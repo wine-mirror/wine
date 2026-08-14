@@ -519,7 +519,6 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
-    if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     dinput_device_init( &impl->base, &mouse_vtbl, guid, dinput );

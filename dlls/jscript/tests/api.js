@@ -2634,6 +2634,7 @@ var exception_array = {
     E_INVALID_LENGTH:  { type: "RangeError",  number: -2146823259 },
 
     E_NOT_DATE:            { type: "TypeError",   number: -2146823282 },
+    E_NOT_STRING:          { type: "TypeError",   number: -2146823283 },
     E_NOT_BOOL:            { type: "TypeError",   number: -2146823278 },
     E_ARG_NOT_OPT:         { type: "TypeError",   number: -2146827839 },
     E_NO_PROPERTY:         { type: "TypeError",   number: -2146827850 },
@@ -2704,6 +2705,7 @@ testException(function() {date.setTime();}, "E_ARG_NOT_OPT");
 testException(function() {date.setYear();}, "E_ARG_NOT_OPT");
 testException(function() {arr.test();}, "E_NO_PROPERTY");
 testException(function() {[1,2,3].sort(nullDisp);}, "E_JSCRIPT_EXPECTED");
+testException(function() {var o = new Object(); o.length = 1; o[0] = "a"; Array.prototype.toString.call(o);}, "E_NOT_ARRAY");
 testException(function() {var o = new Object(); o.length = 1; o[0] = "a"; Array.prototype.toLocaleString.call(o);}, "E_NOT_ARRAY");
 testException(function() {Number.prototype.toString.call(arr);}, "E_NOT_NUM");
 testException(function() {Number.prototype.toFixed.call(arr);}, "E_NOT_NUM");
@@ -2726,6 +2728,8 @@ testException(function() {(new Object()) instanceof nullDisp;}, "E_NOT_FUNC");
 testException(function() {nullDisp instanceof Object;}, "E_OBJECT_EXPECTED");
 testException(function() {Function.prototype.apply.call(nullDisp, Object, []);}, "E_OBJECT_REQUIRED");
 testException(function() {Function.prototype.call.call(nullDisp, Object);}, "E_OBJECT_REQUIRED");
+testException(function() {String.prototype.toString.call(null);}, "E_NOT_STRING");
+testException(function() {String.prototype.toString.call([]);}, "E_NOT_STRING");
 testException(function() {"test" in 3;}, "E_OBJECT_EXPECTED");
 testException(function() {"test" in null;}, "E_OBJECT_EXPECTED");
 testException(function() {"test" in nullDisp;}, "E_OBJECT_EXPECTED");
@@ -2917,6 +2921,8 @@ function testFunctionThis(func) {
 testFunctionThis("toString");
 testFunctionThis("call");
 testFunctionThis("apply");
+
+testException(function() {(function (a, b) {}).apply(null, testObj)}, "E_JSCRIPT_EXPECTED");
 
 function testArrayHostThis(func) {
     testException(function() { Array.prototype[func].call(testObj); }, "E_JSCRIPT_EXPECTED");

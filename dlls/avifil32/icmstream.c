@@ -248,19 +248,17 @@ static HRESULT WINAPI ICMStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
       This->dwBytesPerFrame = 0;
     }
 
-    if (icinfo.dwFlags & VIDCF_COMPRESSFRAMES) {
-      memset(&icFrames, 0, sizeof(icFrames));
-      icFrames.lpbiOutput  = This->lpbiOutput;
-      icFrames.lpbiInput   = This->lpbiInput;
-      icFrames.lFrameCount = This->sInfo.dwLength;
-      icFrames.lQuality    = This->sInfo.dwQuality;
-      icFrames.lDataRate   = pco->dwBytesPerSecond;
-      icFrames.lKeyRate    = This->lKeyFrameEvery;
-      icFrames.dwRate      = This->sInfo.dwRate;
-      icFrames.dwScale     = This->sInfo.dwScale;
-      ICSendMessage(This->hic, ICM_COMPRESS_FRAMES_INFO,
-		    (LPARAM)&icFrames, (LPARAM)sizeof(icFrames));
-    }
+    memset(&icFrames, 0, sizeof(icFrames));
+    icFrames.lpbiOutput  = This->lpbiOutput;
+    icFrames.lpbiInput   = This->lpbiInput;
+    icFrames.lFrameCount = This->sInfo.dwLength;
+    icFrames.lQuality    = This->sInfo.dwQuality;
+    icFrames.lDataRate   = pco->dwBytesPerSecond;
+    icFrames.lKeyRate    = This->lKeyFrameEvery;
+    icFrames.dwRate      = This->sInfo.dwRate;
+    icFrames.dwScale     = This->sInfo.dwScale;
+    ICSendMessage(This->hic, ICM_COMPRESS_FRAMES_INFO,
+		  (LPARAM)&icFrames, (LPARAM)sizeof(icFrames));
   } else
     This->sInfo.fccHandler = comptypeDIB;
 

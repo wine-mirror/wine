@@ -3,6 +3,7 @@ IMPORTS = combase uuid
 
 SOURCES = \
 	async.c \
+	async_private.idl \
 	classes.idl \
 	event_handlers.c \
 	listconstraint.c \

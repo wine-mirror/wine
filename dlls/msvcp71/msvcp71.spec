@@ -2621,9 +2621,9 @@
 @ cdecl -arch=arm ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAAXII@Z(ptr long long) basic_string_wchar__Copy
 @ thiscall -arch=i386 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII@Z(ptr long long) basic_string_wchar__Copy
 @ cdecl -arch=win64 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z(ptr long long) basic_string_wchar__Copy
-@ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
-@ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
-@ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FCosh
+@ cdecl ?_Cosh@?$_Ctraits@N@std@@SANNN@Z(double double) _Cosh
+@ cdecl ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z(double double) _Cosh
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
@@ -3065,9 +3065,9 @@
 @ cdecl -arch=win64 ?_Iput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEAD_K@Z(ptr ptr ptr ptr long ptr long) num_put_short__Iput
 @ cdecl -arch=win32 ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPADI@Z(ptr ptr long ptr ptr long ptr long) num_put_wchar__Iput
 @ cdecl -arch=win64 ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEAD_K@Z(ptr ptr ptr ptr long ptr long) num_put_wchar__Iput
-@ stub ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z
-@ stub ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z
-@ stub ?_Isinf@?$_Ctraits@O@std@@SA_NO@Z
+@ cdecl ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isinf
+@ cdecl ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isinf
+@ cdecl ?_Isinf@?$_Ctraits@O@std@@SA_NO@Z(double) std_Ctraits_long_double__Isinf
 @ cdecl ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isnan
 @ cdecl ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isnan
 @ cdecl ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z(double) std_Ctraits_long_double__Isnan
@@ -3202,9 +3202,9 @@
 # extern -arch=win64 ?_Root2@?CA@???$_Fabs@M@std@@YAMAEBV?$complex@M@1@PEAH@Z@4MB
 # extern -arch=win32 ?_Root2@?CA@???$_Fabs@N@std@@YANABV?$complex@N@1@PAH@Z@4NB
 # extern -arch=win64 ?_Root2@?CA@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB
-@ stub ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z
-@ stub ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
-@ stub ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FSinh
+@ cdecl ?_Sinh@?$_Ctraits@N@std@@SANNN@Z(double double) _Sinh
+@ cdecl ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z(double double) _Sinh
 @ extern -arch=arm ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAAXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
 @ extern -arch=i386 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
 @ extern -arch=win64 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
@@ -7037,14 +7037,14 @@
 @ thiscall -arch=i386 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPB_WH@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ stub _Atexit
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ extern _Denorm
 @ stub _Dnorm
 @ cdecl _Dscale(ptr long)
 @ cdecl _Dtest(ptr)
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)
@@ -7054,7 +7054,7 @@
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 # extern _FZero
@@ -7065,7 +7065,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest
@@ -7075,7 +7075,7 @@
 @ extern _LNan
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan
 # extern _LXbig
 @ extern _LZero
@@ -7083,7 +7083,7 @@
 @ extern _Nan
 @ stub _Poly
 # extern _Rteps
-@ stub _Sinh
+@ cdecl _Sinh(double double)
 @ extern _Snan
 @ cdecl _Stod(ptr ptr long)
 @ cdecl _Stof(ptr ptr long)

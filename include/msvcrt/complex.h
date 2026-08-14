@@ -8,6 +8,10 @@
 
 #include <corecrt.h>
 
+#ifdef __cplusplus
+#include <ccomplex>
+#else
+
 #ifndef _C_COMPLEX_T
 #define _C_COMPLEX_T
 typedef struct _C_double_complex
@@ -25,6 +29,9 @@ typedef _C_double_complex _Dcomplex;
 typedef _C_float_complex _Fcomplex;
 
 _ACRTIMP _Dcomplex __cdecl _Cbuild(double, double);
+_ACRTIMP _Dcomplex __cdecl cexp(_Dcomplex);
+
+_ACRTIMP double __cdecl carg(_Dcomplex);
 _ACRTIMP double __cdecl cimag(_Dcomplex);
 _ACRTIMP double __cdecl creal(_Dcomplex);
 
@@ -48,7 +55,10 @@ static inline _Fcomplex __cdecl __wine__FCbuild(float r, float i)
 _ACRTIMP _Fcomplex __cdecl _FCbuild(float, float);
 #endif
 
+_ACRTIMP float __cdecl cargf(_Fcomplex);
 _ACRTIMP float __cdecl cimagf(_Fcomplex);
 _ACRTIMP float __cdecl crealf(_Fcomplex);
+
+#endif /* __cplusplus */
 
 #endif /* _COMPLEX_H_DEFINED */

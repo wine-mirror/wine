@@ -108,20 +108,10 @@ static BOOL PSDRV_WriteImageMaskHeader(print_ctx *ctx, const BITMAPINFO *info, I
        the foregnd color corresponds to a bit equal to
        0 in the bitmap.
     */
-    if (!info->bmiHeader.biClrUsed)
-    {
-        PSDRV_CreateColor( ctx, &foregnd, GetTextColor( ctx->hdc ) );
-        bkgnd = ctx->bkColor;
-    }
-    else
-    {
-        PSDRV_CreateColor( ctx, &foregnd, RGB(info->bmiColors[0].rgbRed,
-                                              info->bmiColors[0].rgbGreen,
-                                              info->bmiColors[0].rgbBlue) );
-        PSDRV_CreateColor( ctx, &bkgnd, RGB(info->bmiColors[1].rgbRed,
-                                            info->bmiColors[1].rgbGreen,
-                                            info->bmiColors[1].rgbBlue) );
-    }
+    PSDRV_CreateColor(ctx, &foregnd, RGB(info->bmiColors[0].rgbRed, info->bmiColors[0].rgbGreen,
+                      info->bmiColors[0].rgbBlue));
+    PSDRV_CreateColor(ctx, &bkgnd, RGB(info->bmiColors[1].rgbRed, info->bmiColors[1].rgbGreen,
+                      info->bmiColors[1].rgbBlue));
 
     PSDRV_WriteGSave(ctx);
     PSDRV_WriteNewPath(ctx);

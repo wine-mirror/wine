@@ -766,7 +766,7 @@ typedef	MMSYSTEM_MapType        (*MMSYSTDRV_MAPMSG)(DWORD wMsg, DWORD_PTR* lpPar
 typedef	MMSYSTEM_MapType        (*MMSYSTDRV_UNMAPMSG)(DWORD wMsg, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
 typedef void                    (*MMSYSTDRV_MAPCB)(DWORD wMsg, DWORD_PTR* dwUser, DWORD_PTR* dwParam1, DWORD_PTR* dwParam2);
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 #define MMSYSTDRV_MAX_THUNKS      32
 
 static struct mmsystdrv_thunk
@@ -783,7 +783,7 @@ static struct mmsystdrv_thunk
     enum MMSYSTEM_DriverType    kind;
 } *MMSYSTDRV_Thunks;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 static struct MMSYSTDRV_Type
 {

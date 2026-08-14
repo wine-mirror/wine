@@ -124,7 +124,7 @@ static BOOL dump_cv_sst_global_pub(const OMFDirEntry* omfde)
 
     fileoffset = Offset(cv_base) + omfde->lfo;
     printf ("    GlobalPub section starts at file offset 0x%lx\n", fileoffset);
-    printf ("    Symbol table starts at 0x%lx\n", fileoffset + sizeof (OMFSymHash));
+    printf ("    Symbol table starts at 0x%x\n", (int)(fileoffset + sizeof (OMFSymHash)));
 
     printf ("\n                           ----- Begin Symbol Table -----\n");
 

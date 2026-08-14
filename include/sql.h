@@ -22,7 +22,7 @@
 #define __SQL_H
 
 #ifndef ODBCVER
-#define ODBCVER 0x0351
+#define ODBCVER 0x0380
 #endif
 
 #include <sqltypes.h>

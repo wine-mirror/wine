@@ -423,6 +423,45 @@ static void test_Negotiate(void)
     LsaDeregisterLogonProcess(lsa);
 }
 
+static void test_AcquireCredentialsHandle( void )
+{
+    SECURITY_STATUS status;
+    SEC_WINNT_AUTH_IDENTITY_EXW id;
+    CredHandle cred;
+
+    memset( &id, 0, sizeof(id) );
+    id.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+    id.Length = sizeof(id);
+    id.User = (USHORT *)L"winetest";
+    id.UserLength = ARRAY_SIZE( L"winetest" ) - 1;
+    id.Domain = (USHORT *)L"winetest";
+    id.DomainLength = ARRAY_SIZE( L"winetest" ) - 1;
+    id.Password = (USHORT *)L"winetest";
+    id.PasswordLength = ARRAY_SIZE( L"winetest" ) - 1;
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+    id.PackageList = (USHORT *)L"kerberos,!ntlm";
+    id.PackageListLength = ARRAY_SIZE( L"kerberos,!ntlm" ) - 1;
+
+    status = AcquireCredentialsHandleW( NULL, (SEC_WCHAR *)L"Negotiate", SECPKG_CRED_OUTBOUND, NULL, &id, NULL,
+                                        NULL, &cred, NULL );
+    ok( status == SEC_E_OK, "got %#lx\n", status );
+    FreeCredentialsHandle( &cred );
+
+    id.PackageList = (USHORT *)L"nosuch";
+    id.PackageListLength = ARRAY_SIZE( L"nosuch" );
+
+    status = AcquireCredentialsHandleW( NULL, (SEC_WCHAR *)L"Negotiate", SECPKG_CRED_OUTBOUND, NULL, &id, NULL,
+                                        NULL, &cred, NULL );
+    ok( status == SEC_E_OK, "got %#lx\n", status );
+    FreeCredentialsHandle( &cred );
+
+    id.Length = 0;
+    status = AcquireCredentialsHandleW( NULL, (SEC_WCHAR *)L"Negotiate", SECPKG_CRED_OUTBOUND, NULL, &id, NULL,
+                                        NULL, &cred, NULL );
+    ok( status == SEC_E_OK, "got %#lx\n", status );
+    FreeCredentialsHandle( &cred );
+}
+
 START_TEST(negotiate)
 {
     SecPkgInfoA *info;
@@ -446,4 +485,5 @@ START_TEST(negotiate)
 
     test_authentication();
     test_Negotiate();
+    test_AcquireCredentialsHandle();
 }

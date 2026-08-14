@@ -41,23 +41,37 @@ static const WCHAR software_renderW[] =
 static void test_propertystore(IPropertyStore *store)
 {
     const WAVEFORMATEXTENSIBLE *format;
+    WCHAR temp[256];
     HRESULT hr;
-    PROPVARIANT pv;
-    char temp[128];
-    temp[sizeof(temp)-1] = 0;
+    PROPVARIANT pv, pv2;
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_GUID, &pv);
     ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR, "Value should be %i, is %i\n", VT_LPWSTR, pv.vt);
-    WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, temp, sizeof(temp)-1, NULL, NULL);
-    trace("guid: %s\n", temp);
+    trace("guid: %s\n", debugstr_w(pv.pwszVal));
     PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_FriendlyName, &pv);
     ok(hr == S_OK, "Failed with %08lx\n", hr);
     ok(pv.vt == VT_LPWSTR && pv.pwszVal, "FriendlyName value had wrong type: 0x%x or was NULL\n", pv.vt);
+
+    pv2.vt = VT_EMPTY;
+    hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv2);
+    ok(hr == S_OK, "Failed with %#lx\n", hr);
+    ok(pv2.vt == VT_LPWSTR && pv2.pwszVal, "Device_DeviceDesc value had wrong type: %#x or was NULL\n", pv2.vt);
+
+    swprintf(temp, ARRAY_SIZE(temp), L"%ls (%ls)", pv2.pwszVal, pv.pwszVal);
+
+    PropVariantClear(&pv);
+    PropVariantClear(&pv2);
+
+    pv.vt = VT_EMPTY;
+    hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
+    ok(hr == S_OK, "Failed with %#lx\n", hr);
+    ok(pv.vt == VT_LPWSTR && pv.pwszVal, "Device_FriendlyName value had wrong type: %#x or was NULL\n", pv.vt);
+    ok(!wcscmp(temp, pv.pwszVal), "Expected Device_FriendlyName %s, but got %s\n", debugstr_w(temp), debugstr_w(pv.pwszVal));
     PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;

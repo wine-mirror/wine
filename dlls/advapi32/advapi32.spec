@@ -25,7 +25,7 @@
 @ stdcall -import AddAuditAccessAce(ptr long long ptr long long)
 @ stdcall -import AddAuditAccessAceEx(ptr long long long ptr long long)
 @ stdcall -import AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
-# @ stub AddConditionalAce
+@ stdcall AddConditionalAce(ptr long long long long ptr wstr ptr)
 @ stdcall -import AddMandatoryAce(ptr long long long ptr)
 # @ stub AddUsersToEncryptedFile
 # @ stub AddUsersToEncryptedFileEx
@@ -280,7 +280,7 @@
 @ stdcall -import EnumServicesStatusExW(long long long long ptr long ptr ptr ptr wstr)
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
 @ stdcall EnumerateTraceGuids(ptr long ptr)
-# @ stub EnumerateTraceGuidsEx
+@ stdcall EnumerateTraceGuidsEx(long ptr long ptr long ptr)
 @ stdcall -import EqualDomainSid(ptr ptr ptr)
 @ stdcall -import EqualPrefixSid(ptr ptr)
 @ stdcall -import EqualSid(ptr ptr)
@@ -295,7 +295,7 @@
 @ stdcall EventUnregister(int64) ntdll.EtwEventUnregister
 @ stdcall EventWrite(int64 ptr long ptr) ntdll.EtwEventWrite
 # @ stub EventWriteEndScenario
-# @ stub EventWriteEx
+@ stdcall EventWriteEx(int64 ptr int64 long ptr ptr long ptr) ntdll.EtwEventWriteEx
 # @ stub EventWriteStartScenario
 @ stdcall EventWriteString(int64 long int64 ptr) ntdll.EtwEventWriteString
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
@@ -726,7 +726,7 @@
 # @ stub SaferiChangeRegistryScope
 # @ stub SaferiCompareTokenLevels
 # @ stub SaferiIsDllAllowed
-# @ stub SaferiIsExecutableFileType
+@ stdcall SaferiIsExecutableFileType(wstr long)
 # @ stub SaferiPopulateDefaultsInRegistry
 # @ stub SaferiRecordEventLogEntry
 # @ stub SaferiReplaceProcessThreadTokens
@@ -837,7 +837,7 @@
 # @ stub UsePinForEncryptedFilesW
 # @ stub WaitServiceState
 @ stub WdmWmiServiceMain
-@ stub WmiCloseBlock
+@ stdcall WmiCloseBlock(long)
 # @ stub WmiCloseTraceWithCursor
 # @ stub WmiConvertTimestamp
 # @ stub WmiDevInstToInstanceNameA

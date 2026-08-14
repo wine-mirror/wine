@@ -603,4 +603,5 @@ cpp_quote("#endif")
 
 #if XAUDIO2_VER >= 8
 cpp_quote("HRESULT WINAPI XAudio2Create(IXAudio2** pxaudio2, UINT32 flags, XAUDIO2_PROCESSOR processor);")
+cpp_quote("HRESULT WINAPI XAudio2CreateWithVersionInfo(IXAudio2** pxaudio2, UINT32 flags, XAUDIO2_PROCESSOR processor, DWORD version);")
 #endif

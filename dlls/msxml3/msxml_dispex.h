@@ -19,6 +19,8 @@
 #ifndef __MSXML_DISPEX__
 #define __MSXML_DISPEX__
 
+#include <stdbool.h>
+
 #include "dispex.h"
 
 #include "wine/list.h"
@@ -45,19 +47,21 @@ typedef enum tid_t
     IXMLDOMDocumentFragment_tid,
     IXMLDOMDocumentType_tid,
     IXMLDOMElement_tid,
+    IXMLDOMEntity_tid,
     IXMLDOMEntityReference_tid,
     IXMLDOMImplementation_tid,
     IXMLDOMNamedNodeMap_tid,
     IXMLDOMNode_tid,
     IXMLDOMNodeList_tid,
+    IXMLDOMNotation_tid,
     IXMLDOMParseError2_tid,
     IXMLDOMProcessingInstruction_tid,
     IXMLDOMSchemaCollection_tid,
     IXMLDOMSchemaCollection2_tid,
     IXMLDOMSelection_tid,
     IXMLDOMText_tid,
-    IXMLElement_tid,
-    IXMLDocument_tid,
+    IXMLElement2_tid,
+    IXMLDocument2_tid,
     IXMLHTTPRequest_tid,
     IXSLProcessor_tid,
     IXSLTemplate_tid,

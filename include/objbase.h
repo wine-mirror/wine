@@ -74,7 +74,7 @@
  *    #define IDirect3D_Release(p)            (p)->lpVtbl->Release(p)
  *    // *** IDirect3D methods *** //
  *    #define IDirect3D_Initialize(p,a)       (p)->lpVtbl->Initialize(p,a)
- *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevice(p,a,b)
+ *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevices(p,a,b)
  *    #define IDirect3D_CreateLight(p,a,b)    (p)->lpVtbl->CreateLight(p,a,b)
  *    #define IDirect3D_CreateMaterial(p,a,b) (p)->lpVtbl->CreateMaterial(p,a,b)
  *    #define IDirect3D_CreateViewport(p,a,b) (p)->lpVtbl->CreateViewport(p,a,b)
@@ -130,7 +130,7 @@
  *    #define IDirect3D_Release(p)            (p)->lpVtbl->Release(p)
  *    // *** IDirect3D methods *** //
  *    #define IDirect3D_Initialize(p,a)       (p)->lpVtbl->Initialize(p,a)
- *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevice(p,a,b)
+ *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevices(p,a,b)
  *    #define IDirect3D_CreateLight(p,a,b)    (p)->lpVtbl->CreateLight(p,a,b)
  *    #define IDirect3D_CreateMaterial(p,a,b) (p)->lpVtbl->CreateMaterial(p,a,b)
  *    #define IDirect3D_CreateViewport(p,a,b) (p)->lpVtbl->CreateViewport(p,a,b)

@@ -292,12 +292,10 @@ static HRESULT WINAPI d3d_material3_GetHandle(IDirect3DMaterial3 *iface,
         IDirect3DDevice3 *device, D3DMATERIALHANDLE *handle)
 {
     struct d3d_material *material = impl_from_IDirect3DMaterial3(iface);
-    struct d3d_device *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
     wined3d_mutex_lock();
-    material->active_device = device_impl;
     if (!material->Handle)
     {
         DWORD h = ddraw_allocate_handle(NULL, material, DDRAW_HANDLE_MATERIAL);
@@ -441,7 +439,7 @@ static HRESULT WINAPI d3d_material1_GetMaterial(IDirect3DMaterial *iface, D3DMAT
  *  This: Pointer to the material implementation to activate
  *
  *****************************************************************************/
-void material_activate(struct d3d_material *material)
+void material_activate(struct d3d_device *device, struct d3d_material *material)
 {
     D3DMATERIAL7 d3d7mat;
 
@@ -453,7 +451,7 @@ void material_activate(struct d3d_material *material)
     d3d7mat.emissive = material->mat.emissive;
     d3d7mat.power = material->mat.power;
 
-    IDirect3DDevice7_SetMaterial(&material->active_device->IDirect3DDevice7_iface, &d3d7mat);
+    IDirect3DDevice7_SetMaterial(&device->IDirect3DDevice7_iface, &d3d7mat);
 }
 
 static const struct IDirect3DMaterial3Vtbl d3d_material3_vtbl =

@@ -78,6 +78,20 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
         }
        return 1;
 
+       case WM_SIZE:
+        {
+            WINE_MCIAVI *wma = (WINE_MCIAVI *)mciGetDriverData(GetWindowLongW(hWnd, 0));
+
+            if (!wma)
+                return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+
+            EnterCriticalSection(&wma->cs);
+            wma->dest.right = LOWORD(lParam);
+            wma->dest.bottom = HIWORD(lParam);
+            LeaveCriticalSection(&wma->cs);
+            return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+        }
+
     default:
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }

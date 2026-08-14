@@ -55,8 +55,6 @@ typedef struct _fluid_shell_t fluid_shell_t;                    /**< Command she
 typedef struct _fluid_server_t fluid_server_t;                  /**< TCP/IP shell server instance */
 typedef struct _fluid_event_t fluid_event_t;                    /**< Sequencer event */
 typedef struct _fluid_sequencer_t fluid_sequencer_t;            /**< Sequencer instance */
-typedef struct _fluid_ramsfont_t fluid_ramsfont_t;              /**< RAM SoundFont */
-typedef struct _fluid_rampreset_t fluid_rampreset_t;            /**< RAM SoundFont preset */
 typedef struct _fluid_cmd_handler_t fluid_cmd_handler_t;        /**< Shell Command Handler */
 typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;            /**< LADSPA effects instance */
 typedef struct _fluid_file_callbacks_t fluid_file_callbacks_t;  /**< Callback struct to perform custom file loading of soundfonts */

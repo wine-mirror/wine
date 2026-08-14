@@ -665,6 +665,7 @@ static void test_query_drives(void)
     todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
     ret = SetupQueryDrivesInDiskSpaceListA(handle, NULL, 0, &len);
     todo_wine ok(ret == TRUE, "got %d\n", ret);
     todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());

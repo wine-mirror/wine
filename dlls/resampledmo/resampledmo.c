@@ -33,41 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
-static HRESULT WINAPI resampler_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
-        REFIID riid, void **out)
-{
-    static const GUID CLSID_wg_resampler = {0x92f35e78,0x15a5,0x486b,{0x88,0x8e,0x57,0x5f,0x99,0x65,0x1c,0xe2}};
-    return CoCreateInstance(&CLSID_wg_resampler, outer, CLSCTX_INPROC_SERVER, riid, out);
-}
-
-static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
-{
-    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
-    return *out ? S_OK : E_NOINTERFACE;
-}
-static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
-{
-    return 2;
-}
-static ULONG WINAPI class_factory_Release(IClassFactory *iface)
-{
-    return 1;
-}
-static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
-{
-    return S_OK;
-}
-
-static const IClassFactoryVtbl resampler_factory_vtbl =
-{
-    class_factory_QueryInterface,
-    class_factory_AddRef,
-    class_factory_Release,
-    resampler_factory_CreateInstance,
-    class_factory_LockServer,
-};
-
-static IClassFactory resampler_factory = {&resampler_factory_vtbl};
+extern IClassFactory resampler_factory;
 
 /***********************************************************************
  *              DllGetClassObject (resampledmo.@)

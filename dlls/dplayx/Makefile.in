@@ -2,6 +2,10 @@ MODULE    = dplayx.dll
 IMPORTLIB = dplayx
 IMPORTS   = dxguid uuid winmm ole32 user32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Wine DirectPlay"
+VER_PRODUCTVERSION      = 5,3,1,904
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	dpclassfactory.c \
 	dplay.c \
@@ -12,5 +16,4 @@ SOURCES = \
 	dplayx_messages.c \
 	dplobby.c \
 	lobbysp.c \
-	name_server.c \
-	version.rc
+	name_server.c

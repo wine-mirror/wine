@@ -26,7 +26,6 @@
 
 #include <pthread.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "immdev.h"
@@ -48,7 +47,6 @@ struct ime_update
 
 struct imc
 {
-    struct user_object obj;
     DWORD    thread_id;
     UINT_PTR client_ptr;
 };
@@ -95,7 +93,7 @@ HIMC WINAPI NtUserCreateInputContext( UINT_PTR client_ptr )
     if (!(imc = malloc( sizeof(*imc) ))) return 0;
     imc->client_ptr = client_ptr;
     imc->thread_id = GetCurrentThreadId();
-    if (!(handle = alloc_user_handle( &imc->obj, NTUSER_OBJ_IMC )))
+    if (!(handle = alloc_user_handle( imc, NTUSER_OBJ_IMC )))
     {
         free( imc );
         return 0;
@@ -188,7 +186,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
     WND *win;
     UINT ret = AICR_OK;
 
-    TRACE( "%p %p %x\n", hwnd, ctx, (int)flags );
+    TRACE( "%p %p %x\n", hwnd, ctx, flags );
 
     switch (flags)
     {
@@ -198,7 +196,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
         break;
 
     default:
-        FIXME( "unknown flags 0x%x\n", (int)flags );
+        FIXME( "unknown flags 0x%x\n", flags );
         return AICR_FAILED;
     }
 
@@ -212,11 +210,10 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
             return AICR_FAILED;
     }
 
-    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-        return AICR_FAILED;
+    if (ctx && !is_current_thread_window( hwnd )) return AICR_FAILED;
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return AICR_FAILED;
 
-    if (ctx && win->tid != GetCurrentThreadId()) ret = AICR_FAILED;
-    else if (flags != IACE_IGNORENOCONTEXT || win->imc)
+    if (flags != IACE_IGNORENOCONTEXT || win->imc)
     {
         if (win->imc != ctx && get_focus() == hwnd) ret = AICR_FOCUS_CHANGED;
         win->imc = ctx;
@@ -228,10 +225,9 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
 
 HIMC get_default_input_context(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    if (!thread_info->default_imc)
-        thread_info->default_imc = HandleToUlong( NtUserCreateInputContext( 0 ));
-    return UlongToHandle( thread_info->default_imc );
+    struct user_thread_info *thread_info = get_user_thread_info();
+    if (!thread_info->default_imc) thread_info->default_imc = NtUserCreateInputContext( 0 );
+    return thread_info->default_imc ;
 }
 
 HIMC get_window_input_context( HWND hwnd )
@@ -276,6 +272,17 @@ static struct imm_thread_data *get_imm_thread_data(void)
     return thread_info->imm_thread_data;
 }
 
+static BOOL needs_ime_window( HWND hwnd )
+{
+    static const WCHAR imeW[] = {'I','M','E'};
+    WCHAR nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING name = RTL_CONSTANT_STRING(nameW);
+
+    if (NtUserGetClassLongW( hwnd, GCL_STYLE ) & CS_IME) return FALSE;
+    name.Length = NtUserGetClassName( hwnd, FALSE, &name ) * sizeof(WCHAR);
+    return name.Length != sizeof(imeW) || memcmp( name.Buffer, imeW, sizeof(imeW) );
+}
+
 BOOL register_imm_window( HWND hwnd )
 {
     struct imm_thread_data *thread_data;
@@ -299,9 +306,9 @@ BOOL register_imm_window( HWND hwnd )
         UNICODE_STRING class_name = RTL_CONSTANT_STRING( imeW );
         UNICODE_STRING name = RTL_CONSTANT_STRING( default_imeW );
 
-        thread_data->default_hwnd = NtUserCreateWindowEx( 0, &class_name, &class_name, &name,
+        thread_data->default_hwnd = NtUserCreateWindowEx( 0, &class_name, NULL, &name,
                                                           WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
-                                                          0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, FALSE );
+                                                          0, 0, 1, 1, 0, 0, 0, 0, 0, 0, NULL, FALSE );
     }
 
     return TRUE;
@@ -407,7 +414,7 @@ void cleanup_imm_thread(void)
         thread_info->imm_thread_data = NULL;
     }
 
-    NtUserDestroyInputContext( UlongToHandle( thread_info->client_info.default_imc ));
+    NtUserDestroyInputContext( thread_info->default_imc );
 }
 
 /*****************************************************************************
@@ -425,9 +432,8 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
 
     *size = 0;
     user_lock();
-    while (count && (imc = next_process_user_handle_ptr( &handle, NTUSER_OBJ_IMC )))
+    while (count && (imc = next_thread_user_object( thread_id, &handle, NTUSER_OBJ_IMC )))
     {
-        if (thread_id != -1 && imc->thread_id != thread_id) continue;
         buffer[(*size)++] = handle;
         count--;
     }
@@ -656,29 +662,29 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
 
     switch (call)
     {
-    case WINE_IME_PROCESS_KEY:
-    {
-        struct imm_thread_data *data = get_imm_thread_data();
-
-        data->ime_process_scan = HIWORD(lparam);
-        data->ime_process_vkey = LOWORD(wparam);
-        res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
-        data->ime_process_vkey = data->ime_process_scan = 0;
-
-        if (data->update)
-        {
-            data->update->key_consumed = res;
-            pthread_mutex_lock( &imm_mutex );
-            list_add_tail( &ime_updates, &data->update->entry );
-            pthread_mutex_unlock( &imm_mutex );
-            data->update = NULL;
-            res = TRUE;
-        }
-
-        TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam), (UINT)res );
-        return res;
-    }
     case WINE_IME_TO_ASCII_EX:
+        if (params->state)
+        {
+            struct imm_thread_data *data = get_imm_thread_data();
+
+            data->ime_process_scan = LOWORD(lparam);
+            data->ime_process_vkey = LOWORD(wparam);
+            res = user_driver->pImeToAsciiEx( wparam, lparam, params->state, params->himc );
+            data->ime_process_vkey = data->ime_process_scan = 0;
+
+            if (data->update)
+            {
+                data->update->key_consumed = !res;
+                pthread_mutex_lock( &imm_mutex );
+                list_add_tail( &ime_updates, &data->update->entry );
+                pthread_mutex_unlock( &imm_mutex );
+                data->update = NULL;
+                res = STATUS_SUCCESS;
+            }
+
+            TRACE( "processing vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), LOWORD(lparam), res );
+            if (res) return res;
+        }
         return ime_to_tascii_ex( wparam, lparam, params->state, params->compstr, params->key_consumed, params->himc );
     case WINE_IME_POST_UPDATE:
         post_ime_update( hwnd, wparam, (WCHAR *)lparam, (WCHAR *)params );

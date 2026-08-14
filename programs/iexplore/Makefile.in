@@ -4,6 +4,10 @@ DELAYIMPORTS = advpack version user32
 
 EXTRADLLFLAGS = -mwindows -municode -Wl,--large-address-aware
 
+VER_FILEDESCRIPTION_STR = "Wine Internet Explorer"
+VER_PRODUCTVERSION      = 9,0,8112,16421
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	iexplore.rc \
 	iexplore.svg \

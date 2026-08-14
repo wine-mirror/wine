@@ -34,6 +34,7 @@
 #include "wine/list.h"
 
 extern HINSTANCE hProxyDll;
+extern HRESULT PersistentZoneIdentifier_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT StdURLMoniker_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
@@ -44,7 +45,6 @@ extern HRESULT FtpProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT GopherProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT MkProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 extern HRESULT MimeFilter_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
-extern HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
 
 extern BOOL WINAPI URLMON_DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 extern HRESULT WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv);
@@ -52,7 +52,6 @@ extern HRESULT WINAPI URLMON_DllRegisterServer(void);
 extern HRESULT WINAPI URLMON_DllUnregisterServer(void);
 
 extern GUID const CLSID_PSFactoryBuffer;
-extern GUID const CLSID_CUri;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for urlmon.dll

@@ -771,10 +771,100 @@ static void test_COM_editstream(void)
     while (IAVIEditStream_Release(edit));
 }
 
+static void test_avifile_write(void)
+{
+    WCHAR fn[MAX_PATH];
+    IPersistFile *persist;
+    PCMWAVEFORMAT afmt;
+    AVISTREAMINFOW si;
+    USHORT buffer[64];
+    PAVIFILE avifile;
+    PAVISTREAM stm;
+    HRESULT hr;
+    BOOL ret;
+
+    GetTempPathW(MAX_PATH, fn);
+    wcscat(fn, L"test.avi");
+
+    hr = CoCreateInstance(&CLSID_AVIFile, NULL, CLSCTX_INPROC, &IID_IAVIFile, (void **)&avifile);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIFile_QueryInterface(avifile, &IID_IPersistFile, (void **)&persist);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IPersistFile_Load(persist, fn, STGM_CREATE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&si, 0, sizeof(si));
+    si.fccType = streamtypeAUDIO;
+    si.dwScale = 1;
+    si.dwRate = 48000;
+    si.dwLength = 4;
+    si.dwQuality = ~0u;
+    si.dwSampleSize = 4;
+    hr = IAVIFile_CreateStream(avifile, &stm, &si);
+    ok(hr == AVIERR_READONLY, "got %#lx.\n", hr);
+
+    IPersistFile_Release(persist);
+    IAVIFile_Release(avifile);
+
+    ret = DeleteFileW(fn);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    hr = AVIFileOpenW(&avifile, fn, OF_CREATE, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = AVIFileCreateStreamW(avifile, &stm, &si);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&afmt, 0, sizeof(afmt));
+    afmt.wBitsPerSample = 16;
+    afmt.wf.wFormatTag = WAVE_FORMAT_PCM;
+    afmt.wf.nChannels = 2;
+    afmt.wf.nSamplesPerSec = 44800;
+    afmt.wf.nAvgBytesPerSec = afmt.wf.nSamplesPerSec * afmt.wf.nChannels;
+    afmt.wf.nBlockAlign = afmt.wf.nChannels * 2;
+    hr = AVIStreamSetFormat(stm, 0, &afmt, sizeof(afmt));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!si.dwLength, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(!si.dwSuggestedBufferSize, "got %lu.\n", si.dwSuggestedBufferSize);
+    hr = AVIStreamWrite(stm, 0, 2, buffer, si.dwSampleSize * 2, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 2, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 8, "got %lu.\n", si.dwSuggestedBufferSize);
+    hr = AVIStreamWrite(stm, 2, 2, buffer, si.dwSampleSize * 2, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 4, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 8, "got %lu.\n", si.dwSuggestedBufferSize);
+
+    hr = AVIStreamWrite(stm, 4, 4, buffer, si.dwSampleSize * 4, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 8, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 16, "got %lu.\n", si.dwSuggestedBufferSize);
+
+    IAVIStream_Release(stm);
+    IAVIFile_Release(avifile);
+    ret = DeleteFileW(fn);
+    ok(ret, "got error %lu.\n", GetLastError());
+}
+
 START_TEST(api)
 {
 
     AVIFileInit();
+
     test_EditStreamSetInfo();
     test_AVISaveOptions();
     test_default_data();
@@ -784,6 +874,7 @@ START_TEST(api)
     test_COM();
     test_COM_wavfile();
     test_COM_editstream();
+    test_avifile_write();
     AVIFileExit();
 
 }

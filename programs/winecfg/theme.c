@@ -94,11 +94,8 @@ static void color_or_size_dsa_add (WrappedDsa* wdsa, const WCHAR* name,
 {
     ThemeColorOrSize item;
 
-    item.name = malloc ((wcslen (name) + 1) * sizeof(WCHAR));
-    lstrcpyW (item.name, name);
-
-    item.fancyName = malloc ((wcslen (fancyName) + 1) * sizeof(WCHAR));
-    lstrcpyW (item.fancyName, fancyName);
+    item.name = wcsdup (name);
+    item.fancyName = wcsdup (fancyName);
 
     DSA_InsertItem (wdsa->dsa, wdsa->count, &item);
     wdsa->count++;
@@ -206,12 +203,9 @@ static BOOL CALLBACK myEnumThemeProc (LPVOID lpReserved,
     create_color_or_size_dsa (&newEntry.sizes);
     fill_theme_string_array (pszThemeFileName, &newEntry.sizes, EnumThemeSizes);
 
-    newEntry.themeFileName = malloc ((wcslen (pszThemeFileName) + 1) * sizeof(WCHAR));
-    lstrcpyW (newEntry.themeFileName, pszThemeFileName);
+    newEntry.themeFileName = wcsdup (pszThemeFileName);
+    newEntry.fancyName = wcsdup (pszThemeName);
 
-    newEntry.fancyName = malloc ((wcslen (pszThemeName) + 1) * sizeof(WCHAR));
-    lstrcpyW (newEntry.fancyName, pszThemeName);
-  
     /*list_add_tail (&themeFiles, &newEntry->entry);*/
     DSA_InsertItem (themeFiles, themeFilesCount, &newEntry);
     themeFilesCount++;

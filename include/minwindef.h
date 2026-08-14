@@ -21,8 +21,6 @@
 #ifndef _MINWINDEF_
 #define _MINWINDEF_
 
-#include <minwindef.h>
-
 #ifndef NO_STRICT
 # ifndef STRICT
 #  define STRICT
@@ -106,14 +104,14 @@ extern "C" {
 #ifndef _fastcall
 #define _fastcall   __ONLY_IN_WINELIB(__stdcall)
 #endif
-#ifndef cdecl
-#define cdecl       __ONLY_IN_WINELIB(__cdecl)
-#endif
 #ifndef _cdecl
 #define _cdecl      __ONLY_IN_WINELIB(__cdecl)
 #endif
 #endif /* _MSC_VER */
 
+#ifndef cdecl
+#define cdecl       __ONLY_IN_WINELIB(__cdecl)
+#endif
 #ifndef pascal
 #define pascal      __ONLY_IN_WINELIB(__stdcall)
 #endif
@@ -208,7 +206,7 @@ extern "C" {
 #define BASETYPES
 typedef unsigned char UCHAR, *PUCHAR;
 typedef unsigned short USHORT, *PUSHORT;
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) && !defined(WINE_UNIX_LIB)
 typedef unsigned long ULONG, *PULONG;
 #else
 typedef unsigned int ULONG, *PULONG;
@@ -224,7 +222,7 @@ typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
 typedef float           FLOAT,      *PFLOAT;
 typedef char                        *PSZ;
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) && !defined(WINE_UNIX_LIB)
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 #else

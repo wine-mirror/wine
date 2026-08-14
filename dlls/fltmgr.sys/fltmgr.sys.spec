@@ -3,7 +3,7 @@
 @ stub FltAcquireResourceExclusive
 @ stub FltAcquireResourceShared
 @ stub FltAllocateCallbackData
-@ stub FltAllocateContext
+@ stdcall FltAllocateContext(ptr long long long ptr)
 @ stub FltAllocateDeferredIoWorkItem
 @ stub FltAllocateFileLock
 @ stub FltAllocateGenericWorkItem
@@ -27,11 +27,11 @@
 @ stub FltClearCancelCompletion
 @ stub FltClose
 @ stub FltCloseClientPort
-@ stub FltCloseCommunicationPort
+@ stdcall FltCloseCommunicationPort(ptr)
 @ stub FltCompareInstanceAltitudes
 @ stub FltCompletePendedPostOperation
 @ stub FltCompletePendedPreOperation
-@ stub FltCreateCommunicationPort
+@ stdcall FltCreateCommunicationPort(ptr ptr ptr ptr ptr ptr ptr long)
 @ stub FltCreateFile
 @ stub FltCreateFileEx
 @ stub FltCreateSystemVolumeInformationFolder
@@ -53,7 +53,7 @@
 @ stub FltEnumerateInstanceInformationByVolume
 @ stub FltEnumerateInstances
 @ stub FltEnumerateVolumeInformation
-@ stub FltEnumerateVolumes
+@ stdcall FltEnumerateVolumes(ptr ptr long ptr)
 @ stub FltFlushBuffers
 @ stub FltFreeCallbackData
 @ stub FltFreeDeferredIoWorkItem
@@ -68,8 +68,8 @@
 @ stub FltGetDeviceObject
 @ stub FltGetDiskDeviceObject
 @ stub FltGetFileContext
-@ stub FltGetFileNameInformation
-@ stub FltGetFileNameInformationUnsafe
+@ stdcall FltGetFileNameInformation(ptr long ptr)
+@ stdcall FltGetFileNameInformationUnsafe(ptr ptr long ptr)
 @ stub FltGetFilterFromInstance
 @ stub FltGetFilterFromName
 @ stub FltGetFilterInformation
@@ -80,7 +80,7 @@
 @ stub FltGetRequestorProcess
 @ stub FltGetRequestorProcessId
 @ stdcall FltGetRoutineAddress(str)
-@ stub FltGetStreamContext
+@ stdcall FltGetStreamContext(ptr ptr ptr)
 @ stub FltGetStreamHandleContext
 @ stub FltGetSwappedBufferMdlAddress
 @ stub FltGetTopInstance
@@ -113,26 +113,26 @@
 @ stub FltOplockFsctrl
 @ stub FltOplockIsFastIoPossible
 @ stub FltParseFileName
-@ stub FltParseFileNameInformation
+@ stdcall FltParseFileNameInformation(ptr)
 @ stub FltPerformAsynchronousIo
 @ stub FltPerformSynchronousIo
 @ stub FltProcessFileLock
 @ stub FltPurgeFileNameInformationCache
 @ stub FltQueryEaFile
-@ stub FltQueryInformationFile
+@ stdcall FltQueryInformationFile(ptr ptr long ptr ptr ptr)
 @ stub FltQuerySecurityObject
 @ stub FltQueryVolumeInformation
 @ stub FltQueryVolumeInformationFile
 @ stub FltQueueDeferredIoWorkItem
 @ stub FltQueueGenericWorkItem
-@ stub FltReadFile
+@ stdcall FltReadFile(ptr ptr ptr long ptr long ptr ptr ptr)
 @ stub FltReferenceContext
 @ stub FltReferenceFileNameInformation
 @ stdcall FltRegisterFilter(ptr ptr ptr)
 @ stub FltReissueSynchronousIo
-@ stub FltReleaseContext
+@ stdcall FltReleaseContext(ptr)
 @ stub FltReleaseContexts
-@ stub FltReleaseFileNameInformation
+@ stdcall FltReleaseFileNameInformation(ptr)
 @ stdcall FltReleasePushLock(ptr)
 @ stub FltReleaseResource
 @ stub FltRequestOperationStatusCallback
@@ -146,7 +146,7 @@
 @ stub FltSetInformationFile
 @ stub FltSetInstanceContext
 @ stub FltSetSecurityObject
-@ stub FltSetStreamContext
+@ stdcall FltSetStreamContext(ptr ptr long ptr ptr)
 @ stub FltSetStreamHandleContext
 @ stub FltSetVolumeContext
 @ stub FltSetVolumeInformation

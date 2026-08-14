@@ -162,6 +162,7 @@ EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR C
                                EVT_SUBSCRIBE_CALLBACK Callback, DWORD Flags);
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags);
 BOOL WINAPI EvtSaveChannelConfig(EVT_HANDLE,DWORD);
+BOOL WINAPI EvtRender(EVT_HANDLE, EVT_HANDLE, DWORD, DWORD, void *, DWORD *, DWORD *);
 
 #ifdef __cplusplus
 } /* extern "C" */

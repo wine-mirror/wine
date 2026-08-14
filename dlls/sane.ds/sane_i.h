@@ -45,12 +45,37 @@ struct tagActiveDS
 
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
+    TW_INT16            capXferCount;           /* ICAP_XFERCOUNT */
+    TW_BOOL             capIndicators;          /* CAP_INDICATORS */
     BOOL                PixelTypeSet;
     TW_UINT16		defaultPixelType;		/* ICAP_PIXELTYPE */
-    BOOL                XResolutionSet;
     TW_FIX32            defaultXResolution;
-    BOOL                YResolutionSet;
     TW_FIX32            defaultYResolution;
+
+    /* Number of scan lines already transfered in DG_IMAGE / DAT_IMAGEMEMXFER / MSG_GET. */
+    TW_UINT32           YOffset;
+
+    /* Number of images transferd since start of scan process */
+    TW_INT16            scannedImages;
+
+    /* TRUE if we are scanning with an Automatic Document Feeder */
+    BOOL                feederEnabled;
+
+    /* TRUE if user pressed cancel in scanning dialog */
+    BOOL                userCancelled;
+
+    /* TRUE if user interface dialog is shown in DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS */
+    BOOL                ShowUI;
+
+    /* Data strored for the property sheet dialog while it is displayed */
+    struct SUiData *    ui_data;
+
+    /* TRUE if the DS makes the parent window Modal */
+    BOOL                ModalUI;
+
+    /* Resolution used during scan */
+    TW_FIX32            XResolution;
+    TW_FIX32            YResolution;
 };
 
 extern struct tagActiveDS activeDS;
@@ -59,6 +84,10 @@ extern struct tagActiveDS activeDS;
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
 extern TW_UINT16 SANE_SaneSetDefaults (void);
 extern void SANE_Notify (TW_UINT16 message);
+extern TW_UINT16 SANE_Start(void);
+extern void      SANE_Cancel(void);
+extern void      SANE_XferReady(void);
+extern void      SANE_LoadOptions(void);
 
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */
@@ -192,14 +221,20 @@ TW_UINT16 SANE_RGBResponseSet
 /* UI function */
 BOOL DoScannerUI(void);
 HWND ScanningDialogBox(HWND dialog, LONG progress);
+BOOL UI_IsDialogMessage(MSG *msg);
+void UI_Destroy(void);
+void UI_Enable(BOOL enable);
 
 /* Option functions */
+TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr );
 TW_UINT16 sane_option_get_value( int optno, void *val );
 TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload );
 TW_UINT16 sane_option_get_int( const char *option_name, int *val );
 TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload );
 TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len );
 TW_UINT16 sane_option_set_str( const char *option_name, char *val, BOOL *reload );
+TW_UINT16 sane_option_get_fix32( const char *option_name, TW_FIX32 *val);
+TW_UINT16 sane_option_set_fix32( const char *option_name, const TW_FIX32 *val, BOOL *reload);
 TW_UINT16 sane_option_probe_resolution( const char *option_name, struct option_descriptor *opt );
 TW_UINT16 sane_option_probe_str( const char* option_name, const WCHAR* const* filter[], char* opt_vals, int buf_len );
 TW_UINT16 sane_option_get_bool( const char *option_name, BOOL *val );
@@ -207,6 +242,8 @@ TW_UINT16 sane_option_set_bool( const char *option_name, BOOL val );
 TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry );
 TW_UINT16 sane_option_get_max_scan_area( int *tlx, int *tly, int *brx, int *bry );
 TW_UINT16 sane_option_set_scan_area( int tlx, int tly, int brx, int bry, BOOL *reload );
+TW_UINT16 sane_option_get_resolution(const char *best_option_name, TW_FIX32 *val);
+TW_UINT16 sane_option_set_resolution(const char *best_option_name, const TW_FIX32 *val, BOOL *reload);
 TW_FIX32 convert_sane_res_to_twain( int res );
 int convert_twain_res_to_sane( TW_FIX32 res );
 TW_UINT16 get_sane_params( struct frame_parameters *params );

@@ -1332,6 +1332,14 @@ static void test_wmp(void)
     ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
     ok(!IsWindowVisible(hwnd), "Window is visible\n");
 
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, 0, container_hwnd, &pos);
+    ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+    ok(IsWindowVisible(hwnd), "Window is invisible\n");
+    todo_wine CHECK_CALLED(GetWindowContext);
+    todo_wine CHECK_CALLED(ShowObject);
+
     SET_EXPECT(OnShowWindow_FALSE);
     SET_EXPECT(OnInPlaceDeactivate);
     hres = IOleObject_Close(oleobj, 0);

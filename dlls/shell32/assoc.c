@@ -152,7 +152,8 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
   {
     TRACE("Destroying IQueryAssociations (%p)\n", This);
     RegCloseKey(This->hkeySource);
-    RegCloseKey(This->hkeyProgID);
+    if (This->hkeySource != This->hkeyProgID)
+        RegCloseKey(This->hkeyProgID);
     SHFree(This);
   }
 

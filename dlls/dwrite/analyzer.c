@@ -39,7 +39,6 @@ struct dwritescript_properties
 {
     DWRITE_SCRIPT_PROPERTIES props;
     UINT32 scripttags[3]; /* Maximum 2 script tags, 0-terminated. */
-    BOOL is_complex;
 };
 
 #define _OT(a,b,c,d) DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d)
@@ -49,52 +48,52 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Zzzz */ { 0x7a7a7a5a, 999, 15, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Zyyy */ { 0x7979795a, 998,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
     { /* Zinh */ { 0x686e695a, 994, 15, 0x0020, 1, 0, 0, 0, 0, 0, 0 } },
-    { /* Arab */ { 0x62617241, 160,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, { _OT('a','r','a','b') }, TRUE },
+    { /* Arab */ { 0x62617241, 160,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, { _OT('a','r','a','b') } },
     { /* Armn */ { 0x6e6d7241, 230,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('a','r','m','n') } },
     { /* Avst */ { 0x74737641, 134,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('a','v','s','t') } },
     { /* Bali */ { 0x696c6142, 360, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('b','a','l','i') } },
     { /* Bamu */ { 0x756d6142, 435,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('b','a','m','u') } },
     { /* Batk */ { 0x6b746142, 365,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('b','a','t','k') } },
-    { /* Beng */ { 0x676e6542, 325, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('b','n','g','2'), _OT('b','e','n','g') }, TRUE },
+    { /* Beng */ { 0x676e6542, 325, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('b','n','g','2'), _OT('b','e','n','g') } },
     { /* Bopo */ { 0x6f706f42, 285,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('b','o','p','o') } },
     { /* Brah */ { 0x68617242, 300,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('b','r','a','h') } },
-    { /* Brai */ { 0x69617242, 570,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('b','r','a','i') }, TRUE },
+    { /* Brai */ { 0x69617242, 570,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('b','r','a','i') } },
     { /* Bugi */ { 0x69677542, 367,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('b','u','g','i') } },
     { /* Buhd */ { 0x64687542, 372,  8, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('b','u','h','d') } },
-    { /* Cans */ { 0x736e6143, 440,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','a','n','s') }, TRUE },
+    { /* Cans */ { 0x736e6143, 440,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','a','n','s') } },
     { /* Cari */ { 0x69726143, 201,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('c','a','r','i') } },
     { /* Cham */ { 0x6d616843, 358,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('c','h','a','m') } },
-    { /* Cher */ { 0x72656843, 445,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','h','e','r') }, TRUE },
+    { /* Cher */ { 0x72656843, 445,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','h','e','r') } },
     { /* Copt */ { 0x74706f43, 204,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','o','p','t') } },
     { /* Xsux */ { 0x78757358,  20,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('x','s','u','x') } },
     { /* Cprt */ { 0x74727043, 403,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('c','p','r','t') } },
     { /* Cyrl */ { 0x6c727943, 220,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('c','y','r','l') } },
-    { /* Dsrt */ { 0x74727344, 250,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('d','s','r','t') }, TRUE },
-    { /* Deva */ { 0x61766544, 315, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('d','e','v','2'), _OT('d','e','v','a') }, TRUE },
+    { /* Dsrt */ { 0x74727344, 250,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('d','s','r','t') } },
+    { /* Deva */ { 0x61766544, 315, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('d','e','v','2'), _OT('d','e','v','a') } },
     { /* Egyp */ { 0x70796745,  50,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('e','g','y','p') } },
-    { /* Ethi */ { 0x69687445, 430,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('e','t','h','i') }, TRUE },
+    { /* Ethi */ { 0x69687445, 430,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('e','t','h','i') } },
     { /* Geor */ { 0x726f6547, 240,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('g','e','o','r') } },
     { /* Glag */ { 0x67616c47, 225,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('g','l','a','g') } },
     { /* Goth */ { 0x68746f47, 206,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('g','o','t','h') } },
     { /* Grek */ { 0x6b657247, 200,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('g','r','e','k') } },
-    { /* Gujr */ { 0x726a7547, 320, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('g','j','r','2'), _OT('g','u','j','r') }, TRUE },
-    { /* Guru */ { 0x75727547, 310, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('g','u','r','2'), _OT('g','u','r','u') }, TRUE },
+    { /* Gujr */ { 0x726a7547, 320, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('g','j','r','2'), _OT('g','u','j','r') } },
+    { /* Guru */ { 0x75727547, 310, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('g','u','r','2'), _OT('g','u','r','u') } },
     { /* Hani */ { 0x696e6148, 500,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('h','a','n','i') } },
-    { /* Hang */ { 0x676e6148, 286,  8, 0x0020, 1, 1, 1, 1, 0, 0, 0 }, { _OT('h','a','n','g') }, TRUE },
+    { /* Hang */ { 0x676e6148, 286,  8, 0x0020, 1, 1, 1, 1, 0, 0, 0 }, { _OT('h','a','n','g') } },
     { /* Hano */ { 0x6f6e6148, 371,  8, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('h','a','n','o') } },
-    { /* Hebr */ { 0x72626548, 125,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('h','e','b','r') }, TRUE },
+    { /* Hebr */ { 0x72626548, 125,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('h','e','b','r') } },
     { /* Hira */ { 0x61726948, 410,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('k','a','n','a') } },
     { /* Armi */ { 0x696d7241, 124,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('a','r','m','i') } },
     { /* Phli */ { 0x696c6850, 131,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('p','h','l','i') } },
     { /* Prti */ { 0x69747250, 130,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('p','r','t','i') } },
     { /* Java */ { 0x6176614a, 361, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('j','a','v','a') } },
     { /* Kthi */ { 0x6968744b, 317, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('k','t','h','i') } },
-    { /* Knda */ { 0x61646e4b, 345, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('k','n','d','2'), _OT('k','n','d','a') }, TRUE },
+    { /* Knda */ { 0x61646e4b, 345, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('k','n','d','2'), _OT('k','n','d','a') } },
     { /* Kana */ { 0x616e614b, 411,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('k','a','n','a') } },
     { /* Kali */ { 0x696c614b, 357,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('k','a','l','i') } },
     { /* Khar */ { 0x7261684b, 305, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('k','h','a','r') } },
-    { /* Khmr */ { 0x726d684b, 355,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('k','h','m','r') }, TRUE },
-    { /* Laoo */ { 0x6f6f614c, 356,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('l','a','o',' ') }, TRUE },
+    { /* Khmr */ { 0x726d684b, 355,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('k','h','m','r') } },
+    { /* Laoo */ { 0x6f6f614c, 356,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('l','a','o',' ') } },
     { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','a','t','n') } },
     { /* Lepc */ { 0x6370654c, 335,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('l','e','p','c') } },
     { /* Limb */ { 0x626d694c, 336,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('l','i','m','b') } },
@@ -102,46 +101,46 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Lisu */ { 0x7573694c, 399,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','i','s','u') } },
     { /* Lyci */ { 0x6963794c, 202,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','y','c','i') } },
     { /* Lydi */ { 0x6964794c, 116,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','y','d','i') } },
-    { /* Mlym */ { 0x6d796c4d, 347, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('m','l','m','2'), _OT('m','l','y','m') }, TRUE },
+    { /* Mlym */ { 0x6d796c4d, 347, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('m','l','m','2'), _OT('m','l','y','m') } },
     { /* Mand */ { 0x646e614d, 140,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, { _OT('m','a','n','d') } },
     { /* Mtei */ { 0x6965744d, 337,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('m','t','e','i') } },
-    { /* Mong */ { 0x676e6f4d, 145,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('m','o','n','g') }, TRUE },
-    { /* Mymr */ { 0x726d794d, 350, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('m','y','m','r') }, TRUE },
-    { /* Talu */ { 0x756c6154, 354,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','a','l','u') }, TRUE },
-    { /* Nkoo */ { 0x6f6f6b4e, 165,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('n','k','o',' ') }, TRUE },
-    { /* Ogam */ { 0x6d61674f, 212,  1, 0x1680, 0, 1, 0, 0, 0, 1, 0 }, { _OT('o','g','a','m') }, TRUE },
+    { /* Mong */ { 0x676e6f4d, 145,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('m','o','n','g') } },
+    { /* Mymr */ { 0x726d794d, 350, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('m','y','m','r') } },
+    { /* Talu */ { 0x756c6154, 354,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','a','l','u') } },
+    { /* Nkoo */ { 0x6f6f6b4e, 165,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('n','k','o',' ') } },
+    { /* Ogam */ { 0x6d61674f, 212,  1, 0x1680, 0, 1, 0, 0, 0, 1, 0 }, { _OT('o','g','a','m') } },
     { /* Olck */ { 0x6b636c4f, 261,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('o','l','c','k') } },
     { /* Ital */ { 0x6c617449, 210,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('i','t','a','l') } },
-    { /* Xpeo */ { 0x6f657058,  30,  1, 0x0020, 0, 1, 1, 1, 0, 0, 0 }, { _OT('x','p','e','o') }, TRUE },
+    { /* Xpeo */ { 0x6f657058,  30,  1, 0x0020, 0, 1, 1, 1, 0, 0, 0 }, { _OT('x','p','e','o') } },
     { /* Sarb */ { 0x62726153, 105,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('s','a','r','b') } },
     { /* Orkh */ { 0x686b724f, 175,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('o','r','k','h') } },
-    { /* Orya */ { 0x6179724f, 327, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('o','r','y','2'), _OT('o','r','y','a') }, TRUE },
-    { /* Osma */ { 0x616d734f, 260,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('o','s','m','a') }, TRUE },
-    { /* Phag */ { 0x67616850, 331,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('p','h','a','g') }, TRUE },
+    { /* Orya */ { 0x6179724f, 327, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('o','r','y','2'), _OT('o','r','y','a') } },
+    { /* Osma */ { 0x616d734f, 260,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('o','s','m','a') } },
+    { /* Phag */ { 0x67616850, 331,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('p','h','a','g') } },
     { /* Phnx */ { 0x786e6850, 115,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('p','h','n','x') } },
     { /* Rjng */ { 0x676e6a52, 363,  8, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('r','j','n','g') } },
-    { /* Runr */ { 0x726e7552, 211,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('r','u','n','r') }, TRUE },
+    { /* Runr */ { 0x726e7552, 211,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, { _OT('r','u','n','r') } },
     { /* Samr */ { 0x726d6153, 123,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('s','a','m','r') } },
     { /* Saur */ { 0x72756153, 344,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('s','a','u','r') } },
     { /* Shaw */ { 0x77616853, 281,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('s','h','a','w') } },
-    { /* Sinh */ { 0x686e6953, 348,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('s','i','n','h') }, TRUE },
+    { /* Sinh */ { 0x686e6953, 348,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('s','i','n','h') } },
     { /* Sund */ { 0x646e7553, 362,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('s','u','n','d') } },
     { /* Sylo */ { 0x6f6c7953, 316,  8, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, { _OT('s','y','l','o') } },
-    { /* Syrc */ { 0x63727953, 135,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, { _OT('s','y','r','c') }, TRUE },
+    { /* Syrc */ { 0x63727953, 135,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, { _OT('s','y','r','c') } },
     { /* Tglg */ { 0x676c6754, 370,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','g','l','g') } },
     { /* Tagb */ { 0x62676154, 373,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','a','g','b') } },
-    { /* Tale */ { 0x656c6154, 353,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','a','l','e') }, TRUE },
+    { /* Tale */ { 0x656c6154, 353,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','a','l','e') } },
     { /* Lana */ { 0x616e614c, 351,  8, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('l','a','n','a') } },
     { /* Tavt */ { 0x74766154, 359,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('t','a','v','t') } },
-    { /* Taml */ { 0x6c6d6154, 346, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','m','l','2'), _OT('t','a','m','l') }, TRUE },
-    { /* Telu */ { 0x756c6554, 340, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','e','l','2'), _OT('t','e','l','u') }, TRUE },
-    { /* Thaa */ { 0x61616854, 170,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','h','a','a') }, TRUE },
-    { /* Thai */ { 0x69616854, 352,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('t','h','a','i') }, TRUE },
-    { /* Tibt */ { 0x74626954, 330,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','i','b','t') }, TRUE },
-    { /* Tfng */ { 0x676e6654, 120,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','f','n','g') }, TRUE },
+    { /* Taml */ { 0x6c6d6154, 346, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','m','l','2'), _OT('t','a','m','l') } },
+    { /* Telu */ { 0x756c6554, 340, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','e','l','2'), _OT('t','e','l','u') } },
+    { /* Thaa */ { 0x61616854, 170,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','h','a','a') } },
+    { /* Thai */ { 0x69616854, 352,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('t','h','a','i') } },
+    { /* Tibt */ { 0x74626954, 330,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','i','b','t') } },
+    { /* Tfng */ { 0x676e6654, 120,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','f','n','g') } },
     { /* Ugar */ { 0x72616755,  40,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('u','g','a','r') } },
-    { /* Vaii */ { 0x69696156, 470,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('v','a','i',' ') }, TRUE },
-    { /* Yiii */ { 0x69696959, 460,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('y','i',' ',' ') }, TRUE },
+    { /* Vaii */ { 0x69696156, 470,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('v','a','i',' ') } },
+    { /* Yiii */ { 0x69696959, 460,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('y','i',' ',' ') } },
     { /* Cakm */ { 0x6d6b6143, 349,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('c','a','k','m') } },
     { /* Merc */ { 0x6372654d, 101,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('m','e','r','c') } },
     { /* Mero */ { 0x6f72654d, 100,  1, 0x0020, 0, 1, 1, 1, 0, 0, 0 }, { _OT('m','e','r','o') } },
@@ -203,6 +202,20 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Diak */ { 0x6b616944, 342,  8, 0x0020, 1, 1, 0, 0, 0, 0, 0 }, { _OT('d','i','a','k') } },
     { /* Kits */ { 0x7374694b, 288,  8, 0x0020, 1, 0, 1, 1, 0, 0, 0 }, { _OT('k','i','t','s') } },
     { /* Yezi */ { 0x697a6559, 192,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('y','e','z','i') } },
+    { /* Cpmn */ { 0x6e6d7043, 402,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('c','p','m','n') } },
+    { /* Kawi */ { 0x6977614b, 368, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('k','a','w','i') } },
+    { /* Nagm */ { 0x6d67614e, 295,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('n','a','g','m') } },
+    { /* Ougr */ { 0x7267754f, 143,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, { _OT('o','u','g','r') } },
+    { /* Tnsa */ { 0x61736e54, 275,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','n','s','a') } },
+    { /* Toto */ { 0x6f746f54, 294,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','o','t','o') } },
+    { /* Vith */ { 0x68746956, 228,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('v','i','t','h') } },
+    { /* Gara */ { 0x61726147, 164,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('g','a','r','a') } },
+    { /* Gukh */ { 0x686b7547, 397,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('g','u','k','h') } },
+    { /* Krai */ { 0x6961724b, 396,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('k','r','a','i') } },
+    { /* Onao */ { 0x6f616e4f, 296,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('o','n','a','o') } },
+    { /* Sunu */ { 0x756e7553, 274,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('s','u','n','u') } },
+    { /* Todr */ { 0x72646f54, 229,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('t','o','d','r') } },
+    { /* Tutg */ { 0x67747554, 341,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('t','u','t','g') } },
 };
 #undef _OT
 
@@ -222,6 +235,9 @@ system_fallback_config[] =
     /* Latin, Combining Diacritical Marks */
     { "0000-007F, 0080-00FF, 0100-017F, 0180-024F, "
       "0250-02AF, 02B0-02FF, 0300-036F", L"Tahoma" },
+
+    /* Cyrillic, Cyrillic Supplement */
+    { "0400-052F",              L"Tahoma" },
 
     { "0530-058F, FB10-FB1C",   L"Noto Sans Armenian" },
 
@@ -292,6 +308,25 @@ system_fallback_config[] =
     { "1C00-1C4F",              L"Noto Sans Lepcha" },
     { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
 
+    /* Phonetic Extensions            - 1D00-1D7F
+       Phonetic Extensions Supplement - 1D80-1DBF
+       Latin Extended Additional      - 1E00-1EFF */
+    { "1D00-1D7F, 1D80-1DBF, "
+      "1E00-1EFF",              L"Noto Sans" },
+
+    /* Arrows - 2190-21FF */
+    { "2190-21FF",              L"Noto Sans Symbols" },
+
+    /* Miscellaneous Symbols - 2600-26FF */
+    { "2600-26FF",              L"Noto Sans Symbols2, Noto Sans Symbols 2, Noto Sans Symbols" },
+
+    /* Dingbats - 2700-27BF */
+    { "2700-27BF",              L"Noto Sans Symbols2, Noto Sans Symbols 2" },
+
+    /* Misc Symbols and Arrows - 2B00-2BFF
+       Supplemental Arrows-C   - 1F800-1F8FF */
+    { "2B00-2BFF, 1F800-1F8FF", L"Noto Sans Symbols2, Noto Sans Symbols 2" },
+
     { "2C80-2CFF",              L"Noto Sans Coptic" },
     { "2D30-2D7F",              L"Noto Sans Tifinagh" },
 
@@ -322,7 +357,7 @@ system_fallback_config[] =
     { "A000-A4CF",              L"Noto Sans Yi" },
     { "A4D0-A4FF",              L"Noto Sans Lisu" },
     { "A500-A63F",              L"Noto Sans Vai" },
-    { "A6A0-A6FF",              L"Noto Sans Bamum" },
+    { "A6A0-A6FF, 16800-16A38", L"Noto Sans Bamum" },
     { "A800-A82F",              L"Noto Sans Syloti Nagri" },
     { "A840-A87F",              L"Noto Sans PhagsPa" },
     { "A880-A8DF",              L"Noto Sans Saurashtra" },
@@ -357,6 +392,8 @@ system_fallback_config[] =
     { "FF00-FFEF",              L"Noto Sans CJK TC", L"zh-Hant" },
     { "FF00-FFEF",              L"Noto Sans CJK KR", L"ko" },
     { "FF00-FFEF",              L"Noto Sans CJK JP" },
+
+    { "1F800-1F8FF",            L"Noto Sans Symbols2, Noto Sans Symbols 2" },
 };
 
 struct text_source_context
@@ -512,14 +549,14 @@ static HRESULT fallback_locale_add_mapping(struct fallback_locale *locale, size_
 
 /* TODO: potentially needs improvement to consider partially matching locale names. */
 static struct fallback_locale * font_fallback_get_locale(const struct list *locales,
-        const WCHAR *locale_name)
+        const WCHAR *locale_name, bool use_neutral)
 {
     struct fallback_locale *locale, *neutral = NULL;
 
     LIST_FOR_EACH_ENTRY(locale, locales, struct fallback_locale, entry)
     {
         if (!wcsicmp(locale->name, locale_name)) return locale;
-        if (!*locale->name) neutral = locale;
+        if (use_neutral && !*locale->name) neutral = locale;
     }
 
     return neutral;
@@ -612,7 +649,7 @@ static const struct fallback_mapping * find_fallback_mapping(const struct fallba
     /* Mapping wasn't found for specific locale, try with neutral one. This will only recurse once. */
     if (*locale->name)
     {
-        locale = font_fallback_get_locale(&fallback->locales, L"");
+        locale = font_fallback_get_locale(&fallback->locales, L"", true);
         mapping = find_fallback_mapping(fallback, locale, ch);
     }
 
@@ -797,6 +834,12 @@ enum linebreaking_classes {
     b_EB,
     b_EM,
     b_ZWJ,
+    b_AK,
+    b_AP,
+    b_AS,
+    b_VF,
+    b_VI,
+    b_HH,
 };
 
 static BOOL has_strong_condition(DWRITE_BREAK_CONDITION old_condition, DWRITE_BREAK_CONDITION new_condition)
@@ -899,7 +942,7 @@ static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 posi
 
         breakpoints[index].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
         breakpoints[index].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
-        breakpoints[index].isWhitespace = context.ch < 0xffff ? !!iswspace(context.ch) : 0;
+        breakpoints[index].isWhitespace = opentype_is_whitespace(context.ch);
         breakpoints[index].isSoftHyphen = context.ch == 0x00ad /* Unicode Soft Hyphen */;
         breakpoints[index].padding = 0;
         ++index;
@@ -1019,7 +1062,7 @@ static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 posi
             /* LB12a */
                 if (i > 0)
                 {
-                    if (break_class[i-1] != b_SP && break_class[i-1] != b_BA && break_class[i-1] != b_HY)
+                    if (break_class[i-1] != b_SP && break_class[i-1] != b_BA && break_class[i-1] != b_HY && break_class[i-1] != b_HH)
                         set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 }
                 break;
@@ -1088,6 +1131,7 @@ static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 posi
             /* LB21 */
             case b_BA:
             case b_HY:
+            case b_HH:
             case b_NS:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
@@ -1102,6 +1146,7 @@ static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 posi
                     switch (break_class[i+1])
                     {
                     case b_HY:
+                    case b_HH:
                     case b_BA:
                         set_break_condition(i+1, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                     }
@@ -2015,16 +2060,85 @@ static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyze
     return S_OK;
 }
 
+static BOOL is_simple_script(UINT16 script)
+{
+    switch (script)
+    {
+        case Script_Unknown:
+        case Script_Common:
+        case Script_Inherited:
+        case Script_Armenian:
+        case Script_Avestan:
+        case Script_Balinese:
+        case Script_Bamum:
+        case Script_Batak:
+        case Script_Bopomofo:
+        case Script_Brahmi:
+        case Script_Buginese:
+        case Script_Buhid:
+        case Script_Carian:
+        case Script_Cham:
+        case Script_Coptic:
+        case Script_Cuneiform:
+        case Script_Cypriot:
+        case Script_Cyrillic:
+        case Script_Egyptian_Hieroglyphs:
+        case Script_Georgian:
+        case Script_Glagolitic:
+        case Script_Gothic:
+        case Script_Greek:
+        case Script_Han:
+        case Script_Hanunoo:
+        case Script_Hiragana:
+        case Script_Imperial_Aramaic:
+        case Script_Inscriptional_Pahlavi:
+        case Script_Inscriptional_Parthian:
+        case Script_Javanese:
+        case Script_Kaithi:
+        case Script_Katakana:
+        case Script_Kayah_Li:
+        case Script_Kharoshthi:
+        case Script_Latin:
+        case Script_Lepcha:
+        case Script_Limbu:
+        case Script_Linear_B:
+        case Script_Lisu:
+        case Script_Lycian:
+        case Script_Lydian:
+        case Script_Mandaic:
+        case Script_Meetei_Mayek:
+        case Script_Ol_Chiki:
+        case Script_Old_Italic:
+        case Script_Old_South_Arabian:
+        case Script_Old_Turkic:
+        case Script_Phoenician:
+        case Script_Rejang:
+        case Script_Samaritan:
+        case Script_Saurashtra:
+        case Script_Shavian:
+        case Script_Sundanese:
+        case Script_Syloti_Nagri:
+        case Script_Tagalog:
+        case Script_Tagbanwa:
+        case Script_Tai_Tham:
+        case Script_Tai_Viet:
+        case Script_Ugaritic:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 static inline BOOL is_char_from_simple_script(WCHAR c)
 {
     if (IS_HIGH_SURROGATE(c) || IS_LOW_SURROGATE(c) ||
             /* LRM, RLM, LRE, RLE, PDF, LRO, RLO */
             c == 0x200e || c == 0x200f || (c >= 0x202a && c <= 0x202e))
+    {
         return FALSE;
-    else {
-        UINT16 script = get_char_script(c);
-        return !dwritescripts_properties[script].is_complex;
     }
+
+    return is_simple_script(get_char_script(c));
 }
 
 static HRESULT WINAPI dwritetextanalyzer1_GetTextComplexity(IDWriteTextAnalyzer2 *iface, const WCHAR *text,
@@ -2427,7 +2541,7 @@ static HRESULT fallback_map_characters(const struct dwrite_fontfallback *fallbac
     if (!locale_name) locale_name = L"";
 
     /* Lookup locale entry once, if specific locale is missing neutral one will be returned. */
-    locale = font_fallback_get_locale(&data->locales, locale_name);
+    locale = font_fallback_get_locale(&data->locales, locale_name, true);
 
     if (FAILED(hr = text_source_context_init(&context, source, position, length))) return hr;
 
@@ -2455,14 +2569,13 @@ static HRESULT fallback_map_characters(const struct dwrite_fontfallback *fallbac
         if (SUCCEEDED(create_matching_font(mapping->collection ? mapping->collection : fallback->systemcollection,
                 mapping->families[i], weight, style, stretch, &IID_IDWriteFont3, (void **)&font)))
         {
-            if (!(mapped = fallback_font_get_supported_length(font, source, position, mapped)))
+            if (!(*ret_length = fallback_font_get_supported_length(font, source, position, mapped)))
             {
                 IDWriteFont3_Release(font);
                 continue;
             }
 
             *ret_font = (IDWriteFont *)font;
-            *ret_length = mapped;
             *scale = mapping->scale;
 
             return S_OK;
@@ -2666,7 +2779,7 @@ static struct fallback_locale * fallback_builder_add_locale(struct dwrite_fontfa
     struct fallback_locale *locale;
 
     if (!locale_name) locale_name = L"";
-    if ((locale = font_fallback_get_locale(&builder->data.locales, locale_name))) return locale;
+    if ((locale = font_fallback_get_locale(&builder->data.locales, locale_name, false))) return locale;
     if (!(locale = calloc(1, sizeof(*locale)))) return NULL;
     lstrcpynW(locale->name, locale_name, ARRAY_SIZE(locale->name));
     list_add_tail(&builder->data.locales, &locale->entry);

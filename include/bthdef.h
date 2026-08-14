@@ -36,6 +36,7 @@ DEFINE_GUID( GUID_BLUETOOTH_RADIO_OUT_OF_RANGE, 0xe28867c9, 0xc2aa, 0x4ced, 0xb9
              0x86, 0x60, 0x37, 0xc4);
 
 typedef ULONG BTH_COD;
+typedef ULONGLONG BTH_ADDR, *PBTH_ADDR;
 
 #define BTH_MAX_NAME_SIZE  (248)
 
@@ -64,6 +65,17 @@ typedef struct _BTH_RADIO_IN_RANGE
     BTH_DEVICE_INFO deviceInfo;
     ULONG previousDeviceFlags;
 } BTH_RADIO_IN_RANGE, *PBTH_RADIO_IN_RANGE;
+
+
+typedef enum _AUTHENTICATION_REQUIREMENTS {
+    MITMProtectionNotRequired = 0x00,
+    MITMProtectionRequired = 0x01,
+    MITMProtectionNotRequiredBonding = 0x02,
+    MITMProtectionRequiredBonding = 0x03,
+    MITMProtectionNotRequiredGeneralBonding = 0x04,
+    MITMProtectionRequiredGeneralBonding = 0x05,
+    MITMProtectionNotDefined = 0xff
+} AUTHENTICATION_REQUIREMENTS;
 
 #ifdef __cplusplus
 }

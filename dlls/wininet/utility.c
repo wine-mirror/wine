@@ -39,57 +39,148 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, int *sa_len, char *addr_str)
+server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
 {
-    ADDRINFOW *res, hints;
-    void *addr = NULL;
+    server_addr_t *server_addr, *p;
+    struct sockaddr_storage *addr;
+    ADDRINFOW *res, *ai, hints;
+    unsigned int len, count;
     int ret;
 
     TRACE("%s\n", debugstr_w(name));
 
     memset( &hints, 0, sizeof(hints) );
-    /* Prefer IPv4 to IPv6 addresses, since some servers do not listen on
-     * their IPv6 addresses even though they have IPv6 addresses in the DNS.
-     */
-    hints.ai_family = AF_INET;
-
+    hints.ai_socktype = SOCK_STREAM;
     ret = GetAddrInfoW(name, NULL, &hints, &res);
     if (ret != 0)
     {
-        TRACE("failed to get IPv4 address of %s, retrying with IPv6\n", debugstr_w(name));
-        hints.ai_family = AF_INET6;
-        ret = GetAddrInfoW(name, NULL, &hints, &res);
-    }
-    if (ret != 0)
-    {
         TRACE("failed to get address of %s\n", debugstr_w(name));
-        return FALSE;
+        return NULL;
     }
-    if (*sa_len < res->ai_addrlen)
+    count = 0;
+    for (ai = res; ai; ai = ai->ai_next)
+        ++count;
+    p = server_addr = calloc(count, sizeof(*server_addr));
+    ai = res;
+    while (ai)
     {
-        WARN("address too small\n");
-        FreeAddrInfoW(res);
-        return FALSE;
-    }
-    *sa_len = res->ai_addrlen;
-    memcpy( psa, res->ai_addr, res->ai_addrlen );
-    /* Copy port */
-    switch (res->ai_family)
-    {
-    case AF_INET:
-        addr = &((struct sockaddr_in *)psa)->sin_addr;
-        ((struct sockaddr_in *)psa)->sin_port = htons(port);
-        break;
-    case AF_INET6:
-        addr = &((struct sockaddr_in6 *)psa)->sin6_addr;
-        ((struct sockaddr_in6 *)psa)->sin6_port = htons(port);
-        break;
+        addr = &p->addr;
+        p->addr_len = ai->ai_addrlen;
+        memcpy( addr, ai->ai_addr, ai->ai_addrlen );
+        /* Copy port */
+        switch (ai->ai_family)
+        {
+        case AF_INET:
+            ((struct sockaddr_in *)addr)->sin_port = htons(port);
+            inet_ntop(ai->ai_family, &((struct sockaddr_in *)addr)->sin_addr, p->addr_str, INET6_ADDRSTRLEN);
+            break;
+        case AF_INET6:
+            ((struct sockaddr_in6 *)addr)->sin6_port = htons(port);
+            p->addr_str[0] = '[';
+            inet_ntop(ai->ai_family, &((struct sockaddr_in6 *)addr)->sin6_addr, p->addr_str + 1, INET6_ADDRSTRLEN - 2);
+            len = strlen(p->addr_str);
+            p->addr_str[len] = ']';
+            p->addr_str[len + 1] = 0;
+            break;
+        }
+        if (!(ai = ai->ai_next))
+            break;
+        p->next = p + 1;
+        p = p->next;
     }
 
-    if(addr_str)
-        inet_ntop(res->ai_family, addr, addr_str, INET6_ADDRSTRLEN);
     FreeAddrInfoW(res);
-    return TRUE;
+    return server_addr;
+}
+
+static int try_create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr,
+                                     DWORD_PTR callback_context)
+{
+    TIMEVAL timeout_timeval = {0, timeout * 1000};
+    ULONG blocking;
+    socklen_t len;
+    FD_SET set;
+    DWORD err;
+    int res;
+    int s;
+
+    if (hdr)
+        INTERNET_SendCallback(hdr, callback_context, INTERNET_STATUS_CONNECTING_TO_SERVER,
+                              addr->addr_str, strlen(addr->addr_str) + 1);
+
+    if (af != AF_UNSPEC && addr->addr.ss_family != af)
+        return -1;
+
+    if ((s = socket(addr->addr.ss_family, SOCK_STREAM, 0)) == -1)
+        return -1;
+
+    blocking = 0;
+    ioctlsocket(s, FIONBIO, &blocking);
+
+    if (!connect(s, (struct sockaddr *)&addr->addr, addr->addr_len))
+        goto done;
+
+    err = WSAGetLastError();
+    if (err != WSAEINPROGRESS && err != WSAEWOULDBLOCK)
+    {
+        closesocket(s);
+        return -1;
+    }
+
+    FD_ZERO(&set);
+    FD_SET(s, &set);
+    res = select(s + 1, NULL, &set, NULL, timeout == INFINITE ? NULL : &timeout_timeval);
+    len = sizeof(res);
+    if(!res || res == SOCKET_ERROR || getsockopt(s, SOL_SOCKET, SO_ERROR, (void *)&res, &len) || res)
+    {
+        closesocket(s);
+        return -1;
+    }
+
+done:
+    blocking = 1;
+    ioctlsocket(s, FIONBIO, &blocking);
+    if (hdr)
+        INTERNET_SendCallback(hdr, callback_context, INTERNET_STATUS_CONNECTED_TO_SERVER,
+                              addr->addr_str, strlen(addr->addr_str) + 1);
+    return s;
+}
+
+int create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr, DWORD_PTR callback_context)
+{
+    LARGE_INTEGER qpf, qpc, end;
+    server_addr_t *a, tmp;
+    int s;
+
+    if (timeout != INFINITE)
+    {
+        QueryPerformanceFrequency(&qpf);
+        QueryPerformanceCounter(&end);
+        end.QuadPart += qpf.QuadPart / 1000 * timeout;
+    }
+    a = addr;
+    while (a)
+    {
+        if ((s = try_create_connect_socket(a, af, timeout, hdr, callback_context)) != -1)
+        {
+            /* try this address first next time. */
+            tmp = *addr;
+            *addr = *a;
+            *a = tmp;
+            a->next = addr->next;
+            addr->next = tmp.next;
+            return s;
+        }
+        if (timeout != INFINITE)
+        {
+            QueryPerformanceCounter(&qpc);
+            if (qpc.QuadPart >= end.QuadPart)
+                return -1;
+            timeout = (end.QuadPart - qpc.QuadPart) * 1000 / qpf.QuadPart;
+        }
+        a = a->next;
+    }
+    return -1;
 }
 
 /*

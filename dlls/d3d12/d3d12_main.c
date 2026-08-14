@@ -29,6 +29,7 @@
 #include <vkd3d.h>
 
 #include "initguid.h"
+#include "dxcore.h"
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 #include "wine/debug.h"
@@ -79,10 +80,41 @@ static HRESULT d3d12_signal_event(HANDLE event)
     return SetEvent(event) ? S_OK : E_FAIL;
 }
 
+static HRESULT d3d12_get_dxgi_adapter_for_dxcore_adapter(IDXCoreAdapter *adapter,
+        IDXGIAdapter **dxgi_adapter)
+{
+    IDXGIFactory4 *factory;
+    HRESULT hr;
+    LUID luid;
+
+    if (FAILED(hr = IDXCoreAdapter_GetProperty(adapter, InstanceLuid, sizeof(luid), &luid)))
+    {
+        WARN("Failed to get LUID for dxcore adapter, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory)))
+    {
+        WARN("Failed to create DXGI factory, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IDXGIFactory4_EnumAdapterByLuid(factory, luid, &IID_IDXGIAdapter,
+            (void **)dxgi_adapter)))
+    {
+        WARN("Failed to enumerate adapter by LUID, hr %#lx.\n", hr);
+    }
+
+    IDXGIFactory4_Release(factory);
+
+    return hr;
+}
+
 static HRESULT d3d12_get_adapter(IWineDXGIAdapter **wine_adapter, IUnknown *adapter)
 {
     IDXGIAdapter *dxgi_adapter = NULL;
     IDXGIFactory4 *factory = NULL;
+    IDXCoreAdapter *dxcore_adapter;
     HRESULT hr;
 
     if (!adapter)
@@ -98,6 +130,17 @@ static HRESULT d3d12_get_adapter(IWineDXGIAdapter **wine_adapter, IUnknown *adap
             WARN("Failed to enumerate primary adapter, hr %#lx.\n", hr);
             goto done;
         }
+
+        adapter = (IUnknown *)dxgi_adapter;
+    }
+    else if (SUCCEEDED(IUnknown_QueryInterface(adapter, &IID_IDXCoreAdapter, (void **)&dxcore_adapter)))
+    {
+        if (FAILED(hr = d3d12_get_dxgi_adapter_for_dxcore_adapter(dxcore_adapter, &dxgi_adapter)))
+        {
+            WARN("Failed to create DXGI adapter for DXCore adapter, hr %#lx.\n", hr);
+            goto done;
+        }
+        IDXCoreAdapter_Release(dxcore_adapter);
 
         adapter = (IUnknown *)dxgi_adapter;
     }

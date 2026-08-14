@@ -435,7 +435,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
     dibdrv_GetImage,                    /* pGetImage */
     NULL,                               /* pGetKerningPairs */
     dibdrv_GetNearestColor,             /* pGetNearestColor */
@@ -1031,7 +1030,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
     windrv_GetImage,                    /* pGetImage */
     NULL,                               /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */

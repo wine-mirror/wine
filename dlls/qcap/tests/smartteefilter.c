@@ -803,8 +803,8 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     else
     {
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(start == 30000, "Got start time %s.\n", wine_dbgstr_longlong(start));
-        ok(stop == 40000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+        ok(start == 30000, "Got start time %I64d.\n", start);
+        ok(stop == 40000, "Got stop time %I64d.\n", stop);
     }
 
     hr = IMediaSample_GetMediaTime(sample, &start, &stop);
@@ -815,8 +815,8 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     else
     {
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(start == 10000, "Got start time %s.\n", wine_dbgstr_longlong(start));
-        ok(stop == 20000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+        ok(start == 10000, "Got start time %I64d.\n", start);
+        ok(stop == 20000, "Got stop time %I64d.\n", stop);
     }
 
     hr = IMediaSample_IsDiscontinuity(sample);
@@ -835,8 +835,8 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
         REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
-    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
-    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(start == 10000, "Got start %I64d.\n", start);
+    ok(stop == 20000, "Got stop %I64d.\n", stop);
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
     SetEvent(filter->segment_event);
     return S_OK;

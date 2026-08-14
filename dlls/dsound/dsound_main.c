@@ -63,23 +63,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-struct list DSOUND_renderers = LIST_INIT(DSOUND_renderers);
-CRITICAL_SECTION DSOUND_renderers_lock;
-static CRITICAL_SECTION_DEBUG DSOUND_renderers_lock_debug =
-{
-    0, 0, &DSOUND_renderers_lock,
-    { &DSOUND_renderers_lock_debug.ProcessLocksList, &DSOUND_renderers_lock_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": DSOUND_renderers_lock") }
-};
-CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 0, 0, 0 };
-
 /* Some applications expect the GUID pointers emitted from DirectSoundCaptureEnumerate to remain
  * valid at least until the next time DirectSoundCaptureEnumerate is called, so we store them in
  * these dynamically allocated arrays. */
 GUID *DSOUND_renderer_guids;
 GUID *DSOUND_capture_guids;
-
-const WCHAR wine_vxd_drv[] = L"winemm.vxd";
 
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
@@ -296,12 +284,22 @@ struct morecontext
 static BOOL CALLBACK a_to_w_callback(LPGUID guid, LPCWSTR descW, LPCWSTR modW, LPVOID data)
 {
     struct morecontext *context = data;
-    char descA[MAXPNAMELEN], modA[MAXPNAMELEN];
+    char *descA, *modA;
+    DWORD len;
+    BOOL ret;
 
-    WideCharToMultiByte(CP_ACP, 0, descW, -1, descA, sizeof(descA), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, modW, -1, modA, sizeof(modA), NULL, NULL);
+    len = WideCharToMultiByte(CP_ACP, 0, descW, -1, NULL, 0, NULL, NULL);
+    if ((descA = malloc(len)))
+        WideCharToMultiByte(CP_ACP, 0, descW, -1, descA, len, NULL, NULL);
+    len = WideCharToMultiByte(CP_ACP, 0, modW, -1, NULL, 0, NULL, NULL);
+    if ((modA = malloc(len)))
+        WideCharToMultiByte(CP_ACP, 0, modW, -1, modA, len, NULL, NULL);
 
-    return context->callA(guid, descA, modA, context->data);
+    ret = context->callA(guid, descA, modA, context->data);
+
+    free(descA);
+    free(modA);
+    return ret;
 }
 
 /***************************************************************************
@@ -398,6 +396,7 @@ static BOOL send_device(IMMDevice *device, GUID *guid,
     PROPVARIANT pv;
     BOOL keep_going;
     HRESULT hr;
+    WCHAR *id;
 
     PropVariantInit(&pv);
 
@@ -424,8 +423,10 @@ static BOOL send_device(IMMDevice *device, GUID *guid,
     TRACE("Calling back with %s (%s)\n", wine_dbgstr_guid(guid),
             wine_dbgstr_w(pv.pwszVal));
 
-    keep_going = cb(guid, pv.pwszVal, wine_vxd_drv, user);
+    hr = IMMDevice_GetId(device, &id);
+    keep_going = cb(guid, pv.pwszVal, id, user);
 
+    CoTaskMemFree(id);
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
 
@@ -778,8 +779,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
-        if (lpvReserved) break;
-        DeleteCriticalSection(&DSOUND_renderers_lock);
         break;
     }
     return TRUE;

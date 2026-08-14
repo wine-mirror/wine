@@ -2,6 +2,9 @@ MODULE    = d3d8.dll
 IMPORTLIB = d3d8
 IMPORTS   = dxguid uuid wined3d
 
+VER_FILEDESCRIPTION_STR = "Wine Direct3D"
+VER_PRODUCTVERSION      = 5,3,1,904
+
 SOURCES = \
 	buffer.c \
 	d3d8_main.c \
@@ -11,6 +14,5 @@ SOURCES = \
 	surface.c \
 	swapchain.c \
 	texture.c \
-	version.rc \
 	vertexdeclaration.c \
 	volume.c

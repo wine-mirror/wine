@@ -108,7 +108,7 @@ typedef struct {
 #define EVENT_CANCELABLE         0x0008
 /* Event may have default handler (so we always have to register Gecko listener). */
 #define EVENT_HASDEFAULTHANDLERS 0x0020
-/* Ecent is not supported properly, print FIXME message when it's used. */
+/* Event is not supported properly, print FIXME message when it's used. */
 #define EVENT_FIXME              0x0040
 
 /* mouse event flags for fromElement and toElement implementation */
@@ -161,6 +161,8 @@ static const event_info_t event_info[] = {
         EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"input",             EVENT_TYPE_EVENT,     DISPID_UNKNOWN,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES},
+    {L"invalid",           EVENT_TYPE_EVENT,     DISPID_EVPROP_INVALID,
+        EVENT_BIND_TO_TARGET | EVENT_CANCELABLE},
     {L"keydown",           EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYDOWN,
         EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE },
     {L"keypress",          EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYPRESS,
@@ -4746,10 +4748,11 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
         return set_event_handler_disp(event_target, eid, V_DISPATCH(var));
 
     case VT_BSTR: {
+        compat_mode_t compat_mode = dispex_compat_mode(&event_target->dispex);
         VARIANT *v;
         HRESULT hres;
 
-        if(!use_event_quirks(event_target))
+        if(compat_mode == COMPAT_MODE_IE8)
             FIXME("Setting to string %s not supported\n", debugstr_w(V_BSTR(var)));
 
         /*
@@ -4759,6 +4762,8 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
          * properties.
          */
         remove_event_handler(event_target, eid);
+        if(compat_mode >= COMPAT_MODE_IE9)
+            return S_OK;
 
         hres = get_event_dispex_ref(event_target, eid, TRUE, &v);
         if(FAILED(hres))
@@ -4879,6 +4884,45 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
     }
 }
 
+void event_attr_changed(HTMLDocumentNode *doc, nsIDOMElement *nselem, const WCHAR *name)
+{
+    nsAString name_str, value_str;
+    const PRUnichar *value;
+    HTMLDOMNode *node;
+    IDispatch *disp;
+    eventid_t eid;
+    nsresult nsres;
+    HRESULT hres;
+
+    eid = attr_to_eid(name);
+    if(eid == EVENTID_LAST)
+        return;
+
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
+    if(FAILED(hres))
+        return;
+
+    nsAString_InitDepend(&name_str, name);
+    nsAString_InitDepend(&value_str, NULL);
+
+    nsres = nsIDOMElement_GetAttribute(nselem, &name_str, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value);
+
+        TRACE("%p.%s = %s\n", nselem, debugstr_w(name), debugstr_w(value));
+
+        disp = script_parse_event(doc->window, value);
+        if(disp) {
+            set_event_handler_disp(get_node_event_prop_target(node, eid), eid, disp);
+            IDispatch_Release(disp);
+        }
+    }
+
+    node_release(node);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+}
+
 void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 {
     nsIDOMMozNamedAttrMap *attr_map;
@@ -4964,8 +5008,9 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     unsigned i;
     HRESULT hres;
 
-    doc->event_vector = calloc(EVENTID_LAST, sizeof(BOOL));
-    if(!doc->event_vector)
+    if(doc->event_vector)
+        memset(doc->event_vector, 0, EVENTID_LAST * sizeof(BOOL));
+    else if(!(doc->event_vector = calloc(EVENTID_LAST, sizeof(BOOL))))
         return E_OUTOFMEMORY;
 
     init_nsevents(doc);

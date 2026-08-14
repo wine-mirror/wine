@@ -18,7 +18,9 @@
 
 LanguageNames=(ENU=0x409:winerr)
 SeverityNames=(CoError=0x2:STATUS_SEVERITY_COERROR)
-FacilityNames=(Trust=0xb:FACILITY_CERT)
+FacilityNames=(Trust=0xb:FACILITY_CERT
+    Security=0x9:FACILITY_SECURITY
+)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
@@ -960,10 +962,125 @@ SymbolicName=ERROR_INVALID_OPLOCK_PROTOCOL
 Language=ENU
 Invalid oplock message received.
 .
+MessageId=302
+SymbolicName=ERROR_DISK_TOO_FRAGMENTED
+Language=ENU
+Disk is too fragmented.
+.
+MessageId=303
+SymbolicName=ERROR_DELETE_PENDING
+Language=ENU
+File cannot be opened because it is in the process of being deleted.
+.
+MessageId=304
+SymbolicName=ERROR_INCOMPATIBLE_WITH_GLOBAL_SHORT_NAME_REGISTRY_SETTING
+Language=ENU
+Short name settings incompatible with global registry setting.
+.
+MessageId=305
+SymbolicName=ERROR_SHORT_NAMES_NOT_ENABLED_ON_VOLUME
+Language=ENU
+Short names are not enabled on this volume.
+.
+MessageId=306
+SymbolicName=ERROR_SECURITY_STREAM_IS_INCONSISTENT
+Language=ENU
+Security stream is inconsistent.
+.
+MessageId=307
+SymbolicName=ERROR_INVALID_LOCK_RANGE
+Language=ENU
+File lock operation cannot be processed due to invalid byte range.
+.
+MessageId=308
+SymbolicName=ERROR_IMAGE_SUBSYSTEM_NOT_PRESENT
+Language=ENU
+Subsystem for supporting image type is not present.
+.
+MessageId=309
+SymbolicName=ERROR_NOTIFICATION_GUID_ALREADY_DEFINED
+Language=ENU
+Notification GUID is already defined.
+.
+MessageId=310
+SymbolicName=ERROR_INVALID_EXCEPTION_HANDLER
+Language=ENU
+Invalid exception handler.
+.
+MessageId=311
+SymbolicName=ERROR_DUPLICATE_PRIVILEGES
+Language=ENU
+Duplicate privileges for the token.
+.
+MessageId=312
+SymbolicName=ERROR_NO_RANGES_PROCESSED
+Language=ENU
+No ranges could be processed.
+.
+MessageId=313
+SymbolicName=ERROR_NOT_ALLOWED_ON_SYSTEM_FILE
+Language=ENU
+Operation not allowed on system file.
+.
+MessageId=314
+SymbolicName=ERROR_DISK_RESOURCES_EXHAUSTED
+Language=ENU
+Disk resources have been exhausted.
+.
+MessageId=315
+SymbolicName=ERROR_INVALID_TOKEN
+Language=ENU
+Invalid token.
+.
+MessageId=316
+SymbolicName=ERROR_DEVICE_FEATURE_NOT_SUPPORTED
+Language=ENU
+Command feature not supported on the device.
+.
 MessageId=317
 SymbolicName=ERROR_MR_MID_NOT_FOUND
 Language=ENU
 Message 0x%1 not found in file %2.
+.
+MessageId=318
+SymbolicName=ERROR_SCOPE_NOT_FOUND
+Language=ENU
+Scope not found.
+.
+MessageId=319
+SymbolicName=ERROR_UNDEFINED_SCOPE
+Language=ENU
+The specified Central Access Policy is undefined.
+.
+MessageId=320
+SymbolicName=ERROR_INVALID_CAP
+Language=ENU
+Central Access Policy from Active Directory is invalid.
+.
+MessageId=321
+SymbolicName=ERROR_DEVICE_UNREACHABLE
+Language=ENU
+Device is unreachable.
+.
+MessageId=322
+SymbolicName=ERROR_DEVICE_NO_RESOURCES
+Language=ENU
+Target device has insufficient resources to complete the operation.
+.
+MessageId=323
+SymbolicName=ERROR_DATA_CHECKSUM_ERROR
+Language=ENU
+A data integrity checksum error occurred. Data in the file stream is corrupt.
+.
+MessageId=324
+SymbolicName=ERROR_INTERMIXED_KERNEL_EA_OPERATION
+Language=ENU
+Cannot modify both KERNEL and normal Extended Attributes in one operation.
+.
+MessageId=326
+SymbolicName=ERROR_FILE_LEVEL_TRIM_NOT_SUPPORTED
+Language=ENU
+Device does not support file-level TRIM.
 .
 MessageId=487
 SymbolicName=ERROR_INVALID_ADDRESS
@@ -3740,6 +3857,11 @@ SymbolicName=ERROR_NOT_CONNECTED
 Language=ENU
 This network connection does not exist.
 .
+MessageId=4390
+SymbolicName=ERROR_NOT_A_REPARSE_POINT
+Language=ENU
+File or directory is not a reparse point.
+.
 MessageId=10004
 SymbolicName=WSAEINTR
 Language=ENU
@@ -3804,6 +3926,13 @@ MessageId=11004
 SymbolicName=WSANO_DATA
 Language=ENU
 Name valid, no data record.
+.
+MessageId=0x2009
+Severity=CoError
+Facility=Security
+SymbolicName=CRYPT_E_NO_MATCH
+Language=ENU
+Unable to find matching object.
 .
 MessageId=0x100
 Severity=CoError

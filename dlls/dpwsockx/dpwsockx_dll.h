@@ -37,7 +37,7 @@
 #define DPWS_GUARANTEED_MAXBUFFERSIZE 1048547
 #define DPWS_GUARANTEED_MAXPLAYERS    64
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct tagDPSP_MSG_HEADER
 {
@@ -52,7 +52,7 @@ typedef struct
     SOCKADDR_IN udpAddr;
 } DPWS_PLAYERDATA;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 typedef struct tagDPWS_IN_CONNECTION DPWS_IN_CONNECTION;
 typedef void DPWS_COMPLETION_ROUTINE( DPWS_IN_CONNECTION *connection );

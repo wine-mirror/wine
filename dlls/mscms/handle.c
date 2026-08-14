@@ -18,235 +18,131 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/debug.h"
-
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "icm.h"
+#include "wine/debug.h"
 
 #include "mscms_priv.h"
 
-#ifdef HAVE_LCMS2
-
-static CRITICAL_SECTION MSCMS_handle_cs;
-static CRITICAL_SECTION_DEBUG MSCMS_handle_cs_debug =
-{
-    0, 0, &MSCMS_handle_cs,
-    { &MSCMS_handle_cs_debug.ProcessLocksList,
-      &MSCMS_handle_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": MSCMS_handle_cs") }
-};
-static CRITICAL_SECTION MSCMS_handle_cs = { &MSCMS_handle_cs_debug, -1, 0, 0, 0, 0 };
-
-static struct profile *profiletable;
-static struct transform *transformtable;
-
-static unsigned int num_profile_handles;
-static unsigned int num_transform_handles;
-
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
-void free_handle_tables( void )
+static CRITICAL_SECTION mscms_handle_cs;
+static CRITICAL_SECTION_DEBUG mscms_handle_cs_debug =
 {
-    HeapFree( GetProcessHeap(), 0, profiletable );
-    profiletable = NULL;
-    num_profile_handles = 0;
+    0, 0, &mscms_handle_cs,
+    { &mscms_handle_cs_debug.ProcessLocksList,
+      &mscms_handle_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": mscms_handle_cs") }
+};
+static CRITICAL_SECTION mscms_handle_cs = { &mscms_handle_cs_debug, -1, 0, 0, 0, 0 };
 
-    HeapFree( GetProcessHeap(), 0, transformtable );
-    transformtable = NULL;
-    num_transform_handles = 0;
+static struct object **handle_table;
+static ULONG_PTR next_handle;
+static ULONG_PTR max_handles;
 
-    DeleteCriticalSection( &MSCMS_handle_cs );
-}
-
-struct profile *grab_profile( HPROFILE handle )
+struct object *grab_object( HANDLE handle, enum object_type type )
 {
-    DWORD_PTR index;
+    struct object *obj = NULL;
+    ULONG_PTR index = (ULONG_PTR)handle;
 
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    index = (DWORD_PTR)handle - 1;
-    if (index > num_profile_handles)
+    EnterCriticalSection( &mscms_handle_cs );
+    if (index > 0 && index <= max_handles)
     {
-        LeaveCriticalSection( &MSCMS_handle_cs );
-        return NULL;
-    }
-    return &profiletable[index];
-}
-
-void release_profile( struct profile *profile )
-{
-    LeaveCriticalSection( &MSCMS_handle_cs );
-}
-
-struct transform *grab_transform( HTRANSFORM handle )
-{
-    DWORD_PTR index;
-
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    index = (DWORD_PTR)handle - 1;
-    if (index > num_transform_handles)
-    {
-        LeaveCriticalSection( &MSCMS_handle_cs );
-        return NULL;
-    }
-    return &transformtable[index];
-}
-
-void release_transform( struct transform *transform )
-{
-    LeaveCriticalSection( &MSCMS_handle_cs );
-}
-
-static HPROFILE alloc_profile_handle( void )
-{
-    DWORD_PTR index;
-    struct profile *p;
-    unsigned int count = 128;
-
-    for (index = 0; index < num_profile_handles; index++)
-    {
-        if (!profiletable[index].data) return (HPROFILE)(index + 1);
-    }
-    if (!profiletable)
-    {
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(struct profile) );
-    }
-    else
-    {
-        count = num_profile_handles * 2;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, profiletable, count * sizeof(struct profile) );
-    }
-    if (!p) return NULL;
-
-    profiletable = p;
-    num_profile_handles = count;
-
-    return (HPROFILE)(index + 1);
-}
-
-HPROFILE create_profile( struct profile *profile )
-{
-    HPROFILE handle;
-
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    if ((handle = alloc_profile_handle()))
-    {
-        DWORD_PTR index = (DWORD_PTR)handle - 1;
-        profiletable[index] = *profile;
-    }
-    LeaveCriticalSection( &MSCMS_handle_cs );
-    return handle;
-}
-
-BOOL close_profile( HPROFILE handle )
-{
-    DWORD_PTR index;
-    struct profile *profile;
-
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    index = (DWORD_PTR)handle - 1;
-    if (index > num_profile_handles)
-    {
-        LeaveCriticalSection( &MSCMS_handle_cs );
-        return FALSE;
-    }
-    profile = &profiletable[index];
-
-    if (profile->file != INVALID_HANDLE_VALUE)
-    {
-        if (profile->access & PROFILE_READWRITE)
+        index--;
+        if (handle_table[index] && handle_table[index]->type == type)
         {
-            DWORD written;
-
-            if (SetFilePointer( profile->file, 0, NULL, FILE_BEGIN ) ||
-                !WriteFile( profile->file, profile->data, profile->size, &written, NULL ) ||
-                written != profile->size)
-            {
-                ERR( "Unable to write color profile\n" );
-            }
+            obj = handle_table[index];
+            InterlockedIncrement( &obj->refs );
         }
-        CloseHandle( profile->file );
     }
-    cmsCloseProfile( profile->cmsprofile );
-    HeapFree( GetProcessHeap(), 0, profile->data );
+    LeaveCriticalSection( &mscms_handle_cs );
 
-    memset( profile, 0, sizeof(struct profile) );
-
-    LeaveCriticalSection( &MSCMS_handle_cs );
-    return TRUE;
+    TRACE( "handle %p -> %p\n", handle, obj );
+    return obj;
 }
 
-static HTRANSFORM alloc_transform_handle( void )
+void release_object( struct object *obj )
 {
-    DWORD_PTR index;
-    struct transform *p;
-    unsigned int count = 128;
-
-    for (index = 0; index < num_transform_handles; index++)
+    ULONG refs = InterlockedDecrement( &obj->refs );
+    if (!refs)
     {
-        if (!transformtable[index].cmstransform) return (HTRANSFORM)(index + 1);
+        if (obj->close) obj->close( obj );
+        TRACE( "destroying object %p\n", obj );
+        free( obj );
     }
-    if (!transformtable)
-    {
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(struct transform) );
-    }
-    else
-    {
-        count = num_transform_handles * 2;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, transformtable, count * sizeof(struct transform) );
-    }
-    if (!p) return NULL;
-
-    transformtable = p;
-    num_transform_handles = count;
-
-    return (HTRANSFORM)(index + 1);
 }
 
-HTRANSFORM create_transform( struct transform *transform )
+#define HANDLE_TABLE_SIZE 4
+HANDLE alloc_handle( struct object *obj )
 {
-    HTRANSFORM handle;
+    struct object **ptr;
+    ULONG_PTR index, count;
 
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    if ((handle = alloc_transform_handle()))
+    EnterCriticalSection( &mscms_handle_cs );
+    if (!max_handles)
     {
-        DWORD_PTR index = (DWORD_PTR)handle - 1;
-        transformtable[index] = *transform;
+        count = HANDLE_TABLE_SIZE;
+        if (!(ptr = calloc( 1, sizeof(*ptr) * count )))
+        {
+            LeaveCriticalSection( &mscms_handle_cs );
+            return 0;
+        }
+        handle_table = ptr;
+        max_handles = count;
     }
-    LeaveCriticalSection( &MSCMS_handle_cs );
-    return handle;
+    if (max_handles == next_handle)
+    {
+        size_t new_size, old_size = max_handles * sizeof(*ptr);
+        count = max_handles * 2;
+        new_size = count * sizeof(*ptr);
+        if (!(ptr = realloc( handle_table, new_size )))
+        {
+            LeaveCriticalSection( &mscms_handle_cs );
+            return 0;
+        }
+        memset( (char *)ptr + old_size, 0, new_size - old_size );
+        handle_table = ptr;
+        max_handles = count;
+    }
+    index = next_handle;
+    if (handle_table[index]) ERR( "handle isn't free but should be\n" );
+
+    handle_table[index] = obj;
+    InterlockedIncrement( &obj->refs );
+    while (next_handle < max_handles && handle_table[next_handle]) next_handle++;
+
+    LeaveCriticalSection( &mscms_handle_cs );
+    TRACE( "object %p -> %Ix\n", obj, index + 1 );
+    return (HANDLE)(index + 1);
 }
 
-BOOL close_transform( HTRANSFORM handle )
+void free_handle( HANDLE handle )
 {
-    DWORD_PTR index;
-    struct transform *transform;
+    struct object *obj = NULL;
+    ULONG_PTR index = (ULONG_PTR)handle;
 
-    EnterCriticalSection( &MSCMS_handle_cs );
-
-    index = (DWORD_PTR)handle - 1;
-    if (index > num_transform_handles)
+    EnterCriticalSection( &mscms_handle_cs );
+    if (index > 0 && index <= max_handles)
     {
-        LeaveCriticalSection( &MSCMS_handle_cs );
-        return FALSE;
+        index--;
+        if (handle_table[index])
+        {
+            obj = handle_table[index];
+            TRACE( "destroying handle %p for object %p\n", handle, obj );
+            handle_table[index] = NULL;
+        }
     }
-    transform = &transformtable[index];
+    LeaveCriticalSection( &mscms_handle_cs );
 
-    cmsDeleteTransform( transform->cmstransform );
-    memset( transform, 0, sizeof(struct transform) );
+    if (obj) release_object( obj );
 
-    LeaveCriticalSection( &MSCMS_handle_cs );
-    return TRUE;
+    EnterCriticalSection( &mscms_handle_cs );
+    if (next_handle > index && !handle_table[index]) next_handle = index;
+    LeaveCriticalSection( &mscms_handle_cs );
 }
-
-#endif /* HAVE_LCMS2 */

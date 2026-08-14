@@ -24,46 +24,61 @@
 #ifndef __WINE_IMPLGLUE_H
 #define __WINE_IMPLGLUE_H
 
-#include "bcrypt.h"
-#include "tomcrypt.h"
+#include "symcrypt.h"
+#include "symcrypt_low_level.h"
 
 #define RSAENH_MAX_HASH_SIZE        104
 
-typedef union tagKEY_CONTEXT {
-    symmetric_key key;
-    prng_state prng;
-    rsa_key rsa;
+struct rsa_key
+{
+    SYMCRYPT_RSAKEY *key;
+    UINT32           flags;
+};
+
+typedef union tagKEY_CONTEXT
+{
+    SYMCRYPT_DES_EXPANDED_KEY  des;
+    SYMCRYPT_3DES_EXPANDED_KEY des3;
+    SYMCRYPT_RC2_EXPANDED_KEY  rc2;
+    SYMCRYPT_RC4_STATE         rc4;
+    SYMCRYPT_AES_EXPANDED_KEY  aes;
+    struct rsa_key             rsa;
 } KEY_CONTEXT;
 
-extern prng_state prng;
-extern int wprng;
+struct hash
+{
+    const SYMCRYPT_HASH *desc;
+    SYMCRYPT_HASH_STATE  state;
+};
 
-BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle);
-BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD dwDataLen);
-BOOL finalize_hash_impl(BCRYPT_HASH_HANDLE hash_handle, BYTE *hash_value, DWORD hash_size);
-BOOL duplicate_hash_impl(BCRYPT_HASH_HANDLE src_hash_handle, BCRYPT_HASH_HANDLE *dest_hash_handle);
+BOOL init_hash_impl(ALG_ID algid, struct hash *hash);
 
-BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen);
-BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext);
-BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                    DWORD dwEffectiveKeyLen, DWORD dwSaltLen, BYTE *abKeyValue);
-BOOL duplicate_key_impl(ALG_ID aiAlgid, const KEY_CONTEXT *pSrcKeyContext,
-                        KEY_CONTEXT *pDestKeyContext);
+static inline void update_hash_impl(struct hash *hash, const BYTE *data, DWORD len)
+{
+    SymCryptHashAppend( hash->desc, &hash->state, data, len );
+}
 
-/* dwKeySpec is optional for symmetric key algorithms */
-BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
-                        BYTE *pbOut);
-BOOL decrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
-                        BYTE *pbOut);
-BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *pbInOut, DWORD dwLen);
+static inline void finalize_hash_impl(struct hash *hash, BYTE *hash_value, DWORD hash_size)
+{
+    SymCryptHashResult( hash->desc, &hash->state, hash_value, hash_size );
+}
 
-BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                            DWORD *pdwPubExp);
-BOOL import_public_key_impl(const BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                            DWORD dwPubExp);
-BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                             DWORD *pdwPubExp);
-BOOL import_private_key_impl(const BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                             DWORD dwDataLen, DWORD dwPubExp);
+BOOL new_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen);
+BOOL free_key_impl(ALG_ID algid, KEY_CONTEXT *ctx);
+BOOL setup_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen, DWORD effective_keylen, DWORD saltlen,
+                    const BYTE *keyvalue);
+BOOL duplicate_key_impl(ALG_ID algid, const KEY_CONTEXT *src, KEY_CONTEXT *dst);
+
+BOOL encrypt_block_impl(ALG_ID algid, KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL decrypt_block_impl(ALG_ID algid, KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL encrypt_stream_impl(ALG_ID algid, KEY_CONTEXT *ctx, BYTE *inout, DWORD len);
+
+BOOL sign_hash_impl(KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL verify_signature_impl(KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+
+BOOL export_public_key_impl(const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp);
+BOOL import_public_key_impl(ALG_ID algid, const BYTE *src, DWORD keylen, DWORD pubexp, KEY_CONTEXT *ctx);
+BOOL export_private_key_impl(const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp);
+BOOL import_private_key_impl(ALG_ID algid, const BYTE *src, DWORD keylen, DWORD pubexp, KEY_CONTEXT *ctx);
 
 #endif /* __WINE_IMPLGLUE_H */

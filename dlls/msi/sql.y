@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +29,6 @@
 #include "query.h"
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -62,7 +58,8 @@ static struct expr * EXPR_wildcard( void *info );
 
 %lex-param { SQL_input *info }
 %parse-param { SQL_input *info }
-%pure-parser
+%define api.prefix {sql_}
+%define api.pure
 
 %union
 {
@@ -118,6 +115,7 @@ query:
     {
         SQL_input* sql = (SQL_input*) info;
         *sql->view = $1;
+        (void)sql_nerrs; /* avoid unused variable warning */
     }
     ;
 
@@ -322,7 +320,6 @@ column_and_type:
         {
             $$ = $1;
             $$->type = ($2 | MSITYPE_VALID);
-            $$->temporary = $2 & MSITYPE_TEMPORARY ? TRUE : FALSE;
         }
     ;
 
@@ -355,7 +352,7 @@ data_type_l:
 data_type:
     TK_CHAR
         {
-            $$ = MSITYPE_STRING | 1;
+            $$ = MSITYPE_STRING | 0x400;
         }
   | TK_CHAR TK_LP data_count TK_RP
         {
@@ -658,6 +655,12 @@ const_val:
             if( !$$ )
                 YYABORT;
         }
+   | TK_NULL
+        {
+            $$ = EXPR_sval( info, NULL );
+            if ( !$$ )
+                YYABORT;
+        }
     ;
 
 column_val:
@@ -739,16 +742,15 @@ number:
 
 static LPWSTR parser_add_table( void *info, LPCWSTR list, LPCWSTR table )
 {
-    static const WCHAR space[] = {' ',0};
-    DWORD len = strlenW( list ) + strlenW( table ) + 2;
+    DWORD len = lstrlenW( list ) + lstrlenW( table ) + 2;
     LPWSTR ret;
 
     ret = parser_alloc( info, len * sizeof(WCHAR) );
     if( ret )
     {
-        strcpyW( ret, list );
-        strcatW( ret, space );
-        strcatW( ret, table );
+        lstrcpyW( ret, list );
+        lstrcatW( ret, L" " );
+        lstrcatW( ret, table );
     }
     return ret;
 }
@@ -758,7 +760,7 @@ static void *parser_alloc( void *info, unsigned int sz )
     SQL_input* sql = (SQL_input*) info;
     struct list *mem;
 
-    mem = msi_alloc( sizeof (struct list) + sz );
+    mem = malloc( sizeof (struct list) + sz );
     list_add_tail( sql->mem, mem );
     return &mem[1];
 }
@@ -816,7 +818,7 @@ UINT SQL_getstring( void *info, const struct sql_str *strdata, LPWSTR *str )
         ( (p[0]=='\'') && (p[len-1]!='\'') ) )
         return ERROR_FUNCTION_FAILED;
 
-    /* if there's quotes, remove them */
+    /* if there are quotes, remove them */
     if( ( (p[0]=='`') && (p[len-1]=='`') ) ||
         ( (p[0]=='\'') && (p[len-1]=='\'') ) )
     {
@@ -921,7 +923,8 @@ static struct expr * EXPR_sval( void *info, const struct sql_str *str )
     if( e )
     {
         e->type = EXPR_SVAL;
-        if( SQL_getstring( info, str, (LPWSTR *)&e->u.sval ) != ERROR_SUCCESS )
+        if( !str) e->u.sval = NULL;
+        else if( SQL_getstring( info, str, (LPWSTR *)&e->u.sval ) != ERROR_SUCCESS )
             return NULL; /* e will be freed by query destructor */
     }
     return e;
@@ -971,7 +974,7 @@ static BOOL SQL_MarkPrimaryKeys( column_info **cols,
         found = FALSE;
         for( c = *cols, idx = 0; c && !found; c = c->next, idx++ )
         {
-            if( strcmpW( k->column, c->column ) )
+            if( wcscmp( k->column, c->column ) )
                 continue;
             c->type |= MSITYPE_KEY;
             found = TRUE;

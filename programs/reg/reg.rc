@@ -127,7 +127,7 @@ STRINGTABLE
     STRING_ALL, "#msgctxt#All key#A"
     STRING_YESNO, " (Yes|No)"
     STRING_YESNOALL, " (Yes|No|All)"
-    STRING_CANCELLED, "reg: The registry operation was cancelled\n"
+    STRING_CANCELLED, "reg: The registry operation was canceled\n"
     STRING_DEFAULT_VALUE, "(Default)"
     STRING_DELETE_VALUE, "Are you sure you want to delete the registry value '%1'?"
     STRING_DELETE_VALUEALL, "Are you sure you want to delete all registry values in '%1'?"

@@ -39,13 +39,13 @@ DEFINE_MEDIATYPE_GUID( MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8 );
 
 static inline const char *debugstr_ratio( const MFRatio *ratio )
 {
-    return wine_dbg_sprintf( "%d:%d", (int)ratio->Numerator, (int)ratio->Denominator );
+    return wine_dbg_sprintf( "%d:%d", ratio->Numerator, ratio->Denominator );
 }
 
 static inline const char *debugstr_area( const MFVideoArea *area )
 {
     return wine_dbg_sprintf( "(%d,%d)-(%d,%d)", area->OffsetX.value, area->OffsetY.value,
-                             (int)area->Area.cx, (int)area->Area.cy );
+                             area->Area.cx, area->Area.cy );
 }
 
 #define TRACE_HEXDUMP( data, size )                                                               \
@@ -67,7 +67,7 @@ static inline const char *debugstr_area( const MFVideoArea *area )
         }                                                                                         \
     } while (0)
 
-static WORD wave_format_tag_from_codec_id( enum AVCodecID id )
+static UINT wave_format_tag_from_codec_id( enum AVCodecID id )
 {
     const struct AVCodecTag *table[] = {avformat_get_riff_audio_tags(), avformat_get_mov_audio_tags(), 0};
     return av_codec_get_tag( table, id );
@@ -106,8 +106,8 @@ static NTSTATUS wave_format_extensible_from_codec_params( const AVCodecParameter
 
     TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, %u valid bps,"
            " channel mask %#x, subtype %s (%s).\n", format->Format.wFormatTag, format->Format.nChannels,
-           (int)format->Format.nSamplesPerSec, (int)format->Format.nAvgBytesPerSec, format->Format.nBlockAlign,
-           format->Format.wBitsPerSample, format->Samples.wValidBitsPerSample, (int)format->dwChannelMask,
+           format->Format.nSamplesPerSec, format->Format.nAvgBytesPerSec, format->Format.nBlockAlign,
+           format->Format.wBitsPerSample, format->Samples.wValidBitsPerSample, format->dwChannelMask,
            debugstr_guid(&format->SubFormat), debugstr_fourcc(format->SubFormat.Data1) );
     if (format->Format.cbSize)
     {
@@ -130,7 +130,7 @@ static NTSTATUS wave_format_ex_from_codec_params( const AVCodecParameters *param
     if (params->extradata_size && params->extradata) memcpy( format + 1, params->extradata, params->extradata_size );
 
     TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample.\n",
-           format->wFormatTag, format->nChannels, (int)format->nSamplesPerSec, (int)format->nAvgBytesPerSec,
+           format->wFormatTag, format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
            format->nBlockAlign, format->wBitsPerSample );
     if (format->cbSize) TRACE_HEXDUMP( format + 1, format->cbSize );
 
@@ -151,8 +151,8 @@ static NTSTATUS heaac_wave_format_from_codec_params( const AVCodecParameters *pa
     format->wStructType = 0;
 
     TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, payload %#x, "
-           "level %#x, struct %#x.\n", format->wfx.wFormatTag, format->wfx.nChannels, (int)format->wfx.nSamplesPerSec,
-           (int)format->wfx.nAvgBytesPerSec, format->wfx.nBlockAlign, format->wfx.wBitsPerSample, format->wPayloadType,
+           "level %#x, struct %#x.\n", format->wfx.wFormatTag, format->wfx.nChannels, format->wfx.nSamplesPerSec,
+           format->wfx.nAvgBytesPerSec, format->wfx.nBlockAlign, format->wfx.wBitsPerSample, format->wPayloadType,
            format->wAudioProfileLevelIndication, format->wStructType );
     if (format->wfx.cbSize) TRACE_HEXDUMP( format + 1, sizeof(WAVEFORMATEX) + format->wfx.cbSize - sizeof(*format) );
 
@@ -161,9 +161,8 @@ static NTSTATUS heaac_wave_format_from_codec_params( const AVCodecParameters *pa
 
 static NTSTATUS audio_format_from_codec_params( const AVCodecParameters *params, void *format, UINT32 *format_size )
 {
-    UINT wave_format_size = sizeof(WAVEFORMATEX);
+    UINT format_tag, wave_format_size = sizeof(WAVEFORMATEX);
     UINT64 channel_mask;
-    WORD format_tag;
     int channels;
 
     if (params->codec_id == AV_CODEC_ID_AAC) return heaac_wave_format_from_codec_params( params, format, format_size );
@@ -212,6 +211,7 @@ static GUID subtype_from_pixel_format( enum AVPixelFormat fmt )
     case AV_PIX_FMT_BGR24: return MFVideoFormat_RGB24;
     case AV_PIX_FMT_NV12: return MFVideoFormat_NV12;
     case AV_PIX_FMT_NV21: return MFVideoFormat_NV21;
+    case AV_PIX_FMT_P010: return MFVideoFormat_P010;
     case AV_PIX_FMT_RGB565: return MFVideoFormat_RGB565;
     case AV_PIX_FMT_RGB555: return MFVideoFormat_RGB555;
     case AV_PIX_FMT_RGB8: return MFVideoFormat_RGB8;
@@ -285,7 +285,7 @@ static NTSTATUS video_format_from_codec_params( const AVCodecParameters *params,
     if (params->extradata_size && params->extradata) memcpy( format + 1, params->extradata, params->extradata_size );
 
     TRACE( "subtype %s (%s) %ux%u, FPS %s, aperture %s, PAR %s, videoFlags %#x.\n", debugstr_guid(&format->guidFormat),
-           debugstr_fourcc(format->guidFormat.Data1), (int)format->videoInfo.dwWidth, (int)format->videoInfo.dwHeight,
+           debugstr_fourcc(format->guidFormat.Data1), format->videoInfo.dwWidth, format->videoInfo.dwHeight,
            debugstr_ratio(&format->videoInfo.FramesPerSecond), debugstr_area(&format->videoInfo.MinimumDisplayAperture),
            debugstr_ratio(&format->videoInfo.PixelAspectRatio), (int)format->videoInfo.VideoFlags );
     if (format->dwSize > sizeof(*format)) TRACE_HEXDUMP( format + 1, format->dwSize - sizeof(*format) );

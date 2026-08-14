@@ -22,7 +22,6 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "wine/asm.h"
@@ -256,7 +255,7 @@ ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
  */
 UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
 {
-#if defined(__i386__) && defined(__GNUC__)
+#ifdef __i386__
     UINT ret, rem;
 
     __asm__("divl %4"

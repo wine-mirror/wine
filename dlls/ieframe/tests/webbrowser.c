@@ -1010,7 +1010,10 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
     case DISPID_TITLECHANGE:
         CHECK_EXPECT2(Invoke_TITLECHANGE);
-        /* FIXME */
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
+        ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(pDispParams->rgvarg)=%d, expected VT_BSTR\n",
+           V_VT(pDispParams->rgvarg));
         break;
 
     case DISPID_NAVIGATECOMPLETE2:
@@ -2930,18 +2933,20 @@ static void test_QueryStatusWB(IWebBrowser2 *webbrowser, BOOL has_document)
      * is enabled and IDM_STOP is not.
      */
     status = 0xdeadbeef;
-    if (use_container_olecmd) SET_EXPECT(QueryStatus_STOP);
+    if (use_container_olecmd && has_document) SET_EXPECT(QueryStatus_STOP);
     hres = IWebBrowser2_QueryStatusWB(webbrowser, OLECMDID_STOP, &status);
     ok(hres == success_state, "QueryStatusWB failed: %08lx %08lx\n", hres, success_state);
     todo_wine_if (!use_container_olecmd && has_document)
         ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
            "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
+    if (use_container_olecmd && has_document) CHECK_CALLED(QueryStatus_STOP);
     status = 0xdeadbeef;
-    if (use_container_olecmd) SET_EXPECT(QueryStatus_IDM_STOP);
+    if (use_container_olecmd && has_document) SET_EXPECT(QueryStatus_IDM_STOP);
     hres = IWebBrowser2_QueryStatusWB(webbrowser, IDM_STOP, &status);
     ok(hres == success_state, "QueryStatusWB failed: %08lx %08lx\n", hres, success_state);
     ok((has_document && status == 0) || (!has_document && status == 0xdeadbeef),
        "IDM_STOP is enabled/supported: %08x %d\n", status, has_document);
+    if (use_container_olecmd && has_document) CHECK_CALLED(QueryStatus_IDM_STOP);
 }
 
 static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL has_document)
@@ -2965,24 +2970,29 @@ static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL has_document)
      * These tests show that QueryStatusWB uses a NULL pguidCmdGroup, since OLECMDID_STOP
      * succeeds (S_OK) and IDM_STOP does not (OLECMDERR_E_NOTSUPPORTED).
      */
-    if(use_container_olecmd) {
-        SET_EXPECT(Exec_STOP);
-    }else if(has_document) {
+    if(has_document) {
+        if(use_container_olecmd)
+            SET_EXPECT(Exec_STOP);
         SET_EXPECT(Invoke_STATUSTEXTCHANGE);
         SET_EXPECT(SetStatusText);
     }
     hres = IWebBrowser2_ExecWB(webbrowser, OLECMDID_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
-    if(!use_container_olecmd && has_document) {
-        todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08lx %08lx\n", hres, olecmdid_state);
+    if(has_document) {
+        if(use_container_olecmd)
+            CHECK_CALLED(Exec_STOP);
+        else
+            todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08lx %08lx\n", hres, olecmdid_state);
         CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
         CLEAR_CALLED(SetStatusText); /* Called by IE9 */
     }else {
         ok(hres == olecmdid_state, "ExecWB failed: %08lx %08lx\n", hres, olecmdid_state);
     }
-    if (use_container_olecmd)
+    if (use_container_olecmd && has_document)
         SET_EXPECT(Exec_IDM_STOP);
     hres = IWebBrowser2_ExecWB(webbrowser, IDM_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
     ok(hres == idm_state, "ExecWB failed: %08lx %08lx\n", hres, idm_state);
+    if (use_container_olecmd && has_document)
+        CHECK_CALLED(Exec_IDM_STOP);
 }
 
 static void test_download(DWORD flags)
@@ -3121,7 +3131,7 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     else
         CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
-    todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
+    CHECK_CALLED(Invoke_TITLECHANGE);
     if(!(flags & DWL_REFRESH))
         CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
@@ -3899,6 +3909,9 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
         ok(doc == doc2, "doc != doc2\n");
         IHTMLDocument2_Release(doc2);
         IHTMLDocument2_Release(doc);
+
+        hres = IWebBrowser2_Navigate(webbrowser, NULL, NULL, NULL, NULL, NULL);
+        ok(hres == S_FALSE, "Navigate returned: %08lx\n", hres);
 
         if(!do_close) {
             trace("Navigate2 http URL...\n");

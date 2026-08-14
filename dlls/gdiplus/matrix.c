@@ -318,7 +318,7 @@ GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix *matrix, REAL scaleX, REAL scaleY,
 GpStatus WINGDIPAPI GdipSetMatrixElements(GpMatrix *matrix, REAL m11, REAL m12,
     REAL m21, REAL m22, REAL dx, REAL dy)
 {
-    TRACE("(%s, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", debugstr_matrix(matrix), m11, m12,
+    TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", matrix, m11, m12,
             m21, m22, dx, dy);
 
     if(!matrix)

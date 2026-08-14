@@ -1125,14 +1125,8 @@ static void test_semantic_reflection(void)
     {
         winetest_push_context("Test %u", i);
 
-        todo_wine_if (i > 6) code = compile_shader_flags(tests[i].source, tests[i].target,
+        code = compile_shader_flags(tests[i].source, tests[i].target,
                 tests[i].legacy ? D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY : 0);
-        if (!code)
-        {
-            winetest_pop_context();
-            continue;
-        }
-
         hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
                 &IID_ID3D11ShaderReflection, (void **)&reflection);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -1170,12 +1164,49 @@ static void test_semantic_reflection(void)
     }
 }
 
+#if D3D_COMPILER_VERSION >= 47
+
+static void test_D3DCreateLinker(void)
+{
+    ID3D11Linker *linker;
+    HRESULT hr;
+
+    hr = D3DCreateLinker(NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateLinker(&linker);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    linker->lpVtbl->Release(linker);
+}
+
+static void test_D3DCreateFunctionLinkingGraph(void)
+{
+    ID3D11FunctionLinkingGraph *graph;
+    HRESULT hr;
+
+    hr = D3DCreateFunctionLinkingGraph(0, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateFunctionLinkingGraph(1, &graph);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DCreateFunctionLinkingGraph(0, &graph);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    graph->lpVtbl->Release(graph);
+}
+
+#endif /* D3D_COMPILER_VERSION >= 47 */
+
 START_TEST(hlsl_d3d11)
 {
     HMODULE mod;
 
     test_reflection();
     test_semantic_reflection();
+#if D3D_COMPILER_VERSION >= 47
+    test_D3DCreateLinker();
+    test_D3DCreateFunctionLinkingGraph();
+#endif
 
     if (!(mod = LoadLibraryA("d3d11.dll")))
     {

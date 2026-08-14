@@ -3,6 +3,7 @@ IMPORTLIB = lz32
 
 EXTRADLLFLAGS = -Wb,--data-only
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
-	lz32.spec \
-	version.rc
+	lz32.spec

@@ -21,7 +21,6 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"
@@ -189,6 +188,13 @@ NTSTATUS WINAPI wow64_NtGdiBitBlt( UINT *args )
 
     return NtGdiBitBlt( hdc_dst, x_dst, y_dst, width, height, hdc_src,
                         x_src, y_src, rop, bk_color, fl );
+}
+
+NTSTATUS WINAPI wow64_NtGdiCancelDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiCancelDC( hdc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiCloseFigure( UINT *args )
@@ -392,6 +398,66 @@ NTSTATUS WINAPI wow64_NtGdiCreateSolidBrush( UINT *args )
     return HandleToUlong( NtGdiCreateSolidBrush( color, brush ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIAcquireKeyedMutex( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hKeyedMutex;
+        UINT64 Key;
+        ULONG pTimeout;
+        UINT64 FenceValue;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_ACQUIREKEYEDMUTEX desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
+    desc.Key = desc32->Key;
+    desc.pTimeout = UlongToHandle( desc32->pTimeout );
+    desc.FenceValue = desc32->FenceValue;
+    status = NtGdiDdDDIAcquireKeyedMutex( &desc );
+    desc32->FenceValue = desc.FenceValue;
+
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIAcquireKeyedMutex2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hKeyedMutex;
+        UINT64 Key;
+        ULONG pTimeout;
+        UINT64 FenceValue;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_ACQUIREKEYEDMUTEX2 desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
+    desc.Key = desc32->Key;
+    desc.pTimeout = UlongToHandle( desc32->pTimeout );
+    desc.FenceValue = desc32->FenceValue;
+    desc.pPrivateRuntimeData = UlongToHandle( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIAcquireKeyedMutex2( &desc );
+    desc32->FenceValue = desc.FenceValue;
+
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICheckOcclusion( UINT *args )
+{
+    struct
+    {
+        ULONG hWnd;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_CHECKOCCLUSION desc = {.hWnd = UlongToHandle( desc32->hWnd )};
+    return NtGdiDdDDICheckOcclusion( &desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDICheckVidPnExclusiveOwnership( UINT *args )
 {
     const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc = get_ptr( &args );
@@ -464,6 +530,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
 
     desc.hDevice = desc32->hDevice;
     desc.hResource = desc32->hResource;
+    desc.hGlobalShare = desc32->hGlobalShare;
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
     if (!desc32->Flags.StandardAllocation)
@@ -479,16 +546,16 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
         standard.Flags = standard32->Flags;
 
         desc.pStandardAllocation = &standard;
-        desc.PrivateDriverDataSize = sizeof(standard);
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
     }
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pAllocationInfo );
     desc.pAllocationInfo = NULL;
     if (desc32->pAllocationInfo && desc32->NumAllocations)
     {
         if (!(desc.pAllocationInfo = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pAllocationInfo );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pAllocationInfo[i].hAllocation = allocs32->hAllocation;
@@ -503,8 +570,10 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
     desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
 
     status = NtGdiDdDDICreateAllocation( &desc );
-    desc.hResource = desc32->hResource;
-    desc.hGlobalShare = desc32->hGlobalShare;
+    desc32->hResource = desc.hResource;
+    desc32->hGlobalShare = desc.hGlobalShare;
+    for (i = 0; desc32->pAllocationInfo && i < desc32->NumAllocations; i++)
+        allocs32->hAllocation = desc.pAllocationInfo[i].hAllocation;
     return status;
 }
 
@@ -570,6 +639,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
 
     desc.hDevice = desc32->hDevice;
     desc.hResource = desc32->hResource;
+    desc.hGlobalShare = desc32->hGlobalShare;
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
     if (!desc32->Flags.StandardAllocation)
@@ -585,16 +655,16 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
         standard.Flags = standard32->Flags;
 
         desc.pStandardAllocation = &standard;
-        desc.PrivateDriverDataSize = sizeof(standard);
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
     }
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pAllocationInfo2 );
     desc.pAllocationInfo2 = NULL;
     if (desc32->pAllocationInfo2 && desc32->NumAllocations)
     {
         if (!(desc.pAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo2) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pAllocationInfo2 );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pAllocationInfo2[i].hAllocation = allocs32->hAllocation;
@@ -610,10 +680,13 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
     desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
 
     status = NtGdiDdDDICreateAllocation( &desc );
-    desc.hResource = desc32->hResource;
-    desc.hGlobalShare = desc32->hGlobalShare;
+    desc32->hResource = desc.hResource;
+    desc32->hGlobalShare = desc.hGlobalShare;
     for (i = 0; desc32->pAllocationInfo2 && i < desc32->NumAllocations; i++)
+    {
+        allocs32->hAllocation = desc.pAllocationInfo2[i].hAllocation;
         allocs32->GpuVirtualAddress = desc.pAllocationInfo2[i].GpuVirtualAddress;
+    }
     return status;
 }
 
@@ -643,6 +716,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDCFromMemory( UINT *args )
     desc.Pitch = desc32->Pitch;
     desc.hDeviceDc = UlongToHandle( desc32->hDeviceDc );
     desc.pColorTable = UlongToPtr( desc32->pColorTable );
+    desc.hDc = UlongToHandle( desc32->hDc );
+    desc.hBitmap = UlongToHandle( desc32->hBitmap );
 
     if (!(status = NtGdiDdDDICreateDCFromMemory( &desc )))
     {
@@ -672,6 +747,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
 
     if (!desc32) return STATUS_INVALID_PARAMETER;
     desc.hAdapter = desc32->hAdapter;
+    desc.hDevice = desc32->hDevice;
     desc.Flags = desc32->Flags;
     desc.pCommandBuffer = UlongToPtr( desc32->pCommandBuffer );
     desc.CommandBufferSize = desc32->CommandBufferSize;
@@ -704,13 +780,17 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex2( UINT *args )
     D3DKMT_CREATEKEYEDMUTEX2 desc;
     NTSTATUS status;
 
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+
     desc.InitialValue = desc32->InitialValue;
     desc.hSharedHandle = desc32->hSharedHandle;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
     desc.pPrivateRuntimeData = ULongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
     desc.Flags = desc32->Flags;
     status = NtGdiDdDDICreateKeyedMutex2( &desc );
     desc32->hKeyedMutex = desc.hKeyedMutex;
+    desc32->hSharedHandle = desc.hSharedHandle;
     return status;
 }
 
@@ -724,6 +804,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateSynchronizationObject2( UINT *args )
 {
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *desc = get_ptr( &args );
 
+    if (!desc) return STATUS_INVALID_PARAMETER;
     if (desc->Info.Type == D3DDDI_CPU_NOTIFICATION)
     {
         ULONG event = HandleToUlong( desc->Info.CPUNotification.Event );
@@ -874,6 +955,8 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromDeviceName( UINT *args )
 
     if (!desc32) return STATUS_INVALID_PARAMETER;
     desc.pDeviceName = UlongToPtr( desc32->pDeviceName );
+    desc.hAdapter = desc32->hAdapter;
+    desc.AdapterLuid = desc32->AdapterLuid;
 
     if (!(status = NtGdiDdDDIOpenAdapterFromDeviceName( &desc )))
     {
@@ -898,6 +981,10 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
 
     if (!desc32) return STATUS_INVALID_PARAMETER;
     desc.hDc = UlongToHandle( desc32->hDc );
+    desc.hAdapter = desc32->hAdapter;
+    desc.AdapterLuid = desc32->AdapterLuid;
+    desc.VidPnSourceId = desc32->VidPnSourceId;
+
     if (!(status = NtGdiDdDDIOpenAdapterFromHdc( &desc )))
     {
         desc32->hAdapter = desc.hAdapter;
@@ -933,6 +1020,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutex2( UINT *args )
     NTSTATUS status;
 
     desc.hSharedHandle = desc32->hSharedHandle;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
     status = NtGdiDdDDIOpenKeyedMutex2( &desc );
@@ -953,10 +1041,31 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutexFromNtHandle( UINT *args )
     NTSTATUS status;
 
     desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    desc.hKeyedMutex = desc32->hKeyedMutex;
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
     status = NtGdiDdDDIOpenKeyedMutexFromNtHandle( &desc );
     desc32->hKeyedMutex = desc.hKeyedMutex;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenNtHandleFromName( UINT *args )
+{
+    struct
+    {
+        DWORD dwDesiredAccess;
+        ULONG pObjAttrib;
+        ULONG hNtHandle;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENNTHANDLEFROMNAME desc;
+    struct object_attr64 attr;
+    NTSTATUS status;
+
+    desc.dwDesiredAccess = desc32->dwDesiredAccess;
+    desc.pObjAttrib = objattr_32to64( &attr, UlongToPtr( desc32->pObjAttrib ) );
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    status = NtGdiDdDDIOpenNtHandleFromName( &desc );
+    desc32->hNtHandle = HandleToUlong( desc.hNtHandle );
     return status;
 }
 
@@ -989,13 +1098,13 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource( UINT *args )
     desc.hDevice = desc32->hDevice;
     desc.hGlobalShare = desc32->hGlobalShare;
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pOpenAllocationInfo );
     desc.pOpenAllocationInfo = NULL;
     if (desc32->pOpenAllocationInfo && desc32->NumAllocations)
     {
         if (!(desc.pOpenAllocationInfo = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pOpenAllocationInfo[i].hAllocation = allocs32->hAllocation;
@@ -1009,10 +1118,16 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource( UINT *args )
     desc.pResourcePrivateDriverData = UlongToPtr( desc32->pResourcePrivateDriverData );
     desc.TotalPrivateDriverDataBufferSize = desc32->TotalPrivateDriverDataBufferSize;
     desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
+    desc.hResource = desc32->hResource;
 
     status = NtGdiDdDDIOpenResource( &desc );
     desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
     desc32->hResource = desc.hResource;
+    for (i = 0; desc32->pOpenAllocationInfo && i < desc32->NumAllocations; i++)
+    {
+        allocs32->hAllocation = desc.pOpenAllocationInfo[i].hAllocation;
+        allocs32->PrivateDriverDataSize = desc.pOpenAllocationInfo[i].PrivateDriverDataSize;
+    }
     return status;
 }
 
@@ -1047,18 +1162,19 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource2( UINT *args )
     desc.hDevice = desc32->hDevice;
     desc.hGlobalShare = desc32->hGlobalShare;
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
     desc.pOpenAllocationInfo2 = NULL;
     if (desc32->pOpenAllocationInfo2 && desc32->NumAllocations)
     {
         if (!(desc.pOpenAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo2) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pOpenAllocationInfo2[i].hAllocation = allocs32->hAllocation;
             desc.pOpenAllocationInfo2[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
             desc.pOpenAllocationInfo2[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+            desc.pOpenAllocationInfo2[i].GpuVirtualAddress = allocs32->GpuVirtualAddress;
         }
     }
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
@@ -1067,12 +1183,17 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource2( UINT *args )
     desc.pResourcePrivateDriverData = UlongToPtr( desc32->pResourcePrivateDriverData );
     desc.TotalPrivateDriverDataBufferSize = desc32->TotalPrivateDriverDataBufferSize;
     desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
+    desc.hResource = desc32->hResource;
 
     status = NtGdiDdDDIOpenResource2( &desc );
     desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
     desc32->hResource = desc.hResource;
     for (i = 0; desc32->pOpenAllocationInfo2 && i < desc32->NumAllocations; i++)
+    {
+        allocs32->hAllocation = desc.pOpenAllocationInfo2[i].hAllocation;
+        allocs32->PrivateDriverDataSize = desc.pOpenAllocationInfo2[i].PrivateDriverDataSize;
         allocs32->GpuVirtualAddress = desc.pOpenAllocationInfo2[i].GpuVirtualAddress;
+    }
     return status;
 }
 
@@ -1111,18 +1232,19 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResourceFromNtHandle( UINT *args )
     desc.hDevice = desc32->hDevice;
     desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
     desc.NumAllocations = desc32->NumAllocations;
+    allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
     desc.pOpenAllocationInfo2 = NULL;
     if (desc32->pOpenAllocationInfo2 && desc32->NumAllocations)
     {
         if (!(desc.pOpenAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo2) )))
             return STATUS_NO_MEMORY;
 
-        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
         for (i = 0; i < desc32->NumAllocations; i++)
         {
             desc.pOpenAllocationInfo2[i].hAllocation = allocs32->hAllocation;
             desc.pOpenAllocationInfo2[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
             desc.pOpenAllocationInfo2[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+            desc.pOpenAllocationInfo2[i].GpuVirtualAddress = allocs32->GpuVirtualAddress;
         }
     }
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
@@ -1133,14 +1255,23 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResourceFromNtHandle( UINT *args )
     desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
     desc.pKeyedMutexPrivateRuntimeData = UlongToPtr( desc32->pKeyedMutexPrivateRuntimeData );
     desc.KeyedMutexPrivateRuntimeDataSize = desc32->KeyedMutexPrivateRuntimeDataSize;
+    desc.hResource = desc32->hResource;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
+    desc.hSyncObject = desc32->hSyncObject;
 
     status = NtGdiDdDDIOpenResourceFromNtHandle( &desc );
+    desc32->PrivateRuntimeDataSize = desc.PrivateRuntimeDataSize;
+    desc32->ResourcePrivateDriverDataSize = desc.ResourcePrivateDriverDataSize;
     desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
     desc32->hResource = desc.hResource;
     desc32->hKeyedMutex = desc.hKeyedMutex;
     desc32->hSyncObject = desc.hSyncObject;
     for (i = 0; desc32->pOpenAllocationInfo2 && i < desc32->NumAllocations; i++)
+    {
+        allocs32->hAllocation = desc.pOpenAllocationInfo2[i].hAllocation;
+        allocs32->PrivateDriverDataSize = desc.pOpenAllocationInfo2[i].PrivateDriverDataSize;
         allocs32->GpuVirtualAddress = desc.pOpenAllocationInfo2[i].GpuVirtualAddress;
+    }
     return status;
 }
 
@@ -1155,6 +1286,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectFromNtHandle( UINT *args )
     NTSTATUS status;
 
     desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    desc.hSyncObject = desc32->hSyncObject;
     status = NtGdiDdDDIOpenSyncObjectFromNtHandle( &desc );
     desc32->hSyncObject = desc.hSyncObject;
     return status;
@@ -1185,7 +1317,10 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectFromNtHandle2( UINT *args )
     desc.hNtHandle = ULongToHandle( desc32->hNtHandle );
     desc.hDevice = desc32->hDevice;
     desc.Flags = desc32->Flags;
+    desc.hSyncObject = desc32->hSyncObject;
     desc.MonitoredFence.EngineAffinity = desc32->MonitoredFence.EngineAffinity;
+    desc.MonitoredFence.FenceValueCPUVirtualAddress = UlongToPtr( desc32->MonitoredFence.FenceValueCPUVirtualAddress );
+    desc.MonitoredFence.FenceValueGPUVirtualAddress = desc32->MonitoredFence.FenceValueGPUVirtualAddress;
 
     status = NtGdiDdDDIOpenSyncObjectFromNtHandle2( &desc );
     desc32->MonitoredFence.FenceValueCPUVirtualAddress = PtrToUlong( desc.MonitoredFence.FenceValueCPUVirtualAddress );
@@ -1208,6 +1343,7 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectNtHandleFromName( UINT *args )
 
     desc.dwDesiredAccess = desc32->dwDesiredAccess;
     desc.pObjAttrib = objattr_32to64( &attr, UlongToPtr( desc32->pObjAttrib ) );
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
     status = NtGdiDdDDIOpenSyncObjectNtHandleFromName( &desc );
     desc32->hNtHandle = HandleToUlong( desc.hNtHandle );
     return status;
@@ -1259,6 +1395,9 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryResourceInfo( UINT *args )
     desc.hGlobalShare = desc32->hGlobalShare;
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.TotalPrivateDriverDataSize = desc32->TotalPrivateDriverDataSize;
+    desc.ResourcePrivateDriverDataSize = desc32->ResourcePrivateDriverDataSize;
+    desc.NumAllocations = desc32->NumAllocations;
     status = NtGdiDdDDIQueryResourceInfo( &desc );
     desc32->PrivateRuntimeDataSize = desc.PrivateRuntimeDataSize;
     desc32->TotalPrivateDriverDataSize = desc.TotalPrivateDriverDataSize;
@@ -1286,6 +1425,9 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryResourceInfoFromNtHandle( UINT *args )
     desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
     desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
     desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.TotalPrivateDriverDataSize = desc32->TotalPrivateDriverDataSize;
+    desc.ResourcePrivateDriverDataSize = desc32->ResourcePrivateDriverDataSize;
+    desc.NumAllocations = desc32->NumAllocations;
     status = NtGdiDdDDIQueryResourceInfoFromNtHandle( &desc );
     desc32->PrivateRuntimeDataSize = desc.PrivateRuntimeDataSize;
     desc32->TotalPrivateDriverDataSize = desc.TotalPrivateDriverDataSize;
@@ -1322,6 +1464,10 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryVideoMemoryInfo( UINT *args )
     desc.hAdapter = desc32->hAdapter;
     desc.MemorySegmentGroup = desc32->MemorySegmentGroup;
     desc.PhysicalAdapterIndex = desc32->PhysicalAdapterIndex;
+    desc.Budget = desc32->Budget;
+    desc.CurrentUsage = desc32->CurrentUsage;
+    desc.CurrentReservation = desc32->CurrentReservation;
+    desc.AvailableForReservation = desc32->AvailableForReservation;
 
     if (!(status = NtGdiDdDDIQueryVideoMemoryInfo( &desc )))
     {
@@ -1330,6 +1476,36 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryVideoMemoryInfo( UINT *args )
         desc32->CurrentReservation = desc.CurrentReservation;
         desc32->AvailableForReservation = desc.AvailableForReservation;
     }
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIReleaseKeyedMutex( UINT *args )
+{
+    D3DKMT_RELEASEKEYEDMUTEX *desc = get_ptr( &args );
+    return NtGdiDdDDIReleaseKeyedMutex( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIReleaseKeyedMutex2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hKeyedMutex;
+        UINT64 Key;
+        UINT64 FenceValue;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_RELEASEKEYEDMUTEX2 desc;
+    NTSTATUS status;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hKeyedMutex = desc32->hKeyedMutex;
+    desc.Key = desc32->Key;
+    desc.FenceValue = desc32->FenceValue;
+    desc.pPrivateRuntimeData = UlongToHandle( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIReleaseKeyedMutex2( &desc );
+
     return status;
 }
 
@@ -1369,13 +1545,58 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIShareObjects( UINT *args )
     ULONG *handle_ptr = get_ptr( &args );
 
     struct object_attr64 attr;
-    HANDLE handle = 0;
+    HANDLE handle = UlongToHandle( *handle_ptr );
     NTSTATUS status;
 
-    *handle_ptr = 0;
     status = NtGdiDdDDIShareObjects( count, handles, objattr_32to64( &attr, attr32 ), access, &handle );
     *handle_ptr = HandleToULong( handle );
     return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDISignalSynchronizationObjectFromCpu( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE hDevice;
+        UINT ObjectCount;
+        ULONG ObjectHandleArray;
+        ULONG FenceValueArray;
+        D3DDDICB_SIGNALFLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDevice = desc32->hDevice;
+    desc.ObjectCount = desc32->ObjectCount;
+    desc.ObjectHandleArray = UlongToPtr( desc32->ObjectHandleArray );
+    desc.FenceValueArray = UlongToPtr( desc32->FenceValueArray );
+    desc.Flags = desc32->Flags;
+
+    return NtGdiDdDDISignalSynchronizationObjectFromCpu( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIWaitForSynchronizationObjectFromCpu( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE hDevice;
+        UINT ObjectCount;
+        ULONG ObjectHandleArray;
+        ULONG FenceValueArray;
+        ULONG hAsyncEvent;
+        D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDevice = desc32->hDevice;
+    desc.ObjectCount = desc32->ObjectCount;
+    desc.ObjectHandleArray = UlongToPtr( desc32->ObjectHandleArray );
+    desc.FenceValueArray = UlongToPtr( desc32->FenceValueArray );
+    desc.hAsyncEvent = UlongToHandle( desc32->hAsyncEvent );
+    desc.Flags = desc32->Flags;
+
+    return NtGdiDdDDIWaitForSynchronizationObjectFromCpu( &desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )
@@ -1924,6 +2145,14 @@ NTSTATUS WINAPI wow64_NtGdiGetKerningPairs( UINT *args )
     KERNINGPAIR *kern_pair = get_ptr( &args );
 
     return NtGdiGetKerningPairs( hdc, count, kern_pair );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetMiterLimit( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    FLOAT *limit = get_ptr( &args );
+
+    return NtGdiGetMiterLimit( hdc, limit );
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetNearestColor( UINT *args )
@@ -2618,6 +2847,15 @@ NTSTATUS WINAPI wow64_NtGdiSetMetaRgn( UINT *args )
     return NtGdiSetMetaRgn( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSetMiterLimit( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD limit = get_ulong( &args );
+    FLOAT *old_limit = get_ptr( &args );
+
+    return NtGdiSetMiterLimit( hdc, limit, old_limit );
+}
+
 NTSTATUS WINAPI wow64_NtGdiSetPixel( UINT *args )
 {
     HDC hdc = get_handle( &args );
@@ -2818,14 +3056,4 @@ NTSTATUS WINAPI wow64_NtGdiWidenPath( UINT *args )
     HDC hdc = get_handle( &args );
 
     return NtGdiWidenPath( hdc );
-}
-
-NTSTATUS WINAPI wow64___wine_get_icm_profile( UINT *args )
-{
-    HDC hdc = get_handle( &args );
-    BOOL allow_default = get_ulong( &args );
-    DWORD *size = get_ptr( &args );
-    WCHAR *filename = get_ptr( &args );
-
-    return __wine_get_icm_profile( hdc, allow_default, size, filename );
 }

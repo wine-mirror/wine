@@ -21,9 +21,11 @@
 #include "config.h"
 
 #import <AppKit/AppKit.h>
+#import <IOKit/graphics/IOGraphicsLib.h>
 #ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
+#include <dlfcn.h>
 #include "macdrv_cocoa.h"
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
@@ -37,80 +39,13 @@ static uint64_t integrated_gpu_id;
  * Converts an NSRect in Cocoa's y-goes-up-from-bottom coordinate system
  * to a CGRect in y-goes-down-from-top coordinates.
  */
-static inline void convert_display_rect(CGRect* out_rect, NSRect in_rect,
-                                        NSRect primary_frame)
+static inline CGRect convert_display_rect(NSRect in_rect, NSRect primary_frame)
 {
-    *out_rect = NSRectToCGRect(in_rect);
-    out_rect->origin.y = NSMaxY(primary_frame) - NSMaxY(in_rect);
+    CGRect out_rect = NSRectToCGRect(in_rect);
+    out_rect.origin.y = NSMaxY(primary_frame) - NSMaxY(in_rect);
+    return out_rect;
 }
 
-
-/***********************************************************************
- *              macdrv_get_displays
- *
- * Returns information about the displays.
- *
- * Returns 0 on success and *displays contains a newly-allocated array
- * of macdrv_display structures and *count contains the number of
- * elements in that array.  The first element of the array is the
- * primary display.  When the caller is done with the array, it should
- * use macdrv_free_displays() to deallocate it.
- *
- * Returns non-zero on failure and *displays and *count are unchanged.
- */
-int macdrv_get_displays(struct macdrv_display** displays, int* count)
-{
-@autoreleasepool
-{
-    NSArray* screens = [NSScreen screens];
-    if (screens)
-    {
-        NSUInteger num_screens = [screens count];
-        struct macdrv_display* disps = malloc(num_screens * sizeof(disps[0]));
-
-        if (disps)
-        {
-            NSRect primary_frame;
-
-            NSUInteger i;
-            for (i = 0; i < num_screens; i++)
-            {
-                NSScreen* screen = screens[i];
-                NSRect frame = [screen frame];
-                NSRect visible_frame = [screen visibleFrame];
-
-                if (i == 0)
-                    primary_frame = frame;
-
-                disps[i].displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
-                convert_display_rect(&disps[i].frame, frame, primary_frame);
-                convert_display_rect(&disps[i].work_frame, visible_frame,
-                                     primary_frame);
-                disps[i].frame = cgrect_win_from_mac(disps[i].frame);
-                disps[i].work_frame = cgrect_win_from_mac(disps[i].work_frame);
-            }
-
-            *displays = disps;
-            *count = num_screens;
-            return 0;
-        }
-    }
-
-    return -1;
-}
-}
-
-
-/***********************************************************************
- *              macdrv_free_displays
- *
- * Deallocates an array of macdrv_display structures previously returned
- * from macdrv_get_displays().
- */
-void macdrv_free_displays(struct macdrv_display* displays)
-{
-    free(displays);
-}
 
 /***********************************************************************
  *              get_entry_property_uint32
@@ -648,24 +583,333 @@ void macdrv_free_adapters(struct macdrv_adapter* adapters)
         free(adapters);
 }
 
+static CFDataRef get_edid_from_dcpav_service_proxy(uint32_t vendor_number, uint32_t model_number, uint32_t serial_number)
+{
+    typedef CFTypeRef IOAVServiceRef;
+    static IOAVServiceRef (*pIOAVServiceCreateWithService)(CFAllocatorRef, io_service_t);
+    static IOReturn (*pIOAVServiceCopyEDID)(IOAVServiceRef, CFDataRef*);
+    static dispatch_once_t once;
+    io_iterator_t iterator;
+    CFDataRef edid = NULL;
+    kern_return_t result;
+    io_service_t service;
+
+    dispatch_once(&once, ^{
+            void *handle = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY | RTLD_LOCAL);
+            if (handle)
+            {
+                pIOAVServiceCreateWithService = dlsym(handle, "IOAVServiceCreateWithService");
+                pIOAVServiceCopyEDID = dlsym(handle, "IOAVServiceCopyEDID");
+            }
+        });
+
+    if (!pIOAVServiceCreateWithService || !pIOAVServiceCopyEDID)
+        return NULL;
+
+    result = IOServiceGetMatchingServices(0, IOServiceMatching("DCPAVServiceProxy"), &iterator);
+    if (result != KERN_SUCCESS)
+        return NULL;
+
+    while((service = IOIteratorNext(iterator)))
+    {
+        uint32_t vendor_number_edid, model_number_edid, serial_number_edid;
+        const unsigned char *edid_ptr;
+        IOAVServiceRef avservice;
+        IOReturn edid_result;
+
+        avservice = pIOAVServiceCreateWithService(kCFAllocatorDefault, service);
+        IOObjectRelease(service);
+        if (!avservice)
+            continue;
+
+        edid_result = pIOAVServiceCopyEDID(avservice, &edid);
+        CFRelease(avservice);
+        if (edid_result != kIOReturnSuccess || !edid || CFDataGetLength(edid) < 13)
+        {
+            if (edid)
+            {
+                CFRelease(edid);
+                edid = NULL;
+            }
+            continue;
+        }
+
+        edid_ptr = CFDataGetBytePtr(edid);
+        vendor_number_edid = (uint16_t)(edid_ptr[9] | (edid_ptr[8] << 8));
+        model_number_edid = *((uint16_t *)&edid_ptr[10]);
+        serial_number_edid = *((uint32_t *)&edid_ptr[12]);
+        if (vendor_number == vendor_number_edid &&
+                model_number == model_number_edid &&
+                serial_number == serial_number_edid)
+            break;
+
+        CFRelease(edid);
+        edid = NULL;
+    }
+
+    IOObjectRelease(iterator);
+    return edid;
+}
+
+static CFDataRef get_edid_from_io_display_edid(uint32_t vendor_number, uint32_t model_number, uint32_t serial_number)
+{
+    io_iterator_t iterator;
+    CFDataRef data = NULL;
+    kern_return_t result;
+    io_service_t service;
+
+    result = IOServiceGetMatchingServices(0, IOServiceMatching("IODisplayConnect"), &iterator);
+    if (result != KERN_SUCCESS)
+        return NULL;
+
+    while((service = IOIteratorNext(iterator)))
+    {
+        uint32_t vendor_number_edid, model_number_edid, serial_number_edid;
+        const unsigned char *edid_ptr;
+        CFDictionaryRef display_dict;
+        CFDataRef edid;
+
+        display_dict = IOCreateDisplayInfoDictionary(service, 0);
+        if (display_dict)
+        {
+            edid = CFDictionaryGetValue(display_dict, CFSTR(kIODisplayEDIDKey));
+            if (edid && (CFDataGetLength(edid) >= 13))
+            {
+                edid_ptr = CFDataGetBytePtr(edid);
+                vendor_number_edid = (uint16_t)(edid_ptr[9] | (edid_ptr[8] << 8));
+                model_number_edid = *((uint16_t *)&edid_ptr[10]);
+                serial_number_edid = *((uint32_t *)&edid_ptr[12]);
+                if (vendor_number == vendor_number_edid &&
+                        model_number == model_number_edid &&
+                        /* CGDisplaySerialNumber() isn't reliable on Intel machines; it returns 0 sometimes. */
+                        (!serial_number || serial_number == serial_number_edid))
+                    data = CFDataCreateCopy(NULL, edid);
+            }
+            CFRelease(display_dict);
+        }
+        IOObjectRelease(service);
+        if (data)
+            break;
+    }
+
+    IOObjectRelease(iterator);
+    return data;
+}
+
+static uint16_t get_manufacturer_from_vendor(uint32_t vendor)
+{
+    uint16_t manufacturer = 0;
+
+    manufacturer |= ((vendor >> 10) & 0x1f) << 10;
+    manufacturer |= ((vendor >> 5)  & 0x1f) << 5;
+    manufacturer |= (vendor & 0x1f);
+    manufacturer = (manufacturer >> 8) | (manufacturer << 8);
+    return manufacturer;
+}
+
+static void fill_detailed_timing_desc(uint8_t *data, int horizontal, int vertical,
+        double refresh, size_t mwidth, size_t mheight)
+{
+    int h_front_porch = 8, h_sync_pulse = 32, h_back_porch = 40;
+    int v_front_porch = 6, v_sync_pulse = 8, v_back_porch = 40;
+    int h_blanking, v_blanking, h_total, v_total, pixel_clock;
+
+    h_blanking = h_front_porch + h_sync_pulse + h_back_porch;
+    v_blanking = v_front_porch + v_sync_pulse + v_back_porch;
+    h_total = horizontal + h_blanking;
+    v_total = vertical + v_blanking;
+
+    if (refresh <= 0.0) refresh = 60.0;
+    pixel_clock = (int)round(h_total * v_total * refresh / 10000.0);
+
+    memset(data, 0, 18);
+    data[0] = pixel_clock & 0xff;
+    data[1] = (pixel_clock >> 8) & 0xff;
+    data[2] = horizontal;
+    data[3] = h_total - horizontal;
+    data[4] = (((h_total - horizontal) >> 8) & 0xf) | (((horizontal >> 8) & 0xf) << 4);
+    data[5] = vertical;
+    data[6] = v_total - vertical;
+    data[7] = (((v_total - vertical) >> 8) & 0xf) | (((vertical >> 8) & 0xf) << 4);
+    data[8] = h_front_porch;
+    data[9] = h_sync_pulse;
+    data[10] = ((v_front_porch & 0xf) << 4) | (v_sync_pulse & 0xf);
+    data[11] = (((h_front_porch >> 8) & 3) << 6)
+            | (((h_sync_pulse >> 8) & 3) << 4)
+            | (((v_front_porch >> 4) & 3) << 2)
+            | ((v_sync_pulse >> 4) & 3);
+    data[12] = mwidth;
+    data[13] = mheight;
+    data[14] = (((mwidth >> 8) & 0xf) << 4) | ((mheight >> 8) & 0xf);
+    data[17] = 0x1e;
+}
+
+static CFDataRef generate_edid(CGDirectDisplayID display_id, uint32_t vendor_number, uint32_t model_number,
+        uint32_t serial_number)
+{
+    struct display_param {
+        size_t width;
+        size_t height;
+        double refresh;
+    } best_params[3];
+    double mwidth, mheight, refresh;
+    CGDisplayModeRef mode = NULL;
+    size_t width = 0, height = 0;
+    uint8_t edid[128], sum, *p;
+    CFDataRef data = NULL;
+    int i, j, timings = 0;
+    CGSize screen_size;
+    CFArrayRef modes;
+
+    screen_size = CGDisplayScreenSize(display_id);
+    mwidth = screen_size.width;
+    mheight = screen_size.height;
+
+    memset(&edid, 0, sizeof(edid));
+    *(uint64_t *)&edid[0] = 0x00ffffffffffff00;
+
+    *(uint16_t *)&edid[8] = get_manufacturer_from_vendor(vendor_number);
+    *(uint16_t *)&edid[10] = (uint16_t)model_number;
+    *(uint32_t *)&edid[12] = serial_number;
+    edid[16] = 52; /* weeks */
+    edid[17] = 30; /* year */
+    edid[18] = 1; /* version */
+    edid[19] = 4; /* revision */
+    edid[20] = 0xb5; /* video input parameters: 10 bits DisplayPort */
+    edid[21] = (uint8_t)(mwidth / 10.0); /* horizontal screen size in cm */
+    edid[22] = (uint8_t)(mheight / 10.0); /* vertical screen size in cm */
+    edid[23] = 0x78; /* gamma: 2.2 */
+    edid[24] = 0x06; /* supported features: RGB 4:4:4, sRGB, native pixel format and refresh rate */
+
+    /* color characteristics: sRGB */
+    edid[25] = 0xee;
+    edid[26] = 0x91;
+    edid[27] = 0xa3;
+    edid[28] = 0x54;
+    edid[29] = 0x4c;
+    edid[30] = 0x99;
+    edid[31] = 0x26;
+    edid[32] = 0x0f;
+    edid[33] = 0x50;
+    edid[34] = 0x54;
+
+    for (i = 0; i < 16; ++i) edid[38 + i] = 1;
+
+    /* detailed timing descriptors */
+    p = edid + 54;
+    modes = CGDisplayCopyAllDisplayModes(display_id, NULL);
+    if (modes)
+        i = CFArrayGetCount(modes);
+    else
+        i = 0;
+    for (i--; i >= 0; i--)
+    {
+        CGDisplayModeRef candidate_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+        int flags = CGDisplayModeGetIOFlags(candidate_mode);
+        if (flags & kDisplayModeNativeFlag || flags & kDisplayModeDefaultFlag)
+        {
+            width = CGDisplayModeGetPixelWidth(candidate_mode);
+            height = CGDisplayModeGetPixelHeight(candidate_mode);
+            refresh = CGDisplayModeGetRefreshRate(candidate_mode);
+            if (!timings)
+            {
+                best_params[0].width = width;
+                best_params[0].height = height;
+                best_params[0].refresh = refresh;
+                timings++;
+            }
+            else
+            {
+                for (j = 0; j < timings; j++)
+                {
+                    if (best_params[j].width < width ||
+                            (best_params[j].width == width && best_params[j].refresh < refresh))
+                    {
+                        struct display_param swap_display_param = best_params[j];
+
+                        best_params[j].width = width;
+                        best_params[j].height = height;
+                        best_params[j].refresh = refresh;
+                        width = swap_display_param.width;
+                        height = swap_display_param.height;
+                        refresh = swap_display_param.refresh;
+                    }
+                }
+                if (timings != 3)
+                {
+                    best_params[timings].width = width;
+                    best_params[timings].height = height;
+                    best_params[timings].refresh = refresh;
+                    timings++;
+                }
+            }
+        }
+    }
+    if (modes)
+        CFRelease(modes);
+    if (!timings)
+    {
+        mode = CGDisplayCopyDisplayMode(display_id);
+        width = CGDisplayModeGetPixelWidth(mode);
+        height = CGDisplayModeGetPixelHeight(mode);
+        refresh = CGDisplayModeGetRefreshRate(mode);
+        fill_detailed_timing_desc(p, width, height, refresh, (size_t)mwidth, (size_t)mheight);
+        timings++;
+        CGDisplayModeRelease(mode);
+    }
+    else
+    {
+        for (i = 0; i < timings; i++)
+        {
+            fill_detailed_timing_desc(p, best_params[i].width, best_params[i].height,
+                    best_params[i].refresh, (size_t)mwidth, (size_t)mheight);
+            p += 18;
+            p[3] = 0x10;
+        }
+    }
+    while (timings != 3)
+    {
+        p += 18;
+        p[3] = 0x10;
+        timings++;
+    }
+
+    /* display product name */
+    p[3] = 0xfc;
+    strcpy((char *)p + 5, "Wine Monitor");
+    p[17] = 0x0a;
+
+    /* checksum */
+    sum = 0;
+    for (i = 0; i < 127; ++i)
+        sum += edid[i];
+    edid[127] = 256 - sum;
+
+    data = CFDataCreate(NULL, edid, 128);
+    return data;
+}
+
 /***********************************************************************
  *              macdrv_get_monitors
  *
  * Get a list of monitors under adapter_id. The first monitor is primary if adapter is primary.
  * Call macdrv_free_monitors() when you are done using the data.
+ * An adapter_id of kCGNullDirectDisplay will return monitors for all adapters.
  *
  * Returns non-zero value on failure with parameters unchanged and zero on success.
  */
-int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitors, int* count)
+int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** new_monitors, int* count)
+{
+@autoreleasepool
 {
     struct macdrv_monitor* monitors = NULL;
     struct macdrv_monitor* realloc_monitors;
-    struct macdrv_display* displays = NULL;
     CGDirectDisplayID display_ids[16];
-    uint32_t display_id_count;
+    uint32_t display_id_count, vendor_number, model_number, serial_number;
+    NSArray<NSScreen *> *screens = [NSScreen screens];
+    NSRect primary_frame;
     int primary_index = 0;
     int monitor_count = 0;
-    int display_count;
     int capacity;
     int ret = -1;
     int i, j;
@@ -680,19 +924,29 @@ int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitor
         != kCGErrorSuccess)
         goto done;
 
-    if (macdrv_get_displays(&displays, &display_count))
+    screens = [NSScreen screens];
+    if (!screens || screens.count < 1)
         goto done;
+
+    primary_frame = screens[0].frame;
 
     for (i = 0; i < display_id_count; i++)
     {
-        if (display_ids[i] != adapter_id && CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
+        if (adapter_id     != kCGNullDirectDisplay &&
+            display_ids[i] != adapter_id           &&
+            CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
             continue;
 
         /* Find and fill in monitor info */
-        for (j = 0; j < display_count; j++)
+        for (j = 0; j < screens.count; j++)
         {
-            if (displays[j].displayID == display_ids[i]
-                || CGDisplayMirrorsDisplay(display_ids[i]) == displays[j].displayID)
+            NSScreen* screen = screens[j];
+            CGDirectDisplayID screen_displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
+            CFDataRef edid_data;
+            size_t length;
+
+            if (screen_displayID == display_ids[i]
+                || CGDisplayMirrorsDisplay(display_ids[i]) == screen_displayID)
             {
                 /* Allocate more space if needed */
                 if (monitor_count >= capacity)
@@ -707,8 +961,36 @@ int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitor
                 if (j == 0)
                     primary_index = monitor_count;
 
-                monitors[monitor_count].rc_monitor = displays[j].frame;
-                monitors[monitor_count].rc_work = displays[j].work_frame;
+                monitors[monitor_count].id = display_ids[i];
+                monitors[monitor_count].rc_monitor = cgrect_win_from_mac(convert_display_rect(screen.frame, primary_frame));
+                monitors[monitor_count].rc_work = cgrect_win_from_mac(convert_display_rect(screen.visibleFrame, primary_frame));
+
+                vendor_number = CGDisplayVendorNumber(monitors[monitor_count].id);
+                model_number = CGDisplayModelNumber(monitors[monitor_count].id);
+                serial_number = CGDisplaySerialNumber(monitors[monitor_count].id);
+
+                edid_data = get_edid_from_dcpav_service_proxy(vendor_number, model_number, serial_number);
+                if (!edid_data)
+                    edid_data = get_edid_from_io_display_edid(vendor_number, model_number, serial_number);
+                if (!edid_data)
+                    edid_data = generate_edid(monitors[monitor_count].id, vendor_number, model_number, serial_number);
+                if (edid_data && (length = CFDataGetLength(edid_data)))
+                {
+                    const unsigned char *edid_ptr = CFDataGetBytePtr(edid_data);
+
+                    if ((monitors[monitor_count].edid = malloc(length)))
+                    {
+                        monitors[monitor_count].edid_len = length;
+                        memcpy(monitors[monitor_count].edid, edid_ptr, length);
+                    }
+                    CFRelease(edid_data);
+                }
+
+                monitors[monitor_count].hdr_enabled = false;
+#if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+                if (@available(macOS 10.15, *))
+                    monitors[monitor_count].hdr_enabled = (screen.maximumPotentialExtendedDynamicRangeColorComponentValue > 1.0) ? true : false;
+#endif
                 monitor_count++;
                 break;
             }
@@ -728,11 +1010,10 @@ int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitor
     *count = monitor_count;
     ret = 0;
 done:
-    if (displays)
-        macdrv_free_displays(displays);
     if (ret)
-        macdrv_free_monitors(monitors);
+        macdrv_free_monitors(monitors, capacity);
     return ret;
+}
 }
 
 /***********************************************************************
@@ -740,8 +1021,11 @@ done:
  *
  * Frees an monitor list allocated from macdrv_get_monitors()
  */
-void macdrv_free_monitors(struct macdrv_monitor* monitors)
+void macdrv_free_monitors(struct macdrv_monitor* monitors, int monitor_count)
 {
+    while (monitor_count--)
+        if (monitors[monitor_count].edid)
+            free(monitors[monitor_count].edid);
     if (monitors)
         free(monitors);
 }

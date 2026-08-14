@@ -1,6 +1,8 @@
 MODULE    = msvproc.dll
-IMPORTS   = combase mfplat mfuuid dmoguids dxguid strmiids wmcodecdspuuid uuid
+IMPORTS   = $(FFMPEG_PE_LIBS) combase mfplat mfuuid dmoguids dxguid strmiids wmcodecdspuuid uuid
+EXTRAINCL = $(FFMPEG_PE_CFLAGS)
 
 SOURCES = \
 	msvproc.c \
-	msvproc.idl
+	msvproc.idl \
+	video_processor.c

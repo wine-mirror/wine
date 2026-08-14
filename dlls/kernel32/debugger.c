@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -52,6 +51,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
     BOOL caught_by_dbg = TRUE;
+    DWORD last_error = GetLastError();
 
     if (!str) str = "";
     WARN( "%s\n", debugstr_a(str) );
@@ -131,6 +131,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
             CloseHandle( mapping );
         }
     }
+    SetLastError( last_error );
 }
 
 

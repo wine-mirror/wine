@@ -80,7 +80,7 @@ library MSDASC
         HRESULT _stdcall PromptDataSource([in] IUnknown* pUnkOuter, [in] HWND hWndParent,
             [in] DBPROMPTOPTIONS dwPromptOptions, [in] ULONG cSourceTypeFilter,
             [in] DBSOURCETYPE* rgSourceTypeFilter, [in] LPWSTR pwszszzProviderFilter,
-            [in] GUID* riid, [in, out] IUnknown** ppDataSource);
+            [in] REFIID riid, [in, out] IUnknown** ppDataSource);
 
         HRESULT _stdcall PromptFileName([in] HWND hWndParent, [in] ULONG dwPromptOptions,
             [in] LPWSTR pwszInitialDirectory, [in] LPWSTR pwszInitialFile, [out] LPWSTR* ppwszSelectedFile);

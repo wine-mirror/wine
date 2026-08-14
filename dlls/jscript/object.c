@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     const WCHAR *str = NULL;
@@ -53,6 +53,15 @@ static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
         L"[object Object]",
         L"[object ArrayBuffer]",
         L"[object Object]",
+        L"[object Int8Array]",
+        L"[object Int16Array]",
+        L"[object Int32Array]",
+        L"[object Uint8Array]",
+        L"[object Uint8ClampedArray]",
+        L"[object Uint16Array]",
+        L"[object Uint32Array]",
+        L"[object Float32Array]",
+        L"[object Float64Array]",
         L"[object Object]",
         L"[object Object]",
         L"[object Object]",
@@ -137,8 +146,10 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
 
     TRACE("\n");
 
-    if(is_null_disp(vthis)) {
-        if(r) *r = jsval_null_disp();
+    if(is_null(vthis)) {
+        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5_1 || (!ctx->html_mode && !is_null_disp(vthis)))
+            return JS_E_OBJECT_EXPECTED;
+        if(r) *r = vthis;
         return S_OK;
     }
 

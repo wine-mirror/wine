@@ -36,6 +36,10 @@
 #ifdef HAVE_SYS_STATVFS_H
 # include <sys/statvfs.h>
 #endif
+#ifdef __APPLE__
+# include <CoreFoundation/CoreFoundation.h>
+# include <sys/param.h>
+#endif
 #include <unistd.h>
 
 #include "unixlib.h"
@@ -311,6 +315,35 @@ static NTSTATUS set_dosdev_symlink( void *args )
     return status;
 }
 
+#ifdef __APPLE__
+static LONGLONG get_free_bytes_for_important_data(int fd)
+{
+    CFURLRef url = NULL;
+    CFNumberRef num = NULL;
+    char *path = NULL;
+    LONGLONG space = -1;
+
+    if (!(path = malloc( MAXPATHLEN ))) goto done;
+    if (fcntl( fd, F_GETPATH, path ) == -1) goto done;
+    if (!(url = CFURLCreateFromFileSystemRepresentation( NULL, (UInt8 *)path, strlen( path ), false ))) goto done;
+    if (!CFURLCopyResourcePropertyForKey( url, kCFURLVolumeAvailableCapacityForImportantUsageKey, &num, NULL )) goto done;
+    CFNumberGetValue( num, kCFNumberLongLongType, &space );
+    if (space == 0)
+    {
+        /* It's unlikely that a writeable disk has exactly 0 free bytes. This
+         * probably means the disk is read-only, or is not APFS. Fall back to
+         * statfs. */
+        space = -1;
+    }
+
+done:
+    free( path );
+    if (url) CFRelease( url );
+    if (num) CFRelease( num );
+    return space;
+}
+#endif
+
 static NTSTATUS get_volume_size_info( void *args )
 {
     const struct get_volume_size_info_params *params = args;
@@ -326,6 +359,10 @@ static NTSTATUS get_volume_size_info( void *args )
     struct statvfs stfs;
 #else
     struct statfs stfs;
+#endif
+
+#ifdef __APPLE__
+    LONGLONG important_free_bytes;
 #endif
 
     if (!unix_mount) return STATUS_NO_SUCH_DEVICE;
@@ -365,6 +402,12 @@ static NTSTATUS get_volume_size_info( void *args )
     }
     bsize = stfs.f_bsize;
 #endif
+
+#ifdef __APPLE__
+    important_free_bytes = get_free_bytes_for_important_data( fd );
+    if (important_free_bytes != -1) stfs.f_bavail = stfs.f_bfree = important_free_bytes / bsize;
+#endif
+
     if (bsize == 2048)  /* assume CD-ROM */
     {
         info->bytes_per_sector = 2048;
@@ -491,12 +534,10 @@ static NTSTATUS detect_parallel_ports( void *args )
 static NTSTATUS set_shell_folder( void *args )
 {
     const struct set_shell_folder_params *params = args;
-    const char *folder = params->folder;
-    const char *backup = params->backup;
     const char *link = params->link;
     struct stat st;
     const char *home;
-    char *homelink = NULL;
+    char *folder = NULL, *backup = NULL, *homelink = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
     if (link && (!strcmp( link, "$HOME" ) || !strncmp( link, "$HOME/", 6 )) && (home = getenv( "HOME" )))
@@ -512,6 +553,12 @@ static NTSTATUS set_shell_folder( void *args )
         status = STATUS_OBJECT_NAME_NOT_FOUND;
         goto done;
     }
+
+    status = ntdll_get_unix_file_name( params->folder, &folder, FILE_OPEN_IF );
+    if (status == STATUS_NO_SUCH_FILE) status = STATUS_SUCCESS;
+    if (status) goto done;
+
+    if (params->create_backup) asprintf( &backup, "%s.backup", folder );
 
     if (!lstat( folder, &st )) /* move old folder/link out of the way */
     {
@@ -541,6 +588,8 @@ static NTSTATUS set_shell_folder( void *args )
     }
 
 done:
+    free( backup );
+    free( folder );
     free( homelink );
     return status;
 }
@@ -548,11 +597,17 @@ done:
 static NTSTATUS get_shell_folder( void *args )
 {
     const struct get_shell_folder_params *params = args;
-    int ret = readlink( params->folder, params->buffer, params->size - 1 );
+    char *folder = NULL;
+    NTSTATUS status = ntdll_get_unix_file_name( params->folder, &folder, FILE_OPEN );
 
-    if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
-    params->buffer[ret] = 0;
-    return STATUS_SUCCESS;
+    if (!status)
+    {
+        int ret = readlink( folder, params->buffer, params->size - 1 );
+        free( folder );
+        if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
+        params->buffer[ret] = 0;
+    }
+    return status;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =

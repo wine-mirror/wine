@@ -767,6 +767,14 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         return hr;
     }
 
+    case VT_CLSID:
+    {
+        GUID guid;
+        if (SUCCEEDED((hr = PropVariantToGUID(propvarSrc, &guid))))
+            hr = InitPropVariantFromCLSID(&guid, ppropvarDest);
+        return hr;
+    }
+
     default:
         FIXME("Unhandled dest type: %d\n", vt);
         return E_FAIL;
@@ -983,7 +991,7 @@ static inline HRESULT PROPVAR_WCHARToGUID(const WCHAR *str, int len, GUID *guid)
     return S_OK;
 }
 
-HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid)
+HRESULT WINAPI PropVariantToGUID(REFPROPVARIANT ppropvar, GUID *guid)
 {
     TRACE("%p %p)\n", ppropvar, guid);
 
@@ -1332,4 +1340,35 @@ HRESULT WINAPI PropVariantGetStringElem(const PROPVARIANT *propvar, ULONG idx, W
         return E_OUTOFMEMORY;
     wcscpy(*ret, wstr);
     return S_OK;
+}
+
+HRESULT WINAPI PropVariantToFileTime(REFPROPVARIANT propvar, PSTIME_FLAGS flags, FILETIME *timestamp)
+{
+    TRACE("%p, %#x, %p\n", propvar, flags, timestamp);
+
+    switch (propvar->vt)
+    {
+    case VT_EMPTY:
+        return E_INVALIDARG;
+    default:
+        FIXME("Unimplemented for type %d.\n", propvar->vt);
+        return E_NOTIMPL;
+    }
+}
+
+HRESULT WINAPI PropVariantToUInt32Vector(REFPROPVARIANT propvar, ULONG *buffer, ULONG size, ULONG *count)
+{
+    TRACE("%p, %p, %lu, %p.\n", propvar, buffer, size, count);
+
+    *count = 0;
+
+    switch (propvar->vt)
+    {
+    case VT_EMPTY:
+        return E_INVALIDARG;
+    default:
+        FIXME("Unimplemented for type %d.\n", propvar->vt);
+        return E_NOTIMPL;
+    }
+    return E_NOTIMPL;
 }

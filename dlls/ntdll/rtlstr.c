@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "winsock2.h"
 #include "windef.h"
 #include "winnt.h"
@@ -2457,7 +2456,7 @@ NTSTATUS WINAPI RtlIpv6AddressToStringExA(const IN6_ADDR *address, ULONG scope, 
     for (i = 0; i < ipv6_end; i++)
     {
         len = 0;
-        while (!address->s6_words[i] && i < ipv6_end)
+        while (i < ipv6_end && !address->s6_words[i])
         {
             i++;
             len++;

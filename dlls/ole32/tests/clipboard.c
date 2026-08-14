@@ -1925,6 +1925,96 @@ static void test_get_clipboard_locked(void)
     OleUninitialize();
 }
 
+struct sta_clipboard_thread_data
+{
+    const char *text;
+    HRESULT hr_set;
+};
+
+static DWORD CALLBACK sta_clipboard_set_thread(void *arg)
+{
+    struct sta_clipboard_thread_data *data = arg;
+    IDataObject *dataobj;
+    HRESULT hr;
+
+    hr = OleInitialize(NULL);
+    if (FAILED(hr))
+    {
+        data->hr_set = hr;
+        return 1;
+    }
+
+    hr = DataObjectImpl_CreateText(data->text, &dataobj);
+    ok(hr == S_OK, "DataObjectImpl_CreateText returned %#lx\n", hr);
+
+    hr = OleSetClipboard(dataobj);
+    data->hr_set = hr;
+    IDataObject_Release(dataobj);
+
+    if (SUCCEEDED(hr))
+        OleFlushClipboard();
+
+    OleUninitialize();
+    return 0;
+}
+
+static void test_sta_clipboard_reuse(void)
+{
+    struct sta_clipboard_thread_data data;
+    HANDLE thread, hdata;
+    HRESULT hr;
+    char *text;
+    DWORD ret;
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize returned %#lx\n", hr);
+
+    /* First STA thread sets clipboard to "first". */
+    data.text = "first";
+    data.hr_set = E_FAIL;
+    thread = CreateThread(NULL, 0, sta_clipboard_set_thread, &data, 0, NULL);
+    ok(thread != NULL, "CreateThread failed (%ld)\n", GetLastError());
+    ret = WaitForSingleObject(thread, 5000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", ret);
+    CloseHandle(thread);
+    ok(data.hr_set == S_OK, "first OleSetClipboard returned %#lx\n", data.hr_set);
+
+    ok(OpenClipboard(NULL), "OpenClipboard failed\n");
+    hdata = GetClipboardData(CF_TEXT);
+    ok(hdata != NULL, "GetClipboardData returned NULL\n");
+    if (hdata)
+    {
+        text = GlobalLock(hdata);
+        ok(!strcmp(text, "first"), "expected \"first\", got \"%s\"\n", text);
+        GlobalUnlock(hdata);
+    }
+    CloseClipboard();
+
+    /* Regression test: second STA thread should be able to set the
+       clipboard after the first thread's clipboard window is destroyed. */
+    data.text = "second";
+    data.hr_set = E_FAIL;
+    thread = CreateThread(NULL, 0, sta_clipboard_set_thread, &data, 0, NULL);
+    ok(thread != NULL, "CreateThread failed (%ld)\n", GetLastError());
+    ret = WaitForSingleObject(thread, 5000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", ret);
+    CloseHandle(thread);
+    ok(data.hr_set == S_OK, "second OleSetClipboard returned %#lx\n", data.hr_set);
+
+    ok(OpenClipboard(NULL), "OpenClipboard failed\n");
+    hdata = GetClipboardData(CF_TEXT);
+    ok(hdata != NULL, "GetClipboardData returned NULL\n");
+    if (hdata)
+    {
+        text = GlobalLock(hdata);
+        ok(!strcmp(text, "second"), "expected \"second\", got \"%s\"\n", text);
+        GlobalUnlock(hdata);
+    }
+    CloseClipboard();
+
+    OleUninitialize();
+}
+
 START_TEST(clipboard)
 {
     test_get_clipboard_uninitialized();
@@ -1935,5 +2025,6 @@ START_TEST(clipboard)
     test_nonole_clipboard();
     test_getdatahere();
     test_multithreaded_clipboard();
+    test_sta_clipboard_reuse();
     test_get_clipboard_locked();
 }

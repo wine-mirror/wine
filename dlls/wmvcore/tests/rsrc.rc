@@ -23,3 +23,7 @@
 /* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=700" -t 2.0 -f asf -vcodec wmv1 -vf scale=64x48 -acodec wmav1 test.wmv */
 /* @makedep: test.wmv */
 test.wmv RCDATA "test.wmv"
+
+/* ffmpeg -f lavfi -i smptebars -f asf -vcodec rawvideo -pix_fmt yuv420p -vf scale=64x48 -t 2.0 test_rawvideo.wmv */
+/* @makedep: test_rawvideo.wmv */
+test_rawvideo.wmv RCDATA "test_rawvideo.wmv"

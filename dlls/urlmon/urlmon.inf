@@ -455,7 +455,7 @@ DESC_TRUSTED="This zone contains Web sites that you trust not to damage your com
 ZICON_TRUSTED="inetcpl.cpl#00004480"
 
 NAME_INTERNET="Internet"
-DESC_INTERNET="This zone contains all Web sites you haven't placed in other zones"
+DESC_INTERNET="This zone contains all Web sites you haven't placed in other zones."
 ZICON_INTERNET="inetcpl.cpl#001313"
 
 NAME_UNTRUSTED="Restricted sites"

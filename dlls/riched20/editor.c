@@ -1513,6 +1513,61 @@ static void ME_RTFReadParnumGroup( RTF_Info *info )
     RTFRouteToken( info );     /* feed "}" back to router */
 }
 
+static void ME_RTFReadPntextGroup( RTF_Info *info )
+{
+    int level = 1;
+    WCHAR buf[256];
+    int buf_len = 0;
+
+    ME_DestroyString( info->pntext );
+    info->pntext = NULL;
+
+    for (;;)
+    {
+        RTFGetToken( info );
+
+        if (info->rtfClass == rtfEOF)
+            return;
+
+        if (RTFCheckCM( info, rtfGroup, rtfBeginGroup ))
+        {
+            level++;
+            continue;
+        }
+
+        if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+        {
+            level--;
+            if (level == 0) break;
+            continue;
+        }
+
+        if (buf_len >= ARRAY_SIZE(buf) - 1)
+            continue;
+
+        if (info->rtfClass == rtfText)
+        {
+            buf[buf_len++] = (WCHAR)(unsigned char)info->rtfMajor;
+        }
+        else if (info->rtfClass == rtfControl && info->rtfMajor == rtfSpecialChar)
+        {
+            switch (info->rtfMinor)
+            {
+            case rtfTab:        buf[buf_len++] = '\t'; break;
+            case rtfBullet:     buf[buf_len++] = 0x2022; break;
+            case rtfNoBrkSpace: buf[buf_len++] = 0x00A0; break;
+            case rtfNoBrkHyphen:buf[buf_len++] = 0x2011; break;
+            case rtfOptDest:
+            default: break;
+            }
+        }
+    }
+
+    info->pntext = ME_MakeStringN( buf, buf_len );
+
+    RTFRouteToken( info );
+}
+
 static void ME_RTFReadHook(RTF_Info *info)
 {
   switch(info->rtfClass)
@@ -1670,6 +1725,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
       RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
       RTFSetDestinationCallback(&parser, rtfParNumbering, ME_RTFReadParnumGroup);
+      RTFSetDestinationCallback(&parser, rtfParNumText, ME_RTFReadPntextGroup);
       if (!parser.editor->bEmulateVersion10) /* v4.1 */
       {
         RTFSetDestinationCallback(&parser, rtfNoNestTables, RTFSkipGroup);
@@ -3806,13 +3862,31 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int start_ofs, end_ofs;
     ME_Cursor cursor;
 
-    if (wParam > ME_GetTextLength(editor))
-      return 0;
     if (wParam == -1)
     {
-      FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
-      return 0;
+      LONG from, to;
+      int line_start, line_end, line_len, result;
+
+      ME_GetSelectionOfs( editor, &from, &to );
+
+      cursor_from_char_ofs( editor, from, &cursor );
+      row = row_from_cursor( &cursor );
+      row_first_cursor( row, &cursor );
+      line_start = ME_GetCursorOfs( &cursor );
+
+      cursor_from_char_ofs( editor, to, &cursor );
+      row = row_from_cursor( &cursor );
+      row_first_cursor( row, &cursor );
+      line_end = ME_GetCursorOfs( &cursor );
+      row_end_cursor( row, &cursor, FALSE );
+      line_len = ME_GetCursorOfs( &cursor ) - line_end;
+
+      result = (from - line_start) + (line_end + line_len - to);
+      TRACE( "EM_LINELENGTH(-1): sel=%ld..%ld result=%d\n", from, to, result );
+      return result;
     }
+    if (wParam > ME_GetTextLength(editor))
+      return 0;
     cursor_from_char_ofs( editor, wParam, &cursor );
     row = row_from_cursor( &cursor );
     row_first_cursor( row, &cursor );

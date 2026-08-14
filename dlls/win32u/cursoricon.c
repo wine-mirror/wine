@@ -39,7 +39,7 @@ WINE_DECLARE_DEBUG_CHANNEL(icon);
 
 struct cursoricon_object
 {
-    struct user_object      obj;        /* object header */
+    HICON                   handle;     /* cursor full handle */
     struct list             entry;      /* entry in shared icons list */
     struct free_icon_params params;     /* opaque params used by 16-bit code */
     UNICODE_STRING          module;     /* module for icons loaded from resources */
@@ -123,6 +123,8 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
     SERVER_END_REQ;
     if (!ret) return 0;
 
+    check_for_events( QS_INPUT );
+
     if (!(obj = get_icon_ptr( old_cursor ))) return 0;
     release_user_handle_ptr( obj );
     return old_cursor;
@@ -152,7 +154,8 @@ HICON alloc_cursoricon_handle( BOOL is_icon )
 
     if (!(obj = calloc( 1, sizeof(*obj) ))) return NULL;
     obj->is_icon = is_icon;
-    if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON ))) free( obj );
+    if (!(handle = alloc_user_handle( obj, NTUSER_OBJ_ICON ))) free( obj );
+    else obj->handle = handle;
     return handle;
 }
 
@@ -358,7 +361,7 @@ HICON WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRIN
         if (memcmp( ptr->module.Buffer, module->Buffer, module->Length )) continue;
         /* We pass rsrc as desc argument, this is not compatible with Windows */
         if (ptr->rsrc != desc) continue;
-        ret = ptr->obj.handle;
+        ret = ptr->handle;
         break;
     }
     user_unlock();
@@ -398,7 +401,7 @@ HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR cursor, DWORD istep, DWORD *rat
 
     if (!(obj = get_icon_ptr( cursor ))) return 0;
 
-    TRACE( "%p => %d %p %p\n", cursor, (int)istep, rate_jiffies, num_steps );
+    TRACE( "%p => %d %p %p\n", cursor, istep, rate_jiffies, num_steps );
 
     icon_steps = obj->is_ani ? obj->ani.num_steps : 1;
     if (istep < icon_steps || !obj->is_ani)
@@ -445,7 +448,7 @@ HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR cursor, DWORD istep, DWORD *rat
  *
  * Helper function to duplicate a bitmap.
  */
-static HBITMAP copy_bitmap( HBITMAP bitmap )
+static HBITMAP copy_bitmap( HBITMAP bitmap, const SIZE *size )
 {
     HDC src, dst = 0;
     HBITMAP new_bitmap = 0;
@@ -457,10 +460,11 @@ static HBITMAP copy_bitmap( HBITMAP bitmap )
     if ((src = NtGdiCreateCompatibleDC( 0 )) && (dst = NtGdiCreateCompatibleDC( 0 )))
     {
         NtGdiSelectBitmap( src, bitmap );
-        if ((new_bitmap = NtGdiCreateCompatibleBitmap( src, bmp.bmWidth, bmp.bmHeight )))
+        if ((new_bitmap = NtGdiCreateCompatibleBitmap( src, size ? size->cx : bmp.bmWidth, size ? size->cy : bmp.bmHeight )))
         {
             NtGdiSelectBitmap( dst, new_bitmap );
-            NtGdiBitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY, 0, 0 );
+            if (size) NtGdiStretchBlt( dst, 0, 0, size->cx, size->cy, src, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY, 0 );
+            else NtGdiBitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY, 0, 0 );
         }
     }
     NtGdiDeleteObjectApp( dst );
@@ -493,8 +497,8 @@ BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *modul
     info->fIcon        = obj->is_icon;
     info->xHotspot     = frame_obj->frame.hotspot.x;
     info->yHotspot     = frame_obj->frame.hotspot.y;
-    info->hbmColor     = copy_bitmap( frame_obj->frame.color );
-    info->hbmMask      = copy_bitmap( frame_obj->frame.mask );
+    info->hbmColor     = copy_bitmap( frame_obj->frame.color, NULL );
+    info->hbmMask      = copy_bitmap( frame_obj->frame.mask, NULL );
     if (!info->hbmMask || (!info->hbmColor && frame_obj->frame.color))
     {
         NtGdiDeleteObjectApp( info->hbmMask );
@@ -705,6 +709,40 @@ ULONG_PTR set_icon_param( HICON handle, const struct free_icon_params *params )
         release_user_handle_ptr( obj );
     }
     return ret;
+}
+
+HICON create_small_icon( HICON handle )
+{
+    struct cursoricon_frame frame = {0};
+    struct cursoricon_desc desc = {0};
+    struct cursoricon_object *obj;
+    HICON icon;
+    SIZE size;
+
+    if (!handle) return 0;
+
+    desc.frames = &frame;
+    frame.width = size.cx = get_system_metrics( SM_CXSMICON );
+    frame.height = size.cy = get_system_metrics( SM_CYSMICON );
+    frame.hotspot.x = frame.width / 2;
+    frame.hotspot.y = frame.height / 2;
+
+    if (!(obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON )) || obj == OBJ_OTHER_PROCESS) return 0;
+    frame.color = copy_bitmap( obj->frame.color, &size );
+    frame.alpha = copy_bitmap( obj->frame.alpha, &size );
+    frame.mask = copy_bitmap( obj->frame.mask, &size );
+    release_user_handle_ptr( obj );
+
+    if (!(icon = alloc_cursoricon_handle( TRUE )) || !NtUserSetCursorIconData( icon, NULL, NULL, &desc ))
+    {
+        NtGdiDeleteObjectApp( frame.color );
+        NtGdiDeleteObjectApp( frame.alpha );
+        NtGdiDeleteObjectApp( frame.mask );
+        NtUserDestroyCursor( icon, 0 );
+        return 0;
+    }
+
+    return icon;
 }
 
 /******************************************************************************

@@ -249,7 +249,7 @@ HRESULT WINAPI EnumerableObjectCollection_Constructor(IUnknown *outer, REFIID ri
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(This = heap_alloc(sizeof(*This))))
+    if (!(This = malloc(sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->ref = 1;

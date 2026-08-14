@@ -46,9 +46,9 @@ static NSString* const OwnershipSentinel = @"org.winehq.wine.winemac.pasteboard-
 /***********************************************************************
  *              macdrv_is_pasteboard_owner
  */
-int macdrv_is_pasteboard_owner(macdrv_window w)
+bool macdrv_is_pasteboard_owner(macdrv_window w)
 {
-    __block int ret;
+    __block bool ret;
     WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
@@ -65,10 +65,10 @@ int macdrv_is_pasteboard_owner(macdrv_window w)
 /***********************************************************************
  *              macdrv_has_pasteboard_changed
  */
-int macdrv_has_pasteboard_changed(void)
+bool macdrv_has_pasteboard_changed(void)
 {
     __block int new_change_count;
-    int ret;
+    bool ret;
 
     OnMainThread(^{
         NSPasteboard* pb = [NSPasteboard generalPasteboard];

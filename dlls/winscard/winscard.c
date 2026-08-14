@@ -146,6 +146,7 @@ struct handle
 {
     DWORD  magic;
     UINT64 unix_handle;
+    DWORD  protocol;
 };
 
 LONG WINAPI SCardEstablishContext( DWORD scope, const void *reserved1, const void *reserved2, SCARDCONTEXT *context )
@@ -304,6 +305,7 @@ LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DW
     if (!(params.names = malloc( names_len_utf8 ))) return SCARD_E_NO_MEMORY;
     if (!(ret = UNIX_CALL( scard_status, &params )) && !(ret = copy_multiszA( params.names, names, names_len )))
     {
+        handle->protocol = protocol64;
         if (state) *state = state64;
         if (protocol) *protocol = protocol64;
         if (atr_len) *atr_len = atr_len64;
@@ -405,6 +407,7 @@ LONG WINAPI SCardStatusW( SCARDHANDLE connect, WCHAR *names, DWORD *names_len, D
     if (!(params.names = malloc( names_len_utf8 ))) return SCARD_E_NO_MEMORY;
     if (!(ret = UNIX_CALL( scard_status, &params )) && !(ret = copy_multiszW( params.names, names, names_len )))
     {
+        handle->protocol = protocol64;
         if (state) *state = state64;
         if (protocol) *protocol = protocol64;
         if (atr_len) *atr_len = atr_len64;
@@ -708,6 +711,7 @@ LONG WINAPI SCardConnectA( SCARDCONTEXT context, const char *reader, DWORD share
     if ((ret = UNIX_CALL( scard_connect, &params ))) free( connect_handle );
     else
     {
+        connect_handle->protocol = protocol64;
         *connect = (SCARDHANDLE)connect_handle;
         if (protocol) *protocol = protocol64;
     }
@@ -750,6 +754,7 @@ LONG WINAPI SCardConnectW( SCARDCONTEXT context, const WCHAR *reader, DWORD shar
     if ((ret = UNIX_CALL( scard_connect, &params ))) free( connect_handle );
     else
     {
+        connect_handle->protocol = protocol64;
         *connect = (SCARDHANDLE)connect_handle;
         if (protocol) *protocol = protocol64;
     }
@@ -776,7 +781,11 @@ LONG WINAPI SCardReconnect( SCARDHANDLE connect, DWORD share_mode, DWORD preferr
     params.preferred_protocols = preferred_protocols;
     params.initialization = initialization;
     params.protocol = &protocol64;
-    if (!(ret = UNIX_CALL( scard_reconnect, &params )) && protocol) *protocol = protocol64;
+    if (!(ret = UNIX_CALL( scard_reconnect, &params )))
+    {
+        handle->protocol = protocol64;
+        if (protocol) *protocol = protocol64;
+    }
     TRACE( "returning %#lx\n", ret );
     return ret;
 }
@@ -841,7 +850,7 @@ LONG WINAPI SCardTransmit( SCARDHANDLE connect, const SCARD_IO_REQUEST *send, co
 {
     struct handle *handle = (struct handle *)connect;
     struct scard_transmit_params params;
-    struct io_request send64 = { send->dwProtocol, send->cbPciLength }, recv64;
+    struct io_request send64, recv64;
     UINT64 recv_buflen64;
     LONG ret;
 
@@ -849,6 +858,17 @@ LONG WINAPI SCardTransmit( SCARDHANDLE connect, const SCARD_IO_REQUEST *send, co
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
     if (!recv_buflen) return SCARD_E_INVALID_PARAMETER;
+
+    if (send)
+    {
+        send64.protocol = send->dwProtocol;
+        send64.pci_len = send->cbPciLength;
+    }
+    else
+    {
+        send64.protocol = handle->protocol;
+        send64.pci_len = sizeof(send64);
+    }
 
     params.handle = handle->unix_handle;
     params.send = &send64;

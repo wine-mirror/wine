@@ -27,7 +27,7 @@
 
 #define UNDNAME_NO_COMPLEX_TYPE (0x8000)
 
-struct array
+struct str_array
 {
     unsigned            start;          /* first valid reference in array */
     unsigned            num;            /* total number of used elts */
@@ -44,9 +44,9 @@ struct parsed_symbol
     const char*         current;        /* pointer in input (mangled) string */
     char*               result;         /* demangled string */
 
-    struct array        names;          /* array of names for back reference */
-    struct array        args;           /* array of arguments for back reference */
-    struct array        stack;          /* stack of parsed strings */
+    struct str_array    names;          /* array of names for back reference */
+    struct str_array    args;           /* array of arguments for back reference */
+    struct str_array    stack;          /* stack of parsed strings */
 
     void*               alloc_list;     /* linked list of allocated blocks */
     unsigned            avail_in_first; /* number of available bytes in head block */
@@ -75,7 +75,7 @@ static char* get_class_name(struct parsed_symbol* sym);
  *		str_array_init
  * Initialises an array of strings
  */
-static void str_array_init(struct array* a)
+static void str_array_init(struct str_array* a)
 {
     a->start = a->num = a->max = a->alloc = 0;
     a->elts = NULL;
@@ -86,7 +86,7 @@ static void str_array_init(struct array* a)
  * Adding a new string to an array
  */
 static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
-                           struct array* a)
+                           struct str_array* a)
 {
     char**      new;
 
@@ -121,7 +121,7 @@ static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
  * Extracts a reference from an existing array (doing proper type
  * checking)
  */
-static char* str_array_get_ref(struct array* cref, unsigned idx)
+static char* str_array_get_ref(struct str_array* cref, unsigned idx)
 {
     assert(cref);
     if (cref->start + idx >= cref->max) return NULL;
@@ -254,7 +254,7 @@ static char* get_args(struct parsed_symbol* sym, BOOL z_term,
 
 {
     struct datatype_t   ct;
-    struct array        arg_collect;
+    struct str_array    arg_collect;
     char*               args_str = NULL;
     char*               last;
     unsigned int        i;
@@ -612,7 +612,7 @@ static BOOL get_class(struct parsed_symbol* sym)
                 break;
             case '?':
                 {
-                    struct array stack = sym->stack;
+                    struct str_array stack = sym->stack;
                     unsigned int start = sym->names.start;
                     unsigned int num = sym->names.num;
 
@@ -650,7 +650,7 @@ static char* get_class_string(struct parsed_symbol* sym, int start)
     int          i;
     unsigned int len, sz;
     char*        ret;
-    struct array *a = &sym->stack;
+    struct str_array *a = &sym->stack;
 
     for (len = 0, i = start; i < a->num; i++)
     {

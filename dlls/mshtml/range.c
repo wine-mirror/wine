@@ -503,7 +503,7 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
     if(buf->len) {
         WCHAR *p;
 
-        for(p = buf->buf+buf->len-1; p >= buf->buf && iswspace(*p); p--);
+        for(p = buf->buf+buf->len-1; p > buf->buf && iswspace(*p); p--);
 
         p = wcschr(p, '\r');
         if(p)

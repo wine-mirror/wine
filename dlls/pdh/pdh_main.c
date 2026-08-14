@@ -761,6 +761,108 @@ PDH_STATUS WINAPI PdhGetFormattedCounterValue( PDH_HCOUNTER handle, DWORD format
     return ret;
 }
 
+/* caller must hold counter lock; PDH_FMT_COUNTERVALUE_ITEM_A and _W share the same layout */
+static PDH_STATUS get_formatted_counter_array( PDH_HCOUNTER handle, DWORD format,
+                                                LPDWORD bufsize, LPDWORD count, void *buffer, BOOL wide )
+{
+    PDH_STATUS ret;
+    struct counter *counter = handle;
+    PDH_FMT_COUNTERVALUE value;
+    DWORD needed = sizeof(PDH_FMT_COUNTERVALUE_ITEM_W) + (wide ? sizeof(WCHAR) : sizeof(CHAR));
+
+    *count = 1;
+
+    if (!buffer || *bufsize < needed)
+    {
+        *bufsize = needed;
+        return PDH_MORE_DATA;
+    }
+
+    if (!(ret = format_value( counter, format, &counter->one, &counter->two, &value )))
+    {
+        PPDH_FMT_COUNTERVALUE_ITEM_W item = buffer;
+        char *name = (char *)buffer + sizeof(PDH_FMT_COUNTERVALUE_ITEM_W);
+        item->FmtValue = value;
+        item->FmtValue.CStatus = ERROR_SUCCESS;
+        if (wide)
+        {
+            item->szName = (LPWSTR)name;
+            *(WCHAR *)name = 0;
+        }
+        else
+        {
+            ((PPDH_FMT_COUNTERVALUE_ITEM_A)item)->szName = (LPSTR)name;
+            *name = 0;
+        }
+    }
+    *bufsize = needed;
+    return ret;
+}
+
+/***********************************************************************
+ *              PdhGetFormattedCounterArrayW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetFormattedCounterArrayW( PDH_HCOUNTER handle, DWORD format,
+                                                 LPDWORD bufsize, LPDWORD count,
+                                                 PPDH_FMT_COUNTERVALUE_ITEM_W buffer )
+{
+    PDH_STATUS ret;
+    struct counter *counter = handle;
+
+    TRACE("%p %lx %p %p %p\n", handle, format, bufsize, count, buffer);
+
+    if (!bufsize || !count || !handle) return PDH_INVALID_ARGUMENT;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (counter->status)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_DATA;
+    }
+
+    ret = get_formatted_counter_array( handle, format, bufsize, count, buffer, TRUE );
+
+    LeaveCriticalSection( &pdh_handle_cs );
+    return ret;
+}
+
+/***********************************************************************
+ *              PdhGetFormattedCounterArrayA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetFormattedCounterArrayA( PDH_HCOUNTER handle, DWORD format,
+                                                 LPDWORD bufsize, LPDWORD count,
+                                                 PPDH_FMT_COUNTERVALUE_ITEM_A buffer )
+{
+    PDH_STATUS ret;
+    struct counter *counter = handle;
+
+    TRACE("%p %lx %p %p %p\n", handle, format, bufsize, count, buffer);
+
+    if (!bufsize || !count || !handle) return PDH_INVALID_ARGUMENT;
+
+    EnterCriticalSection( &pdh_handle_cs );
+    if (counter->magic != PDH_MAGIC_COUNTER)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_HANDLE;
+    }
+    if (counter->status)
+    {
+        LeaveCriticalSection( &pdh_handle_cs );
+        return PDH_INVALID_DATA;
+    }
+
+    ret = get_formatted_counter_array( handle, format, bufsize, count, buffer, FALSE );
+
+    LeaveCriticalSection( &pdh_handle_cs );
+    return ret;
+}
+
 /***********************************************************************
  *              PdhGetRawCounterValue   (PDH.@)
  */
@@ -1287,5 +1389,43 @@ PDH_STATUS WINAPI PdhBindInputDataSourceW(PDH_HLOG *source, const WCHAR *filenam
 PDH_STATUS WINAPI PdhConnectMachineA(const char *name)
 {
     FIXME("%s: stub\n", debugstr_a(name));
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhEnumObjectsA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhEnumObjectsA(const char *source, const char *machine, char *list,
+                                  DWORD *size, DWORD detail, BOOL refresh)
+{
+    FIXME("%s %s %p %p %lu %d: stub\n", debugstr_a(source),debugstr_a(machine), list, size, detail, refresh);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhEnumObjectsW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhEnumObjectsW(const WCHAR *source, const WCHAR *machine, WCHAR *list,
+                                  DWORD *size, DWORD detail, BOOL refresh)
+{
+    FIXME("%s %s %p %p %lu %d: stub\n", debugstr_w(source),debugstr_w(machine), list, size, detail, refresh);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhGetRawCounterArrayA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetRawCounterArrayA(PDH_HCOUNTER counter, DWORD *size, DWORD *count, PDH_RAW_COUNTER_ITEM_A *buffer)
+{
+    FIXME("%p %p %p %p: stub\n", counter, size, count, buffer);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhGetRawCounterArrayW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetRawCounterArrayW(PDH_HCOUNTER counter, DWORD *size, DWORD *count, PDH_RAW_COUNTER_ITEM_W *buffer)
+{
+    FIXME("%p %p %p %p: stub\n", counter, size, count, buffer);
     return PDH_NOT_IMPLEMENTED;
 }

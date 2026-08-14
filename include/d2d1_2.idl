@@ -101,3 +101,5 @@ interface ID2D1CommandSink1 : ID2D1CommandSink
         [in] D2D1_PRIMITIVE_BLEND primitive_blend
     );
 }
+
+[local] float __stdcall D2D1ComputeMaximumScaleFactor(const D2D1_MATRIX_3X2_F *matrix);

@@ -605,10 +605,10 @@ static const tid_t HTMLLocation_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLLocation_dispex = {
-    "Location",
-    &HTMLLocation_dispex_vtbl,
-    DispHTMLLocation_tid,
-    HTMLLocation_iface_tids
+    .name             = "Location",
+    .vtbl             = &HTMLLocation_dispex_vtbl,
+    .disp_tid         = DispHTMLLocation_tid,
+    .iface_tids       = HTMLLocation_iface_tids
 };
 
 HRESULT create_location(HTMLOuterWindow *window, HTMLLocation **ret)

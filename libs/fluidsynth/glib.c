@@ -40,10 +40,9 @@ int g_snprintf( char *buffer, size_t size, const char *format, ... )
 
 double g_get_monotonic_time(void)
 {
-    static LARGE_INTEGER frequency = {0};
-    LARGE_INTEGER counter;
+    LARGE_INTEGER counter, frequency;
 
-    if (!frequency.QuadPart) QueryPerformanceFrequency( &frequency );
+    QueryPerformanceFrequency( &frequency );
     QueryPerformanceCounter( &counter );
 
     return counter.QuadPart * 1000000.0 / frequency.QuadPart; /* time in micros */
@@ -51,15 +50,15 @@ double g_get_monotonic_time(void)
 
 void g_usleep( unsigned int micros )
 {
-    Sleep( micros / 1000 );
+    Sleep( (micros + 999) / 1000 );
 }
 
 static DWORD CALLBACK g_thread_wrapper( void *args )
 {
     GThread *thread = args;
-    gpointer ret = thread->func( thread->data );
-    if (!InterlockedDecrement( &thread->ref )) free( thread );
-    return (UINT_PTR)ret;
+    thread->result = thread->func( thread->data );
+    g_thread_unref( thread );
+    return 0;
 }
 
 GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GError **err )
@@ -82,14 +81,21 @@ GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GE
 
 void g_thread_unref( GThread *thread )
 {
-    CloseHandle( thread->handle );
-    if (!InterlockedDecrement( &thread->ref )) free( thread );
+    if (!InterlockedDecrement( &thread->ref ))
+    {
+        CloseHandle( thread->handle );
+        free( thread );
+    }
 }
 
-void g_thread_join( GThread *thread )
+gpointer g_thread_join( GThread *thread )
 {
+    gpointer result;
+
     WaitForSingleObject( thread->handle, INFINITE );
+    result = thread->result;
     g_thread_unref( thread );
+    return result;
 }
 
 void g_clear_error( GError **error )
@@ -100,7 +106,10 @@ void g_clear_error( GError **error )
 int g_file_test( const char *path, int test )
 {
     DWORD attrs = GetFileAttributesA( path );
-    if (test == G_FILE_TEST_EXISTS) return attrs != INVALID_FILE_ATTRIBUTES;
-    if (test == G_FILE_TEST_IS_REGULAR) return attrs == FILE_ATTRIBUTE_NORMAL;
+    if (attrs != INVALID_FILE_ATTRIBUTES)
+    {
+        if (test & G_FILE_TEST_EXISTS) return 1;
+        if ((test & G_FILE_TEST_IS_REGULAR) && !(attrs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE))) return 1;
+    }
     return 0;
 }

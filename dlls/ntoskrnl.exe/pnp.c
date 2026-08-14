@@ -27,12 +27,12 @@
 #include "cfgmgr32.h"
 #include "dbt.h"
 #include "wine/exception.h"
-#include "wine/heap.h"
 
 #include "plugplay.h"
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+#include "devpkey.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
@@ -95,6 +95,32 @@ static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WC
     return irp_status.Status;
 }
 
+static NTSTATUS get_device_text( DEVICE_OBJECT *device, DEVICE_TEXT_TYPE type, WCHAR **text )
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    KEVENT event;
+    IRP *irp;
+
+    device = IoGetAttachedDevice( device );
+
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, &event, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_QUERY_DEVICE_TEXT;
+    irpsp->Parameters.QueryDeviceText.DeviceTextType = type;
+    irpsp->Parameters.QueryDeviceText.LocaleId = 0;
+
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
+    *text = (WCHAR *)irp_status.Information;
+    return irp_status.Status;
+}
+
 static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
 {
     IO_STACK_LOCATION *irpsp;
@@ -123,29 +149,43 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
 
 static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
 {
-    static const WCHAR backslashW[] = {'\\',0};
+    struct wine_device *pdo_dev;
     NTSTATUS status;
     WCHAR *id;
 
-    if ((status = get_device_id( device, BusQueryDeviceID, &id )))
+    while (device->DeviceObjectExtension->AttachedTo)
+        device = device->DeviceObjectExtension->AttachedTo;
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
     {
-        ERR("Failed to get device ID, status %#lx.\n", status);
-        return status;
+        ERR( "Lowest device in stack is not a PDO.\n" );
+        return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    lstrcpyW( buffer, id );
-    ExFreePool( id );
-
-    if ((status = get_device_id( device, BusQueryInstanceID, &id )))
+    pdo_dev = CONTAINING_RECORD(device, struct wine_device, device_obj);
+    if (!wcslen( pdo_dev->device_instance_id ))
     {
-        ERR("Failed to get instance ID, status %#lx.\n", status);
-        return status;
+        if ((status = get_device_id( device, BusQueryDeviceID, &id )))
+        {
+            ERR("Failed to get device ID, status %#lx.\n", status);
+            return status;
+        }
+
+        wcscpy( pdo_dev->device_instance_id, id );
+        wcscat( pdo_dev->device_instance_id, L"\\" );
+        ExFreePool( id );
+
+        if ((status = get_device_id( device, BusQueryInstanceID, &id )))
+        {
+            ERR("Failed to get instance ID, status %#lx.\n", status);
+            pdo_dev->device_instance_id[0] = 0;
+            return status;
+        }
+        wcscat( pdo_dev->device_instance_id, id );
+        ExFreePool( id );
     }
 
-    lstrcatW( buffer, backslashW );
-    lstrcatW( buffer, id );
-    ExFreePool( id );
-
+    wcscpy( buffer, pdo_dev->device_instance_id );
     TRACE("Returning ID %s.\n", debugstr_w(buffer));
 
     return STATUS_SUCCESS;
@@ -306,6 +346,42 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
     return TRUE;
 }
 
+static void create_dyn_data_key( DEVICE_OBJECT *device )
+{
+    struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    static unsigned int counter;
+    WCHAR key_path[29];
+    DWORD disposition;
+    LSTATUS ret;
+    HKEY key;
+
+    if (get_device_instance_id( device, device_instance_id ))
+        return;
+
+    for (;;)
+    {
+        swprintf( key_path, ARRAY_SIZE(key_path), L"Config Manager\\Enum\\%08x", counter++ );
+
+        if ((ret = RegCreateKeyExW( HKEY_DYN_DATA, key_path, 0, NULL,
+                REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &disposition )))
+        {
+            ERR( "Failed to create %s, error %lu.\n", debugstr_w(key_path), GetLastError() );
+            return;
+        }
+
+        if (disposition == REG_CREATED_NEW_KEY)
+        {
+            RegSetValueExW( key, L"HardWareKey", 0, REG_SZ, (BYTE *)device_instance_id,
+                    wcslen( device_instance_id ) * sizeof(WCHAR) );
+            wine_device->dyn_data_key = key;
+            break;
+        }
+
+        RegCloseKey( key );
+    }
+}
+
 /* Load the function driver for a newly created PDO, if one is present, and
  * send IRPs to start the device. */
 static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
@@ -313,20 +389,24 @@ static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
         send_pnp_irp( device, IRP_MN_START_DEVICE );
+
+    create_dyn_data_key( device );
 }
 
-static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
+static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OBJECT *parent_device )
 {
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
 
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    WCHAR parent_id[MAX_DEVICE_ID_LEN];
     DEVICE_CAPABILITIES caps;
     BOOL need_driver = TRUE;
     NTSTATUS status;
     HKEY key;
     WCHAR *id;
 
+    device->Flags |= DO_BUS_ENUMERATED_DEVICE;
     if (get_device_instance_id( device, device_instance_id ))
         return;
 
@@ -362,6 +442,18 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
         ExFreePool( id );
     }
 
+    if (!get_device_text(device, DeviceTextDescription, &id) && id)
+    {
+        if (!SetupDiSetDevicePropertyW( set, &sp_device, &DEVPKEY_Device_BusReportedDeviceDesc, DEVPROP_TYPE_STRING,
+                    (BYTE *)id, (lstrlenW( id ) + 1) * sizeof(WCHAR), 0 ))
+            WARN("Failed to set bus reported device desc property.\n");
+        ExFreePool( id );
+    }
+
+    if (!get_device_instance_id( parent_device, parent_id ))
+        SetupDiSetDevicePropertyW( set, &sp_device, &DEVPKEY_Device_Parent, DEVPROP_TYPE_STRING,
+                (BYTE *)parent_id, (wcslen( parent_id ) + 1) * sizeof(WCHAR), 0 );
+
     if (need_driver && !install_device_driver( device, set, &sp_device ) && !caps.RawDeviceOK)
     {
         ERR("Unable to install a function driver for device %s.\n", debugstr_w(device_instance_id));
@@ -389,6 +481,15 @@ static void send_remove_device_irp( DEVICE_OBJECT *device, UCHAR code )
 
 static void remove_device( DEVICE_OBJECT *device )
 {
+    struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+
+    if (wine_device->dyn_data_key)
+    {
+        RegDeleteKeyW( wine_device->dyn_data_key, L"" );
+        RegCloseKey( wine_device->dyn_data_key );
+        wine_device->dyn_data_key = 0;
+    }
+
     send_remove_device_irp( device, IRP_MN_SURPRISE_REMOVAL );
     send_remove_device_irp( device, IRP_MN_REMOVE_DEVICE );
 }
@@ -408,12 +509,16 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
 {
     struct wine_device *wine_parent = CONTAINING_RECORD(parent, struct wine_device, device_obj);
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    SP_DEVINFO_DATA parent_sp = {sizeof(parent_sp)};
+    WCHAR parent_id[MAX_DEVICE_ID_LEN];
+    WCHAR (*child_ids)[MAX_DEVICE_ID_LEN] = NULL;
     DEVICE_RELATIONS *relations;
     IO_STATUS_BLOCK irp_status;
     IO_STACK_LOCATION *irpsp;
     HDEVINFO set;
     KEVENT event;
     IRP *irp;
+    DWORD count = 0;
     ULONG i;
 
     TRACE( "(%p)\n", parent );
@@ -454,7 +559,7 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
         if (!wine_parent->children || !device_in_list( wine_parent->children, child ))
         {
             TRACE("Adding new device %p.\n", child);
-            enumerate_new_device( child, set );
+            enumerate_new_device( child, set, parent );
         }
     }
 
@@ -475,6 +580,65 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
 
     ExFreePool( wine_parent->children );
     wine_parent->children = relations;
+
+    count = relations->Count;
+    child_ids = malloc( count * sizeof(*child_ids) );
+
+    for (i = 0; i < count; ++i)
+        get_device_instance_id( relations->Objects[i], child_ids[i] );
+
+    if (count && !get_device_instance_id( parent, parent_id )
+            && SetupDiOpenDeviceInfoW( set, parent_id, NULL, 0, &parent_sp ))
+    {
+        DWORD multi_len = 1;
+        WCHAR *children_multi, *p;
+
+        for (i = 0; i < count; ++i)
+            multi_len += wcslen( child_ids[i] ) + 1;
+
+        children_multi = malloc( multi_len * sizeof(WCHAR) );
+        p = children_multi;
+        for (i = 0; i < count; ++i)
+        {
+            wcscpy( p, child_ids[i] );
+            p += wcslen( child_ids[i] ) + 1;
+        }
+        *p = 0;
+        SetupDiSetDevicePropertyW( set, &parent_sp, &DEVPKEY_Device_Children,
+                DEVPROP_TYPE_STRING_LIST, (BYTE *)children_multi,
+                multi_len * sizeof(WCHAR), 0 );
+        free( children_multi );
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        SP_DEVINFO_DATA child_sp = {sizeof(child_sp)};
+        if (SetupDiOpenDeviceInfoW( set, child_ids[i], NULL, 0, &child_sp ))
+        {
+            DWORD sib_len = 1, j;
+            WCHAR *siblings_multi, *p;
+
+            for (j = 0; j < count; ++j)
+                if (j != i) sib_len += wcslen( child_ids[j] ) + 1;
+
+            siblings_multi = malloc( sib_len * sizeof(WCHAR) );
+            p = siblings_multi;
+            for (j = 0; j < count; ++j)
+            {
+                if (j != i)
+                {
+                    wcscpy( p, child_ids[j] );
+                    p += wcslen( child_ids[j] ) + 1;
+                }
+            }
+            *p = 0;
+            SetupDiSetDevicePropertyW( set, &child_sp, &DEVPKEY_Device_Siblings,
+                    DEVPROP_TYPE_STRING_LIST, (BYTE *)siblings_multi,
+                    sib_len * sizeof(WCHAR), 0 );
+            free( siblings_multi );
+        }
+    }
+    free( child_ids );
 
     SetupDiDestroyDeviceInfoList( set );
 }
@@ -518,6 +682,9 @@ NTSTATUS WINAPI IoGetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY
     TRACE( "device %p, property_key %s, lcid %#lx, flags %#lx, size %lu, data %p, required_size %p, property_type %p\n",
            device, debugstr_propkey( property_key ), lcid, flags, size, data, required_size,
            property_type );
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+        ERR( "Passed in non-PDO device, this would crash on native.\n" );
 
     if (lcid == LOCALE_SYSTEM_DEFAULT || lcid == LOCALE_USER_DEFAULT) return STATUS_INVALID_PARAMETER;
     if (lcid != LOCALE_NEUTRAL) FIXME( "Only LOCALE_NEUTRAL is supported\n" );
@@ -567,30 +734,40 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
     TRACE("device %p, property %u, length %lu, buffer %p, needed %p.\n",
             device, property, length, buffer, needed);
 
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+    {
+        WARN( "Passed in non-PDO device.\n" );
+        return STATUS_INVALID_DEVICE_REQUEST;
+    }
+
     switch (property)
     {
         case DevicePropertyEnumeratorName:
         {
-            WCHAR *id, *ptr;
+            WCHAR *ptr;
 
-            status = get_device_id( device, BusQueryInstanceID, &id );
+            status = get_device_instance_id( device, device_instance_id );
             if (status != STATUS_SUCCESS)
             {
                 ERR("Failed to get instance ID, status %#lx.\n", status);
-                break;
+                return status;
             }
 
-            wcsupr( id );
-            ptr = wcschr( id, '\\' );
-            if (ptr) *ptr = 0;
+            if (!(ptr = wcschr( device_instance_id, '\\' )))
+            {
+                ERR( "Instance ID %s has no enumerator separator.\n", debugstr_w(device_instance_id) );
+                return STATUS_UNSUCCESSFUL;
+            }
 
-            *needed = sizeof(WCHAR) * (lstrlenW(id) + 1);
+            *needed = ((ptr - device_instance_id) + 1) * sizeof(WCHAR);
             if (length >= *needed)
-                memcpy( buffer, id, *needed );
+            {
+                memcpy( buffer, device_instance_id, *needed - sizeof(WCHAR) );
+                ((WCHAR *)buffer)[((ptr - device_instance_id) + 1)] = 0;
+            }
             else
                 status = STATUS_BUFFER_TOO_SMALL;
 
-            ExFreePool( id );
             return status;
         }
         case DevicePropertyPhysicalDeviceObjectName:
@@ -715,28 +892,28 @@ static NTSTATUS create_device_symlink( DEVICE_OBJECT *device, UNICODE_STRING *sy
     if (ret != STATUS_BUFFER_TOO_SMALL)
         return ret;
 
-    device_name = heap_alloc( len );
+    device_name = malloc( len );
     ret = IoGetDeviceProperty( device, DevicePropertyPhysicalDeviceObjectName, len, device_name, &len );
     if (ret)
     {
-        heap_free( device_name );
+        free( device_name );
         return ret;
     }
 
     RtlInitUnicodeString( &device_nameU, device_name );
     ret = IoCreateSymbolicLink( symlink_name, &device_nameU );
-    heap_free( device_name );
+    free( device_name );
     return ret;
 }
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate( SIZE_T len )
 {
-    return heap_alloc( len );
+    return HeapAlloc( GetProcessHeap(), 0, len );
 }
 
 void __RPC_USER MIDL_user_free( void __RPC_FAR *ptr )
 {
-    heap_free( ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
@@ -755,6 +932,133 @@ static void send_devicechange( const WCHAR *path, DWORD code, void *data, unsign
         WARN("Failed to send event, exception %#lx.\n", GetExceptionCode());
     }
     __ENDTRY
+}
+
+/***********************************************************************
+ *           IoSetDeviceInterfacePropertyData   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoSetDeviceInterfacePropertyData( UNICODE_STRING *name, const DEVPROPKEY *key, LCID lcid, ULONG flags,
+                                                  DEVPROPTYPE type, ULONG len, void *buf )
+{
+    SP_DEVICE_INTERFACE_DATA iface_data = {0};
+    WCHAR device_path[MAX_PATH];
+    struct wine_rb_entry *entry;
+    DWORD err = ERROR_SUCCESS;
+    HDEVINFO set;
+
+    TRACE( "name %s, key %s, lcid %#lx, flags %#lx, type %#lx, len %lu, buf %p\n", debugstr_us( name ),
+           debugstr_propkey( key ), lcid, flags, type, len, buf );
+
+    if (lcid != LOCALE_NEUTRAL) FIXME( "only LOCALE_NEUTRAL is supported\n" );
+
+    if (!(entry = wine_rb_get( &device_interfaces, name )))
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    swprintf( device_path, ARRAY_SIZE( device_path ), L"\\\\%s", &name->Buffer[2] );
+
+    if ((set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        err = GetLastError();
+        ERR( "Failed to create device list, error %lu.\n", err );
+        goto done;
+    }
+    iface_data.cbSize = sizeof( iface_data );
+    if (!SetupDiOpenDeviceInterfaceW( set, device_path, 0, &iface_data ))
+    {
+        err = GetLastError();
+        ERR( "Failed to open device interface, error %lu.\n", err );
+        goto done;
+    }
+    if (!SetupDiSetDeviceInterfacePropertyW( set, &iface_data, key, buf ? type : DEVPROP_TYPE_EMPTY, (BYTE *)buf, len, 0 ))
+        err = GetLastError();
+
+done:
+    if (set != INVALID_HANDLE_VALUE)
+    {
+        SetupDiDeleteDeviceInterfaceData( set, &iface_data );
+        SetupDiDestroyDeviceInfoList( set );
+    }
+    switch (err)
+    {
+    case ERROR_SUCCESS:
+        return STATUS_SUCCESS;
+    case ERROR_INVALID_PARAMETER:
+    case ERROR_INVALID_DATA:
+    case ERROR_INVALID_FLAGS:
+        return STATUS_INVALID_PARAMETER;
+    case ERROR_NOT_ENOUGH_MEMORY:
+        return STATUS_NO_MEMORY;
+    case ERROR_NO_SUCH_DEVICE_INTERFACE:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    case ERROR_INSUFFICIENT_BUFFER:
+        return STATUS_BUFFER_TOO_SMALL;
+    case ERROR_INVALID_ACCESS:
+        return STATUS_ACCESS_DENIED;
+    default:
+        FIXME( "Unhandled error: %lu\n", err );
+        return STATUS_INTERNAL_ERROR;
+    }
+}
+
+/***********************************************************************
+ *           IoGetDeviceInterfacePropertyData   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoGetDeviceInterfacePropertyData( UNICODE_STRING *name, const DEVPROPKEY *key, LCID lcid, ULONG flags,
+                                                  ULONG size, void *buf, ULONG *required, DEVPROPTYPE *type )
+{
+    SP_DEVICE_INTERFACE_DATA iface_data = {0};
+    WCHAR device_path[MAX_PATH];
+    struct wine_rb_entry *entry;
+    DWORD err = ERROR_SUCCESS;
+    HDEVINFO set;
+
+    TRACE( "name %s, key %s, lcid %#lx, flags %#lx, size %lu, buf %p, required %p, type %p\n",
+           debugstr_us( name ), debugstr_propkey( key ), lcid, flags, size, buf, required, type );
+
+    if (!(entry = wine_rb_get( &device_interfaces, name )))
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    swprintf( device_path, ARRAY_SIZE( device_path ), L"\\\\%s", &name->Buffer[2] );
+
+    if ((set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        err = GetLastError();
+        ERR( "Failed to create device list, error %lu.\n", err );
+        goto done;
+    }
+    iface_data.cbSize = sizeof( iface_data );
+    if (!SetupDiOpenDeviceInterfaceW( set, device_path, 0, &iface_data ))
+    {
+        err = GetLastError();
+        ERR( "Failed to open device interface, error %lu.\n", err );
+        goto done;
+    }
+    if (!SetupDiGetDeviceInterfacePropertyW( set, &iface_data, key, type, (BYTE *)buf, size, required, flags ))
+        err = GetLastError();
+
+done:
+    if (set != INVALID_HANDLE_VALUE)
+    {
+        SetupDiDeleteDeviceInterfaceData( set, &iface_data );
+        SetupDiDestroyDeviceInfoList( set );
+    }
+    switch (err)
+    {
+    case ERROR_SUCCESS:
+        return STATUS_SUCCESS;
+    case ERROR_INVALID_PARAMETER:
+    case ERROR_INVALID_FLAGS:
+        return STATUS_INVALID_PARAMETER;
+    case ERROR_NOT_ENOUGH_MEMORY:
+        return STATUS_NO_MEMORY;
+    case ERROR_NO_SUCH_DEVICE_INTERFACE:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    case ERROR_INSUFFICIENT_BUFFER:
+        return STATUS_BUFFER_TOO_SMALL;
+    default:
+        FIXME( "Unhandled error: %lu\n", err );
+        return STATUS_INTERNAL_ERROR;
+    }
 }
 
 /***********************************************************************
@@ -804,7 +1108,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     len = lstrlenW(DeviceClassesW) + 38 + 1 + namelen + 2 + 1;
 
-    if (!(path = heap_alloc( len * sizeof(WCHAR) )))
+    if (!(path = malloc( len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
     lstrcpyW( path, DeviceClassesW );
@@ -822,7 +1126,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     attr.ObjectName = &string;
     RtlInitUnicodeString( &string, path );
     ret = NtOpenKey( &iface_key, KEY_CREATE_SUB_KEY, &attr );
-    heap_free(path);
+    free(path);
     if (ret)
         return ret;
 
@@ -856,7 +1160,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     len = offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[namelen + 1]);
 
-    if ((broadcast = heap_alloc( len )))
+    if ((broadcast = malloc( len )))
     {
         broadcast->dbcc_size       = len;
         broadcast->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
@@ -865,7 +1169,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         if (namelen > 1) broadcast->dbcc_name[1] = '\\';
         send_devicechange( L"", enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
-        heap_free( broadcast );
+        free( broadcast );
     }
     return ret;
 }
@@ -887,6 +1191,9 @@ NTSTATUS WINAPI IoSetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY
     /* flags is always treated as PLUGPLAY_PROPERTY_PERSISTENT starting with Win 8 / 2012 */
 
     if (lcid != LOCALE_NEUTRAL) FIXME( "only LOCALE_NEUTRAL is supported\n" );
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+        ERR( "Passed in non-PDO device, this would crash on native.\n" );
 
     if ((status = get_device_instance_id( device, device_instance_id ))) return status;
 
@@ -985,7 +1292,7 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     }
     else
     {
-        iface = heap_alloc_zero( sizeof(struct device_interface) );
+        iface = calloc( 1, sizeof(struct device_interface) );
         RtlDuplicateUnicodeString( 1, &device_path, &iface->symbolic_link );
         if (wine_rb_put( &device_interfaces, &iface->symbolic_link, &iface->entry ))
             ERR("Failed to insert interface %s into tree.\n", debugstr_us(&iface->symbolic_link));
@@ -1018,15 +1325,15 @@ NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
 
     ret = ObQueryNameString( device, NULL, 0, &size );
     if (ret != STATUS_INFO_LENGTH_MISMATCH) return ret;
-    if (!(name_info = heap_alloc( size ))) return STATUS_NO_MEMORY;
+    if (!(name_info = malloc( size ))) return STATUS_NO_MEMORY;
     ret = ObQueryNameString( device, name_info, size, &size );
     if (ret != STATUS_SUCCESS) return ret;
 
     data_size = notification->Size - offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer );
     size = offsetof( DEV_BROADCAST_HANDLE, dbch_data[data_size + 2 * sizeof(WCHAR)] );
-    if (!(event_handle = heap_alloc_zero( size )))
+    if (!(event_handle = calloc( 1, size )))
     {
-        heap_free( name_info );
+        free( name_info );
         return STATUS_NO_MEMORY;
     }
 
@@ -1036,8 +1343,8 @@ NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
     event_handle->dbch_nameoffset = notification->NameBufferOffset;
     memcpy( event_handle->dbch_data, notification->CustomDataBuffer, data_size );
     send_devicechange( name_info->Name.Buffer, DBT_CUSTOMEVENT, (BYTE *)event_handle, event_handle->dbch_size );
-    heap_free( event_handle );
-    heap_free( name_info );
+    free( event_handle );
+    free( name_info );
 
     return STATUS_SUCCESS;
 }
@@ -1067,6 +1374,12 @@ NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCE
     HDEVINFO set;
 
     TRACE("device %p, type %#lx, access %#lx, key %p.\n", device, type, access, key);
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+    {
+        WARN( "Passed in non-PDO device.\n" );
+        return STATUS_INVALID_PARAMETER;
+    }
 
     if ((status = get_device_instance_id( device, device_instance_id )))
     {
@@ -1348,6 +1661,7 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
         wcscpy( pnp_device->id, id );
         pnp_device->device = device;
         list_add_tail( &new_list, &pnp_device->entry );
+        device->Flags |= DO_BUS_ENUMERATED_DEVICE;
 
         start_device( device, set, &sp_device );
     }

@@ -68,6 +68,8 @@ static BOOL fetch_tls_lvalue(const SYMBOL_INFO* sym, struct dbg_lvalue* lvalue)
     struct dbg_lvalue         lv_teb_tls, lv_index_addr, lv_module_tls;
     dbg_lgint_t               teb_tls_addr, index_addr, tls_module_addr;
     char*                     teb_tls_storage;
+    struct dbg_type           sym_type;
+    DWORD                     tls_offset;
 
     if (!mod || !mod->tls_index_offset || !dbg_curr_thread)
         return FALSE;
@@ -94,7 +96,10 @@ static BOOL fetch_tls_lvalue(const SYMBOL_INFO* sym, struct dbg_lvalue* lvalue)
     init_lvalue(&lv_module_tls, TRUE, (void*)(DWORD_PTR)(teb_tls_addr + tlsindex * ADDRSIZE));
     if (!memory_fetch_integer(&lv_module_tls, ADDRSIZE, FALSE, &tls_module_addr))
         return FALSE;
-    init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(tls_module_addr + sym->Address));
+    sym_type.module = sym->ModBase;
+    sym_type.id = sym->Index;
+    if (!types_get_info(&sym_type, TI_GET_ADDRESSOFFSET, &tls_offset)) return FALSE;
+    init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(tls_module_addr + tls_offset));
     return TRUE;
 }
 
@@ -154,7 +159,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         }
         else
         {
-            DWORD* pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
+            DWORD64* pdw = (DWORD64*)lexeme_alloc_size(sizeof(*pdw));
             init_lvalue(lvalue, FALSE, pdw);
             *pdw = sym->Value;
         }

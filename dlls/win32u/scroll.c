@@ -29,8 +29,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
+static struct scroll_info *get_control_state( HWND hwnd )
+{
+    return (struct scroll_info *)NtUserGetPrivateData( hwnd, 0, sizeof(struct scroll_info *) );
+}
 
-#define SCROLLBAR_MAGIC 0x5c6011ba
+static struct scroll_info *set_control_state( HWND hwnd, struct scroll_info *state )
+{
+    return (struct scroll_info *)NtUserSetPrivateData( hwnd, 0, sizeof(struct scroll_info *), (LONG_PTR)state );
+}
 
 /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4
@@ -72,8 +79,6 @@ struct win_scroll_bar_info
     struct scroll_info vert;
 };
 
-#define SCROLLBAR_MAGIC 0x5c6011ba
-
 
 static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
 {
@@ -91,12 +96,7 @@ static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
         if (win->pScroll) info = &win->pScroll->vert;
         break;
     case SB_CTL:
-        if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
-        {
-            struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
-            if (data->magic == SCROLLBAR_MAGIC) info = &data->info;
-        }
-        if (!info) WARN( "window is not a scrollbar control\n" );
+        if (!(info = get_control_state( hwnd ))) WARN( "window is not a scrollbar control\n" );
         break;
     case SB_BOTH:
         WARN( "with SB_BOTH\n" );
@@ -162,7 +162,7 @@ static BOOL show_scroll_bar( HWND hwnd, int bar, BOOL show_horz, BOOL show_vert 
         return FALSE;  /* Nothing to do! */
     }
 
-    old_style = set_window_style( hwnd, set_bits, clear_bits );
+    old_style = set_window_style_bits( hwnd, set_bits, clear_bits );
     if ((old_style & clear_bits) != 0 || (old_style & set_bits) != set_bits)
     {
         /* frame has been changed, let the window redraw itself */
@@ -199,7 +199,6 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         get_client_rect_rel( hwnd, COORDS_WINDOW, rect, get_thread_dpi() );
         rect->top = rect->bottom;
         rect->bottom += get_system_metrics( SM_CYHSCROLL );
-        if (win->dwStyle & WS_VSCROLL) rect->right++;
         vertical = FALSE;
         break;
 
@@ -215,7 +214,6 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
             rect->left = rect->right;
             rect->right += get_system_metrics( SM_CXVSCROLL );
         }
-        if (win->dwStyle & WS_HSCROLL) rect->bottom++;
         vertical = TRUE;
         break;
 
@@ -255,7 +253,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         if (info->page)
         {
             *thumb_size = muldiv( pixels,info->page, info->maxVal - info->minVal + 1 );
-            min_thumb_size = muldiv( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ), 96 );
+            min_thumb_size = map_user_dpi( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ) );
             if (*thumb_size < min_thumb_size) *thumb_size = min_thumb_size;
         }
         else *thumb_size = get_system_metrics( SM_CXVSCROLL );
@@ -477,7 +475,7 @@ static UINT get_thumb_val( HWND hwnd, int bar, RECT *rect, BOOL vertical, int po
         if (info->page)
         {
             thumb_size = muldiv( pixels, info->page, info->maxVal - info->minVal + 1 );
-            min_thumb_size = muldiv( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ), 96 );
+            min_thumb_size = map_user_dpi( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ) );
             if (thumb_size < min_thumb_size) thumb_size = min_thumb_size;
         }
         else thumb_size = get_system_metrics( SM_CXVSCROLL );
@@ -686,7 +684,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
     }
 
     TRACE( "Event: hwnd=%p bar=%d msg=%s pt=%d,%d hit=%d\n",
-           hwnd, bar, debugstr_msg_name( msg, hwnd ), (int)pt.x, (int)pt.y, hittest );
+           hwnd, bar, debugstr_msg_name( msg, hwnd ), pt.x, pt.y, hittest );
 
     switch (g_tracking_info.hit_test)
     {
@@ -1132,21 +1130,13 @@ static BOOL get_scroll_bar_info( HWND hwnd, LONG id, SCROLLBARINFO *info )
 
 static void create_scroll_bar( HWND hwnd, CREATESTRUCTW *create )
 {
-    struct scroll_info *info = NULL;
-    WND *win;
+    struct scroll_info *info;
 
     TRACE( "hwnd=%p create=%p\n", hwnd, create );
 
-    win = get_win_ptr( hwnd );
-    if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
-    {
-        struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
-        data->magic = SCROLLBAR_MAGIC;
-        info = &data->info;
-    }
-    else WARN( "Not enough extra data\n" );
-    release_win_ptr( win );
-    if (!info) return;
+    if (!(info = calloc( 1, sizeof(*info) ))) return;
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_SCROLLBAR) );
+    set_control_state( hwnd, info );
 
     if (create->style & WS_DISABLED)
     {
@@ -1309,6 +1299,11 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         return 0;
 
+    case WM_GETOBJECT:
+        if ((LONG)lparam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x1000a;
+        return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+
     case WM_SETFOCUS:
         {
             /* Create a caret when a ScrollBar get focus */
@@ -1460,7 +1455,7 @@ BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
  */
 BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
 {
-    TRACE( "hwnd=%p id=%d info=%p\n", hwnd, (int)id, info );
+    TRACE( "hwnd=%p id=%d info=%p\n", hwnd, id, info );
 
     /* Refer OBJID_CLIENT requests to the window */
     if (id == OBJID_CLIENT)

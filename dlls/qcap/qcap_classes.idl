@@ -28,7 +28,7 @@
 coclass AudioRecord {}
 
 [
-    helpstring("Audio Capture Filter"),
+    helpstring("AVI Compressor"),
     threading(both),
     uuid(d76e2820-1563-11cf-ac98-00aa004c0fa9)
 ]

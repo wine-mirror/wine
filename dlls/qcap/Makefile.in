@@ -3,6 +3,8 @@ UNIXLIB   = qcap.so
 IMPORTS   = strmbase strmiids uuid ole32 oleaut32 winmm msvcrt
 DELAYIMPORTS = msvfw32
 
+VER_PRODUCTVERSION = 6,5,1,900
+
 SOURCES = \
 	audiorecord.c \
 	avico.c \
@@ -13,5 +15,4 @@ SOURCES = \
 	qcap_main.c \
 	smartteefilter.c \
 	v4l.c \
-	version.rc \
 	vfwcapture.c

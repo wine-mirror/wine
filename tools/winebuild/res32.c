@@ -68,18 +68,10 @@ struct res_name
 struct res_type
 {
     const struct string_id  *type;         /* type name */
-    struct res_name         *names;        /* names array */
-    unsigned int             nb_names;     /* total number of names */
+    struct array             names;
     unsigned int             nb_id_names;  /* number of names that have a numeric id */
     unsigned int             dir_offset;   /* offset of directory in resource dir */
     unsigned int             name_offset;  /* offset of type name in resource dir */
-};
-
-/* top level of the resource tree */
-struct res_tree
-{
-    struct res_type *types;                /* types array */
-    unsigned int     nb_types;             /* total number of types */
 };
 
 /* size of a resource directory with n entries */
@@ -89,17 +81,9 @@ struct res_tree
 #define RESDIR_SIZE(n)  (RESOURCE_DIR_SIZE + (n) * RESOURCE_DIR_ENTRY_SIZE)
 
 
-static inline struct resource *add_resource( DLLSPEC *spec )
-{
-    spec->resources = xrealloc( spec->resources, (spec->nb_resources + 1) * sizeof(spec->resources[0]) );
-    return &spec->resources[spec->nb_resources++];
-}
-
 static struct res_name *add_name( struct res_type *type, struct resource *res )
 {
-    struct res_name *name;
-    type->names = xrealloc( type->names, (type->nb_names + 1) * sizeof(*type->names) );
-    name = &type->names[type->nb_names++];
+    struct res_name *name = ARRAY_ADD( &type->names, struct res_name );
     name->name         = &res->name;
     name->res          = res;
     name->nb_languages = 1;
@@ -107,14 +91,11 @@ static struct res_name *add_name( struct res_type *type, struct resource *res )
     return name;
 }
 
-static struct res_type *add_type( struct res_tree *tree, struct resource *res )
+static struct res_type *add_type( struct array *types, struct resource *res )
 {
-    struct res_type *type;
-    tree->types = xrealloc( tree->types, (tree->nb_types + 1) * sizeof(*tree->types) );
-    type = &tree->types[tree->nb_types++];
+    struct res_type *type = ARRAY_ADD( types, struct res_type );
     type->type        = &res->type;
-    type->names       = NULL;
-    type->nb_names    = 0;
+    type->names       = empty_array;
     type->nb_id_names = 0;
     return type;
 }
@@ -182,7 +163,7 @@ static int check_header(void)
 static void load_next_resource( DLLSPEC *spec, const char *name )
 {
     unsigned int hdr_size;
-    struct resource *res = add_resource( spec );
+    struct resource *res = ARRAY_ADD( &spec->resources, struct resource );
 
     res->data_size = get_dword();
     hdr_size = get_dword();
@@ -272,53 +253,52 @@ static char *format_res_string( const struct string_id *str )
 static void remove_duplicate_resources( DLLSPEC *spec )
 {
     unsigned int i, n;
+    struct resource *resources = (struct resource *)spec->resources.data;
 
-    for (i = n = 0; i < spec->nb_resources; i++, n++)
+    for (i = n = 0; i < spec->resources.count; i++, n++)
     {
-        if (i && !cmp_string( &spec->resources[i].type, &spec->resources[i-1].type ) &&
-            !cmp_string( &spec->resources[i].name, &spec->resources[i-1].name ) &&
-            spec->resources[i].lang == spec->resources[i-1].lang)
+        if (i && !cmp_string( &resources[i].type, &resources[i-1].type ) &&
+            !cmp_string( &resources[i].name, &resources[i-1].name ) &&
+            resources[i].lang == resources[i-1].lang)
         {
-            if (spec->resources[i].version == spec->resources[i-1].version)
+            if (resources[i].version == resources[i-1].version)
             {
-                char *type_str = format_res_string( &spec->resources[i].type );
-                char *name_str = format_res_string( &spec->resources[i].name );
+                char *type_str = format_res_string( &resources[i].type );
+                char *name_str = format_res_string( &resources[i].name );
                 error( "winebuild: duplicate resource type %s name %s language %04x version %08x\n",
-                       type_str, name_str, spec->resources[i].lang, spec->resources[i].version );
+                       type_str, name_str, resources[i].lang, resources[i].version );
             }
             else n--;  /* replace the previous one */
         }
-        if (n < i) spec->resources[n] = spec->resources[i];
+        if (n < i) resources[n] = resources[i];
     }
-    spec->nb_resources = n;
+    spec->resources.count = n;
 }
 
 /* build the 3-level (type,name,language) resource tree */
-static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_size )
+static struct array build_resource_tree( DLLSPEC *spec, unsigned int *dir_size )
 {
-    unsigned int i, k, n, offset, data_offset;
-    struct res_tree *tree;
+    unsigned int k, offset, data_offset;
+    struct array types = empty_array;
     struct res_type *type = NULL;
     struct res_name *name = NULL;
     struct resource *res;
 
-    qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
+    if (!spec->resources.count) return types;
+
+    ARRAY_SORT( &spec->resources, struct resource, cmp_res );
     remove_duplicate_resources( spec );
 
-    tree = xmalloc( sizeof(*tree) );
-    tree->types = NULL;
-    tree->nb_types = 0;
-
-    for (i = 0; i < spec->nb_resources; i++)
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
-        if (!i || cmp_string( &spec->resources[i].type, &spec->resources[i-1].type ))  /* new type */
+        if (!type || cmp_string( &res->type, &res[-1].type ))  /* new type */
         {
-            type = add_type( tree, &spec->resources[i] );
-            name = add_name( type, &spec->resources[i] );
+            type = add_type( &types, res );
+            name = add_name( type, res );
         }
-        else if (cmp_string( &spec->resources[i].name, &spec->resources[i-1].name )) /* new name */
+        else if (cmp_string( &res->name, &res[-1].name )) /* new name */
         {
-            name = add_name( type, &spec->resources[i] );
+            name = add_name( type, res );
         }
         else
         {
@@ -328,21 +308,21 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
 
     /* compute the offsets */
 
-    offset = RESDIR_SIZE( tree->nb_types );
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    offset = RESDIR_SIZE( types.count );
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         type->dir_offset = offset;
-        offset += RESDIR_SIZE( type->nb_names );
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        offset += RESDIR_SIZE( type->names.count );
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
         {
             name->dir_offset = offset;
             offset += RESDIR_SIZE( name->nb_languages );
         }
     }
     data_offset = offset;
-    offset += spec->nb_resources * RESOURCE_DATA_ENTRY_SIZE;
+    offset += spec->resources.count * RESOURCE_DATA_ENTRY_SIZE;
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         if (type->type->str)
         {
@@ -351,7 +331,7 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
         }
         else type->name_offset = type->type->id;
 
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
         {
             if (name->name->str)
             {
@@ -361,23 +341,13 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
             else name->name_offset = name->name->id;
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
             {
-                unsigned int entry_offset = (res - spec->resources) * RESOURCE_DATA_ENTRY_SIZE;
+                unsigned int entry_offset = (res - (struct resource *)spec->resources.data) * RESOURCE_DATA_ENTRY_SIZE;
                 res->data_offset = data_offset + entry_offset;
             }
         }
     }
     if (dir_size) *dir_size = (offset + 3) & ~3;
-    return tree;
-}
-
-/* free the resource tree */
-static void free_resource_tree( struct res_tree *tree )
-{
-    unsigned int i;
-
-    for (i = 0; i < tree->nb_types; i++) free( tree->types[i].names );
-    free( tree->types );
-    free( tree );
+    return types;
 }
 
 /* output a Unicode string */
@@ -405,15 +375,11 @@ static inline void output_res_dir( unsigned int nb_names, unsigned int nb_ids )
 void output_resources( DLLSPEC *spec )
 {
     int k, nb_id_types;
-    unsigned int i, n;
-    struct res_tree *tree;
-    struct res_type *type;
-    struct res_name *name;
+    unsigned int i;
     const struct resource *res;
+    struct array types = build_resource_tree( spec, NULL );
 
-    if (!spec->nb_resources) return;
-
-    tree = build_resource_tree( spec, NULL );
+    if (!types.count) return;
 
     /* output the resource directories */
 
@@ -422,27 +388,27 @@ void output_resources( DLLSPEC *spec )
     output( "\t.balign %u\n", get_ptr_size() );
     output( ".L__wine_spec_resources:\n" );
 
-    for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
-        if (!type->type->str) nb_id_types++;
+    nb_id_types = 0;
+    ARRAY_FOR_EACH( type, &types, struct res_type ) if (!type->type->str) nb_id_types++;
 
-    output_res_dir( tree->nb_types - nb_id_types, nb_id_types );
+    output_res_dir( types.count - nb_id_types, nb_id_types );
 
     /* dump the type directory */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
         output( "\t.long 0x%08x,0x%08x\n",
                  type->name_offset, type->dir_offset | 0x80000000 );
 
     /* dump the names and languages directories */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
-        output_res_dir( type->nb_names - type->nb_id_names, type->nb_id_names );
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        output_res_dir( type->names.count - type->nb_id_names, type->nb_id_names );
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
             output( "\t.long 0x%08x,0x%08x\n",
                      name->name_offset, name->dir_offset | 0x80000000 );
 
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
         {
             output_res_dir( 0, name->nb_languages );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
@@ -452,27 +418,29 @@ void output_resources( DLLSPEC *spec )
 
     /* dump the resource data entries */
 
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    i = 0;
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
-        output_rva( ".L__wine_spec_res_%d", i );
+        output_rva( ".L__wine_spec_res_%d", i++ );
         output( "\t.long %u,0,0\n", res->data_size );
     }
 
     /* dump the name strings */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         if (type->type->str) output_string( type->type );
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
             if (name->name->str) output_string( name->name );
     }
 
     /* resource data */
 
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    i = 0;
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
         output( "\n\t.balign 4\n" );
-        output( ".L__wine_spec_res_%d:\n", i );
+        output( ".L__wine_spec_res_%d:\n", i++ );
         output( "\t.incbin \"%s\",%d,%d\n", res->input_name, res->input_offset, res->data_size );
     }
 
@@ -481,7 +449,6 @@ void output_resources( DLLSPEC *spec )
         output( ".L__wine_spec_resources_end:\n" );
         output( "\t.byte 0\n" );
     }
-    free_resource_tree( tree );
 }
 
 /* output a Unicode string in binary format */
@@ -508,27 +475,24 @@ static inline void output_bin_res_dir( unsigned int nb_names, unsigned int nb_id
 void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
 {
     int k, nb_id_types;
-    unsigned int i, n, data_offset;
-    struct res_tree *tree;
-    struct res_type *type;
-    struct res_name *name;
+    unsigned int data_offset;
     const struct resource *res;
+    struct array types = build_resource_tree( spec, &data_offset );
 
-    if (!spec->nb_resources) return;
+    if (!types.count) return;
 
-    tree = build_resource_tree( spec, &data_offset );
     init_output_buffer();
 
     /* output the resource directories */
 
-    for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
-        if (!type->type->str) nb_id_types++;
+    nb_id_types = 0;
+    ARRAY_FOR_EACH( type, &types, struct res_type ) if (!type->type->str) nb_id_types++;
 
-    output_bin_res_dir( tree->nb_types - nb_id_types, nb_id_types );
+    output_bin_res_dir( types.count - nb_id_types, nb_id_types );
 
     /* dump the type directory */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         put_dword( type->name_offset );
         put_dword( type->dir_offset | 0x80000000 );
@@ -536,16 +500,16 @@ void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
 
     /* dump the names and languages directories */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
-        output_bin_res_dir( type->nb_names - type->nb_id_names, type->nb_id_names );
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        output_bin_res_dir( type->names.count - type->nb_id_names, type->nb_id_names );
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
         {
             put_dword( name->name_offset );
             put_dword( name->dir_offset | 0x80000000 );
         }
 
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
         {
             output_bin_res_dir( 0, name->nb_languages );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
@@ -558,7 +522,7 @@ void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
 
     /* dump the resource data entries */
 
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
         put_dword( data_offset + start_rva );
         put_dword( res->data_size );
@@ -569,23 +533,21 @@ void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
 
     /* dump the name strings */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         if (type->type->str) output_bin_string( type->type );
-        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        ARRAY_FOR_EACH( name, &type->names, struct res_name )
             if (name->name->str) output_bin_string( name->name );
     }
 
     /* resource data */
 
     align_output( 4 );
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
         put_data( res->data, res->data_size );
         align_output( 4 );
     }
-
-    free_resource_tree( tree );
 }
 
 static unsigned int get_resource_header_size( const struct resource *res )
@@ -604,14 +566,13 @@ static unsigned int get_resource_header_size( const struct resource *res )
 /* output the resources into a .o file */
 void output_res_o_file( DLLSPEC *spec )
 {
-    unsigned int i;
     char *res_file = NULL;
     struct strarray args;
 
-    if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
+    if (!spec->resources.count) fatal_error( "--resources mode needs at least one resource file as input\n" );
     if (!output_file_name) fatal_error( "No output file name specified\n" );
 
-    qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
+    ARRAY_SORT( &spec->resources, struct resource, cmp_res );
     remove_duplicate_resources( spec );
 
     byte_swapped = 0;
@@ -629,21 +590,21 @@ void output_res_o_file( DLLSPEC *spec )
     put_dword( 0 );      /* Version */
     put_dword( 0 );      /* Characteristics */
 
-    for (i = 0; i < spec->nb_resources; i++)
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
-        unsigned int header_size = get_resource_header_size( &spec->resources[i] );
+        unsigned int header_size = get_resource_header_size( res );
 
-        put_dword( spec->resources[i].data_size );
+        put_dword( res->data_size );
         put_dword( (header_size + 3) & ~3 );
-        put_string( &spec->resources[i].type );
-        put_string( &spec->resources[i].name );
+        put_string( &res->type );
+        put_string( &res->name );
         align_output( 4 );
         put_dword( 0 );
-        put_word( spec->resources[i].mem_options );
-        put_word( spec->resources[i].lang );
-        put_dword( spec->resources[i].version );
+        put_word( res->mem_options );
+        put_word( res->lang );
+        put_dword( res->version );
         put_dword( 0 );
-        put_data( spec->resources[i].data, spec->resources[i].data_size );
+        put_data( res->data, res->data_size );
         align_output( 4 );
     }
 

@@ -266,6 +266,12 @@ typedef struct _DEVICE_SEEK_PENALTY_DESCRIPTOR {
     BOOLEAN                     IncursSeekPenalty;
 } DEVICE_SEEK_PENALTY_DESCRIPTOR, *PDEVICE_SEEK_PENALTY_DESCRIPTOR;
 
+typedef struct _DEVICE_TRIM_DESCRIPTOR {
+    DWORD                       Version;
+    DWORD                       Size;
+    BOOLEAN                     TrimEnabled;
+} DEVICE_TRIM_DESCRIPTOR, *PDEVICE_TRIM_DESCRIPTOR;
+
 typedef struct _STORAGE_DESCRIPTOR_HEADER {
     ULONG                       Version;
     ULONG                       Size;
@@ -281,6 +287,19 @@ typedef enum _STORAGE_BUS_TYPE {
     BusTypeFibre,
     BusTypeUsb,
     BusTypeRAID,
+    BusTypeiScsi,
+    BusTypeSas,
+    BusTypeSata,
+    BusTypeSd,
+    BusTypeMmc,
+    BusTypeVirtual,
+    BusTypeFileBackedVirtual,
+    BusTypeSpaces,
+    BusTypeNvme,
+    BusTypeSCM,
+    BusTypeUfs,
+    BusTypeNvmeof,
+    BusTypeMax,
     BusTypeMaxReserved = 0x7F
 } STORAGE_BUS_TYPE, *PSTORAGE_BUS_TYPE;
 

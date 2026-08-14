@@ -861,6 +861,15 @@ std_Ctraits * __thiscall std_Ctraits_op_assign( std_Ctraits *this, std_Ctraits *
     return this;
 }
 
+/* ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z -> bool std::_Ctraits<float>::_Isinf(float) */
+BOOLEAN __cdecl std_Ctraits_float__Isinf( float x ) { return isinf(x); }
+
+/* ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z -> bool std::_Ctraits<double>::_Isinf(double) */
+BOOLEAN __cdecl std_Ctraits_double__Isinf( double x ) { return isinf(x); }
+
+/* ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z -> bool std::_Ctraits<long double>::_Isinf(long double) */
+BOOLEAN __cdecl std_Ctraits_long_double__Isinf( LDOUBLE x ) { return isinf(x); }
+
 /* ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z -> public: static bool __cdecl std::_Ctraits<float>::_Isnan(float) */
 BOOLEAN __cdecl std_Ctraits_float__Isnan( float x ) { return _isnan(x); }
 
@@ -2361,6 +2370,38 @@ short __cdecl _FExp(float *x, float y, short scale)
     *x = d;
 
     return dclass(*x);
+}
+
+/* ?_Cosh@?$_Ctr@N@std@@SANNN@Z
+   ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
+   ?_Cosh@?$_Ctr@O@std@@SAOOO@Z
+   ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z*/
+double __cdecl _Cosh(double x, double y)
+{
+    return y * cosh(x);
+}
+
+/* ?_Cosh@?$_Ctr@M@std@@SAMMM@Z
+   ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z*/
+float __cdecl _FCosh(float x, float y)
+{
+    return y * cosh(x);
+}
+
+/* ?_Sinh@?$_Ctr@N@std@@SANNN@Z
+   ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
+   ?_Sinh@?$_Ctr@O@std@@SAOOO@Z
+   ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z */
+double __cdecl _Sinh(double x, double y)
+{
+    return y * sinh(x);
+}
+
+/* ?_Sinh@?$_Ctr@M@std@@SAMMM@Z
+   ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z */
+float __cdecl _FSinh(float x, float y)
+{
+    return y * sinh(x);
 }
 
 /* ?_XLgamma@std@@YANN@Z */

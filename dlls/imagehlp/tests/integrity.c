@@ -356,7 +356,10 @@ static void test_pe_checksum(void)
     ret = CheckSumMappedFile(modinfo.lpBaseOfDll, 0, &checksum_orig, &checksum_new);
     ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0xdeadbeef) || (checksum_orig == checksum_correct), "Expected %lx, got %lx\n", checksum_correct, checksum_orig);
-    ok((checksum_new == 0xdeadbeef) || (checksum_new != 0 && checksum_new != 0xdeadbeef), "Got unexpected value %lx\n", checksum_new);
+    ok((checksum_new == 0xdeadbeef) ||
+       (checksum_new != 0 && checksum_new != 0xdeadbeef) ||
+       (ret && ret->OptionalHeader.CheckSum == 0 && checksum_new == 0), /* llvm-mingw creates binaries with zero CheckSum */
+       "Got unexpected value %lx\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
     ret = CheckSumMappedFile((char *)modinfo.lpBaseOfDll + 1, 0,

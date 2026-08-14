@@ -272,6 +272,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         if (lpv) break;
         if (dispatch_typeinfo) ITypeInfo_Release(dispatch_typeinfo);
         release_regexp_typelib();
+        release_c_locale();
     }
 
     return TRUE;

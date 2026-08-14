@@ -139,25 +139,33 @@ static INT_PTR CALLBACK delhist_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPAR
  * Filter an URL, add a usable scheme, when needed
  *
  */
-static DWORD parse_url_from_outside(LPCWSTR url, LPWSTR out, DWORD maxlen)
+static BOOL parse_url_from_outside(const WCHAR *in, WCHAR *out, DWORD out_len)
 {
-    HMODULE hdll;
-    DWORD (WINAPI *pParseURLFromOutsideSourceW)(LPCWSTR, LPWSTR, LPDWORD, LPDWORD);
-    DWORD res;
+    WCHAR buffer_in[INTERNET_MAX_URL_LENGTH];
+    DWORD in_len;
+    HRESULT hr;
 
-    hdll = LoadLibraryA("shdocvw.dll");
-    pParseURLFromOutsideSourceW = (void *) GetProcAddress(hdll, (LPSTR) 170);
-
-    if (pParseURLFromOutsideSourceW)
+    if (!PathIsURLW(in))
     {
-        res = pParseURLFromOutsideSourceW(url, out, &maxlen, NULL);
-        FreeLibrary(hdll);
-        return res;
+        in_len = ARRAY_SIZE(buffer_in);
+        buffer_in[0] = 0;
+        hr = UrlApplySchemeW(in, buffer_in, &in_len, URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT);
+        TRACE("got 0x%lx with %s\n", hr, debugstr_w(buffer_in));
+        if (hr == S_OK)
+        {
+            /* we parsed the url to buffer_in */
+            in = buffer_in;
+        }
+        else
+        {
+            FIXME("call search hook for %s\n", debugstr_w(in));
+        }
     }
 
-    ERR("failed to get ordinal 170: %ld\n", GetLastError());
-    FreeLibrary(hdll);
-    return 0;
+    out[0] = 0;
+    hr = UrlCanonicalizeW(in, out, &out_len, URL_ESCAPE_SPACES_ONLY);
+    TRACE("got 0x%lx with %s\n", hr, debugstr_w(out));
+    return SUCCEEDED(hr);
 }
 
 /*********************************************************************

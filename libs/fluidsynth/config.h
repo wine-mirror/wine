@@ -218,6 +218,7 @@
 /* #undef TEST_SOUNDFONT_UTF8_1 */
 /* #undef TEST_SOUNDFONT_UTF8_2 */
 /* #undef TEST_MIDI_UTF8 */
+/* #undef TEST_WAV_UTF8 */
 
 /* SF3 Soundfont to load for unit testing */
 /* #undef TEST_SOUNDFONT_SF3 */

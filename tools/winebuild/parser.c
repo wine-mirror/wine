@@ -163,15 +163,8 @@ static const char * GetToken( int allow_eol )
 
 static ORDDEF *add_entry_point( DLLSPEC *spec )
 {
-    ORDDEF *ret;
+    ORDDEF *ret = ARRAY_ADD( &spec->entry_points, ORDDEF );
 
-    if (spec->nb_entry_points == spec->alloc_entry_points)
-    {
-        spec->alloc_entry_points += 128;
-        spec->entry_points = xrealloc( spec->entry_points,
-                                       spec->alloc_entry_points * sizeof(*spec->entry_points) );
-    }
-    ret = &spec->entry_points[spec->nb_entry_points++];
     memset( ret, 0, sizeof(*ret) );
     return ret;
 }
@@ -184,10 +177,8 @@ static ORDDEF *add_entry_point( DLLSPEC *spec )
 static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 {
     char *endptr;
-    unsigned int *value_array;
-    int n_values;
-    int value_array_size;
     const char *token;
+    struct array values = empty_array;
 
     if (spec->type == SPEC_WIN32)
     {
@@ -202,38 +193,20 @@ static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
         return 0;
     }
 
-    n_values = 0;
-    value_array_size = 25;
-    value_array = xmalloc(sizeof(*value_array) * value_array_size);
-
     for (;;)
     {
-        if (!(token = GetToken(0)))
-        {
-            free( value_array );
-            return 0;
-        }
-	if (*token == ')')
-	    break;
+        if (!(token = GetToken(0))) return 0;
+	if (*token == ')') break;
 
-	value_array[n_values++] = strtoul(token, &endptr, 0);
-	if (n_values == value_array_size)
-	{
-	    value_array_size += 25;
-	    value_array = xrealloc(value_array,
-				   sizeof(*value_array) * value_array_size);
-	}
-
+        *ARRAY_ADD( &values, unsigned int ) = strtoul(token, &endptr, 0);
 	if (endptr == NULL || *endptr != '\0')
         {
             error( "Expected number value, got '%s'\n", token );
-            free( value_array );
             return 0;
         }
     }
 
-    odp->u.var.n_values = n_values;
-    odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
+    odp->u.var = values;
     return 1;
 }
 
@@ -249,6 +222,8 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
     unsigned int i, arg;
     int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
 
+    odp->u.func.nb_args = 0;
+
     if (!(token = GetToken( optional ))) return optional;
     if (*token != '(')
     {
@@ -256,7 +231,6 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
         return 0;
     }
 
-    odp->u.func.nb_args = 0;
     for (i = 0; i < MAX_ARGUMENTS; i++)
     {
         if (!(token = GetToken(0))) return 0;
@@ -280,6 +254,8 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             if (!is_win32) break;
             error( "Argument type '%s' only allowed for Win16\n", token );
             return 0;
+        case ARG_INT64:
+        case ARG_INT128:
         case ARG_FLOAT:
         case ARG_DOUBLE:
             if (!(odp->flags & FLAG_SYSCALL)) break;
@@ -307,6 +283,11 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             error( "First argument of a thiscall function must be a pointer\n" );
             return 0;
         }
+        if (odp->flags & FLAG_CPU_MASK & ~FLAG_CPU(CPU_i386))
+        {
+            error( "A thiscall function can only be exported on i386\n" );
+            return 0;
+        }
     }
     if (odp->flags & FLAG_FASTCALL)
     {
@@ -321,7 +302,7 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
     }
     if (odp->flags & FLAG_SYSCALL)
     {
-        if (odp->type != TYPE_STDCALL)
+        if (odp->type != TYPE_STDCALL && odp->type != TYPE_STUB)
         {
             error( "A syscall function must use the stdcall convention\n" );
             return 0;
@@ -358,7 +339,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
     if (target.cpu != CPU_i386)
-        odp->flags &= ~(FLAG_THISCALL | FLAG_FASTCALL);
+        odp->flags &= ~FLAG_FASTCALL;
 
     if (!(token = GetToken(1)))
     {
@@ -414,7 +395,7 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
         error( "Value %d for absolute symbol doesn't fit in 16 bits\n", value );
         value = 0;
     }
-    odp->u.abs.value = value;
+    odp->u.abs = value;
     return 1;
 }
 
@@ -426,10 +407,16 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
  */
 static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
-    odp->u.func.nb_args = -1;
-    odp->link_name = xstrdup("");
+    const char *token;
 
-    return parse_spec_arguments( odp, spec, 1 );
+    if (!parse_spec_arguments( odp, spec, 1 )) return 0;
+
+    if (!(token = GetToken(1)))
+        odp->link_name = xstrdup( odp->name );
+    else
+        odp->link_name = xstrdup( token );
+
+    return 1;
 }
 
 
@@ -506,6 +493,15 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp, const char *tok
                 cpu_name = strtok( NULL, "," );
             }
             free( args );
+        }
+        else if (!strncmp( token, "syscall=", 8 ))
+        {
+            char *end;
+            unsigned int id = strtoul( token + 8, &end, 0 );
+
+            if (*end || id >= 0x4000)
+                error( "Invalid syscall number '%s', should be in range 0-0x3fff\n", token + 8 );
+            odp->flags |= FLAG_SYSCALL;
         }
         else if (!strcmp( token, "i386" ))  /* backwards compatibility */
         {
@@ -690,7 +686,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     return 1;
 
 error:
-    spec->nb_entry_points--;
+    spec->entry_points.count--;
     free( odp->name );
     return 0;
 }
@@ -727,31 +723,24 @@ static unsigned int apiset_add_str( struct apiset *apiset, const char *str, unsi
     return ret - apiset->strings;
 }
 
-static void add_apiset( struct apiset *apiset, const char *api )
+static struct apiset_entry *add_apiset( struct apiset *apiset, const char *api )
 {
-    struct apiset_entry *entry;
+    struct apiset_entry *entry = ARRAY_ADD( &apiset->entries, struct apiset_entry );
 
-    if (apiset->count == apiset->size)
-    {
-        apiset->size = max( apiset->size * 2, 64 );
-        apiset->entries = xrealloc( apiset->entries, apiset->size * sizeof(*apiset->entries) );
-    }
-    entry = &apiset->entries[apiset->count++];
     entry->name_len = strlen( api );
     entry->name_off = apiset_add_str( apiset, api, entry->name_len );
     entry->hash = apiset_hash( api );
     entry->hash_len = apiset_hash_len( api );
     entry->val_count = 0;
+    return entry;
 }
 
-static void add_apiset_value( struct apiset *apiset, const char *value )
+static void add_apiset_value( struct apiset *apiset, struct apiset_entry *entry, const char *value )
 {
-    struct apiset_entry *entry = &apiset->entries[apiset->count - 1];
-
     if (entry->val_count < ARRAY_SIZE(entry->values) - 1)
     {
         struct apiset_value *val = &entry->values[entry->val_count++];
-        char *sep = strchr( value, ':' );
+        const char *sep = strchr( value, ':' );
 
         if (sep)
         {
@@ -777,7 +766,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
 {
     struct apiset_entry *entry;
     const char *token;
-    unsigned int i, hash;
+    unsigned int hash;
 
     if (!data_only)
     {
@@ -794,7 +783,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
     }
 
     hash = apiset_hash( token );
-    for (i = 0, entry = spec->apiset.entries; i < spec->apiset.count; i++, entry++)
+    ARRAY_FOR_EACH( entry, &spec->apiset.entries, struct apiset_entry )
     {
         if (entry->name_len == strlen( token ) &&
             !strncmp( spec->apiset.strings + entry->name_off, token, entry->name_len ))
@@ -809,7 +798,8 @@ static int parse_spec_apiset( DLLSPEC *spec )
             return 0;
         }
     }
-    add_apiset( &spec->apiset, token );
+
+    entry = add_apiset( &spec->apiset, token );
 
     if (!(token = GetToken(0)) || strcmp( token, "=" ))
     {
@@ -817,7 +807,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
         return 0;
     }
 
-    while ((token = GetToken(1))) add_apiset_value( &spec->apiset, token );
+    while ((token = GetToken(1))) add_apiset_value( &spec->apiset, entry, token );
     return 1;
 }
 
@@ -945,12 +935,9 @@ static void assign_ordinals( struct exports *exports )
 
 static void assign_exports( DLLSPEC *spec, unsigned int cpu, struct exports *exports )
 {
-    unsigned int i;
-
-    exports->entry_points = xmalloc( spec->nb_entry_points * sizeof(*exports->entry_points) );
-    for (i = 0; i < spec->nb_entry_points; i++)
+    exports->entry_points = xmalloc( spec->entry_points.count * sizeof(*exports->entry_points) );
+    ARRAY_FOR_EACH( entry, &spec->entry_points, ORDDEF )
     {
-        ORDDEF *entry = &spec->entry_points[i];
         if ((entry->flags & FLAG_CPU_MASK) && !(entry->flags & FLAG_CPU(cpu)))
             continue;
         exports->entry_points[exports->nb_entry_points++] = entry;
@@ -1238,7 +1225,7 @@ static int parse_def_export( char *name, DLLSPEC *spec )
     return 1;
 
 error:
-    spec->nb_entry_points--;
+    spec->entry_points.count--;
     free( odp->name );
     return 0;
 }

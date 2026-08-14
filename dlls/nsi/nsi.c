@@ -25,7 +25,6 @@
 #include "iptypes.h"
 #include "netiodef.h"
 #include "wine/nsi.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
@@ -82,7 +81,7 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
         {
             if (sizes[i])
             {
-                data[i] = heap_alloc( sizes[i] * num );
+                data[i] = HeapAlloc( GetProcessHeap(), 0, sizes[i] * num );
                 if (!data[i])
                 {
                     err = ERROR_OUTOFMEMORY;
@@ -210,10 +209,10 @@ DWORD WINAPI NsiEnumerateObjectsAllParametersEx( struct nsi_enumerate_all_ex *pa
 void WINAPI NsiFreeTable( void *key_data, void *rw_data, void *dynamic_data, void *static_data )
 {
     TRACE( "%p %p %p %p\n", key_data, rw_data, dynamic_data, static_data );
-    heap_free( key_data );
-    heap_free( rw_data );
-    heap_free( dynamic_data );
-    heap_free( static_data );
+    HeapFree( GetProcessHeap(), 0, key_data );
+    HeapFree( GetProcessHeap(), 0, rw_data );
+    HeapFree( GetProcessHeap(), 0, dynamic_data );
+    HeapFree( GetProcessHeap(), 0, static_data );
 }
 
 DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,

@@ -21,6 +21,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include "macdrv.h"
@@ -35,10 +39,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
 
-#define CHECK_SYSTRAY_TIMER         1
-#define CHECK_SYSTRAY_INTERVAL_MS   2000
-
-
 /* an individual systray icon */
 struct tray_icon
 {
@@ -50,6 +50,7 @@ struct tray_icon
     WCHAR               tiptext[128];       /* tooltip text */
     DWORD               state;              /* state flags */
     macdrv_status_item  status_item;
+    UINT                version;
 };
 
 static struct list icon_list = LIST_INIT(icon_list);
@@ -58,50 +59,16 @@ static struct list icon_list = LIST_INIT(icon_list);
 static BOOL delete_icon(struct tray_icon *icon);
 
 
+
 /***********************************************************************
- *              check_icons
- *
- * Timer procedure for periodically checking that the systray icons are
- * still valid (their owning windows still exist).
+ *              CleanupIcons   (MACDRV.@)
  */
-static VOID CALLBACK check_icons(HWND hwnd, UINT msg, UINT_PTR timer, DWORD time)
+void macdrv_CleanupIcons(HWND hwnd)
 {
     struct tray_icon *icon, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(icon, next, &icon_list, struct tray_icon, entry)
-        if (!IsWindow(icon->owner)) delete_icon(icon);
-}
-
-
-/***********************************************************************
- *              setup_check_icons_timer
- *
- * Set up a window with a timer to check that tray icons are still valid
- * (their owning windows still exist).
- */
-static void setup_check_icons_timer(void)
-{
-    static BOOL done;
-
-    if (!done)
-    {
-        static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
-        HWND timer_window;
-
-        /* Whether we succeed or not, don't try again. */
-        done = TRUE;
-
-        timer_window = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE,
-                                     NULL, NULL, NULL);
-        if (!timer_window)
-        {
-            WARN("Could not create systray checking message window\n");
-            return;
-        }
-
-        if (!SetTimer(timer_window, CHECK_SYSTRAY_TIMER, CHECK_SYSTRAY_INTERVAL_MS, check_icons))
-            WARN("Could not create systray checking timer\n");
-    }
+        if (icon->owner == hwnd) delete_icon(icon);
 }
 
 
@@ -159,7 +126,7 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
 
                         if (icon->image)
                             update_image = TRUE;
-                        if (lstrlenW(icon->tiptext))
+                        if (*icon->tiptext)
                             update_tooltip = TRUE;
                     }
                     else
@@ -171,8 +138,8 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
 
     if (nid->uFlags & NIF_ICON)
     {
-        if (icon->image) DestroyIcon(icon->image);
-        icon->image = CopyIcon(nid->hIcon);
+        if (icon->image) NtUserDestroyCursor(icon->image, 0);
+        icon->image = CopyImage(nid->hIcon, IMAGE_ICON, 0, 0, 0);
         if (icon->status_item)
             update_image = TRUE;
     }
@@ -183,7 +150,7 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
     }
     if (nid->uFlags & NIF_TIP)
     {
-        lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
+        lstrcpynW(icon->tiptext, nid->szTip, ARRAY_SIZE(icon->tiptext));
         if (icon->status_item)
             update_tooltip = TRUE;
     }
@@ -231,9 +198,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
         return FALSE;
     }
 
-    setup_check_icons_timer();
-
-    if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
+    if (!(icon = calloc(1, sizeof(*icon))))
     {
         ERR("out of memory\n");
         return FALSE;
@@ -272,18 +237,16 @@ static BOOL delete_icon(struct tray_icon *icon)
         macdrv_destroy_status_item(icon->status_item);
     }
     list_remove(&icon->entry);
-    DestroyIcon(icon->image);
-    HeapFree(GetProcessHeap(), 0, icon);
+    NtUserDestroyCursor(icon->image, 0);
+    free(icon);
     return TRUE;
 }
 
 
 /***********************************************************************
- *              wine_notify_icon   (MACDRV.@)
- *
- * Driver-side implementation of Shell_NotifyIcon.
+ *              NotifyIcon   (MACDRV.@)
  */
-int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
+LRESULT macdrv_NotifyIcon(HWND hwnd, UINT msg, NOTIFYICONDATAW *data)
 {
     BOOL ret = FALSE;
     struct tray_icon *icon;
@@ -299,13 +262,42 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
     case NIM_MODIFY:
         if ((icon = get_icon(data->hWnd, data->uID))) ret = modify_icon(icon, data);
         break;
-    default:
-        FIXME("unhandled tray message: %u\n", msg);
+    case NIM_SETVERSION:
+        if ((icon = get_icon(data->hWnd, data->uID)))
+        {
+            icon->version = data->uVersion;
+            ret = TRUE;
+        }
         break;
+    default:
+        ERR("Unexpected NotifyIconProc call\n");
+        return -1;
     }
     return ret;
 }
 
+static BOOL notify_owner(struct tray_icon *icon, UINT msg, int x, int y)
+{
+    WPARAM wp = icon->id;
+    LPARAM lp = msg;
+
+    if (icon->version >= NOTIFYICON_VERSION_4)
+    {
+        wp = MAKEWPARAM(x, y);
+        lp = MAKELPARAM(msg, icon->id);
+    }
+
+    TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
+    if (!NtUserMessageCall(icon->owner, icon->callback_message, wp, lp,
+                           0, NtUserSendNotifyMessage, FALSE) &&
+        (RtlGetLastWin32Error() == ERROR_INVALID_WINDOW_HANDLE))
+    {
+        WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
+        delete_icon(icon);
+        return FALSE;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *              macdrv_status_item_mouse_button
@@ -316,9 +308,10 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
 {
     struct tray_icon *icon;
 
-    TRACE("item %p button %d down %d count %d\n", event->status_item_mouse_button.item,
+    TRACE("item %p button %d down %d count %d pos %d,%d\n", event->status_item_mouse_button.item,
           event->status_item_mouse_button.button, event->status_item_mouse_button.down,
-          event->status_item_mouse_button.count);
+          event->status_item_mouse_button.count, event->status_item_mouse_button.x,
+          event->status_item_mouse_button.y);
 
     LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
     {
@@ -341,21 +334,17 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
             else if (event->status_item_mouse_button.count % 2 == 0)
                 msg += WM_LBUTTONDBLCLK - WM_LBUTTONDOWN;
 
-            if (!SendMessageW(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
-                return;
-            }
+            send_message(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0);
 
-            TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, msg) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
+            if (!notify_owner(icon, msg, event->status_item_mouse_button.x, event->status_item_mouse_button.y))
                 return;
+
+            if (icon->version)
+            {
+                if (msg == WM_LBUTTONUP)
+                    notify_owner(icon, NIN_SELECT, event->status_item_mouse_button.x, event->status_item_mouse_button.y);
+                else if (msg == WM_RBUTTONUP)
+                    notify_owner(icon, WM_CONTEXTMENU, event->status_item_mouse_button.x, event->status_item_mouse_button.y);
             }
 
             break;
@@ -373,20 +362,14 @@ void macdrv_status_item_mouse_move(const macdrv_event *event)
 {
     struct tray_icon *icon;
 
-    TRACE("item %p\n", event->status_item_mouse_move.item);
+    TRACE("item %p pos %d,%d\n", event->status_item_mouse_move.item,
+          event->status_item_mouse_move.x, event->status_item_mouse_move.y);
 
     LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
     {
         if (icon->status_item == event->status_item_mouse_move.item)
         {
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, WM_MOUSEMOVE) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
-                return;
-            }
-
+            notify_owner(icon, WM_MOUSEMOVE, event->status_item_mouse_move.x, event->status_item_mouse_move.y);
             break;
         }
     }

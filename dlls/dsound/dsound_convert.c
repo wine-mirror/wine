@@ -47,106 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-#ifdef WORDS_BIGENDIAN
-#define le16(x) RtlUshortByteSwap((x))
-#define le32(x) RtlUlongByteSwap((x))
-#else
-#define le16(x) (x)
-#define le32(x) (x)
-#endif
-
-static float get8(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    const BYTE *buf = base + channel;
-    return (buf[0] - 0x80) / (float)0x80;
-}
-
-static float get16(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    const BYTE *buf = base + 2 * channel;
-    const SHORT *sbuf = (const SHORT*)(buf);
-    SHORT sample = (SHORT)le16(*sbuf);
-    return sample / (float)0x8000;
-}
-
-static float get24(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    LONG sample;
-    const BYTE *buf = base + 3 * channel;
-
-    /* The next expression deliberately has an overflow for buf[2] >= 0x80,
-       this is how negative values are made.
-     */
-    sample = (buf[0] << 8) | (buf[1] << 16) | (buf[2] << 24);
-    return sample / (float)0x80000000U;
-}
-
-static float get32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    const BYTE *buf = base + 4 * channel;
-    const LONG *sbuf = (const LONG*)(buf);
-    LONG sample = le32(*sbuf);
-    return sample / (float)0x80000000U;
-}
-
-static float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    const BYTE *buf = base + 4 * channel;
-    const float *sbuf = (const float*)(buf);
-    /* The value will be clipped later, when put into some non-float buffer */
-    return *sbuf;
-}
-
-const bitsgetfunc getbpp[5] = {get8, get16, get24, get32, getieee32};
-
-float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    DWORD channels = dsb->pwfx->nChannels;
-    DWORD c;
-    float val = 0;
-    /* XXX: does Windows include LFE into the mix? */
-    for (c = 0; c < channels; c++)
-        val += dsb->get_aux(dsb, base, c);
-    val /= channels;
-    return val;
-}
-
-static inline unsigned char f_to_8(float value)
-{
-    if(value <= -1.f)
-        return 0;
-    if(value >= 1.f * 0x7f / 0x80)
-        return 0xFF;
-    return lrintf((value + 1.f) * 0x80);
-}
-
-static inline SHORT f_to_16(float value)
-{
-    if(value <= -1.f)
-        return 0x8000;
-    if(value >= 1.f * 0x7FFF / 0x8000)
-        return 0x7FFF;
-    return le16(lrintf(value * 0x8000));
-}
-
-static LONG f_to_24(float value)
-{
-    if(value <= -1.f)
-        return 0x80000000;
-    if(value >= 1.f * 0x7FFFFF / 0x800000)
-        return 0x7FFFFF00;
-    return lrintf(value * 0x80000000U);
-}
-
-static inline LONG f_to_32(float value)
-{
-    if(value <= -1.f)
-        return 0x80000000;
-    if(value >= 1.f)
-        return 0x7FFFFFFF;
-    return le32(lrintf(value * 0x80000000U));
-}
-
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE *buf = (BYTE *)dsb->device->tmp_buffer;
@@ -207,6 +107,79 @@ void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
     } else if (channel == 1) { /* Right */
         dsb->put_aux(dsb, pos, 1, value); /* Front right */
         dsb->put_aux(dsb, pos, 5, value); /* Back right */
+    }
+}
+
+void put_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    /* XXX: does Windows include LFE into the mix? */
+    dsb->put_aux(dsb, pos, 0, value);
+}
+
+void put_mono2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    dsb->put_aux(dsb, pos, 2, value); /* Front centre */
+
+    dsb->put_aux(dsb, pos, 0, 0.0f); /* Mute front left */
+    dsb->put_aux(dsb, pos, 1, 0.0f); /* Mute front right */
+    dsb->put_aux(dsb, pos, 3, 0.0f); /* Mute LFE */
+    dsb->put_aux(dsb, pos, 4, 0.0f); /* Mute back left */
+    dsb->put_aux(dsb, pos, 5, 0.0f); /* Mute back right */
+    dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+    dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+}
+
+void put_stereo2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    if (channel == 0) { /* Left */
+        dsb->put_aux(dsb, pos, 0, value); /* Front left */
+
+        dsb->put_aux(dsb, pos, 2, 0.0f); /* Mute front centre */
+        dsb->put_aux(dsb, pos, 3, 0.0f); /* Mute LFE */
+        dsb->put_aux(dsb, pos, 4, 0.0f); /* Mute back left */
+        dsb->put_aux(dsb, pos, 5, 0.0f); /* Mute back right */
+        dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+        dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+    } else if (channel == 1) { /* Right */
+        dsb->put_aux(dsb, pos, 1, value); /* Front right */
+    }
+}
+
+void put_quad2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    if (channel == 0) { /* Front left */
+        dsb->put_aux(dsb, pos, 0, value); /* Front left */
+
+        dsb->put_aux(dsb, pos, 2, 0.0f); /* Mute front center */
+        dsb->put_aux(dsb, pos, 3, 0.0f); /* Mute LFE */
+        dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+        dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+    } else if (channel == 1) { /* Front right */
+        dsb->put_aux(dsb, pos, 1, value); /* Front right */
+    } else if (channel == 2) { /* Rear left */
+        dsb->put_aux(dsb, pos, 4, value); /* Rear left */
+    } else if (channel == 3) { /* Rear right */
+        dsb->put_aux(dsb, pos, 5, value); /* Rear right */
+    }
+}
+
+void put_surround512surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    if (channel == 0) { /* Front left */
+        dsb->put_aux(dsb, pos, 0, value); /* Front left */
+
+        dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+        dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+    } else if (channel == 1) { /* Front right */
+        dsb->put_aux(dsb, pos, 1, value); /* Front right */
+    } else if (channel == 2) { /* Front center */
+        dsb->put_aux(dsb, pos, 2, value); /* Front center */
+    } else if (channel == 3) { /* LFE */
+        dsb->put_aux(dsb, pos, 3, value); /* LFE */
+    } else if (channel == 4) { /* Rear left */
+        dsb->put_aux(dsb, pos, 4, value); /* Rear left */
+    } else if (channel == 5) { /* Rear right */
+        dsb->put_aux(dsb, pos, 5, value); /* Rear right */
     }
 }
 
@@ -327,57 +300,3 @@ void mixieee32(float *src, float *dst, unsigned samples)
     while (samples--)
         *(dst++) += *(src++);
 }
-
-static void norm8(float *src, unsigned char *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_8(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-static void norm16(float *src, SHORT *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_16(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-static void norm24(float *src, BYTE *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        LONG t = f_to_24(*src);
-        dst[0] = (t >> 8) & 0xFF;
-        dst[1] = (t >> 16) & 0xFF;
-        dst[2] = t >> 24;
-        dst += 3;
-        ++src;
-    }
-}
-
-static void norm32(float *src, INT *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_32(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-const normfunc normfunctions[4] = {
-    (normfunc)norm8,
-    (normfunc)norm16,
-    (normfunc)norm24,
-    (normfunc)norm32,
-};

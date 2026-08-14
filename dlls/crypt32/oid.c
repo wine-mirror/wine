@@ -740,13 +740,29 @@ BOOL WINAPI CryptRegisterOIDInfo(PCCRYPT_OID_INFO info, DWORD flags)
     char *key_name;
     HKEY root = 0, key = 0;
     DWORD err;
+    CRYPT_OID_INFO info_copy = {0};
 
     TRACE("(%p, %lx)\n", info, flags );
 
-    if (!info || info->cbSize != sizeof(*info) || !info->pszOID)
+    if (!info || !info->pszOID)
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
+    }
+
+    if (info->cbSize != sizeof(*info)) {
+#ifdef CRYPT_OID_INFO_HAS_EXTRA_FIELDS
+        if (info->cbSize == sizeof(CRYPT_OID_INFO) - sizeof(LPWSTR) * 2) {
+            memcpy(&info_copy, info, sizeof(CRYPT_OID_INFO) - sizeof(LPWSTR) * 2);
+            info_copy.cbSize = sizeof(CRYPT_OID_INFO);
+            info = &info_copy;
+        }
+        else
+#endif
+        {
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        }
     }
 
     if (!info->dwGroupId) return TRUE;
@@ -1752,7 +1768,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (!wcscmp(info->info.pwszName, pvKey) &&
+            if (!wcsicmp(info->info.pwszName, pvKey) &&
              (!dwGroupId || info->info.dwGroupId == dwGroupId))
             {
                 ret = &info->info;

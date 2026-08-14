@@ -51,6 +51,7 @@ STRINGTABLE
     IDS_DISABLED_CC         "Conditional compilation is turned off"
     IDS_EXPECTED_AT         "Expected '@'"
     IDS_NOT_FUNC            "Function expected"
+    IDS_NOT_STRING          "'[object]' is not a string object"
     IDS_NOT_DATE            "'[object]' is not a date object"
     IDS_NOT_NUM             "Number expected"
     IDS_OBJECT_EXPECTED     "Object expected"
@@ -69,6 +70,7 @@ STRINGTABLE
     IDS_URI_INVALID_CHAR    "URI to be encoded contains invalid characters"
     IDS_FRACTION_DIGITS_OUT_OF_RANGE "Number of fraction digits is out of range"
     IDS_PRECISION_OUT_OF_RANGE "Precision is out of range"
+    IDS_ARRAY_OR_ARGS_EXPECTED "Array or arguments object expected"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
     IDS_ARRAY_EXPECTED      "Array object expected"
     IDS_INVALID_WRITABLE_PROP_DESC "'writable' attribute on the property descriptor cannot be set to 'true' on this object"
@@ -77,6 +79,11 @@ STRINGTABLE
     IDS_OBJECT_NONEXTENSIBLE       "Cannot define property '|': object is not extensible"
     IDS_NONCONFIGURABLE_REDEFINED  "Cannot redefine non-configurable property '|'"
     IDS_NONWRITABLE_MODIFIED       "Cannot modify non-writable property '|'"
+    IDS_NOT_TYPEDARRAY             "'this' is not a typed array object"
+    IDS_TYPEDARRAY_BAD_CTOR_ARG    "Typed array constructor argument is invalid"
+    IDS_TYPEDARRAY_INVALID_OFFSLEN "Invalid offset/length when creating typed array"
+    IDS_TYPEDARRAY_INVALID_SUBARRAY "Invalid begin/end value in typed array subarray method"
+    IDS_TYPEDARRAY_INVALID_SOURCE  "Invalid source in typed array set"
     IDS_NOT_DATAVIEW               "'this' is not a DataView object"
     IDS_DATAVIEW_NO_ARGUMENT       "Required argument offset or value in DataView method is not specified"
     IDS_DATAVIEW_INVALID_ACCESS    "DataView operation access beyond specified buffer length"
@@ -95,12 +102,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: jscript.rgs */
 2 WINE_REGISTRY jscript.rgs
-
-#define WINE_FILEDESCRIPTION_STR "Wine JScript"
-#define WINE_FILENAME_STR "jscript.dll"
-#define WINE_FILEVERSION 5,7,7601,16982
-#define WINE_FILEVERSION_STR "5.8.7601.16982"
-#define WINE_PRODUCTVERSION 5,8,7601,16982
-#define WINE_PRODUCTVERSION_STR "5.8.7601.16982"
-
-#include "wine/wine_common_ver.rc"

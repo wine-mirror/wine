@@ -564,6 +564,7 @@ static void AddBaseEntries(void)
 
     LoadStringW(globals.hMainInst, IDS_TREE_CLO, tvis.item.pszText,
             MAX_LOAD_STRING);
+    tvis.item.lParam = 0;
     tree.hCLO = TreeView_InsertItemW(globals.hTree, &tvis);
 
     LoadStringW(globals.hMainInst, IDS_TREE_O1O, tvis.item.pszText,

@@ -162,8 +162,8 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
     if (V_VT( &command_line ) == VT_BSTR && V_BSTR( &command_line ))
     {
         bret = CreateProcessW( NULL, V_BSTR( &command_line ), NULL, NULL, FALSE, 0L,
-                V_VT( &current_directory ) == VT_BSTR ? V_BSTR( &current_directory ) : NULL,
-                NULL, &si, &pi );
+                NULL, V_VT( &current_directory ) == VT_BSTR ? V_BSTR( &current_directory ) : NULL,
+                &si, &pi );
         TRACE( "CreateProcessW ret %d, GetLastError() %lu\n", bret, GetLastError() );
         if (bret)
         {

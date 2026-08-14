@@ -282,7 +282,6 @@ static void test_SIPRetrieveSubjectGUID(void)
 static void test_SIPLoad(void)
 {
     BOOL ret;
-    GUID subject;
     static GUID dummySubject = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
     static GUID unknown      = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
     static GUID unknown2     = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
@@ -300,7 +299,7 @@ static void test_SIPLoad(void)
 
     /* Only pSipDispatch NULL */
     SetLastError(0xdeadbeef);
-    ret = CryptSIPLoad(&subject, 0, NULL);
+    ret = CryptSIPLoad(&dummySubject, 0, NULL);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());

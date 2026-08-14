@@ -100,7 +100,6 @@ DEFINE_EXPECT(wrapped_AddRef);
 DEFINE_EXPECT(wrapped_Release);
 DEFINE_EXPECT(wrapped_func);
 DEFINE_EXPECT(OnAmbientPropertyChange_UNKNOWN);
-DEFINE_EXPECT(GetTypeInfo);
 DEFINE_EXPECT(GetClassInfo);
 DEFINE_EXPECT(FindConnectionPoint);
 DEFINE_EXPECT(Advise);
@@ -115,7 +114,7 @@ enum {
     TEST_DISPONLY
 };
 
-static ITypeInfo *actxtest_typeinfo, *class_typeinfo;
+static ITypeInfo *class_typeinfo;
 static HWND container_hwnd, plugin_hwnd;
 static int plugin_behavior;
 static BOOL no_quickact;
@@ -681,11 +680,8 @@ static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    CHECK_EXPECT(GetTypeInfo);
-
-    ITypeInfo_AddRef(actxtest_typeinfo);
-    *ppTInfo = actxtest_typeinfo;
-    return S_OK;
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
@@ -2686,9 +2682,6 @@ static void load_typelib(void)
     hres = LoadTypeLib(path, &typelib);
     ok(hres == S_OK, "LoadTypeLib failed: %08lx\n", hres);
 
-    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &DIID_DispActiveXTest, &actxtest_typeinfo);
-    ok(hres == S_OK, "GetTypeInfoOfGuid(DIID_DispActiveXTest) failed: %08lx\n", hres);
-
     hres = ITypeLib_GetTypeInfoOfGuid(typelib, &CLSID_ActiveXTest, &class_typeinfo);
     ok(hres == S_OK, "GetTypeInfoOfGuid(CLSID_ActiveXTest) failed: %08lx\n", hres);
 
@@ -2794,8 +2787,6 @@ START_TEST(activex)
         skip("Could not register ActiveX\n");
     }
 
-    if(actxtest_typeinfo)
-        ITypeInfo_Release(actxtest_typeinfo);
     if(class_typeinfo)
         ITypeInfo_Release(class_typeinfo);
     DestroyWindow(container_hwnd);

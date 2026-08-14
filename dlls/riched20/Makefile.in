@@ -4,6 +4,8 @@ IMPORTS   = uuid ole32 oleaut32 imm32 user32 gdi32
 
 EXTRADLLFLAGS = -Wl,--image-base,0x7ac00000
 
+VER_PRODUCTVERSION = 5,30,23,1215
+
 SOURCES = \
 	caret.c \
 	clipboard.c \
@@ -17,6 +19,7 @@ SOURCES = \
 	riched_tom.idl \
 	richole.c \
 	row.c \
+	rsrc.rc \
 	run.c \
 	string.c \
 	style.c \
@@ -24,6 +27,5 @@ SOURCES = \
 	txthost.c \
 	txtsrv.c \
 	undo.c \
-	version.rc \
 	wrap.c \
 	writer.c

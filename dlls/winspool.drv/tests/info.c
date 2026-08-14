@@ -72,7 +72,6 @@ struct monitor_entry {
 
 static LPSTR default_printer = NULL;
 static LPSTR local_server = NULL;
-static LPSTR tempdirA = NULL;
 static LPSTR tempfileA = NULL;
 static LPWSTR tempdirW = NULL;
 static LPWSTR tempfileW = NULL;
@@ -275,7 +274,6 @@ static void find_tempfile(VOID)
     ok(res, "returned %u with %lu (expected '!= 0')\n", resint, GetLastError());
     if (resint == 0) return;
 
-    tempdirA  = buffer_dirA;
     tempfileA = buffer_fileA;
     tempdirW  = buffer_dirW;
     tempfileW = buffer_fileW;

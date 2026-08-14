@@ -22,8 +22,12 @@
 # include <windef.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __RPC_WIN64__
-# include <pshpack8.h>
+# pragma pack(push,8)
 #endif
 
 typedef struct tagRPC_ERROR_ENUM_HANDLE
@@ -162,11 +166,7 @@ typedef struct _RPC_ASYNC_STATE
 #define RpcAsyncGetCallHandle(async) (((PRPC_ASYNC_STATE)async)->RuntimeInfo)
 
 #ifdef __RPC_WIN64__
-# include <poppack.h>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
+# pragma pack(pop)
 #endif
 
 RPCRTAPI RPC_STATUS RPC_ENTRY RpcAsyncInitializeHandle(PRPC_ASYNC_STATE,unsigned int);

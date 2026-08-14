@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <uxtheme.h>
+#include <shlwapi.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -37,6 +38,8 @@ static BOOL (WINAPI * pStr_SetPtrA)(LPSTR, LPCSTR);
 static INT (WINAPI * pStr_GetPtrW)(LPCWSTR, LPWSTR, INT);
 static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 
+static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
+static PREGISTERCLASSNAMEW pRegisterClassNameW;
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -92,6 +95,9 @@ static BOOL InitFunctionPtrs(void)
     COMCTL32_GET_PROC(235, Str_GetPtrW)
     COMCTL32_GET_PROC(236, Str_SetPtrW)
 
+    pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
+    pRegisterClassNameW = (void *)GetProcAddress(hComctl32, "RegisterClassNameW");
+
     return TRUE;
 }
 
@@ -107,6 +113,9 @@ static BOOL init_functions_v6(void)
     COMCTL32_GET_PROC(410, SetWindowSubclass)
     COMCTL32_GET_PROC(412, RemoveWindowSubclass)
     COMCTL32_GET_PROC(413, DefSubclassProc)
+
+    pDllGetVersion = (void *)GetProcAddress(hComctl32, "DllGetVersion");
+    pRegisterClassNameW = (void *)GetProcAddress(hComctl32, "RegisterClassNameW");
 
     return TRUE;
 }
@@ -385,7 +394,45 @@ static void test_LoadIconWithScaleDown(void)
     FreeLibrary(hinst);
 }
 
-static void check_class( const char *name, int must_exist, UINT style, UINT ignore, BOOL v6 )
+static WNDPROC real_class_wndproc;
+static const char *real_class_str;
+
+static LRESULT WINAPI test_real_class_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    LRESULT lr = 0;
+
+    /*
+     * Passing through WM_GETTEXT to the WC_IPADDRESSA procedure will cause an
+     * access violation on Windows 7 64-bit.
+     */
+    if ((msg == WM_GETTEXT) && !strcmp( real_class_str, WC_IPADDRESSA )) return lr;
+
+    lr = CallWindowProcA( real_class_wndproc, hwnd, msg, wparam, lparam );
+    if (msg == WM_NCCREATE) lr = 1;
+
+    return lr;
+}
+
+#define check_real_class_name( a, b ) check_real_class_name_( __LINE__, a, b )
+static void check_real_class_name_( int line, HWND hwnd, const char *expect )
+{
+    WCHAR expectW[256], nameW[256];
+    char nameA[256];
+    ULONG len;
+
+    len = RealGetWindowClassA( hwnd, nameA, ARRAY_SIZE(nameA) );
+    ok_(__FILE__, line)( !strcmp( nameA, expect ), "got %s\n", nameA );
+    ok_(__FILE__, line)( len == strlen( expect ), "got %ld\n", len );
+
+    MultiByteToWideChar( CP_ACP, 0, expect, -1, expectW, ARRAY_SIZE(expectW));
+    len = RealGetWindowClassW( hwnd, nameW, ARRAY_SIZE(nameW));
+    ok_(__FILE__, line)( !wcscmp( nameW, expectW ), "got %s\n", debugstr_w(nameW));
+    ok_(__FILE__, line)( len == wcslen( expectW ), "got %ld\n", len );
+}
+
+#define check_class( a, b, c, d, e, f, g ) check_class_( a, b, c, d, e, f, g, FALSE )
+static void check_class_( const char *name, int must_exist, UINT style, UINT ignore, BOOL v6,
+                          DWORD classnameidx, BOOL classnameidx_todo, BOOL name_todo )
 {
     WNDCLASSA wc;
 
@@ -393,10 +440,9 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
     {
         char buff[64];
         HWND hwnd;
+        DWORD objid;
 
-        todo_wine_if(!strcmp(name, "SysLink") && !must_exist && !v6)
         ok( must_exist, "System class %s should %sexist\n", name, must_exist ? "" : "NOT " );
-        if (!must_exist) return;
 
         todo_wine_if(!strcmp(name, "ScrollBar") || (!strcmp(name, "tooltips_class32") && v6))
         ok( !(~wc.style & style & ~ignore), "System class %s is missing bits %x (%08x/%08x)\n",
@@ -410,7 +456,34 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
         ok( hwnd != NULL, "Failed to create window for class %s.\n", name );
         GetClassNameA(hwnd, buff, ARRAY_SIZE(buff));
         ok( !strcmp(name, buff), "Unexpected class name %s, expected %s.\n", buff, name );
+
+        objid = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+        todo_wine_if(classnameidx_todo)
+        ok(objid == classnameidx, "Class %s has nameidx %lx, expected %lx\n",
+            name, objid, classnameidx);
+
+        /* Check with upper 32 bits truncated */
+        objid = SendMessageA(hwnd, WM_GETOBJECT, 0, (DWORD)OBJID_QUERYCLASSNAMEIDX);
+        todo_wine_if(classnameidx_todo)
+        ok(objid == classnameidx, "Class %s has nameidx %lx, expected %lx\n",
+            name, objid, classnameidx);
+
         DestroyWindow(hwnd);
+
+        real_class_wndproc = wc.lpfnWndProc;
+        real_class_str = name;
+        wc.lpfnWndProc = test_real_class_wndproc;
+        wc.hInstance = GetModuleHandleA( NULL );
+        wc.lpszClassName = "WineTest Class";
+        RegisterClassA( &wc );
+
+        hwnd = CreateWindowA( wc.lpszClassName, 0, 0, 0, 0, 0, 0, 0, NULL, GetModuleHandleA( NULL ), 0 );
+        todo_wine_if( name_todo ) check_real_class_name( hwnd, wc.lpszClassName );
+
+        DestroyWindow( hwnd );
+        UnregisterClassA( wc.lpszClassName, GetModuleHandleA( NULL ) );
+        real_class_wndproc = NULL;
+        real_class_str = NULL;
     }
     else
         ok( !must_exist, "System class %s does not exist\n", name );
@@ -420,40 +493,41 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
 static void test_builtin_classes(void)
 {
     /* check style bits */
-    check_class( "Button",     1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ComboBox",   1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "Edit",       1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ListBox",    1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ScrollBar",  1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "Static",     1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE );
-    check_class( "ComboLBox",  1, CS_SAVEBITS | CS_DBLCLKS | CS_DROPSHADOW | CS_GLOBALCLASS, CS_DROPSHADOW, FALSE );
+    check_class( "Button",     1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10002, FALSE );
+    check_class( "ComboBox",   1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10005, FALSE );
+    check_class( "Edit",       1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10004, FALSE );
+    check_class( "ListBox",    1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10000, FALSE );
+    check_class_( "ScrollBar",  1, CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000a, FALSE, TRUE );
+    check_class( "Static",     1, CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10003, FALSE );
+    check_class( "ComboLBox",  1, CS_SAVEBITS | CS_DBLCLKS | CS_DROPSHADOW | CS_GLOBALCLASS, CS_DROPSHADOW, FALSE, 0x10000, FALSE );
 }
 
 static void test_comctl32_classes(BOOL v6)
 {
-    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_COMBOBOXEXA,      1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(DATETIMEPICK_CLASSA, 1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(HOTKEY_CLASSA,       1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_IPADDRESSA,       1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(MONTHCAL_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_NATIVEFONTCTLA,   1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_PAGESCROLLERA,    1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(PROGRESS_CLASSA,     1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(REBARCLASSNAMEA,     1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(STATUSCLASSNAMEA,    1, CS_DBLCLKS | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_TABCONTROLA,      1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class(TOOLBARCLASSNAMEA,   1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
+    check_class(ANIMATE_CLASSA,      1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000e, FALSE);
+    check_class(WC_COMBOBOXEXA,      1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(DATETIMEPICK_CLASSA, 1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_HEADERA,          1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, v6 ? 0 : 0x10011, !v6);
+    check_class(HOTKEY_CLASSA,       1, CS_GLOBALCLASS, 0, FALSE, 0x10010, FALSE);
+    check_class(WC_IPADDRESSA,       1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_LISTVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10013, FALSE);
+    check_class(MONTHCAL_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_NATIVEFONTCTLA,   1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(WC_PAGESCROLLERA,    1, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(PROGRESS_CLASSA,     1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000d, FALSE);
+    check_class(REBARCLASSNAMEA,     1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class(STATUSCLASSNAMEA,    1, CS_DBLCLKS | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000b, FALSE);
+    check_class(WC_TABCONTROLA,      1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x1000f, FALSE);
+    check_class(TOOLBARCLASSNAMEA,   1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x1000c, FALSE);
     if (v6)
-        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS | CS_DROPSHADOW, CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW /* XP */, TRUE);
+        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS | CS_DROPSHADOW, CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW /* XP */, TRUE, 0x10018, FALSE);
     else
-        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_GLOBALCLASS | CS_SAVEBITS, CS_HREDRAW | CS_VREDRAW /* XP */, FALSE);
-    check_class(TRACKBAR_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE);
-    check_class(WC_TREEVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE);
-    check_class(UPDOWN_CLASSA,       1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE);
-    check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE);
+        check_class(TOOLTIPS_CLASSA, 1, CS_DBLCLKS | CS_GLOBALCLASS | CS_SAVEBITS, CS_HREDRAW | CS_VREDRAW /* XP */, FALSE, 0x10018, FALSE);
+    check_class(TRACKBAR_CLASSA,     1, CS_GLOBALCLASS, 0, FALSE, 0x10012, FALSE);
+    check_class(WC_TREEVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10019, FALSE);
+    check_class(UPDOWN_CLASSA,       1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10016, FALSE);
+    check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class("flatsb_class32", 0, 0, 0, FALSE, 0, FALSE);
 }
 
 struct wm_themechanged_test
@@ -1271,6 +1345,200 @@ static void test_WM_SETFONT(void)
     DestroyWindow(parent);
 }
 
+static void test_version(BOOL v6)
+{
+    static const char *v6_only_exports[] =
+    {
+        "DllInstall",
+        "DrawShadowText",
+        "DPA_GetSize",
+        "DSA_Clone",
+        "DSA_GetSize",
+        "GetWindowSubclass",
+        "HIMAGELIST_QueryInterface",
+        "ImageList_CoCreateInstance",
+        "ImageList_WriteEx",
+        "LoadIconMetric",
+        "LoadIconWithScaleDown",
+        "TaskDialog",
+        "TaskDialogIndirect",
+    };
+    DLLVERSIONINFO info;
+    HMODULE module;
+    unsigned int i;
+    HRESULT hr;
+    void *proc;
+
+    info.cbSize = sizeof(info);
+    hr = pDllGetVersion(&info);
+    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
+
+    ok(info.dwMajorVersion == (v6 ? 6 : 5), "Got unexpected major version %lu.\n", info.dwMajorVersion);
+
+    module = GetModuleHandleW(L"comctl32.dll");
+    for (i = 0; i < ARRAY_SIZE(v6_only_exports); i++)
+    {
+        proc = GetProcAddress(module, v6_only_exports[i]);
+        if (v6)
+            ok(!!proc, "Get %s failed.\n", v6_only_exports[i]);
+        else
+            todo_wine_if(!strcmp(v6_only_exports[i], "HIMAGELIST_QueryInterface"))
+            ok(!proc, "Get %s succeeded.\n", v6_only_exports[i]);
+    }
+}
+
+static void test_RegisterClassNameW(BOOL v6)
+{
+    static const WCHAR *v6_class_names[] =
+    {
+        L"Button",
+        L"ComboBox",
+        L"ComboLBox",
+        L"Edit",
+        L"ListBox",
+        L"Static",
+        L"ComboBoxEx32",
+        L"msctls_hotkey32",
+        L"msctls_progress32",
+        L"msctls_statusbar32",
+        L"msctls_trackbar32",
+        L"msctls_updown32",
+        L"NativeFontCtl",
+        L"ReBarWindow32",
+        L"SysAnimate32",
+        L"SysDateTimePick32",
+        L"SysHeader32",
+        L"SysIPAddress32",
+        L"SysLink",
+        L"SysListView32",
+        L"SysMonthCal32",
+        L"SysPager",
+        L"SysTabControl32",
+        L"SysTreeView32",
+        L"ToolbarWindow32",
+        L"tooltips_class32",
+    };
+    static const WCHAR *v5_class_names[] =
+    {
+        L"ComboBoxEx32",
+        L"msctls_hotkey32",
+        L"msctls_progress32",
+        L"msctls_statusbar32",
+        L"msctls_trackbar32",
+        L"msctls_updown32",
+        L"NativeFontCtl",
+        L"ReBarWindow32",
+        L"SysAnimate32",
+        L"SysDateTimePick32",
+        L"SysHeader32",
+        L"SysIPAddress32",
+        L"SysListView32",
+        L"SysMonthCal32",
+        L"SysPager",
+        L"SysTabControl32",
+        L"SysTreeView32",
+        L"ToolbarWindow32",
+        L"tooltips_class32",
+    };
+    unsigned int i;
+    WNDCLASSW wc;
+    BOOL ret;
+
+    winetest_push_context("v%d", v6 ? 6 : 5);
+
+    if (v6)
+    {
+        for (i = 0; i < ARRAY_SIZE(v6_class_names); i++)
+        {
+            ret = pRegisterClassNameW(v6_class_names[i]);
+            ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(v6_class_names[i]), GetLastError());
+        }
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(v5_class_names); i++)
+        {
+            ret = pRegisterClassNameW(v5_class_names[i]);
+            ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(v5_class_names[i]), GetLastError());
+        }
+    }
+
+    /* Test unregistering a class that's implicitly registered by RegisterClassNameW() */
+    ret = UnregisterClassW(ANIMATE_CLASSW, NULL);
+    ok(ret, "UnregisterClassW failed, error %lu.\n", GetLastError());
+
+    /* Make sure that it's really unregistered */
+    ret = UnregisterClassW(ANIMATE_CLASSW, NULL);
+    ok(!ret, "UnregisterClassW succeeded.\n");
+
+    /* GetClassInfoW() should succeed */
+    ret = GetClassInfoW(0, ANIMATE_CLASSW, &wc);
+    ok(ret, "GetClassInfoW failed, error %lu.\n", GetLastError());
+
+    /* Test registering an already registered window class */
+    ret = pRegisterClassNameW(ANIMATE_CLASSW);
+    ok(ret, "RegisterClassNameW failed, error %lu.\n", GetLastError());
+
+    /* Test registering an non-existent window class */
+    ret = pRegisterClassNameW(L"non-existent");
+    ok(!ret, "RegisterClassNameW succeeded.\n");
+
+    /* There is no flatsb_class32 window class */
+    ret = pRegisterClassNameW(L"flatsb_class32");
+    ok(!ret, "RegisterClassNameW succeeded.\n");
+
+    winetest_pop_context();
+}
+
+static void test_CCM_SETVERSION(BOOL v6)
+{
+    unsigned int i, j;
+    LRESULT lr;
+    HWND hwnd;
+
+    static const char *class_names[] =
+    {
+        WC_LISTVIEWA,
+        REBARCLASSNAMEA,
+        TOOLBARCLASSNAMEA,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(class_names); ++i)
+    {
+        winetest_push_context("v%d %s", v6 ? 6 : 5, class_names[i]);
+
+        hwnd = CreateWindowA(class_names[i], "test", WS_POPUP | WS_VISIBLE, 0, 0, 50, 50,
+                             NULL, 0, 0, 0);
+        ok(hwnd != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+        lr = SendMessageA(hwnd, CCM_GETVERSION, 0, 0);
+        ok(lr == (v6 ? 6 : 0), "Got unexpected %Id.\n", lr);
+
+        for (j = 0; j <= 7; j++)
+        {
+            winetest_push_context("%d", j);
+
+            lr = SendMessageA(hwnd, CCM_SETVERSION, j, 0);
+            if (v6)
+            {
+                ok(lr == 6, "Got unexpected %Id.\n", lr);
+            }
+            else
+            {
+                if (j >= 6)
+                    ok(lr == -1, "Got unexpected %Id.\n", lr);
+                else
+                    ok(lr == (j == 0 ? 0 : (j - 1)), "Got unexpected %Id.\n", lr);
+            }
+
+            winetest_pop_context();
+        }
+
+        DestroyWindow(hwnd);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -1285,6 +1553,9 @@ START_TEST(misc)
     test_comctl32_classes(FALSE);
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
+    test_version(FALSE);
+    test_RegisterClassNameW(FALSE);
+    test_CCM_SETVERSION(FALSE);
 
     FreeLibrary(hComctl32);
 
@@ -1301,7 +1572,14 @@ START_TEST(misc)
     test_WM_SYSCOLORCHANGE();
     test_WM_STYLECHANGED();
     test_WM_SETFONT();
+    test_version(TRUE);
+    test_RegisterClassNameW(TRUE);
+    test_CCM_SETVERSION(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
+
+    /* Now that v6 manifest is deactivated, test that comctl32 v5 windows can be created */
+    test_comctl32_classes(FALSE);
+
     FreeLibrary(hComctl32);
 }

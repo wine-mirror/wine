@@ -589,6 +589,11 @@ print UNIX <<EOF
 
 #include "config.h"
 #include "unix_private.h"
+
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 EOF
 ;
 
@@ -598,6 +603,13 @@ foreach (sort keys %core_functions)
     next if needs_unix_wrapper( $_ );
     print UNIX "\n", generate_unix_thunk( $_, $core_functions{$_} );
 }
+
+print UNIX <<EOF
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif
+EOF
+;
 
 print UNIX "\nconst unixlib_entry_t __wine_unix_call_funcs[] =\n{\n";
 foreach (sort keys %core_functions)

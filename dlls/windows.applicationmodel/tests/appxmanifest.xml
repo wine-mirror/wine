@@ -23,4 +23,12 @@
             <uap:VisualElements BackgroundColor="transparent" DisplayName="WineTest" Square150x150Logo="logo.png" Square44x44Logo="logo.png" Description="WineTest" />
         </Application>
     </Applications>
+    <Extensions>
+        <Extension Category="windows.activatableClass.inProcessServer">
+            <InProcessServer>
+                <Path>application.exe</Path>
+                <ActivatableClass ActivatableClassId="Wine.Application.Class" ThreadingModel="both"></ActivatableClass>
+            </InProcessServer>
+        </Extension>
+    </Extensions>
 </Package>

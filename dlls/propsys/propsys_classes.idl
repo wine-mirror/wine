@@ -26,3 +26,9 @@
     uuid(9a02e012-6303-4e1e-b9a1-630f802592c5)
 ]
 coclass InMemoryPropertyStore { interface IPropertyStoreCache; }
+
+[
+    threading(both),
+    uuid(b8967f85-58ae-4f46-9fb2-5d7904798f4b)
+]
+coclass PropertySystem { interface IPropertySystem; }

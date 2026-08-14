@@ -1660,7 +1660,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
 
-    if(bind(sock, addr, addr_size) == SOCKET_ERROR)
+    if(bind(sock, addr, (int) addr_size) == SOCKET_ERROR)
     {
         FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
         fluid_socket_close(sock);
@@ -1787,9 +1787,16 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
+#define FLUID_WINDOWS_MEX_ERROR_LEN    1024
+
 char* fluid_get_windows_error(void)
 {
-    static TCHAR err[1024];
+#ifdef _UNICODE
+    TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+    static char ascii_err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#else
+    static TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#endif
 
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,
@@ -1800,8 +1807,6 @@ char* fluid_get_windows_error(void)
                   NULL);
 
 #ifdef _UNICODE
-    static char ascii_err[sizeof(err)];
-
     WideCharToMultiByte(CP_UTF8, 0, err, -1, ascii_err, sizeof(ascii_err)/sizeof(ascii_err[0]), 0, 0);
     return ascii_err;
 #else

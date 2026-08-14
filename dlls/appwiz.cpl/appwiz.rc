@@ -51,6 +51,7 @@ STRINGTABLE
     IDS_DOWNLOADING     "Downloading..."
     IDS_INSTALLING      "Installing..."
     IDS_INVALID_SHA     "Unexpected checksum of downloaded file. Aborting installation of corrupted file."
+    IDS_DOWNLOAD_FAILED "Download failed."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220

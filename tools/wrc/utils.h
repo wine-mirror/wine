@@ -27,7 +27,6 @@ int compare_striA( const char *str1, const char *str2 );
 int compare_striW( const WCHAR *str1, const WCHAR *str2 );
 int parser_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void fatal_perror( const char *msg, ... ) __attribute__((format (printf, 1, 2), noreturn));
 void error(const char *s, ...) __attribute__((format (printf, 1, 2), noreturn));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));

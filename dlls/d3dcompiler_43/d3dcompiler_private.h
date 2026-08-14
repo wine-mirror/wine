@@ -260,8 +260,8 @@ void create_ps30_parser(struct asm_parser *ret);
 
 struct bwriter_shader *parse_asm_shader(char **messages);
 
-#ifdef __GNUC__
-#define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#ifdef __WINE_CRT_PRINTF_ATTR
+#define PRINTF_ATTR(fmt,args) __WINE_CRT_PRINTF_ATTR(fmt, args)
 #else
 #define PRINTF_ATTR(fmt,args)
 #endif

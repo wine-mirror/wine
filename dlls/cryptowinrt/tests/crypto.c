@@ -34,6 +34,7 @@
 #include "windows.security.cryptography.h"
 #define WIDL_using_Windows_Security_Credentials
 #include "windows.security.credentials.h"
+#include "robuffer.h"
 
 #include "wine/test.h"
 
@@ -208,9 +209,16 @@ static struct bool_async_handler default_bool_async_handler = {{&bool_async_hand
 static void test_CryptobufferStatics(void)
 {
     static const WCHAR *cryptobuffer_statics_name = L"Windows.Security.Cryptography.CryptographicBuffer";
+    static const WCHAR *buffer_name = L"Windows.Storage.Streams.Buffer";
     ICryptographicBufferStatics *cryptobuffer_statics;
-    IActivationFactory *factory;
+    IActivationFactory *factory, *factory2;
+    IBufferByteAccess *buffer_access;
+    IBufferFactory *buffer_factory;
+    const WCHAR *base64_str;
+    IBuffer *buffer;
     HSTRING str;
+    byte *data;
+    UINT32 len;
     HRESULT hr;
     LONG ref;
 
@@ -232,6 +240,54 @@ static void test_CryptobufferStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ICryptographicBufferStatics, (void **)&cryptobuffer_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    /* NULL buffer */
+    hr = ICryptographicBufferStatics_EncodeToBase64String( cryptobuffer_statics, NULL, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    base64_str = WindowsGetStringRawBuffer( str, &len );
+    ok( !wcscmp( L"", base64_str ) && !len, "got str %s, len %d.\n", wine_dbgstr_w( base64_str ), len );
+    WindowsDeleteString( str );
+
+    hr = WindowsCreateString( buffer_name, wcslen( buffer_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IActivationFactory_QueryInterface( factory2, &IID_IBufferFactory, (void **)&buffer_factory );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    /* Empty buffer */
+    hr = IBufferFactory_Create( buffer_factory, 0, &buffer );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = ICryptographicBufferStatics_EncodeToBase64String( cryptobuffer_statics, buffer, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    base64_str = WindowsGetStringRawBuffer( str, &len );
+    ok( !wcscmp( L"", base64_str ) && !len, "got str %s, len %d.\n", wine_dbgstr_w( base64_str ), len );
+    WindowsDeleteString( str );
+    IBuffer_Release( buffer );
+
+    /* Test with contents */
+    hr = IBufferFactory_Create( buffer_factory, 16, &buffer );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IBuffer_QueryInterface( buffer, &IID_IBufferByteAccess, (void **)&buffer_access );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IBufferByteAccess_Buffer( buffer_access, &data );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    for (int i = 0; i < 16; ++i)
+        data[i] = i;
+    hr = IBuffer_put_Length( buffer, 16 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IBufferByteAccess_Release( buffer_access );
+
+    hr = ICryptographicBufferStatics_EncodeToBase64String( cryptobuffer_statics, buffer, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    base64_str = WindowsGetStringRawBuffer( str, &len );
+    ok( !wcscmp( L"AAECAwQFBgcICQoLDA0ODw==", base64_str ), "got str %s, len %d.\n", wine_dbgstr_w( base64_str ), len );
+    WindowsDeleteString( str );
+    IBuffer_Release( buffer );
+
+    IBufferFactory_Release( buffer_factory );
+    IActivationFactory_Release( factory2 );
 
     ref = ICryptographicBufferStatics_Release( cryptobuffer_statics );
     ok( ref == 2, "got ref %ld.\n", ref );

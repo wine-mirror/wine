@@ -49,6 +49,8 @@
 #define _Deref_prepost_opt_z_
 #define _Deref_ret_z_
 
+#define _Field_size_(size)
+#define _Field_size_bytes_(size)
 #define _Field_range_(min, max)
 
 #define _In_
@@ -211,6 +213,8 @@
 #define _Printf_format_string_
 #define _Printf_format_string_params_(count)
 
+#define _Struct_size_bytes_(size)
+
 #define _Reserved_
 
 #define _Result_nullonfailure_
@@ -236,6 +240,8 @@
 #define _Scanf_s_format_string_params_(count)
 
 #define _Success_(exp)
+
+#define _Use_decl_annotations_
 
 #define _When_(exp1, exp2)
 

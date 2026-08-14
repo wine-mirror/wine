@@ -484,6 +484,97 @@ static void test_private_data(VkPhysicalDevice vk_physical_device)
     vkDestroyDevice(vk_device, NULL);
 }
 
+static void test_present_timing(VkInstance instance, VkPhysicalDevice physical_device)
+{
+    static const char *const device_extensions[] = {"VK_KHR_swapchain", "VK_EXT_present_timing"};
+
+    VkSwapchainTimeDomainPropertiesEXT properties = {.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_TIME_DOMAIN_PROPERTIES_EXT};
+    VkCommandBufferAllocateInfo allocate_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    VkWin32SurfaceCreateInfoKHR create_info = {.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
+    VkCommandPoolCreateInfo pool_create_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    PFN_vkGetSwapchainTimeDomainPropertiesEXT p_vkGetSwapchainTimeDomainPropertiesEXT;
+    VkCommandBuffer command_buffer;
+    BOOL has_stage_local = FALSE;
+    uint32_t queue_family_index;
+    VkCommandPool command_pool;
+    VkSwapchainKHR swapchain;
+    VkSurfaceKHR surface;
+    uint64_t counter;
+    VkDevice device;
+    VkQueue queue;
+    VkResult vr;
+    HWND hwnd;
+
+    if ((vr = create_device(physical_device, ARRAY_SIZE(device_extensions), device_extensions, NULL, &device)) < 0)
+    {
+        skip("Failed to create device with VK_EXT_present_timing, VkResult %d.\n", vr);
+        return;
+    }
+
+    p_vkGetSwapchainTimeDomainPropertiesEXT = (void *)vkGetDeviceProcAddr(device, "vkGetSwapchainTimeDomainPropertiesEXT");
+    find_queue_family(physical_device, VK_QUEUE_GRAPHICS_BIT, &queue_family_index);
+    vkGetDeviceQueue(device, queue_family_index, 0, &queue);
+
+    pool_create_info.queueFamilyIndex = queue_family_index;
+    pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    vr = vkCreateCommandPool(device, &pool_create_info, NULL, &command_pool);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    allocate_info.commandPool = command_pool;
+    allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocate_info.commandBufferCount = 1;
+    vr = vkAllocateCommandBuffers(device, &allocate_info, &command_buffer);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+
+    vr = p_vkGetSwapchainTimeDomainPropertiesEXT(device, swapchain, &properties, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(properties.timeDomainCount > 0, "got %u\n", properties.timeDomainCount);
+
+    counter = 0xdeadbeef;
+    properties.timeDomainCount = 0;
+    vr = p_vkGetSwapchainTimeDomainPropertiesEXT(device, swapchain, &properties, &counter);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(properties.timeDomainCount > 0, "got %u\n", properties.timeDomainCount);
+    ok(counter != 0, "got %I64x\n", counter);
+
+    counter = 0xdeadbeef;
+    properties.pTimeDomainIds = calloc(properties.timeDomainCount, sizeof(*properties.pTimeDomainIds));
+    properties.pTimeDomains = calloc(properties.timeDomainCount, sizeof(*properties.pTimeDomains));
+    vr = p_vkGetSwapchainTimeDomainPropertiesEXT(device, swapchain, &properties, &counter);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(properties.timeDomainCount > 0, "got %u\n", properties.timeDomainCount);
+    ok(counter != 0, "got %I64x\n", counter);
+    for (UINT i = 0; i < properties.timeDomainCount; i++)
+    {
+        ok(properties.pTimeDomains[i] != VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT, "got %#x\n", properties.pTimeDomains[i]);
+        ok(properties.pTimeDomains[i] != VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT, "got %#x\n", properties.pTimeDomains[i]);
+        if (properties.pTimeDomains[i] == VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT) has_stage_local = TRUE;
+    }
+    ok(has_stage_local, "missing VK_TIME_DOMAIN_PRESENT_STAGE_LOCAL_EXT\n");
+
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    DestroyWindow(hwnd);
+
+    vkDestroyDevice(device, NULL);
+}
+
 static const char *test_win32_surface_extensions[] =
 {
     "VK_KHR_surface",
@@ -1085,6 +1176,8 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
     vkDestroyCommandPool(device, command_pool, NULL);
     vkDestroyDevice(device, NULL);
+
+    test_present_timing(instance, physical_device);
 }
 
 static uint32_t find_memory_type(VkPhysicalDevice vk_physical_device, VkMemoryPropertyFlagBits flags, uint32_t mask)
@@ -1124,9 +1217,8 @@ static void test_cross_process_resource(VkPhysicalDeviceIDPropertiesKHR *device_
                                                         kmt ? "kmt" : "nt", handle);
     res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0L, NULL, NULL, &si, &info);
     ok(res, "CreateProcess failed: %lu\n", GetLastError());
-    CloseHandle(info.hThread);
 
-    wait_child_process(info.hProcess);
+    wait_child_process(&info);
 }
 
 static void import_memory(VkDevice vk_device, VkMemoryAllocateInfo alloc_info, VkExternalMemoryHandleTypeFlagBits handle_type, HANDLE handle)
@@ -1415,6 +1507,284 @@ static void test_external_memory(VkInstance vk_instance, VkPhysicalDevice vk_phy
     vkDestroyDevice(vk_device, NULL);
 }
 
+static const char *test_timeline_semaphore_extensions[] =
+{
+    "VK_KHR_get_physical_device_properties2",
+    "VK_KHR_external_semaphore_capabilities",
+};
+
+static void test_timeline_semaphore(VkInstance vk_instance, VkPhysicalDevice vk_physical_device)
+{
+    VkSemaphoreTypeCreateInfo type_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO};
+    VkSemaphoreCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, .pNext = &type_info};
+    VkSemaphoreWaitInfo wait_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO};
+    VkTimelineSemaphoreSubmitInfo timeline_info = {.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO};
+    VkSubmitInfo submit = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .pNext = &timeline_info};
+    VkSemaphoreSignalInfo signal_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO};
+    VkFenceCreateInfo fence_info = {.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    PFN_vkGetSemaphoreCounterValueKHR p_vkGetSemaphoreCounterValueKHR;
+    uint32_t index, stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    PFN_vkSignalSemaphoreKHR p_vkSignalSemaphoreKHR;
+    PFN_vkWaitSemaphoresKHR p_vkWaitSemaphoresKHR;
+    uint64_t value, wait_value, signal_value;
+    VkSemaphore vk_semaphore, vk_semaphore2;
+    VkDevice vk_device;
+    VkFence vk_fence;
+    VkQueue vk_queue;
+    VkResult vr;
+
+    static const char *extensions[] =
+    {
+        "VK_KHR_timeline_semaphore",
+        "VK_KHR_external_semaphore",
+        "VK_KHR_external_semaphore_win32",
+    };
+
+    if ((vr = create_device(vk_physical_device, ARRAY_SIZE(extensions), extensions, NULL, &vk_device)))
+    {
+        skip("Failed to create device with external memory extensions, VkResult %d.\n", vr);
+        return;
+    }
+
+    p_vkGetSemaphoreCounterValueKHR = (void *)vkGetDeviceProcAddr(vk_device, "vkGetSemaphoreCounterValueKHR");
+    p_vkSignalSemaphoreKHR = (void *)vkGetDeviceProcAddr(vk_device, "vkSignalSemaphoreKHR");
+    p_vkWaitSemaphoresKHR = (void *)vkGetDeviceProcAddr(vk_device, "vkWaitSemaphoresKHR");
+
+    type_info.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+
+    vr = vkCreateSemaphore(vk_device, &create_info, NULL, &vk_semaphore);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = vkCreateSemaphore(vk_device, &create_info, NULL, &vk_semaphore2);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+
+    find_queue_family(vk_physical_device, VK_QUEUE_GRAPHICS_BIT, &index);
+    vkGetDeviceQueue(vk_device, index, 0, &vk_queue);
+
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 0, "got %#I64x\n", value);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore2, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 0, "got %#I64x\n", value);
+
+    memset(&submit, 0, sizeof(submit));
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &vk_semaphore;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset(&timeline_info, 0, sizeof(timeline_info));
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pSignalSemaphoreValues = &signal_value;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_value = 1;
+    vr = vkQueueSubmit(vk_queue, 1, &submit, VK_NULL_HANDLE);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 1;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 1000 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 1, "got %#I64x\n", value);
+
+    memset(&submit, 0, sizeof(submit));
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &vk_semaphore;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset(&timeline_info, 0, sizeof(timeline_info));
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pSignalSemaphoreValues = &signal_value;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_value = 2;
+    vr = vkQueueSubmit(vk_queue, 1, &submit, VK_NULL_HANDLE);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+    memset(&submit, 0, sizeof(submit));
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &vk_semaphore;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pSignalSemaphores = &vk_semaphore2;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset(&timeline_info, 0, sizeof(timeline_info));
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.waitSemaphoreValueCount = 1;
+    timeline_info.pWaitSemaphoreValues = &wait_value;
+    timeline_info.pSignalSemaphoreValues = &signal_value;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_value = 1;
+    wait_value = 3;
+    vr = vkQueueSubmit(vk_queue, 1, &submit, VK_NULL_HANDLE);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 2;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 1000 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 2, "got %#I64x\n", value);
+
+    wait_info.pSemaphores = &vk_semaphore2;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 1;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_TIMEOUT, "got %d\n", vr);
+
+    signal_info.semaphore = vk_semaphore;
+    signal_info.value = 3;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 3;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 1000 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 3, "got %#I64x\n", value);
+
+    wait_info.pSemaphores = &vk_semaphore2;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 1;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 1000 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore2, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 1, "got %#I64x\n", value);
+
+
+    /* following tests are confusing the vulkan driver on Linux */
+    if (winetest_platform_is_wine) goto done;
+
+
+    /* large value jumps are allowed */
+
+    signal_info.semaphore = vk_semaphore;
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+
+    signal_info.value = 4;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    wait_value = 0x7fffffffffffffffull;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_TIMEOUT, "got %d\n", vr);
+    signal_info.value = 0x7fffffffffffffffull;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 0x7fffffffffffffffull, "got %#I64x\n", value);
+
+
+    /* rewinding on the CPU is allowed */
+
+    signal_info.semaphore = vk_semaphore;
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+
+    signal_info.value = 1;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    wait_value = 2;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_TIMEOUT, "got %d\n", vr);
+    signal_info.value = 2;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 2, "got %#I64x\n", value);
+
+
+    /* rewinding on the GPU is allowed */
+
+    memset(&submit, 0, sizeof(submit));
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &vk_semaphore;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset(&timeline_info, 0, sizeof(timeline_info));
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pSignalSemaphoreValues = &signal_value;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_value = 1;
+    vr = vkCreateFence(vk_device, &fence_info, NULL, &vk_fence);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = vkQueueSubmit(vk_queue, 1, &submit, vk_fence);
+    ok(vr == VK_SUCCESS || broken(vr == VK_ERROR_UNKNOWN) /* AMD */, "got %d\n", vr);
+    vr = vkWaitForFences(vk_device, 1, &vk_fence, VK_FALSE, 100 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vkDestroyFence(vk_device, vk_fence, NULL);
+
+    memset(&submit, 0, sizeof(submit));
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &vk_semaphore2;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pSignalSemaphores = &vk_semaphore;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset(&timeline_info, 0, sizeof(timeline_info));
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pWaitSemaphoreValues = &wait_value;
+    timeline_info.waitSemaphoreValueCount = 1;
+    timeline_info.pSignalSemaphoreValues = &signal_value;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_value = 3;
+    wait_value = 2;
+    vr = vkQueueSubmit(vk_queue, 1, &submit, VK_NULL_HANDLE);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+
+    wait_info.pSemaphores = &vk_semaphore;
+    wait_info.semaphoreCount = 1;
+    wait_info.pValues = &wait_value;
+    wait_value = 2;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_TIMEOUT || broken(vr == VK_SUCCESS) /* AMD */, "got %d\n", vr);
+    wait_value = 1;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 100 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 1 || broken(value == 2) /* AMD */, "got %#I64x\n", value);
+    signal_info.semaphore = vk_semaphore2;
+    signal_info.value = 2;
+    vr = p_vkSignalSemaphoreKHR(vk_device, &signal_info);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    wait_value = 3;
+    vr = p_vkWaitSemaphoresKHR(vk_device, &wait_info, 1000 * 1000000);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    vr = p_vkGetSemaphoreCounterValueKHR(vk_device, vk_semaphore, &value);
+    ok(vr == VK_SUCCESS, "got %d\n", vr);
+    ok(value == 3, "got %#I64x\n", value);
+
+
+done:
+    vkDestroySemaphore(vk_device, vk_semaphore, NULL);
+    vkDestroySemaphore(vk_device, vk_semaphore2, NULL);
+    vkDestroyDevice(vk_device, NULL);
+}
+
 static void for_each_device_instance(uint32_t extension_count, const char * const *enabled_extensions,
         void (*test_func_instance)(VkInstance, VkPhysicalDevice), void (*test_func)(VkPhysicalDevice))
 {
@@ -1484,4 +1854,5 @@ START_TEST(vulkan)
     for_each_device(test_private_data);
     for_each_device_instance(ARRAY_SIZE(test_win32_surface_extensions), test_win32_surface_extensions, test_win32_surface, NULL);
     for_each_device_instance(ARRAY_SIZE(test_external_memory_extensions), test_external_memory_extensions, test_external_memory, NULL);
+    for_each_device_instance(ARRAY_SIZE(test_timeline_semaphore_extensions), test_timeline_semaphore_extensions, test_timeline_semaphore, NULL);
 }

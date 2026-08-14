@@ -1943,6 +1943,7 @@ static void d3dx_pool_release_shared_parameter(struct d3dx_top_level_parameter *
     else
     {
         free(param->shared_data->parameters);
+        param->shared_data->parameters = NULL;
         /* Zeroing table size is required as the entry in pool parameters table can be reused. */
         param->shared_data->size = 0;
         param->shared_data = NULL;

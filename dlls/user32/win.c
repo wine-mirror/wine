@@ -19,7 +19,6 @@
  */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "winver.h"
@@ -29,6 +28,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+#define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
+
+static const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
 
 #ifdef __i386__
 /* Some apps pass a non-stdcall proc to EnumChildWindows,
@@ -88,28 +94,6 @@ static BOOL enum_windows( HDESK desktop, HWND hwnd, DWORD tid, BOOL children,
 }
 
 
-/*******************************************************************
- *           is_desktop_window
- *
- * Check if window is the desktop or the HWND_MESSAGE top parent.
- */
-BOOL is_desktop_window( HWND hwnd )
-{
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-
-    if (!hwnd) return FALSE;
-    if (hwnd == UlongToHandle( thread_info->top_window )) return TRUE;
-    if (hwnd == UlongToHandle( thread_info->msg_window )) return TRUE;
-
-    if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
-    {
-        if (LOWORD(thread_info->top_window) == LOWORD(hwnd)) return TRUE;
-        if (LOWORD(thread_info->msg_window) == LOWORD(hwnd)) return TRUE;
-    }
-    return FALSE;
-}
-
-
 /* check if hwnd is a broadcast magic handle */
 static inline BOOL is_broadcast( HWND hwnd )
 {
@@ -147,20 +131,6 @@ HWND WIN_IsCurrentThread( HWND hwnd )
 HWND WIN_GetFullHandle( HWND hwnd )
 {
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetFullWindowHandle ));
-}
-
-
-/***********************************************************************
- *           WIN_SetStyle
- *
- * Change the style of a window.
- */
-ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
-{
-    /* FIXME: Use SetWindowLong or move callers to win32u instead.
-     * We use STYLESTRUCT to pass params, but meaning of its field does not match our usage. */
-    STYLESTRUCT style = { .styleNew = set_bits, .styleOld = clear_bits };
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&style, NtUserSetWindowStyle );
 }
 
 
@@ -289,14 +259,24 @@ static BOOL is_default_coord( int x )
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
-    UNICODE_STRING class, window_name = {0};
+    WCHAR nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class = RTL_CONSTANT_STRING(nameW), version, window_name = {0};
+    struct client_menu_name *menu_name;
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;
     WCHAR name_buf[8];
     HMENU menu;
 
-    if (!get_class_info( module, className, &info, &class, FALSE )) return FALSE;
+    init_class_name( &class, className );
+    get_class_version( &class, &version, TRUE );
+
+    if (!NtUserGetClassInfoEx( module, &class, &info, &menu_name, FALSE ))
+    {
+        TRACE( "%s %p -> not found\n", debugstr_us(&class), module );
+        SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+        return FALSE;
+    }
 
     TRACE("%s %s%s%s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
@@ -410,7 +390,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, &window_name, cs->style,
                                  cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, menu, module,
-                                 cs->lpCreateParams, 0, cs->hInstance, 0, !unicode );
+                                 cs->lpCreateParams, 0, cs->hInstance, className, !unicode );
     if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
     if (!unicode && window_name.Buffer != name_buf) RtlFreeUnicodeString( &window_name );
     return hwnd;
@@ -509,19 +489,11 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  */
 HWND WINAPI FindWindowExW( HWND parent, HWND child, const WCHAR *class, const WCHAR *title )
 {
-    UNICODE_STRING class_str, title_str;
+    WCHAR class_nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class_str = RTL_CONSTANT_STRING(class_nameW), title_str;
 
     if (title) RtlInitUnicodeString( &title_str, title );
-
-    if (class)
-    {
-        if (IS_INTRESOURCE(class))
-        {
-            class_str.Buffer = (WCHAR *)class;
-            class_str.Length = class_str.MaximumLength = 0;
-        }
-        else RtlInitUnicodeString( &class_str, class );
-    }
+    if (class) init_class_name( &class_str, class );
 
     return NtUserFindWindowEx( parent, child, class ? &class_str : NULL,
                                title ? &title_str : NULL, 0 );
@@ -543,9 +515,10 @@ HWND WINAPI FindWindowA( LPCSTR className, LPCSTR title )
 /***********************************************************************
  *		FindWindowExA (USER32.@)
  */
-HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR title )
+HWND WINAPI FindWindowExA( HWND parent, HWND child, const char *class, const char *title )
 {
-    LPWSTR titleW = NULL;
+    WCHAR *titleW = NULL, class_nameW[MAX_ATOM_LEN + 1];
+    UNICODE_STRING class_str = RTL_CONSTANT_STRING(class_nameW), title_str;
     HWND hwnd = 0;
 
     if (title)
@@ -553,19 +526,12 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child, LPCSTR className, LPCSTR tit
         DWORD len = MultiByteToWideChar( CP_ACP, 0, title, -1, NULL, 0 );
         if (!(titleW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
         MultiByteToWideChar( CP_ACP, 0, title, -1, titleW, len );
+        RtlInitUnicodeString( &title_str, titleW );
     }
+    if (class) init_class_name_ansi( &class_str, class );
 
-    if (!IS_INTRESOURCE(className))
-    {
-        WCHAR classW[256];
-        if (MultiByteToWideChar( CP_ACP, 0, className, -1, classW, ARRAY_SIZE( classW )))
-            hwnd = FindWindowExW( parent, child, classW, titleW );
-    }
-    else
-    {
-        hwnd = FindWindowExW( parent, child, (LPCWSTR)className, titleW );
-    }
-
+    hwnd = NtUserFindWindowEx( parent, child, class ? &class_str : NULL,
+                               title ? &title_str : NULL, 0 );
     HeapFree( GetProcessHeap(), 0, titleW );
     return hwnd;
 }
@@ -585,9 +551,6 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-
-    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
     return NtUserGetDesktopWindow();
 }
 
@@ -1258,6 +1221,17 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
 }
 
 
+/***********************************************************************
+ *		IsWindowArranged (USER32.@)
+ */
+BOOL WINAPI IsWindowArranged( HWND hwnd )
+{
+    FIXME( "hwnd %p stub.\n", hwnd );
+
+    return FALSE;
+}
+
+
 /*******************************************************************
  *		GetTopWindow (USER32.@)
  */
@@ -1606,23 +1580,6 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 #endif /* _WIN64 */
 
 /*****************************************************************************
- *              GetWindowDisplayAffinity (USER32.@)
- */
-BOOL WINAPI GetWindowDisplayAffinity(HWND hwnd, DWORD *affinity)
-{
-    FIXME("(%p, %p): stub\n", hwnd, affinity);
-
-    if (!hwnd || !affinity)
-    {
-        SetLastError(hwnd ? ERROR_NOACCESS : ERROR_INVALID_WINDOW_HANDLE);
-        return FALSE;
-    }
-
-    *affinity = WDA_NONE;
-    return TRUE;
-}
-
-/*****************************************************************************
  *              SetWindowDisplayAffinity (USER32.@)
  */
 BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
@@ -1647,4 +1604,211 @@ BOOL WINAPI SetWindowCompositionAttribute(HWND hwnd, void *data)
     FIXME("(%p, %p): stub\n", hwnd, data);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+/**********************************************************************
+ *              SetProcessLaunchForegroundPolicy (USER32.@)
+ */
+BOOL WINAPI SetProcessLaunchForegroundPolicy(DWORD pid, DWORD flags)
+{
+    FIXME("(%lu %lu): stub\n", pid, flags);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return FALSE;
+}
+
+static BOOL should_move_window( HWND window, HWND parent, DWORD flags )
+{
+    DWORD style = GetWindowLongW( window, GWL_STYLE );
+
+    if (style & WS_MINIMIZE)
+        return FALSE;
+    if (!(style & WS_VISIBLE))
+        return FALSE;
+    if ((style & WS_CAPTION) != WS_CAPTION)
+        return FALSE;
+    if ((flags & MDITILE_SKIPDISABLED) && (style & WS_DISABLED))
+        return FALSE;
+    if (NtUserGetAncestor( window, GA_PARENT ) != parent)
+        return FALSE;
+    return TRUE;
+}
+
+/**********************************************************************
+ *              CascadeWindows (USER32.@)
+ */
+WORD WINAPI CascadeWindows( HWND parent, UINT flags, const RECT *rect, UINT count, const HWND *windows )
+{
+    unsigned int spacing = GetSystemMetrics( SM_CYCAPTION ) + GetSystemMetrics( SM_CYDLGFRAME );
+    unsigned int x, y, width, height;
+    HWND *children = NULL;
+    WORD ret_count = 0;
+    RECT client;
+
+    TRACE( "parent %p, flags %#x, rect %s, count %u, windows %p\n",
+           parent, flags, wine_dbgstr_rect(rect), count, windows );
+
+    if (flags & ~MDITILE_SKIPDISABLED)
+        FIXME( "ignoring flags %#x\n", flags & ~MDITILE_SKIPDISABLED );
+
+    if (!parent)
+        parent = GetDesktopWindow();
+
+    if (!rect)
+    {
+        GetClientRect( parent, &client );
+        rect = &client;
+    }
+
+    x = rect->left;
+    y = rect->top;
+
+    /* On Windows these match the dimensions triggered by CW_USEDEFAULT. */
+    width = rect->right * 3 / 4;
+    height = rect->bottom * 3 / 4;
+
+    if (!windows)
+    {
+        if (!(children = WIN_ListChildren( parent )))
+            return 0;
+        for (count = 0; children[count]; ++count)
+            ;
+        windows = children;
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        HWND child = windows[count - 1 - i];
+        DWORD style = GetWindowLongW( child, GWL_STYLE );
+        DWORD swp_flags = SWP_NOZORDER | SWP_NOACTIVATE;
+
+        if (!should_move_window( child, parent, flags ))
+            continue;
+
+        if (!(style & WS_THICKFRAME))
+            swp_flags |= SWP_NOSIZE;
+        NtUserSetWindowPos( child, 0, x, y, width, height, swp_flags );
+
+        x += spacing;
+        y += spacing;
+        if (x + width > rect->right)
+            x = rect->left;
+        if (y + height > rect->bottom)
+            y = rect->top;
+
+        ++ret_count;
+    }
+
+    HeapFree( GetProcessHeap(), 0, children );
+
+    return ret_count;
+}
+
+/**********************************************************************
+ *              CascadeChildWindows (USER32.@)
+ */
+WORD WINAPI CascadeChildWindows( HWND parent, UINT flags )
+{
+    return CascadeWindows( parent, flags, NULL, 0, NULL );
+}
+
+/**********************************************************************
+ *              TileWindows (USER32.@)
+ */
+WORD WINAPI TileWindows( HWND parent, UINT flags, const RECT *rect, UINT count, const HWND *windows )
+{
+    unsigned int tile_count = 0, column = 0, row = 0;
+    unsigned int root, columns, rows, light_columns;
+    HWND *children = NULL;
+    RECT client;
+
+    TRACE( "parent %p, flags %#x, rect %s, count %u, windows %p\n",
+           parent, flags, wine_dbgstr_rect(rect), count, windows );
+
+    if (flags & ~(MDITILE_SKIPDISABLED | MDITILE_HORIZONTAL))
+        FIXME( "ignoring flags %#x\n", flags & ~(MDITILE_SKIPDISABLED | MDITILE_HORIZONTAL) );
+
+    if (!parent)
+        parent = GetDesktopWindow();
+
+    if (!rect)
+    {
+        GetClientRect( parent, &client );
+        rect = &client;
+    }
+
+    if (!windows)
+    {
+        if (!(children = WIN_ListChildren( parent )))
+            return 0;
+        for (count = 0; children[count]; ++count)
+            ;
+        windows = children;
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        if (should_move_window( windows[i], parent, flags ))
+            ++tile_count;
+    }
+
+    /* Determine root = ⌊√tile_count⌋. This is how many columns (if horizontal)
+     * or rows (if vertical) we have. */
+    for (root = 0; root * root <= tile_count; ++root)
+        ;
+    --root;
+
+    /* Because the number of windows might not evenly divide the number of
+     * columns, Windows might give one extra window to some columns,
+     * starting from the right. These are referred to as "heavy" columns here.
+     * "rows" describes the number of rows in "light" columns,
+     * and light_columns is the number of columns which are light. */
+
+    if (flags & MDITILE_HORIZONTAL)
+    {
+        columns = root;
+        rows = tile_count / columns;
+        light_columns = columns - (tile_count % columns);
+    }
+    else
+    {
+        rows = root;
+        columns = tile_count / rows;
+        light_columns = columns - (tile_count % rows);
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        unsigned int current_rows = (column < light_columns ? rows : rows + 1);
+        unsigned int width = (rect->right - rect->left) / columns;
+        unsigned int height = (rect->bottom - rect->top) / current_rows;
+        HWND child = windows[i];
+        DWORD style = GetWindowLongW( child, GWL_STYLE );
+        DWORD swp_flags = SWP_NOZORDER | SWP_NOACTIVATE;
+
+        if (!should_move_window( child, parent, flags ))
+            continue;
+
+        if (!(style & WS_THICKFRAME))
+            swp_flags |= SWP_NOSIZE;
+        NtUserSetWindowPos( child, 0, rect->left + column * width, rect->top + row * height, width, height, swp_flags );
+
+        ++row;
+        if ((row == rows && column < light_columns) || row == rows + 1)
+        {
+            row = 0;
+            ++column;
+        }
+    }
+
+    HeapFree( GetProcessHeap(), 0, children );
+
+    return tile_count;
+}
+
+/**********************************************************************
+ *              TileChildWindows (USER32.@)
+ */
+WORD WINAPI TileChildWindows( HWND parent, UINT flags )
+{
+    return TileWindows( parent, flags, NULL, 0, NULL );
 }

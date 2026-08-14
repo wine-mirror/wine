@@ -4,6 +4,8 @@ IMPORTLIB = uxtheme
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = msimg32
 
+VER_FILEDESCRIPTION_STR = "Wine uxtheme"
+
 SOURCES = \
 	buffer.c \
 	dialog.c \
@@ -12,9 +14,9 @@ SOURCES = \
 	metric.c \
 	msstyles.c \
 	property.c \
+	rsrc.rc \
 	scrollbar.c \
 	stylemap.c \
 	system.c \
 	uxini.c \
-	version.rc \
 	window.c

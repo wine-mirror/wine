@@ -231,11 +231,7 @@ static void run_child_process(void)
     si.cb = sizeof(si);
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
-
-    wait_child_process(pi.hProcess);
-
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    wait_child_process(&pi);
 }
 
 static void test_SxsLookupClrGuid(void)

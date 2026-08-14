@@ -99,6 +99,24 @@ static void RefCountTest(void)
     IDirectDraw4_Release(dd4);
 }
 
+static HRESULT CALLBACK enum_display_modes_cb(DDSURFACEDESC *desc, void *ctx)
+{
+    return S_OK;
+}
+
+static void test_enum_display_modes(void)
+{
+    IDirectDraw *ddraw = createDDraw();
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IDirectDraw_EnumDisplayModes(ddraw, 0, NULL, NULL, &enum_display_modes_cb);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got unexpected refcount %lu.\n", ref);
+}
+
 START_TEST(ddrawex)
 {
     IClassFactory *classfactory = NULL;
@@ -121,6 +139,7 @@ START_TEST(ddrawex)
     ok(hr == S_OK, "Failed to create a IDirectDrawFactory\n");
 
     RefCountTest();
+    test_enum_display_modes();
 
     if(factory) {
         ref = IDirectDrawFactory_Release(factory);

@@ -34,7 +34,6 @@ CREATE_TYPE_INFO_VTABLE
 
 static HMODULE msvcp140;
 
-int CDECL _callnewh(size_t size);
 void (__cdecl *throw_bad_alloc)(void);
 
 /* non-static, needed by type_info */
@@ -116,17 +115,19 @@ __ASM_BLOCK_BEGIN(vtables)
             VTABLE_ADD_FUNC(do_is_equal));
 __ASM_BLOCK_END
 
-DEFINE_RTTI_BASE(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
-DEFINE_RTTI_BASE(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
-DEFINE_RTTI_DATA2(aligned_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Aligned_new_delete_resource_impl@pmr@std@@")
-DEFINE_RTTI_DATA2(unaligned_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Unaligned_new_delete_resource_impl@pmr@std@@")
-DEFINE_RTTI_DATA2(null_resource, 0, &_Identity_equal_resource_rtti_base_descriptor,
-        &base_memory_resource_rtti_base_descriptor,
-        ".?AV_Null_resource@?1??null_memory_resource@@YAPAVmemory_resource@pmr@std@@XZ")
+DEFINE_RTTI_DATA(base_memory_resource, 0, ".?AVmemory_resource@pmr@std@@")
+DEFINE_RTTI_DATA(_Identity_equal_resource, 0, ".?AV_Identity_equal_resource@pmr@std@@")
+DEFINE_RTTI_DATA(aligned_resource, 0, ".?AV_Aligned_new_delete_resource_impl@pmr@std@@",
+        _Identity_equal_resource_rtti_base_descriptor,
+        base_memory_resource_rtti_base_descriptor)
+DEFINE_RTTI_DATA(unaligned_resource, 0,
+        ".?AV_Unaligned_new_delete_resource_impl@pmr@std@@",
+        _Identity_equal_resource_rtti_base_descriptor,
+        base_memory_resource_rtti_base_descriptor)
+DEFINE_RTTI_DATA(null_resource, 0,
+        ".?AV_Null_resource@?1??null_memory_resource@@YAPAVmemory_resource@pmr@std@@XZ",
+        _Identity_equal_resource_rtti_base_descriptor,
+        base_memory_resource_rtti_base_descriptor)
 
 DEFINE_THISCALL_WRAPPER(nop_dtor, 4)
 void __thiscall nop_dtor(void *this)
@@ -263,14 +264,12 @@ static BOOL init_cxx_funcs(void)
 
 static void init_rtti(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_type_info_rtti(base);
-    init_base_memory_resource_rtti(base);
-    init__Identity_equal_resource_rtti(base);
-    init_aligned_resource_rtti(base);
-    init_unaligned_resource_rtti(base);
-    init_null_resource_rtti(base);
-#endif
+    INIT_RTTI(type_info, base);
+    INIT_RTTI(base_memory_resource, base);
+    INIT_RTTI(_Identity_equal_resource, base);
+    INIT_RTTI(aligned_resource, base);
+    INIT_RTTI(unaligned_resource, base);
+    INIT_RTTI(null_resource, base);
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)

@@ -203,9 +203,78 @@ static DWORD WINAPI thread_SetTimer(void *arg)
     return 0;
 }
 
+static void WINAPI timer_callback(PTP_CALLBACK_INSTANCE inst, void* ctx, PTP_TIMER timer)
+{
+    HANDLE event = ctx;
+    SetEvent(event);
+}
+
+static DWORD WINAPI thread_SetThreadpoolTimer_rel(void *arg)
+{
+    LARGE_INTEGER li;
+    TP_TIMER *timer;
+    HANDLE event;
+    FILETIME ft;
+    DWORD t, r;
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+    timer = CreateThreadpoolTimer(timer_callback, event, NULL);
+    ok(timer != NULL, "CreateThreadpoolTimer failed\n");
+
+    li.QuadPart = -3 * TICKSPERSEC;
+    ft.dwHighDateTime = li.HighPart;
+    ft.dwLowDateTime = li.LowPart;
+    t = GetTickCount();
+    SetThreadpoolTimer(timer, &ft, 0, 0);
+
+    r = WaitForSingleObject(event, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", r);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %ld\n", t);
+
+    WaitForThreadpoolTimerCallbacks(timer, FALSE);
+    CloseThreadpoolTimer(timer);
+    CloseHandle(event);
+    return 0;
+}
+
+static DWORD WINAPI thread_SetThreadpoolTimer_abs(void *arg)
+{
+    LARGE_INTEGER li;
+    TP_TIMER *timer;
+    HANDLE event;
+    FILETIME ft;
+    DWORD t, r;
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+    timer = CreateThreadpoolTimer(timer_callback, event, NULL);
+    ok(timer != NULL, "CreateThreadpoolTimer failed\n");
+
+    GetSystemTimeAsFileTime(&ft);
+    li.HighPart = ft.dwHighDateTime;
+    li.LowPart = ft.dwLowDateTime;
+    li.QuadPart += 3 * TICKSPERSEC;
+    ft.dwHighDateTime = li.HighPart;
+    ft.dwLowDateTime = li.LowPart;
+    t = GetTickCount();
+    SetThreadpoolTimer(timer, &ft, 0, 0);
+
+    r = WaitForSingleObject(event, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", r);
+    t = GetTickCount() - t;
+    ok(t < 2000, "t = %ld\n", t);
+
+    WaitForThreadpoolTimerCallbacks(timer, FALSE);
+    CloseThreadpoolTimer(timer);
+    CloseHandle(event);
+    return 0;
+}
+
 static void test_timeouts(void)
 {
-    HANDLE threads[7];
+    HANDLE threads[9];
     DWORD i;
 
     if (!adjust_system_time(1))
@@ -222,6 +291,8 @@ static void test_timeouts(void)
     threads[4] = CreateThread(NULL, 0, thread_WaitableTimer_abs, NULL, 0, NULL);
     threads[5] = CreateThread(NULL, 0, thread_WaitableTimer_period, NULL, 0, NULL);
     threads[6] = CreateThread(NULL, 0, thread_SetTimer, NULL, 0, NULL);
+    threads[7] = CreateThread(NULL, 0, thread_SetThreadpoolTimer_rel, NULL, 0, NULL);
+    threads[8] = CreateThread(NULL, 0, thread_SetThreadpoolTimer_abs, NULL, 0, NULL);
     for(i=0; i<ARRAY_SIZE(threads); i++)
         ok(threads[i] != NULL, "CreateThread failed\n");
 

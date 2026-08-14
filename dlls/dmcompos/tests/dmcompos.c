@@ -572,7 +572,7 @@ static void test_parsedescriptor(void)
     /* Nothing loaded */
     hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
     ok(hr == S_OK, "GetDescriptor failed: %#lx, expected S_OK\n", hr);
-    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#lx, expected DMUS_OBJ_OBJECT\n",
+    ok(desc.dwValidData == DMUS_OBJ_CLASS, "Got valid data %#lx, expected DMUS_OBJ_CLASS\n",
             desc.dwValidData);
     ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicChordMap),
             "Got class guid %s, expected CLSID_DirectMusicChordMap\n",

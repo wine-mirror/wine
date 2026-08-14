@@ -169,9 +169,15 @@ static ULONG WINAPI loader_Release(IDirectMusicLoader8 *iface)
     TRACE("(%p)->(): new ref = %lu\n", iface, ref);
 
     if (!ref) {
+        struct cache_entry *obj, *obj2;
         unsigned int i;
 
-        IDirectMusicLoader8_ClearCache(iface, &GUID_DirectMusicAllTypes);
+        LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &This->cache, struct cache_entry, entry) {
+            if ((obj->Desc.dwValidData & DMUS_OBJ_LOADED) && obj->pObject)
+                IDirectMusicObject_Release(obj->pObject);
+            list_remove(&obj->entry);
+            free(obj);
+        }
         for (i = 0; i < ARRAY_SIZE(classes); i++)
             free(This->search_paths[i]);
         free(This);
@@ -439,12 +445,14 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
             pObjectEntry = calloc(1, sizeof(*pObjectEntry));
             DM_STRUCT_INIT(&pObjectEntry->Desc);
             DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->Desc.dwValidData |= DMUS_OBJ_LOADED;
             pObjectEntry->pObject = pObject;
             list_add_head(&This->cache, &pObjectEntry->entry);
         }
         else
         {
             DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->Desc.dwValidData |= DMUS_OBJ_LOADED;
             pObjectEntry->pObject = pObject;
         }
         TRACE(": filled in cache entry\n");
@@ -741,10 +749,15 @@ static HRESULT WINAPI loader_ClearCache(IDirectMusicLoader8 *iface, REFGUID clas
     LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &This->cache, struct cache_entry, entry) {
         if ((IsEqualGUID(class, &GUID_DirectMusicAllTypes) || IsEqualGUID(class, &obj->Desc.guidClass)) &&
             (obj->Desc.dwValidData & DMUS_OBJ_LOADED)) {
-            /* basically, wrap to ReleaseObject for each object found */
-            IDirectMusicLoader8_ReleaseObject(iface, obj->pObject);
-            list_remove(&obj->entry);
-            free(obj);
+            if (obj->pObject) {
+                IDirectMusicObject_Release(obj->pObject);
+                obj->pObject = NULL;
+            }
+            obj->Desc.dwValidData &= ~DMUS_OBJ_LOADED;
+            if (!IsEqualGUID(&GUID_DefaultGMCollection, &obj->Desc.guidObject)) {
+                list_remove(&obj->entry);
+                free(obj);
+            }
         }
     }
 

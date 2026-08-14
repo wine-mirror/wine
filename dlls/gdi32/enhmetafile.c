@@ -3001,3 +3001,12 @@ end:
     DeleteMetaFile(hmf);
     return ret;
 }
+
+/******************************************************************
+ *         GetEnhMetaFilePixelFormat   (GDI32.@)
+ */
+UINT WINAPI GetEnhMetaFilePixelFormat( HENHMETAFILE hemf, UINT size, PIXELFORMATDESCRIPTOR *fmt )
+{
+    FIXME( "(%p,%u,%p) stub\n", hemf, size, fmt );
+    return GDI_ERROR;
+}

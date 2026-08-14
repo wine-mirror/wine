@@ -78,9 +78,6 @@ extern LRESULT MDIClientWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
 extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
 extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
 
-/* Class functions */
-extern ATOM get_int_atom_value( UNICODE_STRING *name );
-
 /* desktop */
 extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern );
 

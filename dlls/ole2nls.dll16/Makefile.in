@@ -2,6 +2,8 @@ MODULE    = ole2nls.dll16
 
 EXTRADLLFLAGS = -m16 -Wb,--main-module,ole32.dll
 
+VER_FILEDESCRIPTION_STR = "Wine OLE dll"
+VER_PRODUCTVERSION      = 2,10,3050,1
+
 SOURCES = \
-	ole2nls.c \
-	version.rc
+	ole2nls.c

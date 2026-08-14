@@ -28,7 +28,6 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "ddk/wdm.h"
 
@@ -66,26 +65,12 @@ static void symlink_destroy( struct object *obj );
 
 static const struct object_ops symlink_ops =
 {
-    sizeof(struct symlink),       /* size */
-    &symlink_type,                /* type */
-    symlink_dump,                 /* dump */
-    no_add_queue,                 /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    no_signal,                    /* signal */
-    no_get_fd,                    /* get_fd */
-    default_map_access,           /* map_access */
-    default_get_sd,               /* get_sd */
-    default_set_sd,               /* set_sd */
-    default_get_full_name,        /* get_full_name */
-    symlink_lookup_name,          /* lookup_name */
-    directory_link_name,          /* link_name */
-    default_unlink_name,          /* unlink_name */
-    no_open_file,                 /* open_file */
-    no_kernel_obj_list,           /* get_kernel_obj_list */
-    no_close_handle,              /* close_handle */
-    symlink_destroy               /* destroy */
+    .size        = sizeof(struct symlink),
+    .type        = &symlink_type,
+    .dump        = symlink_dump,
+    .init        = symlink_init,
+    .lookup_name = symlink_lookup_name,
+    .destroy     = symlink_destroy,
 };
 
 static void symlink_dump( struct object *obj, int verbose )
@@ -185,7 +170,10 @@ struct object *create_obj_symlink( struct object *root, struct unicode_str name,
     struct object_params params = { .ops = &symlink_ops, .root = root, .name = name,
                                     .attr = attr, .sd = sd, .init_data = &target_str };
 
-    if (!(target_name = target->ops->get_full_name( target, &len )))
+    if (target->ops->get_full_name) target_name = target->ops->get_full_name( target, ~0u, &len );
+    else target_name = default_get_full_name( target, ~0u, &len );
+
+    if (!target_name)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;

@@ -19,5 +19,11 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.devices.enumeration.idl"
+import "windows.devices.enumeration.idl";
+
+namespace Windows.Devices.Enumeration {
+    runtimeclass DeviceInformation;
+    runtimeclass DeviceAccessInformation;
+}

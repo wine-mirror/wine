@@ -3,6 +3,8 @@ IMPORTS   = winspool
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Spooler Setup API (Printing)"
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
-	ntprint.c \
-	ntprint.rc
+	ntprint.c

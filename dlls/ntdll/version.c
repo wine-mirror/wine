@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -168,7 +167,7 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN10 */
     {
-        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 19043, VER_PLATFORM_WIN32_NT,
+        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 19045, VER_PLATFORM_WIN32_NT,
         L"", 0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     },
     /* WIN11 */

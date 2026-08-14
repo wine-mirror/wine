@@ -118,10 +118,10 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_DEPTH_BOUNDS,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
-    WINED3D_CS_OP_SET_TRANSFORM,
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
+    WINED3D_CS_OP_SET_EXTRA_VS_ARGS,
     WINED3D_CS_OP_SET_EXTRA_PS_ARGS,
     WINED3D_CS_OP_SET_FEATURE_LEVEL,
     WINED3D_CS_OP_PUSH_CONSTANTS,
@@ -379,13 +379,6 @@ struct wined3d_cs_set_texture_state
     DWORD value;
 };
 
-struct wined3d_cs_set_transform
-{
-    enum wined3d_cs_op opcode;
-    enum wined3d_transform_state state;
-    struct wined3d_matrix matrix;
-};
-
 struct wined3d_cs_set_light
 {
     enum wined3d_cs_op opcode;
@@ -397,6 +390,12 @@ struct wined3d_cs_set_light_enable
     enum wined3d_cs_op opcode;
     unsigned int idx;
     BOOL enable;
+};
+
+struct wined3d_cs_set_extra_vs_args
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_extra_vs_args args;
 };
 
 struct wined3d_cs_set_extra_ps_args
@@ -612,11 +611,11 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_BOUNDS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE_STATE);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_TRANSFORM);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_COLOR_KEY);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT_ENABLE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_EXTRA_PS_ARGS);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_EXTRA_VS_ARGS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_FEATURE_LEVEL);
         WINED3D_TO_STR(WINED3D_CS_OP_PUSH_CONSTANTS);
         WINED3D_TO_STR(WINED3D_CS_OP_RESET_STATE);
@@ -640,6 +639,13 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
 #undef WINED3D_TO_STR
     }
     return wine_dbg_sprintf("UNKNOWN_OP(%#x)", op);
+}
+
+static const char *debug_cs_packet(const struct wined3d_cs_packet *packet)
+{
+    if (!packet->size)
+        return wine_dbg_sprintf("padding at %p", packet);
+    return wine_dbg_sprintf("op %s at %p", debug_cs_op(*(const enum wined3d_cs_op *)packet->data), packet);
 }
 
 static struct wined3d_cs_packet *wined3d_next_cs_packet(const uint8_t *data, SIZE_T *offset, SIZE_T mask)
@@ -749,9 +755,7 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
         }
     }
 
-    InterlockedDecrement(&cs->pending_presents);
-    if (InterlockedCompareExchange(&cs->waiting_for_present, FALSE, TRUE))
-        SetEvent(cs->present_event);
+    ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL);
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
@@ -760,7 +764,6 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 {
     struct wined3d_cs_present *op;
     unsigned int i;
-    LONG pending;
 
     wined3d_not_from_cs(cs);
 
@@ -773,8 +776,6 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->swap_interval = swap_interval;
     op->flags = flags;
 
-    pending = InterlockedIncrement(&cs->pending_presents);
-
     wined3d_resource_reference(&swapchain->front_buffer->resource);
     for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
     {
@@ -782,23 +783,6 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     }
 
     wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
-
-    /* Limit input latency by limiting the number of presents that we can get
-     * ahead of the worker thread. */
-    while (pending >= swapchain->max_frame_latency)
-    {
-        InterlockedExchange(&cs->waiting_for_present, TRUE);
-
-        pending = InterlockedCompareExchange(&cs->pending_presents, 0, 0);
-        if (pending >= swapchain->max_frame_latency || !InterlockedCompareExchange(&cs->waiting_for_present, FALSE, TRUE))
-        {
-            TRACE_(d3d_perf)("Reached latency limit (%u frames), blocking to wait.\n", swapchain->max_frame_latency);
-            wined3d_mutex_unlock();
-            WaitForSingleObject(cs->present_event, INFINITE);
-            wined3d_mutex_lock();
-            TRACE_(d3d_perf)("Woken up from the wait.\n");
-        }
-    }
 }
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
@@ -1138,7 +1122,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 }
 
 static void reference_graphics_pipeline_resources(struct wined3d_device_context *context,
-        BOOL indexed, const struct wined3d_d3d_info *d3d_info)
+        bool indexed, const struct wined3d_d3d_info *d3d_info)
 {
     const struct wined3d_state *state = context->state;
     unsigned int i;
@@ -1205,6 +1189,13 @@ void CDECL wined3d_device_context_draw_indirect(struct wined3d_device_context *c
     struct wined3d_cs_draw *op;
 
     wined3d_device_context_lock(context);
+
+    if (indexed && !state->index_buffer)
+    {
+        wined3d_device_context_unlock(context);
+        return;
+    }
+
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DRAW;
     op->primitive_type = state->primitive_type;
@@ -1337,12 +1328,12 @@ static void wined3d_cs_exec_set_rendertarget_views(struct wined3d_cs *cs, const 
             device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
         if (!(device->adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-                || cs->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+                || cs->state.extra_ps_args.srgb_write)
         {
             prev_srgb_write = prev && prev->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
             curr_srgb_write = view && view->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
             if (prev_srgb_write != curr_srgb_write)
-                device_invalidate_state(device, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
+                device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
         }
     }
 
@@ -1572,7 +1563,7 @@ void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_cont
 static bool texture_binding_might_invalidate_ps(struct wined3d_shader_resource_view *view,
         struct wined3d_shader_resource_view *prev, const struct wined3d_d3d_info *d3d_info)
 {
-    unsigned int old_usage, new_usage, old_caps, new_caps;
+    unsigned int old_usage, new_usage;
     const struct wined3d_format *old_format, *new_format;
 
     if (!prev)
@@ -1587,9 +1578,7 @@ static bool texture_binding_might_invalidate_ps(struct wined3d_shader_resource_v
 
     old_format = prev->resource->format;
     new_format = view->resource->format;
-    old_caps = prev->resource->format_caps;
-    new_caps = view->resource->format_caps;
-    if ((old_caps & WINED3D_FORMAT_CAP_SHADOW) != (new_caps & WINED3D_FORMAT_CAP_SHADOW))
+    if ((old_format->attrs & WINED3D_FORMAT_ATTR_SHADOW) != (new_format->attrs & WINED3D_FORMAT_ATTR_SHADOW))
         return true;
 
     if (is_same_fixup(old_format->color_fixup, new_format->color_fixup))
@@ -1934,31 +1923,6 @@ void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_transform(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_transform *op = data;
-
-    cs->state.transforms[op->state] = op->matrix;
-    /* Fog behaviour depends on the projection matrix. */
-    if (op->state == WINED3D_TS_PROJECTION
-            && cs->state.render_states[WINED3D_RS_FOGENABLE]
-            && cs->state.render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
-        device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
-}
-
-void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
-        enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
-{
-    struct wined3d_cs_set_transform *op;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_TRANSFORM;
-    op->state = state;
-    op->matrix = *matrix;
-
-    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-}
-
 static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_color_key *op = data;
@@ -2103,6 +2067,26 @@ void wined3d_device_context_emit_set_light_enable(struct wined3d_device_context 
     op->opcode = WINED3D_CS_OP_SET_LIGHT_ENABLE;
     op->idx = idx;
     op->enable = enable;
+
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+}
+
+static void wined3d_cs_exec_set_extra_vs_args(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_extra_vs_args *op = data;
+
+    cs->state.extra_vs_args = op->args;
+    device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
+}
+
+void wined3d_device_context_emit_set_extra_vs_args(struct wined3d_device_context *context,
+        const struct wined3d_extra_vs_args *args)
+{
+    struct wined3d_cs_set_extra_vs_args *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_EXTRA_VS_ARGS;
+    op->args = *args;
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2793,13 +2777,12 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         {
             unsigned int uv_height = format->uv_height;
             unsigned int uv_width = format->uv_width;
-            const struct wined3d_format *plane_format;
 
-            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[0], 0);
-            wined3d_format_copy_data(plane_format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
-                    map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
-            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[1], 0);
-            wined3d_format_copy_data(plane_format, (const uint8_t *)data + (row_pitch * (box->bottom - box->top)),
+            wined3d_format_copy_data(format->plane_formats[0], data, row_pitch, slice_pitch,
+                    map_desc.data, map_desc.row_pitch, map_desc.slice_pitch,
+                    box->right - box->left, box->bottom - box->top, box->back - box->front);
+            wined3d_format_copy_data(format->plane_formats[1],
+                    (const uint8_t *)data + (row_pitch * (box->bottom - box->top)),
                     row_pitch * 2 / uv_width, slice_pitch * 2 / uv_width / uv_height,
                     (uint8_t *)map_desc.data + map_desc.slice_pitch,
                     map_desc.row_pitch * 2 / uv_width, map_desc.slice_pitch * 2 / uv_width / uv_height,
@@ -3032,10 +3015,10 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_DEPTH_BOUNDS            */ wined3d_cs_exec_set_depth_bounds,
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
-    /* WINED3D_CS_OP_SET_TRANSFORM               */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_COLOR_KEY               */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_LIGHT                   */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE            */ wined3d_cs_exec_set_light_enable,
+    /* WINED3D_CS_OP_SET_EXTRA_VS_ARGS           */ wined3d_cs_exec_set_extra_vs_args,
     /* WINED3D_CS_OP_SET_EXTRA_PS_ARGS           */ wined3d_cs_exec_set_extra_ps_args,
     /* WINED3D_CS_OP_SET_FEATURE_LEVEL           */ wined3d_cs_exec_set_feature_level,
     /* WINED3D_CS_OP_PUSH_CONSTANTS              */ wined3d_cs_exec_push_constants,
@@ -3311,7 +3294,7 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     size_t packet_size;
 
     packet = (struct wined3d_cs_packet *)&queue->data[queue->head & WINED3D_CS_QUEUE_MASK];
-    TRACE("Queuing op %s at %p.\n", debug_cs_op(*(const enum wined3d_cs_op *)packet->data), packet);
+    TRACE("Queuing %s.\n", debug_cs_packet(packet));
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
     InterlockedExchange((LONG *)&queue->head, queue->head + packet_size);
 
@@ -3501,7 +3484,7 @@ static inline bool wined3d_cs_execute_next(struct wined3d_cs *cs, struct wined3d
     {
         opcode = *(const enum wined3d_cs_op *)packet->data;
 
-        TRACE("Executing %s at %p.\n", debug_cs_op(opcode), packet);
+        TRACE("Executing %s.\n", debug_cs_packet(packet));
         if (opcode >= WINED3D_CS_OP_STOP)
         {
             if (opcode > WINED3D_CS_OP_STOP)
@@ -3512,7 +3495,7 @@ static inline bool wined3d_cs_execute_next(struct wined3d_cs *cs, struct wined3d
         wined3d_cs_command_lock(cs);
         wined3d_cs_op_handlers[opcode](cs, packet->data);
         wined3d_cs_command_unlock(cs);
-        TRACE("%s at %p executed.\n", debug_cs_op(opcode), packet);
+        TRACE("%s executed.\n", debug_cs_packet(packet));
     }
 
     InterlockedExchange((LONG *)&queue->tail, tail);
@@ -3688,18 +3671,11 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
             free(cs->data);
             goto fail;
         }
-        if (!(cs->present_event = CreateEventW(NULL, FALSE, FALSE, NULL)))
-        {
-            ERR("Failed to create command stream present event.\n");
-            free(cs->data);
-            goto fail;
-        }
 
         if (!(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                 (const WCHAR *)wined3d_cs_run, &cs->wined3d_module)))
         {
             ERR("Failed to get wined3d module handle.\n");
-            CloseHandle(cs->present_event);
             if (cs->event)
                 CloseHandle(cs->event);
             free(cs->data);
@@ -3710,7 +3686,6 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         {
             ERR("Failed to create wined3d command stream thread.\n");
             FreeLibrary(cs->wined3d_module);
-            CloseHandle(cs->present_event);
             if (cs->event)
                 CloseHandle(cs->event);
             free(cs->data);
@@ -3734,8 +3709,6 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     {
         wined3d_cs_emit_stop(cs);
         CloseHandle(cs->thread);
-        if (!CloseHandle(cs->present_event))
-            ERR("Closing present event failed.\n");
         if (cs->event && !CloseHandle(cs->event))
             ERR("Closing event failed.\n");
     }

@@ -96,7 +96,7 @@
 @ cdecl omp_get_num_procs()
 @ cdecl omp_get_num_threads()
 @ cdecl omp_get_thread_num()
-@ stub omp_get_wtick
+@ cdecl omp_get_wtick()
 @ cdecl omp_get_wtime()
 @ cdecl omp_in_parallel()
 @ cdecl omp_init_lock(ptr)

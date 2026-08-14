@@ -757,6 +757,81 @@ static void test_wshnetwork(void)
     IDispatch_Release(disp);
 }
 
+static void test_wshshortcut(void)
+{
+    WCHAR temp_path[MAX_PATH], path[MAX_PATH];
+    IWshShortcut *shcut;
+    IDispatch *shortcut;
+    IWshShell3 *sh3;
+    BSTR str, str2;
+    HANDLE file;
+    DWORD size;
+    HRESULT hr;
+    LONG ref;
+
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    wcscpy(path, temp_path);
+    wcscat(path, L"test.lnk");
+    file = CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %ld.\n", GetLastError());
+    size = GetFileSize(file, NULL);
+    ok(!size, "got %lu.\n", size);
+    CloseHandle(file);
+
+    hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IWshShell3, (void**)&sh3);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IWshShell3_CreateShortcut(sh3, path, &shortcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&shcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    IDispatch_Release(shortcut);
+
+    hr = IWshShortcut_get_TargetPath(shcut, &str);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "got %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    str2 = SysAllocString(L"C:\\missing\\\\//q//");
+    hr = IWshShortcut_put_TargetPath(shcut, str2);
+    SysFreeString(str2);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IWshShortcut_get_TargetPath(shcut, &str);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"C:\\missing\\q"), "got %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IWshShortcut_Save(shcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %ld.\n", GetLastError());
+    size = GetFileSize(file, NULL);
+    CloseHandle(file);
+    ok(size && size != INVALID_FILE_SIZE, "got %lu.\n", size);
+
+    ref = IWshShortcut_Release(shcut);
+    ok(!ref, "got %ld.\n", ref);
+
+    hr = IWshShell3_CreateShortcut(sh3, path, &shortcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&shcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    IDispatch_Release(shortcut);
+
+    hr = IWshShortcut_get_TargetPath(shcut, &str);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"C:\\missing\\q"), "got %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    ref = IWshShortcut_Release(shcut);
+    ok(!ref, "got %ld.\n", ref);
+
+    DeleteFileW(path);
+}
+
 START_TEST(wshom)
 {
     IUnknown *unk;
@@ -777,6 +852,7 @@ START_TEST(wshom)
     test_registry();
     test_popup();
     test_wshnetwork();
+    test_wshshortcut();
 
     CoUninitialize();
 }

@@ -22,6 +22,7 @@ extern HRESULT create_sink_writer_from_url(const WCHAR *url, IMFByteStream *stre
         IMFAttributes *attributes, REFIID riid, void **out);
 extern HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attributes,
         REFIID riid, void **out);
+extern HRESULT update_media_type(IMFMediaType *dst_type, IMFMediaType *src_type, BOOL advanced);
 
 static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

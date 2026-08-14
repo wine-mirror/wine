@@ -25,3 +25,11 @@ BOOL WINAPI MagUninitialize(void)
     FIXME("stub!\n");
     return TRUE;
 }
+
+BOOL WINAPI MagInitialize(void)
+{
+    FIXME("stub!\n");
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

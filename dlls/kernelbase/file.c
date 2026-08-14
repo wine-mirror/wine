@@ -25,7 +25,6 @@
 
 #include "winerror.h"
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -37,6 +36,7 @@
 #include "ddk/ntddk.h"
 #include "ddk/ntddser.h"
 #include "ioringapi.h"
+#include "ddk/ntifs.h"
 
 #include "kernelbase.h"
 #include "wine/exception.h"
@@ -683,7 +683,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBU
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, sa ? sa->lpSecurityDescriptor : NULL );
     status = NtCreateFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL,
                            FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
-                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT, NULL, 0 );
     if (status == STATUS_SUCCESS) NtClose( handle );
 
     RtlFreeUnicodeString( &nt_name );
@@ -758,18 +758,26 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileA( LPCSTR name, DWORD access, DWORD sh
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
 
-static UINT get_nt_file_options( DWORD attributes )
+static UINT get_nt_file_options( DWORD attributes, DWORD creation )
 {
     UINT options = 0;
 
     if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+    {
         options |= FILE_OPEN_FOR_BACKUP_INTENT;
+        if ((attributes & FILE_FLAG_POSIX_SEMANTICS) &&
+            (attributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            creation == CREATE_NEW)
+            options |= FILE_DIRECTORY_FILE;
+    }
     else
         options |= FILE_NON_DIRECTORY_FILE;
     if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
         options |= FILE_DELETE_ON_CLOSE;
     if (attributes & FILE_FLAG_NO_BUFFERING)
         options |= FILE_NO_INTERMEDIATE_BUFFERING;
+    if (attributes & FILE_FLAG_OPEN_REPARSE_POINT)
+        options |= FILE_OPEN_REPARSE_POINT;
     if (!(attributes & FILE_FLAG_OVERLAPPED))
         options |= FILE_SYNCHRONOUS_IO_NONALERT;
     if (attributes & FILE_FLAG_RANDOM_ACCESS)
@@ -864,7 +872,23 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     status = NtCreateFile( &ret, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
                            NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
                            nt_disposition[creation - CREATE_NEW],
-                           get_nt_file_options( attributes ), NULL, 0 );
+                           get_nt_file_options( attributes, creation ), NULL, 0 );
+
+    /* Before Windows NT, the write flag was ignored on CD drives */
+    if (status == STATUS_ACCESS_DENIED && (access & GENERIC_WRITE) && (GetVersion() & 0x80000000))
+    {
+        WCHAR volume[MAX_PATH];
+        if (GetVolumePathNameW( filename, volume, ARRAY_SIZE(volume) ) &&
+            GetDriveTypeW( volume ) == DRIVE_CDROM)
+        {
+            WARN( "Ignoring write flag on CD drive\n" );
+            status = NtCreateFile( &ret, (access & ~GENERIC_WRITE) | SYNCHRONIZE | FILE_READ_ATTRIBUTES,
+                                   &attr, &io, NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
+                                   nt_disposition[creation - CREATE_NEW],
+                                   get_nt_file_options( attributes, creation ), NULL, 0 );
+        }
+    }
+
     if (status)
     {
         if (vxd_name && vxd_name[0])
@@ -885,6 +909,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
          */
         if (status == STATUS_OBJECT_NAME_COLLISION)
             SetLastError( ERROR_FILE_EXISTS );
+        else if (status == STATUS_FILE_IS_A_DIRECTORY &&
+                 nameW.Buffer[nameW.Length / sizeof(WCHAR) - 1] == '\\')
+            SetLastError( ERROR_PATH_NOT_FOUND );
         else
             SetLastError( RtlNtStatusToDosError(status) );
     }
@@ -959,7 +986,7 @@ BOOL WINAPI CreateHardLinkW( LPCWSTR dest, LPCWSTR source, SECURITY_ATTRIBUTES *
 
     InitializeObjectAttributes( &attr, &ntSource, OBJ_CASE_INSENSITIVE, 0, NULL );
     if (!(ret = set_ntstatus( NtOpenFile( &file, SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
-            FILE_SYNCHRONOUS_IO_NONALERT ) )))
+            FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT ) )))
         goto done;
 
     info->ReplaceIfExists = FALSE;
@@ -980,10 +1007,98 @@ done:
 /*************************************************************************
  *	CreateSymbolicLinkW   (kernelbase.@)
  */
-BOOLEAN WINAPI /* DECLSPEC_HOTPATCH */ CreateSymbolicLinkW( LPCWSTR link, LPCWSTR target, DWORD flags )
+BOOLEAN WINAPI DECLSPEC_HOTPATCH CreateSymbolicLinkW( const WCHAR *link, const WCHAR *target, DWORD flags )
 {
-    FIXME( "(%s %s %ld): stub\n", debugstr_w(link), debugstr_w(target), flags );
-    return TRUE;
+    unsigned int target_len = wcslen( target );
+    ULONG options = FILE_OPEN_REPARSE_POINT;
+    UNICODE_STRING nt_link, nt_target;
+    REPARSE_DATA_BUFFER *data;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    unsigned int size;
+    BOOL is_relative;
+    NTSTATUS status;
+    HANDLE file;
+
+    TRACE( "link %s, target %s, flags %#lx\n", debugstr_w(link), debugstr_w(target), flags );
+
+    if (flags & ~(SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE))
+        FIXME( "ignoring unknown flags %#lx\n", flags );
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus( link, &nt_link, NULL, NULL );
+    if (status) return set_ntstatus( status );
+
+    is_relative = RtlDetermineDosPathNameType_U( target ) == RtlPathTypeRelative;
+
+    if (!is_relative)
+    {
+        status = RtlDosPathNameToNtPathName_U_WithStatus( target, &nt_target, NULL, NULL );
+        if (status)
+        {
+            RtlFreeUnicodeString( &nt_link );
+            return set_ntstatus( status );
+        }
+    }
+
+    size = offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer.PathBuffer );
+    if (is_relative)
+        size += (target_len + 1) * sizeof(WCHAR);
+    else
+        size += nt_target.Length + sizeof(WCHAR);
+    size += (target_len + 1) * sizeof(WCHAR);
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        if (!is_relative) RtlFreeUnicodeString( &nt_target );
+        RtlFreeUnicodeString( &nt_link );
+        return set_ntstatus( status );
+    }
+
+    data->ReparseTag = IO_REPARSE_TAG_SYMLINK;
+    data->ReparseDataLength = size - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer );
+    data->Reserved = 0;
+    data->SymbolicLinkReparseBuffer.SubstituteNameOffset = 0;
+    data->SymbolicLinkReparseBuffer.PrintNameLength = target_len * sizeof(WCHAR);
+    if (is_relative)
+    {
+        data->SymbolicLinkReparseBuffer.Flags = SYMLINK_FLAG_RELATIVE;
+        data->SymbolicLinkReparseBuffer.SubstituteNameLength = target_len * sizeof(WCHAR);
+        data->SymbolicLinkReparseBuffer.PrintNameOffset = (target_len + 1) * sizeof(WCHAR);
+        memcpy( data->SymbolicLinkReparseBuffer.PathBuffer,
+                target, (target_len + 1) * sizeof(WCHAR) );
+        memcpy( data->SymbolicLinkReparseBuffer.PathBuffer + target_len + 1,
+                target, (target_len + 1) * sizeof(WCHAR) );
+    }
+    else
+    {
+        data->SymbolicLinkReparseBuffer.Flags = 0;
+        data->SymbolicLinkReparseBuffer.SubstituteNameLength = nt_target.Length;
+        data->SymbolicLinkReparseBuffer.PrintNameOffset = nt_target.Length + sizeof(WCHAR);
+        memcpy( data->SymbolicLinkReparseBuffer.PathBuffer,
+                nt_target.Buffer, nt_target.Length + sizeof(WCHAR) );
+        memcpy( data->SymbolicLinkReparseBuffer.PathBuffer + (nt_target.Length / sizeof(WCHAR)) + 1,
+                target, (target_len + 1) * sizeof(WCHAR) );
+        RtlFreeUnicodeString( &nt_target );
+    }
+
+
+    if (flags & SYMBOLIC_LINK_FLAG_DIRECTORY)
+        options |= FILE_DIRECTORY_FILE;
+    else
+        options |= FILE_NON_DIRECTORY_FILE;
+
+    InitializeObjectAttributes( &attr, &nt_link, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = NtCreateFile( &file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_CREATE, options, NULL, 0 );
+    RtlFreeUnicodeString( &nt_link );
+    if (status)
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        return set_ntstatus( status );
+    }
+
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, size, NULL, 0 );
+    HeapFree( GetProcessHeap(), 0, data );
+    NtClose( file );
+    return set_ntstatus( status );
 }
 
 
@@ -1019,9 +1134,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileW( LPCWSTR path )
     }
 
     InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
-    status = NtCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
-			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-			  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
+    status = NtCreateFile( &hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
     if (status == STATUS_SUCCESS) status = NtClose(hFile);
 
     RtlFreeUnicodeString( &nameW );
@@ -1129,6 +1244,8 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExA( const char *filename, FINDEX_I
     dataA->ftLastWriteTime  = dataW.ftLastWriteTime;
     dataA->nFileSizeHigh    = dataW.nFileSizeHigh;
     dataA->nFileSizeLow     = dataW.nFileSizeLow;
+    dataA->dwReserved0      = dataW.dwReserved0;
+    dataA->dwReserved1      = dataW.dwReserved1;
     file_name_WtoA( dataW.cFileName, -1, dataA->cFileName, sizeof(dataA->cFileName) );
     file_name_WtoA( dataW.cAlternateFileName, -1, dataA->cAlternateFileName,
                     sizeof(dataA->cAlternateFileName) );
@@ -1368,6 +1485,18 @@ HANDLE WINAPI FindFirstFileNameW( const WCHAR *file_name, DWORD flags, DWORD *le
     return INVALID_HANDLE_VALUE;
 }
 
+
+/******************************************************************************
+ *     FindNextFileNameW   (kernelbase.@)
+ */
+BOOL WINAPI FindNextFileNameW( HANDLE handle, DWORD *len, WCHAR *link_name )
+{
+    FIXME( "(%p, %p, %p): stub.\n", handle, len, link_name );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 /**************************************************************************
  *	FindFirstStreamW   (kernelbase.@)
  */
@@ -1466,7 +1595,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *da
         data->ftLastWriteTime  = *(FILETIME *)&dir_info->LastWriteTime;
         data->nFileSizeHigh    = dir_info->EndOfFile.QuadPart >> 32;
         data->nFileSizeLow     = (DWORD)dir_info->EndOfFile.QuadPart;
+        /* We intentionally do not use FileIdExtdBothDirectoryInformation here;
+         * it breaks certain hotpatchers. Windows returns the reparse tag in
+         * EaSize for FileBothDirectoryInformation. */
         data->dwReserved0      = 0;
+        if (dir_info->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+            data->dwReserved0  = dir_info->EaSize;
         data->dwReserved1      = 0;
 
         memcpy( data->cFileName, dir_info->FileName, dir_info->FileNameLength );
@@ -1782,7 +1916,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
     DWORD drive_part_len = 0;
     NTSTATUS status;
     DWORD result = 0;
-    ULONG dummy;
+    ULONG buffer_size;
     WCHAR *ptr;
 
     TRACE( "(%p,%p,%ld,%lx)\n", file, path, count, flags );
@@ -1795,26 +1929,34 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
     }
 
     /* get object name */
-    status = NtQueryObject( file, ObjectNameInformation, &buffer, sizeof(buffer) - sizeof(WCHAR), &dummy );
-    if (!set_ntstatus( status )) return 0;
+    status = NtQueryObject( file, ObjectNameInformation, &buffer, sizeof(buffer), &buffer_size );
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (!(info = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return 0;
+        status = NtQueryObject( file, ObjectNameInformation, info, buffer_size, &buffer_size );
+    }
+    if (!set_ntstatus( status )) goto done;
 
     if (!info->Name.Buffer)
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
+        goto done;
     }
     if (info->Name.Length < 4 * sizeof(WCHAR) || info->Name.Buffer[0] != '\\' ||
         info->Name.Buffer[1] != '?' || info->Name.Buffer[2] != '?' || info->Name.Buffer[3] != '\\' )
     {
         FIXME("Unexpected object name: %s\n", debugstr_wn(info->Name.Buffer, info->Name.Length / sizeof(WCHAR)));
         SetLastError( ERROR_GEN_FAILURE );
-        return 0;
+        goto done;
     }
 
     /* add terminating null character, remove "\\??\\" */
     info->Name.Buffer[info->Name.Length / sizeof(WCHAR)] = 0;
     info->Name.Length -= 4 * sizeof(WCHAR);
     info->Name.Buffer += 4;
+    /* convert slashes in case of \??\unix path */
+    for (ULONG i = 0; i < info->Name.Length / sizeof(WCHAR); i++)
+        if (info->Name.Buffer[i] == '/') info->Name.Buffer[i] = '\\';
 
     /* FILE_NAME_OPENED is not supported yet, and would require Wineserver changes */
     if (flags & FILE_NAME_OPENED)
@@ -1826,7 +1968,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
     /* Get information required for VOLUME_NAME_NONE, VOLUME_NAME_GUID and VOLUME_NAME_NT */
     if (flags == VOLUME_NAME_NONE || flags == VOLUME_NAME_GUID || flags == VOLUME_NAME_NT)
     {
-        if (!GetVolumePathNameW( info->Name.Buffer, drive_part, MAX_PATH )) return 0;
+        if (!GetVolumePathNameW( info->Name.Buffer, drive_part, MAX_PATH )) goto done;
         drive_part_len = lstrlenW(drive_part);
         if (!drive_part_len || drive_part_len > lstrlenW(info->Name.Buffer) ||
             drive_part[drive_part_len-1] != '\\' ||
@@ -1835,7 +1977,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
             FIXME( "Path %s returned by GetVolumePathNameW does not match file path %s\n",
                    debugstr_w(drive_part), debugstr_w(info->Name.Buffer) );
             SetLastError( ERROR_GEN_FAILURE );
-            return 0;
+            goto done;
         }
     }
 
@@ -1851,7 +1993,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
         WCHAR volume_prefix[51];
 
         /* GetVolumeNameForVolumeMountPointW sets error code on failure */
-        if (!GetVolumeNameForVolumeMountPointW( drive_part, volume_prefix, 50 )) return 0;
+        if (!GetVolumeNameForVolumeMountPointW( drive_part, volume_prefix, 50 )) goto done;
         ptr = info->Name.Buffer + drive_part_len;
         result = lstrlenW(volume_prefix) + lstrlenW(ptr);
         if (result < count)
@@ -1871,7 +2013,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
 
         /* QueryDosDeviceW sets error code on failure */
         drive_part[drive_part_len - 1] = 0;
-        if (!QueryDosDeviceW( drive_part, nt_prefix, MAX_PATH )) return 0;
+        if (!QueryDosDeviceW( drive_part, nt_prefix, MAX_PATH )) goto done;
         ptr = info->Name.Buffer + drive_part_len - 1;
         result = lstrlenW(nt_prefix) + lstrlenW(ptr);
         if (result < count)
@@ -1905,6 +2047,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFinalPathNameByHandleW( HANDLE file, LPWSTR pa
         WARN("Invalid combination of flags: %lx\n", flags);
         SetLastError( ERROR_INVALID_PARAMETER );
     }
+
+ done:
+    if ((WCHAR *)info != buffer) HeapFree( GetProcessHeap(), 0, info );
     return result;
 }
 
@@ -2508,7 +2653,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
                                                      void *param, DWORD flag )
 {
     FILE_RENAME_INFORMATION *rename_info;
-    FILE_BASIC_INFORMATION info;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -2532,11 +2676,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &source_handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         FILE_SYNCHRONOUS_IO_NONALERT );
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString( &nt_name );
-    if (!set_ntstatus( status )) goto error;
-
-    status = NtQueryInformationFile( source_handle, &io, &info, sizeof(info), FileBasicInformation );
     if (!set_ntstatus( status )) goto error;
 
     if (!RtlDosPathNameToNtPathName_U( dest, &nt_name, NULL, NULL ))
@@ -2637,7 +2778,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
     RtlFreeUnicodeString(&nt_replaced_name);
     if (!set_ntstatus( status )) return FALSE;
 
-    if (info.FileAttributes & FILE_ATTRIBUTE_READONLY)
+    if (info.FileAttributes & ( FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY ))
     {
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
@@ -2654,7 +2795,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
     }
     attr.ObjectName = &nt_replacement_name;
     status = NtOpenFile( &hReplacement, GENERIC_READ | GENERIC_WRITE | DELETE | WRITE_DAC | SYNCHRONIZE,
-                         &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE );
+                         &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString(&nt_replacement_name);
     if (!set_ntstatus( status )) return FALSE;
     NtClose( hReplacement );
@@ -2753,7 +2894,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR 
     DWORD ret = 0;
     WCHAR *name_ext;
 
-    if (!name || !name[0])
+    if (!name || !name[wcsspn(name, L" ")])
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -2892,7 +3033,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileAttributesW( LPCWSTR name, DWORD attributes
     }
 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString( &nt_name );
 
     if (status == STATUS_SUCCESS)
@@ -2992,26 +3134,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushFileBuffers( HANDLE file )
 BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandle( HANDLE file, BY_HANDLE_FILE_INFORMATION *info )
 {
     FILE_FS_VOLUME_INFORMATION volume_info;
-    FILE_STAT_INFORMATION stat_info;
+    FILE_ALL_INFORMATION all_info;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
-    status = NtQueryInformationFile( file, &io, &stat_info, sizeof(stat_info), FileStatInformation );
+    status = NtQueryInformationFile( file, &io, &all_info, sizeof(all_info), FileAllInformation );
+    if (status == STATUS_BUFFER_OVERFLOW) status = STATUS_SUCCESS;
     if (!set_ntstatus( status )) return FALSE;
 
-    info->dwFileAttributes                = stat_info.FileAttributes;
-    info->ftCreationTime.dwHighDateTime   = stat_info.CreationTime.u.HighPart;
-    info->ftCreationTime.dwLowDateTime    = stat_info.CreationTime.u.LowPart;
-    info->ftLastAccessTime.dwHighDateTime = stat_info.LastAccessTime.u.HighPart;
-    info->ftLastAccessTime.dwLowDateTime  = stat_info.LastAccessTime.u.LowPart;
-    info->ftLastWriteTime.dwHighDateTime  = stat_info.LastWriteTime.u.HighPart;
-    info->ftLastWriteTime.dwLowDateTime   = stat_info.LastWriteTime.u.LowPart;
+    info->dwFileAttributes                = all_info.BasicInformation.FileAttributes;
+    info->ftCreationTime.dwHighDateTime   = all_info.BasicInformation.CreationTime.u.HighPart;
+    info->ftCreationTime.dwLowDateTime    = all_info.BasicInformation.CreationTime.u.LowPart;
+    info->ftLastAccessTime.dwHighDateTime = all_info.BasicInformation.LastAccessTime.u.HighPart;
+    info->ftLastAccessTime.dwLowDateTime  = all_info.BasicInformation.LastAccessTime.u.LowPart;
+    info->ftLastWriteTime.dwHighDateTime  = all_info.BasicInformation.LastWriteTime.u.HighPart;
+    info->ftLastWriteTime.dwLowDateTime   = all_info.BasicInformation.LastWriteTime.u.LowPart;
     info->dwVolumeSerialNumber            = 0;
-    info->nFileSizeHigh                   = stat_info.EndOfFile.u.HighPart;
-    info->nFileSizeLow                    = stat_info.EndOfFile.u.LowPart;
-    info->nNumberOfLinks                  = stat_info.NumberOfLinks;
-    info->nFileIndexHigh                  = stat_info.FileId.u.HighPart;
-    info->nFileIndexLow                   = stat_info.FileId.u.LowPart;
+    info->nFileSizeHigh                   = all_info.StandardInformation.EndOfFile.u.HighPart;
+    info->nFileSizeLow                    = all_info.StandardInformation.EndOfFile.u.LowPart;
+    info->nNumberOfLinks                  = all_info.StandardInformation.NumberOfLinks;
+    info->nFileIndexHigh                  = all_info.InternalInformation.IndexNumber.u.HighPart;
+    info->nFileIndexLow                   = all_info.InternalInformation.IndexNumber.u.LowPart;
 
     status = NtQueryVolumeInformationFile( file, &io, &volume_info, sizeof(volume_info), FileFsVolumeInformation );
     if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
@@ -3209,7 +3352,37 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileType( HANDLE file )
 BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED overlapped,
                                                    LPDWORD result, BOOL wait )
 {
-    return GetOverlappedResultEx( file, overlapped, result, wait ? INFINITE : 0, FALSE );
+    NTSTATUS status;
+    DWORD ret;
+
+    TRACE( "(%p %p %p %d)\n", file, overlapped, result, wait );
+
+    /* Paired with the write-release in set_async_iosb() in ntdll; see the
+     * latter for details. */
+    status = ReadAcquire( (LONG *)&overlapped->Internal );
+    if (status == STATUS_PENDING)
+    {
+        if (!wait)
+        {
+            SetLastError( ERROR_IO_INCOMPLETE );
+            return FALSE;
+        }
+        ret = WaitForSingleObject( overlapped->hEvent ? overlapped->hEvent : file, INFINITE );
+        if (ret == WAIT_FAILED) return FALSE;
+        if (ret)
+        {
+            SetLastError( ret );
+            return FALSE;
+        }
+
+        /* We don't need to give this load acquire semantics; the wait above
+         * already guarantees that the IOSB and output buffer are filled. */
+        status = overlapped->Internal;
+    }
+
+    *result = overlapped->InternalHigh;
+    SetLastError( RtlNtStatusToDosError( status ));
+    return !status || status == STATUS_PENDING;
 }
 
 
@@ -3219,38 +3392,41 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED ove
 BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *overlapped,
                                                      DWORD *result, DWORD timeout, BOOL alertable )
 {
-    NTSTATUS status;
+    NTSTATUS status = STATUS_PENDING;
+    BOOL compat_mode;
     DWORD ret;
 
     TRACE( "(%p %p %p %lu %d)\n", file, overlapped, result, timeout, alertable );
 
-    /* Paired with the write-release in set_async_iosb() in ntdll; see the
-     * latter for details. */
-    status = ReadAcquire( (LONG *)&overlapped->Internal );
-    if (status == STATUS_PENDING)
+    compat_mode = (ULONG_PTR)file & 1;
+    if (compat_mode || !timeout)
     {
-        if (!timeout)
-        {
-            SetLastError( ERROR_IO_INCOMPLETE );
-            return FALSE;
-        }
+        /* Paired with the write-release in set_async_iosb() in ntdll; see the
+         * latter for details. */
+        status = ReadAcquire( (LONG *)&overlapped->Internal );
+    }
+
+    if (timeout && status == STATUS_PENDING)
+    {
         ret = WaitForSingleObjectEx( overlapped->hEvent ? overlapped->hEvent : file, timeout, alertable );
-        if (ret == WAIT_FAILED)
-            return FALSE;
-        else if (ret)
+        if (ret == WAIT_FAILED) return FALSE;
+        if (ret && !(compat_mode && ret == WAIT_TIMEOUT))
         {
             SetLastError( ret );
             return FALSE;
         }
-
         /* We don't need to give this load acquire semantics; the wait above
          * already guarantees that the IOSB and output buffer are filled. */
         status = overlapped->Internal;
-        if (status == STATUS_PENDING) status = STATUS_SUCCESS;
     }
-
+    else if (status == STATUS_PENDING)
+    {
+        SetLastError( ERROR_IO_INCOMPLETE );
+        return FALSE;
+    }
     *result = overlapped->InternalHigh;
-    return set_ntstatus( status );
+    SetLastError( RtlNtStatusToDosError( status ));
+    return !status || status == STATUS_PENDING;
 }
 
 
@@ -3379,7 +3555,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD s
     }
 
     status = NtCreateFile( &file, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io, NULL,
-                           0, sharing, FILE_OPEN, get_nt_file_options( attributes ), NULL, 0 );
+                           0, sharing, FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE | get_nt_file_options( attributes, OPEN_EXISTING ),
+                           NULL, 0 );
     if (!set_ntstatus( status ))
         return INVALID_HANDLE_VALUE;
     return file;
@@ -3477,7 +3655,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadFile( HANDLE file, LPVOID buffer, DWORD count,
         status = io_status->Status;
     }
 
-    if (result) *result = overlapped && status ? 0 : io_status->Information;
+    if (result && (!overlapped || !status)) *result = io_status->Information;
 
     if (status == STATUS_END_OF_FILE)
     {
@@ -3581,7 +3759,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryW( LPCWSTR path )
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT );
     RtlFreeUnicodeString( &nt_name );
 
     if (!status)
@@ -3658,6 +3836,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
         status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
         break;
     case FileRenameInfo:
+    case FileRenameInfoEx:
         {
             FILE_RENAME_INFORMATION *rename_info;
             UNICODE_STRING nt_name;
@@ -3673,7 +3852,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
                 memcpy( rename_info, info, sizeof(*rename_info) );
                 memcpy( rename_info->FileName, nt_name.Buffer, nt_name.Length + sizeof(WCHAR) );
                 rename_info->FileNameLength = nt_name.Length;
-                status = NtSetInformationFile( file, &io, rename_info, size, FileRenameInformation );
+                status = NtSetInformationFile( file, &io, rename_info, size,
+                        class == FileRenameInfo ? FileRenameInformation : FileRenameInformationEx );
                 HeapFree( GetProcessHeap(), 0, rename_info );
             }
             RtlFreeUnicodeString( &nt_name );
@@ -3813,12 +3993,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH UnlockFile( HANDLE file, DWORD offset_low, DWORD o
                                           DWORD count_low, DWORD count_high )
 {
     LARGE_INTEGER count, offset;
+    IO_STATUS_BLOCK io;
 
     count.u.LowPart = count_low;
     count.u.HighPart = count_high;
     offset.u.LowPart = offset_low;
     offset.u.HighPart = offset_high;
-    return set_ntstatus( NtUnlockFile( file, NULL, &offset, &count, NULL ));
+    return set_ntstatus( NtUnlockFile( file, &io, &offset, &count, NULL ));
 }
 
 
@@ -3867,6 +4048,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteFile( HANDLE file, LPCVOID buffer, DWORD coun
     else piosb->Information = 0;
     piosb->Status = STATUS_PENDING;
 
+    if (result) *result = 0;
+
     status = NtWriteFile( file, event, NULL, cvalue, piosb, buffer, count, poffset, NULL );
 
     if (status == STATUS_PENDING && !overlapped)
@@ -3875,7 +4058,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteFile( HANDLE file, LPCVOID buffer, DWORD coun
         status = piosb->Status;
     }
 
-    if (result) *result = overlapped && status ? 0 : piosb->Information;
+    if (result && (!overlapped || !status)) *result = piosb->Information;
 
     if (status && status != STATUS_TIMEOUT)
     {

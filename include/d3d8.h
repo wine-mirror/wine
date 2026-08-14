@@ -1114,7 +1114,7 @@ DECLARE_INTERFACE_IID_(IDirect3DDevice8,IUnknown,"7385e5df-8fe8-41d5-86b6-d7b485
 #define IDirect3DDevice8_DrawIndexedPrimitive(p,a,b,c,d,e)         (p)->DrawIndexedPrimitive(a,b,c,d,e)
 #define IDirect3DDevice8_DrawPrimitiveUP(p,a,b,c,d)                (p)->DrawPrimitiveUP(a,b,c,d)
 #define IDirect3DDevice8_DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h) (p)->DrawIndexedPrimitiveUP(a,b,c,d,e,f,g,h)
-#define IDirect3DDevice8_ProcessVertices(p,a,b,c,d,e)              (p)->processVertices(a,b,c,d,e)
+#define IDirect3DDevice8_ProcessVertices(p,a,b,c,d,e)              (p)->ProcessVertices(a,b,c,d,e)
 #define IDirect3DDevice8_CreateVertexShader(p,a,b,c,d)             (p)->CreateVertexShader(a,b,c,d)
 #define IDirect3DDevice8_SetVertexShader(p,a)                      (p)->SetVertexShader(a)
 #define IDirect3DDevice8_GetVertexShader(p,a)                      (p)->GetVertexShader(a)

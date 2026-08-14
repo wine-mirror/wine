@@ -847,7 +847,7 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
         hotspot.y = (hotspot.y * height) / (bmi_height / 2);
     }
 
-    if (!(bmi_copy = HeapAlloc( GetProcessHeap(), 0, max( size, FIELD_OFFSET( BITMAPINFO, bmiColors[2] )))))
+    if (!(bmi_copy = malloc( max( size, FIELD_OFFSET( BITMAPINFO, bmiColors[2] )))))
         return 0;
     if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
 
@@ -887,7 +887,7 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
             {
                 LONG x, y, dst_stride = ((bmi_width + 31) / 8) & ~3;
 
-                if ((alpha_mask_bits = heap_calloc( bmi_height, dst_stride )))
+                if ((alpha_mask_bits = calloc( bmi_height, dst_stride )))
                 {
                     static const unsigned char masks[] = { 0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1 };
                     const DWORD *src = color_bits;
@@ -940,8 +940,8 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
 done:
     if (!ret) free_icon_frame( frame );
     DeleteDC( hdc );
-    HeapFree( GetProcessHeap(), 0, bmi_copy );
-    HeapFree( GetProcessHeap(), 0, alpha_mask_bits );
+    free( bmi_copy );
+    free( alpha_mask_bits );
     return ret;
 }
 
@@ -1375,7 +1375,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     TRACE("%p, %s, %dx%d, depth %d, fCursor %d, flags 0x%04x\n",
           hInstance, debugstr_w(name), width, height, depth, fCursor, loadflags);
 
-    if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
+    if ((loadflags & LR_LOADFROMFILE) && get_app_version() >= 0x4000)    /* Load from file */
         return CURSORICON_LoadFromFile( name, width, height, depth, fCursor, loadflags );
 
     if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */

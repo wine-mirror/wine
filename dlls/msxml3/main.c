@@ -19,26 +19,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define COBJMACROS
 
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# ifdef SONAME_LIBXSLT
-#  ifdef HAVE_LIBXSLT_PATTERN_H
-#   include <libxslt/pattern.h>
-#  endif
-#  ifdef HAVE_LIBXSLT_TRANSFORM_H
-#   include <libxslt/transform.h>
-#  endif
-#  include <libxslt/xsltutils.h>
-#  include <libxslt/xsltInternals.h>
-# endif
-#endif
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
+#include <libxml/xmlsave.h>
+#include <libxslt/pattern.h>
+#include <libxslt/transform.h>
+#include <libxslt/imports.h>
+#include <libxslt/xsltutils.h>
+#include <libxslt/variables.h>
+#include <libxslt/xsltInternals.h>
+#include <libxslt/documents.h>
+#include <libxslt/extensions.h>
+#include <libxslt/extra.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -46,25 +41,22 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "msxml.h"
+#include "msxml2.h"
 #include "msxml6.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #include "msxml_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
-
 HINSTANCE MSXML_hInstance = NULL;
 
-#ifdef HAVE_LIBXML2
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
 {
-    static const int max_size = 200;
     enum __wine_debug_class dbcl;
-    char buff[max_size];
+    char buff[200];
+    const int max_size = ARRAY_SIZE(buff);
     int len;
 
     switch (lvl)
@@ -86,7 +78,7 @@ void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, 
     wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", buff);
 }
 
-void wineXmlCallbackError(char const* caller, xmlErrorPtr err)
+void wineXmlCallbackError(char const* caller, const xmlError* err)
 {
     enum __wine_debug_class dbcl;
 
@@ -151,7 +143,7 @@ static int wineXmlReadCallback(void * context, char * buffer, int len)
         return -1;
     }
 
-    TRACE("Read %d\n", dwBytesRead);
+    TRACE("Read %ld bytes.\n", dwBytesRead);
 
     return dwBytesRead;
 }
@@ -161,53 +153,209 @@ static int wineXmlFileCloseCallback (void * context)
     return CloseHandle(context) ? 0 : -1;
 }
 
-void* libxslt_handle = NULL;
-#ifdef SONAME_LIBXSLT
-# define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
-DECL_FUNCPTR(xsltApplyStylesheet);
-DECL_FUNCPTR(xsltCleanupGlobals);
-DECL_FUNCPTR(xsltFreeStylesheet);
-DECL_FUNCPTR(xsltParseStylesheetDoc);
-# undef DECL_FUNCPTR
-#endif
-
 static void init_libxslt(void)
 {
-#ifdef SONAME_LIBXSLT
-    void (*pxsltInit)(void); /* Missing in libxslt <= 1.1.14 */
-
-    libxslt_handle = wine_dlopen(SONAME_LIBXSLT, RTLD_NOW, NULL, 0);
-    if (!libxslt_handle)
-        return;
-
-#define LOAD_FUNCPTR(f, needed) \
-    if ((p##f = wine_dlsym(libxslt_handle, #f, NULL, 0)) == NULL) \
-        if (needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
-    LOAD_FUNCPTR(xsltInit, 0);
-    LOAD_FUNCPTR(xsltApplyStylesheet, 1);
-    LOAD_FUNCPTR(xsltCleanupGlobals, 1);
-    LOAD_FUNCPTR(xsltFreeStylesheet, 1);
-    LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
-#undef LOAD_FUNCPTR
-
-    if (pxsltInit)
-        pxsltInit();
-    return;
-
- sym_not_found:
-    wine_dlclose(libxslt_handle, NULL, 0);
-    libxslt_handle = NULL;
-#endif
+    xsltInit();
+    xsltSetLoaderFunc(xslt_doc_default_loader);
+    xsltRegisterExtModuleFunction(
+        (const xmlChar *)"node-set",
+        (const xmlChar *)"urn:schemas-microsoft-com:xslt",
+        xsltFunctionNodeSet);
 }
 
-#endif  /* HAVE_LIBXML2 */
-
-
-HRESULT WINAPI DllCanUnloadNow(void)
+static int to_utf8(int cp, unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
 {
-    return S_FALSE;
+    WCHAR *tmp;
+    int len = 0;
+
+    if (!in || !inlen || !*inlen) goto done;
+
+    len = MultiByteToWideChar(cp, 0, (const char *)in, *inlen, NULL, 0);
+    tmp = malloc(len * sizeof(WCHAR));
+    if (!tmp) return -1;
+    MultiByteToWideChar(cp, 0, (const char *)in, *inlen, tmp, len);
+
+    len = WideCharToMultiByte(CP_UTF8, 0, tmp, len, (char *)out, *outlen, NULL, NULL);
+    free(tmp);
+    if (!len) return -1;
+done:
+    *outlen = len;
+    return len;
 }
 
+static int from_utf8(int cp, unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    WCHAR *tmp;
+    int len = 0;
+
+    if (!in || !inlen || !*inlen) goto done;
+
+    len = MultiByteToWideChar(CP_UTF8, 0, (const char *)in, *inlen, NULL, 0);
+    tmp = malloc(len * sizeof(WCHAR));
+    if (!tmp) return -1;
+    MultiByteToWideChar(CP_UTF8, 0, (const char *)in, *inlen, tmp, len);
+
+    len = WideCharToMultiByte(cp, 0, tmp, len, (char *)out, *outlen, NULL, NULL);
+    free(tmp);
+    if (!len) return -1;
+done:
+    *outlen = len;
+    return len;
+}
+
+static int gbk_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(936, out, outlen, in, inlen);
+}
+
+static int utf8_to_gbk(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(936, out, outlen, in, inlen);
+}
+
+static int iso8859_1_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(28591, out, outlen, in, inlen);
+}
+
+static int utf8_to_iso8859_1(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(28591, out, outlen, in, inlen);
+}
+
+static int win1250_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1250, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1250(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1250, out, outlen, in, inlen);
+}
+
+static int win1251_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1251, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1251(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1251, out, outlen, in, inlen);
+}
+
+static int win1252_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1252, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1252(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1252, out, outlen, in, inlen);
+}
+
+static int win1253_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1253, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1253(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1253, out, outlen, in, inlen);
+}
+static int win1254_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1254, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1254(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1254, out, outlen, in, inlen);
+}
+
+static int win1255_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1255, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1255(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1255, out, outlen, in, inlen);
+}
+
+static int win1256_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1256, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1256(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1256, out, outlen, in, inlen);
+}
+
+static int win1257_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1257, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1257(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1257, out, outlen, in, inlen);
+}
+
+static int win1258_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(1258, out, outlen, in, inlen);
+}
+
+static int utf8_to_win1258(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(1258, out, outlen, in, inlen);
+}
+
+static void init_char_encoders(void)
+{
+    static const struct
+    {
+        const char *encoding;
+        xmlCharEncodingInputFunc input;
+        xmlCharEncodingOutputFunc output;
+    } encoder[] =
+    {
+        { "gbk",          gbk_to_utf8,       utf8_to_gbk       },
+        { "iso8859-1",    iso8859_1_to_utf8, utf8_to_iso8859_1 },
+        { "windows-1250", win1250_to_utf8,   utf8_to_win1250   },
+        { "windows-1251", win1251_to_utf8,   utf8_to_win1251   },
+        { "windows-1252", win1252_to_utf8,   utf8_to_win1252   },
+        { "windows-1253", win1253_to_utf8,   utf8_to_win1253   },
+        { "windows-1254", win1254_to_utf8,   utf8_to_win1254   },
+        { "windows-1255", win1255_to_utf8,   utf8_to_win1255   },
+        { "windows-1256", win1256_to_utf8,   utf8_to_win1256   },
+        { "windows-1257", win1257_to_utf8,   utf8_to_win1257   },
+        { "windows-1258", win1258_to_utf8,   utf8_to_win1258   }
+    };
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(encoder); i++)
+    {
+        if (!xmlFindCharEncodingHandler(encoder[i].encoding))
+        {
+            TRACE("Adding %s encoding handler\n", encoder[i].encoding);
+            xmlNewCharEncodingHandler(encoder[i].encoding, encoder[i].input, encoder[i].output);
+        }
+    }
+}
+
+const CLSID* DOMDocument_version(MSXML_VERSION v)
+{
+    switch (v)
+    {
+    default:
+    case MSXML_DEFAULT: return &CLSID_DOMDocument;
+    case MSXML3: return &CLSID_DOMDocument30;
+    case MSXML4: return &CLSID_DOMDocument40;
+    case MSXML6: return &CLSID_DOMDocument60;
+    }
+}
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 {
@@ -216,7 +364,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-#ifdef HAVE_LIBXML2
         xmlInitParser();
 
         /* Set the default indent character to a single tab,
@@ -229,90 +376,23 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
                             wineXmlReadCallback, wineXmlFileCloseCallback) == -1)
             WARN("Failed to register callbacks\n");
 
+        init_char_encoders();
+
         schemasInit();
         init_libxslt();
-#endif
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-#ifdef HAVE_LIBXML2
-#ifdef SONAME_LIBXSLT
-        if (libxslt_handle)
-        {
-            pxsltCleanupGlobals();
-            wine_dlclose(libxslt_handle, NULL, 0);
-        }
-#endif
+        xsltCleanupGlobals();
         /* Restore default Callbacks */
         xmlCleanupInputCallbacks();
         xmlRegisterDefaultInputCallbacks();
 
         xmlCleanupParser();
         schemasCleanup();
-#endif
         release_typelib();
         break;
     }
     return TRUE;
-}
-
-const char *debugstr_variant(const VARIANT *v)
-{
-    if(!v)
-        return "(null)";
-
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-        return "{VT_EMPTY}";
-    case VT_NULL:
-        return "{VT_NULL}";
-    case VT_I1:
-        return wine_dbg_sprintf("{VT_I1: %d}", V_I1(v));
-    case VT_I2:
-        return wine_dbg_sprintf("{VT_I2: %d}", V_I2(v));
-    case VT_I4:
-        return wine_dbg_sprintf("{VT_I4: %d}", V_I4(v));
-    case VT_INT:
-        return wine_dbg_sprintf("{VT_INT: %d}", V_INT(v));
-    case VT_R8:
-        return wine_dbg_sprintf("{VT_R8: %lf}", V_R8(v));
-    case VT_BSTR:
-        return wine_dbg_sprintf("{VT_BSTR: %s}", debugstr_w(V_BSTR(v)));
-    case VT_DISPATCH:
-        return wine_dbg_sprintf("{VT_DISPATCH: %p}", V_DISPATCH(v));
-    case VT_BOOL:
-        return wine_dbg_sprintf("{VT_BOOL: %x}", V_BOOL(v));
-    case VT_UNKNOWN:
-        return wine_dbg_sprintf("{VT_UNKNOWN: %p}", V_UNKNOWN(v));
-    case VT_UINT:
-        return wine_dbg_sprintf("{VT_UINT: %u}", V_UINT(v));
-    case VT_BSTR|VT_BYREF:
-        return wine_dbg_sprintf("{VT_BSTR|VT_BYREF: ptr %p, data %s}",
-            V_BSTRREF(v), debugstr_w(V_BSTRREF(v) ? *V_BSTRREF(v) : NULL));
-    case VT_ERROR:
-        return wine_dbg_sprintf("{VT_ERROR: 0x%08x}", V_ERROR(v));
-    case VT_VARIANT|VT_BYREF:
-        return wine_dbg_sprintf("{VT_VARIANT|VT_BYREF: %s}", debugstr_variant(V_VARIANTREF(v)));
-    case VT_UI1|VT_ARRAY:
-        return "{VT_UI1|VT_ARRAY}";
-    default:
-        return wine_dbg_sprintf("{vt %d}", V_VT(v));
-    }
-}
-
-/***********************************************************************
- *		DllRegisterServer (MSXML3.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( MSXML_hInstance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MSXML3.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( MSXML_hInstance );
 }

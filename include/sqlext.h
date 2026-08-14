@@ -448,6 +448,10 @@ extern "C" {
 #define SQL_TYPE_MAX                    SQL_VARCHAR
 #endif
 
+#if (ODBCVER >= 0x0380)
+#define SQL_DRIVER_STMT_ATTR_BASE   0x00004000
+#endif
+
 #if (ODBCVER >= 0x0300)
 #define SQL_C_VARBOOKMARK		SQL_C_BINARY
 #endif

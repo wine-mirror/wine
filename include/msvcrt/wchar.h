@@ -91,6 +91,16 @@ static inline wchar_t* __cdecl wmemset(wchar_t *s, wchar_t c, size_t n)
     return s;
 }
 
+static inline int __cdecl fwide(FILE *file, int mode)
+{
+    return mode;
+}
+
+static inline int __cdecl mbsinit(const mbstate_t *state)
+{
+    return !state || !*state;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -148,10 +148,18 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_THROWEXCEPTION  1027
 #define DISPID_GLOBAL_ISARRAYFIXED    1028
 #define DISPID_GLOBAL_MAXCHARSIZE     1029
+#define DISPID_GLOBAL_INVOKEDISP      1030
+#define DISPID_GLOBAL_INVOKEMETHOD    1031
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
 #define DISPID_TESTOBJ_KEYWORD      2002
+#define DISPID_TESTOBJ_I8VAL        2003
+#define DISPID_TESTOBJ_UI8VAL       2004
+#define DISPID_TESTOBJ_I1VAL        2005
+#define DISPID_TESTOBJ_UI2VAL       2006
+#define DISPID_TESTOBJ_UI4VAL       2007
+#define DISPID_TESTOBJ_UINTVAL      2008
 
 #define DISPID_COLLOBJ_RESET        3000
 
@@ -846,6 +854,12 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
     static const dispid_t dispids[] = {
        { L"propget",  DISPID_TESTOBJ_PROPGET, REF_EXPECT(testobj_propget_d) },
        { L"propput",  DISPID_TESTOBJ_PROPPUT, REF_EXPECT(testobj_propput_d) },
+       { L"i8val",    DISPID_TESTOBJ_I8VAL  },
+       { L"ui8val",   DISPID_TESTOBJ_UI8VAL },
+       { L"i1val",    DISPID_TESTOBJ_I1VAL  },
+       { L"ui2val",   DISPID_TESTOBJ_UI2VAL },
+       { L"ui4val",   DISPID_TESTOBJ_UI4VAL },
+       { L"uintval",  DISPID_TESTOBJ_UINTVAL },
        { L"rem",      DISPID_TESTOBJ_KEYWORD },
        { L"true",     DISPID_TESTOBJ_KEYWORD },
        { L"false",    DISPID_TESTOBJ_KEYWORD },
@@ -994,6 +1008,31 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         V_VT(pvarRes) = VT_I2;
         V_I2(pvarRes) = 10;
         return S_OK;
+
+    case DISPID_TESTOBJ_I8VAL:
+        V_VT(pvarRes) = VT_I8;
+        V_I8(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI8VAL:
+        V_VT(pvarRes) = VT_UI8;
+        V_UI8(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_I1VAL:
+        V_VT(pvarRes) = VT_I1;
+        V_I1(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI2VAL:
+        V_VT(pvarRes) = VT_UI2;
+        V_UI2(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI4VAL:
+        V_VT(pvarRes) = VT_UI4;
+        V_UI4(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UINTVAL:
+        V_VT(pvarRes) = VT_UINT;
+        V_UINT(pvarRes) = 5;
+        return S_OK;
     }
 
     ok(0, "unexpected call %ld\n", id);
@@ -1105,6 +1144,45 @@ static IDispatchExVtbl collectionObjVtbl = {
 
 static IDispatchEx collectionObj = { &collectionObjVtbl };
 
+static HRESULT WINAPI indexedObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    switch(id) {
+    case DISPID_VALUE:
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = V_I2(pdp->rgvarg) * 2;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %ld\n", id);
+    return E_NOTIMPL;
+}
+
+static IDispatchExVtbl indexedObjVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    indexedObj_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx indexedObj = { &indexedObjVtbl };
+
 static ULONG refobj_ref;
 
 static ULONG WINAPI RefObj_AddRef(IDispatchEx *iface)
@@ -1161,7 +1239,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"MaxCharSize",     DISPID_GLOBAL_MAXCHARSIZE },
         { L"firstDayOfWeek",  DISPID_GLOBAL_WEEKSTARTDAY },
         { L"globalCallback",  DISPID_GLOBAL_GLOBALCALLBACK },
+        { L"invokeDisp",      DISPID_GLOBAL_INVOKEDISP },
+        { L"invokeMethod",    DISPID_GLOBAL_INVOKEMETHOD },
         { L"testObj",         DISPID_GLOBAL_TESTOBJ },
+        /* host property sharing its name with a builtin function */
+        { L"InputBox",        DISPID_GLOBAL_TESTOBJ },
         { L"collectionObj" ,  DISPID_GLOBAL_COLLOBJ },
         { L"vbvar",           DISPID_GLOBAL_VBVAR, REF_EXPECT(global_vbvar_d) },
         { L"letobj",          DISPID_GLOBAL_LETOBJ },
@@ -1285,6 +1367,63 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = MaxCharSize;
         return S_OK;
+
+    case DISPID_GLOBAL_INVOKEDISP: {
+        DISPPARAMS params = { NULL, NULL, 0, 0 };
+        VARIANT *arg = pdp->rgvarg;
+        EXCEPINFO ei;
+        HRESULT hr;
+
+        ok(wFlags == INVOKE_FUNC || wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        if(V_VT(arg) == (VT_VARIANT|VT_BYREF))
+            arg = V_VARIANTREF(arg);
+        ok(V_VT(arg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(arg));
+
+        /* Mimic an external object invoking a function reference back into the
+         * engine while a script frame is on the stack. With the host leaving
+         * the error unhandled, native returns SCRIPT_E_RECORDED to the caller;
+         * Wine returns the raw error code instead. */
+        memset(&ei, 0, sizeof(ei));
+        hr = IDispatch_Invoke(V_DISPATCH(arg), DISPID_VALUE, &IID_NULL, 0,
+                              DISPATCH_METHOD, &params, NULL, &ei, NULL);
+        todo_wine ok(hr == SCRIPT_E_RECORDED, "inner Invoke returned %08lx\n", hr);
+        return S_OK;
+    }
+
+    case DISPID_GLOBAL_INVOKEMETHOD: {
+        DISPPARAMS params = { NULL, NULL, 0, 0 };
+        VARIANT *arg = pdp->rgvarg;
+        IDispatchEx *dispex;
+        EXCEPINFO ei;
+        VARIANT v;
+        DISPID did;
+        BSTR str;
+        HRESULT hr;
+
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        if(V_VT(arg) == (VT_VARIANT|VT_BYREF))
+            arg = V_VARIANTREF(arg);
+        ok(V_VT(arg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(arg));
+
+        hr = IDispatch_QueryInterface(V_DISPATCH(arg), &IID_IDispatchEx, (void**)&dispex);
+        ok(hr == S_OK, "QueryInterface(IDispatchEx) returned %08lx\n", hr);
+        str = SysAllocString(L"raiser");
+        hr = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &did);
+        ok(hr == S_OK, "GetDispID(raiser) returned %08lx\n", hr);
+        SysFreeString(str);
+
+        /* As above, but for a class method invoked by an external object. With
+         * the host leaving the error unhandled, native returns DISP_E_EXCEPTION
+         * to the caller; Wine returns the raw error code instead. */
+        memset(&ei, 0, sizeof(ei));
+        V_VT(&v) = VT_EMPTY;
+        hr = IDispatchEx_InvokeEx(dispex, did, 0, DISPATCH_METHOD, &params, &v, &ei, NULL);
+        todo_wine ok(hr == DISP_E_EXCEPTION, "inner InvokeEx returned %08lx\n", hr);
+        IDispatchEx_Release(dispex);
+        return S_OK;
+    }
 
     case DISPID_GLOBAL_WEEKSTARTDAY:
         V_VT(pvarRes) = VT_I4;
@@ -1923,9 +2062,12 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
     return 1;
 }
 
+/* 0 = use the user default; otherwise return this LCID to the engine. */
+static LCID site_lcid_override;
+
 static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *plcid)
 {
-    *plcid = GetUserDefaultLCID();
+    *plcid = site_lcid_override ? site_lcid_override : GetUserDefaultLCID();
     return S_OK;
 }
 
@@ -1935,10 +2077,18 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %lx\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
 
-    if(lstrcmpW(pstrName, L"test"))
+    if(!lstrcmpW(pstrName, L"test")) {
+        *ppiunkItem = (IUnknown*)&Global;
+    }else if(!lstrcmpW(pstrName, L"indexedObj")) {
+        *ppiunkItem = (IUnknown*)&indexedObj;
+    }else if(!lstrcmpW(pstrName, L"Trim")) {
+        *ppiunkItem = (IUnknown*)&testObj;
+    }else {
         ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
+        *ppiunkItem = NULL;
+        return E_FAIL;
+    }
 
-    *ppiunkItem = (IUnknown*)&Global;
     IUnknown_AddRef(*ppiunkItem);
     return S_OK;
 }
@@ -1962,6 +2112,9 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 static IActiveScriptError **store_script_error;
 static ULONG error_line;
 static LONG error_char;
+static USHORT error_code;
+static BSTR error_source_line;
+static HRESULT error_source_line_hres;
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
@@ -1969,6 +2122,10 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
 
     hres = IActiveScriptError_GetSourcePosition(pscripterror, NULL, &error_line, &error_char);
     ok(hres == S_OK, "GetSourcePosition failed: %08lx\n", hres);
+
+    SysFreeString(error_source_line);
+    error_source_line = NULL;
+    error_source_line_hres = IActiveScriptError_GetSourceLineText(pscripterror, &error_source_line);
 
     if(!expect_OnScriptError) {
         EXCEPINFO info;
@@ -1978,6 +2135,15 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
             trace("Error in line %lu: %x %s\n", error_line + 1, info.wCode, wine_dbgstr_w(info.bstrDescription));
     }else {
         IDispatchEx *dispex;
+        EXCEPINFO info;
+
+        hres = IActiveScriptError_GetExceptionInfo(pscripterror, &info);
+        if(SUCCEEDED(hres)) {
+            error_code = HRESULT_CODE(info.scode);
+            SysFreeString(info.bstrSource);
+            SysFreeString(info.bstrDescription);
+            SysFreeString(info.bstrHelpFile);
+        }
 
         hres = IActiveScriptError_QueryInterface(pscripterror, &IID_IDispatchEx, (void**)&dispex);
         ok(hres == E_NOINTERFACE, "QI(IDispatchEx) returned: %08lx\n", hres);
@@ -2062,6 +2228,10 @@ static IActiveScript *create_and_init_script(DWORD flags, BOOL start)
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
     ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
 
+    hres = IActiveScript_AddNamedItem(engine, L"indexedObj",
+            SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
     if (start)
     {
         hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
@@ -2138,6 +2308,38 @@ static HRESULT parse_script_wr(const WCHAR *src)
     hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp, NULL);
     SysFreeString(tmp);
     return hres;
+}
+
+static void test_option_explicit_errors(void)
+{
+    IActiveScriptError *error;
+    EXCEPINFO ei;
+    HRESULT hres;
+
+    /* Without Option Explicit: assigning to undefined variable should succeed (implicit creation) */
+    parse_script_wf(SCRIPTITEM_GLOBALMEMBERS, L"x = 1\nCall ok(x = 1, \"x = \" & x)");
+
+    /* Without Option Explicit: reading undefined variable should succeed and return Empty */
+    parse_script_wf(SCRIPTITEM_GLOBALMEMBERS, L"Call ok(getVT(y) = \"VT_EMPTY*\", \"getVT(y) = \" & getVT(y))");
+
+    /* Option Explicit: assigning to undefined variable should give error 500 */
+    store_script_error = &error;
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"Option Explicit\nx = 1");
+    ok(hres == MAKE_VBSERROR(500), "expected MAKE_VBSERROR(500), got: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+
+    memset(&ei, 0, sizeof(ei));
+    hres = IActiveScriptError_GetExceptionInfo(error, &ei);
+    ok(hres == S_OK, "GetExceptionInfo returned %08lx\n", hres);
+    ok(ei.scode == MAKE_VBSERROR(500), "scode = %lx\n", ei.scode);
+    if(is_english)
+        ok(ei.bstrDescription && !wcscmp(ei.bstrDescription, L"Variable is undefined: 'x'"),
+           "bstrDescription = %s\n", wine_dbgstr_w(ei.bstrDescription));
+    SysFreeString(ei.bstrSource);
+    SysFreeString(ei.bstrDescription);
+    SysFreeString(ei.bstrHelpFile);
+    IActiveScriptError_Release(error);
 }
 
 static void test_parse_context(void)
@@ -2645,8 +2847,11 @@ static void test_parse_errors(void)
     static const struct
     {
         const WCHAR *src;
-        unsigned error_line;
+        int error_line;
         int error_char;
+        const WCHAR *source_line;
+        HRESULT source_line_hres;
+        int error_code;
     }
     invalid_scripts[] =
     {
@@ -2654,43 +2859,67 @@ static void test_parse_errors(void)
             /* If...End If */
             L"If 0 > 1 Then\n"
             "    x = 0 End If\n",
-            1, 10
+            1, 10,
+            L"    x = 0 End If", S_OK, 1042
+        },
+        {
+            /* ElseIf...End If */
+            L"If False Then\n"
+            "    x = 0\n"
+            "ElseIf True Then\n"
+            "    x = 1 End If\n",
+            3, 10,
+            L"    x = 1 End If", S_OK, 1042
+        },
+        {
+            /* Else End If (no separator) */
+            L"If False Then\n"
+            "    x = 0\n"
+            "Else End If\n",
+            2, 5,
+            L"Else End If", S_OK, 1024
         },
         {
             /* While...End While */
             L"While False\n"
             "    x = 0 End While\n",
-            1, 10
+            1, 10,
+            L"    x = 0 End While", S_OK, 1024
         },
         {
             /* While...Wend */
             L"While False\n"
             "    x = 0 Wend\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Wend", S_OK, 1025
         },
         {
             /* Do While...Loop */
             L"Do While False\n"
             "    x = 0 Loop\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop", S_OK, 1025
         },
         {
             /* Do Until...Loop */
             L"Do Until True\n"
             "    x = 0 Loop\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop", S_OK, 1025
         },
         {
             /* Do...Loop While */
             L"Do\n"
             "    x = 0 Loop While False\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop While False", S_OK, 1025
         },
         {
             /* Do...Loop Until */
             L"Do\n"
             "    x = 0 Loop Until True\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop Until True", S_OK, 1025
         },
         {
             /* Select...End Select */
@@ -2701,36 +2930,43 @@ static void test_parse_errors(void)
             "    Case 42\n"
             "        x = True End Select\n"
             "Call ok(x, \"wrong case\")\n",
-            5, 17
+            5, 17,
+            L"        x = True End Select", S_OK, 1042
         },
         {
             /* Class...End Class  (empty) */
             L"Class C End Class",
-            0, 8
+            0, 8,
+            L"Class C End Class", S_OK, 1024
         },
         {
             /* Class...End Class  (empty) */
             L"Class C _\nEnd Class",
-            1, 0
+            1, 0,
+            L"End Class", S_OK, 1024
         },
         {
             /* invalid use of parentheses for call statement */
             L"strcomp(\"x\", \"y\")",
-            0, -17
+            0, 17,
+            L"strcomp(\"x\", \"y\")", S_OK, 1044
         },
         {
             L"\n\n\n  cint _\n   throwInt(&h80001234&)",
-            3, 2
+            3, 2,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "if true then throwInt(&h80001234&)",
-            1, 13
+            1, 13,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "if x = throwInt(&h80001234&) then x = 1",
-            1, 0
+            1, 0,
+            NULL, E_FAIL
         },
         {
             L"sub test\n"
@@ -2738,14 +2974,16 @@ static void test_parse_errors(void)
             "    if x = throwInt(&h80001234&) then x = 1\n"
             "end sub\n"
             "test\n",
-            2, 4
+            2, 4,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "do\n"
             "    x = 1\n"
             "loop until throwInt(&h80001234&)\n",
-            3, 0
+            3, 0,
+            NULL, E_FAIL
         },
         {
             L"\n  select case 3\n"
@@ -2754,7 +2992,8 @@ static void test_parse_errors(void)
             "    case throwInt(&h80001234&)\n"
             "        throwInt &h87001234&\n"
             "end select\n",
-            1, 2
+            1, 2,
+            NULL, E_FAIL
         },
         {
             L"if false then\n"
@@ -2764,7 +3003,550 @@ static void test_parse_errors(void)
             "else\n"
             "    throwInt &h87001234&\n"
             "end if\n",
-            2, 1
+            2, 1,
+            NULL, E_FAIL
+        },
+        {
+            /* Hex literal overflow */
+            L"x = &H100000001\n",
+            0, 4,
+            L"x = &H100000001", S_OK
+        },
+        {
+            /* Unterminated string constant - error 1033 */
+            L"x = \"hello\n",
+            0, 10,
+            NULL, S_OK, 1033
+        },
+        {
+            /* Expected 'End' - error 1014 */
+            L"If True Then\nx = 1\n",
+            2, 0,
+            NULL, S_OK, 1014
+        },
+        {
+            /* Name redefined - error 1041 */
+            L"Dim a\nDim a\n",
+            1, 4,
+            NULL, S_OK, 1041
+        },
+        {
+            /* A global Sub collides with a global Dim of the same name - error 1041 */
+            L"Dim s\nSub S\nEnd Sub\n",
+            1, 4,
+            NULL, S_OK, 1041
+        },
+        {
+            /* Expected identifier - error 1010 */
+            L"Dim If\n",
+            0, 4,
+            NULL, S_OK, 1010
+        },
+        {
+            /* Invalid character - error 1032 */
+            L"x = @invalid\n",
+            0, 4,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Expected literal constant - error 1045 */
+            L"Const x = 1 + \"a\"\n",
+            0, 17,
+            NULL, S_OK, 1045
+        },
+        {
+            /* Expected '(' - error 1005 */
+            L"Sub x)\nEnd Sub\n",
+            0, 5,
+            NULL, S_OK, 1005
+        },
+        {
+            /* Expected '=' - error 1011 */
+            L"Const x\n",
+            0, 7,
+            NULL, S_OK, 1011
+        },
+        {
+            /* Expected 'To' - error 1013 */
+            L"For i = 1 x 10\nNext\n",
+            0, 10,
+            NULL, S_OK, 1013
+        },
+        {
+            /* Expected 'Then' - error 1017 */
+            L"If True\nEnd If\n",
+            0, 7,
+            NULL, S_OK, 1017
+        },
+        {
+            /* Expected 'Wend' - error 1018 */
+            L"While True\nx = 1\n",
+            2, 0,
+            NULL, S_OK, 1018
+        },
+        {
+            /* Expected 'Loop' - error 1019 */
+            L"Do\nx = 1\n",
+            2, 0,
+            NULL, S_OK, 1019
+        },
+        {
+            /* Expected 'Next' - error 1020 */
+            L"For i = 1 To 10\nx = 1\n",
+            2, 0,
+            NULL, S_OK, 1020
+        },
+        {
+            /* Expected 'Case' - error 1021 */
+            L"Select x\nEnd Select\n",
+            0, 7,
+            NULL, S_OK, 1021
+        },
+        {
+            /* Expected integer constant - error 1026 */
+            L"Dim x(\"a\")\n",
+            0, 6,
+            NULL, S_OK, 1026
+        },
+        {
+            /* Invalid number - error 1031 */
+            L"x = 1e999\n",
+            0, 9,
+            NULL, S_OK, 1031
+        },
+        {
+            /* 'loop' without 'do' - error 1038 */
+            L"Loop\n",
+            0, 0,
+            NULL, S_OK, 1038
+        },
+        {
+            /* Invalid 'exit' statement - error 1039 */
+            L"Exit Do\n",
+            0, 5,
+            NULL, S_OK, 1039
+        },
+        {
+            /* Expected 'In' - error 1046 */
+            L"For Each x = arr\nNext\n",
+            0, 11,
+            NULL, S_OK, 1046
+        },
+        {
+            /* Must be defined inside a Class - error 1048 */
+            L"Property Get x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, 1048
+        },
+        {
+            /* Must be defined inside a Class - error 1048 (Let) */
+            L"Property Let x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, 1048
+        },
+        {
+            /* Must be defined inside a Class - error 1048 (Set) */
+            L"Property Set x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, 1048
+        },
+        {
+            /* Expected Let or Set or Get - error 1049 */
+            L"Class C\nProperty x\nEnd Property\nEnd Class\n",
+            1, 9,
+            NULL, S_OK, 1049
+        },
+        {
+            /* Class_Initialize with arguments - error 1053 */
+            L"Class C\n"
+            "Sub Class_Initialize(x)\n"
+            "End Sub\n"
+            "End Class\n",
+            1, -23,
+            NULL, S_OK, 1053
+        },
+        {
+            /* Class_Terminate with arguments - error 1053 */
+            L"Class C\n"
+            "Sub Class_Terminate(x)\n"
+            "End Sub\n"
+            "End Class\n",
+            1, -22,
+            NULL, S_OK, 1053
+        },
+        {
+            /* Property Let/Set needs at least one argument - error 1054 */
+            L"Class C\nProperty Let x\nEnd Property\nEnd Class\n",
+            1, 14,
+            NULL, S_OK, 1054
+        },
+        {
+            /* Unexpected 'Next' - error 1055 */
+            L"Next\n",
+            0, 0,
+            NULL, S_OK, 1055
+        },
+        {
+            /* 'Default' must also specify 'Public' - error 1057 */
+            L"Class C\nDefault Private Function f()\nf = 1\nEnd Function\nEnd Class\n",
+            1, 0,
+            NULL, S_OK, 1057
+        },
+        {
+            /* Unterminated date literal */
+            L"x = #1/1/2000\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* Newline inside date literal */
+            L"x = #1/1/\n2000#\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* Invalid date literal */
+            L"x = #notadate#\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* '_' not followed by newline */
+            L"x = 1 _x\n",
+            0, 7,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: e-acute (chr 233) in identifier */
+            L"Dim caf\x00e9\n",
+            0, 7,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: sharp-s (chr 223) in identifier */
+            L"Dim st\x00df" L"e\n",
+            0, 6,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: u-umlaut (chr 252) in identifier */
+            L"Dim x\x00fc" L"b\n",
+            0, 5,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: Cyrillic a (chr 1072) as identifier start */
+            L"Dim \x0430\n",
+            0, 4,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: e-acute (chr 233) starting identifier */
+            L"\x00e9var = 1\n",
+            0, 0,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Expected ')' - error 1006 */
+            L"x = (1 + 2\n",
+            0, 10,
+            NULL, S_OK, 1006
+        },
+        {
+            /* Expected 'If' - End With inside If block - error 1012 */
+            L"If True Then\n"
+            "  x = 1\n"
+            "End With\n",
+            2, 4,
+            NULL, S_OK, 1012
+        },
+        {
+            /* Expected 'Function' - End Sub inside Function - error 1015 */
+            L"Function F()\n"
+            "End Sub\n",
+            1, 4,
+            NULL, S_OK, 1015
+        },
+        {
+            /* Expected 'Sub' - End Function inside Sub - error 1016 */
+            L"Sub S()\n"
+            "End Function\n",
+            1, 4,
+            NULL, S_OK, 1016
+        },
+        {
+            /* Expected 'Select' - End If inside Select block - error 1022 */
+            L"Select Case 1\n"
+            "  Case 1\n"
+            "End If\n",
+            2, 4,
+            NULL, S_OK, 1022
+        },
+        {
+            /* Expected 'With' - End Sub inside With block - error 1029 */
+            L"With CreateObject(\"Scripting.Dictionary\")\n"
+            "End Sub\n",
+            1, 4,
+            NULL, S_OK, 1029
+        },
+        {
+            /* Expected 'Property' - End Sub inside Property Get - error 1050 */
+            L"Class C\n"
+            "  Property Get P()\n"
+            "  End Sub\n"
+            "End Class\n",
+            2, 6,
+            NULL, S_OK, 1050
+        },
+        {
+            /* Multiple default members - error 1052 */
+            L"Class C\n"
+            "  Public Default Function F()\n"
+            "    F = 1\n"
+            "  End Function\n"
+            "  Public Default Function G()\n"
+            "    G = 2\n"
+            "  End Function\n"
+            "End Class\n",
+            4, 17,
+            NULL, S_OK, 1052
+        },
+        {
+            /* Default only on Property Get - error 1058 */
+            L"Class C\n"
+            "  Public Default Property Let P(v)\n"
+            "  End Property\n"
+            "End Class\n",
+            1, 26,
+            NULL, S_OK, 1058
+        },
+        {
+            /* Invalid use of 'Me' - Set Me inside class - error 1037 */
+            L"Class C\n"
+            "  Sub T()\n"
+            "    Set Me = Nothing\n"
+            "  End Sub\n"
+            "End Class\n",
+            2, 11,
+            NULL, S_OK, 1037
+        },
+        {
+            /* Identifier too long (256 chars) */
+            L"Dim aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+            0, 260,
+            NULL, S_OK, 1030
+        },
+        {
+            /* Nested square brackets */
+            L"Dim [[nested]]\n",
+            0, 13,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Unclosed square bracket */
+            L"Dim [unclosed\n",
+            0, 13,
+            NULL, S_OK, 1007
+        },
+        {
+            /* Do followed by wrong keyword - error 1028 */
+            L"Do For\nLoop\n",
+            0, 3,
+            NULL, S_OK, 1028
+        },
+        {
+            /* Expected 'Class' - End Sub inside class body - error 1047 */
+            L"Class C\nEnd Sub\n",
+            1, 4,
+            NULL, S_OK, 1047
+        },
+        {
+            /* Property arg count mismatch - error 1051 */
+            L"Class C\n"
+            "Property Get P\n  P = 1\nEnd Property\n"
+            "Property Let P(a, b)\nEnd Property\n"
+            "End Class\n",
+            -4, -20,
+            NULL, S_OK, 1051
+        },
+        {
+            /* Const redefined */
+            L"Const X = 1\n"
+            "Const X = 2\n",
+            1, 6,
+            L"Const X = 2", S_OK, 1041
+        },
+        {
+            /* Const redefined on same statement */
+            L"Const C = 1, C = 2\n",
+            0, 13,
+            L"Const C = 1, C = 2", S_OK, 1041
+        },
+        {
+            /* Dim after Const with same name */
+            L"Const D = 1\n"
+            "Dim D\n",
+            1, 4,
+            L"Dim D", S_OK, 1041
+        },
+        {
+            /* Const after Dim with same name */
+            L"Dim E\n"
+            "Const E = 1\n",
+            1, 6,
+            L"Const E = 1", S_OK, 1041
+        },
+        {
+            /* Sub after Const with same name */
+            L"Const F = 1\n"
+            "Sub F()\n"
+            "End Sub\n",
+            1, 4,
+            L"Sub F()", S_OK, 1041
+        },
+        {
+            /* Sub after Dim with same name */
+            L"Dim G\n"
+            "Sub G()\n"
+            "End Sub\n",
+            1, 4,
+            L"Sub G()", S_OK, 1041
+        },
+        {
+            /* Function after Const with same name */
+            L"Const H = 1\n"
+            "Function H()\n"
+            "End Function\n",
+            1, 9,
+            L"Function H()", S_OK, 1041
+        },
+        {
+            /* Const after Sub with same name */
+            L"Sub I()\n"
+            "End Sub\n"
+            "Const I = 1\n",
+            2, 6,
+            L"Const I = 1", S_OK, 1041
+        },
+        {
+            /* Dim after Sub with same name */
+            L"Sub J()\n"
+            "End Sub\n"
+            "Dim J\n",
+            2, 4,
+            L"Dim J", S_OK, 1041
+        },
+        {
+            /* Class after Const with same name */
+            L"Const K = 1\n"
+            "Class K\n"
+            "End Class\n",
+            1, 6,
+            L"Class K", S_OK, 1041
+        },
+        {
+            /* Class after Dim with same name */
+            L"Dim L\n"
+            "Class L\n"
+            "End Class\n",
+            1, 6,
+            L"Class L", S_OK, 1041
+        },
+        {
+            /* Class after Sub with same name */
+            L"Sub M()\n"
+            "End Sub\n"
+            "Class M\n"
+            "End Class\n",
+            2, 6,
+            L"Class M", S_OK, 1041
+        },
+        {
+            /* Duplicate Sub inside Class */
+            L"Class N\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            3, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Duplicate Function inside Class */
+            L"Class O\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "End Class\n",
+            3, 13,
+            L"    Function Foo", S_OK, 1041
+        },
+        {
+            /* Sub and Function with same name inside Class */
+            L"Class P\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "End Class\n",
+            3, 13,
+            L"    Function Foo", S_OK, 1041
+        },
+        {
+            /* Property Get and Sub with same name inside Class */
+            L"Class Q\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            3, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Duplicate Property Get inside Class */
+            L"Class R\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "End Class\n",
+            3, 17,
+            L"    Property Get Foo", S_OK, 1041
+        },
+        {
+            /* Dim and Sub with same name inside Class */
+            L"Class S\n"
+            "    Dim Foo\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            2, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Sub and Dim with same name inside Class */
+            L"Class T\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Dim Foo\n"
+            "End Class\n",
+            3, 8,
+            L"    Dim Foo", S_OK, 1041
+        },
+        {
+            /* Invalid 'for' loop control variable (member expression) - error 1040 */
+            L"Dim x\nFor x.y = 1 To 3\nNext\n",
+            1, 8,
+            NULL, S_OK, 1040
+        },
+        {
+            /* Invalid 'for each' loop control variable (member expression) - error 1040 */
+            L"Dim x\nFor Each x.y In Array(1)\nNext\n",
+            1, 13,
+            NULL, S_OK, 1040
         }
     };
     HRESULT hres;
@@ -2774,6 +3556,7 @@ static void test_parse_errors(void)
     {
         error_line = ~0;
         error_char = -1;
+        error_code = 0;
         onerror_hres = S_OK;
 
         SET_EXPECT(OnScriptError);
@@ -2781,11 +3564,256 @@ static void test_parse_errors(void)
         ok(hres == SCRIPT_E_REPORTED, "[%u] script returned: %08lx\n", i, hres);
         CHECK_CALLED(OnScriptError);
 
-        ok(error_line == invalid_scripts[i].error_line, "[%u] error line %lu expected %u\n",
+        todo_wine_if(invalid_scripts[i].error_line < 0)
+        ok(error_line == abs(invalid_scripts[i].error_line), "[%u] error line %lu expected %d\n",
            i, error_line, invalid_scripts[i].error_line);
         todo_wine_if(invalid_scripts[i].error_char < 0)
         ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %ld expected %d\n",
            i, error_char, invalid_scripts[i].error_char);
+        if(invalid_scripts[i].error_code)
+            todo_wine_if(invalid_scripts[i].error_code < 0)
+            ok(error_code == abs(invalid_scripts[i].error_code), "[%u] error code %u expected %u\n",
+               i, error_code, abs(invalid_scripts[i].error_code));
+        ok(error_source_line_hres == invalid_scripts[i].source_line_hres,
+           "[%u] GetSourceLineText returned: %08lx\n", i, error_source_line_hres);
+        if(error_source_line_hres == S_OK && invalid_scripts[i].source_line)
+            ok(!wcscmp(error_source_line, invalid_scripts[i].source_line),
+               "[%u] source line %s expected %s\n", i,
+               wine_dbgstr_w(error_source_line), wine_dbgstr_w(invalid_scripts[i].source_line));
+    }
+    SysFreeString(error_source_line);
+    error_source_line = NULL;
+}
+
+static void test_redefine_scope(void)
+{
+    static const WCHAR *valid[] = {
+        /* a local Dim may shadow a global Sub */
+        L"Sub S\nEnd Sub\nSub Other\nDim s\nEnd Sub\n",
+        /* a local Const may shadow a global Sub */
+        L"Sub S\nEnd Sub\nSub Other\nConst s = 1\nEnd Sub\n",
+        /* a Class name does not collide with a local Dim of another Sub */
+        L"Class S\nEnd Class\nSub Other\nDim s\nEnd Sub\n",
+        L"Sub Other\nDim s\nEnd Sub\nClass S\nEnd Class\n",
+    };
+    /* A class member lives in a separate namespace, so its name may collide
+     * with a global Dim or Const. Each script also calls the member to prove
+     * it stays usable. */
+    static const WCHAR *valid_class_member[] = {
+        L"Class C\nPublic Function M\nM = 42\nEnd Function\nEnd Class\n"
+        L"Dim M\nDim o : Set o = New C\nCall ok(o.M = 42, \"o.M = \" & o.M)\n",
+        L"Class C\nPublic Function M\nM = 42\nEnd Function\nEnd Class\n"
+        L"Const M = 7\nDim o : Set o = New C\nCall ok(o.M = 42, \"o.M = \" & o.M)\n",
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(valid); i++) {
+        hres = parse_script_wr(valid[i]);
+        ok(hres == S_OK, "[%u] parse returned %08lx\n", i, hres);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(valid_class_member); i++) {
+        hres = parse_script_wr(valid_class_member[i]);
+        ok(hres == S_OK, "[%u] class member parse returned %08lx\n", i, hres);
+    }
+}
+
+static void test_getref_error_reporting(void)
+{
+    /* An error raised inside a function reference obtained from GetRef, when
+     * the reference is called from script under the caller's On Error Resume
+     * Next, must propagate to that caller rather than be reported to the host. */
+    static const WCHAR *src =
+        L"Dim cb : Set cb = GetRef(\"RaisesError\")\n"
+        L"Sub CallIndirect\n"
+        L"    On Error Resume Next\n"
+        L"    cb\n"
+        L"    On Error Goto 0\n"
+        L"End Sub\n"
+        L"Sub RaisesError\n"
+        L"    Err.Raise 5\n"
+        L"End Sub\n"
+        L"CallIndirect\n";
+    HRESULT hres;
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(src);
+    ok(hres == S_OK, "parse_script_wr returned %08lx\n", hres);
+    ok(!called_OnScriptError,
+        "error in a GetRef reference under the caller's On Error Resume Next was reported to the host\n");
+    CLEAR_CALLED(OnScriptError);
+}
+
+static void test_getref_external_caller_error(void)
+{
+    static const WCHAR *src =
+        L"Dim cb : Set cb = GetRef(\"RaisesError\")\n"
+        L"Sub RaisesError\n"
+        L"    Err.Raise 5\n"
+        L"End Sub\n"
+        L"Call invokeDisp(cb)\n";
+    HRESULT hres;
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(src);
+    ok(hres == S_OK, "parse_script_wr returned %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+}
+
+static void test_external_caller_method_error(void)
+{
+    static const WCHAR *src =
+        L"Class C\n"
+        L"    Public Sub raiser\n"
+        L"        Err.Raise 5\n"
+        L"    End Sub\n"
+        L"End Class\n"
+        L"Call invokeMethod(new C)\n";
+    HRESULT hres;
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(src);
+    ok(hres == S_OK, "parse_script_wr returned %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+}
+
+static void test_class_decl_scope(void)
+{
+    static const struct {
+        const WCHAR *src;
+        BOOL expect_ok;     /* whether the script should compile */
+        USHORT error_code;  /* expected error number when it should not */
+        ULONG error_line;   /* expected 0-based error line when it should not */
+    } tests[] = {
+        { L"Dim x : Class C\nPublic v\nEnd Class\n", TRUE },
+        { L"Sub S\nClass C\nEnd Class\nEnd Sub\n", FALSE, 1002, 1 },
+        { L"If True Then\nClass C\nEnd Class\nEnd If\n", FALSE, 1002, 1 },
+        { L"Class C\nEnd Class\nDim x : Class C\nEnd Class\n", FALSE, 1041, 2 },
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+
+        if (tests[i].expect_ok)
+            ok(hres == S_OK, "[%u] %s: hres=%08lx\n", i, wine_dbgstr_w(tests[i].src), hres);
+        else
+            ok(FAILED(hres) && error_code == tests[i].error_code && error_line == tests[i].error_line,
+               "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+               hres, error_code, error_line);
+    }
+}
+
+/* Like a Class, a Sub or Function is only valid at script global scope (a
+   global If/Select block hoists it, a loop or procedure body does not). Native
+   rejects the disallowed cases; the parser does not yet, so these are todo. */
+static void test_sub_decl_scope(void)
+{
+    static const struct {
+        const WCHAR *src;
+        BOOL expect_ok;     /* whether the script should compile */
+        USHORT error_code;  /* expected native error number when it should not */
+        ULONG error_line;   /* expected 0-based native error line when it should not */
+        BOOL todo;          /* the parser does not yet reject this case */
+    } tests[] = {
+        { L"If False Then\nSub S\nEnd Sub\nEnd If\nCall S\n", TRUE, 0, 0, FALSE },
+        { L"Select Case 1\nCase 1\nSub S\nEnd Sub\nEnd Select\nCall S\n", TRUE, 0, 0, FALSE },
+        { L"Sub S\nSub T\nEnd Sub\nEnd Sub\n", FALSE, 1002, 1, TRUE },
+        { L"For i = 1 To 1\nSub S\nEnd Sub\nNext\n", FALSE, 1002, 1, TRUE },
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+
+        if (tests[i].expect_ok)
+            ok(hres == S_OK, "[%u] %s: hres=%08lx\n", i, wine_dbgstr_w(tests[i].src), hres);
+        else
+            todo_wine_if(tests[i].todo)
+            ok(FAILED(hres) && error_code == tests[i].error_code && error_line == tests[i].error_line,
+               "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+               hres, error_code, error_line);
+    }
+}
+
+static void test_named_item_builtin_shadowing(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR str;
+    HRESULT hres;
+
+    strict_dispid_check = FALSE;
+
+    engine = create_and_init_script(SCRIPTITEM_GLOBALMEMBERS, TRUE);
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, L"Trim", SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
+    str = SysAllocString(L"Call ok(getVT(Trim) = \"VT_DISPATCH\", \"getVT(Trim) = \" & getVT(Trim))\n"
+                         L"Trim.propput = 1\n");
+    SET_EXPECT(testobj_propput_d);
+    SET_EXPECT(testobj_propput_i);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(testobj_propput_d);
+    CHECK_CALLED(testobj_propput_i);
+    SysFreeString(str);
+
+    IActiveScriptParse_Release(parser);
+    close_script(engine);
+}
+
+/* Native counts '\n', '\r' and '\r\n' as line endings, so a '\n\r' pair is
+   two. Each script ends with a failing statement preceded by two separators,
+   and the reported 0-based error line is the number of line endings before
+   it: 2 for the single-break styles, 4 for the doubled '\n\r' and '\r\r'. */
+static void test_error_line_endings(void)
+{
+    static const struct {
+        const WCHAR *src;
+        ULONG error_line;
+    } tests[] = {
+        { L"' a\n' b\nx = 1 \\ 0\n",             2 },
+        { L"' a\r\n' b\r\nx = 1 \\ 0\r\n",       2 },
+        { L"' a\r' b\rx = 1 \\ 0\r",             2 },
+        { L"' a\n' b\rx = 1 \\ 0\r",             2 },
+        { L"' a\r' b\nx = 1 \\ 0\n",             2 },
+        { L"' a\n\r' b\n\rx = 1 \\ 0\n\r",       4 },
+        { L"' a\r\r' b\r\rx = 1 \\ 0\r\r",       4 },
+        { L"' a\r\n' b\rx = 1 \\ 0\r\n",         2 },
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+        ok(hres == 0x80020101 && error_code == 11 && error_line == tests[i].error_line,
+           "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+           hres, error_code, error_line);
     }
 }
 
@@ -3169,14 +4197,47 @@ static void run_from_res(const char *name)
     test_name = "";
 }
 
+static void test_setlocale_reset_uses_host_lcid(void)
+{
+    /* The engine takes the LCID returned by IActiveScriptSite::GetLCID as the
+     * baseline; SetLocale with no argument must restore it regardless of the
+     * user default. */
+    site_lcid_override = 1036; /* fr-FR */
+    parse_script_w(L"Call ok(GetLocale() = 1036, \"initial GetLocale = \" & GetLocale())\n"
+                   L"SetLocale 1041\n"
+                   L"Call ok(GetLocale() = 1041, \"after SetLocale 1041: \" & GetLocale())\n"
+                   L"SetLocale\n"
+                   L"Call ok(GetLocale() = 1036, \"after SetLocale reset: \" & GetLocale())\n");
+    site_lcid_override = 0;
+}
+
+static void test_setlocale_does_not_touch_thread_locale(void)
+{
+    LCID thread_lcid_before = GetThreadLocale();
+    parse_script_w(L"SetLocale 1036\n");
+    ok(GetThreadLocale() == thread_lcid_before,
+       "SetLocale leaked to thread locale: before=%#lx after=%#lx\n",
+       thread_lcid_before, GetThreadLocale());
+}
+
 static void run_tests(void)
 {
     HRESULT hres;
 
     strict_dispid_check = TRUE;
 
+    test_setlocale_reset_uses_host_lcid();
+    test_setlocale_does_not_touch_thread_locale();
+
     parse_script_w(L"");
     parse_script_w(L"' empty ;");
+
+    /* Vertical tab and form feed are valid whitespace separators */
+    parse_script_w(L"dim\x0b""x\n");
+    parse_script_w(L"dim\x0c""x\n");
+    parse_script_w(L"dim\x0b\x0c""x\n");
+    parse_script_w(L"x\x0b""=\x0b""1\n");
+    parse_script_w(L"x\x0c""=\x0c""1\n");
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
@@ -3250,6 +4311,12 @@ static void run_tests(void)
     parse_script_w(L"testObj.propput = 1");
     CHECK_CALLED(testobj_propput_d);
     CHECK_CALLED(testobj_propput_i);
+
+    /* the builtin function wins over a global-members host property of the same name */
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"InputBox.propput = 1");
+    ok(hres == MAKE_VBSERROR(450), "InputBox.propput = 1 returned: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
 
     SET_EXPECT(global_propargput_d);
     SET_EXPECT(global_propargput_i);
@@ -3425,16 +4492,41 @@ static void run_tests(void)
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"Const x = 1\nConst x = 2");
+    ok(FAILED(hres), "duplicated const didn't fail\n");
+    CHECK_CALLED(OnScriptError);
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"Const x = 1\nDim x");
+    ok(FAILED(hres), "const+dim didn't fail\n");
+    CHECK_CALLED(OnScriptError);
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"Dim x\nConst x = 1");
+    ok(FAILED(hres), "dim+const didn't fail\n");
+    CHECK_CALLED(OnScriptError);
+
     run_from_res("lang.vbs");
     run_from_res("api.vbs");
     run_from_res("regexp.vbs");
     run_from_res("error.vbs");
+    run_from_res("noexplicit.vbs");
 
     test_procedures();
     test_gc();
     test_msgbox();
+    test_named_item_builtin_shadowing();
     test_isexpression();
+    test_option_explicit_errors();
     test_parse_errors();
+    test_class_decl_scope();
+    test_sub_decl_scope();
+    test_error_line_endings();
+    test_redefine_scope();
+    test_getref_error_reporting();
+    test_getref_external_caller_error();
+    test_external_caller_method_error();
     test_parse_context();
     test_callbacks();
     test_multiple_parse();

@@ -114,7 +114,7 @@ static int coff_add_file(struct CoffFileSet* coff_files, struct module* module,
     file = coff_files->files + coff_files->nfiles;
     file->startaddr = 0xffffffff;
     file->endaddr   = 0;
-    file->compiland = symt_new_compiland(module, filename);
+    file->compiland = symt_new_compiland(module, symt_ptr_to_symref(&module->top->symt), filename);
     file->linetab_offset = -1;
     file->linecnt = 0;
     file->entries = NULL;
@@ -280,7 +280,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             /* FIXME: was adding symbol to this_file ??? */
             coff_add_symbol(&coff_files.files[curr_file_idx],
                             &symt_new_function(msc_dbg->module,
-                                               coff_files.files[curr_file_idx].compiland,
+                                               symt_ptr_to_symref(&coff_files.files[curr_file_idx].compiland->symt),
                                                nampnt,
                                                msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
                                                0 /* FIXME */,
@@ -315,13 +315,13 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             if (j < coff_files.nfiles)
             {
                 coff_add_symbol(&coff_files.files[j],
-                                &symt_new_function(msc_dbg->module, compiland, nampnt,
+                                &symt_new_function(msc_dbg->module, symt_ptr_to_symref(&compiland->symt), nampnt,
                                                    msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
                                                    0 /* FIXME */, 0 /* FIXME */, 0)->symt);
             }
             else
             {
-                symt_new_function(msc_dbg->module, NULL, nampnt,
+                symt_new_function(msc_dbg->module, 0, nampnt,
                                   msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
                                   0 /* FIXME */, 0 /* FIXME */, 0);
             }

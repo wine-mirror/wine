@@ -3,6 +3,8 @@ IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
+VER_PRODUCTVERSION = 6,1,7601,16385
+
 SOURCES = \
 	tasklist.c \
 	tasklist.rc

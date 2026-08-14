@@ -894,6 +894,8 @@ static void test_storage_suminfo(void)
     IStorage *stg = NULL;
     IPropertySetStorage *propset = NULL;
     IPropertyStorage *ps = NULL;
+    IStream *stm;
+    WCHAR name[CCH_MAX_PROPSTG_NAME + 1];
     HRESULT r;
 
     DeleteFileA(filenameA);
@@ -949,11 +951,26 @@ static void test_storage_suminfo(void)
         IPropertyStorage_Release(ps);
 
     /* should be able to open it */
-    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation,
             STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
     ok(r == S_OK, "open failed\n");
     if(r == S_OK)
         IPropertyStorage_Release(ps);
+
+    r = IPropertySetStorage_Open(propset, &FMTID_SummaryInformation,
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, &ps);
+    ok(r == S_OK, "Open failed: 0x%08lx\n", r);
+    IPropertyStorage_Release(ps);
+
+    r = FmtIdToPropStgName(&FMTID_SummaryInformation, name);
+    ok(r == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", r);
+
+    r = IStorage_OpenStream(stg, name, NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r == S_OK, "OpenStream failed: 0x%08lx\n", r);
+    IStream_Release(stm);
+
+    r = IStorage_OpenStream(stg, name, NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, 0, &stm);
+    ok(r == STG_E_INVALIDFUNCTION, "OpenStream should fail: 0x%08lx\n", r);
 
     /* delete it */
     r = IPropertySetStorage_Delete( propset, &FMTID_SummaryInformation );
@@ -3819,6 +3836,8 @@ static void test_custom_lockbytes(void)
     HRESULT hr;
     IStorage* stg;
     IStream* stm;
+    BYTE invalid_data[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A };
+    ULARGE_INTEGER offset = {0};
 
     CreateTestLockBytes(&lockbytes);
 
@@ -3875,6 +3894,160 @@ static void test_custom_lockbytes(void)
     ok(hr==STG_E_INVALIDFUNCTION, "StgCreateDocfileOnILockBytes failed %lx\n", hr);
 
     DeleteTestLockBytes(lockbytes);
+
+    /*test empty lockbytes*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test empty lockbytes with different mode*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on empty lockbytes with different mode failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test invalid lockbytes*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = ILockBytes_WriteAt(&lockbytes->ILockBytes_iface, offset, invalid_data, sizeof(invalid_data), NULL);
+    ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+
+    /*test invalid lockbytes with different mode*/
+    CreateTestLockBytes(&lockbytes);
+
+    hr = ILockBytes_WriteAt(&lockbytes->ILockBytes_iface, offset, invalid_data, sizeof(invalid_data), NULL);
+    ok(hr == S_OK, "ILockBytes_WriteAt failed: %lx\n", hr);
+
+    hr = StgOpenStorageOnILockBytes(&lockbytes->ILockBytes_iface, NULL, STGM_READWRITE | STGM_SHARE_DENY_WRITE | STGM_TRANSACTED, NULL, 0, &stg);
+    ok(hr == STG_E_FILEALREADYEXISTS, "StgOpenStorageOnILockBytes on invalid lockbytes with different mode failed: %lx\n", hr);
+
+    if (stg)
+        IStorage_Release(stg);
+    DeleteTestLockBytes(lockbytes);
+}
+
+static void test_MoveElementTo(void)
+{
+    WCHAR temp[MAX_PATH], src_name[MAX_PATH], dst_name[MAX_PATH];
+    IStorage *src, *dst, *stg;
+    IStream *stream;
+    HRESULT hr;
+
+    GetTempPathW(MAX_PATH, temp);
+    GetTempFileNameW(temp, L"stg", 0, src_name);
+    GetTempFileNameW(temp, L"stg", 0, dst_name);
+
+    hr = StgCreateDocfile(src_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &src);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = create_test_file(src);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = StgCreateDocfile(dst_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &dst);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGTY_STREAM */
+
+    hr = IStorage_MoveElementTo(src, NULL, NULL, NULL, 0);
+    ok(hr == STG_E_INVALIDNAME, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmA_name, dst, strmC_name, ~0);
+    ok(hr == STG_E_INVALIDFLAG, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmA_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, NULL, 0);
+    ok(hr == STG_E_INVALIDNAME, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, NULL, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_INVALIDPOINTER, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, NULL, strmC_name, ~0);
+    ok(hr == STG_E_INVALIDFLAG, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, src, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_ACCESSDENIED, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_COPY doesn't fail if the target already exsists */
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_MOVE fails if the target already exsists */
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_MOVE);
+    ok(hr == STG_E_FILEALREADYEXISTS, "got %#lx\n", hr);
+
+    hr = IStorage_DestroyElement(dst, strmC_name);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStream(src, strmC_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStream(dst, strmC_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IStream_Release(stream);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    /* STGTY_STORAGE */
+
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_COPY doesn't fail if the target already exsists */
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_MOVE fails if the target already exsists */
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_MOVE);
+    ok(hr == STG_E_FILEALREADYEXISTS, "got %#lx\n", hr);
+
+    hr = IStorage_DestroyElement(dst, stgB_name);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgB_name, dst, stgA_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgB_name, dst, stgA_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStorage(dst, stgB_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IStorage_Release(stg);
+
+    IStorage_Release(src);
+    IStorage_Release(dst);
+    DeleteFileW(src_name);
+    DeleteFileW(dst_name);
 }
 
 START_TEST(storage32)
@@ -3926,4 +4099,5 @@ START_TEST(storage32)
     test_transacted_shared();
     test_overwrite();
     test_custom_lockbytes();
+    test_MoveElementTo();
 }

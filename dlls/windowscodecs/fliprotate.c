@@ -334,6 +334,7 @@ HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator)
     This->flip_x = 0;
     This->flip_y = 0;
     This->swap_xy = 0;
+    This->bpp = 0;
     InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FlipRotator.lock");
 

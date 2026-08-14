@@ -174,7 +174,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 /* Emulate a __thiscall */
 #ifdef __i386__
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -183,13 +183,13 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
-static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
-static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
-static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
-        const void *c, const void *d );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
+static void * (WINAPI *call_thiscall_func3)( void *func, void *this, void *a, void *b );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, void *a, void *b,
+        void *c, void *d );
 
 static void init_thiscall_thunk(void)
 {
@@ -207,10 +207,10 @@ static void init_thiscall_thunk(void)
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
-#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
-        (const void*)(c), (const void *)(d))
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(void*)(a),(void*)(b))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(void*)(a),(void*)(b), \
+        (void*)(c), (void *)(d))
 
 #else
 

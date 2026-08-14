@@ -415,9 +415,7 @@ static void test_child_env(char** argv)
     snprintf( tmp, sizeof(tmp), "%s %s create", argv[0], argv[1] );
     ret = CreateProcessA( NULL, tmp, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, env, NULL, &si, &pi );
     ok( ret, "Couldn't create child process %s\n", tmp );
-    winetest_wait_child_process( pi.hProcess );
-    CloseHandle( pi.hProcess );
-    CloseHandle( pi.hThread );
+    winetest_wait_child_process( &pi );
     free( env );
 }
 

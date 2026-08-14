@@ -29,6 +29,7 @@
 #include "wine/test.h"
 #include "wine/list.h"
 
+static BOOL v4;
 static HRESULT (WINAPI *pCreateAssemblyEnum)(IAssemblyEnum **pEnum,
                                              IUnknown *pUnkReserved,
                                              IAssemblyName *pName,
@@ -62,12 +63,21 @@ static BOOL init_functionpointers(void)
         return FALSE;
     }
 
-    hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+    hr = pLoadLibraryShim(L"fusion.dll", L"v4.0.30319", NULL, &hfusion);
     if (FAILED(hr))
     {
-        win_skip("fusion.dll not available\n");
-        FreeLibrary(hmscoree);
-        return FALSE;
+        hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+        if (FAILED(hr))
+        {
+            win_skip("fusion.dll not available\n");
+            FreeLibrary(hmscoree);
+            return FALSE;
+        }
+    }
+    else
+    {
+        v4 = TRUE;
+        trace("using .NET version 4\n");
     }
 
     pCreateAssemblyEnum = (void *)GetProcAddress(hfusion, "CreateAssemblyEnum");
@@ -85,12 +95,12 @@ static BOOL init_functionpointers(void)
     return TRUE;
 }
 
-static inline void to_widechar(LPWSTR dest, LPCSTR src)
+static inline void to_widechar(WCHAR *dest, const char *src)
 {
     MultiByteToWideChar(CP_ACP, 0, src, -1, dest, MAX_PATH);
 }
 
-static inline void to_multibyte(LPSTR dest, LPWSTR src)
+static inline void to_multibyte(char *dest, const WCHAR *src)
 {
     WideCharToMultiByte(CP_ACP, 0, src, -1, dest, MAX_PATH, NULL, NULL);
 }
@@ -235,6 +245,7 @@ static void enum_gac_assembly_dirs(struct list *assemblies, const char *parent, 
     do
     {
         char culture[MAX_PATH];
+        DWORD offset = 0;
 
         if (!strcmp(ffd.cFileName, ".") || !strcmp(ffd.cFileName, "..")) continue;
 
@@ -247,7 +258,8 @@ static void enum_gac_assembly_dirs(struct list *assemblies, const char *parent, 
             if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) continue;
         }
 
-        if (!(ptr = strchr(ffd.cFileName, '_'))) continue;
+        if (!strncmp(ffd.cFileName, "v4.0_", 5)) offset = 5;
+        if (!(ptr = strchr(ffd.cFileName + offset, '_'))) continue;
         *ptr++ = 0;
 
         if (*ptr != '_')
@@ -260,10 +272,10 @@ static void enum_gac_assembly_dirs(struct list *assemblies, const char *parent, 
 
         ptr = strchr(ptr, '_');
         ptr++;
-        len = sizeof(format) + strlen(parent) + strlen(ffd.cFileName) + strlen(culture) + strlen(ptr);
+        len = sizeof(format) + strlen(parent) + strlen(ffd.cFileName + offset) + strlen(culture) + strlen(ptr);
 
         name = HeapAlloc(GetProcessHeap(), 0, offsetof( ASMNAME, data[len] ));
-        sprintf( name->data, format, parent, ffd.cFileName, culture, ptr);
+        sprintf( name->data, format, parent, ffd.cFileName + offset, culture, ptr);
         list_add_tail(assemblies, &name->entry);
     } while (FindNextFileA(hfind, &ffd) != 0);
 
@@ -291,6 +303,30 @@ static void enum_gac_assemblies(struct list *assemblies, char path[MAX_PATH])
     FindClose(hfind);
 }
 
+static void enum_gac(struct list *assemblies, const WCHAR *path)
+{
+    char buf[MAX_PATH];
+
+    to_multibyte(buf, path);
+    strcat(buf, "_32");
+    enum_gac_assemblies(assemblies, buf);
+
+    to_multibyte(buf, path);
+    strcat(buf, "_64");
+    enum_gac_assemblies(assemblies, buf);
+
+    to_multibyte(buf, path);
+    strcat(buf, "_Arm64");
+    enum_gac_assemblies(assemblies, buf);
+
+    to_multibyte(buf, path);
+    strcat(buf, "_MSIL");
+    enum_gac_assemblies(assemblies, buf);
+
+    to_multibyte(buf, path);
+    enum_gac_assemblies(assemblies, buf);
+}
+
 static void test_enumerate(void)
 {
     struct list assemblies = LIST_INIT(assemblies);
@@ -298,7 +334,6 @@ static void test_enumerate(void)
     IAssemblyEnum *asmenum;
     IAssemblyName *next;
     WCHAR buf[MAX_PATH];
-    CHAR path[MAX_PATH];
     CHAR disp[MAX_PATH];
     HRESULT hr;
     BOOL found;
@@ -308,20 +343,8 @@ static void test_enumerate(void)
     hr = pGetCachePath(ASM_CACHE_GAC, buf, &size);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
 
-    to_multibyte(path, buf);
-    lstrcatA(path, "_32");
-    enum_gac_assemblies(&assemblies, path);
-
-    to_multibyte(path, buf);
-    lstrcatA(path, "_64");
-    enum_gac_assemblies(&assemblies, path);
-
-    to_multibyte(path, buf);
-    lstrcatA(path, "_MSIL");
-    enum_gac_assemblies(&assemblies, path);
-
-    to_multibyte(path, buf);
-    enum_gac_assemblies(&assemblies, path);
+    enum_gac(&assemblies, buf);
+    if (v4) enum_gac(&assemblies, L"c:\\windows\\microsoft.net\\assembly\\gac");
 
     asmenum = NULL;
     hr = pCreateAssemblyEnum(&asmenum, NULL, NULL, ASM_CACHE_GAC, NULL);
@@ -409,7 +432,7 @@ static void test_enumerate_name(void)
     lstrcatA(path, "\\Wine.dll");
     if (!create_file_data(path, path, 100))
     {
-        win_skip("Failed to open file %s, skipping name enumeration tests\n", path);
+        win_skip("Failed to open file %s (needs admin), skipping name enumeration tests\n", path);
         goto done;
     }
 
@@ -468,9 +491,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[1]) ||
-       !lstrcmpA(disp, exp[2]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
+    ok(!lstrcmpA(disp, exp[1]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
 
     IAssemblyName_Release(next);
 
@@ -483,9 +504,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[2]) ||
-       !lstrcmpA(disp, exp[1]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
+    ok(!lstrcmpA(disp, exp[2]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
 
     IAssemblyName_Release(next);
 
@@ -519,9 +538,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[4]) ||
-       !lstrcmpA(disp, exp[5]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[4], exp[5], disp);
+    ok(!lstrcmpA(disp, exp[4]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[4], exp[5], disp);
 
     IAssemblyName_Release(next);
 
@@ -534,9 +551,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[5]) ||
-       !lstrcmpA(disp, exp[4]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[5], exp[4], disp);
+    ok(!lstrcmpA(disp, exp[5]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[5], exp[4], disp);
 
     IAssemblyName_Release(next);
 
@@ -630,9 +645,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[1]) ||
-       !lstrcmpA(disp, exp[2]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
+    ok(!lstrcmpA(disp, exp[1]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[1], exp[2], disp);
 
     IAssemblyName_Release(next);
 
@@ -645,9 +658,7 @@ static void test_enumerate_name(void)
     hr = IAssemblyName_GetDisplayName(next, buf, &size, 0);
     to_multibyte(disp, buf);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-    ok(!lstrcmpA(disp, exp[2]) ||
-       !lstrcmpA(disp, exp[1]), /* Win98 */
-       "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
+    ok(!lstrcmpA(disp, exp[2]), "Expected \"%s\" or \"%s\", got \"%s\"\n", exp[2], exp[1], disp);
 
     IAssemblyName_Release(next);
 

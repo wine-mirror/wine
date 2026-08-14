@@ -56,25 +56,9 @@ struct res_type
     unsigned int             nb_names;     /* total number of names */
 };
 
-/* top level of the resource tree */
-struct res_tree
+static struct res_type *add_type( struct array *types, struct resource *res )
 {
-    struct res_type *types;                /* types array */
-    unsigned int     nb_types;             /* total number of types */
-};
-
-
-static inline struct resource *add_resource( DLLSPEC *spec )
-{
-    spec->resources = xrealloc( spec->resources, (spec->nb_resources + 1) * sizeof(*spec->resources) );
-    return &spec->resources[spec->nb_resources++];
-}
-
-static struct res_type *add_type( struct res_tree *tree, struct resource *res )
-{
-    struct res_type *type;
-    tree->types = xrealloc( tree->types, (tree->nb_types + 1) * sizeof(*tree->types) );
-    type = &tree->types[tree->nb_types++];
+    struct res_type *type = ARRAY_ADD( types, struct res_type );
     type->type        = &res->type;
     type->res         = res;
     type->nb_names    = 0;
@@ -102,7 +86,7 @@ static void get_string( struct string_id *str )
 /* load the next resource from the current file */
 static void load_next_resource( DLLSPEC *spec )
 {
-    struct resource *res = add_resource( spec );
+    struct resource *res = ARRAY_ADD( &spec->resources, struct resource );
 
     get_string( &res->type );
     get_string( &res->name );
@@ -146,25 +130,22 @@ static int cmp_res( const void *ptr1, const void *ptr2 )
 }
 
 /* build the 2-level (type,name) resource tree */
-static struct res_tree *build_resource_tree( DLLSPEC *spec )
+static struct array build_resource_tree( DLLSPEC *spec )
 {
-    unsigned int i, j, offset;
-    struct res_tree *tree;
+    unsigned int j, offset;
+    struct array types = empty_array;
     struct res_type *type = NULL;
     struct resource *res;
 
-    qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
+    ARRAY_SORT( &spec->resources, struct resource, cmp_res );
 
     offset = 2;  /* alignment */
-    tree = xmalloc( sizeof(*tree) );
-    tree->types = NULL;
-    tree->nb_types = 0;
 
-    for (i = 0; i < spec->nb_resources; i++)
+    ARRAY_FOR_EACH( res, &spec->resources, struct resource )
     {
-        if (!i || cmp_string( &spec->resources[i].type, &spec->resources[i-1].type ))  /* new type */
+        if (!type || cmp_string( &res->type, &res[-1].type ))  /* new type */
         {
-            type = add_type( tree, &spec->resources[i] );
+            type = add_type( &types, res );
             offset += 8;
         }
         type->nb_names++;
@@ -172,7 +153,7 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec )
     }
     offset += 2;  /* terminator */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, struct res_type )
     {
         if (type->type->str)
         {
@@ -191,14 +172,7 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec )
             else res->name_offset = res->name.id | 0x8000;
         }
     }
-    return tree;
-}
-
-/* free the resource tree */
-static void free_resource_tree( struct res_tree *tree )
-{
-    free( tree->types );
-    free( tree );
+    return types;
 }
 
 /* output a string preceded by its length */
@@ -220,12 +194,11 @@ static void output_bin_string( const char *str )
 /* output the resource data */
 void output_res16_data( DLLSPEC *spec )
 {
-    const struct resource *res;
-    unsigned int i;
+    unsigned int i = 0;
 
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    ARRAY_FOR_EACH( res, &spec->resources, const struct resource )
     {
-        output( ".L__wine_spec_resource_%u:\n", i );
+        output( ".L__wine_spec_resource_%u:\n", i++ );
         dump_bytes( res->data, res->data_size );
     }
 }
@@ -233,26 +206,23 @@ void output_res16_data( DLLSPEC *spec )
 /* output the resource definitions */
 void output_res16_directory( DLLSPEC *spec )
 {
-    unsigned int i, j;
-    struct res_tree *tree;
-    const struct res_type *type;
+    unsigned int j;
     const struct resource *res;
-
-    tree = build_resource_tree( spec );
+    struct array types = build_resource_tree( spec );
 
     output( "\n.L__wine_spec_ne_rsrctab:\n" );
     output( "\t.short 0\n" );  /* alignment */
 
     /* type and name structures */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, const struct res_type )
     {
         output( "\t.short 0x%04x,%u,0,0\n", type->name_offset, type->nb_names );
 
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
         {
             output( "\t.short .L__wine_spec_resource_%lu-.L__wine_spec_dos_header,%u\n",
-                    (unsigned long)(res - spec->resources), res->data_size );
+                    (unsigned long)(res - (struct resource *)spec->resources.data), res->data_size );
             output( "\t.short 0x%04x,0x%04x,0,0\n", res->memopt, res->name_offset );
         }
     }
@@ -260,42 +230,33 @@ void output_res16_directory( DLLSPEC *spec )
 
     /* name strings */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, const struct res_type )
     {
         if (type->type->str) output_string( type->type->str );
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
             if (res->name.str) output_string( res->name.str );
     }
     output( "\t.byte 0\n" );  /* names terminator */
-
-    free_resource_tree( tree );
 }
 
 /* output the resource data in binary format */
 void output_bin_res16_data( DLLSPEC *spec )
 {
-    const struct resource *res;
-    unsigned int i;
-
-    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
-        put_data( res->data, res->data_size );
+    ARRAY_FOR_EACH( res, &spec->resources, const struct resource ) put_data( res->data, res->data_size );
 }
 
 /* output the resource definitions in binary format */
 void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset )
 {
-    unsigned int i, j;
-    struct res_tree *tree;
-    const struct res_type *type;
+    unsigned int j;
     const struct resource *res;
-
-    tree = build_resource_tree( spec );
+    struct array types = build_resource_tree( spec );
 
     put_word( 0 );  /* alignment */
 
     /* type and name structures */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, const struct res_type )
     {
         put_word( type->name_offset );
         put_word( type->nb_names );
@@ -317,13 +278,11 @@ void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset )
 
     /* name strings */
 
-    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    ARRAY_FOR_EACH( type, &types, const struct res_type )
     {
         if (type->type->str) output_bin_string( type->type->str );
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
             if (res->name.str) output_bin_string( res->name.str );
     }
     put_byte( 0 );  /* names terminator */
-
-    free_resource_tree( tree );
 }

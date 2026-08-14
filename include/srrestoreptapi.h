@@ -31,7 +31,7 @@
 #define MAX_DESC                    64
 #define MAX_DESC_W                  256
 
-#pragma pack(1)
+#pragma pack(push,1)
 
 typedef struct _RESTOREPTINFOA {
     DWORD dwEventType;
@@ -59,6 +59,8 @@ typedef struct _SMGRSTATUS {
     DWORD nStatus;
     INT64 llSequenceNumber;
 } STATEMGRSTATUS, *PSTATEMGRSTATUS;
+
+#pragma pack(pop)
 
 #ifdef __cplusplus
 extern "C" {

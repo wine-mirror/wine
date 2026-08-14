@@ -5,6 +5,9 @@ IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
 
+VER_FILEDESCRIPTION_STR = "Wine CRT library"
+VER_PRODUCTVERSION      = 12,0,40664,0
+
 SOURCES = \
 	concurrency.c \
 	console.c \
@@ -45,5 +48,4 @@ SOURCES = \
 	thread.c \
 	time.c \
 	undname.c \
-	version.rc \
 	wcs.c

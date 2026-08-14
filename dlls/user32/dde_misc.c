@@ -1325,7 +1325,8 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
     pByte = (LPBYTE)(pDdh + 1);
     if (pSrc)
     {
-	memcpy(pByte, pSrc + cbOff, cb);
+        if (cbOff) memset(pByte, 0, cbOff);
+        memcpy(pByte + cbOff, pSrc, cb);
     }
     GlobalUnlock(hMem);
 

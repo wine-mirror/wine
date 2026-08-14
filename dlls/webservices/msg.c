@@ -1127,7 +1127,7 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
         return E_NOTIMPL;
     }
 
-    if (!msg || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
+    if (!msg || (UINT)init > WS_FAULT_MESSAGE) return E_INVALIDARG;
 
     EnterCriticalSection( &msg->cs );
 

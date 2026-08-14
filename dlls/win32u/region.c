@@ -830,7 +830,7 @@ DWORD WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *rgndata )
     DWORD size;
     WINEREGION *obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION );
 
-    TRACE(" %p count = %d, rgndata = %p\n", hrgn, (int)count, rgndata);
+    TRACE(" %p count = %d, rgndata = %p\n", hrgn, count, rgndata);
 
     if(!obj) return 0;
 
@@ -901,7 +901,7 @@ HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA
 
     /* XP doesn't care about the type */
     if( rgndata->rdh.iType != RDH_RECTANGLES )
-        WARN("(Unsupported region data type: %u)\n", (int)rgndata->rdh.iType);
+        WARN("(Unsupported region data type: %u)\n", rgndata->rdh.iType);
 
     if (xform)
     {
@@ -948,7 +948,7 @@ HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA
 done:
     if (!hrgn) free_region( obj );
 
-    TRACE("%p %d %p returning %p\n", xform, (int)count, rgndata, hrgn );
+    TRACE("%p %d %p returning %p\n", xform, count, rgndata, hrgn );
     return hrgn;
 }
 

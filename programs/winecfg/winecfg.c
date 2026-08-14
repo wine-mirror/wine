@@ -76,16 +76,8 @@ void set_window_title(HWND dialog)
 WCHAR* load_string (UINT id)
 {
     WCHAR buf[1024];
-    int len;
-    WCHAR* newStr;
-
     LoadStringW(GetModuleHandleW(NULL), id, buf, ARRAY_SIZE(buf));
-
-    len = wcslen(buf);
-    newStr = malloc((len + 1) * sizeof(WCHAR));
-    memcpy(newStr, buf, len * sizeof(WCHAR));
-    newStr[len] = 0;
-    return newStr;
+    return wcsdup(buf);
 }
 
 /**

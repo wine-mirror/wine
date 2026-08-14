@@ -2344,15 +2344,54 @@ static void test_RtlCreateRegistryKey(void)
     pRtlFreeUnicodeString(&str);
 }
 
+/* helper function for test_NtRenameKey */
+static void check_subkeys(HANDLE key, const WCHAR **expected_names, int expected_count)
+{
+    NTSTATUS status;
+    DWORD size;
+    int i;
+    char buffer[200];
+    PKEY_BASIC_INFORMATION info;
+    BOOL match;
+
+    for (i = 0;; i++)
+    {
+        info = (PKEY_BASIC_INFORMATION)buffer;
+        status = pNtEnumerateKey(key, i, KeyBasicInformation, info, sizeof(buffer), &size);
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
+            ok(i == expected_count, "Expected %d subkeys, found %d\n", expected_count, i);
+            break;
+        }
+
+        ok(!status, "NtEnumerateKey failed, status %#lx\n", status);
+
+        info->Name[info->NameLength / sizeof(WCHAR)] = 0;
+
+        match = FALSE;
+        for (int j = 0; j < expected_count; j++)
+        {
+            if (!wcscmp(info->Name, expected_names[j]))
+            {
+                match = TRUE;
+                break;
+            }
+        }
+        ok(match, "Unexpected subkey name %s.\n", wine_dbgstr_w(info->Name));
+    }
+}
+
 static void test_NtRenameKey(void)
 {
     KEY_NAME_INFORMATION *info = NULL;
     UNICODE_STRING str, str2;
     OBJECT_ATTRIBUTES attr;
-    HANDLE key, subkey;
+    HANDLE key, subkey, hsub_b, hsub_c, hsub_d;
     char buffer[200];
     NTSTATUS status;
     DWORD size;
+    const WCHAR *expected_names[4];
+    int expected_count;
 
     status = NtRenameKey(NULL, NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#lx.\n", status);
@@ -2391,9 +2430,6 @@ static void test_NtRenameKey(void)
     status = NtRenameKey(subkey, &str2);
     ok(!status, "Unexpected status %#lx.\n", status);
 
-    pRtlFreeUnicodeString(&str2);
-    pRtlFreeUnicodeString(&str);
-
     info = (KEY_NAME_INFORMATION *)buffer;
     status = pNtQueryKey(subkey, KeyNameInformation, info, sizeof(buffer), &size);
     ok(!status, "Unexpected status %#lx.\n", status);
@@ -2402,6 +2438,56 @@ static void test_NtRenameKey(void)
         info->Name[info->NameLength/sizeof(WCHAR)] = 0;
         ok(!!wcsstr(info->Name, L"renamed_subkey"), "Unexpected subkey name %s.\n", wine_dbgstr_w(info->Name));
     }
+
+    /* create subkey b, c, d */
+    pRtlCreateUnicodeStringFromAsciiz(&str, "b");
+    status = pNtCreateKey(&hsub_b, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0);
+    ok(!status, "Create subkey 'b' failed, status %#lx\n", status);
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "c");
+    status = pNtCreateKey(&hsub_c, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0);
+    ok(!status, "Create subkey 'c' failed, status %#lx\n", status);
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "d");
+    status = pNtCreateKey(&hsub_d, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0);
+    ok(!status, "Create subkey 'd' failed, status %#lx\n", status);
+
+    /* rename "b" to "a" */
+    pRtlCreateUnicodeStringFromAsciiz(&str2, "a");
+    status = NtRenameKey(hsub_b, &str2);
+    ok(!status, "NtRenameKey failed, status %#lx\n", status);
+
+    /* expected subkeys: a, c, d */
+    expected_names[0] = L"a";
+    expected_names[1] = L"c";
+    expected_names[2] = L"d";
+    expected_names[3] = L"renamed_subkey";
+    expected_count = ARRAY_SIZE(expected_names);
+    check_subkeys(key, expected_names, expected_count);
+
+    /* rename "a" -> "b" again */
+    pRtlCreateUnicodeStringFromAsciiz(&str2, "b");
+    status = NtRenameKey(hsub_b, &str2);
+    ok(!status, "NtRenameKey failed, status %#lx\n", status);
+
+    /* expected subkeys: b, c, d */
+    expected_names[0] = L"b";
+    expected_names[1] = L"c";
+    expected_names[2] = L"d";
+    expected_names[3] = L"renamed_subkey";
+    expected_count = ARRAY_SIZE(expected_names);
+    check_subkeys(key, expected_names, expected_count);
+
+    /* clean */
+    pRtlFreeUnicodeString(&str2);
+    pRtlFreeUnicodeString(&str);
+
+    pNtDeleteKey(hsub_b);
+    pNtDeleteKey(hsub_c);
+    pNtDeleteKey(hsub_d);
+    pNtClose(hsub_b);
+    pNtClose(hsub_c);
+    pNtClose(hsub_d);
 
     pNtDeleteKey(subkey);
     pNtDeleteKey(key);
@@ -2545,9 +2631,6 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
     const WCHAR *expected_data;
     ULONG expected_size;
     ULONG expected_type;
-
-    trace("Value name: %s\n", debugstr_w(value_name));
-    if (value_data_size) trace("Value data: %s\n", debugstr_w(value_data));
 
     if (!(test->flags & SKIP_NAME_CHECK))
     {
@@ -2900,6 +2983,8 @@ static struct query_reg_values_test query_reg_values_tests[] =
 
 static void test_RtlQueryRegistryValues(void)
 {
+    RTL_QUERY_REGISTRY_TABLE query_table[2];
+    UNICODE_STRING str;
     NTSTATUS status;
     unsigned int i;
 
@@ -2922,6 +3007,20 @@ static void test_RtlQueryRegistryValues(void)
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest\\subkey", L"Color", REG_SZ,
                              L"Yellow", sizeof(L"Yellow"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value Color: %lu\n", status);
+
+    RtlInitUnicodeString(&str, NULL);
+    memset(query_table, 0, sizeof(query_table));
+    query_table[0].QueryRoutine = NULL;
+    query_table[0].Name = (WCHAR *)L"WindowsDrive";
+    query_table[0].EntryContext = &str;
+    query_table[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_TYPECHECK;
+    query_table[0].DefaultType = REG_EXPAND_SZ << RTL_QUERY_REGISTRY_TYPECHECK_SHIFT;
+    status = pRtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer, query_table, NULL, NULL);
+    ok(!status, "got %#lx.\n", status);
+    ok(!wcsicmp(str.Buffer, L"C:"), "got %s.\n", debugstr_w(str.Buffer));
+    ok(str.Length == 4, "got %d.\n", str.Length);
+    ok(str.MaximumLength == 6, "got %d.\n", str.Length);
+    RtlFreeHeap(GetProcessHeap(), 0, str.Buffer);
 
     for (i = 0; i < ARRAY_SIZE(query_reg_values_tests); i++)
     {

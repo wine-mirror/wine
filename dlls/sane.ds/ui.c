@@ -23,10 +23,12 @@
 #include <stdio.h>
 
 #include "sane_i.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "prsht.h"
+#include "commctrl.h"
 #include "wine/debug.h"
 #include "resource.h"
 
@@ -35,6 +37,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 #define ID_BASE 0x100
 #define ID_EDIT_BASE 0x1000
 #define ID_STATIC_BASE 0x2000
+
+#define OPTION_VALUE_MAX 255
+#define OPTION_NAME_MAX 64
+
+typedef struct
+{
+    INT   opt_type;
+    DWORD reg_type;
+    CHAR  name[OPTION_NAME_MAX];
+    INT   optno;
+    BYTE  value[OPTION_VALUE_MAX];
+    DWORD size;
+    BOOL  is_enabled;
+} ScannerOption;
+
+static char reg_path[MAX_PATH];
 
 static INT_PTR CALLBACK DialogProc (HWND , UINT , WPARAM , LPARAM );
 static INT CALLBACK PropSheetProc(HWND, UINT,LPARAM);
@@ -281,6 +299,10 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
 
         tpl->cx = ctl_cx;
     }
+    if (class == 0x0085 && (styles & CBS_DROPDOWNLIST))
+    {   /* Drop-Down ComboBox */
+        tpl->cy *= 10;
+    }
     ptr = (WORD *)(tpl + 1);
     *ptr++ = 0xffff;
     *ptr++ = class;
@@ -360,7 +382,8 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
                 return NULL;
             }
         }
-        if (!opt.is_active)
+        if (!opt.is_active ||
+            (opt.type==TYPE_INT && opt.size!=sizeof(int)))
             continue;
 
         len = create_item(hdc, &opt, ID_BASE + i, &item_tpl, y, &x, &count);
@@ -462,20 +485,37 @@ exit:
     return tpl;
 }
 
+/** Data stored for the property sheet dialog while it is open */
+struct SUiData
+{
+    /** Window handle of the property sheet */
+    HWND hwPropertySheet;
+
+    /** Number of property sheet pages */
+    int page_count;
+
+    /** Room for property sheet pages */
+    PROPSHEETPAGEW psp[20];
+};
+
 BOOL DoScannerUI(void)
 {
     HDC hdc;
-    PROPSHEETPAGEW psp[10];
+    PROPSHEETPAGEW *psp;
     int page_count= 0;
     PROPSHEETHEADERW psh;
     int index = 1;
     TW_UINT16 rc;
     int optcount;
-    UINT psrc;
     LPWSTR szCaption;
     DWORD len;
 
-    memset(psp,0,sizeof(psp));
+    activeDS.ui_data = (struct SUiData *) calloc(1, sizeof(struct SUiData));
+    if (!activeDS.ui_data)
+    {
+        return FALSE;
+    }
+    psp = activeDS.ui_data->psp;
     rc = sane_option_get_value( 0, &optcount );
     if (rc != TWCC_SUCCESS)
     {
@@ -508,10 +548,11 @@ BOOL DoScannerUI(void)
             psp[page_count].lParam = (LPARAM)&activeDS;
             page_count ++;
         }
-       
+
         index ++;
     }
- 
+    activeDS.ui_data->page_count = page_count;
+
     len = lstrlenA(activeDS.identity.Manufacturer)
          + lstrlenA(activeDS.identity.ProductName) + 2;
     szCaption = malloc(len *sizeof(WCHAR));
@@ -521,7 +562,7 @@ BOOL DoScannerUI(void)
     MultiByteToWideChar(CP_ACP,0,activeDS.identity.ProductName,-1,
             &szCaption[lstrlenA(activeDS.identity.Manufacturer)+1],len);
     psh.dwSize = sizeof(PROPSHEETHEADERW);
-    psh.dwFlags = PSH_PROPSHEETPAGE|PSH_PROPTITLE|PSH_USECALLBACK;
+    psh.dwFlags = PSH_MODELESS|PSH_PROPSHEETPAGE|PSH_PROPTITLE|PSH_USECALLBACK;
     psh.hwndParent = activeDS.hwndOwner;
     psh.hInstance = SANE_instance;
     psh.pszIcon = 0;
@@ -531,21 +572,190 @@ BOOL DoScannerUI(void)
     psh.ppsp = (LPCPROPSHEETPAGEW)psp;
     psh.pfnCallback = PropSheetProc;
 
-    psrc = PropertySheetW(&psh);
+    activeDS.ui_data->hwPropertySheet = (HWND) PropertySheetW(&psh);
 
-    for(index = 0; index < page_count; index ++)
+    if (!activeDS.ui_data->hwPropertySheet)
     {
-        free((LPBYTE)psp[index].pResource);
-        free((LPBYTE)psp[index].pszTitle);
+        UI_Destroy();
     }
     free(szCaption);
 
     DeleteDC(hdc);
 
-    if (psrc == IDOK)
-        return TRUE;
-    else
+    return activeDS.ui_data != NULL;
+}
+
+
+/** Check if a Message is addressed to the property sheet dialog
+ */
+BOOL
+UI_IsDialogMessage(MSG *msg)
+{
+    return
+        activeDS.ui_data &&
+        activeDS.ui_data->hwPropertySheet &&
+        SendMessageW(activeDS.ui_data->hwPropertySheet, PSM_ISDIALOGMESSAGE, 0, (LPARAM) msg);
+}
+
+
+/** Destroy the property sheet dialog and associated structures
+ */
+void
+UI_Destroy(void)
+{
+    if (activeDS.ui_data)
+    {
+        if(activeDS.ui_data->hwPropertySheet)
+        {
+            DestroyWindow(activeDS.ui_data->hwPropertySheet);
+        }
+        for(int index = 0; index < activeDS.ui_data->page_count; index ++)
+        {
+            free((LPBYTE)activeDS.ui_data->psp[index].pResource);
+            free((LPBYTE)activeDS.ui_data->psp[index].pszTitle);
+        }
+        free(activeDS.ui_data);
+        activeDS.ui_data = NULL;
+    }
+    if (activeDS.ModalUI)
+    {
+        EnableWindow(activeDS.hwndOwner, TRUE);
+    }
+}
+
+/**
+ * @brief control enable state of scan dialog
+ * When finished scanning, re-enable the UI Dialog.
+ *
+ * @param enable TRUE to enable, FALSE to disable
+ */
+void
+UI_Enable(BOOL enable)
+{
+    HWND hwndControl;
+
+    if (activeDS.ui_data &&
+        activeDS.ui_data->hwPropertySheet)
+    {
+        EnableWindow(activeDS.ui_data->hwPropertySheet, enable);
+
+        /* Give the user a bit of optical feedback */
+        if (NULL != (hwndControl=GetDlgItem(activeDS.ui_data->hwPropertySheet, IDOK)))
+        {
+            EnableWindow(hwndControl, enable);
+        }
+        if (NULL != (hwndControl=GetDlgItem(activeDS.ui_data->hwPropertySheet, IDCANCEL)))
+        {
+            EnableWindow(hwndControl, enable);
+        }
+    }
+}
+
+
+
+static BOOL save_to_reg( DWORD reg_type, CHAR* name, const BYTE* value, DWORD size )
+{
+    HKEY h_key;
+    LSTATUS res;
+
+    if (RegCreateKeyExA( HKEY_CURRENT_USER, reg_path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &h_key, NULL ))
         return FALSE;
+
+    res = RegSetValueExA( h_key, name, 0, reg_type, value, size );
+    RegCloseKey( h_key );
+    return res == ERROR_SUCCESS;
+}
+
+static BOOL get_option(struct option_descriptor* opt, ScannerOption* option)
+{
+    lstrcpynA(option->name, opt->name, OPTION_NAME_MAX);
+    option->is_enabled = opt->is_active;
+    option->optno = opt->optno;
+
+    if (opt->type ==TYPE_STRING && opt->constraint_type != CONSTRAINT_NONE)
+    {
+        CHAR buffer[255];
+        option->reg_type = REG_SZ;
+        option->opt_type = opt->type;
+        sane_option_get_value(opt->optno, buffer);
+        lstrcpynA((CHAR*)option->value, buffer, OPTION_VALUE_MAX);
+        option->size = (DWORD)(strlen(buffer) + 1);
+    }
+    else if (opt->type == TYPE_BOOL)
+    {
+        BOOL b;
+        option->opt_type = opt->type;
+        option->reg_type = REG_DWORD;
+        sane_option_get_value(opt->optno, &b);
+        memcpy(option->value, &b, sizeof(BOOL));
+        option->size = sizeof(b);
+    }
+    else if (opt->type == TYPE_INT && opt->constraint_type == CONSTRAINT_WORD_LIST)
+    {
+        int val;
+        option->opt_type = opt->type;
+        option->reg_type = REG_DWORD;
+        sane_option_get_value(opt->optno, &val);
+        memcpy(option->value, &val, sizeof(INT));
+        option->size = sizeof(val);
+    }
+    else if (opt->constraint_type == CONSTRAINT_RANGE)
+    {
+        if (opt->type == TYPE_INT)
+        {
+            int si;
+            option->opt_type = opt->type;
+            option->reg_type = REG_DWORD;
+            sane_option_get_value(opt->optno, &si);
+            if (opt->constraint.range.quant)
+            {
+                si = si / opt->constraint.range.quant;
+            }
+            memcpy(option->value, &si, sizeof(INT));
+            option->size = sizeof(si);
+        }
+        else if (opt->type == TYPE_FIXED)
+        {
+            int pos, *sf;
+            option->opt_type = opt->type;
+            option->reg_type = REG_DWORD;
+            sf = calloc( opt->size, sizeof(int) );
+            sane_option_get_value(opt->optno, sf );
+            if (opt->constraint.range.quant)
+                pos = *sf / opt->constraint.range.quant;
+            else
+                pos = MulDiv( *sf, 100, 65536 );
+            memcpy(option->value, &pos, sizeof(INT));
+            option->size = sizeof(pos);
+            free(sf);
+        }
+        else
+        {
+            FIXME("Unhandled option type %d with constraint\n", opt->type);
+            return FALSE;
+        }
+    }
+    else
+    {
+        FIXME("Unhandled option type %d\n", opt->type);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL save_option(int optno)
+{
+    ScannerOption option;
+    struct option_descriptor opt;
+
+    opt.optno = optno;
+    SANE_CALL(option_get_descriptor, &opt);
+
+    if (!get_option(&opt, &option)) return FALSE;
+
+    return save_to_reg(option.reg_type, option.name, option.value, option.size);
 }
 
 static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, int position)
@@ -607,6 +817,7 @@ static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD po
             si = position;
 
         sane_option_set_value( opt->optno, &si, &result );
+        save_option(opt->optno);
         break;
     }
     case TYPE_FIXED:
@@ -616,6 +827,7 @@ static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD po
             si = MulDiv( position, 65536, 100 );
 
         sane_option_set_value( opt->optno, &si, &result );
+        save_option(opt->optno);
         break;
     default:
         break;
@@ -624,6 +836,17 @@ static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD po
     return result;
 }
 
+
+/* @brief Set Dialog control values to SANE values
+ *
+ * Set the values of controls in the Scanner GUI property sheet dialog
+ * to those selected in the SANE parameter space.
+ * Set Combobox options to the list of possible values.
+ *
+ * @param hwnd      Property sheet Dialog window.
+ *
+ * @return Return value for dialog function WM_INITDIALOG. Always TRUE.
+ */
 static INT_PTR InitializeDialog(HWND hwnd)
 {
     TW_UINT16 rc;
@@ -669,9 +892,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
         {
             BOOL b;
             sane_option_get_value( i, &b );
-            if (b)
-                SendMessageA(control,BM_SETCHECK,BST_CHECKED,0);
-
+            SendMessageA(control,BM_SETCHECK, b ? BST_CHECKED : BST_UNCHECKED,0);
         }
         else if (opt.type == TYPE_INT && opt.constraint_type == CONSTRAINT_WORD_LIST)
         {
@@ -817,7 +1038,12 @@ static void ButtonClicked(HWND hwnd, INT id, HWND control)
     {
         BOOL r = SendMessageW(control,BM_GETCHECK,0,0)==BST_CHECKED;
         sane_option_set_value( opt.optno, &r, &changed );
-        if (changed) InitializeDialog(hwnd);
+
+        if (changed)
+        {
+            save_option(opt.optno);
+            InitializeDialog(hwnd);
+        }
     }
 }
 
@@ -851,10 +1077,14 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
         int val = atoi( value );
         sane_option_set_value( opt.optno, &val, &changed );
     }
-    if (changed) InitializeDialog(hwnd);
+
+    if (changed)
+    {
+        save_option(opt.optno);
+        InitializeDialog(hwnd);
+    }
     free( value );
 }
-
 
 static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -872,8 +1102,12 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                     case PSN_APPLY:
                         if (psn->lParam)
                         {
-                            activeDS.currentState = 6;
-                            SANE_Notify(MSG_XFERREADY);
+                            if (IsWindowEnabled(activeDS.ui_data->hwPropertySheet))
+                            {
+                                SANE_XferReady();
+                                /* Disable the DS UI while scanning */
+                                UI_Enable(FALSE);
+                            }
                         }
                         break;
                     case PSN_QUERYCANCEL:
@@ -913,23 +1147,215 @@ static int CALLBACK PropSheetProc(HWND hwnd, UINT msg, LPARAM lParam)
 
 static INT_PTR CALLBACK ScanningProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch (msg)
+    {
+       case WM_INITDIALOG:
+       {
+           WCHAR buffer[34];
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.Manufacturer, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_MANUFACTURER , buffer);
+
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.ProductFamily, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_PRODUCTFAMILY, buffer);
+
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.ProductName, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_PRODUCTNAME  , buffer);
+
+           SetDlgItemInt(hwnd, IDC_PAGE, activeDS.scannedImages+1, TRUE);
+       }
+       break;
+       case WM_COMMAND:
+       {
+           switch (LOWORD(wParam))
+           {
+               case IDCANCEL:
+                   WARN("User cancelled\n");
+                   activeDS.userCancelled = TRUE;
+                   break;
+           }
+           break;
+       }
+    }
     return FALSE;
 }
 
 HWND ScanningDialogBox(HWND dialog, LONG progress)
 {
-    if (!dialog)
-        dialog = CreateDialogW(SANE_instance,
-                (LPWSTR)MAKEINTRESOURCE(IDD_DIALOG1), NULL, ScanningProc);
+    static DWORD tickLast=0;
+    DWORD tickNow = GetTickCount();
 
-    if (progress == -1)
+    if (!activeDS.capIndicators &&
+        !activeDS.ShowUI)
     {
-        EndDialog(dialog,0);
         return NULL;
     }
 
-    RedrawWindow(dialog,NULL,NULL,
-            RDW_INTERNALPAINT|RDW_UPDATENOW|RDW_ALLCHILDREN);
+    if (!dialog)
+    {
+        HWND hwndOwner=
+          activeDS.ui_data
+          ? activeDS.ui_data->hwPropertySheet
+          : NULL;
+        dialog = CreateDialogW(SANE_instance, MAKEINTRESOURCEW(IDD_SCANNING), hwndOwner, ScanningProc);
+
+        if (dialog)
+        {
+            if (hwndOwner)
+            {
+                RECT rcDialog, rcOwner;
+                GetWindowRect(dialog, &rcDialog);
+                GetWindowRect(hwndOwner, &rcOwner);
+                SetWindowPos(dialog, NULL,
+                             (rcOwner.right+rcOwner.left)/2 - (rcDialog.right-rcDialog.left)/2,
+                             (rcOwner.bottom+rcOwner.top)/2 - (rcDialog.bottom-rcDialog.top)/2,
+                             0, 0,
+                             SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+            }
+            else
+            {
+                ShowWindow(dialog, SW_SHOW);
+            }
+        }
+    }
+
+    if (progress == -1)
+    {
+        DestroyWindow(dialog);
+        return NULL;
+    }
+
+    if (tickNow - tickLast > 100)
+    {
+        MSG msg;
+        tickLast = tickNow;
+
+        /* Update progress bar */
+        SendDlgItemMessageW(dialog, IDC_PROGRESS, PBM_SETPOS, progress, 0);
+
+        /* Perform message handling */
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (!IsDialogMessageW(dialog, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+        }
+    }
 
     return dialog;
+}
+
+
+/** @brief Load all current settings from registry to sane
+ *
+ *  Called when opening a data source.
+ *  Loads all SANE options from the registry and sets them
+ *  in the SANE parameter space for later negotiation
+ *  with the CAP_xxx machanism and display in the UI.
+ */
+void
+SANE_LoadOptions(void)
+{
+    TW_UINT16 rc;
+    int optcount;
+    int o;
+    int *opt_order=NULL;
+
+    HKEY h_key;
+    DWORD size;
+
+    int ivalue;
+    char svalue[OPTION_VALUE_MAX+1];
+
+    snprintf(reg_path, MAX_PATH, "Software\\ScannersSettings\\%s\\%s_%s",
+             activeDS.identity.Manufacturer,
+             activeDS.identity.ProductFamily,
+             activeDS.identity.ProductName);
+
+    rc = sane_option_get_value( 0, &optcount );
+    if (rc != TWCC_SUCCESS)
+    {
+        ERR("SANE_LoadOptions: Unable to read number of options\n");
+        return;
+    }
+
+    if (RegOpenKeyExA( HKEY_CURRENT_USER, reg_path, 0, KEY_ALL_ACCESS, &h_key)==ERROR_SUCCESS)
+    {
+        /* Determine the order in which options shall be set in sane */
+        opt_order = malloc((optcount+1) * sizeof(int));
+        if (!opt_order)
+        {
+            ERR("Out of memory allocating opt_order\n");
+            RegCloseKey( h_key );
+            return;
+        }
+
+        for ( o = 0; o < optcount; o++)
+        {
+            opt_order[o] = o;
+        }
+
+        for ( o = 1; o < optcount; o++)
+        {
+            struct option_descriptor opt;
+            opt.optno = opt_order[o];
+            SANE_CALL( option_get_descriptor, &opt );
+
+            if (!strcmp(opt.name, "source"))
+            {
+                /* Source (adf, flatbed) must be set before resolution
+                 * so process it first */
+                memmove(opt_order+2,
+                        opt_order+1,
+                        (o-1) * sizeof(int));
+                opt_order[1] = opt.optno;
+            }
+        }
+
+        for ( o = 1; o < optcount; o++)
+        {
+            struct option_descriptor opt;
+            opt.optno = opt_order[o];
+
+            SANE_CALL( option_get_descriptor, &opt );
+
+            TRACE("%i %s %i %i\n",opt.optno,debugstr_w(opt.title),opt.type,opt.constraint_type);
+
+            switch( opt.type )
+            {
+              case TYPE_INT:
+              case TYPE_BOOL:
+                  size = sizeof(ivalue);
+                  if (RegGetValueA( h_key, NULL, opt.name, RRF_RT_REG_DWORD, NULL, &ivalue, &size)==ERROR_SUCCESS)
+                  {
+                      sane_option_set_value( opt.optno, &ivalue, NULL );
+                  }
+                  break;
+              case TYPE_FIXED:
+                  size = sizeof(ivalue);
+                  if (RegGetValueA( h_key, NULL, opt.name, RRF_RT_REG_DWORD, NULL, &ivalue, &size)==ERROR_SUCCESS)
+                  {
+                      int valSet;
+                      if (opt.constraint.range.quant)
+                          valSet = ivalue * opt.constraint.range.quant;
+                      else
+                          valSet = MulDiv(ivalue, 65536, 100);
+                      sane_option_set_value( opt.optno, &valSet, NULL);
+                  }
+                  break;
+              case TYPE_STRING:
+                  size = OPTION_VALUE_MAX;
+                  if (RegGetValueA( h_key, NULL, opt.name, RRF_RT_REG_SZ, NULL, svalue, &size)==ERROR_SUCCESS)
+                  {
+                      sane_option_set_value( opt.optno, svalue, NULL );
+                  }
+                  break;
+              default: ;
+            }
+        }
+        free(opt_order);
+
+        RegCloseKey( h_key );
+    }
 }

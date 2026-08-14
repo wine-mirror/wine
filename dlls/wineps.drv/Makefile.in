@@ -4,6 +4,8 @@ IMPORTS   = user32 gdi32 advapi32 win32u
 DELAYIMPORTS = winspool
 UNIX_LIBS = -lwin32u -lm
 
+VER_FILEDESCRIPTION_STR = "Wine PostScript Driver"
+
 SOURCES = \
 	afm.c \
 	bitblt.c \

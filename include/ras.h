@@ -24,7 +24,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <pshpack4.h>
+#pragma pack(push,4)
 #include <inaddr.h>
 #include <in6addr.h>
 
@@ -551,7 +551,7 @@ DWORD WINAPI RasSetAutodialEnableA(DWORD dwDialingLocation, BOOL fEnabled);
 DWORD WINAPI RasSetAutodialEnableW(DWORD dwDialingLocation, BOOL fEnabled);
 #define RasSetAutodialEnable WINELIB_NAME_AW(RasSetAutodialEnable)
 
-#include <poppack.h>
+#pragma pack(pop)
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -370,6 +371,18 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     .get_disabled          = HTMLLinkElementImpl_get_disabled,
 };
 
+static void HTMLLinkElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t link_hooks[] = {
+        {DISPID_IHTMLLINKELEMENT_STYLESHEET, .noattr = TRUE},
+        {DISPID_IHTMLLINKELEMENT_READYSTATE, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IHTMLLinkElement_tid, link_hooks);
+
+    HTMLElement_init_dispex_info(info, mode);
+}
+
 static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -382,17 +395,12 @@ static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLLinkElement_iface_tids[] = {
-    IHTMLLinkElement_tid,
-    0
-};
 dispex_static_data_t HTMLLinkElement_dispex = {
     .id           = OBJID_HTMLLinkElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLLinkElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLLinkElement_tid,
-    .iface_tids   = HTMLLinkElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLLinkElement_init_dispex_info,
 };
 
 HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

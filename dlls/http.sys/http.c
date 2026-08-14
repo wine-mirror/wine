@@ -21,7 +21,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "wine/http.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
@@ -385,7 +384,7 @@ static BOOL host_matches(const struct url *url, const char *conn_host)
     if (!url->url)
         return FALSE;
 
-    if (url->url[7] == '+')
+    if (url->url[7] == '+' || url->url[7] == '*')
     {
         const char *queue_port = strchr(url->url + 7, ':');
         host_len = strchr(queue_port, '/') - queue_port - 1;
@@ -685,7 +684,7 @@ static DWORD WINAPI request_thread_proc(void *arg)
 
     TRACE("Starting request thread.\n");
 
-    while (!WaitForSingleObject(request_event, INFINITE))
+    while (!thread_stop && !WaitForSingleObject(request_event, INFINITE) && !thread_stop)
     {
         EnterCriticalSection(&http_cs);
 
@@ -973,7 +972,7 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
         TRACE("Queuing IRP %p.\n", irp);
 
         IoSetCancelRoutine(irp, http_receive_request_cancel);
-        if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
+        if (irp->Cancel && IoSetCancelRoutine(irp, NULL))
         {
             /* The IRP was canceled before we set the cancel routine. */
             ret = STATUS_CANCELLED;

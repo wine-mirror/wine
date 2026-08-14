@@ -3,9 +3,11 @@ IMPORTS   = dxguid uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine DirectPlay Voice"
+VER_PRODUCTVERSION      = 5,3,2600,5512
+
 SOURCES = \
 	client.c \
 	dpvoice.idl \
 	main.c \
-	server.c \
-	version.rc
+	server.c

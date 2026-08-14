@@ -2574,9 +2574,9 @@
 @ cdecl -arch=arm ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAAXI@Z(ptr long) basic_string_wchar__Copy
 @ thiscall -arch=i386 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEXI@Z(ptr long) basic_string_wchar__Copy
 @ cdecl -arch=win64 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAX_K@Z(ptr long) basic_string_wchar__Copy
-@ stub ?_Cosh@?$_Ctr@M@std@@SAMMM@Z
-@ stub ?_Cosh@?$_Ctr@N@std@@SANNN@Z
-@ stub ?_Cosh@?$_Ctr@O@std@@SAOOO@Z
+@ cdecl ?_Cosh@?$_Ctr@M@std@@SAMMM@Z(float float) _FCosh
+@ cdecl ?_Cosh@?$_Ctr@N@std@@SANNN@Z(double double) _Cosh
+@ cdecl ?_Cosh@?$_Ctr@O@std@@SAOOO@Z(double double) _Cosh
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
@@ -3003,9 +3003,9 @@
 @ stub -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z
 @ stub -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z
 @ stub -arch=win64 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@G_K@Z
-@ stub ?_Sinh@?$_Ctr@M@std@@SAMMM@Z
-@ stub ?_Sinh@?$_Ctr@N@std@@SANNN@Z
-@ stub ?_Sinh@?$_Ctr@O@std@@SAOOO@Z
+@ cdecl ?_Sinh@?$_Ctr@M@std@@SAMMM@Z(float float) _FSinh
+@ cdecl ?_Sinh@?$_Ctr@N@std@@SANNN@Z(double double) _Sinh
+@ cdecl ?_Sinh@?$_Ctr@O@std@@SAOOO@Z(double double) _Sinh
 @ cdecl -arch=arm ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAAXXZ(ptr) basic_string_char__Split
 @ thiscall -arch=i386 ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXXZ(ptr) basic_string_char__Split
 @ cdecl -arch=win64 ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAXXZ(ptr) basic_string_char__Split
@@ -5633,14 +5633,14 @@
 @ cdecl -arch=arm ?xsputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAAHPBGH@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ thiscall -arch=i386 ?xsputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPBGH@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JPEBG_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ extern _Denorm _Denorm
 @ stub _Dnorm
 @ cdecl _Dscale(ptr long)
 @ cdecl _Dtest(ptr)
 @ extern _Eps _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)
@@ -5650,7 +5650,7 @@
 @ extern _FInf _FInf
 @ extern _FNan _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan _FSnan
 # extern _FXbig
 @ cdecl -norelay _Getcoll()
@@ -5658,7 +5658,7 @@
 @ cdecl -norelay _Getcvt()
 @ extern _Hugeval _Hugeval
 @ extern _Inf _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest
@@ -5668,14 +5668,14 @@
 @ extern _LNan _LNan
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan _LSnan
 # extern _LXbig
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ extern _Nan _Nan
 @ stub _Poly
 # extern _Rteps
-@ stub _Sinh
+@ cdecl _Sinh(double double)
 @ extern _Snan _Snan
 @ cdecl _Stod(ptr ptr long)
 @ cdecl _Stof(ptr ptr long)

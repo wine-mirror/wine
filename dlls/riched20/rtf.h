@@ -1175,6 +1175,7 @@ struct _RTF_Info {
     int borderType; /* value corresponds to the RTFBorder constants. */
 
     PARAFORMAT2 fmt; /* Accumulated para fmt for current paragraph. */
+    ME_String *pntext; /* Explicit paragraph number text from \pntext destination. */
 };
 
 

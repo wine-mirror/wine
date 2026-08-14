@@ -197,7 +197,7 @@ sub testThrow
     next
     call ok(x = 2, "x = " & x)
     call ok(y = 1, "y = " & y)
-    call todo_wine_ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
+    call ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
 
     Err.clear()
     y = 0
@@ -209,19 +209,31 @@ sub testThrow
     next
     call ok(y = 1, "y = " & y)
     call ok(x = 6, "x = " & x)
-    call todo_wine_ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
+    call ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
 
     Err.clear()
     y = 0
     x = 6
     for x = 100 to throwInt(E_TESTERROR)
         call ok(Err.Number = E_TESTERROR, "Err.Number = " & Err.Number)
-        call todo_wine_ok(x = 6, "x = " & x)
+        call ok(x = 6, "x = " & x)
         y = y+1
     next
     call ok(y = 1, "y = " & y)
-    call todo_wine_ok(x = 6, "x = " & x)
-    call todo_wine_ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
+    call ok(x = 6, "x = " & x)
+    call ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
+
+    Err.clear()
+    y = 0
+    x = 6
+    for x = 100 to 200 step throwInt(E_TESTERROR)
+        call ok(Err.Number = E_TESTERROR, "Err.Number = " & Err.Number)
+        call ok(x = 6, "x = " & x)
+        y = y+1
+    next
+    call ok(y = 1, "y = " & y)
+    call ok(x = 6, "x = " & x)
+    call ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
 
     select case throwInt(E_TESTERROR)
     case true
@@ -318,7 +330,7 @@ sub testForEachError()
     z = true
     call ok(y, "for each not executed")
     call ok(z, "line after next not executed")
-    call todo_wine_ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
+    call ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
 end sub
 
 call testForEachError()
@@ -340,7 +352,7 @@ sub testWithError()
     with throwInt(E_TESTERROR)
         x = true
         .prop = 1
-        todo_wine_ok Err.Number = 424, "Err.Number = " & Err.Number
+        ok Err.Number = 424, "Err.Number = " & Err.Number
     end with
     ok x, "with statement body not executed"
 
@@ -348,7 +360,7 @@ sub testWithError()
     x = false
     with empty
         .prop = 1
-        todo_wine_ok Err.Number = 424, "Err.Number = " & Err.Number
+        ok Err.Number = 424, "Err.Number = " & Err.Number
         x = true
     end with
     ok x, "with statement body not executed"
@@ -460,6 +472,42 @@ end sub
 
 call testVBErrorCodes
 
+sub testDivisionByZero()
+    on error resume next
+    dim x
+
+    Err.Clear()
+    x = 1 / 0
+    call ok(Err.Number = 11, "1 / 0 Err.Number = " & Err.Number)
+    call ok(Err.Description = "Division by zero", "1 / 0 Err.Description = " & Err.Description)
+
+    Err.Clear()
+    x = 1 \ 0
+    call ok(Err.Number = 11, "1 \ 0 Err.Number = " & Err.Number)
+
+    Err.Clear()
+    x = 1 Mod 0
+    call ok(Err.Number = 11, "1 Mod 0 Err.Number = " & Err.Number)
+end sub
+
+call testDivisionByZero
+
+sub testUndefinedVarDescription()
+    on error resume next
+
+    Err.Clear()
+    ExecuteGlobal "Option Explicit" & vbCrLf & "Dim q : q = undefinedReadVar"
+    call ok(Err.Number = 500, "read undefined Err.Number = " & Err.Number)
+    call ok(Err.Description = "Variable is undefined", "read undefined Err.Description = " & Err.Description)
+
+    Err.Clear()
+    ExecuteGlobal "Option Explicit" & vbCrLf & "undefinedAssignVar = 1"
+    call ok(Err.Number = 500, "assign undefined Err.Number = " & Err.Number)
+    call ok(Err.Description = "Variable is undefined", "assign undefined Err.Description = " & Err.Description)
+end sub
+
+call testUndefinedVarDescription
+
 on error resume next
 
 throwWithDesc
@@ -467,13 +515,109 @@ ok err.number = &hdeadbeef&, "err.number = " & hex(err.number)
 ok err.description = "test", "err.description = " & err.description
 ok err.helpcontext = 10, "err.helpcontext = " & err.helpcontext
 ok err.helpfile = "test.chm", "err.helpfile = " & err.helpfile
+err.clear
 
 throwWithDesc = 1
 ok err.number = &hdeadbeef&, "err.number = " & hex(err.number)
 ok err.description = "test", "err.description = " & err.description
 ok err.helpcontext = 10, "err.helpcontext = " & err.helpcontext
 ok err.helpfile = "test.chm", "err.helpfile = " & err.helpfile
+err.clear
 
+' Option Explicit: assigning to undeclared variable should give error 500
+undeclaredVar = 1
+ok err.number = 500, "err.number = " & err.number
+err.clear
+
+' Option Explicit: reading undeclared variable should give error 500
+dim unused
+unused = undeclaredVar2
+ok err.number = 500, "err.number = " & err.number
 on error goto 0
+
+sub testObjectRequired()
+    on error resume next
+    dim x, r
+
+    ' Is operator with non-object operands
+    err.clear
+    r = "hello" Is Nothing
+    ok err.number = 424, "Is string: err.number = " & err.number
+
+    err.clear
+    r = Nothing Is "hello"
+    ok err.number = 424, "Is string rhs: err.number = " & err.number
+
+    err.clear
+    r = 42 Is 42
+    ok err.number = 424, "Is int: err.number = " & err.number
+
+    err.clear
+    r = Empty Is Empty
+    ok err.number = 424, "Is empty: err.number = " & err.number
+
+    err.clear
+    r = Null Is Nothing
+    ok err.number = 424, "Is null: err.number = " & err.number
+
+    ' Member call on Nothing
+    err.clear
+    set x = Nothing
+    x.Prop
+    ok err.number = 424, "Nothing.Prop: err.number = " & err.number
+
+    ' Assign member on Nothing
+    err.clear
+    set x = Nothing
+    x.Prop = 1
+    ok err.number = 424, "Nothing.Prop = 1: err.number = " & err.number
+
+    ' Set member on Nothing
+    err.clear
+    set x = Nothing
+    set x.Child = Nothing
+    ok err.number = 424, "Set Nothing.Child: err.number = " & err.number
+
+    ' With on non-object types (no member access)
+    err.clear
+    with 42
+    end with
+    ok err.number = 424, "With 42: err.number = " & err.number
+
+    err.clear
+    with "hello"
+    end with
+    ok err.number = 424, "With string: err.number = " & err.number
+
+    err.clear
+    with empty
+    end with
+    ok err.number = 424, "With empty: err.number = " & err.number
+
+    err.clear
+    with null
+    end with
+    ok err.number = 424, "With null: err.number = " & err.number
+
+    err.clear
+    with true
+    end with
+    ok err.number = 424, "With true: err.number = " & err.number
+
+    ' With Nothing should NOT raise 424 at entry
+    err.clear
+    with Nothing
+    end with
+    ok err.number = 0, "With Nothing: err.number = " & err.number
+
+    ' With Nothing + member access should raise 424
+    err.clear
+    with Nothing
+        .Prop = 1
+    end with
+    ok err.number = 424, "With Nothing .Prop: err.number = " & err.number
+end sub
+
+call testObjectRequired()
 
 call reportSuccess()

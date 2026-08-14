@@ -38,49 +38,39 @@ enum system_timer_id
     SYSTEM_TIMER_CARET = 0xffff,
 };
 
-struct user_object
-{
-    HANDLE       handle;
-    unsigned int type;
-};
-
 #define OBJ_OTHER_PROCESS ((void *)1)  /* returned by get_user_handle_ptr on unknown handles */
 
 typedef struct tagWND
 {
-    struct user_object obj;           /* object header */
+    HWND               handle;        /* window full handle */
     HWND               parent;        /* Window parent */
     HWND               owner;         /* Window owner */
     struct tagCLASS   *class;         /* Window class */
     struct dce        *dce;           /* DCE pointer */
-    WNDPROC            winproc;       /* Window procedure */
-    UINT               tid;           /* Owner thread id */
-    HINSTANCE          hInstance;     /* Window hInstance (from CreateWindow) */
     struct window_rects rects;        /* window rects in window DPI, relative to the parent client area */
     RECT               normal_rect;   /* Normal window rect saved when maximized/minimized */
+    RECT               present_rect;  /* present rect for exclusive fullscreen mode */
     POINT              min_pos;       /* Position for minimized window */
     POINT              max_pos;       /* Position for maximized window */
     WCHAR             *text;          /* Window text */
     struct win_scroll_bar_info *pScroll; /* Scroll-bar info */
     UINT               dwStyle;       /* Window style (from CreateWindow) */
     UINT               dwExStyle;     /* Extended style (from CreateWindowEx) */
-    UINT_PTR           wIDmenu;       /* ID or hmenu (from CreateWindow) */
     UINT               helpContext;   /* Help context ID */
     UINT               flags;         /* Misc. flags (see below) */
     HMENU              hSysMenu;      /* window's copy of System Menu */
     HICON              hIcon;         /* window's icon */
     HICON              hIconSmall;    /* window's small icon */
     HICON              hIconSmall2;   /* window's secondary small icon, derived from hIcon */
+    BOOL               has_icons;     /* window's icons have been initialized */
     HIMC               imc;           /* window's input context */
-    UINT               dpi_context;   /* window DPI awareness context */
     struct window_surface *surface;   /* Window surface if any */
-    struct list        vulkan_surfaces; /* list of vulkan surfaces created for this window */
+    struct opengl_drawable *current_drawable; /* current GL client surface for this window */
+    struct opengl_drawable *unused_drawable; /* unused GL client surface for this window */
     struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */
+    int                swap_interval; /* OpenGL surface swap interval */
     int                pixel_format;  /* Pixel format set by the graphics driver */
-    int                internal_pixel_format; /* Internal pixel format set via WGL_WINE_pixel_format_passthrough */
-    int                cbWndExtra;    /* class cbWndExtra at window creation */
-    DWORD_PTR          userdata;      /* User private data */
-    DWORD              wExtra[1];     /* Window extra bytes */
+    int                clip_clients;  /* Has client surfaces that needs to be clipped out */
 } WND;
 
 /* WND flags values */
@@ -88,7 +78,6 @@ typedef struct tagWND
 #define WIN_NEED_SIZE             0x0002 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED           0x0004 /* last WM_NCACTIVATE was positive */
 #define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
-#define WIN_ISUNICODE             0x0010 /* Window is Unicode */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0020 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 #define WIN_CHILDREN_MOVED        0x0040 /* children may have moved, ignore stored positions */
 #define WIN_HAS_IME_WIN           0x0080 /* the window has been registered with imm32 */
@@ -102,34 +91,50 @@ static inline BOOL is_broadcast( HWND hwnd )
     return hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST;
 }
 
-/* this is the structure stored in TEB->Win32ClientInfo */
-/* no attempt is made to keep the layout compatible with the Windows one */
+struct mouse_tracking_info
+{
+    TRACKMOUSEEVENT info;
+    POINT pos; /* center of hover rectangle */
+    HWND last_mouse_message_hwnd;
+    int last_mouse_message_hittest;
+    POINT last_mouse_message_pos;
+};
+
+/* internal per-thread data */
 struct user_thread_info
 {
-    struct ntuser_thread_info     client_info;            /* Data shared with client */
+    struct ntuser_thread_info    *client_info;            /* Data shared with client */
     HANDLE                        server_queue;           /* Handle to server-side queue */
-    DWORD                         last_getmsg_time;       /* Get/PeekMessage last request time */
+    HANDLE                        idle_event;             /* Handle to the process idle event */
     LONGLONG                      last_driver_time;       /* Get/PeekMessage driver event time */
+    HWND                          top_window;             /* desktop window */
+    HWND                          msg_window;             /* HWND_MESSAGE parent window */
+    WORD                          msg_call_depth;         /* SendMessage recursion counter */
     WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     WORD                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
     struct received_message_info *receive_info;           /* Message being currently received */
+    UINT                          message_time;           /* value for GetMessageTime */
+    UINT                          message_pos;            /* value for GetMessagePos */
+    LPARAM                        message_extra;          /* value for GetMessageExtraInfo */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */
+    HIMC                          default_imc;            /* default input context */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
+    struct raw_mouse              raw_mouse;              /* accumulated hardware raw mouse frames */
+    INPUT                         mouse_motion;           /* accumulated hardware mouse motion */
+    HWND                          mouse_hwnd;             /* hardware mouse motion target window */
     struct hardware_msg_data     *rawinput;               /* Current rawinput message data */
     UINT                          spy_indent;             /* Current spy indent */
     BOOL                          clipping_cursor;        /* thread is currently clipping */
     DWORD                         clipping_reset;         /* time when clipping was last reset */
     struct session_thread_data   *session_data;           /* shared session thread data */
+    struct mouse_tracking_info   *mouse_tracking_info;    /* NtUserTrackMouseEvent handling */
+    struct opengl_thread_data    *opengl_data;            /* OpenGL private thread data */
+    struct list                   known_pointers;         /* list of known pointers */
 };
 
-C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
-
-static inline struct user_thread_info *get_user_thread_info(void)
-{
-    return CONTAINING_RECORD( NtUserGetThreadInfo(), struct user_thread_info, client_info );
-}
+extern struct user_thread_info *get_user_thread_info(void);
 
 struct hook_extra_info
 {
@@ -150,14 +155,8 @@ struct scroll_info
     BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 };
 
-struct scroll_bar_win_data
-{
-    DWORD magic;
-    struct scroll_info info;
-};
-
-#define WINPROC_HANDLE (~0u >> 16)
-#define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
+/* also defined in server/class.c */
+#define MAKE_WNDPROC(index)     ((WNDPROC)(UINT_PTR)(UINT)MAKELONG(index, 0xffff))
 
 #define MAX_ATOM_LEN 255
 
@@ -177,18 +176,18 @@ extern void spy_exit_message( INT flag, HWND hwnd, UINT msg,
 /* class.c */
 extern HINSTANCE user32_module;
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi );
-BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val );
 DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi );
-WNDPROC get_class_winproc( struct tagCLASS *class );
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi );
 WORD get_class_word( HWND hwnd, INT offset );
 DLGPROC get_dialog_proc( DLGPROC proc, BOOL ansi );
-ATOM get_int_atom_value( UNICODE_STRING *name );
 WNDPROC get_winproc( WNDPROC proc, BOOL ansi );
 void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst );
 struct dce *get_class_dce( struct tagCLASS *class );
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce );
-BOOL needs_ime_window( HWND hwnd );
+extern atom_t wine_server_add_atom( void *req, UNICODE_STRING *str );
+extern BOOL is_desktop_class( UNICODE_STRING *name );
+extern BOOL is_message_class( UNICODE_STRING *name );
+extern ATOM get_builtin_class_atom( enum ntuser_client_procs proc );
 extern void register_builtin_classes(void);
 extern void register_desktop_class(void);
 
@@ -203,38 +202,30 @@ extern LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 HICON alloc_cursoricon_handle( BOOL is_icon );
 
 /* dce.c */
-extern void free_dce( struct dce *dce, HWND hwnd );
+extern void free_dce( struct dce *dce, HWND hwnd, struct list *drawables );
 extern void invalidate_dce( WND *win, const RECT *old_rect );
+extern BOOL is_cache_dc( HDC hdc );
 
 /* message.c */
-struct peek_message_filter
-{
-    HWND hwnd;
-    UINT first;
-    UINT last;
-    UINT mask;
-    UINT flags;
-    BOOL internal;
-};
-
-extern int peek_message( MSG *msg, const struct peek_message_filter *filter );
+extern void check_for_events( UINT flags );
+extern UINT get_send_message_flags(void);
 
 /* systray.c */
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
-/* vulkan.c */
-extern PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
-extern PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+/* opengl.c */
+extern BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct list *drawables );
+extern void release_opengl_drawables( struct list *drawables );
 
-extern BOOL vulkan_init(void);
-extern void vulkan_detach_surfaces( struct list *surfaces );
+/* vulkan.c */
+extern struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions );
 
 /* window.c */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );
-void *free_user_handle( HANDLE handle, unsigned int type );
-void *get_user_handle_ptr( HANDLE handle, unsigned int type );
+HANDLE alloc_user_handle( void *ptr, unsigned short type );
+void *free_user_handle( HANDLE handle, unsigned short type );
+void *get_user_handle_ptr( HANDLE handle, unsigned short type );
 void release_user_handle_ptr( void *ptr );
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type );
+void *next_thread_user_object( UINT tid, HANDLE *handle, unsigned short type );
 UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask );
 
 static inline UINT win_get_flags( HWND hwnd )
@@ -242,8 +233,10 @@ static inline UINT win_get_flags( HWND hwnd )
     return win_set_flags( hwnd, 0, 0 );
 }
 
+struct obj_locator get_window_class_locator( HWND hwnd );
 WND *get_win_ptr( HWND hwnd );
 BOOL is_child( HWND parent, HWND child );
 BOOL is_window( HWND hwnd );
+extern WNDPROC get_window_wndproc_handle( HWND hwnd, BOOL *ansi );
 
 #endif /* __WINE_NTUSER_PRIVATE_H */

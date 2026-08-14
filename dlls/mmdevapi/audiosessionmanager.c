@@ -26,9 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-extern HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
-                                         struct audio_session_wrapper **out);
-
 static CRITICAL_SECTION g_sessions_lock;
 static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
 {

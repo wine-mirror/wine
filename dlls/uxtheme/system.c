@@ -1334,3 +1334,50 @@ BOOLEAN WINAPI IsDarkModeAllowedForWindow(HWND hwnd)
     FIXME("%p: stub\n", hwnd);
     return FALSE;
 }
+
+/**********************************************************************
+ *      GetImmersiveColorFromColorSetEx                    (UXTHEME.95)
+ *
+ * Semi-stub: the immersive color tables are not implemented; return a
+ * color following ShouldAppsUseDarkMode (black for light, white for dark).
+ */
+DWORD WINAPI GetImmersiveColorFromColorSetEx(UINT color_set, UINT color_type,
+                                             BOOL ignore_high_contrast, UINT high_contrast_cache_mode)
+{
+    FIXME("%u %u %d %u: semi-stub\n", color_set, color_type,
+          ignore_high_contrast, high_contrast_cache_mode);
+
+    return ShouldAppsUseDarkMode() ? 0xffffffff : 0xff000000;
+}
+
+/**********************************************************************
+ *      GetImmersiveColorTypeFromName                      (UXTHEME.96)
+ *
+ */
+UINT WINAPI GetImmersiveColorTypeFromName(const WCHAR *name)
+{
+    FIXME("%s: stub\n", debugstr_w(name));
+    return ~0u;
+}
+
+/**********************************************************************
+ *      GetImmersiveUserColorSetPreference                 (UXTHEME.98)
+ *
+ */
+int WINAPI GetImmersiveUserColorSetPreference(BOOL force_check_registry, BOOL skip_check_on_fail)
+{
+    FIXME("%d %d: stub\n", force_check_registry, skip_check_on_fail);
+    return 0;
+}
+
+/**********************************************************************
+ *      GetImmersiveColorNamedTypeByIndex                 (UXTHEME.100)
+ *
+ * Returns a pointer to the color type name at the given index, without
+ * its "Immersive" prefix, or NULL when the index is out of range.
+ */
+const WCHAR ** WINAPI GetImmersiveColorNamedTypeByIndex(UINT index)
+{
+    FIXME("%u: stub\n", index);
+    return NULL;
+}

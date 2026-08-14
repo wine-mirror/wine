@@ -60,6 +60,23 @@ static WCHAR *strdupUtoW(const char *str)
     return ret;
 }
 
+static void wayland_text_input_reset_pending_state(struct wayland_text_input *text_input)
+{
+    free(text_input->preedit.string);
+    text_input->preedit.string = NULL;
+    text_input->preedit.cursor_pos = 0;
+    free(text_input->commit_string);
+    text_input->commit_string = NULL;
+}
+
+static void wayland_text_input_reset_all_state(struct wayland_text_input *text_input)
+{
+    free(text_input->current_preedit.string);
+    text_input->current_preedit.string = NULL;
+    text_input->current_preedit.cursor_pos = 0;
+    wayland_text_input_reset_pending_state(text_input);
+}
+
 static void text_input_enter(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
         struct wl_surface *surface)
 {
@@ -80,6 +97,8 @@ static void text_input_enter(void *data, struct zwp_text_input_v3 *zwp_text_inpu
     zwp_text_input_v3_set_cursor_rectangle(text_input->zwp_text_input_v3, 0, 0, 0, 0);
     zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
     pthread_mutex_unlock(&text_input->mutex);
+
+    activate_keyboard_hkl(hwnd, TRUE);
 }
 
 static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
@@ -96,6 +115,7 @@ static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_inpu
         post_ime_update(text_input->focused_hwnd, 0, NULL, NULL);
         text_input->focused_hwnd = NULL;
     }
+    wayland_text_input_reset_all_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 }
 
@@ -103,18 +123,22 @@ static void text_input_preedit_string(void *data, struct zwp_text_input_v3 *zwp_
         const char *text, int32_t cursor_begin, int32_t cursor_end)
 {
     struct wayland_text_input *text_input = data;
+    DWORD begin = 0, end = 0;
+    WCHAR *textW;
+
     TRACE("data %p, text_input %p, text %s, cursor %d - %d.\n", data, zwp_text_input_v3,
             debugstr_a(text), cursor_begin, cursor_end);
 
-    pthread_mutex_lock(&text_input->mutex);
-    if ((text_input->preedit_string = strdupUtoW(text)))
+    if ((textW = strdupUtoW(text)))
     {
-        DWORD begin = 0, end = 0;
-
         if (cursor_begin > 0) RtlUTF8ToUnicodeN(NULL, 0, &begin, text, cursor_begin);
         if (cursor_end > 0) RtlUTF8ToUnicodeN(NULL, 0, &end, text, cursor_end);
-        text_input->preedit_cursor_pos = MAKELONG(begin / sizeof(WCHAR), end / sizeof(WCHAR));
     }
+
+    pthread_mutex_lock(&text_input->mutex);
+    free(text_input->preedit.string);
+    text_input->preedit.string = textW;
+    text_input->preedit.cursor_pos = MAKELONG(begin / sizeof(WCHAR), end / sizeof(WCHAR));
     pthread_mutex_unlock(&text_input->mutex);
 }
 
@@ -125,6 +149,7 @@ static void text_input_commit_string(void *data, struct zwp_text_input_v3 *zwp_t
     TRACE("data %p, text_input %p, text %s.\n", data, zwp_text_input_v3, debugstr_a(text));
 
     pthread_mutex_lock(&text_input->mutex);
+    free(text_input->commit_string);
     text_input->commit_string = strdupUtoW(text);
     pthread_mutex_unlock(&text_input->mutex);
 }
@@ -143,18 +168,22 @@ static void text_input_done(void *data, struct zwp_text_input_v3 *zwp_text_input
     pthread_mutex_lock(&text_input->mutex);
     /* Some compositors will send a done event for every commit, regardless of
      * the focus state of the text input. This behavior is arguably out of spec,
-     * but otherwise harmless, so just ignore the new state in such cases. */
-    if (text_input->focused_hwnd)
+     * but otherwise harmless, so just ignore the new state in such cases.
+     * Additionally ignore done events that don't actually modify the state. */
+    if (text_input->focused_hwnd &&
+        (text_input->commit_string ||
+         text_input->preedit.cursor_pos != text_input->current_preedit.cursor_pos ||
+         !!text_input->preedit.string != !!text_input->current_preedit.string ||
+         (text_input->preedit.string && text_input->current_preedit.string &&
+          wcscmp(text_input->preedit.string, text_input->current_preedit.string))))
     {
-        post_ime_update(text_input->focused_hwnd, text_input->preedit_cursor_pos,
-                text_input->preedit_string, text_input->commit_string);
+        post_ime_update(text_input->focused_hwnd, text_input->preedit.cursor_pos,
+                text_input->preedit.string, text_input->commit_string);
     }
-
-    free(text_input->preedit_string);
-    text_input->preedit_string = NULL;
-    text_input->preedit_cursor_pos = 0;
-    free(text_input->commit_string);
-    text_input->commit_string = NULL;
+    free(text_input->current_preedit.string);
+    text_input->current_preedit = text_input->preedit;
+    text_input->preedit.string = NULL;
+    wayland_text_input_reset_pending_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 }
 
@@ -187,6 +216,7 @@ void wayland_text_input_deinit(void)
     zwp_text_input_v3_destroy(text_input->zwp_text_input_v3);
     text_input->zwp_text_input_v3 = NULL;
     text_input->focused_hwnd = NULL;
+    wayland_text_input_reset_all_state(text_input);
     pthread_mutex_unlock(&text_input->mutex);
 };
 
@@ -198,7 +228,8 @@ BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect)
     struct wayland_text_input *text_input = &process_wayland.text_input;
     struct wayland_win_data *data;
     struct wayland_surface *surface;
-    int cursor_x, cursor_y, cursor_width, cursor_height;
+    RECT surface_rect;
+
     TRACE("hwnd %p, rect %s.\n", hwnd, wine_dbgstr_rect(&rect));
 
     pthread_mutex_lock(&text_input->mutex);
@@ -215,18 +246,14 @@ BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect)
         goto err;
     }
 
-    wayland_surface_coords_from_window(surface,
-            rect.left - surface->window.rect.left,
-            rect.top - surface->window.rect.top,
-            &cursor_x, &cursor_y);
-    wayland_surface_coords_from_window(surface,
-            rect.right - rect.left,
-            rect.bottom - rect.top,
-            &cursor_width, &cursor_height);
+
+    OffsetRect(&rect, -surface->window.rect.left, -surface->window.rect.top);
+    surface_rect = map_rect_to_surface(surface, rect);
     wayland_win_data_release(data);
 
     zwp_text_input_v3_set_cursor_rectangle(text_input->zwp_text_input_v3,
-            cursor_x, cursor_y, cursor_width, cursor_height);
+            surface_rect.left, surface_rect.top, surface_rect.right - surface_rect.left,
+            surface_rect.bottom - surface_rect.top);
     zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
 
     pthread_mutex_unlock(&text_input->mutex);

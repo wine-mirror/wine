@@ -49,6 +49,8 @@ static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,
 static GUID iface_guid = {0xdeadbeef, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 static GUID iface_guid2 = {0xdeadf00d, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
+static const WCHAR guid_strw[] = L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+
 static HRESULT (WINAPI *pDriverStoreAddDriverPackageA)(const char *inf_path, void *unk1,
         void *unk2, WORD architecture, char *ret_path, DWORD *ret_len);
 static HRESULT (WINAPI *pDriverStoreDeleteDriverPackageA)(const char *path, void *unk1, void *unk2);
@@ -872,17 +874,74 @@ static void test_device_info(void)
     SetupDiDestroyDeviceInfoList(set);
 }
 
+struct reg_property
+{
+    DWORD reg_prop;
+    DWORD reg_type;
+    BYTE *reg_value;
+    DWORD reg_size;
+    DEVPROPTYPE devprop_type;
+    BYTE *devprop_value;
+    DWORD devprop_size;
+
+    /* Error returned by SetupDiSetDevicePropertyW. */
+    DWORD error;
+};
+
+static const LONG dword = 0xdeadbeef;
+static const WCHAR strw[] = L"dummy";
+static const WCHAR multi_strw[] = L"dummy1\0dummy2\0";
+
+/* SPDRP_* properties that can be set and have an associated DEVPROPKEY.
+ * The property key is {{a45c254e-df1c-4efd-8020-67d146a850e0}, reg_prop + 2} */
+static const struct reg_property reg_props[] = {
+    { SPDRP_DEVICEDESC, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_SERVICE, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_DRIVER, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_MFG, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_LOCATION_INFORMATION, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw) },
+    { SPDRP_CONFIGFLAGS, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_UINT32, (BYTE *)&dword, sizeof(dword) },
+    { SPDRP_UPPERFILTERS, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_HARDWAREID, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST,  (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_COMPATIBLEIDS, REG_MULTI_SZ, (BYTE *)multi_strw, sizeof(multi_strw), DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw) },
+    { SPDRP_CLASSGUID, REG_SZ, (BYTE *)guid_strw, sizeof(guid_strw), DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid) },
+};
+
+/* These properties cannot be set through SetupDiSetDevice(Registry)Property. */
+static const struct reg_property invalid_reg_props[] = {
+    { SPDRP_CAPABILITIES, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_INT32, (BYTE *)&dword, sizeof(dword), ERROR_ACCESS_DENIED },
+    { SPDRP_UI_NUMBER, REG_DWORD, (BYTE *)&dword, sizeof(dword), DEVPROP_TYPE_INT32, (BYTE *)&dword, sizeof(dword), ERROR_ACCESS_DENIED },
+    { SPDRP_PHYSICAL_DEVICE_OBJECT_NAME, REG_SZ, (BYTE *)strw, sizeof(strw), DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), ERROR_ACCESS_DENIED },
+    { SPDRP_BASE_CONTAINERID, REG_SZ, (BYTE *)guid_strw, sizeof(guid_strw), DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid), ERROR_INVALID_REG_PROPERTY },
+};
+
 static void test_device_property(void)
 {
+    static const struct property {
+        const DEVPROPKEY *key;
+        DEVPROPTYPE type;
+        BYTE *value;
+        DWORD size;
+        BOOL exists;
+    } inbuilt_props[] = {
+        { &DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), TRUE },
+        { &DEVPKEY_Device_Parent, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), TRUE },
+        { &DEVPKEY_Device_Siblings, DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw), TRUE },
+        { &DEVPKEY_Device_BusReportedDeviceDesc, DEVPROP_TYPE_STRING, (BYTE *)strw, sizeof(strw), FALSE },
+        { &DEVPKEY_Device_Children, DEVPROP_TYPE_STRING_LIST, (BYTE *)multi_strw, sizeof(multi_strw), FALSE },
+        { &DEVPKEY_Device_ContainerId, DEVPROP_TYPE_GUID, (BYTE *)&guid, sizeof(guid), FALSE },
+    };
     static const WCHAR valueW[] = {'d', 'e', 'a', 'd', 'b', 'e', 'e', 'f', 0};
+    static const WCHAR instance_id[] = L"Root\\LEGACY_BOGUS\\0000";
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HMODULE hmod;
     HDEVINFO set;
     DEVPROPTYPE type;
-    DWORD size;
+    DWORD size, i;
     BYTE buffer[256];
     DWORD err;
     BOOL ret;
+    GUID guid_val = {0};
 
     hmod = LoadLibraryA("setupapi.dll");
     pSetupDiSetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiSetDevicePropertyW");
@@ -899,7 +958,7 @@ static void test_device_property(void)
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
 
-    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid, NULL, NULL, 0, &device_data);
+    ret = SetupDiCreateDeviceInfoW(set, instance_id, &guid, NULL, NULL, 0, &device_data);
     ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
 
     /* SetupDiSetDevicePropertyW */
@@ -1193,9 +1252,84 @@ static void test_device_property(void)
     ok(size == sizeof(valueW), "Got size %ld\n", size);
     ok(!lstrcmpW((WCHAR *)buffer, valueW), "Expect buffer %s, got %s\n", wine_dbgstr_w(valueW), wine_dbgstr_w((WCHAR *)buffer));
 
+    /* #15 Innate properties */
+    type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_InstanceId, &type, buffer, sizeof(buffer), &size, 0);
+    err = GetLastError();
+    ok(ret, "Expect success\n");
+    ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
+    ok(size == sizeof(instance_id), "Got size %lu\n", size);
+    ok(!wcsicmp(instance_id, (WCHAR *)buffer), "Expect buffer %s, got %s\n", debugstr_w(instance_id), debugstr_w((WCHAR*)buffer));
+
+    type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    ret = pSetupDiGetDevicePropertyW(set, &device_data, &DEVPKEY_Device_ClassGuid, &type, (BYTE *)&guid_val, sizeof(guid_val), &size, 0);
+    err = GetLastError();
+    ok(ret, "Expect success\n");
+    ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+    ok(type == DEVPROP_TYPE_GUID, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_GUID, type);
+    ok(size == sizeof(guid_val), "Got size %lu\n", size);
+    ok(IsEqualGUID(&guid_val, &guid), "Expect buffer %s, got %s\n", debugstr_guid(&guid), debugstr_guid(&guid_val));
+
+    for (i = 0; i < ARRAY_SIZE(inbuilt_props); i++)
+    {
+        const DEVPROPKEY *key = inbuilt_props[i].key;
+        DEVPROPTYPE type = inbuilt_props[i].type;
+        const BYTE *val = inbuilt_props[i].value;
+        DWORD size = inbuilt_props[i].size;
+        BYTE *buf;
+
+        winetest_push_context("inbuilt_props[%lu]", i);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, key, type, val, size, 0);
+        err = GetLastError();
+        todo_wine ok(!ret, "Expected failure.\n");
+        todo_wine ok(err == ERROR_ACCESS_DENIED, "Expect last error %#x, got %#lx.\n", ERROR_ACCESS_DENIED, err);
+        if (ret)
+        {
+            winetest_pop_context();
+            continue;
+        }
+        /* However, setting this property to its existing value (if it has one) succeeds. */
+        size = 0;
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyW(set, &device_data, key, &type, NULL, 0, &size, 0);
+        err = GetLastError();
+        ok(!ret, "Expect failure.\n");
+        if (inbuilt_props[i].exists)
+            todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n", ERROR_INSUFFICIENT_BUFFER, err);
+        else
+        {
+            todo_wine_if(inbuilt_props[i].exists) ok(err == ERROR_NOT_FOUND, "Expect last error %#x, got %#lx\n",
+                                                     ERROR_NOT_FOUND, err);
+            winetest_pop_context();
+            continue;
+        }
+
+        buf = calloc(1, size);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyW(set, &device_data, key, &type, buf, size, &size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, key, type, buf, size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(err == NO_ERROR, "Expect last error %#x, got %#lx\n", NO_ERROR, err);
+        free(buf);
+        winetest_pop_context();
+    }
+
     if (pSetupDiGetDevicePropertyKeys)
     {
-        DWORD keys_len = 0, n, required_len, expected_keys = 1;
+        DEVPROPKEY expected_keys[] = { DEVPKEY_Device_ClassGuid, DEVPKEY_Device_InstanceId, DEVPKEY_Device_FriendlyName };
+        DWORD keys_len = 0, n, required_len;
         DEVPROPKEY *keys;
 
         ret = pSetupDiGetDevicePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
@@ -1255,19 +1389,27 @@ static void test_device_property(void)
         err = GetLastError();
         ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
         ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
-        ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
+        ok(keys_len >= ARRAY_SIZE(expected_keys), "Expected %lu >= %Iu\n", keys_len, ARRAY_SIZE(expected_keys));
 
         keys_len = 0;
         if (keys)
         {
             for (n = 0; n < required_len; n++)
             {
-                if (!memcmp(&keys[n], &DEVPKEY_Device_FriendlyName, sizeof(keys[n])))
-                    keys_len++;
+                DWORD i;
+
+                for (i = 0; i < ARRAY_SIZE(expected_keys); i++)
+                {
+                    if (!memcmp(&keys[n], &expected_keys[i], sizeof(keys[n])))
+                    {
+                        keys_len++;
+                        break;
+                    }
+                }
             }
 
         }
-        ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
+        todo_wine ok(keys_len == ARRAY_SIZE(expected_keys), "%lu != %Iu\n", keys_len, ARRAY_SIZE(expected_keys));
         free(keys);
     }
     else
@@ -1277,6 +1419,57 @@ static void test_device_property(void)
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
 
     SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device_data);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(reg_props); i++)
+    {
+        const struct reg_property *prop = &reg_props[i];
+        BOOL todo = prop->reg_prop != SPDRP_CLASSGUID;
+        DWORD size = 0, type = 0;
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+        BYTE buf[80] = { 0 };
+
+        winetest_push_context("reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, &key, prop->devprop_type, prop->devprop_value,
+                                         prop->devprop_size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
+
+        ret = SetupDiGetDeviceRegistryPropertyW(set, &device_data, prop->reg_prop, &type, buf, sizeof(buf), &size);
+        todo_wine_if(todo) ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
+        todo_wine_if(todo) ok(type == prop->reg_type, "Got unexpected type %#lx.\n", type);
+        todo_wine_if(todo) ok(size == prop->reg_size, "Got unexpected size %lu.\n", size);
+        if (size == prop->reg_size)
+            todo_wine ok(!memcmp(buf, prop->reg_value, size), "Got unexpected property value.\n");
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(invalid_reg_props); i++)
+    {
+        const struct reg_property *prop = &invalid_reg_props[i];
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+
+        winetest_push_context("invalid_reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiSetDevicePropertyW(set, &device_data, &key, prop->devprop_type, prop->devprop_value,
+                                         prop->devprop_size, 0);
+        todo_wine ok(!ret, "Expect failure.\n");
+        todo_wine ok(GetLastError() == prop->error, "Got unexpected error %#lx.\n", GetLastError());
+        winetest_pop_context();
+    }
+
+    ret = SetupDiRemoveDevice(set, &device_data);
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+
+    SetupDiDestroyDeviceInfoList(set);
+
     FreeLibrary(hmod);
 }
 
@@ -2245,6 +2438,46 @@ todo_wine {
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpA(buf, "device_name"), "Got unexpected value %s.\n", buf);
 
+    /* SPDRP_UNUSED0: PropertyMap[3].nameW == NULL, fix returns ERROR_INVALID_DATA */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_UNUSED0, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for SPDRP_UNUSED0.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#lx for SPDRP_UNUSED0.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: enumerator is first segment of instanceId ("ROOT\...\0000" → "ROOT") */
+    memset(buf, 0, sizeof(buf));
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(!strcmp(buf, "ROOT"), "Got unexpected enumerator '%s', expected 'ROOT'.\n", buf);
+
+    /* SPDRP_ENUMERATOR_NAME: test PropertyRegDataType output */
+    memset(buf, 0, sizeof(buf));
+    type = 0xdeadbeef;
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, &type, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(type == REG_SZ, "Got unexpected type %#lx, expected REG_SZ.\n", type);
+
+    /* SPDRP_ENUMERATOR_NAME: test RequiredSize output (PropertyBuffer=NULL, PropertyBufferSize=0) */
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure for NULL buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+    ok(size > 0, "Got unexpected size %lu.\n", size);
+
+    /* SPDRP_ENUMERATOR_NAME: test with buffer too small */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, 3, &size);
+    ok(!ret, "Expected failure for small buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: PropertyBuffer is NULL but PropertyBufferSize > 0 */
+    /* Windows returns ERROR_INVALID_PARAMETER (A) or ERROR_PARTIAL_COPY (W) here,
+     * Wine returns ERROR_INVALID_DATA. Just check for failure. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for NULL buffer with size.\n");
+
     SetupDiDestroyDeviceInfoList(set);
 
     /* Create device from a registered class */
@@ -2268,7 +2501,7 @@ static void test_registry_property_w(void)
     WCHAR friendly_name[] = {'B','o','g','u','s',0};
     SP_DEVINFO_DATA device = {sizeof(device)};
     WCHAR buf[64] = {0};
-    DWORD size, type;
+    DWORD size, type, i;
     HDEVINFO set;
     BOOL ret;
     LONG res;
@@ -2405,6 +2638,46 @@ todo_wine {
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpW(buf, L"device_name"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
 
+    /* SPDRP_UNUSED0: PropertyMap[3].nameW == NULL, fix returns ERROR_INVALID_DATA */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_UNUSED0, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for SPDRP_UNUSED0.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#lx for SPDRP_UNUSED0.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: enumerator is first segment of instanceId ("ROOT\...\0000" → "ROOT") */
+    memset(buf, 0, sizeof(buf));
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(!lstrcmpW(buf, L"ROOT"), "Got unexpected enumerator %s.\n", wine_dbgstr_w(buf));
+
+    /* SPDRP_ENUMERATOR_NAME: test PropertyRegDataType output */
+    memset(buf, 0, sizeof(buf));
+    type = 0xdeadbeef;
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, &type, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(type == REG_SZ, "Got unexpected type %#lx, expected REG_SZ.\n", type);
+
+    /* SPDRP_ENUMERATOR_NAME: test RequiredSize output (PropertyBuffer=NULL, PropertyBufferSize=0) */
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure for NULL buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+    ok(size > 0, "Got unexpected size %lu.\n", size);
+
+    /* SPDRP_ENUMERATOR_NAME: test with buffer too small */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, 3 * sizeof(WCHAR), &size);
+    ok(!ret, "Expected failure for small buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: PropertyBuffer is NULL but PropertyBufferSize > 0 */
+    /* Windows returns ERROR_INVALID_PARAMETER (A) or ERROR_PARTIAL_COPY (W) here,
+     * Wine returns ERROR_INVALID_DATA. Just check for failure. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for NULL buffer with size.\n");
+
     SetupDiDestroyDeviceInfoList(set);
 
     /* Create device from a registered class */
@@ -2420,6 +2693,57 @@ todo_wine {
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpW(buf, L"Display"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
 
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(reg_props); i++)
+    {
+        const struct reg_property *prop = &reg_props[i];
+        DEVPROPKEY key = { DEVPKEY_Device_DeviceDesc.fmtid, prop->reg_prop + 2 };
+        DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+        BYTE buf[80] = {0};
+        DWORD size = 0, err;
+
+        winetest_push_context("reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = SetupDiSetDeviceRegistryPropertyW(set, &device, prop->reg_prop, prop->reg_value, prop->reg_size);
+        ok(ret, "Failed to set property, error %#lx.\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = SetupDiGetDevicePropertyW(set, &device, &key, &type, buf, sizeof(buf), &size, 0);
+        err = GetLastError();
+        ok(ret, "Expect success.\n");
+        ok(!err, "Got unexpected error %#lx.\n", err);
+        ok(type == prop->devprop_type, "Got unexpected type %#lx.\n", type);
+        ok(size == prop->devprop_size, "Got unexpected size %lu.\n", size);
+        if (size == prop->devprop_size)
+            ok(!memcmp(buf, prop->devprop_value, size), "Got unexpected property value.\n");
+        winetest_pop_context();
+    }
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoW(set, L"display", &GUID_DEVCLASS_DISPLAY, NULL, NULL, DICD_GENERATE_ID, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(invalid_reg_props); i++)
+    {
+        const struct reg_property *prop = &invalid_reg_props[i];
+
+        /* SetupDiSetDeviceRegistryPropertyW seems to only return ERROR_INVALID_REG_PROPERTY. */
+        winetest_push_context("invalid_reg_props[%lu] (%#lx)", i, prop->reg_prop);
+        SetLastError(0xdeadbeef);
+        ret = SetupDiSetDeviceRegistryPropertyW(set, &device, prop->reg_prop, prop->reg_value, prop->reg_size);
+        todo_wine_if(prop->reg_prop != SPDRP_PHYSICAL_DEVICE_OBJECT_NAME) ok(!ret, "Expected failure.\n");
+        todo_wine ok(GetLastError() == ERROR_INVALID_REG_PROPERTY, "Got unexpected error %#lx.\n", GetLastError());
+        winetest_pop_context();
+    }
     SetupDiDestroyDeviceInfoList(set);
 }
 
@@ -2609,6 +2933,12 @@ static void test_devnode(void)
     ok(!ret, "got %#lx\n", ret);
     ok(!strcmp(buffer, "ROOT\\LEGACY_BOGUS\\0000"), "got %s\n", buffer);
 
+    /* CM_Get_Parent parameter validation. The CR_SUCCESS path requires a
+     * PnP-managed device with DEVPKEY_Device_Parent populated by the bus
+     * driver, which is exercised in ntoskrnl/tests/ntoskrnl.c::test_pnp_devices. */
+    ret = CM_Get_Parent(NULL, device.DevInst, 0);
+    ok(ret == CR_INVALID_POINTER, "got %#lx\n", ret);
+
     SetupDiDestroyDeviceInfoList(set);
 }
 
@@ -2719,6 +3049,273 @@ static void test_open_device_interface_key(void)
     key = SetupDiOpenDeviceInterfaceRegKey(set, &iface, 0, KEY_ALL_ACCESS);
     ok(key == INVALID_HANDLE_VALUE, "Expect open interface registry key failure\n");
 
+    ret = SetupDiRemoveDevice(set, &device);
+    ok(ret, "Failed to remove device, error %#lx.\n", GetLastError());
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "Failed to destroy device list, error %#lx.\n", GetLastError());
+}
+
+static void test_device_interface_properties(void)
+{
+    struct {
+        DEVPROPKEY key;
+        DEVPROPTYPE type;
+    } default_keys[] = {
+        { DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN },
+        { DEVPKEY_DeviceInterface_ClassGuid, DEVPROP_TYPE_GUID },
+        { DEVPKEY_Device_InstanceId, DEVPROP_TYPE_STRING }
+    };
+    const WCHAR str[] = L"Wine is not an emulator.";
+    const WCHAR instance_id[] = L"ROOT\\LEGACY_BOGUS\\0000";
+    DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+    DEVPROP_BOOLEAN boolean = DEVPROP_TRUE;
+    SP_DEVICE_INTERFACE_DATA iface;
+    SP_DEVINFO_DATA device;
+    DEVPROPKEY *keys;
+    DWORD err, req, size, i, rem = ARRAY_SIZE(default_keys);
+    WCHAR buf[50];
+    HDEVINFO set;
+    BOOL ret;
+    GUID guid_val = {0};
+
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx\n", GetLastError());
+
+    device.cbSize = sizeof(device);
+    ret = SetupDiCreateDeviceInfoW(set, instance_id, &guid, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+
+    iface.cbSize = sizeof(iface);
+    ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, NULL, 0, &iface);
+    ok(ret, "Failed to create interface, error %#lx.\n", GetLastError());
+
+    ret = SetupDiSetDeviceInterfacePropertyW(NULL, NULL, NULL, DEVPROP_TYPE_STRING, NULL, 0, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, NULL, NULL, DEVPROP_TYPE_STRING, NULL, 0, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, NULL, DEVPROP_TYPE_STRING, NULL, 0, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             NULL, 0, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             (BYTE *)str, 0, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             NULL, 1, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             (BYTE *)str, sizeof(str), 1);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(NULL, NULL, NULL, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, NULL, NULL, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, NULL, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, NULL, sizeof(buf), &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, (BYTE *)buf, sizeof(buf), NULL, 1);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, (BYTE *)buf, sizeof(buf), NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOT_FOUND, "%lu != %d\n", err, ERROR_NOT_FOUND);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, (BYTE *)buf, sizeof(buf), &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOT_FOUND, "%lu != %d\n", err, ERROR_NOT_FOUND);
+
+    /* Should return built-in property keys even when the "Properties" subkey for the interface hasn't been created */
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+    ok(req >= ARRAY_SIZE(default_keys), "got req %lu, should be >= %lu\n", req, (DWORD)ARRAY_SIZE(default_keys));
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             (const BYTE *)str, sizeof(str), 0);
+    err = GetLastError();
+    ok(ret, "SetupDiSetDeviceInterfacePropertyW failed: %lu\n", err);
+
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, NULL, 0, &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+    ok(type == DEVPROP_TYPE_STRING, "%#lx != %#x\n", type, DEVPROP_TYPE_STRING);
+    ok(req == sizeof(str), "%lu != %lu\n", req, (DWORD)sizeof(str));
+
+    buf[0] = '\0';
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, &type, (BYTE *)buf,
+                                             sizeof(buf), &req, 0);
+    err = GetLastError();
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+    ok(!wcscmp(buf, str), "%s != %s\n", debugstr_w(buf), debugstr_w(str));
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_EMPTY,
+                                             NULL, 0, 0);
+    err = GetLastError();
+    ok(ret, "SetupDiSetDeviceInterfacePropertyW failed: %lu\n", err);
+
+    /* DEVPKEY_DeviceInterface_Enabled is a "special" key, as it does not seem to be actually stored in the registry. */
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, &type, (BYTE *)&boolean,
+                                             sizeof(boolean), &req, 0);
+    err = GetLastError();
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+    ok(req == sizeof(boolean), "%lu != %lu\n", req, (DWORD)sizeof(boolean));
+    ok(boolean == DEVPROP_FALSE, "%d != %d\n", boolean, DEVPROP_FALSE);
+
+    boolean = DEVPROP_TRUE;
+    /*  DEVPKEY_DeviceInterface_Enabled cannot be toggled for interfaces. */
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN,
+                                             (const BYTE *)&boolean, sizeof(boolean), 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_ACCESS_DENIED, "%lu != %d\n", err, ERROR_ACCESS_DENIED);
+
+    /* Nor can it be set to anything that's not a DEVPROP_TYPE_BOOLEAN. */
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_STRING,
+                                             (const BYTE *)str, sizeof(str), 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    /* It can however, be "set" to to its current value, i.e whether the interface is enabled. This seems to be a no-op. */
+    boolean = DEVPROP_FALSE;
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN,
+                                             (const BYTE *)&boolean, sizeof(boolean), 0);
+    err = GetLastError();
+    /* Windows 7 returns ERROR_ACCESS_DENIED. */
+    ok(ret || broken(err == ERROR_ACCESS_DENIED), "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+
+    boolean = 0xde;
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_Enabled, DEVPROP_TYPE_BOOLEAN,
+                                             (const BYTE *)&boolean, sizeof(boolean), 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_DATA, "%lu != %d\n", err, ERROR_INVALID_DATA);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, NULL, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, NULL, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 1);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_FLAGS, "%lu != %d\n", err, ERROR_INVALID_FLAGS);
+
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 1, &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_USER_BUFFER, "%lu != %d\n", err, ERROR_INVALID_USER_BUFFER);
+
+    ret = SetupDiSetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_FriendlyName, DEVPROP_TYPE_STRING,
+                                             (const BYTE *)str, sizeof(str), 0);
+    err = GetLastError();
+    ok(ret, "SetupDiSetDeviceInterfacePropertyW failed: %lu\n", err);
+    if (ret) rem += 1;
+
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, NULL, 0, &req, 0);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+
+    size = req;
+    keys = calloc(size, sizeof(*keys));
+    ret = SetupDiGetDeviceInterfacePropertyKeys(set, &iface, keys, size, &req, 0);
+    ok(ret, "SetupDiGetDeviceInterfacePropertyKeys failed: %lu\n", GetLastError());
+    ok(size == req, "%lu != %lu\n", size, req);
+    ok(size >= ARRAY_SIZE(default_keys), "got size %lu, should be >= %lu\n", size, (DWORD)ARRAY_SIZE(default_keys));
+
+    for (i = 0; i < size && rem; i++)
+    {
+        DWORD j;
+        for (j = 0; j < ARRAY_SIZE(default_keys); j++)
+        {
+            DEVPROPKEY key = default_keys[j].key;
+            DEVPROPTYPE exp_type = default_keys[j].type;
+
+            if (IsEqualDevPropKey(key, keys[i]))
+            {
+                BYTE *buf;
+                DWORD size, req = 0;
+
+                winetest_push_context("default_keys[%lu]", j);
+
+                type = DEVPROP_TYPE_EMPTY;
+                ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, NULL, 0, &req, 0);
+                err = GetLastError();
+                ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "%lu != %d\n", err, ERROR_INSUFFICIENT_BUFFER);
+                ok(type == exp_type, "%#lx != %#lx\n", type, exp_type);
+
+                size = req;
+                buf = calloc( 1, size );
+                ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &key, &type, buf, size, &req, 0);
+                err = GetLastError();
+                ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", err);
+                free(buf);
+
+                winetest_pop_context();
+
+                rem--;
+                break;
+            }
+        }
+        if (IsEqualDevPropKey(keys[i], DEVPKEY_DeviceInterface_FriendlyName) && rem) rem--;
+    }
+    free(keys);
+    ok(!rem, "got rem %lu, should be 0\n", rem);
+
+    type = DEVPROP_TYPE_EMPTY;
+    req = 0;
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_DeviceInterface_ClassGuid, &type, (BYTE *)&guid_val,
+                                             sizeof(guid_val), &req, 0);
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", GetLastError());
+    ok(type == DEVPROP_TYPE_GUID, "%#lx != %#x\n", type, DEVPROP_TYPE_GUID);
+    ok(req == sizeof(guid), "%lu != %lu\n", req, (DWORD)sizeof(guid));
+    ok(IsEqualGUID(&guid_val, &guid), "%s != %s", debugstr_guid( &guid_val ), debugstr_guid( &guid ));
+
+    type = DEVPROP_TYPE_EMPTY;
+    req = 0;
+    buf[0] = '\0';
+    ret = SetupDiGetDeviceInterfacePropertyW(set, &iface, &DEVPKEY_Device_InstanceId, &type, (BYTE *)buf,
+                                             sizeof(instance_id), &req, 0);
+    ok(ret, "SetupDiGetDeviceInterfacePropertyW failed: %lu\n", GetLastError());
+    ok(type == DEVPROP_TYPE_STRING, "%#lx != %#x", type, DEVPROP_TYPE_STRING);
+    ok(req == sizeof(instance_id), "%lu != %lu\n", req, (DWORD)sizeof(instance_id));
+    ok(!wcscmp(buf, instance_id), "%s != %s\n", debugstr_w(buf), debugstr_w(instance_id));
+
+    ret = SetupDiRemoveDeviceInterface(set, &iface);
+    ok(ret, "Failed to remove device interface, error %#lx.\n", GetLastError());
     ret = SetupDiRemoveDevice(set, &device);
     ok(ret, "Failed to remove device, error %#lx.\n", GetLastError());
     ret = SetupDiDestroyDeviceInfoList(set);
@@ -4137,6 +4734,13 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
 
+    /* try a relative nonexistent SourceInfFileName, with dest parameter */
+    memset(dest, 0xcc, sizeof(dest));
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+
     /* try an absolute nonexistent SourceInfFileName */
     GetCurrentDirectoryA(sizeof(path), path);
     strcat(path, "\\nonexistent");
@@ -4732,6 +5336,77 @@ static void test_driver_store(struct testsign_context *ctx)
     ok(ret, "Failed to destroy device list.\n");
 }
 
+static void test_device_enum(void)
+{
+    SP_DEVINFO_DATA devinfodata;
+    LARGE_INTEGER filetime;
+    DEVPROPTYPE proptype;
+    HDEVINFO set;
+    WCHAR buf[2048];
+    BOOL next, ret;
+    DWORD i, len;
+
+    set = SetupDiGetClassDevsExW(&GUID_DEVCLASS_DISPLAY, NULL, 0, DIGCF_PRESENT, 0, NULL, 0);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsExW failed with %lu.\n", GetLastError());
+
+    ZeroMemory(&devinfodata, sizeof(SP_DEVINFO_DATA));
+    devinfodata.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    i = 0;
+    next = SetupDiEnumDeviceInfo(set, i, &devinfodata);
+    ok(next, "Failed getting at least one element from SetupDiEnumDeviceInfo with error %lu.\n", GetLastError());
+
+    while (next)
+    {
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDate,  &proptype, (BYTE *)&filetime, sizeof(LARGE_INTEGER), &len, 0);
+        ok(ret, "getting DEVPKEY_Device_DriverDate failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_FILETIME, "got unexpected proptype %#lx.\n", proptype);
+        ok(len == sizeof(LARGE_INTEGER), "got unexpected length.\n");
+        ok((filetime.QuadPart % 864000000000) == 0, "returned value should not contain a time.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverVersion,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        ok(ret, "getting DEVPKEY_Device_DriverVersion failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDesc,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        ok(ret, "getting DEVPKEY_Device_DriverDesc failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverProvider,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        ok(ret, "getting DEVPKEY_Device_DriverProvider failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverCoInstallers,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        ok(!ret, "getting DEVPKEY_Device_DriverCoInstallers failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_EMPTY, "got unexpected proptype %#lx.\n", proptype);
+        ok(len == 0, "got unexpected length.\n");
+
+        i++;
+        next = SetupDiEnumDeviceInfo(set, i, &devinfodata);
+    }
+
+    if (set)
+        SetupDiDestroyDeviceInfoList(set);
+}
+
 START_TEST(devinst)
 {
     static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
@@ -4774,11 +5449,13 @@ START_TEST(devinst)
     test_devnode();
     test_device_interface_key();
     test_open_device_interface_key();
+    test_device_interface_properties();
     test_device_install_params();
     test_driver_list();
     test_call_class_installer();
     test_get_class_devs();
     test_SetupDiOpenDeviceInterface();
+    test_device_enum();
 
     if (!testsign_create_cert(&ctx))
         return;

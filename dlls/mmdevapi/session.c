@@ -34,9 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-extern void sessions_lock(void);
-extern void sessions_unlock(void);
-
 static WCHAR *duplicate_wstr(const WCHAR *str)
 {
     const WCHAR *source = str ? str : L"";
@@ -67,6 +64,8 @@ static inline struct audio_session_wrapper *impl_from_ISimpleAudioVolume(ISimple
 
 static HRESULT WINAPI control_QueryInterface(IAudioSessionControl2 *iface, REFIID riid, void **ppv)
 {
+    struct audio_session_wrapper *session = impl_from_IAudioSessionControl2(iface);
+
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
@@ -76,6 +75,10 @@ static HRESULT WINAPI control_QueryInterface(IAudioSessionControl2 *iface, REFII
         IsEqualIID(riid, &IID_IAudioSessionControl) ||
         IsEqualIID(riid, &IID_IAudioSessionControl2))
         *ppv = iface;
+    else if (IsEqualIID(riid, &IID_ISimpleAudioVolume))
+        *ppv = &session->ISimpleAudioVolume_iface;
+    else if (IsEqualIID(riid, &IID_IChannelAudioVolume))
+        *ppv = &session->IChannelAudioVolume_iface;
     else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -676,6 +679,8 @@ static struct audio_session *session_create(const GUID *guid, IMMDevice *device,
     if (!ret)
         return NULL;
 
+    if (!guid)
+        guid = &GUID_NULL;
     memcpy(&ret->guid, guid, sizeof(GUID));
 
     ret->device = device;
@@ -690,12 +695,15 @@ static struct audio_session *session_create(const GUID *guid, IMMDevice *device,
 
     CoCreateGuid(&ret->grouping_param);
 
+    TRACE("Created session %p\n", ret);
     return ret;
 }
 
 struct audio_session_wrapper *session_wrapper_create(struct audio_client *client)
 {
     struct audio_session_wrapper *ret;
+
+    TRACE("client %p\n", client);
 
     ret = calloc(1, sizeof(struct audio_session_wrapper));
     if (!ret)
@@ -713,6 +721,7 @@ struct audio_session_wrapper *session_wrapper_create(struct audio_client *client
         IAudioClient3_AddRef(&client->IAudioClient3_iface);
     }
 
+    TRACE("Created session wrapper %p\n", ret);
     return ret;
 }
 
@@ -723,19 +732,12 @@ HRESULT get_audio_session(const GUID *guid, IMMDevice *device, UINT channels,
 {
     struct audio_session *session;
 
-    TRACE("(%s, %p, %u, %p)\n", debugstr_guid(guid), device, channels, out);
-
-    if (!guid || IsEqualGUID(guid, &GUID_NULL)) {
-        *out = session_create(&GUID_NULL, device, channels);
-        if (!*out)
-            return E_OUTOFMEMORY;
-
-        return S_OK;
-    }
+    TRACE("guid %s, device %p, channels %u, out %p\n", debugstr_guid(guid), device, channels, out);
 
     *out = NULL;
     LIST_FOR_EACH_ENTRY(session, &sessions, struct audio_session, entry) {
-        if (session->device == device && IsEqualGUID(guid, &session->guid)) {
+        if (session->device == device && ((!guid && IsEqualGUID(&session->guid, &GUID_NULL)) ||
+                                          (guid && IsEqualGUID(guid, &session->guid)))) {
             session_init_vols(session, channels);
             *out = session;
             break;
@@ -748,6 +750,7 @@ HRESULT get_audio_session(const GUID *guid, IMMDevice *device, UINT channels,
             return E_OUTOFMEMORY;
     }
 
+    TRACE("Returning session %p\n", *out);
     return S_OK;
 }
 
@@ -755,8 +758,10 @@ HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
                                   struct audio_session_wrapper **out)
 {
     struct audio_session *session;
-
     const HRESULT hr = get_audio_session(guid, device, 0, &session);
+
+    TRACE("guid %s, device %p, out %p\n", debugstr_guid(guid), device, out);
+
     if (FAILED(hr))
         return hr;
 
@@ -766,6 +771,7 @@ HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
 
     (*out)->session = session;
 
+    TRACE("Returning session wrapper %p, session %p\n", *out, session);
     return S_OK;
 }
 

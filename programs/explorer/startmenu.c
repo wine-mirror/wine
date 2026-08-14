@@ -34,6 +34,8 @@ struct menu_item
 {
     struct list entry;
     LPWSTR displayname;
+    HIMAGELIST icon_himl;
+    int icon_i;
 
     /* parent information */
     struct menu_item* parent;
@@ -185,6 +187,8 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
     int existing_item_count, i;
     BOOL match = FALSE;
     SFGAOF flags;
+    SHFILEINFOW sfi;
+    HIMAGELIST himl;
 
     item = calloc( 1, sizeof(struct menu_item) );
 
@@ -204,6 +208,13 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
 
         if (flags & SFGAO_FOLDER)
             IShellFolder_BindToObject(parent->folder, pidl, NULL, &IID_IShellFolder, (void *)&item->folder);
+    }
+
+    himl = (HIMAGELIST)SHGetFileInfoW((LPCWSTR)pidl, 0, &sfi, sizeof(sfi), SHGFI_PIDL|SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+    if (himl)
+    {
+        item->icon_himl = himl;
+        item->icon_i = sfi.iIcon;
     }
 
     if (item->folder && shell_folder_is_empty(item->folder))
@@ -266,6 +277,10 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
         mii.fMask = MIIM_STRING|MIIM_DATA;
         mii.dwTypeData = item->displayname;
         mii.dwItemData = (ULONG_PTR)item;
+        if (item->icon_himl) {
+            mii.fMask |= MIIM_BITMAP;
+            mii.hbmpItem = HBMMENU_CALLBACK;
+        }
 
         if (item->folder)
         {
@@ -275,7 +290,8 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
             mii.hSubMenu = item->menuhandle;
 
             mi.cbSize = sizeof(mi);
-            mi.fMask = MIM_MENUDATA;
+            mi.fMask = MIM_MENUDATA|MIM_STYLE;
+            mi.dwStyle = MNS_NOTIFYBYPOS|MNS_NOCHECK;
             mi.dwMenuData = (ULONG_PTR)item;
             SetMenuInfo(item->menuhandle, &mi);
         }
@@ -438,6 +454,20 @@ LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
             return 0;
         }
+
+    case WM_MEASUREITEM:
+        ((MEASUREITEMSTRUCT*)lparam)->itemWidth = GetSystemMetrics(SM_CXSMICON) + 5;
+        ((MEASUREITEMSTRUCT*)lparam)->itemHeight = GetSystemMetrics(SM_CYSMICON);
+        return TRUE;
+
+    case WM_DRAWITEM:
+        {
+            DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT*)lparam;
+            struct menu_item* item = (struct menu_item*)dis->itemData;
+
+            ImageList_Draw(item->icon_himl, item->icon_i, dis->hDC, dis->rcItem.left - 2, dis->rcItem.top, ILD_NORMAL);
+            return TRUE;
+        }
     }
 
     return DefWindowProcW(hwnd, msg, wparam, lparam);
@@ -508,7 +538,7 @@ void do_startmenu(HWND hwnd)
 
     mi.cbSize = sizeof(mi);
     mi.fMask = MIM_STYLE;
-    mi.dwStyle = MNS_NOTIFYBYPOS;
+    mi.dwStyle = MNS_NOTIFYBYPOS|MNS_NOCHECK;
     SetMenuInfo(root_menu.menuhandle, &mi);
 
     GetWindowRect(hwnd, &rc);

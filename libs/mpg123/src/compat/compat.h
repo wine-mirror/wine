@@ -110,8 +110,17 @@
 
 typedef unsigned char byte;
 
+// Annoying hackery to select a safe strtok variant. MS decided to call their strtok_r strtok_s, while
+// C11 declares another strtok_s with different prototype. Thanks to you all.
+#ifdef HAVE_STRTOK_R
+#define INT123_compat_strtok(a, b, c) strtok_r((a), (b), (c))
+#endif
+
 #if (defined(_UCRT) || defined(_MSC_VER) || (defined(__MINGW32__) || defined(__MINGW64__)) || (defined(__WATCOMC__) && defined(__NT__))) && !defined(__CYGWIN__)
 #define MPG123_COMPAT_MSVCRT_IO
+#ifndef INT123_compat_strtok
+#define INT123_compat_strtok(a, b, c) strtok_s((a), (b), (c))
+#endif
 #endif
 
 #if defined(MPG123_COMPAT_MSVCRT_IO)
@@ -148,6 +157,11 @@ typedef unsigned char byte;
 #if defined(HAVE__SETMODE) || defined(HAVE_SETMODE) || defined(MPG123_COMPAT_MSVCRT_IO)
 // For _setmode(), at least.
 #include <io.h>
+#endif
+
+#ifndef INT123_compat_strtok
+#warning "no safe strtok found"
+#define INT123_compat_strtok(a, b, c) strtok((a), (b))
 #endif
 
 /* A safe realloc also for very old systems where realloc(NULL, size) returns NULL. */

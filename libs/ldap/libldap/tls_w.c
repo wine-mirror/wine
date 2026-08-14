@@ -571,7 +571,7 @@ restart:
 	}
 	else if ( status == SEC_E_INCOMPLETE_MESSAGE ) {
 		assert( bufs[1].BufferType == SECBUFFER_MISSING );
-		expected = bufs[1].cbBuffer;
+		expected += bufs[1].cbBuffer;
 		goto restart;
 	}
 

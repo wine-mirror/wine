@@ -21,11 +21,14 @@
 
 #include "gdi_private.h"
 #include "winnls.h"
+#include "winreg.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(icm);
 
+static const WCHAR color_path[]      = L"c:\\windows\\system32\\spool\\drivers\\color\\";
+static const WCHAR default_profile[] = L"c:\\windows\\system32\\spool\\drivers\\color\\sRGB Color Space Profile.icm";
 
 struct enum_profiles
 {
@@ -74,7 +77,8 @@ INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
     TRACE( "%p, %p, 0x%08Ix\n", hdc, func, lparam );
 
     if (!func) return -1;
-    if (!__wine_get_icm_profile( hdc, FALSE, &size, profile )) return -1;
+    if (!GetICMProfileW( hdc, &size, profile )) return -1;
+    if (!wcsicmp( profile, default_profile )) return -1;
     /* FIXME: support multiple profiles */
     return func( profile, lparam );
 }
@@ -129,9 +133,39 @@ BOOL WINAPI GetICMProfileA(HDC hdc, LPDWORD size, LPSTR filename)
  */
 BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
 {
+    DC_ATTR *dc_attr;
+    WCHAR fullname[MAX_PATH + ARRAY_SIZE(color_path)];
+    DWORD len = MAX_PATH;
+    HKEY hkey = 0;
+    BOOL ret = FALSE;
+
     TRACE("%p, %p, %p\n", hdc, size, filename);
 
-    return __wine_get_icm_profile( hdc, TRUE, size, filename );
+    if (!size) return FALSE;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\mntr", &hkey ))
+    {
+        wcscpy( fullname, color_path );
+        /* FIXME handle multiple values */
+        if (!RegEnumValueW( hkey, 0, fullname + wcslen(fullname), &len, NULL, NULL, NULL, NULL ))
+            goto found;
+    }
+
+    wcscpy( fullname, default_profile );
+
+ found:
+    len = wcslen(fullname) + 1;
+    if (*size >= len)
+    {
+        if (filename) wcscpy( filename, fullname );
+        ret = TRUE;
+    }
+    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+
+    *size = len;
+    RegCloseKey( hkey );
+    return ret;
 }
 
 /**********************************************************************

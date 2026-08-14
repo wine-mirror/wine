@@ -20,7 +20,7 @@
 #ifndef __WINE_RICHEDIT_H
 #define __WINE_RICHEDIT_H
 
-#include <pshpack4.h>
+#pragma pack(push,4)
 
 #ifdef __cplusplus
 extern "C" {
@@ -1083,6 +1083,6 @@ typedef struct _settextex {
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_RICHEDIT_H */

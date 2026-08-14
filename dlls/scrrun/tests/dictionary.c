@@ -326,6 +326,90 @@ static IUnknown test_unk = { &test_unk_vtbl };
 static IUnknown test_unk2 = { &test_unk_no_vtbl };
 static IDispatch test_disp = { &test_disp_vtbl };
 
+/* A dispatch object whose QueryInterface(IID_IUnknown) can be made to fail,
+ * modelling a COM object that has been logically destroyed while still
+ * referenced as a dictionary key. */
+struct degen_disp
+{
+    IDispatch IDispatch_iface;
+    BOOL qi_unknown_fails;
+};
+
+static HRESULT WINAPI degen_QI(IDispatch *iface, REFIID riid, void **obj)
+{
+    struct degen_disp *d = CONTAINING_RECORD(iface, struct degen_disp, IDispatch_iface);
+
+    if (IsEqualIID(riid, &IID_IDispatch)) {
+        *obj = iface;
+        return S_OK;
+    }
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        if (d->qi_unknown_fails) {
+            *obj = NULL;
+            return E_NOINTERFACE;
+        }
+        *obj = iface;
+        return S_OK;
+    }
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI degen_AddRef(IDispatch *iface) { return 2; }
+static ULONG WINAPI degen_Release(IDispatch *iface) { return 1; }
+
+static const IDispatchVtbl degen_disp_vtbl = {
+    degen_QI,
+    degen_AddRef,
+    degen_Release,
+    test_disp_GetTypeInfoCount,
+    test_disp_GetTypeInfo,
+    test_disp_GetIDsOfNames,
+    test_disp_Invoke
+};
+
+static void test_object_key_hashfail(void)
+{
+    struct degen_disp obj = { { &degen_disp_vtbl }, FALSE };
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT key, item;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key) = VT_DISPATCH;
+    V_DISPATCH(&key) = &obj.IDispatch_iface;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 42;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "Add: %#lx.\n", hr);
+
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &key, &exists);
+    ok(hr == S_OK, "Exists (live): %#lx.\n", hr);
+    ok(exists == VARIANT_TRUE, "expected the key to exist\n");
+
+    /* The object is now degenerate: hashing the key fails. Exists and Remove
+     * must surface that failure rather than report the key as absent. */
+    obj.qi_unknown_fails = TRUE;
+
+    hr = IDictionary_Exists(dict, &key, &exists);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Exists (degenerate): %#lx.\n", hr);
+
+    hr = IDictionary_Remove(dict, &key);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Remove (degenerate): %#lx.\n", hr);
+
+    /* Restore the object and confirm the key is still present and removable. */
+    obj.qi_unknown_fails = FALSE;
+    hr = IDictionary_Remove(dict, &key);
+    ok(hr == S_OK, "Remove (restored): %#lx.\n", hr);
+
+    IDictionary_Release(dict);
+}
+
 static void test_hash_value(void)
 {
     /* string test data */
@@ -744,6 +828,22 @@ if (0) { /* crashes on native */
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == expected, "got hash %#lx, expected %#lx\n", V_I4(&hash), expected);
 
+    V_VT(&key) = VT_BOOL;
+    V_BOOL(&key) = VARIANT_FALSE;
+    V_I4(&hash) = 5678;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
+    ok(V_I4(&hash) == get_num_hash(0.0f), "Unexpected hash value %#lx.\n", V_I4(&hash));
+
+    V_VT(&key) = VT_BOOL;
+    V_BOOL(&key) = VARIANT_TRUE;
+    V_I4(&hash) = 5678;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
+    ok(V_I4(&hash) == get_num_hash((FLOAT)VARIANT_TRUE), "Unexpected hash value %#lx.\n", V_I4(&hash));
+
     V_VT(&key) = VT_EMPTY;
     V_I4(&key) = 1234;
     V_I4(&hash) = 5678;
@@ -1050,6 +1150,306 @@ static void test_Add(void)
     IDictionary_Release(dict);
 }
 
+static void add_str_item(IDictionary *dict, const WCHAR *name, int value)
+{
+    VARIANT key, item;
+    HRESULT hr;
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(name);
+    V_VT(&item) = VT_I2;
+    V_I2(&item) = value;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "Add %s: %#lx.\n", wine_dbgstr_w(name), hr);
+    VariantClear(&key);
+}
+
+static void check_key_at(IDictionary *dict, LONG index, const WCHAR *expect, BOOL todo)
+{
+    VARIANT keys, key;
+    HRESULT hr;
+
+    VariantInit(&keys);
+    hr = IDictionary_Keys(dict, &keys);
+    ok(hr == S_OK, "Keys: %#lx.\n", hr);
+
+    VariantInit(&key);
+    hr = SafeArrayGetElement(V_ARRAY(&keys), &index, &key);
+    ok(hr == S_OK, "GetElement %ld: %#lx.\n", index, hr);
+    todo_wine_if(todo) ok(V_VT(&key) == VT_BSTR && !lstrcmpW(V_BSTR(&key), expect),
+            "key at %ld: got %s, expected %s.\n", index, wine_dbgstr_variant(&key), wine_dbgstr_w(expect));
+    VariantClear(&key);
+    VariantClear(&keys);
+}
+
+static BOOL exists_str(IDictionary *dict, const WCHAR *name)
+{
+    VARIANT_BOOL exists = VARIANT_FALSE;
+    VARIANT key;
+    HRESULT hr;
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(name);
+    hr = IDictionary_Exists(dict, &key, &exists);
+    ok(hr == S_OK, "Exists %s: %#lx.\n", wine_dbgstr_w(name), hr);
+    VariantClear(&key);
+    return exists == VARIANT_TRUE;
+}
+
+static void test_put_Key(void)
+{
+    VARIANT key, newkey, item;
+    IDictionary *dict;
+    BOOL has_y;
+    LONG count;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    add_str_item(dict, L"a", 1);
+    add_str_item(dict, L"b", 2);
+    add_str_item(dict, L"c", 3);
+
+    /* Renaming an existing key keeps its value and enumeration position. */
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"b");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"x");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    ok(hr == S_OK, "put_Key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    ok(!exists_str(dict, L"b"), "old key 'b' should be gone\n");
+    ok(exists_str(dict, L"x"), "new key 'x' should exist\n");
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"x");
+    VariantInit(&item);
+    hr = IDictionary_get_Item(dict, &key, &item);
+    ok(hr == S_OK, "get_Item: %#lx.\n", hr);
+    ok(V_VT(&item) == VT_I2 && V_I2(&item) == 2, "renamed item: %s.\n", wine_dbgstr_variant(&item));
+    VariantClear(&key);
+    VariantClear(&item);
+
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    ok(count == 3, "Unexpected count %ld.\n", count);
+
+    check_key_at(dict, 0, L"a", FALSE);
+    check_key_at(dict, 1, L"x", FALSE);
+    check_key_at(dict, 2, L"c", FALSE);
+
+    /* Renaming a key that does not exist fails and changes nothing. */
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"zzz");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"y");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    ok(hr == CTL_E_ELEMENT_NOT_FOUND, "put_Key of missing key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    ok(count == 3, "Unexpected count %ld.\n", count);
+    has_y = exists_str(dict, L"y");
+    ok(!has_y, "missing-key rename should not create 'y'\n");
+
+    IDictionary_Release(dict);
+
+    /* Renaming onto an existing key fails and leaves the dictionary intact. */
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    add_str_item(dict, L"a", 1);
+    add_str_item(dict, L"b", 2);
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"b");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"a");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "put_Key onto existing key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    ok(exists_str(dict, L"b"), "key 'b' should be intact after failed rename\n");
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %ld.\n", count);
+
+    IDictionary_Release(dict);
+}
+
+/* Add two keys to a fresh dictionary; returns TRUE if the second key is
+ * treated as a duplicate of the first. */
+static BOOL keys_match(VARIANT *key1, VARIANT *key2)
+{
+    IDictionary *dict;
+    VARIANT item;
+    HRESULT hr;
+
+    if (FAILED(CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict)))
+        return FALSE;
+
+    V_VT(&item) = VT_I2;
+    V_I2(&item) = 1;
+    if (FAILED(IDictionary_Add(dict, key1, &item)))
+    {
+        IDictionary_Release(dict);
+        return FALSE;
+    }
+
+    hr = IDictionary_Add(dict, key2, &item);
+    IDictionary_Release(dict);
+    return hr == CTL_E_KEY_ALREADY_EXISTS;
+}
+
+static void test_empty_key(void)
+{
+    static const VARTYPE zero_keys[] = {
+        VT_I2, VT_I4, VT_UI1, VT_R4, VT_R8, VT_DATE,
+    };
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT a, b, item;
+    HRESULT hr;
+    unsigned i;
+
+    /* Empty matches the zero/default value of any numeric type. */
+    for (i = 0; i < ARRAY_SIZE(zero_keys); i++)
+    {
+        V_VT(&a) = VT_EMPTY;
+        V_VT(&b) = zero_keys[i];
+        if (zero_keys[i] == VT_R8 || zero_keys[i] == VT_DATE)
+            V_R8(&b) = 0.0;
+        else if (zero_keys[i] == VT_R4)
+            V_R4(&b) = 0.0f;
+        else
+            V_I4(&b) = 0;
+        ok(keys_match(&a, &b), "Empty should match zero key vt %d\n", zero_keys[i]);
+    }
+
+    /* Empty matches the empty string, but not a non-empty one. */
+    V_VT(&a) = VT_EMPTY;
+    V_VT(&b) = VT_BSTR;
+    V_BSTR(&b) = SysAllocString(L"");
+    ok(keys_match(&a, &b), "Empty should match empty string\n");
+    VariantClear(&b);
+
+    V_VT(&b) = VT_BSTR;
+    V_BSTR(&b) = SysAllocString(L"0");
+    ok(!keys_match(&a, &b), "Empty should not match \"0\"\n");
+    VariantClear(&b);
+
+    /* Empty does not match a non-zero number or Null. */
+    V_VT(&b) = VT_I2;
+    V_I2(&b) = 5;
+    ok(!keys_match(&a, &b), "Empty should not match I2 5\n");
+
+    V_VT(&b) = VT_NULL;
+    ok(!keys_match(&a, &b), "Empty should not match Null\n");
+
+    /* A numeric zero does not match the empty string (only Empty bridges). */
+    V_VT(&a) = VT_I2;
+    V_I2(&a) = 0;
+    V_VT(&b) = VT_BSTR;
+    V_BSTR(&b) = SysAllocString(L"");
+    ok(!keys_match(&a, &b), "I2 0 should not match empty string\n");
+    VariantClear(&b);
+
+    /* Null matches only Null. */
+    V_VT(&a) = VT_NULL;
+    V_VT(&b) = VT_NULL;
+    ok(keys_match(&a, &b), "Null should match Null\n");
+
+    /* Exists and Remove accept an Empty key, matching a zero-valued entry. */
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&a) = VT_I2;
+    V_I2(&a) = 0;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &a, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&b) = VT_EMPTY;
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &b, &exists);
+    ok(hr == S_OK, "Exists with Empty key: %#lx.\n", hr);
+    ok(exists == VARIANT_TRUE, "Empty should find I2 0, got %x\n", exists);
+
+    hr = IDictionary_Remove(dict, &b);
+    ok(hr == S_OK, "Remove with Empty key: %#lx.\n", hr);
+
+    IDictionary_Release(dict);
+}
+
+static void test_bool_key(void)
+{
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT a, b, item;
+    HRESULT hr;
+
+    /* Boolean keys match the equal numeric value across types: True is -1,
+     * False is 0. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_TRUE;
+    V_VT(&b) = VT_I2;
+    V_I2(&b) = -1;
+    ok(keys_match(&a, &b), "True should match I2 -1\n");
+
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_FALSE;
+    V_VT(&b) = VT_I2;
+    V_I2(&b) = 0;
+    ok(keys_match(&a, &b), "False should match I2 0\n");
+
+    /* False is the zero/default value, so it matches an Empty key. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_FALSE;
+    V_VT(&b) = VT_EMPTY;
+    ok(keys_match(&a, &b), "False should match Empty\n");
+
+    /* True and False are distinct keys. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_TRUE;
+    V_VT(&b) = VT_BOOL;
+    V_BOOL(&b) = VARIANT_FALSE;
+    ok(!keys_match(&a, &b), "True should not match False\n");
+
+    /* A script can use a comparison result (a Boolean) as the key to Exists
+     * and Remove. */
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&a) = VT_I2;
+    V_I2(&a) = -1;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &a, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&b) = VT_BOOL;
+    V_BOOL(&b) = VARIANT_TRUE;
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &b, &exists);
+    ok(hr == S_OK, "Exists with Boolean key: %#lx.\n", hr);
+    ok(exists == VARIANT_TRUE, "True should find I2 -1, got %x\n", exists);
+
+    hr = IDictionary_Remove(dict, &b);
+    ok(hr == S_OK, "Remove with Boolean key: %#lx.\n", hr);
+
+    IDictionary_Release(dict);
+}
+
 static void test_IEnumVARIANT(void)
 {
     IUnknown *enum1, *enum2;
@@ -1230,6 +1630,10 @@ START_TEST(dictionary)
     test_Remove();
     test_Item();
     test_Add();
+    test_object_key_hashfail();
+    test_put_Key();
+    test_empty_key();
+    test_bool_key();
     test_IEnumVARIANT();
     test_putref_Item();
 

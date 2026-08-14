@@ -79,12 +79,16 @@ struct hid_device_desc
 {
     BOOL is_polled;
     BOOL use_report_id;
+    UINT tlc_count;
 
     DWORD report_descriptor_len;
     char report_descriptor_buf[MAX_HID_DESCRIPTOR_LEN];
 
     HIDP_CAPS caps;
     HID_DEVICE_ATTRIBUTES attributes;
+    WCHAR vendor_str[64];
+    WCHAR product_str[64];
+    WCHAR serial_str[64];
 
     ULONG input_size;
     struct hid_expect input[64];
@@ -209,7 +213,7 @@ int winetest_start_time, winetest_last_time;
 int winetest_mute_threshold = 42;
 
 static KSPIN_LOCK tls_data_lock;
-static struct winetest_thread_data tls_data_pool[128];
+static struct winetest_thread_data tls_data_pool[256];
 static HANDLE tls_data_thread[ARRAY_SIZE(tls_data_pool)];
 static DWORD tls_data_count;
 

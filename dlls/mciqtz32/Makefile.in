@@ -1,7 +1,10 @@
 MODULE    = mciqtz32.dll
 IMPORTS   = strmiids oleaut32 ole32 winmm user32 gdi32
 
+VER_FILEDESCRIPTION_STR = "Wine DirectShow MCI Driver"
+VER_PRODUCTVERSION      = 6,5,1,900
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	mciavi_res.rc \
-	mciqtz.c \
-	version.rc
+	mciqtz.c

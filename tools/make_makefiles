@@ -23,6 +23,7 @@ use strict;
 
 my (@makefiles, %makefiles);
 my @nls_files;
+my @winmd_files;
 my %deleted_files;
 
 sub dirname($)
@@ -82,22 +83,23 @@ sub replace_in_file($$$@)
 }
 
 # replace all source variables in a makefile
-sub replace_makefile_variables($)
+sub replace_makefile_variables($$)
 {
     my $file = shift;
+    my $var = shift;
     my $make = $makefiles{$file};
     my $old;
     my $new;
     my $replaced = 0;
     my $value = "";
 
-    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=SOURCES"}}) if defined ${$make}{"=SOURCES"};
+    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=$var"}}) if defined ${$make}{"=$var"};
 
     open OLD_FILE, $file or die "cannot open $file";
     while (<OLD_FILE>)
     {
         $old .= $_;
-        if (/^\s*SOURCES\s*=/)
+        if (/^\s*$var\s*=/)
         {
             my $old_str = $_;
             while (/\\$/)
@@ -107,7 +109,7 @@ sub replace_makefile_variables($)
                 $old .= $_;
                 $old_str .= $_;
             }
-            $new .= "SOURCES = $value\n" if $value;
+            $new .= "$var = $value\n" if $value;
             $replaced = 1;
             next;
         }
@@ -115,7 +117,7 @@ sub replace_makefile_variables($)
     }
     unless ($replaced)
     {
-        $new .= "\nSOURCES = $value\n" if $value;
+        $new .= "\n$var = $value\n" if $value;
     }
     close OLD_FILE;
     update_file($file, $new) if $old ne $new;
@@ -138,13 +140,13 @@ sub parse_makefile($)
         while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
         next if (/^\s*$/);
 
-        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|STATICLIB|PARENTSRC|EXTRADLLFLAGS)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|STATICLIB|UNIXLIB|PARENTSRC|EXTRADLLFLAGS)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
             next;
         }
-        if (/^\s*(SOURCES)\s*=\s*(.*)/)
+        if (/^\s*(SOURCES|INSTALL_LIB)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -152,6 +154,7 @@ sub parse_makefile($)
             next;
         }
     }
+    close MAKE;
 
     return %make;
 }
@@ -183,7 +186,7 @@ sub get_makedep_flags($)
     {
         while (<FILE>)
         {
-            next unless /^#\s*pragma\s+makedep\s+(.*)/;
+            next unless /^[#%]\s*pragma\s+makedep\s+(.*)/;
             foreach my $flag (split /\s+/, $1)
             {
                 last if $flag eq "depend";
@@ -230,6 +233,17 @@ sub preserve_shared_source_files($$)
 # assign source files to their respective makefile
 sub assign_sources_to_makefiles(@)
 {
+    my %global_includes;
+
+    my @includes = grep { $_ =~ /^include\// } @_, "include/config.h";
+    foreach (@includes)
+    {
+        s/^include\///;
+        $global_includes{$_} = 1;
+        s/\.idl$/.h/;
+        $global_includes{$_} = 1;
+    }
+
     foreach my $file (@_)
     {
         next if defined $deleted_files{$file};
@@ -238,7 +252,7 @@ sub assign_sources_to_makefiles(@)
         my $subdir = $dir;
 
         while ($dir && !defined $makefiles{"$dir/Makefile.in"}) { $dir = dirname( $dir ); }
-        $subdir =~ s/^$dir\/?//;
+        $subdir =~ s/^\Q$dir\E\/?//;
         next unless $dir;
 
         die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile.in"};
@@ -246,13 +260,20 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.h$/)
+        if ($name =~ /(.*\/)?(.*\.h)$/)
         {
-            next if $dir ne "include";
+            my $basename = $2;
+            next unless defined $global_includes{$name} || defined $global_includes{$basename};
         }
         elsif ($name =~ /\.idl$/)
         {
-            die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
+            my %flags = get_makedep_flags($file);
+            die "no makedep flags specified in $file" unless $dir eq "include" || %flags;
+            if (defined $flags{winmd} && $file =~ /^include\/(.*)\.idl$/)
+            {
+                push @winmd_files, "$1.winmd";
+                push @{${$make}{"=INSTALL_LIB"}}, "$1.winmd";
+            }
         }
         elsif ($name =~ /\.spec$/)
         {
@@ -266,13 +287,26 @@ sub assign_sources_to_makefiles(@)
         {
             push @nls_files, $name if $dir eq "nls";
         }
+        elsif ($name =~ /\.dat$/)
+        {
+            next unless $dir eq "nls";
+        }
         elsif ($name =~ /\.xml$/)
         {
             next unless $dir eq "dlls/winewayland.drv";
         }
-        elsif ($name !~ /\.(S|c|in|inl|l|m|mc|po|rc|rh|sfd|svg|x|y)$/)
+        elsif ($name =~ /^msvcrt\/[^.]+$/) # C++ header without extension
         {
-            next unless $dir eq "loader";  # loader dir contains misc files
+            next unless $dir eq "include";
+        }
+        elsif ($name !~ /\.(S|asm|c|cpp|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|ver|x|y)$/)
+        {
+            next;
+        }
+        else
+        {
+            my %flags = get_makedep_flags($file);
+            next if defined $flags{header};
         }
         push @{${$make}{"=SOURCES"}}, $name;
     }
@@ -299,16 +333,18 @@ sub update_makefiles(@)
         next if $file eq "Makefile.in";
         my %make = %{$makefiles{$file}};
         (my $dir = $file) =~ s/^(.*)\/Makefile\.in/$1/;
+
+        die "Only one of MODULE, STATICLIB, or TESTDLL must be specified in $file"
+            if defined($make{TESTDLL}) + defined($make{STATICLIB}) + defined($make{MODULE}) > 1;
+
         if (defined($make{"TESTDLL"}))  # test
         {
             die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile\.in$/;
-            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
-            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
         }
         elsif (defined($make{"STATICLIB"}))
         {
-            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "invalid STATICLIB name" unless $make{"STATICLIB"} =~ /\.a$/;
+            die "STATICLIB should not be defined in $file" unless $file =~ /^libs\//;
         }
         elsif (defined($make{"MODULE"}))  # dll or program
         {
@@ -316,7 +352,6 @@ sub update_makefiles(@)
             my $dllflags = $make{"EXTRADLLFLAGS"} || "";
             die "invalid MODULE name" if $make{"MODULE"} =~ /\.a$/;
             die "MODULE should not be defined in $file" unless $file =~ /^(dlls|programs)\//;
-            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             if ($file =~ /^programs\//)
             {
                 die "EXTRADLLFLAGS should be defined in $file" unless $dllflags;
@@ -338,18 +373,17 @@ sub update_makefiles(@)
                 die "Subsystem should be set to native in $file" unless $dllflags =~ /-Wl,--subsystem,native/;
             }
         }
-        elsif ($file =~ /^tools.*\/Makefile\.in$/)
+        elsif (defined($make{"UNIXLIB"}))
         {
-            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
-            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            die "EXTRADLLFLAGS should not be defined in $file" if defined $make{"EXTRADLLFLAGS"};
+            die "UNIXLIB should not be defined in $file" unless $file =~ /^dlls\/.*\.drv\/Makefile.in$/;
         }
         push @lines, "WINE_CONFIG_MAKEFILE($dir)\n";
     }
 
     # update the source variables in all the makefiles
 
-    foreach my $file (sort @_) { replace_makefile_variables( $file ); }
+    foreach my $file (sort @_) { replace_makefile_variables( $file, "SOURCES" ); }
+    replace_makefile_variables( "include/Makefile.in", "INSTALL_LIB" );
 
     push @lines, "dnl End of auto-generated output commands\n";
     replace_in_file( "configure.ac", '^WINE_CONFIG_MAKEFILE', '^dnl End of auto-generated output commands\n$', @lines);
@@ -360,6 +394,7 @@ sub update_wine_inf()
     my @lines;
     push @lines, "[NlsFiles]", sort grep(!/^sort/, @nls_files);
     push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
+    push @lines, "\n[WinmdFiles]", sort @winmd_files;
     push @lines, "\n[WineSourceDirs]\n";
     replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
 }

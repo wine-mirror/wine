@@ -214,3 +214,12 @@ BOOL WINAPI GetSystemRegistryQuota(PDWORD pdwQuotaAllowed, PDWORD pdwQuotaUsed)
 
     return TRUE;
 }
+
+/******************************************************************************
+ *          CreateBoundaryDescriptorA    (KERNEL32.@)
+ */
+HANDLE WINAPI CreateBoundaryDescriptorA(LPCSTR name, ULONG flags)
+{
+    FIXME("%s, %#lx - stub\n", debugstr_a(name), flags);
+    return NULL;
+}

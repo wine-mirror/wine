@@ -55,7 +55,6 @@ struct apartment
 
 HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, HKEY *subkey);
 HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey);
-HRESULT create_agile_reference(REFIID iid, IUnknown *unk, IAgileReference **agile_reference);
 
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
@@ -175,8 +174,14 @@ void apartment_revoke_all_classes(const struct apartment *apt);
 struct apartment * apartment_findfromoxid(OXID oxid);
 struct apartment * apartment_findfromtid(DWORD tid);
 
+/* private flag indicating that the caller does not want to notify the stub
+ * when the proxy disconnects or is destroyed */
+#define SORFP_NOLIFETIMEMGMT SORF_OXRES2
+
 HRESULT marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
         DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags);
+HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt, MSHCTX dest_context,
+        void *dest_context_data, REFIID riid, const OXID_INFO *oxid_info, void **object);
 
 /* Stub Manager */
 
@@ -262,3 +267,4 @@ HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
         IID *iid, IUnknown **iface);
 HRESULT ipid_get_dest_context(const IPID *ipid, MSHCTX *dest_context, void **dest_context_data);
 HRESULT start_apartment_remote_unknown(struct apartment *apt);
+void get_process_secret(GUID *process_secret);

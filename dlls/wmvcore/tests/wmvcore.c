@@ -27,6 +27,7 @@
 #include "amvideo.h"
 #include "uuids.h"
 #include "wmcodecdsp.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
 
@@ -127,6 +128,24 @@ static WCHAR *load_resource(const WCHAR *name)
     CloseHandle(file);
 
     return pathW;
+}
+
+static IStream *load_resource_as_stream(const WCHAR *name)
+{
+    IStream *stream;
+    DWORD size;
+    HRSRC res;
+    void *ptr;
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
+    size = SizeofResource(NULL, res);
+    ptr = LockResource(LoadResource(NULL, res));
+
+    stream = SHCreateMemStream(ptr, size);
+    ok(!!stream, "Failed to create stream");
+
+    return stream;
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -2036,6 +2055,27 @@ static void test_sync_reader_compressed_output(void)
 
     IWMSyncReader_Release(reader);
     IWMProfile_Release(profile);
+}
+
+void test_sync_reader_rawvideo_file(void)
+{
+    IWMSyncReader *reader;
+    IStream *stream;
+    HRESULT hr;
+
+    stream = load_resource_as_stream(L"test_rawvideo.wmv");
+
+    hr = WMCreateSyncReader(NULL, WMT_RIGHT_PLAYBACK, &reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader_OpenStream(reader, stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IStream_Release(stream);
+    IWMSyncReader_Release(reader);
 }
 
 struct callback
@@ -4170,9 +4210,162 @@ static void test_sync_reader_allocator(void)
     callback_cleanup(&callback);
 }
 
+static struct IWMReaderAllocatorEx failing_allocator;
+
+static HRESULT WINAPI failing_allocator_QueryInterface(IWMReaderAllocatorEx *this, REFIID riid, void **out)
+{
+    if (IsEqualGUID(riid, &IID_IWMReaderAllocatorEx))
+    {
+        *out = &failing_allocator;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI failing_allocator_AddRef(IWMReaderAllocatorEx *this)
+{
+    return 2;
+}
+
+static ULONG WINAPI failing_allocator_Release(IWMReaderAllocatorEx *this)
+{
+    return 1;
+}
+
+static HRESULT WINAPI failing_allocator_AllocateForStream(IWMReaderAllocatorEx *This, WORD wStreamNum,
+    DWORD cbBuffer, INSSBuffer **ppBuffer, DWORD dwFlags, QWORD cnsSampleTime, QWORD cnsSampleDuration,
+    void *pvContext)
+{
+    return E_FAIL;
+}
+
+static HRESULT WINAPI failing_allocator_AllocateForOutput(IWMReaderAllocatorEx *This, DWORD dwOutput,
+    DWORD cbBuffer, INSSBuffer **ppBuffer, DWORD dwFlags, QWORD cnsSampleTime, QWORD cnsSampleDuration,
+    void *pvContext)
+{
+    return E_FAIL;
+}
+
+static struct IWMReaderAllocatorExVtbl failing_allocator_vtbl =
+{
+    failing_allocator_QueryInterface,
+    failing_allocator_AddRef,
+    failing_allocator_Release,
+    failing_allocator_AllocateForStream,
+    failing_allocator_AllocateForOutput,
+};
+static struct IWMReaderAllocatorEx failing_allocator = { &failing_allocator_vtbl };
+
+static void test_sync_reader_allocator_failure(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    struct teststream stream;
+    DWORD output_num, flags;
+    IWMSyncReader2 *reader;
+    QWORD pts, duration;
+    INSSBuffer *sample;
+    WORD stream_num;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = WMCreateSyncReader(NULL, 0, (IWMSyncReader **)&reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
+
+    teststream_init(&stream, file);
+
+    hr = IWMSyncReader2_OpenStream(reader, &stream.IStream_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
+
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForStream(reader, stream_num, &failing_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 1, &failing_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
+
+    IWMSyncReader2_Release(reader);
+
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
+}
+
+static void test_async_reader_com_init(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    APTTYPEQUALIFIER qualifier;
+    struct callback callback;
+    IWMReader *reader;
+    APTTYPE type;
+    HRESULT hr;
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+    CoUninitialize();
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == CO_E_NOTINITIALIZED, "got %#lx.\n", hr);
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(type == APTTYPE_MTA, "got %d.\n", type);
+    ok(qualifier == APTTYPEQUALIFIER_NONE, "got %d.\n", qualifier);
+
+    callback_init(&callback, NULL);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_opened_callback(&callback);
+
+    CoUninitialize();
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(type == APTTYPE_MTA, "got %d.\n", type);
+    ok(qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", qualifier);
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+
+    SetEvent(callback.expect_started);
+    hr = IWMReader_Start(reader, 0, 0, 1, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IWMReader_Release(reader);
+
+    callback_cleanup(&callback);
+
+    DeleteFileW(filename);
+
+    CoUninitialize();
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
+
+    /* Keep this test before CoInitialize(). */
+    test_async_reader_com_init();
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "failed to init com\n");
@@ -4189,11 +4382,13 @@ START_TEST(wmvcore)
     test_urlextension();
     test_iscontentprotected();
     test_sync_reader_allocator();
+    test_sync_reader_allocator_failure();
     test_sync_reader_settings();
     test_sync_reader_streaming();
     test_sync_reader_types();
     test_sync_reader_file();
     test_sync_reader_compressed_output();
+    test_sync_reader_rawvideo_file();
     test_async_reader_settings();
     test_async_reader_streaming();
     test_async_reader_types();

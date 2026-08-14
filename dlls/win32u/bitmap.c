@@ -31,6 +31,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ntgdi_private.h"
+#include "wine/opengl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
@@ -280,7 +281,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     if (!bmp) return 0;
 
     if (count < 0) {
-	WARN("(%d): Negative number of bytes passed???\n", (int)count );
+	WARN("(%d): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -311,7 +312,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     }
 
     TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
-          hbitmap, (int)count, bits, bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
+          hbitmap, count, bits, bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
           bmp->dib.dsBm.bmBitsPixel, src.height );
 
     if (src_stride == dst_stride)
@@ -370,6 +371,7 @@ LONG WINAPI NtGdiSetBitmapBits(
  */
 HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
 {
+    struct opengl_drawable *drawable = NULL;
     HGDIOBJ ret;
     BITMAPOBJ *bitmap;
     DC *dc;
@@ -419,6 +421,8 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
     }
     else
     {
+        drawable = dc->opengl_drawable;
+        dc->opengl_drawable = NULL;
         dc->hBitmap = handle;
         GDI_inc_ref_count( handle );
         dc->dirty = 0;
@@ -434,6 +438,7 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
 
  done:
     release_dc_ptr( dc );
+    if (ret && drawable) opengl_drawable_release( drawable );
     return ret;
 }
 

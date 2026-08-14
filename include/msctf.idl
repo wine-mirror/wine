@@ -173,6 +173,16 @@ typedef [uuid(d678c645-eb6a-45c9-b4ee-0f3e3a991348)] struct TF_PROPERTYVAL
 } TF_PROPERTYVAL;
 
 [
+  object,
+  uuid(db593490-098f-11d3-8df0-00105a2799b5),
+  pointer_default(unique)
+]
+interface ITfFunction : IUnknown
+{
+    HRESULT GetDisplayName([out] BSTR *name);
+}
+
+[
     object,
     uuid(101d6610-0990-11d3-8df0-00105a2799b5),
     pointer_default(unique)

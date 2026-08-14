@@ -274,7 +274,7 @@ HRESULT get_method( const struct table *table, const WCHAR *name, class_method *
     {
         for (j = 0; j < table->num_cols; j++)
         {
-            if (table->columns[j].type & COL_FLAG_METHOD && !wcscmp( table->columns[j].name, name ))
+            if (table->columns[j].type & COL_FLAG_METHOD && !wcsicmp( table->columns[j].name, name ))
             {
                 HRESULT hr;
                 LONGLONG val;

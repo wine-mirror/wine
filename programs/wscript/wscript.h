@@ -33,3 +33,7 @@ extern WCHAR **argums;
 extern int numOfArgs;
 
 extern VARIANT_BOOL wshInteractive;
+
+extern LONG wshTimeout;
+
+void schedule_timeout(LONG seconds);

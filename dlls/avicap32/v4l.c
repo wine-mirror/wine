@@ -35,7 +35,6 @@
 #endif
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
@@ -125,6 +124,15 @@ static NTSTATUS get_device_desc(void *args)
     return STATUS_UNSUCCESSFUL;
 }
 
+#else /* HAVE_LINUX_VIDEODEV2_H */
+
+static NTSTATUS get_device_desc(void *args)
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+#endif /* HAVE_LINUX_VIDEODEV2_H */
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_device_desc,
@@ -138,5 +146,3 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 };
 
 #endif  /* _WIN64 */
-
-#endif /* HAVE_LINUX_VIDEODEV2_H */

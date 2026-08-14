@@ -22,7 +22,9 @@
 #ifndef __WINE_BLUETOOTHAPIS_UNIXLIB_DBUS_H
 #define __WINE_BLUETOOTHAPIS_UNIXLIB_DBUS_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #ifdef SONAME_LIBDBUS_1
 #include <dbus/dbus.h>
@@ -35,6 +37,7 @@
     DO_FUNC(dbus_bus_get); \
     DO_FUNC(dbus_bus_get_id); \
     DO_FUNC(dbus_bus_get_private); \
+    DO_FUNC(dbus_bus_get_unique_name); \
     DO_FUNC(dbus_bus_remove_match); \
     DO_FUNC(dbus_connection_add_filter); \
     DO_FUNC(dbus_connection_close); \
@@ -81,6 +84,7 @@
     DO_FUNC(dbus_message_is_signal); \
     DO_FUNC(dbus_message_iter_append_basic); \
     DO_FUNC(dbus_message_iter_abandon_container); \
+    DO_FUNC(dbus_message_iter_abandon_container_if_open); \
     DO_FUNC(dbus_message_iter_close_container); \
     DO_FUNC(dbus_message_iter_get_arg_type); \
     DO_FUNC(dbus_message_iter_get_element_type); \

@@ -3,41 +3,41 @@
 @ stub AcquireCredentialsHandleW
 @ stub AddCredentialsW
 @ stub ApplyControlToken
-@ stub BCryptCloseAlgorithmProvider
-@ stub BCryptCreateHash
-@ stub BCryptDecrypt
-@ stub BCryptDeriveKey
-@ stub BCryptDeriveKeyCapi
-@ stub BCryptDeriveKeyPBKDF2
-@ stub BCryptDestroyHash
-@ stub BCryptDestroyKey
-@ stub BCryptDestroySecret
-@ stub BCryptDuplicateHash
-@ stub BCryptDuplicateKey
-@ stub BCryptEncrypt
-@ stub BCryptEnumAlgorithms
+@ stdcall BCryptCloseAlgorithmProvider(ptr long) bcrypt.BCryptCloseAlgorithmProvider
+@ stdcall BCryptCreateHash(ptr ptr ptr long ptr long long) bcrypt.BCryptCreateHash
+@ stdcall BCryptDecrypt(ptr ptr long ptr ptr long ptr long ptr long) bcrypt.BCryptDecrypt
+@ stdcall BCryptDeriveKey(ptr wstr ptr ptr long ptr long) bcrypt.BCryptDeriveKey
+@ stdcall BCryptDeriveKeyCapi(ptr ptr ptr long long) bcrypt.BCryptDeriveKeyCapi
+@ stdcall BCryptDeriveKeyPBKDF2(ptr ptr long ptr long int64 ptr long long) bcrypt.BCryptDeriveKeyPBKDF2
+@ stdcall BCryptDestroyHash(ptr) bcrypt.BCryptDestroyHash
+@ stdcall BCryptDestroyKey(ptr) bcrypt.BCryptDestroyKey
+@ stdcall BCryptDestroySecret(ptr) bcrypt.BCryptDestroySecret
+@ stdcall BCryptDuplicateHash(ptr ptr ptr long long) bcrypt.BCryptDuplicateHash
+@ stdcall BCryptDuplicateKey(ptr ptr ptr long long) bcrypt.BCryptDuplicateKey
+@ stdcall BCryptEncrypt(ptr ptr long ptr ptr long ptr long ptr long) bcrypt.BCryptEncrypt
+@ stdcall BCryptEnumAlgorithms(long ptr ptr long) bcrypt.BCryptEnumAlgorithms
 @ stub BCryptEnumProviders
-@ stub BCryptExportKey
-@ stub BCryptFinalizeKeyPair
-@ stub BCryptFinishHash
-@ stub BCryptFreeBuffer
-@ stub BCryptGenRandom
-@ stub BCryptGenerateKeyPair
-@ stub BCryptGenerateSymmetricKey
-@ stub BCryptGetFipsAlgorithmMode
-@ stub BCryptGetProperty
-@ stub BCryptHashData
-@ stub BCryptImportKey
-@ stub BCryptImportKeyPair
-@ stub BCryptKeyDerivation
-@ stub BCryptOpenAlgorithmProvider
+@ stdcall BCryptExportKey(ptr ptr wstr ptr long ptr long) bcrypt.BCryptExportKey
+@ stdcall BCryptFinalizeKeyPair(ptr long) bcrypt.BCryptFinalizeKeyPair
+@ stdcall BCryptFinishHash(ptr ptr long long) bcrypt.BCryptFinishHash
+@ stdcall BCryptFreeBuffer(ptr) bcrypt.BCryptFreeBuffer
+@ stdcall BCryptGenRandom(ptr ptr long long) bcrypt.BCryptGenRandom
+@ stdcall BCryptGenerateKeyPair(ptr ptr long long) bcrypt.BCryptGenerateKeyPair
+@ stdcall BCryptGenerateSymmetricKey(ptr ptr ptr long ptr long long) bcrypt.BCryptGenerateSymmetricKey
+@ stdcall BCryptGetFipsAlgorithmMode(ptr) bcrypt.BCryptGetFipsAlgorithmMode
+@ stdcall BCryptGetProperty(ptr wstr ptr long ptr long) bcrypt.BCryptGetProperty
+@ stdcall BCryptHashData(ptr ptr long long) bcrypt.BCryptHashData
+@ stdcall BCryptImportKey(ptr ptr wstr ptr ptr long ptr long long) bcrypt.BCryptImportKey
+@ stdcall BCryptImportKeyPair(ptr ptr wstr ptr ptr long long) bcrypt.BCryptImportKeyPair
+@ stdcall BCryptKeyDerivation(ptr ptr ptr long ptr long) bcrypt.BCryptKeyDerivation
+@ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long) bcrypt.BCryptOpenAlgorithmProvider
 @ stub BCryptRegisterConfigChangeNotify
 @ stub BCryptResolveProviders
-@ stub BCryptSecretAgreement
-@ stub BCryptSetProperty
-@ stub BCryptSignHash
+@ stdcall BCryptSecretAgreement(ptr ptr ptr long) bcrypt.BCryptSecretAgreement
+@ stdcall BCryptSetProperty(ptr wstr ptr long long) bcrypt.BCryptSetProperty
+@ stdcall BCryptSignHash(ptr ptr ptr long ptr long ptr long) bcrypt.BCryptSignHash
 @ stub BCryptUnregisterConfigChangeNotify
-@ stub BCryptVerifySignature
+@ stdcall BCryptVerifySignature(ptr ptr ptr long ptr long long) bcrypt.BCryptVerifySignature
 @ stub CompleteAuthToken
 @ stub CredMarshalTargetInfo
 @ stub DeleteSecurityContext

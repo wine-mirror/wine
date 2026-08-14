@@ -141,7 +141,6 @@ typedef struct dds_frame_info {
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICDdsDecoder IWICDdsDecoder_iface;
-    IWICWineDecoder IWICWineDecoder_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
@@ -722,11 +721,6 @@ static inline DdsDecoder *impl_from_IWICDdsDecoder(IWICDdsDecoder *iface)
     return CONTAINING_RECORD(iface, DdsDecoder, IWICDdsDecoder_iface);
 }
 
-static inline DdsDecoder *impl_from_IWICWineDecoder(IWICWineDecoder *iface)
-{
-    return CONTAINING_RECORD(iface, DdsDecoder, IWICWineDecoder_iface);
-}
-
 static inline DdsFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
 {
     return CONTAINING_RECORD(iface, DdsFrameDecode, IWICBitmapFrameDecode_iface);
@@ -1071,8 +1065,6 @@ static HRESULT WINAPI DdsDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
         *ppv = &This->IWICBitmapDecoder_iface;
     } else if (IsEqualIID(&IID_IWICDdsDecoder, iid)) {
         *ppv = &This->IWICDdsDecoder_iface;
-    } else if (IsEqualIID(&IID_IWICWineDecoder, iid)) {
-        *ppv = &This->IWICWineDecoder_iface;
     } else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -1118,27 +1110,75 @@ static HRESULT WINAPI DdsDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
+static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *stream,
                                             WICDecodeOptions cacheOptions)
 {
     DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    DDS_HEADER_DXT10 header_dxt10;
+    LARGE_INTEGER seek;
+    DDS_HEADER header;
+    ULONG bytesread;
+    DWORD magic;
     HRESULT hr;
 
-    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+    TRACE("(%p,%p,%x)\n", iface, stream, cacheOptions);
 
     EnterCriticalSection(&This->lock);
 
-    hr = IWICWineDecoder_Initialize(&This->IWICWineDecoder_iface, pIStream, cacheOptions);
+    if (This->initialized) {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto end;
+
+    hr = IStream_Read(stream, &magic, sizeof(magic), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(magic)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (magic != DDS_MAGIC) {
+        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
+        goto end;
+    }
+
+    hr = IStream_Read(stream, &header, sizeof(header), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(header)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (header.size != sizeof(header)) {
+        hr = WINCODEC_ERR_BADHEADER;
+        goto end;
+    }
+
+    if (has_extended_header(&header)) {
+        hr = IStream_Read(stream, &header_dxt10, sizeof(header_dxt10), &bytesread);
+        if (FAILED(hr)) goto end;
+        if (bytesread != sizeof(header_dxt10)) {
+            hr = WINCODEC_ERR_STREAMREAD;
+            goto end;
+        }
+    }
+
+    get_dds_info(&This->info, &header, &header_dxt10);
 
     if (This->info.dimension == WICDdsTextureCube ||
         (This->info.format != DXGI_FORMAT_BC1_UNORM &&
          This->info.format != DXGI_FORMAT_BC2_UNORM &&
-         This->info.format != DXGI_FORMAT_BC3_UNORM)) {
-        IStream_Release(pIStream);
-        This->stream = NULL;
-        This->initialized = FALSE;
+         This->info.format != DXGI_FORMAT_BC3_UNORM))
+    {
         hr = WINCODEC_ERR_BADHEADER;
+    }
+    else
+    {
+        This->initialized = TRUE;
+        This->stream = stream;
+        IStream_AddRef(stream);
     }
 
 end:
@@ -1432,97 +1472,6 @@ static const IWICDdsDecoderVtbl DdsDecoder_Dds_Vtbl = {
     DdsDecoder_Dds_GetFrame
 };
 
-static HRESULT WINAPI DdsDecoder_Wine_QueryInterface(IWICWineDecoder *iface, REFIID iid, void **ppv)
-{
-    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
-    return DdsDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
-}
-
-static ULONG WINAPI DdsDecoder_Wine_AddRef(IWICWineDecoder *iface)
-{
-    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
-    return DdsDecoder_AddRef(&This->IWICBitmapDecoder_iface);
-}
-
-static ULONG WINAPI DdsDecoder_Wine_Release(IWICWineDecoder *iface)
-{
-    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
-    return DdsDecoder_Release(&This->IWICBitmapDecoder_iface);
-}
-
-static HRESULT WINAPI DdsDecoder_Wine_Initialize(IWICWineDecoder *iface, IStream *stream, WICDecodeOptions options)
-{
-    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
-    DDS_HEADER_DXT10 header_dxt10;
-    LARGE_INTEGER seek;
-    DDS_HEADER header;
-    ULONG bytesread;
-    DWORD magic;
-    HRESULT hr;
-
-    TRACE("(This %p, stream %p, options %#x)\n", iface, stream, options);
-
-    EnterCriticalSection(&This->lock);
-
-    if (This->initialized) {
-        hr = WINCODEC_ERR_WRONGSTATE;
-        goto end;
-    }
-
-    seek.QuadPart = 0;
-    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) goto end;
-
-    hr = IStream_Read(stream, &magic, sizeof(magic), &bytesread);
-    if (FAILED(hr)) goto end;
-    if (bytesread != sizeof(magic)) {
-        hr = WINCODEC_ERR_STREAMREAD;
-        goto end;
-    }
-    if (magic != DDS_MAGIC) {
-        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
-        goto end;
-    }
-
-    hr = IStream_Read(stream, &header, sizeof(header), &bytesread);
-    if (FAILED(hr)) goto end;
-    if (bytesread != sizeof(header)) {
-        hr = WINCODEC_ERR_STREAMREAD;
-        goto end;
-    }
-    if (header.size != sizeof(header)) {
-        hr = WINCODEC_ERR_BADHEADER;
-        goto end;
-    }
-
-    if (has_extended_header(&header)) {
-        hr = IStream_Read(stream, &header_dxt10, sizeof(header_dxt10), &bytesread);
-        if (FAILED(hr)) goto end;
-        if (bytesread != sizeof(header_dxt10)) {
-            hr = WINCODEC_ERR_STREAMREAD;
-            goto end;
-        }
-    }
-
-    get_dds_info(&This->info, &header, &header_dxt10);
-
-    This->initialized = TRUE;
-    This->stream = stream;
-    IStream_AddRef(stream);
-
-end:
-    LeaveCriticalSection(&This->lock);
-
-    return hr;
-}
-
-static const IWICWineDecoderVtbl DdsDecoder_Wine_Vtbl = {
-    DdsDecoder_Wine_QueryInterface,
-    DdsDecoder_Wine_AddRef,
-    DdsDecoder_Wine_Release,
-    DdsDecoder_Wine_Initialize
-};
-
 static HRESULT WINAPI DdsFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid, void **ppv)
 {
     DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
@@ -1757,7 +1706,6 @@ HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
 
     This->IWICBitmapDecoder_iface.lpVtbl = &DdsDecoder_Vtbl;
     This->IWICDdsDecoder_iface.lpVtbl = &DdsDecoder_Dds_Vtbl;
-    This->IWICWineDecoder_iface.lpVtbl = &DdsDecoder_Wine_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->stream = NULL;

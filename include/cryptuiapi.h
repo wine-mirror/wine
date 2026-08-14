@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 BOOL WINAPI CryptUIDlgViewContext(DWORD dwContextType, LPVOID pvContext,
  HWND hwnd, LPCWSTR pwszTitle, DWORD dwFlags, LPVOID pvReserved);
@@ -428,7 +428,7 @@ typedef struct tagCRYPTUI_VIEWSIGNERINFO_STRUCTW
 BOOL WINAPI CryptUIDlgViewSignerInfoA(CRYPTUI_VIEWSIGNERINFO_STRUCTA *pcvsi);
 BOOL WINAPI CryptUIDlgViewSignerInfoW(CRYPTUI_VIEWSIGNERINFO_STRUCTW *pcvsi);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #ifdef __cplusplus
 }

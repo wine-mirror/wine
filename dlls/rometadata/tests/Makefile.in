@@ -2,4 +2,7 @@ TESTDLL = rometadata.dll
 IMPORTS = combase rometadata
 
 SOURCES = \
-	rometadata.c
+	rometadata.c \
+	rsrc.rc \
+	test-enum.idl \
+	test-simple.idl

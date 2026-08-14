@@ -1,6 +1,5 @@
-MODULE = dxcore.dll
-
-EXTRADLLFLAGS = -Wb,--prefer-native
+MODULE  = dxcore.dll
+IMPORTS = wined3d
 
 SOURCES = \
-	main.c
+	dxcore.c

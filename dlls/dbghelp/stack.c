@@ -60,6 +60,7 @@ static DWORD64 WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS64*
     return 0;
 }
 
+#ifndef _WIN64
 static BOOL CALLBACK read_mem(HANDLE hProcess, DWORD addr, void* buffer,
                               DWORD size, LPDWORD nread)
 {
@@ -68,6 +69,7 @@ static BOOL CALLBACK read_mem(HANDLE hProcess, DWORD addr, void* buffer,
     if (nread) *nread = r;
     return TRUE;
 }
+#endif
 
 static BOOL CALLBACK read_mem64(HANDLE hProcess, DWORD64 addr, void* buffer,
                                 DWORD size, LPDWORD nread)
@@ -78,12 +80,14 @@ static BOOL CALLBACK read_mem64(HANDLE hProcess, DWORD64 addr, void* buffer,
     return TRUE;
 }
 
+#ifndef _WIN64
 static inline void addr_32to64(const ADDRESS* addr32, ADDRESS64* addr64)
 {
     addr64->Offset = (ULONG64)addr32->Offset;
     addr64->Segment = addr32->Segment;
     addr64->Mode = addr32->Mode;
 }
+#endif
 
 static inline void addr_64to32(const ADDRESS64* addr64, ADDRESS* addr32)
 {
@@ -132,6 +136,7 @@ DWORD64 sw_module_base(struct cpu_stack_walk* csw, DWORD64 addr)
         return csw->u.s64.f_modl_bas(csw->hProcess, addr);
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *		StackWalk (DBGHELP.@)
  */
@@ -202,6 +207,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 
     return ret;
 }
+#endif
 
 
 /***********************************************************************
@@ -340,6 +346,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     return TRUE;
 }
 
+#ifndef _WIN64
 /******************************************************************
  *		SymRegisterFunctionEntryCallback (DBGHELP.@)
  *
@@ -352,6 +359,7 @@ BOOL WINAPI SymRegisterFunctionEntryCallback(HANDLE hProc,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+#endif
 
 /******************************************************************
  *		SymRegisterFunctionEntryCallback64 (DBGHELP.@)

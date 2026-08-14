@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <intrin.h>
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
@@ -50,17 +51,6 @@ static const signed char NTDLL_mostSignificant[16] = {
 static inline ULONG maskbits( ULONG idx )
 {
     return ~0u << (idx & 31);
-}
-
-static ULONG popcount( ULONG val )
-{
-#if defined(__MINGW32__)
-    return __builtin_popcount( val );
-#else
-    val -= val >> 1 & 0x55555555;
-    val = (val & 0x33333333) + (val >> 2 & 0x33333333);
-    return ((val + (val >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
-#endif
 }
 
 /*************************************************************************
@@ -360,8 +350,8 @@ ULONG WINAPI RtlNumberOfSetBits( const RTL_BITMAP *bitmap )
 {
     ULONG i, ret = 0;
 
-    for (i = 0; i < bitmap->SizeOfBitMap / 32; i++) ret += popcount( bitmap->Buffer[i] );
-    if (bitmap->SizeOfBitMap & 31) ret += popcount( bitmap->Buffer[i] & ~maskbits( bitmap->SizeOfBitMap ));
+    for (i = 0; i < bitmap->SizeOfBitMap / 32; i++) ret += __popcnt( bitmap->Buffer[i] );
+    if (bitmap->SizeOfBitMap & 31) ret += __popcnt( bitmap->Buffer[i] & ~maskbits( bitmap->SizeOfBitMap ));
 
     TRACE( "%p -> %lu\n", bitmap, ret );
     return ret;

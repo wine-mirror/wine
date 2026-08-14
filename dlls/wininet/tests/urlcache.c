@@ -253,6 +253,10 @@ static void test_IsUrlCacheEntryExpiredA(void)
 
     /* Set the expire time to a point in the past.. */
     ret = GetUrlCacheEntryInfoA(test_url, NULL, &size);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("urlcache isurlcacheexpiredA functions\n");
+        return;
+    }
     ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
@@ -389,9 +393,17 @@ static void test_urlcacheA(void)
     create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
 
     ret = CommitUrlCacheEntryA(test_url1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("urlcache ansi functions\n");
+        return;
+    }
     ok(ret, "CommitUrlCacheEntry failed with error %ld\n", GetLastError());
     cbCacheEntryInfo = 0;
     ret = GetUrlCacheEntryInfoA(test_url1, NULL, &cbCacheEntryInfo);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND) {
+        win_skip("urlcache ansi functions\n");
+        return;
+    }
     ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "GetUrlCacheEntryInfo should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %ld\n", GetLastError());
@@ -906,6 +918,10 @@ static void test_urlcacheW(void)
         /* dwHeaderSize is ignored, pass 0 to prove it */
         ret = CommitUrlCacheEntryW(urls[i].url, bufW, filetime_zero, filetime_zero,
                 NORMAL_CACHE_ENTRY, urls[i].header_info, 0, urls[i].extension, NULL);
+        if (i == 0 && !ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+            win_skip("urlcache commitW functions\n");
+            return;
+        }
         ok(ret, "%ld) CommitUrlCacheEntryW failed: %ld\n", i, GetLastError());
 
         SetLastError(0xdeadbeef);
@@ -990,6 +1006,21 @@ static void test_urlcacheW(void)
             ok(ret, "%ld) DeleteUrlCacheEntryW failed: %ld\n", i, GetLastError());
         }
     }
+
+    /* CreateUrlCacheEntryW has no output buffer size parameter, so it must not
+     * write more than MAX_PATH characters to lpszFileName.
+     */
+    for(i=0; i<ARRAY_SIZE(bufW) -1; i++)
+        bufW[i] = 'a';
+    bufW[i] = 0;
+
+    ret = CreateUrlCacheEntryW(test_urlW, 0, bufW, bufW, 0);
+    ok(ret, "CreateUrlCacheEntryW failed: %ld\n", GetLastError());
+    if(ret) {
+        ok(lstrlenW(bufW) < MAX_PATH, "cache path too long: %s\n", wine_dbgstr_w(bufW));
+        ret = DeleteFileW(bufW);
+        ok(ret, "DeleteFileW failed: %ld\n", GetLastError());
+    }
 }
 
 static void test_FindCloseUrlCache(void)
@@ -1073,6 +1104,10 @@ static void test_trailing_slash(void)
 
     ret = CommitUrlCacheEntryA("Visited: http://testing.cache.com/", NULL, filetime_zero, filetime_zero,
             NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("urlcache trailing slash\n");
+        return;
+    }
     ok(ret, "CommitUrlCacheEntry failed with error %ld\n", GetLastError());
 
     ok(cache_entry_exists("Visited: http://testing.cache.com/"), "cache entry does not exist\n");
@@ -1163,6 +1198,10 @@ static void test_GetUrlCacheConfigInfo(void)
 
         SetLastError(0xdeadbeef);
         ret = GetUrlCacheConfigInfoA(td[i].info, NULL, td[i].flags);
+        if (i == 0 && !ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+            win_skip("urlcache config info functions\n");
+            return;
+        }
         ok(ret == td[i].ret, "%d: expected %d, got %d\n", i, td[i].ret, ret);
         if (!ret)
             ok(GetLastError() == td[i].error, "%d: expected %lu, got %lu\n", i, td[i].error, GetLastError());

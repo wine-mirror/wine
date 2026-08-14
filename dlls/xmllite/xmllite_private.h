@@ -61,6 +61,7 @@ xml_encoding get_encoding_from_codepage(UINT);
 BOOL is_ncnamechar(WCHAR ch);
 BOOL is_pubchar(WCHAR ch);
 BOOL is_namestartchar(WCHAR ch);
+BOOL is_ncnamestartchar(WCHAR ch);
 BOOL is_namechar(WCHAR ch);
 
 /* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */

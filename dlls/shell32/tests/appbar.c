@@ -431,7 +431,6 @@ static void test_GetCurrentProcessExplicitAppUserModelID(void)
 
     appid = (void*)0xdeadbeef;
     hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
-    todo_wine
     ok(hr == E_FAIL, "got 0x%08lx\n", hr);
     ok(appid == NULL, "got %p\n", appid);
 }

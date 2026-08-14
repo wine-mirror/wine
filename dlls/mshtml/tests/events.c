@@ -127,6 +127,7 @@ DEFINE_EXPECT(QS_GetCaller);
 DEFINE_EXPECT(QS_GetCaller_parent2);
 DEFINE_EXPECT(QS_GetCaller_parent3);
 DEFINE_EXPECT(cmdtarget_Exec);
+DEFINE_EXPECT(OnChanged_title);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -2545,7 +2546,6 @@ static void test_onclick(IHTMLDocument2 *doc)
         ok(V_VT(&v) == VT_BSTR, "V_VT(onclick) = %d\n", V_VT(&v));
         ok(!lstrcmpW(V_BSTR(&v), L"function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     }else {
-        todo_wine
         ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
     }
     VariantClear(&v);
@@ -3281,9 +3281,10 @@ static void test_message_event(IHTMLDocument2 *doc)
     hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_METHOD, &dp, NULL, NULL, &caller_sp_stub);
     ok(hres == (document_mode < 9 ? E_ABORT : S_OK), "InvokeEx(postMessage) returned: %08lx\n", hres);
     CHECK_CALLED(QS_IActiveScriptSite);
-    if(document_mode < 9)
+    if(document_mode < 9) {
         CHECK_CALLED(QS_GetCaller);
-    else {
+        CLEAR_CALLED(QS_IActiveScriptSite_parent);
+    } else {
         SET_EXPECT(onmessage);
         pump_msgs(&called_onmessage);
         CHECK_CALLED(onmessage);
@@ -3308,6 +3309,8 @@ static void test_message_event(IHTMLDocument2 *doc)
     }
 
     if(document_mode < 9) {
+        CHECK_CALLED(QS_GetCaller);
+        CHECK_CALLED(QS_IActiveScriptSite_parent);
         SET_EXPECT(QS_GetCaller_parent2);
         SET_EXPECT(onmessage);
     }
@@ -4149,6 +4152,7 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLOptionElementFactory *option, *option2;
     IHTMLImageElementFactory *image, *image2;
     IHTMLXMLHttpRequestFactory *xhr, *xhr2;
+    IHTMLXDomainRequestFactory *xdr, *xdr2;
     IHTMLDocument2 *doc_node, *doc_node2;
     IOmNavigator *navigator, *navigator2;
     IHTMLLocation *location, *location2;
@@ -4307,7 +4311,14 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
     hres = IHTMLWindow6_get_sessionStorage(window6, &storage);
     ok(hres == S_OK, "get_sessionStorage failed: %08lx\n", hres);
+
+    hres = IHTMLWindow6_get_XDomainRequest(window6, &res);
+    ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XDomainRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXDomainRequestFactory, (void**)&xdr);
+    ok(hres == S_OK, "Could not get IHTMLXDomainRequestFactory: %08lx\n", hres);
     IHTMLWindow6_Release(window6);
+    VariantClear(&res);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
     ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
@@ -4491,7 +4502,18 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(storage != storage2, "storage == storage2\n");
     IHTMLStorage_Release(storage2);
     IHTMLStorage_Release(storage);
+
+    ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
+    hres = IHTMLWindow6_get_XDomainRequest(window6, &res);
+    ok(hres == S_OK, "get_XDomainRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XDomainRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXDomainRequestFactory, (void**)&xdr2);
+    ok(hres == S_OK, "Could not get IHTMLXDomainRequestFactory: %08lx\n", hres);
+    ok(xdr != xdr2, "xdr == xdr2\n");
+    IHTMLXDomainRequestFactory_Release(xdr2);
+    IHTMLXDomainRequestFactory_Release(xdr);
     IHTMLWindow6_Release(window6);
+    VariantClear(&res);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
     ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
@@ -4633,6 +4655,26 @@ static void test_create_event(IHTMLDocument2 *doc)
     IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);
+}
+
+static void test_doc_title_notify(IHTMLDocument2 *doc)
+{
+    BSTR title = NULL, tmp;
+    HRESULT hres;
+
+    trace("doc title notify tests...\n");
+
+    SET_EXPECT(OnChanged_title);
+    tmp = SysAllocString(L"wine title notify test");
+    hres = IHTMLDocument2_put_title(doc, tmp);
+    ok(hres == S_OK, "put_title failed: %08lx\n", hres);
+    SysFreeString(tmp);
+    CHECK_CALLED(OnChanged_title);
+
+    hres = IHTMLDocument2_get_title(doc, &title);
+    ok(hres == S_OK, "get_title failed: %08lx\n", hres);
+    ok(!lstrcmpW(title, L"wine title notify test"), "unexpected title %s\n", wine_dbgstr_w(title));
+    SysFreeString(title);
 }
 
 static unsigned onstorage_expect_line;
@@ -6452,6 +6494,9 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
             nav_notif_test();
     }
 
+    if(dispID == DISPID_IHTMLDOCUMENT2_TITLE)
+        CHECK_EXPECT(OnChanged_title);
+
     return S_OK;
 }
 
@@ -7758,6 +7803,7 @@ START_TEST(events)
         run_test(empty_doc_ie9_str, test_submit);
         run_test(iframe_doc_str, test_message_event);
         run_test(iframe_doc_str, test_iframe_connections);
+        run_test(empty_doc_str, test_doc_title_notify);
         if(is_ie9plus) {
             run_test_from_res(L"doc_with_prop.html", test_doc_obj);
             run_test_from_res(L"doc_with_prop_ie9.html", test_doc_obj);

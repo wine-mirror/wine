@@ -125,6 +125,28 @@ static UINT_PTR CALLBACK print_hook_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM 
     return 0;
 }
 
+static UINT_PTR CALLBACK printer_properties_hook_procA(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    DEVMODEA* dm;
+    PRINTDLGA* dlg;
+
+    if (msg == WM_INITDIALOG)
+    {
+        PostMessageW(hdlg, WM_COMMAND, psh2, lp);
+    }
+    if (msg == WM_COMMAND && wp == psh2)
+    {
+        dlg = (PRINTDLGA*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        dm->dmDuplex = 999;
+        dm->dmPaperSize = 888;
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, IDOK, FALSE);
+        return TRUE;
+    }
+    return 0;
+}
+
 static void test_PrintDlgA(void)
 {
     DWORD res, n_copies = 0;
@@ -268,7 +290,83 @@ static void test_PrintDlgA(void)
         GlobalFree(pDlg->hDevNames);
     }
 
+    ZeroMemory(pDlg, sizeof(*pDlg));
+
+    pDlg->lStructSize = sizeof(*pDlg);
+    pDlg->Flags = PD_ENABLEPRINTHOOK;
+    pDlg->lpfnPrintHook = printer_properties_hook_procA;
+
+    pDlg->hDevMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DEVMODEA));
+    dm = GlobalLock(pDlg->hDevMode);
+    dm->dmSize = sizeof(*dm);
+    dm->dmFields |= DM_DUPLEX | DM_PAPERSIZE;
+    dm->dmDuplex = 123;
+    dm->dmPaperSize = 321;
+    GlobalUnlock(pDlg->hDevMode);
+
+    PrintDlgA(pDlg);
+    dm = GlobalLock(pDlg->hDevMode);
+    ok(dm->dmDuplex == 999, "expected 999, but got %d.\n", dm->dmDuplex);
+    ok(dm->dmPaperSize == 888, "expected 888, but got %d.\n", dm->dmPaperSize);
+    GlobalUnlock(pDlg->hDevMode);
+    GlobalFree(pDlg->hDevMode);
+
     free(pDlg);
+}
+
+static UINT_PTR CALLBACK printer_properties_hook_procW(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    DEVMODEW* dm;
+    PRINTDLGW* dlg;
+
+    if (msg == WM_INITDIALOG)
+    {
+        PostMessageW(hdlg, WM_COMMAND, psh2, lp);
+    }
+    if (msg == WM_COMMAND && wp == psh2)
+    {
+        dlg = (PRINTDLGW*)lp;
+        dm = GlobalLock(dlg->hDevMode);
+        dm->dmDuplex = 999;
+        dm->dmPaperSize = 888;
+        GlobalUnlock(dlg->hDevMode);
+        PostMessageW(hdlg, WM_COMMAND, IDOK, FALSE);
+        return TRUE;
+    }
+    return 0;
+}
+
+void test_PrintDlgW(void)
+{
+    PRINTDLGW pd = { 0 };
+    DEVMODEW* dm;
+    DWORD name_size = 0;
+
+    GetDefaultPrinterW(NULL, &name_size);
+    if(name_size == 0)
+    {
+        skip("No printer configured.\n");
+        return;
+    }
+
+    pd.lStructSize = sizeof(pd);
+    pd.Flags = PD_ENABLEPRINTHOOK;
+    pd.lpfnPrintHook = printer_properties_hook_procW;
+
+    pd.hDevMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DEVMODEW));
+    dm = GlobalLock(pd.hDevMode);
+    dm->dmSize = sizeof(*dm);
+    dm->dmFields |= DM_DUPLEX | DM_PAPERSIZE;
+    dm->dmDuplex = 123;
+    dm->dmPaperSize = 321;
+    GlobalUnlock(pd.hDevMode);
+
+    PrintDlgW(&pd);
+    dm = GlobalLock(pd.hDevMode);
+    ok(dm->dmDuplex == 999, "expected 999, but got %d.\n", dm->dmDuplex);
+    ok(dm->dmPaperSize == 888, "expected 888, but got %d.\n", dm->dmPaperSize);
+    GlobalUnlock(pd.hDevMode);
+    GlobalFree(pd.hDevMode);
 }
 
 /* ########################### */
@@ -641,6 +739,7 @@ START_TEST(printdlg)
 
     test_PageSetupDlgA();
     test_PrintDlgA();
+    test_PrintDlgW();
     test_PrintDlgExW();
     test_abort_proc();
 }

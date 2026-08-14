@@ -119,6 +119,7 @@ static inline BOOL is_numeric_key(const VARIANT *key)
         case VT_DATE:
         case VT_R4:
         case VT_R8:
+        case VT_BOOL:
             return TRUE;
         default:
             return FALSE;
@@ -162,9 +163,38 @@ static inline BOOL numeric_key_eq(const VARIANT *key1, const VARIANT *key2)
     return V_R4(&v1) == V_R4(&v2);
 }
 
+/* Empty matches the zero/default value of the other key's type: any numeric
+ * zero, the empty string, or another Empty. */
+static BOOL empty_matches_key(const VARIANT *key)
+{
+    VARIANT v;
+
+    switch (V_VT(key))
+    {
+        case VT_EMPTY:
+            return TRUE;
+        case VT_BSTR:
+        {
+            const WCHAR *str = get_key_strptr(key);
+            return !str || !*str;
+        }
+        default:
+            if (!is_numeric_key(key))
+                return FALSE;
+            VariantInit(&v);
+            if (FAILED(VariantChangeType(&v, key, 0, VT_R4)))
+                return FALSE;
+            return V_R4(&v) == 0.0f;
+    }
+}
+
 static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_pair *pair, const VARIANT *key, DWORD hash)
 {
-    if (is_string_key(key) != is_string_key(&pair->key))
+    if (V_VT(key) == VT_EMPTY || V_VT(&pair->key) == VT_EMPTY)
+    {
+        return empty_matches_key(V_VT(key) == VT_EMPTY ? &pair->key : key);
+    }
+    else if (is_string_key(key) != is_string_key(&pair->key))
     {
         return FALSE;
     }
@@ -188,9 +218,9 @@ static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_
     {
         return hash == pair->hash && numeric_key_eq(key, &pair->key);
     }
-    else if (V_VT(&pair->key) == VT_EMPTY || V_VT(&pair->key) == VT_NULL)
+    else if (V_VT(&pair->key) == VT_NULL)
     {
-        return V_VT(&pair->key) == V_VT(key);
+        return V_VT(key) == VT_NULL;
     }
     else
     {
@@ -199,24 +229,30 @@ static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_
     }
 }
 
-static struct keyitem_pair *get_keyitem_pair(struct dictionary *dict, VARIANT *key)
+/* Looks up the pair for a key. On success *ret is the matching pair, or NULL
+   if the key is not present. A failure to hash the key (e.g. an object key
+   that can no longer be queried for IID_IUnknown) is reported to the caller
+   rather than being mistaken for an absent key. */
+static HRESULT get_keyitem_pair(struct dictionary *dict, VARIANT *key, struct keyitem_pair **ret)
 {
     struct keyitem_pair *pair;
     struct list *head, *entry;
     VARIANT hash, v;
     HRESULT hr;
 
+    *ret = NULL;
+
     hr = IDictionary_get_HashVal(&dict->IDictionary_iface, key, &hash);
     if (FAILED(hr))
-        return NULL;
+        return hr;
 
     head = get_bucket_head(dict, V_I4(&hash));
     if (!head->next || list_empty(head))
-        return NULL;
+        return S_OK;
 
     VariantInit(&v);
-    if (FAILED(VariantCopyInd(&v, key)))
-        return NULL;
+    if (FAILED(hr = VariantCopyInd(&v, key)))
+        return hr;
 
     entry = list_head(head);
     do
@@ -225,19 +261,29 @@ static struct keyitem_pair *get_keyitem_pair(struct dictionary *dict, VARIANT *k
         if (is_matching_key(dict, pair, &v, V_I4(&hash)))
         {
             VariantClear(&v);
-            return pair;
+            *ret = pair;
+            return S_OK;
         }
     } while ((entry = list_next(head, entry)));
 
     VariantClear(&v);
 
-    return NULL;
+    return S_OK;
+}
+
+static void link_keyitem_to_bucket(struct dictionary *dict, struct keyitem_pair *pair)
+{
+    struct list *head = get_bucket_head(dict, pair->hash);
+
+    if (!head->next)
+        /* this only happens once per bucket */
+        list_init(head);
+    list_add_tail(head, &pair->bucket);
 }
 
 static HRESULT add_keyitem_pair(struct dictionary *dict, VARIANT *key, VARIANT *item)
 {
     struct keyitem_pair *pair;
-    struct list *head;
     VARIANT hash;
     HRESULT hr;
 
@@ -260,13 +306,8 @@ static HRESULT add_keyitem_pair(struct dictionary *dict, VARIANT *key, VARIANT *
     if (FAILED(hr))
         goto failed;
 
-    head = get_bucket_head(dict, pair->hash);
-    if (!head->next)
-        /* this only happens once per bucket */
-        list_init(head);
-
     /* link to bucket list and to full list */
-    list_add_tail(head, &pair->bucket);
+    link_keyitem_to_bucket(dict, pair);
     list_add_tail(&dict->pairs, &pair->entry);
     dict->count++;
     return S_OK;
@@ -563,10 +604,13 @@ static HRESULT WINAPI dictionary_putref_Item(IDictionary *iface, VARIANT *key, V
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(item));
 
-    if ((pair = get_keyitem_pair(dictionary, key)))
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (pair)
         return VariantCopyInd(&pair->item, item);
 
     return add_keyitem_pair(dictionary, key, item);
@@ -576,10 +620,13 @@ static HRESULT WINAPI dictionary_put_Item(IDictionary *iface, VARIANT *key, VARI
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(item));
 
-    if ((pair = get_keyitem_pair(dictionary, key)))
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (pair)
         return VariantCopyInd(&pair->item, item);
 
     return add_keyitem_pair(dictionary, key, item);
@@ -589,10 +636,13 @@ static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *key, VARI
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_variant(key), item);
 
-    if ((pair = get_keyitem_pair(dictionary, key)))
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (pair)
         VariantCopy(item, &pair->item);
     else {
         VariantInit(item);
@@ -605,10 +655,14 @@ static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *key, VARI
 static HRESULT WINAPI dictionary_Add(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(item));
 
-    if (get_keyitem_pair(dictionary, key))
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (pair)
         return CTL_E_KEY_ALREADY_EXISTS;
 
     return add_keyitem_pair(dictionary, key, item);
@@ -627,13 +681,18 @@ static HRESULT WINAPI dictionary_get_Count(IDictionary *iface, LONG *count)
 static HRESULT WINAPI dictionary_Exists(IDictionary *iface, VARIANT *key, VARIANT_BOOL *exists)
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_variant(key), exists);
 
     if (!exists)
         return CTL_E_ILLEGALFUNCTIONCALL;
 
-    *exists = get_keyitem_pair(dictionary, key) != NULL ? VARIANT_TRUE : VARIANT_FALSE;
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+
+    *exists = pair ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -680,26 +739,41 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
 static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *key, VARIANT *newkey)
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
-    struct keyitem_pair *pair;
-    VARIANT empty;
+    struct keyitem_pair *pair, *existing;
+    VARIANT new_key, hash;
     HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(newkey));
 
-    if ((pair = get_keyitem_pair(dictionary, key)))
-    {
-        /* found existing pair for a key, add new pair with new key
-           and old item and remove old pair after that */
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (!pair)
+        return CTL_E_ELEMENT_NOT_FOUND;
 
-        hr = IDictionary_Add(iface, newkey, &pair->item);
-        if (FAILED(hr))
-            return hr;
+    /* The key is renamed in place, preserving its value and enumeration
+       position; only collisions with a different pair are rejected. */
+    if (FAILED(hr = get_keyitem_pair(dictionary, newkey, &existing)))
+        return hr;
+    if (existing && existing != pair)
+        return CTL_E_KEY_ALREADY_EXISTS;
 
-        return IDictionary_Remove(iface, key);
-    }
+    hr = IDictionary_get_HashVal(iface, newkey, &hash);
+    if (FAILED(hr))
+        return hr;
 
-    VariantInit(&empty);
-    return IDictionary_Add(iface, newkey, &empty);
+    VariantInit(&new_key);
+    hr = VariantCopyInd(&new_key, newkey);
+    if (FAILED(hr))
+        return hr;
+
+    VariantClear(&pair->key);
+    pair->key = new_key;
+    pair->hash = V_I4(&hash);
+
+    list_remove(&pair->bucket);
+    link_keyitem_to_bucket(dictionary, pair);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
@@ -746,10 +820,13 @@ static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
+    HRESULT hr;
 
     TRACE("%p, %s.\n", iface, debugstr_variant(key));
 
-    if (!(pair = get_keyitem_pair(dictionary, key)))
+    if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
+        return hr;
+    if (!pair)
         return CTL_E_ELEMENT_NOT_FOUND;
 
     notify_remove_pair(&dictionary->notifier, &pair->entry);
@@ -919,6 +996,10 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_R8|VT_BYREF:
     case VT_R8:
         return get_flt_hash(V_VT(key) & VT_BYREF ? *V_R8REF(key) : V_R8(key), &V_I4(hash));
+    case VT_BOOL|VT_BYREF:
+    case VT_BOOL:
+        V_I4(hash) = get_num_hash(V_VT(key) & VT_BYREF ? *V_BOOLREF(key) : V_BOOL(key));
+        break;
     case VT_EMPTY:
     case VT_NULL:
         V_I4(hash) = 0;

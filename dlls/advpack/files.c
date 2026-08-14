@@ -320,30 +320,33 @@ static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
         BOOL done = TRUE;
         int fname_len = lstrlenW(fname);
 
-        /* Generate a path with wildcard suitable for iterating */
-        if (fname_len && fname[fname_len-1] != '\\') fname[fname_len++] = '\\';
-        lstrcpyW(fname + fname_len, L"*");
-
-        if ((hFindFile = FindFirstFileW(fname, &w32fd)) != INVALID_HANDLE_VALUE)
+        if (!(flags & ADN_DEL_IF_EMPTY))
         {
-            /* Iterate through the files in the directory */
-            for (done = FALSE; !done; done = !FindNextFileW(hFindFile, &w32fd))
+            /* Generate a path with wildcard suitable for iterating */
+            if (fname_len && fname[fname_len-1] != '\\') fname[fname_len++] = '\\';
+            lstrcpyW(fname + fname_len, L"*");
+
+            if ((hFindFile = FindFirstFileW(fname, &w32fd)) != INVALID_HANDLE_VALUE)
             {
-                TRACE("%s\n", debugstr_w(w32fd.cFileName));
-                if (lstrcmpW(L".", w32fd.cFileName) != 0 && lstrcmpW(L"..", w32fd.cFileName) != 0)
+                /* Iterate through the files in the directory */
+                for (done = FALSE; !done; done = !FindNextFileW(hFindFile, &w32fd))
                 {
-                    lstrcpyW(fname + fname_len, w32fd.cFileName);
-                    if (DELNODE_recurse_dirtree(fname, flags) != S_OK)
+                    TRACE("%s\n", debugstr_w(w32fd.cFileName));
+                    if (lstrcmpW(L".", w32fd.cFileName) != 0 && lstrcmpW(L"..", w32fd.cFileName) != 0)
                     {
-                        break; /* Failure */
+                        lstrcpyW(fname + fname_len, w32fd.cFileName);
+                        if (DELNODE_recurse_dirtree(fname, flags) != S_OK)
+                        {
+                            break; /* Failure */
+                        }
                     }
                 }
+                FindClose(hFindFile);
             }
-            FindClose(hFindFile);
-        }
 
-        /* We're done with this directory, so restore the old path without wildcard */
-        *(fname + fname_len) = '\0';
+            /* We're done with this directory, so restore the old path without wildcard */
+            *(fname + fname_len) = '\0';
+        }
 
         if (done)
         {

@@ -25,32 +25,30 @@
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
-
 
 /*****************************************************************************
- * IDirectMusicScriptImpl implementation
+ * IDirectMusicScript implementation
  */
-typedef struct IDirectMusicScriptImpl {
+struct script {
     IDirectMusicScript IDirectMusicScript_iface;
     struct dmobject dmobj;
     LONG ref;
     IDirectMusicPerformance *pPerformance;
-    DMUS_IO_SCRIPT_HEADER *pHeader;
-    DMUS_IO_VERSION *pVersion;
-    WCHAR *pwzLanguage;
-    WCHAR *pwzSource;
-} IDirectMusicScriptImpl;
+    DMUS_IO_SCRIPT_HEADER header;
+    DMUS_IO_VERSION version;
+    WCHAR *lang;
+    WCHAR *source;
+};
 
-static inline IDirectMusicScriptImpl *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
+static inline struct script *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
 {
-  return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, IDirectMusicScript_iface);
+  return CONTAINING_RECORD(iface, struct script, IDirectMusicScript_iface);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *iface, REFIID riid,
         void **ret_iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
 
@@ -73,7 +71,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *
 
 static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -83,16 +81,14 @@ static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 
 static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 {
-    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    struct script *This = impl_from_IDirectMusicScript(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
-        free(This->pHeader);
-        free(This->pVersion);
-        free(This->pwzLanguage);
-        free(This->pwzSource);
+        free(This->lang);
+        free(This->source);
         free(This);
     }
 
@@ -102,7 +98,7 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
         IDirectMusicPerformance *pPerformance, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %p, %p): stub\n", This, pPerformance, pErrorInfo);
   This->pPerformance = pPerformance;
   return S_OK;
@@ -111,7 +107,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
 static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *iface,
         WCHAR *pwszRoutineName, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
   /*return E_NOTIMPL;*/
   return S_OK;
@@ -121,7 +117,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, FIXME, %d, %p): stub\n", This, debugstr_w(pwszVariableName),/* varValue,*/ fSetRef, pErrorInfo);
   return S_OK;
 }
@@ -129,7 +125,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT *pvarValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), pvarValue, pErrorInfo);
   return S_OK;
 }
@@ -137,7 +133,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG lValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %li, %p): stub\n", This, debugstr_w(pwszVariableName), lValue, pErrorInfo);
   return S_OK;
 }
@@ -145,7 +141,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG *plValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), plValue, pErrorInfo);
   return S_OK;
 }
@@ -153,7 +149,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, IUnknown *punkValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), punkValue, pErrorInfo);
   return S_OK;
 }
@@ -161,7 +157,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, REFIID riid, void **ppv, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), debugstr_dmguid(riid), ppv, pErrorInfo);
   return S_OK;
 }
@@ -169,7 +165,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
@@ -177,7 +173,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumVariable(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+  struct script *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
@@ -241,238 +237,109 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     script_IDirectMusicObject_ParseDescriptor
 };
 
-/* IDirectMusicScriptImpl IPersistStream part: */
-static inline IDirectMusicScriptImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct script *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct script, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT load_container(IStream *stream, struct chunk_entry *riff)
 {
-        IDirectMusicScriptImpl *This = impl_from_IPersistStream(iface);
-	DMUS_PRIVATE_CHUNK Chunk;
-	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
-	LARGE_INTEGER liMove; /* used when skipping chunks */
-	LPDIRECTMUSICGETLOADER pGetLoader = NULL;
-	LPDIRECTMUSICLOADER pLoader = NULL;
+    DMUS_OBJECTDESC desc = {.dwSize = sizeof(DMUS_OBJECTDESC), .dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS,
+                            .guidClass = CLSID_DirectMusicContainer};
+    IDirectMusicObject *dmobj;
+    HRESULT hr;
 
-	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
-	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-	switch (Chunk.fccID) {	
-		case FOURCC_RIFF: {
-			IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
-			TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-			StreamSize = Chunk.dwSize - sizeof(FOURCC);
-			StreamCount = 0;
-			switch (Chunk.fccID) {
-				case DMUS_FOURCC_SCRIPT_FORM: {
-					TRACE_(dmfile)(": script form\n");
-					do {
-						IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-						StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-						TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-						switch (Chunk.fccID) { 
-						        case DMUS_FOURCC_SCRIPT_CHUNK: {
-							        TRACE_(dmfile)(": script header chunk\n");
-								This->pHeader = calloc(1, Chunk.dwSize);
-								IStream_Read (pStm, This->pHeader, Chunk.dwSize, NULL);
-								break;
-						        }
-						        case DMUS_FOURCC_SCRIPTVERSION_CHUNK: {
-							        TRACE_(dmfile)(": script version chunk\n");
-								This->pVersion = calloc(1, Chunk.dwSize);
-								IStream_Read (pStm, This->pVersion, Chunk.dwSize, NULL); 
-								TRACE_(dmfile)("version: 0x%08lx.0x%08lx\n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
-								break;
-						        }
-						        case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK: {
-							        TRACE_(dmfile)(": script language chunk\n");
-								This->pwzLanguage = calloc(1, Chunk.dwSize);
-								IStream_Read (pStm, This->pwzLanguage, Chunk.dwSize, NULL); 
-								TRACE_(dmfile)("using language: %s\n", debugstr_w(This->pwzLanguage));
-								break;
-						        }
-						        case DMUS_FOURCC_SCRIPTSOURCE_CHUNK: {
-							        TRACE_(dmfile)(": script source chunk\n");
-								This->pwzSource = calloc(1, Chunk.dwSize);
-								IStream_Read (pStm, This->pwzSource, Chunk.dwSize, NULL); 
-								if (TRACE_ON(dmscript)) {
-								    int count = WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, NULL, 0, NULL, NULL);
-								    LPSTR str = malloc(count);
-								    WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, str, count, NULL, NULL);
-								    str[count-1] = '\n';
-								    TRACE("source:\n");
-								    fwrite( str, 1, count, stderr );
-								    free(str);
-								}
-								break;
-						        }
-							case DMUS_FOURCC_GUID_CHUNK: {
-								TRACE_(dmfile)(": GUID chunk\n");
-								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->dmobj.desc.guidObject, Chunk.dwSize, NULL);
-								break;
-							}
-							case DMUS_FOURCC_VERSION_CHUNK: {
-								TRACE_(dmfile)(": version chunk\n");
-								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->dmobj.desc.vVersion, Chunk.dwSize, NULL);
-								break;
-							}
-							case DMUS_FOURCC_CATEGORY_CHUNK: {
-								TRACE_(dmfile)(": category chunk\n");
-								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->dmobj.desc.wszCategory, Chunk.dwSize, NULL);
-								break;
-							}
-						        case FOURCC_RIFF: {
-								IDirectMusicObject* pObject = NULL;
-								DMUS_OBJECTDESC desc;
+    if (FAILED(hr = IStream_Clone(stream, &desc.pStream)))
+    {
+        ERR("Failed to clone IStream (%p): hr %#lx.\n", stream, hr);
+        return hr;
+    }
+    if (SUCCEEDED(hr = stream_reset_chunk_start(desc.pStream, riff)))
+    {
+        if (SUCCEEDED(hr = stream_get_object(desc.pStream, &desc, &IID_IDirectMusicObject, (void **)&dmobj)))
+            IDirectMusicObject_Release(dmobj);
+        else
+            ERR("Failed to load container: hr %#lx.\n", hr);
+    }
 
-								ZeroMemory (&desc, sizeof(DMUS_OBJECTDESC));
-								desc.dwSize = sizeof(DMUS_OBJECTDESC);
-								desc.dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS;
-								desc.guidClass = CLSID_DirectMusicContainer;
-								desc.pStream = NULL;
-								IStream_Clone (pStm, &desc.pStream);
+    IStream_Release(desc.pStream);
 
-								liMove.QuadPart = 0;
-								liMove.QuadPart -= (sizeof(FOURCC) + sizeof(DWORD));
-								IStream_Seek (desc.pStream, liMove, STREAM_SEEK_CUR, NULL);
+    return hr;
+}
 
-								IStream_QueryInterface (pStm, &IID_IDirectMusicGetLoader, (LPVOID*)&pGetLoader);
-								IDirectMusicGetLoader_GetLoader (pGetLoader, &pLoader);
-								IDirectMusicGetLoader_Release (pGetLoader);
+static HRESULT WINAPI script_persist_stream_Load(IPersistStream *iface, IStream *stream)
+{
+    struct script *This = impl_from_IPersistStream(iface);
+    struct chunk_entry script = {0};
+    struct chunk_entry chunk = {.parent = &script};
+    HRESULT hr;
 
-								if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &desc, &IID_IDirectMusicObject, (LPVOID*) &pObject))) {
-								  IDirectMusicObject_Release (pObject);
-								} else {
-								  ERR_(dmfile)("Error on GetObject while trying to load Scrip SubContainer\n");
-								}
+    TRACE("(%p, %p): Loading\n", This, stream);
 
-								IDirectMusicLoader_Release (pLoader); pLoader = NULL; /* release loader */
-								IStream_Release(desc.pStream); desc.pStream = NULL; /* release cloned stream */
+    if (!stream)
+        return E_POINTER;
 
-								liMove.QuadPart = Chunk.dwSize;
-								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-								/*
-							        IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
-								TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
-								ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-								ListCount[0] = 0;
+    if (stream_get_chunk(stream, &script) != S_OK || script.id != FOURCC_RIFF ||
+            script.type != DMUS_FOURCC_SCRIPT_FORM)
+    {
+        WARN("Invalid chunk %s\n", debugstr_chunk(&script));
+        return DMUS_E_UNSUPPORTED_STREAM;
+    }
+    if (FAILED(hr = dmobj_parsedescriptor(stream, &script, &This->dmobj.desc, DMUS_OBJ_OBJECT))
+                || FAILED(hr = stream_reset_chunk_data(stream, &script)))
+        return hr;
 
-								switch (Chunk.fccID) {
-								        default: {
-										TRACE_(dmfile)(": unknown (skipping)\n");
-										liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-										break;						
-									}
-								}
-								*/
-								break;
-							}
-							case FOURCC_LIST: {
-								IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
-								TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-								ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-								ListCount[0] = 0;
-								switch (Chunk.fccID) {
-									case DMUS_FOURCC_UNFO_LIST: {
-										TRACE_(dmfile)(": UNFO list\n");
-										do {
-											IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-											switch (Chunk.fccID) {
-												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
-                                              (though strings seem to be valid unicode) */
-												case mmioFOURCC('I','N','A','M'):
-												case DMUS_FOURCC_UNAM_CHUNK: {
-													TRACE_(dmfile)(": name chunk\n");
-													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->dmobj.desc.wszName, Chunk.dwSize, NULL);
-													break;
-												}
-												case mmioFOURCC('I','A','R','T'):
-												case DMUS_FOURCC_UART_CHUNK: {
-													TRACE_(dmfile)(": artist chunk (ignored)\n");
-													liMove.QuadPart = Chunk.dwSize;
-													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-													break;
-												}
-												case mmioFOURCC('I','C','O','P'):
-												case DMUS_FOURCC_UCOP_CHUNK: {
-													TRACE_(dmfile)(": copyright chunk (ignored)\n");
-													liMove.QuadPart = Chunk.dwSize;
-													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-													break;
-												}
-												case mmioFOURCC('I','S','B','J'):
-												case DMUS_FOURCC_USBJ_CHUNK: {
-													TRACE_(dmfile)(": subject chunk (ignored)\n");
-													liMove.QuadPart = Chunk.dwSize;
-													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-													break;
-												}
-												case mmioFOURCC('I','C','M','T'):
-												case DMUS_FOURCC_UCMT_CHUNK: {
-													TRACE_(dmfile)(": comment chunk (ignored)\n");
-													liMove.QuadPart = Chunk.dwSize;
-													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-													break;
-												}
-												default: {
-													TRACE_(dmfile)(": unknown sub-chunk (irrelevant & skipping)\n");
-													liMove.QuadPart = Chunk.dwSize;
-													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-													break;						
-												}
-											}
-											TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-										} while (ListCount[0] < ListSize[0]);
-										break;
-									}
-									default: {
-										TRACE_(dmfile)(": unknown (skipping)\n");
-										liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-										break;						
-									}
-								}
-								break;
-							}	
-							default: {
-								TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-								liMove.QuadPart = Chunk.dwSize;
-								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-								break;						
-							}
-						}
-						TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
-					} while (StreamCount < StreamSize);
-					break;
-				}
-				default: {
-					TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-					liMove.QuadPart = StreamSize;
-					IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-					return E_FAIL;
-				}
-			}
-			TRACE_(dmfile)(": reading finished\n");
-			break;
-		}
-		default: {
-			TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-			liMove.QuadPart = Chunk.dwSize;
-			IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-			return E_FAIL;
-		}
-	}
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+            case DMUS_FOURCC_GUID_CHUNK:
+            case DMUS_FOURCC_VERSION_CHUNK:
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_UNFO_LIST):
+                /* already parsed/ignored by dmobj_parsedescriptor */
+                break;
+            case DMUS_FOURCC_SCRIPT_CHUNK:
+                hr = stream_chunk_get_data(stream, &chunk, &This->header, sizeof(This->header));
+                if (SUCCEEDED(hr))
+                    TRACE("header dwFlags: %#lx\n", This->header.dwFlags);
+                break;
+            case DMUS_FOURCC_SCRIPTVERSION_CHUNK:
+                hr = stream_chunk_get_data(stream, &chunk, &This->version, sizeof(This->version));
+                if (SUCCEEDED(hr))
+                    TRACE("version: %#lx.%#lx\n", This->version.dwVersionMS, This->version.dwVersionLS);
+                break;
+            case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_CONTAINER_FORM):
+                hr = load_container(stream, &chunk);
+                break;
+            case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK:
+                if (This->lang)
+                    free(This->lang);
+                This->lang = calloc(1, chunk.size);
+                hr = stream_chunk_get_wstr(stream, &chunk, This->lang, chunk.size);
+                if (SUCCEEDED(hr))
+                    TRACE("language: %s\n", debugstr_w(This->lang));
+                break;
+            case DMUS_FOURCC_SCRIPTSOURCE_CHUNK:
+                if (This->source)
+                    free(This->source);
+                This->source = calloc(1, chunk.size);
+                hr = stream_chunk_get_wstr(stream, &chunk, This->source, chunk.size);
+                if (SUCCEEDED(hr))
+                    TRACE("source: %s\n", debugstr_w(This->source));
+                break;
+            case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_REF_LIST):
+                FIXME("Loading the script source from file not implement.");
+                break;
+            default:
+                WARN("Ignoring chunk %s\n", debugstr_chunk(&chunk));
+                break;
+        }
 
-	return S_OK;
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {
@@ -481,7 +348,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     unimpl_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    script_persist_stream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };
@@ -489,7 +356,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
 {
-  IDirectMusicScriptImpl *obj;
+  struct script *obj;
   HRESULT hr;
 
   *ppobj = NULL;

@@ -198,7 +198,7 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
     e = xmalloc(sizeof(expr_t));
     e->type = type;
     e->ref = expr;
-    e->u.tref = var->declspec;
+    e->u.var = var;
     e->is_const = FALSE;
     if (type == EXPR_SIZEOF)
     {
@@ -240,7 +240,6 @@ expr_t *make_exprt(enum expr_type type, var_t *var, expr_t *expr)
             e->cval = expr->cval;
         }
     }
-    free(var);
     return e;
 }
 
@@ -581,7 +580,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         break;
     case EXPR_CAST:
         result = resolve_expression(expr_loc, cont_type, e->ref);
-        result.type = e->u.tref.type;
+        result.type = e->u.var->declspec.type;
         break;
     case EXPR_SIZEOF:
         result.is_temporary = FALSE;
@@ -752,13 +751,13 @@ void write_expr(FILE *h, const expr_t *e, int brackets,
         break;
     case EXPR_CAST:
         fprintf(h, "(");
-        write_type_decl(h, &e->u.tref, NULL);
+        write_type_decl(h, &e->u.var->declspec, NULL);
         fprintf(h, ")");
         write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type, local_var_prefix);
         break;
     case EXPR_SIZEOF:
         fprintf(h, "sizeof(");
-        write_type_decl(h, &e->u.tref, NULL);
+        write_type_decl(h, &e->u.var->declspec, NULL);
         fprintf(h, ")");
         break;
     case EXPR_SHL:
@@ -909,7 +908,7 @@ int compare_expr(const expr_t *a, const expr_t *b)
                 return ret;
             return compare_expr(a->u.ext, b->u.ext);
         case EXPR_CAST:
-            ret = compare_type(a->u.tref.type, b->u.tref.type);
+            ret = compare_type(a->u.var->declspec.type, b->u.var->declspec.type);
             if (ret != 0)
                 return ret;
             /* Fall through.  */
@@ -921,7 +920,7 @@ int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_POS:
             return compare_expr(a->ref, b->ref);
         case EXPR_SIZEOF:
-            return compare_type(a->u.tref.type, b->u.tref.type);
+            return compare_type(a->u.var->declspec.type, b->u.var->declspec.type);
         case EXPR_VOID:
             return 0;
     }

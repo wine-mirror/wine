@@ -55,7 +55,7 @@ static inline DWORD gdi_handle_type( HGDIOBJ obj )
 #define DIB_PAL_INDICES 2
 
 /* Format of comment record added by GetWinMetaFileBits */
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct
 {
     DWORD comment_id;   /* WMFC */
@@ -69,7 +69,7 @@ typedef struct
     DWORD emf_size;
     BYTE emf_data[1];
 } emf_in_wmf_comment;
-#include <poppack.h>
+#pragma pack(pop)
 
 static inline BOOL is_meta_dc( HDC hdc )
 {

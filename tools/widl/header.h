@@ -24,13 +24,12 @@
 #include "typetree.h"
 
 extern const char* get_name(const var_t *v);
-extern void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, bool define, int write_callconv);
-extern void write_type_right(FILE *h, type_t *t, int is_field);
+extern void write_type_left( FILE *h, const decl_spec_t *ds, enum name_type name_type );
+extern void write_type_right( FILE *h, type_t *t, bool is_field );
 extern void write_type_decl(FILE *f, const decl_spec_t *t, const char *name);
 extern void write_type_decl_left(FILE *f, const decl_spec_t *ds);
 extern unsigned int get_context_handle_offset( const type_t *type );
 extern unsigned int get_generic_handle_offset( const type_t *type );
-extern int needs_space_after(type_t *t);
 extern int is_object(const type_t *iface);
 extern int is_local(const attr_list_t *list);
 extern int count_methods(const type_t *iface);

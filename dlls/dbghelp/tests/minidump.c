@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include <intrin.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windows.h"
@@ -29,16 +30,9 @@
 static HRESULT (WINAPI *pSetThreadDescription)(HANDLE,PCWSTR);
 static const WCHAR *main_thread_name = L"I'm the running thread!";
 
-static unsigned popcount32(ULONG val)
+static unsigned popcount64(ULONG64 val)
 {
-    val -= val >> 1 & 0x55555555;
-    val = (val & 0x33333333) + (val >> 2 & 0x33333333);
-    return ((val + (val >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
-}
-
-static inline unsigned popcount64(ULONG64 val)
-{
-    return popcount32(val >> 32) + popcount32(val);
+    return __popcnt(val >> 32) + __popcnt(val);
 }
 
 #define minidump_open_for_read(a) _minidump_open_for_read(__LINE__, (a))

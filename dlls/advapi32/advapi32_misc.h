@@ -45,15 +45,4 @@ static inline WCHAR *strdupAW( const char *src )
     return dst;
 }
 
-static inline WCHAR *strdupAW( const char *src )
-{
-    WCHAR *dst = NULL;
-    if (src)
-    {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-        if ((dst = heap_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
-    }
-    return dst;
-}
-
 #endif /* __WINE_ADVAPI32MISC_H */

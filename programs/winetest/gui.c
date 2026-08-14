@@ -311,7 +311,7 @@ guiAsk (va_list ap)
     return ret;
 }
 
-static BOOL CALLBACK
+static LRESULT CALLBACK
 EditTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {

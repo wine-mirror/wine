@@ -1044,8 +1044,8 @@ static void test_async_reader(void)
 
     hr = IAsyncReader_Length(reader, &length, &available);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(length == 600, "Got length %s.\n", wine_dbgstr_longlong(length));
-    ok(available == 600, "Got available length %s.\n", wine_dbgstr_longlong(available));
+    ok(length == 600, "Got length %I64d.\n", length);
+    ok(available == 600, "Got available length %I64d.\n", available);
 
     memset(buffer, 0xcc, sizeof(buffer));
     hr = IAsyncReader_SyncRead(reader, 0, 10, buffer);

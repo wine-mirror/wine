@@ -375,10 +375,12 @@ HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk)
    element[] - Array of elements
    The caller needs to free() the array.
 */
-HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
-        unsigned int *count, DWORD elem_size)
+HRESULT stream_chunk_get_array_alt(IStream *stream, const struct chunk_entry *chunk, void **array,
+        unsigned int *count, DWORD elem_size, DWORD alt_size)
 {
     DWORD size;
+    unsigned int i;
+    void *p;
     HRESULT hr;
 
     *array = NULL;
@@ -390,23 +392,29 @@ HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk,
     }
     if (FAILED(hr = stream_read(stream, &size, sizeof(DWORD))))
         return hr;
-    if (size != elem_size) {
+    if (!(size == elem_size || (alt_size && size == alt_size))) {
         WARN_(dmfile)("%s: Array element size mismatch: got %lu, expected %lu\n",
                 debugstr_chunk(chunk), size, elem_size);
         return DMUS_E_UNSUPPORTED_STREAM;
     }
 
-    *count = (chunk->size - sizeof(DWORD)) / elem_size;
-    size = *count * elem_size;
-    if (!(*array = malloc(size)))
+    *count = (chunk->size - sizeof(DWORD)) / size;
+    if (!(*array = calloc(*count, elem_size)))
         return E_OUTOFMEMORY;
-    if (FAILED(hr = stream_read(stream, *array, size))) {
+    if (size == elem_size)
+        hr = stream_read(stream, *array, *count * elem_size);
+    else
+        for (i = 0, p = *array; i < *count; i++, p = (char *)p + elem_size)
+            if (FAILED(hr = stream_read(stream, p, size)))
+                break;
+
+    if (FAILED(hr)) {
         free(*array);
         *array = NULL;
         return hr;
     }
 
-    if (chunk->size > size + sizeof(DWORD)) {
+    if (chunk->size > *count * size + sizeof(DWORD)) {
         WARN_(dmfile)("%s: Extraneous data at end of array\n", debugstr_chunk(chunk));
         stream_skip_chunk(stream, chunk);
         return S_FALSE;
@@ -414,16 +422,30 @@ HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk,
     return S_OK;
 }
 
-HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
-        ULONG size)
+HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
+        unsigned int *count, DWORD elem_size)
+{
+    return stream_chunk_get_array_alt(stream, chunk, array, count, elem_size, 0);
+}
+
+HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data, ULONG size)
 {
     if (chunk->size != size) {
-        WARN_(dmfile)("Chunk %s (size %lu, offset %s) doesn't contains the expected data size %lu\n",
-                debugstr_fourcc(chunk->id), chunk->size,
-                wine_dbgstr_longlong(chunk->offset.QuadPart), size);
+        WARN_(dmfile)("%s: doesn't contains the expected data size %lu\n", debugstr_chunk(chunk), size);
         return E_FAIL;
     }
     return stream_read(stream, data, size);
+}
+
+HRESULT stream_chunk_get_data_alt(IStream *stream, const struct chunk_entry *chunk, void *data,
+        ULONG size, ULONG alt_size)
+{
+    if (chunk->size != size && chunk->size != alt_size) {
+        WARN_(dmfile)("%s: doesn't contains the expected data size %lu or %lu\n", debugstr_chunk(chunk),
+                size, alt_size);
+        return E_FAIL;
+    }
+    return stream_read(stream, data, chunk->size);
 }
 
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,

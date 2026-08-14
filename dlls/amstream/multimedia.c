@@ -200,11 +200,11 @@ static HRESULT WINAPI multimedia_stream_GetDuration(IAMMultiMediaStream *iface, 
 
 static HRESULT WINAPI multimedia_stream_Seek(IAMMultiMediaStream *iface, STREAM_TIME seek_time)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
-    TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(seek_time));
+    TRACE("mmstream %p, seek_time %I64d.\n", mmstream, seek_time);
 
-    return IMediaSeeking_SetPositions(This->media_seeking, &seek_time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+    return IMediaSeeking_SetPositions(mmstream->media_seeking, &seek_time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
 }
 
 static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *iface, HANDLE *eos)

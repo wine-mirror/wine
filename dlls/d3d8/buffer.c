@@ -186,7 +186,7 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface, UINT
     struct d3d8_vertexbuffer *buffer = impl_from_IDirect3DVertexBuffer8(iface);
     struct wined3d_resource *wined3d_resource;
     struct wined3d_map_desc wined3d_map_desc;
-    struct wined3d_box wined3d_box = {0};
+    struct wined3d_box wined3d_box;
     HRESULT hr;
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#lx.\n",
@@ -200,8 +200,7 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface, UINT
     if (flags & D3DLOCK_DISCARD)
         buffer->discarded = true;
 
-    wined3d_box.left = offset;
-    wined3d_box.right = offset + size;
+    wined3d_box_set(&wined3d_box, offset, 0, offset + size, 1, 0, 1);
     wined3d_resource = wined3d_buffer_get_resource(buffer->wined3d_buffer);
     hr = wined3d_resource_map(wined3d_resource, 0, &wined3d_map_desc, &wined3d_box,
             wined3dmapflags_from_d3dmapflags(flags, buffer->usage));
@@ -510,7 +509,7 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface, UINT o
     struct d3d8_indexbuffer *buffer = impl_from_IDirect3DIndexBuffer8(iface);
     struct wined3d_resource *wined3d_resource;
     struct wined3d_map_desc wined3d_map_desc;
-    struct wined3d_box wined3d_box = {0};
+    struct wined3d_box wined3d_box;
     HRESULT hr;
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#lx.\n",
@@ -524,8 +523,7 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface, UINT o
     if (flags & D3DLOCK_DISCARD)
         buffer->discarded = true;
 
-    wined3d_box.left = offset;
-    wined3d_box.right = offset + size;
+    wined3d_box_set(&wined3d_box, offset, 0, offset + size, 1, 0, 1);
     wined3d_resource = wined3d_buffer_get_resource(buffer->wined3d_buffer);
     hr = wined3d_resource_map(wined3d_resource, 0, &wined3d_map_desc, &wined3d_box,
             wined3dmapflags_from_d3dmapflags(flags, buffer->usage));

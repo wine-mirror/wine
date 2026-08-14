@@ -443,6 +443,26 @@ typedef struct _LOCALGROUP_USERS_INFO_0 {
     LPWSTR lgrui0_name;
 } LOCALGROUP_USERS_INFO_0, *PLOCALGROUP_USERS_INFO_0, *LPLOCALGROUP_USERS_INFO_0;
 
+typedef struct _NET_VALIDATE_PASSWORD_HASH {
+    ULONG  Length;
+    LPBYTE Hash;
+} NET_VALIDATE_PASSWORD_HASH, *PNET_VALIDATE_PASSWORD_HASH;
+
+typedef struct _NET_VALIDATE_PERSISTED_FIELDS {
+    ULONG                       PresentFields;
+    FILETIME                    PasswordLastSet;
+    FILETIME                    BadPasswordTime;
+    FILETIME                    LockoutTime;
+    ULONG                       BadPasswordCount;
+    ULONG                       PasswordHistoryLength;
+    PNET_VALIDATE_PASSWORD_HASH PasswordHistory;
+} NET_VALIDATE_PERSISTED_FIELDS, *PNET_VALIDATE_PERSISTED_FIELDS;
+
+typedef struct _NET_VALIDATE_OUTPUT_ARG {
+    NET_VALIDATE_PERSISTED_FIELDS ChangedPersistedFields;
+    DWORD                ValidationStatus;
+} NET_VALIDATE_OUTPUT_ARG, *PNET_VALIDATE_OUTPUT_ARG;
+
 #define USER_PRIV_GUEST   0
 #define USER_PRIV_USER    1
 #define USER_PRIV_ADMIN   2
@@ -473,6 +493,9 @@ NET_API_STATUS WINAPI NetUserGetInfo(LPCWSTR,LPCWSTR,DWORD,LPBYTE*);
 NET_API_STATUS WINAPI NetUserGetGroups(LPCWSTR,LPCWSTR,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD);
 NET_API_STATUS WINAPI NetUserGetLocalGroups(LPCWSTR,LPCWSTR,DWORD,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD);
 NET_API_STATUS WINAPI NetUserModalsGet(LPCWSTR,DWORD,LPBYTE*);
+NET_API_STATUS WINAPI NetValidatePasswordPolicy(LPCWSTR, LPVOID, DWORD, LPVOID, LPVOID*);
+NET_API_STATUS WINAPI NetValidatePasswordPolicyFree(LPVOID*);
+
 
 #ifdef __cplusplus
 }

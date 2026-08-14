@@ -150,6 +150,7 @@ RTFDestroy(RTF_Info *info)
 	}
 	RTFDestroyAttrs(info);
 	free(info->cpOutputBuffer);
+        ME_DestroyString( info->pntext );
         while (info->tableDef)
         {
                 RTFTable *tableDef = info->tableDef;
@@ -252,6 +253,7 @@ void RTFInit(RTF_Info *info)
         info->nestingLevel = 0;
         info->canInheritInTbl = FALSE;
         info->borderType = 0;
+        info->pntext = NULL;
 
         memset(&info->fmt, 0, sizeof(info->fmt));
         info->fmt.cbSize = sizeof(info->fmt);
@@ -2498,13 +2500,42 @@ static void SpecialChar (RTF_Info *info)
 	case rtfPage:
 	case rtfSect:
 	case rtfPar:
+        {
+                ME_Paragraph *para;
                 RTFFlushOutputBuffer(info);
+                if ((info->fmt.dwMask & PFM_NUMBERING) && !info->pntext)
+                    info->fmt.wNumbering = 0;
+
+                if (info->pntext && info->pntext->nLen &&
+                    info->pntext->szData[info->pntext->nLen - 1] == '\t')
+                {
+                    info->pntext->szData[--info->pntext->nLen] = 0;
+                    if ((info->fmt.dwMask & PFM_NUMBERINGTAB) &&
+                        info->fmt.wNumberingTab == 0)
+                        info->fmt.wNumberingTab = lDefaultTab;
+                }
+
                 editor_set_selection_para_fmt( info->editor, &info->fmt );
+                para = info->editor->pCursors[0].para;
                 memset(&info->fmt, 0, sizeof(info->fmt));
                 info->fmt.cbSize = sizeof(info->fmt);
 		RTFPutUnicodeChar (info, '\r');
 		if (info->editor->bEmulateVersion10) RTFPutUnicodeChar (info, '\n');
+
+                if (info->pntext)
+                {
+                    if (info->pntext->nLen && para->fmt.wNumbering)
+                    {
+                        para_num_clear( &para->para_num );
+                        para->para_num.text = info->pntext;
+                        info->pntext = NULL;
+                        para_mark_rewrap( info->editor, para );
+                    }
+                    ME_DestroyString( info->pntext );
+                    info->pntext = NULL;
+                }
 		break;
+        }
 	case rtfNoBrkSpace:
 		RTFPutUnicodeChar (info, 0x00A0);
 		break;

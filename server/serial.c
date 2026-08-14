@@ -21,7 +21,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -31,51 +30,52 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <time.h>
+#include <termios.h>
 #include <unistd.h>
+#include <poll.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "winioctl.h"
+#include "ddk/ntddser.h"
 
 #include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
 
+struct wait_req
+{
+    struct serial *serial;
+    struct timeout_user *timeout;
+};
+
 static void serial_dump( struct object *obj, int verbose );
 static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
-static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void serial_queue_async( struct fd *fd, struct async *async, int type, int count );
+static void serial_reselect_async( struct fd *fd, struct async_queue *queue );
 
 struct serial
 {
     struct object       obj;
     struct fd          *fd;
 
-    /* timeout values */
-    unsigned int        readinterval;
-    unsigned int        readconst;
-    unsigned int        readmult;
-    unsigned int        writeconst;
-    unsigned int        writemult;
+    struct async_queue  wait_q; /* queue for asynchronous WAIT_ON_MASK */
 
+    struct timeout_user *read_timer;
+    SERIAL_TIMEOUTS     timeouts;
     unsigned int        eventmask;
+    unsigned int        pending_write : 1;
 
     struct termios      original;
 
@@ -84,34 +84,21 @@ struct serial
 
 static const struct object_ops serial_ops =
 {
-    sizeof(struct serial),        /* size */
-    serial_dump,                  /* dump */
-    no_get_type,                  /* get_type */
-    add_queue,                    /* add_queue */
-    remove_queue,                 /* remove_queue */
-    default_fd_signaled,          /* signaled */
-    no_satisfied,                 /* satisfied */
-    no_signal,                    /* signal */
-    serial_get_fd,                /* get_fd */
-    default_fd_map_access,        /* map_access */
-    default_get_sd,               /* get_sd */
-    default_set_sd,               /* set_sd */
-    no_lookup_name,               /* lookup_name */
-    no_open_file,                 /* open_file */
-    fd_close_handle,              /* close_handle */
-    serial_destroy                /* destroy */
+    .size     = sizeof(struct serial),
+    .type     = &file_type,
+    .dump     = serial_dump,
+    .get_fd   = serial_get_fd,
+    .get_sync = default_fd_get_sync,
+    .destroy  = serial_destroy,
 };
 
 static const struct fd_ops serial_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
-    default_poll_event,           /* poll_event */
-    no_flush,                     /* flush */
-    serial_get_fd_type,           /* get_fd_type */
-    default_fd_ioctl,             /* ioctl */
-    serial_queue_async,           /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    .get_fd_type    = serial_get_fd_type,
+    .get_file_info  = default_fd_get_file_info,
+    .ioctl          = serial_ioctl,
+    .queue_async    = serial_queue_async,
+    .reselect_async = serial_reselect_async,
 };
 
 /* check if the given fd is a serial port */
@@ -129,12 +116,11 @@ struct object *create_serial( struct fd *fd )
 
     if (!(serial = alloc_object( &serial_ops ))) return NULL;
 
-    serial->readinterval = 0;
-    serial->readmult     = 0;
-    serial->readconst    = 0;
-    serial->writemult    = 0;
-    serial->writeconst   = 0;
+    serial->read_timer   = NULL;
     serial->eventmask    = 0;
+    serial->pending_write = 0;
+    memset( &serial->timeouts, 0, sizeof(serial->timeouts) );
+    init_async_queue( &serial->wait_q );
     serial->fd = (struct fd *)grab_object( fd );
     set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
@@ -149,6 +135,8 @@ static struct fd *serial_get_fd( struct object *obj )
 static void serial_destroy( struct object *obj)
 {
     struct serial *serial = (struct serial *)obj;
+    if (serial->read_timer) remove_timeout_user( serial->read_timer );
+    free_async_queue( &serial->wait_q );
     release_object( serial->fd );
 }
 
@@ -169,30 +157,149 @@ static enum server_fd_type serial_get_fd_type( struct fd *fd )
     return FD_TYPE_SERIAL;
 }
 
-static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+#define WAIT_ON_MASK_POLL_INTERVAL -10000
+
+static void free_wait_req( void *private )
+{
+    struct wait_req *req = private;
+
+    if (req->timeout) remove_timeout_user( req->timeout );
+    release_object( req->serial );
+    free( req );
+}
+
+static void async_wait_timeout( void *private )
+{
+    struct wait_req *req = private;
+
+    async_wake_up( &req->serial->wait_q, STATUS_ALERTED );
+    req->timeout = add_timeout_user( WAIT_ON_MASK_POLL_INTERVAL, async_wait_timeout, req );
+}
+
+static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    struct serial *serial = get_fd_user( fd );
+
+    switch (code)
+    {
+    case IOCTL_SERIAL_GET_TIMEOUTS:
+        if (get_reply_max_size() < sizeof(serial->timeouts))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        set_reply_data( &serial->timeouts, sizeof(serial->timeouts ));
+        return;
+
+    case IOCTL_SERIAL_SET_TIMEOUTS:
+        if (get_req_data_size() < sizeof(serial->timeouts))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        memcpy( &serial->timeouts, get_req_data(), sizeof(serial->timeouts) );
+        return;
+
+    case IOCTL_SERIAL_GET_WAIT_MASK:
+        if (get_reply_max_size() < sizeof(serial->eventmask))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        set_reply_data( &serial->eventmask, sizeof(serial->eventmask) );
+        return;
+
+    case IOCTL_SERIAL_SET_WAIT_MASK:
+        if (get_req_data_size() < sizeof(serial->eventmask))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        serial->eventmask = *(unsigned int *)get_req_data();
+        async_wake_up( &serial->wait_q, STATUS_CANCELLED );
+        return;
+
+    case IOCTL_SERIAL_WAIT_ON_MASK:
+    {
+        struct wait_req *req;
+
+        if (async_queued( &serial->wait_q ))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
+        if (!(req = mem_alloc(sizeof(*req))))
+            return;
+
+        req->serial = (struct serial *)grab_object( serial );
+        if (!(req->timeout = add_timeout_user( WAIT_ON_MASK_POLL_INTERVAL, async_wait_timeout, req )))
+        {
+            free( req );
+            return;
+        }
+
+        async_set_completion_callback( async, free_wait_req, req );
+        queue_async( &serial->wait_q, async );
+        set_error( STATUS_ALERTED );
+        return;
+    }
+
+    default:
+        set_error( STATUS_NOT_SUPPORTED );
+    }
+}
+
+static void serial_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
     timeout_t timeout = 0;
-    struct async *async;
 
     assert(serial->obj.ops == &serial_ops);
 
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        timeout = serial->readconst + (timeout_t)serial->readmult*count;
+        timeout = serial->timeouts.ReadTotalTimeoutConstant +
+            (timeout_t)serial->timeouts.ReadTotalTimeoutMultiplier * count;
         break;
     case ASYNC_TYPE_WRITE:
-        timeout = serial->writeconst + (timeout_t)serial->writemult*count;
+        timeout = serial->timeouts.WriteTotalTimeoutConstant +
+            (timeout_t)serial->timeouts.WriteTotalTimeoutMultiplier * count;
         break;
     }
 
-    if ((async = fd_queue_async( fd, data, type )))
+    fd_queue_async( fd, async, type );
+    if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
+    set_error( STATUS_PENDING );
+}
+
+static void serial_read_timeout( void *arg )
+{
+    struct serial *serial = arg;
+
+    serial->read_timer = NULL;
+    fd_async_wake_up( serial->fd, ASYNC_TYPE_READ, STATUS_TIMEOUT );
+}
+
+static void serial_reselect_async( struct fd *fd, struct async_queue *queue )
+{
+    struct serial *serial = get_fd_user( fd );
+
+    if (serial->read_timer)
     {
-        if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
-        release_object( async );
-        set_error( STATUS_PENDING );
+        if (!(default_fd_get_poll_events( fd ) & POLLIN))
+        {
+            remove_timeout_user( serial->read_timer );
+            serial->read_timer = NULL;
+        }
     }
+    else if (serial->timeouts.ReadIntervalTimeout && (default_fd_get_poll_events( fd ) & POLLIN))
+    {
+        serial->read_timer = add_timeout_user( (timeout_t)serial->timeouts.ReadIntervalTimeout * -10000,
+                                               serial_read_timeout, serial );
+    }
+    default_fd_reselect_async( fd, queue );
 }
 
 DECL_HANDLER(get_serial_info)
@@ -201,15 +308,13 @@ DECL_HANDLER(get_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
-        /* timeouts */
-        reply->readinterval = serial->readinterval;
-        reply->readconst    = serial->readconst;
-        reply->readmult     = serial->readmult;
-        reply->writeconst   = serial->writeconst;
-        reply->writemult    = serial->writemult;
-
         /* event mask */
         reply->eventmask    = serial->eventmask;
+
+        /* pending write */
+        reply->pending_write = serial->pending_write;
+        if (req->flags & SERIALINFO_PENDING_WRITE)
+            serial->pending_write = 0;
 
         release_object( serial );
     }
@@ -221,25 +326,8 @@ DECL_HANDLER(set_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
-        /* timeouts */
-        if (req->flags & SERIALINFO_SET_TIMEOUTS)
-        {
-            serial->readinterval = req->readinterval;
-            serial->readconst    = req->readconst;
-            serial->readmult     = req->readmult;
-            serial->writeconst   = req->writeconst;
-            serial->writemult    = req->writemult;
-        }
-
-        /* event mask */
-        if (req->flags & SERIALINFO_SET_MASK)
-        {
-            serial->eventmask = req->eventmask;
-            if (!serial->eventmask)
-            {
-                fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-            }
-        }
+        if (req->flags & SERIALINFO_PENDING_WRITE)
+            serial->pending_write = 1;
 
         release_object( serial );
     }

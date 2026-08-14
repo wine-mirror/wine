@@ -22,7 +22,7 @@
 #include <lmcons.h>
 #include <lmerr.h>
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct _share_info_1 {
        char shi1_netname[LM20_NNLEN+1];
@@ -41,6 +41,6 @@ typedef struct _share_info_50 {
        char shi50_ro_password[SHPWLEN+1];
 } share_info_50;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* SVRAPI_INCLUDED */

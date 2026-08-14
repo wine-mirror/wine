@@ -271,7 +271,7 @@ static void balloon_create_timer( struct icon *icon )
 
 static BOOL show_balloon( struct icon *icon )
 {
-    if (!show_systray) return FALSE;  /* systray has been hidden */
+    if (!enable_taskbar && !show_systray) return FALSE;  /* systray has been hidden */
     if (icon->display == ICON_DISPLAY_HIDDEN) return FALSE;  /* not displayed */
     if (!icon->info_text[0]) return FALSE;  /* no balloon */
     balloon_icon = icon;
@@ -1105,8 +1105,7 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         return handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
 
     case WM_DISPLAYCHANGE:
-        if (!show_systray) do_hide_systray();
-        else if (!nb_displayed && !enable_taskbar) do_hide_systray();
+        if (!enable_taskbar && (!show_systray || !nb_displayed)) do_hide_systray();
         else do_show_systray();
         break;
 
@@ -1134,7 +1133,14 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         return 0;
 
     case WM_DRAWITEM:
+        if (((MEASUREITEMSTRUCT*)lparam)->CtlType == ODT_MENU)
+            return menu_wndproc(hwnd, msg, wparam, lparam);
         paint_taskbar_button( (const DRAWITEMSTRUCT *)lparam );
+        break;
+
+    case WM_MEASUREITEM:
+        if (((MEASUREITEMSTRUCT*)lparam)->CtlType == ODT_MENU)
+            return menu_wndproc(hwnd, msg, wparam, lparam);
         break;
 
     case WM_COMMAND:

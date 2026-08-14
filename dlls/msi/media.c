@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <fcntl.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -31,90 +32,58 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "objidl.h"
-#include "wine/unicode.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-/* from msvcrt/fcntl.h */
-#define _O_RDONLY      0
-#define _O_WRONLY      1
-#define _O_RDWR        2
-#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
-#define _O_APPEND      0x0008
-#define _O_RANDOM      0x0010
-#define _O_SEQUENTIAL  0x0020
-#define _O_TEMPORARY   0x0040
-#define _O_NOINHERIT   0x0080
-#define _O_CREAT       0x0100
-#define _O_TRUNC       0x0200
-#define _O_EXCL        0x0400
-#define _O_SHORT_LIVED 0x1000
-#define _O_TEXT        0x4000
-#define _O_BINARY      0x8000
-
 static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
 {
-    WCHAR volume_name[MAX_PATH + 1];
-    WCHAR root[MAX_PATH + 1];
+    WCHAR volume_name[MAX_PATH + 1], root[MAX_PATH + 1];
+    const WCHAR *p;
+    int len, len2;
 
-    strcpyW(root, source_root);
+    lstrcpyW(root, source_root);
     PathStripToRootW(root);
     PathAddBackslashW(root);
 
     if (!GetVolumeInformationW(root, volume_name, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0))
     {
-        WARN("failed to get volume information for %s (%u)\n", debugstr_w(root), GetLastError());
+        WARN( "failed to get volume information for %s (%lu)\n", debugstr_w(root), GetLastError() );
         return FALSE;
     }
-    return !strcmpiW( mi->volume_label, volume_name );
+
+    len = lstrlenW( volume_name );
+    len2 = lstrlenW( mi->volume_label );
+    if (len2 > len) return FALSE;
+    p = volume_name + len - len2;
+
+    return !wcsicmp( mi->volume_label, p );
 }
 
-static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
+static UINT change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
-    LPWSTR error, error_dialog;
+    MSIRECORD *record;
     LPWSTR source_dir;
-    UINT r = ERROR_SUCCESS;
+    UINT r = IDRETRY;
 
-    static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
+    source_dir = msi_dup_property(package->db, L"SourceDir");
+    record = MSI_CreateRecord(2);
 
-    if ((package->ui_level & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE &&
-        !gUIHandlerA && !gUIHandlerW && !gUIHandlerRecord) return ERROR_SUCCESS;
-
-    error = msi_build_error_string(package, 1302, 1, mi->disk_prompt);
-    error_dialog = msi_dup_property(package->db, error_prop);
-    source_dir = msi_dup_property(package->db, szSourceDir);
-
-    while (r == ERROR_SUCCESS && !source_matches_volume(mi, source_dir))
+    while (r == IDRETRY && !source_matches_volume(mi, source_dir))
     {
-        r = msi_spawn_error_dialog(package, error_dialog, error);
-
-        if (gUIHandlerW)
-        {
-            gUIHandlerW(gUIContext, MB_RETRYCANCEL | INSTALLMESSAGE_ERROR, error);
-        }
-        else if (gUIHandlerA)
-        {
-            char *msg = strdupWtoA(error);
-            gUIHandlerA(gUIContext, MB_RETRYCANCEL | INSTALLMESSAGE_ERROR, msg);
-            msi_free(msg);
-        }
-        else if (gUIHandlerRecord)
-        {
-            MSIHANDLE rec = MsiCreateRecord(1);
-            MsiRecordSetStringW(rec, 0, error);
-            gUIHandlerRecord(gUIContext, MB_RETRYCANCEL | INSTALLMESSAGE_ERROR, rec);
-            MsiCloseHandle(rec);
-        }
+        MSI_RecordSetStringW(record, 0, NULL);
+        MSI_RecordSetInteger(record, 1, MSIERR_CABNOTFOUND);
+        MSI_RecordSetStringW(record, 2, mi->disk_prompt);
+        r = MSI_ProcessMessage(package, INSTALLMESSAGE_ERROR | MB_RETRYCANCEL, record);
     }
 
-    msi_free(error);
-    msi_free(error_dialog);
-    msi_free(source_dir);
+    msiobj_release(&record->hdr);
+    free(source_dir);
 
-    return r;
+    return r == IDRETRY ? ERROR_SUCCESS : ERROR_INSTALL_SOURCE_ABSENT;
 }
 
-static MSICABINETSTREAM *msi_get_cabinet_stream( MSIPACKAGE *package, UINT disk_id )
+static MSICABINETSTREAM *get_cabinet_stream( MSIPACKAGE *package, UINT disk_id )
 {
     MSICABINETSTREAM *cab;
 
@@ -127,12 +96,12 @@ static MSICABINETSTREAM *msi_get_cabinet_stream( MSIPACKAGE *package, UINT disk_
 
 static void * CDECL cabinet_alloc(ULONG cb)
 {
-    return msi_alloc(cb);
+    return malloc(cb);
 }
 
 static void CDECL cabinet_free(void *pv)
 {
-    msi_free(pv);
+    free(pv);
 }
 
 static INT_PTR CDECL cabinet_open(char *pszFile, int oflag, int pmode)
@@ -140,6 +109,8 @@ static INT_PTR CDECL cabinet_open(char *pszFile, int oflag, int pmode)
     DWORD dwAccess = 0;
     DWORD dwShareMode = 0;
     DWORD dwCreateDisposition = OPEN_EXISTING;
+    HANDLE handle;
+    WCHAR *path;
 
     switch (oflag & _O_ACCMODE)
     {
@@ -162,8 +133,10 @@ static INT_PTR CDECL cabinet_open(char *pszFile, int oflag, int pmode)
     else if (oflag & _O_CREAT)
         dwCreateDisposition = CREATE_ALWAYS;
 
-    return (INT_PTR)CreateFileA(pszFile, dwAccess, dwShareMode, NULL,
-                                dwCreateDisposition, 0, NULL);
+    path = strdupUtoW(pszFile);
+    handle = CreateFileW(path, dwAccess, dwShareMode, NULL, dwCreateDisposition, 0, NULL);
+    free(path);
+    return (INT_PTR)handle;
 }
 
 static UINT CDECL cabinet_read(INT_PTR hf, void *pv, UINT cb)
@@ -213,31 +186,39 @@ static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
 {
     MSICABINETSTREAM *cab;
     IStream *stream;
-    WCHAR *encoded;
-    HRESULT hr;
 
-    cab = msi_get_cabinet_stream( package_disk.package, package_disk.id );
-    if (!cab)
+    if (!(cab = get_cabinet_stream( package_disk.package, package_disk.id )))
     {
         WARN("failed to get cabinet stream\n");
         return -1;
     }
-    if (!cab->stream[0] || !(encoded = encode_streamname( FALSE, cab->stream + 1 )))
+    if (cab->storage == package_disk.package->db->storage)
     {
-        WARN("failed to encode stream name\n");
-        return -1;
-    }
-    if (msi_clone_open_stream( package_disk.package->db, cab->storage, encoded, &stream ) != ERROR_SUCCESS)
-    {
-        hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
-        if (FAILED(hr))
+        UINT r = msi_get_stream( package_disk.package->db, cab->stream + 1, &stream );
+        if (r != ERROR_SUCCESS)
         {
-            WARN("failed to open stream 0x%08x\n", hr);
-            msi_free( encoded );
+            WARN("failed to get stream %u\n", r);
             return -1;
         }
     }
-    msi_free( encoded );
+    else /* patch storage */
+    {
+        HRESULT hr;
+        WCHAR *encoded;
+
+        if (!(encoded = encode_streamname( FALSE, cab->stream + 1 )))
+        {
+            WARN("failed to encode stream name\n");
+            return -1;
+        }
+        hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
+        free( encoded );
+        if (FAILED(hr))
+        {
+            WARN( "failed to open stream %#lx\n", hr );
+            return -1;
+        }
+    }
     return (INT_PTR)stream;
 }
 
@@ -278,28 +259,20 @@ static LONG CDECL cabinet_seek_stream( INT_PTR hf, LONG dist, int seektype )
     return -1;
 }
 
-static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
+static UINT media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
 
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-        '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
-        '`','D','i','s','k','I','d','`',' ','=',' ','%','i',0};
-
-    row = MSI_QueryGetRecord(package->db, query, mi->disk_id);
+    row = MSI_QueryGetRecord(package->db, L"SELECT * FROM `Media` WHERE `DiskId` = %d", mi->disk_id);
     if (!row)
     {
         TRACE("Unable to query row\n");
         return ERROR_FUNCTION_FAILED;
     }
 
-    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
-    mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
-    mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
-
-    if (!mi->first_volume)
-        mi->first_volume = strdupW(mi->volume_label);
+    mi->disk_prompt = wcsdup(MSI_RecordGetString(row, 3));
+    mi->cabinet = wcsdup(MSI_RecordGetString(row, 4));
+    mi->volume_label = wcsdup(MSI_RecordGetString(row, 5));
 
     msiobj_release(&row->hdr);
     return ERROR_SUCCESS;
@@ -318,10 +291,10 @@ static WCHAR *get_cabinet_filename(MSIMEDIAINFO *mi)
     int len;
     WCHAR *ret;
 
-    len = strlenW(mi->sourcedir) + strlenW(mi->cabinet) + 1;
-    if (!(ret = msi_alloc(len * sizeof(WCHAR)))) return NULL;
-    strcpyW(ret, mi->sourcedir);
-    strcatW(ret, mi->cabinet);
+    len = lstrlenW(mi->sourcedir) + lstrlenW(mi->cabinet) + 1;
+    if (!(ret = malloc(len * sizeof(WCHAR)))) return NULL;
+    lstrcpyW(ret, mi->sourcedir);
+    lstrcatW(ret, mi->cabinet);
     return ret;
 }
 
@@ -334,9 +307,9 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
     INT_PTR res = -1;
     UINT rc;
 
-    msi_free(mi->disk_prompt);
-    msi_free(mi->cabinet);
-    msi_free(mi->volume_label);
+    free(mi->disk_prompt);
+    free(mi->cabinet);
+    free(mi->volume_label);
     mi->disk_prompt = NULL;
     mi->cabinet = NULL;
     mi->volume_label = NULL;
@@ -344,14 +317,14 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
     mi->disk_id++;
     mi->is_continuous = TRUE;
 
-    rc = msi_media_get_disk_info(data->package, mi);
+    rc = media_get_disk_info(data->package, mi);
     if (rc != ERROR_SUCCESS)
     {
         ERR("Failed to get next cabinet information: %d\n", rc);
         goto done;
     }
 
-    if (strcmpiW( mi->cabinet, cab ))
+    if (wcsicmp( mi->cabinet, cab ))
     {
         char *next_cab;
         ULONG length;
@@ -364,8 +337,8 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
         length = strlen(pfdin->psz3) + 1 + strlen(next_cab) + 1;
         if (length > 256)
         {
-            WARN("Cannot update next cabinet filename with a string size %u > 256\n", length);
-            msi_free(next_cab);
+            WARN( "cannot update next cabinet filename with a string size %lu > 256\n", length );
+            free(next_cab);
             goto done;
         }
         else
@@ -375,7 +348,7 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
         }
         /* Path psz3 and cabinet psz1 are concatenated by FDI so just reset psz1 */
         *pfdin->psz1 = 0;
-        msi_free(next_cab);
+        free(next_cab);
     }
 
     if (!(cabinet_file = get_cabinet_filename(mi)))
@@ -386,13 +359,13 @@ static INT_PTR cabinet_next_cabinet(FDINOTIFICATIONTYPE fdint,
     res = 0;
     if (GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
     {
-        if (msi_change_media(data->package, mi) != ERROR_SUCCESS)
+        if (change_media(data->package, mi) != ERROR_SUCCESS)
             res = -1;
     }
 
 done:
-    msi_free(cab);
-    msi_free(cabinet_file);
+    free(cab);
+    free(cabinet_file);
     return res;
 }
 
@@ -403,9 +376,9 @@ static INT_PTR cabinet_next_cabinet_stream( FDINOTIFICATIONTYPE fdint,
     MSIMEDIAINFO *mi = data->mi;
     UINT rc;
 
-    msi_free( mi->disk_prompt );
-    msi_free( mi->cabinet );
-    msi_free( mi->volume_label );
+    free( mi->disk_prompt );
+    free( mi->cabinet );
+    free( mi->volume_label );
     mi->disk_prompt = NULL;
     mi->cabinet = NULL;
     mi->volume_label = NULL;
@@ -413,7 +386,7 @@ static INT_PTR cabinet_next_cabinet_stream( FDINOTIFICATIONTYPE fdint,
     mi->disk_id++;
     mi->is_continuous = TRUE;
 
-    rc = msi_media_get_disk_info( data->package, mi );
+    rc = media_get_disk_info( data->package, mi );
     if (rc != ERROR_SUCCESS)
     {
         ERR("Failed to get next cabinet information: %u\n", rc);
@@ -438,7 +411,7 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
                   &attrs, data->user))
     {
         /* We're not extracting this file, so free the filename. */
-        msi_free(data->curfile);
+        free(data->curfile);
         data->curfile = NULL;
         goto done;
     }
@@ -448,23 +421,22 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
     attrs = attrs & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (!attrs) attrs = FILE_ATTRIBUTE_NORMAL;
 
-    handle = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0,
-                         NULL, CREATE_ALWAYS, attrs, NULL);
+    handle = msi_create_file( data->package, path, GENERIC_READ | GENERIC_WRITE, 0, CREATE_ALWAYS, attrs );
     if (handle == INVALID_HANDLE_VALUE)
     {
         DWORD err = GetLastError();
-        DWORD attrs2 = GetFileAttributesW(path);
+        DWORD attrs2 = msi_get_file_attributes( data->package, path );
 
         if (attrs2 == INVALID_FILE_ATTRIBUTES)
         {
-            ERR("failed to create %s (error %d)\n", debugstr_w(path), err);
+            ERR( "failed to create %s (error %lu)\n", debugstr_w(path), err );
             goto done;
         }
         else if (err == ERROR_ACCESS_DENIED && (attrs2 & FILE_ATTRIBUTE_READONLY))
         {
             TRACE("removing read-only attribute on %s\n", debugstr_w(path));
-            SetFileAttributesW( path, attrs2 & ~FILE_ATTRIBUTE_READONLY );
-            handle = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs2, NULL);
+            msi_set_file_attributes( data->package, path, attrs2 & ~FILE_ATTRIBUTE_READONLY );
+            handle = msi_create_file( data->package, path, GENERIC_READ | GENERIC_WRITE, 0, CREATE_ALWAYS, attrs );
 
             if (handle != INVALID_HANDLE_VALUE) goto done;
             err = GetLastError();
@@ -476,38 +448,37 @@ static INT_PTR cabinet_copy_file(FDINOTIFICATIONTYPE fdint,
 
             TRACE("file in use, scheduling rename operation\n");
 
-            if (!(tmppathW = strdupW( path ))) return ERROR_OUTOFMEMORY;
-            if ((p = strrchrW(tmppathW, '\\'))) *p = 0;
-            len = strlenW( tmppathW ) + 16;
-            if (!(tmpfileW = msi_alloc(len * sizeof(WCHAR))))
+            if (!(tmppathW = wcsdup(path))) return ERROR_OUTOFMEMORY;
+            if ((p = wcsrchr(tmppathW, '\\'))) *p = 0;
+            len = lstrlenW( tmppathW ) + 16;
+            if (!(tmpfileW = malloc(len * sizeof(WCHAR))))
             {
-                msi_free( tmppathW );
+                free( tmppathW );
                 return ERROR_OUTOFMEMORY;
             }
-            if (!GetTempFileNameW(tmppathW, szMsi, 0, tmpfileW)) tmpfileW[0] = 0;
-            msi_free( tmppathW );
+            if (!msi_get_temp_file_name( data->package, tmppathW, L"msi", tmpfileW )) tmpfileW[0] = 0;
+            free( tmppathW );
 
-            handle = CreateFileW(tmpfileW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, attrs, NULL);
+            handle = msi_create_file( data->package, tmpfileW, GENERIC_READ | GENERIC_WRITE, 0, CREATE_ALWAYS, attrs );
 
             if (handle != INVALID_HANDLE_VALUE &&
-                MoveFileExW(path, NULL, MOVEFILE_DELAY_UNTIL_REBOOT) &&
-                MoveFileExW(tmpfileW, path, MOVEFILE_DELAY_UNTIL_REBOOT))
+                msi_move_file( data->package, path, NULL, MOVEFILE_DELAY_UNTIL_REBOOT ) &&
+                msi_move_file( data->package, tmpfileW, path, MOVEFILE_DELAY_UNTIL_REBOOT ))
             {
                 data->package->need_reboot_at_end = 1;
             }
             else
             {
-                WARN("failed to schedule rename operation %s (error %d)\n", debugstr_w(path), GetLastError());
-                DeleteFileW( tmpfileW );
+                WARN( "failed to schedule rename operation %s (error %lu)\n", debugstr_w(path), GetLastError() );
+                msi_delete_file( data->package, tmpfileW );
             }
-            msi_free(tmpfileW);
+            free(tmpfileW);
         }
-        else
-            WARN("failed to create %s (error %d)\n", debugstr_w(path), err);
+        else WARN( "failed to create %s (error %lu)\n", debugstr_w(path), err );
     }
 
 done:
-    msi_free(path);
+    free(path);
 
     return (INT_PTR)handle;
 }
@@ -523,18 +494,25 @@ static INT_PTR cabinet_close_file_info(FDINOTIFICATIONTYPE fdint,
     data->mi->is_continuous = FALSE;
 
     if (!DosDateTimeToFileTime(pfdin->date, pfdin->time, &ft))
+    {
+        CloseHandle(handle);
         return -1;
+    }
     if (!LocalFileTimeToFileTime(&ft, &ftLocal))
+    {
+        CloseHandle(handle);
         return -1;
+    }
     if (!SetFileTime(handle, &ftLocal, 0, &ftLocal))
+    {
+        CloseHandle(handle);
         return -1;
+    }
 
     CloseHandle(handle);
+    data->cb(data->package, data->curfile, MSICABEXTRACT_FILEEXTRACTED, NULL, NULL, data->user);
 
-    data->cb(data->package, data->curfile, MSICABEXTRACT_FILEEXTRACTED, NULL, NULL,
-             data->user);
-
-    msi_free(data->curfile);
+    free(data->curfile);
     data->curfile = NULL;
 
     return 1;
@@ -603,11 +581,11 @@ static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data 
         return FALSE;
     }
 
-    cabinet = strdupWtoA( mi->cabinet );
+    cabinet = strdupWtoU( mi->cabinet );
     if (!cabinet)
         goto done;
 
-    cab_path = strdupWtoA( mi->sourcedir );
+    cab_path = strdupWtoU( mi->sourcedir );
     if (!cab_path)
         goto done;
 
@@ -617,8 +595,8 @@ static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data 
 
 done:
     FDIDestroy( hfdi );
-    msi_free(cabinet );
-    msi_free( cab_path );
+    free( cabinet );
+    free( cab_path );
 
     if (ret)
         mi->is_extracted = TRUE;
@@ -670,38 +648,42 @@ BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data)
 
 void msi_free_media_info(MSIMEDIAINFO *mi)
 {
-    msi_free(mi->disk_prompt);
-    msi_free(mi->cabinet);
-    msi_free(mi->volume_label);
-    msi_free(mi->first_volume);
-    msi_free(mi);
+    free(mi->disk_prompt);
+    free(mi->cabinet);
+    free(mi->volume_label);
+    free(mi->last_volume);
+    free(mi);
 }
 
 static UINT get_drive_type(const WCHAR *path)
 {
     WCHAR root[MAX_PATH + 1];
 
-    strcpyW(root, path);
+    lstrcpyW(root, path);
     PathStripToRootW(root);
     PathAddBackslashW(root);
 
     return GetDriveTypeW(root);
 }
 
+static WCHAR *get_base_url( MSIDATABASE *db )
+{
+    WCHAR *p, *ret = NULL, *orig_db = msi_dup_property( db, L"OriginalDatabase" );
+    if (UrlIsW( orig_db, URLIS_URL ) && (ret = wcsdup( orig_db )) && (p = wcsrchr( ret, '/' ))) p[1] = 0;
+    free( orig_db );
+    return ret;
+}
+
 UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
 {
-    static const WCHAR query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','M','e','d','i','a','`',' ',
-        'W','H','E','R','E',' ','`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ',
-        '>','=',' ','%','i',' ','O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
     MSIRECORD *row;
-    LPWSTR source_dir, source;
+    WCHAR *source_dir, *source, *base_url = NULL;
     DWORD options;
 
     if (Sequence <= mi->last_sequence) /* already loaded */
         return ERROR_SUCCESS;
 
-    row = MSI_QueryGetRecord(package->db, query, Sequence);
+    row = MSI_QueryGetRecord(package->db, L"SELECT * FROM `Media` WHERE `LastSequence` >= %d ORDER BY `DiskId`", Sequence);
     if (!row)
     {
         TRACE("Unable to query row\n");
@@ -711,19 +693,16 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
     mi->is_extracted = FALSE;
     mi->disk_id = MSI_RecordGetInteger(row, 1);
     mi->last_sequence = MSI_RecordGetInteger(row, 2);
-    msi_free(mi->disk_prompt);
-    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
-    msi_free(mi->cabinet);
-    mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
-    msi_free(mi->volume_label);
-    mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
+    free(mi->disk_prompt);
+    mi->disk_prompt = wcsdup(MSI_RecordGetString(row, 3));
+    free(mi->cabinet);
+    mi->cabinet = wcsdup(MSI_RecordGetString(row, 4));
+    free(mi->volume_label);
+    mi->volume_label = wcsdup(MSI_RecordGetString(row, 5));
     msiobj_release(&row->hdr);
 
-    if (!mi->first_volume)
-        mi->first_volume = strdupW(mi->volume_label);
-
     msi_set_sourcedir_props(package, FALSE);
-    source_dir = msi_dup_property(package->db, szSourceDir);
+    source_dir = msi_dup_property(package->db, L"SourceDir");
     lstrcpyW(mi->sourcedir, source_dir);
     PathAddBackslashW(mi->sourcedir);
     mi->type = get_drive_type(source_dir);
@@ -734,9 +713,9 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
         source = source_dir;
         options |= MSISOURCETYPE_MEDIA;
     }
-    else if (package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
+    else if ((base_url = get_base_url(package->db)))
     {
-        source = package->BaseURL;
+        source = base_url;
         options |= MSISOURCETYPE_URL;
     }
     else
@@ -752,8 +731,10 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
     msi_package_add_info(package, package->Context,
                          options, INSTALLPROPERTY_LASTUSEDSOURCEW, source);
 
-    msi_free(source_dir);
     TRACE("sequence %u -> cabinet %s disk id %u\n", Sequence, debugstr_w(mi->cabinet), mi->disk_id);
+
+    free(base_url);
+    free(source_dir);
     return ERROR_SUCCESS;
 }
 
@@ -796,7 +777,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
                                              MSISOURCETYPE_NETWORK, index++,
                                              volume, &volumesz) == ERROR_SUCCESS)
             {
-                if (check_all || !strncmpiW(source, volume, strlenW(source)))
+                if (check_all || !wcsnicmp(source, volume, lstrlenW(source)))
                 {
                     lstrcpyW(cabinet_file, volume);
                     PathAddBackslashW(cabinet_file);
@@ -833,13 +814,13 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
                                         volume, &volumesz, prompt, &promptsz) == ERROR_SUCCESS)
     {
         mi->disk_id = id;
-        msi_free( mi->volume_label );
-        if (!(mi->volume_label = msi_alloc( ++volumesz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-        strcpyW( mi->volume_label, volume );
+        free( mi->volume_label );
+        if (!(mi->volume_label = malloc( ++volumesz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        lstrcpyW( mi->volume_label, volume );
 
-        msi_free( mi->disk_prompt );
-        if (!(mi->disk_prompt = msi_alloc( ++promptsz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-        strcpyW( mi->disk_prompt, prompt );
+        free( mi->disk_prompt );
+        if (!(mi->disk_prompt = malloc( ++promptsz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        lstrcpyW( mi->disk_prompt, prompt );
 
         if (source_matches_volume(mi, source))
         {
@@ -864,6 +845,8 @@ UINT ready_media( MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi )
 
     if (mi->cabinet)
     {
+        WCHAR *base_url;
+
         /* cabinet is internal, no checks needed */
         if (mi->cabinet[0] == '#') return ERROR_SUCCESS;
 
@@ -871,40 +854,55 @@ UINT ready_media( MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi )
 
         /* package should be downloaded */
         if (compressed && GetFileAttributesW( cabinet_file ) == INVALID_FILE_ATTRIBUTES &&
-            package->BaseURL && UrlIsW( package->BaseURL, URLIS_URL ))
+            (base_url = get_base_url( package->db )))
         {
-            WCHAR temppath[MAX_PATH], *p;
+            WCHAR temppath[MAX_PATH], *p, *url;
 
-            if ((rc = msi_download_file( cabinet_file, temppath )) != ERROR_SUCCESS)
+            free( cabinet_file );
+            if (!(url = realloc( base_url, (wcslen( base_url ) + wcslen( mi->cabinet ) + 1) * sizeof(WCHAR) )))
             {
-                ERR("failed to download %s (%u)\n", debugstr_w(cabinet_file), rc);
-                msi_free( cabinet_file );
+                free( base_url );
+                return ERROR_OUTOFMEMORY;
+            }
+            lstrcatW( url, mi->cabinet );
+            if ((rc = msi_download_file( url, temppath )) != ERROR_SUCCESS)
+            {
+                ERR("failed to download %s (%u)\n", debugstr_w(url), rc);
+                free( url );
                 return rc;
             }
-            if ((p = strrchrW( temppath, '\\' ))) *p = 0;
-            strcpyW( mi->sourcedir, temppath );
+            if ((p = wcsrchr( temppath, '\\' ))) *p = 0;
+            lstrcpyW( mi->sourcedir, temppath );
             PathAddBackslashW( mi->sourcedir );
-            msi_free( mi->cabinet );
-            mi->cabinet = strdupW( p + 1 );
-            msi_free( cabinet_file );
+            free( mi->cabinet );
+            mi->cabinet = wcsdup( p + 1 );
+
+            free( url );
             return ERROR_SUCCESS;
         }
     }
     /* check volume matches, change media if not */
-    if (mi->volume_label && mi->disk_id > 1 && strcmpW( mi->first_volume, mi->volume_label ))
+    if (mi->volume_label)
     {
-        WCHAR *source = msi_dup_property( package->db, szSourceDir );
-        BOOL match = source_matches_volume( mi, source );
-        msi_free( source );
-
-        if (!match && (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE))
+        /* assume first volume is in the drive */
+        if (mi->last_volume && wcsicmp( mi->last_volume, mi->volume_label ))
         {
-            if ((rc = msi_change_media( package, mi )) != ERROR_SUCCESS)
+            WCHAR *source = msi_dup_property( package->db, L"SourceDir" );
+            BOOL match = source_matches_volume( mi, source );
+            free( source );
+
+            if (!match && (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE))
             {
-                msi_free( cabinet_file );
-                return rc;
+                if ((rc = change_media( package, mi )) != ERROR_SUCCESS)
+                {
+                    free( cabinet_file );
+                    return rc;
+                }
             }
         }
+
+        free(mi->last_volume);
+        mi->last_volume = wcsdup(mi->volume_label);
     }
     if (mi->cabinet)
     {
@@ -913,12 +911,12 @@ UINT ready_media( MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi )
             if ((rc = find_published_source( package, mi )) != ERROR_SUCCESS)
             {
                 ERR("cabinet not found: %s\n", debugstr_w(cabinet_file));
-                msi_free( cabinet_file );
+                free( cabinet_file );
                 return ERROR_INSTALL_FAILURE;
             }
         }
     }
-    msi_free( cabinet_file );
+    free( cabinet_file );
     return ERROR_SUCCESS;
 }
 
@@ -936,13 +934,13 @@ UINT msi_add_cabinet_stream( MSIPACKAGE *package, UINT disk_id, IStorage *storag
             return ERROR_FUNCTION_FAILED;
         }
     }
-    if (!(cab = msi_alloc( sizeof(*cab) ))) return ERROR_OUTOFMEMORY;
-    if (!(cab->stream = msi_alloc( (strlenW( name ) + 1) * sizeof(WCHAR ) )))
+    if (!(cab = malloc( sizeof(*cab) ))) return ERROR_OUTOFMEMORY;
+    if (!(cab->stream = malloc( (wcslen( name ) + 1) * sizeof(WCHAR) )))
     {
-        msi_free( cab );
+        free( cab );
         return ERROR_OUTOFMEMORY;
     }
-    strcpyW( cab->stream, name );
+    lstrcpyW( cab->stream, name );
     cab->disk_id = disk_id;
     cab->storage = storage;
     IStorage_AddRef( storage );

@@ -130,35 +130,16 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
                              DWORD mouse_data, BOOL drag, unsigned long time)
 {
     INPUT input;
-    HWND top_level_hwnd;
-
-    top_level_hwnd = NtUserGetAncestor(hwnd, GA_ROOT);
-
-    if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE) && !drag &&
-        cocoa_window != macdrv_thread_data()->capture_window)
-    {
-        /* update the wine server Z-order */
-        SERVER_START_REQ(update_window_zorder)
-        {
-            req->window      = wine_server_user_handle(top_level_hwnd);
-            req->rect.left   = x;
-            req->rect.top    = y;
-            req->rect.right  = x + 1;
-            req->rect.bottom = y + 1;
-            wine_server_call(req);
-        }
-        SERVER_END_REQ;
-    }
 
     input.type              = INPUT_MOUSE;
     input.mi.dx             = x;
     input.mi.dy             = y;
     input.mi.mouseData      = mouse_data;
-    input.mi.dwFlags        = flags;
+    input.mi.dwFlags        = flags | MOUSEEVENTF_MOVE_NOCOALESCE;
     input.mi.time           = time;
     input.mi.dwExtraInfo    = 0;
 
-    NtUserSendHardwareInput(top_level_hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 
@@ -274,7 +255,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     CFArrayRef frames;
 
     TRACE("hdc %p icon->hbmMask %p icon->xHotspot %d icon->yHotspot %d width %d height %d\n",
-          hdc, icon->hbmMask, (int)icon->xHotspot, (int)icon->yHotspot, width, height);
+          hdc, icon->hbmMask, icon->xHotspot, icon->yHotspot, width, height);
 
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = width;
@@ -484,7 +465,7 @@ static CFDictionaryRef create_cursor_frame(HDC hdc, const ICONINFOEXW *iinfo, HA
 
     TRACE("hdc %p iinfo->xHotspot %d iinfo->yHotspot %d icon %p hbmColor %p color_bits %p color_size %d"
           " hbmMask %p mask_bits %p mask_size %d width %d height %d istep %d\n",
-          hdc, (int)iinfo->xHotspot, (int)iinfo->yHotspot, icon, hbmColor, color_bits, color_size,
+          hdc, iinfo->xHotspot, iinfo->yHotspot, icon, hbmColor, color_bits, color_size,
           hbmMask, mask_bits, mask_size, width, height, istep);
 
     frame = CFDictionaryCreateMutable(NULL, 0, &kCFCopyStringDictionaryKeyCallBacks,
@@ -631,7 +612,7 @@ cleanup:
         frames = NULL;
     }
     else
-        TRACE("returning cursor with %d frames\n", (int)nFrames);
+        TRACE("returning cursor with %d frames\n", nFrames);
     /* Cleanup all of the resources used to obtain the frame data */
     if (hbmColor) NtGdiDeleteObjectApp(hbmColor);
     if (hbmMask) NtGdiDeleteObjectApp(hbmMask);
@@ -665,9 +646,7 @@ BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset)
 
     TRACE("%s %u\n", wine_dbgstr_rect(clip), reset);
 
-    if (reset) return TRUE;
-
-    if (clip)
+    if (!reset && clip)
     {
         rect = CGRectMake(clip->left, clip->top, max(1, clip->right - clip->left),
                           max(1, clip->bottom - clip->top));
@@ -693,7 +672,7 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
     ret = macdrv_get_cursor_position(&pt);
     if (ret)
     {
-        TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, (int)pos->x, (int)pos->y);
+        TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, pos->x, pos->y);
         pos->x = floor(pt.x);
         pos->y = floor(pt.y);
     }
@@ -704,13 +683,12 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
 /***********************************************************************
  *              SetCapture (MACDRV.@)
  */
- void macdrv_SetCapture(HWND hwnd, UINT flags)
+ void macdrv_SetCapture(HWND hwnd, UINT flags, HWND previous)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    HWND top = NtUserGetAncestor(hwnd, GA_ROOT);
-    macdrv_window cocoa_window = macdrv_get_cocoa_window(top, FALSE);
+    macdrv_window cocoa_window = macdrv_get_cocoa_window(hwnd, FALSE);
 
-    TRACE("hwnd %p top %p/%p flags 0x%08x\n", hwnd, top, cocoa_window, flags);
+    TRACE("hwnd %p/%p flags 0x%08x previous %p\n", hwnd, cocoa_window, flags, previous);
 
     if (!thread_data) return;
 
@@ -959,6 +937,6 @@ void macdrv_release_capture(HWND hwnd, const macdrv_event *event)
     {
         NtUserReleaseCapture();
         if (!NtUserPostMessage(capture, WM_CANCELMODE, 0, 0))
-            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", (unsigned int)RtlGetLastWin32Error());
+            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", RtlGetLastWin32Error());
     }
 }

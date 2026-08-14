@@ -625,6 +625,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
     case 0x0800:  /* Physical address mapping */
         FIXME( "physical address mapping (0x%08lx) - unimplemented\n",
                MAKELONG(CX_reg(context),BX_reg(context)) );
+        SET_CFLAG( context );
         break;
 
     case 0x0900:  /* Get and Disable Virtual Interrupt State */

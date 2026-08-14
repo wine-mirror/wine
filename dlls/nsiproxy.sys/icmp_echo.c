@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <assert.h>
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -40,8 +41,12 @@
 #include <netinet/ip.h>
 #endif
 
+#ifdef HAVE_LINUX_ERRQUEUE_H
+#include <linux/errqueue.h>
+#define USE_ERRQUEUE
+#endif
+
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -53,6 +58,7 @@
 #include "ipexport.h"
 #include "ipmib.h"
 #include "wine/nsi.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 #include "nsiproxy_private.h"
@@ -73,6 +79,28 @@ struct ip_hdr
     uint16_t checksum;
     uint32_t saddr;
     uint32_t daddr;
+};
+
+struct ipv6_hdr
+{
+    uint8_t v_prio; /* version << 4 | priority */
+    uint8_t flow_lbl[3];
+    uint16_t next_len;
+    uint8_t next_hdr;
+    uint8_t hop_limit;
+    struct in6_addr saddr;
+    struct in6_addr daddr;
+};
+
+C_ASSERT( sizeof(struct ipv6_hdr) == 40 );
+
+struct ipv6_pseudo_header
+{
+    struct in6_addr src;
+    struct in6_addr dst;
+    UINT32 next_len; /* incapsulated packet length in network byte order */
+    BYTE zero[3];
+    BYTE next_header;
 };
 
 struct icmp_hdr
@@ -100,25 +128,58 @@ struct icmp_reply_ctx
     BYTE tos;
     BYTE flags;
     BYTE options_size;
-    void *options_data;
-    void *data;
+    unsigned int options_data_offset;
+    unsigned int data_offset;
+    BYTE packet[65536];
+    unsigned int packet_size;
+    uint16_t id, sequence;
 };
 
 struct family_ops;
+
+struct icmp_socket
+{
+    struct list entry;
+    struct list listen_entry;
+    struct list request_list;
+    LONG ref;
+    int socket;
+    const struct family_ops *ops;
+    struct sockaddr_storage src_storage;
+    int src_len;
+    int hop_limit;
+    BYTE ttl, tos;
+    BOOL ping_socket;
+    unsigned short id;
+    BOOL polling;
+};
+
 struct icmp_data
 {
+    struct list entry;
     LARGE_INTEGER send_time;
-    int socket;
-    int cancel_pipe[2];
-    unsigned short id;
     unsigned short seq;
-    const struct family_ops *ops;
+    struct sockaddr_storage dst_storage;
+    int dst_len;
+    struct icmp_socket *s;
+    struct icmp_reply_ctx reply_ctx;
+    HANDLE completion_event;
+    BOOL polling;
+    NTSTATUS status;
 };
+
+
+static pthread_mutex_t listen_lock = PTHREAD_MUTEX_INITIALIZER;
+struct list socket_list = LIST_INIT( socket_list );
+static int socket_list_update_pipe[2];
+static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 
 #define MAX_HANDLES 256 /* Max number of simultaneous pings - could become dynamic if need be */
 static struct icmp_data *handle_table[MAX_HANDLES];
 static pthread_mutex_t handle_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct icmp_data **next_free, **next_unused = handle_table;
+
+static void icmp_listen( void *args );
 
 static icmp_handle handle_alloc( struct icmp_data *data )
 {
@@ -180,15 +241,17 @@ static void ipv4_init_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp_hd
     icmp_hdr->type = ICMP4_ECHO_REQUEST;
     icmp_hdr->code = 0;
     icmp_hdr->checksum = 0;
-    icmp_hdr->un.echo.id = data->id = getpid() & 0xffff; /* will be overwritten for linux ping socks */
-    icmp_hdr->un.echo.sequence = data->seq = InterlockedIncrement( &icmp_sequence ) & 0xffff;
+    icmp_hdr->un.echo.id = data->s->id = htons( 1 ); /* will be overwritten for linux ping socks */
+    icmp_hdr->un.echo.sequence = data->seq = htons( InterlockedIncrement( &icmp_sequence ) & 0xffff );
 }
 
 /* rfc 1071 checksum */
-static unsigned short chksum( BYTE *data, unsigned int count )
+static unsigned short chksum( struct icmp_data *icmp_data, BYTE *data, unsigned int count )
 {
     unsigned int sum = 0, carry = 0;
     unsigned short check, s;
+
+    if (icmp_data->s->ping_socket) return 0;
 
     while (count > 1)
     {
@@ -212,13 +275,6 @@ static unsigned short chksum( BYTE *data, unsigned int count )
     return check;
 }
 
-#ifdef __linux__
-static unsigned short null_chksum( BYTE *data, unsigned int count )
-{
-    return 0;
-}
-#endif
-
 static int ipv4_set_reply_ip_status( IP_STATUS ip_status, unsigned int bits, void *out )
 {
     if (bits == 32)
@@ -237,53 +293,40 @@ static int ipv4_set_reply_ip_status( IP_STATUS ip_status, unsigned int bits, voi
     }
 }
 
-static void ipv4_set_socket_opts( struct icmp_data *data, struct icmp_send_echo_params *params )
+static void ipv4_set_socket_opts( struct icmp_socket *s )
 {
     int val;
 
-    val = params->ttl;
-    if (val) setsockopt( data->socket, IPPROTO_IP, IP_TTL, &val, sizeof(val) );
-    val = params->tos;
-    if (val) setsockopt( data->socket, IPPROTO_IP, IP_TOS, &val, sizeof(val) );
+    val = s->ttl;
+    if (val) setsockopt( s->socket, IPPROTO_IP, IP_TTL, &val, sizeof(val) );
+    val = s->tos;
+    if (val) setsockopt( s->socket, IPPROTO_IP, IP_TOS, &val, sizeof(val) );
 }
 
 #ifdef __linux__
-static void ipv4_linux_ping_set_socket_opts( struct icmp_data *data, struct icmp_send_echo_params *params )
+static void ipv4_linux_ping_set_socket_opts( struct icmp_socket *s )
 {
     static const int val = 1;
 
-    ipv4_set_socket_opts( data, params );
+    ipv4_set_socket_opts( s );
 
-    setsockopt( data->socket, IPPROTO_IP, IP_RECVTTL, &val, sizeof(val) );
-    setsockopt( data->socket, IPPROTO_IP, IP_RECVTOS, &val, sizeof(val) );
+    setsockopt( s->socket, IPPROTO_IP, IP_RECVTTL, &val, sizeof(val) );
+    setsockopt( s->socket, IPPROTO_IP, IP_RECVTOS, &val, sizeof(val) );
+    setsockopt( s->socket, IPPROTO_IP, IP_RECVERR, &val, sizeof(val) );
 }
 #endif
 
-static int ipv4_reply_buffer_len( struct icmp_listen_params *params )
-{
-    int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
-    return sizeof(struct ip_hdr) + sizeof(struct icmp_hdr) + params->reply_len - struct_len;
-}
-
-#ifdef __linux__
-static int ipv4_linux_ping_reply_buffer_len( struct icmp_listen_params *params )
-{
-    int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
-    return sizeof(struct icmp_hdr) + params->reply_len - struct_len;
-}
-#endif
-
-static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
+static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
                                struct icmp_reply_ctx *ctx )
 {
     struct ip_hdr *ip_hdr;
 
-    if (recvd < sizeof(*ip_hdr)) return FALSE;
+    if (*recvd < sizeof(*ip_hdr)) return FALSE;
     ip_hdr = msg->msg_iov[0].iov_base;
     if (ip_hdr->v_hl >> 4 != 4 || ip_hdr->protocol != IPPROTO_ICMP) return FALSE;
     *ip_hdr_len = (ip_hdr->v_hl & 0xf) << 2;
     if (*ip_hdr_len < sizeof(*ip_hdr)) return FALSE;
-    ctx->options_data = ip_hdr + 1;
+    ctx->options_data_offset = sizeof(*ip_hdr);
     ctx->ttl = ip_hdr->ttl;
     ctx->tos = ip_hdr->tos;
     ctx->flags = ip_hdr->frag_off >> 13;
@@ -293,13 +336,13 @@ static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
 }
 
 #ifdef __linux__
-static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
+static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
                                           struct icmp_reply_ctx *ctx )
 {
     struct cmsghdr *cmsg;
 
     *ip_hdr_len = 0;
-    ctx->options_data = NULL;
+    ctx->options_data_offset = 0;
     ctx->ttl = 0;
     ctx->tos = 0;
     ctx->flags = 0;
@@ -316,14 +359,33 @@ static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip
         case IP_TOS:
             ctx->tos = *(BYTE *)CMSG_DATA( cmsg );
             break;
+#ifdef HAVE_LINUX_ERRQUEUE_H
+        case IP_RECVERR:
+        {
+            struct sock_extended_err *e;
+            struct icmp_hdr *icmp_h;
+
+            e = (struct sock_extended_err *)CMSG_DATA( cmsg );
+            icmp_h = msg->msg_iov[0].iov_base;
+            if (e->ee_origin != SO_EE_ORIGIN_ICMP) break;
+            if (*recvd + sizeof(*icmp_h) > ARRAY_SIZE(ctx->packet)) break;
+            memmove( ctx->packet + sizeof(*icmp_h), ctx->packet, *recvd );
+            *recvd += sizeof(*icmp_h);
+            memset( icmp_h, 0, sizeof(*icmp_h) );
+            icmp_h->type = e->ee_type;
+            icmp_h->code = e->ee_code;
+            TRACE( "got error packet type %d, code %d.\n", icmp_h->type, icmp_h->code );
+            break;
+        }
+#endif
         }
     }
     return TRUE;
 }
 #endif
 
-static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
-                                 struct icmp_reply_ctx *ctx, int ping_socket )
+static int ipv4_parse_icmp_hdr( struct icmp_socket *s, struct icmp_hdr *icmp, int icmp_size,
+                                struct icmp_reply_ctx *ctx )
 {
     static const IP_STATUS unreach_codes[] =
     {
@@ -352,9 +414,8 @@ static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, 
     switch (icmp->type)
     {
     case ICMP4_ECHO_REPLY:
-        if ((!ping_socket && icmp->un.echo.id != data->id) ||
-            icmp->un.echo.sequence != data->seq) return -1;
-
+        ctx->id = icmp->un.echo.id;
+        ctx->sequence = icmp->un.echo.sequence;
         ctx->status = IP_SUCCESS;
         return icmp_size - sizeof(*icmp);
 
@@ -384,39 +445,32 @@ static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, 
         return -1;
     }
 
-    /* Check that the appended packet is really ours -
-     * all handled icmp replies have an 8-byte header
-     * followed by the original ip hdr. */
-    if (icmp_size < sizeof(*icmp) + sizeof(*orig_ip_hdr)) return -1;
-    orig_ip_hdr = (struct ip_hdr *)(icmp + 1);
-    if (orig_ip_hdr->v_hl >> 4 != 4 || orig_ip_hdr->protocol != IPPROTO_ICMP) return -1;
-    orig_ip_hdr_len = (orig_ip_hdr->v_hl & 0xf) << 2;
-    if (icmp_size < sizeof(*icmp) + orig_ip_hdr_len + sizeof(*orig_icmp_hdr)) return -1;
-    orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + orig_ip_hdr_len);
+    icmp_size -= sizeof(*icmp);
+    if (s->ping_socket)
+    {
+        orig_ip_hdr_len = 0;
+        orig_icmp_hdr = icmp + 1;
+    }
+    else
+    {
+        /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
+        if (icmp_size < sizeof(*orig_ip_hdr)) return -1;
+        orig_ip_hdr = (struct ip_hdr *)(icmp + 1);
+        if (orig_ip_hdr->v_hl >> 4 != 4 || orig_ip_hdr->protocol != IPPROTO_ICMP) return -1;
+        orig_ip_hdr_len = (orig_ip_hdr->v_hl & 0xf) << 2;
+        orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + orig_ip_hdr_len);
+    }
+    if (icmp_size < orig_ip_hdr_len + sizeof(*orig_icmp_hdr)) return -1;
     if (orig_icmp_hdr->type != ICMP4_ECHO_REQUEST ||
-        orig_icmp_hdr->code != 0 ||
-        (!ping_socket && orig_icmp_hdr->un.echo.id != data->id) ||
-        orig_icmp_hdr->un.echo.sequence != data->seq) return -1;
+        orig_icmp_hdr->code != 0) return -1;
 
+    ctx->id = orig_icmp_hdr->un.echo.id;
+    ctx->sequence = orig_icmp_hdr->un.echo.sequence;
     ctx->status = status;
     return 0;
 }
 
-static int ipv4_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp,
-                                int icmp_size, struct icmp_reply_ctx *ctx)
-{
-    return ipv4_parse_icmp_hdr_( data, icmp, icmp_size, ctx, 0 );
-}
-
-#ifdef __linux__
-static int ipv4_linux_ping_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp,
-                                           int icmp_size, struct icmp_reply_ctx *ctx )
-{
-    return ipv4_parse_icmp_hdr_( data, icmp, icmp_size, ctx, 1 );
-}
-#endif
-
-static void ipv4_fill_reply( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx)
+static BOOL ipv4_fill_reply( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx)
 {
     void *options_data;
     ULONG data_offset;
@@ -455,12 +509,17 @@ static void ipv4_fill_reply( struct icmp_listen_params *params, struct icmp_repl
         options_data = reply + 1;
     }
 
-    memcpy( options_data, ctx->options_data, ctx->options_size );
+    if (ctx->options_size && ((char *)options_data - (char *)params->reply) + ctx->options_size > params->reply_len)
+        return FALSE;
+    memcpy( options_data, ctx->packet + ctx->options_data_offset, ctx->options_size );
     if (ctx->options_size & 3)
         memset( (char *)options_data + ctx->options_size, 0, 4 - (ctx->options_size & 3) );
 
-    memcpy( (char *)params->reply + data_offset, ctx->data, ctx->data_size );
+    if (ctx->data_size && data_offset + ctx->data_size > params->reply_len)
+        return FALSE;
+    memcpy( (char *)params->reply + data_offset, ctx->packet + ctx->data_offset, ctx->data_size );
     params->reply_len = data_offset + ctx->data_size;
+    return TRUE;
 }
 
 struct family_ops
@@ -468,13 +527,12 @@ struct family_ops
     int family;
     int icmp_protocol;
     void (*init_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp_hdr );
-    unsigned short (*chksum)( BYTE *data, unsigned int count );
+    unsigned short (*chksum)( struct icmp_data *icmp_data, BYTE *data, unsigned int count );
     int (*set_reply_ip_status)( IP_STATUS ip_status, unsigned int bits, void *out );
-    void (*set_socket_opts)( struct icmp_data *data, struct icmp_send_echo_params *params );
-    int (*reply_buffer_len)( struct icmp_listen_params *params );
-    BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
-    int (*parse_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_len, struct icmp_reply_ctx *ctx );
-    void (*fill_reply)( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx );
+    void (*set_socket_opts)( struct icmp_socket *s );
+    BOOL (*parse_ip_hdr)( struct msghdr *msg, int *recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
+    int (*parse_icmp_hdr)( struct icmp_socket *s, struct icmp_hdr *icmp, int icmp_len, struct icmp_reply_ctx *ctx );
+    BOOL (*fill_reply)( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx );
 };
 
 static const struct family_ops ipv4 =
@@ -485,7 +543,6 @@ static const struct family_ops ipv4 =
     chksum,
     ipv4_set_reply_ip_status,
     ipv4_set_socket_opts,
-    ipv4_reply_buffer_len,
     ipv4_parse_ip_hdr,
     ipv4_parse_icmp_hdr,
     ipv4_fill_reply,
@@ -498,15 +555,247 @@ static const struct family_ops ipv4_linux_ping =
     AF_INET,
     IPPROTO_ICMP,
     ipv4_init_icmp_hdr,
-    null_chksum,
+    chksum,
     ipv4_set_reply_ip_status,
     ipv4_linux_ping_set_socket_opts,
-    ipv4_linux_ping_reply_buffer_len,
     ipv4_linux_ping_parse_ip_hdr,
-    ipv4_linux_ping_parse_icmp_hdr,
+    ipv4_parse_icmp_hdr,
     ipv4_fill_reply,
 };
 #endif
+
+static void ipv6_init_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp_hdr )
+{
+    icmp_hdr->type = ICMP6_ECHO_REQUEST;
+    icmp_hdr->code = 0;
+    icmp_hdr->checksum = 0;
+    icmp_hdr->un.echo.id = data->s->id;
+    icmp_hdr->un.echo.sequence = data->seq = InterlockedIncrement( &icmp_sequence ) & 0xffff;
+}
+
+static unsigned short ipv6_chksum( struct icmp_data *icmp_data, BYTE *data, unsigned int count )
+{
+    struct ipv6_pseudo_header *ip_h;
+    struct sockaddr_in6 addr;
+    unsigned short sum;
+    socklen_t slen;
+    int s, ret;
+
+    if (icmp_data->s->ping_socket) return 0;
+
+    /* Determine source address. Do it on a separate socket or raw socket won't receive ICMP replies
+     * originating not from the destination address. */
+    s = socket( AF_INET6, SOCK_RAW, IPPROTO_ICMPV6 );
+    if (s < 0)
+    {
+        TRACE( "failed to open raw sock, trying a dgram sock\n" );
+        s = socket( AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6 );
+        if (s < 0)
+        {
+            WARN( "Unable to create socket\n" );
+            return 0;
+        }
+    }
+    if (bind( s, (void *)&icmp_data->s->src_storage, icmp_data->s->src_len ))
+    {
+        close( s );
+        return 0;
+    }
+    if (connect( s, (void *)&icmp_data->dst_storage, icmp_data->dst_len ))
+    {
+        close( s );
+        return 0;
+    }
+    slen = sizeof(addr);
+    ret = getsockname( s, (void *)&addr, &slen );
+    close( s );
+    if (ret) return 0;
+
+    ip_h = malloc( sizeof(*ip_h) + count );
+    if (!ip_h) return 0;
+    memset( ip_h, 0, sizeof(*ip_h) );
+    ip_h->src = addr.sin6_addr;
+    ip_h->dst = ((struct sockaddr_in6 *)&icmp_data->dst_storage)->sin6_addr;
+    ip_h->next_len = htonl( count );
+    ip_h->next_header = IPPROTO_ICMPV6;
+    memcpy( ip_h + 1, data, count );
+    sum = chksum( icmp_data, (BYTE *)ip_h, sizeof(*ip_h) + count );
+    free( ip_h );
+    return sum;
+}
+
+static int ipv6_set_reply_ip_status( IP_STATUS ip_status, unsigned int bits, void *out )
+{
+    ICMPV6_ECHO_REPLY *reply = out;
+
+    memset( reply, 0, sizeof(*reply) );
+    reply->Status = ip_status;
+    return sizeof(*reply);
+}
+
+static void ipv6_set_socket_opts( struct icmp_socket *s )
+{
+#ifdef IPV6_UNICAST_HOPS
+{
+    int val = s->hop_limit;
+
+    setsockopt( s->socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val, sizeof(val) );
+}
+#endif
+#ifdef IP_RECVERR
+{
+    int val = 1;
+
+    if (s->ping_socket)
+        setsockopt( s->socket, IPPROTO_IPV6, IPV6_RECVERR, &val, sizeof(val) );
+}
+#endif
+}
+
+static BOOL ipv6_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
+                                          struct icmp_reply_ctx *ctx )
+{
+    *ip_hdr_len = 0;
+    ctx->options_data_offset = 0;
+    ctx->ttl = 0;
+    ctx->tos = 0;
+    ctx->flags = 0;
+    ctx->options_size = 0;
+
+#ifdef HAVE_LINUX_ERRQUEUE_H
+{
+    struct sock_extended_err *e;
+    struct icmp_hdr *icmp_h;
+    struct cmsghdr *cmsg;
+
+    for (cmsg = CMSG_FIRSTHDR( msg ); cmsg; cmsg = CMSG_NXTHDR( msg, cmsg ))
+    {
+        if (cmsg->cmsg_level != IPPROTO_IPV6) continue;
+        switch (cmsg->cmsg_type)
+        {
+        case IPV6_RECVERR:
+            e = (struct sock_extended_err *)CMSG_DATA( cmsg );
+            icmp_h = msg->msg_iov[0].iov_base;
+            if (e->ee_origin != SO_EE_ORIGIN_ICMP6) break;
+            if (*recvd + sizeof(*icmp_h) > ARRAY_SIZE(ctx->packet)) break;
+            TRACE( "got error packet.\n" );
+            memmove( ctx->packet + sizeof(*icmp_h), ctx->packet, *recvd );
+            *recvd += sizeof(*icmp_h);
+            memset( icmp_h, 0, sizeof(*icmp_h) );
+            icmp_h->type = e->ee_type;
+            icmp_h->code = e->ee_code;
+            break;
+        }
+    }
+}
+#endif
+    return TRUE;
+}
+
+static int ipv6_parse_icmp_hdr( struct icmp_socket *s, struct icmp_hdr *icmp,
+                                int icmp_size, struct icmp_reply_ctx *ctx )
+{
+    static const IP_STATUS unreach_codes[] =
+    {
+        IP_DEST_NO_ROUTE,
+        IP_DEST_PROHIBITED,
+        IP_DEST_SCOPE_MISMATCH,
+        IP_DEST_ADDR_UNREACHABLE,
+        IP_DEST_PORT_UNREACHABLE,
+        IP_ICMP_ERROR,
+        IP_DEST_UNREACHABLE,
+        IP_BAD_HEADER,
+    };
+    const struct ipv6_hdr *orig_ip_hdr;
+    const struct icmp_hdr *orig_icmp_hdr;
+    IP_STATUS status;
+
+    switch (icmp->type)
+    {
+    case ICMP6_ECHO_REPLY:
+        ctx->id = icmp->un.echo.id;
+        ctx->sequence = icmp->un.echo.sequence;
+        ctx->status = IP_SUCCESS;
+        return icmp_size - sizeof(*icmp);
+
+    case ICMP6_DST_UNREACH:
+        if (icmp->code < ARRAY_SIZE(unreach_codes))
+            status = unreach_codes[icmp->code];
+        else
+            status = IP_DEST_HOST_UNREACHABLE;
+        break;
+
+    case ICMP6_PACKET_TOO_BIG:
+        status = IP_PACKET_TOO_BIG;
+        break;
+
+    case ICMP6_TIME_EXCEEDED:
+        switch(icmp->code)
+        {
+        case 0: status = IP_HOP_LIMIT_EXCEEDED; break;
+        case 1: status = IP_REASSEMBLY_TIME_EXCEEDED; break;
+        default: status = IP_TIME_EXCEEDED; break;
+        }
+        break;
+
+    case ICMP6_PARAM_PROB:
+        status = IP_PARAMETER_PROBLEM;
+        break;
+
+    default:
+        return -1;
+    }
+
+    icmp_size -= sizeof(*icmp);
+    if (s->ping_socket) orig_icmp_hdr = icmp + 1;
+    else
+    {
+        /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
+        if (icmp_size < sizeof(*orig_ip_hdr)) return -1;
+        icmp_size -= sizeof(*orig_ip_hdr);
+        orig_ip_hdr = (struct ipv6_hdr *)(icmp + 1);
+        if ((orig_ip_hdr->v_prio >> 4) != 6 || orig_ip_hdr->next_hdr != IPPROTO_ICMPV6) return -1;
+        orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + sizeof(*orig_ip_hdr));
+    }
+    if (icmp_size < sizeof(*orig_icmp_hdr)) return -1;
+    if (orig_icmp_hdr->type != ICMP6_ECHO_REQUEST ||
+        orig_icmp_hdr->code != 0) return -1;
+
+    ctx->id = orig_icmp_hdr->un.echo.id;
+    ctx->sequence = orig_icmp_hdr->un.echo.sequence;
+    ctx->status = status;
+    return 0;
+}
+
+static BOOL ipv6_fill_reply( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx)
+{
+    ICMPV6_ECHO_REPLY *reply = params->reply;
+
+    reply->Status = ctx->status;
+    memcpy( reply->Address.sin6_addr, &ctx->addr.Ipv6.sin6_addr, sizeof(ctx->addr.Ipv6.sin6_addr) );
+    reply->Address.sin6_flowinfo = ctx->addr.Ipv6.sin6_flowinfo;
+    reply->Address.sin6_port = ctx->addr.Ipv6.sin6_port;
+    reply->Address.sin6_scope_id = ctx->addr.Ipv6.sin6_scope_id;
+    reply->RoundTripTime = ctx->round_trip_time;
+    if (sizeof(*reply) + ctx->data_size > params->reply_len)
+        return FALSE;
+    memcpy( reply + 1, ctx->packet + ctx->data_offset, ctx->data_size );
+    params->reply_len = sizeof(*reply) + ctx->data_size;
+    return TRUE;
+}
+
+static const struct family_ops ipv6 =
+{
+    AF_INET6,
+    IPPROTO_ICMPV6,
+    ipv6_init_icmp_hdr,
+    ipv6_chksum,
+    ipv6_set_reply_ip_status,
+    ipv6_set_socket_opts,
+    ipv6_parse_ip_hdr,
+    ipv6_parse_icmp_hdr,
+    ipv6_fill_reply,
+};
 
 static IP_STATUS errno_to_ip_status( int err )
 {
@@ -526,6 +815,7 @@ static int SOCKADDR_INET_to_sockaddr( const SOCKADDR_INET *in, struct sockaddr *
         struct sockaddr_in *sa = (struct sockaddr_in *)out;
 
         if (len < sizeof(*sa)) return 0;
+        memset( sa, 0, sizeof(*sa) );
         sa->sin_family = AF_INET;
         sa->sin_port = in->Ipv4.sin_port;
         sa->sin_addr.s_addr = in->Ipv4.sin_addr.WS_s_addr;
@@ -536,6 +826,7 @@ static int SOCKADDR_INET_to_sockaddr( const SOCKADDR_INET *in, struct sockaddr *
         struct sockaddr_in6 *sa = (struct sockaddr_in6 *)out;
 
         if (len < sizeof(*sa)) return 0;
+        memset( sa, 0, sizeof(*sa) );
         sa->sin6_family = AF_INET6;
         sa->sin6_port = in->Ipv6.sin6_port;
         sa->sin6_flowinfo = in->Ipv6.sin6_flowinfo;
@@ -575,65 +866,171 @@ static BOOL sockaddr_to_SOCKADDR_INET( const struct sockaddr *in, SOCKADDR_INET 
     return FALSE;
 }
 
-static NTSTATUS icmp_data_create( ADDRESS_FAMILY win_family, struct icmp_data **icmp_data )
+static void icmp_grab_socket( struct icmp_socket *s )
 {
-    struct icmp_data *data;
-    const struct family_ops *ops;
+    assert( s->ref > 0 );
+    InterlockedIncrement( &s->ref );
+}
 
-    if (win_family == WS_AF_INET) ops = &ipv4;
-    else return STATUS_INVALID_PARAMETER;
-
-    data = malloc( sizeof(*data) );
-    if (!data) return STATUS_NO_MEMORY;
-
-    data->socket = socket( ops->family, SOCK_RAW, ops->icmp_protocol );
-    if (data->socket < 0) /* Try a ping-socket */
+static void icmp_release_socket( struct icmp_socket *s )
+{
+    pthread_mutex_lock( &listen_lock );
+    if (!InterlockedDecrement( &s->ref ))
     {
-        TRACE( "failed to open raw sock, trying a dgram sock\n" );
-        data->socket = socket( ops->family, SOCK_DGRAM, ops->icmp_protocol );
-        if (data->socket < 0)
-        {
-            WARN( "Unable to create socket\n" );
-            free( data );
-            return STATUS_ACCESS_DENIED;
-        }
-#ifdef __linux__
-        if (ops->family == AF_INET) ops = &ipv4_linux_ping;
-#endif
+        TRACE( "freeing socket %p, fd %d.\n", s, s->socket );
+        if (s->polling) list_remove( &s->entry );
+        if (s->socket >= 0) close( s->socket );
+        free( s );
     }
-    if (pipe( data->cancel_pipe ))
-    {
-        close( data->socket );
-        free( data );
-        return STATUS_ACCESS_DENIED;
-    }
+    pthread_mutex_unlock( &listen_lock );
+}
 
-    data->ops = ops;
-    *icmp_data = data;
-    return STATUS_SUCCESS;
+static BOOL icmp_data_stop_polling( struct icmp_data *data, NTSTATUS status )
+{
+    BOOL ret;
+
+    pthread_mutex_lock( &listen_lock );
+    if ((ret = data->polling))
+    {
+        list_remove( &data->entry );
+        data->polling = FALSE;
+        data->status = status;
+    }
+    pthread_mutex_unlock( &listen_lock );
+    return ret;
 }
 
 static void icmp_data_free( struct icmp_data *data )
 {
-    close( data->socket );
-    close( data->cancel_pipe[0] );
-    close( data->cancel_pipe[1] );
+    assert( !data->polling );
+    icmp_release_socket( data->s );
     free( data );
+}
+
+static void init_listen(void)
+{
+    HANDLE thread;
+
+    pipe( socket_list_update_pipe );
+
+    if (PsCreateSystemThread( &thread, THREAD_ALL_ACCESS, NULL, 0, NULL, icmp_listen, NULL ))
+        ERR( "Could not create listen thread.\n" );
+    else
+        NtClose( thread );
+}
+
+static NTSTATUS icmp_get_socket( struct icmp_send_echo_params *params, struct icmp_socket **ret_socket )
+{
+    const struct family_ops *ops;
+    struct icmp_socket *s;
+    struct sockaddr *src;
+    int src_len;
+    struct sockaddr_storage src_storage;
+
+    src = (struct sockaddr *)&src_storage;
+    src_len = SOCKADDR_INET_to_sockaddr( params->src, src, sizeof(src_storage) );
+
+    if (params->dst->si_family == WS_AF_INET6)     ops = &ipv6;
+    else if (params->dst->si_family == WS_AF_INET) ops = &ipv4;
+    else return STATUS_INVALID_PARAMETER;
+
+    *ret_socket = NULL;
+    pthread_mutex_lock( &listen_lock );
+    LIST_FOR_EACH_ENTRY( s, &socket_list, struct icmp_socket, entry )
+    {
+        assert( s->polling );
+        if (params->dst->si_family == WS_AF_INET6 && ops->family != AF_INET6) continue;
+        if (params->dst->si_family == WS_AF_INET && ops->family != AF_INET) continue;
+        if (s->hop_limit != params->hop_limit || s->ttl != params->ttl || s->tos != params->tos) continue;
+        if (s->src_len != src_len) continue;
+        if (memcmp( src, &s->src_storage, src_len )) continue;
+
+        icmp_grab_socket( s );
+        pthread_mutex_unlock( &listen_lock );
+        *ret_socket = s;
+        TRACE( "Using socket %p.\n", s );
+        return STATUS_SUCCESS;
+    }
+
+    pthread_once( &init_once, init_listen );
+
+    if (!(s = calloc( 1, sizeof(*s) )))
+    {
+        pthread_mutex_unlock( &listen_lock );
+        return STATUS_NO_MEMORY;
+    }
+    s->ref = 1;
+    list_init( &s->request_list );
+    s->socket = -1;
+    s->id = getpid() & 0xffff; /* will be overwritten for linux ping socks */
+    s->ping_socket = FALSE;
+
+    s->socket = socket( ops->family, SOCK_RAW, ops->icmp_protocol );
+    if (s->socket < 0) /* Try a ping-socket */
+    {
+        int value = 1;
+
+        TRACE( "failed to open raw sock, trying a dgram sock\n" );
+        s->socket = socket( ops->family, SOCK_DGRAM, ops->icmp_protocol );
+        if (s->socket < 0)
+        {
+            WARN( "Unable to create socket\n" );
+            pthread_mutex_unlock( &listen_lock );
+            icmp_release_socket( s );
+            return STATUS_ACCESS_DENIED;
+        }
+        setsockopt( s->socket, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value) );
+#ifdef __linux__
+        if (ops->family == AF_INET) ops = &ipv4_linux_ping;
+        s->ping_socket = TRUE;
+#endif
+    }
+
+    s->hop_limit = params->hop_limit;
+    s->ttl = params->ttl;
+    s->tos = params->tos;
+    s->src_len = src_len;
+    s->src_storage = src_storage;
+
+    if (bind( s->socket, src, s->src_len ))
+    {
+        pthread_mutex_unlock( &listen_lock );
+        icmp_release_socket( s );
+        return STATUS_INVALID_ADDRESS_COMPONENT;
+    }
+
+    s->ops = ops;
+    s->ops->set_socket_opts( s );
+    list_add_tail( &socket_list, &s->entry );
+    s->polling = TRUE;
+    pthread_mutex_unlock( &listen_lock );
+    write( socket_list_update_pipe[1], "x", 1 );
+    *ret_socket = s;
+    TRACE( "created socket %p.\n", s );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS icmp_send_echo( void *args )
 {
     struct icmp_send_echo_params *params = args;
     struct icmp_hdr *icmp_hdr; /* this is the same for both ipv4 and ipv6 */
-    struct sockaddr_storage dst_storage;
-    struct sockaddr *dst = (struct sockaddr *)&dst_storage;
     struct icmp_data *data;
-    int dst_len, ret;
+    struct sockaddr *dst;
+    int ret, err;
+
     NTSTATUS status;
 
-    status = icmp_data_create( params->dst->si_family, &data );
-    if (status) return status;
-    data->ops->set_socket_opts( data, params );
+    data = calloc( 1, sizeof(*data) );
+    if (!data) return STATUS_NO_MEMORY;
+    if ((status = icmp_get_socket( params, &data->s )))
+    {
+        free( data );
+        return status;
+    }
+    data->completion_event = params->completion_event;
+
+    dst = (struct sockaddr *)&data->dst_storage;
+    data->dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(data->dst_storage) );
 
     icmp_hdr = malloc( sizeof(*icmp_hdr) + params->request_size );
     if (!icmp_hdr)
@@ -641,38 +1038,40 @@ NTSTATUS icmp_send_echo( void *args )
         icmp_data_free( data );
         return STATUS_NO_MEMORY;
     }
-    data->ops->init_icmp_hdr( data, icmp_hdr );
+    data->s->ops->init_icmp_hdr( data, icmp_hdr );
     memcpy( icmp_hdr + 1, params->request, params->request_size );
-    icmp_hdr->checksum = data->ops->chksum( (BYTE *)icmp_hdr, sizeof(*icmp_hdr) + params->request_size );
+    icmp_hdr->checksum = data->s->ops->chksum( data, (BYTE *)icmp_hdr, sizeof(*icmp_hdr) + params->request_size );
 
-    dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(dst_storage) );
+    TRACE( "data %p, seq %d.\n", data, data->seq );
+
+    pthread_mutex_lock( &listen_lock );
+    list_add_tail( &data->s->request_list, &data->entry );
+    data->polling = TRUE;
+    pthread_mutex_unlock( &listen_lock );
 
     NtQueryPerformanceCounter( &data->send_time, NULL );
-    ret = sendto( data->socket, icmp_hdr, sizeof(*icmp_hdr) + params->request_size, 0, dst, dst_len );
+    ret = sendto( data->s->socket, icmp_hdr, sizeof(*icmp_hdr) + params->request_size, 0,
+                  (struct sockaddr *)&data->dst_storage, data->dst_len );
+    if (ret < 0) err = errno;
     free( icmp_hdr );
 
     if (ret < 0)
     {
-        TRACE( "sendto() rets %d errno %d\n", ret, errno );
-        params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->bits, params->reply );
+        status = errno_to_ip_status( err );
+        TRACE( "sendto() rets %d errno %d\n", ret, err );
+        icmp_data_stop_polling( data, status );
+        params->reply_len = data->s->ops->set_reply_ip_status( status, params->bits, params->reply );
         icmp_data_free( data );
         return STATUS_SUCCESS;
     }
 
     *params->handle = handle_alloc( data );
-    if (!*params->handle) icmp_data_free( data );
+    if (!*params->handle)
+    {
+        icmp_data_stop_polling( data, STATUS_NO_MEMORY );
+        icmp_data_free( data );
+    }
     return *params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
-}
-
-static int get_timeout( LARGE_INTEGER start, UINT timeout )
-{
-    LARGE_INTEGER now, end;
-
-    end.QuadPart = start.QuadPart + (ULONGLONG)timeout * 10000;
-    NtQueryPerformanceCounter( &now, NULL );
-    if (now.QuadPart >= end.QuadPart) return 0;
-
-    return min( (end.QuadPart - now.QuadPart) / 10000, INT_MAX );
 }
 
 static ULONG get_rtt( LARGE_INTEGER start )
@@ -683,114 +1082,159 @@ static ULONG get_rtt( LARGE_INTEGER start )
     return (now.QuadPart - start.QuadPart) / 10000;
 }
 
-static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *params )
+static void icmp_listen( void *args )
 {
     struct sockaddr_storage addr;
     struct icmp_reply_ctx ctx;
-    struct iovec iov[1];
     BYTE cmsg_buf[1024];
-    struct msghdr msg = { .msg_name = &addr, .msg_namelen = sizeof(addr),
-                          .msg_iov = iov, .msg_iovlen = ARRAY_SIZE(iov),
-                          .msg_control = cmsg_buf, .msg_controllen = sizeof(cmsg_buf) };
-    int ip_hdr_len, recvd, reply_buf_len;
-    char *reply_buf;
+    struct iovec iov[1] = {{ .iov_base = ctx.packet, .iov_len = sizeof(ctx.packet) }};
+    struct msghdr msg = { .msg_iov = iov, .msg_iovlen = ARRAY_SIZE(iov) };
+    struct list listen_list;
+    unsigned int fds_size = 64;
+    struct pollfd *fds = malloc( fds_size * sizeof(*fds) );
+    struct icmp_socket *s, *next;
     struct icmp_hdr *icmp_hdr;
+    int ip_hdr_len, recvd;
+    struct icmp_data *data;
+    unsigned int i, count;
+    BOOL matched;
+    int ret;
+    BYTE b;
 
-    reply_buf_len = data->ops->reply_buffer_len( params );
-    reply_buf = malloc( reply_buf_len );
-    if (!reply_buf) return STATUS_NO_MEMORY;
-
-    iov[0].iov_base = reply_buf;
-    iov[0].iov_len = reply_buf_len;
-
-    recvd = recvmsg( data->socket, &msg, 0 );
-    TRACE( "recvmsg() rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
-           recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
-
-    if (recvd < 0) goto skip;
-    if (!data->ops->parse_ip_hdr( &msg, recvd, &ip_hdr_len, &ctx )) goto skip;
-    if (recvd < ip_hdr_len + sizeof(*icmp_hdr)) goto skip;
-
-    icmp_hdr = (struct icmp_hdr *)(reply_buf + ip_hdr_len);
-    if ((ctx.data_size = data->ops->parse_icmp_hdr( data, icmp_hdr, recvd - ip_hdr_len, &ctx )) < 0) goto skip;
-    if (ctx.data_size && msg.msg_flags & MSG_TRUNC)
+    pthread_once( &init_once, init_listen );
+    while (1)
     {
-        free( reply_buf );
-        params->reply_len = data->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->bits, params->reply );
-        return STATUS_SUCCESS;
-    }
+        list_init( &listen_list );
 
-    sockaddr_to_SOCKADDR_INET( (struct sockaddr *)&addr, &ctx.addr );
-    ctx.round_trip_time = get_rtt( data->send_time );
-    ctx.data = icmp_hdr + 1;
+        pthread_mutex_lock( &listen_lock );
+        i = 0;
+        LIST_FOR_EACH_ENTRY( s, &socket_list, struct icmp_socket, entry )
+        {
+            icmp_grab_socket( s );
+            list_add_tail( &listen_list, &s->listen_entry );
+            if (i + 1 >= fds_size)
+            {
+                fds_size *= 2;
+                fds = realloc( fds, fds_size * sizeof(*fds) );
+            }
+            fds[i].fd = s->socket;
+            fds[i].events = POLLIN;
+            ++i;
+        }
+        pthread_mutex_unlock( &listen_lock );
 
-    data->ops->fill_reply( params, &ctx );
+        fds[i].fd = socket_list_update_pipe[0];
+        fds[i].events = POLLIN;
+        count = i;
+        while ((ret = poll( fds, count + 1, -1 )) < 0 && (errno == EINTR || errno == EAGAIN))
+            ;
+        if (ret < 0)
+        {
+            ERR( "poll(): ret %d, %s.\n", ret, strerror( errno ));
+            return;
+        }
 
-    free( reply_buf );
-    return STATUS_SUCCESS;
-
+        i = 0;
+        LIST_FOR_EACH_ENTRY( s, &listen_list, struct icmp_socket, listen_entry )
+        {
+            if (!(fds[i].revents & (POLLIN | POLLERR))) goto skip;
+            msg.msg_name = &addr;
+            msg.msg_namelen = sizeof(addr);
+            msg.msg_control = cmsg_buf;
+            msg.msg_controllen = sizeof(cmsg_buf);
+            recvd = recvmsg( s->socket, &msg, 0 );
+            TRACE( "s %p, recvmsg() rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
+                   s, recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
+#ifdef __linux__
+            if (recvd < 0 && s->ping_socket && fds[i].revents & POLLERR)
+            {
+                msg.msg_name = &addr;
+                msg.msg_namelen = sizeof(addr);
+                msg.msg_control = cmsg_buf;
+                msg.msg_controllen = sizeof(cmsg_buf);
+                recvd = recvmsg( s->socket, &msg, MSG_ERRQUEUE );
+                TRACE( "s %p, recvmsg(MSG_ERRQUEUE) rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
+                       s, recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
+            }
+#endif
+            if (recvd < 0) goto skip;
+            if (!s->ops->parse_ip_hdr( &msg, &recvd, &ip_hdr_len, &ctx )) goto skip;
+            if (recvd < ip_hdr_len + sizeof(*icmp_hdr)) goto skip;
+            ctx.packet_size = recvd;
+            icmp_hdr = (struct icmp_hdr *)(ctx.packet + ip_hdr_len);
+            if ((ctx.data_size = s->ops->parse_icmp_hdr( s, icmp_hdr, recvd - ip_hdr_len, &ctx )) < 0)
+            {
+                WARN( "parse_icmp_hdr failed.\n" );
+                goto skip;
+            }
+            pthread_mutex_lock( &listen_lock );
+            matched = FALSE;
+            LIST_FOR_EACH_ENTRY( data, &s->request_list, struct icmp_data, entry )
+            {
+                if ((!s->ping_socket && ctx.id != s->id) || ctx.sequence != data->seq) continue;
+                TRACE( "id %d, seq %d matched to %p.\n", ctx.id, ctx.sequence, data );
+                matched = TRUE;
+                data->polling = FALSE;
+                list_remove( &data->entry );
+                sockaddr_to_SOCKADDR_INET( (struct sockaddr *)&addr, &ctx.addr );
+                ctx.round_trip_time = get_rtt( data->send_time );
+                ctx.data_offset = (BYTE *)(icmp_hdr + 1) - ctx.packet;
+                data->reply_ctx = ctx;
+                NtSetEvent( data->completion_event, NULL );
+                break;
+            }
+            pthread_mutex_unlock( &listen_lock );
+            if (!matched) TRACE( "id %d, seq %d not matched.\n", ctx.id, ctx.sequence );
 skip:
-    free( reply_buf );
-    return STATUS_RETRY;
+            ++i;
+        }
+        if (fds[count].revents & POLLIN)
+        {
+            read( socket_list_update_pipe[0], &b, 1 );
+            TRACE( "updating socket list.\n" );
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE( s, next, &listen_list, struct icmp_socket, listen_entry )
+        {
+            icmp_release_socket( s );
+        }
+    }
 }
 
-NTSTATUS icmp_listen( void *args )
+NTSTATUS icmp_get_reply( void *args )
 {
-    struct icmp_listen_params *params = args;
+    struct icmp_get_reply_params *params = args;
     struct icmp_data *data;
-    struct pollfd fds[2];
-    NTSTATUS status;
-    int ret;
+    NTSTATUS ret = STATUS_SUCCESS;
 
     data = handle_data( params->handle );
     if (!data) return STATUS_INVALID_PARAMETER;
 
-    fds[0].fd = data->socket;
-    fds[0].events = POLLIN;
-    fds[1].fd = data->cancel_pipe[0];
-    fds[1].events = POLLIN;
-
-    while ((ret = poll( fds, ARRAY_SIZE(fds), get_timeout( data->send_time, params->timeout ) )) > 0)
+    if (data->dst_storage.ss_family == AF_INET6 && !data->s->hop_limit)
     {
-        if (fds[1].revents & POLLIN)
+        TRACE( "data %p, seq %u, invalid hop_limit.\n", data, data->seq );
+        icmp_data_stop_polling( data, STATUS_SUCCESS );
+        params->reply_len = data->s->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->bits, params->reply );
+        goto done;
+    }
+
+    if (icmp_data_stop_polling( data, STATUS_TIMEOUT ))
+    {
+        /* Was still polling, timeout. */
+        TRACE( "data %p, seq %u, timeout.\n", data, data->seq );
+        params->reply_len = data->s->ops->set_reply_ip_status( IP_REQ_TIMED_OUT, params->bits, params->reply );
+    }
+    else if (!(ret = data->status))
+    {
+        if (!data->s->ops->fill_reply( params, &data->reply_ctx ))
         {
-            TRACE( "cancelled\n" );
-            return STATUS_CANCELLED;
+            WARN( "data %p, seq %u, buffer too small.\n", data, data->seq );
+            params->reply_len = data->s->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->bits, params->reply );
         }
-
-        status = recv_msg( data, params );
-        if (status == STATUS_RETRY) continue;
-        return status;
+        else TRACE( "data %p, seq %u, got reply %u.\n", data, data->seq, data->reply_ctx.status );
     }
-
-    if (!ret) /* timeout */
-    {
-        TRACE( "timeout\n" );
-        params->reply_len = data->ops->set_reply_ip_status( IP_REQ_TIMED_OUT, params->bits, params->reply );
-        return STATUS_SUCCESS;
-    }
-    /* ret < 0 */
-    params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->bits, params->reply );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS icmp_cancel_listen( void *args )
-{
-    struct icmp_cancel_listen_params *params = args;
-    struct icmp_data *data = handle_data( params->handle );
-
-    if (!data) return STATUS_INVALID_PARAMETER;
-    write( data->cancel_pipe[1], "x", 1 );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS icmp_close( void *args )
-{
-    struct icmp_close_params *params = args;
-    struct icmp_data *data = handle_data( params->handle );
-
-    if (!data) return STATUS_INVALID_PARAMETER;
+done:
     icmp_data_free( data );
     handle_free( params->handle );
-    return STATUS_SUCCESS;
+    return ret;
 }

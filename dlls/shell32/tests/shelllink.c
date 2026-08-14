@@ -172,9 +172,10 @@ static void test_get_set(void)
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
     /* Win98 returns S_FALSE, but WinXP returns S_OK */
-    str="c:\\nonexistent\\file";
+    str="c:\\nonexistent\\file\\";
     r = IShellLinkA_SetPath(sl, str);
-    ok(r==S_FALSE || r==S_OK, "SetPath failed (0x%08lx)\n", r);
+    ok(r==S_OK, "SetPath failed (0x%08lx)\n", r);
+    str="c:\\nonexistent\\file";
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
@@ -1055,11 +1056,17 @@ static void test_SHGetStockIconInfo(void)
     {
         memset(buffer, '#', sizeof(buffer));
         sii->cbSize = sizeof(SHSTOCKICONINFO);
-        hr = pSHGetStockIconInfo(i, SHGSI_ICONLOCATION, sii);
+        hr = pSHGetStockIconInfo(i, SHGSI_ICONLOCATION | SHGSI_ICON, sii);
 
         ok(hr == S_OK,
             "%3d: got 0x%lx, iSysImageIndex: 0x%x, iIcon: 0x%x (expected S_OK)\n",
             i, hr, sii->iSysImageIndex, sii->iIcon);
+
+    todo_wine_if(sii->hIcon == 0) {
+        ok(sii->hIcon != 0,
+            "%3d: got %p, should be non-zero handle\n",
+            i, sii->hIcon);
+    }
 
         if ((hr == S_OK) && (winetest_debug > 1))
             trace("%3d: got iSysImageIndex %3d, iIcon %3d and %s\n", i, sii->iSysImageIndex,

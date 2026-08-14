@@ -345,6 +345,103 @@ interface IMFMediaEngineClassFactory : IUnknown
 
 [
     object,
+    uuid(a7901327-05dd-4469-a7b7-0e01979e361d),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaSourceExtensionNotify : IUnknown
+{
+    void OnSourceOpen();
+    void OnSourceEnded();
+    void OnSourceClose();
+};
+
+[
+    object,
+    uuid(87e47623-2ceb-45d6-9b88-d8520c4dcbbc),
+    local,
+    pointer_default(unique)
+]
+interface IMFSourceBufferNotify : IUnknown
+{
+    void OnUpdateStart();
+    void OnAbort();
+    void OnError([in] HRESULT hr);
+    void OnUpdate();
+    void OnUpdateEnd();
+};
+
+[
+    object,
+    uuid(e2cd3a4b-af25-4d3d-9110-da0e6f8ee877),
+    local,
+    pointer_default(unique)
+]
+interface IMFSourceBuffer : IUnknown
+{
+    BOOL GetUpdating();
+    HRESULT GetBuffered([out] IMFMediaTimeRange **buffered);
+    double GetTimeStampOffset();
+    HRESULT SetTimeStampOffset([in] double offset);
+    double GetAppendWindowStart();
+    HRESULT SetAppendWindowStart([in] double time);
+    double GetAppendWindowEnd();
+    HRESULT SetAppendWindowEnd([in] double time);
+    HRESULT Append([in] const BYTE *data,[in] DWORD len);
+    HRESULT AppendByteStream([in] IMFByteStream *stream, [in] DWORDLONG *max_len);
+    HRESULT Abort();
+    HRESULT Remove([in] double start, [in] double end);
+};
+
+[
+    object,
+    uuid(249981f8-8325-41f3-b80c-3b9e3aad0cbe),
+    local,
+    pointer_default(unique)
+]
+interface IMFSourceBufferList : IUnknown
+{
+    DWORD GetLength();
+    IMFSourceBuffer *GetSourceBuffer([in] DWORD index);
+};
+
+typedef enum MF_MSE_READY
+{
+    MF_MSE_READY_CLOSED = 1,
+    MF_MSE_READY_OPEN,
+    MF_MSE_READY_ENDED,
+} MF_MSE_READY;
+
+typedef enum MF_MSE_ERROR
+{
+    MF_MSE_ERROR_NOERROR,
+    MF_MSE_ERROR_NETWORK,
+    MF_MSE_ERROR_DECODE,
+    MF_MSE_ERROR_UNKNOWN_ERROR
+} MF_MSE_ERROR;
+
+[
+    object,
+    uuid(e467b94e-a713-4562-a802-816a42e9008a),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaSourceExtension : IUnknown
+{
+    IMFSourceBufferList *GetSourceBuffers();
+    IMFSourceBufferList *GetActiveSourceBuffers();
+    MF_MSE_READY GetReadyState();
+    double GetDuration();
+    HRESULT SetDuration([in] double duration);
+    HRESULT AddSourceBuffer([in] BSTR type, [in] IMFSourceBufferNotify *notify, [out] IMFSourceBuffer **source_buffer);
+    HRESULT RemoveSourceBuffer([in] IMFSourceBuffer *source_buffer);
+    HRESULT SetEndOfStream([in] MF_MSE_ERROR error);
+    BOOL IsTypeSupported([in] BSTR type);
+    IMFSourceBuffer *GetSourceBuffer([in] DWORD stream_index);
+};
+
+[
+    object,
     uuid(fee7c112-e776-42b5-9bbf-0048524e2bd5),
     local,
     pointer_default(unique)
@@ -379,4 +476,84 @@ interface IMFMediaEngineExtension : IUnknown
             [out] IUnknown **cancel_cookie, [in] IMFAsyncCallback *callback, [in] IUnknown *state);
     HRESULT CancelObjectCreation([in] IUnknown *cancel_cookie);
     HRESULT EndCreateObject([in] IMFAsyncResult *result, [out] IUnknown **object);
+}
+
+[
+    object,
+    uuid(6a0083f9-8947-4c1d-9ce0-cdee22b23135),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaKeySessionNotify : IUnknown
+{
+    void KeyMessage([in] BSTR destination_url, [in] const BYTE *message, [in] DWORD message_len);
+    void KeyAdded();
+    void KeyError([in] USHORT code, [in] DWORD system_code);
+}
+
+[
+    object,
+    uuid(24fa67d5-d1d0-4dc5-995c-c0efdc191fb5),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaKeySession : IUnknown
+{
+    HRESULT GetError([out] USHORT *code, [out] DWORD *system_code);
+    HRESULT get_KeySystem([out] BSTR *key_system);
+    HRESULT get_SessionId([out] BSTR *session_id);
+    HRESULT Update([in] const BYTE *key, [in] DWORD key_len);
+    HRESULT Close();
+}
+
+[
+    object,
+    uuid(7a5645d2-43bd-47fd-87b7-dcd24cc7d692),
+    pointer_default(unique)
+]
+interface IMFCdmSuspendNotify : IUnknown
+{
+    HRESULT Begin();
+    HRESULT End();
+}
+
+[
+    object,
+    uuid(5cb31c05-61ff-418f-afda-caaf41421a38),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaKeys : IUnknown
+{
+    HRESULT CreateSession([in] BSTR mime_type, [in] const BYTE *init_data, [in] DWORD init_data_len,
+            [in] const BYTE *custom_data, [in] DWORD custom_data_len,
+            [in] IMFMediaKeySessionNotify *notify, [out] IMFMediaKeySession **session);
+    HRESULT get_KeySystem([out] BSTR *key_system);
+    HRESULT Shutdown();
+    HRESULT GetSuspendNotify([out] IMFCdmSuspendNotify **notify);
+}
+
+[
+    object,
+    uuid(c56156c6-ea5b-48a5-9df8-fbe035d0929e),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineClassFactoryEx : IMFMediaEngineClassFactory
+{
+    HRESULT CreateMediaSourceExtension([in] DWORD flags, [in] IMFAttributes *attr, [out] IMFMediaSourceExtension **mse);
+    HRESULT CreateMediaKeys([in] BSTR key_system, [in] BSTR cdm_store_path, [out] IMFMediaKeys **keys);
+    HRESULT IsTypeSupported([in] BSTR type, [in] BSTR key_system, [out] BOOL *is_supported);
+}
+
+[
+    object,
+    uuid(09083cef-867f-4bf6-8776-dee3a7b42fca),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineClassFactory2 : IUnknown
+{
+    HRESULT CreateMediaKeys2([in] BSTR key_system, [in] BSTR default_cdm_store_path,
+            [in] BSTR inprivate_cdm_store_path, [out] IMFMediaKeys **keys);
 }

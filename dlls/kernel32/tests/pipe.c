@@ -3181,20 +3181,16 @@ static void child_process_write_pipe(HANDLE pipe)
     Sleep(INFINITE);
 }
 
-static HANDLE create_writepipe_process(HANDLE pipe)
+static void create_writepipe_process(HANDLE pipe, PROCESS_INFORMATION *info)
 {
     STARTUPINFOA si = { sizeof(si) };
-    PROCESS_INFORMATION info;
     char **argv, buf[MAX_PATH];
     BOOL res;
 
     winetest_get_mainargs(&argv);
     sprintf(buf, "\"%s\" pipe writepipe %Ix", argv[0], (UINT_PTR)pipe);
-    res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0L, NULL, NULL, &si, &info);
+    res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0L, NULL, NULL, &si, info);
     ok(res, "CreateProcess failed: %lu\n", GetLastError());
-    CloseHandle(info.hThread);
-
-    return info.hProcess;
 }
 
 static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
@@ -3230,9 +3226,9 @@ static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
 static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
 {
     OVERLAPPED overlapped, overlapped2;
+    PROCESS_INFORMATION process_info;
     HANDLE server, client, flush;
     DWORD read_bytes;
-    HANDLE process;
     char buf[60000];
     BOOL res;
 
@@ -3286,7 +3282,7 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
 
     /* terminate process with pending write */
     create_overlapped_pipe(create_flags, &client, &server);
-    process = create_writepipe_process(client);
+    create_writepipe_process(client, &process_info);
     /* successfully read part of write that is pending in child process */
     res = ReadFile(server, buf, 10, &read_bytes, NULL);
     if(!msg_read_mode)
@@ -3294,13 +3290,12 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     else
         ok(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned: %x %lu\n", res, GetLastError());
     ok(read_bytes == 10, "read_bytes = %lu\n", read_bytes);
-    TerminateProcess(process, 0);
-    wait_child_process(process);
+    TerminateProcess(process_info.hProcess, 0);
+    wait_child_process(&process_info);
     /* after terminating process, there is no pending write and pipe buffer is empty */
     overlapped_read_async(server, buf, 10, &overlapped);
     overlapped_write_sync(client, buf, 1);
     test_overlapped_result(server, &overlapped, 1, FALSE);
-    CloseHandle(process);
     CloseHandle(server);
     CloseHandle(client);
 }
@@ -3439,24 +3434,22 @@ static void child_process_check_pid(DWORD server_pid)
     CloseHandle(pipe);
 }
 
-static HANDLE create_check_id_process(const char *verb, DWORD id)
+static void create_check_id_process(const char *verb, DWORD id, PROCESS_INFORMATION *info)
 {
     STARTUPINFOA si = {sizeof(si)};
-    PROCESS_INFORMATION info;
     char **argv, buf[MAX_PATH];
     BOOL ret;
 
     winetest_get_mainargs(&argv);
     sprintf(buf, "\"%s\" pipe %s %lx", argv[0], verb, id);
-    ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0, NULL, NULL, &si, &info);
+    ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0, NULL, NULL, &si, info);
     ok(ret, "got %lu\n", GetLastError());
-    CloseHandle(info.hThread);
-    return info.hProcess;
 }
 
 static void test_namedpipe_process_id(void)
 {
-    HANDLE client, server, process;
+    PROCESS_INFORMATION process_info;
+    HANDLE client, server;
     DWORD current = GetProcessId(GetCurrentProcess());
     OVERLAPPED overlapped;
     ULONG pid;
@@ -3560,11 +3553,10 @@ static void test_namedpipe_process_id(void)
     server = create_overlapped_server( &overlapped );
     ok(server != INVALID_HANDLE_VALUE, "got %lu\n", GetLastError());
 
-    process = create_check_id_process("checkpid", GetProcessId(GetCurrentProcess()));
-    wait_child_process(process);
+    create_check_id_process("checkpid", GetProcessId(GetCurrentProcess()), &process_info);
+    wait_child_process(&process_info);
 
     CloseHandle(overlapped.hEvent);
-    CloseHandle(process);
     CloseHandle(server);
 }
 
@@ -3594,7 +3586,8 @@ static void child_process_check_session_id(DWORD server_id)
 
 static void test_namedpipe_session_id(void)
 {
-    HANDLE client, server, process;
+    PROCESS_INFORMATION process_info;
+    HANDLE client, server;
     OVERLAPPED overlapped;
     DWORD current;
     ULONG id;
@@ -3703,11 +3696,10 @@ static void test_namedpipe_session_id(void)
     server = create_overlapped_server( &overlapped );
     ok(server != INVALID_HANDLE_VALUE, "got %lu\n", GetLastError());
 
-    process = create_check_id_process("checksessionid", current);
-    wait_child_process(process);
+    create_check_id_process("checksessionid", current, &process_info);
+    wait_child_process(&process_info);
 
     CloseHandle(overlapped.hEvent);
-    CloseHandle(process);
     CloseHandle(server);
 }
 

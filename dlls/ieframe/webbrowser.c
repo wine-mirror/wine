@@ -326,7 +326,7 @@ static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl,
           debugstr_variant(TargetFrameName), debugstr_variant(PostData),
           debugstr_variant(Headers));
 
-    return navigate_url(&This->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers);
+    return szUrl ? navigate_url(&This->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers) : S_FALSE;
 }
 
 static HRESULT WINAPI WebBrowser_Refresh(IWebBrowser2 *iface)

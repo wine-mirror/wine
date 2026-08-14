@@ -31,7 +31,6 @@
 #include <sane/saneopts.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "unixlib.h"
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -163,6 +162,8 @@ static void map_descr( struct option_descriptor *descr, const SANE_Option_Descri
     if (opt->title) len = ntdll_umbstowcs( opt->title, strlen(opt->title),
                                            descr->title, ARRAY_SIZE(descr->title) );
     descr->title[len] = 0;
+    if (opt->name) lstrcpynA(descr->name, opt->name, ARRAY_SIZE(descr->name));
+
     switch (descr->constraint_type)
     {
     case CONSTRAINT_RANGE:
@@ -264,10 +265,21 @@ static NTSTATUS open_ds( void *args )
         return STATUS_DEVICE_NOT_CONNECTED;
     }
     status = sane_open( device_list[i]->name, &device_handle );
-    if (status == SANE_STATUS_GOOD) return STATUS_SUCCESS;
+    if (status != SANE_STATUS_GOOD)
+    {
+	ERR("sane_open(%s): %s\n", device_list[i]->name, sane_strstatus (status));
+	return STATUS_DEVICE_NOT_CONNECTED;
+    }
 
-    ERR("sane_open(%s): %s\n", device_list[i]->name, sane_strstatus (status));
-    return STATUS_DEVICE_NOT_CONNECTED;
+    /* return the Identity of the device */
+    id->ProtocolMajor = TWON_PROTOCOLMAJOR;
+    id->ProtocolMinor = TWON_PROTOCOLMINOR;
+    id->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
+    copy_sane_short_name(device_list[i]->name, id->ProductName, sizeof(id->ProductName) - 1);
+    lstrcpynA (id->Manufacturer, device_list[i]->vendor, sizeof(id->Manufacturer) - 1);
+    lstrcpynA (id->ProductFamily, device_list[i]->model, sizeof(id->ProductFamily) - 1);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS close_ds( void *args )
@@ -282,15 +294,16 @@ static NTSTATUS start_device( void *args )
 {
     SANE_Status status;
 
-    if (device_started) return STATUS_SUCCESS;
     status = sane_start( device_handle );
     if (status != SANE_STATUS_GOOD)
     {
         TRACE("sane_start returns %s\n", sane_strstatus(status));
-        return STATUS_DEVICE_NOT_CONNECTED;
     }
-    device_started = TRUE;
-    return STATUS_SUCCESS;
+    else
+    {
+        device_started = TRUE;
+    }
+    return status;
 }
 
 static NTSTATUS cancel_device( void *args )
@@ -385,7 +398,8 @@ static NTSTATUS option_find_descriptor( void *args )
 
     for (i = 1; (opt = sane_get_option_descriptor( device_handle, i )) != NULL; i++)
     {
-        if (params->type != map_type( opt->type )) continue;
+        if (params->type >= 0 &&
+            params->type != map_type( opt->type )) continue;
         if (strcmp( params->name, opt->name )) continue;
         descr->optno = i;
         map_descr( descr, opt );

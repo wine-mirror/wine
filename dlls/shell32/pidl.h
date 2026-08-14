@@ -107,7 +107,7 @@
 #define PT_IESPECIAL2	0xb1
 #define PT_SHARE	0xc3
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef BYTE PIDLTYPE;
 
 typedef struct tagPIDLCPanelStruct
@@ -182,7 +182,7 @@ typedef struct tagPIDLDATA
           struct tagValueW valueW;
 	}u;
 } PIDLDATA, *LPPIDLDATA;
-#include "poppack.h"
+#pragma pack(pop)
 
 /*
  * getting special values from simple pidls

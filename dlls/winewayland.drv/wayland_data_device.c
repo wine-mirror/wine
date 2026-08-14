@@ -268,9 +268,9 @@ static struct data_device_format *data_device_format_for_mime_type(const char *m
 
 static ATOM register_clipboard_format(const WCHAR *name)
 {
-    ATOM atom;
-    if (NtAddAtom(name, lstrlenW(name) * sizeof(WCHAR), &atom)) return 0;
-    return atom;
+    UNICODE_STRING name_str;
+    RtlInitUnicodeString(&name_str, name);
+    return NtUserRegisterWindowMessage(&name_str);
 }
 
 /**********************************************************************

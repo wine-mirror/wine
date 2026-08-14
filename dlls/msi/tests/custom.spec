@@ -60,3 +60,5 @@
 @ stdcall tl_absent(long)
 @ stdcall wrv_present(long)
 @ stdcall wrv_absent(long)
+@ stdcall page_fault(long)
+@ stdcall raise_exception(long)

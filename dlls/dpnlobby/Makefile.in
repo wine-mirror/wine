@@ -1,5 +1,5 @@
 MODULE    = dpnlobby.dll
 IMPORTS   = dpnet
 
-SOURCES = \
-	version.rc
+VER_FILEDESCRIPTION_STR = "Wine DpnLobby dll"
+VER_PRODUCTVERSION      = 5,3,2600,2180

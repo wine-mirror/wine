@@ -34,6 +34,8 @@
 #include "wine/test.h"
 #include "utils.h"
 
+static BOOL (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
+
 static BOOL is_wow64;
 static const char msifile[] = "winetest-package.msi";
 static const WCHAR msifileW[] = L"winetest-package.msi";
@@ -893,6 +895,9 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     VS_FIXEDFILEINFO *pFixedInfo;
     LPBYTE buffer, ofs;
     CHAR path[MAX_PATH];
+    HANDLE file;
+    BYTE filedata[4096];
+    IMAGE_NT_HEADERS *nt;
     DWORD handle, size;
     HANDLE resource;
     BOOL ret = FALSE;
@@ -927,6 +932,16 @@ static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
 
     if (!EndUpdateResourceA(resource, FALSE))
         goto done;
+
+    /* clear export directory to make sure we don't try to load the builtin */
+    file = CreateFileA( name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ReadFile( file, filedata, sizeof(filedata), NULL, NULL );
+    nt = (IMAGE_NT_HEADERS *)(filedata + ((IMAGE_DOS_HEADER *)filedata)->e_lfanew);
+    nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress = 0;
+    nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size = 0;
+    SetFilePointer( file, 0, NULL, FILE_BEGIN );
+    WriteFile( file, filedata, sizeof(filedata), NULL, NULL );
+    CloseHandle( file );
 
     ret = TRUE;
 
@@ -3899,8 +3914,7 @@ static void test_appsearch(void)
     }
     ok( r == ERROR_SUCCESS, "Could not create key: %d.\n", r );
 
-    r = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const BYTE *)"c:\\windows\\system32\\notepad.exe",
-                       sizeof("c:\\windows\\system32\\notepad.exe"));
+    r = reg_set_str(hkey, NULL, "c:\\windows\\system32\\notepad.exe");
     ok( r == ERROR_SUCCESS, "Could not set key value: %d.\n", r);
     RegCloseKey(hkey);
     add_reglocator_entry( hdb, "NewSignature4", 2, "Software\\Winetest_msi", "", msidbLocatorTypeFileName );
@@ -3908,8 +3922,7 @@ static void test_appsearch(void)
     r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Winetest_msi", 0, NULL, 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY,
                         NULL, &hkey, NULL);
     ok( r == ERROR_SUCCESS, "Could not create key: %d.\n", r );
-    r = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const BYTE *)"c:\\windows\\system32\\notepad.exe",
-                       sizeof("c:\\windows\\system32\\notepad.exe"));
+    r = reg_set_str(hkey, NULL, "c:\\windows\\system32\\notepad.exe");
     ok( r == ERROR_SUCCESS, "Could not set key value: %d.\n", r);
     RegCloseKey(hkey);
     add_reglocator_entry( hdb, "NewSignature5", 2, "Software\\Winetest_msi", "",
@@ -4249,15 +4262,13 @@ static void test_appsearch_reglocator(void)
     }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(classes, "Value1", 0, REG_SZ,
-                         (const BYTE *)"regszdata", 10);
+    res = reg_set_str(classes, "Value1", "regszdata");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     res = RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine", &hkcu);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hkcu, "Value1", 0, REG_SZ,
-                         (const BYTE *)"regszdata", 10);
+    res = reg_set_str(hkcu, "Value1", "regszdata");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     users = 0;
@@ -4266,8 +4277,7 @@ static void test_appsearch_reglocator(void)
 
     if (res == ERROR_SUCCESS)
     {
-        res = RegSetValueExA(users, "Value1", 0, REG_SZ,
-                             (const BYTE *)"regszdata", 10);
+        res = reg_set_str(users, "Value1", "regszdata");
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
     }
 
@@ -4277,8 +4287,7 @@ static void test_appsearch_reglocator(void)
     res = RegSetValueA(hklm, NULL, REG_SZ, "defvalue", 8);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hklm, "Value1", 0, REG_SZ,
-                         (const BYTE *)"regszdata", 10);
+    res = reg_set_str(hklm, "Value1", "regszdata");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     val = 42;
@@ -4309,8 +4318,7 @@ static void test_appsearch_reglocator(void)
                          (const BYTE *)binary, sizeof(binary));
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hklm, "Value8", 0, REG_SZ,
-                         (const BYTE *)"#regszdata", 11);
+    res = reg_set_str(hklm, "Value8", "#regszdata");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     strcpy(expected, CURR_DIR);
@@ -4332,8 +4340,7 @@ static void test_appsearch_reglocator(void)
                          (const BYTE *)path, lstrlenA(path) + 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hklm, "Value12", 0, REG_SZ,
-                         (const BYTE *)"", 1);
+    res = reg_set_str(hklm, "Value12", "");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     create_file_with_version("FileName3.dll", MAKELONG(2, 1), MAKELONG(4, 3));
@@ -5453,9 +5460,12 @@ static void test_installprops(void)
     REGSAM access = KEY_ALL_ACCESS;
     SYSTEM_INFO si;
     INSTALLUILEVEL uilevel;
+    USHORT machine, native_machine = 0;
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
+
+    if (pIsWow64Process2) pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine);
 
     lstrcpyA(path, CURR_DIR);
     if (!is_root(CURR_DIR)) lstrcatA(path, "\\");
@@ -5640,7 +5650,10 @@ static void test_installprops(void)
         si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
     {
         sprintf(buf, "%d", si.wProcessorLevel);
-        check_prop(hpkg, "Intel", buf, 1, 0);
+        if (native_machine == IMAGE_FILE_MACHINE_ARM64)
+            check_prop(hpkg, "Intel", "0", 1, 0);
+        else
+            check_prop(hpkg, "Intel", buf, 1, 0);
         check_prop(hpkg, "MsiAMD64", buf, 1, 0);
         check_prop(hpkg, "Msix64", buf, 1, 0);
         sprintf(buf, "%d", LOBYTE(LOWORD(GetVersion())) * 100 + HIBYTE(LOWORD(GetVersion())));
@@ -9539,6 +9552,7 @@ START_TEST(package)
     if (!is_process_elevated()) restart_as_admin_elevated();
 
     IsWow64Process(GetCurrentProcess(), &is_wow64);
+    pIsWow64Process2 = (void *)GetProcAddress(GetModuleHandleA("kernel32"), "IsWow64Process2");
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);
     GetTempPathA(MAX_PATH, temp_path);

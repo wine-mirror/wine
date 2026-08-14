@@ -55,7 +55,7 @@ typedef struct _CONSOLE_READCONSOLE_CONTROL
     ULONG       nLength;
     ULONG       nInitialChars;
     ULONG       dwCtrlWakeupMask;
-    ULONG       dwConsoleKeyState;
+    ULONG       dwControlKeyState;
 } CONSOLE_READCONSOLE_CONTROL,*LPCONSOLE_READCONSOLE_CONTROL;
 
 #ifdef __cplusplus

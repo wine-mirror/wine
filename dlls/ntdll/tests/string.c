@@ -68,6 +68,7 @@ static WCHAR    (__cdecl *ptowlower)(WCHAR);
 static WCHAR    (__cdecl *ptowupper)(WCHAR);
 static int      (__cdecl *p_wcsicmp)(LPCWSTR,LPCWSTR);
 static int      (__cdecl *p_wcsnicmp)(LPCWSTR,LPCWSTR,int);
+static LPWSTR   (__cdecl *pwcsncpy)(LPCWSTR,LPCWSTR,int);
 
 static LPWSTR   (__cdecl *pwcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (__cdecl *pwcsrchr)(LPCWSTR, WCHAR);
@@ -139,6 +140,7 @@ static void InitFunctionPtrs(void)
     X(towupper);
     X(_wcsicmp);
     X(_wcsnicmp);
+    X(wcsncpy);
     X(wcschr);
     X(wcsrchr);
     X(memchr);
@@ -1919,7 +1921,7 @@ static void test_printf_format(void)
     WCHAR ws[256], expectedw[256], specw[256];
     unsigned int i, j;
     char expected[256], spec[256], s[256];
-    int len;
+    int len = 0;
 
     p_snprintf(s, ARRAY_SIZE(s), "%C", 0x95c8);
     p_snwprintf(ws, ARRAY_SIZE(ws), L"%c", 0x95c8);
@@ -1963,7 +1965,6 @@ static void test_printf_format(void)
                     len = p_snwprintf(ws, ~(size_t)0, specw, (ULONG64)tests[i].arg, L"end");
                 break;
             default:
-                len = 0;
                 ok(0, "unknown length %u.\n", tests[i].arg_size);
                 break;
         }
@@ -2233,6 +2234,23 @@ static void test_memchr(void)
     ok(r == s, "memchr returned %p, expected %p\n", r, s);
 }
 
+static void test_wcsncpy(void)
+{
+    wchar_t dst[8], *p;
+
+    memset(dst, 0xbb, sizeof(dst));
+    p = pwcsncpy(dst, L"1234567", 6);
+    ok(p == dst, "unexpected return value.\n");
+    ok(!wcsncmp(dst, L"123456", 6), "unexpected buffer %s\n",
+            wine_dbgstr_wn(dst, ARRAY_SIZE(dst)));
+    ok(dst[6] == 0xbbbb , "expected 0xbbbb unexpected wchar_t %x\n", dst[6]);
+
+    memset(dst, 0xbb, sizeof(dst));
+    pwcsncpy(dst, L"123", 5);
+    ok(dst[4] == 0, "expected 0, unexpected wchar_t %x\n", dst[4]);
+    ok(dst[5] == 0xbbbb , "expected 0xbbbb unexpected wchar_t %x\n", dst[5]);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -2266,4 +2284,5 @@ START_TEST(string)
     test_wctype();
     test_ctype();
     test_memchr();
+    test_wcsncpy();
 }

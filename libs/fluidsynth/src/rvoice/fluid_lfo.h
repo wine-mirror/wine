@@ -23,6 +23,9 @@
 
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct _fluid_lfo_t fluid_lfo_t;
 
 struct _fluid_lfo_t
@@ -71,4 +74,7 @@ fluid_lfo_calc(fluid_lfo_t *lfo, unsigned int cur_delay)
 
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif

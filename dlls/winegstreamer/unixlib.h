@@ -104,6 +104,7 @@ enum wg_video_format
     WG_VIDEO_FORMAT_AYUV,
     WG_VIDEO_FORMAT_I420,
     WG_VIDEO_FORMAT_NV12,
+    WG_VIDEO_FORMAT_P010_10LE,
     WG_VIDEO_FORMAT_UYVY,
     WG_VIDEO_FORMAT_YUY2,
     WG_VIDEO_FORMAT_YV12,
@@ -153,7 +154,7 @@ struct wg_format
          * H264: width, height, fps_n, fps_d, profile, level, codec_data_len, codec_data.
          * WMV: width, height, fps_n, fps_d, codec_data_len, codec_data.
          * INDEO: width, height, fps_n, fps_d, version.
-         * MPEG1: width, height, fps_n, fps_d. */
+         * MPEG1: width, height, fps_n, fps_d, codec_data_len, codec_data. */
         struct
         {
             wg_video_format format;
@@ -167,7 +168,7 @@ struct wg_format
             uint32_t level;
             uint32_t version;
             uint32_t codec_data_len;
-            unsigned char codec_data[64];
+            unsigned char codec_data[140]; /* =MAX_SIZE_MPEG1_SEQUENCE_INFO */
         } video;
     } u;
 };
@@ -179,17 +180,19 @@ enum wg_sample_flag
     WG_SAMPLE_FLAG_HAS_DURATION = 4,
     WG_SAMPLE_FLAG_SYNC_POINT = 8,
     WG_SAMPLE_FLAG_DISCONTINUITY = 0x10,
+    WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS = 0x20,
 };
 
 struct wg_sample
 {
     /* timestamp and duration are in 100-nanosecond units. */
-    UINT64 pts;
+    INT64 pts;
     UINT64 duration;
     LONG refcount; /* unix refcount */
     UINT32 flags;
     UINT32 max_size;
     UINT32 size;
+    INT32 stride;
     UINT64 data; /* pointer to user memory */
 };
 
@@ -332,9 +335,11 @@ struct wg_parser_stream_seek_params
 struct wg_transform_attrs
 {
     UINT32 output_plane_align;
+    INT32 output_plane_stride;
     UINT32 input_queue_length;
     BOOL allow_format_change;
     BOOL low_latency;
+    BOOL preserve_timestamps;
 };
 
 struct wg_transform_create_params

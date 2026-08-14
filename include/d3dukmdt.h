@@ -26,6 +26,8 @@
 #endif /* MAKEFOURCC */
 
 typedef UINT D3DKMT_HANDLE;
+typedef ULONGLONG D3DGPU_VIRTUAL_ADDRESS;
+typedef UINT D3DDDI_VIDEO_PRESENT_TARGET_ID;
 
 typedef enum _D3DDDIFORMAT
 {
@@ -152,5 +154,139 @@ typedef struct _D3DDDI_ESCAPEFLAGS
         UINT Value;
     };
 } D3DDDI_ESCAPEFLAGS;
+
+#ifndef D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 Reserved0
+#endif
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT Shared : 1;
+            UINT NtSecuritySharing : 1;
+            UINT CrossAdapter : 1;
+            UINT TopOfPipeline : 1;
+            UINT NoSignal : 1;
+            UINT NoWait : 1;
+            UINT NoSignalMaxValueOnTdr : 1;
+            UINT NoGPUAccess : 1;
+            UINT Reserved : 23;
+            UINT D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 : 1;
+        };
+        UINT Value;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS;
+
+typedef enum _D3DDDI_SYNCHRONIZATIONOBJECT_TYPE
+{
+    D3DDDI_SYNCHRONIZATION_MUTEX = 1,
+    D3DDDI_SEMAPHORE = 2,
+    D3DDDI_FENCE = 3,
+    D3DDDI_CPU_NOTIFICATION = 4,
+    D3DDDI_MONITORED_FENCE = 5,
+    D3DDDI_PERIODIC_MONITORED_FENCE = 6,
+    D3DDDI_SYNCHRONIZATION_TYPE_LIMIT
+} D3DDDI_SYNCHRONIZATIONOBJECT_TYPE;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT Reserved[16];
+        } Reserved;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO2
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT64 FenceValue;
+        } Fence;
+        struct
+        {
+            HANDLE Event;
+        } CPUNotification;
+        struct
+        {
+            UINT64 InitialFenceValue;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } MonitoredFence;
+        struct
+        {
+            D3DKMT_HANDLE hAdapter;
+            D3DDDI_VIDEO_PRESENT_TARGET_ID VidPnTargetId;
+            UINT64 Time;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } PeriodicMonitoredFence;
+        struct
+        {
+            UINT64 Reserved[8];
+        } Reserved;
+    };
+    D3DKMT_HANDLE SharedHandle;
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO2;
+
+typedef struct _D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT WaitAny        :1;
+            UINT Reserved       :31;
+        };
+        UINT Value;
+    };
+} D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS;
+
+typedef struct _D3DDDICB_SIGNALFLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT SignalAtSubmission             :1;
+            UINT EnqueueCpuEvent                :1;
+            UINT AllowFenceRewind               :1;
+            UINT Reserved                       :28;
+            UINT DXGK_SIGNAL_FLAG_INTERNAL0     :1;
+        };
+        UINT Value;
+    };
+} D3DDDICB_SIGNALFLAGS;
 
 #endif /* __WINE_D3DUKMDT_H */

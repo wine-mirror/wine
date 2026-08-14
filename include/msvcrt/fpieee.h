@@ -166,15 +166,15 @@ typedef struct {
     unsigned short W[5];
 } _FP80;
 
-typedef struct DECLSPEC_ALIGN(16) {
+typedef struct _CRT_ALIGN(16) {
     __msvcrt_ulong W[4];
 } _FP128;
 
-typedef struct DECLSPEC_ALIGN(8) {
+typedef struct _CRT_ALIGN(8) {
     __msvcrt_ulong W[2];
 } _I64;
 
-typedef struct DECLSPEC_ALIGN(8) {
+typedef struct _CRT_ALIGN(8) {
     __msvcrt_ulong W[2];
 } _U64;
 
@@ -182,7 +182,7 @@ typedef struct {
     unsigned short W[5];
 } _BCD80;
 
-typedef struct DECLSPEC_ALIGN(16) {
+typedef struct _CRT_ALIGN(16) {
     _Q64 W[2];
 } _FPQ64;
 

@@ -23,6 +23,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
+static BOOL is_ime_hkl( HKL hkl )
+{
+    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
+    switch (HIWORD(hkl))
+    {
+    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
+    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
+    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
+    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
+    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
+    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
+    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
+    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
+    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
+    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
+    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
+    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
+    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
+    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
+    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
+    }
+}
+
 struct ime_private
 {
     BOOL in_composition;
@@ -327,8 +356,6 @@ static void ime_ui_update_window( INPUTCONTEXT *ctx, HWND hwnd )
         RedrawWindow( hwnd, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE );
     }
     free( str );
-
-    ctx->hWnd = GetFocus();
 }
 
 static void ime_ui_composition( HIMC himc, HWND hwnd, LPARAM lparam )
@@ -392,7 +419,7 @@ static UINT ime_set_comp_string( HIMC himc, LPARAM lparam )
 
 static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", hwnd, himc, debugstr_imn(wparam), lparam );
+    TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", himc, hwnd, debugstr_imn(wparam), lparam );
 
     switch (wparam)
     {
@@ -507,21 +534,41 @@ BOOL WINAPI ImeSelect( HIMC himc, BOOL select )
 
 BOOL WINAPI ImeSetActiveContext( HIMC himc, BOOL flag )
 {
+    INPUTCONTEXT *ctx;
+    UINT msg;
+
     TRACE( "himc %p, flag %#x stub!\n", himc, flag );
+    if (!flag && (msg = ime_set_composition_status( himc, FALSE )))
+    {
+        if ((ctx = ImmLockIMC( himc )))
+        {
+            input_context_set_comp_str( ctx, NULL, 0 );
+            ImmUnlockIMC( himc );
+        }
+        ime_send_message( himc, msg, 0, 0 );
+    }
     return TRUE;
 }
 
 BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 {
-    struct ime_driver_call_params params = {.himc = himc, .state = state};
     INPUTCONTEXT *ctx;
     LRESULT ret;
 
     TRACE( "himc %p, vkey %#x, lparam %#Ix, state %p\n", himc, vkey, lparam, state );
 
+    if (!is_ime_hkl( GetKeyboardLayout( 0 ) )) return FALSE;
+
     if (!(ctx = ImmLockIMC( himc ))) return FALSE;
-    ret = NtUserMessageCall( ctx->hWnd, WINE_IME_PROCESS_KEY, vkey, lparam, &params,
-                             NtUserImeDriverCall, FALSE );
+    ret = TRUE; /* TODO: should be ctx->fOpen */
+    switch (LOWORD(vkey))
+    {
+        case VK_SHIFT:
+        case VK_CONTROL:
+        case VK_CAPITAL:
+        case VK_MENU:
+            ret = FALSE;
+    }
     ImmUnlockIMC( himc );
 
     return ret;
@@ -534,9 +581,12 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
     INPUTCONTEXT *ctx;
     NTSTATUS status;
     BOOL key_consumed = TRUE;
+    struct ime_driver_call_params params = {.himc = himc, .state = state};
 
     TRACE( "vkey %#x, vsc %#x, state %p, msgs %p, flags %#x, himc %p\n",
            vkey, vsc, state, msgs, flags, himc );
+
+    if (!is_ime_hkl( GetKeyboardLayout( 0 ) )) return 0;
 
     if (!(ctx = ImmLockIMC( himc ))) return 0;
     if (!(compstr = ImmLockIMCC( ctx->hCompStr ))) goto done;
@@ -544,7 +594,6 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
     do
     {
-        struct ime_driver_call_params params = {.himc = himc, .state = state};
         HIMCC himcc;
 
         ImmUnlockIMCC( ctx->hCompStr );
@@ -556,9 +605,15 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
         status = NtUserMessageCall( ctx->hWnd, WINE_IME_TO_ASCII_EX, vkey, vsc, &params,
                                     NtUserImeDriverCall, FALSE );
         size = compstr->dwSize;
+        params.state = NULL;
     } while (status == STATUS_BUFFER_TOO_SMALL);
 
-    if (status) WARN( "WINE_IME_TO_ASCII_EX returned status %#lx\n", status );
+    if (status == STATUS_NOT_IMPLEMENTED)
+    {
+        TRANSMSG msg = {.message = vsc & KF_UP ? WM_KEYUP : WM_KEYDOWN, .wParam = vkey, .lParam = vsc};
+        msgs->TransMsg[count++] = msg;
+    }
+    else if (status) WARN( "WINE_IME_TO_ASCII_EX returned unexpected status %#lx\n", status );
     else
     {
         if (compstr->dwCompStrOffset || compstr->dwResultStrLen)
@@ -640,8 +695,11 @@ BOOL WINAPI ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, D
     {
         UINT msg, flags = GCS_COMPSTR | GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART | GCS_CURSORPOS;
         WCHAR wparam = comp && comp_len >= sizeof(WCHAR) ? *(WCHAR *)comp : 0;
-        input_context_set_comp_str( ctx, comp, comp_len / sizeof(WCHAR) );
-        if ((msg = ime_set_composition_status( himc, TRUE ))) ime_send_message( himc, msg, 0, 0 );
+        DWORD len = comp_len / sizeof(WCHAR);
+
+        while (len && comp && !((WCHAR *)comp)[len - 1]) --len;
+        input_context_set_comp_str( ctx, comp, len );
+        if ((msg = ime_set_composition_status( himc, !!len ))) ime_send_message( himc, msg, 0, 0 );
         ime_send_message( himc, WM_IME_COMPOSITION, wparam, flags );
     }
 

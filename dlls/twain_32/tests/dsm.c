@@ -838,6 +838,11 @@ START_TEST(dsm)
     TW_UINT16 rc;
     HANDLE hwnd;
     HMODULE htwain;
+#ifdef __i386__
+    const char* twain_dll = "twain_32.dll";
+#else
+    const char* twain_dll = "twaindsm.dll";
+#endif
 
     if (!dsm_RegisterWindowClasses())
     {
@@ -845,10 +850,10 @@ START_TEST(dsm)
         return;
     }
 
-    htwain = LoadLibraryA("twain_32.dll");
+    htwain = LoadLibraryA(twain_dll);
     if (! htwain)
     {
-        win_skip("twain_32.dll not available, skipping tests\n");
+        win_skip("%s not available, skipping tests\n", twain_dll);
         return;
     }
     pDSM_Entry = (void*)GetProcAddress(htwain, "DSM_Entry");

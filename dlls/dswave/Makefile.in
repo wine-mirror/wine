@@ -2,9 +2,12 @@ MODULE    = dswave.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
+VER_FILEDESCRIPTION_STR = "Wine DirectMusic Wave"
+VER_PRODUCTVERSION      = 5,3,0,900
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	dmobject.c \
 	dswave.idl \
 	dswave_main.c \
-	version.rc \
 	wave.c

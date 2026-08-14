@@ -36,6 +36,19 @@ struct OIDToAlgID
     DWORD altAlgID;
 };
 
+struct CRYPT_OID_INFO_XP {
+    DWORD   cbSize;
+    LPCSTR  pszOID;
+    LPCWSTR pwszName;
+    DWORD   dwGroupId;
+    union {
+        DWORD  dwValue;
+        ALG_ID Algid;
+        DWORD  dwLength;
+    } DUMMYUNIONNAME;
+    CRYPT_DATA_BLOB ExtraInfo;
+};
+
 static const struct OIDToAlgID oidToAlgID[] = {
  { szOID_RSA_RSA, CALG_RSA_KEYX },
  { szOID_RSA_MD2RSA, CALG_MD2 },
@@ -592,6 +605,7 @@ static void test_registerOIDInfo(void)
 {
     static char test_oid[] = "1.2.3.4.5.6.7.8.9.10";
     CRYPT_OID_INFO info1;
+    struct CRYPT_OID_INFO_XP info_xp = {0};
     const CRYPT_OID_INFO *info2;
     HKEY key;
     DWORD ret, size, type, value;
@@ -629,6 +643,12 @@ static void test_registerOIDInfo(void)
      * registry on Windows because dwGroupId == 0.
      */
     ret = CryptRegisterOIDInfo(&info1, 0);
+    ok(ret, "got %lu\n", GetLastError());
+
+    memcpy(&info_xp, &info1, sizeof(info_xp));
+    info_xp.cbSize = sizeof(info_xp);
+
+    ret = CryptRegisterOIDInfo((CRYPT_OID_INFO*)&info_xp, 0);
     ok(ret, "got %lu\n", GetLastError());
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllFindOIDInfo\\1.2.3.4.5.6.7.8.9.10!1", &key);

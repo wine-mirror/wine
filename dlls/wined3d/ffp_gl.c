@@ -157,6 +157,23 @@ GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f)
     }
 }
 
+GLenum wined3d_gl_filter_reduction_mode(enum wined3d_filter_reduction_mode m)
+{
+    switch (m)
+    {
+        case WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE:
+        case WINED3D_FILTER_REDUCTION_COMPARISON:
+            return GL_WEIGHTED_AVERAGE_ARB;
+        case WINED3D_FILTER_REDUCTION_MINIMUM:
+            return GL_MIN;
+        case WINED3D_FILTER_REDUCTION_MAXIMUM:
+            return GL_MAX;
+        default:
+            FIXME("Unhandled reduction mode %#x.\n", m);
+            return GL_WEIGHTED_AVERAGE_ARB;
+    }
+}
+
 static GLenum gl_blend_op(const struct wined3d_gl_info *gl_info, enum wined3d_blend_op op)
 {
     switch (op)
@@ -527,21 +544,11 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
 
 void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    uint32_t enable_mask;
-
     /* glEnable(GL_CLIP_PLANEx) doesn't apply to (ARB backend) vertex shaders.
      * The enabled / disabled planes are hardcoded into the shader. Update the
      * shader to update the enabled clipplanes. In case of fixed function, we
      * need to update the clipping field from ffp_vertex_settings. */
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
-
-    /* If enabling / disabling all
-     * TODO: Is this correct? Doesn't D3DRS_CLIPPING disable clipping on the viewport frustrum?
-     */
-    enable_mask = state->render_states[WINED3D_RS_CLIPPING] ?
-            state->render_states[WINED3D_RS_CLIPPLANEENABLE] : 0;
-    wined3d_context_gl_enable_clip_distances(context_gl, enable_mask);
 }
 
 static void renderstate_stencil_twosided(struct wined3d_context *context, GLint face,
@@ -1537,21 +1544,17 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     }
     rs_holes[] =
     {
-        {  1,   8},
+        {  1,   9},
         { 11,  25},
         { 27,  27},
-        { 30,  34},
-        { 36,  40},
+        { 30,  40},
         { 42,  47},
-        { 49, 135},
+        { 49, 136},
         {138, 139},
         {144, 144},
         {149, 150},
-        {153, 153},
-        {156, 160},
-        {162, 165},
-        {167, 193},
-        {195, 209},
+        {152, 160},
+        {162, 209},
         {  0,   0},
     };
     static const unsigned int simple_states[] =

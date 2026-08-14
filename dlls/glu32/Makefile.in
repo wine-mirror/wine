@@ -1,9 +1,17 @@
 MODULE    = glu32.dll
 IMPORTLIB = glu32
-EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = -lGLU @OPENGL_LIBS@ @X_LIBS@ @XLIB@ @X_EXTRA_LIBS@
+IMPORTS   = opengl32
 
-C_SRCS = \
-	glu.c
+EXTRADLLFLAGS = -Wb,--prefer-native
 
-@MAKE_DLL_RULES@
+SOURCES = \
+	geom.c \
+	glu.c \
+	mesh.c \
+	mipmap.c \
+	priorityq.c \
+	project.c \
+	quad.c \
+	render.c \
+	sweep.c \
+	tess.c

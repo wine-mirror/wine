@@ -97,7 +97,6 @@ MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const cha
 static void (CDECL *mono_config_parse)(const char *filename);
 MonoDomain* (CDECL *mono_domain_get)(void);
 MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
-BOOL (CDECL *mono_domain_set)(MonoDomain *domain,BOOL force);
 void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name);
 static void (CDECL *mono_free)(void *);
 MonoImage* (CDECL *mono_get_corlib)(void);
@@ -125,8 +124,9 @@ static void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_
 static void (CDECL *mono_set_verbose_level)(DWORD level);
 MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
-MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
+MonoDomain* (CDECL *mono_threads_attach_coop)(MonoDomain *domain, void *attach_cookie);
+void (CDECL *mono_threads_detach_coop)(MonoDomain *orig_domain, void *attach_cookie);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_log_handler)(MonoLogCallback callback, void *user_data);
@@ -215,7 +215,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_get);
         LOAD_MONO_FUNCTION(mono_domain_get_by_id);
-        LOAD_MONO_FUNCTION(mono_domain_set);
         LOAD_MONO_FUNCTION(mono_domain_set_config);
         LOAD_MONO_FUNCTION(mono_free);
         LOAD_MONO_FUNCTION(mono_get_corlib);
@@ -237,8 +236,9 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_set_verbose_level);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
         LOAD_MONO_FUNCTION(mono_string_new);
-        LOAD_MONO_FUNCTION(mono_thread_attach);
         LOAD_MONO_FUNCTION(mono_thread_manage);
+        LOAD_MONO_FUNCTION(mono_threads_attach_coop);
+        LOAD_MONO_FUNCTION(mono_threads_detach_coop);
 
 #undef LOAD_MONO_FUNCTION
 
@@ -710,11 +710,13 @@ HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **res
 }
 
 #ifdef __i386__
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86.dll";
 #elif defined(__x86_64__)
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','_','6','4','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86_64.dll";
+#elif defined(__aarch64__)
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-arm64.dll";
 #else
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0.dll";
 #endif
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path)
@@ -791,15 +793,11 @@ static BOOL get_mono_path_registry(LPWSTR path)
 
 static BOOL get_mono_path_dos(const WCHAR *dir, LPWSTR path)
 {
-    static const WCHAR unix_prefix[] = {'\\','\\','?','\\','u','n','i','x','\\'};
     static const WCHAR basedir[] = L"\\wine-mono-" WINE_MONO_VERSION;
     LPWSTR dos_dir;
     WCHAR mono_dll_path[MAX_PATH];
     DWORD len;
     BOOL ret;
-
-    if (memcmp(dir, unix_prefix, sizeof(unix_prefix)) == 0)
-        return FALSE;  /* No drive letter for this directory */
 
     len = lstrlenW( dir ) + lstrlenW( basedir ) + 1;
     if (!(dos_dir = malloc( len * sizeof(WCHAR) ))) return FALSE;
@@ -815,48 +813,42 @@ static BOOL get_mono_path_dos(const WCHAR *dir, LPWSTR path)
     return ret;
 }
 
-static BOOL get_mono_path_unix(const char *unix_dir, LPWSTR path)
+static BOOL get_mono_path_unix(const WCHAR *unix_dir, LPWSTR path)
 {
-    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
-    LPWSTR dos_dir;
-    BOOL ret;
+    WCHAR buffer[MAX_PATH];
+    HANDLE dir;
+    DWORD len;
 
-    if (!p_wine_get_dos_file_name)
-    {
-        p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
-        if (!p_wine_get_dos_file_name)
-            return FALSE;
-    }
+    if (!get_mono_path_dos( unix_dir, buffer )) return FALSE;
 
-    dos_dir = p_wine_get_dos_file_name(unix_dir);
-    if (!dos_dir)
-        return FALSE;
+    /* try to get a DOS name for that directory */
 
-    ret = get_mono_path_dos( dos_dir, path);
-
-    HeapFree(GetProcessHeap(), 0, dos_dir);
-    return ret;
+    dir = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                       NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (dir == INVALID_HANDLE_VALUE) return FALSE;
+    len = GetFinalPathNameByHandleW( dir, buffer, ARRAY_SIZE(buffer), VOLUME_NAME_DOS );
+    CloseHandle( dir );
+    if (!len) return FALSE;
+    if (len > ARRAY_SIZE(buffer)) return FALSE;
+    if (buffer[5] != ':') return FALSE;
+    wcscpy( path, buffer + 4 );
+    return TRUE;
 }
 
 static BOOL get_mono_path_datadir(LPWSTR path)
 {
-    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
-    static const WCHAR unix_prefix[] = {'\\','?','?','\\','u','n','i','x','\\'};
-    static const WCHAR monoW[] = {'\\','m','o','n','o',0};
-    static const WCHAR dotdotmonoW[] = {'\\','.','.','\\','m','o','n','o',0};
     const WCHAR *data_dir, *suffix;
     WCHAR *package_dir;
     BOOL ret;
 
-    if ((data_dir = _wgetenv( winedatadirW )))
-        suffix = monoW;
-    else if ((data_dir = _wgetenv( winebuilddirW )))
-        suffix = dotdotmonoW;
+    if ((data_dir = _wgetenv( L"WINEDATADIR" )))
+        suffix = L"\\mono";
+    else if ((data_dir = _wgetenv( L"WINEBUILDDIR" )))
+        suffix = L"\\..\\mono";
     else
         return FALSE;
 
-    if (!wcsncmp( data_dir, unix_prefix, wcslen(unix_prefix) )) return FALSE;
+    if (!wcsncmp( data_dir, L"\\??\\unix", 8 )) return FALSE;
     data_dir += 4;  /* skip \??\ prefix */
     package_dir = malloc((wcslen(data_dir) + wcslen(suffix) + 1) * sizeof(WCHAR));
     lstrcpyW( package_dir, data_dir );
@@ -874,10 +866,10 @@ BOOL get_mono_path(LPWSTR path, BOOL skip_local)
     return (!skip_local && get_mono_path_local(path)) ||
         get_mono_path_registry(path) ||
         get_mono_path_datadir(path) ||
-        get_mono_path_unix(INSTALL_DATADIR "/wine/mono", path) ||
+        get_mono_path_unix(L"\\\\?\\unix" INSTALL_DATADIR "/wine/mono", path) ||
         (strcmp(INSTALL_DATADIR, "/usr/share") &&
-         get_mono_path_unix("/usr/share/wine/mono", path)) ||
-        get_mono_path_unix("/opt/wine/mono", path);
+         get_mono_path_unix(L"\\\\?\\unix/usr/share/wine/mono", path)) ||
+        get_mono_path_unix(L"\\\\?\\unix/opt/wine/mono", path);
 }
 
 struct InstalledRuntimeEnum

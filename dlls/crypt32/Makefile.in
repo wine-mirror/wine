@@ -2,10 +2,13 @@ EXTRADEFS = -D_CRYPT32_
 MODULE    = crypt32.dll
 UNIXLIB   = crypt32.so
 IMPORTLIB = crypt32
-IMPORTS   = user32 advapi32 bcrypt
-DELAYIMPORTS = cryptnet
+IMPORTS   = user32 advapi32 bcrypt ncrypt
+DELAYIMPORTS = cryptnet rpcrt4
 UNIX_LIBS    = $(SECURITY_LIBS)
 UNIX_CFLAGS  = $(GNUTLS_CFLAGS)
+
+VER_FILEDESCRIPTION_STR = "Wine CryptoAPI Library"
+VER_PRODUCTVERSION      = 5,131,2600,1243
 
 SOURCES = \
 	base64.c \

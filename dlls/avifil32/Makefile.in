@@ -2,6 +2,10 @@ MODULE    = avifil32.dll
 IMPORTLIB = avifil32
 IMPORTS   = uuid msacm32 msvfw32 winmm ole32 user32 advapi32 rpcrt4
 
+VER_FILEDESCRIPTION_STR = "Wine AVI file support library"
+VER_PRODUCTVERSION      = 4,0,3,1998
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	acmstream.c \
 	api.c \

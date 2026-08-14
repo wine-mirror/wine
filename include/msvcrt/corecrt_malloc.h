@@ -32,6 +32,7 @@ _ACRTIMP void*  __cdecl malloc(size_t);
 _ACRTIMP void*  __cdecl realloc(void*,size_t);
 _ACRTIMP void*  __cdecl _recalloc(void*,size_t,size_t) __WINE_ALLOC_SIZE(2,3) __WINE_DEALLOC(free);
 
+_ACRTIMP int    __cdecl _callnewh(size_t);
 _ACRTIMP void*  __cdecl _expand(void*,size_t);
 _ACRTIMP size_t __cdecl _msize(void*);
 

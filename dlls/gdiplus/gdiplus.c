@@ -143,7 +143,7 @@ ULONG WINAPI GdiplusShutdown_wrapper(ULONG_PTR token)
  */
 void* WINGDIPAPI GdipAlloc(SIZE_T size)
 {
-    return calloc(1, size);
+    return malloc(size);
 }
 
 /*****************************************************

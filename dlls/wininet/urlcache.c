@@ -1455,17 +1455,19 @@ static DWORD urlcache_hash_key(LPCSTR lpszKey)
         0xA3, 0xC8, 0xDE, 0xEB, 0xF8, 0xF3, 0xDB, 0x0A,
         0x98, 0x83, 0x7B, 0xE5, 0xCB, 0x4C, 0x78, 0xD1
     };
+    const BYTE *input = (const BYTE *)lpszKey;
     BYTE key[4];
     DWORD i;
 
     for (i = 0; i < ARRAY_SIZE(key); i++)
-        key[i] = lookupTable[(*lpszKey + i) & 0xFF];
+        key[i] = lookupTable[(*input + i) & 0xFF];
 
-    for (lpszKey++; *lpszKey; lpszKey++)
-    {
-        for (i = 0; i < ARRAY_SIZE(key); i++)
-            key[i] = lookupTable[*lpszKey ^ key[i]];
-    }
+    if (*input)
+        for (input++; *input; input++)
+        {
+            for (i = 0; i < ARRAY_SIZE(key); i++)
+                key[i] = lookupTable[*input ^ key[i]];
+        }
 
     return *(DWORD *)key;
 }
@@ -2687,19 +2689,23 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
 
         extW[0] = '.';
         ext_len = MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
-
-        for(p=extW; *p; p++) {
-            switch(*p) {
-            case '<': case '>':
-            case ':': case '"':
-            case '|': case '?':
-            case '*':
-                *p = '_'; break;
-            default: break;
+        if(!ext_len || ext_len >= MAX_PATH - 8) {
+            extW[0] = '\0';
+            ext_len = 0;
+        }else {
+            for(p=extW; *p; p++) {
+                switch(*p) {
+                case '<': case '>':
+                case ':': case '"':
+                case '|': case '?':
+                case '*':
+                    *p = '_'; break;
+                default: break;
+                }
             }
+            if(p > extW && (p[-1]==' ' || p[-1]=='.'))
+                p[-1] = '_';
         }
-        if(p[-1]==' ' || p[-1]=='.')
-            p[-1] = '_';
     }else {
         extW[0] = '\0';
     }

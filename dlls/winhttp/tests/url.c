@@ -40,7 +40,7 @@ static WCHAR escape3[]  = {'?','t','e','x','t','=',0xfb00,0};
 static WCHAR escape4[]  = {'/','t','e','x','t','=',0xfb00,0};
 
 static const WCHAR url1[] = L"http://username:password@www.winehq.org/site/about?query";
-static const WCHAR url2[] = L"http://username:";
+static const WCHAR url2[] = L"http://username:@www.winehq.org/site/about?query";
 static const WCHAR url3[] = L"http://www.winehq.org/site/about?query";
 static const WCHAR url4[] = L"http://";
 static const WCHAR url5[] = L"ftp://username:password@www.winehq.org:80/site/about?query";
@@ -62,6 +62,7 @@ static const WCHAR url19[] = L"http://?text=\xfb00";
 static const WCHAR url20[] = L"http:///text=\xfb00";
 static const WCHAR url21[] = L"https://nba2k19-ws.2ksports.com:19133/nba/v4/Accounts/get_account?x=3789526775265663876";
 static const WCHAR url22[] = L"http://winehq.org:/";
+static const WCHAR url23[] = L"http://:@www.winehq.org/site/about?query";
 
 static const WCHAR url_k1[] = L"http://username:password@www.winehq.org/site/about";
 static const WCHAR url_k2[] = L"http://www.winehq.org";
@@ -202,11 +203,12 @@ static void WinHttpCreateUrl_test( void )
     /* valid username, empty password */
     fill_url_components( &uc );
     uc.lpszPassword = empty;
+    uc.dwPasswordLength = 0;
     url[0] = 0;
     len = 256;
     ret = WinHttpCreateUrl( &uc, 0, url, &len );
     ok( ret, "expected success\n" );
-    ok( len == 56, "expected len 56 got %lu\n", len );
+    ok( len == 48, "expected len 48 got %lu\n", len );
     ok( !lstrcmpW( url, url2 ), "url doesn't match\n" );
 
     /* valid password, NULL username */
@@ -222,6 +224,7 @@ static void WinHttpCreateUrl_test( void )
     /* valid password, empty username */
     fill_url_components( &uc );
     uc.lpszUserName = empty;
+    uc.dwUserNameLength = 0;
     url[0] = 0;
     len = 256;
     ret = WinHttpCreateUrl( &uc, 0, url, &len );
@@ -241,13 +244,15 @@ static void WinHttpCreateUrl_test( void )
     /* empty username, empty password */
     fill_url_components( &uc );
     uc.lpszUserName = empty;
+    uc.dwUserNameLength = 0;
     uc.lpszPassword = empty;
+    uc.dwPasswordLength = 0;
     url[0] = 0;
     len = 256;
     ret = WinHttpCreateUrl( &uc, 0, url, &len );
     ok( ret, "expected success\n" );
-    ok( len == 56, "expected len 56 got %lu\n", len );
-    ok( !lstrcmpW( url, url4 ), "url doesn't match\n" );
+    ok( len == 40, "expected len 40 got %lu\n", len );
+    ok( !lstrcmpW( url, url23 ), "url doesn't match\n" );
 
     /* nScheme has lower precedence than lpszScheme */
     fill_url_components( &uc );

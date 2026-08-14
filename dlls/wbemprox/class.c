@@ -276,6 +276,7 @@ struct class_object
     LONG refs;
     WCHAR *name;
     IEnumWbemClassObject *iter;
+    LONG flags;
     UINT index;
     UINT index_method;
     UINT index_property;
@@ -519,9 +520,10 @@ static HRESULT WINAPI class_object_BeginEnumeration(
 
     TRACE( "%p, %#lx\n", iface, lEnumFlags );
 
-    if (lEnumFlags) FIXME( "flags %#lx not supported\n", lEnumFlags );
+    if (lEnumFlags & ~WBEM_FLAG_NONSYSTEM_ONLY) FIXME( "flags %#lx not supported\n", lEnumFlags );
 
     co->index_property = 0;
+    co->flags = lEnumFlags;
     return S_OK;
 }
 
@@ -539,15 +541,31 @@ static HRESULT WINAPI class_object_Next(
     struct table *table = get_view_table( view, obj->index );
     BSTR prop;
     HRESULT hr;
-    UINT i;
+    UINT i, view_idx_start;
 
     TRACE( "%p, %#lx, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor );
 
-    for (i = obj->index_property; i < table->num_cols; i++)
+    if (lFlags)
     {
-        if (is_method( table, i )) continue;
-        if (!is_result_prop( view, table->columns[i].name )) continue;
-        if (!(prop = SysAllocString( table->columns[i].name ))) return E_OUTOFMEMORY;
+        WARN( "lFlags %#lx.\n", lFlags );
+        return WBEM_E_INVALID_PARAMETER;
+    }
+
+    if (obj->record || (obj->flags & WBEM_FLAG_NONSYSTEM_ONLY)) view_idx_start = 0;
+    else view_idx_start = system_prop_count;
+
+    for (i = obj->index_property; i < table->num_cols + view_idx_start; i++)
+    {
+        if (i < view_idx_start)
+        {
+            if (!(prop = SysAllocString( system_props[i] ))) return E_OUTOFMEMORY;
+        }
+        else
+        {
+            if (is_method( table, i - view_idx_start )) continue;
+            if (!is_result_prop( view, table->columns[i - view_idx_start].name )) continue;
+            if (!(prop = SysAllocString( table->columns[i - view_idx_start].name ))) return E_OUTOFMEMORY;
+        }
         if (obj->record)
         {
             UINT index;

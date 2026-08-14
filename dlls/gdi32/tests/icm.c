@@ -128,20 +128,13 @@ static void test_GetICMProfileW( HDC dc )
     size = MAX_PATH;
     ret = GetICMProfileW( dc, &size, filename );
     ok( ret, "GetICMProfileW failed %ld\n", GetLastError() );
+
+    trace( "%s\n", debugstr_w(filename) );
 }
 
 static void test_SetICMMode( HDC dc )
 {
     INT ret, knob, save;
-    BOOL impl;
-
-    SetLastError( 0xdeadbeef );
-    impl = GetICMProfileA( NULL, NULL, NULL );
-    if ( !impl && ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED ) )
-    {
-        win_skip( "On NT4 where SetICMMode is not implemented but this is not advertised\n" );
-        return;
-    }
 
     SetLastError( 0xdeadbeef );
     ret = SetICMMode( NULL, 0 );
@@ -190,18 +183,18 @@ static void test_EnumICMProfilesA( HDC dc )
     INT ret;
 
     ret = EnumICMProfilesA( NULL, NULL, 0 );
-    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1, "expected -1, got %d\n", ret);
 
     ret = EnumICMProfilesA( dc, enum_profiles_callbackA, 0 );
-    ok(ret == -1 || ret == 1 || broken(ret == 0) /* nt4 */,
-       "expected -1 or 1, got %d\n", ret);
+    ok(ret == -1 || ret == 1, "expected -1 or 1, got %d\n", ret);
 
     ret = EnumICMProfilesA( dc, NULL, 0 );
-    ok(ret == -1 || broken(ret == 0) /* nt4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1, "expected -1, got %d\n", ret);
 }
 
 static INT CALLBACK enum_profiles_callbackW( LPWSTR filename, LPARAM lparam )
 {
+    trace("%s\n", debugstr_w(filename));
     return 1;
 }
 
@@ -210,13 +203,13 @@ static void test_EnumICMProfilesW( HDC dc )
     INT ret;
 
     ret = EnumICMProfilesW( NULL, NULL, 0 );
-    ok(ret == -1 || broken(ret == 0) /* NT4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1, "expected -1, got %d\n", ret);
 
     ret = EnumICMProfilesW( dc, NULL, 0 );
-    ok(ret == -1 || broken(ret == 0) /* NT4 */, "expected -1, got %d\n", ret);
+    ok(ret == -1, "expected -1, got %d\n", ret);
 
     ret = EnumICMProfilesW( dc, enum_profiles_callbackW, 0 );
-    ok(ret == -1 || ret == 1 || broken(ret == 0) /* NT4 */, "expected -1 or 1, got %d\n", ret);
+    ok(ret == -1 || ret == 1, "expected -1 or 1, got %d\n", ret);
 }
 
 static void test_SetICMProfileA( HDC dc )

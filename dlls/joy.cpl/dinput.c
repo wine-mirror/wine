@@ -77,7 +77,7 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     {
         .dwSize = sizeof(DIEFFECT),
         .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
-        .dwDuration = 2 * DI_SECONDS,
+        .dwDuration = INFINITE,
         .dwGain = DI_FFNOMINALMAX,
         .rglDirection = direction,
         .rgdwAxes = axes,
@@ -92,12 +92,15 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         .dwMagnitude = DI_FFNOMINALMAX,
         .dwPeriod = DI_SECONDS / 2,
     };
-    DICONDITION condition =
+    DICONDITION condition[2] =
     {
-        .dwPositiveSaturation = 10000,
-        .dwNegativeSaturation = 10000,
-        .lPositiveCoefficient = 10000,
-        .lNegativeCoefficient = 10000,
+        {0},
+        {
+            .dwPositiveSaturation = 10000,
+            .dwNegativeSaturation = 10000,
+            .lPositiveCoefficient = 10000,
+            .lNegativeCoefficient = 10000,
+        },
     };
     DIRAMPFORCE ramp =
     {
@@ -107,45 +110,38 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     struct effect *entry;
     HRESULT hr;
 
-    hr = IDirectInputDevice8_Acquire( device );
-    if (FAILED(hr)) return DIENUM_CONTINUE;
-
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    if (IsEqualGUID( &info->guid, &GUID_RampForce ))
+    switch (DIEFT_GETTYPE( info->dwEffType ))
     {
+    case DIEFT_RAMPFORCE:
         params.cbTypeSpecificParams = sizeof(ramp);
+        params.dwDuration = 2 * DI_SECONDS;
         params.lpvTypeSpecificParams = &ramp;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
-    {
+        break;
+    case DIEFT_CONSTANTFORCE:
         params.cbTypeSpecificParams = sizeof(constant);
         params.lpvTypeSpecificParams = &constant;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_Sine ) ||
-             IsEqualGUID( &info->guid, &GUID_Square ) ||
-             IsEqualGUID( &info->guid, &GUID_Triangle ) ||
-             IsEqualGUID( &info->guid, &GUID_SawtoothUp ) ||
-             IsEqualGUID( &info->guid, &GUID_SawtoothDown ))
-    {
+        break;
+    case DIEFT_PERIODIC:
         params.cbTypeSpecificParams = sizeof(periodic);
         params.lpvTypeSpecificParams = &periodic;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
-    }
-    else if (IsEqualGUID( &info->guid, &GUID_Spring ) ||
-             IsEqualGUID( &info->guid, &GUID_Damper ) ||
-             IsEqualGUID( &info->guid, &GUID_Inertia ) ||
-             IsEqualGUID( &info->guid, &GUID_Friction ))
-    {
+        break;
+    case DIEFT_CONDITION:
         params.cbTypeSpecificParams = sizeof(condition);
         params.lpvTypeSpecificParams = &condition;
-        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+        break;
     }
 
-    do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
-    while (FAILED(hr) && --params.cAxes);
+    do
+    {
+        hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
+        if (FAILED(hr) && DIEFT_GETTYPE(info->dwEffType) == DIEFT_CONDITION)
+        {
+            params.cbTypeSpecificParams = sizeof(condition[1]);
+            params.lpvTypeSpecificParams = &condition[1];
+        }
+    } while (FAILED(hr) && --params.cAxes);
 
     if (FAILED(hr))
     {
@@ -166,16 +162,19 @@ static void set_selected_effect( IDirectInputEffect *effect )
 
     EnterCriticalSection( &state_cs );
     if ((previous = effect_selected)) IDirectInputEffect_Release( previous );
-    if ((effect_selected = effect)) IDirectInput_AddRef( effect );
+    if ((effect_selected = effect)) IDirectInputEffect_AddRef( effect );
     LeaveCriticalSection( &state_cs );
 }
 
-static IDirectInputEffect *get_selected_effect(void)
+static IDirectInputEffect *get_selected_effect( DIJOYSTATE2 *state )
 {
+    IDirectInputDevice8W *device;
     IDirectInputEffect *effect;
 
     EnterCriticalSection( &state_cs );
-    if ((effect = effect_selected)) IDirectInputEffect_AddRef( effect );
+    if (!(device = device_selected)) effect = NULL;
+    else if (FAILED(IDirectInputDevice8_GetDeviceState( device, sizeof(*state), state ))) effect = NULL;
+    else if ((effect = effect_selected)) IDirectInputEffect_AddRef( effect );
     LeaveCriticalSection( &state_cs );
 
     return effect;
@@ -206,6 +205,7 @@ static void set_selected_device( IDirectInputDevice8W *device )
     if ((previous = device_selected))
     {
         IDirectInputDevice8_SetEventNotification( previous, NULL );
+        IDirectInputDevice8_Unacquire( previous );
         IDirectInputDevice8_Release( previous );
     }
     if ((device_selected = device))
@@ -232,17 +232,34 @@ static IDirectInputDevice8W *get_selected_device(void)
 
 static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *context )
 {
-    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     IDirectInput8W *dinput = context;
     struct device *entry;
+    DIPROPDWORD ac_prop =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+        .dwData = DIPROPAUTOCENTER_OFF,
+    };
+    HRESULT hr;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
-    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
-    IDirectInputDevice8_GetCapabilities( entry->device, &caps );
+    hr = IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
+    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
+    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetCooperativeLevel( entry->device, GetAncestor( dialog_hwnd, GA_ROOT ),
+                                                                     DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_SetProperty( entry->device, DIPROP_AUTOCENTER, &ac_prop.diph );
 
-    list_add_tail( &devices, &entry->entry );
+    if (SUCCEEDED(hr)) list_add_tail( &devices, &entry->entry );
+    else
+    {
+        if (entry->device) IDirectInputDevice8_Release( entry->device );
+        free( entry );
+    }
 
     return DIENUM_CONTINUE;
 }
@@ -256,7 +273,6 @@ static void clear_devices(void)
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device, entry )
     {
         list_remove( &entry->entry );
-        IDirectInputDevice8_Unacquire( entry->device );
         IDirectInputDevice8_Release( entry->device );
         free( entry );
     }
@@ -265,51 +281,67 @@ static void clear_devices(void)
 static DWORD WINAPI input_thread( void *param )
 {
     HANDLE events[2] = {param, state_event};
+    IDirectInputEffect *playing = NULL;
 
     while (WaitForMultipleObjects( 2, events, FALSE, INFINITE ) != 0)
     {
         IDirectInputEffect *effect;
         DIJOYSTATE2 state = {0};
-        unsigned int i;
+        HRESULT hr;
 
         SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
 
-        if ((effect = get_selected_effect()))
+        if ((effect = get_selected_effect( &state )))
         {
-            DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
-            LONG direction[3] = {0};
-            DWORD axes[3] = {0};
+            static const BYTE empty[sizeof(state.rgbButtons)] = {0};
+            BOOL pressed = memcmp( empty, state.rgbButtons, sizeof(state.rgbButtons) );
+            LONG direction[2] = {state.lX - 32768, state.lY - 32768};
             DIEFFECT params =
             {
                 .dwSize = sizeof(DIEFFECT),
-                .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+                .dwFlags = DIEFF_CARTESIAN,
                 .rglDirection = direction,
-                .rgdwAxes = axes,
-                .cAxes = 3,
+                .cAxes = 2,
             };
 
-            IDirectInputEffect_GetParameters( effect, &params, flags );
-            params.rgdwAxes[0] = state.lX;
-            params.rgdwAxes[1] = state.lY;
-
-            for (i = 0; i < ARRAY_SIZE(state.rgbButtons); i++)
+            if (playing && (!pressed || playing != effect))
             {
-                if (state.rgbButtons[i])
-                {
-                    IDirectInputEffect_SetParameters( effect, &params, flags );
-                    IDirectInputEffect_Start( effect, 1, 0 );
-                    break;
-                }
+                IDirectInputEffect_Stop( playing );
+                IDirectInputEffect_Release( playing );
+                playing = NULL;
+            }
+
+            if (pressed && !playing)
+            {
+                do hr = IDirectInputEffect_SetParameters( effect, &params, DIEP_DIRECTION | DIEP_NORESTART );
+                while (FAILED(hr) && --params.cAxes);
+
+                IDirectInputEffect_Start( effect, 1, 0 );
+                IDirectInputEffect_AddRef( effect );
+                playing = effect;
             }
 
             IDirectInputEffect_Release( effect );
         }
+        else if (playing)
+        {
+            IDirectInputEffect_Stop( playing );
+            IDirectInputEffect_Release( playing );
+            playing = NULL;
+        }
+    }
+
+    if (playing)
+    {
+        IDirectInputEffect_Stop( playing );
+        IDirectInputEffect_Release( playing );
+        playing = NULL;
     }
 
     return 0;
 }
 
-static void draw_axis_view( HDC hdc, RECT rect, const WCHAR *name, LONG value )
+static void draw_axis_view( HDC hdc, RECT rect, const WCHAR *name, double value )
 {
     POINT center =
     {
@@ -317,7 +349,7 @@ static void draw_axis_view( HDC hdc, RECT rect, const WCHAR *name, LONG value )
         .y = (rect.top + rect.bottom) / 2,
     };
     LONG w = (rect.bottom - rect.top + 1) / 3;
-    LONG x = rect.left + 20 + (w + 1) / 2 + MulDiv( value, rect.right - rect.left - 20 - w, 0xffff );
+    LONG x = rect.left + 20 + (w + 1) / 2 + value * (rect.right - rect.left - 20 - w);
     COLORREF color;
     HFONT font;
 
@@ -352,6 +384,53 @@ static void draw_axis_view( HDC hdc, RECT rect, const WCHAR *name, LONG value )
         MoveToEx( hdc, center.x, center.y - 3, NULL );
         LineTo( hdc, center.x, center.y + 3 );
     }
+}
+
+void paint_axes_view( HWND hwnd, UINT32 count, double *axes, const WCHAR **names )
+{
+    RECT rect, tmp_rect;
+    PAINTSTRUCT paint;
+    HDC hdc;
+
+    hdc = BeginPaint( hwnd, &paint );
+
+    GetClientRect( hwnd, &rect );
+    rect.bottom = rect.top + (rect.bottom - rect.top - 2) / 4 - 2;
+    rect.right = rect.left + (rect.right - rect.left) / 2 - 10;
+
+    OffsetRect( &rect, 5, 2 );
+    draw_axis_view( hdc, rect, names[0], axes[0] );
+
+    tmp_rect = rect;
+    OffsetRect( &rect, rect.right - rect.left + 10, 0 );
+    draw_axis_view( hdc, rect, names[4], axes[4] );
+    rect = tmp_rect;
+
+    OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
+    draw_axis_view( hdc, rect, names[1], axes[1] );
+
+    tmp_rect = rect;
+    OffsetRect( &rect, rect.right - rect.left + 10, 0 );
+    draw_axis_view( hdc, rect, names[5], axes[5] );
+    rect = tmp_rect;
+
+    OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
+    draw_axis_view( hdc, rect, names[2], axes[2] );
+
+    tmp_rect = rect;
+    OffsetRect( &rect, rect.right - rect.left + 10, 0 );
+    draw_axis_view( hdc, rect, names[6], axes[6] );
+    rect = tmp_rect;
+
+    OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
+    draw_axis_view( hdc, rect, names[3], axes[3] );
+
+    tmp_rect = rect;
+    OffsetRect( &rect, rect.right - rect.left + 10, 0 );
+    draw_axis_view( hdc, rect, names[7], axes[7] );
+    rect = tmp_rect;
+
+    EndPaint( hwnd, &paint );
 }
 
 static void draw_pov_view( HDC hdc, RECT rect, DWORD value )
@@ -407,6 +486,30 @@ static void draw_pov_view( HDC hdc, RECT rect, DWORD value )
     if (value != -1) Polygon( hdc, points + value / 4500 * 2, 3 );
 }
 
+void paint_povs_view( HWND hwnd, UINT32 count, UINT32 *povs )
+{
+    PAINTSTRUCT paint;
+    RECT rect;
+    HDC hdc;
+
+    hdc = BeginPaint( hwnd, &paint );
+
+    GetClientRect( hwnd, &rect );
+    rect.bottom = rect.top + (rect.bottom - rect.top - 5) / 2 - 5;
+    rect.right = rect.left + (rect.bottom - rect.top);
+
+    OffsetRect( &rect, 5, 5 );
+    draw_pov_view( hdc, rect, povs[0] );
+    OffsetRect( &rect, rect.right - rect.left + 5, 0 );
+    draw_pov_view( hdc, rect, povs[1] );
+    OffsetRect( &rect, rect.left - rect.right - 5, rect.bottom - rect.top + 5 );
+    draw_pov_view( hdc, rect, povs[1] );
+    OffsetRect( &rect, rect.right - rect.left + 5, 0 );
+    draw_pov_view( hdc, rect, povs[2] );
+
+    EndPaint( hwnd, &paint );
+}
+
 static void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
 {
     COLORREF color;
@@ -432,18 +535,58 @@ static void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
     SelectObject( hdc, font );
 }
 
+void paint_buttons_view( HWND hwnd, UINT32 count, BYTE *buttons )
+{
+    UINT i, j, offs, size, step, space = 2;
+    PAINTSTRUCT paint;
+    RECT rect;
+    HDC hdc;
+
+    if (count <= 48) step = 16;
+    else step = 24;
+
+    hdc = BeginPaint( hwnd, &paint );
+
+    GetClientRect( hwnd, &rect );
+    FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
+
+    size = (rect.right - rect.left - space) / step;
+    offs = (rect.right - rect.left - step * size - space) / 2;
+    OffsetRect( &rect, offs, offs );
+    rect.right = rect.left + size - space;
+    rect.bottom = rect.top + size - space;
+
+    for (i = 0; i < count;)
+    {
+        RECT first = rect;
+
+        for (j = 0; j < step && i < count; j++, i++)
+        {
+            WCHAR buffer[3];
+            if (step == 24) swprintf( buffer, ARRAY_SIZE(buffer), L"%02x", i );
+            else swprintf( buffer, ARRAY_SIZE(buffer), L"%d", i );
+            draw_button_view( hdc, rect, buttons[i], buffer );
+            OffsetRect( &rect, size, 0 );
+        }
+
+        rect = first;
+        OffsetRect( &rect, 0, size );
+    }
+
+    EndPaint( hwnd, &paint );
+}
+
 LRESULT CALLBACK test_di_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
     if (msg == WM_PAINT)
     {
+        static const WCHAR *names[] = { L"X", L"Y", L"Z", L"S", L"Rx", L"Ry", L"Rz", L"Rs" };
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+        double axes[16], *axis = axes;
         IDirectInputDevice8W *device;
         DIJOYSTATE2 state = {0};
-        RECT rect, tmp_rect;
-        PAINTSTRUCT paint;
-        HDC hdc;
 
         if ((device = get_selected_device()))
         {
@@ -452,46 +595,16 @@ LRESULT CALLBACK test_di_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
             IDirectInputDevice8_Release( device );
         }
 
-        hdc = BeginPaint( hwnd, &paint );
+        *axis++ = (double)state.lX / 65535.0;
+        *axis++ = (double)state.lY / 65535.0;
+        *axis++ = (double)state.lZ / 65535.0;
+        *axis++ = (double)state.rglSlider[0] / 65535.0;
+        *axis++ = (double)state.lRx / 65535.0;
+        *axis++ = (double)state.lRy / 65535.0;
+        *axis++ = (double)state.lRz / 65535.0;
+        *axis++ = (double)state.rglSlider[1] / 65535.0;
 
-        GetClientRect( hwnd, &rect );
-        rect.bottom = rect.top + (rect.bottom - rect.top - 2) / 4 - 2;
-        rect.right = rect.left + (rect.right - rect.left) / 2 - 10;
-
-        OffsetRect( &rect, 5, 2 );
-        draw_axis_view( hdc, rect, L"X", state.lX );
-
-        tmp_rect = rect;
-        OffsetRect( &rect, rect.right - rect.left + 10, 0 );
-        draw_axis_view( hdc, rect, L"Rx", state.lRx );
-        rect = tmp_rect;
-
-        OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
-        draw_axis_view( hdc, rect, L"Y", state.lY );
-
-        tmp_rect = rect;
-        OffsetRect( &rect, rect.right - rect.left + 10, 0 );
-        draw_axis_view( hdc, rect, L"Ry", state.lRy );
-        rect = tmp_rect;
-
-        OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
-        draw_axis_view( hdc, rect, L"Z", state.lZ );
-
-        tmp_rect = rect;
-        OffsetRect( &rect, rect.right - rect.left + 10, 0 );
-        draw_axis_view( hdc, rect, L"Rz", state.lRz );
-        rect = tmp_rect;
-
-        OffsetRect( &rect, 0, rect.bottom - rect.top + 2 );
-        draw_axis_view( hdc, rect, L"S", state.rglSlider[0] );
-
-        tmp_rect = rect;
-        OffsetRect( &rect, rect.right - rect.left + 10, 0 );
-        draw_axis_view( hdc, rect, L"Rs", state.rglSlider[1] );
-        rect = tmp_rect;
-
-        EndPaint( hwnd, &paint );
-
+        paint_axes_view( hwnd, min( caps.dwAxes, ARRAY_SIZE(axes) ), axes, names );
         return 0;
     }
 
@@ -507,9 +620,6 @@ LRESULT CALLBACK test_di_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
         IDirectInputDevice8W *device;
         DIJOYSTATE2 state = {0};
-        PAINTSTRUCT paint;
-        RECT rect;
-        HDC hdc;
 
         if ((device = get_selected_device()))
         {
@@ -518,23 +628,7 @@ LRESULT CALLBACK test_di_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
             IDirectInputDevice8_Release( device );
         }
 
-        hdc = BeginPaint( hwnd, &paint );
-
-        GetClientRect( hwnd, &rect );
-        rect.bottom = rect.top + (rect.bottom - rect.top - 5) / 2 - 5;
-        rect.right = rect.left + (rect.bottom - rect.top);
-
-        OffsetRect( &rect, 5, 5 );
-        draw_pov_view( hdc, rect, state.rgdwPOV[0] );
-        OffsetRect( &rect, rect.right - rect.left + 5, 0 );
-        draw_pov_view( hdc, rect, state.rgdwPOV[1] );
-        OffsetRect( &rect, rect.left - rect.right - 5, rect.bottom - rect.top + 5 );
-        draw_pov_view( hdc, rect, state.rgdwPOV[1] );
-        OffsetRect( &rect, rect.right - rect.left + 5, 0 );
-        draw_pov_view( hdc, rect, state.rgdwPOV[2] );
-
-        EndPaint( hwnd, &paint );
-
+        paint_povs_view( hwnd, caps.dwPOVs, (UINT32 *)state.rgdwPOV );
         return 0;
     }
 
@@ -548,12 +642,8 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
     if (msg == WM_PAINT)
     {
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
-        UINT i, j, offs, size, step, space = 2;
         IDirectInputDevice8W *device;
         DIJOYSTATE2 state = {0};
-        PAINTSTRUCT paint;
-        RECT rect;
-        HDC hdc;
 
         if ((device = get_selected_device()))
         {
@@ -562,39 +652,7 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
             IDirectInputDevice8_Release( device );
         }
 
-        if (caps.dwButtons <= 48) step = 16;
-        else step = 24;
-
-        hdc = BeginPaint( hwnd, &paint );
-
-        GetClientRect( hwnd, &rect );
-        FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
-
-        size = (rect.right - rect.left - space) / step;
-        offs = (rect.right - rect.left - step * size - space) / 2;
-        OffsetRect( &rect, offs, offs );
-        rect.right = rect.left + size - space;
-        rect.bottom = rect.top + size - space;
-
-        for (i = 0; i < ARRAY_SIZE(state.rgbButtons) && i < caps.dwButtons;)
-        {
-            RECT first = rect;
-
-            for (j = 0; j < step && i < caps.dwButtons; j++, i++)
-            {
-                WCHAR buffer[3];
-                if (step == 24) swprintf( buffer, ARRAY_SIZE(buffer), L"%02x", i );
-                else swprintf( buffer, ARRAY_SIZE(buffer), L"%d", i );
-                draw_button_view( hdc, rect, state.rgbButtons[i], buffer );
-                OffsetRect( &rect, size, 0 );
-            }
-
-            rect = first;
-            OffsetRect( &rect, 0, size );
-        }
-
-        EndPaint( hwnd, &paint );
-
+        paint_buttons_view( hwnd, min( caps.dwButtons, ARRAY_SIZE(state.rgbButtons) ), state.rgbButtons );
         return 0;
     }
 
@@ -625,7 +683,6 @@ static void update_di_effects( HWND hwnd, IDirectInputDevice8W *device )
 
 static void handle_di_effects_change( HWND hwnd )
 {
-    IDirectInputDevice8W *device;
     struct list *entry;
     int sel;
 
@@ -639,14 +696,6 @@ static void handle_di_effects_change( HWND hwnd )
     if (!entry) return;
 
     set_selected_effect( LIST_ENTRY( entry, struct effect, entry )->effect );
-
-    if ((device = get_selected_device()))
-    {
-        IDirectInputDevice8_Unacquire( device );
-        IDirectInputDevice8_SetCooperativeLevel( device, GetAncestor( hwnd, GA_ROOT ), DISCL_BACKGROUND | DISCL_EXCLUSIVE );
-        IDirectInputDevice8_Acquire( device );
-        IDirectInputDevice8_Release( device );
-    }
 }
 
 static void create_device_views( HWND hwnd )

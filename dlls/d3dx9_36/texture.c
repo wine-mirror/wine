@@ -24,12 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-/* Returns TRUE if num is a power of 2, FALSE if not, or if 0 */
-static BOOL is_pow2(UINT num)
-{
-    return !(num & (num - 1));
-}
-
 static HRESULT get_surface(D3DRESOURCETYPE type, struct IDirect3DBaseTexture9 *tex,
         int face, UINT level, struct IDirect3DSurface9 **surf)
 {
@@ -59,7 +53,7 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
     if (!texture)
         return D3DERR_INVALIDCALL;
 
-    if (filter != D3DX_DEFAULT && FAILED(hr = d3dx9_validate_filter(filter)))
+    if (filter != D3DX_DEFAULT && FAILED(hr = d3dx_validate_filter(filter)))
         return hr;
 
     if (srclevel == D3DX_DEFAULT)
@@ -186,6 +180,7 @@ static D3DFORMAT get_replacement_format(D3DFORMAT format)
         {D3DFMT_DXT3, D3DFMT_A8R8G8B8},
         {D3DFMT_DXT4, D3DFMT_A8R8G8B8},
         {D3DFMT_DXT5, D3DFMT_A8R8G8B8},
+        {D3DFMT_CxV8U8, D3DFMT_X8L8V8U8},
     };
     unsigned int i;
 
@@ -612,7 +607,11 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return hr;
     }
 
-    d3dximage_info_from_d3dx_image(&imginfo, &image);
+    if (!d3dximage_info_from_d3dx_image(&imginfo, &image))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto err;
+    }
 
     /* handle default values */
     if (!width || width == D3DX_DEFAULT_NONPOW2 || width == D3DX_FROM_FILE || width == D3DX_DEFAULT)
@@ -1142,7 +1141,11 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         return hr;
     }
 
-    d3dximage_info_from_d3dx_image(&image_info, &image);
+    if (!d3dximage_info_from_d3dx_image(&image_info, &image))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto err;
+    }
 
     /* Handle default values. */
     if (!width || width == D3DX_DEFAULT_NONPOW2 || width == D3DX_FROM_FILE || width == D3DX_DEFAULT)
@@ -1374,7 +1377,12 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         return hr;
     }
 
-    d3dximage_info_from_d3dx_image(&img_info, &image);
+    if (!d3dximage_info_from_d3dx_image(&img_info, &image))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto err;
+    }
+
     if (img_info.ResourceType != D3DRTYPE_CUBETEXTURE)
     {
         hr = E_FAIL;
@@ -1974,8 +1982,8 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     if (FAILED(hr))
         return hr;
 
-    hr = d3dx_init_dds_header((struct dds_header *)ID3DXBuffer_GetBufferPointer(buffer), type, fmt_desc->format, &size,
-            levels);
+    hr = d3dx_init_dds_header((struct dds_header *)ID3DXBuffer_GetBufferPointer(buffer),
+            d3dx_resource_type_from_d3dresourcetype(type), fmt_desc->format, &size, levels);
     if (FAILED(hr))
         goto exit;
 

@@ -1641,6 +1641,7 @@ static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert, const CERT_R
     }
 
     TRACE("Using cached status %#lx, reason %#lx.\n", status->dwError, status->dwReason);
+    fclose(file);
     return TRUE;
 }
 

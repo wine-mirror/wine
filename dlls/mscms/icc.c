@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -31,13 +29,16 @@
 
 #include "mscms_priv.h"
 
-#ifdef HAVE_LCMS2
-
 static inline void adjust_endianness32( ULONG *ptr )
 {
 #ifndef WORDS_BIGENDIAN
     *ptr = RtlUlongByteSwap(*ptr);
 #endif
+}
+
+static const struct tag_entry *first_tag( const struct profile *profile )
+{
+    return (const struct tag_entry *)(profile->data + sizeof(PROFILEHEADER) + sizeof(DWORD));
 }
 
 void get_profile_header( const struct profile *profile, PROFILEHEADER *header )
@@ -62,34 +63,77 @@ void set_profile_header( const struct profile *profile, const PROFILEHEADER *hea
         adjust_endianness32( (ULONG *)profile->data + i );
 }
 
-static BOOL get_adjusted_tag( const struct profile *profile, TAGTYPE type, cmsTagEntry *tag )
+DWORD get_tag_count( const struct profile *profile )
 {
-    DWORD i, num_tags = *(DWORD *)(profile->data + sizeof(cmsICCHeader));
-    cmsTagEntry *entry;
-    ULONG sig;
-
+    DWORD num_tags = *(DWORD *)(profile->data + sizeof(PROFILEHEADER));
     adjust_endianness32( &num_tags );
-    for (i = 0; i < num_tags; i++)
+    if ((const BYTE *)(first_tag( profile ) + num_tags) > (const BYTE *)profile->data + profile->size)
+        return 0;
+    return num_tags;
+}
+
+BOOL get_tag_entry( const struct profile *profile, DWORD index, struct tag_entry *tag )
+{
+    const struct tag_entry *entry = first_tag( profile );
+
+    if (index < 1 || index > get_tag_count( profile )) return FALSE;
+    *tag = entry[index - 1];
+    adjust_endianness32( &tag->sig );
+    adjust_endianness32( &tag->offset );
+    adjust_endianness32( &tag->size );
+    if (tag->offset > profile->size || tag->size > profile->size - tag->offset) return FALSE;
+    return TRUE;
+}
+
+BOOL get_adjusted_tag( const struct profile *profile, TAGTYPE type, struct tag_entry *tag )
+{
+    const struct tag_entry *entry = first_tag( profile );
+    DWORD sig, i;
+
+    for (i = get_tag_count(profile); i > 0; i--, entry++)
     {
-        entry = (cmsTagEntry *)(profile->data + sizeof(cmsICCHeader) + sizeof(DWORD) + i * sizeof(*tag));
         sig = entry->sig;
         adjust_endianness32( &sig );
         if (sig == type)
         {
-            tag->sig    = sig;
-            tag->offset = entry->offset;
-            tag->size   = entry->size;
+            *tag = *entry;
+            adjust_endianness32( &tag->sig );
             adjust_endianness32( &tag->offset );
             adjust_endianness32( &tag->size );
+            if (tag->offset > profile->size || tag->size > profile->size - tag->offset) return FALSE;
             return TRUE;
         }
     }
     return FALSE;
 }
 
-BOOL get_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, void *buffer, DWORD *len )
+static BOOL get_linked_tag( const struct profile *profile, struct tag_entry *ret )
 {
-    cmsTagEntry tag;
+    const struct tag_entry *entry = first_tag( profile );
+    DWORD sig, offset, size, i;
+
+    for (i = get_tag_count(profile); i > 0; i--, entry++)
+    {
+        sig = entry->sig;
+        adjust_endianness32( &sig );
+        if (sig == ret->sig) continue;
+        offset = entry->offset;
+        size = entry->size;
+        adjust_endianness32( &offset );
+        adjust_endianness32( &size );
+        if (size == ret->size && offset == ret->offset)
+        {
+            ret->sig = sig;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+BOOL get_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, void *buffer,
+                   DWORD *len, BOOL *linked )
+{
+    struct tag_entry tag;
 
     if (!get_adjusted_tag( profile, type, &tag )) return FALSE;
 
@@ -102,12 +146,13 @@ BOOL get_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, vo
     }
     memcpy( buffer, profile->data + tag.offset + offset, tag.size - offset );
     *len = tag.size - offset;
+    if (linked) *linked = get_linked_tag( profile, &tag );
     return TRUE;
 }
 
 BOOL set_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, const void *buffer, DWORD *len )
 {
-    cmsTagEntry tag;
+    struct tag_entry tag;
 
     if (!get_adjusted_tag( profile, type, &tag )) return FALSE;
 
@@ -116,5 +161,3 @@ BOOL set_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, co
     memcpy( profile->data + tag.offset + offset, buffer, *len );
     return TRUE;
 }
-
-#endif /* HAVE_LCMS2 */

@@ -24,8 +24,10 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "setjmp.h"
 #include "wine/test.h"
 
+static NTSTATUS (WINAPI *pNtAlertMultipleThreadByThreadId)( HANDLE *, ULONG, void *, void * );
 static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)( HANDLE );
 static NTSTATUS (WINAPI *pNtClose)( HANDLE );
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const OBJECT_ATTRIBUTES *, EVENT_TYPE, BOOLEAN);
@@ -45,6 +47,7 @@ static NTSTATUS (WINAPI *pNtReleaseMutant)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtReleaseSemaphore)( HANDLE, ULONG, ULONG * );
 static NTSTATUS (WINAPI *pNtResetEvent)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtSetEvent)( HANDLE, LONG * );
+static NTSTATUS (WINAPI *pNtSetEventBoostPriority)( HANDLE );
 static NTSTATUS (WINAPI *pNtWaitForAlertByThreadId)( void *, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 static BOOLEAN  (WINAPI *pRtlAcquireResourceExclusive)( RTL_RWLOCK *, BOOLEAN );
@@ -56,6 +59,10 @@ static void     (WINAPI *pRtlReleaseResource)( RTL_RWLOCK * );
 static NTSTATUS (WINAPI *pRtlWaitOnAddress)( const void *, const void *, SIZE_T, const LARGE_INTEGER * );
 static void     (WINAPI *pRtlWakeAddressAll)( const void * );
 static void     (WINAPI *pRtlWakeAddressSingle)( const void * );
+
+static NTSTATUS (WINAPI *pRtlInitBarrier)(RTL_BARRIER*,LONG,LONG);
+static void     (WINAPI *pRtlDeleteBarrier)(RTL_BARRIER*);
+static BOOLEAN  (WINAPI *pRtlBarrier)(RTL_BARRIER*,ULONG);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -144,6 +151,20 @@ static void test_event(void)
     status = pNtPulseEvent( event, &prev_state );
     ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08lx\n", status );
     ok( prev_state == 1, "prev_state = %lx\n", prev_state );
+
+    pNtClose(event);
+
+    status = pNtCreateEvent(&event, GENERIC_ALL, &attr, SynchronizationEvent, 0);
+    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08lx\n", status );
+
+    status = pNtSetEventBoostPriority( event );
+    ok( status == STATUS_SUCCESS, "NtSetEventBoostPriority failed: %08lx\n", status );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
+    ok( info.EventState == 1,
+        "NtQueryEventBoostPriority failed, expected 1, got %ld\n", info.EventState );
 
     pNtClose(event);
 }
@@ -760,12 +781,22 @@ static DWORD WINAPI tid_alert_thread( void *arg )
     return 0;
 }
 
+static DWORD WINAPI tid_wait_alert_thread( void *arg )
+{
+    NTSTATUS ret;
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, NULL );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    return 0;
+}
+
 static void test_tid_alert( char **argv )
 {
     LARGE_INTEGER timeout = {{0}};
     char cmdline[MAX_PATH];
     STARTUPINFOA si = {0};
     PROCESS_INFORMATION pi;
+    HANDLE tids[2];
     HANDLE thread;
     NTSTATUS ret;
     DWORD tid;
@@ -826,6 +857,43 @@ static void test_tid_alert( char **argv )
     ok(!WaitForSingleObject( pi.hProcess, 1000 ), "wait failed\n");
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
+
+    if (!pNtAlertMultipleThreadByThreadId)
+    {
+        win_skip( "NtAlertMultipleThreadByThreadId is not avaliable.\n" );
+        return;
+    }
+
+    timeout.QuadPart = 0;
+    ret = pNtAlertMultipleThreadByThreadId( NULL, 0, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtAlertMultipleThreadByThreadId( NULL, 1, NULL, NULL );
+    ok( ret == STATUS_ACCESS_VIOLATION, "got %#lx.\n", ret );
+
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+    tids[0] = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
+    tids[1] = (HANDLE)0xdeadbeef;
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( ret == STATUS_INVALID_CID, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+    tids[1] = tids[0];
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+
+    thread = CreateThread( NULL, 0, tid_wait_alert_thread, (HANDLE)(DWORD_PTR)GetCurrentThreadId(), 0, &tid );
+    tids[1] = (HANDLE)(ULONG_PTR)tid;
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
 }
 
 struct test_completion_port_scheduling_param
@@ -1119,6 +1187,246 @@ static void test_delayexecution(void)
     }
 }
 
+static jmp_buf call_exception_jmpbuf;
+
+static LONG WINAPI call_exception_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+
+    longjmp(call_exception_jmpbuf, rec->ExceptionCode);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+struct test_barrier_thread_param
+{
+    RTL_BARRIER *barrier;
+    ULONG flags;
+    LONG thread_count;
+    BOOL wait_skipped;
+    volatile LONG *count;
+    volatile LONG *true_ret_count;
+    unsigned int iter_count;
+};
+
+static DWORD WINAPI test_barrier_thread(void *param)
+{
+    struct test_barrier_thread_param *p = param;
+    unsigned int i;
+
+    InterlockedIncrement( p->count );
+    for (i = 0; i < p->iter_count; ++i)
+    {
+        if (pRtlBarrier( p->barrier, p->flags ))
+            InterlockedIncrement( p->true_ret_count );
+    }
+    if (!p->wait_skipped)
+        ok( *p->count == p->thread_count * p->iter_count, "got %ld.\n", *p->count );
+    return 0;
+}
+
+static DWORD WINAPI test_barrier_delete_thread(void *param)
+{
+    struct test_barrier_thread_param *p = param;
+
+    pRtlDeleteBarrier( p->barrier );
+    if (p->flags & 0x10000)
+    {
+        ok( *p->count == p->thread_count, "got %ld.\n", *p->count );
+    }
+    else
+    {
+        /* No wait was performed. */
+        ok( *p->count <= p->thread_count, "got %ld.\n", *p->count );
+    }
+
+    return 0;
+}
+
+static void test_barrier(void)
+{
+    static const ULONG rtl_barrier_flags[] =
+    {
+        0,
+        0x10000,
+        ~0u,
+        1,
+    };
+    struct test_barrier_thread_param p, p2;
+    volatile LONG count, true_ret_count;
+    HANDLE threads[8], delete_thread;
+    void *vectored_handler;
+    unsigned int i, test;
+    RTL_BARRIER barrier;
+    NTSTATUS status;
+    int exc_code;
+    BOOLEAN bval;
+    DWORD ret;
+
+    if (!pRtlInitBarrier)
+    {
+        win_skip("RtlInitBarrier is not available.\n");
+        return;
+    }
+
+
+    vectored_handler = AddVectoredExceptionHandler(TRUE, call_exception_handler);
+    status = 0;
+    if (!(exc_code = setjmp(call_exception_jmpbuf)))
+        status = pRtlInitBarrier( NULL, 1, -1 );
+    if (exc_code == STATUS_ACCESS_VIOLATION)
+    {
+        /* Crashes before Win10 1607; the other behaviour details are also different. */
+        win_skip( "Old synchronization barriers implementation, skipping tests.\n" );
+        return;
+    }
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    RemoveVectoredExceptionHandler(vectored_handler);
+
+    status = pRtlInitBarrier(  &barrier, -2, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, INT_MAX, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, 0, -1 );
+    ok( !status, "got %#lx.\n", status );
+    if (0)
+    {
+        /* Waits forever. */
+        bval = pRtlBarrier( &barrier, 0 );
+        ok( bval == 1, "got %#x.\n", bval );
+    }
+    status = pRtlInitBarrier(  &barrier, 1, -2 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, 1, INT_MAX );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier( &barrier, 1, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    bval = pRtlBarrier( NULL, 0 );
+    ok( !bval, "got %#x.\n", bval );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    pRtlDeleteBarrier( NULL );
+
+    pRtlDeleteBarrier( &barrier );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    /* Previously completed barrier. */
+    p.barrier = &barrier;
+    p.flags = 0;
+    p.thread_count = ARRAY_SIZE(threads) + 1;
+    p.count = &count;
+    p.true_ret_count = &true_ret_count;
+    p.iter_count = 100;
+    p.wait_skipped = TRUE;
+
+    status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    ok( !status, "got %#lx.\n", status );
+    count = 0;
+    true_ret_count = 0;
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+
+    for (i = 0; i < p.iter_count; ++i)
+    {
+        InterlockedIncrement( p.count );
+        if (pRtlBarrier( p.barrier, p.flags ))
+            InterlockedIncrement( p.true_ret_count );
+    }
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+    {
+        WaitForSingleObject( threads[i], INFINITE );
+        CloseHandle( threads[i] );
+    }
+    ok( true_ret_count == p.iter_count, "got %ld.\n", true_ret_count );
+
+    /* Normal case. */
+    status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    ok( !status, "got %#lx.\n", status );
+    /* RtlDeleteBarrier doesn't seem to do anything unless there are threads already waiting on the barrier with
+     * flag 0x10000 (and then it will wait for those to finish). */
+    pRtlDeleteBarrier( &barrier );
+    p.flags = 0x10000;
+    p.wait_skipped = FALSE;
+    p.iter_count = 1;
+    count = 0;
+    true_ret_count = 0;
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+    InterlockedIncrement( p.count );
+    if (pRtlBarrier( p.barrier, p.flags ))
+        InterlockedIncrement( p.true_ret_count );
+    /* RtlDeleteBarrier (with 0x10000 flag passed to RtlBarrier) will wait for the waiters to be actually woken
+     * before returning. Without calling RtlDeleteBarrier or setting 0x10000 flag here the test will randomly
+     * fire an exception or hang (because RtlInitBarrier will break the not yet woken waiters wake up. */
+    pRtlDeleteBarrier( &barrier );
+    pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    /* p.count is incremented before barrier wait, check at once. */
+    ok( *p.count == p.thread_count, "got %ld.\n", *p.count );
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+    {
+        WaitForSingleObject( threads[i], INFINITE );
+        CloseHandle( threads[i] );
+    }
+    /* Only check after all the threads are finished and thus guaranteed to exit RtlBarrier() and increment true_ret_count. */
+    ok( true_ret_count == 1, "got %ld.\n", true_ret_count );
+
+    /* Test wait in RtlDeleteBarrier(). */
+    for (test = 0; test < ARRAY_SIZE(rtl_barrier_flags); ++test)
+    {
+        winetest_push_context( "flags %#lx", rtl_barrier_flags[test] );
+        p.thread_count = ARRAY_SIZE(threads);
+        status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+        ok( !status, "got %#lx.\n", status );
+        true_ret_count = 0;
+        p.wait_skipped = FALSE;
+        count = 0;
+        true_ret_count = 0;
+        p.flags = rtl_barrier_flags[test];
+        threads[0] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+        /* Now try to make sure the thread has entered barrier wait before spawning test_barrier_delete_thread. */
+        while (!ReadAcquire( p.count ))
+            Sleep(1);
+        Sleep(16);
+
+        delete_thread = CreateThread( NULL, 0, test_barrier_delete_thread, &p, 0, NULL );
+        ret = WaitForSingleObject( delete_thread, 100 );
+        if (p.flags & 0x10000)
+            ok( ret == WAIT_TIMEOUT, "got %#lx.\n", ret );
+        else
+            ok( !ret, "got %#lx.\n", ret );
+
+        /* If barrier waiters joined with flag 0x10000 after RtlDeleteBarrier started the wait, all the barrier
+         * waiting threads and RtlDeleteBarrier will hang forever on Windows for some reason. So create the rest of
+         * the waiters without the flag. */
+        p2 = p;
+        p2.flags = 0;
+        for (i = 1; i < ARRAY_SIZE(threads); ++i)
+            threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p2, 0, NULL );
+
+        WaitForSingleObject( delete_thread, INFINITE );
+        CloseHandle( delete_thread );
+        for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        {
+            WaitForSingleObject( threads[i], INFINITE );
+            CloseHandle( threads[i] );
+        }
+        ok( *p.count == p.thread_count, "got %ld.\n", *p.count );
+        ok( true_ret_count == 1, "got %ld.\n", true_ret_count );
+        winetest_pop_context();
+    }
+}
+
 START_TEST(sync)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -1129,6 +1437,7 @@ START_TEST(sync)
 
     if (argc > 2) return;
 
+    pNtAlertMultipleThreadByThreadId = (void *)GetProcAddress(module, "NtAlertMultipleThreadByThreadId");
     pNtAlertThreadByThreadId        = (void *)GetProcAddress(module, "NtAlertThreadByThreadId");
     pNtClose                        = (void *)GetProcAddress(module, "NtClose");
     pNtCreateEvent                  = (void *)GetProcAddress(module, "NtCreateEvent");
@@ -1148,6 +1457,7 @@ START_TEST(sync)
     pNtReleaseSemaphore             = (void *)GetProcAddress(module, "NtReleaseSemaphore");
     pNtResetEvent                   = (void *)GetProcAddress(module, "NtResetEvent");
     pNtSetEvent                     = (void *)GetProcAddress(module, "NtSetEvent");
+    pNtSetEventBoostPriority        = (void *)GetProcAddress(module, "NtSetEventBoostPriority");
     pNtWaitForAlertByThreadId       = (void *)GetProcAddress(module, "NtWaitForAlertByThreadId");
     pNtWaitForKeyedEvent            = (void *)GetProcAddress(module, "NtWaitForKeyedEvent");
     pRtlAcquireResourceExclusive    = (void *)GetProcAddress(module, "RtlAcquireResourceExclusive");
@@ -1159,6 +1469,9 @@ START_TEST(sync)
     pRtlWaitOnAddress               = (void *)GetProcAddress(module, "RtlWaitOnAddress");
     pRtlWakeAddressAll              = (void *)GetProcAddress(module, "RtlWakeAddressAll");
     pRtlWakeAddressSingle           = (void *)GetProcAddress(module, "RtlWakeAddressSingle");
+    pRtlInitBarrier                 = (void *)GetProcAddress(module, "RtlInitBarrier");
+    pRtlDeleteBarrier               = (void *)GetProcAddress(module, "RtlDeleteBarrier");
+    pRtlBarrier                     = (void *)GetProcAddress(module, "RtlBarrier");
 
     test_wait_on_address();
     test_event();
@@ -1169,4 +1482,5 @@ START_TEST(sync)
     test_tid_alert( argv );
     test_completion_port_scheduling();
     test_delayexecution();
+    test_barrier();
 }

@@ -30,7 +30,6 @@
 #include "cderr.h"
 #include "dlgs.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -285,7 +284,7 @@ static INT_PTR CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPA
         if(iMsg == WM_DESTROY)
         {
 		RemovePropA(hDlgWnd, (LPSTR)COMDLG32_Atom);
-		heap_free(pdata);
+		free(pdata);
         }
 
         return retval;
@@ -428,7 +427,7 @@ static HWND COMDLG32_FR_DoFindReplace(
 		error = CDERR_DIALOGFAILURE;
 cleanup:
 		COMDLG32_SetCommDlgExtendedError(error);
-                heap_free(pdata);
+                free(pdata);
         }
         return hdlgwnd;
 }
@@ -448,9 +447,11 @@ HWND WINAPI FindTextA(
 	if(!COMDLG32_FR_CheckPartial(pfr, FALSE))
 		return 0;
 
-        if((pdata = COMDLG32_AllocMem(sizeof(COMDLG32_FR_Data))) == NULL)
-		return 0; /* Error has been set */
-
+	if(!(pdata = malloc(sizeof(COMDLG32_FR_Data))))
+	{
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+	    return 0;
+	}
         pdata->user_fr.fra = pfr;
         pdata->fr = *pfr;
 	return COMDLG32_FR_DoFindReplace(pdata);
@@ -471,9 +472,11 @@ HWND WINAPI ReplaceTextA(
 	if(!COMDLG32_FR_CheckPartial(pfr, TRUE))
 		return 0;
 
-        if((pdata = COMDLG32_AllocMem(sizeof(COMDLG32_FR_Data))) == NULL)
-		return 0; /* Error has been set */
-
+	if(!(pdata = malloc(sizeof(COMDLG32_FR_Data))))
+	{
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+	    return 0;
+	}
         pdata->user_fr.fra = pfr;
         pdata->fr = *pfr;
 	pdata->fr.Flags |= FR_WINE_REPLACE;
@@ -502,9 +505,11 @@ HWND WINAPI FindTextW(
 
         len = WideCharToMultiByte( CP_ACP, 0, pfr->lpstrFindWhat, pfr->wFindWhatLen,
                                    NULL, 0, NULL, NULL );
-        if((pdata = COMDLG32_AllocMem(sizeof(COMDLG32_FR_Data) + len)) == NULL)
-                return 0; /* Error has been set */
-
+	if(!(pdata = malloc(sizeof(COMDLG32_FR_Data) + len)))
+	{
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+	    return 0;
+	}
         pdata->user_fr.frw = pfr;
         pdata->fr = *(LPFINDREPLACEA)pfr;	/* FINDREPLACEx have same size */
 	pdata->fr.Flags |= FR_WINE_UNICODE;
@@ -538,9 +543,11 @@ HWND WINAPI ReplaceTextW(
                                     NULL, 0, NULL, NULL );
         len2 = WideCharToMultiByte( CP_ACP, 0, pfr->lpstrReplaceWith, pfr->wReplaceWithLen,
                                     NULL, 0, NULL, NULL );
-        if((pdata = COMDLG32_AllocMem(sizeof(COMDLG32_FR_Data) + len1 + len2)) == NULL)
-                return 0; /* Error has been set */
-
+	if(!(pdata = malloc(sizeof(COMDLG32_FR_Data) + len1 + len2)))
+	{
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+	    return 0;
+	}
         pdata->user_fr.frw = pfr;
         pdata->fr = *(LPFINDREPLACEA)pfr;	/* FINDREPLACEx have same size */
 	pdata->fr.Flags |= FR_WINE_REPLACE | FR_WINE_UNICODE;

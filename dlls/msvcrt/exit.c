@@ -265,7 +265,14 @@ void CDECL abort(void)
       _cputs("\nabnormal program termination\n");
   }
 #endif
+
   raise(SIGABRT);
+
+#if _MSVCR_VER >= 110
+  if (MSVCRT_abort_behavior & _CALL_REPORTFAULT)
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+#endif
+
   /* in case raise() returns */
   _exit(3);
 }
@@ -279,8 +286,6 @@ unsigned int CDECL _set_abort_behavior(unsigned int flags, unsigned int mask)
   unsigned int old = MSVCRT_abort_behavior;
 
   TRACE("%x, %x\n", flags, mask);
-  if (mask & _CALL_REPORTFAULT)
-    FIXME("_WRITE_CALL_REPORTFAULT unhandled\n");
 
   MSVCRT_abort_behavior = (MSVCRT_abort_behavior & ~mask) | (flags & mask);
   return old;
@@ -300,12 +305,12 @@ void DECLSPEC_NORETURN CDECL _wassert(const wchar_t* str, const wchar_t* file, u
     wchar_t text[2048];
     _snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
     DoMessageBoxW(L"Assertion failed!", text);
+    raise(SIGABRT);
+    _exit(3);
   }
-  else
-    fwprintf(stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
-  raise(SIGABRT);
-  _exit(3);
+  fwprintf(stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
+  abort();
 }
 
 /*********************************************************************

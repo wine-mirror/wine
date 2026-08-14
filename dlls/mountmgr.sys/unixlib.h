@@ -121,14 +121,14 @@ struct detect_ports_params
 
 struct set_shell_folder_params
 {
-    const char *folder;
-    const char *backup;
+    const WCHAR *folder;
     const char *link;
+    BOOL create_backup;
 };
 
 struct get_shell_folder_params
 {
-    const char *folder;
+    const WCHAR *folder;
     char *buffer;
     ULONG size;
 };

@@ -300,7 +300,7 @@ typedef struct {
  *
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct {
 /*00*/	DWORD SLTG_magic;	/* 0x47544c53  == "SLTG" */
@@ -589,7 +589,7 @@ WORD offset from start of block to SAFEARRAY
 WORD typeofarray
 */
 
-#include "poppack.h"
+#pragma pack(pop)
 
 /* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
 DEFINE_OLEGUID( CLSID_PSDispatch,    0x00020420, 0x0000, 0x0000 );

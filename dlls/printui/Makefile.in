@@ -3,6 +3,8 @@ IMPORTS   = shell32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "User Interface for Printing"
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
-	printui.c \
-	printui.rc
+	printui.c

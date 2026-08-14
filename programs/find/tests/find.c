@@ -105,7 +105,7 @@ static void mangle_text(const BYTE *input, int input_len, BYTE *output, int outp
     int count_wchar;
 
     /* Check for UTF-16 LE BOM */
-    if (input[0] == 0xFF && input[1] == 0xFE)
+    if (input_len > 1 && input[0] == 0xFF && input[1] == 0xFE)
     {
         int buffer_count = 0;
         int i;

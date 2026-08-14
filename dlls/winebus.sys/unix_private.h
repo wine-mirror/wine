@@ -128,7 +128,7 @@ struct hid_report_descriptor
     BYTE next_report_id[3];
 };
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct hid_haptics_feature
 {
     WORD waveform;
@@ -143,7 +143,7 @@ struct hid_haptics_features
     struct hid_haptics_feature left;
     struct hid_haptics_feature right;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 struct hid_haptics
 {
@@ -190,10 +190,10 @@ struct hid_physical
 struct hid_device_state
 {
     ULONG bit_size;
+    USHORT axis_byte_offsets[64];
+    BYTE axis_sizes[64];
     USAGE_AND_PAGE abs_axis_usages[32];
-    USHORT abs_axis_start;
     USHORT abs_axis_count;
-    USHORT rel_axis_start;
     USHORT rel_axis_count;
     USHORT hatswitch_start;
     USHORT hatswitch_count;
@@ -253,6 +253,7 @@ extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count);
 extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
                                 const USAGE *usages, BOOL rel, LONG min, LONG max);
 
+extern BOOL hid_device_add_gamepad(struct unix_device *iface);
 extern BOOL hid_device_add_haptics(struct unix_device *iface);
 extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count, USHORT axes_count);
 

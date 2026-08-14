@@ -1406,17 +1406,12 @@ static HRESULT load_ifd_metadata_internal(MetadataHandler *handler, IStream *inp
     MetadataItem *result;
     USHORT count, i;
     struct IFD_entry *entry;
-    BOOL native_byte_order = TRUE;
+    BOOL native_byte_order;
     ULONG bytesread;
 
     TRACE("\n");
 
-#ifdef WORDS_BIGENDIAN
-    if (persist_options & WICPersistOptionLittleEndian)
-#else
-    if (persist_options & WICPersistOptionBigEndian)
-#endif
-        native_byte_order = FALSE;
+    native_byte_order = !(persist_options & WICPersistOptionBigEndian);
 
     hr = IStream_Read(input, &count, sizeof(count), &bytesread);
     if (bytesread != sizeof(count)) hr = E_FAIL;
@@ -1552,7 +1547,7 @@ static HRESULT load_app1_metadata_internal(MetadataHandler *handler, IStream *in
     MetadataItem *result;
     LARGE_INTEGER move;
 
-#include "pshpack2.h"
+#pragma pack(push,2)
     struct app1_header
     {
         BYTE exif_header[6];
@@ -1560,7 +1555,7 @@ static HRESULT load_app1_metadata_internal(MetadataHandler *handler, IStream *in
         USHORT marker;
         ULONG ifd0_offset;
     } header;
-#include "poppack.h"
+#pragma pack(pop)
 
     IStream *ifd_stream;
     ULONG length;

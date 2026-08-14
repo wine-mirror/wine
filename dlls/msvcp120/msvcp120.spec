@@ -1803,7 +1803,7 @@
 @ cdecl -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z(str) _Xout_of_range
 @ stub -arch=win32 ?_Xoverflow_error@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xoverflow_error@std@@YAXPEBD@Z
-@ stub ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
+@ cdecl ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z(long) _Xregex_error
 @ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) _Xruntime_error
 @ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) _Xruntime_error
 # extern ?adopt_lock@std@@3Uadopt_lock_t@1@B
@@ -3679,7 +3679,7 @@
 @ cdecl _Cnd_timedwait(ptr ptr ptr)
 @ cdecl _Cnd_unregister_at_thread_exit(ptr)
 @ cdecl _Cnd_wait(ptr ptr)
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ extern _Denorm
 @ stub _Dint
 @ stub _Dnorm
@@ -3690,7 +3690,7 @@
 @ stub _Dunscale
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDint
 @ stub _FDnorm
@@ -3705,7 +3705,7 @@
 @ stub _FPlsw
 @ stub _FPmsw
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 @ stub _FXp_addh
@@ -3729,7 +3729,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm
 @ stub _LDint
 @ cdecl _LDscale(ptr long) _Dscale
@@ -3744,7 +3744,7 @@
 @ stub _LPmsw
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan
 # extern _LXbig
 @ stub _LXp_addh
@@ -3782,7 +3782,7 @@
 @ stub _Pmsw
 @ stub _Poly
 # extern _Rteps
-@ stub _Sinh
+@ cdecl _Sinh(double double)
 @ extern _Snan
 @ cdecl _Stod(ptr ptr long)
 @ cdecl _Stodx(ptr ptr long ptr)

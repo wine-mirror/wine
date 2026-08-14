@@ -4,7 +4,7 @@
 @ stdcall D3DCompileFromFile(wstr ptr ptr str str long long ptr ptr)
 @ stub D3DCompressShaders
 @ stdcall D3DCreateBlob(long ptr)
-@ stub D3DCreateFunctionLinkingGraph
+@ stdcall D3DCreateFunctionLinkingGraph(long ptr)
 @ stdcall D3DCreateLinker(ptr)
 @ stub D3DDecompressShaders
 @ stdcall D3DDisassemble(ptr long long ptr ptr)

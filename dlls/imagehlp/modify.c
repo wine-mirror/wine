@@ -360,6 +360,23 @@ BOOL WINAPI ReBaseImage(
 }
 
 /***********************************************************************
+ *		ReBaseImage64 (IMAGEHLP.@)
+ */
+BOOL WINAPI ReBaseImage64(
+  const char *image_name, const char *symbol_path, BOOL rebase,
+  BOOL rebase_sys, BOOL down, ULONG max_image_size, ULONG *old_image_size,
+  ULONG64 *old_image_base, ULONG *new_image_size, ULONG64 *new_image_base,
+  ULONG timestamp)
+{
+  FIXME("(%s, %s, %d, %d, %d, %ld, %p, %p, %p, %p, %ld): stub\n",
+        debugstr_a(image_name), debugstr_a(symbol_path), rebase, rebase_sys,
+        down, max_image_size, old_image_size, old_image_base, new_image_size,
+        new_image_base, timestamp);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/***********************************************************************
  *		RemovePrivateCvSymbolic (IMAGEHLP.@)
  */
 BOOL WINAPI RemovePrivateCvSymbolic(

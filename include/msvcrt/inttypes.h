@@ -233,11 +233,16 @@ typedef struct {
 #define SCNuPTR "u"
 #endif
 
+_ACRTIMP intmax_t           __cdecl imaxabs(intmax_t);
 _ACRTIMP imaxdiv_t          __cdecl imaxdiv(intmax_t, intmax_t);
 _ACRTIMP __int64            __cdecl strtoimax(const char*,char**,int);
 _ACRTIMP __int64            __cdecl strtoimax_l(const char*,char**,int,_locale_t);
 _ACRTIMP unsigned __int64   __cdecl strtoumax(const char*,char**,int);
 _ACRTIMP unsigned __int64   __cdecl strtoumax_l(const char*,char**,int,_locale_t);
+_ACRTIMP __int64            __cdecl wcstoimax(const wchar_t*,wchar_t**,int);
+_ACRTIMP __int64            __cdecl wcstoimax_l(const wchar_t*,wchar_t**,int,_locale_t);
+_ACRTIMP unsigned __int64   __cdecl wcstoumax(const wchar_t*,wchar_t**,int);
+_ACRTIMP unsigned __int64   __cdecl wcstoumax_l(const wchar_t*,wchar_t**,int,_locale_t);
 
 #ifdef	__cplusplus
 }

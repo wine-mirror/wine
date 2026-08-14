@@ -20,12 +20,31 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "windows.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "ntdsapi.h"
+#include "winternl.h"
+#include "inaddr.h"
+#include "in6addr.h"
+#include "ip2string.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdsapi);
+
+static inline LPWSTR strdupAtoW(LPCSTR str)
+{
+    LPWSTR ret = NULL;
+    DWORD len;
+
+    if (!str) return ret;
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = malloc(len * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
 
 /***********************************************************************
  *             DsBindA (NTDSAPI.@)
@@ -80,6 +99,20 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
     }
     if (inst_name)
         new_spn_length += 1 /* for '/' */ + lstrlenW(svc_name);
+    if (ref)
+    {
+        ULONG scope_id;
+        IN6_ADDR ip6;
+        IN_ADDR ip4;
+        USHORT port;
+
+        if (RtlIpv4StringToAddressExW(svc_name, TRUE, &ip4, &port) &&
+                RtlIpv6StringToAddressExW(svc_name, &ip6, &scope_id, &port))
+            ref = NULL;
+
+        if (ref)
+            new_spn_length += 1 + lstrlenW(ref);
+    }
 
     if (*spn_length < new_spn_length)
     {
@@ -127,6 +160,16 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
         *p = '\0';
     }
 
+    if (ref)
+    {
+        *p = '/';
+        p++;
+        len = lstrlenW(ref);
+        memcpy(p, ref, len * sizeof(WCHAR));
+        p += len;
+        *p = '\0';
+    }
+
     TRACE("spn = %s\n", debugstr_w(spn));
 
     return ERROR_SUCCESS;
@@ -141,11 +184,34 @@ DWORD WINAPI DsMakeSpnA(LPCSTR svc_class, LPCSTR svc_name,
                         LPCSTR inst_name, USHORT inst_port,
                         LPCSTR ref, DWORD *spn_length, LPSTR spn)
 {
-    FIXME("(%s,%s,%s,%d,%s,%p,%p): stub!\n", debugstr_a(svc_class),
-            debugstr_a(svc_name), debugstr_a(inst_name), inst_port,
-            debugstr_a(ref), spn_length, spn);
+    WCHAR *svc_classW, *svc_nameW, *inst_nameW, *refW, *spnW;
+    DWORD len, lenW = 0, ret;
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    svc_classW = strdupAtoW(svc_class);
+    svc_nameW = strdupAtoW(svc_name);
+    inst_nameW = strdupAtoW(inst_name);
+    refW = strdupAtoW(ref);
+
+    ret = DsMakeSpnW(svc_classW, svc_nameW, inst_nameW, inst_port, refW, &lenW, NULL);
+    if (ret == ERROR_BUFFER_OVERFLOW)
+    {
+        spnW = malloc(lenW * sizeof(WCHAR));
+        ret = DsMakeSpnW(svc_classW, svc_nameW, inst_nameW, inst_port, refW, &lenW, spnW);
+        if (!ret)
+        {
+            len = WideCharToMultiByte(CP_ACP, 0, spnW, lenW, NULL, 0, NULL, NULL);
+            if (len > *spn_length) ret = ERROR_BUFFER_OVERFLOW;
+            else WideCharToMultiByte(CP_ACP, 0, spnW, lenW, spn, *spn_length, NULL, NULL);
+            if (!len) ret = GetLastError();
+            else *spn_length = len;
+        }
+        free(spnW);
+    }
+    free(refW);
+    free(inst_nameW);
+    free(svc_nameW);
+    free(svc_classW);
+    return ret;
 }
 
 /***********************************************************************

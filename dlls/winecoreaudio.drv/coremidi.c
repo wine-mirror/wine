@@ -75,7 +75,6 @@
 #include <pthread.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -899,8 +898,8 @@ static UINT midi_out_reset(WORD dev_id)
         {
             /* turn off every note */
             MusicDeviceMIDIEvent(dests[dev_id].synth, 0xB0 | chn, 0x7B, 0, 0);
-            /* remove sustain on channel */
-            MusicDeviceMIDIEvent(dests[dev_id].synth, 0xB0 | chn, 0x40, 0, 0);
+            /* resets controller settings */
+            MusicDeviceMIDIEvent(dests[dev_id].synth, 0xB0 | chn, 0x79, 0, 0);
         }
     }
     else FIXME("MOD_MIDIPORT\n");

@@ -28,14 +28,9 @@
 #include "winuser.h"
 #include "richedit.h"
 #include "imm.h"
-#include "shlwapi.h"
 #include "oleidl.h"
 #include "initguid.h"
 #include "textserv.h"
-
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(msftedit);
 
 /***********************************************************************
  * DllMain.
@@ -56,19 +51,4 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
         break;
     }
     return TRUE;
-}
-
-/***********************************************************************
- *              DllGetVersion (msftedit.@)
- */
-HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
-{
-    if (info->cbSize != sizeof(DLLVERSIONINFO)) FIXME("support DLLVERSIONINFO2\n");
-
-    /* this is what WINXP SP2 reports */
-    info->dwMajorVersion = 41;
-    info->dwMinorVersion = 15;
-    info->dwBuildNumber = 1507;
-    info->dwPlatformID = 1;
-    return NOERROR;
 }

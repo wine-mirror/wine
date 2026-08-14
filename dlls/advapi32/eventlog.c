@@ -618,7 +618,10 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
     ret = ReportEventW(hEventLog, wType, wCategory, dwEventID, lpUserSid,
                        wNumStrings, dwDataSize, (LPCWSTR *)wideStrArray, lpRawData);
     for (i = 0; i < wNumStrings; i++)
-        free(wideStrArray[i]);
+    {
+        str.Buffer = wideStrArray[i];
+        RtlFreeUnicodeString(&str);
+    }
     free(wideStrArray);
     return ret;
 }
@@ -725,5 +728,17 @@ ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
                                  ULONG arraycount, PULONG guidcount)
 {
     FIXME("%p %ld %p: stub\n", propertiesarray, arraycount, guidcount);
+    return ERROR_INVALID_PARAMETER;
+}
+
+/******************************************************************************
+ * EnumerateTraceGuidsEx [ADVAPI32.@]
+ */
+ULONG WINAPI EnumerateTraceGuidsEx(TRACE_QUERY_INFO_CLASS class, void *in, ULONG in_size, void *out, ULONG out_size,
+                                   ULONG *ret_len)
+{
+    FIXME("%d %p %ld %p %ld %p: stub\n", class, in, in_size, out, out_size, ret_len);
+
+    *ret_len = 0;
     return ERROR_INVALID_PARAMETER;
 }

@@ -160,6 +160,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_SCRIPT_TESTPROP2  0x100001
 #define DISPID_REFTEST_GET       0x100000
 #define DISPID_REFTEST_REF       0x100001
+#define DISPID_OBJWITHMETHOD_FUNC 0x100000
 
 #define DISPID_EXTERNAL_OK             0x300000
 #define DISPID_EXTERNAL_TRACE          0x300001
@@ -177,6 +178,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_GETMIMETYPE    0x30000D
 #define DISPID_EXTERNAL_SETVIEWSIZE    0x30000E
 #define DISPID_EXTERNAL_NEWREFTEST     0x30000F
+#define DISPID_EXTERNAL_OBJWITHMETHOD  0x300010
 
 static const GUID CLSID_TestScript[] = {
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}},
@@ -319,11 +321,15 @@ fail:
 
 static void test_sp_caller(IServiceProvider *sp)
 {
+    BOOL seen_doc, seen_undefined;
     IOleCommandTarget *cmdtarget;
     IServiceProvider *caller;
     IHTMLWindow2 *window;
+    IDispatchEx *dispex;
     HRESULT hres;
     VARIANT var;
+    DISPID id;
+    BSTR str;
 
     hres = IServiceProvider_QueryService(sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&caller);
     ok(hres == S_OK, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
@@ -343,8 +349,27 @@ static void test_sp_caller(IServiceProvider *sp)
     hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLWindow2, (void**)&window);
     ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
     ok(window != NULL, "window is NULL\n");
-    IHTMLWindow2_Release(window);
     VariantClear(&var);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    for(id = DISPID_STARTENUM, seen_doc = FALSE, seen_undefined = FALSE;;) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        if(hres == S_FALSE) break;
+        ok(hres == S_OK, "GetNextDispID failed: %08lx\n", hres);
+
+        hres = IDispatchEx_GetMemberName(dispex, id, &str);
+        ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+        if(!wcscmp(str, L"document")) seen_doc = TRUE;
+        if(!wcscmp(str, L"undefined")) seen_undefined = TRUE;
+        SysFreeString(str);
+    }
+    ok(seen_doc, "document was not enumerated from window\n");
+    ok(!seen_undefined, "undefined was enumerated from window\n");
+
+    IDispatchEx_Release(dispex);
 }
 
 static void test_script_vars(unsigned argc, VARIANTARG *argv)
@@ -948,6 +973,52 @@ static IDispatchExVtbl testHostContextDisp_no_this_vtbl = {
 
 static IDispatchEx testHostContextDisp_no_this = { &testHostContextDisp_no_this_vtbl };
 
+static HRESULT WINAPI objWithMethod_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    if(!lstrcmpW(bstrName, L"func")) {
+        *pid = DISPID_OBJWITHMETHOD_FUNC;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI objWithMethod_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(id == DISPID_OBJWITHMETHOD_FUNC, "id = %ld\n", id);
+    ok(wFlags == (DISPATCH_PROPERTYGET | DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pdp->cArgs == 1, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(pdp->cNamedArgs == 0, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+    ok(V_VT(&pdp->rgvarg[0]) == VT_I4, "V_VT(rgvarg[0]) = %d\n", V_VT(&pdp->rgvarg[0]));
+    ok(V_I4(&pdp->rgvarg[0]) == 42, "V_I4(rgvarg[0]) = %ld\n", V_I4(&pdp->rgvarg[0]));
+    ok(!pdp->rgdispidNamedArgs, "pdp->rgdispidNamedArgs != NULL\n");
+    ok(pvarRes != NULL, "pvarRes = NULL\n");
+    return S_OK;
+}
+
+static IDispatchExVtbl objWithMethod_vtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    objWithMethod_GetDispID,
+    objWithMethod_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx objWithMethod = { &objWithMethod_vtbl };
+
 struct refTestObj
 {
     IDispatchEx IDispatchEx_iface;
@@ -1187,6 +1258,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     }
     if(!lstrcmpW(bstrName, L"newRefTest")) {
         *pid = DISPID_EXTERNAL_NEWREFTEST;
+        return S_OK;
+    }
+    if(!lstrcmpW(bstrName, L"objWithMethod")) {
+        *pid = DISPID_EXTERNAL_OBJWITHMETHOD;
         return S_OK;
     }
 
@@ -1488,6 +1563,19 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         V_DISPATCH(pvarRes) = (IDispatch*)&obj->IDispatchEx_iface;
         return S_OK;
     }
+
+    case DISPID_EXTERNAL_OBJWITHMETHOD:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&objWithMethod;
+        return S_OK;
 
     default:
         ok(0, "unexpected call\n");
@@ -5275,7 +5363,9 @@ START_TEST(script)
     detect_locale();
     if(argc > 2) {
         init_protocol_handler();
-        run_script_as_http_with_mode(argv[2], NULL, "11");
+        run_script_as_http_with_mode(argv[2],
+                                     argc > 4 ? argv[4] : NULL,
+                                     argc > 3 ? argv[3] : "11");
     }else if(check_ie()) {
         if(winetest_interactive || ! is_ie_hardened()) {
             if(register_script_engine()) {

@@ -92,18 +92,29 @@ rem call :setError 666 & (start /B I\dont\exist.exe &&echo SUCCESS !errorlevel!|
 rem can't run this test, generates a nice popup under windows
 call :setError 666 & (start "" /B /WAIT cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (start "" /B cmd.exe /c "(choice /C:YN /T:3 /D:Y > NUL) & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+mkdir foo & cd foo
+set "FOO_PATH=%cd%" > NUL
+cd ..
+call :setError 666 & (start /B /WAIT /d "%FOO_PATH%" cmd /s /c "if /I \"%%cd%%\"==\"%FOO_PATH%\" (exit 0) else (exit 1)" >nul &&echo !errorlevel!)
+rd /q /s foo
 echo --- success/failure for TYPE command
 mkdir foo & cd foo
+mkdir bar
+mkdir spam
 echo a > fileA
 echo b > fileB
 call :setError 666 & (type &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (type NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (type i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (type file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 echo ---
-call :setError 666 & (type i\dont\exist\at\all.txt file* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-cd .. && rd /q /s foo
-
+call :setError 666 & (type file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type file* idontexistatall.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type idontexistatall.txt file* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type i\dont\exist\at\all.txt file*&&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd ..
+del foo\file*
+call :setError 666 & (type foo\* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rd /q /s foo
 echo --- success/failure for COPY command
 mkdir foo & cd foo
 echo a > fileA
@@ -114,6 +125,12 @@ call :setError 666 & (copy fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!
 call :setError 666 & (copy fileA+fileD fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (copy fileD+fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 if exist fileD echo Unexpected fileD
+call :setError 666 & (copy /b fileA fileA /Y >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy /b fileA+fileB fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+type fileA
+echo a > fileA
+call :setError 666 & (copy /b fileA+fileB /Y fileB >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+type fileB
 cd .. && rd /q /s foo
 
 echo --- success/failure for MOVE command
@@ -147,6 +164,7 @@ call :setError 666 & (erase &&echo SUCCESS !errorlevel!||echo FAILURE !errorleve
 call :setError 666 & (erase fileE &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (erase i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (erase file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (erase *.idontexistatall &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
 
 echo --- success/failure for change drive command
@@ -183,6 +201,7 @@ call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !error
 call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (pushd "abc/"&&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & popd & echo ERRORLEVEL !errorlevel!
 cd .. && rd /q /s foo
 
@@ -229,6 +248,9 @@ call :setError 666 & (mklink &&echo SUCCESS !errorlevel!||echo FAILURE !errorlev
 call :setError 666 & (mklink /h foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /z foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rmdir foo
 echo bar > foo
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h bar foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -331,9 +353,12 @@ call :setError 666 & ((echo A | choice /C:BA) >NUL &&echo SUCCESS !errorlevel!||
 call :setError 666 & (choice /C:BA <NUL >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem syntax errors in command return INVALID_FUNCTION, need to find a test for returning 255
 echo --- success/failure for MORE command
+echo a> filea
 call :setError 666 & (more NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (more I\dont\exist.txt > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (echo foo | more &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem native 'MORE file' outputs to CONOUT$, not stdout!
+call :setError 666 & (more filea I\dont\exist.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+erase filea
 echo --- success/failure for PAUSE command
 call :setError 666 & (pause < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem TODO: pause is harder to test when fd 1 is a console handle as we don't control output

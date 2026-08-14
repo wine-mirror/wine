@@ -8,7 +8,7 @@
 
 #include <corecrt_wio.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #if defined(_USE_32BIT_TIME_T)
 # define _finddata_t     _finddata32_t
@@ -32,7 +32,7 @@ struct _finddata32i64_t {
   __time32_t time_create;
   __time32_t time_access;
   __time32_t time_write;
-  __int64    DECLSPEC_ALIGN(8) size;
+  __int64    _CRT_ALIGN(8) size;
   char       name[260];
 };
 
@@ -50,7 +50,7 @@ struct _finddata64_t {
   __time64_t time_create;
   __time64_t time_access;
   __time64_t time_write;
-  __int64    DECLSPEC_ALIGN(8) size;
+  __int64    _CRT_ALIGN(8) size;
   char       name[260];
 };
 
@@ -150,6 +150,6 @@ _ACRTIMP int      __cdecl rename(const char*,const char*);
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* _IO_DEFINED */

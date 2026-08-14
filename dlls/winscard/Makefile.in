@@ -3,7 +3,9 @@ IMPORTLIB = winscard
 UNIXLIB   = winscard.so
 UNIX_LIBS = $(PCSCLITE_LIBS)
 
+VER_FILEDESCRIPTION_STR = "Wine Smart Card API"
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
-	rsrc.rc \
 	unixlib.c \
 	winscard.c

@@ -104,14 +104,14 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
  * Create a global heap block for a fixed range of linear memory.
  */
 HGLOBAL16 GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
-                              HGLOBAL16 hOwner, unsigned char selflags )
+                              HGLOBAL16 hOwner, struct ldt_bits bits )
 {
     WORD sel, selcount;
     GLOBALARENA *pArena;
 
       /* Allocate the selector(s) */
 
-    sel = SELECTOR_AllocBlock( ptr, size, selflags );
+    sel = SELECTOR_AllocBlock( ptr, size, bits );
     if (!sel) return 0;
     selcount = (size + 0xffff) / 0x10000;
 
@@ -132,7 +132,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
     pArena->flags = flags & GA_MOVEABLE;
     if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
     if (flags & GMEM_DDESHARE) pArena->flags |= GA_IPCSHARE;
-    if (!(selflags & (LDT_FLAGS_CODE ^ LDT_FLAGS_DATA))) pArena->flags |= GA_DGROUP;
+    if (!(bits.type & 0x08 /* code */)) pArena->flags |= GA_DGROUP;
     pArena->selCount = selcount;
     if (selcount > 1)  /* clear the next arena blocks */
         memset( pArena + 1, 0, (selcount - 1) * sizeof(GLOBALARENA) );
@@ -192,7 +192,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size )
  *
  * Implementation of GlobalAlloc16()
  */
-HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags )
+HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, struct ldt_bits bits )
 {
     void *ptr;
     HGLOBAL16 handle;
@@ -202,7 +202,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 
     /* If size is 0, create a discarded block */
 
-    if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, selflags );
+    if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, bits );
 
     /* Fixup the size */
 
@@ -217,7 +217,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 
       /* Allocate the selector(s) */
 
-    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner, selflags );
+    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner, bits );
     if (!handle)
     {
         HeapFree( get_win16_heap(), 0, ptr );
@@ -250,7 +250,7 @@ HGLOBAL16 WINAPI GlobalAlloc16(
         STACK16FRAME *frame = CURRENT_STACK16;
         owner = GetExePtr( frame->cs );
     }
-    return GLOBAL_Alloc( flags, size, owner, LDT_FLAGS_DATA );
+    return GLOBAL_Alloc( flags, size, owner, data_segment );
 }
 
 
@@ -775,7 +775,7 @@ DWORD WINAPI GlobalDOSAlloc16(
        WORD	 wSelector;
        GLOBALARENA *pArena;
 
-       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, LDT_FLAGS_DATA );
+       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, data_segment );
        pArena = GET_ARENA_PTR(wSelector);
        pArena->flags |= GA_DOSMEM;
        return MAKELONG(wSelector,uParagraph);

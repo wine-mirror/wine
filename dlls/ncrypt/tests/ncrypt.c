@@ -636,7 +636,7 @@ static void test_verify_signature(void)
 
     ret = NCryptVerifySignature(key, &padinfo, sha256_hash, sizeof(sha256_hash), signature_pkcs1_sha256, 4,
                                 NCRYPT_PAD_PKCS1_FLAG);
-    todo_wine ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
+    ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
 
     invalid_padinfo.pszAlgId = BCRYPT_MD5_ALGORITHM;
     ret = NCryptVerifySignature(key, &invalid_padinfo, sha256_hash, sizeof(sha256_hash), signature_pkcs1_sha256,

@@ -134,7 +134,7 @@ extern BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, c
 
 extern BOOL get_app_key(HKEY*, HKEY*);
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD );
-extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override );
+extern BOOL device_instance_is_disabled( const WCHAR *instance, BOOL *override );
 extern void queue_event( IDirectInputDevice8W *iface, int index, DWORD data, DWORD time, DWORD seq );
 
 extern const GUID dinput_pidvid_guid;

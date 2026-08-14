@@ -19,6 +19,11 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "systemmediatransportcontrolsinterop.idl"
-#include "windows.media.idl"
+import "systemmediatransportcontrolsinterop.idl";
+import "windows.media.idl";
+
+namespace Windows.Media {
+    runtimeclass SystemMediaTransportControls;
+}

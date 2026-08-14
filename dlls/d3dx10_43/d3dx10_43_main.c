@@ -168,11 +168,3 @@ D3DX_CPU_OPTIMIZATION WINAPI D3DXCpuOptimizations(BOOL enable)
 
     return D3DX_NOT_OPTIMIZED;
 }
-
-HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_TEXTURE_LOAD_INFO *load_info,
-        ID3D10Resource *dst_texture)
-{
-    FIXME("src_texture %p, load_info %p, dst_texture %p stub!\n", src_texture, load_info, dst_texture);
-
-    return E_NOTIMPL;
-}

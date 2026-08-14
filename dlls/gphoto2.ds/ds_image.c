@@ -339,28 +339,16 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
 TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
-    pTW_UINT32 pHandle = (pTW_UINT32) pData;
-    HBITMAP hDIB;
-    BITMAPINFO bmpInfo;
-    LPBYTE bits;
+    TW_HANDLE *pHandle = (TW_HANDLE *) pData;
+    HGLOBAL hDIB;
+    BITMAPINFO *bmpInfo;
     JSAMPROW samprow, oldsamprow;
+    UINT header_size; /* Number of bytes in the BITMAPINFOHEADER and the color palette (RGBQUAD) */
+    UINT bytes_per_line; /* Number of bytes per scan line including padding */
+    UINT image_size; /* Number of bytes in the image bits */
 
-    FIXME("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET: implemented, but expect program crash due to DIB.\n");
+    TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
-/*  NOTE NOTE NOTE NOTE NOTE NOTE NOTE
- *
- *  While this is a mandatory transfer mode and this function
- *  is correctly implemented and fully works, the calling program
- *  will likely crash after calling.
- *
- *  Reason is that there is a lot of example code that does:
- *  bmpinfo = GlobalLock(hBITMAP); ... pointer access to bmpinfo
- *
- *  Our current HBITMAP handles do not support getting GlobalLocked -> App Crash
- *
- *  This needs a GDI Handle rewrite, at least for DIB sections.
- *  - Marcus
- */
     if (activeDS.currentState != 6) {
         activeDS.twCC = TWCC_SEQERROR;
         return TWRC_FAILURE;
@@ -373,46 +361,87 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     TRACE("Acquiring image %dx%dx%d bits from gphoto.\n",
 	activeDS.jd.output_width, activeDS.jd.output_height,
 	activeDS.jd.output_components*8);
-    ZeroMemory (&bmpInfo, sizeof (BITMAPINFO));
-    bmpInfo.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-    bmpInfo.bmiHeader.biWidth = activeDS.jd.output_width;
-    bmpInfo.bmiHeader.biHeight = -activeDS.jd.output_height;
-    bmpInfo.bmiHeader.biPlanes = 1;
-    bmpInfo.bmiHeader.biBitCount = activeDS.jd.output_components*8;
-    bmpInfo.bmiHeader.biCompression = BI_RGB;
-    bmpInfo.bmiHeader.biSizeImage = 0;
-    bmpInfo.bmiHeader.biXPelsPerMeter = 0;
-    bmpInfo.bmiHeader.biYPelsPerMeter = 0;
-    bmpInfo.bmiHeader.biClrUsed = 0;
-    bmpInfo.bmiHeader.biClrImportant = 0;
-    hDIB = CreateDIBSection (0, &bmpInfo, DIB_RGB_COLORS, (LPVOID)&bits, 0, 0);
+
+    header_size = sizeof(BITMAPINFOHEADER) + (activeDS.jd.output_components==1 ? 256*sizeof(RGBQUAD) : 0);
+    bytes_per_line = (activeDS.jd.output_width*activeDS.jd.output_components + 3) & ~3;
+    image_size = bytes_per_line * activeDS.jd.output_height;
+    hDIB = GlobalAlloc(GMEM_MOVEABLE, header_size + image_size);
     if (!hDIB) {
-	FIXME("Failed creating DIB.\n");
+	FIXME("Failed allocating memory for DIB.\n");
         close_current_file();
 	activeDS.twCC = TWCC_LOWMEMORY;
 	return TWRC_FAILURE;
     }
+    bmpInfo = (BITMAPINFO *) GlobalLock(hDIB);
+    bmpInfo->bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
+    bmpInfo->bmiHeader.biWidth = activeDS.jd.output_width;
+    bmpInfo->bmiHeader.biHeight = activeDS.jd.output_height;
+    bmpInfo->bmiHeader.biPlanes = 1;
+    bmpInfo->bmiHeader.biBitCount = activeDS.jd.output_components*8;
+    bmpInfo->bmiHeader.biCompression = BI_RGB;
+    bmpInfo->bmiHeader.biSizeImage = image_size;
+    bmpInfo->bmiHeader.biXPelsPerMeter = 0;
+    bmpInfo->bmiHeader.biYPelsPerMeter = 0;
+    bmpInfo->bmiHeader.biClrUsed = 0;
+    bmpInfo->bmiHeader.biClrImportant = 0;
+
+    if (bmpInfo->bmiHeader.biBitCount==8)
+      {
+	/* Create a grayscale color palette */
+	for (int i=0; i<255; i++)
+	  {
+	    bmpInfo->bmiColors[i].rgbBlue =
+	      bmpInfo->bmiColors[i].rgbGreen =
+	      bmpInfo->bmiColors[i].rgbRed = i;
+	    bmpInfo->bmiColors[i].rgbReserved = 0;
+	  }
+      }
+
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,activeDS.jd.output_width*activeDS.jd.output_components);
     oldsamprow = samprow;
     while ( activeDS.jd.output_scanline<activeDS.jd.output_height ) {
+	BYTE *bits;
+	BYTE *row;
         unsigned int i;
-        int x = jpeg_read_scanlines(&activeDS.jd,&samprow,1);
-	if (x != 1) {
+
+	/* Calculate to the beginning of the current row before calling jpeg_read_scanlines */
+	row = ((BYTE *) bmpInfo)
+	  + header_size
+	  + (activeDS.jd.output_height - activeDS.jd.output_scanline - 1) * bytes_per_line;
+
+	/* Read next data row from the JPEG source */
+	if (jpeg_read_scanlines(&activeDS.jd, &samprow, 1) != 1) {
 		FIXME("failed to read current scanline?\n");
 		break;
 	}
-	/* We have to convert from RGB to BGR, see MSDN/ BITMAPINFOHEADER */
-	for(i=0;i<activeDS.jd.output_width;i++,samprow+=activeDS.jd.output_components) {
-	    *(bits++) = *(samprow+2);
-	    *(bits++) = *(samprow+1);
-	    *(bits++) = *(samprow);
-	}
-	bits = (LPBYTE)(((UINT_PTR)bits + 3) & ~3);
+
+	bits = row;
+	if (activeDS.jd.output_components==1)
+	  {
+	    /* Grayscale value, no RGB to BGR conversion */
+	    memcpy(row, samprow, activeDS.jd.output_width);
+	    bits += activeDS.jd.output_width;
+	  }
+	else if (activeDS.jd.output_components>=3)
+	  {
+	    /* RGB data, We have to convert from RGB to BGR, see MSDN/ BITMAPINFOHEADER */
+	    for(i=0;i<activeDS.jd.output_width;i++,samprow+=activeDS.jd.output_components) {
+	      *(bits++) = *(samprow+2);
+	      *(bits++) = *(samprow+1);
+	      *(bits++) = *(samprow);
+	    }
+	  }
+	/* set the padding-bytes at the end of the scan line to 0 */
+	while ((bits-row) & 3)
+	  {
+	    *bits++ = 0;
+	  }
 	samprow = oldsamprow;
     }
     HeapFree (GetProcessHeap(), 0, samprow);
+    GlobalUnlock(hDIB);
     close_current_file();
-    *pHandle = (UINT_PTR)hDIB;
+    *pHandle = (TW_HANDLE *)hDIB;
     activeDS.twCC = TWCC_SUCCESS;
     activeDS.currentState = 7;
     return TWRC_XFERDONE;
@@ -509,6 +538,9 @@ TW_UINT16 GPHOTO2_RGBResponseSet (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
+/* Called from ui.c in gphoto2.ds to display
+ * preview images of the photos on the camera
+ */
 TW_UINT16
 _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hDIB )
 {

@@ -26,7 +26,7 @@
 static HMODULE hAdvPack;
 /* function pointers */
 static HRESULT (WINAPI *pRunSetupCommand)(HWND, LPCSTR, LPCSTR, LPCSTR, LPCSTR, HANDLE*, DWORD, LPVOID);
-static HRESULT (WINAPI *pLaunchINFSection)(HWND, HINSTANCE, LPSTR, INT);
+static INT (WINAPI *pLaunchINFSection)(HWND, HINSTANCE, LPSTR, INT);
 static HRESULT (WINAPI *pLaunchINFSectionEx)(HWND, HINSTANCE, LPSTR, INT);
 
 static char CURR_DIR[MAX_PATH];
@@ -55,6 +55,24 @@ static BOOL is_spapi_err(DWORD err)
     return (((err & SPAPI_MASK) ^ SPAPI_PREFIX) == 0);
 }
 
+static void load_resource(const char *name, const char *filename)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    file = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n", filename, GetLastError());
+
+    res = FindResourceA(NULL, name, "TESTDLL");
+    ok(res != 0, "couldn't find resource\n");
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "couldn't write resource\n");
+    CloseHandle(file);
+}
+
 static void create_inf_file(LPCSTR filename)
 {
     DWORD dwNumberOfBytesWritten;
@@ -66,7 +84,29 @@ static void create_inf_file(LPCSTR filename)
         "Signature=\"$Chicago$\"\n"
         "AdvancedINF=2.5\n"
         "[DefaultInstall]\n"
-        "CheckAdminRights=1\n";
+        "CheckAdminRights=1\n"
+
+        "[OcxInstallGood]\n"
+        "RegisterOCXs=GoodOCX\n"
+        "[OcxUninstallGood]\n"
+        "UnregisterOCXs=GoodOCX\n"
+        "[GoodOCX]\n"
+        "winetest_selfreg.ocx\n"
+
+        "[OcxInstallAtGood]\n"
+        "RegisterOCXs=AtGoodOCX\n"
+        "[AtGoodOCX]\n"
+        "@winetest_selfreg.ocx\n"
+
+        "[OcxInstallBad]\n"
+        "RegisterOCXs=BadOCXsToRegister\n"
+        "[BadOCXsToRegister]\n"
+        "nonexistent.ocx\n"
+
+        "[OcxInstallAtBad]\n"
+        "RegisterOCXs=AtBadOCX\n"
+        "[AtBadOCX]\n"
+        "@nonexistent.ocx\n";
 
     WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
@@ -262,6 +302,61 @@ static void test_LaunchINFSectionEx(void)
     DeleteFileA("test.inf");
 }
 
+static LRESULT CALLBACK hide_window_hook(int code, WPARAM wparam, LPARAM lparam)
+{
+    if (code == HCBT_CREATEWND)
+    {
+        /* Suppress the "Error registering the OCX" dialog */
+        return 1;
+    }
+
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+static void test_RegisterOCXs(void)
+{
+    static char install_good_section[] = "test.inf,OcxInstallGood,4,0";
+    static char uninstall_good_section[] = "test.inf,OcxUninstallGood,4,0";
+    static char install_at_good_section[] = "test.inf,OcxInstallAtGood,4,0";
+    static char install_bad_section[] = "test.inf,OcxInstallBad,4,0";
+    static char install_at_bad_section[] = "test.inf,OcxInstallAtBad,4,0";
+    HHOOK hook;
+    HKEY key;
+    INT res;
+
+    load_resource("selfreg.dll", "winetest_selfreg.ocx");
+    create_inf_file("test.inf");
+
+    RegDeleteKeyA(HKEY_CLASSES_ROOT, "selfreg_test");
+    res = pLaunchINFSection(NULL, NULL, install_good_section, 0);
+    ok(res == 0, "Expected 0, got %d\n", res);
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "selfreg_test", &key);
+    ok(res == 0, "Expected 0, got %d\n", res);
+    RegCloseKey(key);
+
+    res = pLaunchINFSection(NULL, NULL, uninstall_good_section, 0);
+    ok(res == 0, "Expected 0, got %d\n", res);
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "selfreg_test", &key);
+    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    RegDeleteKeyA(HKEY_CLASSES_ROOT, "selfreg_test");
+
+    res = pLaunchINFSection(NULL, NULL, install_at_good_section, 0);
+    ok(res == 0, "Expected 0, got %d\n", res);
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "selfreg_test", &key);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    hook = SetWindowsHookExW(WH_CBT, hide_window_hook, NULL, GetCurrentThreadId());
+    res = pLaunchINFSection(NULL, NULL, install_bad_section, 0);
+    ok(res == 1, "Expected 1, got %d\n", res);
+    UnhookWindowsHookEx(hook);
+
+    res = pLaunchINFSection(NULL, NULL, install_at_bad_section, 0);
+    ok(res == 0, "Expected 0, got %d\n", res);
+
+    DeleteFileA("winetest_selfreg.ocx");
+    DeleteFileA("test.inf");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -289,6 +384,7 @@ START_TEST(install)
     test_RunSetupCommand();
     test_LaunchINFSection();
     test_LaunchINFSectionEx();
+    test_RegisterOCXs();
 
     FreeLibrary(hAdvPack);
     SetCurrentDirectoryA(prev_path);

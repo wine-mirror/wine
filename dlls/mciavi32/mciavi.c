@@ -175,6 +175,8 @@ static void MCIAVI_CleanUp(WINE_MCIAVI* wma)
         free(wma->lpFileName);
         wma->lpFileName = NULL;
 
+        DrawDibClose(wma->hdd);
+
         free(wma->lpVideoIndex);
         wma->lpVideoIndex = NULL;
         free(wma->lpAudioIndex);
@@ -570,7 +572,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     }
 
     dwFromFrame = wma->dwCurrVideoFrame;
-    dwToFrame = wma->dwPlayableVideoFrames - 1;
+    dwToFrame = wma->dwPlayableVideoFrames;
 
     if (dwFlags & MCI_FROM) {
 	dwFromFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwFrom);
@@ -578,8 +580,11 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (dwFlags & MCI_TO) {
 	dwToFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
     }
-    if (dwToFrame >= wma->dwPlayableVideoFrames)
-	dwToFrame = wma->dwPlayableVideoFrames - 1;
+    if (dwToFrame > wma->dwPlayableVideoFrames)
+    {
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_OUTOFRANGE;
+    }
 
     TRACE("Playing from frame=%lu to frame=%lu\n", dwFromFrame, dwToFrame);
 
@@ -757,12 +762,12 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     if (dwFlags & MCI_TO) {
 	position = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
-	if (position >= wma->dwPlayableVideoFrames)
+	if (position > wma->dwPlayableVideoFrames)
 	    return MCIERR_OUTOFRANGE;
     } else if (dwFlags & MCI_SEEK_TO_START) {
 	position = 0;
     } else {
-	position = wma->dwPlayableVideoFrames - 1;
+	position = wma->dwPlayableVideoFrames;
     }
     if (dwFlags & MCI_TEST)	return 0;
 
@@ -860,7 +865,7 @@ static	DWORD	MCIAVI_mciStep(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpP
     if (dwFlags & MCI_DGV_STEP_FRAMES)  delta = lpParms->dwFrames;
     if (dwFlags & MCI_DGV_STEP_REVERSE) delta = -delta;
     position = wma->dwCurrVideoFrame + delta;
-    if (position >= wma->dwPlayableVideoFrames) return MCIERR_OUTOFRANGE;
+    if (position > wma->dwPlayableVideoFrames) return MCIERR_OUTOFRANGE;
     if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);

@@ -8107,7 +8107,7 @@ static const AFM font_AvantGarde_Book =
     .WinMetrics.sAvgCharWidth = 486,
     .WinMetrics.usWinAscent = 819,
     .WinMetrics.usWinDescent = 222,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_AvantGarde_Book
 };
 
@@ -8127,7 +8127,7 @@ static const AFM font_AvantGarde_BookOblique =
     .WinMetrics.sAvgCharWidth = 486,
     .WinMetrics.usWinAscent = 819,
     .WinMetrics.usWinDescent = 222,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_AvantGarde_BookOblique
 };
 
@@ -8147,7 +8147,7 @@ static const AFM font_AvantGarde_Demi =
     .WinMetrics.sAvgCharWidth = 486,
     .WinMetrics.usWinAscent = 857,
     .WinMetrics.usWinDescent = 251,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_AvantGarde_Demi
 };
 
@@ -8167,7 +8167,7 @@ static const AFM font_AvantGarde_DemiOblique =
     .WinMetrics.sAvgCharWidth = 486,
     .WinMetrics.usWinAscent = 857,
     .WinMetrics.usWinDescent = 251,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_AvantGarde_DemiOblique
 };
 
@@ -8187,7 +8187,7 @@ static const AFM font_Bookman_Demi =
     .WinMetrics.sAvgCharWidth = 527,
     .WinMetrics.usWinAscent = 805,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Bookman_Demi
 };
 
@@ -8207,7 +8207,7 @@ static const AFM font_Bookman_DemiItalic =
     .WinMetrics.sAvgCharWidth = 538,
     .WinMetrics.usWinAscent = 790,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Bookman_DemiItalic
 };
 
@@ -8227,7 +8227,7 @@ static const AFM font_Bookman_Light =
     .WinMetrics.sAvgCharWidth = 493,
     .WinMetrics.usWinAscent = 791,
     .WinMetrics.usWinDescent = 251,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Bookman_Light
 };
 
@@ -8247,7 +8247,7 @@ static const AFM font_Bookman_LightItalic =
     .WinMetrics.sAvgCharWidth = 483,
     .WinMetrics.usWinAscent = 777,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Bookman_LightItalic
 };
 
@@ -8267,7 +8267,7 @@ static const AFM font_Courier =
     .WinMetrics.sAvgCharWidth = 600,
     .WinMetrics.usWinAscent = 764,
     .WinMetrics.usWinDescent = 249,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Courier
 };
 
@@ -8287,7 +8287,7 @@ static const AFM font_Courier_Bold =
     .WinMetrics.sAvgCharWidth = 600,
     .WinMetrics.usWinAscent = 764,
     .WinMetrics.usWinDescent = 249,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Courier_Bold
 };
 
@@ -8307,7 +8307,7 @@ static const AFM font_Courier_BoldOblique =
     .WinMetrics.sAvgCharWidth = 600,
     .WinMetrics.usWinAscent = 764,
     .WinMetrics.usWinDescent = 249,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Courier_BoldOblique
 };
 
@@ -8327,7 +8327,7 @@ static const AFM font_Courier_Oblique =
     .WinMetrics.sAvgCharWidth = 600,
     .WinMetrics.usWinAscent = 764,
     .WinMetrics.usWinDescent = 249,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Courier_Oblique
 };
 
@@ -8347,7 +8347,7 @@ static const AFM font_Helvetica =
     .WinMetrics.sAvgCharWidth = 442,
     .WinMetrics.usWinAscent = 775,
     .WinMetrics.usWinDescent = 225,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica
 };
 
@@ -8367,7 +8367,7 @@ static const AFM font_Helvetica_Bold =
     .WinMetrics.sAvgCharWidth = 479,
     .WinMetrics.usWinAscent = 776,
     .WinMetrics.usWinDescent = 228,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Bold
 };
 
@@ -8387,7 +8387,7 @@ static const AFM font_Helvetica_BoldOblique =
     .WinMetrics.sAvgCharWidth = 479,
     .WinMetrics.usWinAscent = 776,
     .WinMetrics.usWinDescent = 228,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_BoldOblique
 };
 
@@ -8407,7 +8407,7 @@ static const AFM font_Helvetica_Narrow =
     .WinMetrics.sAvgCharWidth = 362,
     .WinMetrics.usWinAscent = 775,
     .WinMetrics.usWinDescent = 225,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Narrow
 };
 
@@ -8427,7 +8427,7 @@ static const AFM font_Helvetica_Narrow_Bold =
     .WinMetrics.sAvgCharWidth = 393,
     .WinMetrics.usWinAscent = 776,
     .WinMetrics.usWinDescent = 228,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Narrow_Bold
 };
 
@@ -8447,7 +8447,7 @@ static const AFM font_Helvetica_Narrow_BoldOblique =
     .WinMetrics.sAvgCharWidth = 393,
     .WinMetrics.usWinAscent = 776,
     .WinMetrics.usWinDescent = 228,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Narrow_BoldOblique
 };
 
@@ -8467,7 +8467,7 @@ static const AFM font_Helvetica_Narrow_Oblique =
     .WinMetrics.sAvgCharWidth = 362,
     .WinMetrics.usWinAscent = 775,
     .WinMetrics.usWinDescent = 225,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Narrow_Oblique
 };
 
@@ -8487,7 +8487,7 @@ static const AFM font_Helvetica_Oblique =
     .WinMetrics.sAvgCharWidth = 442,
     .WinMetrics.usWinAscent = 775,
     .WinMetrics.usWinDescent = 225,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Helvetica_Oblique
 };
 
@@ -8507,7 +8507,7 @@ static const AFM font_NewCenturySchlbk_Bold =
     .WinMetrics.sAvgCharWidth = 524,
     .WinMetrics.usWinAscent = 810,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_NewCenturySchlbk_Bold
 };
 
@@ -8527,7 +8527,7 @@ static const AFM font_NewCenturySchlbk_BoldItalic =
     .WinMetrics.sAvgCharWidth = 515,
     .WinMetrics.usWinAscent = 810,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_NewCenturySchlbk_BoldItalic
 };
 
@@ -8547,7 +8547,7 @@ static const AFM font_NewCenturySchlbk_Italic =
     .WinMetrics.sAvgCharWidth = 458,
     .WinMetrics.usWinAscent = 808,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_NewCenturySchlbk_Italic
 };
 
@@ -8567,7 +8567,7 @@ static const AFM font_NewCenturySchlbk_Roman =
     .WinMetrics.sAvgCharWidth = 465,
     .WinMetrics.usWinAscent = 813,
     .WinMetrics.usWinDescent = 250,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_NewCenturySchlbk_Roman
 };
 
@@ -8587,7 +8587,7 @@ static const AFM font_Palatino_Bold =
     .WinMetrics.sAvgCharWidth = 459,
     .WinMetrics.usWinAscent = 750,
     .WinMetrics.usWinDescent = 266,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Palatino_Bold
 };
 
@@ -8607,7 +8607,7 @@ static const AFM font_Palatino_BoldItalic =
     .WinMetrics.sAvgCharWidth = 447,
     .WinMetrics.usWinAscent = 750,
     .WinMetrics.usWinDescent = 271,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Palatino_BoldItalic
 };
 
@@ -8627,7 +8627,7 @@ static const AFM font_Palatino_Italic =
     .WinMetrics.sAvgCharWidth = 401,
     .WinMetrics.usWinAscent = 750,
     .WinMetrics.usWinDescent = 276,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Palatino_Italic
 };
 
@@ -8647,7 +8647,7 @@ static const AFM font_Palatino_Roman =
     .WinMetrics.sAvgCharWidth = 445,
     .WinMetrics.usWinAscent = 750,
     .WinMetrics.usWinDescent = 283,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Palatino_Roman
 };
 
@@ -8667,7 +8667,7 @@ static const AFM font_Symbol =
     .WinMetrics.sAvgCharWidth = 586,
     .WinMetrics.usWinAscent = 1010,
     .WinMetrics.usWinDescent = 293,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 189,
     .Metrics = metrics_Symbol
 };
 
@@ -8687,7 +8687,7 @@ static const AFM font_Times_Bold =
     .WinMetrics.sAvgCharWidth = 427,
     .WinMetrics.usWinAscent = 782,
     .WinMetrics.usWinDescent = 218,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Times_Bold
 };
 
@@ -8707,7 +8707,7 @@ static const AFM font_Times_BoldItalic =
     .WinMetrics.sAvgCharWidth = 412,
     .WinMetrics.usWinAscent = 782,
     .WinMetrics.usWinDescent = 218,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Times_BoldItalic
 };
 
@@ -8727,7 +8727,7 @@ static const AFM font_Times_Italic =
     .WinMetrics.sAvgCharWidth = 402,
     .WinMetrics.usWinAscent = 783,
     .WinMetrics.usWinDescent = 217,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Times_Italic
 };
 
@@ -8747,7 +8747,7 @@ static const AFM font_Times_Roman =
     .WinMetrics.sAvgCharWidth = 401,
     .WinMetrics.usWinAscent = 782,
     .WinMetrics.usWinDescent = 218,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_Times_Roman
 };
 
@@ -8767,7 +8767,7 @@ static const AFM font_ZapfChancery_MediumItalic =
     .WinMetrics.sAvgCharWidth = 350,
     .WinMetrics.usWinAscent = 750,
     .WinMetrics.usWinDescent = 314,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 229,
     .Metrics = metrics_ZapfChancery_MediumItalic
 };
 
@@ -8787,7 +8787,7 @@ static const AFM font_ZapfDingbats =
     .WinMetrics.sAvgCharWidth = 746,
     .WinMetrics.usWinAscent = 820,
     .WinMetrics.usWinDescent = 143,
-    .NumofMetrics = 3680,
+    .NumofMetrics = 202,
     .Metrics = metrics_ZapfDingbats
 };
 

@@ -26,6 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "verrsrc.h"
 #include "winedump.h"
 
 struct ne_segtable_entry
@@ -101,6 +102,7 @@ typedef struct
 #define NE_RSCTYPE_RCDATA             0x800a
 #define NE_RSCTYPE_GROUP_CURSOR       0x800c
 #define NE_RSCTYPE_GROUP_ICON         0x800e
+#define NE_RSCTYPE_VERSION            0x8010
 #define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc
 
 static inline WORD get_word( const BYTE *ptr )
@@ -174,10 +176,153 @@ static const char *get_resource_type( WORD id )
     case NE_RSCTYPE_RCDATA: return "RCDATA";
     case NE_RSCTYPE_GROUP_CURSOR: return "CURSOR_GROUP";
     case NE_RSCTYPE_GROUP_ICON: return "ICON_GROUP";
+    case NE_RSCTYPE_VERSION: return "VERSION";
     default:
         sprintf( buffer, "%04x", id );
         return buffer;
     }
+}
+
+/* dump data for a STRING resource */
+static void dump_string_data( const char *ptr, unsigned int size, unsigned int id, const char *prefix )
+{
+    int i;
+
+    for (i = 0; i < 16 && size; i++)
+    {
+        unsigned int len = (unsigned char)*ptr++;
+
+        if (len >= size)
+        {
+            len = size;
+            size = 0;
+        }
+        else size -= len + 1;
+
+        if (len)
+        {
+            printf( "%s%04x \"", prefix, (id - 1) * 16 + i );
+            dump_strA( ptr, len );
+            printf( "\"\n" );
+            ptr += len;
+        }
+    }
+}
+
+struct version_info
+{
+    WORD  len;
+    WORD  val_len;
+    char  key[1];
+};
+#define GET_VALUE(info) ((void *)((char *)info + ((offsetof(struct version_info, key[strlen(info->key) + 1]) + 3) & ~3)))
+#define GET_CHILD(info) ((void *)((char *)GET_VALUE(info) + ((info->val_len + 3) & ~3)))
+#define GET_NEXT(info)  ((void *)((char *)info + ((info->len + 3) & ~3)))
+
+static void dump_version_children( const struct version_info *info, const char *prefix, int indent )
+{
+    const struct version_info *next, *child = GET_CHILD( info );
+
+    for ( ; (char *)child < (char *)info + info->len; child = next)
+    {
+        next = GET_NEXT( child );
+        printf( "%s%*s", prefix, indent * 2, "" );
+        if (child->val_len || GET_VALUE( child ) == next)
+        {
+            printf( "VALUE \"" );
+            dump_strA( child->key, strlen(child->key) );
+            printf( "\", \"" );
+            dump_strA( GET_VALUE(child), child->val_len );
+            printf( "\"\n" );
+        }
+        else
+        {
+            printf( "BLOCK \"" );
+            dump_strA( child->key, strlen(child->key) );
+            printf( "\"\n" );
+        }
+        dump_version_children( child, prefix, indent + 1 );
+    }
+}
+
+/* dump data for a VERSION resource */
+static void dump_version_data( const void *ptr, unsigned int size, const char *prefix )
+{
+    const struct version_info *info = ptr;
+    const VS_FIXEDFILEINFO *fileinfo = GET_VALUE( info );
+
+    printf( "%sSIGNATURE      %08x\n", prefix, (UINT)fileinfo->dwSignature );
+    printf( "%sVERSION        %u.%u\n", prefix,
+            HIWORD(fileinfo->dwStrucVersion), LOWORD(fileinfo->dwStrucVersion) );
+    printf( "%sFILEVERSION    %u.%u.%u.%u\n", prefix,
+            HIWORD(fileinfo->dwFileVersionMS), LOWORD(fileinfo->dwFileVersionMS),
+            HIWORD(fileinfo->dwFileVersionLS), LOWORD(fileinfo->dwFileVersionLS) );
+    printf( "%sPRODUCTVERSION %u.%u.%u.%u\n", prefix,
+            HIWORD(fileinfo->dwProductVersionMS), LOWORD(fileinfo->dwProductVersionMS),
+            HIWORD(fileinfo->dwProductVersionLS), LOWORD(fileinfo->dwProductVersionLS) );
+    printf( "%sFILEFLAGSMASK  %08x\n", prefix, (UINT)fileinfo->dwFileFlagsMask );
+    printf( "%sFILEFLAGS      %08x\n", prefix, (UINT)fileinfo->dwFileFlags );
+
+    switch (fileinfo->dwFileOS)
+    {
+#define CASE(x) case x: printf( "%sFILEOS         %s\n", prefix, #x ); break
+        CASE(VOS_UNKNOWN);
+        CASE(VOS_DOS_WINDOWS16);
+        CASE(VOS_DOS_WINDOWS32);
+        CASE(VOS_OS216_PM16);
+        CASE(VOS_OS232_PM32);
+        CASE(VOS_NT_WINDOWS32);
+#undef CASE
+    default:
+        printf( "%sFILEOS         %u.%u\n", prefix,
+                (WORD)(fileinfo->dwFileOS >> 16), (WORD)fileinfo->dwFileOS );
+        break;
+    }
+
+    switch (fileinfo->dwFileType)
+    {
+#define CASE(x) case x: printf( "%sFILETYPE       %s\n", prefix, #x ); break
+        CASE(VFT_UNKNOWN);
+        CASE(VFT_APP);
+        CASE(VFT_DLL);
+        CASE(VFT_DRV);
+        CASE(VFT_FONT);
+        CASE(VFT_VXD);
+        CASE(VFT_STATIC_LIB);
+#undef CASE
+    default:
+        printf( "%sFILETYPE       %08x\n", prefix, (UINT)fileinfo->dwFileType );
+        break;
+    }
+
+    switch (((ULONGLONG)fileinfo->dwFileType << 32) + fileinfo->dwFileSubtype)
+    {
+#define CASE(t,x) case (((ULONGLONG)t << 32) + x): printf( "%sFILESUBTYPE    %s\n", prefix, #x ); break
+        CASE(VFT_DRV, VFT2_UNKNOWN);
+        CASE(VFT_DRV, VFT2_DRV_PRINTER);
+        CASE(VFT_DRV, VFT2_DRV_KEYBOARD);
+        CASE(VFT_DRV, VFT2_DRV_LANGUAGE);
+        CASE(VFT_DRV, VFT2_DRV_DISPLAY);
+        CASE(VFT_DRV, VFT2_DRV_MOUSE);
+        CASE(VFT_DRV, VFT2_DRV_NETWORK);
+        CASE(VFT_DRV, VFT2_DRV_SYSTEM);
+        CASE(VFT_DRV, VFT2_DRV_INSTALLABLE);
+        CASE(VFT_DRV, VFT2_DRV_SOUND);
+        CASE(VFT_DRV, VFT2_DRV_COMM);
+        CASE(VFT_DRV, VFT2_DRV_INPUTMETHOD);
+        CASE(VFT_DRV, VFT2_DRV_VERSIONED_PRINTER);
+        CASE(VFT_FONT, VFT2_FONT_RASTER);
+        CASE(VFT_FONT, VFT2_FONT_VECTOR);
+        CASE(VFT_FONT, VFT2_FONT_TRUETYPE);
+#undef CASE
+    default:
+        printf( "%sFILESUBTYPE    %08x\n", prefix, (UINT)fileinfo->dwFileSubtype );
+        break;
+    }
+
+    printf( "%sFILEDATE       %08x.%08x\n", prefix,
+            (UINT)fileinfo->dwFileDateMS, (UINT)fileinfo->dwFileDateLS );
+    dump_version_children( info, prefix, 0 );
 }
 
 static void dump_ne_resources( const IMAGE_OS2_HEADER *ne )
@@ -194,15 +339,29 @@ static void dump_ne_resources( const IMAGE_OS2_HEADER *ne )
         name = (const NE_NAMEINFO *)(info + 1);
         for (count = info->count; count > 0; count--, name++)
         {
-            if (name->id & 0x8000) printf( "  %d", (name->id & ~0x8000) );
-            else printf( "  %.*s", *((const unsigned char *)res_ptr + name->id),
-                         (const char *)res_ptr + name->id + 1 );
-            if (info->type_id & 0x8000) printf( " %s", get_resource_type(info->type_id) );
-            else printf( " %.*s", *((const unsigned char *)res_ptr + info->type_id),
+            if (info->type_id & 0x8000) printf( "  %s", get_resource_type(info->type_id) );
+            else printf( "  %.*s", *((const unsigned char *)res_ptr + info->type_id),
                          (const char *)res_ptr + info->type_id + 1 );
+            if (name->id & 0x8000) printf( " name %04x", (name->id & ~0x8000) );
+            else printf( " name %.*s", *((const unsigned char *)res_ptr + name->id),
+                         (const char *)res_ptr + name->id + 1 );
             printf(" flags %04x length %04x\n", name->flags, name->length << size_shift);
-            dump_data( PRD(name->offset << size_shift, name->length << size_shift),
-                       name->length << size_shift, "    " );
+
+            switch(info->type_id)
+            {
+            case NE_RSCTYPE_STRING:
+                dump_string_data( PRD(name->offset << size_shift, name->length << size_shift),
+                                  name->length << size_shift, name->id & ~0x8000, "    " );
+                break;
+            case NE_RSCTYPE_VERSION:
+                dump_version_data( PRD(name->offset << size_shift, name->length << size_shift),
+                                   name->length << size_shift, "  |  " );
+                break;
+            default:
+                dump_data( PRD(name->offset << size_shift, name->length << size_shift),
+                           name->length << size_shift, "    " );
+                break;
+            }
         }
         info = (const NE_TYPEINFO *)name;
     }

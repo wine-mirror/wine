@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"
+#include "winerror.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "usp10.h"
@@ -32,36 +33,35 @@
 #include "usp10_internal.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
 #define FIRST_ARABIC_CHAR 0x0600
 #define LAST_ARABIC_CHAR  0x06ff
 
-typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
+typedef HRESULT (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
                                       WCHAR*, INT, WORD*, INT*, INT, WORD*);
 
-static void ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
-static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static HRESULT ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
@@ -496,8 +496,8 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_devanagari_features, MS_MAKE_TAG('g','j','r','2'), ContextualShape_Gujarati, ShapeCharGlyphProp_Gujarati},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, ShapeCharGlyphProp_Oriya},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_oriya_features, MS_MAKE_TAG('o','r','y','2'), ContextualShape_Oriya, NULL},
-    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
-    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','a','m','2'), ContextualShape_Tamil, NULL},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','m','l','2'), ContextualShape_Tamil, ShapeCharGlyphProp_Tamil},
+    {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_tamil_features, MS_MAKE_TAG('t','m','l','2'), ContextualShape_Tamil, NULL},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, ShapeCharGlyphProp_Telugu},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('t','e','l','2'), ContextualShape_Telugu, NULL},
     {{ devanagari_features, 6}, {devanagari_gpos_features, 4}, required_telugu_features, MS_MAKE_TAG('k','n','d','2'), ContextualShape_Kannada, ShapeCharGlyphProp_Kannada},
@@ -672,7 +672,7 @@ static VOID *load_gsub_table(HDC hdc)
     int length = NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'S', 'U', 'B'), 0, NULL, 0);
     if (length != GDI_ERROR)
     {
-        GSUB_Table = heap_alloc(length);
+        GSUB_Table = malloc(length);
         NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'S', 'U', 'B'), 0, GSUB_Table, length);
         TRACE("Loaded GSUB table of %i bytes\n",length);
     }
@@ -685,7 +685,7 @@ static VOID *load_gpos_table(HDC hdc)
     int length = NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'P', 'O', 'S'), 0, NULL, 0);
     if (length != GDI_ERROR)
     {
-        GPOS_Table = heap_alloc(length);
+        GPOS_Table = malloc(length);
         NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'P', 'O', 'S'), 0, GPOS_Table, length);
         TRACE("Loaded GPOS table of %i bytes\n",length);
     }
@@ -698,7 +698,7 @@ static VOID *load_gdef_table(HDC hdc)
     int length = NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'D', 'E', 'F'), 0, NULL, 0);
     if (length != GDI_ERROR)
     {
-        GDEF_Table = heap_alloc(length);
+        GDEF_Table = malloc(length);
         NtGdiGetFontData(hdc, MS_MAKE_TAG('G', 'D', 'E', 'F'), 0, GDEF_Table, length);
         TRACE("Loaded GDEF table of %i bytes\n",length);
     }
@@ -722,7 +722,7 @@ int SHAPE_does_GSUB_feature_apply_to_chars(HDC hdc, SCRIPT_ANALYSIS *psa, Script
     INT glyph_count = count;
     INT rc;
 
-    glyphs = heap_calloc(count, 2 * sizeof(*glyphs));
+    glyphs = calloc(count, 2 * sizeof(*glyphs));
     NtGdiGetGlyphIndicesW(hdc, chars, count, glyphs, 0);
     rc = apply_GSUB_feature_to_glyph(hdc, psa, psc, glyphs, 0, write_dir, &glyph_count, feature);
     if (rc > GSUB_E_NOGLYPH)
@@ -730,7 +730,7 @@ int SHAPE_does_GSUB_feature_apply_to_chars(HDC hdc, SCRIPT_ANALYSIS *psa, Script
     else
         rc = 0;
 
-    heap_free(glyphs);
+    free(glyphs);
     return rc;
 }
 
@@ -893,10 +893,12 @@ static inline BOOL get_GSUB_Indic2(SCRIPT_ANALYSIS *psa, ScriptCache *psc)
     return(SUCCEEDED(hr));
 }
 
-static void insert_glyph(WORD *pwGlyphs, INT *pcGlyphs, INT cChars, INT write_dir, WORD glyph, INT index, WORD *pwLogClust)
+static HRESULT insert_glyph(WORD *pwGlyphs, INT *pcGlyphs, INT cChars, INT write_dir, WORD glyph, INT index, WORD *pwLogClust, INT maxGlyphs)
 {
     int i;
-    for (i = *pcGlyphs; i>=index; i--)
+    if (*pcGlyphs >= maxGlyphs)
+        return E_OUTOFMEMORY;
+    for (i = *pcGlyphs-1; i>=index; i--)
         pwGlyphs[i+1] = pwGlyphs[i];
     pwGlyphs[index] = glyph;
     *pcGlyphs = *pcGlyphs+1;
@@ -904,16 +906,18 @@ static void insert_glyph(WORD *pwGlyphs, INT *pcGlyphs, INT cChars, INT write_di
         UpdateClusters(index-3, 1, write_dir, cChars, pwLogClust);
     else
         UpdateClusters(index, 1, write_dir, cChars, pwLogClust);
+    return S_OK;
 }
 
-static void mark_invalid_combinations(HDC hdc, const WCHAR* pwcChars, INT cChars, WORD *pwGlyphs, INT *pcGlyphs, INT write_dir, WORD *pwLogClust, combining_lexical_function lex)
+static HRESULT mark_invalid_combinations(HDC hdc, const WCHAR* pwcChars, INT cChars, WORD *pwGlyphs, INT *pcGlyphs, INT write_dir, WORD *pwLogClust, INT maxGlyphs, combining_lexical_function lex)
 {
     CHAR *context_type;
     int i,g;
     WCHAR invalid = 0x25cc;
     WORD invalid_glyph;
+    HRESULT hr = S_OK;
 
-    context_type = heap_alloc(cChars);
+    context_type = malloc(cChars);
 
     /* Mark invalid combinations */
     for (i = 0; i < cChars; i++)
@@ -924,15 +928,18 @@ static void mark_invalid_combinations(HDC hdc, const WCHAR* pwcChars, INT cChars
     {
         if (context_type[i] != 0 && context_type[i+write_dir]==context_type[i])
         {
-            insert_glyph(pwGlyphs, pcGlyphs, cChars, write_dir, invalid_glyph, g, pwLogClust);
+            hr = insert_glyph(pwGlyphs, pcGlyphs, cChars, write_dir, invalid_glyph, g, pwLogClust, maxGlyphs);
+            if (FAILED(hr))
+                break;
             g++;
         }
     }
 
-    heap_free(context_type);
+    free(context_type);
+    return hr;
 }
 
-static void ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int i;
     for (i=0; i < cChars; i++)
@@ -950,6 +957,7 @@ static void ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
                     pwOutGlyphs[i] = psc->sfp.wgBlank;
         }
     }
+    return S_OK;
 }
 
 static WCHAR neighbour_char(int i, int delta, const WCHAR* chars, INT cchLen)
@@ -1055,7 +1063,7 @@ static int combining_lexical_Arabic(WCHAR c)
 /*
  * ContextualShape_Arabic
  */
-static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     CHAR *context_type;
     INT *context_shape;
@@ -1067,7 +1075,7 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (psa->fLogicalOrder && psa->fRTL)
@@ -1083,8 +1091,8 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 
     load_ot_tables(hdc, psc);
 
-    context_type = heap_alloc(cChars);
-    context_shape = heap_alloc(cChars * sizeof(*context_shape));
+    context_type = malloc(cChars);
+    context_shape = malloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
         context_type[i] = get_table_entry_16( wine_shaping_table, pwcChars[i] );
@@ -1174,10 +1182,10 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
         }
     }
 
-    heap_free(context_shape);
-    heap_free(context_type);
+    free(context_shape);
+    free(context_type);
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Arabic);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Arabic);
 }
 
 static int combining_lexical_Hebrew(WCHAR c)
@@ -1237,14 +1245,14 @@ static int combining_lexical_Hebrew(WCHAR c)
     }
 }
 
-static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT dirL;
 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1252,7 +1260,7 @@ static void ContextualShape_Hebrew(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     else
         dirL = 1;
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Hebrew);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Hebrew);
 }
 
 /*
@@ -1311,7 +1319,7 @@ static int combining_lexical_Syriac(WCHAR c)
 #define DALATH 0x715
 #define RISH 0x72A
 
-static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     CHAR *context_type;
     INT *context_shape;
@@ -1323,7 +1331,7 @@ static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1340,10 +1348,10 @@ static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
-        return;
+        return E_INVALIDARG;
 
-    context_type = heap_alloc(cChars);
-    context_shape = heap_alloc(cChars * sizeof(*context_shape));
+    context_type = malloc(cChars);
+    context_shape = malloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
         context_type[i] = get_table_entry_16( wine_shaping_table, pwcChars[i] );
@@ -1422,10 +1430,10 @@ right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
         }
     }
 
-    heap_free(context_shape);
-    heap_free(context_type);
+    free(context_shape);
+    free(context_type);
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Syriac);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Syriac);
 }
 
 static int combining_lexical_Thaana(WCHAR c)
@@ -1448,14 +1456,14 @@ static int combining_lexical_Thaana(WCHAR c)
     }
 }
 
-static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT dirL;
 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1463,7 +1471,7 @@ static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     else
         dirL = 1;
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Thaana);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Thaana);
 }
 
 /*
@@ -1474,7 +1482,7 @@ static void ContextualShape_Thaana(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 #define phags_pa_START 0xA840
 #define phags_pa_END  0xA87F
 
-static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT *context_shape;
     INT dirR, dirL;
@@ -1485,7 +1493,7 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1502,9 +1510,9 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     load_ot_tables(hdc, psc);
 
     if (!psc->GSUB_Table)
-        return;
+        return E_INVALIDARG;
 
-    context_shape = heap_alloc(cChars * sizeof(*context_shape));
+    context_shape = malloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
     {
@@ -1561,7 +1569,8 @@ static void ContextualShape_Phags_pa(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
         }
     }
 
-    heap_free(context_shape);
+    free(context_shape);
+    return S_OK;
 }
 
 static int combining_lexical_Thai(WCHAR c)
@@ -1591,14 +1600,14 @@ static int combining_lexical_Thai(WCHAR c)
     }
 }
 
-static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT dirL;
 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1606,7 +1615,7 @@ static void ContextualShape_Thai(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
     else
         dirL = 1;
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Thai);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Thai);
 }
 
 static int combining_lexical_Lao(WCHAR c)
@@ -1635,14 +1644,14 @@ static int combining_lexical_Lao(WCHAR c)
     }
 }
 
-static void ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT dirL;
 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -1650,7 +1659,7 @@ static void ContextualShape_Lao(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     else
         dirL = 1;
 
-    mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, combining_lexical_Lao);
+    return mark_invalid_combinations(hdc, pwcChars, cChars, pwOutGlyphs, pcGlyphs, dirL, pwLogClust, cMaxGlyphs, combining_lexical_Lao);
 }
 
 static void ReplaceInsertChars(HDC hdc, INT cWalk, INT* pcChars, WCHAR *pwOutChars, const WCHAR *replacements)
@@ -2285,7 +2294,7 @@ static const VowelComponents Sinhala_vowels[] = {
             {0x0DDE, {0x0DD9,0x0DDE,0x0}},
             {0x0000, {0x0000,0x0000,0x0}}};
 
-static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     int i;
@@ -2296,10 +2305,10 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(3 * cChars * sizeof(*input));
+    input = malloc(3 * cChars * sizeof(*input));
 
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
@@ -2325,8 +2334,9 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     *pcGlyphs = cCount;
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, sinhala_lex, NULL, TRUE);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int devanagari_lex(WCHAR c)
@@ -2350,9 +2360,10 @@ static const ConsonantComponents Devanagari_consonants[] ={
     {{0x0921, 0x093C, 0x00000}, 0x095C},
     {{0x0922, 0x093C, 0x00000}, 0x095D},
     {{0x092B, 0x093C, 0x00000}, 0x095E},
-    {{0x092F, 0x093C, 0x00000}, 0x095F}};
+    {{0x092F, 0x093C, 0x00000}, 0x095F},
+    {{0x0000, 0x0000, 0x00000}, 0x0000}};
 
-static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2363,10 +2374,10 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(cChars * sizeof(*input));
+    input = malloc(cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Compose Consonant and Nukta */
@@ -2382,8 +2393,9 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, devanagari_lex, NULL, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int bengali_lex(WCHAR c)
@@ -2408,7 +2420,7 @@ static const ConsonantComponents Bengali_consonants[] = {
             {{0x09AF,0x09BC,0x0000}, 0x09DF},
             {{0x0000,0x0000,0x0000}, 0x0000}};
 
-static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2419,10 +2431,10 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(2 * cChars * sizeof(*input));
+    input = malloc(2 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonants */
@@ -2452,8 +2464,9 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     /* Step 4: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, bengali_lex, NULL, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int gurmukhi_lex(WCHAR c)
@@ -2472,7 +2485,7 @@ static const ConsonantComponents Gurmukhi_consonants[] = {
             {{0x0A2B,0x0A3C,0x0000}, 0x0A5E},
             {{0x0000,0x0000,0x0000}, 0x0000}};
 
-static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2483,10 +2496,10 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(cChars * sizeof(*input));
+    input = malloc(cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Compose Consonants */
@@ -2502,8 +2515,9 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gurmukhi_lex, NULL, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int gujarati_lex(WCHAR c)
@@ -2516,7 +2530,7 @@ static int gujarati_lex(WCHAR c)
     }
 }
 
-static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2527,10 +2541,10 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(cChars * sizeof(*input));
+    input = malloc(cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Reorder within Syllables */
@@ -2542,8 +2556,9 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     /* Step 2: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, gujarati_lex, NULL, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int oriya_lex(WCHAR c)
@@ -2567,7 +2582,7 @@ static const ConsonantComponents Oriya_consonants[] = {
             {{0x0B22,0x0B3C,0x0000}, 0x0B5D},
             {{0x0000,0x0000,0x0000}, 0x0000}};
 
-static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2578,10 +2593,10 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(2 * cChars * sizeof(*input));
+    input = malloc(2 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonants */
@@ -2598,8 +2613,9 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, oriya_lex, NULL, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int tamil_lex(WCHAR c)
@@ -2617,7 +2633,7 @@ static const ConsonantComponents Tamil_consonants[] = {
             {{0x0B92,0x0BD7,0x0000}, 0x0B94},
             {{0x0000,0x0000,0x0000}, 0x0000}};
 
-static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2628,10 +2644,10 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(2 * cChars * sizeof(*input));
+    input = malloc(2 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonants */
@@ -2648,8 +2664,9 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, tamil_lex, SecondReorder_Like_Tamil, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int telugu_lex(WCHAR c)
@@ -2667,7 +2684,7 @@ static const VowelComponents Telugu_vowels[] = {
             {0x0C48, {0x0C46,0x0C56,0x0000}},
             {0x0000, {0x0000,0x0000,0x0000}}};
 
-static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2678,10 +2695,10 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(2 * cChars * sizeof(*input));
+    input = malloc(2 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
@@ -2697,8 +2714,9 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, telugu_lex, SecondReorder_Like_Telugu, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int kannada_lex(WCHAR c)
@@ -2719,7 +2737,7 @@ static const VowelComponents Kannada_vowels[] = {
             {0x0CCB, {0x0CC6,0x0CC2,0x0CD5}},
             {0x0000, {0x0000,0x0000,0x0000}}};
 
-static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2730,10 +2748,10 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(3 * cChars * sizeof(*input));
+    input = malloc(3 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
@@ -2749,8 +2767,9 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, kannada_lex, SecondReorder_Like_Telugu, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int malayalam_lex(WCHAR c)
@@ -2764,7 +2783,7 @@ static const VowelComponents Malayalam_vowels[] = {
             {0x0D4C, {0x0D46,0x0D57,0x0000}},
             {0x0000, {0x0000,0x0000,0x0000}}};
 
-static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2775,10 +2794,10 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(2 * cChars * sizeof(*input));
+    input = malloc(2 * cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
@@ -2794,8 +2813,9 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     /* Step 3: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, malayalam_lex, SecondReorder_Like_Tamil, modern);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static int khmer_lex(WCHAR c)
@@ -2803,7 +2823,7 @@ static int khmer_lex(WCHAR c)
     return unicode_lex(c);
 }
 
-static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     int cCount = cChars;
     WCHAR *input;
@@ -2813,10 +2833,10 @@ static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
-    input = heap_alloc(cChars * sizeof(*input));
+    input = malloc(cChars * sizeof(*input));
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Reorder within Syllables */
@@ -2828,8 +2848,9 @@ static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 2: Base Form application to syllables */
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, khmer_lex, NULL, FALSE);
 
-    heap_free(input);
-    heap_free(syllables);
+    free(input);
+    free(syllables);
+    return S_OK;
 }
 
 static inline BOOL mongolian_wordbreak(WCHAR chr)
@@ -2837,7 +2858,7 @@ static inline BOOL mongolian_wordbreak(WCHAR chr)
     return ((chr == 0x0020) || (chr == 0x200C) || (chr == 0x202F) || (chr == 0x180E) || (chr == 0x1800) || (chr == 0x1802) || (chr == 0x1803) || (chr == 0x1805) || (chr == 0x1808) || (chr == 0x1809) || (chr == 0x1807));
 }
 
-static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+static HRESULT ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     INT *context_shape;
     INT dirL;
@@ -2848,7 +2869,7 @@ static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
-        return;
+        return E_INVALIDARG;
     }
 
     if (!psa->fLogicalOrder && psa->fRTL)
@@ -2857,9 +2878,9 @@ static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
         dirL = 1;
 
     if (!psc->GSUB_Table)
-        return;
+        return E_INVALIDARG;
 
-    context_shape = heap_alloc(cChars * sizeof(*context_shape));
+    context_shape = malloc(cChars * sizeof(*context_shape));
 
     for (i = 0; i < cChars; i++)
     {
@@ -2904,7 +2925,8 @@ static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
         }
     }
 
-    heap_free(context_shape);
+    free(context_shape);
+    return S_OK;
 }
 
 static void ShapeCharGlyphProp_Default( ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)
@@ -2973,8 +2995,7 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     INT dirR, dirL;
     BYTE *spaces;
 
-    spaces = heap_alloc(cGlyphs);
-    memset(spaces,0,cGlyphs);
+    spaces = calloc(cGlyphs, sizeof(*spaces));
 
     if (psa->fLogicalOrder && psa->fRTL)
     {
@@ -3073,7 +3094,7 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
 
     OpenType_GDEF_UpdateGlyphProps(psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
-    heap_free(spaces);
+    free(spaces);
 }
 
 static void ShapeCharGlyphProp_Hebrew( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )
@@ -3321,7 +3342,7 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
             }
         }
 
-        heap_free(syllables);
+        free(syllables);
     }
 
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
@@ -3392,12 +3413,13 @@ void SHAPE_CharGlyphProp(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const 
         ShapeCharGlyphProp_Default(psc, psa, pwcChars, cChars, pwGlyphs, cGlyphs, pwLogClust, pCharProp, pGlyphProp);
 }
 
-void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+HRESULT SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     load_ot_tables(hdc, psc);
 
     if (ShapingData[psa->eScript].contextProc)
-        ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
+        return ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
+    return S_OK;
 }
 
 static void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, INT cChars, const TEXTRANGE_PROPERTIES *rpRangeProperties, WORD *pwLogClust)

@@ -15,9 +15,7 @@
 #define FORCE_ACCURATE
 #include "../common/sample.h"
 #include "parse.h"
-#ifndef PORTABLE_API
 #include "lfs_wrap.h"
-#endif
 
 #include "../common/debug.h"
 
@@ -559,18 +557,9 @@ double attribute_align_arg mpg123_geteq2(mpg123_handle *mh, int channel, int ban
 	return mpg123_geteq(mh, channel, band);
 }
 
-#ifndef PORTABLE_API
-
-#ifdef FORCED_OFF_64
-// Only _64 symbols for a system-wide enforced _FILE_OFFSET_BITS=64.
-#define mpg123_open mpg123_open_64
-#define mpg123_open_fixed mpg123_open_fixed_64
-#define mpg123_open_fd mpg123_open_fd_64
-#define mpg123_open_handle mpg123_open_handle_64
-#endif
-
-/* plain file access, no http! */
-int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
+// LFS wrapper code is so agnostic to it all now that internal I/O is portable
+// as long as you do not mix in off_t API.
+int attribute_align_arg mpg123_open64(mpg123_handle *mh, const char *path)
 {
 	if(mh == NULL) return MPG123_BAD_HANDLE;
 
@@ -584,6 +573,24 @@ int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
 		ret = INT123_open_stream_handle(mh, mh->wrapperdata);
 	return ret;
 }
+
+#ifndef PORTABLE_API
+
+#ifdef FORCED_OFF_64
+// Only _64 symbols for a system-wide enforced _FILE_OFFSET_BITS=64.
+#define mpg123_open mpg123_open_64
+#define mpg123_open_fixed mpg123_open_fixed_64
+#define mpg123_open_fd mpg123_open_fd_64
+#define mpg123_open_handle mpg123_open_handle_64
+#endif
+
+// This now is agnostic to off_t choice, but still subject to renaming
+// for legacy reasons.
+int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
+{
+	return mpg123_open64(mh, path);
+}
+#endif // PORTABLE_API
 
 // The convenience function mpg123_open_fixed() wraps over acual mpg123_open
 // and hence needs to have the exact same code in lfs_wrap.c. The flesh is
@@ -624,17 +631,28 @@ static int INT123_open_fixed_post(mpg123_handle *mh, int channels, int encoding)
 	return err;
 }
 
-int attribute_align_arg mpg123_open_fixed( mpg123_handle *mh, const char *path
+int attribute_align_arg mpg123_open_fixed64( mpg123_handle *mh, const char *path
 ,	int channels, int encoding )
 {
 	int err = INT123_open_fixed_pre(mh, channels, encoding);
 	if(err == MPG123_OK)
-		err = mpg123_open(mh, path);
+		err = mpg123_open64(mh, path);
 	if(err == MPG123_OK)
 		err = INT123_open_fixed_post(mh, channels, encoding);
 	return err;
 }
 
+#ifndef PORTABLE_API
+// Only to have the modern offset-agnostic open under a fixed name.
+int attribute_align_arg mpg123_open_fixed( mpg123_handle *mh, const char *path
+,	int channels, int encoding )
+{
+	return mpg123_open_fixed64(mh, path, channels, encoding);
+}
+
+// Won't define a 'portable' variant of this, as I cannot guess
+// properties of the handed-in fd, which in theory, on specific platforms,
+// could not support large files.
 int attribute_align_arg mpg123_open_fd(mpg123_handle *mh, int fd)
 {
 	if(mh == NULL) return MPG123_BAD_HANDLE;
@@ -650,21 +668,33 @@ int attribute_align_arg mpg123_open_fd(mpg123_handle *mh, int fd)
 }
 #endif // PORTABLE_API
 
+// Only works with int64 reader setup.
+int attribute_align_arg mpg123_open_handle64(mpg123_handle *mh, void *iohandle)
+{
+	if(mh == NULL) return MPG123_BAD_HANDLE;
+
+	mpg123_close(mh);
+	return INT123_open_stream_handle(mh, iohandle);
+}
+
+#ifndef PORTABLE_API
+// Change from 1.32: No largefile-renamed symbols in a library with strict
+// portable API.
+// I allow that breaking change since this is far from a standard libmpg123 build.
 int attribute_align_arg mpg123_open_handle(mpg123_handle *mh, void *iohandle)
 {
 	if(mh == NULL) return MPG123_BAD_HANDLE;
 
 	mpg123_close(mh);
 	int ret;
-#ifndef PORTABLE_API
 	ret = INT123_wrap_open( mh, iohandle, NULL, -1
 	,	mh->p.timeout, mh->p.flags & MPG123_QUIET );
 	iohandle = ret == LFS_WRAP_NONE ? iohandle : mh->wrapperdata;
 	if(ret >= 0)
-#endif
 		ret = INT123_open_stream_handle(mh, iohandle);
 	return ret;
 }
+#endif
 
 int attribute_align_arg mpg123_open_feed(mpg123_handle *mh)
 {

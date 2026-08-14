@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <errno.h>
+#include <process.h>
 
 #include "msvcp90.h"
 
@@ -1020,13 +1021,13 @@ typedef struct {
 } custom_category;
 static custom_category iostream_category;
 
-DEFINE_RTTI_DATA0(error_category, 0, ".?AVerror_category@std@@")
-DEFINE_RTTI_DATA1(generic_category, 0, &error_category_rtti_base_descriptor, ".?AV_Generic_error_category@std@@")
+DEFINE_RTTI_DATA(error_category, 0, ".?AVerror_category@std@@")
+DEFINE_RTTI_DATA(generic_category, 0, ".?AV_Generic_error_category@std@@", error_category_rtti_base_descriptor)
 #if _MSVCP_VER == 100
-DEFINE_RTTI_DATA1(iostream_category, 0, &error_category_rtti_base_descriptor, ".?AV_Iostream_error_category@std@@")
+DEFINE_RTTI_DATA(iostream_category, 0, ".?AV_Iostream_error_category@std@@", error_category_rtti_base_descriptor)
 #else
-DEFINE_RTTI_DATA2(iostream_category, 0, &generic_category_rtti_base_descriptor,
-        &error_category_rtti_base_descriptor, ".?AV_Iostream_error_category@std@@")
+DEFINE_RTTI_DATA(iostream_category, 0, ".?AV_Iostream_error_category@std@@",
+        generic_category_rtti_base_descriptor, error_category_rtti_base_descriptor)
 #endif
 
 extern const vtable_ptr iostream_category_vtable;
@@ -1117,7 +1118,7 @@ const error_category* __cdecl std_iostream_category(void)
 
 #if _MSVCP_VER == 100 || _MSVCP_VER >= 140
 static custom_category system_category;
-DEFINE_RTTI_DATA1(system_category, 0, &error_category_rtti_base_descriptor, ".?AV_System_error_category@std@@")
+DEFINE_RTTI_DATA(system_category, 0, ".?AV_System_error_category@std@@", error_category_rtti_base_descriptor)
 
 extern const vtable_ptr system_category_vtable;
 
@@ -1237,7 +1238,7 @@ void __cdecl _Do_call(void *this)
 typedef struct
 {
     HANDLE hnd;
-    DWORD  id;
+    unsigned int id;
 } _Thrd_t;
 
 typedef int (__cdecl *_Thrd_start_t)(void*);
@@ -1246,13 +1247,13 @@ typedef int (__cdecl *_Thrd_start_t)(void*);
 
 int __cdecl _Thrd_equal(_Thrd_t a, _Thrd_t b)
 {
-    TRACE("(%p %lu %p %lu)\n", a.hnd, a.id, b.hnd, b.id);
+    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
     return a.id == b.id;
 }
 
 int __cdecl _Thrd_lt(_Thrd_t a, _Thrd_t b)
 {
-    TRACE("(%p %lu %p %lu)\n", a.hnd, a.id, b.hnd, b.id);
+    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
     return a.id < b.id;
 }
 
@@ -1280,7 +1281,7 @@ static _Thrd_t thread_current(void)
     }
     ret.id  = GetCurrentThreadId();
 
-    TRACE("(%p %lu)\n", ret.hnd, ret.id);
+    TRACE("(%p %u)\n", ret.hnd, ret.id);
     return ret;
 }
 
@@ -1306,7 +1307,7 @@ ULONGLONG __cdecl _Thrd_current(void)
 
 int __cdecl _Thrd_join(_Thrd_t thr, int *code)
 {
-    TRACE("(%p %lu %p)\n", thr.hnd, thr.id, code);
+    TRACE("(%p %u %p)\n", thr.hnd, thr.id, code);
     if (WaitForSingleObject(thr.hnd, INFINITE))
         return _THRD_ERROR;
 
@@ -1317,10 +1318,11 @@ int __cdecl _Thrd_join(_Thrd_t thr, int *code)
     return 0;
 }
 
-int __cdecl _Thrd_start(_Thrd_t *thr, LPTHREAD_START_ROUTINE proc, void *arg)
+int __cdecl _Thrd_start(_Thrd_t *thr, _beginthreadex_start_routine_t proc, void *arg)
 {
     TRACE("(%p %p %p)\n", thr, proc, arg);
-    thr->hnd = CreateThread(NULL, 0, proc, arg, 0, &thr->id);
+
+    thr->hnd = (HANDLE)_beginthreadex(NULL, 0, proc, arg, 0, &thr->id);
     return thr->hnd ? 0 : _THRD_ERROR;
 }
 
@@ -1330,7 +1332,7 @@ typedef struct
     void *arg;
 } thread_proc_arg;
 
-static DWORD WINAPI thread_proc_wrapper(void *arg)
+static unsigned int WINAPI thread_proc_wrapper(void *arg)
 {
     thread_proc_arg wrapped_arg = *((thread_proc_arg*)arg);
     free(arg);
@@ -1368,7 +1370,7 @@ typedef struct
     bool launched;
 } _Pad;
 
-DEFINE_RTTI_DATA0(_Pad, 0, ".?AV_Pad@std@@")
+DEFINE_RTTI_DATA(_Pad, 0, ".?AV_Pad@std@@")
 
 /* ??_7_Pad@std@@6B@ */
 extern const vtable_ptr _Pad_vtable;
@@ -1454,7 +1456,7 @@ unsigned int __thiscall _Pad__Go(_Pad *this)
     return 0;
 }
 
-static DWORD WINAPI launch_thread_proc(void *arg)
+static unsigned int WINAPI launch_thread_proc(void *arg)
 {
     _Pad *this = arg;
     return call__Pad__Go(this);
@@ -1790,18 +1792,16 @@ __ASM_BLOCK_END
 
 void init_misc(void *base)
 {
-#ifdef RTTI_USE_RVA
 #if _MSVCP_VER >= 100
-    init_error_category_rtti(base);
-    init_generic_category_rtti(base);
-    init_iostream_category_rtti(base);
+    INIT_RTTI(error_category, base);
+    INIT_RTTI(generic_category, base);
+    INIT_RTTI(iostream_category, base);
 #endif
 #if _MSVCP_VER == 100 || _MSVCP_VER >= 140
-    init_system_category_rtti(base);
+    INIT_RTTI(system_category, base);
 #endif
 #if _MSVCP_VER >= 110
-    init__Pad_rtti(base);
-#endif
+    INIT_RTTI(_Pad, base);
 #endif
 
 #if _MSVCP_VER >= 100

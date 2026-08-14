@@ -19,11 +19,13 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define COBJMACROS
 
 #include "windef.h"
 #include "wincodec.h"
+#include "winternl.h"
 #include "wine/test.h"
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
@@ -35,20 +37,26 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
-#define IFD_BYTE 1
-#define IFD_ASCII 2
-#define IFD_SHORT 3
-#define IFD_LONG 4
-#define IFD_RATIONAL 5
-#define IFD_SBYTE 6
-#define IFD_UNDEFINED 7
-#define IFD_SSHORT 8
-#define IFD_SLONG 9
-#define IFD_SRATIONAL 10
-#define IFD_FLOAT 11
-#define IFD_DOUBLE 12
+enum tiff_constants
+{
+    IFD_BYTE = 1,
+    IFD_ASCII = 2,
+    IFD_SHORT = 3,
+    IFD_LONG = 4,
+    IFD_RATIONAL = 5,
+    IFD_SBYTE = 6,
+    IFD_UNDEFINED = 7,
+    IFD_SSHORT = 8,
+    IFD_SLONG = 9,
+    IFD_SRATIONAL = 10,
+    IFD_FLOAT = 11,
+    IFD_DOUBLE = 12,
 
-#include "pshpack2.h"
+    TIFF_SUBFILETYPE = 0xfe,
+    TIFF_OSUBFILETYPE = 0xff,
+};
+
+#pragma pack(push,2)
 struct IFD_entry
 {
     SHORT id;
@@ -63,38 +71,192 @@ struct IFD_rational
     LONG denominator;
 };
 
+static unsigned int put_u16be(char **dst, const char **src)
+{
+    uint16_t r, w;
+
+    memcpy(&r, *src, sizeof(r));
+    *src += sizeof(r);
+    w = RtlUshortByteSwap(r);
+    memcpy(*dst, &w, sizeof(w));
+    *dst += sizeof(w);
+
+    return r;
+}
+
+static unsigned int put_u32be(char **dst, const char **src)
+{
+    uint32_t r, w;
+
+    memcpy(&r, *src, sizeof(r));
+    *src += sizeof(r);
+    w = RtlUlongByteSwap(r);
+    memcpy(*dst, &w, sizeof(w));
+    *dst += sizeof(w);
+
+    return r;
+}
+
+static void put_ifd_entry_be(char **dst, const char **src)
+{
+    const struct IFD_entry *entry = (const struct IFD_entry *)*src;
+
+    put_u16be(dst, src); /* id */
+    put_u16be(dst, src); /* type */
+    put_u32be(dst, src); /* count */
+
+    switch (entry->type)
+    {
+        case IFD_SHORT:
+            put_u16be(dst, src);
+            put_u16be(dst, src);
+            break;
+        case IFD_LONG:
+        case IFD_RATIONAL:
+            put_u32be(dst, src);
+            break;
+        default:
+            ok(0, "Unexpected entry type %u.\n", entry->type);
+    }
+}
+
+static char *get_tiff_be(const void *src, size_t size)
+{
+    const char *data = src;
+    unsigned int count;
+    char *dst, *p;
+
+    if (!(dst = malloc(size))) return NULL;
+    p = dst;
+
+    *p++ = 'M'; *p++ = 'M'; data += 2;
+    put_u16be(&p, &data);
+    put_u32be(&p, &data);
+    count = put_u16be(&p, &data);
+    for (int i = 0; i < count; ++i)
+        put_ifd_entry_be(&p, &data);
+    put_u32be(&p, &data); /* next IFD */
+    put_u32be(&p, &data);
+    put_u32be(&p, &data);
+
+    /* copy remaining image data as is */
+    memcpy(p, data, size - (p - dst));
+
+    return dst;
+}
+
+struct tiff_header
+{
+    USHORT byte_order;
+    USHORT version;
+    ULONG  dir_offset;
+};
+
+static void tiff_set_field(void *data, int dir, short id, int value)
+{
+    struct tiff_header *tiff = (struct tiff_header *)data;
+    unsigned int offset = tiff->dir_offset;
+    struct IFD_entry *ifd;
+    uint16_t count;
+    BYTE *p = data;
+
+    while (dir)
+    {
+        count = *(uint16_t *)(p + offset);
+        offset = *(uint32_t *)(p + offset + sizeof(count) + count * sizeof(struct IFD_entry));
+        --dir;
+    }
+    count = *(uint16_t *)(p + offset);
+    ifd = (struct IFD_entry *)(p + offset + sizeof(count));
+
+    for (int i = 0; i < count; ++i)
+    {
+        if (ifd->id == id)
+        {
+            ifd->value = value;
+            break;
+        }
+        ifd++;
+    }
+}
+
 static const struct tiff_1bpp_data
 {
     USHORT byte_order;
     USHORT version;
     ULONG  dir_offset;
-    USHORT number_of_entries;
-    struct IFD_entry entry[13];
-    ULONG next_IFD;
+    struct
+    {
+        USHORT number_of_entries;
+        struct IFD_entry entries[13];
+        ULONG next_IFD;
+    } frames[3];
     struct IFD_rational res;
     BYTE pixel_data[4];
 } tiff_1bpp_data =
 {
     'I' | 'I' << 8,
     42,
-    FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
-    13,
+    FIELD_OFFSET(struct tiff_1bpp_data, frames),
     {
-        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
-        { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
-        { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
-        { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
-        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
-        { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
-        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_1bpp_data, pixel_data) }, /* STRIPOFFSETS */
-        { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
-        { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
-        { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
-        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* XRESOLUTION */
-        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* YRESOLUTION */
-        { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+        {
+            ARRAY_SIZE(tiff_1bpp_data.frames[0].entries),
+            {
+                { 0xfe,  IFD_LONG, 1, 0 }, /* SUBFILETYPE */
+                { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
+                { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+                { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
+                { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+                { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
+                { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_1bpp_data, pixel_data) }, /* STRIPOFFSETS */
+                { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
+                { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+                { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
+                { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* XRESOLUTION */
+                { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* YRESOLUTION */
+                { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+            },
+            FIELD_OFFSET(struct tiff_1bpp_data, frames[1]),
+        },
+        {
+            ARRAY_SIZE(tiff_1bpp_data.frames[1].entries),
+            {
+                { 0xfe,  IFD_LONG, 1, 0 }, /* SUBFILETYPE */
+                { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
+                { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+                { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
+                { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+                { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
+                { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_1bpp_data, pixel_data) + 1 }, /* STRIPOFFSETS */
+                { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
+                { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+                { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
+                { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* XRESOLUTION */
+                { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* YRESOLUTION */
+                { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+            },
+            FIELD_OFFSET(struct tiff_1bpp_data, frames[2]),
+        },
+        {
+            ARRAY_SIZE(tiff_1bpp_data.frames[2].entries),
+            {
+                { 0xfe,  IFD_LONG, 1, 0 }, /* SUBFILETYPE */
+                { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
+                { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+                { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
+                { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+                { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
+                { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_1bpp_data, pixel_data) + 2 }, /* STRIPOFFSETS */
+                { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
+                { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+                { 0x117, IFD_LONG, 1, 1 }, /* STRIPBYTECOUNT */
+                { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* XRESOLUTION */
+                { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_1bpp_data, res) }, /* YRESOLUTION */
+                { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+            },
+            0,
+        },
     },
-    0,
     { 900, 3 },
     { 0x11, 0x22, 0x33, 0 }
 };
@@ -261,7 +423,7 @@ static const struct tiff_24bpp_data
 {
     'I' | 'I' << 8,
     42,
-    FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
+    FIELD_OFFSET(struct tiff_24bpp_data, number_of_entries),
     13,
     {
         { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
@@ -281,6 +443,51 @@ static const struct tiff_24bpp_data
     0,
     { 900, 3 },
     { 0x11, 0x22, 0x33 }
+};
+
+static const struct tiff_24bpp_separate_planes_data
+{
+    USHORT byte_order;
+    USHORT version;
+    ULONG  dir_offset;
+    USHORT number_of_entries;
+    struct IFD_entry entry[14];
+    ULONG next_IFD;
+    struct IFD_rational res;
+    ULONG strip_offsets[3];
+    ULONG strip_byte_counts[3];
+    BYTE pixel_data[12];
+} tiff_24bpp_separate_planes_data =
+{
+    'I' | 'I' << 8,
+    42,
+    FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, number_of_entries),
+    14,
+    {
+        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 4 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 8 }, /* BITSPERSAMPLE */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+        { 0x106, IFD_SHORT, 1, 2 }, /* PHOTOMETRIC */
+        { 0x111, IFD_LONG, 3, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, strip_offsets) }, /* STRIPOFFSETS */
+        { 0x115, IFD_SHORT, 1, 3 }, /* SAMPLESPERPIXEL */
+        { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+        { 0x117, IFD_LONG, 3, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, strip_byte_counts) }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, res) }, /* XRESOLUTION */
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, res) }, /* YRESOLUTION */
+        { 0x11c, IFD_SHORT, 1, 2 }, /* PLANARCONFIGURATION */
+        { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+    },
+    0,
+    { 900, 3 },
+    {
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data),
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data) + 4,
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data) + 8,
+    },
+    { 24, 24, 24 },
+    { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc }
 };
 
 static const struct tiff_4bps_bgra
@@ -346,7 +553,43 @@ static const struct tiff_4bps_bgra
     { 0x12,0x34,0x70, 0xe8,0xf0,0xa0 }
 },
 };
-#include "poppack.h"
+
+static const struct tiff_16bpp_data
+{
+    USHORT byte_order;
+    USHORT version;
+    ULONG  dir_offset;
+    USHORT number_of_entries;
+    struct IFD_entry entry[13];
+    ULONG next_IFD;
+    struct IFD_rational res;
+    BYTE pixel_data[2];
+} tiff_16bpp_data =
+{
+    'I' | 'I' << 8,
+    42,
+    FIELD_OFFSET(struct tiff_16bpp_data, number_of_entries),
+    13,
+    {
+        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 1 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 16 }, /* BITSPERSAMPLE */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION */
+        { 0x106, IFD_SHORT, 1, 1 }, /* PHOTOMETRIC */
+        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_16bpp_data, pixel_data) }, /* STRIPOFFSETS */
+        { 0x115, IFD_SHORT, 1, 1 }, /* SAMPLESPERPIXEL */
+        { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+        { 0x117, IFD_LONG, 1, 2 }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_16bpp_data, res) }, /* XRESOLUTION */
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_16bpp_data, res) }, /* YRESOLUTION */
+        { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+    },
+    0,
+    { 900, 3 },
+    { 0x12, 0x34 }
+};
+#pragma pack(pop)
 
 static IWICImagingFactory *factory;
 
@@ -439,7 +682,7 @@ static HRESULT get_pixelformat_info(const GUID *format, UINT *bpp, UINT *channel
 static void dump_tiff(void *buf)
 {
     UINT count, i;
-    struct tiff_1bpp_data *tiff;
+    struct tiff_header *tiff;
     struct IFD_entry *tag;
 
     tiff = buf;
@@ -462,15 +705,35 @@ static void dump_tiff(void *buf)
 
 static void test_tiff_1bpp_palette(void)
 {
+    static const struct
+    {
+        unsigned int dir_mask;
+        unsigned int count;
+        unsigned int colors;
+    } test_data[] =
+    {
+        { 0x1, 2, 0x3322 },
+        { 0x2, 2, 0x3311 },
+        { 0x4, 2, 0x2211 },
+        { 0x3, 1, 0x33 },
+        { 0x5, 1, 0x22 },
+    };
     HRESULT hr;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
+    struct tiff_1bpp_data tiff;
     IWICPalette *palette;
     GUID format;
+    UINT count;
+    DWORD data;
 
     hr = create_decoder(&tiff_1bpp_data, sizeof(tiff_1bpp_data), &decoder);
     ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 3, "Unexpected count %u.\n", count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#lx\n", hr);
@@ -485,10 +748,78 @@ static void test_tiff_1bpp_palette(void)
     hr = IWICBitmapFrameDecode_CopyPalette(frame, palette);
     ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE,
        "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %#lx\n", hr);
-
     IWICPalette_Release(palette);
+
+    data = 0xfeffaadd;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, 4, (BYTE *)&data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == 0xfeffaa11, "Unexpected data %#lx.\n", data);
     IWICBitmapFrameDecode_Release(frame);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 1, &frame);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    data = 0xfeffaadd;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, 4, (BYTE *)&data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == 0xfeffaa22, "Unexpected data %#lx.\n", data);
+    IWICBitmapFrameDecode_Release(frame);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 2, &frame);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    data = 0xfeffaadd;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, 4, (BYTE *)&data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == 0xfeffaa33, "Unexpected data %#lx.\n", data);
+    IWICBitmapFrameDecode_Release(frame);
+
     IWICBitmapDecoder_Release(decoder);
+
+    /* Frames marked with SUBFILETYPE(0x1) are ignored. */
+
+    for (int i = 0; i < ARRAY_SIZE(test_data); ++i)
+    {
+        tiff = tiff_1bpp_data;
+
+        for (int j = 0; j < 3; ++j)
+        {
+            if (test_data[i].dir_mask & (1 << j))
+                tiff_set_field(&tiff, j, TIFF_SUBFILETYPE, 0x1);
+        }
+
+        hr = create_decoder(&tiff, sizeof(tiff), &decoder);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(count == test_data[i].count, "Unexpected count %u.\n", count);
+
+        for (int j = 0; j < count; ++j)
+        {
+            BYTE color;
+
+            hr = IWICBitmapDecoder_GetFrame(decoder, j, &frame);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            data = 0xfeffaadd;
+            hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, 4, (BYTE *)&data);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+            color = (test_data[i].colors >> 8 * j) & 0xff;
+            ok(data == (0xfeffaa00 | color), "Unexpected data %#lx.\n", data);
+            IWICBitmapFrameDecode_Release(frame);
+        }
+
+        IWICBitmapDecoder_Release(decoder);
+    }
+
+    /* Mark all the frames as reduced-size - image is bad. */
+    tiff = tiff_1bpp_data;
+
+    tiff_set_field(&tiff, 0, TIFF_SUBFILETYPE, 0x1);
+    tiff_set_field(&tiff, 1, TIFF_SUBFILETYPE, 0x1);
+    tiff_set_field(&tiff, 2, TIFF_SUBFILETYPE, 0x1);
+
+    hr = create_decoder(&tiff, sizeof(tiff), &decoder);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 }
 
 static void test_QueryCapability(void)
@@ -534,7 +865,7 @@ static void test_QueryCapability(void)
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
-    ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+    ok(frame_count == 3, "expected 1, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#lx\n", hr);
@@ -570,7 +901,7 @@ static void test_QueryCapability(void)
     frame_count = 0xdeadbeef;
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
-    ok(frame_count == 1, "expected 1, got %u\n", frame_count);
+    ok(frame_count == 3, "expected 1, got %u\n", frame_count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
     ok(hr == S_OK, "GetFrame error %#lx\n", hr);
@@ -841,7 +1172,7 @@ static void test_tiff_24bpp(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 static const struct tiff_1x1_data
 {
     USHORT byte_order;
@@ -881,7 +1212,7 @@ static const struct tiff_1x1_data
     { 8,8,8,0 },
     { 1,0,2,3,4,5,6,7,8,9,0,1,2,3,4,5 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static UINT width_bytes(UINT width, UINT bpp)
 {
@@ -1365,6 +1696,143 @@ static void test_tiff_4bps_bgra(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
+static void test_tiff_16bpp(void)
+{
+    IWICBitmapFrameDecode *frame;
+    IWICBitmapDecoder *decoder;
+    UINT count, width, height;
+    double dpi_x, dpi_y;
+    char *tiff_be;
+    GUID format;
+    HRESULT hr;
+    WICRect rc;
+    ULONG data;
+
+    hr = create_decoder(&tiff_16bpp_data, sizeof(tiff_16bpp_data), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
+    ok(decoder != NULL, "Failed to load TIFF image data\n");
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
+    ok(width == 1, "got %u\n", width);
+    ok(height == 1, "got %u\n", height);
+
+    hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
+    ok(hr == S_OK, "GetResolution error %#lx\n", hr);
+    ok(dpi_x == 300.0, "got %f\n", dpi_x);
+    ok(dpi_y == 300.0, "got %f\n", dpi_y);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat16bppGray), "Unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 1;
+    rc.Height = 1;
+    data = 0xfefefefe;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 4, sizeof(data), (BYTE *)&data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == 0xfefe3412, "Unexpected data %#lx.\n", data);
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    /* Same data, BE format. */
+    tiff_be = get_tiff_be(&tiff_16bpp_data, sizeof(tiff_16bpp_data));
+
+    hr = create_decoder(tiff_be, sizeof(tiff_16bpp_data), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
+    ok(decoder != NULL, "Failed to load TIFF image data\n");
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+    ok(hr == S_OK, "GetFrameCount error %#lx\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
+    ok(width == 1, "got %u\n", width);
+    ok(height == 1, "got %u\n", height);
+
+    hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
+    ok(hr == S_OK, "GetResolution error %#lx\n", hr);
+    ok(dpi_x == 300.0, "got %f\n", dpi_x);
+    ok(dpi_y == 300.0, "got %f\n", dpi_y);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat16bppGray), "Unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 1;
+    rc.Height = 1;
+    data = 0xfefefefe;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 4, sizeof(data), (BYTE *)&data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(data == 0xfefe1234, "Unexpected data %#lx.\n", data);
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+    free(tiff_be);
+}
+
+static void test_tiff_24bpp_separate_planes(void)
+{
+    static const BYTE expected_data[] = { 0x99,0x55,0x11, 0xaa,0x66,0x22, 0xbb,0x77,0x33, 0xcc,0x88,0x44 };
+    UINT count, width, height, i;
+    IWICBitmapFrameDecode *frame;
+    IWICBitmapDecoder *decoder;
+    double dpi_x, dpi_y;
+    BYTE data[3*4];
+    GUID format;
+    HRESULT hr;
+
+    hr = create_decoder(&tiff_24bpp_separate_planes_data, sizeof(tiff_24bpp_separate_planes_data), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
+    ok(decoder != NULL, "Failed to load TIFF image data\n");
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(width == 4, "got %u\n", width);
+    ok(height == 1, "got %u\n", height);
+
+    hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(dpi_x == 300.0, "got %f\n", dpi_x);
+    ok(dpi_y == 300.0, "got %f\n", dpi_y);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat24bppBGR), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
+    memset(data, 0xfe, sizeof(data));
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 12, sizeof(data), data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(tiffformat)
 {
     HRESULT hr;
@@ -1384,6 +1852,8 @@ START_TEST(tiffformat)
     test_tiff_8bpp_alpha();
     test_tiff_resolution();
     test_tiff_24bpp();
+    test_tiff_16bpp();
+    test_tiff_24bpp_separate_planes();
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();

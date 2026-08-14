@@ -46,6 +46,7 @@ static MONITORINFOEXW default_monitor =
 };
 
 static pthread_mutex_t xinerama_mutex = PTHREAD_MUTEX_INITIALIZER;
+static unsigned long xinerama_generation;
 static MONITORINFOEXW *monitors;
 static int nb_monitors;
 
@@ -123,19 +124,16 @@ static inline int query_screens(void)
 
 #endif  /* SONAME_LIBXINERAMA */
 
-/* Get xinerama monitor indices required for _NET_WM_FULLSCREEN_MONITORS */
-void xinerama_get_fullscreen_monitors( const RECT *rect, long *indices )
+/* Get xinerama monitor indices required for _NET_WM_FULLSCREEN_MONITORS. Return FALSE if rect is
+ * not fullscreen */
+BOOL xinerama_get_fullscreen_monitors( const RECT *rect, unsigned long *generation, long *indices )
 {
     RECT window_rect, intersected_rect, monitor_rect;
+    BOOL ret = FALSE;
     POINT offset;
     INT i;
 
     pthread_mutex_lock( &xinerama_mutex );
-    if (nb_monitors == 1)
-    {
-        memset( indices, 0, sizeof(*indices) * 4 );
-        goto done;
-    }
 
     /* Convert window rectangle to root coordinates */
     offset = virtual_screen_to_root( rect->left, rect->top );
@@ -154,6 +152,7 @@ void xinerama_get_fullscreen_monitors( const RECT *rect, long *indices )
     }
 
     indices[0] = indices[1] = indices[2] = indices[3] = -1;
+    *generation = xinerama_generation;
     for (i = 0; i < nb_monitors; ++i)
     {
         SetRect( &monitor_rect, monitors[i].rcMonitor.left - offset.x,
@@ -170,10 +169,11 @@ void xinerama_get_fullscreen_monitors( const RECT *rect, long *indices )
         }
     }
 
-    if (indices[0] == -1) WARN("Failed to get xinerama fullscreen monitor indices.\n");
+    if (indices[0] != -1)
+        ret = TRUE;
 
-done:
     pthread_mutex_unlock( &xinerama_mutex );
+    return ret;
 }
 
 static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL get_properties )
@@ -185,7 +185,6 @@ static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
     if (!gpus)
         return FALSE;
 
-    gpus[0].name = strdup( "Wine GPU" );
     *new_gpus = gpus;
     *count = 1;
 
@@ -354,6 +353,7 @@ void xinerama_init( unsigned int width, unsigned int height )
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
+    xinerama_generation++;
     pthread_mutex_unlock( &xinerama_mutex );
 
     handler.name = "Xinerama";

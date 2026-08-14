@@ -7434,7 +7434,7 @@ static void shrink_row_null(const dib_info *dst_dib, const POINT *dst_start,
     return;
 }
 
-static float clampf( float value, float min, float max )
+static INT64 clamp64( INT64 value, INT64 min, INT64 max )
 {
     return max( min, min( value, max ) );
 }
@@ -7444,20 +7444,21 @@ static int clamp( int value, int min, int max )
     return max( min, min( value, max ) );
 }
 
-static BYTE linear_interpolate( BYTE start, BYTE end, float delta )
+static BYTE linear_interpolate( BYTE start, BYTE end, UINT32 delta )
 {
-    return start + (end - start) * delta + 0.5f;
+    return start + (int)(((INT64)(end - start) * delta + (1ll << 31)) >> 32);
 }
 
-static BYTE bilinear_interpolate( BYTE c00, BYTE c01, BYTE c10, BYTE c11, float dx, float dy )
+static BYTE bilinear_interpolate( BYTE c00, BYTE c01, BYTE c10, BYTE c11, UINT32 dx, UINT32 dy )
 {
     return linear_interpolate( linear_interpolate( c00, c01, dx ),
                                linear_interpolate( c10, c11, dx ), dy );
 }
 
+/* fixed_src_inc_x and fixed_src_inc_y are 32.32 fixed-point integers */
 static void calc_halftone_params( const struct bitblt_coords *dst, const struct bitblt_coords *src,
                                   RECT *dst_rect, RECT *src_rect, int *src_start_x,
-                                  int *src_start_y, float *src_inc_x, float *src_inc_y )
+                                  int *src_start_y, INT64 *fixed_src_inc_x, INT64 *fixed_src_inc_y )
 {
     int src_width, src_height, dst_width, dst_height;
     BOOL mirrored_x, mirrored_y;
@@ -7477,8 +7478,8 @@ static void calc_halftone_params( const struct bitblt_coords *dst, const struct 
     mirrored_y = (dst->height < 0) != (src->height < 0);
     *src_start_x = mirrored_x ? src_rect->right - 1 : src_rect->left;
     *src_start_y = mirrored_y ? src_rect->bottom - 1 : src_rect->top;
-    *src_inc_x = mirrored_x ? -(float)src_width / dst_width : (float)src_width / dst_width;
-    *src_inc_y = mirrored_y ? -(float)src_height / dst_height : (float)src_height / dst_height;
+    *fixed_src_inc_x = mirrored_x ? -((INT64)src_width << 32) / dst_width : ((INT64)src_width << 32) / dst_width;
+    *fixed_src_inc_y = mirrored_y ? -((INT64)src_height << 32) / dst_height : ((INT64)src_height << 32) / dst_height;
 }
 
 static void halftone_888( const dib_info *dst_dib, const struct bitblt_coords *dst,
@@ -7486,34 +7487,35 @@ static void halftone_888( const dib_info *dst_dib, const struct bitblt_coords *d
 {
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     DWORD *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE c00_r, c01_r, c10_r, c11_r;
     BYTE c00_g, c01_g, c10_g, c11_g;
     BYTE c00_b, c01_b, c10_b, c11_b;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     dst_ptr = get_pixel_ptr_32( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_32( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride / 4;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0;
             c01_ptr = src_ptr + x1;
@@ -7536,11 +7538,11 @@ static void halftone_888( const dib_info *dst_dib, const struct bitblt_coords *d
             b = bilinear_interpolate( c00_b, c01_b, c10_b, c11_b, dx, dy );
             dst_ptr[dst_x] = ((r << 16) & 0xff0000) | ((g << 8) & 0x00ff00) | (b & 0x0000ff);
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride / 4;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7549,34 +7551,35 @@ static void halftone_32( const dib_info *dst_dib, const struct bitblt_coords *ds
 {
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     DWORD *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE c00_r, c01_r, c10_r, c11_r;
     BYTE c00_g, c01_g, c10_g, c11_g;
     BYTE c00_b, c01_b, c10_b, c11_b;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     dst_ptr = get_pixel_ptr_32( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_32( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride / 4;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0;
             c01_ptr = src_ptr + x1;
@@ -7599,11 +7602,11 @@ static void halftone_32( const dib_info *dst_dib, const struct bitblt_coords *ds
             b = bilinear_interpolate( c00_b, c01_b, c10_b, c11_b, dx, dy );
             dst_ptr[dst_x] = rgb_to_pixel_masks( dst_dib, r, g, b );
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride / 4;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7612,34 +7615,35 @@ static void halftone_24( const dib_info *dst_dib, const struct bitblt_coords *ds
 {
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     BYTE *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE c00_r, c01_r, c10_r, c11_r;
     BYTE c00_g, c01_g, c10_g, c11_g;
     BYTE c00_b, c01_b, c10_b, c11_b;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     dst_ptr = get_pixel_ptr_24( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_24( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0 * 3;
             c01_ptr = src_ptr + x1 * 3;
@@ -7664,11 +7668,11 @@ static void halftone_24( const dib_info *dst_dib, const struct bitblt_coords *ds
             dst_ptr[dst_x * 3 + 1] = g;
             dst_ptr[dst_x * 3 + 2] = r;
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7677,34 +7681,35 @@ static void halftone_555( const dib_info *dst_dib, const struct bitblt_coords *d
 {
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     WORD *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE c00_r, c01_r, c10_r, c11_r;
     BYTE c00_g, c01_g, c10_g, c11_g;
     BYTE c00_b, c01_b, c10_b, c11_b;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     dst_ptr = get_pixel_ptr_16( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_16( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride / 2;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0;
             c01_ptr = src_ptr + x1;
@@ -7727,11 +7732,11 @@ static void halftone_555( const dib_info *dst_dib, const struct bitblt_coords *d
             b = bilinear_interpolate( c00_b, c01_b, c10_b, c11_b, dx, dy );
             dst_ptr[dst_x] = ((r << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((b >> 3) & 0x001f);
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride / 2;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7740,34 +7745,35 @@ static void halftone_16( const dib_info *dst_dib, const struct bitblt_coords *ds
 {
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     WORD *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE c00_r, c01_r, c10_r, c11_r;
     BYTE c00_g, c01_g, c10_g, c11_g;
     BYTE c00_b, c01_b, c10_b, c11_b;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     dst_ptr = get_pixel_ptr_16( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_16( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride / 2;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0;
             c01_ptr = src_ptr + x1;
@@ -7790,11 +7796,11 @@ static void halftone_16( const dib_info *dst_dib, const struct bitblt_coords *ds
             b = bilinear_interpolate( c00_b, c01_b, c10_b, c11_b, dx, dy );
             dst_ptr[dst_x] = rgb_to_pixel_masks( dst_dib, r, g, b );
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride / 2;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7804,33 +7810,34 @@ static void halftone_8( const dib_info *dst_dib, const struct bitblt_coords *dst
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     BYTE *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
     RGBQUAD c00_rgb, c01_rgb, c10_rgb, c11_rgb, zero_rgb = {0};
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     const RGBQUAD *src_clr_table;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
     BYTE r, g, b;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     src_clr_table = get_dib_color_table( src_dib );
     dst_ptr = get_pixel_ptr_8( dst_dib, dst_rect.left, dst_rect.top );
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = get_pixel_ptr_8( src_dib, 0, y0 );
         src_ptr_dy = (y1 - y0) * src_dib->stride;
         for (dst_x = 0; dst_x < dst_rect.right - dst_rect.left; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + x0;
             c01_ptr = src_ptr + x1;
@@ -7854,11 +7861,11 @@ static void halftone_8( const dib_info *dst_dib, const struct bitblt_coords *dst
             }
             dst_ptr[dst_x] = rgb_to_pixel_colortable( dst_dib, r, g, b );
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_ptr += dst_dib->stride;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7868,33 +7875,34 @@ static void halftone_4( const dib_info *dst_dib, const struct bitblt_coords *dst
     BYTE *dst_col_ptr, *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1;
     RGBQUAD c00_rgb, c01_rgb, c10_rgb, c11_rgb, zero_rgb = {0};
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE r, g, b, val, c00, c01, c10, c11;
     const RGBQUAD *src_clr_table;
     RECT dst_rect, src_rect;
+    UINT32 dx, dy;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     src_clr_table = get_dib_color_table( src_dib );
     dst_col_ptr = (BYTE *)dst_dib->bits.ptr + (dst_dib->rect.top + dst_rect.top) * dst_dib->stride;
     for (dst_y = 0; dst_y < dst_rect.bottom - dst_rect.top; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = (BYTE *)src_dib->bits.ptr + (src_dib->rect.top + y0) * src_dib->stride;
         src_ptr_dy = (y1 - y0) * src_dib->stride;
         for (dst_x = dst_rect.left; dst_x < dst_rect.right; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + (src_dib->rect.left + x0) / 2;
             c01_ptr = src_ptr + (src_dib->rect.left + x1) / 2;
@@ -7945,11 +7953,11 @@ static void halftone_4( const dib_info *dst_dib, const struct bitblt_coords *dst
             else
                 *dst_ptr = (val << 4) & 0xf0;
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_col_ptr += dst_dib->stride;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 
@@ -7959,36 +7967,37 @@ static void halftone_1( const dib_info *dst_dib, const struct bitblt_coords *dst
     int src_start_x, src_start_y, src_ptr_dy, dst_x, dst_y, x0, x1, y0, y1, bit_pos;
     BYTE *dst_col_ptr, *dst_ptr, *src_ptr, *c00_ptr, *c01_ptr, *c10_ptr, *c11_ptr;
     RGBQUAD c00_rgb, c01_rgb, c10_rgb, c11_rgb, zero_rgb = {0};
-    float src_inc_x, src_inc_y, float_x, float_y, dx, dy;
+    INT64 fixed_src_inc_x, fixed_src_inc_y, fixed_x, fixed_y;
     BYTE r, g, b, val, c00, c01, c10, c11;
     const RGBQUAD *src_clr_table;
     RECT dst_rect, src_rect;
     RGBQUAD bg_entry;
     DWORD bg_pixel;
+    UINT32 dx, dy;
 
-    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &src_inc_x,
-                          &src_inc_y );
+    calc_halftone_params( dst, src, &dst_rect, &src_rect, &src_start_x, &src_start_y, &fixed_src_inc_x,
+                          &fixed_src_inc_y );
 
-    float_y = src_start_y;
+    fixed_y = (INT64)src_start_y << 32;
     bg_entry = *get_dib_color_table( dst_dib );
     src_clr_table = get_dib_color_table( src_dib );
     dst_col_ptr = (BYTE *)dst_dib->bits.ptr + (dst_dib->rect.top + dst_rect.top) * dst_dib->stride;
     for (dst_y = dst_rect.top; dst_y < dst_rect.bottom; ++dst_y)
     {
-        float_y = clampf( float_y, src_rect.top, src_rect.bottom - 1 );
-        y0 = float_y;
+        fixed_y = clamp64( fixed_y, (INT64)src_rect.top << 32, (INT64)(src_rect.bottom - 1) << 32 );
+        y0 = fixed_y >> 32;
         y1 = clamp( y0 + 1, src_rect.top, src_rect.bottom - 1 );
-        dy = float_y - y0;
+        dy = fixed_y;
 
-        float_x = src_start_x;
+        fixed_x = (INT64)src_start_x << 32;
         src_ptr = (BYTE *)src_dib->bits.ptr + (src_dib->rect.top + y0) * src_dib->stride;
         src_ptr_dy = (y1 - y0) * src_dib->stride;
         for (dst_x = dst_rect.left; dst_x < dst_rect.right; ++dst_x)
         {
-            float_x = clampf( float_x, src_rect.left, src_rect.right - 1 );
-            x0 = float_x;
+            fixed_x = clamp64( fixed_x, (INT64)src_rect.left << 32, (INT64)(src_rect.right - 1) << 32 );
+            x0 = fixed_x >> 32;
             x1 = clamp( x0 + 1, src_rect.left, src_rect.right - 1 );
-            dx = float_x - x0;
+            dx = fixed_x;
 
             c00_ptr = src_ptr + (src_dib->rect.left + x0) / 8;
             c01_ptr = src_ptr + (src_dib->rect.left + x1) / 8;
@@ -8024,11 +8033,11 @@ static void halftone_1( const dib_info *dst_dib, const struct bitblt_coords *dst
                 *dst_ptr = 0;
             *dst_ptr = (*dst_ptr & ~pixel_masks_1[bit_pos]) | (val & pixel_masks_1[bit_pos]);
 
-            float_x += src_inc_x;
+            fixed_x += fixed_src_inc_x;
         }
 
         dst_col_ptr += dst_dib->stride;
-        float_y += src_inc_y;
+        fixed_y += fixed_src_inc_y;
     }
 }
 

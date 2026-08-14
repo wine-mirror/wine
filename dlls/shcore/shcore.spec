@@ -31,7 +31,7 @@
 # @ stub IsProcessInIsolatedContainer
 # @ stub IsProcessInWDAGContainer
 # @ stub RecordFeatureError
-# @ stub RecordFeatureUsage
+@ stdcall RecordFeatureUsage(long long long str)
 @ stdcall RegisterScaleChangeEvent(ptr ptr)
 @ stdcall RegisterScaleChangeNotifications(long ptr long ptr)
 @ stub RevokeScaleChangeNotifications

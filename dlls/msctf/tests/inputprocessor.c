@@ -29,6 +29,7 @@
 #include "shlguid.h"
 #include "comcat.h"
 #include "msctf.h"
+#include "ctffunc.h"
 #include "olectl.h"
 
 static ITfInputProcessorProfiles* g_ipp;
@@ -1082,6 +1083,7 @@ DEFINE_GUID(GUID_COMPARTMENT_SPEECH_GLOBALSTATE,    0x2a54fe8e,0x0d08,0x460c,0xa
 DEFINE_GUID(GUID_COMPARTMENT_PERSISTMENUENABLED,    0x575f3783,0x70c8,0x47c8,0xae,0x5d,0x91,0xa0,0x1a,0x1f,0x75,0x92);
 DEFINE_GUID(GUID_COMPARTMENT_EMPTYCONTEXT,          0xd7487dbf,0x804e,0x41c5,0x89,0x4d,0xad,0x96,0xfd,0x4e,0xea,0x13);
 DEFINE_GUID(GUID_COMPARTMENT_TIPUISTATUS,           0x148ca3ec,0x0366,0x401c,0x8d,0x75,0xed,0x97,0x8d,0x85,0xfb,0xc9);
+DEFINE_GUID(GUID_SYSTEM_FUNCTIONPROVIDER, 0x9a698bb0,0x0f21,0x11d3,0x8d,0xf1,0x00,0x10,0x5a,0x27,0x99,0xb5);
 
 static HRESULT initialize(void)
 {
@@ -2627,6 +2629,28 @@ static void test_MultiThreadApartment(void)
     CloseHandle(thread);
 }
 
+static void test_function_provider(void)
+{
+    ITfFunctionProvider *provider;
+    ITfFnReconversion *reconv;
+    BSTR name;
+    HRESULT hr;
+
+    hr = ITfThreadMgr_GetFunctionProvider(g_tm, &GUID_SYSTEM_FUNCTIONPROVIDER, &provider);
+    ok(hr == S_OK, "got %lx\n", hr);
+
+    hr = ITfFunctionProvider_GetFunction(provider, &GUID_NULL, &IID_ITfFnReconversion, (IUnknown **)&reconv);
+    ok(hr == S_OK, "got %lx\n", hr);
+
+    hr = ITfFnReconversion_GetDisplayName(reconv, &name);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(!wcscmp(name, L"Reconversion"), "got %s\n", debugstr_w(name));
+    SysFreeString(name);
+
+    ITfFnReconversion_Release(reconv);
+    ITfFunctionProvider_Release(provider);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -2657,6 +2681,7 @@ START_TEST(inputprocessor)
         test_Unregister();
         test_profile_mgr();
         test_MultiThreadApartment();
+        test_function_provider();
 
         ITextStoreACPSink_Release(ACPSink);
         ITfDocumentMgr_Release(g_dm);

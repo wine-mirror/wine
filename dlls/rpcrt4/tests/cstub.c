@@ -56,18 +56,13 @@ static GUID IID_if3 = {0x1234567a, 1234, 5678, {12,34,56,78,90,0xab,0xcd,0xef}};
 static GUID IID_if4 = {0x1234567b, 1234, 5678, {12,34,56,78,90,0xab,0xcd,0xef}};
 static CLSID CLSID_psfact = {0x1234567c, 1234, 5678, {12,34,56,78,90,0xab,0xcd,0xef}};
 
-static int my_alloc_called;
-static int my_free_called;
-
 static void * CALLBACK my_alloc(SIZE_T size)
 {
-    my_alloc_called++;
     return malloc(size);
 }
 
 static void CALLBACK my_free(void *ptr)
 {
-    my_free_called++;
     free(ptr);
 }
 

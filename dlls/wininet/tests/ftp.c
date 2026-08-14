@@ -71,10 +71,10 @@ static void test_connect(HINTERNET hInternet)
      */
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp)
     {
-        skip("No ftp connection could be made to ftp.winehq.org %lu\n", GetLastError());
+        skip("No ftp connection could be made to test.winehq.org %lu\n", GetLastError());
         return;
     }
     ok(GetLastError() == ERROR_SUCCESS,
@@ -82,13 +82,13 @@ static void test_connect(HINTERNET hInternet)
     InternetCloseHandle(hFtp);
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     ok ( hFtp == NULL, "Expected InternetConnect to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "", "IEUser@",
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "", "IEUser@",
             INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     ok(!hFtp, "Expected InternetConnect to fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
@@ -102,12 +102,12 @@ static void test_connect(HINTERNET hInternet)
      */
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp && (GetLastError() == ERROR_INTERNET_LOGIN_FAILURE))
     {
         /* We are most likely running on a clean Wine install or a Windows install where the registry key is removed */
         SetLastError(0xdeadbeef);
-        hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+        hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     }
     ok ( hFtp != NULL, "InternetConnect failed : %ld\n", GetLastError());
     ok ( GetLastError() == ERROR_SUCCESS,
@@ -115,7 +115,7 @@ static void test_connect(HINTERNET hInternet)
     InternetCloseHandle(hFtp);
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "", NULL,
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "", NULL,
             INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp)
     {
@@ -1004,11 +1004,11 @@ static void test_status_callbacks(HINTERNET hInternet)
     cb = pInternetSetStatusCallbackA(hInternet, status_callback);
     ok(cb == NULL, "expected NULL got %p\n", cb);
 
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@",
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@",
                            INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 1);
     if (!hFtp)
     {
-        skip("No ftp connection could be made to ftp.winehq.org %lu\n", GetLastError());
+        skip("No ftp connection could be made to test.winehq.org %lu\n", GetLastError());
         return;
     }
 
@@ -1038,11 +1038,11 @@ START_TEST(ftp)
     hInternet = InternetOpenA("winetest", 0, NULL, NULL, 0);
     ok(hInternet != NULL, "InternetOpen failed: %lu\n", GetLastError());
 
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    hFtp = InternetConnectA(hInternet, "test.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp)
     {
         InternetCloseHandle(hInternet);
-        skip("No ftp connection could be made to ftp.winehq.org\n");
+        skip("No ftp connection could be made to test.winehq.org\n");
         return;
     }
     hHttp = InternetConnectA(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);

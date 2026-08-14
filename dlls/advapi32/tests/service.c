@@ -200,9 +200,20 @@ static void test_create_delete_svc(void)
     static const CHAR pathname            [] = "we_dont_care.exe";
     static const CHAR empty               [] = "";
     static const CHAR password            [] = "secret";
+    static const struct
+    {
+        const CHAR *account;
+    } localsystem_account_tests[] =
+    {
+        {"LocalSystem"},
+        {"localsystem"},
+        {".\\LocalSystem"},
+        {".\\localsystem"},
+    };
     char buffer[200];
     DWORD size;
     BOOL ret;
+    UINT i;
 
     /* Get the username and turn it into an account to be used in some tests */
     GetUserNameA(username, &user_size);
@@ -325,8 +336,31 @@ static void test_create_delete_svc(void)
     svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
                                  SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, account, password);
     ok(!svc_handle1, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_SERVICE_ACCOUNT,
-       "Expected ERROR_INVALID_PARAMETER or ERROR_INVALID_SERVICE_ACCOUNT, got %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, account, password);
+    ok(!svc_handle1, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    /* A valid LocalSystem account name is accepted for an interactive service. */
+    for (i = 0; i < ARRAY_SIZE(localsystem_account_tests); i++)
+    {
+        winetest_push_context("%u:%s", i, localsystem_account_tests[i].account);
+
+        do
+        {
+            SetLastError(0xdeadbeef);
+            svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                         SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, localsystem_account_tests[i].account, NULL);
+        } while (!svc_handle1 && GetLastError() == ERROR_SERVICE_MARKED_FOR_DELETE);
+        ok(!!svc_handle1, "Failed to create service, error %lu\n", GetLastError());
+        ret = DeleteService(svc_handle1);
+        ok(ret, "Failed to delete service, error %lu\n", GetLastError());
+        CloseServiceHandle(svc_handle1);
+        winetest_pop_context();
+    }
 
     /* Illegal (start-type is not a mask and should only be one of the possibilities)
      * Remark : 'OR'-ing them could result in a valid possibility (but doesn't make sense as
@@ -711,6 +745,28 @@ static void test_get_displayname(void)
     /* Delete the service */
     ret = DeleteService(svc_handle);
     ok(ret, "Expected success (err=%ld)\n", GetLastError());
+
+    CloseServiceHandle(svc_handle);
+
+    /* Test empty DisplayName */
+    do
+    {
+        SetLastError(0xdeadbeef);
+        svc_handle = CreateServiceA(scm_handle, servicename, "", DELETE,
+                                SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    } while (!svc_handle && GetLastError() == ERROR_SERVICE_MARKED_FOR_DELETE);
+    ok(svc_handle != NULL, "CreateService() error %lu\n", GetLastError());
+
+    strcpy(displayname, "deadbeef");
+    displaysize = sizeof(displayname);
+    SetLastError(0xdeadbeef);
+    ret = GetServiceDisplayNameA(scm_handle, servicename, displayname, &displaysize);
+    ok(ret, "GetServiceDisplayName() error %lu\n", GetLastError());
+    ok(!lstrcmpiA(displayname, servicename), "got \"%s\"\n", displayname);
+
+    ret = DeleteService(svc_handle);
+    ok(ret, "DeleteService() error %lu\n", GetLastError());
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
@@ -2857,15 +2913,14 @@ static void test_refcount(void)
     ret = CloseServiceHandle(svc_handle1);
     ok(ret, "Expected success (err=%ld)\n", GetLastError());
 
-    /* Wait a while. Doing a CreateService too soon will result again
-     * in an ERROR_SERVICE_MARKED_FOR_DELETE error.
-     */
-    Sleep(1000);
-
-    /* We succeed now as all handles are closed (tested this also with a long SLeep() */
-    svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
-                                 SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
-                                 SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    /* We succeed now as all handles are closed (tested this also with a long Sleep() */
+    do
+    {
+        SetLastError(0xdeadbeef);
+        svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
+                                     SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
+                                     SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    } while (!svc_handle5 && GetLastError() == ERROR_SERVICE_MARKED_FOR_DELETE);
     ok(svc_handle5 != NULL, "Expected success, got error %lu\n", GetLastError());
 
     /* Delete the service */
@@ -2968,6 +3023,58 @@ static void test_EventLog(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_LockServiceDatabase(void)
+{
+    static const struct
+    {
+        DWORD access, error;
+    } td[] =
+    {
+        { 0, ERROR_ACCESS_DENIED },
+        { SC_MANAGER_CONNECT, ERROR_ACCESS_DENIED },
+        { SC_MANAGER_LOCK, 0 }
+    };
+    SC_HANDLE hscm;
+    SC_LOCK lock;
+    int i, ret;
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        winetest_push_context("%d", i);
+
+        hscm = OpenSCManagerW(NULL, NULL, td[i].access);
+        if (!hscm)
+        {
+            skip("OpenSCManager(%08lx) error %lu, skipping the tests\n", td[i].access, GetLastError());
+            break;
+        }
+
+        SetLastError(0xdeadbeef);
+        lock = LockServiceDatabase(hscm);
+        if (!td[i].error)
+        {
+            ok(lock != NULL, "LockServiceDatabase() error %lu\n", GetLastError());
+            SetLastError(0xdeadbeef);
+            ret = UnlockServiceDatabase(lock);
+            ok(ret, "UnlockServiceDatabase() error %lu\n", GetLastError());
+        }
+        else
+        {
+            ok(!lock, "LockServiceDatabase() should fail\n");
+            ok(td[i].error == GetLastError(), "got %lu\n", GetLastError());
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = UnlockServiceDatabase(lock);
+        ok(!ret, "UnlockServiceDatabase() should fail\n");
+        ok(GetLastError() == ERROR_INVALID_SERVICE_LOCK, "got %lu\n", GetLastError());
+
+        winetest_pop_context();
+    }
+
+    CloseServiceHandle(hscm);
+}
+
 static DWORD WINAPI ctrl_handler(DWORD ctl, DWORD type, void *data, void *user)
 {
     HANDLE evt = user;
@@ -3055,6 +3162,7 @@ START_TEST(service)
     test_get_displayname();
     test_get_servicekeyname();
     test_query_svc();
+    test_LockServiceDatabase();
 
     /* Services may start or stop between enumeration calls, leading to
      * inconsistencies and failures. So we may need a couple attempts.

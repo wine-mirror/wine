@@ -27,7 +27,7 @@ extern "C" {
 
 #include <prsht.h>
 #ifndef _WIN64
-#include <pshpack1.h>
+#pragma pack(push,1)
 #endif
 
 #ifndef WINCOMMDLGAPI
@@ -818,7 +818,7 @@ WINCOMMDLGAPI BOOL    WINAPI ChooseFontW(LPCHOOSEFONTW);
 #define ChooseFont    WINELIB_NAME_AW(ChooseFont)
 
 #ifndef _WIN64
-#include <poppack.h>
+#pragma pack(pop)
 #endif
 
 #ifdef __cplusplus

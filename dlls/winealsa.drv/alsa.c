@@ -30,7 +30,6 @@
 #include <alsa/asoundlib.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -59,6 +58,7 @@ struct alsa_stream
     AUDCLNT_SHAREMODE share;
     EDataFlow flow;
     HANDLE event;
+    HANDLE timer_thread;
 
     BOOL need_remapping;
     int alsa_channels;
@@ -478,27 +478,6 @@ static WCHAR *alsa_get_card_name(int card)
     return ret;
 }
 
-static NTSTATUS alsa_process_attach(void *args)
-{
-#ifdef _WIN64
-    if (NtCurrentTeb()->WowTebOffset)
-    {
-        SYSTEM_BASIC_INFORMATION info;
-
-        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    }
-#endif
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS alsa_main_loop(void *args)
-{
-    struct main_loop_params *params = args;
-    NtSetEvent(params->event, NULL);
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS alsa_get_endpoint_ids(void *args)
 {
     static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
@@ -882,6 +861,12 @@ static NTSTATUS alsa_create_stream(void *args)
     stream->mmdev_period_frames = muldiv(params->fmt->nSamplesPerSec,
             stream->mmdev_period_rt, 10000000);
 
+    if (stream->mmdev_period_frames == 0)
+    {
+        params->result = E_INVALIDARG;
+        goto exit;
+    }
+
     /* Buffer 4 ALSA periods if large enough, else 4 mmdevapi periods */
     stream->alsa_bufsize_frames = stream->mmdev_period_frames * 4;
     if(err < 0 || alsa_period_us < params->period / 10)
@@ -1040,10 +1025,10 @@ static NTSTATUS alsa_release_stream(void *args)
     struct alsa_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
-    if(params->timer_thread){
+    if(stream->timer_thread){
         stream->please_quit = TRUE;
-        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
-        NtClose(params->timer_thread);
+        NtWaitForSingleObject(stream->timer_thread, FALSE, NULL);
+        NtClose(stream->timer_thread);
     }
 
     snd_pcm_drop(stream->pcm_handle);
@@ -1530,10 +1515,46 @@ static int alsa_rewind_best_effort(struct alsa_stream *stream)
     return len;
 }
 
+static void alsa_timer_loop(void *args)
+{
+    struct alsa_stream *stream = args;
+    LARGE_INTEGER delay, next;
+    int adjust;
+
+    alsa_lock(stream);
+
+    delay.QuadPart = -stream->mmdev_period_rt;
+    NtQueryPerformanceCounter(&stream->last_period_time, NULL);
+    next.QuadPart = stream->last_period_time.QuadPart + stream->mmdev_period_rt;
+
+    while(!stream->please_quit){
+        if(stream->flow == eRender)
+            alsa_write_data(stream);
+        else if(stream->flow == eCapture)
+            alsa_read_data(stream);
+        alsa_unlock(stream);
+
+        NtDelayExecution(FALSE, &delay);
+
+        alsa_lock(stream);
+        NtQueryPerformanceCounter(&stream->last_period_time, NULL);
+        adjust = next.QuadPart - stream->last_period_time.QuadPart;
+        if(adjust > stream->mmdev_period_rt / 2)
+            adjust = stream->mmdev_period_rt / 2;
+        else if(adjust < -stream->mmdev_period_rt / 2)
+            adjust = -stream->mmdev_period_rt / 2;
+        delay.QuadPart = -(stream->mmdev_period_rt + adjust);
+        next.QuadPart += stream->mmdev_period_rt;
+    }
+
+    alsa_unlock(stream);
+}
+
 static NTSTATUS alsa_start(void *args)
 {
     struct start_params *params = args;
     struct alsa_stream *stream = handle_get_stream(params->stream);
+    static const WCHAR name[] = {'a','u','d','i','o','_','c','l','i','e','n','t','_','t','i','m','e','r',0};
 
     alsa_lock(stream);
 
@@ -1571,6 +1592,7 @@ static NTSTATUS alsa_start(void *args)
             stream->data_in_alsa_frames = 0;
         }
     }
+    if (!stream->timer_thread) create_unix_thread( &stream->timer_thread, name, alsa_timer_loop, stream );
     stream->started = TRUE;
 
     return alsa_unlock_result(stream, &params->result, S_OK);
@@ -1627,44 +1649,6 @@ static NTSTATUS alsa_reset(void *args)
     stream->wri_offs_frames = 0;
 
     return alsa_unlock_result(stream, &params->result, S_OK);
-}
-
-static NTSTATUS alsa_timer_loop(void *args)
-{
-    struct timer_loop_params *params = args;
-    struct alsa_stream *stream = handle_get_stream(params->stream);
-    LARGE_INTEGER delay, next;
-    int adjust;
-
-    alsa_lock(stream);
-
-    delay.QuadPart = -stream->mmdev_period_rt;
-    NtQueryPerformanceCounter(&stream->last_period_time, NULL);
-    next.QuadPart = stream->last_period_time.QuadPart + stream->mmdev_period_rt;
-
-    while(!stream->please_quit){
-        if(stream->flow == eRender)
-            alsa_write_data(stream);
-        else if(stream->flow == eCapture)
-            alsa_read_data(stream);
-        alsa_unlock(stream);
-
-        NtDelayExecution(FALSE, &delay);
-
-        alsa_lock(stream);
-        NtQueryPerformanceCounter(&stream->last_period_time, NULL);
-        adjust = next.QuadPart - stream->last_period_time.QuadPart;
-        if(adjust > stream->mmdev_period_rt / 2)
-            adjust = stream->mmdev_period_rt / 2;
-        else if(adjust < -stream->mmdev_period_rt / 2)
-            adjust = -stream->mmdev_period_rt / 2;
-        delay.QuadPart = -(stream->mmdev_period_rt + adjust);
-        next.QuadPart += stream->mmdev_period_rt;
-    }
-
-    alsa_unlock(stream);
-
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS alsa_get_render_buffer(void *args)
@@ -1863,36 +1847,13 @@ static NTSTATUS alsa_release_capture_buffer(void *args)
 static NTSTATUS alsa_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
     snd_pcm_t *pcm_handle;
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_format_mask_t *formats = NULL;
     snd_pcm_format_t format;
-    WAVEFORMATEXTENSIBLE *closest = NULL;
     unsigned int max = 0, min = 0;
     int err;
     int alsa_channels, alsa_channel_map[32];
-
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            params->result = E_INVALIDARG;
-        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
-                (fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample))
-            params->result = E_INVALIDARG;
-    }
-    if(FAILED(params->result))
-        return STATUS_SUCCESS;
-
-    if(params->fmt_in->nChannels == 0){
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        return STATUS_SUCCESS;
-    }
 
     params->result = alsa_open_device(params->device, params->flow, &pcm_handle, &hw_params);
     if(FAILED(params->result))
@@ -1914,12 +1875,6 @@ static NTSTATUS alsa_is_format_supported(void *args)
     if (format == SND_PCM_FORMAT_UNKNOWN ||
         !snd_pcm_format_mask_test(formats, format)){
         params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        goto exit;
-    }
-
-    closest = clone_format(params->fmt_in);
-    if(!closest){
-        params->result = E_OUTOFMEMORY;
         goto exit;
     }
 
@@ -1951,47 +1906,17 @@ static NTSTATUS alsa_is_format_supported(void *args)
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
-    if(params->fmt_in->nChannels > max){
+    if(params->fmt_in->nChannels > max)
         params->result = S_FALSE;
-        closest->Format.nChannels = max;
-    }else if(params->fmt_in->nChannels < min){
+    else if(params->fmt_in->nChannels < min)
         params->result = S_FALSE;
-        closest->Format.nChannels = min;
-    }
 
     map_channels(params->flow, params->fmt_in, &alsa_channels, alsa_channel_map);
 
-    if(alsa_channels > max){
+    if(alsa_channels > max)
         params->result = S_FALSE;
-        closest->Format.nChannels = max;
-    }
-
-    if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        closest->dwChannelMask = get_channel_mask(closest->Format.nChannels);
-
-    if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
-       params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec ||
-       (params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-        fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample))
-        params->result = S_FALSE;
-
-    if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE && params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED)
-            params->result = S_FALSE;
-    }
 
 exit:
-    if(params->result == S_FALSE && !params->fmt_out)
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    if(params->result == S_FALSE) {
-        closest->Format.nBlockAlign = closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
-        closest->Format.nAvgBytesPerSec = closest->Format.nBlockAlign * closest->Format.nSamplesPerSec;
-        if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            closest->Samples.wValidBitsPerSample = closest->Format.wBitsPerSample;
-        memcpy(params->fmt_out, closest, closest->Format.cbSize);
-    }
-    free(closest);
     free(formats);
     free(hw_params);
     snd_pcm_close(pcm_handle);
@@ -2476,16 +2401,16 @@ static NTSTATUS alsa_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    alsa_process_attach,
     alsa_not_implemented,
-    alsa_main_loop,
+    alsa_not_implemented,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
     alsa_start,
     alsa_stop,
     alsa_reset,
-    alsa_timer_loop,
     alsa_get_render_buffer,
     alsa_release_render_buffer,
     alsa_get_capture_buffer,
@@ -2521,17 +2446,13 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 typedef UINT PTR32;
 
-static NTSTATUS alsa_wow64_main_loop(void *args)
+static NTSTATUS alsa_wow64_process_attach(void *args)
 {
-    struct
-    {
-        PTR32 event;
-    } *params32 = args;
-    struct main_loop_params params =
-    {
-        .event = ULongToHandle(params32->event)
-    };
-    return alsa_main_loop(&params);
+    SYSTEM_BASIC_INFORMATION info;
+
+    NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+    zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS alsa_wow64_get_endpoint_ids(void *args)
@@ -2598,13 +2519,11 @@ static NTSTATUS alsa_wow64_release_stream(void *args)
     struct
     {
         stream_handle stream;
-        PTR32 timer_thread;
         HRESULT result;
     } *params32 = args;
     struct release_stream_params params =
     {
         .stream = params32->stream,
-        .timer_thread = ULongToHandle(params32->timer_thread)
     };
     alsa_release_stream(&params);
     params32->result = params.result;
@@ -2669,7 +2588,6 @@ static NTSTATUS alsa_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
-        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
@@ -2678,7 +2596,6 @@ static NTSTATUS alsa_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
-        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     alsa_is_format_supported(&params);
     params32->result = params.result;
@@ -2935,16 +2852,16 @@ static NTSTATUS alsa_wow64_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    alsa_process_attach,
+    alsa_wow64_process_attach,
     alsa_not_implemented,
-    alsa_wow64_main_loop,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_wow64_get_endpoint_ids,
     alsa_wow64_create_stream,
     alsa_wow64_release_stream,
     alsa_start,
     alsa_stop,
     alsa_reset,
-    alsa_timer_loop,
     alsa_wow64_get_render_buffer,
     alsa_release_render_buffer,
     alsa_wow64_get_capture_buffer,

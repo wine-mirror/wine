@@ -36,19 +36,11 @@ HRESULT WINAPI RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt);
 
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
-                                MSHCTX dest_context, void *dest_context_data,
-                                REFIID riid, const OXID_INFO *oxid_info,
-                                void **object);
-
 /* number of refs given out for normal marshaling */
 #define NORMALEXTREFS 5
 
 /* private flag indicating that the object was marshaled as table-weak */
 #define SORFP_TABLEWEAK SORF_OXRES1
-/* private flag indicating that the caller does not want to notify the stub
- * when the proxy disconnects or is destroyed */
-#define SORFP_NOLIFETIMEMGMT SORF_OXRES2
 
 /* imported interface proxy */
 struct ifproxy
@@ -1873,7 +1865,7 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
 
         /* do the unmarshal */
         hr = unmarshal_object(&stdobjref, apt, This->dest_context,
-                              This->dest_context_data, &IID_IRemUnknown,
+                              This->dest_context_data, &IID_IRundown,
                               &This->oxid_info, (void**)remunk);
         if (hr == S_OK && called_in_original_apt)
         {
@@ -2095,7 +2087,7 @@ static HRESULT WINAPI StdMarshalImpl_MarshalInterface(IMarshal *iface, IStream *
 /* helper for StdMarshalImpl_UnmarshalInterface - does the unmarshaling with
  * no questions asked about the rules surrounding same-apartment unmarshals
  * and table marshaling */
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt, MSHCTX dest_context,
+HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt, MSHCTX dest_context,
         void *dest_context_data, REFIID riid, const OXID_INFO *oxid_info, void **object)
 {
     struct proxy_manager *proxy_manager = NULL;

@@ -55,6 +55,7 @@ alias_map[] =
     { L"nicconfig", L"Win32_NetworkAdapterConfiguration" },
     { L"os", L"Win32_OperatingSystem" },
     { L"process", L"Win32_Process" },
+    { L"qfe", L"Win32_QuickFixEngineering" },
     { L"systemenclosure", L"Win32_SystemEnclosure" },
 };
 
@@ -290,7 +291,7 @@ static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
 
-        IWbemClassObject_BeginEnumeration( obj, 0 );
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
         while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
         {
             convert_to_bstr( &v );
@@ -308,7 +309,7 @@ static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
     IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
     if (count)
     {
-        IWbemClassObject_BeginEnumeration( obj, 0 );
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
         while (IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL ) == S_OK)
         {
             output_text( name, width );
@@ -324,7 +325,7 @@ static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
     {
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
-        IWbemClassObject_BeginEnumeration( obj, 0 );
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
         while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
         {
             convert_to_bstr( &v );
@@ -352,6 +353,12 @@ static int process_args( int argc, WCHAR *argv[] )
 {
     const WCHAR *class;
     int i;
+
+    if (!wcscmp( argv[0], L"/?" ))
+    {
+        output_error( STRING_HELP );
+        return 0;
+    }
 
     for (i = 0; i < argc && argv[i][0] == '/'; i++)
         WINE_FIXME( "switch %s not supported\n", debugstr_w(argv[i]) );

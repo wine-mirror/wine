@@ -20,7 +20,6 @@
  */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "dde.h"
@@ -29,6 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
+#define MAX_ATOM_LEN  255
 
 /* pack a pointer into a 32/64 portable format */
 static inline ULONGLONG pack_ptr( const void *ptr )
@@ -671,7 +671,7 @@ BOOL WINAPI InSendMessage(void)
  */
 DWORD WINAPI InSendMessageEx( LPVOID reserved )
 {
-    return NtUserGetThreadInfo()->receive_flags;
+    return NtUserGetThreadState( UserThreadStateInSendMessage );
 }
 
 
@@ -894,34 +894,6 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
 
 
 /***********************************************************************
- *		GetMessagePos (USER.119)
- *		GetMessagePos (USER32.@)
- *
- * The GetMessagePos() function returns a long value representing a
- * cursor position, in screen coordinates, when the last message
- * retrieved by the GetMessage() function occurs. The x-coordinate is
- * in the low-order word of the return value, the y-coordinate is in
- * the high-order word. The application can use the MAKEPOINT()
- * macro to obtain a POINT structure from the return value.
- *
- * For the current cursor position, use GetCursorPos().
- *
- * RETURNS
- *
- * Cursor position of last message on success, zero on failure.
- *
- * CONFORMANCE
- *
- * ECMA-234, Win32
- *
- */
-DWORD WINAPI GetMessagePos(void)
-{
-    return NtUserGetThreadInfo()->message_pos;
-}
-
-
-/***********************************************************************
  *		GetMessageTime (USER.120)
  *		GetMessageTime (USER32.@)
  *
@@ -953,18 +925,6 @@ LPARAM WINAPI GetMessageExtraInfo(void)
 
 
 /***********************************************************************
- *		SetMessageExtraInfo (USER32.@)
- */
-LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
-{
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    LONG old_value = thread_info->message_extra;
-    thread_info->message_extra = lParam;
-    return old_value;
-}
-
-
-/***********************************************************************
  *		MsgWaitForMultipleObjects (USER32.@)
  */
 DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,
@@ -988,23 +948,33 @@ DWORD WINAPI WaitForInputIdle( HANDLE process, DWORD timeout )
  *		RegisterWindowMessageA (USER32.@)
  *		RegisterWindowMessage (USER.118)
  */
-UINT WINAPI RegisterWindowMessageA( LPCSTR str )
+UINT WINAPI RegisterWindowMessageA( LPCSTR name )
 {
-    UINT ret = GlobalAddAtomA(str);
-    TRACE("%s, ret=%x\n", str, ret);
-    return ret;
+    WCHAR buf[MAX_ATOM_LEN + 1];
+    UNICODE_STRING str = {.Buffer = buf, .MaximumLength = sizeof(buf)};
+    STRING ansi;
+
+    TRACE( "%s\n", debugstr_a(name) );
+
+    RtlInitAnsiString( &ansi, name );
+    RtlAnsiStringToUnicodeString( &str, &ansi, FALSE );
+    return NtUserRegisterWindowMessage( &str );
 }
 
 
 /***********************************************************************
  *		RegisterWindowMessageW (USER32.@)
  */
-UINT WINAPI RegisterWindowMessageW( LPCWSTR str )
+UINT WINAPI RegisterWindowMessageW( LPCWSTR name )
 {
-    UINT ret = GlobalAddAtomW(str);
-    TRACE("%s ret=%x\n", debugstr_w(str), ret);
-    return ret;
+    UNICODE_STRING str;
+
+    TRACE( "%s\n", debugstr_w(name) );
+
+    RtlInitUnicodeString( &str, name );
+    return NtUserRegisterWindowMessage( &str );
 }
+
 
 typedef struct BroadcastParm
 {

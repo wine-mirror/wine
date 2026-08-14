@@ -1,4 +1,4 @@
-EXTLIB    = libfluidsynth.a
+STATICLIB = libfluidsynth.a
 EXTRADEFS = -DNDEBUG -DWITH_PROFILING
 EXTRAINCL = -I$(srcdir)/src \
             -I$(srcdir)/src/bindings \
@@ -11,6 +11,7 @@ EXTRAINCL = -I$(srcdir)/src \
             $(FLUIDSYNTH_PE_CFLAGS)
 
 SOURCES = \
+	config.h \
 	glib.c \
 	src/midi/fluid_midi.c \
 	src/rvoice/fluid_adsr_env.c \
@@ -19,7 +20,7 @@ SOURCES = \
 	src/rvoice/fluid_lfo.c \
 	src/rvoice/fluid_rev.c \
 	src/rvoice/fluid_rvoice.c \
-	src/rvoice/fluid_rvoice_dsp.c \
+	src/rvoice/fluid_rvoice_dsp.cpp \
 	src/rvoice/fluid_rvoice_event.c \
 	src/rvoice/fluid_rvoice_mixer.c \
 	src/sfloader/fluid_defsfont.c \
@@ -27,7 +28,6 @@ SOURCES = \
 	src/sfloader/fluid_sffile.c \
 	src/sfloader/fluid_sfont.c \
 	src/synth/fluid_chan.c \
-	src/synth/fluid_event.c \
 	src/synth/fluid_gen.c \
 	src/synth/fluid_mod.c \
 	src/synth/fluid_synth.c \

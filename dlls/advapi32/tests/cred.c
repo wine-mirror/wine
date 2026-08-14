@@ -32,7 +32,6 @@ static BOOL (WINAPI *pCredEnumerateA)(LPCSTR,DWORD,DWORD *,PCREDENTIALA **);
 static VOID (WINAPI *pCredFree)(PVOID);
 static BOOL (WINAPI *pCredGetSessionTypes)(DWORD,LPDWORD);
 static BOOL (WINAPI *pCredReadA)(LPCSTR,DWORD,DWORD,PCREDENTIALA *);
-static BOOL (WINAPI *pCredRenameA)(LPCSTR,LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCredWriteA)(PCREDENTIALA,DWORD);
 static BOOL (WINAPI *pCredReadDomainCredentialsA)(PCREDENTIAL_TARGET_INFORMATIONA,DWORD,DWORD*,PCREDENTIALA**);
 static BOOL (WINAPI *pCredMarshalCredentialA)(CRED_MARSHAL_TYPE,PVOID,LPSTR *);
@@ -768,7 +767,6 @@ START_TEST(cred)
     pCredWriteA = (void *)GetProcAddress(mod, "CredWriteA");
     pCredDeleteA = (void *)GetProcAddress(mod, "CredDeleteA");
     pCredReadA = (void *)GetProcAddress(mod, "CredReadA");
-    pCredRenameA = (void *)GetProcAddress(mod, "CredRenameA");
     pCredReadDomainCredentialsA = (void *)GetProcAddress(mod, "CredReadDomainCredentialsA");
     pCredMarshalCredentialA = (void *)GetProcAddress(mod, "CredMarshalCredentialA");
     pCredUnmarshalCredentialA = (void *)GetProcAddress(mod, "CredUnmarshalCredentialA");

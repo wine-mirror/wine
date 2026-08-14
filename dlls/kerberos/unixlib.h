@@ -106,8 +106,10 @@ struct seal_message_params
 struct unseal_message_params
 {
     UINT64 context;
-    BYTE *data;
-    ULONG data_length;
+    BYTE *stream;
+    ULONG stream_length;
+    BYTE **data;
+    ULONG *data_length;
     BYTE *token;
     ULONG token_length;
     ULONG *qop;

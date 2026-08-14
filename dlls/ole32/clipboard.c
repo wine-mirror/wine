@@ -1899,6 +1899,9 @@ static HWND create_clipbrd_window(void);
  */
 static inline HRESULT get_clipbrd_window(ole_clipbrd *clipbrd, HWND *wnd)
 {
+    if ( clipbrd->window && !IsWindow(clipbrd->window) )
+        clipbrd->window = NULL;
+
     if ( !clipbrd->window )
         clipbrd->window = create_clipbrd_window();
 

@@ -45,19 +45,6 @@ interface IMFSinkClassFactory : IUnknown
     );
 }
 
-[
-    uuid(0aab315c-33a4-43db-af6b-c9c86921034e),
-    object,
-    local
-]
-interface IMFMediaShutdownNotify : IUnknown
-{
-    HRESULT set_notification_callback(
-            [in] IMFAsyncCallback *callback,
-            [in] IUnknown *state
-    );
-}
-
 cpp_quote("DEFINE_GUID(CLSID_MF3GPSinkClassFactory, 0xe54cdfaf, 0x2381, 0x4cad, 0xab, 0x99, 0xf3, 0x85, 0x17, 0x12, 0x7d, 0x5c);")
 cpp_quote("DEFINE_GUID(CLSID_MFAC3SinkClassFactory, 0x255a6fda, 0x6f93, 0x4e8a, 0x96, 0x11, 0xde, 0xd1, 0x16, 0x9e, 0xef, 0xb4);")
 cpp_quote("DEFINE_GUID(CLSID_MFADTSSinkClassFactory, 0xd7ca55ab, 0x5022, 0x4db3, 0xa5, 0x99, 0xab, 0xaf, 0xa3, 0x58, 0xe6, 0xf3);")

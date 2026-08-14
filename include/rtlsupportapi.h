@@ -21,6 +21,12 @@
 #ifndef _APISETRTLSUPPORT_
 #define _APISETRTLSUPPORT_
 
+#include <apisetcconv.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NTSYSAPI void   WINAPI RtlCaptureContext(CONTEXT*);
 NTSYSAPI void   WINAPI RtlCaptureContext2(CONTEXT*);
 NTSYSAPI USHORT WINAPI RtlCaptureStackBackTrace(ULONG,ULONG,void**,ULONG*);
@@ -73,5 +79,9 @@ NTSYSAPI BOOLEAN            WINAPI RtlIsEcCode(ULONG_PTR);
 #endif
 
 #endif  /* __i386__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _APISETRTLSUPPORT_ */

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_FREETYPE
+#ifdef SONAME_LIBFREETYPE
 
 #ifdef HAVE_FT2BUILD_H
 #include <ft2build.h>
@@ -42,7 +42,7 @@
 #include "basetsd.h"
 #include "../tools.h"
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -137,7 +137,7 @@ typedef struct
 } FT_Version_t;
 static FT_Version_t FT_Version;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 unsigned char *output_buffer = NULL;
 size_t output_buffer_pos = 0;
@@ -1036,7 +1036,7 @@ done:
     exit(0);
 }
 
-#else /* HAVE_FREETYPE */
+#else /* SONAME_LIBFREETYPE */
 
 int main(int argc, char **argv)
 {
@@ -1044,4 +1044,4 @@ int main(int argc, char **argv)
     exit(1);
 }
 
-#endif /* HAVE_FREETYPE */
+#endif /* SONAME_LIBFREETYPE */

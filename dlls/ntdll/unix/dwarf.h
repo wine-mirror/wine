@@ -21,7 +21,6 @@
 #ifndef __NTDLL_DWARF_H
 #define __NTDLL_DWARF_H
 
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 

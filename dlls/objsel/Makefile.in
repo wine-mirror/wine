@@ -1,7 +1,8 @@
 MODULE    = objsel.dll
 IMPORTS   = strmiids uuid ole32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Wine objsel"
+
 SOURCES = \
 	objsel.c \
-	objsel.rc \
 	objsel_classes.idl

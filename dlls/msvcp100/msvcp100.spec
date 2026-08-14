@@ -3837,14 +3837,14 @@
 @ cdecl -ret64 -arch=arm ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAA_JPB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
 @ thiscall -ret64 -arch=i386 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE_JPB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ extern _Denorm
 @ stub _Dnorm
 @ cdecl _Dscale(ptr long)
 @ cdecl _Dtest(ptr)
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)
@@ -3854,7 +3854,7 @@
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 @ stub _GetLocaleForCP
@@ -3866,7 +3866,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest
@@ -3876,7 +3876,7 @@
 @ extern _LNan
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan
 # extern _LXbig
 @ extern _LZero
@@ -3889,7 +3889,7 @@
 @ stub _Once
 @ stub _Poly
 # extern _Rteps
-@ stub _Sinh
+@ cdecl _Sinh(double double)
 @ extern _Snan
 @ cdecl _Stod(ptr ptr long)
 @ cdecl _Stodx(ptr ptr long ptr)

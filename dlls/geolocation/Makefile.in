@@ -3,4 +3,5 @@ IMPORTS = combase uuid
 
 SOURCES = \
 	classes.idl \
-	main.c
+	main.c \
+	weakref.c

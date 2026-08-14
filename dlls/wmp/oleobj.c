@@ -421,7 +421,15 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
         ShowWindow(This->hwnd, SW_HIDE);
         return S_OK;
+    case OLEIVERB_SHOW:
+        if (!This->hwnd)
+        {
+            FIXME("No window to show\n");
+            return E_UNEXPECTED;
+        }
 
+        ShowWindow(This->hwnd, SW_SHOW);
+        return S_OK;
     default:
         FIXME("Unsupported iVerb %ld\n", iVerb);
     }

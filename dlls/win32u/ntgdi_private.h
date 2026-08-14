@@ -61,6 +61,7 @@ typedef struct tagDC
     UINT         bounds_enabled:1; /* bounds tracking is enabled */
     UINT         path_open:1;      /* path is currently open (only for saved DCs) */
     UINT         is_display:1;     /* DC is for display device */
+    struct opengl_drawable *opengl_drawable; /* GL driver drawable for the DC */
 
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
@@ -180,10 +181,13 @@ extern DC *alloc_dc_ptr( DWORD magic );
 extern void free_dc_ptr( DC *dc );
 extern DC *get_dc_ptr( HDC hdc );
 extern void release_dc_ptr( DC *dc );
+extern BOOL is_dc_display( HDC hdc );
+extern int get_dc_pixel_format( HDC hdc );
 extern struct dce *get_dc_dce( HDC hdc );
 extern void set_dc_dce( HDC hdc, struct dce *dce );
 extern WORD set_dce_flags( HDC hdc, WORD flags );
 extern DWORD set_stretch_blt_mode( HDC hdc, DWORD mode );
+extern BOOL offset_viewport_org( HDC hdc, INT x, INT y, POINT *point );
 extern BOOL set_viewport_org( HDC hdc, INT x, INT y, POINT *point );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
@@ -640,7 +644,5 @@ static inline void copy_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *src )
 extern void free_heap_bits( struct gdi_image_bits *bits );
 
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr );
-
-extern SYSTEM_BASIC_INFORMATION system_info;
 
 #endif /* __WINE_NTGDI_PRIVATE_H */

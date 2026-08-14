@@ -36,7 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
  */
 
 static const WCHAR favoritesKey[] =  L"Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\Regedit\\Favorites";
-static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 static WCHAR favoriteName[128];
 static WCHAR searchString[128];
 static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
@@ -81,13 +80,11 @@ static void OnEnterMenuLoop(HWND hWnd)
     /* Update the status bar pane sizes */
     nParts = -1;
     SendMessageW(hStatusBar, SB_SETPARTS, 1, (LPARAM)&nParts);
-    bInMenuLoop = TRUE;
     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)&empty);
 }
 
 static void OnExitMenuLoop(HWND hWnd)
 {
-    bInMenuLoop = FALSE;
     /* Update the status bar pane sizes*/
     SetupStatusBar(hWnd, TRUE);
     UpdateStatusBar();

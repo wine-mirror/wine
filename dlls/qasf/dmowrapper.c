@@ -26,6 +26,7 @@ struct buffer
 {
     IMediaBuffer IMediaBuffer_iface;
     IMediaSample *sample;
+    DWORD len;
 };
 
 struct dmo_wrapper_source
@@ -88,7 +89,8 @@ static HRESULT WINAPI buffer_SetLength(IMediaBuffer *iface, DWORD len)
 
     TRACE("iface %p, len %lu.\n", iface, len);
 
-    return IMediaSample_SetActualDataLength(buffer->sample, len);
+    buffer->len = len;
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_GetMaxLength(IMediaBuffer *iface, DWORD *len)
@@ -107,8 +109,10 @@ static HRESULT WINAPI buffer_GetBufferAndLength(IMediaBuffer *iface, BYTE **data
 
     TRACE("iface %p, data %p, len %p.\n", iface, data, len);
 
-    *len = IMediaSample_GetActualDataLength(buffer->sample);
-    return IMediaSample_GetPointer(buffer->sample, data);
+    *len = buffer->len;
+    if (data)
+        return IMediaSample_GetPointer(buffer->sample, data);
+    return S_OK;
 }
 
 static const IMediaBufferVtbl buffer_vtbl =
@@ -216,7 +220,7 @@ static void release_output_samples(struct dmo_wrapper *filter)
     }
 }
 
-static HRESULT get_output_samples(struct dmo_wrapper *filter)
+static HRESULT get_output_samples(struct dmo_wrapper *filter, IMediaObject *dmo)
 {
     HRESULT hr;
     DWORD i;
@@ -225,6 +229,8 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
     {
         if (filter->sources[i].pin.pin.peer)
         {
+            AM_MEDIA_TYPE *mt;
+
             if (FAILED(hr = IMemAllocator_GetBuffer(filter->sources[i].pin.pAllocator,
                     &filter->sources[i].buffer.sample, NULL, NULL, 0)))
             {
@@ -233,7 +239,26 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
                 return hr;
             }
             filter->buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
-            IMediaSample_SetActualDataLength(filter->sources[i].buffer.sample, 0);
+            filter->sources[i].buffer.len = 0;
+
+            /* Handle dynamic format change. */
+            if ((hr = IMediaSample_GetMediaType(filter->sources[i].buffer.sample, &mt)) == S_OK)
+            {
+                if ((hr = IMediaObject_SetOutputType(dmo, i, (const DMO_MEDIA_TYPE *)mt, 0)) != S_OK)
+                {
+                    /* This isn't supposed to happen; the downstream filter
+                     * should call QueryAccept() first. */
+                    ERR("Failed to set output type, hr %#lx.\n", hr);
+                    release_output_samples(filter);
+                    DeleteMediaType(mt);
+                    return hr;
+                }
+                DeleteMediaType(mt);
+            }
+            else if (hr != S_FALSE)
+            {
+                ERR("Failed to get media type, hr %#lx.\n", hr);
+            }
         }
         else
             filter->buffers[i].pBuffer = NULL;
@@ -246,18 +271,21 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 {
     DMO_OUTPUT_DATA_BUFFER *buffers = filter->buffers;
     HRESULT hr = S_OK;
-    DWORD status, i;
+    DWORD status = 0, i;
     BOOL more_data;
 
     do
     {
+        HRESULT process_hr;
         more_data = FALSE;
 
-        if (FAILED(hr = get_output_samples(filter)))
+        if (FAILED(hr = get_output_samples(filter, dmo)))
             return hr;
 
-        if (FAILED(IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
-                filter->source_count, buffers, &status)))
+        process_hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
+                filter->source_count, buffers, &status);
+        TRACE("ProcessOutput() returned %#lx.\n", process_hr);
+        if (FAILED(process_hr))
         {
             release_output_samples(filter);
             break;
@@ -269,6 +297,8 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 
             if (!buffers[i].pBuffer)
                 continue;
+
+            IMediaSample_SetActualDataLength(sample, filter->sources[i].buffer.len);
 
             if (buffers[i].dwStatus & DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE)
                 more_data = TRUE;
@@ -346,6 +376,7 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     }
 
     filter->input_buffer.sample = sample;
+    filter->input_buffer.len = IMediaSample_GetActualDataLength(sample);
     if (FAILED(hr = IMediaObject_ProcessInput(dmo, index,
             &filter->input_buffer.IMediaBuffer_iface, flags, start, stop - start)))
     {
@@ -682,7 +713,21 @@ static HRESULT dmo_wrapper_query_interface(struct strmbase_filter *iface, REFIID
 static HRESULT dmo_wrapper_init_stream(struct strmbase_filter *iface)
 {
     struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
+    IMediaObject *dmo;
+    HRESULT hr;
     DWORD i;
+
+    if (!filter->dmo)
+        return E_FAIL;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    if (FAILED(hr = IMediaObject_AllocateStreamingResources(dmo)))
+    {
+        ERR("AllocateStreamingResources() failed, hr %#lx.\n", hr);
+        IMediaObject_Release(dmo);
+        return hr;
+    }
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -690,6 +735,7 @@ static HRESULT dmo_wrapper_init_stream(struct strmbase_filter *iface)
             IMemAllocator_Commit(filter->sources[i].pin.pAllocator);
     }
 
+    IMediaObject_Release(dmo);
     return S_OK;
 }
 
@@ -712,6 +758,7 @@ static HRESULT dmo_wrapper_cleanup_stream(struct strmbase_filter *iface)
     }
 
     IMediaObject_Flush(dmo);
+    IMediaObject_FreeStreamingResources(dmo);
 
     IMediaObject_Release(dmo);
     LeaveCriticalSection(&filter->filter.stream_cs);

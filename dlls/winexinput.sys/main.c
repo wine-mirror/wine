@@ -22,7 +22,6 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -236,9 +235,9 @@ static void translate_report_to_xinput_state(struct func_device *fdo)
         fdo->xinput_state.buttons |= (1 << (usages[i] - 1));
     }
     fdo->xinput_state.lx_axis = scale_value(lx, &fdo->lx_caps, 0, 65535);
-    fdo->xinput_state.ly_axis = scale_value(ly, &fdo->ly_caps, 0, 65535);
+    fdo->xinput_state.ly_axis = 65535 - scale_value(ly, &fdo->ly_caps, 0, 65535);
     fdo->xinput_state.rx_axis = scale_value(rx, &fdo->rx_caps, 0, 65535);
-    fdo->xinput_state.ry_axis = scale_value(ry, &fdo->ry_caps, 0, 65535);
+    fdo->xinput_state.ry_axis = 65535 - scale_value(ry, &fdo->ry_caps, 0, 65535);
     rt = scale_value(rt, &fdo->rt_caps, 0, 255);
     lt = scale_value(lt, &fdo->lt_caps, 0, 255);
     fdo->xinput_state.trigger = 0x8000 + (lt - rt) * 128;

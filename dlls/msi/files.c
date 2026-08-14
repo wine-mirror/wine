@@ -157,27 +157,41 @@ static BOOL apply_filepatch( MSIPACKAGE *package, const WCHAR *patch, const WCHA
     return ret;
 }
 
-DWORD msi_get_file_version_info( MSIPACKAGE *package, const WCHAR *path, DWORD buflen, BYTE *buffer )
+BYTE *msi_get_file_version_info( MSIPACKAGE *package, const WCHAR *path )
 {
-    DWORD size, handle;
+    WCHAR temppath[MAX_PATH];
+    DWORD size;
+    BYTE *buffer = NULL;
+
     msi_disable_fs_redirection( package );
-    if (buffer) size = GetFileVersionInfoW( path, 0, buflen, buffer );
-    else size = GetFileVersionInfoSizeW( path, &handle );
+    if (is_wow64 && is_platform_64bit( package->platform ) && !wcsnicmp( path, sysdir, sysdir_len )
+        && path[sysdir_len] == '\\')
+    {
+        SIZE_T len = sysdir_len;
+
+        while (len && sysdir[len] != '\\') --len;
+        swprintf( temppath, ARRAY_SIZE(temppath), L"%.*s\\sysnative%s", len, sysdir, path + sysdir_len );
+        path = temppath;
+    }
+    if (!(size = GetFileVersionInfoSizeW( path, NULL ))) goto done;
+    if (!(buffer = malloc( size ))) goto done;
+    if (!GetFileVersionInfoW( path, 0, size, buffer ))
+    {
+        free( buffer );
+        buffer = NULL;
+    }
+done:
     msi_revert_fs_redirection( package );
-    return size;
+    return buffer;
 }
 
 VS_FIXEDFILEINFO *msi_get_disk_file_version( MSIPACKAGE *package, const WCHAR *filename )
 {
     VS_FIXEDFILEINFO *ptr, *ret;
-    DWORD version_size;
     UINT size;
     void *version;
 
-    if (!(version_size = msi_get_file_version_info( package, filename, 0, NULL ))) return NULL;
-    if (!(version = malloc( version_size ))) return NULL;
-
-    msi_get_file_version_info( package, filename, version_size, version );
+    if (!(version = msi_get_file_version_info( package, filename ))) return NULL;
 
     if (!VerQueryValueW( version, L"\\", (void **)&ptr, &size ))
     {
@@ -729,7 +743,7 @@ UINT msi_patch_assembly( MSIPACKAGE *package, MSIASSEMBLY *assembly, MSIFILEPATC
     IAssemblyName *name;
     IAssemblyEnum *iter;
 
-    if (!(iter = msi_create_assembly_enum( package, assembly->display_name )))
+    if (!(iter = msi_create_assembly_enum( assembly->display_name )))
         return ERROR_FUNCTION_FAILED;
 
     while ((IAssemblyEnum_GetNextAssembly( iter, NULL, &name, 0 ) == S_OK))
@@ -749,7 +763,7 @@ UINT msi_patch_assembly( MSIPACKAGE *package, MSIASSEMBLY *assembly, MSIFILEPATC
             break;
         }
 
-        if ((path = msi_get_assembly_path( package, displayname )))
+        if ((path = msi_get_assembly_path( displayname )))
         {
             if (!msi_copy_file( package, path, patch->File->TargetPath, FALSE ))
             {

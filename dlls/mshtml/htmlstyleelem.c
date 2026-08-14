@@ -302,11 +302,15 @@ static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t
         {DISPID_IHTMLSTYLEELEMENT_STYLESHEET, NULL},
         {DISPID_UNKNOWN}
     };
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IHTMLSTYLEELEMENT_STYLESHEET, .noattr = TRUE},
+        {DISPID_UNKNOWN}
+    };
 
     HTMLElement_init_dispex_info(info, mode);
 
     dispex_info_add_interface(info, IHTMLStyleElement_tid,
-                              mode >= COMPAT_MODE_IE11 ? ie11_hooks : NULL);
+                              mode >= COMPAT_MODE_IE11 ? ie11_hooks : hooks);
 
     if(mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLStyleElement2_tid, NULL);

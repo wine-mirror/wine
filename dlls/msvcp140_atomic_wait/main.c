@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include "stdint.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -81,6 +82,18 @@ BOOL __stdcall __std_atomic_wait_direct(volatile void *addr, void *cmp,
 {
     TRACE("(%p %p %Id %ld)\n", addr, cmp, size, timeout);
     return WaitOnAddress(addr, cmp, size, timeout);
+}
+
+void __stdcall __std_execution_wait_on_uchar(void *addr, unsigned char val)
+{
+    TRACE("(%p %d)\n", addr, val);
+    WaitOnAddress(addr, &val, sizeof(val), INFINITE);
+}
+
+void __stdcall __std_execution_wake_by_address_all(void *addr)
+{
+    TRACE("(%p)\n", addr);
+    WakeByAddressAll(addr);
 }
 
 typedef struct
@@ -174,4 +187,128 @@ void* __stdcall __std_calloc_crt(size_t count, size_t size)
 void __stdcall __std_free_crt(void *ptr)
 {
     free(ptr);
+}
+
+enum tzdb_error
+{
+    TZDB_ERROR_SUCCESS,
+    TZDB_ERROR_WIN,
+    TZDB_ERROR_ICU,
+};
+
+struct tzdb_time_zones
+{
+    enum tzdb_error error;
+    char *ver;
+    unsigned int count;
+    char **names;
+    char **links;
+};
+
+struct tzdb_current_zone
+{
+    enum tzdb_error error;
+    char *name;
+};
+
+struct tzdb_leap_second
+{
+    uint16_t year;
+    uint16_t month;
+    uint16_t day;
+    uint16_t hour;
+    uint16_t negative;
+    uint16_t reserved;
+};
+
+struct tzdb_time_zones * __stdcall __std_tzdb_get_time_zones(void)
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tzd;
+    static char ver[] = "2022g";
+    struct tzdb_time_zones *z;
+    unsigned int i, j;
+
+    FIXME("returning Windows time zone names.\n");
+
+    z = calloc(1, sizeof(*z));
+    while (!EnumDynamicTimeZoneInformation(z->count, &tzd))
+        ++z->count;
+
+    z->ver = ver;
+    z->names = calloc(z->count, sizeof(*z->names));
+    z->links = calloc(z->count, sizeof(*z->links));
+
+    for (i = 0; i < z->count; ++i)
+    {
+        if (EnumDynamicTimeZoneInformation(i, &tzd))
+            break;
+        z->names[i] = malloc(wcslen(tzd.StandardName) + 1);
+        j = 0;
+        while ((z->names[i][j] = tzd.StandardName[j]))
+            ++j;
+    }
+    z->count = i;
+    return z;
+}
+
+void __stdcall __std_tzdb_delete_time_zones(struct tzdb_time_zones *z)
+{
+    unsigned int i;
+
+    TRACE("(%p)\n", z);
+
+    for (i = 0; i < z->count; ++i)
+    {
+        free(z->names[i]);
+        free(z->links[i]);
+    }
+    free(z->names);
+    free(z->links);
+    free(z);
+}
+
+struct tzdb_current_zone * __stdcall __std_tzdb_get_current_zone(void)
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tzd;
+    struct tzdb_current_zone *c;
+    unsigned int i;
+
+    FIXME("returning Windows time zone name.\n");
+
+    c = calloc(1, sizeof(*c));
+
+    if (GetDynamicTimeZoneInformation(&tzd) == TIME_ZONE_ID_INVALID)
+    {
+        c->error = TZDB_ERROR_WIN;
+        return c;
+    }
+
+    c->name = malloc(wcslen(tzd.StandardName) + 1);
+    i = 0;
+    while ((c->name[i] = tzd.StandardName[i]))
+        ++i;
+    return c;
+}
+
+void __stdcall __std_tzdb_delete_current_zone(struct tzdb_current_zone *c)
+{
+    TRACE("(%p)\n", c);
+
+    free(c->name);
+    free(c);
+}
+
+struct tzdb_leap_second * __stdcall __std_tzdb_get_leap_seconds(size_t prev_size, size_t *new_size)
+{
+    FIXME("(%#Ix %p) stub\n", prev_size, new_size);
+
+    *new_size = 0;
+    return NULL;
+}
+
+void __stdcall __std_tzdb_delete_leap_seconds(struct tzdb_leap_second *l)
+{
+    TRACE("(%p)\n", l);
+
+    free(l);
 }

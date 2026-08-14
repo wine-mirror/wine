@@ -1385,7 +1385,7 @@ BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
     }
 
     cb->type = brush->type;
-    cb->opacity = brush->opacity;
+    cb->opacity = max(0.0f, min(brush->opacity, 1.0f));
 
     switch (brush->type)
     {
@@ -1445,7 +1445,7 @@ BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
             t = sqrtf(s1 - s2);
             d2d_point_set(&cb->u.radial.rb, t * -sin_theta, t * cos_theta);
 
-            cb->u.radial.stop_count = brush->u.linear.gradient->stop_count;
+            cb->u.radial.stop_count = brush->u.radial.gradient->stop_count;
 
             return TRUE;
 

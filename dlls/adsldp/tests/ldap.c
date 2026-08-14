@@ -37,6 +37,9 @@ DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_OLEGUID(CLSID_PointerMoniker,0x306,0,0);
 
+DEFINE_GUID(CLSID_Computers,0x252831aa,0x8876,0xd111,0xad,0xed,0x00,0xc0,0x4f,0xd8,0xd5,0xcd);
+DEFINE_GUID(CLSID_Users,0x15cad1a9,0x8876,0xd111,0xad,0xed,0x00,0xc0,0x4f,0xd8,0xd5,0xcd);
+
 static BOOL server_down;
 
 static const struct
@@ -204,7 +207,7 @@ static void test_ParseDisplayName(void)
             server_down = TRUE;
             break;
         }
-        todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
+        todo_wine_if(i == 0 || i == 1)
         ok(hr == test[i].hr, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {
@@ -595,6 +598,204 @@ static void test_DirectoryObject(void)
     IDirectoryObject_Release(dirobj);
 }
 
+static void get_attribute(IADs *ads, BSTR name, int vt)
+{
+    HRESULT hr;
+    VARIANT var;
+
+    VariantInit(&var);
+    hr = IADs_GetEx(ads, name, &var);
+    ok(hr == S_OK, "GetEx(%s) error %#lx\n", wine_dbgstr_w(name), hr);
+    ok(V_VT(&var) == vt, "attribute %s has vt %#x\n", wine_dbgstr_w(name), V_VT(&var));
+    if (V_VT(&var) != vt) return;
+
+    if (V_VT(&var) | VT_ARRAY)
+    {
+        VARIANT item;
+        LONG start, end, idx;
+
+        hr = SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        hr = SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        for (idx = start; idx <= end; idx++)
+        {
+            VariantInit(&item);
+            hr = SafeArrayGetElement(V_ARRAY(&var), &idx, &item);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            ok(V_VT(&item) == VT_BSTR, "%ld: got %d\n", idx, V_VT(&item));
+            trace("%s[%ld]: %s\n", wine_dbgstr_w(name), idx, wine_dbgstr_w(V_BSTR(&item)));
+            VariantClear(&item);
+        }
+    }
+    VariantClear(&var);
+}
+
+static void test_IADs_GetEx(void)
+{
+    HRESULT hr;
+    IADs *ads, *ads2;
+    BSTR bstr;
+    VARIANT var, item, bin;
+    LONG start, end, idx, found;
+    WCHAR path[256];
+    IADsDNWithBinary *dn;
+
+    hr = ADsGetObject(L"LDAP://rootDSE", &IID_IADs, (void **)&ads);
+    if (hr != S_OK)
+    {
+        skip("Computer is not part of an Active Directory Domain\n");
+        return;
+    }
+
+    hr = IADs_get_Schema(ads, &bstr);
+    ok(hr == E_ADS_PROPERTY_NOT_SUPPORTED, "got %#lx\n", hr);
+
+    VariantInit(&var);
+    hr = IADs_Get(ads, (BSTR)L"objectClass", &var);
+    ok(hr == E_ADS_PROPERTY_NOT_FOUND, "got %#lx\n", hr);
+
+    VariantInit(&var);
+    hr = IADs_Get(ads, (BSTR)L"defaultNamingContext", &var);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(V_VT(&var) == VT_BSTR, "got %#x\n", V_VT(&var));
+    trace("defaultNamingContext: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    wcscpy(path, L"LDAP://");
+    wcscat(path, V_BSTR(&var));
+    VariantClear(&var);
+
+    get_attribute(ads, (BSTR)L"defaultNamingContext", VT_ARRAY | VT_VARIANT);
+
+    VariantInit(&var);
+    hr = IADs_Get(ads, (BSTR)L"wellKnownObjects", &var);
+    ok(hr == E_ADS_PROPERTY_NOT_FOUND, "got %#lx\n", hr);
+
+    IADs_Release(ads);
+
+    hr = ADsGetObject(path, &IID_IADs, (void **)&ads);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    get_attribute(ads, (BSTR)L"objectClass", VT_ARRAY | VT_VARIANT);
+
+    hr = IADs_get_Schema(ads, &bstr);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    trace("Schema of %s: %s\n", wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    /* ::Get() */
+    VariantInit(&var);
+    hr = IADs_Get(ads, (BSTR)L"wellKnownObjects", &var);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(V_VT(&var) == (VT_ARRAY | VT_VARIANT), "got %#x\n", V_VT(&var));
+    hr = SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(start == 0, "got start %ld\n", start);
+    hr = SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    trace("wellKnownObjects contains %lu elements\n", end - start + 1);
+    VariantInit(&item);
+    found = 0;
+    for (idx = start; idx <= end; idx++)
+    {
+        hr = SafeArrayGetElement(V_ARRAY(&var), &idx, &item);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(V_VT(&item) == VT_DISPATCH, "%ld: got %d\n", idx, V_VT(&item));
+        hr = IDispatch_QueryInterface(V_DISPATCH(&item), &IID_IADsDNWithBinary, (void **)&dn);
+        ok(hr == S_OK, "IID_IADsDNWithBinary: got %#lx\n", hr);
+
+        hr = IADsDNWithBinary_get_DNString(dn, &bstr);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        trace("%ld: DNString => %s\n", idx, wine_dbgstr_w(bstr));
+
+        VariantInit(&bin);
+        hr = IADsDNWithBinary_get_BinaryValue(dn, &bin);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(V_VT(&bin) == (VT_ARRAY | VT_UI1), "%ld: got %d\n", idx, V_VT(&bin));
+        ok(V_ARRAY(&bin)->cDims == 1, "%ld: got cDims %u\n", idx, V_ARRAY(&bin)->cDims);
+        ok(V_ARRAY(&bin)->cbElements == 1, "%ld: got cDims %lu\n", idx, V_ARRAY(&bin)->cbElements);
+        ok(V_ARRAY(&bin)->rgsabound[0].cElements == sizeof(CLSID),
+           "%ld: got cElements %lu\n", idx, V_ARRAY(&bin)->rgsabound[0].cElements);
+
+        if(!memcmp(V_ARRAY(&bin)->pvData, &CLSID_Computers, sizeof(CLSID)) ||
+           !memcmp(V_ARRAY(&bin)->pvData, &CLSID_Users, sizeof(CLSID)))
+            found++;
+
+        IADsDNWithBinary_Release(dn);
+        VariantClear(&item);
+    }
+    VariantClear(&var);
+    ok(found == 2, "Users or Computers entry not found\n");
+
+    /* ::GetEx() */
+    VariantInit(&var);
+    hr = IADs_GetEx(ads, (BSTR)L"wellKnownObjects", &var);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(V_VT(&var) == (VT_ARRAY | VT_VARIANT), "got %#x\n", V_VT(&var));
+    hr = SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(start == 0, "got start %ld\n", start);
+    hr = SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    VariantInit(&item);
+    found = 0;
+    for (idx = start; idx <= end; idx++)
+    {
+        hr = SafeArrayGetElement(V_ARRAY(&var), &idx, &item);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(V_VT(&item) == VT_DISPATCH, "%ld: got %d\n", idx, V_VT(&item));
+        hr = IDispatch_QueryInterface(V_DISPATCH(&item), &IID_IADsDNWithBinary, (void **)&dn);
+        ok(hr == S_OK, "IID_IADsDNWithBinary: got %#lx\n", hr);
+
+        hr = IADsDNWithBinary_get_DNString(dn, &bstr);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        trace("%ld: DNString => %s\n", idx, wine_dbgstr_w(bstr));
+
+        VariantInit(&bin);
+        hr = IADsDNWithBinary_get_BinaryValue(dn, &bin);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(V_VT(&bin) == (VT_ARRAY | VT_UI1), "%ld: got %d\n", idx, V_VT(&bin));
+        ok(V_ARRAY(&bin)->cDims == 1, "%ld: got cDims %u\n", idx, V_ARRAY(&bin)->cDims);
+        ok(V_ARRAY(&bin)->cbElements == 1, "%ld: got cDims %lu\n", idx, V_ARRAY(&bin)->cbElements);
+        ok(V_ARRAY(&bin)->rgsabound[0].cElements == sizeof(CLSID),
+           "%ld: got cElements %lu\n", idx, V_ARRAY(&bin)->rgsabound[0].cElements);
+
+        if(!memcmp(V_ARRAY(&bin)->pvData, &CLSID_Computers, sizeof(CLSID)) ||
+           !memcmp(V_ARRAY(&bin)->pvData, &CLSID_Users, sizeof(CLSID)))
+            found++;
+
+        wcscpy(path, L"LDAP://");
+        wcscat(path, bstr);
+        SysFreeString(bstr);
+        hr = ADsOpenObject(path, NULL, NULL, ADS_SECURE_AUTHENTICATION, &IID_IADs, (void **)&ads2);
+        if (hr == S_OK)
+        {
+            get_attribute(ads2, (BSTR)L"objectClass", VT_ARRAY | VT_VARIANT);
+
+            hr = IADs_get_Schema(ads2, &bstr);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            trace("Schema of %s: %s\n", wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+
+            IADs_Release(ads2);
+
+            hr = ADsOpenObject(bstr, NULL, NULL, ADS_SECURE_AUTHENTICATION, &IID_IADs, (void **)&ads2);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            IADs_Release(ads2);
+
+            SysFreeString(bstr);
+        }
+        else
+            trace("ADsOpenObject(%s) error %#lx\n", wine_dbgstr_w(path), hr);
+
+        VariantClear(&bin);
+        IADsDNWithBinary_Release(dn);
+        VariantClear(&item);
+    }
+    VariantClear(&var);
+    ok(found == 2, "Users or Computers entry not found\n");
+
+    IADs_Release(ads);
+}
+
 START_TEST(ldap)
 {
     HRESULT hr;
@@ -602,6 +803,7 @@ START_TEST(ldap)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
 
+    test_IADs_GetEx();
     test_LDAP();
     test_ParseDisplayName();
     test_DirectorySearch();

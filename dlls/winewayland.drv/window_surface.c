@@ -38,12 +38,14 @@ struct wayland_buffer_queue
     struct wl_list buffer_list;
     int width;
     int height;
+    uint32_t format;
 };
 
 struct wayland_window_surface
 {
     struct window_surface header;
     struct wayland_buffer_queue *wayland_buffer_queue;
+    BOOL layered;
 };
 
 static struct wayland_window_surface *wayland_window_surface_cast(
@@ -101,7 +103,8 @@ static void wayland_buffer_queue_destroy(struct wayland_buffer_queue *queue)
  *
  * Creates a buffer queue containing buffers with the specified width and height.
  */
-static struct wayland_buffer_queue *wayland_buffer_queue_create(int width, int height)
+static struct wayland_buffer_queue *wayland_buffer_queue_create(int width, int height,
+                                                                uint32_t format)
 {
     struct wayland_buffer_queue *queue;
 
@@ -112,6 +115,7 @@ static struct wayland_buffer_queue *wayland_buffer_queue_create(int width, int h
     if (!queue->wl_event_queue) goto err;
     queue->width = width;
     queue->height = height;
+    queue->format = format;
 
     wl_list_init(&queue->buffer_list);
 
@@ -153,7 +157,7 @@ static struct wayland_shm_buffer *wayland_buffer_queue_get_free_buffer(struct wa
         if (nbuffers < 3)
         {
             shm_buffer = wayland_shm_buffer_create(queue->width, queue->height,
-                                                   WL_SHM_FORMAT_XRGB8888);
+                                                   queue->format);
             if (shm_buffer)
             {
                 /* Buffer events go to their own queue so that we can dispatch
@@ -241,7 +245,7 @@ RGNDATA *get_region_data(HRGN region)
  */
 static void copy_pixel_region(const char *src_pixels, RECT *src_rect,
                               char *dst_pixels, RECT *dst_rect,
-                              HRGN region)
+                              HRGN region, BOOL force_opaque)
 {
     static const int bpp = WINEWAYLAND_BYTES_PER_PIXEL;
     RGNDATA *rgndata = get_region_data(region);
@@ -261,7 +265,7 @@ static void copy_pixel_region(const char *src_pixels, RECT *src_rect,
     {
         const char *src;
         char *dst;
-        int y, width_bytes, height;
+        int x, y, width, height;
         RECT rc;
 
         TRACE("rect %s\n", wine_dbgstr_rect(rgn_rect));
@@ -271,21 +275,39 @@ static void copy_pixel_region(const char *src_pixels, RECT *src_rect,
 
         src = src_pixels + (rc.top - src_rect->top) * src_stride + (rc.left - src_rect->left) * bpp;
         dst = dst_pixels + (rc.top - dst_rect->top) * dst_stride + (rc.left - dst_rect->left) * bpp;
-        width_bytes = (rc.right - rc.left) * bpp;
+        width = rc.right - rc.left;
         height = rc.bottom - rc.top;
 
         /* Fast path for full width rectangles. */
-        if (width_bytes == src_stride && width_bytes == dst_stride)
+        if (width * bpp == src_stride && src_stride == dst_stride)
         {
-            memcpy(dst, src, height * width_bytes);
+            if (force_opaque)
+            {
+                for (x = 0; x < height * width; ++x)
+                    ((UINT32 *)dst)[x] = ((UINT32 *)src)[x] | 0xff000000;
+            }
+            else memcpy(dst, src, height * width * 4);
             continue;
         }
 
-        for (y = 0; y < height; y++)
+        if (force_opaque)
         {
-            memcpy(dst, src, width_bytes);
-            src += src_stride;
-            dst += dst_stride;
+            for (y = 0; y < height; y++)
+            {
+                for (x = 0; x < width; ++x)
+                    ((UINT32 *)dst)[x] = ((UINT32 *)src)[x] | 0xff000000;
+                src += src_stride;
+                dst += dst_stride;
+            }
+        }
+        else
+        {
+            for (y = 0; y < height; y++)
+            {
+                memcpy(dst, src, width * 4);
+                src += src_stride;
+                dst += dst_stride;
+            }
         }
     }
 
@@ -297,11 +319,11 @@ static void copy_pixel_region(const char *src_pixels, RECT *src_rect,
  */
 static void wayland_shm_buffer_copy_data(struct wayland_shm_buffer *buffer,
                                          const char *bits, RECT *rect,
-                                         HRGN region)
+                                         HRGN region, BOOL force_opaque)
 {
     RECT buffer_rect = {0, 0, buffer->width, buffer->height};
     TRACE("buffer=%p bits=%p rect=%s\n", buffer, bits, wine_dbgstr_rect(rect));
-    copy_pixel_region(bits, rect, buffer->map_data, &buffer_rect, region);
+    copy_pixel_region(bits, rect, buffer->map_data, &buffer_rect, region, force_opaque);
 }
 
 static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
@@ -311,7 +333,36 @@ static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
     RECT src_rect = {0, 0, src->width, src->height};
     RECT dst_rect = {0, 0, dst->width, dst->height};
     TRACE("src=%p dst=%p\n", src, dst);
-    copy_pixel_region(src->map_data, &src_rect, dst->map_data, &dst_rect, region);
+    copy_pixel_region(src->map_data, &src_rect, dst->map_data, &dst_rect, region,
+                      src->format == WL_SHM_FORMAT_XRGB8888 && dst->format == WL_SHM_FORMAT_ARGB8888);
+}
+
+/**********************************************************************
+ *          wayland_shm_buffer_copy_shape
+ */
+static void wayland_shm_buffer_copy_shape(struct wayland_shm_buffer *buffer, const RECT *dirty,
+                                          const BITMAPINFO *shape_info, const void *shape_bits)
+{
+    RECT dst_rect = {0, 0, buffer->width, buffer->height};
+    UINT32 *color, shape_stride, color_stride, x, y;
+    const BYTE *shape;
+    RECT rect;
+
+    shape_stride = shape_info->bmiHeader.biSizeImage / abs(shape_info->bmiHeader.biHeight);
+    color_stride = dst_rect.right - dst_rect.left;
+
+    if (!intersect_rect(&rect, &dst_rect, dirty)) return;
+
+    color = (UINT32 *)buffer->map_data + rect.top * color_stride;
+    shape = (const BYTE *)shape_bits + rect.top * shape_stride;
+
+    for (y = rect.top; y < rect.bottom; y++, color += color_stride, shape += shape_stride)
+    {
+        for (x = rect.left; x < rect.right; x++)
+        {
+            if (!(shape[x / 8] & (1 << (7 - (x & 7))))) color[x] = 0;
+        }
+    }
 }
 
 /***********************************************************************
@@ -327,6 +378,7 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     BOOL flushed = FALSE;
     HRGN surface_damage_region = NULL;
     HRGN copy_from_window_region;
+    uint32_t buffer_format;
 
     surface_damage_region = NtGdiCreateRectRgn(rect->left + dirty->left, rect->top + dirty->top,
                                                rect->left + dirty->right, rect->top + dirty->bottom);
@@ -334,6 +386,16 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     {
         ERR("failed to create surface damage region\n");
         goto done;
+    }
+
+    buffer_format = (shape_bits || wws->layered) ? WL_SHM_FORMAT_ARGB8888 : WL_SHM_FORMAT_XRGB8888;
+    if (wws->wayland_buffer_queue->format != buffer_format)
+    {
+        int width = wws->wayland_buffer_queue->width;
+        int height = wws->wayland_buffer_queue->height;
+        TRACE("recreating buffer queue with format %d\n", buffer_format);
+        wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
+        wws->wayland_buffer_queue = wayland_buffer_queue_create(width, height, buffer_format);
     }
 
     wayland_buffer_queue_add_damage(wws->wayland_buffer_queue, surface_damage_region);
@@ -377,7 +439,10 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
         copy_from_window_region = shm_buffer->damage_region;
     }
 
-    wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region);
+    wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region,
+                                 shape_bits && !wws->layered);
+    if (shape_bits) wayland_shm_buffer_copy_shape(shm_buffer, rect, shape_info, shape_bits);
+
     NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
 
     flushed = set_window_surface_contents(window_surface->hwnd, shm_buffer, surface_damage_region);
@@ -410,7 +475,8 @@ static const struct window_surface_funcs wayland_window_surface_funcs =
 /***********************************************************************
  *           wayland_window_surface_create
  */
-static struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect)
+static struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect,
+                                                            BOOL layered)
 {
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -433,7 +499,11 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     if ((window_surface = window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0)))
     {
         struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
-        wws->wayland_buffer_queue = wayland_buffer_queue_create(width, height);
+        wws->wayland_buffer_queue =
+            wayland_buffer_queue_create(width, height,
+                                        layered ? WL_SHM_FORMAT_ARGB8888 :
+                                                  WL_SHM_FORMAT_XRGB8888);
+        wws->layered = layered;
     }
 
     return window_surface;
@@ -453,7 +523,8 @@ BOOL WAYLAND_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_re
     if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
     if (previous) window_surface_release(previous);
 
-    *surface = wayland_window_surface_create(data->hwnd, surface_rect);
+    if (layered) data->layered_attribs_set = TRUE;
+    *surface = wayland_window_surface_create(data->hwnd, surface_rect, layered);
 
     wayland_win_data_release(data);
     return TRUE;

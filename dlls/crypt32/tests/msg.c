@@ -1250,8 +1250,29 @@ static void test_signed_msg_update(void)
     ok(ret, "CryptMsgUpdate failed: %08lx\n", GetLastError());
     CryptMsgClose(msg);
 
+    /* does final update release context? */
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
+     CMSG_CRYPT_RELEASE_CONTEXT_FLAG | CMSG_DETACHED_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %lx\n", GetLastError());
+    /* non-final updates shouldn't release context. */
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    ok(ret, "CryptMsgUpdate failed: %lx\n", GetLastError());
+    ret = CryptContextAddRef(signer.hCryptProv, NULL, 0);
+    ok(ret, "non-final CryptMsgUpdate released context\n");
+    if (ret) CryptReleaseContext(signer.hCryptProv, 0);
+    /* the final update should, according to the docs, but... */
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %lx\n", GetLastError());
+    ret = CryptContextAddRef(signer.hCryptProv, NULL, 0);
+    ok(ret, "final CryptMsgUpdate released context\n");
+    if (ret) CryptReleaseContext(signer.hCryptProv, 0);
+
+    /* close msg would release the context, so destroy key first. */
     CryptDestroyKey(key);
-    CryptReleaseContext(signer.hCryptProv, 0);
+    CryptMsgClose(msg);
+    ret = CryptContextAddRef(signer.hCryptProv, NULL, 0);
+    ok(!ret, "CryptMsgClose didn't release context\n");
+    if (ret) CryptReleaseContext(signer.hCryptProv, 0);
     CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
@@ -1811,7 +1832,7 @@ static void test_signed_msg_get_param(void)
     HCRYPTMSG msg;
     DWORD size, value = 0;
     CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
-    CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
+    CMSG_SIGNER_ENCODE_INFO signers[2] = { { sizeof(signers[0]), 0 }, {sizeof(signers[0]), 0 } };
     CERT_INFO certInfo = { 0 };
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
@@ -1857,15 +1878,15 @@ static void test_signed_msg_get_param(void)
     certInfo.SerialNumber.pbData = serialNum;
     certInfo.Issuer.cbData = sizeof(encodedCommonName);
     certInfo.Issuer.pbData = encodedCommonName;
-    signer.pCertInfo = &certInfo;
-    signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+    signers[0].pCertInfo = &certInfo;
+    signers[0].HashAlgorithm.pszObjId = oid_rsa_md5;
     signInfo.cSigners = 1;
-    signInfo.rgSigners = &signer;
+    signInfo.rgSigners = signers;
 
-    ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+    ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
                                 PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS) {
-        ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+        ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
                                     PROV_RSA_FULL, 0);
     }
     ok(ret, "CryptAcquireContext failed: 0x%lx\n", GetLastError());
@@ -1898,23 +1919,62 @@ static void test_signed_msg_get_param(void)
 
     CryptMsgClose(msg);
 
+    /* try two signers */
+    signers[1].pCertInfo = &certInfo;
+    signers[1].HashAlgorithm.pszObjId = oid_rsa_md5;
+    signers[1].hCryptProv = signers[0].hCryptProv;
+    signInfo.cSigners = 2;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %lx\n", GetLastError());
+
+    /* This message, with two signer, has the hash and signer for index 0 and 1
+     * available, but not for other indexes.
+     */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 1, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %lx\n", GetLastError());
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 2, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %lx\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 2, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
+     "Expected CRYPT_E_INVALID_INDEX, got %lx\n", GetLastError());
+
+    CryptMsgClose(msg);
+    signInfo.cSigners = 1;
+
     /* Opening the message using the CMS fields.. */
     certInfo.SerialNumber.cbData = 0;
     certInfo.Issuer.cbData = 0;
-    signer.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
-    signer.SignerId.IssuerSerialNumber.Issuer.cbData = sizeof(encodedCommonName);
-    signer.SignerId.IssuerSerialNumber.Issuer.pbData = encodedCommonName;
-    signer.SignerId.IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
-    signer.SignerId.IssuerSerialNumber.SerialNumber.pbData = serialNum;
-    ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+    signers[0].SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+    signers[0].SignerId.IssuerSerialNumber.Issuer.cbData = sizeof(encodedCommonName);
+    signers[0].SignerId.IssuerSerialNumber.Issuer.pbData = encodedCommonName;
+    signers[0].SignerId.IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
+    signers[0].SignerId.IssuerSerialNumber.SerialNumber.pbData = serialNum;
+    /* does CryptMsgOpenToEncode release the context? */
+    ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+        ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextA failed: %lx\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
      CMSG_CRYPT_RELEASE_CONTEXT_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %lx\n", GetLastError());
+    ret = CryptContextAddRef(signers[0].hCryptProv, NULL, 0);
+    ok(ret, "CryptMsgOpenToEncode released context\n");
+    if (ret) CryptReleaseContext(signers[0].hCryptProv, 0);
     /* still results in the version being 1 when the issuer and serial number
      * are used and no additional CMS fields are used.
      */
@@ -1940,17 +2000,21 @@ static void test_signed_msg_get_param(void)
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "expected CRYPT_E_INVALID_MSG_TYPE, got %08lx\n", GetLastError());
     CryptMsgClose(msg);
+    /* does CryptMsgClose release context? (doc says it should be released by
+     * the last Update, but...) */
+    ret = CryptContextAddRef(signers[0].hCryptProv, NULL, 0);
+    ok(!ret, "CryptMsgClose didn't release context\n");
 
     /* Using the KeyId field of the SignerId results in the version becoming
      * the CMS version.
      */
-    signer.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
-    signer.SignerId.KeyId.cbData = sizeof(serialNum);
-    signer.SignerId.KeyId.pbData = serialNum;
-    ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+    signers[0].SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+    signers[0].SignerId.KeyId.cbData = sizeof(serialNum);
+    signers[0].SignerId.KeyId.pbData = serialNum;
+    ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+        ret = CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, NULL,
          PROV_RSA_FULL, 0);
     ok(ret, "CryptAcquireContextA failed: %lx\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
@@ -1977,10 +2041,9 @@ static void test_signed_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_CERT_ID_PARAM, 0, NULL, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "expected CRYPT_E_INVALID_MSG_TYPE, got %08lx\n", GetLastError());
-    CryptMsgClose(msg);
+    CryptMsgClose(msg); /* this releases the context. */
 
-    CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextA(&signer.hCryptProv, cspNameA, MS_DEF_PROV_A,
+    CryptAcquireContextA(&signers[0].hCryptProv, cspNameA, MS_DEF_PROV_A,
      PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
@@ -2808,6 +2871,17 @@ static void test_decode_msg_get_param(void)
         compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
         CryptMemFree(buf);
     }
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam succeeded unexpectedly\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %08lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_AUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam succeeded unexpectedly\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %08lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
     /* Getting the CMS signer info of a PKCS7 message is possible. */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);

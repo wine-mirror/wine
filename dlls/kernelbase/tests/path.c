@@ -1093,7 +1093,7 @@ static void test_PathCchAddExtension(void)
 
 static void test_PathCchCanonicalize(void)
 {
-    WCHAR path_inW[MAX_PATH], path_outW[MAX_PATH];
+    WCHAR path_inW[MAX_PATH + 16], path_outW[MAX_PATH];
     CHAR path_outA[MAX_PATH];
     HRESULT hr;
     INT i;
@@ -1150,7 +1150,8 @@ static void test_PathCchCanonicalize(void)
         /* Skip test cases where a flag is used */
         if (!lstrcmpA("C:", t->path_in) || t->flags) continue;
 
-        MultiByteToWideChar(CP_ACP, 0, t->path_in, -1, path_inW, ARRAY_SIZE(path_inW));
+        hr = MultiByteToWideChar(CP_ACP, 0, t->path_in, -1, path_inW, ARRAY_SIZE(path_inW));
+        ok(hr, "MultiByteToWideChar failed %#lx\n", GetLastError());
         hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
         ok(hr == t->hr, "path %s expect result %#lx, got %#lx\n", t->path_in, t->hr, hr);
         if (SUCCEEDED(hr))

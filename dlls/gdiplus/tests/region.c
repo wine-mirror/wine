@@ -2012,6 +2012,38 @@ static void test_isvisiblepoint(void)
     status = GdipTranslateWorldTransform(graphics, -25, -40, MatrixOrderAppend);
     expect(Ok, status);
 
+    /* fractional region */
+    rectf.X = 4.25;
+    rectf.Y = 5.25;
+    rectf.Width = 6;
+    rectf.Height = 7;
+
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    expect(Ok, status);
+
+    x = 4;
+    y = 5;
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f) to not be visible\n", x, y);
+
+    x = 4.3;
+    y = 5.3;
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+    ok(res == FALSE, "Expected (%.2f, %.2f) to not be visible\n", x, y);
+
+    /* Point is rounded in device coordinates, so this gives more precision */
+    status = GdipScaleWorldTransform(graphics, 20.0, 20.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipIsVisibleRegionPoint(region, x, y, graphics, &res);
+    expect(Ok, status);
+    ok(res == TRUE, "Expected (%.2f, %.2f) to be visible\n", x, y);
+
+    status = GdipResetWorldTransform(graphics);
+    expect(Ok, status);
+
     /* region from path */
     status = GdipCreatePath(FillModeAlternate, &path);
     expect(Ok, status);
@@ -2695,6 +2727,56 @@ static void test_rounding(void)
     GdipDeleteMatrix(matrix);
 }
 
+static void test_empty_spans(void)
+{
+    GpStatus status;
+    GpGraphics *graphics;
+    GpBitmap *bitmap;
+    GpPath *path, *path2;
+    const GpPointF inside_path_points[] = { { 20, 20 }, { 80, 20 }, { 80, 80 } };
+    const GpPointF outside_path_points[] = { { 100, 20 }, { 101, 20 }, { 101, 80 } };
+    GpRegion *region;
+    GpBrush *brush;
+
+    status = GdipCreateBitmapFromScan0(100, 100, 400, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipAddPathPolygon(path, inside_path_points, ARRAY_SIZE(inside_path_points));
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeAlternate, &path2);
+    expect(Ok, status);
+    /* add a path inside the device bounds and one outside,
+     * resulting in an empty span at the end of each scanline */
+    status = GdipAddPathPolygon(path2, inside_path_points, ARRAY_SIZE(inside_path_points));
+    expect(Ok, status);
+    status = GdipAddPathPolygon(path2, outside_path_points, ARRAY_SIZE(outside_path_points));
+    expect(Ok, status);
+
+    status = GdipCreateRegionPath(path, &region);
+    expect(Ok, status);
+    status = GdipCombineRegionPath(region, path2, CombineModeIntersect);
+    expect(Ok, status);
+
+    status = GdipCreateSolidFill(0xffffffff, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    status = GdipFillRegion(graphics, brush, region);
+    expect(Ok, status);
+
+    GdipDeleteBrush(brush);
+    GdipDeleteRegion(region);
+    GdipDeletePath(path2);
+    GdipDeletePath(path);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDeleteGraphics(graphics);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2731,6 +2813,7 @@ START_TEST(region)
     test_GdipCreateRegionRgnData();
     test_incombinedregion();
     test_rounding();
+    test_empty_spans();
 
     GdiplusShutdown(gdiplusToken);
 }

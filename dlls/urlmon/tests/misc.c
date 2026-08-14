@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "urlmon.h"
+#include "wininet.h"
 
 #include "initguid.h"
 
@@ -792,6 +793,11 @@ static void test_FindMimeFromData(void)
     hres = pFindMimeFromData(NULL, NULL, data1, 0, L"text/plain", 0, &mime, 0);
     ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
     ok(!lstrcmpW(mime, L"text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
+    hres = pFindMimeFromData(NULL, L"winexml://content/brew=1", data1, 0, L"text/html; charset=unicode", 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, L"text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
     hres = pFindMimeFromData(NULL, NULL, data1, 0, L"text/plain", 0, NULL, 0);
@@ -2003,9 +2009,7 @@ static void test_internet_features(void) {
         sprintf(cmdline, "\"%s\" %s internet_features", argv[0], argv[1]);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "Could not create process: %lu\n", GetLastError());
-        wait_child_process( pi.hProcess );
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        wait_child_process(&pi);
 
         RegDeleteKeyA(HKEY_CURRENT_USER, szFeatureControlKey);
         return;
@@ -2722,6 +2726,43 @@ static void test_bsc_marshaling(void)
     TerminateThread(thread, 0);
 }
 
+static void test_URLDownloadToCacheFile(void)
+{
+    WCHAR url[512], filename[MAX_PATH];
+    static const WCHAR prefix[] = L"http://127.0.0.1:1/test.";
+    char urlA[ARRAY_SIZE(url)], filenameA[MAX_PATH];
+    DWORD size;
+    HRESULT hres;
+    BOOL ret;
+    unsigned int i, len;
+
+    lstrcpyW(url, prefix);
+    len = lstrlenW(url);
+    for(i = len; i < ARRAY_SIZE(url) - 1; i++)
+        url[i] = 'a';
+    url[i] = 0;
+
+    memset(filename, 0xcc, sizeof(filename));
+    hres = URLDownloadToCacheFileW(NULL, url, filename, ARRAY_SIZE(filename), 0, NULL);
+    ok(FAILED(hres), "URLDownloadToCacheFileW returned %#lx\n", hres);
+    ok(filename[ARRAY_SIZE(filename) - 1] == 0xcccc, "filename buffer overflowed\n");
+
+    WideCharToMultiByte(CP_ACP, 0, url, -1, urlA, sizeof(urlA), NULL, NULL);
+    size = 0;
+    ret = GetUrlCacheEntryInfoA(urlA, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "cache entry was not deleted, error %ld\n", GetLastError());
+    /* Always clean up any remaining cache entry */
+    if (ret || GetLastError() != ERROR_FILE_NOT_FOUND)
+        DeleteUrlCacheEntryA(urlA);
+
+    memset(filenameA, 0xcc, sizeof(filenameA));
+    hres = URLDownloadToCacheFileA(NULL, urlA, filenameA, sizeof(filenameA), 0, NULL);
+    ok(FAILED(hres), "URLDownloadToCacheFileA returned %#lx\n", hres);
+    ok(filenameA[sizeof(filenameA) - 1] == (char)0xcc, "filenameA buffer overflowed\n");
+    /* Always clean up any remaining cache entry */
+    DeleteUrlCacheEntryA(urlA);
+}
+
 static void test_MapBrowserEmulationModeToUserAgent(BOOL custom_ua)
 {
     /* Undocumented structure of unknown size, crashes if it's too small (with arbitrary values from stack) */
@@ -2829,6 +2870,7 @@ START_TEST(misc)
         test_MkParseDisplayNameEx();
         test_IsValidURL();
         test_bsc_marshaling();
+        test_URLDownloadToCacheFile();
         test_MapBrowserEmulationModeToUserAgent(TRUE);
     }
 

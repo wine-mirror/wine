@@ -29,7 +29,6 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winver.h"
@@ -154,7 +153,7 @@ static const struct
     },
     /* Windows 10 */
     {
-        { 10, 0, 19043 },
+        { 10, 0, 19045 },
         {0x8e0f7a12,0xbfb3,0x4fe8,{0xb9,0xa5,0x48,0xfd,0x50,0xa1,0x5a,0x9a}}
     }
 };

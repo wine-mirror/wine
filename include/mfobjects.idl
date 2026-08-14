@@ -88,6 +88,9 @@ enum MF_ATTRIBUTE_SERIALIZE_OPTIONS {
     MF_ATTRIBUTE_SERIALIZE_UNKNOWN_BYREF = 0x00000001
 };
 
+cpp_quote( "STDAPI MFSerializeAttributesToStream(IMFAttributes *, DWORD, IStream *);")
+cpp_quote( "STDAPI MFDeserializeAttributesFromStream(IMFAttributes *, DWORD, IStream *);")
+
 [
     object,
     uuid(045fa593-8799-42b8-bc8d-8968c6453507),

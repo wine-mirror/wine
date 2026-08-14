@@ -316,6 +316,8 @@ static LRESULT USER_DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     DIALOGINFO *dlgInfo;
     LRESULT result;
 
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_DIALOG) );
+
     /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return 0;
 
@@ -367,6 +369,8 @@ static LRESULT USER_DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 {
     DIALOGINFO *dlgInfo;
     LRESULT result;
+
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_DIALOG) );
 
     /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return 0;

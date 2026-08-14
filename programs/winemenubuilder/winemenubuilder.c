@@ -97,7 +97,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(menubuilder);
 
 /* link file formats */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -158,7 +158,7 @@ typedef struct
 #define NE_RSCTYPE_ICON        0x8003
 #define NE_RSCTYPE_GROUP_ICON  0x800e
 
-#include "poppack.h"
+#pragma pack(pop)
 
 typedef struct
 {
@@ -1206,7 +1206,7 @@ static DWORD register_menus_entry(const WCHAR *menu_file, const WCHAR *windows_f
     return ret;
 }
 
-/* This escapes reserved characters in .desktop files' Exec keys. */
+/* This escapes required characters in .desktop files' Exec keys. */
 static LPSTR escape(LPCWSTR arg)
 {
     int i, j;
@@ -1224,24 +1224,9 @@ static LPSTR escape(LPCWSTR arg)
             escaped_string[j++] = '\\';
             escaped_string[j++] = '\\';
             break;
-        case ' ':
-        case '\t':
-        case '\n':
         case '"':
-        case '\'':
-        case '>':
-        case '<':
-        case '~':
-        case '|':
-        case '&':
-        case ';':
-        case '$':
-        case '*':
-        case '?':
-        case '#':
-        case '(':
-        case ')':
         case '`':
+        case '$':
             escaped_string[j++] = '\\';
             escaped_string[j++] = '\\';
             /* fall through */
@@ -1288,11 +1273,11 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const 
     if (prefix)
     {
         char *path = wine_get_unix_file_name( prefix );
-        fprintf(file, "env WINEPREFIX=\"%s\" ", path);
+        fprintf(file, "env \"WINEPREFIX=%s\" ", path);
         heap_free( path );
     }
-    fprintf(file, "wine %s", escape(path));
-    if (args) fprintf(file, " %s", escape(args) );
+    fprintf(file, "wine \"%s\"", escape(path));
+    if (args) fprintf(file, " \"%s\"", escape(args) );
     fputc( '\n', file );
     fprintf(file, "Type=Application\n");
     fprintf(file, "StartupNotify=true\n");
@@ -1721,8 +1706,8 @@ static BOOL build_native_mime_types(struct list *mime_types)
     WCHAR *dirs, *dir, *dos_name, *ctx, *p;
     BOOL ret;
 
-    if (_wgetenv( L"XDG_DATA_DIRS" ))
-        dirs = xwcsdup( _wgetenv( L"XDG_DATA_DIRS" ));
+    if (_wgetenv( L"WINE_HOST_XDG_DATA_DIRS" ))
+        dirs = xwcsdup( _wgetenv( L"WINE_HOST_XDG_DATA_DIRS" ));
     else
         dirs = xwcsdup( L"/usr/local/share/:/usr/share/" );
 
@@ -2050,13 +2035,13 @@ static BOOL write_freedesktop_association_entry(const WCHAR *desktopPath, const 
         if (prefix)
         {
             char *path = wine_get_unix_file_name( prefix );
-            fprintf(desktop, "Exec=env WINEPREFIX=\"%s\" wine start ", path);
+            fprintf(desktop, "Exec=env \"WINEPREFIX=%s\" wine start ", path);
             heap_free( path );
         }
         else
             fprintf(desktop, "Exec=wine start ");
         if (progId) /* file association */
-            fprintf(desktop, "/ProgIDOpen %s %%f\n", escape(progId));
+            fprintf(desktop, "/ProgIDOpen \"%s\" %%f\n", escape(progId));
         else /* protocol association */
             fprintf(desktop, "%%u\n");
         fprintf(desktop, "NoDisplay=true\n");
@@ -2715,8 +2700,7 @@ static void cleanup_menus(void)
 
 static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
 {
-    char *utf8lnkPath = NULL;
-    WCHAR *winLnkPath = NULL;
+    WCHAR *winLnkPath;
     IShellLinkW *shellLink = NULL;
     IPersistFile *persistFile = NULL;
     WCHAR szTmp[MAX_PATH];
@@ -2728,14 +2712,15 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     ICONDIRENTRY *pIconDirEntries = NULL;
     int numEntries;
     HRESULT hr;
+    DWORD size = 8 + wcslen(lnkPath) + 1;
 
-    utf8lnkPath = wchars_to_utf8_chars(lnkPath);
-    winLnkPath = wine_get_dos_file_name(utf8lnkPath);
+    winLnkPath = malloc( size * sizeof(WCHAR) );
     if (winLnkPath == NULL)
     {
-        WINE_ERR("could not convert %s to DOS path\n", utf8lnkPath);
+        WINE_ERR("could not convert %s to DOS path\n", debugstr_w(lnkPath));
         goto end;
     }
+    swprintf( winLnkPath, size, L"\\\\?\\unix%s", lnkPath );
 
     hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IShellLinkW, (LPVOID*)&shellLink);
@@ -2787,8 +2772,7 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     }
 
 end:
-    free(utf8lnkPath);
-    heap_free(winLnkPath);
+    free(winLnkPath);
     if (shellLink != NULL)
         IShellLinkW_Release(shellLink);
     if (persistFile != NULL)
@@ -2839,9 +2823,15 @@ static BOOL init_xdg(void)
     WCHAR *p;
     HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, xdg_desktop_dir);
 
+    if (!_wgetenv( L"WINE_HOST_XDG_CURRENT_DESKTOP" ))
+    {
+        WINE_WARN( "Skipping .desktop file creation, no XDG-compliant desktop environment detected.\n" );
+        return FALSE;
+    }
+
     if (FAILED(hr)) return FALSE;
 
-    if ((p = _wgetenv( L"XDG_CONFIG_HOME" )))
+    if ((p = _wgetenv( L"WINE_HOST_XDG_CONFIG_HOME" )))
         xdg_menu_dir = heap_wprintf( L"\\??\\unix%s/menus/applications-merged", p );
     else
         xdg_menu_dir = heap_wprintf( L"%s/.config/menus/applications-merged", _wgetenv(L"WINEHOMEDIR") );
@@ -2849,7 +2839,7 @@ static BOOL init_xdg(void)
     xdg_menu_dir[1] = '\\';  /* change \??\ to \\?\ */
     create_directories(xdg_menu_dir);
 
-    if ((p = _wgetenv( L"XDG_DATA_HOME" )))
+    if ((p = _wgetenv( L"WINE_HOST_XDG_DATA_HOME" )))
         xdg_data_dir = heap_wprintf( L"\\??\\unix%s", p );
     else
         xdg_data_dir = heap_wprintf( L"%s/.local/share", _wgetenv(L"WINEHOMEDIR") );

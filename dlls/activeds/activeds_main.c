@@ -4,9 +4,6 @@
  * Copyright 2005 Detlef Riekenberg
  * Copyright 2019 Dmitry Timoshkov
  *
- * This file contains only stubs to get the printui.dll up and running
- * activeds.dll is much much more than this
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -47,8 +44,10 @@ HRESULT WINAPI ADsGetObject(LPCWSTR path, REFIID riid, void **obj)
 {
     HRESULT hr;
 
+    TRACE("(%s, %s, %p)\n", debugstr_w(path), wine_dbgstr_guid(riid), obj);
+
     hr = ADsOpenObject(path, NULL, NULL, ADS_SECURE_AUTHENTICATION, riid, obj);
-    if (hr != S_OK)
+    if (hr != S_OK && hr != E_ADS_BAD_PATHNAME)
         hr = ADsOpenObject(path, NULL, NULL, 0, riid, obj);
     return hr;
 }

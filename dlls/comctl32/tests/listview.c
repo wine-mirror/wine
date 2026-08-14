@@ -608,6 +608,16 @@ static const struct message listview_end_label_edit_kill_focus[] = {
     { 0 }
 };
 
+static const struct message subclassed_header_no_validate_wmpaint[] = {
+    { WM_PAINT, sent|id, 0, 0, LISTVIEW_ID },
+    { WM_PAINT, sent|id, 0, 0, HEADER_ID },
+    { WM_NCPAINT, sent|id, 0, 0, HEADER_ID },
+    { WM_ERASEBKGND, sent|id, 0, 0, HEADER_ID },
+    { WM_ERASEBKGND, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { LVM_GETHEADER, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
 static void hold_key(int vk)
 {
     BYTE kstate[256];
@@ -1067,6 +1077,7 @@ static void test_lvm_subitemhittest_(HWND hwnd, INT x, INT y, INT item, INT subi
 
 #define test_lvm_subitemhittest(a,b,c,d,e,f,g,h,i) test_lvm_subitemhittest_(a,b,c,d,e,f,g,h,i,__LINE__)
 
+static void insert_column(HWND hwnd, int idx);
 static void test_images(void)
 {
     HWND hwnd;
@@ -1160,14 +1171,53 @@ static void test_images(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    /*
+     * If LVS_EX_SUBITEMIMAGES is not set, iImage field value is untouched
+     * for subitems.
+     */
     memset(&item, 0, sizeof(item));
     item.mask = LVIF_IMAGE;
     item.iSubItem = 1;
+    item.iImage = 500;
     r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
     ok(r, "Failed to get item.\n");
+    ok(item.iImage == 500, "Unexpected iImage value %d.\n", item.iImage);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "get image dispinfo 2", FALSE);
 
+    r = SendMessageA(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_SUBITEMIMAGES);
+    ok(!r, "Unexpected return value %d.\n", r);
+
+    /*
+     * LVS_EX_SUBITEMIMAGES is set, iImage field value is set for subitems.
+     */
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_IMAGE;
+    item.iSubItem = 1;
+    item.iImage = 500;
+    r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    ok(r, "Failed to get item.\n");
+    ok(item.iImage == I_IMAGECALLBACK, "Unexpected iImage value %d.\n", item.iImage);
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+
+    /* Set subitem iImage value. */
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_IMAGE;
+    item.iSubItem = 1;
+    item.iImage = 500;
+    r = SendMessageA(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+    ok(r, "Failed to set item.\n");
+
+    item.mask = LVIF_IMAGE;
+    item.iSubItem = 1;
+    item.iImage = 0;
+    r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    ok(r, "Failed to get item.\n");
+    ok(item.iImage == 500, "Unexpected iImage value %d.\n", item.iImage);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(hwnd);
 }
 
@@ -2200,6 +2250,137 @@ static void test_customdraw(void)
 
     SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)oldwndproc);
     DestroyWindow(hwnd);
+}
+
+static LRESULT WINAPI customdraw_background_wndproc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    if (message == WM_NOTIFY)
+    {
+        NMHDR *nmhdr = (NMHDR *)lp;
+
+        if (nmhdr->code == NM_CUSTOMDRAW)
+        {
+            NMLVCUSTOMDRAW *nmlvcd = (NMLVCUSTOMDRAW *)nmhdr;
+            struct message msg;
+
+            msg.message = message;
+            msg.flags = sent | wparam | lparam | id | custdraw;
+            msg.wParam = wp;
+            msg.lParam = lp;
+            msg.id = GetBkMode(nmlvcd->nmcd.hdc);
+            msg.stage = nmlvcd->nmcd.dwDrawStage;
+            add_message(sequences, PARENT_CD_SEQ_INDEX, &msg);
+
+            switch (nmlvcd->nmcd.dwDrawStage)
+            {
+            case CDDS_PREPAINT:
+                return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPREPAINT:
+                return CDRF_NOTIFYSUBITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
+                return CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPOSTPAINT | CDDS_SUBITEM:
+                return CDRF_NOTIFYPOSTPAINT;
+            case CDDS_POSTPAINT:
+                return CDRF_DODEFAULT;
+            }
+            return CDRF_DODEFAULT;
+        }
+    }
+
+    return DefWindowProcA(hwnd, message, wp, lp);
+}
+
+static const struct message parent_list_cd_bk_seq[] =
+{
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_PREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_POSTPAINT},
+    {0}
+};
+
+static const struct message parent_report_cd_bk_seq[] =
+{
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_PREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPREPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT | CDDS_SUBITEM},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_ITEMPOSTPAINT},
+    {WM_NOTIFY, sent | id | custdraw, 0, 0, TRANSPARENT, CDDS_POSTPAINT},
+    {0}
+};
+
+static void test_customdraw_background(BOOL v6)
+{
+    static const DWORD test_styles[] = {LVS_ICON, LVS_REPORT, LVS_SMALLICON, LVS_LIST, LVS_REPORT | LVS_OWNERDRAWFIXED};
+    static const COLORREF test_colors[] = {CLR_DEFAULT, CLR_NONE, RGB(255, 0, 0)};
+    BOOL is_64bit = sizeof(void *) == 8;
+    const struct message *expected_msgs;
+    WNDPROC oldwndproc;
+    unsigned int i, j;
+    LVITEMA item;
+    HWND hwnd;
+
+    for (i = 0; i < ARRAY_SIZE(test_styles); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(test_colors); j++)
+        {
+            winetest_push_context("%s %dbit style %#lx color %#lx", v6 ? "v6" : "v5",
+                                  is_64bit ? 64 : 32, test_styles[i], test_colors[j]);
+
+            if (test_styles[i] == LVS_REPORT)
+                expected_msgs = parent_report_cd_bk_seq;
+            else
+                expected_msgs = parent_list_cd_bk_seq;
+
+            /* Comctl32 v6 will send a sequence of custom draw messages with OPAQUE mode to draw
+             * headers first. Then send another sequence of custom draw messages to draw items.
+             * However, the sequence to draw headers differ with different listview styles and
+             * machine architectures so it's not easy to replicate. Comctl32 v5 doesn't send
+             * separate message sequences to draw headers. Ignore headers for now. */
+            hwnd = create_listview_control(test_styles[i] | LVS_NOCOLUMNHEADER);
+            SendMessageA(hwnd, LVM_SETTEXTBKCOLOR, 0, test_colors[j]);
+
+            insert_column(hwnd, 0);
+            insert_column(hwnd, 1);
+            insert_item(hwnd, 0);
+            flush_events();
+
+            oldwndproc = (WNDPROC)SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)customdraw_background_wndproc);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "Normal", FALSE);
+
+            /* LVIS_SELECTED */
+            item.mask = LVIF_STATE;
+            item.stateMask = LVIS_SELECTED;
+            item.state = LVIS_SELECTED;
+            SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVIS_SELECTED", FALSE);
+
+            /* LVS_SHOWSELALWAYS */
+            SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) | LVS_SHOWSELALWAYS);
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            InvalidateRect(hwnd, NULL, TRUE);
+            UpdateWindow(hwnd);
+            ok_sequence(sequences, PARENT_CD_SEQ_INDEX, expected_msgs, "LVS_SHOWSELALWAYS", FALSE);
+
+            SetWindowLongPtrA(hwndparent, GWLP_WNDPROC, (LONG_PTR)oldwndproc);
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            DestroyWindow(hwnd);
+            winetest_pop_context();
+        }
+    }
 }
 
 static void test_icon_spacing(void)
@@ -3480,6 +3661,35 @@ static void test_ownerdata(void)
     expect(1, res);
     res = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(1, res);
+
+    /* LVIF_STATE is not set, state field untouched. */
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.state = 0xffff;
+    res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    ok(res, "Failed to get item.\n");
+    ok(item.state == 0xffff, "Unexpected item state %#x.\n", item.state);
+
+    /* LVIF_STATE is set with no statemask, state field zeroed. */
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_STATE;
+    item.iItem = 0;
+    item.state = 0xffff;
+    res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    ok(res, "Failed to get item.\n");
+    ok(!item.state, "Unexpected item state %#x.\n", item.state);
+
+    res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, 0xff);
+    ok(res == LVIS_SELECTED, "Unexpected item state %#lx.\n", res);
+
+    /* Set the callback mask for LVIS_SELECTED. */
+    res = SendMessageA(hwnd, LVM_SETCALLBACKMASK, LVIS_SELECTED, 0);
+    expect(TRUE, res);
+
+    res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, 0xff);
+    ok(!res, "Unexpected item state %#lx.\n", res);
+
     DestroyWindow(hwnd);
 
     /* LVM_SETITEM and LVM_SETITEMTEXT is unsupported on LVS_OWNERDATA */
@@ -7489,6 +7699,98 @@ static void test_LVM_GETHOTCURSOR(void)
     DestroyWindow(hwnd);
 }
 
+static LRESULT WINAPI header_subclass_wmpaint_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    struct message msg = {0};
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.id = HEADER_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    /* Handle WM_PAINT by returning directly and not validating update regions */
+    if (message == WM_PAINT)
+        return 0;
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(oldproc, hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return ret;
+}
+
+static LRESULT WINAPI listview_subclass_wmpaint_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    RECT rect, header_client_rect, tmp_rect;
+    static LONG defwndproc_counter = 0;
+    struct message msg = {0};
+    int region_type;
+    HWND header;
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.id = LISTVIEW_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    if (message == WM_ERASEBKGND)
+    {
+        region_type = GetClipBox((HDC)wp, &rect);
+        ok(region_type == SIMPLEREGION, "Got unexpected region type %d.\n", region_type);
+
+        header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+        GetClientRect(header, &header_client_rect);
+        ok(!IntersectRect(&tmp_rect, &header_client_rect, &rect),
+           "WM_ERASEBKGND dc clip box intersects with the header rectangle.\n");
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(oldproc, hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return ret;
+}
+
+static void test_WM_PAINT(void)
+{
+    HWND hwnd, header;
+    LVCOLUMNA column;
+    WNDPROC oldproc;
+    LRESULT lr;
+
+    /* Test WM_PAINT with a subclassed header that paints without validating update regions */
+    hwnd = create_listview_control(LVS_REPORT);
+    column.mask = LVCF_WIDTH;
+    column.cx = 100;
+    lr = SendMessageA(hwnd, LVM_INSERTCOLUMNA, 0, (LPARAM)&column);
+    ok(!lr, "LVM_INSERTCOLUMNA failed.\n");
+    flush_events();
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    oldproc = (WNDPROC)SetWindowLongPtrA(header, GWLP_WNDPROC, (LONG_PTR)header_subclass_wmpaint_proc);
+    SetWindowLongPtrA(header, GWLP_USERDATA, (LONG_PTR)oldproc);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)listview_subclass_wmpaint_proc);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    lr = SendMessageA(hwnd, WM_PAINT, 0, 0);
+    ok(!lr, "WM_PAINT failed.\n");
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, subclassed_header_no_validate_wmpaint,
+                "Subclassed header WM_PAINT without validating update regions", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -7511,6 +7813,7 @@ START_TEST(listview)
     test_create(FALSE);
     test_redraw();
     test_customdraw();
+    test_customdraw_background(FALSE);
     test_icon_spacing();
     test_color();
     test_item_count();
@@ -7559,6 +7862,7 @@ START_TEST(listview)
     test_custom_sort();
     test_LVM_GETNEXTITEM();
     test_LVM_GETHOTCURSOR();
+    test_WM_PAINT();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -7611,6 +7915,8 @@ START_TEST(listview)
     test_LVM_SETBKIMAGE(TRUE);
     test_LVM_GETHOTCURSOR();
     test_LVM_GETORIGIN(TRUE);
+    test_customdraw_background(TRUE);
+    test_WM_PAINT();
 
     uninit_winevent_hook();
 

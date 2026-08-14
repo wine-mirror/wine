@@ -70,19 +70,19 @@ typedef unsigned long long   uintmax_t;
     defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
 
 /* 7.18.2.1  Limits of exact-width integer types */
-#define INT8_MIN (-128)
-#define INT16_MIN (-32768)
-#define INT32_MIN (-2147483647 - 1)
-#define INT64_MIN  (-9223372036854775807LL - 1)
+#define INT8_MIN (-0x80)
+#define INT16_MIN (-0x8000)
+#define INT32_MIN (-0x7fffffff - 1)
+#define INT64_MIN  (-0x7fffffffffffffffLL - 1)
 
-#define INT8_MAX 127
-#define INT16_MAX 32767
-#define INT32_MAX 2147483647
-#define INT64_MAX 9223372036854775807LL
+#define INT8_MAX 0x7f
+#define INT16_MAX 0x7fff
+#define INT32_MAX 0x7fffffff
+#define INT64_MAX 0x7fffffffffffffffLL
 
-#define UINT8_MAX 255
-#define UINT16_MAX 65535
-#define UINT32_MAX 0xffffffffU  /* 4294967295U */
+#define UINT8_MAX 0xff
+#define UINT16_MAX 0xffff
+#define UINT32_MAX 0xffffffffu  /* 4294967295U */
 #define UINT64_MAX 0xffffffffffffffffULL /* 18446744073709551615ULL */
 
 /* 7.18.2.2  Limits of minimum-width integer types */

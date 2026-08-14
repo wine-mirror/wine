@@ -15,6 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+import "objidl.idl";
 
 cpp_quote("#define FOFX_NOSKIPJUNCTIONS 0x00010000")
 cpp_quote("#define FOFX_PREFERHARDLINK 0x00020000")
@@ -32,6 +33,17 @@ cpp_quote("#define FOFX_REQUIREELEVATION 0x10000000")
 cpp_quote("#define FOFX_ADDUNDORECORD 0x20000000")
 cpp_quote("#define FOFX_COPYASDOWNLOAD 0x40000000")
 cpp_quote("#define FOFX_DONTDISPLAYLOCATIONS 0x80000000")
+
+[
+    object,
+    uuid(3a3dcd6c-3eab-43dc-bcde-45671ce800c8),
+    pointer_default(unique)
+]
+interface IDataTransferManagerInterop : IUnknown
+{
+    HRESULT GetForWindow( [in] HWND hwnd, [in] REFIID riid, [out, retval, iid_is(riid)] void **manager );
+    HRESULT ShowShareUIForWindow( [in] HWND hwnd );
+}
 
 [
     uuid(56f9f44f-f74c-4e38-99bc-9f3ebd3d696a)

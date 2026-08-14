@@ -161,8 +161,12 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
 
             ret = store->vtbl->ctls.addContext(store, context_from_ptr(toAdd),
              existing ? context_from_ptr(existing) : NULL, ppStoreContext ? &ret_ctx : NULL, TRUE);
-            if(ret && ppStoreContext)
-                *ppStoreContext = context_ptr(ret_ctx);
+            if (ret)
+            {
+                CertControlStore(store, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
+                if (ppStoreContext)
+                    *ppStoreContext = context_ptr(ret_ctx);
+            }
         }else if (ppStoreContext) {
             *ppStoreContext = CertDuplicateCTLContext(toAdd);
         }
@@ -356,7 +360,10 @@ BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
 
     ret = hcs->vtbl->ctls.delete(hcs, &ctl->base);
     if (ret)
+    {
+        CertControlStore(hcs, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
         ret = CertFreeCTLContext(pCtlContext);
+    }
     return ret;
 }
 

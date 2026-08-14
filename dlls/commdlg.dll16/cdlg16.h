@@ -31,7 +31,7 @@
 
 /* 16 bit api */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef UINT16 (CALLBACK *LPOFNHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 
@@ -157,6 +157,6 @@ short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
 BOOL16 CALLBACK PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam);
 BOOL16 CALLBACK PrintSetupDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #endif /* _WINE_DLL_CDLG16_H */

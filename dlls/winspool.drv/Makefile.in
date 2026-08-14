@@ -5,6 +5,10 @@ IMPORTS   = user32 gdi32 advapi32 compstui
 UNIX_CFLAGS  = $(CUPS_CFLAGS)
 UNIX_LIBS    = $(APPLICATIONSERVICES_LIBS)
 
+VER_FILEDESCRIPTION_STR = "Wine core printer driver"
+VER_FILESUBTYPE         = VFT2_DRV_PRINTER
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
 	cups.c \
 	info.c \

@@ -29,6 +29,7 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Media
+#define WIDL_using_Windows_Storage_Streams
 #include "windows.media.h"
 #include "systemmediatransportcontrolsinterop.h"
 
@@ -64,6 +65,7 @@ static void test_MediaControlStatics(void)
     ISystemMediaTransportControls *media_control_statics = NULL;
     IMusicDisplayProperties2 *music_properties2 = NULL;
     IMusicDisplayProperties *music_properties = NULL;
+    IRandomAccessStreamReference *stream_ref;
     MediaPlaybackType playback_type;
     IActivationFactory *factory;
     HSTRING_HEADER header;
@@ -118,6 +120,8 @@ static void test_MediaControlStatics(void)
 
     hr = ISystemMediaTransportControls_put_IsPlayEnabled( media_control_statics, FALSE );
     ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControls_put_IsStopEnabled( media_control_statics, FALSE );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPauseEnabled( media_control_statics, FALSE );
     ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPreviousEnabled( media_control_statics, FALSE );
@@ -129,6 +133,11 @@ static void test_MediaControlStatics(void)
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsPlayEnabled( media_control_statics, &value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
+
+    value = TRUE;
+    hr = ISystemMediaTransportControls_get_IsStopEnabled( media_control_statics, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value == FALSE, "got value %d.\n", value );
 
@@ -165,6 +174,8 @@ static void test_MediaControlStatics(void)
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControlsDisplayUpdater_put_Type( display_updater, MediaPlaybackType_Music );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControlsDisplayUpdater_put_Thumbnail( display_updater, NULL );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     playback_type = -1;
     hr = ISystemMediaTransportControlsDisplayUpdater_get_Type( display_updater, &playback_type );
@@ -176,6 +187,11 @@ static void test_MediaControlStatics(void)
 
     hr = ISystemMediaTransportControlsDisplayUpdater_get_MusicProperties( display_updater, &music_properties );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    stream_ref = (void *)0xdeadbeef;
+    hr = ISystemMediaTransportControlsDisplayUpdater_get_Thumbnail( display_updater, &stream_ref );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( stream_ref == NULL, "got stream_ref %p.\n", stream_ref );
 
     check_interface( music_properties, &IID_IUnknown );
     check_interface( music_properties, &IID_IInspectable );

@@ -224,6 +224,8 @@ static ULONG WINAPI media_event_Release(IUnknown *iface)
                 if (event->u.event.pMediaItem)
                     IMFPMediaItem_Release(event->u.event.pMediaItem);
                 break;
+            case MFP_EVENT_TYPE_ERROR:
+                break;
             default:
                 FIXME("Unsupported event %u.\n", event->u.header.eEventType);
                 break;

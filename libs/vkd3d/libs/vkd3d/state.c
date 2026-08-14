@@ -754,8 +754,11 @@ struct vkd3d_descriptor_set_context
     unsigned int uav_counter_index;
     unsigned int push_constant_index;
 
-    struct vk_binding_array *push_descriptor_set;
+    struct vk_binding_array *root_descriptor_set;
+    struct vk_binding_array *static_samplers_descriptor_set;
     bool push_descriptor;
+    bool static_samplers;
+    bool use_vk_heaps;
 };
 
 static void descriptor_set_context_cleanup(struct vkd3d_descriptor_set_context *context)
@@ -806,13 +809,59 @@ static struct vk_binding_array *d3d12_root_signature_vk_binding_array_for_type(
 {
     struct vk_binding_array *array, **current;
 
+    /* There are a few different ways we can reach this point:
+     *  * If we are using virtual heaps we want to allocate descriptors to sets
+     *    depending on their descriptor type, in order to minimize waste when
+     *    recycling descriptor pools.
+     *    + With the exception of root descriptors when we are using push
+     *      descriptors: the push descriptors must be in a separate set, so we
+     *      keep one specifically for them.
+     *  * If we are using Vulkan heaps then all the root table descriptors don't
+     *    even reach here, because they are managed by the D3D12 descriptor
+     *    heap. Thus we only have to deal with root descriptors and static
+     *    samplers.
+     *    + If we're using push descriptors then again we have to dedicate a set
+     *      for them, so static samplers will and up in their own set too.
+     *    + If we're not using push descriptors then we can use the same set and
+     *      save one. In this case we don't care too much about minimizing
+     *      wasted descriptors, because few descriptors can end up here anyway.
+     */
+
     if (context->push_descriptor)
     {
-        if (!context->push_descriptor_set)
-            context->push_descriptor_set = d3d12_root_signature_append_vk_binding_array(root_signature,
-                    descriptor_type, VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR, context);
+        /* The descriptor type is irrelevant here, it will never be used. */
+        if (!context->root_descriptor_set)
+            context->root_descriptor_set = d3d12_root_signature_append_vk_binding_array(root_signature,
+                    0, VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR, context);
 
-        return context->push_descriptor_set;
+        return context->root_descriptor_set;
+    }
+
+    if (context->use_vk_heaps)
+    {
+        if (context->static_samplers)
+        {
+            if (!context->static_samplers_descriptor_set)
+            {
+                if (!root_signature->device->vk_info.KHR_push_descriptor && context->root_descriptor_set)
+                    context->static_samplers_descriptor_set = context->root_descriptor_set;
+                else
+                    /* The descriptor type is irrelevant here, it will never be used. */
+                    context->static_samplers_descriptor_set = d3d12_root_signature_append_vk_binding_array(
+                            root_signature, 0, 0, context);
+            }
+
+            return context->static_samplers_descriptor_set;
+        }
+        else
+        {
+            /* The descriptor type is irrelevant here, it will never be used. */
+            if (!context->root_descriptor_set)
+                context->root_descriptor_set = d3d12_root_signature_append_vk_binding_array(
+                        root_signature, 0, 0, context);
+
+            return context->root_descriptor_set;
+        }
     }
 
     current = context->current_binding_array;
@@ -889,19 +938,19 @@ static unsigned int vk_binding_count_from_descriptor_range(const struct d3d12_ro
     switch (range->type)
     {
         case VKD3D_SHADER_DESCRIPTOR_TYPE_CBV:
-            limit = limits->uniform_buffer_max_descriptors;
+            limit = limits->max_cbv_descriptor_count;
             count = (limit - min(info->cbv_count, limit)) / info->cbv_unbounded_range_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_SRV:
-            limit = limits->sampled_image_max_descriptors;
+            limit = limits->max_srv_descriptor_count;
             count = (limit - min(info->srv_count, limit)) / info->srv_unbounded_range_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_UAV:
-            limit = limits->storage_image_max_descriptors;
+            limit = limits->max_uav_descriptor_count;
             count = (limit - min(info->uav_count, limit)) / info->uav_unbounded_range_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
-            limit = limits->sampler_max_descriptors;
+            limit = limits->max_sampler_descriptor_count;
             count = (limit - min(info->sampler_count, limit)) / info->sampler_unbounded_range_count;
             break;
         default:
@@ -1035,36 +1084,36 @@ static void vkd3d_descriptor_heap_binding_from_descriptor_range(const struct d3d
         if (range->type == VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER)
         {
             binding->set = VKD3D_SET_INDEX_SAMPLER;
-            descriptor_set_size = descriptor_limits->sampler_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_sampler_descriptor_count;
         }
         else
         {
             binding->set = VKD3D_SET_INDEX_MUTABLE;
-            descriptor_set_size = descriptor_limits->sampled_image_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_srv_descriptor_count;
         }
     }
     else switch (range->type)
     {
         case VKD3D_SHADER_DESCRIPTOR_TYPE_SRV:
             binding->set = is_buffer ? VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER : VKD3D_SET_INDEX_SAMPLED_IMAGE;
-            descriptor_set_size = descriptor_limits->sampled_image_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_srv_descriptor_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_UAV:
             binding->set = is_buffer ? VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER : VKD3D_SET_INDEX_STORAGE_IMAGE;
-            descriptor_set_size = descriptor_limits->storage_image_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_uav_descriptor_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_CBV:
             binding->set = VKD3D_SET_INDEX_UNIFORM_BUFFER;
-            descriptor_set_size = descriptor_limits->uniform_buffer_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_cbv_descriptor_count;
             break;
         case VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
             binding->set = VKD3D_SET_INDEX_SAMPLER;
-            descriptor_set_size = descriptor_limits->sampler_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_sampler_descriptor_count;
             break;
         default:
             FIXME("Unhandled descriptor range type type %#x.\n", range->type);
             binding->set = VKD3D_SET_INDEX_SAMPLED_IMAGE;
-            descriptor_set_size = descriptor_limits->sampled_image_max_descriptors;
+            descriptor_set_size = descriptor_limits->max_srv_descriptor_count;
             break;
     }
     binding->set += root_signature->vk_set_count;
@@ -1102,7 +1151,7 @@ static void d3d12_root_signature_map_vk_heap_uav_counter(struct d3d12_root_signa
     mapping->binding.set = root_signature->vk_set_count + VKD3D_SET_INDEX_UAV_COUNTER;
     mapping->binding.binding = 0;
     mapping->binding.count = vk_heap_binding_count_from_descriptor_range(range,
-            root_signature->device->vk_info.descriptor_limits.storage_image_max_descriptors);
+            root_signature->device->vk_info.descriptor_limits.max_uav_descriptor_count);
     offset->static_offset = range->offset;
     offset->dynamic_offset_index = context->push_constant_index;
 }
@@ -1638,17 +1687,22 @@ static HRESULT d3d12_root_signature_init(struct d3d12_root_signature *root_signa
             sizeof(*root_signature->static_samplers))))
         goto fail;
 
+    context.use_vk_heaps = use_vk_heaps;
     context.push_descriptor = vk_info->KHR_push_descriptor;
     if (FAILED(hr = d3d12_root_signature_init_root_descriptors(root_signature, desc, &context)))
         goto fail;
-    root_signature->main_set = !!context.push_descriptor_set;
+    root_signature->main_set = context.root_descriptor_set && context.push_descriptor;
     context.push_descriptor = false;
 
     if (FAILED(hr = d3d12_root_signature_init_push_constants(root_signature, desc,
             root_signature->push_constant_ranges, &root_signature->push_constant_range_count)))
         goto fail;
+
+    context.static_samplers = true;
     if (FAILED(hr = d3d12_root_signature_init_static_samplers(root_signature, device, desc, &context)))
         goto fail;
+    context.static_samplers = false;
+
     context.push_constant_index = 0;
     if (FAILED(hr = d3d12_root_signature_init_root_descriptor_tables(root_signature, desc, &info, &context)))
         goto fail;
@@ -2316,6 +2370,8 @@ static unsigned int feature_flags_compile_option(const struct d3d12_device *devi
         flags |= VKD3D_SHADER_COMPILE_OPTION_FEATURE_FLOAT64;
     if (device->feature_options1.WaveOps)
         flags |= VKD3D_SHADER_COMPILE_OPTION_FEATURE_WAVE_OPS;
+    if (device->vk_info.KHR_zero_initialize_workgroup_memory)
+        flags |= VKD3D_SHADER_COMPILE_OPTION_FEATURE_ZERO_INITIALIZE_WORKGROUP_MEMORY;
 
     return flags;
 }
@@ -2327,16 +2383,21 @@ static HRESULT create_shader_stage(struct d3d12_device *device,
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     struct vkd3d_shader_compile_info compile_info;
     struct VkShaderModuleCreateInfo shader_desc;
+    struct vkd3d_shader_dxbc_desc dxbc_desc;
     struct vkd3d_shader_code spirv = {0};
+    char source_name[33];
     VkResult vr;
     int ret;
 
     const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_15},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_CURRENT},
         {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
         {VKD3D_SHADER_COMPILE_OPTION_WRITE_TESS_GEOM_POINT_SIZE, 0},
         {VKD3D_SHADER_COMPILE_OPTION_FEATURE, feature_flags_compile_option(device)},
+        {VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F16, VKD3D_SHADER_DENORMAL_MODE_ANY},
+        {VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F32, VKD3D_SHADER_DENORMAL_MODE_ANY},
+        {VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F64, VKD3D_SHADER_DENORMAL_MODE_ANY},
     };
 
     stage_desc->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -2359,6 +2420,16 @@ static HRESULT create_shader_stage(struct d3d12_device *device,
     compile_info.option_count = ARRAY_SIZE(options);
     compile_info.log_level = VKD3D_SHADER_LOG_NONE;
     compile_info.source_name = NULL;
+
+    if ((ret = vkd3d_shader_parse_dxbc(&(struct vkd3d_shader_code){code->pShaderBytecode, code->BytecodeLength},
+            0, &dxbc_desc, NULL)) >= 0)
+    {
+        sprintf(source_name, "%08x%08x%08x%08x", dxbc_desc.checksum[0],
+                dxbc_desc.checksum[1], dxbc_desc.checksum[2], dxbc_desc.checksum[3]);
+        vkd3d_shader_free_dxbc(&dxbc_desc);
+        TRACE("Compiling shader \"%s\".\n", source_name);
+        compile_info.source_name = source_name;
+    }
 
     if ((ret = vkd3d_shader_parse_dxbc_source_type(&compile_info.source, &compile_info.source_type, NULL)) < 0
             || (ret = vkd3d_shader_compile(&compile_info, &spirv, NULL)) < 0)
@@ -2388,7 +2459,7 @@ static int vkd3d_scan_dxbc(const struct d3d12_device *device, const D3D12_SHADER
 
     const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_15},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_CURRENT},
         {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
     };
 
@@ -3146,13 +3217,13 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
     struct vkd3d_shader_spirv_target_info *stage_target_info;
     uint32_t aligned_offsets[D3D12_VS_INPUT_REGISTER_COUNT];
     struct vkd3d_shader_descriptor_offset_info offset_info;
+    struct vkd3d_shader_scan_signature_info signature_info;
     struct vkd3d_shader_parameter ps_shader_parameters[1];
     struct vkd3d_shader_transform_feedback_info xfb_info;
     struct vkd3d_shader_spirv_target_info ps_target_info;
     struct vkd3d_shader_interface_info shader_interface;
     struct vkd3d_shader_spirv_target_info target_info;
-    const struct d3d12_root_signature *root_signature;
-    struct vkd3d_shader_signature input_signature;
+    struct d3d12_root_signature *root_signature;
     bool have_attachment, is_dsv_format_unknown;
     VkShaderStageFlagBits xfb_stage = 0;
     VkSampleCountFlagBits sample_count;
@@ -3163,19 +3234,7 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
     size_t rt_count;
     uint32_t mask;
     HRESULT hr;
-    int ret;
 
-    static const DWORD default_ps_code[] =
-    {
-#if 0
-        ps_4_0
-        ret
-#endif
-        0x43425844, 0x19cbf606, 0x18f562b9, 0xdaeed4db, 0xc324aa46, 0x00000001, 0x00000060, 0x00000003,
-        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
-        0x00000008, 0x00000000, 0x00000008, 0x52444853, 0x0000000c, 0x00000040, 0x00000003, 0x0100003e,
-    };
-    static const D3D12_SHADER_BYTECODE default_ps = {default_ps_code, sizeof(default_ps_code)};
     static const struct
     {
         enum VkShaderStageFlagBits stage;
@@ -3196,7 +3255,8 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
     memset(&state->uav_counters, 0, sizeof(state->uav_counters));
     graphics->stage_count = 0;
 
-    memset(&input_signature, 0, sizeof(input_signature));
+    memset(&signature_info, 0, sizeof(signature_info));
+    signature_info.type = VKD3D_SHADER_STRUCTURE_TYPE_SCAN_SIGNATURE_INFO;
 
     for (i = desc->rtv_formats.NumRenderTargets; i < ARRAY_SIZE(desc->rtv_formats.RTFormats); ++i)
     {
@@ -3207,10 +3267,25 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
         }
     }
 
+    state->implicit_root_signature = NULL;
     if (!(root_signature = unsafe_impl_from_ID3D12RootSignature(desc->root_signature)))
     {
-        WARN("Root signature is NULL.\n");
-        return E_INVALIDARG;
+        TRACE("Root signature is NULL, looking for an embedded signature in the vertex shader.\n");
+        if (FAILED(hr = d3d12_root_signature_create(device,
+                desc->vs.pShaderBytecode, desc->vs.BytecodeLength, &root_signature))
+                && FAILED(hr = d3d12_root_signature_create(device,
+                desc->ps.pShaderBytecode, desc->ps.BytecodeLength, &root_signature))
+                && FAILED(hr = d3d12_root_signature_create(device,
+                desc->ds.pShaderBytecode, desc->ds.BytecodeLength, &root_signature))
+                && FAILED(hr = d3d12_root_signature_create(device,
+                desc->hs.pShaderBytecode, desc->hs.BytecodeLength, &root_signature))
+                && FAILED(hr = d3d12_root_signature_create(device,
+                desc->gs.pShaderBytecode, desc->gs.BytecodeLength, &root_signature)))
+        {
+            WARN("Failed to find an embedded root signature, hr %s.\n", debugstr_hresult(hr));
+            goto fail;
+        }
+        state->implicit_root_signature = &root_signature->ID3D12RootSignature_iface;
     }
 
     sample_count = vk_samples_from_dxgi_sample_desc(&desc->sample_desc);
@@ -3318,11 +3393,10 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
 
         if (!desc->ps.pShaderBytecode)
         {
-            if (FAILED(hr = create_shader_stage(device, &graphics->stages[graphics->stage_count],
-                    VK_SHADER_STAGE_FRAGMENT_BIT, &default_ps, NULL)))
-                goto fail;
-
-            ++graphics->stage_count;
+            for (i = 0; i < rt_count; i++)
+            {
+                graphics->blend_attachments[i].colorWriteMask = 0;
+            }
         }
     }
 
@@ -3425,7 +3499,6 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
     for (i = 0; i < ARRAY_SIZE(shader_stages); ++i)
     {
         const D3D12_SHADER_BYTECODE *b = (const void *)((uintptr_t)desc + shader_stages[i].offset);
-        const struct vkd3d_shader_code dxbc = {b->pShaderBytecode, b->BytecodeLength};
 
         if (!b->pShaderBytecode)
             continue;
@@ -3439,14 +3512,6 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
         stage_target_info = &target_info;
         switch (shader_stages[i].stage)
         {
-            case VK_SHADER_STAGE_VERTEX_BIT:
-                if ((ret = vkd3d_shader_parse_input_signature(&dxbc, &input_signature, NULL)) < 0)
-                {
-                    hr = hresult_from_vkd3d_result(ret);
-                    goto fail;
-                }
-                break;
-
             case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
                 if (desc->primitive_topology_type != D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH)
@@ -3457,6 +3522,7 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
                 }
                 break;
 
+            case VK_SHADER_STAGE_VERTEX_BIT:
             case VK_SHADER_STAGE_GEOMETRY_BIT:
                 break;
 
@@ -3478,11 +3544,14 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
         ps_target_info.next = NULL;
         target_info.next = NULL;
         offset_info.next = NULL;
+        signature_info.next = NULL;
         if (shader_stages[i].stage == xfb_stage)
             vkd3d_prepend_struct(&shader_interface, &xfb_info);
         vkd3d_prepend_struct(&shader_interface, stage_target_info);
         if (root_signature->descriptor_offsets)
             vkd3d_prepend_struct(&shader_interface, &offset_info);
+        if (shader_stages[i].stage == VK_SHADER_STAGE_VERTEX_BIT)
+            vkd3d_prepend_struct(&shader_interface, &signature_info);
 
         if (FAILED(hr = create_shader_stage(device, &graphics->stages[graphics->stage_count],
                 shader_stages[i].stage, b, &shader_interface)))
@@ -3533,7 +3602,7 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
             goto fail;
         }
 
-        if (!(signature_element = vkd3d_shader_find_signature_element(&input_signature,
+        if (!(signature_element = vkd3d_shader_find_signature_element(&signature_info.input,
                 e->SemanticName, e->SemanticIndex, 0)))
         {
             WARN("Unused input element %u.\n", i);
@@ -3660,19 +3729,21 @@ static HRESULT d3d12_pipeline_state_init_graphics(struct d3d12_pipeline_state *s
     if (FAILED(hr = vkd3d_private_store_init(&state->private_store)))
         goto fail;
 
-    vkd3d_shader_free_shader_signature(&input_signature);
+    vkd3d_shader_free_scan_signature_info(&signature_info);
     state->vk_bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    state->implicit_root_signature = NULL;
     d3d12_device_add_ref(state->device = device);
 
     return S_OK;
 
 fail:
+    if (state->implicit_root_signature)
+        ID3D12RootSignature_Release(state->implicit_root_signature);
+
     for (i = 0; i < graphics->stage_count; ++i)
     {
         VK_CALL(vkDestroyShaderModule(device->vk_device, state->u.graphics.stages[i].module, NULL));
     }
-    vkd3d_shader_free_shader_signature(&input_signature);
+    vkd3d_shader_free_scan_signature_info(&signature_info);
 
     d3d12_pipeline_uav_counter_state_cleanup(&state->uav_counters, device);
 
@@ -3903,9 +3974,9 @@ VkPipeline d3d12_pipeline_state_get_or_create_pipeline(struct d3d12_pipeline_sta
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .viewportCount = 1,
+        .viewportCount = D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
         .pViewports = NULL,
-        .scissorCount = 1,
+        .scissorCount = D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
         .pScissors = NULL,
     };
     static const VkDynamicState dynamic_states[] =
@@ -4067,7 +4138,7 @@ static int compile_hlsl_cs(const struct vkd3d_shader_code *hlsl, struct vkd3d_sh
 
     static const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_15},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_CURRENT},
     };
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;

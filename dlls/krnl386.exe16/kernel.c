@@ -129,8 +129,7 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
     /* Initialize the real-mode selector entry points */
 #define SET_ENTRY_POINT( num, addr ) \
     NE_SetEntryPoint( inst, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
-                      DOSMEM_MapDosToLinear(addr), 0x10000, inst, \
-                      LDT_FLAGS_DATA ))
+                      DOSMEM_MapDosToLinear(addr), 0x10000, inst, data_segment ))
 
     SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
     SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */

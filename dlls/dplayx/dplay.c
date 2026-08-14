@@ -615,6 +615,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
       TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", messageHeader, ((const DWORD *)messageHeader)[1] );
       NS_SetLocalAddr( This->dp2->lpNameServerData, messageHeader, 20 );
       DP_MSG_ReplyReceived( This, wCommandId, messageBody, dwMessageBodySize, messageHeader );
+      break;
 
     case DPMSGCMD_FORWARDADDPLAYER:
       TRACE( "Sending message to self to get my addr\n" );

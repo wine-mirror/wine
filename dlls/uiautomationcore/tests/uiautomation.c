@@ -10476,6 +10476,7 @@ static const struct prov_method_sequence nav_seq9[] = {
     { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_hwnd, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { 0 },
 };
 
 static const struct prov_method_sequence nav_seq10[] = {
@@ -10554,6 +10555,7 @@ static const struct prov_method_sequence nav_seq14[] = {
 static const struct prov_method_sequence nav_seq15[] = {
     NODE_CREATE_SEQ(&Provider_child2_child_child),
     { &Provider_child2_child_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
+    { 0 },
 };
 
 static const struct prov_method_sequence nav_seq16[] = {
@@ -18627,7 +18629,7 @@ static void launch_test_process(const char *name, const char *test_name)
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
+    wait_child_process(&proc);
 }
 
 START_TEST(uiautomation)

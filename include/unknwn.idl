@@ -60,6 +60,9 @@ cpp_quote("        }")
 cpp_quote("        END_INTERFACE")
 cpp_quote("    };")
 cpp_quote("}")
+cpp_quote("#ifdef __CRT_UUID_DECL")
+cpp_quote("__CRT_UUID_DECL(IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46)")
+cpp_quote("#endif")
 cpp_quote("#else")
   HRESULT QueryInterface(
     [in] REFIID riid,
@@ -111,38 +114,3 @@ interface IClassFactory : IUnknown
   HRESULT RemoteLockServer(
     [in] BOOL fLock);
 }
-
-[
-    local,
-    object,
-    uuid(c03f6a43-65a4-9818-987e-e0b810d2a6f2),
-    pointer_default(unique)
-]
-interface IAgileReference : IUnknown
-{
-  typedef [unique] IUnknown *LPAGILEREFERENCE;
-cpp_quote("#if defined(__cplusplus) && !defined(CINTERFACE)")
-cpp_quote("EXTERN_C const IID IID_IAgileReference;")
-cpp_quote("extern \"C++\"")
-cpp_quote("{")
-cpp_quote("    MIDL_INTERFACE(\"c03f6a43-65a4-9818-987e-e0b810d2a6f2\")")
-cpp_quote("    IAgileReference : public IUnknown")
-cpp_quote("    {")
-cpp_quote("        public:")
-cpp_quote("            BEGIN_INTERFACE")
-cpp_quote("            virtual HRESULT STDMETHODCALLTYPE Resolve(REFIID riid, void **object_reference) = 0;")
-
-cpp_quote("        template<class iface>")
-cpp_quote("        HRESULT STDMETHODCALLTYPE Resolve(_COM_Outptr_ iface** pp)")
-cpp_quote("        {")
-cpp_quote("            return Resolve(__uuidof(iface), (void **)pp);")
-cpp_quote("        }")
-cpp_quote("  };")
-cpp_quote("}")
-cpp_quote("#else")
-   HRESULT Resolve(
-    [in] REFIID riid, 
-    [out, retval, iid_is(riid)] void **ppvObjectReference);
-};
-cpp_quote("#endif")
-

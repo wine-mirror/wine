@@ -95,7 +95,7 @@ extern WORD int16_sel;
 #define SET_CH(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xff00) | (((BYTE)(val)) << 8)))
 #define SET_DH(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xff00) | (((BYTE)(val)) << 8)))
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -155,11 +155,11 @@ typedef struct
     BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 /* Device driver header */
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -170,7 +170,7 @@ typedef struct
     char  name[8];
 } DOS_DEVICE_HEADER;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 /* dosvm.c */
 extern void DOSVM_Exit( WORD retval );

@@ -62,14 +62,14 @@ typedef enum MUX_PID_TYPE
     PID_MPEG2_SECTION_PSI_SI,
 } MUX_PID_TYPE;
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct _BDA_MUX_PIDLISTITEM
 {
     USHORT usPIDNumber;
     USHORT usProgramNumber;
     MUX_PID_TYPE ePIDType;
 } BDA_MUX_PIDLISTITEM, *PBDA_MUX_PIDLISTITEM;
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef enum BDA_CONDITIONALACCESS_REQUESTTYPE
 {

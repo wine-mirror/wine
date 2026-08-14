@@ -3,6 +3,8 @@ IMPORTLIB = dxgi
 IMPORTS   = gdi32 dxguid uuid wined3d user32 win32u
 EXTRAINCL = $(VKD3D_PE_CFLAGS)
 
+VER_PRODUCTVERSION = 6,0,6000,16386
+
 SOURCES = \
 	adapter.c \
 	device.c \
@@ -11,5 +13,4 @@ SOURCES = \
 	output.c \
 	resource.c \
 	swapchain.c \
-	utils.c \
-	version.rc
+	utils.c

@@ -124,6 +124,7 @@ typedef struct GifFileType {
     struct SavedImage *SavedImages; /* Use this to accumulate file state */
     void *UserData;             /* hook to attach user data (TVT) */
     void *Private;              /* Don't mess with this! */
+    void *seekFunc;             /* SeekFunc: seek to absolute byte offset for on-demand decoding */
 } GifFileType;
 
 typedef enum {
@@ -136,6 +137,9 @@ typedef enum {
 
 /* func type to read gif data from arbitrary sources (TVT) */
 typedef int (*InputFunc) (GifFileType *, GifByteType *, int);
+
+/* func type to seek to an absolute byte offset in the GIF data source */
+typedef void (*SeekFunc) (GifFileType *, int offset);
 
 /*  GIF89 extension function codes */
 
@@ -171,8 +175,12 @@ int DGifCloseFile(GifFileType * GifFile);
 typedef struct SavedImage {
     GifImageDesc ImageDesc;
     int ImageDescOffset;
+    int LZWDataOffset;   /* byte offset to this frame's LZW sub-blocks in the stream */
     unsigned char *RasterBits;
     Extensions Extensions;
 } SavedImage;
+
+int DGifSlurpHeaders(GifFileType *GifFile);   /* scan frame headers only, skip pixel data */
+int DGifDecodeFrame(GifFileType *GifFile, int frame); /* on-demand decode of a specific frame */
 
 #endif /* _UNGIF_H_ */

@@ -115,7 +115,8 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     TRACE("factory %p, adapter %p, flags %#x, feature_levels %p, levels %u, device %p.\n",
             factory, adapter, flags, feature_levels, levels, device);
 
-    d3d11 = GetModuleHandleA("d3d11.dll");
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+            | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (const WCHAR *)D3D11CoreCreateDevice, &d3d11);
     hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, feature_levels, levels, (void **)&dxgi_device);
     if (FAILED(hr))
     {

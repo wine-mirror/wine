@@ -354,7 +354,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
         <enum value="0x818B" name="WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE"/>
         <enum value="0x818C" name="WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE"/>
         <enum value="0x818D" name="WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE"/>
-        <enum value="0x818E" name="WGL_RENDERER_ID_WINE"/>
     </enums>
 
     <extensions>
@@ -422,7 +421,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
             <require>
                 <enum name="WGL_RENDERER_ACCELERATED_WINE"/>
                 <enum name="WGL_RENDERER_DEVICE_ID_WINE"/>
-                <enum name="WGL_RENDERER_ID_WINE"/>
                 <enum name="WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE"/>
                 <enum name="WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE"/>
                 <enum name="WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE"/>

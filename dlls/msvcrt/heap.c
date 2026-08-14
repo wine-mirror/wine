@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define UNLOCK_HEAP _unlock( _HEAP_LOCK )
 
 /* _aligned */
-#define SAVED_PTR(x) ((void *)((DWORD_PTR)((char *)x - sizeof(void *)) & \
+#define SAVED_PTR(x) ((void **)((DWORD_PTR)((char *)x - sizeof(void *)) & \
                                ~(sizeof(void *) - 1)))
 #define ALIGN_PTR(ptr, alignment, offset) ((void *) \
     ((((DWORD_PTR)((char *)ptr + alignment + sizeof(void *) + offset)) & \
@@ -612,8 +612,9 @@ void * CDECL _aligned_malloc(size_t size, size_t alignment)
 void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
                                      size_t alignment, size_t offset)
 {
-    void * temp, **saved;
+    void *temp, *alloc_ptr;
     size_t old_padding, new_padding, old_size;
+
     TRACE("(%p, %Iu, %Iu, %Iu)\n", memblock, size, alignment, offset);
 
     if (!memblock)
@@ -643,18 +644,11 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
     if (alignment < sizeof(void *))
         alignment = sizeof(void *);
 
-    /* make sure alignment and offset didn't change */
-    saved = SAVED_PTR(memblock);
-    if (memblock != ALIGN_PTR(*saved, alignment, offset))
-    {
-        *_errno() = EINVAL;
-        return NULL;
-    }
-
-    old_padding = (char *)memblock - (char *)*saved;
+    alloc_ptr = *SAVED_PTR(memblock);
+    old_padding = (char *)memblock - (char *)alloc_ptr;
 
     /* Get previous size of block */
-    old_size = _msize(*saved);
+    old_size = _msize(alloc_ptr);
     if (old_size == -1)
     {
         /* It seems this function was called with an invalid pointer. Bail out. */
@@ -669,55 +663,34 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
     }
     old_size -= old_padding;
 
-    temp = realloc(*saved, size + alignment + sizeof(void *));
+    /* Ensure data is preserved if padding block is shrinked */
+    if (alignment + sizeof(void *) < old_padding)
+    {
+        memmove(alloc_ptr, memblock, old_size);
+        old_padding = 0;
+    }
 
+    temp = realloc(alloc_ptr, size + alignment + sizeof(void *));
     if (!temp)
+    {
+        if (!old_padding)
+        {
+            memmove(memblock, alloc_ptr, old_size);
+            *SAVED_PTR(memblock) = alloc_ptr;
+        }
         return NULL;
+    }
 
     /* adjust pointer for proper alignment and offset */
     memblock = ALIGN_PTR(temp, alignment, offset);
-
-    /* Save the real allocation address below returned address */
-    /* so it can be found later to free. */
-    saved = SAVED_PTR(memblock);
-
     new_padding = (char *)memblock - (char *)temp;
-
-/*
-   Memory layout of old block is as follows:
-   +-------+---------------------+-+--------------------------+-----------+
-   |  ...  | "old_padding" bytes | | ... "old_size" bytes ... |    ...    |
-   +-------+---------------------+-+--------------------------+-----------+
-           ^                     ^ ^
-           |                     | |
-        *saved               saved memblock
-
-   Memory layout of new block is as follows:
-   +-------+-----------------------------+-+----------------------+-------+
-   |  ...  |    "new_padding" bytes      | | ... "size" bytes ... |  ...  |
-   +-------+-----------------------------+-+----------------------+-------+
-           ^                             ^ ^
-           |                             | |
-          temp                       saved memblock
-
-   However, in the new block, actual data is still written as follows
-   (because it was copied by realloc):
-   +-------+---------------------+--------------------------------+-------+
-   |  ...  | "old_padding" bytes |   ... "old_size" bytes ...     |  ...  |
-   +-------+---------------------+--------------------------------+-------+
-           ^                             ^ ^
-           |                             | |
-          temp                       saved memblock
-
-   Therefore, min(old_size,size) bytes of actual data have to be moved
-   from the offset they were at in the old block (temp + old_padding),
-   to the offset they have to be in the new block (temp + new_padding == memblock).
-*/
+    /* copy data to new location */
     if (new_padding != old_padding)
         memmove((char *)memblock, (char *)temp + old_padding, (old_size < size) ? old_size : size);
 
-    *saved = temp;
-
+    /* Save the real allocation address below returned address */
+    /* so it can be found later to free. */
+    *SAVED_PTR(memblock) = temp;
     return memblock;
 }
 

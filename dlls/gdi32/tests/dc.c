@@ -109,6 +109,22 @@ static void test_dc_values(void)
     ok(ret, "Unexpected return value.\n");
     ok(limit == 10.0f, "Unexpected default miter limit %f.\n", limit);
 
+    ret = SetMiterLimit(hdc, 3.4f, &limit);
+    ok(ret, "Unexpected return value.\n");
+    ok(limit == 1.0f, "Unexpected default miter limit %f.\n", limit);
+
+    ret = GetMiterLimit(hdc, &limit);
+    ok(ret, "Unexpected return value.\n");
+    ok(limit == 3.4f, "Unexpected default miter limit %f.\n", limit);
+
+    ret = SetMiterLimit(hdc, 3.6f, &limit);
+    ok(ret, "Unexpected return value.\n");
+    ok(limit == 3.4f, "Unexpected default miter limit %f.\n", limit);
+
+    ret = GetMiterLimit(hdc, &limit);
+    ok(ret, "Unexpected return value.\n");
+    ok(limit == 3.6f, "Unexpected default miter limit %f.\n", limit);
+
     DeleteDC( hdc );
 }
 

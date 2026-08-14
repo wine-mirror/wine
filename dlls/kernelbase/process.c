@@ -22,12 +22,12 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "wincontypes.h"
 #include "winternl.h"
+#include "processsnapshot.h"
 
 #include "kernelbase.h"
 #include "wine/debug.h"
@@ -64,6 +64,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, DWORD buflen )
         HANDLE handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                      NULL, OPEN_EXISTING, 0, 0 );
         if ((ret = (handle != INVALID_HANDLE_VALUE))) CloseHandle( handle );
+        else SetLastError( ERROR_FILE_NOT_FOUND );
     }
     RtlReleasePath( load_path );
     return ret;
@@ -87,6 +88,8 @@ static WCHAR *get_file_name( WCHAR *cmdline, WCHAR *buffer, DWORD buflen )
     if (cmdline[0] == '"' && (p = wcschr( cmdline + 1, '"' )))
     {
         int len = p - cmdline - 1;
+        /* trim spaces in quotes */
+        while (len && cmdline[len] == L' ') len--;
         /* extract the quoted portion as file name */
         if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
         memcpy( name, cmdline + 1, len * sizeof(WCHAR) );
@@ -114,15 +117,12 @@ static WCHAR *get_file_name( WCHAR *cmdline, WCHAR *buffer, DWORD buflen )
             ret = cmdline;
             break;
         }
+        if (GetLastError() != ERROR_FILE_NOT_FOUND) break;
         if (!first_space) first_space = pos;
         if (!(*pos++ = *p++)) break;
     }
 
-    if (!ret)
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-    }
-    else if (first_space)  /* build a new command-line with quotes */
+    if (ret && first_space)  /* build a new command-line with quotes */
     {
         if (!(ret = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(cmdline) + 3) * sizeof(WCHAR) )))
             goto done;
@@ -516,7 +516,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     WCHAR name[MAX_PATH];
     WCHAR *p, *tidy_cmdline = cmd_line;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    RTL_USER_PROCESS_INFORMATION rtl_info;
+    RTL_USER_PROCESS_INFORMATION rtl_info = { 0 };
     HANDLE parent = 0, debug = 0;
     ULONG nt_flags = 0;
     USHORT machine = 0;
@@ -608,6 +608,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
                             TRACE( "PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE %p reference %p\n",
                                    console, console->reference );
                             params->ConsoleHandle = console->reference;
+                            if (!(flags & DETACHED_PROCESS))
+                            {
+                                params->ConsoleFlags |= 2;
+                                /* don't inherit standard handles bound to parent console (but inherit the others) */
+                                if (!(startup_info->dwFlags & STARTF_USESTDHANDLES))
+                                {
+                                    if (is_console_handle(params->hStdInput))  params->hStdInput = NULL;
+                                    if (is_console_handle(params->hStdOutput)) params->hStdOutput = NULL;
+                                    if (is_console_handle(params->hStdError))  params->hStdError = NULL;
+                                }
+                            }
                             break;
                         }
                     case PROC_THREAD_ATTRIBUTE_JOB_LIST:
@@ -817,6 +828,38 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetHandleInformation( HANDLE handle, DWORD *flags 
 
 
 /***********************************************************************
+ *           GetMachineTypeAttributes   (kernelbase.@)
+ */
+HRESULT WINAPI GetMachineTypeAttributes( USHORT machine, MACHINE_ATTRIBUTES *attr )
+{
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
+    HANDLE process = NULL;
+    NTSTATUS status;
+
+    status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures2, &process, sizeof(process),
+                                         machines, sizeof(machines), NULL );
+    if (status) return HRESULT_FROM_NT(status);
+
+    *attr = 0;
+
+    for (unsigned int i = 0; machines[i].Machine; i++)
+    {
+        if (machines[i].Machine == machine)
+        {
+            if (machines[i].KernelMode)
+                *attr |= KernelEnabled;
+            if (machines[i].UserMode)
+                *attr |= UserEnabled;
+            if (machines[i].WoW64Container)
+                *attr |= Wow64Container;
+        }
+    }
+
+    return S_OK;
+}
+
+
+/***********************************************************************
  *           GetPriorityClass   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetPriorityClass( HANDLE process )
@@ -900,9 +943,7 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetProcessMitigationPolicy( HANDLE process, 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetProcessPriorityBoost( HANDLE process, PBOOL disable )
 {
-    FIXME( "(%p,%p): semi-stub\n", process, disable );
-    *disable = FALSE;  /* report that no boost is present */
-    return TRUE;
+    return set_ntstatus( NtQueryInformationProcess( process, ProcessPriorityBoost, disable, sizeof(*disable), NULL ));
 }
 
 
@@ -1050,7 +1091,7 @@ BOOL WINAPI GetProcessInformation( HANDLE process, PROCESS_INFORMATION_CLASS inf
                 return FALSE;
             }
 
-            status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+            status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures2, &process, sizeof(process),
                     machines, sizeof(machines), NULL );
             if (status) return set_ntstatus( status );
 
@@ -1246,8 +1287,7 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessMitigationPolicy( PROCESS_MITIGATI
  */
 BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessPriorityBoost( HANDLE process, BOOL disable )
 {
-    FIXME( "(%p,%d): stub\n", process, disable );
-    return TRUE;
+    return set_ntstatus( NtSetInformationProcess( process, ProcessPriorityBoost, &disable, sizeof(disable) ));
 }
 
 
@@ -1276,7 +1316,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessWorkingSetSizeEx( HANDLE process, SIZE_T
 /******************************************************************************
  *           TerminateProcess   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH TerminateProcess( HANDLE handle, DWORD exit_code )
+BOOL WINAPI DECLSPEC_HOTPATCH TerminateProcess( HANDLE handle, UINT exit_code )
 {
     if (!handle)
     {
@@ -1801,6 +1841,9 @@ static inline DWORD validate_proc_thread_attribute( DWORD_PTR attr, SIZE_T size 
     case PROC_THREAD_ATTRIBUTE_MACHINE_TYPE:
         if (size != sizeof(USHORT)) return ERROR_BAD_LENGTH;
         break;
+    case PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY:
+        if (size != sizeof(GROUP_AFFINITY)) return ERROR_BAD_LENGTH;
+        break;
     default:
         FIXME( "Unhandled attribute %Iu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );
         return ERROR_NOT_SUPPORTED;
@@ -1864,4 +1907,31 @@ void WINAPI DECLSPEC_HOTPATCH DeleteProcThreadAttributeList( struct _PROC_THREAD
 BOOL WINAPI DECLSPEC_HOTPATCH CompareObjectHandles( HANDLE first, HANDLE second )
 {
     return set_ntstatus( NtCompareObjects( first, second ));
+}
+
+/***********************************************************************
+ *           PssQuerySnapshot   (kernelbase.@)
+ */
+DWORD WINAPI PssQuerySnapshot( HPSS handle, PSS_QUERY_INFORMATION_CLASS class, void *buffer, DWORD len )
+{
+    FIXME( "(%p %u %p %lu)\n", handle ,class, buffer, len );
+    return ERROR_NOT_FOUND;
+}
+
+/***********************************************************************
+ *           PssFreeSnapshot   (kernelbase.@)
+ */
+DWORD WINAPI PssFreeSnapshot( HANDLE hprocess, HPSS handle )
+{
+    FIXME( "(%p %p)\n", hprocess , handle );
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *           PssCaptureSnapshot   (kernelbase.@)
+ */
+DWORD WINAPI PssCaptureSnapshot( HANDLE hprocess, PSS_CAPTURE_FLAGS flags, DWORD ctx_flags, HPSS *handle )
+{
+    FIXME( "(%p %u %lu %p)\n", hprocess , flags, ctx_flags, handle );
+    return ERROR_NOT_FOUND;
 }

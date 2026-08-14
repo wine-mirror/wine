@@ -857,15 +857,33 @@ static HRESULT WINAPI video_control_GetMaxAvailableFrameRate(IAMVideoControl *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI video_control_GetFrameRateList(IAMVideoControl *iface, IPin *pin, LONG index,
-        SIZE dimensions, LONG *list_size, LONGLONG **frame_rate)
+/* Despite the name this function actually returns a list of frame intervals. */
+static HRESULT WINAPI video_control_GetFrameRateList(IAMVideoControl *iface, IPin *pin,
+        LONG index, SIZE dimensions, LONG *ret_count, LONGLONG **ret_intervals)
 {
     struct vfw_capture *filter = impl_from_IAMVideoControl(iface);
+    struct get_frame_intervals_params params;
+    unsigned int count;
 
-    FIXME("filter %p, pin %p, index %ld, dimensions (%ldx%ld), list size %p, frame rate %p, stub.\n",
-            filter, pin, index, dimensions.cx, dimensions.cy, list_size, frame_rate);
+    TRACE("filter %p, pin %p, index %ld, dimensions (%ldx%ld), ret_count %p, ret_intervals %p.\n",
+            filter, pin, index, dimensions.cx, dimensions.cy, ret_count, ret_intervals);
 
-    return E_NOTIMPL;
+    params.device = filter->device;
+    params.caps_index = index;
+    params.width = dimensions.cx;
+    params.height = dimensions.cy;
+    params.intervals = NULL;
+    params.count = &count;
+    V4L_CALL( get_frame_intervals, &params );
+
+    if (!(params.intervals = CoTaskMemAlloc(count * sizeof(LONGLONG))))
+        return E_OUTOFMEMORY;
+
+    V4L_CALL( get_frame_intervals, &params );
+
+    *ret_intervals = params.intervals;
+    *ret_count = count;
+    return S_OK;
 }
 
 static const IAMVideoControlVtbl IAMVideoControl_VTable =

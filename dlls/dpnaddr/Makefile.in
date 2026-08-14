@@ -1,5 +1,5 @@
 MODULE    = dpnaddr.dll
 IMPORTS   = dpnet
 
-SOURCES = \
-	version.rc
+VER_FILEDESCRIPTION_STR = "Wine DpnAddr dll"
+VER_PRODUCTVERSION      = 5,3,2600,2180

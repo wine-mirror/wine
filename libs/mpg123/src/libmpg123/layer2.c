@@ -341,7 +341,8 @@ int INT123_do_layer2(mpg123_handle *fr)
 
 	if(fr->jsbound > fr->II_sblimit)
 	{
-		fprintf(stderr, "Truncating stereo boundary to sideband limit.\n");
+		if(NOQUIET)
+			error("Truncating stereo boundary to sideband limit.");
 		fr->jsbound=fr->II_sblimit;
 	}
 

@@ -5,4 +5,5 @@ IMPORTS   = advapi32
 SOURCES = \
 	assisted.c \
 	line.c \
-	phone.c
+	phone.c \
+	tapi.rc

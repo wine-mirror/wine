@@ -1030,7 +1030,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
         winetest_ok(nGlyphs == outnGlyphs, "got incorrect number of glyphs (%i)\n",outnGlyphs);
     else if (nGlyphs != outnGlyphs)
         winetest_trace("got incorrect number of glyphs (%i)\n",outnGlyphs);
-    for (x = 0; x < outnGlyphs; x++)
+    for (x = 0; x < min(nGlyphs, outnGlyphs); x++)
     {
         if (glyphItems[x].Glyph)
         {

@@ -31,7 +31,6 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "crypt.h"
 #include "winnls.h"
 #include "winreg.h"

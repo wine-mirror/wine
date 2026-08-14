@@ -22,6 +22,7 @@
 
 #include "exdispid.h"
 #include "mshtml.h"
+#include "mshtmdid.h"
 #include "perhist.h"
 #include "initguid.h"
 
@@ -80,6 +81,40 @@ void abort_dochost_tasks(DocHost *This, task_proc_t proc)
         list_remove(&task->entry);
         task->destr(task);
     }
+}
+
+static BOOL fire_titlechange(DocHost *This)
+{
+    IHTMLDocument2 *doc;
+    BSTR title = NULL;
+    DISPPARAMS dp = { NULL, NULL, 0, 0 };
+    HRESULT hres;
+    BOOL has_title = FALSE;
+    VARIANTARG arg;
+
+    if(!This->document)
+        return FALSE;
+
+    hres = IUnknown_QueryInterface(This->document, &IID_IHTMLDocument2, (void **)&doc);
+    if(FAILED(hres))
+        return FALSE;
+
+    hres = IHTMLDocument2_get_title(doc, &title);
+    IHTMLDocument2_Release(doc);
+    if(FAILED(hres) || !title)
+        return FALSE;
+
+    has_title = *title != 0;
+
+    VariantInit(&arg);
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = title;
+    dp.rgvarg = &arg;
+    dp.cArgs = 1;
+    call_sink(This->cps.wbe2, DISPID_TITLECHANGE, &dp);
+    VariantClear(&arg);
+
+    return has_title;
 }
 
 void on_commandstate_change(DocHost *doc_host, LONG command, BOOL enable)
@@ -708,6 +743,10 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             if(!This->olecmd)
                 return E_NOTIMPL;
             return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        case OLECMDID_SETTITLE:
+            if(fire_titlechange(This) && This->olecmd)
+                return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            return S_OK;
         case OLECMDID_SETDOWNLOADSTATE:
             if(pvaIn && V_VT(pvaIn) == VT_I4)
                 This->busy = V_I4(pvaIn) ? VARIANT_TRUE : VARIANT_FALSE;
@@ -1109,6 +1148,9 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         update_ready_state(This, ready_state);
         break;
     }
+    case DISPID_IHTMLDOCUMENT2_TITLE:
+        fire_titlechange(This);
+        break;
     default:
         FIXME("unimplemented dispid %ld\n", dispID);
         return E_NOTIMPL;

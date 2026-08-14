@@ -59,6 +59,10 @@
 #include <netinet6/ip6_var.h>
 #endif
 
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+
 #ifdef __APPLE__
 /* For reasons unknown, Mac OS doesn't export <netinet6/ip6_var.h> to user-
  * space. We'll have to define the needed struct ourselves.
@@ -142,7 +146,6 @@ struct ip6stat {
 #endif
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -761,10 +764,10 @@ static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size,
             for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
                 if (!ascii_strcasecmp( buf, ipstatlist[i].name ))
                 {
-                    if (ipstatlist[i].size == sizeof(long))
-                        *(long *)ipstatlist[i].elem = strtoul( value, NULL, 10 );
+                    if (ipstatlist[i].size == sizeof(UINT))
+                        *(UINT *)ipstatlist[i].elem = strtoul( value, NULL, 10 );
                     else
-                        *(long long *)ipstatlist[i].elem = strtoull( value, NULL, 10 );
+                        *(ULONGLONG *)ipstatlist[i].elem = strtoull( value, NULL, 10 );
                     status = STATUS_SUCCESS;
                 }
         }
@@ -808,6 +811,184 @@ static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size,
     FIXME( "not implemented\n" );
     return STATUS_NOT_IMPLEMENTED;
 #endif
+}
+
+static NTSTATUS ip_interface_fill( UINT fam, const char *unix_name, void *key_data, UINT key_size,
+                                   void *rw_data, UINT rw_size, void *dynamic_data, UINT dynamic_size,
+                                   void *static_data, UINT static_size, UINT_PTR *count )
+{
+    BOOL want_data = key_size || rw_size || dynamic_size || static_size;
+    int base_reachable_time, dad_transmits, site_prefix_len;
+    struct nsi_ip_interface_dynamic *dyn = dynamic_data;
+    struct nsi_ip_interface_static *stat = static_data;
+    struct nsi_ndis_ifinfo_dynamic iface_dynamic;
+    struct nsi_ip_interface_key *key = key_data;
+    struct nsi_ndis_ifinfo_static iface_static;
+    struct ipv6_addr_scope *addr_scopes = NULL;
+    unsigned int addr_scopes_size = 0;
+    struct nsi_ip_interface_rw *rw = rw_data;
+    struct ifaddrs *addrs, *entry, *entry2;
+    UINT num = 0, scope_id = 0xffffffff;
+    NET_LUID luid;
+
+    if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
+
+    if (fam == AF_INET6) addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
+
+    rw = rw_data;
+    for (entry = addrs; entry; entry = entry->ifa_next)
+    {
+        if (!entry->ifa_addr || entry->ifa_addr->sa_family != fam) continue;
+        if (unix_name && strcmp( entry->ifa_name, unix_name )) continue;
+        if (fam == AF_INET6)
+        {
+            scope_id = find_ipv6_addr_scope( (IN6_ADDR*)&((struct sockaddr_in6 *)entry->ifa_addr)->sin6_addr, addr_scopes,
+                                             addr_scopes_size );
+            /* Info in the IP interface table entry corresponds to link local IPv6 address, while reported info for
+             * loopback is different on Windows. */
+            if (scope_id != 0xffffffff && scope_id != 0x1000 /* loopback */ && scope_id != 0x2000 /* link_local */)
+                continue;
+        }
+        if (!unix_name)
+        {
+            /* getifaddrs may return multipe entries for the same interface having different IP addresses.
+             * IP interface table being returned has only one entry per network interface. */
+            for (entry2 = addrs; entry2 && entry2 != entry; entry2 = entry2->ifa_next)
+            {
+                if (!entry2->ifa_addr || entry2->ifa_addr->sa_family != fam) continue;
+                if (fam == AF_INET6)
+                {
+                    scope_id = find_ipv6_addr_scope( (IN6_ADDR*)&((struct sockaddr_in6 *)entry2->ifa_addr)->sin6_addr,
+                                                     addr_scopes, addr_scopes_size );
+                    if (scope_id != 0xffffffff && scope_id != 0x1000 /* loopback */
+                        && scope_id != 0x2000 /* link_local */) continue;
+                }
+                if (!strcmp( entry2->ifa_name, entry->ifa_name ))
+                    break;
+            }
+            if (entry2 != entry) continue;
+        }
+        if (!convert_unix_name_to_luid( entry->ifa_name, &luid )) continue;
+        if (!nsi_get_all_parameters( &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, &luid, sizeof(luid),
+                                     NULL, 0, &iface_dynamic, sizeof(iface_dynamic),
+                                     &iface_static, sizeof(iface_static) ))
+        {
+            ERR( "Could not get iface parameters.\n" );
+            continue;
+        }
+
+        if (!count || num < *count)
+        {
+            if (key && count) memcpy( key, &luid, sizeof(luid) );
+            if (stat) memset( stat, 0, sizeof(*stat) );
+
+            base_reachable_time = 0;
+            if (iface_static.type == MIB_IF_TYPE_LOOPBACK) dad_transmits = 0;
+            else                                           dad_transmits = (fam == AF_INET6) ? 1 : 3;
+#if __linux__
+            if (rw || dyn)
+            {
+                char path[256];
+                sprintf( path, "/proc/sys/net/%s/neigh/%s/base_reachable_time_ms",
+                         (fam == AF_INET) ? "ipv4" : "ipv6",  entry->ifa_name);
+                read_sysctl_int( path, &base_reachable_time );
+            }
+            if (rw)
+            {
+                if (fam == AF_INET6 && iface_static.type != MIB_IF_TYPE_LOOPBACK)
+                {
+                    char path[256];
+                    sprintf( path, "/proc/sys/net/ipv6/conf/%s/dad_transmits", entry->ifa_name);
+                    read_sysctl_int( path, &dad_transmits );
+                }
+            }
+#endif
+            if (rw)
+            {
+                site_prefix_len = 64;
+                if (fam == AF_INET6 && iface_static.type != MIB_IF_TYPE_LOOPBACK)
+                {
+                    /* For some reason prefix length reported on ipv4 is 64 for ipv4 addresses on Windows and
+                     * prefix len is 64 for loopback device. */
+                    site_prefix_len = mask_v6_to_prefix( &((struct sockaddr_in6 *)entry->ifa_netmask)->sin6_addr );
+                }
+                memset( rw, 0, sizeof(*rw) );
+                rw->mtu = iface_dynamic.mtu;
+                rw->site_prefix_len = site_prefix_len;
+                rw->base_reachable_time = base_reachable_time;
+                rw->dad_transmits = dad_transmits;
+                rw->retransmit_time = 1000;
+                rw->path_mtu_discovery_timeout = 600000;
+                rw->link_local_address_behavior = (fam == AF_INET6) ? LinkLocalAlwaysOn : LinkLocalDelayed;
+                rw->link_local_address_timeout = (fam == AF_INET6) ? 0 : 6500;
+            }
+            if (dyn)
+            {
+                memset( dyn, 0, sizeof(*dyn) );
+                dyn->if_index = iface_static.if_index;
+                dyn->connected = (iface_dynamic.media_conn_state == MediaConnectStateConnected);
+                dyn->reachable_time = base_reachable_time;
+            }
+        }
+        if (!count)
+        {
+            freeifaddrs( addrs );
+            free( addr_scopes );
+            return STATUS_SUCCESS;
+        }
+        ++num;
+        if (key) ++key;
+        if (rw) ++rw;
+        if (dyn) ++dyn;
+        if (stat) ++stat;
+    }
+    freeifaddrs( addrs );
+    free( addr_scopes );
+
+    if (!count) return STATUS_NOT_FOUND;
+    if (want_data && num > *count) return STATUS_BUFFER_OVERFLOW;
+    *count = num;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ipv4_interface_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size,
+                                              void *static_data, UINT static_size, UINT_PTR *count )
+{
+    return ip_interface_fill( AF_INET, NULL, key_data, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+                              static_data, static_size, count );
+}
+
+static NTSTATUS ipv4_interface_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                   void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
+{
+    struct nsi_ip_interface_key *ip_key = (void *)key;
+    const char *unix_name;
+
+    if (!convert_luid_to_unix_name( &ip_key->luid, &unix_name )) return STATUS_NOT_FOUND;
+
+    return ip_interface_fill( AF_INET, unix_name, ip_key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+                              static_data, static_size, NULL );
+}
+
+static NTSTATUS ipv6_interface_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size,
+                                              void *static_data, UINT static_size, UINT_PTR *count )
+{
+    return ip_interface_fill( AF_INET6, NULL, key_data, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+                              static_data, static_size, count );
+}
+
+static NTSTATUS ipv6_interface_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                   void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
+{
+    struct nsi_ip_interface_key *ip_key = (void *)key;
+    const char *unix_name;
+
+    if (!convert_luid_to_unix_name( &ip_key->luid, &unix_name )) return STATUS_NOT_FOUND;
+
+    return ip_interface_fill( AF_INET6, unix_name, ip_key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+                              static_data, static_size, NULL );
 }
 
 static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_unicast_rw *rw,
@@ -1047,6 +1228,12 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
                                      NULL, 0, NULL, 0, &iface_count )))
         return status;
 
+    if (!iface_count)
+    {
+        *count = 0;
+        return STATUS_SUCCESS;
+    }
+
     if (!(luid_tbl = malloc( iface_count * sizeof(*luid_tbl) )))
         return STATUS_NO_MEMORY;
 
@@ -1215,7 +1402,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
             for (j = 0; j < ARRAY_SIZE(ipv4_multicast_addresses); ++j)
             {
                 if (iface_static[i].unk & (1 << j)) continue;
-                if (num <= *count)
+                if (num < *count)
                 {
                     entry.addr.s_addr = ipv4_multicast_addresses[j];
                     ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
@@ -1317,10 +1504,49 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
 
 #ifdef __linux__
     {
+        struct ifaddrs *addrs, *ifentry;
         char buf[512], *ptr;
         struct in_addr mask;
         UINT rtf_flags;
         FILE *fp;
+
+        /* Loopback routes are not present in /proc/net/routes, add those explicitly. */
+        if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
+        for (ifentry = addrs; ifentry; ifentry = ifentry->ifa_next)
+        {
+            if (!(ifentry->ifa_flags & IFF_LOOPBACK)) continue;
+            if (!convert_unix_name_to_luid( ifentry->ifa_name, &entry.luid )) continue;
+            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+
+            if (num < *count)
+            {
+                entry.prefix.s_addr = htonl( 0x7f000000 );
+                entry.next_hop.s_addr = 0;
+                entry.metric = ~0u;
+                entry.prefix_len = 8;
+                entry.protocol = MIB_IPPROTO_LOCAL;
+                entry.loopback = 1;
+                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+                key_data = (BYTE *)key_data + key_size;
+                rw_data = (BYTE *)rw_data + rw_size;
+                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+            if (num < *count)
+            {
+                entry.prefix.s_addr = htonl( INADDR_LOOPBACK );
+                entry.prefix_len = 32;
+                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+                key_data = (BYTE *)key_data + key_size;
+                rw_data = (BYTE *)rw_data + rw_size;
+                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+            break;
+        }
+        freeifaddrs( addrs );
 
         if (!(fp = fopen( "/proc/net/route", "r" ))) return STATUS_NOT_SUPPORTED;
 
@@ -1597,8 +1823,9 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
             strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
             strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
             rtf_flags = strtoul( ptr + 1, &ptr, 16);
+            if (!(rtf_flags & RTF_UP)) continue;
             entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
-            entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
+            entry.loopback = entry.prefix_len == 128 && IN6_IS_ADDR_LOOPBACK(&entry.prefix);
 
             while (isspace( *ptr )) ptr++;
             end = ptr;
@@ -1659,6 +1886,15 @@ static struct module_table ipv4_tables[] =
         },
         NULL,
         ipv4_ipstats_get_all_parameters,
+    },
+    {
+        NSI_IP_INTERFACE_TABLE,
+        {
+            sizeof(struct nsi_ip_interface_key), sizeof(struct nsi_ip_interface_rw),
+            sizeof(struct nsi_ip_interface_dynamic), sizeof(struct nsi_ip_interface_static)
+        },
+        ipv4_interface_enumerate_all,
+        ipv4_interface_get_all_parameters,
     },
     {
         NSI_IP_UNICAST_TABLE,
@@ -1724,6 +1960,15 @@ static struct module_table ipv6_tables[] =
         },
         NULL,
         ipv6_ipstats_get_all_parameters,
+    },
+    {
+        NSI_IP_INTERFACE_TABLE,
+        {
+            sizeof(struct nsi_ip_interface_key), sizeof(struct nsi_ip_interface_rw),
+            sizeof(struct nsi_ip_interface_dynamic), sizeof(struct nsi_ip_interface_static)
+        },
+        ipv6_interface_enumerate_all,
+        ipv6_interface_get_all_parameters,
     },
     {
         NSI_IP_UNICAST_TABLE,

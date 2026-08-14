@@ -493,6 +493,16 @@ BOOL WINAPI NtGdiSwapBuffers( HDC hdc )
 
 
 /***********************************************************************
+ *           NtGdiCancelDC   (win32u.@)
+ */
+BOOL WINAPI NtGdiCancelDC( HDC hdc )
+{
+    FIXME( "%p: stub\n", hdc );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           NtGdiFillRgn    (win32u.@)
  */
 BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
@@ -912,7 +922,7 @@ BOOL WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
  */
 BOOL WINAPI NtGdiDrawStream( HDC hdc, ULONG in, void *pvin )
 {
-    FIXME("stub: %p, %d, %p\n", hdc, (int)in, pvin);
+    FIXME("stub: %p, %d, %p\n", hdc, in, pvin);
     return FALSE;
 }
 

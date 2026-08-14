@@ -1,11 +1,12 @@
 MODULE  = windows.ui.dll
-IMPORTS = combase advapi32
+IMPORTS = combase advapi32 user32
 
 SOURCES = \
-	async.c \
+	accessibilitysettings.c \
 	classes.idl \
+	corewindow.c \
 	inputpane.c \
-	jumplist.c \
 	main.c \
 	uisettings.c \
-	uiviewsettings.c
+	uiviewsettings.c \
+	weakref.c

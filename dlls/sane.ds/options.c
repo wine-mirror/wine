@@ -40,7 +40,7 @@ TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload )
     return SANE_CALL( option_set_value, &params );
 }
 
-static TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr )
+TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr )
 {
     struct option_find_descriptor_params params = { name, type, descr };
     return SANE_CALL( option_find_descriptor, &params ) ? TWCC_CAPUNSUPPORTED : TWCC_SUCCESS;
@@ -64,6 +64,130 @@ TW_UINT16 sane_option_set_int(const char *option_name, int val, BOOL *needs_relo
     if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, &val, needs_reload );
     return rc;
 }
+
+
+/** @brief Read an option from SANE into a TW_FIX32 structure
+ *
+ *  If the sane option is stored as TYPE_INT, then the value is
+ *  set into the "Whole" portion.
+ *
+ *  @param option_name     Name of the SANE option, like "resolution"
+ *  @param val             OUT: The value of the option
+ *  @return TWCC_SUCCESS on success
+ */
+TW_UINT16 sane_option_get_fix32(const char *option_name, TW_FIX32 *val)
+{
+    struct option_descriptor opt;
+    int resolution;
+    TW_UINT16 rc = sane_find_option(option_name, -1, &opt);
+    if (rc == TWCC_SUCCESS)
+    {
+        if (opt.size == sizeof(int) &&
+            (opt.type == TYPE_INT || opt.type == TYPE_FIXED))
+        {
+            rc = sane_option_get_value(opt.optno, &resolution);
+            if (opt.type == TYPE_INT)
+            {
+                val->Whole = resolution;
+                val->Frac = 0;
+            }
+            else
+            {
+                val->Whole= resolution >> 16;
+                val->Frac = resolution & 0xffff;
+            }
+        }
+        else
+        {
+            rc = TWCC_BADCAP;
+        }
+    }
+    return rc;
+}
+
+
+/** @brief Set an option from SANE from a TW_FIX32 structure
+ *
+ *  If the sane option is stored as TYPE_INT, then the value is
+ *  set into the "Whole" portion.
+ *
+ *  @param option_name     Name of the SANE option, like "resolution"
+ *  @param val             The new value of the option
+ *  @param needs_reload    Forwarded to sane_option_set_value
+ *
+ *  @return TWCC_SUCCESS on success
+ */
+TW_UINT16 sane_option_set_fix32(const char *option_name, const TW_FIX32 *val, BOOL *needs_reload )
+{
+    struct option_descriptor opt;
+    int resolution;
+    TW_UINT16 rc = sane_find_option(option_name, -1, &opt);
+    if (rc == TWCC_SUCCESS)
+    {
+        if (opt.is_settable &&
+            opt.size == sizeof(int) &&
+            (opt.type == TYPE_INT || opt.type == TYPE_FIXED))
+        {
+            resolution =
+              (opt.type == TYPE_INT)
+              ?    val->Whole
+              : ( (val->Whole << 16) | val->Frac);
+
+            rc = sane_option_set_value( opt.optno, &resolution, needs_reload );
+        }
+        else
+        {
+            rc = TWCC_BADCAP;
+        }
+    }
+
+    return rc;
+}
+
+
+/** @brief Get X or Y-Resolution from SANE and store as TW_FIX32
+ *  @param best_option_name  Either "x-resolution" or "y-resolution"
+ *  @param val               OUT: Resolution value read or -1
+ *  @return TWCC_SUCCESS on success
+ */
+TW_UINT16
+sane_option_get_resolution(const char *best_option_name, TW_FIX32 *val)
+{
+    TW_UINT16 rc;
+    if (sane_option_get_fix32(best_option_name, val)!=TWCC_SUCCESS &&
+        sane_option_get_fix32("resolution"    , val)!=TWCC_SUCCESS)
+    {
+        val->Whole = -1;
+        val->Frac = 0;
+        rc = TWCC_BADCAP;
+    }
+    else
+    {
+        rc = TWCC_SUCCESS;
+    }
+    return rc;
+}
+
+
+
+/** @brief Set X or Y-Resolution in SANE and from a TW_FIX32
+ *  @param best_option_name   Either "x-resolution" or "y-resolution"
+ *  @param val                New resolution to set
+ *  @param needs_reload       Forwarded to sane_option_set_value
+ *  @return TWCC_SUCCESS on success
+ */
+TW_UINT16
+sane_option_set_resolution(const char *best_option_name, const TW_FIX32 *val, BOOL *needs_reload)
+{
+    return
+      sane_option_set_fix32(best_option_name, val, needs_reload)==TWCC_SUCCESS ||
+      sane_option_set_fix32("resolution"    , val, needs_reload)==TWCC_SUCCESS
+      ? TWCC_SUCCESS
+      : TWCC_BADCAP;
+}
+
+
+
 
 TW_UINT16 sane_option_get_bool(const char *option_name, int *val)
 {
@@ -112,7 +236,10 @@ TW_UINT16 sane_option_set_str(const char *option_name, char *val, BOOL *needs_re
 
 TW_UINT16 sane_option_probe_resolution(const char *option_name, struct option_descriptor *opt)
 {
-    return sane_find_option(option_name, TYPE_INT, opt);
+    TW_UINT16 rc = sane_find_option(option_name, -1, opt);
+    return rc==TWCC_SUCCESS
+      ? (opt->type == TYPE_INT || opt->type == TYPE_FIXED) ? TWCC_SUCCESS : TWCC_BADCAP
+      : rc;
 }
 
 static void sane_categorize_value(const WCHAR* value, const WCHAR* const* filter[], char* categories, int buf_len)

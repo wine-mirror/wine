@@ -541,7 +541,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     if (!samples->pSample)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(encoder->wg_transform, samples->pSample, 0, &samples->dwStatus)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(encoder->wg_transform, samples->pSample, 0, &samples->dwStatus, NULL)))
         wg_sample_queue_flush(encoder->wg_sample_queue, false);
 
     return hr;

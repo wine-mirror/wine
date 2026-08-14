@@ -256,6 +256,16 @@ function test_getter_call() {
     ok(document.all("divid").tagName === "DIV", "document.all('divid').tagName = " + document.all("divid").tagName);
 }
 
+function test_funcobj_call() {
+    var f = document.body.getElementsByTagName;
+    var r = f("winetest");
+    ok(r.length === 0, "r.length = " + r.length);
+
+    f = document.close;
+    r = f("test");
+    ok(r === undefined, "r = " + r);
+}
+
 function test_arg_conv() {
     /* this call would throw if the argument wasn't converted by JScript */
     window.clearInterval("");
@@ -381,6 +391,7 @@ function runTests() {
     test_document_name_as_index();
     test_remove_style_attribute();
     test_getter_call();
+    test_funcobj_call();
     test_attrs();
     test_attribute_collection();
     test_arg_conv();

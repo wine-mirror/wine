@@ -42,7 +42,6 @@
 
 #include "pidl.h"
 #include "shell32_main.h"
-#include "version.h"
 #include "shresdef.h"
 #include "initguid.h"
 #include "shfldr.h"
@@ -93,7 +92,7 @@ static DWORD shgfi_get_exe_type(LPCWSTR szFullPath)
         /* DLL files are not executable and should return 0 */
         if (nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
             return 0;
-        if (IMAGE_SUBSYSTEM_IS_GUI(nt.OptionalHeader.Subsystem))
+        if (nt.OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
         {
              return IMAGE_NT_SIGNATURE | 
                    (nt.OptionalHeader.MajorSubsystemVersion << 24) |
@@ -1047,54 +1046,6 @@ HRESULT WINAPI SHLoadNonloadedIconOverlayIdentifiers( VOID )
     return S_OK;
 }
 
-/***********************************************************************
- * DllGetVersion [SHELL32.@]
- *
- * Retrieves version information of the 'SHELL32.DLL'
- *
- * PARAMS
- *     pdvi [O] pointer to version information structure.
- *
- * RETURNS
- *     Success: S_OK
- *     Failure: E_INVALIDARG
- *
- * NOTES
- *     Returns version of a shell32.dll from IE4.01 SP1.
- */
-
-HRESULT WINAPI DllGetVersion (DLLVERSIONINFO *pdvi)
-{
-    /* FIXME: shouldn't these values come from the version resource? */
-    if (pdvi->cbSize == sizeof(DLLVERSIONINFO) ||
-        pdvi->cbSize == sizeof(DLLVERSIONINFO2))
-    {
-        pdvi->dwMajorVersion = WINE_FILEVERSION_MAJOR;
-        pdvi->dwMinorVersion = WINE_FILEVERSION_MINOR;
-        pdvi->dwBuildNumber = WINE_FILEVERSION_BUILD;
-        pdvi->dwPlatformID = WINE_FILEVERSION_PLATFORMID;
-        if (pdvi->cbSize == sizeof(DLLVERSIONINFO2))
-        {
-            DLLVERSIONINFO2 *pdvi2 = (DLLVERSIONINFO2 *)pdvi;
-
-            pdvi2->dwFlags = 0;
-            pdvi2->ullVersion = MAKEDLLVERULL(WINE_FILEVERSION_MAJOR,
-                                              WINE_FILEVERSION_MINOR,
-                                              WINE_FILEVERSION_BUILD,
-                                              WINE_FILEVERSION_PLATFORMID);
-        }
-        TRACE("%lu.%lu.%lu.%lu\n",
-              pdvi->dwMajorVersion, pdvi->dwMinorVersion,
-              pdvi->dwBuildNumber, pdvi->dwPlatformID);
-        return S_OK;
-    }
-    else
-    {
-        WARN("wrong DLLVERSIONINFO size from app\n");
-        return E_INVALIDARG;
-    }
-}
-
 /*************************************************************************
  * global variables of the shell32.dll
  * all are once per process
@@ -1234,6 +1185,17 @@ HRESULT WINAPI SHSetUnreadMailCountW(LPCWSTR mailaddress, DWORD count, LPCWSTR e
 HRESULT WINAPI SHEnumerateUnreadMailAccountsW(HKEY user, DWORD idx, LPWSTR mailaddress, INT mailaddresslen)
 {
     FIXME("%p %ld %p %d: stub\n", user, idx, mailaddress, mailaddresslen);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *              SHEvaluateSystemCommandTemplate (SHELL32.@)
+ */
+HRESULT WINAPI SHEvaluateSystemCommandTemplate(PCWSTR cmdtemplate, PWSTR *application,
+                                               PWSTR *commandline, PWSTR *parameters)
+{
+    FIXME("(%s %p %p %p) stub!\n", debugstr_w(cmdtemplate), application,
+           commandline, parameters);
     return E_NOTIMPL;
 }
 

@@ -43,7 +43,7 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
     }
     view_types[] =
     {
-        {GL_TEXTURE_CUBE_MAP,  0, GL_TEXTURE_CUBE_MAP},
+        {GL_TEXTURE_CUBE_MAP,  WINED3D_VIEW_TEXTURE_CUBE, GL_TEXTURE_CUBE_MAP},
         {GL_TEXTURE_3D,        0, GL_TEXTURE_3D},
 
         {GL_TEXTURE_2D,       0,                          GL_TEXTURE_2D},
@@ -84,12 +84,12 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
 static bool find_format_plane_idx(const struct wined3d_format *resource_format,
         const struct wined3d_format *plane_format, unsigned int *plane_idx)
 {
-    if (plane_format->id == resource_format->plane_formats[0])
+    if (plane_format->typeless_id == resource_format->plane_formats[0]->typeless_id)
     {
         *plane_idx = 0;
         return true;
     }
-    if (plane_format->id == resource_format->plane_formats[1])
+    if (plane_format->typeless_id == resource_format->plane_formats[1]->typeless_id)
     {
         *plane_idx = 1;
         return true;
@@ -219,7 +219,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
         return;
     }
 
-    wined3d_texture_gl_prepare_texture(texture_gl, context_gl, FALSE);
+    wined3d_texture_gl_prepare_texture(texture_gl, context_gl, false);
     texture_name = wined3d_texture_gl_get_texture_name(texture_gl, context, FALSE);
 
     level_idx = desc->u.texture.level_idx;

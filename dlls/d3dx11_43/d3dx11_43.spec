@@ -23,15 +23,15 @@
 @ stdcall D3DX11CreateTextureFromFileA(ptr str ptr ptr ptr ptr)
 @ stdcall D3DX11CreateTextureFromFileW(ptr wstr ptr ptr ptr ptr)
 @ stdcall D3DX11CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
-@ stub D3DX11CreateTextureFromResourceA
-@ stub D3DX11CreateTextureFromResourceW
+@ stdcall D3DX11CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr)
+@ stdcall D3DX11CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr)
 @ stub D3DX11CreateThreadPump
 @ stdcall D3DX11FilterTexture(ptr ptr long long)
 @ stdcall D3DX11GetImageInfoFromFileA(str ptr ptr ptr)
 @ stdcall D3DX11GetImageInfoFromFileW(wstr ptr ptr ptr)
 @ stdcall D3DX11GetImageInfoFromMemory(ptr long ptr ptr ptr)
-@ stub D3DX11GetImageInfoFromResourceA
-@ stub D3DX11GetImageInfoFromResourceW
+@ stdcall D3DX11GetImageInfoFromResourceA(long str ptr ptr ptr)
+@ stdcall D3DX11GetImageInfoFromResourceW(long wstr ptr ptr ptr)
 @ stdcall D3DX11LoadTextureFromTexture(ptr ptr ptr ptr)
 @ stub D3DX11PreprocessShaderFromFileA
 @ stub D3DX11PreprocessShaderFromFileW

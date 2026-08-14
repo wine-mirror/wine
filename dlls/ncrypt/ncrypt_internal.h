@@ -26,6 +26,7 @@ enum algid
     RSA,
     DSA,
     ECDSA,
+    ECDSA_P256,
 };
 
 struct key

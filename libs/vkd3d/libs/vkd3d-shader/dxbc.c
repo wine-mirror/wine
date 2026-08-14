@@ -90,10 +90,9 @@ int vkd3d_shader_serialize_dxbc(size_t section_count, const struct vkd3d_shader_
         set_u32(&buffer, checksum_position + i * sizeof(uint32_t), checksum[i]);
 
     if (!buffer.status)
-    {
-        dxbc->code = buffer.data;
-        dxbc->size = buffer.size;
-    }
+        vkd3d_shader_code_from_bytecode_buffer(dxbc, &buffer);
+    vkd3d_bytecode_buffer_cleanup(&buffer);
+
     return buffer.status;
 }
 
@@ -187,7 +186,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
     if (data_size < VKD3D_DXBC_HEADER_SIZE)
     {
-        WARN("Invalid data size %zu.\n", data_size);
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_SIZE,
                 "DXBC size %zu is smaller than the DXBC header size.", data_size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -198,7 +196,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
     if (tag != TAG_DXBC)
     {
-        WARN("Wrong tag.\n");
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_MAGIC, "Invalid DXBC magic.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
@@ -227,7 +224,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
     TRACE("version: %#x.\n", version);
     if (version != 0x00000001)
     {
-        WARN("Got unexpected DXBC version %#x.\n", version);
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_VERSION,
                 "DXBC version %#x is not supported.", version);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -256,7 +252,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
         if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(uint32_t), data_size))
         {
-            WARN("Invalid chunk offset %#x (data size %zu).\n", chunk_offset, data_size);
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_OFFSET,
                     "DXBC chunk %u has invalid offset %#x (data size %#zx).", i, chunk_offset, data_size);
             vkd3d_free(sections);
@@ -270,8 +265,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
         if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
         {
-            WARN("Invalid chunk size %#x (data size %zu, chunk offset %#x).\n",
-                    chunk_size, data_size, chunk_offset);
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
                     "DXBC chunk %u has invalid size %#x (data size %#zx, chunk offset %#x).",
                     i, chunk_offset, data_size, chunk_offset);
@@ -340,11 +333,7 @@ int vkd3d_shader_parse_dxbc(const struct vkd3d_shader_code *dxbc,
     ret = parse_dxbc(dxbc, &message_context, NULL, flags, desc);
 
     vkd3d_shader_message_context_trace_messages(&message_context);
-    if (!vkd3d_shader_message_context_copy_messages(&message_context, messages) && ret >= 0)
-    {
-        vkd3d_shader_free_dxbc(desc);
-        ret = VKD3D_ERROR_OUT_OF_MEMORY;
-    }
+    vkd3d_shader_string_from_message_context(messages, &message_context);
     vkd3d_shader_message_context_cleanup(&message_context);
 
     if (ret < 0)
@@ -381,13 +370,13 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     uint32_t count, header_size;
     struct signature_element *e;
     const char *ptr = data;
-    unsigned int i, j;
+    bool fail = false;
+    unsigned int i;
 
     if (!require_space(0, 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
-                "Section size %zu is smaller than the minimum signature header size.\n", section->data.size);
+                "Section size %zu is smaller than the minimum signature header size.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
 
@@ -399,9 +388,8 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     if (align(header_size, sizeof(uint32_t)) != header_size || i < 2
             || !require_space(2, i - 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid header size %#x.\n", header_size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
-                "Signature header size %#x is invalid.\n", header_size);
+                "Signature header size %#x is invalid.", header_size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
     skip_dword_unknown(&ptr, i - 2);
@@ -436,17 +424,19 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
         if (!(name = shader_get_string(data, section->data.size, name_offset))
                 || !(e[i].semantic_name = vkd3d_strdup(name)))
         {
-            WARN("Invalid name offset %#zx (data size %#zx).\n", name_offset, section->data.size);
-            for (j = 0; j < i; ++j)
-            {
-                vkd3d_free((void *)e[j].semantic_name);
-            }
-            vkd3d_free(e);
-            return VKD3D_ERROR_INVALID_ARGUMENT;
+            vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_STRING_REFERENCE,
+                    "Element %u has invalid semantic name reference %#zx (data size %#zx).",
+                    i, name_offset, section->data.size);
+            fail = true;
         }
         e[i].semantic_index = read_u32(&ptr);
         e[i].sysval_semantic = read_u32(&ptr);
-        e[i].component_type = read_u32(&ptr);
+        if ((e[i].component_type = read_u32(&ptr)) > VKD3D_SHADER_COMPONENT_FLOAT)
+        {
+            vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_COMPONENT_TYPE,
+                    "Element %u has invalid component type %#x.", i, e[i].component_type);
+            fail = true;
+        }
         e[i].register_index = read_u32(&ptr);
         e[i].target_location = e[i].register_index;
         e[i].register_count = 1;
@@ -477,7 +467,14 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     }
 
     s->elements = e;
+    s->elements_capacity = count;
     s->element_count = count;
+
+    if (fail)
+    {
+        shader_signature_cleanup(s);
+        return VKD3D_ERROR_INVALID_ARGUMENT;
+    }
 
     return VKD3D_OK;
 }
@@ -519,9 +516,8 @@ static int shdr_parse_features(const struct vkd3d_shader_dxbc_section_desc *sect
 
     if (!require_space(0, 1, sizeof(uint64_t), section->data.size))
     {
-        WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
-                "SFI0 section size %zu is too small to contain flags.\n", section->data.size);
+                "SFI0 section size %zu is too small to contain flags.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
     flags = read_u64(&ptr);
@@ -542,6 +538,8 @@ static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
     {
         case TAG_ISGN:
         case TAG_ISG1:
+            if (desc->is_dxil)
+                break;
             if (desc->input_signature.elements)
             {
                 FIXME("Multiple input signatures.\n");
@@ -554,6 +552,8 @@ static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
         case TAG_OSGN:
         case TAG_OSG5:
         case TAG_OSG1:
+            if (desc->is_dxil)
+                break;
             if (desc->output_signature.elements)
             {
                 FIXME("Multiple output signatures.\n");
@@ -565,6 +565,8 @@ static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
 
         case TAG_PCSG:
         case TAG_PSG1:
+            if (desc->is_dxil)
+                break;
             if (desc->patch_constant_signature.elements)
             {
                 FIXME("Multiple patch constant signatures.\n");
@@ -1090,9 +1092,7 @@ int vkd3d_shader_parse_root_signature(const struct vkd3d_shader_code *dxbc,
 
     ret = for_each_dxbc_section(dxbc, &message_context, NULL, rts0_handler, root_signature);
     vkd3d_shader_message_context_trace_messages(&message_context);
-    if (!vkd3d_shader_message_context_copy_messages(&message_context, messages))
-        ret = VKD3D_ERROR_OUT_OF_MEMORY;
-
+    vkd3d_shader_string_from_message_context(messages, &message_context);
     vkd3d_shader_message_context_cleanup(&message_context);
     if (ret < 0)
         vkd3d_shader_free_root_signature(root_signature);
@@ -1314,7 +1314,6 @@ static int shader_write_root_parameters(struct root_signature_writer_context *co
                     shader_write_root_descriptor1(buffer, &desc->u.v_1_1.parameters[i].u.descriptor);
                 break;
             default:
-                FIXME("Unrecognized type %#x.\n", versioned_root_signature_get_parameter_type(desc, i));
                 vkd3d_shader_error(&context->message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_ROOT_PARAMETER_TYPE,
                         "Invalid/unrecognised root signature root parameter type %#x.",
                         versioned_root_signature_get_parameter_type(desc, i));
@@ -1394,7 +1393,6 @@ static int validate_descriptor_table_v_1_0(const struct vkd3d_shader_root_descri
         }
         else
         {
-            WARN("Invalid descriptor range type %#x.\n", r->range_type);
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_DESCRIPTOR_RANGE_TYPE,
                     "Invalid root signature descriptor range type %#x.", r->range_type);
             return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1403,7 +1401,6 @@ static int validate_descriptor_table_v_1_0(const struct vkd3d_shader_root_descri
 
     if (have_srv_uav_cbv && have_sampler)
     {
-        WARN("Samplers cannot be mixed with CBVs/SRVs/UAVs in descriptor tables.\n");
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_MIXED_DESCRIPTOR_RANGE_TYPES,
                 "Encountered both CBV/SRV/UAV and sampler descriptor ranges in the same root descriptor table.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1435,7 +1432,6 @@ static int validate_descriptor_table_v_1_1(const struct vkd3d_shader_root_descri
         }
         else
         {
-            WARN("Invalid descriptor range type %#x.\n", r->range_type);
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_DESCRIPTOR_RANGE_TYPE,
                     "Invalid root signature descriptor range type %#x.", r->range_type);
             return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1444,7 +1440,6 @@ static int validate_descriptor_table_v_1_1(const struct vkd3d_shader_root_descri
 
     if (have_srv_uav_cbv && have_sampler)
     {
-        WARN("Samplers cannot be mixed with CBVs/SRVs/UAVs in descriptor tables.\n");
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_MIXED_DESCRIPTOR_RANGE_TYPES,
                 "Encountered both CBV/SRV/UAV and sampler descriptor ranges in the same root descriptor table.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1500,7 +1495,6 @@ int vkd3d_shader_serialize_root_signature(const struct vkd3d_shader_versioned_ro
             && root_signature->version != VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1)
     {
         ret = VKD3D_ERROR_INVALID_ARGUMENT;
-        WARN("Root signature version %#x not supported.\n", root_signature->version);
         vkd3d_shader_error(&context.message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_VERSION,
                 "Root signature version %#x is not supported.", root_signature->version);
         goto done;
@@ -1542,8 +1536,7 @@ int vkd3d_shader_serialize_root_signature(const struct vkd3d_shader_versioned_ro
 
 done:
     vkd3d_shader_message_context_trace_messages(&context.message_context);
-    if (!vkd3d_shader_message_context_copy_messages(&context.message_context, messages))
-        ret = VKD3D_ERROR_OUT_OF_MEMORY;
+    vkd3d_shader_string_from_message_context(messages, &context.message_context);
     vkd3d_shader_message_context_cleanup(&context.message_context);
     return ret;
 }

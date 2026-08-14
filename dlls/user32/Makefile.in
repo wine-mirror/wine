@@ -5,6 +5,8 @@ IMPORTS   = $(PNG_PE_LIBS) gdi32 sechost advapi32 kernelbase win32u uuid
 EXTRAINCL = $(PNG_PE_CFLAGS)
 DELAYIMPORTS = imm32 combase
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
 	button.c \
 	class.c \

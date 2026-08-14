@@ -147,9 +147,18 @@ async_test("iframe_location", function() {
     iframe.onload = function() {
         ok(iframe.contentWindow.location.pathname === "/emptyfile",
            "path = " + iframe.contentWindow.location.pathname);
+        ok(iframe.contentWindow.Image !== undefined, "Image is undefined");
+        ok(iframe.contentWindow.VBArray !== undefined, "VBArray is undefined");
+        iframe.contentWindow.Image = undefined;
+        iframe.contentWindow.VBArray = undefined;
+        iframe.contentWindow.foobar = 1234;
         iframe.onload = function () {
             ok(iframe.contentWindow.location.pathname === "/empty/file",
                "path = " + iframe.contentWindow.location.pathname);
+            ok(iframe.contentWindow.Image !== undefined, "Image is undefined (2)");
+            ok(iframe.contentWindow.VBArray !== undefined, "VBArray is undefined (2)");
+            ok(!Object.prototype.hasOwnProperty.call(iframe.contentWindow, "foobar"),
+               "contentWindow has foobar");
             next_test();
         }
         iframe.src = "empty/file";
@@ -374,6 +383,33 @@ sync_test("document_owner", function() {
 
     node = document.createTextNode("test");
     ok(node.ownerDocument === document, "text.ownerDocument = " + node.ownerDocument);
+});
+
+sync_test("document_style_props", function() {
+    document.body.innerHTML = '<a href="#"></a>';
+    var r, elem = document.getElementsByTagName("a")[0];
+    todo_wine.
+    ok(document.linkColor === "#0000ff", "default linkColor = " + document.linkColor);
+
+    document.linkColor = "#deadb8";
+    ok(document.linkColor === "#deadb8", "linkColor = " + document.linkColor);
+    r = window.getComputedStyle(elem).color;
+    ok(r === "rgb(222, 173, 184)", "style color = " + r);
+
+    ok(document.vLinkColor === undefined, "default vLinkColor = " + document.vLinkColor);
+    document.vLinkColor = "#b8dead";
+    ok(document.vLinkColor === "#b8dead", "vLinkColor = " + document.vLinkColor);
+
+    ok(document.aLinkColor === undefined, "default aLinkColor = " + document.aLinkColor);
+    document.aLinkColor = "#deb8ad";
+    ok(document.aLinkColor === "#deb8ad", "aLinkColor = " + document.aLinkColor);
+});
+
+sync_test("document_frag", function() {
+    var frag = document.createDocumentFragment()
+
+    frag.textContent = "1234";
+    ok(frag.textContent === "1234", "textContent = " + frag.textContent);
 });
 
 sync_test("style_properties", function() {
@@ -1010,4 +1046,151 @@ sync_test("importNode", function() {
     ok(node.parentNode === null, "node.parentNode = " + node.parentNode);
     ok(node2.hasChildNodes() === false, "node2 has child nodes");
     ok(node2.parentNode === null, "node2.parentNode = " + node2.parentNode);
+});
+
+sync_test("attributeNode", function() {
+    document.body.innerHTML = '<div id="test" attr="wine"></div>';
+    var elem = document.getElementById("test");
+    var attr, clone, prev, ret;
+
+    attr = elem.attributes["id"];
+    ok(attr.ownerDocument === document, "ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === elem, "ownerElement = " + attr.ownerElement);
+    ok(attr.specified === true, "attr.specified = " + attr.expando);
+    ok(attr.expando === false, "attr.expando = " + attr.expando);
+    ok(attr.value === "test", "attr.value = " + attr.value);
+    ok(attr.name === "id", "attr.name = " + attr.name);
+
+    clone = attr.cloneNode(true);
+    ok(clone.ownerDocument === document, "ownerDocument = " + clone.ownerDocument);
+    ok(clone.ownerElement === null, "ownerElement = " + clone.ownerElement);
+    ok(clone.specified === true, "clone.specified = " + clone.expando);
+    ok(clone.expando === false, "clone.expando = " + clone.expando);
+    ok(clone.value === "test", "clone.value = " + clone.value);
+    ok(clone.name === "id", "clone.name = " + clone.name);
+
+    ok(elem.getAttributeNode("id") === attr, 'elem.getAttributeNode("id") = ' + elem.getAttributeNode("id"));
+    ok(elem.attributes.getNamedItem("id") === attr, "unexpected id named item");
+    ok(elem.getAttributeNode("nonexistent") === null,
+       'elem.getAttributeNode("nonexistent") = ' + elem.getAttributeNode("nonexistent"));
+    ok(elem.attributes.getNamedItem("nonexistent") === null,
+       'elem.attributes.getNamedItem("nonexistent") = ' + elem.attributes.getNamedItem("nonexistent"));
+    ok(elem.attributes.length === 2, "elem.attributes.length = " + elem.attributes.length);
+    ok(elem.attributes[0] == attr || elem.attributes[1] === attr, "attr not found in elem.attributes");
+    ok(elem.attributes.item(0) == attr || elem.attributes.item(1) === attr, "attr not found in items");
+    ok(elem.attributes.item(2) == null, "item(2) = " + elem.attributes.item(2));
+    prev = attr;
+
+    attr = document.createAttribute("id");
+    ok(attr.ownerDocument === document, "detached attr ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === null, "detached attr ownerElement = " + attr.ownerElement);
+    ok(attr.specified === true, "attr.specified = " + attr.specified);
+    ok(attr.expando === false, "attr.expando = " + attr.expando);
+    ok(attr.value === "", "attr.value = " + attr.value);
+    ok(attr.name === "id", "attr.name = " + attr.name);
+    attr.value = "new";
+
+    ret = elem.setAttributeNode(attr);
+    ok(ret === prev, "ret != prev");
+    ok(elem.getAttributeNode("id") === attr, "unexpected id attr");
+    ok(elem.getAttribute("id") === "new", "unexpected id attr value " + elem.getAttribute("id"));
+
+    attr = document.createAttribute("test");
+    attr.value = "test";
+    ret = elem.setAttributeNode(attr);
+    ok(ret === null, "ret != null");
+    ok(elem.attributes.length === 3, "elem.attributes.length = " + elem.attributes.length);
+    ok(elem.getAttributeNode("test") === attr, "unexpected test attr");
+    ok(elem.attributes.getNamedItem("test") === attr, "unexpected test named item");
+    ok(elem.getAttribute("test") === "test", "unexpected test attr value " + elem.getAttribute("id"));
+    ok(elem.attributes.item(3) == null, "item(3) = " + elem.attributes.item(3));
+
+    attr = elem.getAttributeNode("style");
+    ok(attr === null, "found style attribute node");
+    attr = elem.attributes.getNamedItem("style");
+    ok(attr === null, "found style attribute named item");
+    ok(!("style" in elem.attributes), "found style in attribute collection " + elem.attributes["style"]);
+
+    attr = elem.getAttributeNode("attr");
+    ok(attr.ownerDocument === document, "ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === elem, "ownerElement = " + attr.ownerElement);
+    ok(attr.namespaceURI === null, "namespaceURI = " + attr.namespaceURI);
+    ok(attr.specified === true, "attr is not specified");
+    ok(attr.textContent === "wine", "textContent = " + attr.textContent);
+    todo_wine.
+    ok(attr.hasChildNodes() === true, "attr doesn't have child nodes");
+    todo_wine.
+    ok(attr.childNodes.length === 1, "child count = " + attr.childNodes.length);
+    if(attr.firstChild /* todo_wine */) {
+        ok(attr.firstChild.nodeType === 3, "child nodeType = " + attr.firstChild.nodeType);
+        ok(attr.firstChild.textContent === "wine", "child textContent = " + attr.firstChild.textContent);
+    }
+
+    elem = document.createElement("span");
+    try {
+        attr.appendChild(elem);
+        ok(false, "appendChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "appendChild threw " + e.message);
+    }
+    try {
+        attr.insertBefore(elem, null);
+        ok(false, "insertBefore did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "insertBefore threw " + e.message);
+    }
+    try {
+        attr.replaceChild(elem, attr.firstChild);
+        ok(false, "replaceChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "HierarchyRequestError", "replaceChild threw " + e.message);
+    }
+    try {
+        attr.removeChild(attr.firstChild);
+        ok(false, "removeChild did not throw");
+    }catch(e) {
+        todo_wine.
+        ok(e.message === "NotFoundError", "removeChild threw " + e.message);
+    }
+});
+
+sync_test("document.open", function() {
+    document.body.innerHTML = '<iframe id="test"></iframe>';
+    var elem = document.getElementById("test");
+    var doc = elem.contentDocument;
+    var f = function() {};
+    doc.onclick = f;
+    ok(doc.onclick === f, "doc.onclick != f");
+    doc.open();
+    ok(doc.onclick === null, "doc.onclick != null");
+    doc.onclick = f;
+    doc.close();
+    ok(doc.onclick === f, "doc.onclick != f");
+});
+
+sync_test("XMLSerializer", function() {
+    var serializer = new XMLSerializer();
+    ok(serializer !== null, "XMLSerializer constructor returned null");
+    ok(typeof serializer === "object", "XMLSerializer is not an object");
+
+    /* Test serializeToString with a simple element */
+    var div = document.createElement("div");
+    div.id = "testdiv";
+    div.innerHTML = "test content";
+
+    var result = serializer.serializeToString(div);
+    ok(/<div .*id="testdiv">test content<\/div>/.test(result), "unexpected result " + result);
+
+    /* Test with nested elements */
+    div = document.createElement("div");
+    div.innerHTML = '<span attr="attrval">nested</span>';
+    result = serializer.serializeToString(div);
+    ok(/<div.*><span attr="attrval">nested<\/span><\/div>/.test(result), "unexpected result " + result);
+
+    /* Test with text node */
+    result = serializer.serializeToString(document.createTextNode("plain text"));
+    ok(result === "plain text", "serialized text node missing content: " + result);
 });

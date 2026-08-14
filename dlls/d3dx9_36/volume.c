@@ -201,7 +201,12 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
 
-    d3dximage_info_from_d3dx_image(&image_info, &image);
+    if (!d3dximage_info_from_d3dx_image(&image_info, &image))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto exit;
+    }
+
     if (src_box)
     {
         if (src_box->Right > image_info.Width
@@ -303,7 +308,8 @@ HRESULT WINAPI D3DXSaveVolumeToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
         case D3DXIFF_PPM:
-            FIXME("File format %s is not supported yet.\n", debug_d3dx_image_file_format(file_format));
+            FIXME("File format %s is not supported yet.\n",
+                    debug_d3dx_image_file_format(d3dx_image_file_format_from_d3dximage_fileformat(file_format)));
             return E_NOTIMPL;
 
         default:
@@ -350,7 +356,7 @@ HRESULT WINAPI D3DXSaveVolumeToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_
         return hr;
     }
 
-    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
+    hr = d3dx9_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
     IDirect3DVolume9_UnlockBox(src_volume);
     if (SUCCEEDED(hr))
         *dst_buffer = buffer;

@@ -59,7 +59,7 @@ enum _LI_METRIC
 WINCOMMCTRLAPI HRESULT WINAPI LoadIconWithScaleDown(HINSTANCE, const WCHAR *, int, int, HICON *);
 WINCOMMCTRLAPI HRESULT WINAPI LoadIconMetric(HINSTANCE, const WCHAR *, int, HICON *);
 
-#define COMCTL32_VERSION                5  /* dll version */
+#define COMCTL32_VERSION                6  /* dll version */
 
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
@@ -642,17 +642,6 @@ typedef struct tagTRACKMOUSEEVENT {
 #endif
 
 WINCOMMCTRLAPI BOOL WINAPI _TrackMouseEvent(LPTRACKMOUSEEVENT lpEventTrack);
-
-/* Flat Scrollbar control */
-
-#define FLATSB_CLASSA         "flatsb_class32"
-#if defined(_MSC_VER) || defined(__MINGW32__)
-# define FLATSB_CLASSW        L"flatsb_class32"
-#else
-static const WCHAR FLATSB_CLASSW[] = { 'f','l','a','t','s','b','_',
-  'c','l','a','s','s','3','2',0 };
-#endif
-#define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
 
 #define WSB_PROP_CYVSCROLL     __MSABI_LONG(0x00000001)
 #define WSB_PROP_CXHSCROLL     __MSABI_LONG(0x00000002)
@@ -2293,7 +2282,7 @@ static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #define PGN_CALCSIZE            (PGN_FIRST-2)
 #define PGN_HOTITEMCHANGE       (PGN_FIRST-3)
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -2306,7 +2295,7 @@ typedef struct
     INT  iScroll;
 } NMPGSCROLL, *LPNMPGSCROLL;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct
 {
@@ -2830,14 +2819,14 @@ typedef struct tagNMTVASYNCDRAW
     int iRetImageIndex;
 } NMTVASYNCDRAW;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagTVKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTVKEYDOWN, *LPNMTVKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define TV_KEYDOWN      NMTVKEYDOWN
 
@@ -3692,14 +3681,14 @@ typedef struct tagLVDISPINFOW
 #define LV_DISPINFOA	NMLVDISPINFOA
 #define LV_DISPINFOW	NMLVDISPINFOW
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
   WORD  wVKey;
   UINT flags;
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define LV_KEYDOWN     NMLVKEYDOWN
 
@@ -4447,14 +4436,14 @@ typedef struct tagTCITEMW
 #define TCN_GETOBJECT           (TCN_FIRST - 3)
 #define TCN_FOCUSCHANGE         (TCN_FIRST - 4)
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagTCKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTCKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define TC_KEYDOWN              NMTCKEYDOWN
 
@@ -5451,7 +5440,7 @@ static const WCHAR WC_SCROLLBARW[] = { 'S','c','r','o','l','l','B','a','r',0 };
 
 #ifndef NOTASKDIALOG
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 enum _TASKDIALOG_FLAGS
 {
@@ -5588,7 +5577,7 @@ WINCOMMCTRLAPI HRESULT WINAPI TaskDialog(HWND owner, HINSTANCE hinst, const WCHA
         const WCHAR *content, TASKDIALOG_COMMON_BUTTON_FLAGS common_buttons, const WCHAR *icon, int *button);
 WINCOMMCTRLAPI HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *, int *, int *, BOOL *);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* NOTASKDIALOG */
 

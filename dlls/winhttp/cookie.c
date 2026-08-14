@@ -270,9 +270,7 @@ BOOL set_cookies( struct request *request, const WCHAR *cookies )
     struct cookie *cookie;
     int len, used;
 
-    len = lstrlenW( cookies );
-    if (!(buffer = malloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
-    lstrcpyW( buffer, cookies );
+    if (!(buffer = wcsdup( cookies ))) return FALSE;
 
     p = buffer;
     while (*p && *p != ';') p++;

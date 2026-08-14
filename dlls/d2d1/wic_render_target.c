@@ -149,10 +149,46 @@ static const struct d2d_device_context_ops d2d_wic_render_target_ops =
     d2d_wic_render_target_present,
 };
 
+static HRESULT d2d_wic_resolve_pixel_format(D2D1_PIXEL_FORMAT *pixel_format,
+        const WICPixelFormatGUID *wic_format)
+{
+    static const struct
+    {
+        const WICPixelFormatGUID *wic_format;
+        D2D1_PIXEL_FORMAT pixel_format;
+    }
+    formats[] =
+    {
+        { &GUID_WICPixelFormat32bppBGR, { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+        { &GUID_WICPixelFormat32bppRGB, { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
+        { &GUID_WICPixelFormat32bppPBGRA, { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED } },
+        { &GUID_WICPixelFormat32bppPRGBA, { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED } },
+    };
+
+    if (pixel_format->format != DXGI_FORMAT_UNKNOWN && pixel_format->alphaMode != D2D1_ALPHA_MODE_UNKNOWN)
+        return S_OK;
+
+    for (int i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        if (IsEqualGUID(formats[i].wic_format, wic_format))
+        {
+            if (pixel_format->format == DXGI_FORMAT_UNKNOWN)
+                pixel_format->format = formats[i].pixel_format.format;
+            if (pixel_format->alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
+                pixel_format->alphaMode = formats[i].pixel_format.alphaMode;
+            return S_OK;
+        }
+    }
+
+    return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+}
+
 HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory1 *factory,
         ID3D10Device1 *d3d_device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
+    D2D1_RENDER_TARGET_PROPERTIES rt_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
+    WICPixelFormatGUID bitmap_format;
     ID3D10Texture2D *texture;
     IDXGIDevice *dxgi_device;
     ID2D1Device *device;
@@ -166,38 +202,24 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
         return hr;
     }
 
+    if (FAILED(hr = IWICBitmap_GetPixelFormat(bitmap, &bitmap_format)))
+    {
+        WARN("Failed to get bitmap format, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    rt_desc = *desc;
+    if (FAILED(hr = d2d_wic_resolve_pixel_format(&rt_desc.pixelFormat, &bitmap_format)))
+    {
+        WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&bitmap_format));
+        return hr;
+    }
+
     texture_desc.Width = render_target->width;
     texture_desc.Height = render_target->height;
     texture_desc.MipLevels = 1;
     texture_desc.ArraySize = 1;
-
-    texture_desc.Format = desc->pixelFormat.format;
-    if (texture_desc.Format == DXGI_FORMAT_UNKNOWN)
-    {
-        WICPixelFormatGUID bitmap_format;
-
-        if (FAILED(hr = IWICBitmap_GetPixelFormat(bitmap, &bitmap_format)))
-        {
-            WARN("Failed to get bitmap format, hr %#lx.\n", hr);
-            return hr;
-        }
-
-        if (IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppPBGRA)
-                || IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppBGR))
-        {
-            texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        }
-        else if (IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppPRGBA)
-                || IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppRGB))
-        {
-            texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        }
-        else
-        {
-            WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&bitmap_format));
-            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
-        }
-    }
+    texture_desc.Format = rt_desc.pixelFormat.format;
 
     switch (texture_desc.Format)
     {
@@ -263,7 +285,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
 
     hr = d2d_d3d_create_render_target(unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device),
             render_target->dxgi_surface, &render_target->IUnknown_iface,
-            &d2d_wic_render_target_ops, desc, (void **)&render_target->dxgi_inner);
+            &d2d_wic_render_target_ops, &rt_desc, (void **)&render_target->dxgi_inner);
     ID2D1Device_Release(device);
     if (FAILED(hr))
     {

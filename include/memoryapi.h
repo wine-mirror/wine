@@ -14,6 +14,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _MEMORY_API_H_
+#define _MEMORY_API_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum WIN32_MEMORY_INFORMATION_CLASS
 {
     MemoryRegionInfo
@@ -44,3 +51,9 @@ typedef struct WIN32_MEMORY_REGION_INFORMATION
 WINBASEAPI HANDLE WINAPI CreateFileMapping2(HANDLE,LPSECURITY_ATTRIBUTES,ULONG,ULONG,ULONG,ULONG64,const WCHAR*,MEM_EXTENDED_PARAMETER*,ULONG);
 WINBASEAPI DWORD  WINAPI DiscardVirtualMemory(void *addr, SIZE_T size);
 WINBASEAPI BOOL   WINAPI QueryVirtualMemoryInformation(HANDLE process,const void *addr, WIN32_MEMORY_INFORMATION_CLASS info_class, void *info, SIZE_T size, SIZE_T *ret_size);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _MEMORY_API_H_ */

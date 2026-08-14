@@ -35,7 +35,6 @@
 #include <unistd.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -69,11 +68,7 @@ static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 static inline struct debug_info *get_info(void)
 {
     if (!init_done) return &initial_info;
-#ifdef _WIN64
-    return (struct debug_info *)((TEB32 *)((char *)NtCurrentTeb() + teb_offset) + 1);
-#else
-    return (struct debug_info *)(NtCurrentTeb() + 1);
-#endif
+    return (struct debug_info *)get_thread_data()->debug_info;
 }
 
 /* add a string to the output buffer */
@@ -340,8 +335,8 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
             UINT ticks = NtGetTickCount();
             pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%3u.%03u:", ticks / 1000, ticks % 1000 );
         }
-        if (TRACE_ON(pid)) pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%04x:", (UINT)GetCurrentProcessId() );
-        pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%04x:", (UINT)GetCurrentThreadId() );
+        if (TRACE_ON(pid)) pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%04x:", pid );
+        pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%04x:", GetCurrentThreadId() );
     }
     if (function && cls < ARRAY_SIZE( classes ))
         pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%s:%s:%s ",
@@ -378,7 +373,7 @@ NTSTATUS WINAPI NtTraceControl( ULONG code, void *inbuf, ULONG inbuf_len,
                                 void *outbuf, ULONG outbuf_len, ULONG *size )
 {
     FIXME( "code %u, inbuf %p, inbuf_len %u, outbuf %p, outbuf_len %u, size %p\n",
-           (int)code, inbuf, (int)inbuf_len, outbuf, (int)outbuf_len, size );
+           code, inbuf, inbuf_len, outbuf, outbuf_len, size );
     return STATUS_SUCCESS;
 }
 
@@ -388,7 +383,7 @@ NTSTATUS WINAPI NtTraceControl( ULONG code, void *inbuf, ULONG inbuf_len,
  */
 NTSTATUS WINAPI NtSetDebugFilterState( ULONG component_id, ULONG level, BOOLEAN state )
 {
-    FIXME( "component_id %#x, level %u, state %#x stub.\n", (int)component_id, (int)level, state );
+    FIXME( "component_id %#x, level %u, state %#x stub.\n", component_id, level, state );
 
     return STATUS_SUCCESS;
 }

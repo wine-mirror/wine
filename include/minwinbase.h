@@ -33,13 +33,15 @@ typedef RTL_CRITICAL_SECTION_DEBUG CRITICAL_SECTION_DEBUG;
 typedef PRTL_CRITICAL_SECTION_DEBUG PCRITICAL_SECTION_DEBUG;
 typedef PRTL_CRITICAL_SECTION_DEBUG LPCRITICAL_SECTION_DEBUG;
 
-/* The security attributes structure */
+#ifndef _SECURITY_ATTRIBUTES_
+#define _SECURITY_ATTRIBUTES_
 typedef struct _SECURITY_ATTRIBUTES
 {
     DWORD   nLength;
     LPVOID  lpSecurityDescriptor;
     BOOL  bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+#endif
 
 #ifndef _FILETIME_
 #define _FILETIME_
@@ -142,6 +144,15 @@ typedef struct _PROCESS_HEAP_ENTRY
 #define PROCESS_HEAP_ENTRY_BUSY               0x0004
 #define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
 #define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
+
+typedef struct _HEAP_SUMMARY
+{
+    DWORD  cb;
+    SIZE_T cbAllocated;
+    SIZE_T cbCommitted;
+    SIZE_T cbReserved;
+    SIZE_T cbMaxReserve;
+} HEAP_SUMMARY, *PHEAP_SUMMARY, *LPHEAP_SUMMARY;
 
 typedef enum _GET_FILEEX_INFO_LEVELS {
     GetFileExInfoStandard

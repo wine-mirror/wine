@@ -37,7 +37,7 @@ DECLARE_HANDLE(SAFER_LEVEL_HANDLE);
 
 #define SAFER_MAX_HASH_SIZE 64
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 typedef struct _SAFER_CODE_PROPERTIES_V2 {
     DWORD cbSize;
     DWORD dwCheckFlags;
@@ -59,7 +59,7 @@ typedef struct _SAFER_CODE_PROPERTIES_V2 {
 } SAFER_CODE_PROPERTIES_V2, *PSAFER_CODE_PROPERTIES_V2;
 
 typedef SAFER_CODE_PROPERTIES_V2 SAFER_CODE_PROPERTIES, *PSAFER_CODE_PROPERTIES;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define SAFER_SCOPEID_MACHINE  1
 #define SAFER_SCOPEID_USER     2

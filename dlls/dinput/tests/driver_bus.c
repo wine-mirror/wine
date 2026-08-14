@@ -198,7 +198,7 @@ static NTSTATUS wait_queue_add_pending_locked( struct wait_queue *queue, IRP *ir
     if (queue->pending_wait) return STATUS_INVALID_PARAMETER;
 
     IoSetCancelRoutine( irp, wait_cancel_routine );
-    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+    if (irp->Cancel && IoSetCancelRoutine( irp, NULL ))
         return STATUS_CANCELLED;
 
     irp->Tail.Overlay.DriverContext[0] = queue;
@@ -505,6 +505,10 @@ struct phys_device
     struct device base;
     struct func_device *fdo; /* parent FDO */
 
+    WCHAR vendor_str[64];
+    WCHAR product_str[64];
+    WCHAR serial_str[64];
+
     WCHAR instance_id[MAX_PATH];
     WCHAR device_id[MAX_PATH];
     IRP *pending_remove;
@@ -563,7 +567,7 @@ static NTSTATUS remove_child_device( struct func_device *impl, DEVICE_OBJECT *de
     for (i = 0; i < impl->devices->Count; ++i)
         if (impl->devices->Objects[i] == device) break;
     if (i == impl->devices->Count) status = STATUS_NOT_FOUND;
-    else impl->devices->Objects[i] = impl->devices->Objects[impl->devices->Count--];
+    else impl->devices->Objects[i] = impl->devices->Objects[--impl->devices->Count];
     KeReleaseSpinLock( &impl->base.lock, irql );
 
     return status;
@@ -600,11 +604,12 @@ static DEVICE_OBJECT *find_child_device( struct func_device *impl, struct hid_de
 
     KeAcquireSpinLock( &impl->base.lock, &irql );
     devices = impl->devices->Objects;
-    for (i = 0; i < impl->devices->Count; ++i)
+    for (i = 0; !device && i < impl->devices->Count; ++i)
     {
-        struct phys_device *phys = pdo_from_DEVICE_OBJECT( (device = devices[i]) );
-        if (!wcscmp( phys->device_id, device_id )) break;
-        else device = NULL;
+        struct phys_device *phys = pdo_from_DEVICE_OBJECT( devices[i] );
+        if (wcscmp( phys->device_id, device_id )) continue;
+        if (*desc->serial_str && wcscmp( phys->serial_str, desc->serial_str )) continue;
+        device = devices[i];
     }
     KeReleaseSpinLock( &impl->base.lock, irql );
 
@@ -903,11 +908,16 @@ static NTSTATUS create_child_pdo( DEVICE_OBJECT *device, struct hid_device_desc 
 
     impl = pdo_from_DEVICE_OBJECT( child );
     KeInitializeSpinLock( &impl->base.lock );
+
+    wcscpy( impl->vendor_str, *desc->vendor_str ? desc->vendor_str : L"WineTest" );
+    wcscpy( impl->product_str, *desc->product_str ? desc->product_str : L"Wine Test" );
+    wcscpy( impl->serial_str, *desc->serial_str ? desc->serial_str : L"0&0000&0" );
+
     swprintf( impl->device_id, MAX_PATH, L"WINETEST\\VID_%04X&PID_%04X", desc->attributes.VendorID,
               desc->attributes.ProductID );
     /* use a different device ID so that driver cache select the polled driver */
     if (desc->is_polled) wcscat( impl->device_id, L"&POLL" );
-    swprintf( impl->instance_id, MAX_PATH, L"0&0000&0" );
+    swprintf( impl->instance_id, MAX_PATH, L"%s", impl->serial_str );
     impl->base.is_phys = TRUE;
     impl->fdo = fdo;
 
@@ -1238,10 +1248,41 @@ static NTSTATUS pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
 
     case IOCTL_HID_GET_STRING:
-        memcpy( irp->UserBuffer, L"Wine Test", sizeof(L"Wine Test") );
-        irp->IoStatus.Information = sizeof(L"Wine Test");
-        status = STATUS_SUCCESS;
+    {
+        UINT index = (UINT_PTR)stack->Parameters.DeviceIoControl.Type3InputBuffer & 0xffff;
+        UINT lcid = ((UINT_PTR)stack->Parameters.DeviceIoControl.Type3InputBuffer) >> 16;
+
+        todo_wine ok( lcid, "Unexpected LCID %#x.\n", lcid );
+        if (winetest_debug > 1)
+            trace( "%s: device %p, code %#lx %s, lcid %#x, idx %#x.\n", __func__, device, code, debugstr_ioctl(code),
+                    lcid, index );
+        switch (index)
+        {
+        case HID_STRING_ID_IMANUFACTURER:
+            irp->IoStatus.Information = (wcslen( impl->vendor_str ) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->vendor_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        case HID_STRING_ID_IPRODUCT:
+            irp->IoStatus.Information = (wcslen( impl->product_str ) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->product_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        case HID_STRING_ID_ISERIALNUMBER:
+            irp->IoStatus.Information = (wcslen(impl->serial_str) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->serial_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        default:
+            ok(0, "Unknown string type %#x.\n", index);
+            status = STATUS_NOT_IMPLEMENTED;
+            break;
+        }
         break;
+    }
 
     case IOCTL_GET_PHYSICAL_DESCRIPTOR:
         irp->IoStatus.Information = 0;

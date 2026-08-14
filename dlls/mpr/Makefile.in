@@ -2,6 +2,9 @@ MODULE    = mpr.dll
 IMPORTLIB = mpr
 IMPORTS   = user32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Wine Multiprotocol Router Library"
+VER_PRODUCTVERSION      = 5,0,2195,6611
+
 SOURCES = \
 	auth.c \
 	mpr.rc \

@@ -21,8 +21,6 @@
 #ifndef __WINE_PARSE_H
 #define __WINE_PARSE_H
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"

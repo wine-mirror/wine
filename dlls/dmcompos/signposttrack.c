@@ -162,7 +162,7 @@ static HRESULT WINAPI signpost_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME
 {
         IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
 	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI signpost_track_PlayEx(IDirectMusicTrack8 *iface, void *pStateData,

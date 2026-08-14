@@ -507,6 +507,7 @@ static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *ke
         else csidl = CSIDL_PROGRAM_FILES_COMMON;
     }
 #ifdef __x86_64__
+    else if (!wcsicmp(key, L"runtime.syswow64")) csidl = CSIDL_SYSTEMX86;
     else if (!wcsicmp(key, L"runtime.programfilesx86")) csidl = CSIDL_PROGRAM_FILESX86;
     else if (!wcsicmp(key, L"runtime.commonfilesx86")) csidl = CSIDL_PROGRAM_FILES_COMMONX86;
 #endif

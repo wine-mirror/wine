@@ -79,4 +79,5 @@ Where:\n\
 \t\tIf no date is supplied, only copy if destination is older\n\
 \t\tthan source.\n\n"
 
+    STRING_NOCOPYTOSELF, "File cannot be copied onto itself.\n"
 }

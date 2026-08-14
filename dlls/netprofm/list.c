@@ -46,8 +46,10 @@ struct network
     struct list          entry;
     GUID                 id;
     INetworkListManager *mgr;
-    VARIANT_BOOL         connected_to_internet;
-    VARIANT_BOOL         connected;
+    VARIANT_BOOL         connected_to_internet_v4;
+    VARIANT_BOOL         connected_to_internet_v6;
+    VARIANT_BOOL         connected_v4;
+    VARIANT_BOOL         connected_v6;
 };
 
 struct connection
@@ -58,8 +60,10 @@ struct connection
     struct list            entry;
     GUID                   id;
     INetwork              *network;
-    VARIANT_BOOL           connected_to_internet;
-    VARIANT_BOOL           connected;
+    VARIANT_BOOL           connected_to_internet_v4;
+    VARIANT_BOOL           connected_to_internet_v6;
+    VARIANT_BOOL           connected_v4;
+    VARIANT_BOOL           connected_v6;
 };
 
 struct connection_point
@@ -471,7 +475,8 @@ static HRESULT WINAPI network_get_IsConnectedToInternet(
 
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
-    *pbIsConnected = network->connected_to_internet;
+    *pbIsConnected = network->connected_to_internet_v4 | network->connected_to_internet_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -483,7 +488,8 @@ static HRESULT WINAPI network_get_IsConnected(
 
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
-    *pbIsConnected = network->connected;
+    *pbIsConnected = network->connected_v4 | network->connected_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -493,15 +499,21 @@ static HRESULT WINAPI network_GetConnectivity(
 {
     struct network *network = impl_from_INetwork( iface );
 
-    FIXME( "%p, %p\n", iface, pConnectivity );
+    TRACE( "%p, %p\n", iface, pConnectivity );
 
     *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
 
-    if (network->connected_to_internet)
+    if (network->connected_to_internet_v4)
         *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
-    else if (network->connected)
+    else if (network->connected_v4)
         *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
 
+    if (network->connected_to_internet_v6)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV6_INTERNET;
+    else if (network->connected_v6)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
+
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
@@ -554,10 +566,8 @@ static struct network *create_network( const GUID *id )
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
 
     ret->INetwork_iface.lpVtbl = &network_vtbl;
-    ret->refs                  = 1;
-    ret->id                    = *id;
-    ret->connected             = VARIANT_FALSE;
-    ret->connected_to_internet = VARIANT_FALSE;
+    ret->refs = 1;
+    ret->id   = *id;
     list_init( &ret->entry );
 
     return ret;
@@ -796,7 +806,7 @@ static HRESULT WINAPI networks_enum_get__NewEnum(
 static BOOL match_enum_network_flags( NLM_ENUM_NETWORK flags, struct network *network )
 {
     if (flags == NLM_ENUM_NETWORK_ALL) return TRUE;
-    if (network->connected)
+    if (network->connected_v4 || network->connected_v6)
     {
         if (flags & NLM_ENUM_NETWORK_CONNECTED) return TRUE;
     }
@@ -1321,7 +1331,7 @@ static HRESULT WINAPI list_manager_IsConnectedToInternet(
 
     LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
     {
-        if (network->connected_to_internet)
+        if (network->connected_to_internet_v4 || network->connected_to_internet_v6)
         {
             *pbIsConnected = VARIANT_TRUE;
             return S_OK;
@@ -1343,7 +1353,7 @@ static HRESULT WINAPI list_manager_IsConnected(
 
     LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
     {
-        if (network->connected)
+        if (network->connected_v4 || network->connected_v6)
         {
             *pbIsConnected = VARIANT_TRUE;
             return S_OK;
@@ -1361,18 +1371,24 @@ static HRESULT WINAPI list_manager_GetConnectivity(
     struct list_manager *mgr = impl_from_INetworkListManager( iface );
     struct network *network;
 
-    FIXME( "%p, %p\n", iface, pConnectivity );
+    TRACE( "%p, %p\n", iface, pConnectivity );
 
     *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
 
     LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
     {
-        if (network->connected_to_internet)
+        if (network->connected_to_internet_v4)
             *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
-        else if (network->connected)
+        else if (network->connected_v4)
             *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
+
+        if (network->connected_to_internet_v6)
+            *pConnectivity |= NLM_CONNECTIVITY_IPV6_INTERNET;
+        else if (network->connected_v6)
+            *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
     }
 
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
@@ -1585,7 +1601,8 @@ static HRESULT WINAPI connection_get_IsConnectedToInternet(
 
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
-    *pbIsConnected = connection->connected_to_internet;
+    *pbIsConnected = connection->connected_to_internet_v4 | connection->connected_to_internet_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -1597,7 +1614,8 @@ static HRESULT WINAPI connection_get_IsConnected(
 
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
-    *pbIsConnected = connection->connected;
+    *pbIsConnected = connection->connected_v4 | connection->connected_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -1607,15 +1625,21 @@ static HRESULT WINAPI connection_GetConnectivity(
 {
     struct connection *connection = impl_from_INetworkConnection( iface );
 
-    FIXME( "%p, %p\n", iface, pConnectivity );
+    TRACE( "%p, %p\n", iface, pConnectivity );
 
     *pConnectivity = NLM_CONNECTIVITY_DISCONNECTED;
 
-    if (connection->connected_to_internet)
+    if (connection->connected_to_internet_v4)
         *pConnectivity |= NLM_CONNECTIVITY_IPV4_INTERNET;
-    else if (connection->connected)
+    else if (connection->connected_v4)
         *pConnectivity |= NLM_CONNECTIVITY_IPV4_LOCALNETWORK;
 
+    if (connection->connected_to_internet_v6)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV6_INTERNET;
+    else if (connection->connected_v6)
+        *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
+
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
@@ -1750,11 +1774,8 @@ static struct connection *create_connection( const GUID *id )
 
     ret->INetworkConnection_iface.lpVtbl     = &connection_vtbl;
     ret->INetworkConnectionCost_iface.lpVtbl = &connection_cost_vtbl;
-    ret->refs                  = 1;
-    ret->id                    = *id;
-    ret->network               = NULL;
-    ret->connected             = VARIANT_FALSE;
-    ret->connected_to_internet = VARIANT_FALSE;
+    ret->refs = 1;
+    ret->id   = *id;
     list_init( &ret->entry );
 
     return ret;
@@ -1779,10 +1800,54 @@ static IP_ADAPTER_ADDRESSES *get_network_adapters(void)
     return NULL;
 }
 
+static void has_ipv6_address( const IP_ADAPTER_ADDRESSES *aa, BOOL *has_local, BOOL *has_global )
+{
+    const IP_ADAPTER_UNICAST_ADDRESS *addr = aa->FirstUnicastAddress;
+    const struct in6_addr *sa6;
+
+    *has_local = *has_global = FALSE;
+    for (addr = aa->FirstUnicastAddress; addr; addr = addr->Next)
+    {
+        if (addr->Address.lpSockaddr->sa_family != AF_INET6) continue;
+        sa6 = &((struct sockaddr_in6 *)addr->Address.lpSockaddr)->sin6_addr;
+        if (IN6_IS_ADDR_LINKLOCAL(sa6) || IN6_IS_ADDR_SITELOCAL(sa6))
+            *has_local = TRUE;
+        else if (!IN6_IS_ADDR_UNSPECIFIED(sa6) && !IN6_IS_ADDR_MULTICAST(sa6) && !IN6_IS_ADDR_LOOPBACK(sa6))
+            *has_global = TRUE;
+    }
+}
+
+static BOOL has_ipv4_address( const IP_ADAPTER_ADDRESSES *aa )
+{
+    const IP_ADAPTER_UNICAST_ADDRESS *addr = aa->FirstUnicastAddress;
+    while (addr)
+    {
+        if (addr->Address.lpSockaddr->sa_family == AF_INET)
+            return TRUE;
+        addr = addr->Next;
+    }
+    return FALSE;
+}
+
+static BOOL has_ipv4_gateway_address( const IP_ADAPTER_ADDRESSES *aa )
+{
+    const IP_ADAPTER_GATEWAY_ADDRESS *addr = aa->FirstGatewayAddress;
+    while (addr)
+    {
+        if (addr->Address.lpSockaddr->sa_family == AF_INET)
+            return TRUE;
+        addr = addr->Next;
+    }
+    return FALSE;
+}
+
 static void init_networks( struct list_manager *mgr )
 {
+    BOOL has_local, has_global;
     IP_ADAPTER_ADDRESSES *buf, *aa;
     GUID id;
+
+    FIXME( "no support for detecting network changes\n" );
 
     list_init( &mgr->networks );
     list_init( &mgr->connections );
@@ -1796,6 +1861,8 @@ static void init_networks( struct list_manager *mgr )
         struct connection *connection;
         NET_LUID luid;
 
+        if (!wcscmp( aa->FriendlyName, L"lo" )) continue;
+
         ConvertInterfaceIndexToLuid(aa->IfIndex, &luid);
         ConvertInterfaceLuidToGuid(&luid, &id);
 
@@ -1807,15 +1874,26 @@ static void init_networks( struct list_manager *mgr )
             goto done;
         }
 
-        if (aa->FirstUnicastAddress)
+        has_ipv6_address( aa, &has_local, &has_global );
+        if (has_local || has_global)
         {
-            network->connected = VARIANT_TRUE;
-            connection->connected = VARIANT_TRUE;
+            network->connected_v6 = VARIANT_TRUE;
+            connection->connected_v6 = VARIANT_TRUE;
         }
-        if (aa->FirstGatewayAddress)
+        if (has_global)
         {
-            network->connected_to_internet = VARIANT_TRUE;
-            connection->connected_to_internet = VARIANT_TRUE;
+            network->connected_to_internet_v6 = VARIANT_TRUE;
+            connection->connected_to_internet_v6 = VARIANT_TRUE;
+        }
+        if (has_ipv4_address( aa ))
+        {
+            network->connected_v4 = VARIANT_TRUE;
+            connection->connected_v4 = VARIANT_TRUE;
+        }
+        if (has_ipv4_gateway_address( aa ))
+        {
+            network->connected_to_internet_v4 = VARIANT_TRUE;
+            connection->connected_to_internet_v4 = VARIANT_TRUE;
         }
 
         network->mgr = &mgr->INetworkListManager_iface;

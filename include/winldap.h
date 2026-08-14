@@ -164,6 +164,9 @@ typedef struct berelement
 #define LDAP_OPT_ON                     ((void *)1)
 #define LDAP_OPT_OFF                    ((void *)0)
 
+#define LDAP_CHASE_SUBORDINATE_REFERRALS 0x20
+#define LDAP_CHASE_EXTERNAL_REFERRALS    0x40
+
 #define LDAP_VERSION1   1
 #define LDAP_VERSION2   2
 #define LDAP_VERSION3   3

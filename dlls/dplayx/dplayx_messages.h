@@ -74,7 +74,7 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf );
 #define DPMSG_DEFAULT_WAIT_TIME DPMSG_WAIT_30_SECS
 
 /* Message types etc. */
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -333,6 +333,6 @@ typedef struct
   DPID id;
 } DPSP_MSG_ADDFORWARDACK;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #endif

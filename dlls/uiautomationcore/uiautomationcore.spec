@@ -55,7 +55,7 @@
 @ stub TransformPattern_Rotate
 @ stdcall UiaAddEvent(ptr long ptr long ptr long ptr ptr)
 @ stdcall UiaClientsAreListening()
-#@ stub UiaDisconnectAllProviders
+@ stdcall UiaDisconnectAllProviders()
 @ stdcall UiaDisconnectProvider(ptr)
 @ stdcall UiaEventAddWindow(ptr long)
 @ stdcall UiaEventRemoveWindow(ptr long)

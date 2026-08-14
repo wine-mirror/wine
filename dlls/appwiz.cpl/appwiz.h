@@ -26,19 +26,3 @@ typedef enum {
 BOOL install_addon(addon_t);
 
 extern HINSTANCE hInst;
-
-static inline WCHAR *strdupAtoW(const char *str)
-{
-    WCHAR *ret = NULL;
-
-    if(str) {
-        size_t len;
-
-        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = malloc(len * sizeof(WCHAR));
-        if(ret)
-            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    }
-
-    return ret;
-}

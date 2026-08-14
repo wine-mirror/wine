@@ -21,10 +21,8 @@
 #define __WINE_VULKAN_LOADER_H
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include <stdarg.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -39,32 +37,6 @@
 
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
-
-#define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
-
-struct VkPhysicalDevice_T
-{
-    struct vulkan_client_object obj;
-};
-
-struct VkInstance_T
-{
-    struct vulkan_client_object obj;
-    uint32_t phys_dev_count;
-    struct VkPhysicalDevice_T phys_devs[1];
-};
-
-struct VkQueue_T
-{
-    struct vulkan_client_object obj;
-};
-
-struct VkDevice_T
-{
-    struct vulkan_client_object obj;
-    unsigned int quirks;
-    struct VkQueue_T queues[1];
-};
 
 struct vk_command_pool
 {
@@ -93,10 +65,11 @@ void *wine_vk_get_device_proc_addr(const char *name);
 void *wine_vk_get_phys_dev_proc_addr(const char *name);
 void *wine_vk_get_instance_proc_addr(const char *name);
 
-struct vk_callback_funcs
+struct init_params
 {
     UINT64 call_vulkan_debug_report_callback;
     UINT64 call_vulkan_debug_utils_callback;
+    struct vulkan_instance_extensions *extensions;
 };
 
 /* debug callbacks params */
@@ -171,5 +144,14 @@ struct is_available_device_function_params
 };
 
 #define UNIX_CALL(code, params) WINE_UNIX_CALL(unix_ ## code, params)
+#define UNIX_CALL_CHECKED(code, params)                           \
+    do {                                                          \
+        NTSTATUS status = UNIX_CALL(code, params);                \
+        if (status)                                               \
+        {                                                         \
+            ERR("Exception %#lx in Unix call.\n", status);        \
+            ExitProcess(3);                                       \
+        }                                                         \
+    } while (0)
 
 #endif /* __WINE_VULKAN_LOADER_H */

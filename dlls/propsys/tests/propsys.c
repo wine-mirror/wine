@@ -32,6 +32,7 @@
 #include "propsys.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#include "propkey.h"
 #include "wine/test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -54,6 +55,13 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
+}
+
+static inline const char *debugstr_propkey(const PROPERTYKEY *key)
+{
+    if (!key)
+        return "(null)";
+    return wine_dbg_sprintf("{%s,%04lx}", wine_dbgstr_guid(&key->fmtid), key->pid);
 }
 
 static void test_PSStringFromPropertyKey(void)
@@ -566,7 +574,10 @@ static void test_InitPropVariantFromBuffer(void)
 
 static void test_PropVariantToGUID(void)
 {
+    SAFEARRAYBOUND arrbounds;
     PROPVARIANT propvar;
+    SAFEARRAY *arr;
+    void *buf;
     VARIANT var;
     GUID guid;
     HRESULT hres;
@@ -634,6 +645,25 @@ static void test_PropVariantToGUID(void)
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %lx\n", hres);
     ok(IsEqualGUID(&dummy_guid, &guid), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
+    PropVariantClear(&propvar);
+
+    arrbounds.lLbound = 0;
+    arrbounds.cElements = sizeof(GUID);
+    arr = SafeArrayCreate(VT_UI1, 1, &arrbounds);
+    ok(!!arr, "SafeArrayCreate failed\n");
+    hres = SafeArrayAccessData(arr, &buf);
+    ok(hres == S_OK, "SafeArrayAccessData failed %lx\n", hres);
+    memcpy(buf, &dummy_guid, sizeof(GUID));
+    hres = SafeArrayUnaccessData(arr);
+    ok(hres == S_OK, "SafeArrayUnaccessData failed %lx\n", hres);
+    propvar.vt = VT_ARRAY | VT_UI1;
+    propvar.parray = arr;
+    memset(&guid, 0, sizeof(guid));
+    hres = PropVariantToGUID(&propvar, &guid);
+    todo_wine
+    ok(hres == S_OK, "PropVariantToGUID failed %lx\n", hres);
+    if (SUCCEEDED(hres))
+        ok(IsEqualGUID(&guid, &dummy_guid), "incorrect GUID created: %s\n", debugstr_guid(&guid));
     PropVariantClear(&propvar);
 }
 
@@ -1613,11 +1643,95 @@ static void test_PropVariantChangeType_R8(void)
        "Unexpected value %f.\n", dest.dblVal);
 }
 
+static void test_PropVariantChangeType_CLSID(void)
+{
+    static const struct {
+        const WCHAR *str;
+        const GUID *guid;
+        HRESULT hr;
+    } test_cases[] = {
+        {dummy_guid_str, &dummy_guid, S_OK},
+        {L"{deadbeef-dead-beef-dead-beefcafebabe}", &dummy_guid, S_OK},
+        {L"DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE", NULL, E_INVALIDARG},
+        {L"foo", NULL, E_INVALIDARG},
+        {L"", NULL, E_INVALIDARG},
+    };
+    SAFEARRAYBOUND arrbounds;
+    PROPVARIANT src, dest;
+    SAFEARRAY *arr;
+    HRESULT hr;
+    void *buf;
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE(test_cases); i++)
+    {
+        winetest_push_context("test_cases[%Iu]", i);
+        PropVariantInit(&src);
+        src.vt = VT_LPWSTR;
+        src.pwszVal = CoTaskMemAlloc((wcslen(test_cases[i].str) + 1) * sizeof(WCHAR));
+        wcscpy(src.pwszVal, test_cases[i].str);
+        hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+        ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_CLSID, "Unexecpted type %d.\n", dest.vt);
+            ok(IsEqualGUID(dest.puuid, test_cases[i].guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+        }
+
+        PropVariantClear(&src);
+        PropVariantClear(&dest);
+        src.vt = VT_BSTR;
+        src.bstrVal = SysAllocString(test_cases[i].str);
+        hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+        ok(hr == test_cases[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+            ok(IsEqualGUID(dest.puuid, test_cases[i].guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+        }
+        PropVariantClear(&src);
+        PropVariantClear(&dest);
+        winetest_pop_context();
+    }
+
+    arrbounds.lLbound = 0;
+    arrbounds.cElements = sizeof(GUID);
+    arr = SafeArrayCreate(VT_UI1, 1, &arrbounds);
+    ok(!!arr, "SafeArrayCreate failed.\n");
+    hr = SafeArrayAccessData(arr, &buf);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memcpy(buf, &dummy_guid, sizeof(GUID));
+    hr = SafeArrayUnaccessData(arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    src.vt = VT_ARRAY | VT_UI1;
+    src.parray = arr;
+    hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+        ok(IsEqualGUID(dest.puuid, &dummy_guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+    }
+    PropVariantClear(&src);
+    PropVariantClear(&dest);
+
+    hr = InitPropVariantFromCLSID(&dummy_guid, &src);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = PropVariantChangeType(&dest, &src, 0, VT_CLSID);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(dest.vt == VT_CLSID, "Unexpected type %d.\n", dest.vt);
+    ok(IsEqualGUID(dest.puuid, &dummy_guid), "Unexpected value %s.\n", debugstr_guid(dest.puuid));
+    PropVariantClear(&src);
+    PropVariantClear(&dest);
+}
+
 static void test_PropVariantChangeType(void)
 {
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantChangeType_UI4();
     test_PropVariantChangeType_R8();
+    test_PropVariantChangeType_CLSID();
 }
 
 static void test_InitPropVariantFromCLSID(void)
@@ -1980,7 +2094,7 @@ static void test_PropVariantToBSTR(void)
     ok(hr == S_OK, "PropVariantToBSTR returned %#lx.\n", hr);
     length = SysStringLen(bstr);
     ok(length == wcslen(test_bstr), "Unexpected length %u.\n", length);
-    ok(!wcscmp(bstr, test_bstr), "Unexpected bstr %s.", debugstr_wn(bstr, ARRAY_SIZE(test_bstr)));
+    ok(!wcscmp(bstr, test_bstr), "Unexpected bstr %s.", debugstr_wn(bstr, length));
     SysFreeString(bstr);
     PropVariantClear(&propvar);
 }
@@ -2457,7 +2571,7 @@ static void test_InitVariantFromFileTime(void)
     SYSTEMTIME st;
     VARIANT var;
     HRESULT hr;
-    double d;
+    DOUBLE d;
 
     VariantInit(&var);
     if (0) /* crash on Windows */
@@ -2949,6 +3063,161 @@ void test_PropVariantGetStringElem(void)
     PropVariantClear(&propvar);
 }
 
+static void test_PropertyDescription_(int line, const PROPERTYKEY *expect_key, const WCHAR *expect_name, VARTYPE expect_type,
+                                      IPropertyDescription *desc)
+{
+    HRESULT hr;
+    PROPERTYKEY key;
+    VARTYPE type;
+    WCHAR *name;
+
+    hr = IPropertyDescription_GetPropertyKey(desc, &key);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    ok_(__FILE__, line)(IsEqualPropertyKey(key, *expect_key), "%s != %s\n", debugstr_propkey(&key),
+                        debugstr_propkey(expect_key));
+    hr = IPropertyDescription_GetCanonicalName(desc, &name);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok_(__FILE__, line)(!wcscmp(name, expect_name), "%s != %s\n", debugstr_w(name), debugstr_w(expect_name));
+        CoTaskMemFree(name);
+    }
+    hr = IPropertyDescription_GetPropertyType(desc, &type);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+        ok_(__FILE__, line)(type == expect_type, "%s != !%s\n", debugstr_vt(type), debugstr_vt(expect_type));
+}
+#define test_PropertyDescription(k,n,t,d) test_PropertyDescription_(__LINE__, k, n, t, d)
+
+static void test_PropertySystem(void)
+{
+    const static struct
+    {
+        const PROPERTYKEY *key;
+        const WCHAR *name;
+        VARTYPE type;
+        HRESULT hr_broken;
+    } system_props[] = {
+        {&PKEY_ItemNameDisplay, L"System.ItemNameDisplay", VT_LPWSTR},
+        {&PKEY_Devices_ContainerId, L"System.Devices.ContainerId", VT_CLSID},
+        {&PKEY_Devices_InterfaceClassGuid, L"System.Devices.InterfaceClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
+        {&PKEY_Devices_HardwareIds, L"System.Devices.HardwareIds", VT_VECTOR | VT_LPWSTR, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
+        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* <= Win8 */},
+        {&PKEY_Devices_ModelName, L"System.Devices.ModelName", VT_LPWSTR},
+        {&PKEY_Devices_Manufacturer, L"System.Devices.Manufacturer", VT_LPWSTR},
+    };
+    IPropertySystem *system;
+    HRESULT hr;
+    IPropertyDescription *desc;
+    SIZE_T i;
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_PropertySystem, NULL, CLSCTX_INPROC_SERVER, &IID_IPropertySystem, (void **)&system);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        return;
+    }
+
+    for(i = 0; i < ARRAY_SIZE(system_props); i++)
+    {
+        IPropertyDescription *desc;
+        LPWSTR name;
+        PROPERTYKEY key;
+
+        winetest_push_context("system_props %d", (int)i);
+
+        hr = IPropertySystem_GetPropertyDescription(system, system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        if (!SUCCEEDED(hr) && broken(hr == system_props[i].hr_broken))
+        {
+            win_skip("Property not supported, skipping.\n");
+            winetest_pop_context();
+            continue;
+        }
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+        hr = PSGetPropertyDescription(system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+
+        hr = PSGetPropertyKeyFromName(system_props[i].name, &key);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+            ok(!memcmp(&key, system_props[i].key, sizeof(key)), "%s != %s\n", debugstr_propkey(&key),
+               debugstr_propkey(system_props[i].key));
+
+        hr = PSGetNameFromPropertyKey(system_props[i].key, &name);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(!wcscmp(name, system_props[i].name), "%s != %s\n", debugstr_w(name), debugstr_w(system_props[i].name));
+            CoTaskMemFree(name);
+        }
+
+        hr = IPropertySystem_GetPropertyDescriptionByName(system, system_props[i].name, &IID_IPropertyDescription, (void **)&desc);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+        hr = PSGetPropertyDescription(system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+
+        winetest_pop_context();
+    }
+
+    hr = IPropertySystem_GetPropertyDescriptionByName(system, L"Non.Existent.Property.Name", &IID_IPropertyDescription, (void **)&desc);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "%#lx != %#lx\n", hr, TYPE_E_ELEMENTNOTFOUND);
+
+    IPropertySystem_Release(system);
+    CoUninitialize();
+}
+
+static void test_PropVariantToFileTime(void)
+{
+    PROPVARIANT propvar;
+    FILETIME timestamp;
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    timestamp.dwLowDateTime = 12;
+    timestamp.dwHighDateTime = 34;
+    hr = PropVariantToFileTime(&propvar, PSTF_LOCAL, &timestamp);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(timestamp.dwLowDateTime == 12 && timestamp.dwHighDateTime == 34,
+            "Unexpected timestamp %#lx.%#lx.\n", timestamp.dwHighDateTime, timestamp.dwLowDateTime);
+}
+
+static void test_PropVariantToUInt32Vector(void)
+{
+    ULONG buffer[16], count;
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    PropVariantInit(&propvar);
+    buffer[0] = 1;
+    count = 0xabc;
+    hr = PropVariantToUInt32Vector(&propvar, buffer, ARRAY_SIZE(buffer), &count);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(buffer[0] == 1, "Unexpected contents %#lx.\n", buffer[0]);
+    ok(!count, "Unexpected count %#lx.\n", count);
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -2981,4 +3250,8 @@ START_TEST(propsys)
     test_VariantToPropVariant();
     test_PropVariantToVariant();
     test_PropVariantGetStringElem();
+    test_PropVariantToFileTime();
+    test_PropVariantToUInt32Vector();
+
+    test_PropertySystem();
 }

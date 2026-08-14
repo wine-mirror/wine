@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef _TIMEB_DEFINED
 #define _TIMEB_DEFINED
@@ -71,6 +71,6 @@ static inline void __cdecl _ftime(struct _timeb *tb) { return _ftime64((struct _
 
 static inline void ftime(struct _timeb* ptr) { return _ftime(ptr); }
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_SYS_TIMEB_H */

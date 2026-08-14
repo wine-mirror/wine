@@ -119,8 +119,10 @@ THEMEAPI_(DWORD) GetThemeAppProperties(void);
 THEMEAPI GetThemeBackgroundContentRect(HTHEME,HDC,int,int, const RECT*,RECT*);
 THEMEAPI GetThemeBackgroundExtent(HTHEME,HDC,int,int,const RECT*,RECT*);
 THEMEAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
+THEMEAPI GetThemeBitmap(HTHEME,int,int,int,ULONG,HBITMAP*);
 THEMEAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
 THEMEAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
+THEMEAPI GetThemeStream(HTHEME,int,int,int,void**,DWORD*,HINSTANCE);
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 # define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"

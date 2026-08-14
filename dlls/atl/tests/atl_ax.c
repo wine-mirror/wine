@@ -128,6 +128,50 @@ static void test_ax_win(void)
     ok(wcex.style == CS_GLOBALCLASS, "wcex.style %08x\n", wcex.style);
 }
 
+static void test_atl_messages(void)
+{
+    UINT wmAtlGetHost;
+    UINT wmAtlGetControl;
+    HWND hwnd;
+    HRESULT ret;
+    IUnknown *host1 = NULL, *host2;
+    IUnknown *ctrl1 = NULL, *ctrl2;
+
+    /* Already called by test_ax_win, but left in to allow this test to be standalone */
+    AtlAxWinInit();
+
+    wmAtlGetHost = RegisterWindowMessageW( L"WM_ATLGETHOST" );
+    wmAtlGetControl = RegisterWindowMessageW( L"WM_ATLGETCONTROL" );
+
+    hwnd = CreateWindowExW(0, L"AtlAxWin", L"Shell.Explorer", 0,
+                           CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                           CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "Failed to create AtlAxWin window\n");
+
+    ret = AtlAxGetHost(hwnd, &host1);
+    ok(ret == S_OK, "AtlAxGetHost failed\n");
+    ok(host1 != NULL, "AtlAxGetHost did not fill the out pointer\n");
+
+    ret = AtlAxGetControl(hwnd, &ctrl1);
+    ok(ret == S_OK, "AtlAxGetControl failed\n");
+    ok(ctrl1 != NULL, "AtlAxGetControl did not fill the out pointer\n");
+
+    host2 = (IUnknown *)SendMessageW(hwnd, wmAtlGetHost, 0, 0);
+    ok(host2 != NULL, "WM_ATLGETHOST did not return a value\n");
+    ctrl2 = (IUnknown *)SendMessageW(hwnd, wmAtlGetControl, 0, 0);
+    ok(ctrl2 != NULL, "WM_ATLGETCONTROL did not return a value\n");
+
+    ok(host1 == host2, "Mismatch between AtlAxGetHost and WM_ATLGETHOST\n");
+    ok(ctrl1 == ctrl2, "Mismatch between AtlAxGetControl and WM_ATLGETCONTROL\n");
+
+    IUnknown_Release(host1);
+    IUnknown_Release(ctrl1);
+    IUnknown_Release(host2);
+    IUnknown_Release(ctrl2);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(atl_ax)
 {
     init_function_pointers();
@@ -143,6 +187,7 @@ START_TEST(atl_ax)
         win_skip("AtlAxAttachControl is not available\n");
 
     test_ax_win();
+    test_atl_messages();
 
     CoUninitialize();
 }

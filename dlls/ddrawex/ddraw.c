@@ -575,10 +575,12 @@ static HRESULT WINAPI ddrawex3_EnumDisplayModes(IDirectDraw3 *iface, DWORD flags
 
     TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
-    DDSD_to_DDSD2(desc, &ddsd2);
+    if (desc)
+        DDSD_to_DDSD2(desc, &ddsd2);
     cb_ctx.orig_cb = cb;
     cb_ctx.orig_ctx = ctx;
-    return ddrawex4_EnumDisplayModes(&ddrawex->IDirectDraw4_iface, flags, &ddsd2, &cb_ctx, enum_modes_cb2);
+    return ddrawex4_EnumDisplayModes(&ddrawex->IDirectDraw4_iface, flags,
+            desc ? &ddsd2 : NULL, &cb_ctx, enum_modes_cb2);
 }
 
 static HRESULT WINAPI ddrawex2_EnumDisplayModes(IDirectDraw2 *iface, DWORD flags,

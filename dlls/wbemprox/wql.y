@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -28,7 +27,6 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
@@ -40,6 +38,7 @@ struct parser
     HRESULT error;
     struct view **view;
     struct list *mem;
+    enum wbm_namespace ns;
 };
 
 struct string
@@ -50,7 +49,7 @@ struct string
 
 static void *alloc_mem( struct parser *parser, UINT size )
 {
-    struct list *mem = heap_alloc( sizeof(struct list) + size );
+    struct list *mem = malloc( sizeof(struct list) + size );
     list_add_tail( parser->mem, mem );
     return &mem[1];
 }
@@ -67,6 +66,18 @@ static struct property *alloc_property( struct parser *parser, const WCHAR *clas
     return prop;
 }
 
+static struct keyword *alloc_keyword( struct parser *parser, const WCHAR *name, const WCHAR *value )
+{
+    struct keyword *keyword = alloc_mem( parser, sizeof(*keyword) );
+    if (keyword)
+    {
+        keyword->name  = name;
+        keyword->value = value;
+        keyword->next  = NULL;
+    }
+    return keyword;
+}
+
 static WCHAR *get_string( struct parser *parser, const struct string *str )
 {
     const WCHAR *p = str->data;
@@ -81,6 +92,24 @@ static WCHAR *get_string( struct parser *parser, const struct string *str )
         p++;
         len -= 2;
     }
+    if (!(ret = alloc_mem( parser, (len + 1) * sizeof(WCHAR) ))) return NULL;
+    memcpy( ret, p, len * sizeof(WCHAR) );
+    ret[len] = 0;
+    return ret;
+}
+
+static WCHAR *get_path( struct parser *parser, const struct string *str )
+{
+    const WCHAR *p = str->data;
+    int len = str->len;
+    WCHAR *ret;
+
+    if (p[0] == '{' && p[len - 1] == '}')
+    {
+        p++;
+        len -= 2;
+    }
+
     if (!(ret = alloc_mem( parser, (len + 1) * sizeof(WCHAR) ))) return NULL;
     memcpy( ret, p, len * sizeof(WCHAR) );
     ret[len] = 0;
@@ -187,35 +216,110 @@ static int wql_lex( void *val, struct parser *parser );
 
 %lex-param { struct parser *ctx }
 %parse-param { struct parser *ctx }
-%error-verbose
-%pure-parser
+%define parse.error verbose
+%define api.prefix {wql_}
+%define api.pure
 
 %union
 {
     struct string str;
     WCHAR *string;
     struct property *proplist;
+    struct keyword *keywordlist;
     struct view *view;
     struct expr *expr;
     int integer;
 }
 
 %token TK_SELECT TK_FROM TK_STAR TK_COMMA TK_DOT TK_IS TK_LP TK_RP TK_NULL TK_FALSE TK_TRUE
-%token TK_INTEGER TK_WHERE TK_SPACE TK_MINUS TK_ILLEGAL TK_BY
-%token <str> TK_STRING TK_ID
+%token TK_INTEGER TK_WHERE TK_SPACE TK_MINUS TK_ILLEGAL TK_BY TK_ASSOCIATORS TK_OF
+%token <str> TK_STRING TK_ID TK_PATH
 
-%type <string> id
+%type <string> id path
 %type <proplist> prop proplist
-%type <view> select
+%type <keywordlist> keyword keywordlist
+%type <view> query select associatorsof
 %type <expr> expr prop_val const_val string_val
 %type <integer> number
 
-%left TK_OR
-%left TK_AND
-%left TK_NOT
-%left TK_EQ TK_NE TK_LT TK_GT TK_LE TK_GE TK_LIKE
+%left TK_OR TK_AND TK_NOT TK_EQ TK_NE TK_LT TK_GT TK_LE TK_GE TK_LIKE
 
 %%
+
+query:
+    select
+  |
+    associatorsof
+    ;
+
+path:
+    TK_PATH
+        {
+            $$ = get_path( ctx, &$1 );
+            if (!$$)
+                YYABORT;
+        }
+    ;
+
+keyword:
+    id
+        {
+            $$ = alloc_keyword( ctx, $1, NULL );
+            if (!$$)
+                YYABORT;
+        }
+ | id TK_EQ id
+        {
+            $$ = alloc_keyword( ctx, $1, $3 );
+            if (!$$)
+                YYABORT;
+        }
+    ;
+
+keywordlist:
+    keyword
+  | keyword keywordlist
+        {
+            $1->next = $2;
+        }
+    ;
+
+associatorsof:
+    TK_ASSOCIATORS TK_OF path
+        {
+            HRESULT hr;
+            struct parser *parser = ctx;
+            struct view *view;
+
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, ctx->ns, $3, NULL, NULL, NULL, NULL, &view );
+            if (hr != S_OK)
+            {
+                ctx->error = hr;
+                YYABORT;
+            }
+
+            PARSER_BUBBLE_UP_VIEW( parser, $$, view );
+#if YYBISON >= 30704
+            (void)yysymbol_name; /* avoid unused function warning */
+#endif
+            (void)wql_nerrs; /* avoid unused variable warning */
+        }
+  | TK_ASSOCIATORS TK_OF path TK_WHERE keywordlist
+        {
+            HRESULT hr;
+            struct parser *parser = ctx;
+            struct view *view;
+
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, ctx->ns, $3, $5, NULL, NULL, NULL, &view );
+            if (hr != S_OK)
+            {
+                ctx->error = hr;
+                YYABORT;
+            }
+
+            PARSER_BUBBLE_UP_VIEW( parser, $$, view );
+        }
+    ;
 
 select:
     TK_SELECT TK_FROM id
@@ -224,9 +328,12 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( NULL, $3, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $3, NULL, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -236,9 +343,12 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( $2, $4, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $4, $2, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -248,9 +358,12 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( $2, $4, $6, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $4, $2, $6, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -315,6 +428,12 @@ expr:
   | expr TK_OR expr
         {
             $$ = expr_complex( ctx, $1, OP_OR, $3 );
+            if (!$$)
+                YYABORT;
+        }
+  | TK_NOT expr
+        {
+            $$ = expr_unary( ctx, $2, OP_NOT );
             if (!$$)
                 YYABORT;
         }
@@ -408,6 +527,30 @@ expr:
             if (!$$)
                 YYABORT;
         }
+  | prop_val TK_EQ TK_NULL
+        {
+            $$ = expr_unary( ctx, $1, OP_ISNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | TK_NULL TK_EQ prop_val
+        {
+            $$ = expr_unary( ctx, $3, OP_ISNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | prop_val TK_NE TK_NULL
+        {
+            $$ = expr_unary( ctx, $1, OP_NOTNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | TK_NULL TK_NE prop_val
+        {
+            $$ = expr_unary( ctx, $3, OP_NOTNULL );
+            if (!$$)
+                YYABORT;
+        }
     ;
 
 string_val:
@@ -457,7 +600,7 @@ const_val:
 
 %%
 
-HRESULT parse_query( const WCHAR *str, struct view **view, struct list *mem )
+HRESULT parse_query( enum wbm_namespace ns, const WCHAR *str, struct view **view, struct list *mem )
 {
     struct parser parser;
     int ret;
@@ -470,6 +613,7 @@ HRESULT parse_query( const WCHAR *str, struct view **view, struct list *mem )
     parser.error = WBEM_E_INVALID_QUERY;
     parser.view  = view;
     parser.mem   = mem;
+    parser.ns    = ns;
 
     ret = wql_parse( &parser );
     TRACE("wql_parse returned %d\n", ret);
@@ -505,51 +649,48 @@ static const char id_char[] =
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 };
 
-struct keyword
+static int is_idchar(WCHAR chr)
+{
+    return chr >= ARRAY_SIZE(id_char) || id_char[chr];
+}
+
+struct wql_keyword
 {
     const WCHAR *name;
     unsigned int len;
     int type;
 };
 
-#define MAX_TOKEN_LEN 6
+#define MIN_TOKEN_LEN 2
+#define MAX_TOKEN_LEN 11
 
-static const WCHAR andW[] = {'A','N','D'};
-static const WCHAR byW[] = {'B','Y'};
-static const WCHAR falseW[] = {'F','A','L','S','E'};
-static const WCHAR fromW[] = {'F','R','O','M'};
-static const WCHAR isW[] = {'I','S'};
-static const WCHAR likeW[] = {'L','I','K','E'};
-static const WCHAR notW[] = {'N','O','T'};
-static const WCHAR nullW[] = {'N','U','L','L'};
-static const WCHAR orW[] = {'O','R'};
-static const WCHAR selectW[] = {'S','E','L','E','C','T'};
-static const WCHAR trueW[] = {'T','R','U','E'};
-static const WCHAR whereW[] = {'W','H','E','R','E'};
-
-static const struct keyword keyword_table[] =
+#define X(str)  str, ARRAY_SIZE(str) - 1
+static const struct wql_keyword keyword_table[] =
 {
-  { andW,    SIZEOF(andW),    TK_AND },
-  { byW,     SIZEOF(byW),     TK_BY },
-  { falseW,  SIZEOF(falseW),  TK_FALSE },
-  { fromW,   SIZEOF(fromW),   TK_FROM },
-  { isW,     SIZEOF(isW),     TK_IS },
-  { likeW,   SIZEOF(likeW),   TK_LIKE },
-  { notW,    SIZEOF(notW),    TK_NOT },
-  { nullW,   SIZEOF(nullW),   TK_NULL },
-  { orW,     SIZEOF(orW),     TK_OR },
-  { selectW, SIZEOF(selectW), TK_SELECT },
-  { trueW,   SIZEOF(trueW),   TK_TRUE },
-  { whereW,  SIZEOF(whereW),  TK_WHERE }
+    { X(L"AND"),         TK_AND },
+    { X(L"ASSOCIATORS"), TK_ASSOCIATORS },
+    { X(L"BY"),          TK_BY },
+    { X(L"FALSE"),       TK_FALSE },
+    { X(L"FROM"),        TK_FROM },
+    { X(L"IS"),          TK_IS },
+    { X(L"LIKE"),        TK_LIKE },
+    { X(L"NOT"),         TK_NOT },
+    { X(L"NULL"),        TK_NULL },
+    { X(L"OF"),          TK_OF },
+    { X(L"OR"),          TK_OR },
+    { X(L"SELECT"),      TK_SELECT },
+    { X(L"TRUE"),        TK_TRUE },
+    { X(L"WHERE"),       TK_WHERE }
 };
+#undef X
 
-static int cmp_keyword( const void *arg1, const void *arg2 )
+static int __cdecl cmp_keyword( const void *arg1, const void *arg2 )
 {
-    const struct keyword *key1 = arg1, *key2 = arg2;
+    const struct wql_keyword *key1 = arg1, *key2 = arg2;
     int len = min( key1->len, key2->len );
     int ret;
 
-    if ((ret = memicmpW( key1->name, key2->name, len ))) return ret;
+    if ((ret = wcsnicmp( key1->name, key2->name, len ))) return ret;
     if (key1->len < key2->len) return -1;
     else if (key1->len > key2->len) return 1;
     return 0;
@@ -557,14 +698,14 @@ static int cmp_keyword( const void *arg1, const void *arg2 )
 
 static int keyword_type( const WCHAR *str, unsigned int len )
 {
-    struct keyword key, *ret;
+    struct wql_keyword key, *ret;
 
-    if (len > MAX_TOKEN_LEN) return TK_ID;
+    if (len < MIN_TOKEN_LEN || len > MAX_TOKEN_LEN) return TK_ID;
 
     key.name = str;
     key.len  = len;
     key.type = 0;
-    ret = bsearch( &key, keyword_table, SIZEOF(keyword_table), sizeof(struct keyword), cmp_keyword );
+    ret = bsearch( &key, keyword_table, ARRAY_SIZE(keyword_table), sizeof(struct wql_keyword), cmp_keyword );
     if (ret) return ret->type;
     return TK_ID;
 }
@@ -577,8 +718,9 @@ static int get_token( const WCHAR *s, int *token )
     {
     case ' ':
     case '\t':
+    case '\r':
     case '\n':
-        for (i = 1; isspaceW( s[i] ); i++) {}
+        for (i = 1; iswspace( s[i] ); i++) {}
         *token = TK_SPACE;
         return i;
     case '-':
@@ -591,6 +733,15 @@ static int get_token( const WCHAR *s, int *token )
     case ')':
         *token = TK_RP;
         return 1;
+    case '{':
+        for (i = 1; s[i] && s[i] != '}'; i++) {}
+        if (s[i] != '}')
+        {
+            *token = TK_ILLEGAL;
+            return i;
+        }
+        *token = TK_PATH;
+        return i + 1;
     case '*':
         *token = TK_STAR;
         return 1;
@@ -640,17 +791,15 @@ static int get_token( const WCHAR *s, int *token )
         return 1;
     case '\"':
     case '\'':
+        for (i = 1; s[i]; i++)
         {
-            for (i = 1; s[i]; i++)
-            {
-                if (s[i] == s[0]) break;
-            }
-            if (s[i]) i++;
-            *token = TK_STRING;
-            return i;
+            if (s[i] == s[0]) break;
         }
+        if (s[i]) i++;
+        *token = TK_STRING;
+        return i;
     case '.':
-        if (!isdigitW( s[1] ))
+        if (!is_digit( s[1] ))
         {
             *token = TK_DOT;
             return 1;
@@ -659,12 +808,12 @@ static int get_token( const WCHAR *s, int *token )
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
         *token = TK_INTEGER;
-        for (i = 1; isdigitW( s[i] ); i++) {}
+        for (i = 1; is_digit( s[i] ); i++) {}
         return i;
     default:
-        if (!id_char[*s]) break;
+        if (!is_idchar(*s)) break;
 
-        for (i = 1; id_char[s[i]]; i++) {}
+        for (i = 1; is_idchar(s[i]); i++) {}
         *token = keyword_type( s, i );
         return i;
     }

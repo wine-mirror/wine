@@ -22,13 +22,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
-
 #include "olestd.h"
-
-#define WINE_FILENAME_STR "ole32.dll"
-#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
-
-#include "wine/wine_common_ver.rc"
 
 /*
  * Everything that does not depend on language,

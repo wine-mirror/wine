@@ -1,9 +1,11 @@
 MODULE    = explorerframe.dll
 IMPORTS   = uuid ole32 comctl32 shell32 user32
 
+VER_PRODUCTVERSION  = 6,1,7601,16666
+VER_OLESELFREGISTER = 1
+
 SOURCES = \
 	explorerframe.idl \
 	explorerframe_main.c \
 	nstc.c \
-	taskbarlist.c \
-	version.rc
+	taskbarlist.c

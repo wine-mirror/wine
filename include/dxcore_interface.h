@@ -170,6 +170,40 @@ DECLARE_INTERFACE_IID_(IDXCoreAdapter, IUnknown, "f0db4c7f-fe5a-42a2-bd62-f2a6cf
     #endif
 };
 
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDXCoreAdapter_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDXCoreAdapter_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDXCoreAdapter_Release(p)                    (p)->lpVtbl->Release(p)
+/*** IDXCoreAdapter methods ***/
+#define IDXCoreAdapter_IsValid(p)                    (p)->lpVtbl->IsValid(p)
+#define IDXCoreAdapter_IsAttributeSupported(p,a)     (p)->lpVtbl->IsAttributeSupported(p,a)
+#define IDXCoreAdapter_IsPropertySupported(p,a)      (p)->lpVtbl->IsPropertySupported(p,a)
+#define IDXCoreAdapter_GetProperty(p,a,b,c)          (p)->lpVtbl->GetProperty(p,a,b,c)
+#define IDXCoreAdapter_GetPropertySize(p,a,b)        (p)->lpVtbl->GetPropertySize(p,a,b)
+#define IDXCoreAdapter_IsQueryStateSupported(p,a)    (p)->lpVtbl->IsQueryStateSupported(p,a)
+#define IDXCoreAdapter_QueryState(p,a,b,c,d,e)       (p)->lpVtbl->QueryState(p,a,b,c,d,e)
+#define IDXCoreAdapter_IsSetStateSupported(p,a)      (p)->lpVtbl->IsSetStateSupported(p,a)
+#define IDXCoreAdapter_SetState(p,a,b,c,d,e)         (p)->lpVtbl->SetState(p,a,b,c,d,e)
+#define IDXCoreAdapter_GetFactory(p,a,b)             (p)->lpVtbl->GetFactory(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDXCoreAdapter_QueryInterface(p,a,b)         (p)->QueryInterface(a,b)
+#define IDXCoreAdapter_AddRef(p)                     (p)->AddRef()
+#define IDXCoreAdapter_Release(p)                    (p)->Release()
+/*** IDXCoreAdapter methods ***/
+#define IDXCoreAdapter_IsValid(p)                    (p)->IsValid()
+#define IDXCoreAdapter_IsAttributeSupported(p,a)     (p)->IsAttributeSupported(a)
+#define IDXCoreAdapter_IsPropertySupported(p,a)      (p)->IsPropertySupported(a)
+#define IDXCoreAdapter_GetProperty(p,a,b,c)          (p)->GetProperty(a,b,c)
+#define IDXCoreAdapter_GetPropertySize(p,a,b)        (p)->GetPropertySize(a,b)
+#define IDXCoreAdapter_IsQueryStateSupported(p,a)    (p)->IsQueryStateSupported(a)
+#define IDXCoreAdapter_QueryState(p,a,b,c,d,e)       (p)->QueryState(a,b,c,d,e)
+#define IDXCoreAdapter_IsSetStateSupported(p,a)      (p)->IsSetStateSupported(a)
+#define IDXCoreAdapter_SetState(p,a,b,c,d,e)         (p)->SetState(a,b,c,d,e)
+#define IDXCoreAdapter_GetFactory(p,a,b)             (p)->GetFactory(a,b)
+#endif
+
 #undef INTERFACE
 #define INTERFACE IDXCoreAdapterList
 DECLARE_INTERFACE_IID_(IDXCoreAdapterList, IUnknown, "526c7776-40e9-459b-b711-f32ad76dfc28")
@@ -201,6 +235,32 @@ DECLARE_INTERFACE_IID_(IDXCoreAdapterList, IUnknown, "526c7776-40e9-459b-b711-f3
     #endif
 };
 
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDXCoreAdapterList_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDXCoreAdapterList_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDXCoreAdapterList_Release(p)                        (p)->lpVtbl->Release(p)
+/*** IDXCoreAdapterList methods ***/
+#define IDXCoreAdapterList_GetAdapter(p,a,b,c)               (p)->lpVtbl->GetAdapter(p,a,b,c)
+#define IDXCoreAdapterList_GetAdapterCount(p)                (p)->lpVtbl->GetAdapterCount(p)
+#define IDXCoreAdapterList_IsStale(p)                        (p)->lpVtbl->IsStale(p)
+#define IDXCoreAdapterList_GetFactory(p,a,b)                 (p)->lpVtbl->GetFactory(p,a,b)
+#define IDXCoreAdapterList_Sort(p,a,b)                       (p)->lpVtbl->Sort(p,a,b)
+#define IDXCoreAdapterList_IsAdapterPreferenceSupported(p,a) (p)->lpVtbl->IsAdapterPreferenceSupported(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDXCoreAdapterList_QueryInterface(p,a,b)             (p)->QueryInterface(a,b)
+#define IDXCoreAdapterList_AddRef(p)                         (p)->AddRef()
+#define IDXCoreAdapterList_Release(p)                        (p)->Release()
+/*** IDXCoreAdapterList methods ***/
+#define IDXCoreAdapterList_GetAdapter(p,a,b)                 (p)->GetAdapter(a,b)
+#define IDXCoreAdapterList_GetAdapterCount(p)                (p)->GetAdapterCount()
+#define IDXCoreAdapterList_IsStale(p)                        (p)->IsStale()
+#define IDXCoreAdapterList_GetFactory(p,a,b)                 (p)->GetFactory(a,b)
+#define IDXCoreAdapterList_Sort(p,a,b)                       (p)->Sort(a,b)
+#define IDXCoreAdapterList_IsAdapterPreferenceSupported(p,a) (p)->IsAdapterPreferenceSupported(a)
+#endif
+
 #undef INTERFACE
 #define INTERFACE IDXCoreAdapterFactory
 DECLARE_INTERFACE_IID_(IDXCoreAdapterFactory, IUnknown, "78ee5945-c36e-4b13-a669-005dd11c0f06")
@@ -231,5 +291,29 @@ DECLARE_INTERFACE_IID_(IDXCoreAdapterFactory, IUnknown, "78ee5945-c36e-4b13-a669
     }
     #endif
 };
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDXCoreAdapterFactory_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDXCoreAdapterFactory_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define IDXCoreAdapterFactory_Release(p)                             (p)->lpVtbl->Release(p)
+/*** IDXCoreAdapterFactory methods ***/
+#define IDXCoreAdapterFactory_CreateAdapterList(p,a,b,c,d)           (p)->lpVtbl->CreateAdapterList(p,a,b,c,d)
+#define IDXCoreAdapterFactory_GetAdapterByLuid(p,a,b,c)              (p)->lpVtbl->GetAdapterByLuid(p,a,b,c)
+#define IDXCoreAdapterFactory_IsNotificationTypeSupported(p,a)       (p)->lpVtbl->IsNotificationTypeSupported(p,a)
+#define IDXCoreAdapterFactory_RegisterEventNotification(p,a,b,c,d,e) (p)->lpVtbl->RegisterEventNotification(p,a,b,c,d,e)
+#define IDXCoreAdapterFactory_UnregisterEventNotification(p,a)       (p)->lpVtbl->UnregisterEventNotification(p,a)
+#else
+/*** IUnknown methods ***/
+#define IDXCoreAdapterFactory_QueryInterface(p,a,b)                  (p)->QueryInterface(a,b)
+#define IDXCoreAdapterFactory_AddRef(p)                              (p)->AddRef()
+#define IDXCoreAdapterFactory_Release(p)                             (p)->Release()
+/*** IDXCoreAdapterFactory methods ***/
+#define IDXCoreAdapterFactory_CreateAdapterList(p,a,b,c,d)           (p)->CreateAdapterList(a,b,c,d)
+#define IDXCoreAdapterFactory_GetAdapterByLuid(p,a,b,c)              (p)->GetAdapterByLuid(a,b,c)
+#define IDXCoreAdapterFactory_IsNotificationTypeSupported(p,a)       (p)->IsNotificationTypeSupported(a)
+#define IDXCoreAdapterFactory_RegisterEventNotification(p,a,b,c,d,e) (p)->RegisterEventNotification(a,b,c,d,e)
+#define IDXCoreAdapterFactory_UnregisterEventNotification(p,a)       (p)->UnregisterEventNotification(a)
+#endif
 
 #endif /* __DXCORE_INTERFACE__ */

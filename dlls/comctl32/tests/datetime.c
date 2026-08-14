@@ -722,6 +722,8 @@ static void test_dtm_set_and_get_system_time(void)
     expect(4, (LRESULT)getSt.wDayOfWeek);
     st.wDayOfWeek = 4;
     expect_systime(&st, &getSt);
+
+    DestroyWindow(hWnd);
 }
 
 static void test_dtm_set_and_get_systemtime_with_limits(void)

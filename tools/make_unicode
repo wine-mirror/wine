@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Generate code page .c files from ftp.unicode.org descriptions
+# Generate Unicode data files
 #
 # Copyright 2000 Alexandre Julliard
 #
@@ -25,25 +25,26 @@ use Digest::SHA;
 use Encode;
 use Time::Local qw(timegm_modern);
 
-my $UNIVERSION = "16.0.0";
-my $CLDRVERSION = "46";
+my $UNIVERSION = "17.0.0";
+my $CLDRVERSION = "48";
 my $ISO639VERSION = "20230123";
-my $TZVERSION = "2025a";
+my $TZVERSION = "2026a";
+my $ICUVERSION = "v72.1.0.3";
 
 my %data_files =
 (
  ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip",
-                sha  => "c86dd81f2b14a43b0cc064aa5f89aa7241386801e35c59c7984e579832634eb2" },
+                sha  => "2066d1909b2ea93916ce092da1c0ee4808ea3ef8407c94b4f14f5b7eb263d28e" },
  unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip",
-                sha  => "b8f000df69de7828d21326a2ffea462b04bc7560022989f7cc704f10521ef3e0" },
- idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
-                sha  => "6db2ef4ed35f3b3de74ebc2e00404a9607f76d499f576b8d4043cf14f1ed175c" },
+                sha  => "f7a48b2b545acfaa77b2d607ae28747404ce02baefee16396c5d2d7a8ef34b5e" },
+ idna      => { url  => "https://www.unicode.org/Public/$UNIVERSION/idna/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
+                sha  => "87f05505dc026fdb2bff16132bdc68a8014675836882a9a2b1844540ad3be382" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "716d0fc10a6469f7b808e55671ab98640c387e43bae152382e725462e366ccb2" },
+                sha  => "fa6d331e52d59771009c424bd1c9df311b6b2bf0bf2f6c1ddf6c952c32da4702" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
- sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
-                sha  => "81fcfa1e5ed3e3a94d329959ff7d97d522ddf9d653d2c4d6ddcccc5cd4df663f" },
+ sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 11 Sorting Weight Table.txt",
+                sha  => "f0bab873ed8901ae17afc4848c7d9e0a7de4310942effb2b54b538411b26d542" },
  codepages => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows Supported Code Page Data Files.zip",
                 sha  => "5074e6dd253056ba61fc6c870c9a955467855129c6ad3a51761c386b301b125a" },
  iso639    => { url  => "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip",
@@ -55,11 +56,13 @@ my %data_files =
  jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT",
                 sha  => "477820bb3055bbcc90880d788cd95607d221dc94457bae249231adecf13c12e6" },
  tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz",
-                sha  => "4d5fcbc72c7c450ebfe0b659bd0f1c02fbf52fd7f517a9ea13fe71c21eb5f0d0" },
+                sha  => "77b541725937bb53bd92bd484c0b43bec8545e2d3431ee01f04ef8f2203ba2b7" },
  glyphs    => { url  => "https://github.com/adobe-type-tools/agl-aglfn/raw/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6/glyphlist.txt",
                 sha  => "a3b2f61ced9f3644cc0d4ecde5c59df34ca286c689d9484a43a710a81c466789" },
  psfonts   => { url  => "https://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz",
                 sha  => "034ed3025cff4c48bbefae90f9eff7dc6237dd384443c594c017b571e49d0649" },
+ icu       => { url  => "https://github.com/microsoft/icu/releases/download/$ICUVERSION/msicu-icu4c-$ICUVERSION-src.tgz",
+                sha  => "8b769d613dddca081c4f77e09395a63f41b1e25496419ff17448131836f30b6f" },
 );
 
 
@@ -71,6 +74,7 @@ my $MAX_CHAR = 0x10ffff;
 
 my $nlskey = "-SYSTEM\\-CurrentControlSet\\-Control\\-Nls";
 my $zonekey = "-Software\\-Microsoft\\-Windows NT\\-CurrentVersion\\Time Zones";
+my $winezonekey = "-Software\\-Wine\\Time Zones";
 
 my @allfiles =
 (
@@ -290,6 +294,7 @@ my %break_types =
     "AS"  => 0x002e,
     "VF"  => 0x002f,
     "VI"  => 0x0030,
+    "HH"  => 0x0031,
 );
 
 my %vertical_types =
@@ -562,6 +567,8 @@ my @locales =
  { name => "bo-Tibt", alias => "bo" },
  { name => "bo-Tibt-CN", alias => "bo-CN" },
  { name => "bo-Tibt-IN", alias => "bo-IN" },
+ { name => "bqi" },
+ { name => "bqi-IR" },
  { name => "br", lcid => 0x0000007e, oemcp => 850, ebcdiccp => 20297 },
  { name => "br-FR", lcid => 0x0000047e },
  { name => "br-Latn", alias => "br" },
@@ -573,6 +580,8 @@ my @locales =
  { name => "bs-Cyrl-BA", lcid => 0x0000201a },
  { name => "bs-Latn", lcid => 0x0000681a },
  { name => "bs-Latn-BA", lcid => 0x0000141a },
+ { name => "bua" },
+ { name => "bua-RU" },
  { name => "byn", sopentypelang => "BIL" },
  { name => "byn-ER" },
  { name => "ca", lcid => 0x00000003, oemcp => 850 },
@@ -581,6 +590,8 @@ my @locales =
  { name => "ca-ES-valencia", lcid => 0x00000803, file => "ca_ES_VALENCIA", sabbrevlangname => "VAL" },
  { name => "ca-FR", maccp => 65001 },
  { name => "ca-IT", maccp => 65001 },
+ { name => "cop" },
+ { name => "cop-EG" },
  { name => "ccp" },
  { name => "ccp-BD", alias => "ccp-Cakm-BD" },
  { name => "ccp-Cakm", file => "ccp" },
@@ -599,9 +610,9 @@ my @locales =
  { name => "chr-Cher", lcid => 0x00007c5c, file => "chr" },
  { name => "chr-Cher-US", lcid => 0x0000045c, file => "chr_US" },
  { name => "chr-US", alias => "chr-Cher-US" },
- { name => "ckb", alias => "ku" },
- { name => "ckb-IQ", alias => "ku-Arab-IQ" },
- { name => "ckb-IR", alias => "ku-Arab-IR" },
+ { name => "ckb" },
+ { name => "ckb-IQ" },
+ { name => "ckb-IR" },
  { name => "co", lcid => 0x00000083, oemcp => 850, ebcdiccp => 20297 },
  { name => "co-FR", lcid => 0x00000483 },
  { name => "co-Latn", alias => "co" },
@@ -681,6 +692,7 @@ my @locales =
  { name => "en-DG", oemcp => 850 },
  { name => "en-DK", oemcp => 65001 },
  { name => "en-DM", oemcp => 850 },
+ { name => "en-EE", oemcp => 850 },
  { name => "en-ER", oemcp => 850 },
  { name => "en-FI", oemcp => 65001 },
  { name => "en-FJ", oemcp => 850 },
@@ -688,6 +700,7 @@ my @locales =
  { name => "en-FM", oemcp => 850 },
  { name => "en-GB", lcid => 0x00000809, oemcp => 850, ebcdiccp => 20285, sabbrevlangname => "ENG" },
  { name => "en-GD", oemcp => 850 },
+ { name => "en-GE", oemcp => 850 },
  { name => "en-GG", oemcp => 850 },
  { name => "en-GH", oemcp => 850 },
  { name => "en-GI", oemcp => 850 },
@@ -710,6 +723,8 @@ my @locales =
  { name => "en-LC", oemcp => 850 },
  { name => "en-LR", oemcp => 850 },
  { name => "en-LS", oemcp => 850 },
+ { name => "en-LT", oemcp => 850 },
+ { name => "en-LV", oemcp => 850 },
  { name => "en-MG", oemcp => 850 },
  { name => "en-MH", oemcp => 850 },
  { name => "en-MO", oemcp => 850 },
@@ -750,6 +765,7 @@ my @locales =
  { name => "en-TT", lcid => 0x00002c09, oemcp => 850, sabbrevlangname => "ENT" },
  { name => "en-TV", oemcp => 850 },
  { name => "en-TZ", oemcp => 850 },
+ { name => "en-UA", oemcp => 850 },
  { name => "en-UG", oemcp => 850 },
  { name => "en-UM", oemcp => 850 },
  { name => "en-US", lcid => 0x00000409 },
@@ -939,6 +955,8 @@ my @locales =
  { name => "hr-HR", lcid => 0x0000041a },
  { name => "hsb", lcid => 0x0000002e, oemcp => 850, ebcdiccp => 870, sopentypelang => "USB" },
  { name => "hsb-DE", lcid => 0x0000042e },
+ { name => "ht" },
+ { name => "ht-HT" },
  { name => "hu", lcid => 0x0000000e, oemcp => 852, group => 2 },
  { name => "hu-HU", lcid => 0x0000040e },
  { name => "hu-HU_technl", lcid => 0x0001040e, alias => "hu-HU" },
@@ -1003,6 +1021,8 @@ my @locales =
  { name => "kde-TZ" },
  { name => "kea" },
  { name => "kea-CV" },
+ { name => "kek" },
+ { name => "kek-GT" },
  { name => "kgp" },
  { name => "kgp-BR" },
  { name => "khq" },
@@ -1050,10 +1070,14 @@ my @locales =
  { name => "ksf-CM" },
  { name => "ksh", sopentypelang => "KSH0" },
  { name => "ksh-DE" },
- { name => "ku", lcid => 0x00000092, file => "ckb", slist => "\x{061b}", sortlocale => "ku-Arab-IQ", oemcp => 720 },
- { name => "ku-Arab", lcid => 0x00007c92, file => "ckb", group => 13 },
- { name => "ku-Arab-IQ", lcid => 0x00000492, file => "ckb_IQ" },
- { name => "ku-Arab-IR", file => "ckb_IR", oemcp => 65001 },
+ { name => "ku", lcid => 0x00000092, slist => "\x{061b}", sortlocale => "ku-Arab-IQ", oemcp => 720 },
+ { name => "ku-Arab", lcid => 0x00007c92, group => 13 },
+ { name => "ku-Arab-IQ", lcid => 0x00000492 },
+ { name => "ku-Arab-IR", oemcp => 65001 },
+ { name => "ku-Latn" },
+ { name => "ku-Latn-IQ" },
+ { name => "ku-Latn-SY" },
+ { name => "ku-Latn-TR" },
  { name => "kw" },
  { name => "kw-GB" },
  { name => "ky", lcid => 0x00000040, oemcp => 866, group => 5, sabbrevlangname => "KYR" },
@@ -1095,6 +1119,8 @@ my @locales =
  { name => "luy-KE" },
  { name => "lv", lcid => 0x00000026, oemcp => 775, group => 3, sabbrevlangname => "LVI", sopentypelang => "LVI" },
  { name => "lv-LV", lcid => 0x00000426 },
+ { name => "lzz" },
+ { name => "lzz-TR" },
  { name => "mai" },
  { name => "mai-IN" },
  { name => "mas" },
@@ -1152,6 +1178,9 @@ my @locales =
  { name => "mt-MT", lcid => 0x0000043a },
  { name => "mua" },
  { name => "mua-CM" },
+ { name => "mww" },
+ { name => "mww-Hmnp" },
+ { name => "mww-Hmnp-US" },
  { name => "my", lcid => 0x00000055, sopentypelang => "BRM" },
  { name => "my-MM", lcid => 0x00000455 },
  { name => "mzn" },
@@ -1199,6 +1228,9 @@ my @locales =
  { name => "oc-FR", lcid => 0x00000482 },
  { name => "oc-Latn", alias => "oc" },
  { name => "oc-Latn-FR", alias => "oc-FR" },
+ { name => "oka" },
+ { name => "oka-CA" },
+ { name => "oka-US" },
  { name => "om", lcid => 0x00000072, sopentypelang => "ORO" },
  { name => "om-ET", lcid => 0x00000472 },
  { name => "om-KE" },
@@ -1219,8 +1251,13 @@ my @locales =
  { name => "pcm-NG", alias => "pcm-Latn-NG" },
  { name => "pcm-Latn", file => "pcm" },
  { name => "pcm-Latn-NG", file => "pcm_NG" },
+ { name => "pi" },
+ { name => "pi-Latn" },
+ { name => "pi-Latn-GB" },
  { name => "pl", lcid => 0x00000015, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "PLK", sopentypelang => "PLK" },
  { name => "pl-PL", lcid => 0x00000415 },
+ { name => "pms" },
+ { name => "pms-IT" },
  { name => "prg" },
  { name => "prg-001", file => "prg" },
  { name => "prg-PL" },
@@ -1322,6 +1359,8 @@ my @locales =
  { name => "ses-ML" },
  { name => "sg", sopentypelang => "SGO" },
  { name => "sg-CF" },
+ { name => "sgs" },
+ { name => "sgs-LT" },
  { name => "shi" },
  { name => "shi-Latn" },
  { name => "shi-Latn-MA" },
@@ -1392,6 +1431,11 @@ my @locales =
  { name => "su" },
  { name => "su-Latn" },
  { name => "su-Latn-ID" },
+ { name => "suz" },
+ { name => "suz-Deva" },
+ { name => "suz-Deva-NP" },
+ { name => "suz-Sunu" },
+ { name => "suz-Sunu-NP" },
  { name => "sv", lcid => 0x0000001d, oemcp => 850, ebcdiccp => 20278, sabbrevlangname => "SVE", sopentypelang => "SVE" },
  { name => "sv-AX" },
  { name => "sv-FI", lcid => 0x0000081d, sabbrevlangname => "SVF" },
@@ -1528,6 +1572,7 @@ my @locales =
  { name => "yue-Hant" },
  { name => "yue-Hant-CN" },
  { name => "yue-Hant-HK" },
+ { name => "yue-Hant-MO" },
  { name => "zgh" },
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
  { name => "zgh-Tfng", file => "zgh" },
@@ -1976,7 +2021,11 @@ sub download_data_files()
         {
             print "Fetching $url...\n";
             system "mkdir", "-p", $cache;
-            !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
+            if (system "wget", "-q", "-O", $filename, $url)
+            {
+                unlink $filename;
+                die "cannot fetch $url";
+            }
         }
         my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
         die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
@@ -2222,6 +2271,7 @@ sub load_data()
             my $dst = hex $2;
             if ($1 eq "narrow")
             {
+                next if $src >= 0xffe8 && $src <= 0xffef;  # don't remap arrows
                 $halfwidth_table[$dst] = $src;
                 $fullwidth_table[$src] = $dst;
             }
@@ -3001,6 +3051,22 @@ my %scripts =
     "Dives_Akuru"            => 154,
     "Khitan_Small_Script"    => 155,
     "Yezidi"                 => 156,
+    # Win11 24H2
+    "Cypro_Minoan"           => 157,
+    "Kawi"                   => 158,
+    "Nag_Mundari"            => 159,
+    "Old_Uyghur"             => 160,
+    "Tangsa"                 => 161,
+    "Toto"                   => 162,
+    "Vithkuqi"               => 163,
+    # Win11 25H2
+    "Garay"                  => 164,
+    "Gurung_Khema"           => 165,
+    "Kirat_Rai"              => 166,
+    "Ol_Onal"                => 167,
+    "Sunuwar"                => 168,
+    "Todhri"                 => 169,
+    "Tulu_Tigalari"          => 170,
 );
 
 ################################################################
@@ -4740,9 +4806,9 @@ sub build_locale_data()
         my $sopentypelang = sprintf "%-4s", locale_entry( $loc, "sopentypelang", uc $siso639langname2 );
         my $sabbrevlangname = defined $loc->{lcid} ? locale_entry( $loc, "sabbrevlangname", uc $siso639langname2 ) : "ZZZ";
         my $siso3166ctryname2 = $geo->{iso3} || $geo->{uncode};
-        my $senglanguage = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" ) || "";
+        my $senglanguage = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt) and not(\@menu)]" ) || "";
         my $sengcountry = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" ) || "";
-        my $snativelangname = loc_query( $loc, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" );
+        my $snativelangname = loc_query( $loc, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt) and not(\@menu)]" );
         my $snativectryname = loc_query( $loc, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" );
         $sengcountry =~ s/South Korea/Korea/;
         $sengcountry =~ s/T\xfcrkiye/Turkey/;
@@ -4855,7 +4921,7 @@ sub build_locale_data()
         {
             next unless defined $caltypes{$c};
             $icalendartype .= chr($caltypes{$c});
-            $scalnames[$caltypes{$c} - 1] = loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$c']" );
+            $scalnames[$caltypes{$c} - 1] = loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$c' and not(\@scope)]" );
         }
 
         # date/time formats
@@ -5153,7 +5219,7 @@ sub build_locale_data()
                 push @sabbrevmonthname, $abbrev || $name || "";
             }
 
-            $scalname ||= loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$type']" );
+            $scalname ||= loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$type' and not(\@scope)]" );
             if (defined $cal->{eras})
             {
                 my @eras;
@@ -5439,6 +5505,7 @@ sub load_windows_zones()
 {
     my $current_name;
     my %names;
+    my %mapping;
     my $base = "cldr-release-$CLDRVERSION";
     my $INPUT = open_data_file( "cldr", "$base/common/supplemental/windowsZones.xml" );
     while (<$INPUT>)
@@ -5451,9 +5518,16 @@ sub load_windows_zones()
         {
             $names{$1} = [ $current_name, $2 ];
         }
+        if (/<mapZone other="(.*)" territory=(.*) type="(.*)"\/>/)
+        {
+            foreach my $name (split ' ', $3)
+            {
+                $mapping{$name} = $1;
+            }
+        }
     }
     close $INPUT;
-    return %names;
+    return (\%names, \%mapping);
 }
 
 
@@ -5576,7 +5650,7 @@ sub dump_timezones($@)
     my $FIRST_YEAR = 2000;
     my $LAST_YEAR = 2030;
 
-    my %names = load_windows_zones();
+    my ($names, $mapping) = load_windows_zones();
     my %zones;
     my %rules;
     my %links;
@@ -5632,9 +5706,10 @@ sub dump_timezones($@)
         close $FILE;
     }
 
-    foreach my $name (sort { uc($a) cmp uc($b) } keys %names)
+    foreach my $name (sort { uc($a) cmp uc($b) } keys %{$names})
     {
-        my ($display, $zone) = @{$names{$name}};
+        my ($display, $zone) = @{%{$names}{$name}};
+
         $zone = $links{$zone} if defined $links{$zone};
 
         # build list of transitions
@@ -5801,6 +5876,12 @@ sub dump_timezones($@)
         }
         add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "FirstEntry", $first_year );
         add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "LastEntry", $last_year );
+    }
+
+    foreach my $map (sort { uc($a) cmp uc($b) } keys %{$mapping})
+    {
+        my $name = %{$mapping}{$map};
+        add_registry_string_value( $winezonekey, "TZ Mapping", $map, $name );
     }
 
     print OUTPUT "}\n";
@@ -6105,6 +6186,7 @@ sub dump_psfonts($)
 
     foreach my $name (sort keys %fonts)
     {
+        my $count = scalar @{$fonts{$name}->{chars}};
         my %weights = ( Bold => "FW_BOLD",
                         Book => "FW_NORMAL",
                         Demi => "FW_BOLD",
@@ -6137,6 +6219,21 @@ sub dump_psfonts($)
     print OUTPUT  "    NULL\n};\n";
     close OUTPUT;
     save_file($filename);
+}
+
+
+################################################################
+# build the ICU data file
+sub dump_icu($)
+{
+    my $filename = shift;
+
+    printf "Building %s\n", $filename;
+    !system "tar", "xf", $data_files{icu}->{filename} or die "failed to extract";
+    !system "(cd icu/source && mkdir -p data/out/tmp && ./runConfigureICU Linux/gcc --disable-extras --disable-samples --disable-tests --with-data-packaging=archive && make) >icu.log 2>&1" or die "build failed";
+    rename "icu/source/data/out/icudt72l.dat", "$filename.new" or die "cannot find icudt72l.dat";
+    save_file($filename);
+    system "rm -rf icu icu.log";
 }
 
 
@@ -6178,6 +6275,7 @@ dump_indic( "dlls/gdi32/uniscribe/indicsyllable.c" );
 dump_vertical( "dlls/win32u/vertical.c", 1 );
 dump_vertical( "dlls/wineps.drv/vertical.c", 0 );
 dump_psfonts( "dlls/wineps.drv" );
+dump_icu( "nls/icudtl.dat" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );

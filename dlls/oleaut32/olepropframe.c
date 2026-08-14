@@ -286,6 +286,8 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         if(FAILED(res))
             WARN("SetObjects() failed, hr %#lx.\n", res);
 
+        memset(&page_info, 0, sizeof(page_info));
+        page_info.cb = sizeof(page_info);
         res = IPropertyPage_GetPageInfo(property_page[i], &page_info);
         if(FAILED(res))
             continue;

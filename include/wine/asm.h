@@ -64,13 +64,13 @@
 #endif
 
 #ifdef __WINE_PE_BUILD
-# define __ASM_GLOBL(name) ".globl " name
+# define __ASM_GLOBL(name) ".globl " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ""
 #elif defined(__APPLE__)
-# define __ASM_GLOBL(name) ".globl " name "\n\t.private_extern " name
+# define __ASM_GLOBL(name) ".globl " name "\n\t.private_extern " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ""
 #else
-# define __ASM_GLOBL(name) ".globl " name "\n\t.hidden " name
+# define __ASM_GLOBL(name) ".globl " name "\n\t.hidden " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ".size " name ",.-" name
 #endif
 
@@ -96,7 +96,6 @@
          __ASM_FUNC_ALIGN "\n\t" \
          __ASM_FUNC_TYPE(name) "\n" \
          __ASM_GLOBL(name) "\n\t" \
-         name ":\n\t" \
          __ASM_SEH(".seh_proc " name "\n\t") \
          __ASM_CFI(".cfi_startproc\n\t") \
          __ASM_EHABI(".fnstart\n\t") \
@@ -109,40 +108,38 @@
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
 
+#ifdef _WIN64
+#define __ASM_DEFINE_POINTER(sec,decl,value)  \
+    __ASM_BLOCK_BEGIN(__LINE__) \
+    asm( sec "\n\t" \
+         ".balign 8\n\t" \
+         decl \
+         ".quad " value "\n\t" \
+         ".text" ); \
+    __ASM_BLOCK_END
+#else
+#define __ASM_DEFINE_POINTER(sec,decl,value)  \
+    __ASM_BLOCK_BEGIN(__LINE__) \
+    asm( sec "\n\t" \
+         ".balign 4\n\t" \
+         decl \
+         ".long " value "\n\t" \
+         ".text" ); \
+    __ASM_BLOCK_END
+#endif
+
+#define __ASM_GLOBAL_POINTER(name,value) __ASM_DEFINE_POINTER(".data",__ASM_GLOBL(name) "\n\t",value)
+#define __ASM_SECTION_POINTER(sec,value) __ASM_DEFINE_POINTER(sec,"",__ASM_NAME(#value))
+
 /* import variables */
 
 #ifdef __WINE_PE_BUILD
 # ifdef __arm64ec__
 #  define __ASM_DEFINE_IMPORT(name) \
-    asm( ".data\n\t" \
-         ".balign 8\n\t" \
-         ".globl __imp_" name "\n" \
-         "__imp_" name ":\n\t" \
-         ".quad \"#" name "\"\n\t" \
-         ".globl __imp_aux_" name "\n" \
-         "__imp_aux_" name ":\n\t" \
-         ".quad " name "\n\t" \
-         ".text" );
-# elif defined(_WIN64)
-#  define __ASM_DEFINE_IMPORT(name) \
-    __ASM_BLOCK_BEGIN(__LINE__) \
-    asm( ".data\n\t" \
-         ".balign 8\n\t" \
-         ".globl __imp_" name "\n" \
-         "__imp_" name ":\n\t" \
-         ".quad " name "\n\t" \
-         ".text"); \
-    __ASM_BLOCK_END
+     __ASM_GLOBAL_POINTER("__imp_" name, "\"#" name "\"") \
+     __ASM_GLOBAL_POINTER("__imp_aux_" name, name)
 # else
-#  define __ASM_DEFINE_IMPORT(name) \
-    __ASM_BLOCK_BEGIN(__LINE__) \
-    asm( ".data\n\t" \
-         ".balign 4\n\t" \
-         ".globl __imp_" name "\n" \
-         "__imp_" name ":\n\t" \
-         ".long " name "\n\t" \
-         ".text"); \
-    __ASM_BLOCK_END
+#  define __ASM_DEFINE_IMPORT(name) __ASM_GLOBAL_POINTER("__imp_" name, name)
 # endif
 # define __ASM_GLOBAL_IMPORT(name) __ASM_DEFINE_IMPORT(__ASM_NAME(#name))
 #else

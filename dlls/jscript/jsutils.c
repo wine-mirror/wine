@@ -676,7 +676,7 @@ HRESULT to_integer(script_ctx_t *ctx, jsval_t v, double *ret)
     return S_OK;
 }
 
-static INT32 double_to_int32(double number)
+INT32 double_to_int32(double number)
 {
     INT32 exp, result;
     union {

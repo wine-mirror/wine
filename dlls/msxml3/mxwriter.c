@@ -35,15 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-static const WCHAR emptyW[] = {0};
-static const WCHAR spaceW[] = {' '};
-static const WCHAR quotW[]  = {'\"'};
-static const WCHAR closetagW[] = {'>','\r','\n'};
-static const WCHAR crlfW[] = {'\r','\n'};
-static const WCHAR entityW[] = {'<','!','E','N','T','I','T','Y',' '};
-static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
-static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
-
 /* should be ordered as encoding names are sorted */
 typedef enum
 {
@@ -279,6 +270,17 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
+UINT get_codepage_for_encoding(const WCHAR *encoding)
+{
+    for (int i = 0; i < ARRAYSIZE(xml_encoding_map); ++i)
+    {
+        if (!wcsicmp(encoding, xml_encoding_map[i].encoding))
+            return xml_encoding_map[i].cp;
+    }
+
+    return 0;
+}
+
 static HRESULT init_output_buffer(xml_encoding encoding, output_buffer *buffer)
 {
     HRESULT hr;
@@ -318,7 +320,7 @@ static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
     ULONG written;
     int src_len;
 
-    if (!len || !*data)
+    if (!len)
         return S_OK;
 
     src_len = len == -1 ? lstrlenW(data) : len;
@@ -450,9 +452,9 @@ static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
 
 static HRESULT write_output_buffer_quoted(mxwriter *writer, const WCHAR *data, int len)
 {
-    write_output_buffer(writer, quotW, 1);
+    write_output_buffer(writer, L"\"", 1);
     write_output_buffer(writer, data, len);
-    write_output_buffer(writer, quotW, 1);
+    write_output_buffer(writer, L"\"", 1);
 
     return S_OK;
 }
@@ -477,107 +479,117 @@ static void close_output_buffer(mxwriter *writer)
     list_init(&writer->buffer.blocks);
 }
 
-/* Escapes special characters like:
+/*
+   Special characters are escaped:
+
    '<' -> "&lt;"
    '&' -> "&amp;"
    '"' -> "&quot;"
    '>' -> "&gt;"
 
-   On call 'len' contains a length of 'str' in chars or -1 if it's null terminated.
-   After a call it's updated with actual new length if it wasn't -1 initially.
+   Newlines always produce CRLF.
+
 */
-static WCHAR *get_escaped_string(const WCHAR *str, escape_mode mode, int *len)
+
+static void write_crlf(mxwriter *writer, escape_mode mode)
 {
-    static const WCHAR ltW[]    = {'&','l','t',';'};
-    static const WCHAR ampW[]   = {'&','a','m','p',';'};
-    static const WCHAR equotW[] = {'&','q','u','o','t',';'};
-    static const WCHAR gtW[]    = {'&','g','t',';'};
+    bool use_charref_lf = writer->class_version >= MSXML4 && mode == EscapeValue;
 
-    const int default_alloc = 100;
-    const int grow_thresh = 10;
-    int p = *len, conv_len;
-    WCHAR *ptr, *ret;
+    if (use_charref_lf)
+        write_output_buffer(writer, L"&#xA;", 5);
+    else
+        write_output_buffer(writer, L"\r\n", 2);
+}
 
-    /* default buffer size to something if length is unknown */
-    conv_len = max(2**len, default_alloc);
-    ptr = ret = malloc(conv_len * sizeof(WCHAR));
+static void write_escaped_string(mxwriter *writer, const WCHAR *str, int len, escape_mode mode)
+{
+    const WCHAR *p = str;
 
-    while (p)
+    while (len-- > 0)
     {
-        if (ptr - ret > conv_len - grow_thresh)
+        if (*p == '<')
+            write_output_buffer(writer, L"&lt;", 4);
+        else if (*p == '&')
+            write_output_buffer(writer, L"&amp;", 5);
+        else if (*p == '>')
+            write_output_buffer(writer, L"&gt;", 4);
+        else if (*p == '"' && mode == EscapeValue)
+            write_output_buffer(writer, L"&quot;", 6);
+        else if (*p == '\n')
+            write_crlf(writer, mode);
+        else if (*p == '\r')
         {
-            int written = ptr - ret;
-            conv_len *= 2;
-            ptr = ret = realloc(ret, conv_len * sizeof(WCHAR));
-            ptr += written;
-        }
-
-        switch (*str)
-        {
-        case '<':
-            memcpy(ptr, ltW, sizeof(ltW));
-            ptr += ARRAY_SIZE(ltW);
-            break;
-        case '&':
-            memcpy(ptr, ampW, sizeof(ampW));
-            ptr += ARRAY_SIZE(ampW);
-            break;
-        case '>':
-            memcpy(ptr, gtW, sizeof(gtW));
-            ptr += ARRAY_SIZE(gtW);
-            break;
-        case '"':
-            if (mode == EscapeValue)
+            if (len > 0 && p[1] == '\n')
             {
-                memcpy(ptr, equotW, sizeof(equotW));
-                ptr += ARRAY_SIZE(equotW);
-                break;
+                write_crlf(writer, mode);
+
+                ++p;
+                --len;
             }
-            /* fallthrough for text mode */
-        default:
-            *ptr++ = *str;
-            break;
+            else
+            {
+                write_crlf(writer, mode);
+            }
         }
+        else
+            write_output_buffer(writer, p, 1);
 
-        str++;
-        p--;
+        ++p;
     }
+}
 
-    *len = ptr-ret;
-    *++ptr = 0;
+static void write_string_with_crlf(mxwriter *writer, const WCHAR *str, int len)
+{
+    const WCHAR *p = str;
 
-    return ret;
+    while (len-- > 0)
+    {
+        if (*p == '\n')
+            write_crlf(writer, EscapeText);
+        else if (*p == '\r')
+        {
+            if (len > 0 && p[1] == '\n')
+            {
+                write_crlf(writer, EscapeText);
+
+                ++p;
+                --len;
+            }
+            else
+            {
+                write_crlf(writer, EscapeText);
+            }
+        }
+        else
+            write_output_buffer(writer, p, 1);
+
+        ++p;
+    }
 }
 
 static void write_prolog_buffer(mxwriter *writer)
 {
-    static const WCHAR versionW[] = {'<','?','x','m','l',' ','v','e','r','s','i','o','n','='};
-    static const WCHAR encodingW[] = {' ','e','n','c','o','d','i','n','g','=','\"'};
-    static const WCHAR standaloneW[] = {' ','s','t','a','n','d','a','l','o','n','e','=','\"'};
-    static const WCHAR yesW[] = {'y','e','s','\"','?','>'};
-    static const WCHAR noW[] = {'n','o','\"','?','>'};
-
     /* version */
-    write_output_buffer(writer, versionW, ARRAY_SIZE(versionW));
+    write_output_buffer(writer, L"<?xml version=", 14);
     write_output_buffer_quoted(writer, writer->version, -1);
 
     /* encoding */
-    write_output_buffer(writer, encodingW, ARRAY_SIZE(encodingW));
+    write_output_buffer(writer, L" encoding=", 10);
 
     if (writer->dest)
-        write_output_buffer(writer, writer->encoding, -1);
+        write_output_buffer_quoted(writer, writer->encoding, -1);
     else
-        write_output_buffer(writer, L"UTF-16", ARRAY_SIZE(L"UTF-16") - 1);
-    write_output_buffer(writer, quotW, 1);
+        write_output_buffer_quoted(writer, L"UTF-16", 6);
 
     /* standalone */
-    write_output_buffer(writer, standaloneW, ARRAY_SIZE(standaloneW));
+    write_output_buffer(writer, L" standalone=", 12);
     if (writer->props[MXWriter_Standalone] == VARIANT_TRUE)
-        write_output_buffer(writer, yesW, ARRAY_SIZE(yesW));
+        write_output_buffer_quoted(writer, L"yes", 3);
     else
-        write_output_buffer(writer, noW, ARRAY_SIZE(noW));
+        write_output_buffer_quoted(writer, L"no", 2);
+    write_output_buffer(writer, L"?>", 2);
 
-    write_output_buffer(writer, crlfW, ARRAY_SIZE(crlfW));
+    write_output_buffer(writer, L"\r\n", 2);
     writer->newline = TRUE;
 }
 
@@ -610,14 +622,12 @@ static HRESULT write_data_to_stream(mxwriter *writer)
    we have to close it differently. */
 static void close_element_starttag(mxwriter *writer)
 {
-    static const WCHAR gtW[] = {'>'};
     if (!writer->element) return;
-    write_output_buffer(writer, gtW, 1);
+    write_output_buffer(writer, L">", 1);
 }
 
 static void write_node_indent(mxwriter *writer)
 {
-    static const WCHAR tabW[] = {'\t'};
     int indent = writer->indent;
 
     if (!writer->props[MXWriter_Indent] || writer->text)
@@ -629,9 +639,9 @@ static void write_node_indent(mxwriter *writer)
     /* This is to workaround PI output logic that always puts newline chars,
        document prolog PI does that too. */
     if (!writer->newline)
-        write_output_buffer(writer, crlfW, ARRAY_SIZE(crlfW));
+        write_output_buffer(writer, L"\r\n", 2);
     while (indent--)
-        write_output_buffer(writer, tabW, 1);
+        write_output_buffer(writer, L"\t", 1);
 
     writer->newline = FALSE;
     writer->text = FALSE;
@@ -645,9 +655,6 @@ static inline void writer_inc_indent(mxwriter *This)
 static inline void writer_dec_indent(mxwriter *This)
 {
     if (This->indent) This->indent--;
-    /* depth is decreased only when element is closed, meaning it's not a text node
-       at this point */
-    This->text = FALSE;
 }
 
 static void set_element_name(mxwriter *This, const WCHAR *name, int len)
@@ -1174,13 +1181,11 @@ static ULONG WINAPI SAXContentHandler_Release(ISAXContentHandler *iface)
     return IMXWriter_Release(&This->IMXWriter_iface);
 }
 
-static HRESULT WINAPI SAXContentHandler_putDocumentLocator(
-    ISAXContentHandler *iface,
-    ISAXLocator *locator)
+static HRESULT WINAPI SAXContentHandler_putDocumentLocator(ISAXContentHandler *iface, ISAXLocator *locator)
 {
-    mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%p)\n", This, locator);
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, locator);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXContentHandler_startDocument(ISAXContentHandler *iface)
@@ -1249,34 +1254,28 @@ static HRESULT WINAPI SAXContentHandler_endPrefixMapping(
 static void mxwriter_write_attribute(mxwriter *writer, const WCHAR *qname, int qname_len,
     const WCHAR *value, int value_len, BOOL escape)
 {
-    static const WCHAR eqW[] = {'='};
-
     /* space separator in front of every attribute */
-    write_output_buffer(writer, spaceW, 1);
+    write_output_buffer(writer, L" ", 1);
     write_output_buffer(writer, qname, qname_len);
-    write_output_buffer(writer, eqW, 1);
+    write_output_buffer(writer, L"=", 1);
 
+    write_output_buffer(writer, L"\"", 1);
     if (escape)
-    {
-        WCHAR *escaped = get_escaped_string(value, EscapeValue, &value_len);
-        write_output_buffer_quoted(writer, escaped, value_len);
-        free(escaped);
-    }
+        write_escaped_string(writer, value, value_len, EscapeValue);
     else
-        write_output_buffer_quoted(writer, value, value_len);
+        write_string_with_crlf(writer, value, value_len);
+    write_output_buffer(writer, L"\"", 1);
 }
 
 static void mxwriter_write_starttag(mxwriter *writer, const WCHAR *qname, int len)
 {
-    static const WCHAR ltW[] = {'<'};
-
     close_element_starttag(writer);
-    set_element_name(writer, qname ? qname : emptyW, qname ? len : 0);
+    set_element_name(writer, qname ? qname : L"", qname ? len : 0);
 
     write_node_indent(writer);
 
-    write_output_buffer(writer, ltW, 1);
-    write_output_buffer(writer, qname ? qname : emptyW, qname ? len : 0);
+    write_output_buffer(writer, L"<", 1);
+    write_output_buffer(writer, qname ? qname : L"", qname ? len : 0);
     writer_inc_indent(writer);
 }
 
@@ -1352,18 +1351,14 @@ static HRESULT WINAPI SAXContentHandler_endElement(
 
     if (This->element)
     {
-        static const WCHAR closeW[] = {'/','>'};
-        write_output_buffer(This, closeW, 2);
+        write_output_buffer(This, L"/>", 2);
     }
     else
     {
-        static const WCHAR closetagW[] = {'<','/'};
-        static const WCHAR gtW[] = {'>'};
-
         write_node_indent(This);
-        write_output_buffer(This, closetagW, 2);
+        write_output_buffer(This, L"</", 2);
         write_output_buffer(This, QName, nQName);
-        write_output_buffer(This, gtW, 1);
+        write_output_buffer(This, L">", 1);
     }
 
     set_element_name(This, NULL, 0);
@@ -1371,36 +1366,28 @@ static HRESULT WINAPI SAXContentHandler_endElement(
     return S_OK;
 }
 
-static HRESULT WINAPI SAXContentHandler_characters(
-    ISAXContentHandler *iface,
-    const WCHAR *chars,
-    int nchars)
+static HRESULT WINAPI SAXContentHandler_characters(ISAXContentHandler *iface, const WCHAR *chars, int nchars)
 {
-    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    mxwriter *writer = impl_from_ISAXContentHandler(iface);
 
-    TRACE("(%p)->(%s:%d)\n", This, debugstr_wn(chars, nchars), nchars);
+    TRACE("%p, %s, %d.\n", iface, debugstr_wn(chars, nchars), nchars);
 
     if (!chars) return E_INVALIDARG;
 
-    close_element_starttag(This);
-    set_element_name(This, NULL, 0);
+    close_element_starttag(writer);
+    set_element_name(writer, NULL, 0);
 
-    if (!This->cdata)
-        This->text = TRUE;
+    if (!writer->cdata)
+        writer->text = TRUE;
 
     if (nchars)
     {
-        if (This->cdata || This->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
-            write_output_buffer(This, chars, nchars);
+        if (writer->cdata)
+            write_string_with_crlf(writer, chars, nchars);
+        else if (writer->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
+            write_output_buffer(writer, chars, nchars);
         else
-        {
-            int len = nchars;
-            WCHAR *escaped;
-
-            escaped = get_escaped_string(chars, EscapeText, &len);
-            write_output_buffer(This, escaped, len);
-            free(escaped);
-        }
+            write_escaped_string(writer, chars, nchars, EscapeText);
     }
 
     return S_OK;
@@ -1429,28 +1416,26 @@ static HRESULT WINAPI SAXContentHandler_processingInstruction(
     const WCHAR *data,
     int ndata)
 {
-    mxwriter *This = impl_from_ISAXContentHandler( iface );
-    static const WCHAR openpiW[] = {'<','?'};
-    static const WCHAR closepiW[] = {'?','>','\r','\n'};
+    mxwriter *writer = impl_from_ISAXContentHandler(iface);
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_wn(target, ntarget), debugstr_wn(data, ndata));
+    TRACE("%p, %s, %s.\n", iface, debugstr_wn(target, ntarget), debugstr_wn(data, ndata));
 
     if (!target) return E_INVALIDARG;
 
-    write_node_indent(This);
-    write_output_buffer(This, openpiW, ARRAY_SIZE(openpiW));
+    write_node_indent(writer);
+    write_output_buffer(writer, L"<?", 2);
 
     if (*target)
-        write_output_buffer(This, target, ntarget);
+        write_output_buffer(writer, target, ntarget);
 
     if (data && *data && ndata)
     {
-        write_output_buffer(This, spaceW, 1);
-        write_output_buffer(This, data, ndata);
+        write_output_buffer(writer, L" ", 1);
+        write_output_buffer(writer, data, ndata);
     }
 
-    write_output_buffer(This, closepiW, ARRAY_SIZE(closepiW));
-    This->newline = TRUE;
+    write_output_buffer(writer, L"?>\r\n", 4);
+    writer->newline = TRUE;
 
     return S_OK;
 }
@@ -1507,60 +1492,56 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
     const WCHAR *name, int name_len, const WCHAR *publicId, int publicId_len,
     const WCHAR *systemId, int systemId_len)
 {
-    static const WCHAR doctypeW[] = {'<','!','D','O','C','T','Y','P','E',' '};
-    static const WCHAR openintW[] = {'[','\r','\n'};
+    mxwriter *writer = impl_from_ISAXLexicalHandler(iface);
 
-    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-
-    TRACE("(%p)->(%s %s %s)\n", This, debugstr_wn(name, name_len), debugstr_wn(publicId, publicId_len),
+    TRACE("%p, %s. %s. %s.\n", iface, debugstr_wn(name, name_len), debugstr_wn(publicId, publicId_len),
         debugstr_wn(systemId, systemId_len));
 
     if (!name) return E_INVALIDARG;
 
-    write_output_buffer(This, doctypeW, ARRAY_SIZE(doctypeW));
+    write_output_buffer(writer, L"<!DOCTYPE ", 10);
 
     if (*name)
     {
-        write_output_buffer(This, name, name_len);
-        write_output_buffer(This, spaceW, 1);
+        write_output_buffer(writer, name, name_len);
+        write_output_buffer(writer, L" ", 1);
     }
 
     if (publicId)
     {
-        write_output_buffer(This, publicW, ARRAY_SIZE(publicW));
-        write_output_buffer_quoted(This, publicId, publicId_len);
+        write_output_buffer(writer, L"PUBLIC ", 7);
+        write_output_buffer_quoted(writer, publicId, publicId_len);
 
         if (!systemId) return E_INVALIDARG;
 
         if (*publicId)
-            write_output_buffer(This, spaceW, 1);
+            write_output_buffer(writer, L" ", 1);
 
-        write_output_buffer_quoted(This, systemId, systemId_len);
+        write_output_buffer_quoted(writer, systemId, systemId_len);
 
         if (*systemId)
-            write_output_buffer(This, spaceW, 1);
+            write_output_buffer(writer, L" ", 1);
     }
     else if (systemId)
     {
-        write_output_buffer(This, systemW, ARRAY_SIZE(systemW));
-        write_output_buffer_quoted(This, systemId, systemId_len);
+        write_output_buffer(writer, L"SYSTEM ", 7);
+        write_output_buffer_quoted(writer, systemId, systemId_len);
         if (*systemId)
-            write_output_buffer(This, spaceW, 1);
+            write_output_buffer(writer, L" ", 1);
     }
 
-    write_output_buffer(This, openintW, ARRAY_SIZE(openintW));
+    write_output_buffer(writer, L"[\r\n", 3);
 
     return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_endDTD(ISAXLexicalHandler *iface)
 {
-    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    static const WCHAR closedtdW[] = {']','>','\r','\n'};
+    mxwriter *writer = impl_from_ISAXLexicalHandler(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("%p.\n", iface);
 
-    write_output_buffer(This, closedtdW, ARRAY_SIZE(closedtdW));
+    write_output_buffer(writer, L"]>\r\n", 4);
 
     return S_OK;
 }
@@ -1581,48 +1562,44 @@ static HRESULT WINAPI SAXLexicalHandler_endEntity(ISAXLexicalHandler *iface, con
 
 static HRESULT WINAPI SAXLexicalHandler_startCDATA(ISAXLexicalHandler *iface)
 {
-    static const WCHAR scdataW[] = {'<','!','[','C','D','A','T','A','['};
-    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
+    mxwriter *writer = impl_from_ISAXLexicalHandler(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("%p.\n", iface);
 
-    write_node_indent(This);
-    write_output_buffer(This, scdataW, ARRAY_SIZE(scdataW));
-    This->cdata = TRUE;
+    write_node_indent(writer);
+    write_output_buffer(writer, L"<![CDATA[", 9);
+    writer->cdata = TRUE;
 
     return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
 {
-    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    static const WCHAR ecdataW[] = {']',']','>'};
+    mxwriter *writer = impl_from_ISAXLexicalHandler(iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("%p.\n", iface);
 
-    write_output_buffer(This, ecdataW, ARRAY_SIZE(ecdataW));
-    This->cdata = FALSE;
+    write_output_buffer(writer, L"]]>", 3);
+    writer->cdata = FALSE;
 
     return S_OK;
 }
 
 static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const WCHAR *chars, int nchars)
 {
-    mxwriter *This = impl_from_ISAXLexicalHandler( iface );
-    static const WCHAR copenW[] = {'<','!','-','-'};
-    static const WCHAR ccloseW[] = {'-','-','>','\r','\n'};
+    mxwriter *writer = impl_from_ISAXLexicalHandler(iface);
 
-    TRACE("(%p)->(%s:%d)\n", This, debugstr_wn(chars, nchars), nchars);
+    TRACE("%p, %s:%d.\n", iface, debugstr_wn(chars, nchars), nchars);
 
     if (!chars) return E_INVALIDARG;
 
-    close_element_starttag(This);
-    write_node_indent(This);
+    close_element_starttag(writer);
+    write_node_indent(writer);
 
-    write_output_buffer(This, copenW, ARRAY_SIZE(copenW));
+    write_output_buffer(writer, L"<!--", 4);
     if (nchars)
-        write_output_buffer(This, chars, nchars);
-    write_output_buffer(This, ccloseW, ARRAY_SIZE(ccloseW));
+        write_output_buffer(writer, chars, nchars);
+    write_output_buffer(writer, L"-->\r\n", 5);
 
     return S_OK;
 }
@@ -1664,7 +1641,6 @@ static ULONG WINAPI SAXDeclHandler_Release(ISAXDeclHandler *iface)
 static HRESULT WINAPI SAXDeclHandler_elementDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *model, int n_model)
 {
-    static const WCHAR elementW[] = {'<','!','E','L','E','M','E','N','T',' '};
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
 
     TRACE("(%p)->(%s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
@@ -1672,14 +1648,14 @@ static HRESULT WINAPI SAXDeclHandler_elementDecl(ISAXDeclHandler *iface,
 
     if (!name || !model) return E_INVALIDARG;
 
-    write_output_buffer(This, elementW, ARRAY_SIZE(elementW));
+    write_output_buffer(This, L"<!ELEMENT ", 10);
     if (n_name) {
         write_output_buffer(This, name, n_name);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(This, L" ", 1);
     }
     if (n_model)
         write_output_buffer(This, model, n_model);
-    write_output_buffer(This, closetagW, ARRAY_SIZE(closetagW));
+    write_output_buffer(This, L">\r\n", 3);
 
     return S_OK;
 }
@@ -1690,38 +1666,36 @@ static HRESULT WINAPI SAXDeclHandler_attributeDecl(ISAXDeclHandler *iface,
     const WCHAR *value, int n_value)
 {
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
-    static const WCHAR attlistW[] = {'<','!','A','T','T','L','I','S','T',' '};
-    static const WCHAR closetagW[] = {'>','\r','\n'};
 
     TRACE("(%p)->(%s:%d %s:%d %s:%d %s:%d %s:%d)\n", This, debugstr_wn(element, n_element), n_element,
         debugstr_wn(attr, n_attr), n_attr, debugstr_wn(type, n_type), n_type, debugstr_wn(Default, n_default), n_default,
         debugstr_wn(value, n_value), n_value);
 
-    write_output_buffer(This, attlistW, ARRAY_SIZE(attlistW));
+    write_output_buffer(This, L"<!ATTLIST ", 10);
     if (n_element) {
         write_output_buffer(This, element, n_element);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(This, L" ", 1);
     }
 
     if (n_attr) {
         write_output_buffer(This, attr, n_attr);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(This, L" ", 1);
     }
 
     if (n_type) {
         write_output_buffer(This, type, n_type);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(This, L" ", 1);
     }
 
     if (n_default) {
         write_output_buffer(This, Default, n_default);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(This, L" ", 1);
     }
 
     if (n_value)
         write_output_buffer_quoted(This, value, n_value);
 
-    write_output_buffer(This, closetagW, ARRAY_SIZE(closetagW));
+    write_output_buffer(This, L">\r\n", 3);
 
     return S_OK;
 }
@@ -1729,23 +1703,23 @@ static HRESULT WINAPI SAXDeclHandler_attributeDecl(ISAXDeclHandler *iface,
 static HRESULT WINAPI SAXDeclHandler_internalEntityDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *value, int n_value)
 {
-    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    mxwriter *writer = impl_from_ISAXDeclHandler(iface);
 
-    TRACE("(%p)->(%s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
+    TRACE("%p, %s:%d, %s:%d.\n", iface, debugstr_wn(name, n_name), n_name,
         debugstr_wn(value, n_value), n_value);
 
     if (!name || !value) return E_INVALIDARG;
 
-    write_output_buffer(This, entityW, ARRAY_SIZE(entityW));
+    write_output_buffer(writer, L"<!ENTITY ", 9);
     if (n_name) {
-        write_output_buffer(This, name, n_name);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(writer, name, n_name);
+        write_output_buffer(writer, L" ", 1);
     }
 
     if (n_value)
-        write_output_buffer_quoted(This, value, n_value);
+        write_output_buffer_quoted(writer, value, n_value);
 
-    write_output_buffer(This, closetagW, ARRAY_SIZE(closetagW));
+    write_output_buffer(writer, L">\r\n", 3);
 
     return S_OK;
 }
@@ -1754,33 +1728,33 @@ static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *publicId, int n_publicId,
     const WCHAR *systemId, int n_systemId)
 {
-    mxwriter *This = impl_from_ISAXDeclHandler( iface );
+    mxwriter *writer = impl_from_ISAXDeclHandler(iface);
 
-    TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
+    TRACE("%p, %s:%d, %s:%d, %s:%d.\n", iface, debugstr_wn(name, n_name), n_name,
         debugstr_wn(publicId, n_publicId), n_publicId, debugstr_wn(systemId, n_systemId), n_systemId);
 
     if (!name || !systemId) return E_INVALIDARG;
 
-    write_output_buffer(This, entityW, ARRAY_SIZE(entityW));
+    write_output_buffer(writer, L"<!ENTITY ", 9);
     if (n_name) {
-        write_output_buffer(This, name, n_name);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+        write_output_buffer(writer, name, n_name);
+        write_output_buffer(writer, L" ", 1);
     }
 
     if (publicId)
     {
-        write_output_buffer(This, publicW, ARRAY_SIZE(publicW));
-        write_output_buffer_quoted(This, publicId, n_publicId);
-        write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
-        write_output_buffer_quoted(This, systemId, n_systemId);
+        write_output_buffer(writer, L"PUBLIC ", 7);
+        write_output_buffer_quoted(writer, publicId, n_publicId);
+        write_output_buffer(writer, L" ", 1);
+        write_output_buffer_quoted(writer, systemId, n_systemId);
     }
     else
     {
-        write_output_buffer(This, systemW, ARRAY_SIZE(systemW));
-        write_output_buffer_quoted(This, systemId, n_systemId);
+        write_output_buffer(writer, L"SYSTEM ", 7);
+        write_output_buffer_quoted(writer, systemId, n_systemId);
     }
 
-    write_output_buffer(This, closetagW, ARRAY_SIZE(closetagW));
+    write_output_buffer(writer, L">\r\n", 3);
 
     return S_OK;
 }
@@ -2085,8 +2059,8 @@ static HRESULT WINAPI VBSAXContentHandler_Invoke(IVBSAXContentHandler *iface, DI
 
 static HRESULT WINAPI VBSAXContentHandler_putref_documentLocator(IVBSAXContentHandler *iface, IVBSAXLocator *locator)
 {
-    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
-    TRACE("(%p)->(%p)\n", This, locator);
+    TRACE("%p, %p.\n", iface, locator);
+
     return S_OK;
 }
 
@@ -2283,7 +2257,6 @@ static HRESULT WINAPI SAXDTDHandler_notationDecl(ISAXDTDHandler *iface,
     const WCHAR *publicid, INT n_publicid,
     const WCHAR *systemid, INT n_systemid)
 {
-    static const WCHAR notationW[] = {'<','!','N','O','T','A','T','I','O','N',' '};
     mxwriter *This = impl_from_ISAXDTDHandler( iface );
 
     TRACE("(%p)->(%s:%d, %s:%d, %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
@@ -2292,30 +2265,30 @@ static HRESULT WINAPI SAXDTDHandler_notationDecl(ISAXDTDHandler *iface,
     if (!name || !n_name)
         return E_INVALIDARG;
 
-    write_output_buffer(This, notationW, ARRAY_SIZE(notationW));
+    write_output_buffer(This, L"<!NOTATION ", 11);
     write_output_buffer(This, name, n_name);
 
     if (!publicid && !systemid)
         return E_INVALIDARG;
 
-    write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+    write_output_buffer(This, L" ", 1);
     if (publicid)
     {
-        write_output_buffer(This, publicW, ARRAY_SIZE(publicW));
+        write_output_buffer(This, L"PUBLIC ", 7);
         write_output_buffer_quoted(This, publicid, n_publicid);
         if (systemid)
         {
-            write_output_buffer(This, spaceW, ARRAY_SIZE(spaceW));
+            write_output_buffer(This, L" ", 1);
             write_output_buffer_quoted(This, systemid, n_systemid);
         }
     }
     else
     {
-        write_output_buffer(This, systemW, ARRAY_SIZE(systemW));
+        write_output_buffer(This, L"SYSTEM ", 7);
         write_output_buffer_quoted(This, systemid, n_systemid);
     }
 
-    write_output_buffer(This, closetagW, ARRAY_SIZE(closetagW));
+    write_output_buffer(This, L">\r\n", 3);
 
     return S_OK;
 }
@@ -2605,7 +2578,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->cdata = FALSE;
     This->indent = 0;
     This->text = FALSE;
-    This->newline = FALSE;
+    This->newline = TRUE;
 
     This->dest = NULL;
 
@@ -2761,7 +2734,7 @@ static HRESULT WINAPI MXAttributes_addAttribute(IMXAttributes *iface,
     attr->qname = SysAllocString(QName);
     attr->local = SysAllocString(localName);
     attr->uri   = SysAllocString(uri);
-    attr->type  = SysAllocString(type ? type : emptyW);
+    attr->type  = SysAllocString(type ? type : L"");
     attr->value = SysAllocString(value);
     This->length++;
 

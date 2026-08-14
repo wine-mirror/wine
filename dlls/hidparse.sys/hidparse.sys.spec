@@ -18,7 +18,7 @@
 @ stdcall HidP_InitializeReportForID(long long ptr ptr long)
 @ stdcall HidP_MaxDataListLength(long ptr)
 @ stdcall HidP_MaxUsageListLength(long long ptr)
-@ stub HidP_SetData
+@ stdcall HidP_SetData(long ptr ptr ptr ptr long)
 @ stub HidP_SetScaledUsageValue
 @ stdcall HidP_SetUsages(long long long ptr ptr ptr ptr long)
 @ stdcall HidP_SetUsageValue(long long long long long ptr ptr long)

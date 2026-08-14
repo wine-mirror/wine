@@ -477,7 +477,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
     {
         if (!wcscmp(path + len - ARRAY_SIZE(relsextW) + 1, relsextW))
         {
-            if (start && !memcmp(start, relsdirW, ARRAY_SIZE(relsdirW) - sizeof(WCHAR)))
+            if (start && !memcmp(start, relsdirW, sizeof(relsdirW) - sizeof(WCHAR)))
             {
                 SysFreeString(path);
                 return NULL;

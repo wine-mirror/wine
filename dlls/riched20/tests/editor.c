@@ -535,6 +535,31 @@ static void test_EM_LINELENGTH(void)
         offset_test[i][0], result, offset_test[i][1]);
   }
 
+  /* EM_LINELENGTH with wParam == -1 returns the count of unselected
+   * characters on the line(s) containing the selection. */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, 0);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret at start: got %Id, expected 9\n", result);
+
+  SendMessageA(hwndRichEdit, EM_SETSEL, 5, 5);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret mid-line: got %Id, expected 9\n", result);
+
+  /* Selection entirely within one line: unselected chars on that line */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 2, 5);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 6, "EM_LINELENGTH(-1) with sel 2..5 on line 1: got %Id, expected 6\n", result);
+
+  /* Selection spanning two lines: unselected chars on first + last line */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 13);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 10, "EM_LINELENGTH(-1) with sel 4..13: got %Id, expected 10\n", result);
+
+  /* Caret at end of text */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 39, 39);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret at end: got %Id, expected 9\n", result);
+
   /* Test with multibyte character */
   if (!is_lang_japanese)
     skip("Skip multibyte character tests on non-Japanese platform\n");
@@ -2969,7 +2994,6 @@ static void test_EM_SCROLL(void)
 }
 
 static unsigned int recursionLevel = 0;
-static unsigned int WM_SIZE_recursionLevel = 0;
 static BOOL bailedOutOfRecursion = FALSE;
 static LRESULT (WINAPI *richeditProc)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -2986,11 +3010,9 @@ static LRESULT WINAPI RicheditStupidOverrideProcA(HWND hwnd, UINT message, WPARA
     recursionLevel++;
     switch (message) {
     case WM_SIZE:
-        WM_SIZE_recursionLevel++;
         r = richeditProc(hwnd, message, wParam, lParam);
         /* Because, uhhhh... I never heard of ES_DISABLENOSCROLL */
         ShowScrollBar(hwnd, SB_VERT, TRUE);
-        WM_SIZE_recursionLevel--;
         break;
     default:
         r = richeditProc(hwnd, message, wParam, lParam);
@@ -3659,14 +3681,12 @@ static void test_scrollbar_visibility(void)
     if(!RegisterClassA(&cls)) assert(0);
 
     recursionLevel = 0;
-    WM_SIZE_recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
     hwndRichEdit = new_window(cls.lpszClassName, ES_MULTILINE, NULL);
     ok(!bailedOutOfRecursion,
         "WM_SIZE/scrollbar mutual recursion detected, expected none!\n");
 
     recursionLevel = 0;
-    WM_SIZE_recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
     MoveWindow(hwndRichEdit, 0, 0, 250, 100, TRUE);
     ok(!bailedOutOfRecursion,
@@ -3675,7 +3695,6 @@ static void test_scrollbar_visibility(void)
     /* Unblock window in order to process WM_DESTROY */
     recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
-    WM_SIZE_recursionLevel = 0;
     DestroyWindow(hwndRichEdit);
   }
 }
@@ -9067,6 +9086,86 @@ static void test_para_numbering(void)
     SendMessageW( edit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf );
     ok( cf.yHeight == 200, "got %ld\n", cf.yHeight );
 
+    DestroyWindow( edit );
+
+    /* \pn without \pntext should not produce a visible number: native
+     * richedit treats \pntext as the authoritative label, so its absence
+     * suppresses auto-numbering entirely. */
+    edit = new_richeditW( NULL );
+    {
+        const char *no_pntext =
+            "{\\rtf1{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}}"
+            "\\pard{\\*\\pn\\pnlvlbody\\pnf0\\pnindent1000\\pnstart1\\pndec{\\pntxta.}}"
+            "\\f0 Alpha\\par "
+            "Beta\\par}";
+        const WCHAR expect_no_pntext[] = {'A','l','p','h','a','\r','B','e','t','a',0};
+
+        es.dwCookie = (DWORD_PTR)&no_pntext;
+        es.dwError = 0;
+        es.pfnCallback = test_EM_STREAMIN_esCallback;
+        result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+        ok( result == lstrlenW( expect_no_pntext ), "got %Id\n", result );
+
+        result = SendMessageW( edit, EM_GETTEXTEX, (WPARAM)&get_text, (LPARAM)buf );
+        ok( result == lstrlenW( expect_no_pntext ), "got %Id\n", result );
+        ok( !lstrcmpW( buf, expect_no_pntext ), "got %s\n", wine_dbgstr_w(buf) );
+    }
+    DestroyWindow( edit );
+
+    /* \pntext containing \bullet:
+     * the bullet character is the label and must not appear in EM_GETTEXT. */
+    edit = new_richeditW( NULL );
+    {
+        const char *bullet_rtf =
+            "{\\rtf1{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}"
+            "{\\f1\\fnil\\fcharset2 Symbol;}}"
+            "\\pard{\\pntext\\f1\\'b7\\tab}"
+            "{\\*\\pn\\pnlvlblt\\pnf1\\pnindent1000{\\pntxtb\\bullet}}"
+            "\\f0 Item one\\par"
+            "{\\pntext\\f1\\bullet\\tab}\\f0 Item two\\par}";
+        const WCHAR expect_bullet[] = {'I','t','e','m',' ','o','n','e','\r',
+                                        'I','t','e','m',' ','t','w','o',0};
+
+        es.dwCookie = (DWORD_PTR)&bullet_rtf;
+        es.dwError = 0;
+        es.pfnCallback = test_EM_STREAMIN_esCallback;
+        result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+        ok( result == lstrlenW( expect_bullet ), "got %Id\n", result );
+
+        result = SendMessageW( edit, EM_GETTEXTEX, (WPARAM)&get_text, (LPARAM)buf );
+        ok( result == lstrlenW( expect_bullet ), "got %Id\n", result );
+        ok( !lstrcmpW( buf, expect_bullet ), "got %s\n", wine_dbgstr_w(buf) );
+
+        SendMessageW( edit, EM_SETSEL, 1, 1 );
+        memset( &fmt, 0, sizeof(fmt) );
+        fmt.cbSize = sizeof(fmt);
+        fmt.dwMask = PFM_ALL2;
+        SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+        ok( fmt.wNumbering == PFN_BULLET, "got %d\n", fmt.wNumbering );
+    }
+    DestroyWindow( edit );
+
+    /* The trailing \tab inside \pntext is the label/body separator and
+     * should not be present in the document text. */
+    edit = new_richeditW( NULL );
+    {
+        const char *tab_rtf =
+            "{\\rtf1{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}}"
+            "\\pard{\\pntext\\f0 1.\\tab}"
+            "{\\*\\pn\\pnlvlbody\\pnf0\\pnindent1000\\pnstart1\\pndec{\\pntxta.}}"
+            "\\f0 Hello\\par}";
+        const WCHAR expect_tab[] = {'H','e','l','l','o',0};
+
+        es.dwCookie = (DWORD_PTR)&tab_rtf;
+        es.dwError = 0;
+        es.pfnCallback = test_EM_STREAMIN_esCallback;
+        result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+        ok( result == lstrlenW( expect_tab ), "got %Id\n", result );
+
+        result = SendMessageW( edit, EM_GETTEXTEX, (WPARAM)&get_text, (LPARAM)buf );
+        ok( result == lstrlenW( expect_tab ), "got %Id\n", result );
+        ok( !lstrcmpW( buf, expect_tab ), "got %s\n", wine_dbgstr_w(buf) );
+    }
     DestroyWindow( edit );
 }
 

@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 
 #include <wchar.h>
 
@@ -42,23 +41,6 @@ typedef struct tagLANGANDCODEPAGE
     WORD wLanguage;
     WORD wCodePage;
 } LANGANDCODEPAGE;
-
-extern void sessions_lock(void);
-extern void sessions_unlock(void);
-
-extern HRESULT get_audio_session(const GUID *sessionguid, IMMDevice *device, UINT channels,
-                                 struct audio_session **out);
-extern struct audio_session_wrapper *session_wrapper_create(struct audio_client *client);
-
-static HANDLE main_loop_thread;
-
-void main_loop_stop(void)
-{
-    if (main_loop_thread) {
-        WaitForSingleObject(main_loop_thread, INFINITE);
-        CloseHandle(main_loop_thread);
-    }
-}
 
 void set_stream_volumes(struct audio_client *This)
 {
@@ -210,58 +192,11 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
     }
 }
 
-static DWORD CALLBACK main_loop_func(void *event)
-{
-    struct main_loop_params params;
-
-    SetThreadDescription(GetCurrentThread(), L"audio_client_main");
-
-    params.event = event;
-
-    wine_unix_call(main_loop, &params);
-
-    return 0;
-}
-
-HRESULT main_loop_start(void)
-{
-    if (!main_loop_thread) {
-        HANDLE event = CreateEventW(NULL, TRUE, FALSE, NULL);
-        if (!(main_loop_thread = CreateThread(NULL, 0, main_loop_func, event, 0, NULL))) {
-            ERR("Failed to create main loop thread\n");
-            CloseHandle(event);
-            return E_FAIL;
-        }
-
-        SetThreadPriority(main_loop_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        WaitForSingleObject(event, INFINITE);
-        CloseHandle(event);
-    }
-
-    return S_OK;
-}
-
-static DWORD CALLBACK timer_loop_func(void *user)
-{
-    struct timer_loop_params params;
-    struct audio_client *This = user;
-
-    SetThreadDescription(GetCurrentThread(), L"audio_client_timer");
-
-    params.stream = This->stream;
-
-    wine_unix_call(timer_loop, &params);
-
-    return 0;
-}
-
-HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
+static HRESULT stream_release(stream_handle stream)
 {
     struct release_stream_params params;
 
-    params.stream       = stream;
-    params.timer_thread = timer_thread;
-
+    params.stream = stream;
     wine_unix_call(release_stream, &params);
 
     return params.result;
@@ -366,6 +301,79 @@ skip:
     return wcsdup(name);
 }
 
+HRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL compatible)
+{
+    WAVEFORMATEXTENSIBLE fmt2;
+    HRESULT ret;
+
+    /* Reduce non-extensible formats to extensible ones. */
+    if (fmt->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+    {
+        fmt2.Format = fmt->Format;
+
+        switch (fmt2.Format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: fmt2.SubFormat = KSDATAFORMAT_SUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: fmt2.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT; break;
+            default: return AUDCLNT_E_UNSUPPORTED_FORMAT;
+        }
+
+        if (fmt2.Format.nChannels > 2)
+            return E_INVALIDARG;
+
+        fmt2.dwChannelMask = (1u << fmt2.Format.nChannels) - 1;
+        fmt2.Samples.wValidBitsPerSample = fmt2.Format.wBitsPerSample;
+        fmt2.Format.cbSize = sizeof(fmt2) - sizeof(fmt2.Format);
+    }
+    else
+    {
+        if (fmt->Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
+            return E_INVALIDARG;
+        fmt2 = *fmt;
+    }
+
+    if (fmt2.Format.nChannels == 0 || fmt2.Format.nSamplesPerSec == 0)
+        ret = E_INVALIDARG;
+    else if (fmt2.Format.nBlockAlign != fmt2.Format.nChannels * fmt2.Format.wBitsPerSample / 8)
+        ret = E_INVALIDARG;
+    else if (fmt2.Format.nAvgBytesPerSec != fmt2.Format.nBlockAlign * fmt2.Format.nSamplesPerSec)
+        ret = E_INVALIDARG;
+    else if (fmt2.Samples.wValidBitsPerSample == 0)
+        ret = E_INVALIDARG;
+    else if (fmt2.Samples.wValidBitsPerSample > fmt2.Format.wBitsPerSample)
+        ret = E_INVALIDARG;
+    else if (IsEqualGUID(&fmt2.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))
+    {
+        if (fmt2.Format.wBitsPerSample != 8 && fmt2.Format.wBitsPerSample != 16
+                && fmt2.Format.wBitsPerSample != 24 && fmt2.Format.wBitsPerSample != 32)
+            ret = E_INVALIDARG;
+        else if (fmt2.Format.wBitsPerSample == 32 && fmt2.Samples.wValidBitsPerSample == 24)
+            ret = S_OK;
+        else if (fmt2.Samples.wValidBitsPerSample != fmt2.Format.wBitsPerSample)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else
+            ret = S_OK;
+    }
+    else if (IsEqualGUID(&fmt2.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))
+    {
+        if (fmt2.Format.wBitsPerSample != 32 && fmt2.Format.wBitsPerSample != 64)
+            ret = E_INVALIDARG;
+        else if (fmt2.Format.wBitsPerSample != 32)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else if (fmt2.Samples.wValidBitsPerSample != fmt2.Format.wBitsPerSample)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else
+            ret = S_OK;
+    }
+    else
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if (!compatible && ret == S_OK)
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    return ret;
+}
+
 static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_period,
                            const AUDCLNT_SHAREMODE mode, const DWORD flags,
                            REFERENCE_TIME duration, REFERENCE_TIME period,
@@ -374,7 +382,9 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     struct create_stream_params params;
     UINT32 i, channel_count;
     stream_handle stream;
+    BOOL compatible;
     WCHAR *name;
+    HRESULT hr;
 
     if (!fmt)
         return E_POINTER;
@@ -397,6 +407,37 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         FIXME("Unknown flags: %08lx\n", flags);
         return E_INVALIDARG;
     }
+    if (flags & AUDCLNT_STREAMFLAGS_CROSSPROCESS)
+        FIXME("Cross-process sessions not supported\n");
+
+    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
+
+    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        if (flags & AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)
+            return E_INVALIDARG;
+
+        compatible = TRUE;
+    } else {
+        WAVEFORMATEX *mix_fmt;
+
+        if (FAILED(hr = IAudioClient3_GetMixFormat(&client->IAudioClient3_iface, &mix_fmt)))
+            return hr;
+
+        if (flags & AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)
+            compatible = TRUE;
+        else if (flags & AUDCLNT_STREAMFLAGS_RATEADJUST)
+            compatible = fmt->nChannels == mix_fmt->nChannels;
+        else
+            compatible = fmt->nSamplesPerSec == mix_fmt->nSamplesPerSec && fmt->nChannels == mix_fmt->nChannels;
+
+        CoTaskMemFree(mix_fmt);
+    }
+
+    hr = validate_fmt((const WAVEFORMATEXTENSIBLE *)fmt, compatible);
+
+    if (hr != S_OK)
+        return hr;
 
     sessions_lock();
 
@@ -405,10 +446,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    if (FAILED(params.result = main_loop_start())) {
-        sessions_unlock();
-        return params.result;
-    }
+    wine_unix_call( main_loop_start, NULL );
 
     if (flags & AUDCLNT_STREAMFLAGS_LOOPBACK) {
         struct get_loopback_capture_device_params params;
@@ -479,7 +517,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
 
 exit:
     if (FAILED(params.result)) {
-        stream_release(stream, NULL);
+        stream_release(stream);
         free(client->vols);
         client->vols = NULL;
     } else {
@@ -667,7 +705,7 @@ static ULONG WINAPI client_Release(IAudioClient3 *iface)
         free(This->vols);
 
         if (This->stream)
-            stream_release(This->stream, This->timer_thread);
+            stream_release(This->stream);
 
         free(This->device_name);
         free(This);
@@ -757,32 +795,69 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
     struct is_format_supported_params params;
+    BOOL compatible;
+    HRESULT hr;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
 
-    if (fmt)
-        dump_fmt(fmt);
-
-    params.device  = This->device_name;
-    params.flow    = This->dataflow;
-    params.share   = mode;
-    params.fmt_in  = fmt;
-    params.fmt_out = NULL;
-
-    if (out) {
+    if (out)
         *out = NULL;
-        if (mode == AUDCLNT_SHAREMODE_SHARED)
-            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
+
+    if (!fmt || (mode == AUDCLNT_SHAREMODE_SHARED && !out))
+        return E_POINTER;
+
+    dump_fmt(fmt);
+
+    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
+
+    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        compatible = TRUE;
+    } else {
+        WAVEFORMATEX *mix_fmt;
+
+        if (FAILED(hr = IAudioClient3_GetMixFormat(iface, &mix_fmt)))
+            return hr;
+
+        compatible = fmt->nSamplesPerSec == mix_fmt->nSamplesPerSec && fmt->nChannels == mix_fmt->nChannels;
+
+        CoTaskMemFree(mix_fmt);
     }
 
-    wine_unix_call(is_format_supported, &params);
+    hr = validate_fmt((const WAVEFORMATEXTENSIBLE *)fmt, TRUE);
 
-    if (params.result == S_FALSE)
-        *out = &params.fmt_out->Format;
-    else
-        CoTaskMemFree(params.fmt_out);
+    if (hr == S_OK && !compatible)
+        hr = S_FALSE;
 
-    return params.result;
+    if (FAILED(hr))
+        return hr;
+
+    if (hr == S_OK) {
+        params.device  = This->device_name;
+        params.flow    = This->dataflow;
+        params.share   = mode;
+        params.fmt_in  = fmt;
+
+        wine_unix_call(is_format_supported, &params);
+
+        hr = params.result;
+    }
+
+    if (hr == S_FALSE) {
+        if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;
+        } else {
+            if (FAILED(hr = IAudioClient3_GetMixFormat(iface, out)))
+                return hr;
+            return S_FALSE;
+        }
+    }
+
+    if (hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED && This->dataflow == eCapture)
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    return hr;
+
 }
 
 static HRESULT WINAPI client_GetMixFormat(IAudioClient3 *iface, WAVEFORMATEX **pwfx)
@@ -843,15 +918,6 @@ static HRESULT WINAPI client_Start(IAudioClient3 *iface)
 
     params.stream = This->stream;
     wine_unix_call(start, &params);
-
-    if (SUCCEEDED(params.result) && !This->timer_thread) {
-        if ((This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL)))
-            SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        else {
-            IAudioClient3_Stop(&This->IAudioClient3_iface);
-            params.result = E_FAIL;
-        }
-    }
 
     sessions_unlock();
 

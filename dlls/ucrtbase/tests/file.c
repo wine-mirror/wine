@@ -229,9 +229,11 @@ static void test_utf8(const char *argv0)
     struct _finddata64i32_t fdata64i32;
     struct _finddata32_t fdata32;
     struct _finddata64_t fdata64;
+    PROCESS_INFORMATION info;
     intptr_t hfind, hproc;
     WCHAR bufW[256], *pW;
     struct _stat64 stat;
+    unsigned int i;
     FILE *f;
     int ret;
 
@@ -239,6 +241,24 @@ static void test_utf8(const char *argv0)
     {
         win_skip("utf-8 tests\n");
         return;
+    }
+
+    for (i = 128; i < 256; ++i)
+    {
+        unsigned int v;
+
+        winetest_push_context("%#x", i);
+        v = tolower(i);
+        ok(i == v, "got %#x.\n", v);
+        v = toupper(i);
+        ok(i == v, "got %#x.\n", v);
+
+        v = _isctype(i, ~0u);
+        if (i >= 0xc2 && i <= 0xf4)
+            ok(v == _LEADBYTE, "got %#x.\n", v);
+        else
+            ok(!v, "got %#x.\n", v);
+        winetest_pop_context();
     }
 
     ret = _mkdir(dir);
@@ -427,8 +447,10 @@ static void test_utf8(const char *argv0)
     env[1] = NULL;
     hproc = _spawnle(_P_NOWAIT, argv0, argv0, "file", "utf8", file, NULL, env);
     ok(hproc != -1, "_spawnl returned %Id, errno %d\n", hproc, errno);
-    wait_child_process((HANDLE)hproc);
-    CloseHandle((HANDLE)hproc);
+    memset(&info, 0, sizeof(info));
+    info.hProcess = (HANDLE)hproc;
+    info.dwProcessId = GetProcessId(info.hProcess);
+    wait_child_process(&info);
 
     setlocale(LC_ALL, "C");
 }

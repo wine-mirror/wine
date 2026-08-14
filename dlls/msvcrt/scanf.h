@@ -25,6 +25,7 @@
 
 #ifdef WIDE_SCANF
 #define _CHAR_ wchar_t
+#define _UCHAR_ wchar_t
 #define _EOF_ WEOF
 #define _EOF_RET (short)WEOF
 #define _ISSPACE_(c) iswspace(c)
@@ -34,6 +35,7 @@
 #define _BITMAPSIZE_ 256*256
 #else /* WIDE_SCANF */
 #define _CHAR_ char
+#define _UCHAR_ unsigned char
 #define _EOF_ EOF
 #define _EOF_RET EOF
 #define _ISSPACE_(c) isspace(c)
@@ -272,6 +274,9 @@ _FUNCTION_ {
                     }
                     l_prefix = 1;
                     break;
+		case 'j':
+		    I64_prefix = 1;
+		    break;
 		case 'w': w_prefix = 1; break;
 		case 'L': L_prefix = 1; break;
 		case 'I':
@@ -649,13 +654,13 @@ _FUNCTION_ {
 			/* According to msdn:
 			 * "Note that %[a-z] and %[z-a] are interpreted as equivalent to %[abcde...z]." */
                         if(format[1] == '-' && format[2] && format[2] != ']') {
-                            if (format[0] < format[2])
-                                RtlSetBits(&bitMask, format[0], format[2] - format[0] + 1);
+                            if ((_UCHAR_)format[0] < (_UCHAR_)format[2])
+                                RtlSetBits(&bitMask, (_UCHAR_)format[0], (_UCHAR_)format[2] - (_UCHAR_)format[0] + 1);
                             else
-                                RtlSetBits(&bitMask, format[2], format[0] - format[2] + 1);
+                                RtlSetBits(&bitMask, (_UCHAR_)format[2], (_UCHAR_)format[0] - (_UCHAR_)format[2] + 1);
 			    format += 2;
 			} else
-			    RtlSetBits(&bitMask, *format, 1);
+			    RtlSetBits(&bitMask, (_UCHAR_)*format, 1);
 			format++;
 		    }
                     /* read until char is not suitable */
@@ -727,6 +732,7 @@ _FUNCTION_ {
 }
 
 #undef _CHAR_
+#undef _UCHAR_
 #undef _EOF_
 #undef _EOF_RET
 #undef _ISSPACE_

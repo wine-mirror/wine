@@ -41,6 +41,21 @@ static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMI
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("shell32.dll");
@@ -334,7 +349,6 @@ static IFileDialogEvents *IFileDialogEvents_Constructor(void)
 
 static BOOL test_instantiation(void)
 {
-    IFileDialog *pfd;
     IFileOpenDialog *pfod;
     IFileSaveDialog *pfsd;
     IServiceProvider *psp;
@@ -342,6 +356,8 @@ static BOOL test_instantiation(void)
     IUnknown *punk, *unk2;
     HRESULT hr;
     LONG ref;
+    IFolderView *pfv;
+    IFolderView2 *pfv2;
 
     /* Instantiate FileOpenDialog */
     hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
@@ -353,9 +369,14 @@ static BOOL test_instantiation(void)
     }
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
+    check_interface(pfod, &IID_IModalWindow, TRUE);
+    check_interface(pfod, &IID_IFileDialog, TRUE);
+    check_interface(pfod, &IID_IExplorerBrowserEvents, TRUE);
+    check_interface(pfod, &IID_ICommDlgBrowser3, TRUE);
+    check_interface(pfod, &IID_IFileSaveDialog, FALSE);
+    check_interface(pfod, &IID_IFileDialogEvents, FALSE);
+    check_interface(pfod, &IID_IExplorerBrowser, FALSE);
+    check_interface(pfod, &IID_IShellBrowser, FALSE);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&punk);
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
@@ -365,10 +386,6 @@ static BOOL test_instantiation(void)
     ok(punk == unk2, "got %p, %p\n", punk, unk2);
     IUnknown_Release(punk);
     IUnknown_Release(unk2);
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileSaveDialog, (void**)&pfsd);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IFileSaveDialog_Release(pfsd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IServiceProvider, (void**)&psp);
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
@@ -399,28 +416,15 @@ static BOOL test_instantiation(void)
         ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
+        hr = IServiceProvider_QueryService(psp, &IID_IFolderView, &IID_IFolderView, (void**)&pfv);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IFolderView_Release(pfv);
+        hr = IServiceProvider_QueryService(psp, &IID_IFolderView, &IID_IFolderView2, (void**)&pfv2);
+        ok(hr == E_NOTIMPL || broken(hr == E_FAIL), "got 0x%08lx (expected E_NOTIMPL)\n", hr);
+        if(SUCCEEDED(hr)) IFolderView2_Release(pfv2);
+
         IServiceProvider_Release(psp);
     }
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogEvents, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowserEvents, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_ICommDlgBrowser3, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IShellBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
@@ -460,9 +464,14 @@ static BOOL test_instantiation(void)
     }
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialog, (void**)&pfd);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
+    check_interface(pfsd, &IID_IModalWindow, TRUE);
+    check_interface(pfsd, &IID_IFileDialog, TRUE);
+    check_interface(pfsd, &IID_IExplorerBrowserEvents, TRUE);
+    check_interface(pfsd, &IID_ICommDlgBrowser3, TRUE);
+    check_interface(pfsd, &IID_IFileOpenDialog, FALSE);
+    check_interface(pfsd, &IID_IFileDialogEvents, FALSE);
+    check_interface(pfsd, &IID_IExplorerBrowser, FALSE);
+    check_interface(pfsd, &IID_IShellBrowser, FALSE);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&punk);
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
@@ -472,30 +481,6 @@ static BOOL test_instantiation(void)
     ok(punk == unk2, "got %p, %p\n", punk, unk2);
     IUnknown_Release(punk);
     IUnknown_Release(unk2);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IFileOpenDialog_Release(pfod);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogEvents, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IFileDialog_Release(pfd);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowserEvents, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_ICommDlgBrowser3, (void**)&punk);
-    ok(hr == S_OK, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IShellBrowser, (void**)&punk);
-    ok(hr == E_NOINTERFACE, "got 0x%08lx.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
@@ -1165,15 +1150,11 @@ static void filedialog_change_filetype(IFileDialog *pfd, HWND dlg_hwnd)
     const WCHAR filetype1_broken[] = {'f','n','a','m','e','1',' ', '(','*','.','t','x','t',')',0};
 
     cb_filetype = find_window(dlg_hwnd, NULL, filetype1);
-    ok(cb_filetype != NULL || broken(cb_filetype == NULL), "Could not find combobox on first attempt\n");
-
     if(!cb_filetype)
     {
-        /* Not sure when this happens. Some specific version?
-         * Seen on 32-bit English Vista */
-        trace("Didn't find combobox on first attempt, trying broken string..\n");
+        /* Verified on Windows 10: the string "(*.txt)" is required to find the combobox. */
         cb_filetype = find_window(dlg_hwnd, NULL, filetype1_broken);
-        ok(broken(cb_filetype != NULL), "Failed to find combobox on second attempt\n");
+        ok(cb_filetype != NULL, "Failed to find combobox.\n");
         if(!cb_filetype)
             return;
     }
@@ -1547,6 +1528,8 @@ static void test_filename(void)
 
     /* No extension */
     test_filename_savedlg(filename_noextW, NULL, NULL, NULL, 0, 0, filename_noextW);
+    /* Empty extension */
+    test_filename_savedlg(filename_noextW, NULL, L"", NULL, 0, 0, filename_noextW);
     /* Default extension */
     test_filename_savedlg(filename_noextW, NULL, defextW, NULL, 0, 0, filename_defextW);
     /* Default extension on filename ending with a . */
@@ -2585,6 +2568,346 @@ static void test_double_show(void)
     IFileDialog_Release(pfd);
 }
 
+typedef struct {
+    IFileDialogEvents IFileDialogEvents_iface;
+    IFileDialogControlEvents IFileDialogControlEvents_iface;
+    LONG ref;
+    LPCWSTR button_text;
+    DWORD button_id;
+    BOOL button_clicked;
+    BOOL test_passed;
+    IFileDialog *pfd;
+} ITestEventsImpl;
+
+static inline ITestEventsImpl *test_impl_from_IFileDialogEvents(IFileDialogEvents *iface)
+{
+    return CONTAINING_RECORD(iface, ITestEventsImpl, IFileDialogEvents_iface);
+}
+
+static HRESULT WINAPI test_events_QueryInterface(IFileDialogEvents *iface, REFIID riid, void **ppv)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogEvents(iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IFileDialogEvents))
+    {
+        *ppv = &This->IFileDialogEvents_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IFileDialogControlEvents)) {
+        *ppv = &This->IFileDialogControlEvents_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI test_events_AddRef(IFileDialogEvents *iface)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogEvents(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI test_events_Release(IFileDialogEvents *iface)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogEvents(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+    if (!ref) free(This);
+    return ref;
+}
+
+static HRESULT WINAPI test_events_OnFileOk(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    return S_OK;
+}
+static HRESULT WINAPI test_events_OnFolderChanging(IFileDialogEvents *iface, IFileDialog *pfd, IShellItem *psi)
+{
+    return S_OK;
+}
+static HRESULT WINAPI test_events_OnSelectionChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    return S_OK;
+}
+static HRESULT WINAPI test_events_OnShareViolation(IFileDialogEvents *iface, IFileDialog *pfd,
+                                                   IShellItem *psi, FDE_SHAREVIOLATION_RESPONSE *resp)
+{
+    return S_OK;
+}
+static HRESULT WINAPI test_events_OnTypeChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    return S_OK;
+}
+static HRESULT WINAPI test_events_OnOverwrite(IFileDialogEvents *iface, IFileDialog *pfd,
+                                              IShellItem *psi, FDE_OVERWRITE_RESPONSE *resp)
+{
+    return S_OK;
+}
+
+static LRESULT CALLBACK test_control_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
+static HRESULT WINAPI test_events_OnFolderChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogEvents(iface);
+    HWND hwnd;
+    WNDPROC oldproc;
+
+    hwnd = get_hwnd_from_ifiledialog(pfd);
+    ok(hwnd != NULL, "Failed to get dialog window\n");
+
+    if (GetPropA(hwnd, "TEST_THIS")) return S_OK;
+
+    IFileDialogEvents_AddRef(iface);
+
+    oldproc = (WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+    SetPropA(hwnd, "OLD_PROC", (HANDLE)oldproc);
+    SetPropA(hwnd, "TEST_THIS", (HANDLE)This);
+    SetPropA(hwnd, "IFD", (HANDLE)pfd);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)test_control_wndproc);
+
+    PostMessageW(hwnd, WM_APP + 1, 0, 0);
+
+    return S_OK;
+}
+
+static const IFileDialogEventsVtbl test_events_vtbl = {
+    test_events_QueryInterface,
+    test_events_AddRef,
+    test_events_Release,
+    test_events_OnFileOk,
+    test_events_OnFolderChanging,
+    test_events_OnFolderChange,
+    test_events_OnSelectionChange,
+    test_events_OnShareViolation,
+    test_events_OnTypeChange,
+    test_events_OnOverwrite
+};
+
+static inline ITestEventsImpl *test_impl_from_IFileDialogControlEvents(IFileDialogControlEvents *iface)
+{
+    return CONTAINING_RECORD(iface, ITestEventsImpl, IFileDialogControlEvents_iface);
+}
+
+static HRESULT WINAPI test_control_QueryInterface(IFileDialogControlEvents *iface, REFIID riid, void **ppv)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogControlEvents(iface);
+    return IFileDialogEvents_QueryInterface(&This->IFileDialogEvents_iface, riid, ppv);
+}
+
+static ULONG WINAPI test_control_AddRef(IFileDialogControlEvents *iface)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogControlEvents(iface);
+    return IFileDialogEvents_AddRef(&This->IFileDialogEvents_iface);
+}
+
+static ULONG WINAPI test_control_Release(IFileDialogControlEvents *iface)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogControlEvents(iface);
+    return IFileDialogEvents_Release(&This->IFileDialogEvents_iface);
+}
+
+static HRESULT WINAPI test_control_OnItemSelected(IFileDialogControlEvents *iface,
+                                                  IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_control_OnButtonClicked(IFileDialogControlEvents *iface,
+                                                   IFileDialogCustomize *pfdc, DWORD dwIDCtl)
+{
+    ITestEventsImpl *This = test_impl_from_IFileDialogControlEvents(iface);
+    IServiceProvider *psp;
+    IFolderView2 *pfv2;
+    IShellItemArray *psia;
+    HRESULT hr;
+    IFileDialog *pfd;
+
+    ok(dwIDCtl == This->button_id, "Expected button ID %lu, got %lu\n", This->button_id, dwIDCtl);
+
+    hr = IFileDialogCustomize_QueryInterface(pfdc, &IID_IServiceProvider, (void**)&psp);
+    ok(hr == S_OK, "QI for IServiceProvider failed: 0x%08lx\n", hr);
+    if (FAILED(hr))
+    {
+        return S_OK;
+    }
+
+    hr = IServiceProvider_QueryService(psp, &IID_IFolderView, &IID_IFolderView2, (void**)&pfv2);
+    ok(hr == S_OK, "QueryService for IFolderView2 failed: 0x%08lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        psia = NULL;
+        hr = IFolderView2_GetSelection(pfv2, TRUE, &psia);
+        todo_wine ok(hr == S_OK, "GetSelection(TRUE) returned 0x%08lx \n", hr);
+
+        if (hr == S_OK)
+        {
+            ok(psia != NULL, "psia should not be NULL when hr == S_OK\n");
+            if (psia)
+            {
+                DWORD count;
+                hr = IShellItemArray_GetCount(psia, &count);
+                ok(hr == S_OK, "GetCount failed: 0x%08lx\n", hr);
+                ok(count == 1, "Expected 1 item (the current folder), got %lu\n", count);
+                IShellItemArray_Release(psia);
+            }
+        }
+        IFolderView2_Release(pfv2);
+    }
+    IServiceProvider_Release(psp);
+
+    This->test_passed = TRUE;
+    This->button_clicked = TRUE;
+
+    hr = IFileDialogCustomize_QueryInterface(pfdc, &IID_IFileDialog, (void**)&pfd);
+    ok(hr == S_OK, "QI for IFileDialog failed: 0x%08lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IFileDialog_Close(pfd, S_FALSE);
+        ok(hr == S_OK, "Close failed: 0x%08lx\n", hr);
+        IFileDialog_Release(pfd);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_control_OnCheckButtonToggled(IFileDialogControlEvents *iface,
+                                                        IFileDialogCustomize *pfdc,
+                                                        DWORD dwIDCtl, BOOL bChecked)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_control_OnControlActivating(IFileDialogControlEvents *iface,
+                                                       IFileDialogCustomize *pfdc,
+                                                       DWORD dwIDCtl)
+{
+    return E_NOTIMPL;
+}
+
+static const IFileDialogControlEventsVtbl test_control_vtbl = {
+    test_control_QueryInterface,
+    test_control_AddRef,
+    test_control_Release,
+    test_control_OnItemSelected,
+    test_control_OnButtonClicked,
+    test_control_OnCheckButtonToggled,
+    test_control_OnControlActivating
+};
+
+static LRESULT CALLBACK test_control_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    WNDPROC oldproc;
+    switch (msg)
+    {
+    case WM_APP + 1:
+        SetTimer(hwnd, 1000, 100, NULL);
+        return 0;
+
+    case WM_TIMER:
+        if (wparam == 1000)
+        {
+            ITestEventsImpl *This = (ITestEventsImpl*)GetPropA(hwnd, "TEST_THIS");
+            if (This)
+            {
+                HWND btn = find_window(hwnd, L"Button", This->button_text);
+                if (btn)
+                {
+                    SendMessageW(btn, BM_CLICK, 0, 0);
+                }
+                else
+                {
+                    trace("Button not found!\n");
+                }
+            }
+            KillTimer(hwnd, 1000);
+            oldproc = (WNDPROC)GetPropA(hwnd, "OLD_PROC");
+            if (oldproc)
+            {
+                SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)oldproc);
+                RemovePropA(hwnd, "OLD_PROC");
+                RemovePropA(hwnd, "TEST_THIS");
+                RemovePropA(hwnd, "IFD");
+            }
+
+            if (This)
+              IFileDialogEvents_Release(&This->IFileDialogEvents_iface);
+
+            return 0;
+        }
+        break;
+    }
+    oldproc = (WNDPROC)GetPropA(hwnd, "OLD_PROC");
+    if (oldproc)
+        return CallWindowProcW(oldproc, hwnd, msg, wparam, lparam);
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static void test_control_events_selection(void)
+{
+    IFileDialog *pfd;
+    IFileDialogCustomize *pfdc;
+    ITestEventsImpl *events;
+    IFileDialogEvents *pEvents;
+    DWORD cookie;
+    HRESULT hr;
+    static const WCHAR button_text[] = L"testButton";
+    DWORD button_id = 1001;
+
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfd);
+    ok(hr == S_OK, "CoCreateInstance failed: 0x%08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IFileDialog_QueryInterface(pfd, &IID_IFileDialogCustomize, (void**)&pfdc);
+    ok(hr == S_OK, "QI for IFileDialogCustomize failed: 0x%08lx\n", hr);
+    if (FAILED(hr))
+    {
+        IFileDialog_Release(pfd);
+        return;
+    }
+
+    hr = IFileDialogCustomize_AddPushButton(pfdc, button_id, button_text);
+    ok(hr == S_OK, "AddPushButton failed: 0x%08lx\n", hr);
+
+    events = calloc(1, sizeof(*events));
+    events->IFileDialogEvents_iface.lpVtbl = &test_events_vtbl;
+    events->IFileDialogControlEvents_iface.lpVtbl = &test_control_vtbl;
+    events->ref = 1;
+    events->button_text = button_text;
+    events->button_id = button_id;
+    events->pfd = pfd;
+    pEvents = &events->IFileDialogEvents_iface;
+
+    hr = IFileDialog_Advise(pfd, pEvents, &cookie);
+    ok(hr == S_OK, "Advise failed: 0x%08lx\n", hr);
+
+    {
+        IShellItem *psi;
+        WCHAR path[MAX_PATH];
+        GetCurrentDirectoryW(MAX_PATH, path);
+        hr = pSHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void**)&psi);
+        if (SUCCEEDED(hr))
+        {
+            IFileDialog_SetFolder(pfd, psi);
+            IShellItem_Release(psi);
+        }
+    }
+
+    hr = IFileDialog_Show(pfd, NULL);
+    ok(hr == S_FALSE || hr == HRESULT_FROM_WIN32(ERROR_CANCELLED),
+       "Show returned 0x%08lx (expected S_FALSE or ERROR_CANCELLED)\n", hr);
+
+    ok(events->button_clicked, "Button was not clicked\n");
+    ok(events->test_passed, "Test in OnButtonClicked failed\n");
+
+    IFileDialog_Unadvise(pfd, cookie);
+    IFileDialogCustomize_Release(pfdc);
+    IFileDialog_Release(pfd);
+    IFileDialogEvents_Release(pEvents);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -2611,6 +2934,7 @@ START_TEST(itemdlg)
         test_overwrite();
         test_customize_remove_from_empty_combobox();
         test_double_show();
+        test_control_events_selection();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

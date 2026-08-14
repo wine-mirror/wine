@@ -309,6 +309,9 @@ static void test_audio_object_buffers(void)
     hr = ISpatialAudioClient_ActivateSpatialAudioStream(sac, &activation_params_prop, &IID_ISpatialAudioObjectRenderStream, (void**)&sas);
     ok(hr == S_OK, "Failed to activate spatial audio stream: 0x%08lx\n", hr);
 
+    hr = ISpatialAudioObjectRenderStream_Reset(sas);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
     hr = ISpatialAudioClient_GetMaxFrameCount(sac, &format, &max_frame_count);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     frame_count = format.nSamplesPerSec / 100; /* 10ms */
@@ -458,6 +461,27 @@ static void test_audio_object_buffers(void)
 
     hr = ISpatialAudioObjectRenderStream_EndUpdatingAudioObjects(sas);
     ok(hr == S_OK, "Failed to end updating audio objects: 0x%08lx\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_Reset(sas);
+    ok(hr == SPTLAUDCLNT_E_STREAM_NOT_STOPPED, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_Stop(sas);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_Reset(sas);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_Reset(sas);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_EndUpdatingAudioObjects(sas);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpatialAudioObjectRenderStream_Reset(sas);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     for (i = 0; i < ARRAYSIZE(sao); i++)
     {

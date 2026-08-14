@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winerror.h"
@@ -33,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(message);
+
+#define MAX_ATOM_LEN 255
 
 DWORD USER16_AlertableWait = 0;
 
@@ -99,7 +100,7 @@ static LRESULT call_window_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM
  * Support for window procedure thunks
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct
 {
     WORD        popl_eax;        /* popl  %eax (return address) */
@@ -109,11 +110,11 @@ typedef struct
     BYTE        ljmp;            /* ljmp relay*/
     FARPROC16   relay;           /* __wine_call_wndproc */
 } WINPROC_THUNK;
-#include "poppack.h"
+#pragma pack(pop)
 
-#define WINPROC_HANDLE (~0u >> 16)
-#define MAX_WINPROCS32 4096
-#define MAX_WINPROCS16 1024
+#define MAKE_WNDPROC16(index)   ((WNDPROC)(UINT_PTR)(UINT)MAKELONG(index, 0xffff))
+#define MAX_WINPROCS32          4096
+#define MAX_WINPROCS16          1024
 
 static WNDPROC16 winproc16_array[MAX_WINPROCS16];
 static unsigned int winproc16_used;
@@ -139,7 +140,7 @@ static int winproc_to_index( WNDPROC16 handle )
     else
     {
         index = LOWORD(handle);
-        if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return -1;
+        if (handle != (WNDPROC16)MAKE_WNDPROC16(index)) return -1;
         /* check array limits */
         if (index >= winproc16_used + MAX_WINPROCS32) return -1;
     }
@@ -190,8 +191,7 @@ WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
     if (!func) return NULL;
 
     /* check if the function is already a win proc */
-    if ((index = winproc_to_index( func )) != -1)
-        return (WNDPROC)(ULONG_PTR)(index | (WINPROC_HANDLE << 16));
+    if ((index = winproc_to_index( func )) != -1) return MAKE_WNDPROC16(index);
 
     /* then check if we already have a winproc for that function */
     for (index = 0; index < winproc16_used; index++)
@@ -205,7 +205,7 @@ WNDPROC WINPROC_AllocProc16( WNDPROC16 func )
     winproc16_array[winproc16_used++] = func;
 
 done:
-    ret = (WNDPROC)(ULONG_PTR)((index + MAX_WINPROCS32) | (WINPROC_HANDLE << 16));
+    ret = MAKE_WNDPROC16(index + MAX_WINPROCS32);
     TRACE( "returning %p for %p/16-bit (%d/%d used)\n",
            ret, func, winproc16_used, MAX_WINPROCS16 );
     return ret;
@@ -220,7 +220,7 @@ WNDPROC16 WINPROC_GetProc16( WNDPROC proc, BOOL unicode )
 {
     WNDPROC winproc = wow_handlers32.alloc_winproc( proc, unicode );
 
-    if ((ULONG_PTR)winproc >> 16 != WINPROC_HANDLE) return (WNDPROC16)winproc;
+    if (winproc != MAKE_WNDPROC16(LOWORD(winproc))) return (WNDPROC16)winproc;
     return alloc_win16_thunk( winproc );
 }
 
@@ -320,7 +320,7 @@ static LRESULT call_dialog_proc_Ato16( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
 #define MAX_THUNKS 32
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 static struct word_break_thunk
 {
     BYTE                popl_eax;       /* popl  %eax (return address) */
@@ -330,7 +330,7 @@ static struct word_break_thunk
     BYTE                jmp;            /* ljmp call_word_break_proc16 */
     DWORD               callback;
 } *word_break_thunks;
-#include <poppack.h>
+#pragma pack(pop)
 
 /**********************************************************************
  *           call_word_break_proc16
@@ -881,9 +881,9 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             UINT_PTR lo = LOWORD(lParam);
             UINT_PTR hi = HIWORD(lParam);
             int flag = 0;
-            char buf[2];
+            char buf[MAX_ATOM_LEN + 1];
 
-            if (GlobalGetAtomNameA(hi, buf, 2) > 0) flag |= 1;
+            if (GlobalGetAtomNameA(hi, buf, sizeof(buf)) > 0) flag |= 1;
             if (GlobalSize16(hi) != 0) flag |= 2;
             switch (flag)
             {
@@ -1262,9 +1262,14 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         {
             UINT_PTR lo, hi;
             int flag = 0;
-            char buf[2];
+            char buf[MAX_ATOM_LEN + 1];
 
-            UnpackDDElParam( msg, lParam, &lo, &hi );
+            if (!UnpackDDElParam( msg, lParam, &lo, &hi ))
+            {
+                /* Probably this is a response to WM_DDE_INITIATE */
+                lo = LOWORD( lParam );
+                hi = HIWORD( lParam );
+            }
 
             if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
             if (GlobalSize((HANDLE)hi) != 0) flag |= 2;

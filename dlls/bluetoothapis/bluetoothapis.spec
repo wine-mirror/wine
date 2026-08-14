@@ -1,4 +1,5 @@
 @ stub BluetoothAddressToString
+@ stdcall BluetoothAuthenticateDeviceEx(ptr ptr ptr ptr long)
 @ stub BluetoothDisconnectDevice
 @ stdcall BluetoothEnableDiscovery(ptr long)
 @ stdcall BluetoothEnableIncomingConnections(ptr long)
@@ -33,12 +34,12 @@
 @ stub BluetoothGATTAbortReliableWrite
 @ stub BluetoothGATTBeginReliableWrite
 @ stub BluetoothGATTEndReliableWrite
-@ stub BluetoothGATTGetCharacteristicValue
-@ stub BluetoothGATTGetCharacteristics
+@ stdcall BluetoothGATTGetCharacteristicValue(ptr ptr long ptr ptr long)
+@ stdcall BluetoothGATTGetCharacteristics(ptr ptr long ptr ptr long)
 @ stub BluetoothGATTGetDescriptorValue
 @ stub BluetoothGATTGetDescriptors
 @ stub BluetoothGATTGetIncludedServices
-@ stub BluetoothGATTGetServices
+@ stdcall BluetoothGATTGetServices(ptr long ptr ptr long)
 @ stub BluetoothGATTRegisterEvent
 @ stub BluetoothGATTSetCharacteristicValue
 @ stub BluetoothGATTSetDescriptorValue

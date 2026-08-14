@@ -24,6 +24,9 @@
 #include "fluidsynth_priv.h"
 #include "utils/fluid_conv_tables.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);
 fluid_real_t fluid_cb2amp(fluid_real_t cb);
@@ -39,4 +42,7 @@ fluid_real_t fluid_balance(fluid_real_t balance, int left);
 fluid_real_t fluid_concave(fluid_real_t val);
 fluid_real_t fluid_convex(fluid_real_t val);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_CONV_H */

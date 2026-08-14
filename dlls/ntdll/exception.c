@@ -19,35 +19,34 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
-#include "wine/server.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "excpt.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 typedef struct
 {
-    struct list                 entry;
-    PVECTORED_EXCEPTION_HANDLER func;
-    ULONG                       count;
+    LIST_ENTRY                   entry;
+    ULONG_PTR                   *count;
+    void                        *unknown;
+    PVECTORED_EXCEPTION_HANDLER *func;
 } VECTORED_HANDLER;
 
-static struct list vectored_handlers = LIST_INIT(vectored_handlers);
+static LIST_ENTRY vectored_exception_handlers = { &vectored_exception_handlers, &vectored_exception_handlers };
+static LIST_ENTRY vectored_continue_handlers  = { &vectored_continue_handlers, &vectored_continue_handlers };
 
 static RTL_CRITICAL_SECTION vectored_handlers_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -58,133 +57,172 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-/**********************************************************************
- *           wait_suspend
- *
- * Wait until the thread is no longer suspended.
- */
-void wait_suspend( CONTEXT *context )
+static PRTL_EXCEPTION_FILTER unhandled_exception_filter;
+
+static const char *debugstr_exception_code( DWORD code )
 {
-    LARGE_INTEGER timeout;
-    int saved_errno = errno;
-    context_t server_context;
-
-    context_to_server( &server_context, context );
-
-    /* store the context we got at suspend time */
-    SERVER_START_REQ( set_suspend_context )
+    switch (code)
     {
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
+    case CONTROL_C_EXIT: return "CONTROL_C_EXIT";
+    case DBG_CONTROL_C: return "DBG_CONTROL_C";
+    case DBG_PRINTEXCEPTION_C: return "DBG_PRINTEXCEPTION_C";
+    case DBG_PRINTEXCEPTION_WIDE_C: return "DBG_PRINTEXCEPTION_WIDE_C";
+    case EXCEPTION_ACCESS_VIOLATION: return "EXCEPTION_ACCESS_VIOLATION";
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: return "EXCEPTION_ARRAY_BOUNDS_EXCEEDED";
+    case EXCEPTION_BREAKPOINT: return "EXCEPTION_BREAKPOINT";
+    case EXCEPTION_DATATYPE_MISALIGNMENT: return "EXCEPTION_DATATYPE_MISALIGNMENT";
+    case EXCEPTION_FLT_DENORMAL_OPERAND: return "EXCEPTION_FLT_DENORMAL_OPERAND";
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO: return "EXCEPTION_FLT_DIVIDE_BY_ZERO";
+    case EXCEPTION_FLT_INEXACT_RESULT: return "EXCEPTION_FLT_INEXACT_RESULT";
+    case EXCEPTION_FLT_INVALID_OPERATION: return "EXCEPTION_FLT_INVALID_OPERATION";
+    case EXCEPTION_FLT_OVERFLOW: return "EXCEPTION_FLT_OVERFLOW";
+    case EXCEPTION_FLT_STACK_CHECK: return "EXCEPTION_FLT_STACK_CHECK";
+    case EXCEPTION_FLT_UNDERFLOW: return "EXCEPTION_FLT_UNDERFLOW";
+    case EXCEPTION_GUARD_PAGE: return "EXCEPTION_GUARD_PAGE";
+    case EXCEPTION_ILLEGAL_INSTRUCTION: return "EXCEPTION_ILLEGAL_INSTRUCTION";
+    case EXCEPTION_IN_PAGE_ERROR: return "EXCEPTION_IN_PAGE_ERROR";
+    case EXCEPTION_INT_DIVIDE_BY_ZERO: return "EXCEPTION_INT_DIVIDE_BY_ZERO";
+    case EXCEPTION_INT_OVERFLOW: return "EXCEPTION_INT_OVERFLOW";
+    case EXCEPTION_INVALID_DISPOSITION: return "EXCEPTION_INVALID_DISPOSITION";
+    case EXCEPTION_INVALID_HANDLE: return "EXCEPTION_INVALID_HANDLE";
+    case EXCEPTION_NONCONTINUABLE_EXCEPTION: return "EXCEPTION_NONCONTINUABLE_EXCEPTION";
+    case EXCEPTION_PRIV_INSTRUCTION: return "EXCEPTION_PRIV_INSTRUCTION";
+    case EXCEPTION_SINGLE_STEP: return "EXCEPTION_SINGLE_STEP";
+    case EXCEPTION_STACK_OVERFLOW: return "EXCEPTION_STACK_OVERFLOW";
+    case EXCEPTION_WINE_ASSERTION: return "EXCEPTION_WINE_ASSERTION";
+    case EXCEPTION_WINE_CXX_EXCEPTION: return "EXCEPTION_WINE_CXX_EXCEPTION";
+    case EXCEPTION_WINE_NAME_THREAD: return "EXCEPTION_WINE_NAME_THREAD";
+    case EXCEPTION_WINE_STUB: return "EXCEPTION_WINE_STUB";
+    case RPC_S_SERVER_UNAVAILABLE: return "RPC_S_SERVER_UNAVAILABLE";
     }
-    SERVER_END_REQ;
-
-    /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    timeout.QuadPart = 0;
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, &timeout );
-
-    /* retrieve the new context */
-    SERVER_START_REQ( get_suspend_context )
-    {
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    context_from_server( context, &server_context );
-    errno = saved_errno;
+    return "unknown";
 }
 
 
-/**********************************************************************
- *           send_debug_event
- *
- * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
- */
-NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
+static VECTORED_HANDLER *add_vectored_handler( LIST_ENTRY *handler_list, ULONG first,
+                                               PVECTORED_EXCEPTION_HANDLER func )
 {
-    NTSTATUS ret;
-    DWORD i;
-    obj_handle_t handle = 0;
-    client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
-    context_t server_context;
-    select_op_t select_op;
-
-    if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
-
-    for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
-        params[i] = rec->ExceptionInformation[i];
-
-    context_to_server( &server_context, context );
-
-    SERVER_START_REQ( queue_exception_event )
+    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) + sizeof(*handler->count) );
+    if (handler)
     {
-        req->first   = first_chance;
-        req->code    = rec->ExceptionCode;
-        req->flags   = rec->ExceptionFlags;
-        req->record  = wine_server_client_ptr( rec->ExceptionRecord );
-        req->address = wine_server_client_ptr( rec->ExceptionAddress );
-        req->len     = i * sizeof(params[0]);
-        wine_server_add_data( req, params, req->len );
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        if (!wine_server_call( req )) handle = reply->handle;
+        handler->func = RtlEncodePointer( func );
+        handler->count = (ULONG_PTR *)(handler + 1);
+        *handler->count = 1;
+        RtlEnterCriticalSection( &vectored_handlers_section );
+        if (first) InsertHeadList( handler_list, &handler->entry );
+        else InsertTailList( handler_list, &handler->entry );
+        RtlLeaveCriticalSection( &vectored_handlers_section );
     }
-    SERVER_END_REQ;
-    if (!handle) return 0;
+    return handler;
+}
 
-    select_op.wait.op = SELECT_WAIT;
-    select_op.wait.handles[0] = handle;
-    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, NULL );
 
-    SERVER_START_REQ( get_exception_status )
+static ULONG remove_vectored_handler( LIST_ENTRY *handler_list, VECTORED_HANDLER *handler )
+{
+    PLIST_ENTRY mark, entry;
+    ULONG ret = FALSE;
+
+    RtlEnterCriticalSection( &vectored_handlers_section );
+    mark = handler_list;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        req->handle = handle;
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        ret = wine_server_call( req );
+        VECTORED_HANDLER *curr_handler = CONTAINING_RECORD( entry, VECTORED_HANDLER, entry );
+        if (curr_handler == handler)
+        {
+            if (!--*curr_handler->count) RemoveEntryList( entry );
+            else handler = NULL;  /* don't free it yet */
+            ret = TRUE;
+            break;
+        }
     }
-    SERVER_END_REQ;
-    if (ret >= 0) context_from_server( context, &server_context );
+    RtlLeaveCriticalSection( &vectored_handlers_section );
+    if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
     return ret;
 }
 
+#if defined(__x86_64__) && !defined(__arm64ec__)
+/*
+ * Some vectored exception handlers restore nonvolatile registers before
+ * returning. Preserve the caller state across the callback.
+ */
+extern LONG WINAPI call_vectored_handler( EXCEPTION_POINTERS *ptr, PVECTORED_EXCEPTION_HANDLER func );
+__ASM_GLOBAL_FUNC( call_vectored_handler,
+                    "pushq %rbx\n\t"
+                    __ASM_SEH(".seh_pushreg %rbx\n\t")
+                    "pushq %rsi\n\t"
+                    __ASM_SEH(".seh_pushreg %rsi\n\t")
+                    "pushq %rdi\n\t"
+                    __ASM_SEH(".seh_pushreg %rdi\n\t")
+                    "pushq %rbp\n\t"
+                    __ASM_SEH(".seh_pushreg %rbp\n\t")
+                    "pushq %r12\n\t"
+                    __ASM_SEH(".seh_pushreg %r12\n\t")
+                    "pushq %r13\n\t"
+                    __ASM_SEH(".seh_pushreg %r13\n\t")
+                    "pushq %r14\n\t"
+                    __ASM_SEH(".seh_pushreg %r14\n\t")
+                    "pushq %r15\n\t"
+                    __ASM_SEH(".seh_pushreg %r15\n\t")
+                    "subq $0x28,%rsp\n\t"
+                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
+                    __ASM_SEH(".seh_endprologue\n\t")
+                    "callq *%rdx\n\t"
+                    "addq $0x28,%rsp\n\t"
+                    "popq %r15\n\t"
+                    "popq %r14\n\t"
+                    "popq %r13\n\t"
+                    "popq %r12\n\t"
+                    "popq %rbp\n\t"
+                    "popq %rdi\n\t"
+                    "popq %rsi\n\t"
+                    "popq %rbx\n\t"
+                    "ret" )
+#else
+static inline LONG call_vectored_handler( EXCEPTION_POINTERS *ptr, PVECTORED_EXCEPTION_HANDLER func )
+{
+    return func( ptr );
+}
+#endif
 
 /**********************************************************************
  *           call_vectored_handlers
  *
  * Call the vectored handlers chain.
  */
-LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct list *ptr;
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
     EXCEPTION_POINTERS except_ptrs;
     PVECTORED_EXCEPTION_HANDLER func;
     VECTORED_HANDLER *handler, *to_free = NULL;
+    PLIST_ENTRY mark, entry;
 
     except_ptrs.ExceptionRecord = rec;
     except_ptrs.ContextRecord = context;
 
     RtlEnterCriticalSection( &vectored_handlers_section );
-    ptr = list_head( &vectored_handlers );
-    while (ptr)
+
+    mark = &vectored_exception_handlers;
+    entry = mark->Flink;
+    while (entry != mark)
     {
-        handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
-        handler->count++;
+        handler = CONTAINING_RECORD( entry, VECTORED_HANDLER, entry );
+        ++*handler->count;
         func = RtlDecodePointer( handler->func );
         RtlLeaveCriticalSection( &vectored_handlers_section );
         RtlFreeHeap( GetProcessHeap(), 0, to_free );
         to_free = NULL;
 
-        TRACE( "calling handler at %p code=%x flags=%x\n",
+        TRACE( "calling handler at %p code=%lx flags=%lx\n",
                func, rec->ExceptionCode, rec->ExceptionFlags );
-        ret = func( &except_ptrs );
-        TRACE( "handler at %p returned %x\n", func, ret );
+        ret = call_vectored_handler( &except_ptrs, func );
+        TRACE( "handler at %p returned %lx\n", func, ret );
 
         RtlEnterCriticalSection( &vectored_handlers_section );
-        ptr = list_next( &vectored_handlers, ptr );
-        if (!--handler->count)  /* removed during execution */
+        entry = entry->Flink;
+        if (!--*handler->count)  /* removed during execution */
         {
-            list_remove( &handler->entry );
+            RemoveEntryList( &handler->entry );
             to_free = handler;
         }
         if (ret == EXCEPTION_CONTINUE_EXECUTION) break;
@@ -196,16 +234,133 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /*******************************************************************
+ *		dispatch_exception
+ */
+NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+    DWORD i;
+
+    switch (rec->ExceptionCode)
+    {
+    case EXCEPTION_WINE_STUB:
+        if (rec->ExceptionInformation[1] >> 16)
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                     rec->ExceptionAddress,
+                     (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        else
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%u, aborting\n",
+                     rec->ExceptionAddress,
+                     (char *)rec->ExceptionInformation[0], (USHORT)rec->ExceptionInformation[1] );
+        break;
+
+    case EXCEPTION_WINE_NAME_THREAD:
+        if (rec->ExceptionInformation[0] == 0x1000)
+        {
+            const char *name = (char *)rec->ExceptionInformation[1];
+            DWORD tid = (DWORD)rec->ExceptionInformation[2];
+
+            if (tid == -1 || tid == GetCurrentThreadId())
+                WARN_(threadname)( "Thread renamed to %s\n", debugstr_a(name) );
+            else
+                WARN_(threadname)( "Thread ID %04lx renamed to %s\n", tid, debugstr_a(name) );
+            set_native_thread_name( tid, name );
+        }
+        break;
+
+    case DBG_PRINTEXCEPTION_C:
+        WARN( "%s\n", debugstr_an((char *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
+        break;
+
+    case DBG_PRINTEXCEPTION_WIDE_C:
+        WARN( "%s\n", debugstr_wn((WCHAR *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
+        break;
+
+    case STATUS_ASSERTION_FAILURE:
+        ERR( "assertion failure exception\n" );
+        break;
+
+    default:
+        if (!TRACE_ON(seh)) WARN( "%s exception (code=%lx) raised\n",
+                                  debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+        break;
+    }
+
+    TRACE( "code=%lx (%s) flags=%lx addr=%p\n",
+           rec->ExceptionCode, debugstr_exception_code(rec->ExceptionCode),
+           rec->ExceptionFlags, rec->ExceptionAddress );
+    for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
+        TRACE( " info[%ld]=%p\n", i, (void *)rec->ExceptionInformation[i] );
+    TRACE_CONTEXT( context );
+
+    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+        NtContinue( context, FALSE );
+
+    if ((status = call_seh_handlers( rec, context )) == STATUS_SUCCESS)
+        NtContinue( context, FALSE );
+
+    if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
+    return NtRaiseException( rec, context, FALSE );
+}
+
+
+#if defined(__WINE_PE_BUILD) && !defined(__i386__)
+
+/*******************************************************************
+ *		user_callback_handler
+ *
+ * Exception handler for KiUserCallbackDispatcher.
+ */
+EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
+                                                    CONTEXT *context, void *dispatch )
+{
+    if (!(record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)))
+    {
+        ERR( "ignoring exception %lx\n", record->ExceptionCode );
+        RtlUnwind( frame, KiUserCallbackDispatcherReturn, record, ULongToPtr(record->ExceptionCode) );
+    }
+    return ExceptionContinueSearch;
+}
+
+#else
+
+/*******************************************************************
+ *		dispatch_user_callback
+ *
+ * Implementation of KiUserCallbackDispatcher.
+ */
+NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
+{
+    NTSTATUS status;
+
+    __TRY
+    {
+        KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[id];
+        status = func( args, len );
+    }
+    __EXCEPT_ALL
+    {
+        status = GetExceptionCode();
+        ERR( "ignoring exception %lx\n", status );
+    }
+    __ENDTRY
+    return status;
+}
+
+#endif
+
+
+/*******************************************************************
  *		raise_status
  *
  * Implementation of RtlRaiseStatus with a specific exception record.
  */
-void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
+void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
 {
     EXCEPTION_RECORD ExceptionRec;
 
     ExceptionRec.ExceptionCode    = status;
-    ExceptionRec.ExceptionFlags   = EH_NONCONTINUABLE;
+    ExceptionRec.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
     ExceptionRec.ExceptionRecord  = rec;
     ExceptionRec.NumberParameters = 0;
     for (;;) RtlRaiseException( &ExceptionRec );  /* never returns */
@@ -217,28 +372,48 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
  *
  * Raise an exception with ExceptionCode = status
  */
-void WINAPI RtlRaiseStatus( NTSTATUS status )
+void DECLSPEC_NORETURN WINAPI RtlRaiseStatus( NTSTATUS status )
 {
     raise_status( status, NULL );
 }
 
 
 /*******************************************************************
+ *		KiRaiseUserExceptionDispatcher  (NTDLL.@)
+ */
+NTSTATUS WINAPI KiRaiseUserExceptionDispatcher(void)
+{
+    DWORD code = NtCurrentTeb()->ExceptionCode;
+    EXCEPTION_RECORD rec = { code };
+    RtlRaiseException( &rec );
+    return code;
+}
+
+
+/*******************************************************************
+ *         RtlAddVectoredContinueHandler   (NTDLL.@)
+ */
+PVOID WINAPI RtlAddVectoredContinueHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
+{
+    return add_vectored_handler( &vectored_continue_handlers, first, func );
+}
+
+
+/*******************************************************************
+ *         RtlRemoveVectoredContinueHandler   (NTDLL.@)
+ */
+ULONG WINAPI RtlRemoveVectoredContinueHandler( PVOID handler )
+{
+    return remove_vectored_handler( &vectored_continue_handlers, handler );
+}
+
+
+/*******************************************************************
  *         RtlAddVectoredExceptionHandler   (NTDLL.@)
  */
-PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
+PVOID WINAPI DECLSPEC_HOTPATCH RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
 {
-    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
-    if (handler)
-    {
-        handler->func = RtlEncodePointer( func );
-        handler->count = 1;
-        RtlEnterCriticalSection( &vectored_handlers_section );
-        if (first) list_add_head( &vectored_handlers, &handler->entry );
-        else list_add_tail( &vectored_handlers, &handler->entry );
-        RtlLeaveCriticalSection( &vectored_handlers_section );
-    }
-    return handler;
+    return add_vectored_handler( &vectored_exception_handlers, first, func );
 }
 
 
@@ -247,24 +422,57 @@ PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HA
  */
 ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 {
-    struct list *ptr;
-    ULONG ret = FALSE;
+    return remove_vectored_handler( &vectored_exception_handlers, handler );
+}
 
-    RtlEnterCriticalSection( &vectored_handlers_section );
-    LIST_FOR_EACH( ptr, &vectored_handlers )
+
+/*******************************************************************
+ *         RtlSetUnhandledExceptionFilter   (NTDLL.@)
+ */
+void WINAPI RtlSetUnhandledExceptionFilter( PRTL_EXCEPTION_FILTER filter )
+{
+    unhandled_exception_filter = filter;
+}
+
+
+/*******************************************************************
+ *         call_unhandled_exception_filter
+ */
+LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr )
+{
+    if (!unhandled_exception_filter) return EXCEPTION_CONTINUE_SEARCH;
+    return unhandled_exception_filter( eptr );
+}
+
+/*******************************************************************
+ *         call_unhandled_exception_handler
+ */
+EXCEPTION_DISPOSITION WINAPI call_unhandled_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                               CONTEXT *context, void *dispatch )
+{
+    EXCEPTION_POINTERS ep = { rec, context };
+
+    switch (call_unhandled_exception_filter( &ep ))
     {
-        VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
-        if (curr_handler == handler)
-        {
-            if (!--curr_handler->count) list_remove( ptr );
-            else handler = NULL;  /* don't free it yet */
-            ret = TRUE;
-            break;
-        }
+    case EXCEPTION_CONTINUE_SEARCH:
+        return ExceptionContinueSearch;
+    case EXCEPTION_CONTINUE_EXECUTION:
+        return ExceptionContinueExecution;
+    case EXCEPTION_EXECUTE_HANDLER:
+        break;
     }
-    RtlLeaveCriticalSection( &vectored_handlers_section );
-    if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
-    return ret;
+    NtTerminateProcess( GetCurrentProcess(), rec->ExceptionCode );
+    return ExceptionContinueExecution;
+}
+
+
+/*************************************************************
+ *            _assert
+ */
+void DECLSPEC_NORETURN __cdecl _assert( const char *str, const char *file, unsigned int line )
+{
+    ERR( "%s:%u: Assertion failed %s\n", file, line, debugstr_a(str) );
+    RtlRaiseStatus( EXCEPTION_WINE_ASSERTION );
 }
 
 
@@ -274,16 +482,566 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
  * ntdll-specific implementation to avoid depending on kernel functions.
  * Can be removed once ntdll.spec no longer contains stubs.
  */
-void __wine_spec_unimplemented_stub( const char *module, const char *function )
+void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     EXCEPTION_RECORD record;
 
     record.ExceptionCode    = EXCEPTION_WINE_STUB;
-    record.ExceptionFlags   = EH_NONCONTINUABLE;
+    record.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
     record.ExceptionRecord  = NULL;
     record.ExceptionAddress = __wine_spec_unimplemented_stub;
     record.NumberParameters = 2;
     record.ExceptionInformation[0] = (ULONG_PTR)module;
     record.ExceptionInformation[1] = (ULONG_PTR)function;
     for (;;) RtlRaiseException( &record );
+}
+
+
+/*************************************************************
+ *            IsBadStringPtrA
+ *
+ * IsBadStringPtrA replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const char *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+/*************************************************************
+ *            IsBadStringPtrW
+ *
+ * IsBadStringPtrW replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const WCHAR *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+#ifdef __i386__
+__ASM_STDCALL_IMPORT(IsBadStringPtrA,8)
+__ASM_STDCALL_IMPORT(IsBadStringPtrW,8)
+#else
+__ASM_GLOBAL_IMPORT(IsBadStringPtrA)
+__ASM_GLOBAL_IMPORT(IsBadStringPtrW)
+#endif
+
+
+/*************************************************************************
+ *		RtlCaptureStackBackTrace (NTDLL.@)
+ */
+USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, void **buffer, ULONG *hash_ret )
+{
+    ULONG i, ret, hash;
+
+    TRACE( "(%lu, %lu, %p, %p)\n", skip, count, buffer, hash_ret );
+
+    skip++;  /* skip our own frame */
+    ret = RtlWalkFrameChain( buffer, count + skip, skip << 8 );
+    if (hash_ret)
+    {
+        for (i = hash = 0; i < ret; i++) hash += (ULONG_PTR)buffer[i];
+        *hash_ret = hash;
+    }
+    return ret;
+}
+
+
+/*************************************************************************
+ *		RtlGetCallersAddress (NTDLL.@)
+ */
+void WINAPI RtlGetCallersAddress( void **caller, void **parent )
+{
+    void *buffer[2];
+    ULONG count = ARRAY_SIZE(buffer), skip = 2;  /* skip our frame and the parent */
+
+    count = RtlWalkFrameChain( buffer, count + skip, skip << 8 );
+    *caller = count > 0 ? buffer[0] : NULL;
+    *parent = count > 1 ? buffer[1] : NULL;
+}
+
+
+/**********************************************************************
+ *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
+{
+    return user_shared_data->XState.EnabledFeatures & feature_mask;
+}
+
+struct context_copy_range
+{
+    ULONG start;
+    ULONG flag;
+};
+
+static const struct context_copy_range copy_ranges_amd64[] =
+{
+    {0x38, 0x1}, {0x3a, 0x4}, { 0x42, 0x1}, { 0x48, 0x10}, { 0x78,  0x2}, { 0x98, 0x1},
+    {0xa0, 0x2}, {0xf8, 0x1}, {0x100, 0x8}, {0x2a0,    0}, {0x4b0, 0x10}, {0x4d0,   0}
+};
+
+static const struct context_copy_range copy_ranges_x86[] =
+{
+    {  0x4, 0x10}, {0x1c, 0x8}, {0x8c, 0x4}, {0x9c, 0x2}, {0xb4, 0x1}, {0xcc, 0x20}, {0x1ec, 0},
+    {0x2cc,    0},
+};
+
+static const struct context_parameters
+{
+    ULONG arch_flag;
+    ULONG supported_flags;
+    ULONG context_size;    /* sizeof(CONTEXT) */
+    ULONG legacy_size;     /* Legacy context size */
+    ULONG context_ex_size; /* sizeof(CONTEXT_EX) */
+    ULONG alignment;       /* Used when computing size of context. */
+    ULONG true_alignment;  /* Used for actual alignment. */
+    ULONG flags_offset;
+    const struct context_copy_range *copy_ranges;
+}
+arch_context_parameters[] =
+{
+    {
+        CONTEXT_AMD64,
+        0xd8000000 | CONTEXT_AMD64_ALL | CONTEXT_AMD64_XSTATE,
+        sizeof(AMD64_CONTEXT),
+        sizeof(AMD64_CONTEXT),
+        0x20,
+        7,
+        TYPE_ALIGNMENT(AMD64_CONTEXT) - 1,
+        offsetof(AMD64_CONTEXT,ContextFlags),
+        copy_ranges_amd64
+    },
+    {
+        CONTEXT_i386,
+        0xd8000000 | CONTEXT_I386_ALL | CONTEXT_I386_XSTATE,
+        sizeof(I386_CONTEXT),
+        offsetof(I386_CONTEXT,ExtendedRegisters),
+        0x18,
+        3,
+        TYPE_ALIGNMENT(I386_CONTEXT) - 1,
+        offsetof(I386_CONTEXT,ContextFlags),
+        copy_ranges_x86
+    },
+};
+
+static const struct context_parameters *context_get_parameters( ULONG context_flags )
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(arch_context_parameters); ++i)
+    {
+        if (context_flags & arch_context_parameters[i].arch_flag)
+            return context_flags & ~arch_context_parameters[i].supported_flags ? NULL : &arch_context_parameters[i];
+    }
+    return NULL;
+}
+
+/* offset is from the start of XSAVE_AREA_HEADER. */
+static int next_compacted_xstate_offset( int off, UINT64 compaction_mask, int feature_idx )
+{
+    const UINT64 feature_mask = (UINT64)1 << feature_idx;
+
+    if (compaction_mask & feature_mask) off += user_shared_data->XState.Features[feature_idx].Size;
+    if (user_shared_data->XState.AlignedFeatures & (feature_mask << 1))
+        off = (off + 63) & ~63;
+    return off;
+}
+
+/* size includes XSAVE_AREA_HEADER but not XSAVE_FORMAT (legacy save area). */
+static int xstate_get_compacted_size( UINT64 mask )
+{
+    UINT64 compaction_mask;
+    unsigned int i;
+    int off;
+
+    compaction_mask = ((UINT64)1 << 63) | mask;
+    mask >>= 2;
+    off = sizeof(XSAVE_AREA_HEADER);
+    i = 2;
+    while (mask)
+    {
+        if (mask == 1) return off + user_shared_data->XState.Features[i].Size;
+        off = next_compacted_xstate_offset( off, compaction_mask, i );
+        mask >>= 1;
+        ++i;
+    }
+    return off;
+}
+
+static int xstate_get_size( UINT64 mask )
+{
+    unsigned int i;
+
+    mask >>= 2;
+    if (!mask) return sizeof(XSAVE_AREA_HEADER);
+    i = 2;
+    while (mask != 1)
+    {
+        mask >>= 1;
+        ++i;
+    }
+    return user_shared_data->XState.Features[i].Offset + user_shared_data->XState.Features[i].Size - sizeof(XSAVE_FORMAT);
+}
+
+/**********************************************************************
+ *              RtlGetExtendedContextLength2    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length, ULONG64 compaction_mask )
+{
+    const struct context_parameters *p;
+    ULONG64 supported_mask;
+    ULONG64 size;
+
+    TRACE( "context_flags %#lx, length %p, compaction_mask %s.\n", context_flags, length,
+            wine_dbgstr_longlong(compaction_mask) );
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(context_flags & 0x40))
+    {
+        *length = p->context_size + p->context_ex_size + p->alignment;
+        return STATUS_SUCCESS;
+    }
+
+    if (!(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0) ))
+        return STATUS_NOT_SUPPORTED;
+
+    size = p->context_size + p->context_ex_size + 63;
+
+    compaction_mask &= supported_mask & ~(ULONG64)3;
+    if (user_shared_data->XState.CompactionEnabled) size += xstate_get_compacted_size( compaction_mask );
+    else if (compaction_mask)                       size += xstate_get_size( compaction_mask );
+    else                                            size += sizeof(XSAVE_AREA_HEADER);
+
+    *length = size;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlGetExtendedContextLength    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetExtendedContextLength( ULONG context_flags, ULONG *length )
+{
+    return RtlGetExtendedContextLength2( context_flags, length, ~(ULONG64)0 );
+}
+
+
+/**********************************************************************
+ *              RtlInitializeExtendedContext2    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flags, CONTEXT_EX **context_ex,
+        ULONG64 compaction_mask )
+{
+    const struct context_parameters *p;
+    ULONG64 supported_mask = 0;
+    CONTEXT_EX *c_ex;
+
+    TRACE( "context %p, context_flags %#lx, context_ex %p, compaction_mask %s.\n",
+            context, context_flags, context_ex, wine_dbgstr_longlong(compaction_mask));
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if ((context_flags & 0x40) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
+        return STATUS_NOT_SUPPORTED;
+
+    context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~(ULONG_PTR)p->true_alignment);
+    *(ULONG *)((BYTE *)context + p->flags_offset) = context_flags;
+
+    *context_ex = c_ex = (CONTEXT_EX *)((BYTE *)context + p->context_size);
+    c_ex->Legacy.Offset = c_ex->All.Offset = -(LONG)p->context_size;
+    c_ex->Legacy.Length = context_flags & 0x20 ? p->context_size : p->legacy_size;
+
+    if (context_flags & 0x40)
+    {
+        XSTATE *xs;
+
+        compaction_mask &= supported_mask;
+
+        xs = (XSTATE *)(((ULONG_PTR)c_ex + p->context_ex_size + 63) & ~(ULONG_PTR)63);
+
+        c_ex->XState.Offset = (ULONG_PTR)xs - (ULONG_PTR)c_ex;
+        compaction_mask &= supported_mask;
+
+        if (user_shared_data->XState.CompactionEnabled) c_ex->XState.Length = xstate_get_compacted_size( compaction_mask );
+        else if (compaction_mask & ~(ULONG64)3)         c_ex->XState.Length = xstate_get_size( compaction_mask );
+        else                                            c_ex->XState.Length = sizeof(XSAVE_AREA_HEADER);
+
+        memset( xs, 0, c_ex->XState.Length );
+        if (user_shared_data->XState.CompactionEnabled)
+            xs->CompactionMask = ((ULONG64)1 << 63) | compaction_mask;
+
+        c_ex->All.Length = p->context_size + c_ex->XState.Offset + c_ex->XState.Length;
+    }
+    else
+    {
+        c_ex->XState.Offset = 25; /* According to the tests, it is just 25 if CONTEXT_XSTATE is not specified. */
+        c_ex->XState.Length = 0;
+        c_ex->All.Length = p->context_size + 24; /* sizeof(CONTEXT_EX) minus 8 alignment bytes on x64. */
+    }
+
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlInitializeExtendedContext    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeExtendedContext( void *context, ULONG context_flags, CONTEXT_EX **context_ex )
+{
+    return RtlInitializeExtendedContext2( context, context_flags, context_ex, ~(ULONG64)0 );
+}
+
+
+/**********************************************************************
+ *              RtlLocateExtendedFeature2    (NTDLL.@)
+ */
+void * WINAPI RtlLocateExtendedFeature2( CONTEXT_EX *context_ex, ULONG feature_id,
+        XSTATE_CONFIGURATION *xstate_config, ULONG *length )
+{
+    UINT64 feature_mask = (ULONG64)1 << feature_id;
+    XSAVE_AREA_HEADER *xs;
+    unsigned int offset, i;
+
+    TRACE( "context_ex %p, feature_id %lu, xstate_config %p, length %p.\n",
+            context_ex, feature_id, xstate_config, length );
+
+    if (!xstate_config)
+    {
+        FIXME( "NULL xstate_config.\n" );
+        return NULL;
+    }
+
+    if (xstate_config != &user_shared_data->XState)
+    {
+        FIXME( "Custom xstate configuration is not supported.\n" );
+        return NULL;
+    }
+
+    if (feature_id < 2 || feature_id >= 64)
+        return NULL;
+
+    xs = (XSAVE_AREA_HEADER *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    if (length)
+        *length = xstate_config->Features[feature_id].Size;
+
+    if (xstate_config->CompactionEnabled)
+    {
+        if (!(xs->CompactionMask & feature_mask)) return NULL;
+        offset = sizeof(XSAVE_AREA_HEADER);
+        for (i = 2; i < feature_id; ++i)
+            offset = next_compacted_xstate_offset( offset, xs->CompactionMask, i );
+    }
+    else
+    {
+        if (!(feature_mask & xstate_config->EnabledFeatures)) return NULL;
+        offset = xstate_config->Features[feature_id].Offset - sizeof(XSAVE_FORMAT);
+    }
+
+    if (context_ex->XState.Length < offset + xstate_config->Features[feature_id].Size)
+        return NULL;
+
+    return (BYTE *)xs + offset;
+}
+
+
+/**********************************************************************
+ *              RtlLocateExtendedFeature    (NTDLL.@)
+ */
+void * WINAPI RtlLocateExtendedFeature( CONTEXT_EX *context_ex, ULONG feature_id,
+        ULONG *length )
+{
+    return RtlLocateExtendedFeature2( context_ex, feature_id, &user_shared_data->XState, length );
+}
+
+/**********************************************************************
+ *              RtlLocateLegacyContext      (NTDLL.@)
+ */
+void * WINAPI RtlLocateLegacyContext( CONTEXT_EX *context_ex, ULONG *length )
+{
+    if (length)
+        *length = context_ex->Legacy.Length;
+
+    return (BYTE *)context_ex + context_ex->Legacy.Offset;
+}
+
+/**********************************************************************
+ *              RtlSetExtendedFeaturesMask  (NTDLL.@)
+ */
+void WINAPI RtlSetExtendedFeaturesMask( CONTEXT_EX *context_ex, ULONG64 feature_mask )
+{
+    XSTATE *xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    xs->Mask = RtlGetEnabledExtendedFeatures( feature_mask ) & ~(ULONG64)3;
+}
+
+
+/**********************************************************************
+ *              RtlGetExtendedFeaturesMask  (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetExtendedFeaturesMask( CONTEXT_EX *context_ex )
+{
+    XSTATE *xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    return xs->Mask & ~(ULONG64)3;
+}
+
+
+static void context_copy_ranges( BYTE *d, DWORD context_flags, BYTE *s, const struct context_parameters *p )
+{
+    const struct context_copy_range *range;
+    unsigned int start;
+
+    *((ULONG *)(d + p->flags_offset)) |= context_flags;
+
+    start = 0;
+    range = p->copy_ranges;
+    do
+    {
+        if (range->flag & context_flags)
+        {
+            if (!start)
+                start = range->start;
+        }
+        else if (start)
+        {
+            memcpy( d + start, s + start, range->start - start );
+            start = 0;
+        }
+    }
+    while (range++->start != p->context_size);
+}
+
+
+/***********************************************************************
+ *              RtlCopyContext  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src )
+{
+    DWORD context_size, arch_flag, flags_offset, dst_flags, src_flags;
+    static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64;
+    const struct context_parameters *p;
+    BYTE *d, *s;
+
+    TRACE("dst %p, context_flags %#lx, src %p.\n", dst, context_flags, src);
+
+    if (context_flags & 0x40 && !RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) return STATUS_NOT_SUPPORTED;
+
+    arch_flag = context_flags & arch_mask;
+    switch (arch_flag)
+    {
+    case CONTEXT_i386:
+        context_size = sizeof( I386_CONTEXT );
+        flags_offset = offsetof( I386_CONTEXT, ContextFlags );
+        break;
+    case CONTEXT_AMD64:
+        context_size = sizeof( AMD64_CONTEXT );
+        flags_offset = offsetof( AMD64_CONTEXT, ContextFlags );
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    d = (BYTE *)dst;
+    s = (BYTE *)src;
+    dst_flags = *(DWORD *)(d + flags_offset);
+    src_flags = *(DWORD *)(s + flags_offset);
+
+    if ((dst_flags & arch_mask) != arch_flag || (src_flags & arch_mask) != arch_flag)
+        return STATUS_INVALID_PARAMETER;
+
+    context_flags &= src_flags;
+    if (context_flags & ~dst_flags & 0x40) return STATUS_BUFFER_OVERFLOW;
+
+    if (context_flags & 0x40)
+        return RtlCopyExtendedContext( (CONTEXT_EX *)(d + context_size), context_flags,
+                                       (CONTEXT_EX *)(s + context_size) );
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    context_copy_ranges( d, context_flags, s, p );
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlCopyExtendedContext      (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CONTEXT_EX *src )
+{
+    const struct context_parameters *p;
+    XSAVE_AREA_HEADER *dst_xs, *src_xs;
+    ULONG64 feature_mask;
+    unsigned int i, off, size;
+
+    TRACE( "dst %p, context_flags %#lx, src %p.\n", dst, context_flags, src );
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(feature_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) && context_flags & 0x40)
+        return STATUS_NOT_SUPPORTED;
+
+    context_copy_ranges( RtlLocateLegacyContext( dst, NULL ), context_flags, RtlLocateLegacyContext( src, NULL ), p );
+
+    if (!(context_flags & 0x40))
+        return STATUS_SUCCESS;
+
+    if (dst->XState.Length < sizeof(XSAVE_AREA_HEADER))
+        return STATUS_BUFFER_OVERFLOW;
+
+    dst_xs = (XSAVE_AREA_HEADER *)((BYTE *)dst + dst->XState.Offset);
+    src_xs = (XSAVE_AREA_HEADER *)((BYTE *)src + src->XState.Offset);
+
+    memset(dst_xs, 0, sizeof(XSAVE_AREA_HEADER));
+    dst_xs->Mask = (src_xs->Mask & ~(ULONG64)3) & feature_mask;
+    dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled
+            ? ((ULONG64)1 << 63) | (src_xs->CompactionMask & feature_mask) : 0;
+
+
+    if (dst_xs->CompactionMask) feature_mask &= dst_xs->CompactionMask;
+    feature_mask = dst_xs->Mask >> 2;
+
+    i = 2;
+    off = sizeof(XSAVE_AREA_HEADER);
+    while (1)
+    {
+        if (feature_mask & 1)
+        {
+            if (!dst_xs->CompactionMask) off = user_shared_data->XState.Features[i].Offset - sizeof(XSAVE_FORMAT);
+            size = user_shared_data->XState.Features[i].Size;
+            if (src->XState.Length < off + size || dst->XState.Length < off + size) break;
+            memcpy( (BYTE *)dst_xs + off, (BYTE *)src_xs + off, size );
+        }
+        if (!(feature_mask >>= 1)) break;
+        if (dst_xs->CompactionMask) off = next_compacted_xstate_offset( off, dst_xs->CompactionMask, i);
+        ++i;
+    }
+    return STATUS_SUCCESS;
 }

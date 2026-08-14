@@ -1,16 +1,18 @@
 MODULE    = d3dx10_43.dll
 IMPORTLIB = d3dx10
-IMPORTS   = d3d10_1 d3dcompiler dxguid uuid gdi32
+IMPORTS   = d3d10_1 d3dcompiler dxguid uuid gdi32 ole32 user32
+PARENTSRC = ../d3dx9_36
 DELAYIMPORTS = windowscodecs
 
-EXTRADLLFLAGS = -Wb,--prefer-native
+VER_FILEDESCRIPTION_STR = "Wine D3DX10"
+VER_PRODUCTVERSION      = 9,29,952,3111
 
 SOURCES = \
 	async.c \
 	compiler.c \
 	d3dx10_43_main.c \
+	d3dx_helpers.c \
 	font.c \
 	mesh.c \
 	sprite.c \
-	texture.c \
-	version.rc
+	texture.c

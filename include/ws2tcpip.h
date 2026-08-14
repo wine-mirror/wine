@@ -149,6 +149,7 @@ static inline char *gai_strerrorA(int errcode)
 
     /* FIXME: should format message from system, ignoring inserts in neutral
      * language */
+    UNREFERENCED_PARAMETER(errcode);
     buffer[0] = '\0';
 
     return buffer;
@@ -160,6 +161,7 @@ static inline WCHAR *gai_strerrorW(int errcode)
 
     /* FIXME: should format message from system, ignoring inserts in neutral
      * language */
+    UNREFERENCED_PARAMETER(errcode);
     buffer[0] = '\0';
 
     return buffer;

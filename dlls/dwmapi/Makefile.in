@@ -2,6 +2,8 @@ MODULE    = dwmapi.dll
 IMPORTS   = user32
 IMPORTLIB = dwmapi
 
+VER_FILEDESCRIPTION_STR = "Desktop Window Manager API"
+VER_PRODUCTVERSION      = 6,0,6000,16386
+
 SOURCES = \
-	dwmapi_main.c \
-	version.rc
+	dwmapi_main.c

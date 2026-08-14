@@ -2,5 +2,5 @@ MODULE = photometadatahandler.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-SOURCES = \
-	photometadatahandler.rc
+VER_FILEDESCRIPTION_STR = "Wine photometadatahandler dll"
+VER_PRODUCTVERSION      = 7,0,0,0

@@ -384,7 +384,7 @@ Severity=Error
 Facility=MF
 SymbolicName=MF_E_OPERATION_CANCELLED
 Language=ENU
-Operation was cancelled.
+Operation was canceled.
 .
 MessageId=14062
 Severity=Error

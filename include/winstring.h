@@ -47,6 +47,11 @@ HRESULT WINAPI WindowsSubstringWithSpecifiedLength(HSTRING str, UINT32 pos,
 HRESULT WINAPI WindowsTrimStringEnd(HSTRING str, HSTRING charstr, HSTRING *out);
 HRESULT WINAPI WindowsTrimStringStart(HSTRING str, HSTRING charstr, HSTRING *out);
 
+ULONG __RPC_USER HSTRING_UserSize(ULONG *flags, ULONG size, HSTRING *str);
+BYTE * __RPC_USER HSTRING_UserMarshal(ULONG *flags, BYTE *buf, HSTRING *str);
+BYTE * __RPC_USER HSTRING_UserUnmarshal(ULONG *flags, BYTE *buf, HSTRING *str);
+void __RPC_USER HSTRING_UserFree(ULONG *flags, HSTRING *str);
+
 #ifdef __cplusplus
 }
 #endif

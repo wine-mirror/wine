@@ -101,7 +101,7 @@ static void clip_cursor_location(CGRect cursorClipRect, CGPoint *location)
 }
 
 
-static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
+static void scale_rect_for_retina_mode(BOOL mode, CGRect *cursorClipRect)
 {
     double scale = mode ? 0.5 : 2.0;
     cursorClipRect->origin.x *= scale;
@@ -378,7 +378,7 @@ static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
         clip_cursor_location(cursorClipRect, location);
     }
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         scale_rect_for_retina_mode(mode, &cursorClipRect);
     }
@@ -499,7 +499,7 @@ static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
         clip_cursor_location(cursorClipRect, location);
     }
 
-    - (void) setRetinaMode:(int)mode
+    - (void) setRetinaMode:(BOOL)mode
     {
         scale_rect_for_retina_mode(mode, &cursorClipRect);
     }

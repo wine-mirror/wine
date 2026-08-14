@@ -522,7 +522,11 @@ HRESULT d2d_factory_create_device(ID2D1Factory1 *factory, IDXGIDevice *dxgi_devi
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_device_init(object, factory, dxgi_device, allow_get_dxgi_device);
+    if (FAILED(hr = d2d_device_init(object, factory, dxgi_device, allow_get_dxgi_device)))
+    {
+        ID2D1Device6_Release(&object->ID2D1Device6_iface);
+        return hr;
+    }
 
     TRACE("Create device %p.\n", object);
 
@@ -1441,6 +1445,27 @@ BOOL WINAPI D2D1InvertMatrix(D2D1_MATRIX_3X2_F *matrix)
     return d2d_matrix_invert(matrix, &m);
 }
 
+float WINAPI D2D1ComputeMaximumScaleFactor(const D2D1_MATRIX_3X2_F *matrix)
+{
+    const float (*m)[2] = matrix->m;
+    float a1, a2, c;
+
+    TRACE("matrix %p.\n", matrix);
+
+    /* 2x2 matrix, _31 and _32 are ignored. */
+    a1 = m[0][0] * m[0][0] + m[1][0] * m[1][0];
+    a2 = m[0][1] * m[0][1] + m[1][1] * m[1][1];
+    c = m[0][0] * m[0][1] + m[1][0] * m[1][1];
+
+    /* Maximum scale factor of matrix M refers to maximum value of |Mv|/|v| over all vectors v, where |.| is
+     * vector length. That is defined as matrix spectral norm. Spectral norm equals to the maximum of the
+     * singular values s1, s2 for 2x2 matrix M.
+     * s_i^2 = e_i where e_i (e1, e2) are eigenvalues of (transpose(M) * M)
+     * e1 + e2 = trace(transpose(M) * M) = a1 + a2
+     * e1 * e2 = det(transpose(M) * M) = a1 * a2 - c ^ 2. */
+    return sqrtf(0.5f * (a1 + a2 + sqrtf((a1 - a2) * (a1 - a2) + 4 * c * c)));
+}
+
 HRESULT WINAPI D2D1CreateDevice(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device)
 {
@@ -1482,6 +1507,28 @@ HRESULT WINAPI D2D1CreateDevice(IDXGIDevice *dxgi_device,
 
     hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, device);
     ID2D1Factory1_Release(factory);
+    return hr;
+}
+
+HRESULT WINAPI D2D1CreateDeviceContext(IDXGISurface *dxgi_surface,
+        const D2D1_CREATION_PROPERTIES *properties, ID2D1DeviceContext **context)
+{
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
+    HRESULT hr;
+
+    TRACE("dxgi_surface %p, properties %p, context %p.\n", dxgi_surface, properties, context);
+
+    if (FAILED(hr = IDXGISurface_GetDevice(dxgi_surface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+
+    if (SUCCEEDED(hr = D2D1CreateDevice(dxgi_device, properties, &device)))
+    {
+        hr = ID2D1Device_CreateDeviceContext(device, properties ? properties->options : D2D1_DEVICE_CONTEXT_OPTIONS_NONE, context);
+        ID2D1Device_Release(device);
+    }
+
+    IDXGIDevice_Release(dxgi_device);
     return hr;
 }
 

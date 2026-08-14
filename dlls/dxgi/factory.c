@@ -272,6 +272,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC windowed_fullscreen_desc = {0};
     IWineDXGISwapChainFactory *swapchain_factory;
     ID3D12CommandQueue *command_queue;
     HRESULT hr;
@@ -293,6 +294,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
 
     if (!dxgi_validate_swapchain_desc(desc))
         return DXGI_ERROR_INVALID_CALL;
+
+    if (!fullscreen_desc || !dxgi_validate_swapchain_fullscreen_desc(fullscreen_desc))
+    {
+        if (fullscreen_desc)
+            windowed_fullscreen_desc = *fullscreen_desc;
+        windowed_fullscreen_desc.Windowed = TRUE;
+        fullscreen_desc = &windowed_fullscreen_desc;
+    }
 
     if (output)
         FIXME("Ignoring output %p.\n", output);
@@ -439,9 +448,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IWineDXGIFactory
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumWarpAdapter(IWineDXGIFactory *iface,
         REFIID iid, void **adapter)
 {
-    FIXME("iface %p, iid %s, adapter %p stub!\n", iface, debugstr_guid(iid), adapter);
+    IDXGIAdapter1 *adapter_object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, iid %s, adapter %p semi-stub, returning a hardware adapter.\n",
+            iface, debugstr_guid(iid), adapter);
+
+    if (!adapter)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (FAILED(hr = dxgi_factory_EnumAdapters1(iface, 0, &adapter_object)))
+        return hr;
+
+    hr = IDXGIAdapter1_QueryInterface(adapter_object, iid, adapter);
+    IDXGIAdapter1_Release(adapter_object);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CheckFeatureSupport(IWineDXGIFactory *iface,

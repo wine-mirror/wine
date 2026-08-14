@@ -20,3 +20,7 @@
 
 /* @makedep: msvfw32.manifest */
 1 RT_MANIFEST msvfw32.manifest
+
+/* ffmpeg -f lavfi -i "sine=frequency=500" -t 0.5 -ar 48000 -b:a 32k -f mp3 -acodec mp3 -write_xing 0 test.mp3 */
+/* @makedep: test.mp3 */
+test.mp3 RCDATA "test.mp3"

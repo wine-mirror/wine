@@ -361,6 +361,20 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
 
+    /* set a bool value */
+    spec.ulKind = PRSPEC_PROPID;
+    spec.propid = PID_FIRST_USABLE + 1;
+    var.vt = VT_BOOL;
+    var.boolVal = VARIANT_TRUE;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(hr == S_OK, "WriteMultiple failed: 0x%08lx\n", hr);
+
+    spec.ulKind = PRSPEC_LPWSTR;
+    spec.lpwstr = (WCHAR*)L"TestBoolProp";
+    var.boolVal = VARIANT_FALSE;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, PID_FIRST_USABLE);
+    ok(hr == S_OK, "Write VT_BOOL (FALSE) by name failed: 0x%08lx\n", hr);
+
     hr = IPropertyStorage_Commit(propertyStorage, STGC_DEFAULT);
     ok(hr == S_OK, "Commit failed: 0x%08lx\n", hr);
 
@@ -402,6 +416,22 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
     ok(var.vt == VT_I4 && var.lVal == 1,
      "Didn't get expected type or value for property (got type %d, value %ld)\n",
      var.vt, var.lVal);
+
+    PropVariantClear(&var);
+    spec.ulKind = PRSPEC_PROPID;
+    spec.propid = PID_FIRST_USABLE + 1;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_BOOL && var.boolVal == VARIANT_TRUE,
+     "Didn't get expected type or value for property (got type %d, value %d)\n",
+     var.vt, var.boolVal);
+
+    PropVariantClear(&var);
+    spec.ulKind = PRSPEC_LPWSTR;
+    spec.lpwstr = (WCHAR*)L"TestBoolProp";
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(hr == S_OK && var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE,
+     "Read VT_BOOL (FALSE) failed\n");
 
     IPropertyStorage_Release(propertyStorage);
     if(propSetStorage) IPropertySetStorage_Release(*propSetStorage);

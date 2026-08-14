@@ -22,6 +22,8 @@
 #pragma makedep unix
 #endif
 
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+
 #include "config.h"
 
 #include <assert.h>
@@ -29,10 +31,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -42,21 +45,51 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+#include <dlfcn.h>
+
+#define ANDROID_LOG_ERR ANDROID_LOG_ERROR
+#define ANDROID_LOG_TRACE ANDROID_LOG_VERBOSE
+#define ANDROID_LOG_FIXME 16
+
+static int log_flags;
+
+#define LOG(level, fmt, ...) \
+    do { \
+        if (!(log_flags & (1 << __WINE_DBCL_INIT)) || (log_flags & (1 << __WINE_DBCL_ ## level))) \
+        { \
+            int prio = (ANDROID_LOG_ ## level == ANDROID_LOG_FIXME) ? \
+                       ANDROID_LOG_WARN : ANDROID_LOG_ ## level; \
+            p__android_log_print(prio, "wineandroid.drv", "%s: %s" fmt, \
+                                 __func__, \
+                                 (ANDROID_LOG_ ## level == ANDROID_LOG_FIXME) ? "FIXME: " : "", \
+                                 ##__VA_ARGS__); \
+        } \
+    } while (0)
+
+#define DBGSTR_RECT_FMT "(%d,%d)-(%d,%d)"
+#define DBGSTR_RECT(rect) (int)(rect)->left, (int)(rect)->top, (int)(rect)->right, (int)(rect)->bottom
+
+
 WINE_DEFAULT_DEBUG_CHANNEL(android);
+
+static int desktop_client_fd = -1;
+static jobject java_object;
 
 #ifndef SYNC_IOC_WAIT
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
 #endif
 
-static HANDLE thread;
-static JNIEnv *jni_env;
-static HWND capture_window;
+static HWND desktop_window;
+
+int event_sink = -1;
+static pthread_mutex_t dispatch_ioctl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 #define ANDROIDCONTROLTYPE  ((ULONG)'A')
 #define ANDROID_IOCTL(n) CTL_CODE(ANDROIDCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 enum android_ioctl
 {
+    IOCTL_CREATE_DESKTOP_VIEW,
     IOCTL_CREATE_WINDOW,
     IOCTL_DESTROY_WINDOW,
     IOCTL_WINDOW_POS_CHANGED,
@@ -74,21 +107,11 @@ enum android_ioctl
 
 #define NB_CACHED_BUFFERS 4
 
-struct native_buffer_wrapper;
-
-/* buffer for storing a variable-size native handle inside an ioctl structure */
-union native_handle_buffer
-{
-    native_handle_t handle;
-    int space[256];
-};
-
 /* data about the native window in the context of the Java process */
 struct native_win_data
 {
     struct ANativeWindow       *parent;
-    struct ANativeWindowBuffer *buffers[NB_CACHED_BUFFERS];
-    void                       *mappings[NB_CACHED_BUFFERS];
+    struct AHardwareBuffer *buffers[NB_CACHED_BUFFERS];
     HWND                        hwnd;
     BOOL                        opengl;
     int                         generation;
@@ -102,23 +125,24 @@ struct native_win_data
 struct native_win_wrapper
 {
     struct ANativeWindow          win;
-    struct native_buffer_wrapper *buffers[NB_CACHED_BUFFERS];
-    struct ANativeWindowBuffer   *locked_buffer;
+    struct
+    {
+        struct AHardwareBuffer   *self;
+        int                       buffer_id;
+        int                       generation;
+    } buffers[NB_CACHED_BUFFERS];
+    struct AHardwareBuffer       *locked_buffer;
     HWND                          hwnd;
     BOOL                          opengl;
     LONG                          ref;
 };
 
-/* wrapper for a native buffer in the context of the client (non-Java) process */
-struct native_buffer_wrapper
-{
-    struct ANativeWindowBuffer buffer;
-    LONG                       ref;
-    HWND                       hwnd;
-    void                      *bits;
-    int                        buffer_id;
-    int                        generation;
-    union native_handle_buffer native_handle;
+#define IPC_SOCKET_NAME "\0\\Device\\WineAndroid"
+#define IPC_SOCKET_ADDR_LEN ((socklen_t)(offsetof(struct sockaddr_un, sun_path) + sizeof(IPC_SOCKET_NAME) - 1))
+
+static const struct sockaddr_un ipc_addr = {
+    .sun_family = AF_UNIX,
+    .sun_path = IPC_SOCKET_NAME,
 };
 
 struct ioctl_header
@@ -127,11 +151,17 @@ struct ioctl_header
     BOOL opengl;
 };
 
+struct ioctl_android_create_desktop_view
+{
+    struct ioctl_header hdr;
+    int                 log_flags;
+};
+
 struct ioctl_android_create_window
 {
     struct ioctl_header hdr;
     int                 parent;
-    float               scale;
+    BOOL                is_desktop;
 };
 
 struct ioctl_android_destroy_window
@@ -154,15 +184,8 @@ struct ioctl_android_window_pos_changed
 struct ioctl_android_dequeueBuffer
 {
     struct ioctl_header hdr;
-    int                 win32;
-    int                 width;
-    int                 height;
-    int                 stride;
-    int                 format;
-    int                 usage;
-    int                 buffer_id;
-    int                 generation;
-    union native_handle_buffer native_handle;
+    int buffer_id;
+    int generation;
 };
 
 struct ioctl_android_queueBuffer
@@ -203,7 +226,6 @@ struct ioctl_android_set_window_parent
 {
     struct ioctl_header hdr;
     int                 parent;
-    float               scale;
 };
 
 struct ioctl_android_set_capture
@@ -222,72 +244,6 @@ struct ioctl_android_set_cursor
     int                 bits[1];
 };
 
-static struct gralloc_module_t *gralloc_module;
-static struct gralloc1_device *gralloc1_device;
-static BOOL gralloc1_caps[GRALLOC1_LAST_CAPABILITY + 1];
-
-static gralloc1_error_t (*gralloc1_retain)( gralloc1_device_t *device, buffer_handle_t buffer );
-static gralloc1_error_t (*gralloc1_release)( gralloc1_device_t *device, buffer_handle_t buffer );
-static gralloc1_error_t (*gralloc1_lock)( gralloc1_device_t *device, buffer_handle_t buffer,
-                                          uint64_t producerUsage, uint64_t consumerUsage,
-                                          const gralloc1_rect_t *accessRegion, void **outData,
-                                          int32_t acquireFence );
-static gralloc1_error_t (*gralloc1_unlock)( gralloc1_device_t *device, buffer_handle_t buffer,
-                                            int32_t *outReleaseFence );
-
-static inline BOOL is_in_desktop_process(void)
-{
-    return thread != NULL;
-}
-
-static inline DWORD current_client_id(void)
-{
-    DWORD client_id = NtUserGetThreadInfo()->driver_data;
-    return client_id ? client_id : GetCurrentProcessId();
-}
-
-static inline BOOL is_client_in_process(void)
-{
-    return current_client_id() == GetCurrentProcessId();
-}
-
-#ifdef __i386__  /* the Java VM uses %fs/%gs for its own purposes, so we need to wrap the calls */
-
-static WORD orig_fs, java_fs;
-static inline void wrap_java_call(void)   { __asm__( "mov %0,%%fs" :: "r" (java_fs) ); }
-static inline void unwrap_java_call(void) { __asm__( "mov %0,%%fs" :: "r" (orig_fs) ); }
-static inline void init_java_thread( JavaVM *java_vm )
-{
-    java_fs = *p_java_gdt_sel;
-    __asm__( "mov %%fs,%0" : "=r" (orig_fs) );
-    __asm__( "mov %0,%%fs" :: "r" (java_fs) );
-    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-    if (!*p_java_gdt_sel) __asm__( "mov %%fs,%0" : "=r" (java_fs) );
-    __asm__( "mov %0,%%fs" :: "r" (orig_fs) );
-}
-
-#elif defined(__x86_64__)
-
-#include <asm/prctl.h>
-#include <asm/unistd.h>
-static void *orig_teb, *java_teb;
-static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
-static inline void wrap_java_call(void)   { arch_prctl( ARCH_SET_GS, java_teb ); }
-static inline void unwrap_java_call(void) { arch_prctl( ARCH_SET_GS, orig_teb ); }
-static inline void init_java_thread( JavaVM *java_vm )
-{
-    arch_prctl( ARCH_GET_GS, &orig_teb );
-    (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-    arch_prctl( ARCH_GET_GS, &java_teb );
-    arch_prctl( ARCH_SET_GS, orig_teb );
-}
-
-#else
-static inline void wrap_java_call(void) { }
-static inline void unwrap_java_call(void) { }
-static inline void init_java_thread( JavaVM *java_vm ) { (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 ); }
-#endif  /* __i386__ */
-
 static struct native_win_data *data_map[65536];
 
 static unsigned int data_map_idx( HWND hwnd, BOOL opengl )
@@ -301,7 +257,7 @@ static struct native_win_data *get_native_win_data( HWND hwnd, BOOL opengl )
     struct native_win_data *data = data_map[data_map_idx( hwnd, opengl )];
 
     if (data && data->hwnd == hwnd && !data->opengl == !opengl) return data;
-    WARN( "unknown win %p opengl %u\n", hwnd, opengl );
+    LOG( WARN, "unknown win %p opengl %u\n", hwnd, opengl );
     return NULL;
 }
 
@@ -326,75 +282,46 @@ static void wait_fence_and_close( int fence )
     close( fence );
 }
 
-static int duplicate_fd( HANDLE client, int fd )
+static inline struct ANativeWindowBuffer *anwb_from_ahb(AHardwareBuffer *ahb)
 {
-    HANDLE handle, ret = 0;
+    static ptrdiff_t off = (ptrdiff_t)-1;
 
-    if (!wine_server_fd_to_handle( dup(fd), GENERIC_READ | SYNCHRONIZE, 0, &handle ))
-        NtDuplicateObject( GetCurrentProcess(), handle, client, &ret,
-                           0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
+    if (!ahb) return NULL;
 
-    if (!ret) return -1;
-    return HandleToLong( ret );
+    if (off == (ptrdiff_t)-1)
+    {
+        struct ANativeWindowBuffer *fake =
+        (struct ANativeWindowBuffer *)(uintptr_t)0x10000u;
+
+        AHardwareBuffer *h = pANativeWindowBuffer_getHardwareBuffer(fake);
+        off = (const char *)h - (const char *)fake;
+    }
+
+    return (struct ANativeWindowBuffer *)((char *)ahb - off);
 }
 
-static int map_native_handle( union native_handle_buffer *dest, const native_handle_t *src,
-                              HANDLE mapping, HANDLE client )
+static AHardwareBuffer *ahb_from_anwb( struct native_win_wrapper *win, struct ANativeWindowBuffer *buffer, int *buffer_id, int *generation )
 {
-    const size_t size = offsetof( native_handle_t, data[src->numFds + src->numInts] );
-    int i;
+    AHardwareBuffer *ahb;
+    unsigned int i;
 
-    if (mapping)  /* only duplicate the mapping handle */
+    if (!buffer) return NULL;
+
+    ahb = pANativeWindowBuffer_getHardwareBuffer(buffer);
+
+    if (win)
     {
-        HANDLE ret = 0;
-        if (!NtDuplicateObject( GetCurrentProcess(), mapping, client, &ret,
-                                0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE ))
-            return -ENOSPC;
-        dest->handle.numFds = 0;
-        dest->handle.numInts = 1;
-        dest->handle.data[0] = HandleToLong( ret );
-        return 0;
+        for (i = 0; i < NB_CACHED_BUFFERS; ++i)
+        {
+            if (win->buffers[i].self != ahb) continue;
+
+            if (buffer_id) *buffer_id = win->buffers[i].buffer_id;
+            if (generation) *generation = win->buffers[i].generation;
+            break;
+        }
     }
-    if (is_client_in_process())  /* transfer the actual handle pointer */
-    {
-        dest->handle.numFds = 0;
-        dest->handle.numInts = sizeof(src) / sizeof(int);
-        memcpy( dest->handle.data, &src, sizeof(src) );
-        return 0;
-    }
-    if (size > sizeof(*dest)) return -ENOSPC;
-    memcpy( dest, src, size );
-    /* transfer file descriptors to the client process */
-    for (i = 0; i < dest->handle.numFds; i++)
-        dest->handle.data[i] = duplicate_fd( client, src->data[i] );
-    return 0;
-}
 
-static native_handle_t *unmap_native_handle( const native_handle_t *src )
-{
-    const size_t size = offsetof( native_handle_t, data[src->numFds + src->numInts] );
-    native_handle_t *dest;
-    int i;
-
-    if (!is_in_desktop_process())
-    {
-        dest = malloc( size );
-        memcpy( dest, src, size );
-        /* fetch file descriptors passed from the server process */
-        for (i = 0; i < dest->numFds; i++)
-            wine_server_handle_to_fd( LongToHandle(src->data[i]), GENERIC_READ | SYNCHRONIZE,
-                                      &dest->data[i], NULL );
-    }
-    else memcpy( &dest, src->data, sizeof(dest) );
-    return dest;
-}
-
-static void close_native_handle( native_handle_t *handle )
-{
-    int i;
-
-    for (i = 0; i < handle->numFds; i++) close( handle->data[i] );
-    free( handle );
+    return ahb;
 }
 
 /* insert a buffer index at the head of the LRU list */
@@ -413,8 +340,7 @@ static void insert_buffer_lru( struct native_win_data *win, int index )
     win->buffer_lru[0] = index;
 }
 
-static int register_buffer( struct native_win_data *win, struct ANativeWindowBuffer *buffer,
-                            HANDLE *mapping, int *is_new )
+static int register_buffer( struct native_win_data *win, struct AHardwareBuffer *buffer, int *is_new )
 {
     unsigned int i;
 
@@ -431,31 +357,16 @@ static int register_buffer( struct native_win_data *win, struct ANativeWindowBuf
         i = win->buffer_lru[NB_CACHED_BUFFERS - 1];
         assert( i < NB_CACHED_BUFFERS );
 
-        TRACE( "%p %p evicting buffer %p id %d from cache\n",
+        LOG( TRACE, "%p %p evicting buffer %p id %d from cache\n",
                win->hwnd, win->parent, win->buffers[i], i );
-        win->buffers[i]->common.decRef( &win->buffers[i]->common );
-        if (win->mappings[i]) NtUnmapViewOfSection( GetCurrentProcess(), win->mappings[i] );
+        pAHardwareBuffer_release(win->buffers[i]);
     }
 
     win->buffers[i] = buffer;
-    win->mappings[i] = NULL;
 
-    if (mapping)
-    {
-        OBJECT_ATTRIBUTES attr;
-        LARGE_INTEGER size;
-        SIZE_T count = 0;
-        size.QuadPart = buffer->stride * buffer->height * 4;
-        InitializeObjectAttributes( &attr, NULL, OBJ_OPENIF, NULL, NULL );
-        NtCreateSection( mapping,
-                         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE,
-                         &attr, &size, PAGE_READWRITE, 0, INVALID_HANDLE_VALUE );
-        NtMapViewOfSection( *mapping, GetCurrentProcess(), &win->mappings[i], 0, 0,
-                            NULL, &count, ViewShare, 0, PAGE_READONLY );
-    }
-    buffer->common.incRef( &buffer->common );
+    pAHardwareBuffer_acquire(buffer);
     *is_new = 1;
-    TRACE( "%p %p %p -> %d\n", win->hwnd, win->parent, buffer, i );
+    LOG( TRACE, "%p %p %p -> %d\n", win->hwnd, win->parent, buffer, i );
 
 done:
     insert_buffer_lru( win, i );
@@ -466,10 +377,10 @@ static struct ANativeWindowBuffer *get_registered_buffer( struct native_win_data
 {
     if (id < 0 || id >= NB_CACHED_BUFFERS || !win->buffers[id])
     {
-        ERR( "unknown buffer %d for %p %p\n", id, win->hwnd, win->parent );
+        LOG( ERR, "unknown buffer %d for %p %p\n", id, win->hwnd, win->parent );
         return NULL;
     }
-    return win->buffers[id];
+    return anwb_from_ahb(win->buffers[id]);
 }
 
 static void release_native_window( struct native_win_data *data )
@@ -479,19 +390,16 @@ static void release_native_window( struct native_win_data *data )
     if (data->parent) pANativeWindow_release( data->parent );
     for (i = 0; i < NB_CACHED_BUFFERS; i++)
     {
-        if (data->buffers[i]) data->buffers[i]->common.decRef( &data->buffers[i]->common );
-        if (data->mappings[i]) NtUnmapViewOfSection( GetCurrentProcess(), data->mappings[i] );
+        if (data->buffers[i]) pAHardwareBuffer_release(data->buffers[i]);
         data->buffer_lru[i] = -1;
     }
     memset( data->buffers, 0, sizeof(data->buffers) );
-    memset( data->mappings, 0, sizeof(data->mappings) );
 }
 
 static void free_native_win_data( struct native_win_data *data )
 {
     unsigned int idx = data_map_idx( data->hwnd, data->opengl );
 
-    InterlockedCompareExchangePointer( (void **)&capture_window, 0, data->hwnd );
     release_native_window( data );
     free( data );
     data_map[idx] = NULL;
@@ -504,7 +412,7 @@ static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
 
     if (data)
     {
-        WARN( "data for %p not freed correctly\n", data->hwnd );
+        LOG( WARN, "data for %p not freed correctly\n", data->hwnd );
         free_native_win_data( data );
     }
     if (!(data = calloc( 1, sizeof(*data) ))) return NULL;
@@ -517,337 +425,211 @@ static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
     return data;
 }
 
-NTSTATUS android_register_window( void *arg )
+/* register a native window received from the UI thread for use in ioctls */
+void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
 {
-    struct register_window_params *params = arg;
-    HWND hwnd = (HWND)params->arg1;
-    struct ANativeWindow *win = (struct ANativeWindow *)params->arg2;
-    BOOL opengl = params->arg3;
-    struct native_win_data *data = get_native_win_data( hwnd, opengl );
+    struct native_win_data *data = NULL;
 
-    if (!win) return 0;  /* do nothing and hold on to the window until we get a new surface */
+    pthread_mutex_lock(&dispatch_ioctl_lock);
+    data = get_native_win_data( hwnd, opengl );
+
+    if (!win) goto end;  /* do nothing and hold on to the window until we get a new surface */
 
     if (!data || data->parent == win)
     {
         pANativeWindow_release( win );
-        if (data) NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
-        TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
-        return 0;
+        LOG( TRACE, "%p -> %p win %p (unchanged)\n", hwnd, data, win );
+        goto end;
     }
 
     release_native_window( data );
     data->parent = win;
     data->generation++;
-    wrap_java_call();
     if (data->api) win->perform( win, NATIVE_WINDOW_API_CONNECT, data->api );
     win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
     win->setSwapInterval( win, data->swap_interval );
-    unwrap_java_call();
-    NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
-    TRACE( "%p -> %p win %p\n", hwnd, data, win );
-    return 0;
+    LOG( TRACE, "%p -> %p win %p\n", hwnd, data, win );
+end:
+    pthread_mutex_unlock(&dispatch_ioctl_lock);
 }
 
-/* register a native window received from the Java side for use in ioctls */
-void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
+static jobject load_java_method( JNIEnv* env, jmethodID *method, const char *name, const char *args )
 {
-    NtQueueApcThread( thread, register_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
-}
-
-void init_gralloc( const struct hw_module_t *module )
-{
-    struct hw_device_t *device;
-    int ret;
-
-    TRACE( "got module %p ver %u.%u id %s name %s author %s\n",
-           module, module->module_api_version >> 8, module->module_api_version & 0xff,
-           debugstr_a(module->id), debugstr_a(module->name), debugstr_a(module->author) );
-
-    switch (module->module_api_version >> 8)
-    {
-    case 0:
-        gralloc_module = (struct gralloc_module_t *)module;
-        break;
-    case 1:
-        if (!(ret = module->methods->open( module, GRALLOC_HARDWARE_MODULE_ID, &device )))
-        {
-            int32_t caps[64];
-            uint32_t i, count = ARRAY_SIZE(caps);
-
-            gralloc1_device = (struct gralloc1_device *)device;
-            gralloc1_retain  = gralloc1_device->getFunction( gralloc1_device, GRALLOC1_FUNCTION_RETAIN );
-            gralloc1_release = gralloc1_device->getFunction( gralloc1_device, GRALLOC1_FUNCTION_RELEASE );
-            gralloc1_lock    = gralloc1_device->getFunction( gralloc1_device, GRALLOC1_FUNCTION_LOCK );
-            gralloc1_unlock  = gralloc1_device->getFunction( gralloc1_device, GRALLOC1_FUNCTION_UNLOCK );
-            TRACE( "got device version %u funcs %p %p %p %p\n", device->version,
-                   gralloc1_retain, gralloc1_release, gralloc1_lock, gralloc1_unlock );
-
-            gralloc1_device->getCapabilities( gralloc1_device, &count, caps );
-            if (count == ARRAY_SIZE(caps)) ERR( "too many gralloc capabilities\n" );
-            for (i = 0; i < count; i++)
-                if (caps[i] < ARRAY_SIZE(gralloc1_caps)) gralloc1_caps[caps[i]] = TRUE;
-        }
-        else ERR( "failed to open gralloc err %d\n", ret );
-        break;
-    default:
-        ERR( "unknown gralloc module version %u\n", module->module_api_version >> 8 );
-        break;
-    }
-}
-
-static int gralloc_grab_buffer( struct ANativeWindowBuffer *buffer )
-{
-    if (gralloc1_device)
-        return gralloc1_retain( gralloc1_device, buffer->handle );
-    if (gralloc_module)
-        return gralloc_module->registerBuffer( gralloc_module, buffer->handle );
-    return -ENODEV;
-}
-
-static void gralloc_release_buffer( struct ANativeWindowBuffer *buffer )
-{
-    if (gralloc1_device) gralloc1_release( gralloc1_device, buffer->handle );
-    else if (gralloc_module) gralloc_module->unregisterBuffer( gralloc_module, buffer->handle );
-
-    if (!gralloc1_caps[GRALLOC1_CAPABILITY_RELEASE_IMPLY_DELETE])
-        close_native_handle( (native_handle_t *)buffer->handle );
-}
-
-static int gralloc_lock( struct ANativeWindowBuffer *buffer, void **bits )
-{
-    if (gralloc1_device)
-    {
-        gralloc1_rect_t rect = { 0, 0, buffer->width, buffer->height };
-        return gralloc1_lock( gralloc1_device, buffer->handle,
-                              GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN |
-                              GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN,
-                              GRALLOC1_CONSUMER_USAGE_NONE, &rect, bits, -1 );
-    }
-    if (gralloc_module)
-        return gralloc_module->lock( gralloc_module, buffer->handle,
-                                     GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-                                     0, 0, buffer->width, buffer->height, bits );
-
-    *bits = ((struct native_buffer_wrapper *)buffer)->bits;
-    return 0;
-}
-
-static void gralloc_unlock( struct ANativeWindowBuffer *buffer )
-{
-    if (gralloc1_device)
-    {
-        int fence;
-        gralloc1_unlock( gralloc1_device, buffer->handle, &fence );
-        wait_fence_and_close( fence );
-    }
-    else if (gralloc_module) gralloc_module->unlock( gralloc_module, buffer->handle );
-}
-
-/* get the capture window stored in the desktop process */
-HWND get_capture_window(void)
-{
-    return capture_window;
-}
-
-static NTSTATUS android_error_to_status( int err )
-{
-    switch (err)
-    {
-    case 0:            return STATUS_SUCCESS;
-    case -ENOMEM:      return STATUS_NO_MEMORY;
-    case -ENOSYS:      return STATUS_NOT_SUPPORTED;
-    case -EINVAL:      return STATUS_INVALID_PARAMETER;
-    case -ENOENT:      return STATUS_INVALID_HANDLE;
-    case -EPERM:       return STATUS_ACCESS_DENIED;
-    case -ENODEV:      return STATUS_NO_SUCH_DEVICE;
-    case -EEXIST:      return STATUS_DUPLICATE_NAME;
-    case -EPIPE:       return STATUS_PIPE_DISCONNECTED;
-    case -ENODATA:     return STATUS_NO_MORE_FILES;
-    case -ETIMEDOUT:   return STATUS_IO_TIMEOUT;
-    case -EBADMSG:     return STATUS_INVALID_DEVICE_REQUEST;
-    case -EWOULDBLOCK: return STATUS_DEVICE_NOT_READY;
-    default:
-        FIXME( "unmapped error %d\n", err );
-        return STATUS_UNSUCCESSFUL;
-    }
-}
-
-static int status_to_android_error( unsigned int status )
-{
-    switch (status)
-    {
-    case STATUS_SUCCESS:                return 0;
-    case STATUS_NO_MEMORY:              return -ENOMEM;
-    case STATUS_NOT_SUPPORTED:          return -ENOSYS;
-    case STATUS_INVALID_PARAMETER:      return -EINVAL;
-    case STATUS_BUFFER_OVERFLOW:        return -EINVAL;
-    case STATUS_INVALID_HANDLE:         return -ENOENT;
-    case STATUS_ACCESS_DENIED:          return -EPERM;
-    case STATUS_NO_SUCH_DEVICE:         return -ENODEV;
-    case STATUS_DUPLICATE_NAME:         return -EEXIST;
-    case STATUS_PIPE_DISCONNECTED:      return -EPIPE;
-    case STATUS_NO_MORE_FILES:          return -ENODATA;
-    case STATUS_IO_TIMEOUT:             return -ETIMEDOUT;
-    case STATUS_INVALID_DEVICE_REQUEST: return -EBADMSG;
-    case STATUS_DEVICE_NOT_READY:       return -EWOULDBLOCK;
-    default:
-        FIXME( "unmapped status %08x\n", status );
-        return -EINVAL;
-    }
-}
-
-static jobject load_java_method( jmethodID *method, const char *name, const char *args )
-{
-    jobject object = *p_java_object;
-
     if (!*method)
     {
         jclass class;
 
-        wrap_java_call();
-        class = (*jni_env)->GetObjectClass( jni_env, object );
-        *method = (*jni_env)->GetMethodID( jni_env, class, name, args );
-        unwrap_java_call();
+        class = (*env)->GetObjectClass( env, java_object );
+        *method = (*env)->GetMethodID( env, class, name, args );
         if (!*method)
         {
-            FIXME( "method %s not found\n", name );
+            LOG( FIXME, "method %s not found\n", name );
             return NULL;
         }
     }
-    return object;
+    return java_object;
 }
 
-static void create_desktop_window( HWND hwnd )
+static int createDesktopView_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
+    static int event_pipe[2];
     static jmethodID method;
     jobject object;
+    struct ioctl_android_create_desktop_view *res = data;
 
-    if (!(object = load_java_method( &method, "createDesktopWindow", "(I)V" ))) return;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, HandleToLong( hwnd ));
-    unwrap_java_call();
+    if (event_sink != -1) close(event_sink);
+
+    if (pipe2( event_pipe, O_CLOEXEC | O_NONBLOCK ) == -1)
+    {
+        LOG( ERR, "could not create data event pipe\n" );
+        return -1;
+    }
+
+    event_sink = event_pipe[1];
+    *reply_fd = event_pipe[0];
+
+    log_flags = res->log_flags; /* Copy logging levels from client */
+
+    if (!(object = load_java_method( env, &method, "createDesktopView", "()V" ))) return -ENOSYS;
+
+    (*env)->CallVoidMethod( env, object, method );
+    return 0;
 }
 
-static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
     struct ioctl_android_create_window *res = data;
     struct native_win_data *win_data;
-    DWORD pid = current_client_id();
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
     if (!(win_data = create_native_win_data( LongToHandle(res->hdr.hwnd), res->hdr.opengl )))
-        return STATUS_NO_MEMORY;
+        return -ENOMEM;
 
-    TRACE( "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
+    LOG( TRACE, "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
 
-    if (!(object = load_java_method( &method, "createWindow", "(IZIFI)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( env, &method, "createWindow", "(IZZI)V" ))) return -ENOSYS;
 
-    wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->hdr.opengl, res->parent, res->scale, pid );
-    unwrap_java_call();
-    return STATUS_SUCCESS;
+    (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->is_desktop, res->hdr.opengl, res->parent );
+    return 0;
 }
 
-static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int destroyWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
     struct ioctl_android_destroy_window *res = data;
     struct native_win_data *win_data;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
     win_data = get_ioctl_native_win_data( &res->hdr );
 
-    TRACE( "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
+    LOG( TRACE, "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
 
-    if (!(object = load_java_method( &method, "destroyWindow", "(I)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( env, &method, "destroyWindow", "(I)V" ))) return -ENOSYS;
 
-    wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd );
-    unwrap_java_call();
+    (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd );
     if (win_data) free_native_win_data( win_data );
-    return STATUS_SUCCESS;
+    return 0;
 }
 
-static NTSTATUS windowPosChanged_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int windowPosChanged_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
     struct ioctl_android_window_pos_changed *res = data;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    TRACE( "hwnd %08x win %s client %s visible %s style %08x flags %08x after %08x owner %08x\n",
-           res->hdr.hwnd, wine_dbgstr_rect(&res->window_rect), wine_dbgstr_rect(&res->client_rect),
-           wine_dbgstr_rect(&res->visible_rect), res->style, res->flags, res->after, res->owner );
+    LOG( TRACE, "hwnd %08x win " DBGSTR_RECT_FMT " client " DBGSTR_RECT_FMT " visible " DBGSTR_RECT_FMT " style %08x flags %08x after %08x owner %08x\n",
+                res->hdr.hwnd, DBGSTR_RECT(&res->window_rect), DBGSTR_RECT(&res->client_rect),
+                DBGSTR_RECT(&res->visible_rect), res->style, res->flags, res->after, res->owner );
 
-    if (!(object = load_java_method( &method, "windowPosChanged", "(IIIIIIIIIIIIIIIII)V" )))
-        return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( env, &method, "windowPosChanged", "(IIIIIIIIIIIIIIIII)V" )))
+        return -ENOSYS;
 
-    wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->flags, res->after, res->owner, res->style,
-                                res->window_rect.left, res->window_rect.top, res->window_rect.right, res->window_rect.bottom,
-                                res->client_rect.left, res->client_rect.top, res->client_rect.right, res->client_rect.bottom,
-                                res->visible_rect.left, res->visible_rect.top, res->visible_rect.right, res->visible_rect.bottom );
-    unwrap_java_call();
-    return STATUS_SUCCESS;
+    (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->flags, res->after, res->owner, res->style,
+                            res->window_rect.left, res->window_rect.top, res->window_rect.right, res->window_rect.bottom,
+                            res->client_rect.left, res->client_rect.top, res->client_rect.right, res->client_rect.bottom,
+                            res->visible_rect.left, res->visible_rect.top, res->visible_rect.right, res->visible_rect.bottom );
+    return 0;
 }
 
-static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ANativeWindow *parent;
     struct ioctl_android_dequeueBuffer *res = data;
     struct native_win_data *win_data;
-    struct ANativeWindowBuffer *buffer;
+    struct ANativeWindowBuffer *buffer = NULL;
+    AHardwareBuffer *ahb = NULL;
     int fence, ret, is_new;
 
-    if (out_size < sizeof( *res )) return STATUS_BUFFER_OVERFLOW;
+    if (out_size < sizeof( *res ) || in_size < sizeof(res->hdr)) return -EINVAL;
 
-    if (in_size < offsetof( struct ioctl_android_dequeueBuffer, native_handle ))
-        return STATUS_INVALID_PARAMETER;
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
+    if (!(parent = win_data->parent)) return -EWOULDBLOCK;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
-    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+    res->buffer_id = -1;
+    res->generation = 0;
+    *ret_size = sizeof(*res);
 
-    *ret_size = offsetof( struct ioctl_android_dequeueBuffer, native_handle );
-    wrap_java_call();
     ret = parent->dequeueBuffer( parent, &buffer, &fence );
-    unwrap_java_call();
-    if (!ret)
+    if (ret)
     {
-        HANDLE mapping = 0;
-
-        TRACE( "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
-        res->width  = buffer->width;
-        res->height = buffer->height;
-        res->stride = buffer->stride;
-        res->format = buffer->format;
-        res->usage  = buffer->usage;
-        res->buffer_id = register_buffer( win_data, buffer, res->win32 ? &mapping : NULL, &is_new );
-        res->generation = win_data->generation;
-        if (is_new)
-        {
-            OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
-            CLIENT_ID cid = { .UniqueProcess = UlongToHandle( current_client_id() ) };
-            HANDLE process;
-            NtOpenProcess( &process, PROCESS_DUP_HANDLE, &attr, &cid );
-            map_native_handle( &res->native_handle, buffer->handle, mapping, process );
-            NtClose( process );
-            *ret_size = sizeof( *res );
-        }
-        wait_fence_and_close( fence );
-        return STATUS_SUCCESS;
+        LOG( ERR, "%08x failed %d\n", res->hdr.hwnd, ret );
+        return ret;
     }
-    ERR( "%08x failed %d\n", res->hdr.hwnd, ret );
-    return android_error_to_status( ret );
+
+    if (!buffer)
+    {
+        LOG( TRACE, "got invalid buffer\n" );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    LOG( TRACE, "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
+    ahb = pANativeWindowBuffer_getHardwareBuffer( buffer );
+
+    res->buffer_id = register_buffer( win_data, ahb, &is_new );
+    res->generation = win_data->generation;
+
+    if (is_new)
+    {
+        int sv[2] = { -1, -1 };
+
+        if (!ahb)
+        {
+            wait_fence_and_close( fence );
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        if (socketpair( AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sv ) < 0)
+        {
+            wait_fence_and_close( fence );
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        ret = pAHardwareBuffer_sendHandleToUnixSocket( ahb, sv[0] );
+        close( sv[0] );
+        if (ret)
+        {
+            close( sv[1] );
+            wait_fence_and_close( fence );
+            return ret;
+        }
+
+        *reply_fd = sv[1];
+    }
+
+    wait_fence_and_close( fence );
+    return 0;
 }
 
-static NTSTATUS cancelBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int cancelBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_cancelBuffer *res = data;
     struct ANativeWindow *parent;
@@ -855,22 +637,20 @@ static NTSTATUS cancelBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, U
     struct native_win_data *win_data;
     int ret;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
-    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
-    if (res->generation != win_data->generation) return STATUS_SUCCESS;  /* obsolete buffer, ignore */
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
+    if (!(parent = win_data->parent)) return -EWOULDBLOCK;
+    if (res->generation != win_data->generation) return 0;  /* obsolete buffer, ignore */
 
-    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
+    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return -ENOENT;
 
-    TRACE( "%08x buffer %p\n", res->hdr.hwnd, buffer );
-    wrap_java_call();
+    LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
     ret = parent->cancelBuffer( parent, buffer, -1 );
-    unwrap_java_call();
-    return android_error_to_status( ret );
+    return ret;
 }
 
-static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int queueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_queueBuffer *res = data;
     struct ANativeWindow *parent;
@@ -878,115 +658,84 @@ static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, UL
     struct native_win_data *win_data;
     int ret;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
-    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
-    if (res->generation != win_data->generation) return STATUS_SUCCESS;  /* obsolete buffer, ignore */
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
+    if (!(parent = win_data->parent)) return -EWOULDBLOCK;
+    if (res->generation != win_data->generation) return 0;  /* obsolete buffer, ignore */
 
-    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
+    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return -ENOENT;
 
-    TRACE( "%08x buffer %p mapping %p\n", res->hdr.hwnd, buffer, win_data->mappings[res->buffer_id] );
-    if (win_data->mappings[res->buffer_id])
-    {
-        void *bits;
-        ret = gralloc_lock( buffer, &bits );
-        if (ret) return android_error_to_status( ret );
-        memcpy( bits, win_data->mappings[res->buffer_id], buffer->stride * buffer->height * 4 );
-        gralloc_unlock( buffer );
-    }
-    wrap_java_call();
+    LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
     ret = parent->queueBuffer( parent, buffer, -1 );
-    unwrap_java_call();
-    return android_error_to_status( ret );
+    return ret;
 }
 
-static NTSTATUS query_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int query_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_query *res = data;
     struct ANativeWindow *parent;
     struct native_win_data *win_data;
     int ret;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
-    if (out_size < sizeof(*res)) return STATUS_BUFFER_OVERFLOW;
+    if (in_size < sizeof(*res) || out_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
-    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
+    if (!(parent = win_data->parent)) return -EWOULDBLOCK;
 
     *ret_size = sizeof( *res );
-    wrap_java_call();
     ret = parent->query( parent, res->what, &res->value );
-    unwrap_java_call();
-    return android_error_to_status( ret );
+    return ret;
 }
 
-static NTSTATUS perform_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_perform *res = data;
     struct ANativeWindow *parent;
     struct native_win_data *win_data;
     int ret = -ENOENT;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
-    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
+    if (!(parent = win_data->parent)) return -EWOULDBLOCK;
 
     switch (res->operation)
     {
     case NATIVE_WINDOW_SET_BUFFERS_FORMAT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->buffer_format = res->args[0];
         break;
     case NATIVE_WINDOW_API_CONNECT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->api = res->args[0];
         break;
     case NATIVE_WINDOW_API_DISCONNECT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->api = 0;
         break;
     case NATIVE_WINDOW_SET_USAGE:
     case NATIVE_WINDOW_SET_BUFFERS_TRANSFORM:
     case NATIVE_WINDOW_SET_SCALING_MODE:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFER_COUNT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, (size_t)res->args[0] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS:
     case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0], res->args[1] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_GEOMETRY:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0], res->args[1], res->args[2] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] | ((int64_t)res->args[1] << 32) );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_CONNECT:
     case NATIVE_WINDOW_DISCONNECT:
     case NATIVE_WINDOW_UNLOCK_AND_POST:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_CROP:
     {
@@ -995,115 +744,104 @@ static NTSTATUS perform_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_
         rect.top    = res->args[1];
         rect.right  = res->args[2];
         rect.bottom = res->args[3];
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, &rect );
-        unwrap_java_call();
         break;
     }
     case NATIVE_WINDOW_LOCK:
     default:
-        FIXME( "unsupported perform op %d\n", res->operation );
+        LOG( FIXME, "unsupported perform op %d\n", res->operation );
         break;
     }
-    return android_error_to_status( ret );
+    return ret;
 }
 
-static NTSTATUS setSwapInterval_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int setSwapInterval_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_set_swap_interval *res = data;
     struct ANativeWindow *parent;
     struct native_win_data *win_data;
     int ret;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
     win_data->swap_interval = res->interval;
 
-    if (!(parent = win_data->parent)) return STATUS_SUCCESS;
-    wrap_java_call();
+    if (!(parent = win_data->parent)) return 0;
     ret = parent->setSwapInterval( parent, res->interval );
-    unwrap_java_call();
-    return android_error_to_status( ret );
+    return ret;
 }
 
-static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int setWindowParent_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
     struct ioctl_android_set_window_parent *res = data;
     struct native_win_data *win_data;
-    DWORD pid = current_client_id();
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return -ENOENT;
 
-    TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
+    LOG( TRACE, "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
 
-    if (!(object = load_java_method( &method, "setParent", "(IIFI)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( env, &method, "setParent", "(II)V" ))) return -ENOSYS;
 
-    wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, res->scale, pid );
-    unwrap_java_call();
-    return STATUS_SUCCESS;
+    (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->parent );
+    return 0;
 }
 
-static NTSTATUS setCapture_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int setCapture_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_set_capture *res = data;
 
-    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (in_size < sizeof(*res)) return -EINVAL;
 
-    if (res->hdr.hwnd && !get_ioctl_native_win_data( &res->hdr )) return STATUS_INVALID_HANDLE;
+    if (res->hdr.hwnd && !get_ioctl_native_win_data( &res->hdr )) return -ENOENT;
 
-    TRACE( "hwnd %08x\n", res->hdr.hwnd );
+    LOG( TRACE, "hwnd %08x\n", res->hdr.hwnd );
 
-    InterlockedExchangePointer( (void **)&capture_window, LongToHandle( res->hdr.hwnd ));
-    return STATUS_SUCCESS;
+    return 0;
 }
 
-static NTSTATUS setCursor_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static int setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
     int size;
     struct ioctl_android_set_cursor *res = data;
 
-    if (in_size < offsetof( struct ioctl_android_set_cursor, bits )) return STATUS_INVALID_PARAMETER;
+    if (in_size < offsetof( struct ioctl_android_set_cursor, bits )) return -EINVAL;
 
     if (res->width < 0 || res->height < 0 || res->width > 256 || res->height > 256)
-        return STATUS_INVALID_PARAMETER;
+        return -EINVAL;
 
     size = res->width * res->height;
     if (in_size != offsetof( struct ioctl_android_set_cursor, bits[size] ))
-        return STATUS_INVALID_PARAMETER;
+        return -EINVAL;
 
-    TRACE( "hwnd %08x size %d\n", res->hdr.hwnd, size );
+    LOG( TRACE, "hwnd %08x size %d\n", res->hdr.hwnd, size );
 
-    if (!(object = load_java_method( &method, "setCursor", "(IIIII[I)V" )))
-        return STATUS_NOT_SUPPORTED;
-
-    wrap_java_call();
+    if (!(object = load_java_method( env, &method, "setCursor", "(IIIII[I)V" )))
+        return -ENOSYS;
 
     if (size)
     {
-        jintArray array = (*jni_env)->NewIntArray( jni_env, size );
-        (*jni_env)->SetIntArrayRegion( jni_env, array, 0, size, (jint *)res->bits );
-        (*jni_env)->CallVoidMethod( jni_env, object, method, 0, res->width, res->height,
+        jintArray array = (*env)->NewIntArray( env, size );
+        (*env)->SetIntArrayRegion( env, array, 0, size, (jint *)res->bits );
+        (*env)->CallVoidMethod( env, object, method, 0, res->width, res->height,
                                     res->hotspotx, res->hotspoty, array );
-        (*jni_env)->DeleteLocalRef( jni_env, array );
+        (*env)->DeleteLocalRef( env, array );
     }
-    else (*jni_env)->CallVoidMethod( jni_env, object, method, res->id, 0, 0, 0, 0, 0 );
+    else (*env)->CallVoidMethod( env, object, method, res->id, 0, 0, 0, 0, NULL );
 
-    unwrap_java_call();
-
-    return STATUS_SUCCESS;
+    return 0;
 }
 
-typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
+typedef int (*ioctl_func)( JNIEnv* env, void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd );
 static const ioctl_func ioctl_funcs[] =
 {
+    createDesktopView_ioctl,    /* IOCTL_CREATE_DESKTOP_VIEW */
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
     destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
     windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
@@ -1118,107 +856,214 @@ static const ioctl_func ioctl_funcs[] =
     setCursor_ioctl,            /* IOCTL_SET_CURSOR */
 };
 
-NTSTATUS android_dispatch_ioctl( void *arg )
+static ALooper *looper;
+static JNIEnv *looper_env; /* JNIEnv for the main thread looper. Must only be used from that thread. */
+
+/* Handle a single ioctl request from a client socket.
+ * Returns 0 if a request was handled successfully and the caller may
+ * continue draining the socket, -1 if there is nothing more to read
+ * for now, and 1 if the client fd should be closed.
+ */
+static int handle_ioctl_message( JNIEnv *env, int fd )
 {
-    struct ioctl_params *params = arg;
-    IRP *irp = params->irp;
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
+    char buffer[1024], control[CMSG_SPACE(sizeof(int))];
+    int code = 0, status = -EINVAL, reply_fd = -1;
+    ULONG_PTR reply_size = 0;
+    ssize_t ret;
+    struct iovec iov[2] = { { &code, sizeof(code) }, { buffer, sizeof(buffer) } };
+    struct iovec reply_iov[2] = { { &status, sizeof(status) }, { buffer, 0 } };
+    struct msghdr msg = { NULL, 0, iov, 2, NULL, 0, 0 };
+    struct msghdr reply = { NULL, 0, reply_iov, 2, NULL, 0, 0 };
+    struct cmsghdr *cmsg;
 
-    if (code < NB_IOCTLS)
+    ret = recvmsg( fd, &msg, MSG_DONTWAIT );
+    if (ret < 0)
     {
-        struct ioctl_header *header = irp->AssociatedIrp.SystemBuffer;
-        DWORD in_size = irpsp->Parameters.DeviceIoControl.InputBufferLength;
-        ioctl_func func = ioctl_funcs[code];
+        if (errno == EINTR) return 0;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) return -1;
+        return 1;
+    }
 
-        if (in_size >= sizeof(*header))
+    if (!ret || ret < sizeof(code)) return 1;
+    ret -= sizeof(code);
+
+    if ((unsigned int)code < NB_IOCTLS)
+    {
+        if (ret >= sizeof(struct ioctl_header))
         {
-            irp->IoStatus.Information = 0;
-            NtUserGetThreadInfo()->driver_data = params->client_id;
-            irp->IoStatus.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
-                                         irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                         &irp->IoStatus.Information );
-            NtUserGetThreadInfo()->driver_data = 0;
+            pthread_mutex_lock( &dispatch_ioctl_lock );
+            status = ioctl_funcs[code]( env, buffer, ret, sizeof(buffer), &reply_size, &reply_fd );
+            if (IOCTL_CREATE_DESKTOP_VIEW == code) /* special case: desktop client */
+                desktop_client_fd = fd;
+            pthread_mutex_unlock( &dispatch_ioctl_lock );
         }
-        else irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
     }
     else
     {
-        FIXME( "ioctl %x not supported\n", (int)irpsp->Parameters.DeviceIoControl.IoControlCode );
-        irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+        LOG( FIXME, "ioctl %x not supported\n", code );
+        status = -ENOTSUP;
     }
-    return STATUS_SUCCESS;
+
+    reply_iov[1].iov_len = reply_size;
+    if (reply_fd != -1)
+    {
+        reply.msg_control = control;
+        reply.msg_controllen = sizeof(control);
+        cmsg = CMSG_FIRSTHDR( &reply );
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN( sizeof(reply_fd) );
+        memcpy( CMSG_DATA(cmsg), &reply_fd, sizeof(reply_fd) );
+        reply.msg_controllen = cmsg->cmsg_len;
+    }
+
+    ret = sendmsg( fd, &reply, 0 );
+    if (reply_fd != -1) close( reply_fd );
+    return ret < 0 ? 1 : 0;
 }
 
-NTSTATUS android_java_init( void *arg )
+static int looper_handle_client( int fd, int events, void *data )
 {
-    JavaVM *java_vm;
+    for (;;)
+    {
+        int ret = (events & (ALOOPER_EVENT_HANGUP | ALOOPER_EVENT_ERROR)) ? 1 : handle_ioctl_message( looper_env, fd );
 
-    if (!(java_vm = *p_java_vm)) return STATUS_UNSUCCESSFUL;  /* not running under Java */
+        if (!ret) continue;
 
-    init_java_thread( java_vm );
-    create_desktop_window( NtUserGetDesktopWindow() );
-    return STATUS_SUCCESS;
+        if (ret > 0)
+        {
+            pALooper_removeFd( looper, fd );
+            close( fd );
+            if (fd == desktop_client_fd) /* our explorer process died */
+                _exit(0);
+        }
+        break;
+    }
+
+    return 1;
 }
 
-NTSTATUS android_java_uninit( void *arg )
+static int looper_handle_listen( int fd, int events, void *data )
 {
-    JavaVM *java_vm;
+    for (;;)
+    {
+        int client = accept4( fd, NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK );
 
-    if (!(java_vm = *p_java_vm)) return STATUS_UNSUCCESSFUL;  /* not running under Java */
+        if (client < 0)
+        {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) break;
+            LOG( ERR,  "accept4 failed: %s\n", strerror( errno ) );
+            break;
+        }
 
-    wrap_java_call();
-    (*java_vm)->DetachCurrentThread( java_vm );
-    unwrap_java_call();
-    return STATUS_SUCCESS;
+        if (pALooper_addFd( looper, client, client, ALOOPER_EVENT_INPUT | ALOOPER_EVENT_HANGUP | ALOOPER_EVENT_ERROR, looper_handle_client, NULL ) != 1) {
+            LOG( ERR, "Failed to add client to ALooper\n" );
+            close( client );
+        }
+    }
+
+    return 1;
 }
 
-void start_android_device(void)
+/* main Wine initialisation */
+void wine_init_jni( JNIEnv *env, jobject obj )
 {
-    void *ret_ptr;
-    ULONG ret_len;
-    struct dispatch_callback_params params = {.callback = start_device_callback};
-    if (KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len )) return;
-    if (ret_len == sizeof(thread)) thread = *(HANDLE *)ret_ptr;
+    int sockfd;
+
+    java_object = (*env)->NewGlobalRef( env, obj );
+    looper_env = env;
+    if (!(looper = pALooper_forThread()))
+    {
+        LOG( ERR, "No looper for current thread\n");
+        abort();
+    }
+    pALooper_acquire( looper );
+
+    sockfd = socket( AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC | SOCK_NONBLOCK, 0 );
+    if (sockfd < 0)
+    {
+        LOG( ERR,  "Failed to open server socket: %s\n", strerror( errno ) );
+        abort();
+    }
+
+    if (bind( sockfd, (const struct sockaddr *)&ipc_addr, IPC_SOCKET_ADDR_LEN ) < 0 ||
+        listen( sockfd, 32 ) < 0)
+    {
+        LOG( ERR, "Failed to bind server socket: %s\n", strerror( errno ) );
+        close(sockfd);
+        abort();
+    }
+
+    if (pALooper_addFd( looper, sockfd, sockfd, ALOOPER_EVENT_INPUT, looper_handle_listen, NULL ) != 1) {
+        LOG( ERR, "Failed to add listening socket to main looper\n" );
+        close(sockfd);
+        abort();
+    }
 }
 
 
 /* Client-side ioctl support */
 
 
-static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size )
+static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *recv_fd )
 {
-    static const WCHAR deviceW[] = {'\\','\\','.','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
-    static HANDLE device;
-    IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
+    static int device_fd = -1;
+    static pthread_mutex_t device_mutex = PTHREAD_MUTEX_INITIALIZER;
+    int status, err = -ENOENT;
+    ssize_t ret;
+    char control[CMSG_SPACE(sizeof(int))];
+    struct iovec iov[2] = { { &status, sizeof(status) }, { out, out_size ? *out_size : 0 } };
+    struct msghdr msg = { NULL, 0, iov, (out && out_size) ? 2 : 1,
+                          recv_fd ? control : NULL, recv_fd ? sizeof(control) : 0, 0 };
+    struct cmsghdr *cmsg;
 
-    if (!device)
+    pthread_mutex_lock( &device_mutex );
+
+    if (recv_fd) *recv_fd = -1;
+
+    if (device_fd == -1)
     {
-        OBJECT_ATTRIBUTES attr;
-        UNICODE_STRING name;
-        IO_STATUS_BLOCK io;
-        NTSTATUS status;
-        HANDLE file;
-
-        RtlInitUnicodeString( &name, deviceW );
-        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
-        status = NtCreateFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
-                               FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
-                               FILE_NON_DIRECTORY_FILE, NULL, 0 );
-        if (status) return -ENOENT;
-        if (InterlockedCompareExchangePointer( &device, file, NULL )) NtClose( file );
+        device_fd = socket( AF_UNIX, SOCK_SEQPACKET, 0 );
+        if (device_fd < 0) goto done;
+        if (connect( device_fd, (const struct sockaddr *)&ipc_addr, IPC_SOCKET_ADDR_LEN ) < 0)
+        {
+            close( device_fd );
+            device_fd = -1;
+            goto done;
+        }
     }
 
-    status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, ANDROID_IOCTL(code),
-                                    in, in_size, out, out_size ? *out_size : 0 );
-    if (status == STATUS_FILE_DELETED)
-    {
-        WARN( "parent process is gone\n" );
-        NtTerminateProcess( 0, 1 );
-    }
-    if (out_size) *out_size = iosb.Information;
-    return status_to_android_error( status );
+    ret = writev( device_fd, (struct iovec[]){ { &code, sizeof(code) }, { in, in_size } }, 2 );
+    if (ret <= 0 || ret != sizeof(code) + in_size) goto disconnected;
+
+    ret = recvmsg( device_fd, &msg, 0 );
+    if (ret <= 0 || ret < sizeof(status)) goto disconnected;
+
+    if (out && out_size) *out_size = ret - sizeof(status);
+    err = status;
+
+    if (recv_fd)
+        for (cmsg = CMSG_FIRSTHDR( &msg ); cmsg; cmsg = CMSG_NXTHDR( &msg, cmsg ))
+            if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS &&
+                cmsg->cmsg_len >= CMSG_LEN(sizeof(int)))
+            {
+                memcpy( recv_fd, CMSG_DATA(cmsg), sizeof(int) );
+                break;
+            }
+
+    goto done;
+
+disconnected:
+    close( device_fd );
+    device_fd = -1;
+    WARN( "parent process is gone\n" );
+    NtTerminateProcess( 0, 1 );
+    err = -ENOENT;
+
+done:
+    pthread_mutex_unlock( &device_mutex );
+    return err;
 }
 
 static void win_incRef( struct android_native_base_t *base )
@@ -1233,119 +1078,92 @@ static void win_decRef( struct android_native_base_t *base )
     InterlockedDecrement( &win->ref );
 }
 
-static void buffer_incRef( struct android_native_base_t *base )
+void createDesktopView( int *event_source )
 {
-    struct native_buffer_wrapper *buffer = (struct native_buffer_wrapper *)base;
-    InterlockedIncrement( &buffer->ref );
-}
-
-static void buffer_decRef( struct android_native_base_t *base )
-{
-    struct native_buffer_wrapper *buffer = (struct native_buffer_wrapper *)base;
-
-    if (!InterlockedDecrement( &buffer->ref ))
-    {
-        if (!is_in_desktop_process()) gralloc_release_buffer( &buffer->buffer );
-        if (buffer->bits) NtUnmapViewOfSection( GetCurrentProcess(), buffer->bits );
-        free( buffer );
-    }
+    struct ioctl_android_create_desktop_view res = { 0 };
+    res.log_flags = __wine_dbg_get_channel_flags(&__wine_dbch_android);
+    android_ioctl( IOCTL_CREATE_DESKTOP_VIEW, &res, sizeof(res), NULL, NULL, event_source );
 }
 
 static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer, int *fence )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
-    struct ioctl_android_dequeueBuffer res;
+    struct ioctl_android_dequeueBuffer res = {0};
     DWORD size = sizeof(res);
-    int ret, use_win32 = !gralloc_module && !gralloc1_device;
+    int ret, buffer_fd = -1;
 
     res.hdr.hwnd = HandleToLong( win->hwnd );
     res.hdr.opengl = win->opengl;
-    res.win32 = use_win32;
-    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER,
-                         &res, offsetof( struct ioctl_android_dequeueBuffer, native_handle ),
-                         &res, &size );
+    res.buffer_id = -1;
+    res.generation = 0;
+
+    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, &buffer_fd );
     if (ret) return ret;
+    if (size < sizeof(res)) return -EINVAL;
 
-    /* if we received the native handle, this is a new buffer */
-    if (size > offsetof( struct ioctl_android_dequeueBuffer, native_handle ))
+    if (res.buffer_id < 0 || res.buffer_id >= NB_CACHED_BUFFERS) return -EINVAL;
+
+    if (buffer_fd != -1)
     {
-        struct native_buffer_wrapper *buf = calloc( 1, sizeof(*buf) );
+        AHardwareBuffer *ahb = NULL;
+        ret = pAHardwareBuffer_recvHandleFromUnixSocket( buffer_fd, &ahb );
+        close( buffer_fd );
+        if (ret) return ret;
 
-        buf->buffer.common.magic   = ANDROID_NATIVE_BUFFER_MAGIC;
-        buf->buffer.common.version = sizeof( buf->buffer );
-        buf->buffer.common.incRef  = buffer_incRef;
-        buf->buffer.common.decRef  = buffer_decRef;
-        buf->buffer.width          = res.width;
-        buf->buffer.height         = res.height;
-        buf->buffer.stride         = res.stride;
-        buf->buffer.format         = res.format;
-        buf->buffer.usage          = res.usage;
-        buf->buffer.handle         = unmap_native_handle( &res.native_handle.handle );
-        buf->ref                   = 1;
-        buf->hwnd                  = win->hwnd;
-        buf->buffer_id             = res.buffer_id;
-        buf->generation            = res.generation;
-        if (win->buffers[res.buffer_id])
-            win->buffers[res.buffer_id]->buffer.common.decRef(&win->buffers[res.buffer_id]->buffer.common);
-        win->buffers[res.buffer_id] = buf;
+        if (win->buffers[res.buffer_id].self)
+            pAHardwareBuffer_release( win->buffers[res.buffer_id].self );
 
-        if (use_win32)
-        {
-            LARGE_INTEGER zero = { .QuadPart = 0 };
-            SIZE_T count = 0;
-            HANDLE mapping = LongToHandle( res.native_handle.handle.data[0] );
-            NtMapViewOfSection( mapping, GetCurrentProcess(), &buf->bits, 0, 0, &zero, &count,
-                                ViewShare, 0, PAGE_READWRITE );
-            NtClose( mapping );
-        }
-        else if (!is_in_desktop_process())
-        {
-            if ((ret = gralloc_grab_buffer( &buf->buffer )) < 0)
-                WARN( "hwnd %p, buffer %p failed to register %d %s\n",
-                      win->hwnd, &buf->buffer, ret, strerror(-ret) );
-        }
+        win->buffers[res.buffer_id].self = ahb;
+        win->buffers[res.buffer_id].buffer_id = res.buffer_id;
+        win->buffers[res.buffer_id].generation = res.generation;
     }
 
-    *buffer = &win->buffers[res.buffer_id]->buffer;
+    if (!win->buffers[res.buffer_id].self) return -EINVAL;
+
+    *buffer = anwb_from_ahb(win->buffers[res.buffer_id].self);
     *fence = -1;
 
-    TRACE( "hwnd %p, buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
-           win->hwnd, *buffer, res.width, res.height, res.stride, res.format, res.usage, *fence );
+    TRACE( "hwnd %p, buffer %p id %d gen %d fence %d\n",
+           win->hwnd, *buffer, res.buffer_id, res.generation, *fence );
     return 0;
 }
 
 static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
-    struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
     struct ioctl_android_cancelBuffer cancel;
 
-    TRACE( "hwnd %p buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
-           win->hwnd, buffer, buffer->width, buffer->height,
-           buffer->stride, buffer->format, buffer->usage, fence );
-    cancel.buffer_id = buf->buffer_id;
-    cancel.generation = buf->generation;
+    TRACE( "hwnd %p buffer %p fence %d\n", win->hwnd, buffer, fence );
+
+    if (!ahb_from_anwb( win, buffer, &cancel.buffer_id, &cancel.generation ))
+    {
+        wait_fence_and_close( fence );
+        return -EINVAL;
+    }
+
     cancel.hdr.hwnd = HandleToLong( win->hwnd );
     cancel.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
-    return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL );
+    return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL, NULL );
 }
 
 static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
-    struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
     struct ioctl_android_queueBuffer queue;
 
-    TRACE( "hwnd %p buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
-           win->hwnd, buffer, buffer->width, buffer->height,
-           buffer->stride, buffer->format, buffer->usage, fence );
-    queue.buffer_id = buf->buffer_id;
-    queue.generation = buf->generation;
+    TRACE( "hwnd %p buffer %p fence %d\n", win->hwnd, buffer, fence );
+
+    if (!ahb_from_anwb( win, buffer, &queue.buffer_id, &queue.generation ))
+    {
+        wait_fence_and_close( fence );
+        return -EINVAL;
+    }
+
     queue.hdr.hwnd = HandleToLong( win->hwnd );
     queue.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
-    return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL );
+    return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL, NULL );
 }
 
 static int dequeueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer )
@@ -1380,7 +1198,7 @@ static int setSwapInterval( struct ANativeWindow *window, int interval )
     swap.hdr.hwnd = HandleToLong( win->hwnd );
     swap.hdr.opengl = win->opengl;
     swap.interval = interval;
-    return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL );
+    return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL, NULL );
 }
 
 static int query( const ANativeWindow *window, int what, int *value )
@@ -1393,7 +1211,7 @@ static int query( const ANativeWindow *window, int what, int *value )
     query.hdr.hwnd = HandleToLong( win->hwnd );
     query.hdr.opengl = win->opengl;
     query.what = what;
-    ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size );
+    ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size, NULL );
     TRACE( "hwnd %p what %d got %d -> %p\n", win->hwnd, what, query.value, value );
     if (!ret) *value = query.value;
     return ret;
@@ -1468,31 +1286,43 @@ static int perform( ANativeWindow *window, int operation, ... )
     }
     case NATIVE_WINDOW_LOCK:
     {
-        struct ANativeWindowBuffer *buffer;
+        struct ANativeWindowBuffer *buffer = NULL;
         struct ANativeWindow_Buffer *buffer_ret = va_arg( args, ANativeWindow_Buffer * );
+        struct AHardwareBuffer* b = NULL;
         ARect *bounds = va_arg( args, ARect * );
         int ret = window->dequeueBuffer_DEPRECATED( window, &buffer );
+        if (!ret && !buffer)
+        {
+            ret = -EWOULDBLOCK;
+            TRACE( "got invalid buffer\n" );
+        }
         if (!ret)
         {
-            if ((ret = gralloc_lock( buffer, &buffer_ret->bits )))
+            if (!(b = ahb_from_anwb((struct native_win_wrapper*) window, buffer, NULL, NULL))) {
+                ret = -EINVAL;
+            }
+
+            if (b && (ret = pAHardwareBuffer_lock( b, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, NULL, &buffer_ret->bits )))
             {
-                WARN( "gralloc->lock %p failed %d %s\n", win->hwnd, ret, strerror(-ret) );
+                WARN( "AHardwareBuffer_lock %p failed %d %s\n", win->hwnd, ret, strerror(-ret) );
                 window->cancelBuffer( window, buffer, -1 );
             }
         }
         if (!ret)
         {
-            buffer_ret->width  = buffer->width;
-            buffer_ret->height = buffer->height;
-            buffer_ret->stride = buffer->stride;
-            buffer_ret->format = buffer->format;
-            win->locked_buffer = buffer;
+            AHardwareBuffer_Desc d = {0};
+            pAHardwareBuffer_describe(b, &d);
+            buffer_ret->width  = d.width;
+            buffer_ret->height = d.height;
+            buffer_ret->stride = d.stride;
+            buffer_ret->format = d.format;
+            win->locked_buffer = b;
             if (bounds)
             {
                 bounds->left   = 0;
                 bounds->top    = 0;
-                bounds->right  = buffer->width;
-                bounds->bottom = buffer->height;
+                bounds->right  = d.width;
+                bounds->bottom = d.height;
             }
         }
         va_end( args );
@@ -1504,8 +1334,8 @@ static int perform( ANativeWindow *window, int operation, ... )
         int ret = -EINVAL;
         if (win->locked_buffer)
         {
-            gralloc_unlock( win->locked_buffer );
-            ret = window->queueBuffer( window, win->locked_buffer, -1 );
+            pAHardwareBuffer_unlock(win->locked_buffer, NULL);
+            ret = window->queueBuffer( window, anwb_from_ahb(win->locked_buffer), -1 );
             win->locked_buffer = NULL;
         }
         va_end( args );
@@ -1523,10 +1353,10 @@ static int perform( ANativeWindow *window, int operation, ... )
         break;
     }
     va_end( args );
-    return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL );
+    return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL, NULL );
 }
 
-struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
+struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
 {
     struct ioctl_android_create_window req;
     struct native_win_wrapper *win = calloc( 1, sizeof(*win) );
@@ -1555,8 +1385,8 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
     req.hdr.hwnd = HandleToLong( win->hwnd );
     req.hdr.opengl = win->opengl;
     req.parent = get_ioctl_win_parent( NtUserGetAncestor( hwnd, GA_PARENT ));
-    req.scale = scale;
-    android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
+    req.is_desktop = hwnd == desktop_window;
+    android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL, NULL );
 
     return &win->win;
 }
@@ -1577,7 +1407,7 @@ void release_ioctl_window( struct ANativeWindow *window )
 
     TRACE( "%p %p\n", win, win->hwnd );
     for (i = 0; i < ARRAY_SIZE( win->buffers ); i++)
-        if (win->buffers[i]) win->buffers[i]->buffer.common.decRef( &win->buffers[i]->buffer.common );
+        if (win->buffers[i].self) pAHardwareBuffer_release(win->buffers[i].self);
 
     destroy_ioctl_window( win->hwnd, win->opengl );
     free( win );
@@ -1589,7 +1419,7 @@ void destroy_ioctl_window( HWND hwnd, BOOL opengl )
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = opengl;
-    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
+    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
@@ -1606,18 +1436,17 @@ int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
     req.flags        = flags;
     req.after        = HandleToLong( after );
     req.owner        = HandleToLong( owner );
-    return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL, NULL );
 }
 
-int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale )
+int ioctl_set_window_parent( HWND hwnd, HWND parent )
 {
     struct ioctl_android_set_window_parent req;
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
     req.parent = get_ioctl_win_parent( parent );
-    req.scale = scale;
-    return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_set_capture( HWND hwnd )
@@ -1626,7 +1455,7 @@ int ioctl_set_capture( HWND hwnd )
 
     req.hdr.hwnd  = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
-    return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_set_cursor( int id, int width, int height,
@@ -1645,7 +1474,15 @@ int ioctl_set_cursor( int id, int width, int height,
     req->hotspotx = hotspotx;
     req->hotspoty = hotspoty;
     memcpy( req->bits, bits, width * height * sizeof(req->bits[0]) );
-    ret = android_ioctl( IOCTL_SET_CURSOR, req, size, NULL, NULL );
+    ret = android_ioctl( IOCTL_SET_CURSOR, req, size, NULL, NULL, NULL );
     free( req );
     return ret;
+}
+
+/**********************************************************************
+ *           ANDROID_SetDesktopWindow
+ */
+void ANDROID_SetDesktopWindow( HWND hwnd )
+{
+    desktop_window = hwnd;
 }

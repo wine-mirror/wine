@@ -34,7 +34,6 @@ static HMODULE msvcp140;
 
 extern const vtable_ptr exception_vtable;
 
-int CDECL _callnewh(size_t size);
 void (__cdecl *_Xmem)(void);
 void (__cdecl *_Xout_of_range)(const char*);
 
@@ -91,13 +90,12 @@ __ASM_VTABLE(range_error,
         VTABLE_ADD_FUNC(exception_what));
 __ASM_BLOCK_END
 
-DEFINE_CXX_DATA0( exception, exception_dtor )
-DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
-DEFINE_CXX_TYPE_INFO(runtime_error)
-DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
-DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info,
-        &exception_cxx_type_info, exception_dtor)
+DEFINE_CXX_TYPE( exception, exception_dtor )
+DEFINE_RTTI_DATA(runtime_error, 0, ".?AVruntime_error@std@@", exception_rtti_base_descriptor)
+DEFINE_CXX_TYPE(runtime_error, exception_dtor, exception_cxx_type_info)
+DEFINE_RTTI_DATA(range_error, 0, ".?AVrange_error@std@@", runtime_error_rtti_base_descriptor,
+        exception_rtti_base_descriptor)
+DEFINE_CXX_TYPE(range_error, exception_dtor, runtime_error_cxx_type_info, exception_cxx_type_info)
 
 void DECLSPEC_NORETURN throw_range_error(const char *str)
 {
@@ -140,16 +138,14 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
    {
    case DLL_PROCESS_ATTACH:
        if (!init_cxx_funcs()) return FALSE;
-#ifdef RTTI_USE_RVA
-       init_exception_rtti((char*)inst);
-       init_range_error_rtti((char*)inst);
-       init_runtime_error_rtti((char*)inst);
-       init_type_info_rtti((char*)inst);
+       INIT_RTTI(exception, inst);
+       INIT_RTTI(range_error, inst);
+       INIT_RTTI(runtime_error, inst);
+       INIT_RTTI(type_info, inst);
 
-       init_exception_cxx((char*)inst);
-       init_runtime_error_cxx_type_info((char*)inst);
-       init_range_error_cxx((char*)inst);
-#endif
+       INIT_CXX_TYPE(exception, inst);
+       INIT_CXX_TYPE(runtime_error, inst);
+       INIT_CXX_TYPE(range_error, inst);
        msvcrt_init_concurrency(inst);
        init_concurrency_details(inst);
        break;

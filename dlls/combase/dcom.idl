@@ -21,6 +21,7 @@
 
 #pragma makedep header
 
+#include "hstring.idl"
 #include "wine/orpc.idl"
 
 [
@@ -59,4 +60,75 @@ interface IRemUnknown : IUnknown
     HRESULT RemRelease(
         [in] unsigned short cInterfaceRefs,
         [in, size_is(cInterfaceRefs)] REMINTERFACEREF *InterfaceRefs);
+}
+
+[
+    object,
+    uuid(00000142-0000-0000-C000-000000000046)
+]
+interface IRemUnknown2 : IRemUnknown
+{
+    typedef [unique] IRemUnknown2 *LPREMUNKNOWN2;
+
+    HRESULT RemQueryInterface2(
+        [in] REFIPID ripid,
+        [in] unsigned short cIids,
+        [in, size_is(cIids)] IID *iids,
+        [out, size_is(cIids)] HRESULT *phr,
+        [out, size_is(cIids)] MInterfacePointer **ppMIF);
+}
+
+[
+    object,
+    uuid(0000013C-0000-0000-C000-000000000046)
+]
+interface IRemUnknownN : IRemUnknown2
+{
+    const DWORD IRUF_CONVERTTOWEAK = 0x01;
+    const DWORD IRUF_CONVERTTOSTRONG = 0x02;
+    const DWORD IRUF_DISCONNECTIFLASTSTRONG = 0x04;
+
+    typedef struct tagXAptCallback
+    {
+        DWORD64 pfnCallback;
+        DWORD64 pParam;
+        DWORD64 pServerCtx;
+        DWORD64 pUnk;
+        GUID iid;
+        INT iMethod;
+        GUID guidProcessSecret;
+    } XAptCallback;
+
+    HRESULT AcknowledgeMarshalingSets(
+        [in] WORD cMarshalingSets,
+        [in, size_is(cMarshalingSets)] DWORD64 *pMarshalingSets);
+
+    HRESULT RemChangeRef(
+        [in] DWORD flags,
+        [in] WORD cInterfaceRefs,
+        [in, size_is(cInterfaceRefs)] REMINTERFACEREF InterfaceRefs[]);
+
+    HRESULT DoCallback(
+        [in] XAptCallback *pCallbackData);
+
+    HRESULT DoNonreentrantCallback(
+        [in] XAptCallback *pCallbackData);
+
+    HRESULT GetInterfaceNameFromIPID(
+        [in] REFIPID ripid,
+        [out] HSTRING *interfaceName);
+}
+
+[
+    object,
+    uuid(00000134-0000-0000-C000-000000000046),
+]
+interface IRundown : IRemUnknownN
+{
+    const DWORD MAX_OID_RUNDOWNS_PER_CALL = 100;
+
+    HRESULT RundownOid(
+        [in, range(1, MAX_OID_RUNDOWNS_PER_CALL)] DWORD cOid,
+        [in, size_is(cOid)] OID aOid[],
+        [out, size_is(cOid)] BYTE aRundownStatus[]);
 }

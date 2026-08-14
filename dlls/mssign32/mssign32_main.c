@@ -25,7 +25,6 @@
 #include "wincrypt.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/mssign.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mssign);
@@ -78,6 +77,5 @@ HRESULT WINAPI SignerSignEx(DWORD flags, SIGNER_SUBJECT_INFO *subject_info, SIGN
 
 HRESULT WINAPI SignerFreeSignerContext(SIGNER_CONTEXT *signer_context)
 {
-    heap_free(signer_context);
     return S_OK;
 }

@@ -630,24 +630,14 @@ typedef [restricted, hidden] struct SPVSTATE
     SPVCONTEXT      Context;
 } SPVSTATE;
 
-cpp_quote("#if defined(__GNUC__)")
-
-cpp_quote("#define SPCAT_AUDIOOUT (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','O','u','t','p','u','t',0 }")
-cpp_quote("#define SPCAT_AUDIOIN (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','I','n','p','u','t',0 }")
-cpp_quote("#define SPCAT_VOICES (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','V','o','i','c','e','s',0 }")
-
-cpp_quote("#elif defined(_MSC_VER)")
-
+cpp_quote("#if defined(_MSC_VER) || defined(__MINGW32__)")
 cpp_quote("#define SPCAT_AUDIOOUT L\"HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Speech\\\\AudioOutput\"")
 cpp_quote("#define SPCAT_AUDIOIN L\"HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Speech\\\\AudioInput\"")
 cpp_quote("#define SPCAT_VOICES L\"HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Speech\\\\Voices\"")
-
 cpp_quote("#else")
-
 cpp_quote("static const WCHAR SPCAT_AUDIOOUT[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','O','u','t','p','u','t',0};")
 cpp_quote("static const WCHAR SPCAT_AUDIOIN[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','I','n','p','u','t',0};")
 cpp_quote("static const WCHAR SPCAT_VOICES[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','V','o','i','c','e','s',0};")
-
 cpp_quote("#endif")
 
 interface IEnumSpObjectTokens;

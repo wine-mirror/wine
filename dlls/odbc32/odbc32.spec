@@ -140,7 +140,7 @@
 238 stub    SQLGetStmtAttrA
 239 stub    SQLSetConnectAttrA
 240 stub    SQLColumnsA
-241 stub    SQLDriverConnectA
+241 stdcall SQLDriverConnectA(long long str long ptr long ptr long) SQLDriverConnect
 242 stub    SQLGetConnectOptionA
 245 stub    SQLGetInfoA
 247 stub    SQLGetTypeInfoA

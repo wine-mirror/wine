@@ -692,6 +692,8 @@ void METAFILE_Free(GpMetafile *metafile)
     DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
     if (!metafile->preserve_hemf)
         DeleteEnhMetaFile(metafile->hemf);
+    if (!metafile->preserve_hwmf)
+        DeleteMetaFile(metafile->hwmf);
     if (metafile->record_graphics)
     {
         WARN("metafile closed while recording\n");
@@ -1709,8 +1711,8 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
 
                 af_min->X = fmin(af_min->X, gdi_bounds_rc.left);
                 af_min->Y = fmin(af_min->Y, gdi_bounds_rc.top);
-                af_max->X = fmax(af_max->X, gdi_bounds_rc.right);
-                af_max->Y = fmax(af_max->Y, gdi_bounds_rc.bottom);
+                af_max->X = fmax(af_max->X, gdi_bounds_rc.right + 1);
+                af_max->Y = fmax(af_max->Y, gdi_bounds_rc.bottom + 1);
             }
 
             bounds_rc.left = floorf(metafile->auto_frame_min.X * x_scale);
@@ -4315,6 +4317,9 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if (retval == Ok)
     {
+        (*metafile)->hwmf = hwmf;
+        (*metafile)->preserve_hwmf = !delete;
+
         if (placeable)
         {
             (*metafile)->image.xres = (REAL)placeable->Inch;
@@ -4330,11 +4335,12 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
         else
             (*metafile)->metafile_type = MetafileTypeWmf;
         (*metafile)->image.format = ImageFormatWMF;
-
-        if (delete) DeleteMetaFile(hwmf);
     }
     else
+    {
         DeleteEnhMetaFile(hemf);
+    }
+
     return retval;
 }
 

@@ -860,7 +860,7 @@ static void update_job_status(struct job_t *job)
 {
     HANDLE hfile;
     DWORD try, size;
-#include "pshpack2.h"
+#pragma pack(push,2)
     struct
     {
         UINT exit_code;
@@ -869,7 +869,7 @@ static void update_job_status(struct job_t *job)
         SYSTEMTIME last_runtime;
         WORD instance_count;
     } state;
-#include "poppack.h"
+#pragma pack(pop)
 
     try = 1;
     for (;;)

@@ -544,12 +544,13 @@ static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *p
         if(!proposed_mime)
             return E_FAIL;
 
-        len = lstrlenW(proposed_mime)+1;
-        *ret_mime = CoTaskMemAlloc(len*sizeof(WCHAR));
+        len = wcscspn(proposed_mime, L";");
+        *ret_mime = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
         if(!*ret_mime)
             return E_OUTOFMEMORY;
 
         memcpy(*ret_mime, proposed_mime, len*sizeof(WCHAR));
+        (*ret_mime)[len] = 0;
         return S_OK;
     }
 
@@ -638,12 +639,13 @@ static HRESULT find_mime_from_buffer(const BYTE *buf, DWORD size, const WCHAR *p
 
     TRACE("found %s for %s\n", debugstr_w(ret), debugstr_an((const char*)buf, min(32, size)));
 
-    len = lstrlenW(ret)+1;
-    *ret_mime = CoTaskMemAlloc(len*sizeof(WCHAR));
+    len = wcscspn(ret, L";");
+    *ret_mime = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
     if(!*ret_mime)
         return E_OUTOFMEMORY;
 
     memcpy(*ret_mime, ret, len*sizeof(WCHAR));
+    (*ret_mime)[len] = 0;
     return S_OK;
 }
 

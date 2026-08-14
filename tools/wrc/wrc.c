@@ -436,9 +436,9 @@ int main(int argc,char *argv[])
 
 	atexit(cleanup_files);
 
-        for (i = 0; i < input_files.count; i++)
+        STRARRAY_FOR_EACH( file, &input_files )
         {
-            input_name = input_files.str[i];
+            input_name = file;
             if (load_file( input_name, output_name )) exit(1);
         }
 	/* stdin special case. NULL means "stdin" for wpp. */

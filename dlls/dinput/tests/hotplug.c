@@ -154,9 +154,9 @@ static BOOL test_input_lost( DWORD version )
         .dwData = UINT_MAX,
     };
 
-    DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)}, devinst2 = devinst;
+    IDirectInputDevice8W *device = NULL, *device2;
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
-    IDirectInputDevice8W *device = NULL;
     ULONG ref, count, size;
     DIJOYSTATE2 state;
     HRESULT hr;
@@ -167,7 +167,6 @@ static BOOL test_input_lost( DWORD version )
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
@@ -209,7 +208,6 @@ static BOOL test_input_lost( DWORD version )
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
 
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
     hid_device_start( &desc, 1 );
 
     hr = IDirectInputDevice8_Acquire( device );
@@ -218,6 +216,15 @@ static BOOL test_input_lost( DWORD version )
     ok( hr == S_OK, "GetDeviceState returned %#lx\n", hr );
 
     ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "Release returned %ld\n", ref );
+
+    /* Test guidInstance across hotplugs. It should remain the same. */
+    hr = dinput_test_create_device( version, &devinst2, &device2 );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( !!device2, "device2 is NULL.\n" );
+    ok( !memcmp( &devinst.guidInstance, &devinst2.guidInstance, sizeof(GUID) ),
+                  "Unexpected guidInstance.\n" );
+    ref = IDirectInputDevice8_Release( device2 );
     ok( ref == 0, "Release returned %ld\n", ref );
 
 done:

@@ -23,6 +23,11 @@ extern char APP_DATA_DIR[MAX_PATH];
 extern char WINDOWS_DIR[MAX_PATH];
 extern char CURR_DIR[MAX_PATH];
 
+static inline LONG reg_set_str( HKEY key, const char *subkey, const char *value)
+{
+    return RegSetValueExA(key, subkey, 0, REG_SZ, (const BYTE *)value, strlen(value) + 1);
+}
+
 BOOL get_system_dirs(void);
 BOOL get_user_dirs(void);
 

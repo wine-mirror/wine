@@ -246,6 +246,14 @@ static void test_sscanf(void)
         ok(!strcmp(buffer, "test"), "got wrong string '%s' for flags %#x\n", buffer, tests[i]);
         ok(!strcmp(buffer1, "value\xda"), "got wrong string '%s' for flags %#x\n", buffer1, tests[i]);
 
+        ret = vsscanf_wrapper(tests[i], "123", -1, "%[\x01-\xff]", buffer);
+        ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+        ok(!strcmp(buffer, "123"), "got wrong string '%s' for flags %#x\n", buffer, tests[i]);
+
+        ret = vsscanf_wrapper(tests[i], "\xf0\xf1\xf2", -1, "%[\xff-\xf1\xf0]", buffer);
+        ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+        ok(!strcmp(buffer, "\xf0\xf1\xf2"), "got wrong string '%s' for flags %#x\n", buffer, tests[i]);
+
         ret = vsscanf_wrapper(tests[i], "0.1", 3, "%lf%n", &double_res, &count);
         ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
         ok(double_res == 0.1, "got wrong double %.16e for flags %#x\n", double_res, tests[i]);
@@ -321,6 +329,12 @@ static void test_sscanf(void)
         ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
         ok(result_ptr == (DWORD_PTR)0x123456789ull, /* this is truncated on 32bit systems */
            "got wrong number %Ix for flags %#x\n", result_ptr, tests[i]);
+
+        result64 = 0;
+        ret = vsscanf_wrapper(tests[i], "0xfefefefefefefefe", -1, "%jx", &result64);
+        ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+        ok(result64 == 0xfefefefefefefefell, "got wrong number 0x%s for flags %#x\n",
+                wine_dbgstr_longlong(result64), tests[i]);
     }
 }
 

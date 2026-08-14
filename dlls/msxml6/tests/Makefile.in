@@ -3,5 +3,6 @@ IMPORTS = oleaut32 ole32
 
 SOURCES = \
 	domdoc.c \
+	httpreq.c \
 	saxreader.c \
 	schema.c

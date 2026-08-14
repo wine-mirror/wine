@@ -1,4 +1,4 @@
-EXTLIB    = libz.a
+STATICLIB = libz.a
 EXTRAINCL = $(ZLIB_PE_CFLAGS)
 
 SOURCES = \

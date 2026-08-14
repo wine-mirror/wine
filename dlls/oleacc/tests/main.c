@@ -727,7 +727,7 @@ static void test_LresultFromObject(const char *name)
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
+    wait_child_process(&proc);
     ok(Object_ref == 1, "Object_ref = %ld\n", Object_ref);
 }
 

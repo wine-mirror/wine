@@ -3,8 +3,10 @@ IMPORTLIB = mspatcha
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine File Patch API"
+VER_PRODUCTVERSION      = 6,1,7600,16385
+
 SOURCES = \
 	lzxd_dec.c \
 	mspatcha_main.c \
-	pa19.c \
-	version.rc
+	pa19.c

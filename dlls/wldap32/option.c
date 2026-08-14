@@ -120,7 +120,7 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
                 *(char **)value = host;
             free( hostW );
         }
-        return map_error( ret );
+        return ret;
     }
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
@@ -375,7 +375,7 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
 
         ret = ldap_set_optionW( ld, option, &hostW );
         free( hostW );
-        return map_error( ret );
+        return ret;
     }
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:

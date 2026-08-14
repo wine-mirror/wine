@@ -24,7 +24,9 @@
 use strict;
 use locale;
 use POSIX;
-use Text::CSV::Encoded;
+use Encode;
+use JSON;
+use REST::Client;
 use open ':encoding(utf8)';
 
 sub unescape($)
@@ -70,20 +72,10 @@ sub get_current_version()
 sub get_bugs($)
 {
     my $filter = shift;
-    my $csv = Text::CSV::Encoded->new({ encoding_in => "utf-8", encoding_out => "utf-8" });
-    my %bugs;
-
-    open QUERY, "-|" or exec "wget", "-qO-", "https://bugs.winehq.org/buglist.cgi?columnlist=short_desc&query_format=advanced&ctype=csv&$filter"
-        or die "cannot query bug list";
-    <QUERY>;  # skip header line
-    while (<QUERY>)
-    {
-        next unless $csv->parse($_);
-        my ($id, $descr) = $csv->fields();
-        $bugs{$id} = $descr;
-    }
-    close QUERY;
-    return %bugs;
+    my $bz = REST::Client->new({ host => 'https://bugs.winehq.org/rest/' });
+    $bz->GET( "bug?include_fields=id,summary&$filter", { Accept => 'application/json' } );
+    my $bugs = from_json( decode_utf8( $bz->responseContent() ));
+    return map { $_->{id} => $_->{summary} } @{$bugs->{bugs}};
 }
 
 # retrieve the current list of authors

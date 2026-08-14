@@ -742,6 +742,12 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
         !wcschr(filename, '\\') && !wcschr(filename, '/'))
     {
         WCHAR windirW[MAX_PATH];
+
+        if (!filename[0])
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return FALSE;
+        }
         GetWindowsDirectoryW( windirW, MAX_PATH );
         lstrcpyW(buffer, windirW);
         lstrcatW(buffer, L"\\");
@@ -752,7 +758,7 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
         LPWSTR dummy;
         GetFullPathNameW(filename, ARRAY_SIZE(buffer), buffer, &dummy);
     }
-        
+
     TRACE("path: %s\n", debugstr_w(buffer));
 
     hFile = CreateFileW(buffer, GENERIC_READ | (write_access ? GENERIC_WRITE : 0),

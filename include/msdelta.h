@@ -26,8 +26,8 @@ extern "C" {
 #include <windows.h>
 #include <wincrypt.h>
 
-typedef __int64 DELTA_FILE_TYPE;
-typedef __int64 DELTA_FLAG_TYPE;
+typedef INT64 DELTA_FILE_TYPE;
+typedef INT64 DELTA_FLAG_TYPE;
 
 #define DELTA_FILE_SIZE_LIMIT         (32*1024*1024)
 #define DELTA_OPTIONS_SIZE_LIMIT      (128*1024*1024)

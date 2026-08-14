@@ -55,6 +55,7 @@ typedef struct _user_type_t context_handle_t;
 typedef struct _user_type_t generic_handle_t;
 typedef struct _statement_t statement_t;
 typedef struct _warning_t warning_t;
+typedef struct _version_t version_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
@@ -74,6 +75,7 @@ enum attr_type
     ATTR_AGGREGATABLE,
     ATTR_ALLOCATE,
     ATTR_ANNOTATION,
+    ATTR_APICONTRACT, /* implicit attribute */
     ATTR_APPOBJECT,
     ATTR_ASYNC,
     ATTR_ASYNCUUID,
@@ -343,6 +345,8 @@ struct _attr_t {
     unsigned int ival;
     void *pval;
   } u;
+  /* metadata */
+  unsigned int md_member;
   /* parser-internal */
   struct list entry;
   struct location where;
@@ -364,7 +368,7 @@ struct _expr_t {
     double dval;
     const char *sval;
     const expr_t *ext;
-    decl_spec_t tref;
+    var_t *var;
   } u;
   const expr_t *ext2;
   int is_const;
@@ -402,6 +406,7 @@ struct iface_details
   struct _type_t *inherit;
   struct _type_t *disp_inherit;
   struct _type_t *async_iface;
+  struct _type_t *runtime_class;
   typeref_list_t *requires;
 };
 
@@ -496,6 +501,23 @@ enum type_type
     TYPE_DELEGATE,
 };
 
+struct metadata
+{
+    unsigned int name;
+    unsigned int namespace;
+    unsigned int ref;
+    unsigned int def;
+    unsigned int extends;
+    /* get/put methods */
+    unsigned int class_property;
+    unsigned int iface_property;
+    unsigned int propertymap;
+    /* add/remove methods */
+    unsigned int class_event;
+    unsigned int iface_event;
+    unsigned int eventmap;
+};
+
 struct _type_t {
   const char *name;               /* C++ name with parameters in brackets */
   struct namespace *namespace;
@@ -524,9 +546,11 @@ struct _type_t {
   const char *impl_name;          /* C++ parameterized types impl base class name */
   const char *param_name;         /* used to build c_name of a parameterized type, when used as a parameter */
   const char *short_name;         /* widl specific short name */
+  const char *winmd_short_name;   /* metadata short name for parameterized type */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
+  struct metadata md;
   struct location where;
   unsigned int ignore : 1;
   unsigned int defined : 1;
@@ -624,6 +648,7 @@ struct _user_type_t {
 struct _statement_t {
     struct list entry;
     enum statement_type type;
+    struct location where;
     union
     {
         type_t *type;
@@ -635,6 +660,11 @@ struct _statement_t {
     /* For STMT_TYPE and STMT_TYPEDEF, should we define the UDT in this
      * statement, when writing a header? */
     unsigned int is_defined : 1;
+};
+
+struct _version_t {
+    unsigned short major;
+    unsigned short minor;
 };
 
 struct _warning_t {
@@ -672,10 +702,6 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
 var_t *make_var(char *name);
 var_list_t *append_var(var_list_t *list, var_t *var);
 
-char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
-                       const char *abi_prefix);
-char *format_parameterized_type_name(type_t *type, typeref_list_t *params);
-
 static inline enum type_type type_get_type_detect_alias(const type_t *type)
 {
     return type->type_type;
@@ -683,6 +709,11 @@ static inline enum type_type type_get_type_detect_alias(const type_t *type)
 
 #define STATEMENTS_FOR_EACH_FUNC(stmt, stmts) \
   if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, statement_t, entry ) \
+    if (stmt->type == STMT_DECLARATION && stmt->u.var->declspec.stgclass == STG_NONE && \
+        type_get_type_detect_alias(stmt->u.var->declspec.type) == TYPE_FUNCTION)
+
+#define STATEMENTS_FOR_EACH_FUNC_REV(stmt, stmts) \
+  if (stmts) LIST_FOR_EACH_ENTRY_REV( stmt, stmts, statement_t, entry ) \
     if (stmt->type == STMT_DECLARATION && stmt->u.var->declspec.stgclass == STG_NONE && \
         type_get_type_detect_alias(stmt->u.var->declspec.type) == TYPE_FUNCTION)
 

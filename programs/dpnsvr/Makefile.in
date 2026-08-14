@@ -2,6 +2,7 @@ MODULE    = dpnsvr.exe
 
 EXTRADLLFLAGS = -mwindows -municode
 
+VER_PRODUCTVERSION = 5,3,0,900
+
 SOURCES = \
-	main.c \
-	version.rc
+	main.c

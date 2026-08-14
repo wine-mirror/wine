@@ -239,12 +239,9 @@ static HRESULT parse_lbin_list(struct band *This, IStream *stream, struct chunk_
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
         case DMUS_FOURCC_INSTRUMENT_CHUNK:
-        {
-            UINT size = sizeof(inst);
-            if (chunk.size == offsetof(DMUS_IO_INSTRUMENT, nPitchBendRange)) size = chunk.size;
-            if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &inst, size))) break;
+            hr = stream_chunk_get_data_alt(stream, &chunk, &inst, sizeof(inst),
+                    offsetof(DMUS_IO_INSTRUMENT, nPitchBendRange));
             break;
-        }
 
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_REF_LIST):
         {

@@ -1,6 +1,5 @@
 MODULE       = ir50_32.dll
-IMPORTS      = user32 mfplat mfuuid
-DELAYIMPORTS = winegstreamer
+IMPORTS      = winegstreamer user32 mfplat mfuuid
 
 SOURCES = \
 	ir50.c \

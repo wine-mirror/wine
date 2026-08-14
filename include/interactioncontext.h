@@ -147,6 +147,14 @@ typedef enum CROSS_SLIDE_FLAGS
     CROSS_SLIDE_FLAGS_MAX        = 0xffffffff,
 } CROSS_SLIDE_FLAGS;
 
+typedef enum INTERACTION_STATE
+{
+    INTERACTION_STATE_IDLE                = 0x00000000,
+    INTERACTION_STATE_IN_INTERACTION      = 0x00000001,
+    INTERACTION_STATE_POSSIBLE_DOUBLE_TAP = 0x00000002,
+    INTERACTION_STATE_MAX                 = 0xffffffff
+} INTERACTION_STATE;
+
 typedef struct INTERACTION_ARGUMENTS_CROSS_SLIDE
 {
     CROSS_SLIDE_FLAGS flags;
@@ -170,9 +178,13 @@ typedef struct INTERACTION_CONTEXT_OUTPUT
 typedef void (CALLBACK *INTERACTION_CONTEXT_OUTPUT_CALLBACK)(void *data,
         const INTERACTION_CONTEXT_OUTPUT *output);
 
+HRESULT WINAPI BufferPointerPacketsInteractionContext(HINTERACTIONCONTEXT context,
+        UINT32 entries_count, const POINTER_INFO *pointer_info);
+
 HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *context);
 HRESULT WINAPI DestroyInteractionContext(HINTERACTIONCONTEXT context);
 
+HRESULT WINAPI ProcessBufferedPacketsInteractionContext(HINTERACTIONCONTEXT context);
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context);
 
 HRESULT WINAPI RegisterOutputCallbackInteractionContext(HINTERACTIONCONTEXT context,
@@ -187,6 +199,9 @@ HRESULT WINAPI GetPropertyInteractionContext(HINTERACTIONCONTEXT context,
         INTERACTION_CONTEXT_PROPERTY property, UINT32 *value);
 HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT context,
         INTERACTION_CONTEXT_PROPERTY property, UINT32 value);
+
+HRESULT WINAPI GetStateInteractionContext(HINTERACTIONCONTEXT context,
+        const POINTER_INFO *pointer_info, INTERACTION_STATE *state);
 
 #ifdef __cplusplus
 } /* extern "C" */

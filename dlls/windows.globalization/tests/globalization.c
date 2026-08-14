@@ -236,15 +236,27 @@ static void test_GlobalizationPreferences(void)
 static void test_Language(void)
 {
     static const WCHAR *class_name = L"Windows.Globalization.Language";
-
+    static const struct
+    {
+        const WCHAR *tag;
+        enum LanguageLayoutDirection direction;
+    }
+    lang_layout_direction_tests[] =
+    {
+        {L"en-US", LanguageLayoutDirection_Ltr},
+        {L"ar-SA", LanguageLayoutDirection_Rtl},
+    };
     IAgileObject *agile_object, *tmp_agile_object;
     IInspectable *inspectable, *tmp_inspectable;
+    enum LanguageLayoutDirection direction;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
     ILanguageFactory *language_factory;
     IActivationFactory *factory;
+    ILanguage2 *language2;
     ILanguage *language;
     HSTRING tag, str;
     const WCHAR *buf;
+    unsigned int i;
     HRESULT hr;
 
     hr = WindowsCreateString(class_name, wcslen(class_name), &str);
@@ -303,6 +315,36 @@ static void test_Language(void)
     WindowsDeleteString(tag);
 
     ILanguage_Release(language);
+
+    /* ILanguage2 */
+    for (i = 0; i < ARRAY_SIZE(lang_layout_direction_tests); i++)
+    {
+        winetest_push_context("%s", wine_dbgstr_w(lang_layout_direction_tests[i].tag));
+
+        hr = WindowsCreateString(lang_layout_direction_tests[i].tag, wcslen(lang_layout_direction_tests[i].tag), &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = ILanguageFactory_CreateLanguage(language_factory, str, &language);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        WindowsDeleteString(str);
+
+        hr = ILanguage_QueryInterface(language, &IID_ILanguage2, (void **)&language2);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* <= Windows 10 1507 */, "Unexpected hr %#lx.\n", hr);
+        if (FAILED(hr))
+        {
+            ILanguage_Release(language);
+            winetest_pop_context();
+            break;
+        }
+
+        hr = ILanguage2_get_LayoutDirection(language2, &direction);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(direction == lang_layout_direction_tests[i].direction, "Expected direction %d, got %d.\n",
+           lang_layout_direction_tests[i].direction, direction);
+
+        ILanguage2_Release(language2);
+        ILanguage_Release(language);
+        winetest_pop_context();
+    }
 
     ILanguageFactory_Release(language_factory);
 
@@ -384,6 +426,73 @@ static void test_GeographicRegion(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_ApplicationLanguages(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Globalization_ApplicationLanguages;
+    IApplicationLanguagesStatics *application_languages_statics;
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    IVectorView_HSTRING *languages;
+    IActivationFactory *factory;
+    BOOL found = FALSE;
+    const WCHAR *ptr;
+    UINT32 size, i;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+    int ret;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (FAILED( hr ))
+    {
+        win_skip( "%s runtimeclass not found, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+    check_interface( factory, &IID_IActivationFactory );
+    check_interface( factory, &IID_IApplicationLanguagesStatics );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IApplicationLanguagesStatics, (void **)&application_languages_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IApplicationLanguagesStatics_get_Languages( application_languages_statics, &languages );
+    ok( hr == S_OK || broken( hr == 0x80073d54 ) /* Win8 */, "got hr %#lx.\n", hr );
+    if (FAILED( hr ))
+        goto done;
+
+    hr = IVectorView_HSTRING_get_Size( languages, &size );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( size > 0, "Got unexpected %u.\n", size );
+
+    ret = GetUserDefaultLocaleName( locale, LOCALE_NAME_MAX_LENGTH );
+    ok( ret > 0, "GetUserDefaultLocaleName failed, error %lu.\n", GetLastError() );
+
+    for (i = 0; i < size; i++)
+    {
+        hr = IVectorView_HSTRING_GetAt( languages, i, &str );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+        ptr = WindowsGetStringRawBuffer( str, NULL );
+        found = !wcscmp( ptr, locale );
+        WindowsDeleteString( str );
+        if (found)
+            break;
+    }
+    ok( found, "Language not found.\n" );
+
+done:
+    ref = IApplicationLanguagesStatics_Release( application_languages_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(globalization)
 {
     HMODULE kernel32;
@@ -398,6 +507,7 @@ START_TEST(globalization)
     test_GlobalizationPreferences();
     test_Language();
     test_GeographicRegion();
+    test_ApplicationLanguages();
 
     RoUninitialize();
 }

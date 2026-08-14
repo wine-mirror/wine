@@ -6,6 +6,9 @@ UNIX_LIBS    = $(APPLICATIONSERVICES_LIBS)
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Printer spooler component"
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
 	cups.c \
 	localmon.c \

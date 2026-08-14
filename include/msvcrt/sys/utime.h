@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef _UTIMBUF_DEFINED
 #define _UTIMBUF_DEFINED
@@ -73,6 +73,6 @@ static inline int _wutime(const wchar_t *s, struct _utimbuf *buf) { return _wuti
 
 static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_SYS_UTIME_H */

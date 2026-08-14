@@ -57,7 +57,7 @@
 #define LOCAL_LABEL(name) .L ## name
 #define FILE_LEVEL_DIRECTIVE
 #define SYMBOL_IS_FUNC(name)                                                   \
-  .def name SEPARATOR                                                          \
+  .def FUNC_SYMBOL(name) SEPARATOR                                             \
     .scl 2 SEPARATOR                                                           \
     .type 32 SEPARATOR                                                         \
   .endef
@@ -135,9 +135,20 @@
 #define DEFINE_CODE_STATE
 #endif
 
-#define GLUE2(a, b) a##b
-#define GLUE(a, b) GLUE2(a, b)
+#define GLUE2_(a, b) a##b
+#define GLUE(a, b) GLUE2_(a, b)
+#define GLUE2(a, b) GLUE2_(a, b)
 #define SYMBOL_NAME(name) GLUE(__USER_LABEL_PREFIX__, name)
+#ifndef __arm64ec__
+#define FUNC_SYMBOL(name) name
+#else
+// On ARM64EC, function names and calls (but not address-taking or data symbol
+// references) use symbols prefixed with "#".
+#define QUOTE(a) #a
+#define STR(a) QUOTE(a)
+#define HASH #
+#define FUNC_SYMBOL(name) STR(GLUE2(HASH, name))
+#endif
 
 #ifdef VISIBILITY_HIDDEN
 #define DECLARE_SYMBOL_VISIBILITY(name)                                        \
@@ -149,16 +160,16 @@
 #define DEFINE_COMPILERRT_FUNCTION(name)                                       \
   DEFINE_CODE_STATE                                                            \
   FILE_LEVEL_DIRECTIVE SEPARATOR                                               \
-  .globl SYMBOL_NAME(name) SEPARATOR                                           \
+  .globl FUNC_SYMBOL(SYMBOL_NAME(name)) SEPARATOR                              \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(name)                                              \
   DECLARE_FUNC_ENCODING                                                        \
-  SYMBOL_NAME(name):
+  FUNC_SYMBOL(SYMBOL_NAME(name)):
 
 #define DEFINE_COMPILERRT_THUMB_FUNCTION(name)                                 \
   DEFINE_CODE_STATE                                                            \
   FILE_LEVEL_DIRECTIVE SEPARATOR                                               \
-  .globl SYMBOL_NAME(name) SEPARATOR                                           \
+  .globl FUNC_SYMBOL(SYMBOL_NAME(name)) SEPARATOR                              \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(name) SEPARATOR                                    \
   .thumb_func SEPARATOR                                                        \
@@ -167,11 +178,11 @@
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)                               \
   DEFINE_CODE_STATE                                                            \
   FILE_LEVEL_DIRECTIVE SEPARATOR                                               \
-  .globl SYMBOL_NAME(name) SEPARATOR                                           \
+  .globl FUNC_SYMBOL(SYMBOL_NAME(name)) SEPARATOR                              \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   HIDDEN(SYMBOL_NAME(name)) SEPARATOR                                          \
   DECLARE_FUNC_ENCODING                                                        \
-  SYMBOL_NAME(name):
+  FUNC_SYMBOL(SYMBOL_NAME(name)):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(name)                     \
   DEFINE_CODE_STATE                                                            \
@@ -182,10 +193,10 @@
   name:
 
 #define DEFINE_COMPILERRT_FUNCTION_ALIAS(name, target)                         \
-  .globl SYMBOL_NAME(name) SEPARATOR                                           \
+  .globl FUNC_SYMBOL(SYMBOL_NAME(name)) SEPARATOR                              \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(SYMBOL_NAME(name)) SEPARATOR                       \
-  .set SYMBOL_NAME(name), SYMBOL_NAME(target) SEPARATOR
+  .set FUNC_SYMBOL(SYMBOL_NAME(name)), FUNC_SYMBOL(SYMBOL_NAME(target)) SEPARATOR
 
 #if defined(__ARM_EABI__)
 #define DEFINE_AEABI_FUNCTION_ALIAS(aeabi_name, name)                          \

@@ -19,5 +19,11 @@
  */
 
 #pragma makedep register
+#pragma winrt ns_prefix
 
-#include "windows.security.authentication.onlineid.idl"
+import "windows.security.authentication.onlineid.idl";
+
+namespace Windows.Security.Authentication.OnlineId {
+    runtimeclass OnlineIdSystemAuthenticator;
+    runtimeclass OnlineIdServiceTicketRequest;
+}

@@ -347,7 +347,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *if
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_resource_init(object, (IDXGIDevice *)iface, outer, needs_surface, wined3d_resource)))
+    if (FAILED(hr = dxgi_resource_init(object, (IDXGIDevice *)iface, outer, needs_surface,
+            wined3d_resource, NULL, 0)))
     {
         WARN("Failed to initialize resource, hr %#lx.\n", hr);
         free(object);
@@ -355,7 +356,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *if
     }
 
     TRACE("Created resource %p.\n", object);
-    *resource = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGIResource_iface;
+    *resource = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGIResource1_iface;
 
     return S_OK;
 }
@@ -461,7 +462,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d11_swapchain_init(object, device, &wined3d_desc)))
+    if (FAILED(hr = d3d11_swapchain_init(object, device, &wined3d_desc, fullscreen_desc)))
     {
         WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
         free(object);

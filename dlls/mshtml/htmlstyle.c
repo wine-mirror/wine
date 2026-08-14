@@ -409,6 +409,11 @@ static const style_tbl_entry_t style_tbl[] = {
         ATTR_COMPAT_IE10
     },
     {
+        L"content",
+        DISPID_IHTMLCSSSTYLEDECLARATION_CONTENT,
+        DISPID_IHTMLSTYLE6_CONTENT
+    },
+    {
         L"cursor",
         DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR,
         DISPID_A_CURSOR,
@@ -4182,15 +4187,15 @@ DISPEX_IDISPATCH_IMPL(HTMLStyle6, IHTMLStyle6, impl_from_IHTMLStyle6(iface)->css
 static HRESULT WINAPI HTMLStyle6_put_content(IHTMLStyle6 *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(&This->css_style, STYLEID_CONTENT, v);
 }
 
 static HRESULT WINAPI HTMLStyle6_get_content(IHTMLStyle6 *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(&This->css_style, STYLEID_CONTENT, p);
 }
 
 static HRESULT WINAPI HTMLStyle6_put_contentSide(IHTMLStyle6 *iface, BSTR v)
@@ -6499,15 +6504,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_maxWidth(IHTMLCSSStyleDeclarat
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_content(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_CONTENT, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_content(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_CONTENT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_captionSide(IHTMLCSSStyleDeclaration *iface, BSTR v)
@@ -9778,6 +9783,7 @@ dispex_static_data_t MSStyleCSSProperties_dispex = {
     .disp_tid     = DispHTMLStyle_tid,
     .iface_tids   = MSStyleCSSProperties_iface_tids,
     .init_info    = MSStyleCSSProperties_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_PROPS
 };
 
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
@@ -9922,6 +9928,7 @@ dispex_static_data_t CSSStyleDeclaration_dispex = {
     .vtbl      = &CSSStyleDeclaration_dispex_vtbl,
     .disp_tid  = DispHTMLW3CComputedStyle_tid,
     .init_info = CSSStyleDeclaration_init_dispex_info,
+    .js_flags  = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, DispatchEx *owner, IHTMLCSSStyleDeclaration **p)

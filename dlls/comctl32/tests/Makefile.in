@@ -1,5 +1,6 @@
 TESTDLL   = comctl32.dll
 IMPORTS   = ole32 user32 gdi32 advapi32 imm32 uxtheme oleacc oleaut32
+EXTRADLLFLAGS = -Wl,--subsystem,console:5.2
 
 SOURCES = \
 	animate.c \

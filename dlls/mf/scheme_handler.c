@@ -23,6 +23,8 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "shlwapi.h"
+
 #include "evr.h"
 #include "mfidl.h"
 #include "mf_private.h"
@@ -454,8 +456,13 @@ static const IMFAsyncCallbackVtbl scheme_handler_callback_vtbl =
 
 static HRESULT file_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
 {
-    if (!wcsnicmp(url, L"file://", 7))
-        url += 7;
+    WCHAR path[MAX_PATH];
+    DWORD len;
+
+    len = ARRAY_SIZE(path);
+    if (SUCCEEDED(PathCreateFromUrlW(url, path, &len, 0)))
+        url = path;
+
     return MFCreateFile(flags & MF_RESOLUTION_WRITE ? MF_ACCESSMODE_READWRITE : MF_ACCESSMODE_READ,
             MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, url, out);
 }

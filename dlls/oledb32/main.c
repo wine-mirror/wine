@@ -38,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 HINSTANCE instance;
 
-DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
-
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID lpv)
 {
     switch(reason)
@@ -126,7 +124,7 @@ static const IClassFactoryVtbl CF_Vtbl =
 
 static cf oledb_convert_cf = { { &CF_Vtbl }, create_oledb_convert };
 static cf oledb_datainit_cf = { { &CF_Vtbl }, create_data_init };
-static cf oledb_errorinfo_cf = { { &CF_Vtbl }, create_error_info };
+static cf oledb_errorinfo_cf = { { &CF_Vtbl }, create_error_object };
 static cf oledb_rowpos_cf = { { &CF_Vtbl }, create_oledb_rowpos };
 static cf oledb_dslocator_cf = { { &CF_Vtbl }, create_dslocator };
 
@@ -135,33 +133,39 @@ static cf oledb_dslocator_cf = { { &CF_Vtbl }, create_dslocator };
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
 {
+    IClassFactory *factory = NULL;
+    HRESULT hr;
+
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), obj);
 
     if ( IsEqualCLSID (rclsid, &CLSID_OLEDB_CONVERSIONLIBRARY) )
     {
-        *obj = &oledb_convert_cf;
-        return S_OK;
+        factory = &oledb_convert_cf.IClassFactory_iface;
     }
     else if ( IsEqualCLSID (rclsid, &CLSID_MSDAINITIALIZE) )
     {
-        *obj = &oledb_datainit_cf;
-        return S_OK;
+        factory = &oledb_datainit_cf.IClassFactory_iface;
     }
-    else if ( IsEqualCLSID (rclsid, &CSLID_MSDAER) )
+    else if ( IsEqualCLSID (rclsid, &CLSID_EXTENDEDERRORINFO) )
     {
-        *obj = &oledb_errorinfo_cf;
-        return S_OK;
+        factory = &oledb_errorinfo_cf.IClassFactory_iface;
     }
     else if ( IsEqualCLSID (rclsid, &CLSID_OLEDB_ROWPOSITIONLIBRARY) )
     {
-        *obj = &oledb_rowpos_cf;
-        return S_OK;
+        factory = &oledb_rowpos_cf.IClassFactory_iface;
     }
     else if ( IsEqualCLSID (rclsid, &CLSID_DataLinks) )
     {
-        *obj = &oledb_dslocator_cf;
-        return S_OK;
+        factory = &oledb_dslocator_cf.IClassFactory_iface;
+    }
+    else
+    {
+        *obj = NULL;
+        return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    return CLASS_E_CLASSNOTAVAILABLE;
+    hr = IClassFactory_QueryInterface(factory, riid, obj);
+    IClassFactory_Release(factory);
+
+    return hr;
 }

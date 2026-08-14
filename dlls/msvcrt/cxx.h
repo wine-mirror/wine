@@ -21,7 +21,22 @@
 #include "rtlsupportapi.h"
 #include "wine/asm.h"
 
+#define CLASS_IS_SIMPLE_TYPE          1
+#define CLASS_HAS_VIRTUAL_BASE_CLASS  4
+#define CLASS_IS_WINRT                8
+
+#define TYPE_FLAG_CONST      1
+#define TYPE_FLAG_VOLATILE   2
+#define TYPE_FLAG_REFERENCE  8
+#define TYPE_FLAG_WINRT     16
+
 #ifdef __i386__
+#undef CXX_USE_RVA
+#else
+#define CXX_USE_RVA 1
+#endif
+
+#ifndef _WIN64
 #undef RTTI_USE_RVA
 #else
 #define RTTI_USE_RVA 1
@@ -35,8 +50,7 @@
     __asm__(".data\n" \
             "\t.balign 8\n" \
             "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME(#name "_vtable") "\n" \
-            __ASM_NAME(#name "_vtable") ":\n" \
+            __ASM_GLOBL(__ASM_NAME(#name "_vtable")) "\n" \
             funcs "\n\t.text")
 
 #else
@@ -47,246 +61,156 @@
     __asm__(".data\n" \
             "\t.balign 4\n" \
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME(#name "_vtable") "\n" \
-            __ASM_NAME(#name "_vtable") ":\n" \
+            __ASM_GLOBL(__ASM_NAME(#name "_vtable")) "\n" \
             funcs "\n\t.text")
 
 #endif /* _WIN64 */
 
 #ifndef RTTI_USE_RVA
 
-#define DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    static type_info name ## _type_info = { \
-        &type_info_vtable, \
-        NULL, \
-        mangled_name \
-    }; \
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
-    &name ##_type_info, \
-    base_classes_no, \
-    { 0, -1, 0}, \
-    64 \
-};
+static const rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
+    { { &name ##_type_info, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
+\
+static const rtti_base_array name ## _rtti_base_array = \
+    { { name ## _rtti_base_descriptor, __VA_ARGS__ } }; \
+\
+static const rtti_object_hierarchy name ## _hierarchy = \
+    { 0, 0, ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), &name ## _rtti_base_array }; \
+\
+const rtti_object_locator name ## _rtti = \
+    { 0, off, 0, &name ## _type_info, &name ## _hierarchy };
 
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-\
-static const rtti_base_array name ## _rtti_base_array = { \
-    { \
-        &name ## _rtti_base_descriptor, \
-        cl1, \
-        cl2, \
-        cl3, \
-        cl4, \
-        cl5, \
-        cl6, \
-        cl7, \
-        cl8, \
-        cl9, \
-    } \
-}; \
-\
-static const rtti_object_hierarchy name ## _hierarchy = { \
-    0, \
-    0, \
-    base_classes_no+1, \
-    &name ## _rtti_base_array \
-}; \
-\
-const rtti_object_locator name ## _rtti = { \
-    0, \
-    off, \
-    0, \
-    &name ## _type_info, \
-    &name ## _hierarchy \
-};
+#define INIT_RTTI(name,base) /* nothing to do */
 
-#define DEFINE_CXX_TYPE_INFO(type) \
-static const cxx_type_info type ## _cxx_type_info = { \
-    0, \
-    & type ##_type_info, \
-    { 0, -1, 0 }, \
-    sizeof(type), \
-    THISCALL(type ##_copy_ctor) \
-};
+#elif defined __WINE_PE_BUILD
 
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
-DEFINE_CXX_TYPE_INFO(type) \
-\
-static const cxx_type_info_table type ## _cxx_type_table = { \
-    base_no+1, \
-    { \
-        & type ## _cxx_type_info, \
-        cl1, \
-        cl2, \
-        cl3, \
-        cl4  \
-    } \
-}; \
-\
-static const cxx_exception_type type ## _exception_type = { \
-    0, \
-    THISCALL(dtor), \
-    NULL, \
-    & type ## _cxx_type_table \
-};
+#define DEFINE_RTTI_DATA2(name, off, mangled_name, ...) \
+extern const rtti_object_locator name##_rtti; \
+type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
+extern const rtti_base_descriptor name ## _rtti_base_descriptor[1]; \
+void __asm_dummy_ ## name ## _rtti(void) \
+{ \
+    asm( ".balign 4\n\t" \
+         __ASM_GLOBL(#name "_rtti_base_descriptor") "\n\t" \
+         ".rva " #name "_type_info\n\t" \
+         ".long %c0-1, 0, -1, 0, 64\n" \
+         #name "_rtti_base_array:\n\t" \
+         ".rva " #__VA_ARGS__ "\n" \
+         #name "_rtti_hierarchy:\n\t" \
+         ".long 0, 0, %c0\n\t" \
+         ".rva " #name "_rtti_base_array\n\t" \
+         __ASM_GLOBL(#name "_rtti") "\n\t" \
+         ".long 1, %c1, 0\n\t" \
+         ".rva " #name "_type_info\n\t" \
+         ".rva " #name "_rtti_hierarchy\n\t" \
+         ".rva " #name "_rtti\n\t" \
+         :: "i"(ARRAY_SIZE(((const void *[]){ __VA_ARGS__ }))), "i"(off) ); \
+}
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+    DEFINE_RTTI_DATA2(name, off, mangled_name, name ## _rtti_base_descriptor, ##__VA_ARGS__)
 
-#else
+#define INIT_RTTI(name,base) /* nothing to do */
 
-#define __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    static type_info name ## _type_info = { \
-        &type_info_vtable, \
-        NULL, \
-        mangled_name \
-    }; \
-\
-static rtti_base_descriptor name ## _rtti_base_descriptor = { \
-    0xdeadbeef, \
-    base_classes_no, \
-    { 0, -1, 0}, \
-    64 \
-};
+#else  /* RTTI_USE_RVA */
 
-#define DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
-    \
-    static void init_ ## name ## _rtti(char *base) \
-    { \
-        name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
-    }
-
-#define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    __DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
-static rtti_base_array name ## _rtti_base_array = { \
-    { \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-    } \
-}; \
+static rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
+    { { 0xdeadbeef, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
 \
-static rtti_object_hierarchy name ## _hierarchy = { \
-    0, \
-    0, \
-    base_classes_no+1, \
-    0xdeadbeef \
-}; \
+static rtti_base_array name ## _rtti_base_array; \
 \
-rtti_object_locator name ## _rtti = { \
-    1, \
-    off, \
-    0, \
-    0xdeadbeef, \
-    0xdeadbeef, \
-    0xdeadbeef \
-};\
+static rtti_object_hierarchy name ## _hierarchy = \
+    { 0, 0, ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })) }; \
+\
+rtti_object_locator name ## _rtti = \
+    { 1, off, 0, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef }; \
 \
 static void init_ ## name ## _rtti(char *base) \
 { \
-    name ## _rtti_base_descriptor.type_descriptor = (char*)&name ## _type_info - base; \
-    name ## _rtti_base_array.bases[0] = (char*)&name ## _rtti_base_descriptor - base; \
-    name ## _rtti_base_array.bases[1] = (char*)cl1 - base; \
-    name ## _rtti_base_array.bases[2] = (char*)cl2 - base; \
-    name ## _rtti_base_array.bases[3] = (char*)cl3 - base; \
-    name ## _rtti_base_array.bases[4] = (char*)cl4 - base; \
-    name ## _rtti_base_array.bases[5] = (char*)cl5 - base; \
-    name ## _rtti_base_array.bases[6] = (char*)cl6 - base; \
-    name ## _rtti_base_array.bases[7] = (char*)cl7 - base; \
-    name ## _rtti_base_array.bases[8] = (char*)cl8 - base; \
-    name ## _rtti_base_array.bases[9] = (char*)cl9 - base; \
+    const void * const name ## _rtti_bases[] = { name ## _rtti_base_descriptor, __VA_ARGS__ }; \
+    name ## _rtti_base_descriptor[0].type_descriptor = (char*)&name ## _type_info - base; \
+    for (unsigned int i = 0; i < ARRAY_SIZE(name ## _rtti_bases); i++) \
+        name ## _rtti_base_array.bases[i] = (char*)name ## _rtti_bases[i] - base; \
     name ## _hierarchy.base_classes = (char*)&name ## _rtti_base_array - base; \
     name ## _rtti.type_descriptor = (char*)&name ## _type_info - base; \
     name ## _rtti.type_hierarchy = (char*)&name ## _hierarchy - base; \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
-#define DEFINE_CXX_TYPE_INFO(type) \
-static cxx_type_info type ## _cxx_type_info = { \
-    0, \
-    0xdeadbeef, \
-    { 0, -1, 0 }, \
-    sizeof(type), \
-    0xdeadbeef \
-}; \
-\
-static void init_ ## type ## _cxx_type_info(char *base) \
-{ \
-    type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
-    type ## _cxx_type_info.copy_ctor  = (char *)type ## _copy_ctor - base; \
-}
+#define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
 
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+#endif  /* RTTI_USE_RVA */
+
+#ifndef CXX_USE_RVA
+
+#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+static const cxx_type_info type ## _cxx_type_info[1] = \
+    { { 0, &type ##_type_info, { 0, -1, 0 }, sizeof(type), THISCALL(type ##_copy_ctor) } }; \
 \
-DEFINE_CXX_TYPE_INFO(type) \
+static const cxx_type_info_table type ## _cxx_type_table = \
+    { ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), { type ## _cxx_type_info, __VA_ARGS__ } }; \
 \
-static cxx_type_info_table type ## _cxx_type_table = { \
-    base_no+1, \
-    { \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef, \
-        0xdeadbeef  \
-    } \
-}; \
+static const cxx_exception_type type ## _exception_type = \
+    { 0, THISCALL(dtor), NULL, & type ## _cxx_type_table };
+
+#define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
+
+#elif defined __WINE_PE_BUILD
+
+#define DEFINE_CXX_TYPE2(type, dtor, ...) \
+extern const cxx_type_info type ## _cxx_type_info[1]; \
+extern const cxx_exception_type type ## _exception_type; \
+void __asm_dummy_ ## type ## _exception_type(void) \
+{ \
+    asm( ".balign 4\n\t" \
+         __ASM_GLOBL(#type "_cxx_type_info") "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #type "_type_info\n\t" \
+         ".long 0, -1, 0, %c0\n\t" \
+         ".rva " #type "_copy_ctor\n" \
+         #type "_type_table:\n\t" \
+         ".long %c1\n\t" \
+         ".rva " #__VA_ARGS__ "\n\t" \
+         __ASM_GLOBL(#type "_exception_type") "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #dtor "\n\t" \
+         ".long 0\n\t" \
+         ".rva " #type "_type_table\n\t" \
+         :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ &__VA_ARGS__ }))) ); \
+}
+#define DEFINE_CXX_TYPE(type, dtor, ...) \
+    DEFINE_CXX_TYPE2(type, dtor, type ## _cxx_type_info, ##__VA_ARGS__)
+
+#define INIT_CXX_TYPE(name,base) /* nothing to do */
+
+#else  /* CXX_USE_RVA */
+
+#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+static cxx_type_info type ## _cxx_type_info[1] = \
+    { { 0, 0xdeadbeef, { 0, -1, 0 }, sizeof(type), 0xdeadbeef } }; \
 \
-static cxx_exception_type type ##_exception_type = { \
-    0, \
-    0xdeadbeef, \
-    0, \
-    0xdeadbeef \
-}; \
+static const void * const type ## _cxx_type_classes[] = { type ## _cxx_type_info, __VA_ARGS__ }; \
+static cxx_type_info_table type ## _cxx_type_table = { ARRAY_SIZE(type ## _cxx_type_classes) }; \
+static cxx_exception_type type ##_exception_type; \
 \
 static void init_ ## type ## _cxx(char *base) \
 { \
-    init_ ## type ## _cxx_type_info(base); \
-    type ## _cxx_type_table.info[0]   = (char *)&type ## _cxx_type_info - base; \
-    type ## _cxx_type_table.info[1]   = (char *)cl1 - base; \
-    type ## _cxx_type_table.info[2]   = (char *)cl2 - base; \
-    type ## _cxx_type_table.info[3]   = (char *)cl3 - base; \
-    type ## _cxx_type_table.info[4]   = (char *)cl4 - base; \
+    type ## _cxx_type_info[0].type_info = (char *)&type ## _type_info - base; \
+    type ## _cxx_type_info[0].copy_ctor = (char *)type ## _copy_ctor - base; \
+    for (unsigned int i = 0; i < ARRAY_SIZE(type ## _cxx_type_classes); i++) \
+        type ## _cxx_type_table.info[i] = (char *)type ## _cxx_type_classes[i] - base; \
     type ## _exception_type.destructor      = (char *)dtor - base; \
     type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
 
-#endif
+#define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
 
-#define DEFINE_RTTI_DATA0(name, off, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA1(name, off, cl1, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 1, cl1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA2(name, off, cl1, cl2, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 2, cl1, cl2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA3(name, off, cl1, cl2, cl3, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 3, cl1, cl2, cl3, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA4(name, off, cl1, cl2, cl3, cl4, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 4, cl1, cl2, cl3, cl4, NULL, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA5(name, off, cl1, cl2, cl3, cl4, cl5, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 5, cl1, cl2, cl3, cl4, cl5, NULL, NULL, NULL, NULL, mangled_name)
-#define DEFINE_RTTI_DATA8(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 8, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, NULL, mangled_name)
-#define DEFINE_RTTI_DATA9(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    DEFINE_RTTI_DATA(name, off, 9, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name)
-
-#define DEFINE_CXX_DATA0(name, dtor) \
-    DEFINE_CXX_DATA(name, 0, NULL, NULL, NULL, NULL, dtor)
-#define DEFINE_CXX_DATA1(name, cl1, dtor) \
-    DEFINE_CXX_DATA(name, 1, cl1, NULL, NULL, NULL, dtor)
-#define DEFINE_CXX_DATA2(name, cl1, cl2, dtor) \
-    DEFINE_CXX_DATA(name, 2, cl1, cl2, NULL, NULL, dtor)
-#define DEFINE_CXX_DATA3(name, cl1, cl2, cl3, dtor) \
-    DEFINE_CXX_DATA(name, 3, cl1, cl2, cl3, NULL, dtor)
-#define DEFINE_CXX_DATA4(name, cl1, cl2, cl3, cl4, dtor) \
-    DEFINE_CXX_DATA(name, 4, cl1, cl2, cl3, cl4, dtor)
+#endif  /* CXX_USE_RVA */
 
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
@@ -371,29 +295,6 @@ typedef struct _rtti_object_locator
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
 
-typedef struct
-{
-    UINT flags;
-    const type_info *type_info;
-    this_ptr_offsets offsets;
-    unsigned int size;
-    void *copy_ctor;
-} cxx_type_info;
-
-typedef struct
-{
-    UINT count;
-    const cxx_type_info *info[5];
-} cxx_type_info_table;
-
-typedef struct
-{
-    UINT flags;
-    void *destructor;
-    void *custom_handler;
-    const cxx_type_info_table *type_info_table;
-} cxx_exception_type;
-
 #else
 
 typedef struct
@@ -427,6 +328,35 @@ typedef struct
     unsigned int object_locator;
 } rtti_object_locator;
 
+#endif  /* RTTI_USE_RVA */
+
+#ifndef CXX_USE_RVA
+
+typedef struct
+{
+    UINT flags;
+    const type_info *type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    void *copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    const cxx_type_info *info[5];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    void *destructor;
+    void *custom_handler;
+    const cxx_type_info_table *type_info_table;
+} cxx_exception_type;
+
+#else
+
 typedef struct
 {
     UINT flags;
@@ -450,31 +380,31 @@ typedef struct
     unsigned int type_info_table;
 } cxx_exception_type;
 
-#endif
+#endif  /* CXX_USE_RVA */
 
 extern const vtable_ptr type_info_vtable;
 
-#ifdef RTTI_USE_RVA
+#ifdef CXX_USE_RVA
 
-static inline uintptr_t rtti_rva_base( const void *ptr )
+static inline uintptr_t cxx_rva_base( const void *ptr )
 {
     void *base;
     return (uintptr_t)RtlPcToFileHeader( (void *)ptr, &base );
 }
 
-static inline void *rtti_rva( unsigned int rva, uintptr_t base )
+static inline void *cxx_rva( unsigned int rva, uintptr_t base )
 {
     return (void *)(base + rva);
 }
 
 #else
 
-static inline uintptr_t rtti_rva_base( const void *ptr )
+static inline uintptr_t cxx_rva_base( const void *ptr )
 {
     return 0;
 }
 
-static inline void *rtti_rva( const void *ptr, uintptr_t base )
+static inline void *cxx_rva( const void *ptr, uintptr_t base )
 {
     return (void *)ptr;
 }
@@ -501,7 +431,7 @@ void * __thiscall type_info_vector_dtor(type_info * _this, unsigned int flags) \
     return _this; \
 } \
 \
-DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" ) \
+DEFINE_RTTI_DATA( type_info, 0, ".?AVtype_info@@" ) \
 \
 __ASM_BLOCK_BEGIN(type_info_vtables) \
     __ASM_VTABLE(type_info, \

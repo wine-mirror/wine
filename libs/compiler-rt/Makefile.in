@@ -1,17 +1,21 @@
-EXTLIB    = libcompiler-rt.a
+STATICLIB = libcompiler-rt.a
 
 SOURCES = \
+	lib/builtins/aarch64/chkstk.S \
 	lib/builtins/arm/aeabi_idivmod.S \
 	lib/builtins/arm/aeabi_ldivmod.S \
 	lib/builtins/arm/aeabi_uidivmod.S \
 	lib/builtins/arm/aeabi_uldivmod.S \
 	lib/builtins/arm/divmodsi4.S \
 	lib/builtins/arm/udivmodsi4.S \
+	lib/builtins/arm64ec/chkstk.S \
+	lib/builtins/ctzdi2.c \
 	lib/builtins/divdi3.c \
 	lib/builtins/divmoddi4.c \
 	lib/builtins/divmodsi4.c \
 	lib/builtins/divsi3.c \
 	lib/builtins/divti3.c \
+	lib/builtins/emutls.c \
 	lib/builtins/fixdfdi.c \
 	lib/builtins/fixsfdi.c \
 	lib/builtins/fixunsdfdi.c \
@@ -20,7 +24,12 @@ SOURCES = \
 	lib/builtins/floatdisf.c \
 	lib/builtins/floatundidf.c \
 	lib/builtins/floatundisf.c \
+	lib/builtins/i386/chkstk.S \
+	lib/builtins/i386/chkstk2.S \
+	lib/builtins/i386/moddi3.S \
 	lib/builtins/mingw_fixfloat.c \
+	lib/builtins/popcountdi2.c \
+	lib/builtins/popcountsi2.c \
 	lib/builtins/udivdi3.c \
 	lib/builtins/udivmoddi4.c \
 	lib/builtins/udivmodsi4.c \
@@ -29,6 +38,8 @@ SOURCES = \
 	lib/builtins/udivti3.c \
 	lib/builtins/umoddi3.c \
 	lib/builtins/umodsi3.c \
-	lib/builtins/umodti3.c
+	lib/builtins/umodti3.c \
+	lib/builtins/x86_64/chkstk.S \
+	lib/builtins/x86_64/chkstk2.S
 
-INSTALL_DEV = $(EXTLIB)
+INSTALL_DEV = $(STATICLIB)

@@ -3,6 +3,6 @@ IMPORTS = combase
 
 SOURCES = \
 	async.c \
+	async_private.idl \
 	classes.idl \
-	main.c \
-	provider.idl
+	main.c

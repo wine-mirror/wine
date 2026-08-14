@@ -4,8 +4,10 @@ IMPORTS   = $(FAUDIO_PE_LIBS) ole32
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 PARENTSRC = ../xaudio2_7
 
+VER_FILEDESCRIPTION_STR = "Wine XAPOFX dll"
+VER_PRODUCTVERSION      = 9,26,1590,0
+
 SOURCES = \
-	version.rc \
 	xapo.c \
 	xapofx.c \
 	xaudio_allocator.c \

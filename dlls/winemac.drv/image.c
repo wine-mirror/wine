@@ -278,28 +278,9 @@ CFArrayRef create_app_icon_images(void)
     {
         struct app_icon_entry *icon = &entries[i];
         CGImageRef cgimage = NULL;
-
-        if (icon->png)
-        {
-            CFDataRef data = CFDataCreate(NULL, param_ptr(icon->png), icon->size);
-            if (data)
-            {
-                CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
-                CFRelease(data);
-                if (provider)
-                {
-                    cgimage = CGImageCreateWithPNGDataProvider(provider, NULL, FALSE,
-                                                               kCGRenderingIntentDefault);
-                    CGDataProviderRelease(provider);
-                }
-            }
-        }
-        else
-        {
-            HICON handle = UlongToHandle(icon->icon);
-            cgimage = create_cgimage_from_icon(handle, icon->width, icon->height);
-            NtUserDestroyCursor(handle, 0);
-        }
+        HICON handle = UlongToHandle(icon->icon);
+        cgimage = create_cgimage_from_icon(handle, icon->width, icon->height);
+        NtUserDestroyCursor(handle, 0);
 
         if (cgimage)
         {

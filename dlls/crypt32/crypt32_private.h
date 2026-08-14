@@ -26,6 +26,11 @@ BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key);
 BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded_sig_len,
     BYTE **sig_value, DWORD *sig_len);
 
+/* Returns a freshly-allocated, NUL-terminated UUID string suitable for use
+ * as a CSP key container name. Caller frees with CryptMemFree.  Returns
+ * NULL on failure. */
+WCHAR *CRYPT32_AllocateUniqueContainerName(void);
+
 /* a few asn.1 tags we need */
 #define ASN_BOOL            (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x01)
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)
@@ -483,6 +488,7 @@ struct open_cert_store_params
     CRYPT_DATA_BLOB *pfx;
     const WCHAR *password;
     cert_store_data_t *data_ret;
+    unsigned int *key_count_ret;
 };
 
 struct import_store_key_params
@@ -512,6 +518,17 @@ struct enum_root_certs_params
     DWORD *needed;
 };
 
+struct export_cert_store_params
+{
+    const BYTE *cert_data;
+    DWORD       cert_size;
+    const BYTE *key_blob;
+    DWORD       key_blob_size;
+    const WCHAR *password;
+    BYTE        *pfx_data;
+    DWORD       *pfx_size;
+};
+
 enum unix_funcs
 {
     unix_process_attach,
@@ -521,6 +538,7 @@ enum unix_funcs
     unix_import_store_cert,
     unix_close_cert_store,
     unix_enum_root_certs,
+    unix_export_cert_store,
     unix_funcs_count,
 };
 

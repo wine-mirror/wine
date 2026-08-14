@@ -21,8 +21,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <libxml/parser.h>
-#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -43,9 +41,9 @@ typedef struct
     DispatchEx dispex;
     IXMLDOMNamedNodeMap IXMLDOMNamedNodeMap_iface;
     ISupportErrorInfo ISupportErrorInfo_iface;
-    LONG ref;
+    LONG refcount;
 
-    xmlNodePtr node;
+    struct domnode *node;
     LONG iterator;
     IEnumVARIANT *enumvariant;
 
@@ -73,41 +71,40 @@ static inline xmlnodemap *impl_from_ISupportErrorInfo( ISupportErrorInfo *iface 
     return CONTAINING_RECORD(iface, xmlnodemap, ISupportErrorInfo_iface);
 }
 
-static HRESULT WINAPI xmlnodemap_QueryInterface(
-    IXMLDOMNamedNodeMap *iface,
-    REFIID riid, void** ppvObject )
+static HRESULT WINAPI xmlnodemap_QueryInterface(IXMLDOMNamedNodeMap *iface, REFIID riid, void **obj)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    if( IsEqualGUID( riid, &IID_IUnknown ) ||
-        IsEqualGUID( riid, &IID_IDispatch ) ||
-        IsEqualGUID( riid, &IID_IXMLDOMNamedNodeMap ) )
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID( riid, &IID_IUnknown) ||
+        IsEqualGUID( riid, &IID_IDispatch) ||
+        IsEqualGUID( riid, &IID_IXMLDOMNamedNodeMap))
     {
-        *ppvObject = iface;
+        *obj = iface;
     }
-    else if (IsEqualGUID( riid, &IID_IEnumVARIANT ))
+    else if (IsEqualGUID(riid, &IID_IEnumVARIANT))
     {
-        if (!This->enumvariant)
+        if (!map->enumvariant)
         {
-            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &nodemap_enumvariant, &This->enumvariant);
+            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &nodemap_enumvariant, &map->enumvariant);
             if (FAILED(hr)) return hr;
         }
 
-        return IEnumVARIANT_QueryInterface(This->enumvariant, &IID_IEnumVARIANT, ppvObject);
+        return IEnumVARIANT_QueryInterface(map->enumvariant, &IID_IEnumVARIANT, obj);
     }
-    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    else if (dispex_query_interface(&map->dispex, riid, obj))
     {
-        return *ppvObject ? S_OK : E_NOINTERFACE;
+        return *obj ? S_OK : E_NOINTERFACE;
     }
-    else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo))
     {
-        *ppvObject = &This->ISupportErrorInfo_iface;
+        *obj = &map->ISupportErrorInfo_iface;
     }
     else
     {
         TRACE("interface %s not implemented\n", debugstr_guid(riid));
-        *ppvObject = NULL;
+        *obj = NULL;
         return E_NOINTERFACE;
     }
 
@@ -116,188 +113,150 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
     return S_OK;
 }
 
-static ULONG WINAPI xmlnodemap_AddRef(
-    IXMLDOMNamedNodeMap *iface )
+static ULONG WINAPI xmlnodemap_AddRef(IXMLDOMNamedNodeMap *iface)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("%p, refcount %lu.\n", iface, ref);
-    return ref;
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    ULONG refcount = InterlockedIncrement(&map->refcount);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    return refcount;
 }
 
-static ULONG WINAPI xmlnodemap_Release(
-    IXMLDOMNamedNodeMap *iface )
+static ULONG WINAPI xmlnodemap_Release(IXMLDOMNamedNodeMap *iface)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    ULONG ref = InterlockedDecrement( &This->ref );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    ULONG refcount = InterlockedDecrement(&map->refcount);
 
-    TRACE("%p, refcount %lu.\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        xmlnode_release( This->node );
-        xmldoc_release( This->node->doc );
-        if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
-        free( This );
+        domnode_release(map->node);
+        if (map->enumvariant)
+            IEnumVARIANT_Release(map->enumvariant);
+        free(map);
     }
 
-    return ref;
+    return refcount;
 }
 
-static HRESULT WINAPI xmlnodemap_GetTypeInfoCount(
-    IXMLDOMNamedNodeMap *iface,
-    UINT* pctinfo )
+static HRESULT WINAPI xmlnodemap_GetTypeInfoCount(IXMLDOMNamedNodeMap *iface, UINT *count)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    return IDispatchEx_GetTypeInfoCount(&map->dispex.IDispatchEx_iface, count);
 }
 
-static HRESULT WINAPI xmlnodemap_GetTypeInfo(
-    IXMLDOMNamedNodeMap *iface,
-    UINT iTInfo, LCID lcid,
-    ITypeInfo** ppTInfo )
+static HRESULT WINAPI xmlnodemap_GetTypeInfo(IXMLDOMNamedNodeMap *iface, UINT index, LCID lcid, ITypeInfo **ti)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
-        iTInfo, lcid, ppTInfo);
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    return IDispatchEx_GetTypeInfo(&map->dispex.IDispatchEx_iface, index, lcid, ti);
 }
 
-static HRESULT WINAPI xmlnodemap_GetIDsOfNames(
-    IXMLDOMNamedNodeMap *iface,
-    REFIID riid, LPOLESTR* rgszNames,
-    UINT cNames, LCID lcid, DISPID* rgDispId )
+static HRESULT WINAPI xmlnodemap_GetIDsOfNames(IXMLDOMNamedNodeMap *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
-        riid, rgszNames, cNames, lcid, rgDispId);
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    return IDispatchEx_GetIDsOfNames(&map->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI xmlnodemap_Invoke(
-    IXMLDOMNamedNodeMap *iface,
-    DISPID dispIdMember, REFIID riid, LCID lcid,
-    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
-    EXCEPINFO* pExcepInfo, UINT* puArgErr )
+static HRESULT WINAPI xmlnodemap_Invoke(IXMLDOMNamedNodeMap *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *puArgErr)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
-        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
+    return IDispatchEx_Invoke(&map->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, flags, params, result, ei, puArgErr);
 }
 
-static HRESULT WINAPI xmlnodemap_getNamedItem(
-    IXMLDOMNamedNodeMap *iface,
-    BSTR name,
-    IXMLDOMNode** item)
+static HRESULT WINAPI xmlnodemap_getNamedItem(IXMLDOMNamedNodeMap *iface, BSTR name, IXMLDOMNode **item)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), item );
+    TRACE("%p, %s, %p.\n", iface, debugstr_w(name), item);
 
-    return This->funcs->get_named_item(This->node, name, item);
+    return map->funcs->get_named_item(map->node, name, item);
 }
 
-static HRESULT WINAPI xmlnodemap_setNamedItem(
-    IXMLDOMNamedNodeMap *iface,
-    IXMLDOMNode* newItem,
-    IXMLDOMNode** namedItem)
+static HRESULT WINAPI xmlnodemap_setNamedItem(IXMLDOMNamedNodeMap *iface, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%p %p)\n", This, newItem, namedItem );
+    TRACE("%p, %p, %p.\n", iface, newItem, namedItem );
 
-    return This->funcs->set_named_item(This->node, newItem, namedItem);
+    return map->funcs->set_named_item(map->node, newItem, namedItem);
 }
 
-static HRESULT WINAPI xmlnodemap_removeNamedItem(
-    IXMLDOMNamedNodeMap *iface,
-    BSTR name,
-    IXMLDOMNode** namedItem)
+static HRESULT WINAPI xmlnodemap_removeNamedItem(IXMLDOMNamedNodeMap *iface, BSTR name, IXMLDOMNode **namedItem)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), namedItem );
+    TRACE("%p, %s, %p.\n", iface, debugstr_w(name), namedItem);
 
-    return This->funcs->remove_named_item(This->node, name, namedItem);
+    return map->funcs->remove_named_item(map->node, name, namedItem);
 }
 
-static HRESULT WINAPI xmlnodemap_get_item(
-    IXMLDOMNamedNodeMap *iface,
-    LONG index,
-    IXMLDOMNode** item)
+static HRESULT WINAPI xmlnodemap_get_item(IXMLDOMNamedNodeMap *iface, LONG index, IXMLDOMNode **item)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
     TRACE("%p, %ld, %p.\n", iface, index, item);
 
-    return This->funcs->get_item(This->node, index, item);
+    return map->funcs->get_item(map->node, index, item);
 }
 
-static HRESULT WINAPI xmlnodemap_get_length(
-    IXMLDOMNamedNodeMap *iface,
-    LONG *length)
+static HRESULT WINAPI xmlnodemap_get_length(IXMLDOMNamedNodeMap *iface, LONG *length)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%p)\n", This, length);
+    TRACE("%p, %p.\n", iface, length);
 
-    return This->funcs->get_length(This->node, length);
+    return map->funcs->get_length(map->node, length);
 }
 
-static HRESULT WINAPI xmlnodemap_getQualifiedItem(
-    IXMLDOMNamedNodeMap *iface,
-    BSTR baseName,
-    BSTR namespaceURI,
-    IXMLDOMNode** item)
+static HRESULT WINAPI xmlnodemap_getQualifiedItem(IXMLDOMNamedNodeMap *iface,
+        BSTR baseName, BSTR namespaceURI, IXMLDOMNode **item)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_w(baseName), debugstr_w(namespaceURI), item);
 
-    return This->funcs->get_qualified_item(This->node, baseName, namespaceURI, item);
+    return map->funcs->get_qualified_item(map->node, baseName, namespaceURI, item);
 }
 
-static HRESULT WINAPI xmlnodemap_removeQualifiedItem(
-    IXMLDOMNamedNodeMap *iface,
-    BSTR baseName,
-    BSTR namespaceURI,
-    IXMLDOMNode** item)
+static HRESULT WINAPI xmlnodemap_removeQualifiedItem(IXMLDOMNamedNodeMap *iface, BSTR baseName,
+        BSTR namespaceURI, IXMLDOMNode **item)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_w(baseName), debugstr_w(namespaceURI), item);
 
-    return This->funcs->remove_qualified_item(This->node, baseName, namespaceURI, item);
+    return map->funcs->remove_qualified_item(map->node, baseName, namespaceURI, item);
 }
 
-static HRESULT WINAPI xmlnodemap_nextNode(
-    IXMLDOMNamedNodeMap *iface,
-    IXMLDOMNode** nextItem)
+static HRESULT WINAPI xmlnodemap_nextNode(IXMLDOMNamedNodeMap *iface, IXMLDOMNode **nextItem)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("%p, %p, %ld.\n", iface, nextItem, This->iterator);
+    TRACE("%p, %p, %ld.\n", iface, nextItem, map->iterator);
 
-    return This->funcs->next_node(This->node, &This->iterator, nextItem);
+    return map->funcs->next_node(map->node, &map->iterator, nextItem);
 }
 
-static HRESULT WINAPI xmlnodemap_reset(
-    IXMLDOMNamedNodeMap *iface )
+static HRESULT WINAPI xmlnodemap_reset(IXMLDOMNamedNodeMap *iface)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap(iface);
 
-    TRACE("%p, %ld.\n", iface, This->iterator);
+    TRACE("%p, %ld.\n", iface, map->iterator);
 
-    This->iterator = 0;
+    map->iterator = 0;
 
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnodemap__newEnum(
-    IXMLDOMNamedNodeMap *iface,
-    IUnknown** enumv)
+static HRESULT WINAPI xmlnodemap__newEnum(IXMLDOMNamedNodeMap *iface, IUnknown **enumv)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    TRACE("(%p)->(%p)\n", This, enumv);
-    return create_enumvariant((IUnknown*)iface, TRUE, &nodemap_enumvariant, (IEnumVARIANT**)enumv);
+    TRACE("%p, %p.\n", iface, enumv);
+
+    return create_enumvariant((IUnknown *)iface, TRUE, &nodemap_enumvariant, (IEnumVARIANT **)enumv);
 }
 
 static const struct IXMLDOMNamedNodeMapVtbl XMLDOMNamedNodeMapVtbl =
@@ -321,9 +280,7 @@ static const struct IXMLDOMNamedNodeMapVtbl XMLDOMNamedNodeMapVtbl =
     xmlnodemap__newEnum,
 };
 
-static HRESULT WINAPI support_error_QueryInterface(
-    ISupportErrorInfo *iface,
-    REFIID riid, void** ppvObject )
+static HRESULT WINAPI support_error_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void** ppvObject )
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
@@ -379,7 +336,7 @@ static HRESULT xmlnodemap_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DI
 static HRESULT xmlnodemap_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei)
 {
-    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( (IXMLDOMNamedNodeMap*)iface );
+    xmlnodemap *map = impl_from_IXMLDOMNamedNodeMap((IXMLDOMNamedNodeMap *)iface);
 
     TRACE("%p, %ld, %lx, %x, %p, %p, %p.\n", iface, id, lcid, flags, params, res, ei);
 
@@ -395,7 +352,7 @@ static HRESULT xmlnodemap_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
         {
             IXMLDOMNode *disp = NULL;
 
-            IXMLDOMNamedNodeMap_get_item(&This->IXMLDOMNamedNodeMap_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
+            IXMLDOMNamedNodeMap_get_item(&map->IXMLDOMNamedNodeMap_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
             V_DISPATCH(res) = (IDispatch*)disp;
             break;
         }
@@ -411,43 +368,44 @@ static HRESULT xmlnodemap_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t xmlnodemap_dispex_vtbl = {
+static const dispex_static_data_vtbl_t xmlnodemap_dispex_vtbl =
+{
     xmlnodemap_get_dispid,
     xmlnodemap_invoke
 };
 
-static const tid_t xmlnodemap_iface_tids[] = {
+static const tid_t xmlnodemap_iface_tids[] =
+{
     IXMLDOMNamedNodeMap_tid,
     0
 };
 
-static dispex_static_data_t xmlnodemap_dispex = {
+static dispex_static_data_t xmlnodemap_dispex =
+{
     &xmlnodemap_dispex_vtbl,
     IXMLDOMNamedNodeMap_tid,
     NULL,
     xmlnodemap_iface_tids
 };
 
-IXMLDOMNamedNodeMap *create_nodemap(xmlNodePtr node, const struct nodemap_funcs *funcs)
+HRESULT create_nodemap(struct domnode *node, const struct nodemap_funcs *funcs, IXMLDOMNamedNodeMap **map)
 {
-    xmlnodemap *This;
+    xmlnodemap *object;
 
-    This = malloc(sizeof(*This));
-    if ( !This )
-        return NULL;
+    *map = NULL;
 
-    This->IXMLDOMNamedNodeMap_iface.lpVtbl = &XMLDOMNamedNodeMapVtbl;
-    This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
-    This->node = node;
-    This->ref = 1;
-    This->iterator = 0;
-    This->enumvariant = NULL;
-    This->funcs = funcs;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMNamedNodeMap_iface, &xmlnodemap_dispex);
+    object->IXMLDOMNamedNodeMap_iface.lpVtbl = &XMLDOMNamedNodeMapVtbl;
+    object->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
+    object->refcount = 1;
+    object->funcs = funcs;
+    object->node = domnode_addref(node);
 
-    xmlnode_add_ref(node);
-    xmldoc_add_ref(node->doc);
+    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMNamedNodeMap_iface, &xmlnodemap_dispex);
 
-    return &This->IXMLDOMNamedNodeMap_iface;
+    *map = &object->IXMLDOMNamedNodeMap_iface;
+
+    return S_OK;
 }

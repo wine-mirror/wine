@@ -2,5 +2,5 @@ MODULE    = wuaueng.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-SOURCES = \
-	version.rc
+VER_FILEDESCRIPTION_STR = "Wine Update Agent"
+VER_PRODUCTVERSION      = 7,2,6001,788

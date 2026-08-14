@@ -44,6 +44,8 @@ static NTSTATUS (WINAPI *pLdrSetDllDirectory)(UNICODE_STRING*);
 static NTSTATUS (WINAPI *pLdrGetDllHandle)( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base );
 static NTSTATUS (WINAPI *pLdrGetDllHandleEx)( ULONG flags, LPCWSTR load_path, ULONG *dll_characteristics,
                                               const UNICODE_STRING *name, HMODULE *base );
+static NTSTATUS (WINAPI *pLdrGetDllPath)(LPCWSTR,ULONG,LPWSTR*,LPWSTR*);
+static NTSTATUS (WINAPI *pLdrLoadDll)(LPCWSTR,DWORD *,const UNICODE_STRING *,HMODULE*);
 static NTSTATUS (WINAPI *pLdrGetDllFullName)( HMODULE module, UNICODE_STRING *name );
 
 static BOOL (WINAPI *pIsApiSetImplemented)(LPCSTR);
@@ -519,9 +521,13 @@ static void test_LoadLibraryEx_search_flags(void)
         { { 1, 1, 2 }, 0, 2 },
     };
     char *p, path[MAX_PATH], buf[MAX_PATH], curdir[MAX_PATH];
-    WCHAR bufW[MAX_PATH];
+    WCHAR bufW[MAX_PATH], pathW[MAX_PATH];
     DLL_DIRECTORY_COOKIE cookies[4];
+    WCHAR *load_path, *dummy;
     unsigned int i, j, k;
+    UNICODE_STRING name;
+    DWORD load_flags;
+    NTSTATUS status;
     BOOL ret;
     HMODULE mod;
 
@@ -550,6 +556,12 @@ static void test_LoadLibraryEx_search_flags(void)
     ok( mod != NULL, "LoadLibrary failed err %lu\n", GetLastError() );
     FreeLibrary( mod );
 
+    RtlInitUnicodeString( &name, L"1\\winetestdll.dll" );
+    status = pLdrLoadDll( NULL, NULL, &name, &mod );
+    ok( !status, "got %#lx.\n", status );
+    ok( !!mod, "got NULL.\n" );
+    FreeLibrary( mod );
+
     SetLastError( 0xdeadbeef );
     sprintf( path, "%c:1\\winetestdll.dll", buf[0] );
     mod = LoadLibraryA( path );
@@ -563,9 +575,45 @@ static void test_LoadLibraryEx_search_flags(void)
         ok( !mod, "LoadLibrary succeeded\n" );
         ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 
+        RtlInitUnicodeString( &name, L"1\\winetestdll.dll" );
+        mod = (void *)0xdeadbeef;
+        status = pLdrLoadDll( (void *)(ULONG_PTR)(LOAD_LIBRARY_SEARCH_SYSTEM32 | 1), NULL, &name, &mod );
+        ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+        ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
+
+        load_flags = LOAD_LIBRARY_SEARCH_SYSTEM32;
+        mod = (void *)0xdeadbeef;
+        if (0)
+        {
+            /* crashes on Windows. */
+            pLdrLoadDll( NULL, (void *)(ULONG_PTR)load_flags, &name, &mod );
+        }
+        status = pLdrLoadDll( NULL, &load_flags, &name, &mod );
+        ok( !status, "got %#lx.\n", status );
+        FreeLibrary( mod );
+
+        status = pLdrGetDllPath( name.Buffer, LOAD_LIBRARY_SEARCH_SYSTEM32, &load_path, &dummy );
+        ok( !status, "got %#lx.\n", status );
+        mod = (void *)0xdeadbeef;
+        status = pLdrLoadDll( load_path, NULL, &name, &mod );
+        ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+        ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
+        RtlReleasePath( load_path );
+
+        mod = (void *)0xdeadbeef;
+        status = pLdrLoadDll( L".", NULL, &name, &mod );
+        ok( !status, "got %#lx.\n", status );
+        FreeLibrary( mod );
+
         SetLastError( 0xdeadbeef );
         mod = LoadLibraryExA( path, 0, LOAD_LIBRARY_SEARCH_SYSTEM32 );
         ok( mod != NULL, "LoadLibrary failed err %lu\n", GetLastError() );
+        FreeLibrary( mod );
+
+        MultiByteToWideChar( CP_ACP, 0, path, -1, pathW, ARRAY_SIZE(pathW) );
+        RtlInitUnicodeString( &name, pathW );
+        status = pLdrLoadDll( (void *)(LOAD_LIBRARY_SEARCH_SYSTEM32 | 1), NULL, &name, &mod );
+        ok( !status, "got %#lx.\n", status );
         FreeLibrary( mod );
     }
 
@@ -613,6 +661,12 @@ static void test_LoadLibraryEx_search_flags(void)
         mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_WITH_ALTERED_SEARCH_PATH );
         ok( !mod, "LoadLibrary succeeded\n" );
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
+
+        RtlInitUnicodeString( &name, L"winetestdll.dll" );
+        mod = (void *)0xdeadbeef;
+        status = pLdrLoadDll( (void *)(LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_WITH_ALTERED_SEARCH_PATH | 1), NULL, &name, &mod );
+        ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+        ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
 
         SetLastError( 0xdeadbeef );
         mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_WITH_ALTERED_SEARCH_PATH );
@@ -673,6 +727,12 @@ static void test_LoadLibraryEx_search_flags(void)
     ok( !mod, "LoadLibrary succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
 
+    RtlInitUnicodeString( &name, L"foo\\winetestdll.dll" );
+    mod = (void *)0xdeadbeef;
+    status = pLdrLoadDll( (void *)(LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | 1), NULL, &name, &mod );
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
+
     SetLastError( 0xdeadbeef );
     mod = LoadLibraryExA( "\\windows\\winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR );
     ok( !mod, "LoadLibrary succeeded\n" );
@@ -713,6 +773,37 @@ static void test_LoadLibraryEx_search_flags(void)
             ok( !mod, "%u: LoadLibrary succeeded\n", j );
             ok( GetLastError() == ERROR_MOD_NOT_FOUND || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
                 "%u: wrong error %lu\n", j, GetLastError() );
+        }
+        FreeLibrary( mod );
+
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_USER_DIRS );
+        if (tests[j].expect)
+        {
+            ok( mod != NULL, "%u: LoadLibrary failed err %lu\n", j, GetLastError() );
+            GetModuleFileNameA( mod, path, MAX_PATH );
+            sprintf( p, "\\%u\\winetestdll.dll", tests[j].expect );
+            ok( !lstrcmpiA( path, buf ), "%u: wrong module %s expected %s\n", j, path, buf );
+        }
+        else
+        {
+            ok( !mod, "%u: LoadLibrary succeeded\n", j );
+            ok( GetLastError() == ERROR_MOD_NOT_FOUND || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
+                "%u: wrong error %lu\n", j, GetLastError() );
+        }
+        FreeLibrary( mod );
+
+        mod = NULL;
+        RtlInitUnicodeString( &name, L"winetestdll.dll" );
+        status = pLdrLoadDll( (void *)(ULONG_PTR)(LOAD_LIBRARY_SEARCH_USER_DIRS | 1), NULL, &name, &mod );
+        if (tests[j].expect)
+        {
+            ok( !status, "got %#lx.\n", status );
+            ok( !!mod, "got NULL.\n" );
+        }
+        else
+        {
+            ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+            ok( !mod, "got %p.\n", mod );
         }
         FreeLibrary( mod );
 
@@ -968,6 +1059,8 @@ static void init_pointers(void)
     MAKEFUNC(LdrSetDllDirectory);
     MAKEFUNC(LdrGetDllHandle);
     MAKEFUNC(LdrGetDllHandleEx);
+    MAKEFUNC(LdrGetDllPath);
+    MAKEFUNC(LdrLoadDll);
     MAKEFUNC(LdrGetDllFullName);
     MAKEFUNC(RtlHashUnicodeString);
     mod = GetModuleHandleA( "kernelbase.dll" );
@@ -1216,6 +1309,7 @@ static void test_AddDllDirectory(void)
     static const WCHAR tmpW[] = {'t','m','p',0};
     static const WCHAR dotW[] = {'.','\\','.',0};
     static const WCHAR rootW[] = {'\\',0};
+    static const WCHAR deviceW[] = {'\\','\\','.','\\', 'C', ':', '\\', 0};
     WCHAR path[MAX_PATH], buf[MAX_PATH];
     DLL_DIRECTORY_COOKIE cookie;
     BOOL ret;
@@ -1246,6 +1340,11 @@ static void test_AddDllDirectory(void)
     ok( !cookie, "AddDllDirectory succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     cookie = pAddDllDirectory( rootW );
+    ok( cookie != NULL, "AddDllDirectory failed err %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pRemoveDllDirectory( cookie );
+    ok( ret, "RemoveDllDirectory failed err %lu\n", GetLastError() );
+    cookie = pAddDllDirectory( deviceW );
     ok( cookie != NULL, "AddDllDirectory failed err %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pRemoveDllDirectory( cookie );

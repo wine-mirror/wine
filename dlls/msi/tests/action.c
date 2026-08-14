@@ -1800,6 +1800,13 @@ static const char pa_feature_dat[] =
     "Feature\tFeature\n"
     "assembly\t\t\tassembly feature\t1\t2\tMSITESTDIR\t0\n";
 
+static const char pa_feature_with_2nd_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "assembly\t\t\tassembly feature\t1\t2\tMSITESTDIR\t0\n"
+    "2nd_feature\t\tSecond feature\tSpace filler\t1\t2\tMSITESTDIR\t0\n";
+
 static const char pa_feature_comp_dat[] =
     "Feature_\tComponent_\n"
     "s38\ts72\n"
@@ -1962,6 +1969,24 @@ static const char rep_install_exec_seq_dat[] =
     "PublishProduct\t\t5200\n"
     "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
+
+static const char exception_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "page_fault\tPAGEFAULT AND NOT REMOVE\t601\n"
+    "page_fault_ignore\tPAGEFAULT_IGNORE AND NOT REMOVE\t602\n"
+    "raise_exception\tEXCEPTION AND NOT REMOVE\t603\n"
+    "raise_exception_ignore\tEXCEPTION_IGNORE AND NOT REMOVE\t604\n";
+
+static const char exception_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\n"
+    "s72\ti2\tS64\tS0\n"
+    "CustomAction\tAction\n"
+    "page_fault\t1\tcustom.dll\tpage_fault\n"
+    "page_fault_ignore\t65\tcustom.dll\tpage_fault\n"
+    "raise_exception\t1\tcustom.dll\traise_exception\n"
+    "raise_exception_ignore\t65\tcustom.dll\traise_exception\n";
 
 static const msi_table env_tables[] =
 {
@@ -2336,6 +2361,21 @@ static const msi_table pa_tables[] =
     ADD_TABLE(property)
 };
 
+static const msi_table pa_tables_with_2nd_feature[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(pa_component),
+    ADD_TABLE(pa_feature_with_2nd_feature),
+    ADD_TABLE(pa_feature_comp),
+    ADD_TABLE(pa_file),
+    ADD_TABLE(pa_msi_assembly),
+    ADD_TABLE(pa_msi_assembly_name),
+    ADD_TABLE(pa_install_exec_seq),
+    ADD_TABLE(pa_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
 static const msi_table rep_tables[] =
 {
     ADD_TABLE(directory),
@@ -2347,6 +2387,19 @@ static const msi_table rep_tables[] =
     ADD_TABLE(rep_property),
     ADD_TABLE(rep_install_exec_seq),
     ADD_TABLE(media)
+};
+
+static const msi_table exception_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(exception_install_exec_seq),
+    ADD_TABLE(exception_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
 };
 
 /* cabinet definitions */
@@ -2468,7 +2521,7 @@ static void check_reg_multi(HKEY prodkey, const char *name, const char *expect, 
     ok_(__FILE__, line)(!res, "Failed to query value, error %ld\n", res);
     ok_(__FILE__, line)(type == REG_MULTI_SZ, "Got wrong type %lu\n", type);
     ok_(__FILE__, line)(size == expect_size, "expected size %lu, got %lu\n", expect_size, size);
-    ok_(__FILE__, line)(!memcmp(val, expect, size), "got %s\n", debugstr_an(val, size));
+    ok_(__FILE__, line)(size == expect_size && !memcmp(val, expect, size), "got %s\n", debugstr_an(val, size));
 }
 
 static void check_reg_dword(HKEY prodkey, LPCSTR name, DWORD expected, BOOL todo, DWORD line)
@@ -3431,8 +3484,8 @@ static void test_register_user(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     CHECK_REG_STR(props, "ProductID", "none");
-    CHECK_REG_STR(props, "RegCompany", company);
-    CHECK_REG_STR(props, "RegOwner", owner);
+    if (company) CHECK_REG_STR(props, "RegCompany", company);
+    if (owner) CHECK_REG_STR(props, "RegOwner", owner);
 
     RegDeleteValueA(props, "ProductID");
     RegDeleteValueA(props, "RegCompany");
@@ -3453,8 +3506,8 @@ static void test_register_user(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     CHECK_REG_STR(props, "ProductID", "none");
-    CHECK_REG_STR(props, "RegCompany", company);
-    CHECK_REG_STR(props, "RegOwner", owner);
+    if (company) CHECK_REG_STR(props, "RegCompany", company);
+    if (owner) CHECK_REG_STR(props, "RegOwner", owner);
 
     RegDeleteValueA(props, "ProductID");
     RegDeleteValueA(props, "RegCompany");
@@ -4763,10 +4816,10 @@ static void test_write_registry_values(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
     res = RegSetValueExA(hkey, "Value6", 0, REG_MULTI_SZ, (const BYTE *)"one\0", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
-    res = RegSetValueExA(hkey, "Value7", 0, REG_SZ, (const BYTE *)"one", 4);
+    res = reg_set_str(hkey, "Value7", "one");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(hkey, "instremove", 0, REG_SZ, (const BYTE *)"val", 3);
+    res = reg_set_str(hkey, "instremove", "val");
     ok(!res, "got %ld\n", res);
 
     res = RegCreateKeyA(hkey, "instremove", &subkey);
@@ -4919,13 +4972,13 @@ static void test_envvar(void)
                           0, NULL, 0, KEY_ALL_ACCESS, NULL, &env2, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR1", 0, REG_SZ, (const BYTE *)"0", 2);
+    res = reg_set_str(env, "MSITESTVAR1", "0");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR2", 0, REG_SZ, (const BYTE *)"0", 2);
+    res = reg_set_str(env, "MSITESTVAR2", "0");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR21", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR21", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -4975,10 +5028,10 @@ static void test_envvar(void)
     CHECK_REG_STR(env, "MSITESTVAR24", "TestService");
     CHECK_REG_STR(env2, "MSITESTVAR100", "1");
 
-    res = RegSetValueExA(env, "MSITESTVAR22", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR22", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
-    res = RegSetValueExA(env, "MSITESTVAR23", 0, REG_SZ, (const BYTE *)"1", 2);
+    res = reg_set_str(env, "MSITESTVAR23", "1");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     res = RegDeleteValueA(env, "MSITESTVAR25");
@@ -6400,6 +6453,75 @@ static void test_publish_assemblies(void)
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
 
+    /* When there are more than 1 feature in MSI package, the feature has to be recorded in
+       the assembly publication entry. */
+    DeleteFileA(msifile);
+    create_database(msifile, pa_tables_with_2nd_feature, ARRAY_SIZE(pa_tables_with_2nd_feature));
+
+    r = MsiInstallProductA(msifile, "ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    access = KEY_QUERY_VALUE;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    if (res == ERROR_FILE_NOT_FOUND && is_wow64) /* Vista WOW64 */
+    {
+        trace("Using 64-bit registry view for HKCR\\Installer\n");
+        access = KEY_QUERY_VALUE | KEY_WOW64_64KEY;
+        res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_dotnet, "rcHQPHq?CA@Uv-XqMI1eassembly>Z'q,T*76M@=YEg6My?~]\0");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_dotnet_local, "rcHQPHq?CA@Uv-XqMI1eassembly>LF,8A?0d.AW@vcZ$Cgox\0");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_win32, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1eassembly>}NJjwR'%D9v1p!v{WV(%\0");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
+    CHECK_REG_MULTI(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1eassembly>C)Uvlj*53A)u(QQ9=)X!\0");
+    RegCloseKey(hkey);
+
+    /* No registration is done for a local assembly with no matching file */
+    path = (is_wow64 || is_64bit) ? classes_path_fake_local_wow64 : classes_path_fake_local;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "got %ld\n", res);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_dotnet, &hkey);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_dotnet);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_win32, &hkey);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_win32);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", res);
+
 done:
     DeleteFileA("msitest\\win32.txt");
     DeleteFileA("msitest\\win32_local.txt");
@@ -6447,6 +6569,41 @@ static void test_remove_existing_products(void)
 error:
     DeleteFileA("msitest\\rep.txt");
     delete_test_files();
+    DeleteFileA(msifile);
+}
+
+static void test_custom_action_exception(void)
+{
+    UINT r;
+
+    if (!is_process_elevated())
+    {
+        skip("Process is limited\n");
+        return;
+    }
+
+    create_database(msifile, exception_tables, ARRAY_SIZE(exception_tables));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "PAGEFAULT=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto done;
+    }
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "PAGEFAULT_IGNORE=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "EXCEPTION=1");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "EXCEPTION_IGNORE=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+done:
     DeleteFileA(msifile);
 }
 
@@ -6556,6 +6713,7 @@ START_TEST(action)
     test_register_mime_info();
     test_publish_assemblies();
     test_remove_existing_products();
+    test_custom_action_exception();
 
     DeleteFileA(log_file);
     SetCurrentDirectoryA(prev_path);

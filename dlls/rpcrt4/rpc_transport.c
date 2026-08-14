@@ -24,7 +24,6 @@
  */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "ws2tcpip.h"
 
 #include <stdarg.h>

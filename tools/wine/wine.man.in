@@ -10,8 +10,7 @@ wine \- run Windows programs on Unix
 .B wine --version
 .PP
 For instructions on passing arguments to Windows programs, please see the
-.B
-PROGRAM/ARGUMENTS
+.B PROGRAM/ARGUMENTS
 section of the man page.
 .SH DESCRIPTION
 .B wine
@@ -26,8 +25,7 @@ For running CUI executables (Windows console programs), use
 .B wineconsole
 instead of
 .BR wine .
-This will display all the output in a separate windows (this requires X11 to
-run). Not using
+This will display the output in a separate window. Not using
 .B wineconsole
 for CUI programs will only provide very limited console support, and your
 program might not function properly.
@@ -87,18 +85,7 @@ processes.
 .B WINESERVER
 Specifies the path and name of the
 .B wineserver
-binary. If not set, Wine will try to load
-.IR @bindir@/wineserver ,
-and if this doesn't exist it will then look for a file named
-"wineserver" in the path and in a few other likely locations.
-.TP
-.B WINELOADER
-Specifies the path and name of the
-.B wine
-binary to use to launch new Windows processes. If not set, Wine will
-try to load
-.IR @bindir@/wine ,
-and if this doesn't exist it will then look for a file named "wine" in
+binary. If not set, Wine will look for a file named "wineserver" in
 the path and in a few other likely locations.
 .TP
 .B WINEDEBUG
@@ -156,8 +143,7 @@ Specifies the path(s) in which to search for builtin dlls and Winelib
 applications. This is a list of directories separated by ":". In
 addition to any directory specified in
 .BR WINEDLLPATH ,
-Wine will also look in
-.IR @dlldir@ .
+Wine will also look in the installation directory.
 .TP
 .B WINEDLLOVERRIDES
 Defines the override type and load order of dlls used in the loading
@@ -202,18 +188,52 @@ the builtin load fails; load shell32 always as builtin and comctl32
 always as native; oleaut32 will be disabled.
 .RE
 .TP
+.B WINEPATH
+Specifies additional path(s) to be prepended to the default Windows
+.B PATH
+environment variable. This is a list of Windows-style directories
+separated by ";".
+.RS
+.PP
+For a permanent alternative, edit (create if needed) the
+.B PATH
+value under the
+.B HKEY_CURRENT_USER\\\\Environment
+registry key.
+.RE
+.TP
 .B WINEARCH
-Specifies the Windows architecture to support. It can be set either to
+Specifies the Windows architecture to support. It can be set to
 .B win32
-(support only 32-bit applications), or to
+(support only 32-bit applications), to
 .B win64
-(support both 64-bit applications and 32-bit ones in WoW64 mode).
+(support both 64-bit applications and 32-bit ones), or to
+.B wow64
+(support 64-bit applications and 32-bit ones, using a 64-bit host
+process in all cases).
 .br
 The architecture supported by a given Wine prefix is set at prefix
 creation time and cannot be changed afterwards. When running with an
 existing prefix, Wine will refuse to start if
 .B WINEARCH
-doesn't match the prefix architecture.
+doesn't match the prefix architecture. It is possible however to
+switch freely between \fBwin64\fR and \fBwow64\fR with an existing
+64-bit prefix.
+.TP
+.B WINE_D3D_CONFIG
+Specifies Direct3D configuration options. It can be used instead of
+modifying the
+.B HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Direct3D
+registry key. The value is a comma- or semicolon-separated list
+of key-value pairs.
+.RS
+For example:
+.TP
+WINE_D3D_CONFIG="renderer=vulkan;VideoPciVendorID=0xc0de"
+.PP
+If an individual setting is specified in both
+the environment variable and the registry, the former takes precedence.
+.RE
 .TP
 .B DISPLAY
 Specifies the X11 display to use.
@@ -233,20 +253,17 @@ Set the MIDI (sequencer) device. Default
 .IR /dev/sequencer .
 .SH FILES
 .TP
-.I @bindir@/wine
+.I wine
 The Wine program loader.
 .TP
-.I @bindir@/wineconsole
+.I wineconsole
 The Wine program loader for CUI (console) applications.
 .TP
-.I @bindir@/wineserver
+.I wineserver
 The Wine server
 .TP
-.I @bindir@/winedbg
+.I winedbg
 The Wine debugger
-.TP
-.I @dlldir@
-Directory containing Wine shared libraries
 .TP
 .I $WINEPREFIX/dosdevices
 Directory containing the DOS device mappings. Each file in that
@@ -274,27 +291,27 @@ in the top-level directory of the source distribution.
 .SH BUGS
 .PP
 A status report on many applications is available from the
-.UR http://appdb.winehq.org
+.UR https://appdb.winehq.org
 .B Wine Application Database
 .UE .
 Please add entries to this list for applications you currently run, if
 necessary.
 .PP
 Bugs can be reported on the
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
 is available through WineHQ, the
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
 .BR wineserver (1),
 .BR winedbg (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine documentation and support
 .UE .

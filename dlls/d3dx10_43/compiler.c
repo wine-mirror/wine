@@ -162,8 +162,8 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceA(HMODULE module, const char *resou
         ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump, ID3D10Effect **effect,
         ID3D10Blob **errors, HRESULT *hresult)
 {
+    uint32_t size;
     void *data;
-    DWORD size;
     HRESULT hr;
 
     TRACE("module %p, resource_name %s, filename %s, defines %p, include %p, profile %s, "
@@ -172,7 +172,7 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceA(HMODULE module, const char *resou
             defines, include, debugstr_a(profile), shader_flags, effect_flags,
             device, effect_pool, pump, effect, errors, hresult);
 
-    hr = load_resourceA(module, resource_name, &data, &size);
+    hr = d3dx_load_resource_a(module, resource_name, &data, &size);
     if (FAILED(hr))
         return hr;
 
@@ -187,8 +187,8 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
         ID3D10Blob **errors, HRESULT *hresult)
 {
     char *filename = NULL;
+    uint32_t size;
     void *data;
-    DWORD size;
     HRESULT hr;
     int len;
 
@@ -198,7 +198,7 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
             defines, include, debugstr_a(profile), shader_flags, effect_flags,
             device, effect_pool, pump, effect, errors, hresult);
 
-    hr = load_resourceW(module, resource_name, &data, &size);
+    hr = d3dx_load_resource_w(module, resource_name, &data, &size);
     if (FAILED(hr))
         return hr;
 

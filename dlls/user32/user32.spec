@@ -14,8 +14,8 @@
 
 2010 stub -noname SlicerControl  # NtUserSlicerControl
 
-2503 stub DelegateInput  # NtUserDelegateInput
-2504 stub UndelegateInput  # NtUserUndelegateInput
+2503 stdcall DelegateInput(ptr ptr ptr ptr ptr ptr)  # NtUserDelegateInput
+2504 stdcall UndelegateInput(ptr ptr)  # NtUserUndelegateInput
 2505 stub HandleDelegatedInput  # NtUserHandleDelegatedInput
 2506 stub @
 2507 stub -noname SetAutoRotation  # NtUserSetAutoRotation
@@ -93,7 +93,7 @@
 2579 stub -noname SetWindowShowState  # NtUserSetWindowShowState
 
 2581 stub -noname GetWindowTrackInfoAsync  # NtUserGetWindowTrackInfoAsync
-2582 stub -noname ScheduleDispatchNotification  # NtUserScheduleDispatchNotification
+2582 stdcall -noname ScheduleDispatchNotification(ptr) NtUserScheduleDispatchNotification
 
 2584 stub -noname EnableModernAppWindowKeyboardIntercept  # NtUserEnableModernAppWindowKeyboardIntercept
 2585 stub -noname UpdateWindowTrackingInfo  # NtUserUpdateWindowTrackingInfo
@@ -613,7 +613,7 @@
 @ stdcall GetMenuStringW(long long ptr long long)
 @ stdcall GetMessageA(ptr long long long)
 @ stdcall GetMessageExtraInfo()
-@ stdcall GetMessagePos()
+@ stdcall GetMessagePos() NtUserGetMessagePos
 @ stdcall GetMessageTime()
 @ stdcall GetMessageW(ptr long long long)
 @ stdcall GetMonitorInfoA(long ptr)
@@ -629,24 +629,24 @@
 # @ stub GetPointerDeviceCursors
 # @ stub GetPointerDeviceInputSpace
 # @ stub GetPointerDeviceOrientation
-# @ stub GetPointerDeviceProperties
-# @ stub GetPointerDeviceRects
+@ stdcall GetPointerDeviceProperties(ptr ptr ptr)
+@ stdcall GetPointerDeviceRects(ptr ptr ptr) NtUserGetPointerDeviceRects
 @ stdcall GetPointerDevices(ptr ptr)
-# @ stub GetPointerFrameInfo
-# @ stub GetPointerFrameInfoHistory
-# @ stub GetPointerFramePenInfo
-# @ stub GetPointerFramePenInfoHistory
+@ stdcall GetPointerFrameInfo(long ptr ptr)
+@ stdcall GetPointerFrameInfoHistory(long ptr ptr ptr)
+@ stdcall GetPointerFramePenInfo(long ptr ptr)
+@ stdcall GetPointerFramePenInfoHistory(long ptr ptr ptr)
 # @ stub GetPointerFrameTimes
-# @ stub GetPointerFrameTouchInfo
-# @ stub GetPointerFrameTouchInfoHistory
+@ stdcall GetPointerFrameTouchInfo(long ptr ptr)
+@ stdcall GetPointerFrameTouchInfoHistory(long ptr ptr ptr)
 @ stdcall GetPointerInfo(long ptr)
-# @ stub GetPointerInfoHistory
+@ stdcall GetPointerInfoHistory(long ptr ptr)
 # @ stub GetPointerInputTransform
-# @ stub GetPointerPenInfo
-# @ stub GetPointerPenInfoHistory
+@ stdcall GetPointerPenInfo(long ptr)
+@ stdcall GetPointerPenInfoHistory(long ptr ptr)
 @ stdcall GetPointerTouchInfo(long ptr)
 @ stdcall GetPointerTouchInfoHistory(long ptr ptr)
-@ stdcall GetPointerType(long ptr)
+@ stdcall GetPointerType(long ptr) NtUserGetPointerType
 @ stdcall GetPriorityClipboardFormat(ptr long) NtUserGetPriorityClipboardFormat
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall GetProcessDpiAwarenessInternal(long ptr)
@@ -660,7 +660,7 @@
 @ stdcall GetRawInputDeviceInfoA(ptr long ptr ptr)
 @ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr) NtUserGetRawInputDeviceInfo
 @ stdcall GetRawInputDeviceList(ptr ptr long) NtUserGetRawInputDeviceList
-# @ stub GetRawPointerDeviceData
+@ stdcall GetRawPointerDeviceData(long long long ptr ptr)
 # @ stub GetReasonTitleFromReasonCode
 @ stdcall GetRegisteredRawInputDevices(ptr ptr long) NtUserGetRegisteredRawInputDevices
 @ stdcall GetScrollBarInfo(long long ptr) NtUserGetScrollBarInfo
@@ -701,7 +701,7 @@
 # @ stub GetWindowCompositionInfo
 @ stdcall GetWindowContextHelpId(long) NtUserGetWindowContextHelpId
 @ stdcall GetWindowDC(long) NtUserGetWindowDC
-@ stdcall GetWindowDisplayAffinity(long ptr)
+@ stdcall GetWindowDisplayAffinity(long ptr) NtUserGetWindowDisplayAffinity
 @ stdcall GetWindowDpiAwarenessContext(long)
 @ stdcall GetWindowDpiHostingBehavior(long)
 # @ stub GetWindowFeedbackSetting
@@ -749,7 +749,7 @@
 # @ stub InitializeLpkHooks
 # @ stub InitializePointerDeviceInjection
 # @ stub InitializePointerDeviceInjectionEx
-# @ stub InitializeTouchInjection
+@ stdcall InitializeTouchInjection(long long) NtUserInitializeTouchInjection
 # @ stub InjectDeviceInput
 # @ stub InjectGenericHidInput
 # @ stub InjectKeyboardInput
@@ -785,7 +785,7 @@
 @ stdcall IsGUIThread(long)
 @ stdcall IsHungAppWindow(long)
 @ stdcall IsIconic(long)
-# @ stub IsImmersiveProcess
+@ stdcall IsImmersiveProcess(ptr)
 # @ stub IsInDesktopWindowBand
 @ stdcall IsMenu(long)
 @ stdcall IsMouseInPointerEnabled() NtUserIsMouseInPointerEnabled
@@ -802,7 +802,7 @@
 @ stdcall IsValidDpiAwarenessContext(long)
 @ stdcall IsWinEventHookInstalled(long)
 @ stdcall IsWindow(long)
-# @ stub IsWindowArranged
+@ stdcall IsWindowArranged(long)
 @ stdcall IsWindowEnabled(long)
 # @ stub IsWindowInDestroy
 @ stdcall IsWindowRedirectedForPrint(long)
@@ -1064,7 +1064,7 @@
 @ stdcall SetMenuItemBitmaps(long long long long long)
 @ stdcall SetMenuItemInfoA(long long long ptr)
 @ stdcall SetMenuItemInfoW(long long long ptr)
-@ stdcall SetMessageExtraInfo(long)
+@ stdcall SetMessageExtraInfo(long) NtUserSetMessageExtraInfo
 @ stdcall SetMessageQueue(long)
 # @ stub SetMirrorRendering
 @ stdcall SetParent(long long) NtUserSetParent
@@ -1074,7 +1074,7 @@
 @ stdcall SetProcessDefaultLayout(long) NtUserSetProcessDefaultLayout
 @ stdcall SetProcessDpiAwarenessContext(long)
 @ stdcall SetProcessDpiAwarenessInternal(long)
-# @ stub SetProcessLaunchForegroundPolicy
+@ stdcall SetProcessLaunchForegroundPolicy(long long)
 # @ stub SetProcessRestrictionExemption
 @ stdcall SetProcessWindowStation(long) NtUserSetProcessWindowStation
 @ stdcall SetProgmanWindow(long) NtUserSetProgmanWindow

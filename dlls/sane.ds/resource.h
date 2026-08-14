@@ -22,6 +22,22 @@
 #include <winbase.h>
 #include <winuser.h>
 
-#define IDD_DIALOG1 0x400
+#define IDD_SCANNING 0x400
 
-#define IDC_STATIC  0x401
+#define IDC_STATIC        -1
+#define IDC_PROGRESS      0x401
+#define IDC_MANUFACTURER  0x402
+#define IDC_PRODUCTFAMILY 0x403
+#define IDC_PRODUCTNAME   0x404
+#define IDC_RESOLUTION    0x405
+#define IDC_PAGE          0x406
+
+#define IDS_GRAY          0x501
+#define IDS_COLOUR        0x502
+#define IDS_LINEART       0x503
+#define IDS_UNKNOWN       0x504
+#define IDS_CAPTION       0x505
+#define IDS_NO_DOCS       0x506
+#define IDS_JAMMED        0x507
+#define IDS_COVER_OPEN    0x508
+#define IDS_DEVICE_BUSY   0x509

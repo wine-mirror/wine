@@ -2,6 +2,9 @@ MODULE    = dpnet.dll
 IMPORTLIB = dpnet
 IMPORTS   = dxguid uuid ole32 advapi32 ws2_32
 
+VER_FILEDESCRIPTION_STR = "Wine DirectPlay 8"
+VER_PRODUCTVERSION      = 5,3,0,900
+
 SOURCES = \
 	address.c \
 	client.c \
@@ -9,6 +12,6 @@ SOURCES = \
 	dpnet_main.c \
 	lobbiedapp.c \
 	peer.c \
+	rsrc.rc \
 	server.c \
-	threadpool.c \
-	version.rc
+	threadpool.c

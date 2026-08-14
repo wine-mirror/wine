@@ -22,10 +22,7 @@
 #ifndef __WINE_WINEBTH_UNIXLIB_PRIV_H
 #define __WINE_WINEBTH_UNIXLIB_PRIV_H
 
-#include <config.h>
-
 #include <ntstatus.h>
-#define WIN32_NO_STATUS
 #include <windef.h>
 
 #include <wine/list.h>
@@ -41,9 +38,9 @@ struct unix_name
     struct wine_rb_entry entry;
 };
 
-extern struct unix_name *unix_name_get_or_create( const char *str );
 extern void unix_name_free( struct unix_name *name );
-extern struct unix_name *unix_name_dup( struct unix_name *name );
+extern struct unix_name *unix_name_get_or_create( const char *str ) __WINE_DEALLOC(unix_name_free) __WINE_MALLOC;
+extern struct unix_name *unix_name_dup( struct unix_name *name ) __WINE_DEALLOC(unix_name_free) __WINE_MALLOC;
 
 extern void *bluez_dbus_init( void );
 extern void bluez_dbus_close( void *connection );
@@ -62,6 +59,11 @@ extern NTSTATUS bluez_auth_agent_send_response( void *auth_agent, struct unix_na
                                                 BLUETOOTH_AUTHENTICATION_METHOD method, UINT32 numeric_or_passkey,
                                                 BOOL negative, BOOL *authenticated );
 extern NTSTATUS bluez_device_disconnect( void *connection, const char *device_path );
+extern NTSTATUS bluez_device_start_pairing( void *dbus_connection, void *watcher_ctx, struct unix_name *device, IRP *irp );
 extern NTSTATUS bluez_watcher_init( void *connection, void **ctx );
+extern void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *value, BYTE *buf );
+extern void bluez_gatt_characteristic_value_free( void *val );
+extern NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher_ctx, struct unix_name *characteristic,
+                                                IRP *irp );
 extern void bluez_watcher_close( void *connection, void *ctx );
 #endif /* __WINE_WINEBTH_UNIXLIB_PRIV_H */

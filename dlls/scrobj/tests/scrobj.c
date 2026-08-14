@@ -95,7 +95,6 @@ DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
-DEFINE_EXPECT(SetScriptState_INITIALIZED);
 DEFINE_EXPECT(SetScriptState_UNINITIALIZED);
 DEFINE_EXPECT(SetScriptState_STARTED);
 DEFINE_EXPECT(AddNamedItem_scriptlet);
@@ -445,9 +444,6 @@ static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTST
 {
     switch(ss)
     {
-    case SCRIPTSTATE_INITIALIZED:
-        CHECK_EXPECT(SetScriptState_INITIALIZED);
-        break;
     case SCRIPTSTATE_UNINITIALIZED:
         CHECK_EXPECT(SetScriptState_UNINITIALIZED);
         break;

@@ -21,7 +21,7 @@
 #ifndef _DMKSCTRL_
 #define _DMKSCTRL_
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #include <objbase.h>
 
@@ -95,7 +95,7 @@ DECLARE_INTERFACE_(IKsControl,IUnknown)
 
 #endif /* _KS_ */
 
-#include <poppack.h>
+#pragma pack(pop)
 
 
 DEFINE_GUID(IID_IKsControl, 0x28f54685, 0x06fd, 0x11d2, 0xb2, 0x7a, 0x00, 0xa0, 0xc9, 0x22, 0x31, 0x96);

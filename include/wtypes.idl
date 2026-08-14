@@ -18,8 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import "basetsd.h";
-import "guiddef.h";
+import "wtypesbase.idl";
 
 [
   uuid(D3980A60-910C-1068-9341-00DD010F2F1C),
@@ -33,36 +32,8 @@ interface IWinTypes
 /******************** BASIC WIN32 TYPES ********************/
 cpp_quote("#if 0 /* winnt.h */") /* don't redefine these */
 
-typedef byte BYTE;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-typedef long BOOL;
-typedef unsigned char UCHAR;
-typedef int INT;
-typedef unsigned int UINT;
-typedef short SHORT;
-typedef unsigned short USHORT;
-typedef long LONG;
-typedef unsigned long ULONG;
-typedef float FLOAT;
-
-typedef void *PVOID, *LPVOID;
-
-typedef DWORD *LPDWORD;
-
-typedef char CHAR;
-typedef [string] CHAR *LPSTR;
-typedef [string] const CHAR *LPCSTR;
-
-typedef wchar_t WCHAR;
-typedef [string] WCHAR *LPWSTR;
-typedef [string] const WCHAR *LPCWSTR;
-
-typedef boolean BOOLEAN;
-
 typedef DWORD COLORREF;
 
-typedef void *HANDLE;
 #define DECLARE_HANDLE(name) typedef void *name
 #define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name
 
@@ -85,62 +56,8 @@ typedef HANDLE HDWP;
 
 typedef LONG_PTR LRESULT;
 
-typedef LONG HRESULT;
 typedef DWORD LCID;
 typedef USHORT LANGID;
-
-typedef unsigned __int64 DWORDLONG;
-typedef __int64 LONGLONG;
-typedef unsigned __int64 ULONGLONG;
-
-typedef struct _LARGE_INTEGER {
-  LONGLONG QuadPart;
-} LARGE_INTEGER;
-
-typedef struct _ULARGE_INTEGER {
-  ULONGLONG QuadPart;
-} ULARGE_INTEGER;
-
-typedef struct _SID_IDENTIFIER_AUTHORITY {
-  UCHAR Value[6];
-} SID_IDENTIFIER_AUTHORITY, *PSID_IDENTIFIER_AUTHORITY;
-
-typedef struct _SID {
-  UCHAR Revision;
-  UCHAR SubAuthorityCount;
-  SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-  [size_is(SubAuthorityCount)] ULONG SubAuthority[*];
-} SID, *PISID;
-
-typedef void *PSID;
-
-typedef USHORT SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
-
-typedef struct _ACL {
-  UCHAR AclRevision;
-  UCHAR Sbz1;
-  USHORT AclSize;
-  USHORT AceCount;
-  USHORT Sbz2;
-} ACL;
-typedef ACL *PACL;
-
-typedef struct _SECURITY_DESCRIPTOR {
-  UCHAR Revision;
-  UCHAR Sbz1;
-  SECURITY_DESCRIPTOR_CONTROL Control;
-  PSID Owner;
-  PSID Group;
-  PACL Sacl;
-  PACL Dacl;
-} SECURITY_DESCRIPTOR, *PISECURITY_DESCRIPTOR;
-
-typedef struct _SECURITY_ATTRIBUTES
-{
-    DWORD nLength;
-    [size_is(nLength)] LPVOID lpSecurityDescriptor;
-    BOOL bInheritHandle;
-} SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
 typedef struct tagSIZE
 {
@@ -184,12 +101,6 @@ typedef LONG_PTR LPARAM;
 
 cpp_quote("#endif /* winnt.h */")
 
-cpp_quote("#ifdef _MSC_VER") /* for IDL and MSVC only */
-typedef double DOUBLE;
-cpp_quote("#else")
-cpp_quote("typedef double DECLSPEC_ALIGN(8) DOUBLE;")
-cpp_quote("#endif")
-
 cpp_quote("#ifndef _PALETTEENTRY_DEFINED")
 cpp_quote("#define _PALETTEENTRY_DEFINED")
 typedef struct tagPALETTEENTRY {
@@ -208,28 +119,6 @@ typedef struct tagLOGPALETTE
   WORD palNumEntries;
   [size_is(palNumEntries)] PALETTEENTRY palPalEntry[*];
 } LOGPALETTE, *PLOGPALETTE, *LPLOGPALETTE;
-cpp_quote("#endif")
-
-cpp_quote("#ifndef _SYSTEMTIME_")
-cpp_quote("#define _SYSTEMTIME_")
-typedef struct _SYSTEMTIME{
-        WORD wYear;
-        WORD wMonth;
-        WORD wDayOfWeek;
-        WORD wDay;
-        WORD wHour;
-        WORD wMinute;
-        WORD wSecond;
-        WORD wMilliseconds;
-} SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
-cpp_quote("#endif")
-
-cpp_quote("#ifndef _FILETIME_")
-cpp_quote("#define _FILETIME_")
-typedef struct _FILETIME {
-  DWORD dwLowDateTime;
-  DWORD dwHighDateTime;
-} FILETIME, *PFILETIME, *LPFILETIME;
 cpp_quote("#endif")
 
 cpp_quote("#ifndef _TEXTMETRIC_DEFINED")
@@ -285,47 +174,6 @@ cpp_quote("#endif")
 
 /******************** BASIC COM/OLE TYPES ********************/
 
-typedef WCHAR OLECHAR;
-typedef [string] OLECHAR *LPOLESTR;
-typedef [string] const OLECHAR *LPCOLESTR;
-cpp_quote("#ifndef __WINESRC__")
-cpp_quote("# if defined(WINE_UNICODE_NATIVE) || defined(__MINGW32__) || defined(_MSC_VER)")
-cpp_quote("#  define OLESTR(str) L##str")
-cpp_quote("# else")
-cpp_quote("#  define OLESTR(str) u##str")
-cpp_quote("# endif")
-cpp_quote("#endif")
-
-typedef LONG SCODE;
-
-typedef struct _COAUTHIDENTITY {
-  [size_is(UserLength+1)] USHORT *User;
-  ULONG UserLength;
-  [size_is(DomainLength+1)] USHORT *Domain;
-  ULONG DomainLength;
-  [size_is(PasswordLength+1)] USHORT *Password;
-  ULONG PasswordLength;
-  ULONG Flags;
-} COAUTHIDENTITY;
-
-typedef struct _COAUTHINFO {
-  DWORD dwAuthnSvc;
-  DWORD dwAuthzSvc;
-  LPWSTR pwszServerPrincName;
-  DWORD dwAuthnLevel;
-  DWORD dwImpersonationLevel;
-  COAUTHIDENTITY *pAuthIdentityData;
-  DWORD dwCapabilities;
-} COAUTHINFO;
-
-typedef enum tagMEMCTX {
-  MEMCTX_TASK      = 1,
-  MEMCTX_SHARED    = 2,
-  MEMCTX_MACSYSTEM = 3,
-  MEMCTX_UNKNOWN   = -1,
-  MEMCTX_SAME      = -2
-} MEMCTX;
-
 cpp_quote("#ifndef _ROT_COMPARE_MAX_DEFINED")
 cpp_quote("#define _ROT_COMPARE_MAX_DEFINED")
 cpp_quote("#define ROT_COMPARE_MAX 2048")
@@ -336,95 +184,6 @@ cpp_quote("#define _ROTFLAGS_DEFINED")
 cpp_quote("#define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1")
 cpp_quote("#define ROTFLAGS_ALLOWANYCLIENT 0x2")
 cpp_quote("#endif")
-
-typedef enum tagCLSCTX {
-  CLSCTX_INPROC_SERVER          = 0x00000001,
-  CLSCTX_INPROC_HANDLER         = 0x00000002,
-  CLSCTX_LOCAL_SERVER           = 0x00000004,
-  CLSCTX_INPROC_SERVER16        = 0x00000008,
-  CLSCTX_REMOTE_SERVER          = 0x00000010,
-  CLSCTX_INPROC_HANDLER16       = 0x00000020,
-  CLSCTX_INPROC_SERVERX86       = 0x00000040,
-  CLSCTX_INPROC_HANDLERX86      = 0x00000080,
-  CLSCTX_ESERVER_HANDLER        = 0x00000100,
-  CLSCTX_NO_CODE_DOWNLOAD       = 0x00000400,
-  CLSCTX_NO_CUSTOM_MARSHAL      = 0x00001000,
-  CLSCTX_ENABLE_CODE_DOWNLOAD   = 0x00002000,
-  CLSCTX_NO_FAILURE_LOG         = 0x00004000,
-  CLSCTX_DISABLE_AAA            = 0x00008000,
-  CLSCTX_ENABLE_AAA             = 0x00010000,
-  CLSCTX_FROM_DEFAULT_CONTEXT   = 0x00020000,
-  CLSCTX_ACTIVATE_X86_SERVER    = 0x00040000,
-  CLSCTX_ACTIVATE_32_BIT_SERVER = CLSCTX_ACTIVATE_X86_SERVER,
-  CLSCTX_ACTIVATE_64_BIT_SERVER = 0x00080000,
-  CLSCTX_ENABLE_CLOAKING        = 0x00100000,
-  CLSCTX_APPCONTAINER           = 0x00400000,
-  CLSCTX_ACTIVATE_AAA_AS_IU     = 0x00800000,
-  CLSCTX_RESERVED6              = 0x01000000,
-  CLSCTX_ACTIVATE_ARM32_SERVER  = 0x02000000,
-  CLSCTX_PS_DLL                 = 0x80000000,
-} CLSCTX;
-
-cpp_quote("#define CLSCTX_INPROC (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER)")
-cpp_quote("#define CLSCTX_ALL (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
-cpp_quote("#define CLSCTX_SERVER (CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
-
-typedef enum tagMSHLFLAGS {
-  MSHLFLAGS_NORMAL      = 0,
-  MSHLFLAGS_TABLESTRONG = 1,
-  MSHLFLAGS_TABLEWEAK   = 2,
-  MSHLFLAGS_NOPING      = 4
-} MSHLFLAGS;
-
-typedef enum tagMSHCTX {
-  MSHCTX_LOCAL            = 0,
-  MSHCTX_NOSHAREDMEM      = 1,
-  MSHCTX_DIFFERENTMACHINE = 2,
-  MSHCTX_INPROC           = 3,
-  MSHCTX_CROSSCTX         = 4
-} MSHCTX;
-
-/******************** BLOB TYPES ********************/
-
-typedef struct _BYTE_BLOB {
-  unsigned long clSize;
-  [size_is(clSize)] byte abData[];
-} BYTE_BLOB;
-typedef [unique] BYTE_BLOB *UP_BYTE_BLOB;
-
-typedef struct _FLAGGED_BYTE_BLOB {
-  unsigned long fFlags;
-  unsigned long clSize;
-  [size_is(clSize)] byte abData[];
-} FLAGGED_BYTE_BLOB;
-typedef [unique] FLAGGED_BYTE_BLOB *UP_FLAGGED_BYTE_BLOB;
-
-typedef struct _FLAGGED_WORD_BLOB {
-  unsigned long fFlags;
-  unsigned long clSize;
-  [size_is(clSize)] unsigned short asData[];
-} FLAGGED_WORD_BLOB;
-typedef [unique] FLAGGED_WORD_BLOB *UP_FLAGGED_WORD_BLOB;
-
-typedef struct _BYTE_SIZEDARR {
-  unsigned long clSize;
-  [size_is(clSize)] byte *pData;
-} BYTE_SIZEDARR;
-
-typedef struct _SHORT_SIZEDARR {
-  unsigned long clSize;
-  [size_is(clSize)] unsigned short *pData;
-} WORD_SIZEDARR;
-
-typedef struct _LONG_SIZEDARR {
-  unsigned long clSize;
-  [size_is(clSize)] unsigned long *pData;
-} DWORD_SIZEDARR;
-
-typedef struct _HYPER_SIZEDARR {
-  unsigned long clSize;
-  [size_is(clSize)] hyper *pData;
-} HYPER_SIZEDARR;
 
 /******************** GDI TYPES ********************/
 
@@ -589,15 +348,8 @@ typedef struct tagMSG
     POINT  pt;
 } MSG, *PMSG, *NPMSG, *LPMSG;
 
-cpp_quote("#endif")
-
-/******************** GUID TYPES ********************/
-
-cpp_quote("#if 0") /* for IDL only (C/C++ defs are in guiddef.h) */
-typedef GUID *REFGUID;
-typedef IID *REFIID;
-typedef CLSID *REFCLSID;
 typedef FMTID *REFFMTID;
+
 cpp_quote("#endif")
 
 /******************** MISC TYPES ********************/
@@ -702,16 +454,6 @@ typedef struct tagBSTRBLOB {
   ULONG cbSize;
   [size_is(cbSize)] BYTE *pData;
 } BSTRBLOB, *LPBSTRBLOB;
-
-cpp_quote("#ifndef _tagBLOB_DEFINED")
-cpp_quote("#define _tagBLOB_DEFINED")
-cpp_quote("#define _BLOB_DEFINED")
-cpp_quote("#define _LPBLOB_DEFINED")
-typedef struct tagBLOB {
-  ULONG cbSize;
-  [size_is(cbSize)] BYTE *pBlobData;
-} BLOB, *LPBLOB;
-cpp_quote("#endif")
 
 typedef struct tagCLIPDATA {
   ULONG cbSize;

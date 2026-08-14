@@ -1,6 +1,6 @@
 MODULE    = sane.ds
 UNIXLIB   = sane.so
-IMPORTS   = comctl32 user32 gdi32
+IMPORTS   = comctl32 user32 gdi32 kernelbase
 UNIX_LIBS    = $(SANE_LIBS)
 UNIX_CFLAGS  = $(SANE_CFLAGS)
 

@@ -32,7 +32,7 @@
 
 #include "wine/list.h"
 
-#define DS_MAX_CHANNELS 6
+#define DS_MAX_CHANNELS 8
 
 extern int ds_hel_buflen;
 
@@ -43,14 +43,11 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 
 /* dsound_convert.h */
-typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, BYTE *, DWORD);
-typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float);
-extern const bitsgetfunc getbpp[5];
+typedef void (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel);
+typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void putieee32_sum(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void mixieee32(float *src, float *dst, unsigned samples);
-typedef void (*normfunc)(const void *, void *, unsigned);
-extern const normfunc normfunctions[4];
 
 typedef struct _DSVOLUMEPAN
 {
@@ -70,14 +67,13 @@ typedef struct DSFilter {
  */
 struct DirectSoundDevice
 {
-    LONG                        ref;
-
     GUID                        guid;
     DSCAPS                      drvcaps;
     DWORD                       priolevel, sleeptime;
     PWAVEFORMATEX               pwfx, primary_pwfx;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, ac_frames, frag_frames, playpos, pad, stopped;
+    LONG                        terminated;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
     SRWLOCK                     buffer_list_lock;
@@ -94,8 +90,6 @@ struct DirectSoundDevice
 
     DSVOLUMEPAN                 volpan;
 
-    normfunc normfunction;
-
     /* DirectSound3DListener fields */
     DS3DLISTENER                ds3dl;
     BOOL                        ds3dl_need_recalc;
@@ -106,7 +100,6 @@ struct DirectSoundDevice
     IAudioRenderClient *render;
 
     HANDLE sleepev, thread;
-    struct list entry;
 };
 
 /* reference counted buffer memory for duplicated buffer memory */
@@ -140,17 +133,15 @@ struct IDirectSoundBufferImpl
     SRWLOCK                     lock;
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
-    DWORD                       playflags,state,leadin;
+    DWORD                       playflags,state;
     DWORD                       writelead,maxwritelead,buflen;
     DWORD                       freq;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
-    ULONG                       freqneeded;
-    DWORD                       firstep;
     float                       firgain;
-    LONG64                      freqAdjustNum,freqAdjustDen;
-    LONG64                      freqAccNum;
+    DWORD                       freqAdjustNum,freqAdjustDen;
+    DWORD                       freqAccNum;
     /* used for mixing */
     DWORD                       sec_mixpos;
     /* Holds a copy of the next 'writelead' bytes, to be used for mixing. This makes it
@@ -169,7 +160,7 @@ struct IDirectSoundBufferImpl
     BOOL                        ds3db_need_recalc;
     /* Used for bit depth conversion */
     int                         mix_channels;
-    bitsgetfunc get, get_aux;
+    bitsgetfunc get;
     bitsputfunc put, put_aux;
     int                         num_filters;
     DSFilter*                   filters;
@@ -177,15 +168,19 @@ struct IDirectSoundBufferImpl
     struct list entry;
 };
 
-float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel);
 void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_mono2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_mono2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
+void put_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_surround712stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void put_quad2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
+void put_stereo2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
+void put_mono2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
+void put_quad2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
+void put_surround512surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 
 HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *dsbd,
         IDirectSoundBuffer **buffer);
@@ -242,7 +237,7 @@ DWORD CALLBACK DSOUND_mixthread(void *ptr);
 void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 /* capture.c */
- 
+
 HRESULT DSOUND_CaptureCreate(REFIID riid, void **ppv);
 HRESULT DSOUND_CaptureCreate8(REFIID riid, void **ppv);
 HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **ppv, BOOL has_dsc8);
@@ -253,19 +248,12 @@ HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **
 #define STATE_CAPTURING 2
 #define STATE_STOPPING  3
 
-extern CRITICAL_SECTION DSOUND_renderers_lock;
-extern struct list DSOUND_renderers;
-
 extern GUID *DSOUND_renderer_guids;
 extern GUID *DSOUND_capture_guids;
-
-extern const WCHAR wine_vxd_drv[];
 
 void setup_dsound_options(void);
 
 HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device);
 
-BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
-        DWORD depth, WORD channels);
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user);

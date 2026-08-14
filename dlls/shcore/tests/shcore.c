@@ -23,10 +23,15 @@
 #include <windows.h>
 #include "initguid.h"
 #include "objidl.h"
+#include "objbase.h"
 #include "shlwapi.h"
+#include "winternl.h"
+#include "appmodel.h"
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pSetCurrentProcessExplicitAppUserModelID)(const WCHAR *);
+static HRESULT (WINAPI *pGetCurrentProcessExplicitAppUserModelID)(WCHAR **);
 static HRESULT (WINAPI *pGetProcessReference)(IUnknown **);
 static void (WINAPI *pSetProcessReference)(IUnknown *);
 static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown **);
@@ -55,13 +60,14 @@ static const char * test_envvar1 = "bar";
 static const char * test_envvar2 = "ImARatherLongButIndeedNeededString";
 static char test_exp_path1[MAX_PATH];
 static char test_exp_path2[MAX_PATH];
-static DWORD exp_len1;
 static DWORD exp_len2;
 static const char * initial_buffer ="0123456789";
 
 static void init(HMODULE hshcore)
 {
 #define X(f) p##f = (void*)GetProcAddress(hshcore, #f)
+    X(SetCurrentProcessExplicitAppUserModelID);
+    X(GetCurrentProcessExplicitAppUserModelID);
     X(GetProcessReference);
     X(SetProcessReference);
     X(SHUnicodeToAnsi);
@@ -371,7 +377,6 @@ static HKEY create_test_entries(void)
 {
     HKEY hKey;
     DWORD ret;
-    DWORD nExpectedLen1, nExpectedLen2;
 
     SetEnvironmentVariableA("LONGSYSTEMVAR", test_envvar1);
     SetEnvironmentVariableA("FOO", test_envvar2);
@@ -386,15 +391,10 @@ static HKEY create_test_entries(void)
         ok(!RegSetValueExA(hKey, "Test3", 0, REG_EXPAND_SZ, (BYTE *)test_path2, strlen(test_path2)+1), "RegSetValueExA failed\n");
     }
 
-    exp_len1 = ExpandEnvironmentStringsA(test_path1, test_exp_path1, sizeof(test_exp_path1));
-    exp_len2 = ExpandEnvironmentStringsA(test_path2, test_exp_path2, sizeof(test_exp_path2));
+    ExpandEnvironmentStringsA(test_path1, test_exp_path1, sizeof(test_exp_path1));
+    ExpandEnvironmentStringsA(test_path2, test_exp_path2, sizeof(test_exp_path2));
 
-    nExpectedLen1 = strlen(test_path1) - strlen("%LONGSYSTEMVAR%") + strlen(test_envvar1) + 1;
-    nExpectedLen2 = strlen(test_path2) - strlen("%FOO%") + strlen(test_envvar2) + 1;
-
-    /* Make sure we carry on with correct values */
-    exp_len1 = nExpectedLen1;
-    exp_len2 = nExpectedLen2;
+    exp_len2 = strlen(test_path2) - strlen("%FOO%") + strlen(test_envvar2) + 1;
 
     return hKey;
 }
@@ -777,6 +777,72 @@ static void test_stream_size(void)
     DeleteFileA(filename);
 }
 
+static void test_AppUserModelID(void)
+{
+    WCHAR *appid;
+    HRESULT hr;
+    WCHAR long_id[APPLICATION_USER_MODEL_ID_MAX_LENGTH + 10];
+    PEB *peb = NtCurrentTeb()->Peb;
+    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
+
+    if (!pSetCurrentProcessExplicitAppUserModelID || !pGetCurrentProcessExplicitAppUserModelID)
+    {
+        win_skip("AppUserModelID functions not available.\n");
+        return;
+    }
+
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+    params->dwFlags |= STARTF_TITLEISAPPID;
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok( !wcscmp( appid, params->WindowTitle.Buffer ), "got %s / %s\n",
+        debugstr_w(appid), debugstr_w(params->WindowTitle.Buffer) );
+    CoTaskMemFree(appid);
+
+    /* Set a valid ID */
+    params->dwFlags = STARTF_TITLEISLINKNAME;
+    hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok( params->dwFlags == (STARTF_TITLEISAPPID | 0x4000), "wrong flags %lx\n", params->dwFlags );
+    ok( !wcscmp( params->WindowTitle.Buffer, L"Wine.Test.AppId" ), "got %s\n",
+        debugstr_w(params->WindowTitle.Buffer) );
+
+    /* Get should return the ID we set */
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(appid != NULL, "Expected non-NULL appid.\n");
+    ok(!lstrcmpW(appid, L"Wine.Test.AppId"), "Got %s.\n", wine_dbgstr_w(appid));
+    CoTaskMemFree(appid);
+
+    /* String length validation. Native rejects strings with 128+ characters. */
+    memset(long_id, 'A', sizeof(long_id));
+
+    /* 128 chars — should fail */
+    long_id[128] = 0;
+    hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+    ok(hr == E_INVALIDARG, "Got hr %#lx for 128-char string.\n", hr);
+
+    /* 127 chars — should succeed */
+    long_id[127] = 0;
+    hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+    ok(hr == S_OK, "Got hr %#lx for 127-char string.\n", hr);
+
+    /* Set a different ID */
+    hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId2");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!lstrcmpW(appid, L"Wine.Test.AppId2"), "Got %s.\n", wine_dbgstr_w(appid));
+    CoTaskMemFree(appid);
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -789,6 +855,7 @@ START_TEST(shcore)
 
     init(hshcore);
 
+    test_AppUserModelID();
     test_process_reference();
     test_SHUnicodeToAnsi();
     test_SHAnsiToUnicode();

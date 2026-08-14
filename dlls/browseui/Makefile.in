@@ -3,6 +3,9 @@ IMPORTS   = uuid ole32 comctl32 user32 advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION  = 6,0,2900,2180
+VER_OLESELFREGISTER = 1
+
 SOURCES = \
 	aclmulti.c \
 	aclsource.c \
