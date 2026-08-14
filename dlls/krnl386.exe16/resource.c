@@ -875,7 +875,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
-    ret = GlobalAlloc16( GMEM_FIXED, size );
+    ret = GlobalAlloc16( pNameInfo->flags & NE_SEGFLAGS_MOVEABLE ? GMEM_MOVEABLE : GMEM_FIXED, size );
     if (ret) FarSetOwner16( ret, hModule );
     return ret;
 }
