@@ -4500,9 +4500,14 @@ static void test_dpi_window(void)
             dpi = pGetDpiForWindow( child );
             ok( dpi == (j == DPI_AWARENESS_UNAWARE ? USER_DEFAULT_SCREEN_DPI : real_dpi),
                 "%Iu/%Iu: got %u / %u\n", i, j, dpi, real_dpi );
+            SetLastError( 0xdeadbeef );
             ret = SetParent( child, hwnd );
-            ok( ret != 0 || GetLastError() == ERROR_INVALID_STATE,
-                "SetParent failed err %lu\n", GetLastError() );
+            if (i == j) ok( !!ret, "SetParent failed err %lu\n", GetLastError() );
+            else
+            {
+                ok( !ret, "SetParent succeeded\n" );
+                ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
+            }
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );
             ok( awareness == (ret ? i : j), "%Iu/%Iu: wrong awareness %u\n", i, j, awareness );

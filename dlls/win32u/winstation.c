@@ -29,7 +29,6 @@
 #include <pthread.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "ntuser.h"
@@ -71,6 +70,7 @@ struct session_block
 
 static pthread_mutex_t session_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list session_blocks = LIST_INIT(session_blocks);
+const session_shm_t *shared_session;
 
 static struct session_thread_data *get_session_thread_data(void)
 {
@@ -79,20 +79,13 @@ static struct session_thread_data *get_session_thread_data(void)
     return thread_info->session_data;
 }
 
-#if defined(__i386__) || defined(__x86_64__)
-/* this prevents compilers from incorrectly reordering non-volatile reads (e.g., memcpy) from shared memory */
-#define __SHARED_READ_FENCE do { __asm__ __volatile__( "" ::: "memory" ); } while (0)
-#else
-#define __SHARED_READ_FENCE __atomic_thread_fence( __ATOMIC_ACQUIRE )
-#endif
-
-static void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
+void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
 {
     while ((*seq = ReadNoFence64( &object->seq )) & 1) YieldProcessor();
     __SHARED_READ_FENCE;
 }
 
-static BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq )
+BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq )
 {
     __SHARED_READ_FENCE;
     return ReadNoFence64( &object->seq ) == seq;
@@ -179,20 +172,31 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
     return status;
 }
 
-static const shared_object_t *find_shared_session_object( struct obj_locator locator )
+const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t offset )
 {
     struct session_block *block = NULL;
     const shared_object_t *object;
     NTSTATUS status;
 
-    if (locator.id && !(status = find_shared_session_block( locator.offset, sizeof(*object), &block )))
+    if (id && !(status = find_shared_session_block( offset, sizeof(*object), &block )))
     {
-        object = (const shared_object_t *)(block->data + locator.offset - block->offset);
-        if (locator.id == shared_object_get_id( object )) return object;
-        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(locator.id) );
+        object = (const shared_object_t *)(block->data + offset - block->offset);
+        if (id == shared_object_get_id( object )) return object;
+        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(id) );
     }
 
     return NULL;
+}
+
+void shared_session_init(void)
+{
+    struct session_block *block;
+    UINT status;
+
+    if ((status = find_shared_session_block( 0, sizeof(*shared_session), &block )))
+        ERR( "Failed to map initial shared session block, status %#x\n", status );
+    else
+        shared_session = (const session_shm_t *)block->data;
 }
 
 NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **desktop_shm )
@@ -214,9 +218,8 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
         }
         SERVER_END_REQ;
 
-        data->shared_desktop = find_shared_session_object( locator );
+        data->shared_desktop = find_shared_session_object( locator.id, locator.offset );
         if (!(object = data->shared_desktop)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
@@ -248,9 +251,8 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
         }
         SERVER_END_REQ;
 
-        data->shared_queue = find_shared_session_object( locator );
+        data->shared_queue = find_shared_session_object( locator.id, locator.offset );
         if (!(object = data->shared_queue)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
@@ -283,9 +285,8 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
         SERVER_END_REQ;
 
         cache->id = locator.id;
-        cache->object = find_shared_session_object( locator );
+        cache->object = find_shared_session_object( locator.id, locator.offset );
         if (!(object = cache->object)) return STATUS_INVALID_HANDLE;
-        memset( lock, 0, sizeof(*lock) );
     }
 
     /* check object validity by comparing ids, within the object seqlock */
@@ -303,7 +304,12 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
         return STATUS_PENDING;
     }
 
-    if (!valid) memset( cache, 0, sizeof(*cache) ); /* object has been invalidated, clear the cache and start over */
+    if (!valid)
+    {
+        /* object has been invalidated, start over */
+        memset( cache, 0, sizeof(*cache) );
+        memset( lock, 0, sizeof(*lock) );
+    }
     return STATUS_SUCCESS;
 }
 
@@ -342,6 +348,15 @@ BOOL is_virtual_desktop(void)
     return ret;
 }
 
+BOOL is_service_process(void)
+{
+    static const WCHAR wine_service_station_name[] = {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
+    WCHAR name[MAX_PATH];
+
+    return NtUserGetObjectInformation( NtUserGetProcessWindowStation(), UOI_NAME, name, sizeof(name), NULL ) &&
+           !wcscmp( name, wine_service_station_name );
+}
+
 /***********************************************************************
  *           NtUserCreateWindowStation  (win32u.@)
  */
@@ -349,24 +364,31 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK a
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 )
 {
     HANDLE ret;
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len )))
+    {
+        RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
+        return 0;
+    }
 
     SERVER_START_REQ( create_winstation )
     {
-        req->flags      = 0;
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        req->access = access;
+        req->flags  = 0;
+        wine_server_add_data( req, objattr, len );
         wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+    free( objattr );
     return ret;
 }
 
@@ -447,6 +469,9 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 {
     WCHAR buffer[MAX_PATH];
     HANDLE ret;
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if ((device && device->Length) || (devmode && !(flags & DF_WINE_VIRTUAL_DESKTOP)))
     {
@@ -458,16 +483,21 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len )))
+    {
+        RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
+        return 0;
+    }
     SERVER_START_REQ( create_desktop )
     {
-        req->flags      = flags;
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        req->access = access;
+        req->flags  = flags;
+        wine_server_add_data( req, objattr, len );
         wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+    free( objattr );
     if (!devmode) return ret;
 
     lstrcpynW( buffer, attr->ObjectName->Buffer, attr->ObjectName->Length / sizeof(WCHAR) + 1 );
@@ -561,10 +591,10 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     {
         struct user_thread_info *thread_info = get_user_thread_info();
         struct session_thread_data *data = get_session_thread_data();
-        data->shared_desktop = find_shared_session_object( locator );
+        data->shared_desktop = find_shared_session_object( locator.id, locator.offset );
         memset( &data->shared_foreground, 0, sizeof(data->shared_foreground) );
-        thread_info->client_info.top_window = 0;
-        thread_info->client_info.msg_window = 0;
+        thread_info->top_window = 0;
+        thread_info->msg_window = 0;
         if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( TRUE );
     }
     return ret;
@@ -577,12 +607,12 @@ HDESK WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK acce
 {
     HANDLE ret = 0;
 
-    TRACE( "(%x,%i,%x)\n", (int)flags, inherit, (int)access );
+    TRACE( "(%x,%i,%x)\n", flags, inherit, access );
 
     access |= DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS;
 
     if (flags)
-        FIXME( "partial stub flags %08x\n", (int)flags );
+        FIXME( "partial stub flags %08x\n", flags );
 
     SERVER_START_REQ( open_input_desktop )
     {
@@ -774,28 +804,21 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 
 HWND get_desktop_window(void)
 {
-    static const WCHAR wine_service_station_name[] =
-        {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    WCHAR name[MAX_PATH];
+    struct user_thread_info *thread_info = get_user_thread_info();
     BOOL is_service;
 
-    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
+    if (thread_info->top_window) return thread_info->top_window;
 
     /* don't create an actual explorer desktop window for services */
-    if (NtUserGetObjectInformation( NtUserGetProcessWindowStation(), UOI_NAME, name, sizeof(name), NULL )
-        && !wcscmp( name, wine_service_station_name ))
-        is_service = TRUE;
-    else
-        is_service = FALSE;
+    is_service = is_service_process();
 
     SERVER_START_REQ( get_desktop_window )
     {
         req->force = is_service;
         if (!wine_server_call( req ))
         {
-            thread_info->top_window = reply->top_window;
-            thread_info->msg_window = reply->msg_window;
+            thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+            thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
         }
     }
     SERVER_END_REQ;
@@ -810,11 +833,13 @@ HWND get_desktop_window(void)
         static const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
             's','y','s','t','e','m','3','2','\\',0};
         RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
-        PS_ATTRIBUTE_LIST ps_attr;
+        ULONG_PTR attr_buffer[offsetof(PS_ATTRIBUTE_LIST,Attributes[2]) / sizeof(ULONG_PTR)];
+        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
+        PS_ATTRIBUTE_LIST *ps_attr = (PS_ATTRIBUTE_LIST *)attr_buffer;
         PS_CREATE_INFO create_info;
         WCHAR desktop[MAX_PATH];
-        PEB *peb = NtCurrentTeb()->Peb;
-        HANDLE process, thread;
+        PEB *peb = RtlGetCurrentPeb();
+        HANDLE process = 0, thread;
         unsigned int status;
 
         SERVER_START_REQ( set_user_object_info )
@@ -843,24 +868,28 @@ HWND get_desktop_window(void)
         RtlInitUnicodeString( &params.WindowTitle, appnameW + 4 );
         RtlInitUnicodeString( &params.Desktop, desktop );
 
-        ps_attr.TotalLength = sizeof(ps_attr);
-        ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
-        ps_attr.Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
-        ps_attr.Attributes[0].ValuePtr     = (WCHAR *)appnameW;
-        ps_attr.Attributes[0].ReturnLength = NULL;
+        NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                    machines, sizeof(machines), NULL );
+        ps_attr->TotalLength = sizeof(attr_buffer);
+        ps_attr->Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+        ps_attr->Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
+        ps_attr->Attributes[0].ValuePtr     = (WCHAR *)appnameW;
+        ps_attr->Attributes[0].ReturnLength = NULL;
+        ps_attr->Attributes[1].Attribute    = PS_ATTRIBUTE_MACHINE_TYPE;
+        ps_attr->Attributes[1].Value        = machines[0].Machine;
 
         if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
         {
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, &ps_attr );
+                                          &create_info, ps_attr );
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
         }
         else
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, &ps_attr );
+                                          &create_info, ps_attr );
         if (!status)
         {
             NtResumeThread( thread, NULL );
@@ -876,18 +905,17 @@ HWND get_desktop_window(void)
             req->force = 1;
             if (!wine_server_call( req ))
             {
-                thread_info->top_window = reply->top_window;
-                thread_info->msg_window = reply->msg_window;
+                thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+                thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
             }
         }
         SERVER_END_REQ;
     }
-
     if (!thread_info->top_window) ERR_(win)( "failed to create desktop window\n" );
-    else user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
+    else user_driver->pSetDesktopWindow( thread_info->top_window );
 
     register_builtin_classes();
-    return UlongToHandle( thread_info->top_window );
+    return thread_info->top_window;
 }
 
 static HANDLE get_winstations_dir_handle(void)
@@ -899,7 +927,7 @@ static HANDLE get_winstations_dir_handle(void)
     NTSTATUS status;
     HANDLE dir;
 
-    snprintf( bufferA, sizeof(bufferA), "\\Sessions\\%u\\Windows\\WindowStations", (int)NtCurrentTeb()->Peb->SessionId );
+    snprintf( bufferA, sizeof(bufferA), "\\Sessions\\%u\\Windows\\WindowStations", RtlGetCurrentPeb()->SessionId );
     str.Buffer = buffer;
     str.MaximumLength = asciiz_to_unicode( buffer, bufferA );
     str.Length = str.MaximumLength - sizeof(WCHAR);
@@ -915,7 +943,7 @@ static HANDLE get_winstations_dir_handle(void)
  */
 static const WCHAR *get_default_desktop( void *buf, size_t buf_size )
 {
-    const WCHAR *p, *appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    const WCHAR *p, *appname = RtlGetCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = buf;
     WCHAR *buffer = buf;
     HKEY tmpkey, appkey;
@@ -961,7 +989,7 @@ static const WCHAR *get_default_desktop( void *buf, size_t buf_size )
  */
 void winstation_init(void)
 {
-    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+    RTL_USER_PROCESS_PARAMETERS *params = RtlGetCurrentPeb()->ProcessParameters;
     WCHAR *winstation = NULL, *desktop = NULL, *buffer = NULL;
     HANDLE handle, dir = NULL;
     OBJECT_ATTRIBUTES attr;
@@ -983,7 +1011,7 @@ void winstation_init(void)
     }
 
     /* set winstation if explicitly specified, or if we don't have one yet */
-    if (buffer || !NtUserGetProcessWindowStation())
+    if (buffer || !(handle = NtUserGetProcessWindowStation()))
     {
         str.Buffer = (WCHAR *)(winstation ? winstation : winsta0);
         str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
@@ -1011,9 +1039,7 @@ void winstation_init(void)
         char buffer[4096];
         str.Buffer = (WCHAR *)(desktop ? desktop : get_default_desktop( buffer, sizeof(buffer) ));
         str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
-        if (!dir) dir = get_winstations_dir_handle();
-        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-                                    dir, NULL );
+        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, handle, NULL );
 
         handle = NtUserCreateDesktopEx( &attr, NULL, NULL, 0, STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS, 0 );
         if (handle) NtUserSetThreadDesktop( handle );

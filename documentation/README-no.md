@@ -35,7 +35,7 @@ Følgende kreves for å bygge og kjøre Wine:
 - FreeBSD 12.4 eller nyere
 - Solaris x86 9 eller nyere
 - NetBSD-current
-- macOS 10.12 eller nyere
+- macOS 10.15 eller nyere
 
 Wine krever støtte for tråder på kjernenivå, og derfor er det bare
 operativsystemene ovenfor som støttes. Andre operativsystemer som
@@ -56,8 +56,6 @@ støtter kjernetråder støttes kanskje i framtiden.
 
 **Informasjon for Mac OS X**:
   Du må ha Xcode/Xcode Command Line Tools eller Apple cctools.
-  Minimumskravet for å bygge Wine er clang 3.8 med MacOSX10.10.sdk og
-  mingw-w64 v8. MacOSX10.14.sdk eller nyere kan bare bygge wine64.
 
 **Støttede filsystemer**:
   Wine kan kjøre på de fleste filsystemer. Det har imidlertid vært

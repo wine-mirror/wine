@@ -159,7 +159,7 @@
 @ stdcall D3DXGetShaderVersion(ptr)
 @ stdcall D3DXGetVertexShaderProfile(ptr)
 @ stdcall D3DXIntersect(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stub D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXIntersectTri(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXLoadMeshFromXA(str long ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXLoadMeshFromXInMemory(ptr long long ptr ptr ptr ptr ptr ptr)

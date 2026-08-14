@@ -21,7 +21,7 @@
 @ stdcall Get(long ptr wstr long ptr ptr ptr)
 @ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
-@ stub GetErrorInfo
+@ stdcall GetErrorInfo() wminet_utils_GetErrorInfo
 @ stdcall GetMethod(long ptr wstr long ptr ptr)
 @ stub GetMethodOrigin
 @ stdcall GetMethodQualifierSet(long ptr wstr ptr)
@@ -30,7 +30,7 @@
 @ stub GetPropertyHandle
 @ stub GetPropertyInfoByHandle
 @ stub GetPropertyOrigin
-@ stub GetPropertyQualifierSet
+@ stdcall GetPropertyQualifierSet(long ptr wstr ptr)
 @ stub GetQualifierSet
 @ stub InheritsFrom
 @ stdcall Initialize(long)
@@ -44,7 +44,7 @@
 @ stub QualifierSet_BeginEnumeration
 @ stub QualifierSet_Delete
 @ stub QualifierSet_EndEnumeration
-@ stub QualifierSet_Get
+@ stdcall QualifierSet_Get(long ptr wstr long ptr ptr)
 @ stub QualifierSet_GetNames
 @ stub QualifierSet_Next
 @ stub QualifierSet_Put

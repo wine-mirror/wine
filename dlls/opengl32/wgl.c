@@ -18,312 +18,1254 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <string.h>
+#include <math.h>
 
-#include "opengl_ext.h"
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "winreg.h"
-#include "wingdi.h"
-#include "winternl.h"
-#include "winnt.h"
+#include "ntuser.h"
+#include "ntgdi.h"
+#include "malloc.h"
 
-#define WGL_WGLEXT_PROTOTYPES
-#include "wine/wglext.h"
-#include "wine/gdi_driver.h"
-#include "wine/wgl_driver.h"
+#include "unixlib.h"
+#include "private.h"
+
+#include "wine/glu.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-extern struct opengl_funcs null_opengl_funcs;
+static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
-/* handle management */
+#define WINE_GL_RESERVED_FORMATS_HDC      2
+#define WINE_GL_RESERVED_FORMATS_PTR      3
+#define WINE_GL_RESERVED_FORMATS_NUM      4
+#define WINE_GL_RESERVED_FORMATS_ONSCREEN 5
 
-#define MAX_WGL_HANDLES 1024
-
-enum wgl_handle_type
-{
-    HANDLE_CONTEXT = 0 << 12,
-    HANDLE_PBUFFER = 1 << 12,
-    HANDLE_TYPE_MASK = 15 << 12
+static CRITICAL_SECTION wgl_cs;
+static CRITICAL_SECTION_DEBUG wgl_cs_debug = {
+    0, 0, &wgl_cs,
+    { &wgl_cs_debug.ProcessLocksList,
+      &wgl_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": wgl_cs") }
 };
+static CRITICAL_SECTION wgl_cs = { &wgl_cs_debug, -1, 0, 0, 0, 0 };
+static char *wgl_extensions;
 
-struct opengl_context
+#define USE_GL_EXT(x) #x,
+static const char *extension_names[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+#undef USE_GL_EXT
+
+#ifndef _WIN64
+
+static char **wow64_strings;
+static SIZE_T wow64_strings_count;
+
+static CRITICAL_SECTION wow64_cs;
+static CRITICAL_SECTION_DEBUG wow64_cs_debug =
 {
-    DWORD               tid;         /* thread that the context is current in */
-    HDC                 draw_dc;     /* current drawing DC */
-    HDC                 read_dc;     /* current reading DC */
-    GLubyte            *extensions;  /* extension string */
-    struct wgl_context *drv_ctx;     /* driver context */
+    0, 0, &wow64_cs,
+    { &wow64_cs_debug.ProcessLocksList, &wow64_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": wow64_cs") }
 };
+static CRITICAL_SECTION wow64_cs = { &wow64_cs_debug, -1, 0, 0, 0, 0 };
 
-struct wgl_handle
+static void append_wow64_string( char *str )
 {
-    UINT                 handle;
-    struct opengl_funcs *funcs;
+    char **tmp;
+
+    EnterCriticalSection( &wow64_cs );
+
+    if (!(tmp = realloc( wow64_strings, (wow64_strings_count + 1) * sizeof(*wow64_strings) )))
+        ERR( "Failed to allocate memory for wow64 strings\n" );
+    else
+    {
+        wow64_strings = tmp;
+        wow64_strings[wow64_strings_count] = str;
+        wow64_strings_count += 1;
+    }
+
+    LeaveCriticalSection( &wow64_cs );
+}
+
+static void cleanup_wow64_strings(void)
+{
+    while (wow64_strings_count--) free( wow64_strings[wow64_strings_count] );
+    free( wow64_strings );
+}
+
+#endif
+
+static const char *debugstr_object_type( enum object_type type )
+{
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: return "buffer";
+    case OBJ_TYPE_DISPLAY_LIST: return "display list";
+    case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
+    case OBJ_TYPE_MEMORY: return "memory";
+    case OBJ_TYPE_PATH: return "path";
+    case OBJ_TYPE_PROGRAM: return "program";
+    case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
+    case OBJ_TYPE_SEMAPHORE: return "semaphore";
+    case OBJ_TYPE_SHADER: return "shader";
+    case OBJ_TYPE_SAMPLER: return "sampler";
+    case OBJ_TYPE_SHADER_ATI: return "fragment shader";
+    case OBJ_TYPE_SHADER_EXT: return "vertex shader";
+    case OBJ_TYPE_TEXTURE: return "texture";
+    case OBJ_TYPE_COUNT: break;
+    }
+    return wine_dbg_sprintf( "object (type %u)", type );
+}
+
+static void init_wgl_extensions( const BOOLEAN extensions[GL_EXTENSION_COUNT] )
+{
+    UINT pos = 0, len = 0, ext;
+    char *str;
+
+    for (ext = WGL_FIRST_EXTENSION; ext < GL_EXTENSION_COUNT; ext++)
+        if (extensions[ext]) len += strlen( extension_names[ext] ) + 1;
+
+    if (!(str = malloc( len + 1 ))) return;
+
+    for (ext = WGL_FIRST_EXTENSION; ext < GL_EXTENSION_COUNT; ext++)
+        if (extensions[ext]) pos += sprintf( str + pos, "%s ", extension_names[ext] );
+    str[pos - 1] = 0;
+
+    wgl_extensions = str;
+}
+
+struct handle_entry
+{
+    UINT handle;
     union
     {
-        struct opengl_context *context;  /* for HANDLE_CONTEXT */
-        struct wgl_pbuffer    *pbuffer;  /* for HANDLE_PBUFFER */
-        struct wgl_handle     *next;     /* for free handles */
-    } u;
+        struct opengl_client_context *context;
+        struct opengl_client_pbuffer *pbuffer;
+        struct handle_entry *next_free;
+        void *user_data;
+    };
 };
 
-static struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
-static struct wgl_handle *next_free;
-static unsigned int handle_count;
-
-static CRITICAL_SECTION wgl_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+struct handle_table
 {
-    0, 0, &wgl_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": wgl_section") }
+    SRWLOCK              lock;
+    struct handle_entry  handles[1024];
+    struct handle_entry *next_free;
+    UINT                 count;
 };
-static CRITICAL_SECTION wgl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
+static struct handle_table pbuffers;
+static struct handle_table contexts;
+
+static struct handle_entry *alloc_handle( struct handle_table *table, void *user_data )
 {
-    struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-    if (funcs == (void *)-1) funcs = &null_opengl_funcs;
-    return funcs;
-}
+    struct handle_entry *ptr = NULL;
+    WORD generation;
 
-static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
-{
-    WORD generation = HIWORD( ptr->handle ) + 1;
-    if (!generation) generation++;
-    ptr->handle = MAKELONG( ptr - wgl_handles, generation ) | type;
-    return ULongToHandle( ptr->handle );
-}
-
-/* the current context is assumed valid and doesn't need locking */
-static inline struct wgl_handle *get_current_context_ptr(void)
-{
-    if (!NtCurrentTeb()->glCurrentRC) return NULL;
-    return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC) & ~HANDLE_TYPE_MASK];
-}
-
-static struct wgl_handle *get_handle_ptr( HANDLE handle, enum wgl_handle_type type )
-{
-    unsigned int index = LOWORD( handle ) & ~HANDLE_TYPE_MASK;
-
-    EnterCriticalSection( &wgl_section );
-    if (index < handle_count && ULongToHandle(wgl_handles[index].handle) == handle)
-        return &wgl_handles[index];
-
-    LeaveCriticalSection( &wgl_section );
-    SetLastError( ERROR_INVALID_HANDLE );
-    return NULL;
-}
-
-static void release_handle_ptr( struct wgl_handle *ptr )
-{
-    if (ptr) LeaveCriticalSection( &wgl_section );
-}
-
-static HANDLE alloc_handle( enum wgl_handle_type type, struct opengl_funcs *funcs, void *user_ptr )
-{
-    HANDLE handle = 0;
-    struct wgl_handle *ptr = NULL;
-
-    EnterCriticalSection( &wgl_section );
-    if ((ptr = next_free))
-        next_free = next_free->u.next;
-    else if (handle_count < MAX_WGL_HANDLES)
-        ptr = &wgl_handles[handle_count++];
+    AcquireSRWLockExclusive( &table->lock );
+    if ((ptr = table->next_free)) table->next_free = ptr->next_free;
+    else if (table->count < ARRAY_SIZE(table->handles)) ptr = table->handles + table->count++;
+    else ptr = NULL;
 
     if (ptr)
     {
-        ptr->funcs = funcs;
-        ptr->u.context = user_ptr;
-        handle = next_handle( ptr, type );
+        if (!(generation = HIWORD( ptr->handle ) + 1)) generation++;
+        ptr->handle = MAKELONG( ptr - table->handles + 1, generation );
+        ptr->user_data = user_data;
     }
-    else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-    LeaveCriticalSection( &wgl_section );
-    return handle;
+
+    if (!ptr) RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
+    ReleaseSRWLockExclusive( &table->lock );
+    return ptr;
 }
 
-static void free_handle_ptr( struct wgl_handle *ptr )
+static void free_handle( struct handle_table *table, struct handle_entry *ptr )
 {
+    AcquireSRWLockExclusive( &table->lock );
     ptr->handle |= 0xffff;
-    ptr->u.next = next_free;
-    ptr->funcs = NULL;
-    next_free = ptr;
-    LeaveCriticalSection( &wgl_section );
+    ptr->next_free = table->next_free;
+    table->next_free = ptr;
+    ReleaseSRWLockExclusive( &table->lock );
 }
 
-/***********************************************************************
- *		wglCopyContext (OPENGL32.@)
- */
-BOOL WINAPI wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
+static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE handle )
 {
-    struct wgl_handle *src, *dst;
-    BOOL ret = FALSE;
+    UINT index = ((UINT_PTR)handle & 0xffff) - 1;
+    struct handle_entry *ptr;
 
-    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
+    if (index >= ARRAY_SIZE(table->handles)) return NULL;
+    ptr = table->handles + index;
+
+    AcquireSRWLockShared( &table->lock );
+    if (index >= table->count || ULongToHandle( ptr->handle ) != handle)
     {
-        if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglCopyContext( src->u.context->drv_ctx,
-                                                     dst->u.context->drv_ctx, mask );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        ptr = NULL;
     }
-    release_handle_ptr( dst );
-    release_handle_ptr( src );
-    return ret;
+    ReleaseSRWLockShared( &table->lock );
+
+    return ptr;
 }
 
-/***********************************************************************
- *		wglDeleteContext (OPENGL32.@)
- */
-BOOL WINAPI wglDeleteContext(HGLRC hglrc)
+BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj )
 {
-    struct wgl_handle *ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT );
+    struct handle_entry *ptr;
 
-    if (!ptr) return FALSE;
-
-    if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
+    if (!(ptr = get_handle_ptr( &pbuffers, handle )))
     {
-        SetLastError( ERROR_BUSY );
-        release_handle_ptr( ptr );
+        SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (hglrc == NtCurrentTeb()->glCurrentRC) wglMakeCurrent( 0, 0 );
-    ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
-    HeapFree( GetProcessHeap(), 0, ptr->u.context->extensions );
-    HeapFree( GetProcessHeap(), 0, ptr->u.context );
-    free_handle_ptr( ptr );
+
+    *obj = &ptr->pbuffer->obj;
+    return TRUE;
+}
+
+static struct handle_entry *alloc_client_pbuffer(void)
+{
+    struct opengl_client_pbuffer *pbuffer;
+    struct handle_entry *ptr;
+
+    if (!(pbuffer = calloc( 1, sizeof(*pbuffer) ))) return NULL;
+    if (!(ptr = alloc_handle( &pbuffers, pbuffer ))) free( pbuffer );
+    return ptr;
+}
+
+static void free_client_pbuffer( struct handle_entry *ptr )
+{
+    struct opengl_client_pbuffer *pbuffer = ptr->pbuffer;
+    free_handle( &pbuffers, ptr );
+    free( pbuffer );
+}
+
+HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
+{
+    struct wglCreatePbufferARB_params args = { .teb = NtCurrentTeb(), .hDC = hdc, .iPixelFormat = format, .iWidth = width, .iHeight = height, .piAttribList = attribs };
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "hdc %p, format %d, width %d, height %d, attribs %p\n", hdc, format, width, height, attribs );
+
+    if (!(ptr = alloc_client_pbuffer())) return 0;
+    args.ret = &ptr->pbuffer->obj;
+
+    if ((status = UNIX_CALL( wglCreatePbufferARB, &args ))) WARN( "wglCreatePbufferARB returned %#lx\n", status );
+    assert( args.ret == &ptr->pbuffer->obj || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_pbuffer( ptr );
+    return NULL;
+}
+
+BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
+{
+    struct wglDestroyPbufferARB_params args = { .teb = NtCurrentTeb() };
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "handle %p\n", handle );
+
+    if (!(ptr = get_handle_ptr( &pbuffers, handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    args.hPbuffer = &ptr->pbuffer->obj;
+
+    if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#lx\n", status );
+    if (args.ret) free_client_pbuffer( ptr );
+
+    return args.ret;
+}
+
+#define L1_COUNT   0x80
+#define L2_COUNT  0x400
+#define L3_COUNT 0x8000
+
+struct object_table
+{
+    enum object_type    type;                   /* object type of the id table */
+    SRWLOCK             lock;                   /* lock for accessing the table */
+    GLuint            **host_ids[L1_COUNT];     /* client -> host id mapping sparse array */
+    GLuint            **client_ids[L1_COUNT];   /* host -> client id mapping sparse array */
+    GLuint              min_free;               /* id to start looking for a free slot */
+    BOOL                implicit;               /* table allows implicit allocation */
+};
+
+static GLuint *find_object_id( GLuint **ids[L1_COUNT], GLuint client_id )
+{
+    GLuint i = client_id / L3_COUNT / L2_COUNT, j = (client_id / L3_COUNT) % L2_COUNT, k = client_id % L3_COUNT;
+    return ids[i] ? ids[i][j] ? ids[i][j] + k : NULL : NULL;
+}
+
+static GLuint *alloc_object_ids( GLuint **ids[L1_COUNT], GLuint client_id )
+{
+    GLuint i = client_id / L3_COUNT / L2_COUNT, j = (client_id / L3_COUNT) % L2_COUNT;
+    GLuint **ptr;
+
+    if (!(ptr = ids[i]) && !(ptr = ids[i] = calloc( L2_COUNT, sizeof(*ptr) ))) return NULL;
+    if (!ptr[j] && !(ptr[j] = calloc( L3_COUNT, sizeof(*ptr[j]) ))) return NULL;
+    return ptr[j];
+}
+
+static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT],
+                             void (*callback)(struct object_table *, GLuint, GLuint) )
+{
+    GLuint id, **l1_block, *l2_block;
+
+    for (int i = 0; i < L1_COUNT; i++)
+    {
+        if (!(l1_block = ids[i])) continue;
+        for (int j = 0; j < L2_COUNT; j++)
+        {
+            if (!(l2_block = l1_block[j])) continue;
+            for (int k = 0; callback && k < L3_COUNT; k++)
+            {
+                if (!(id = l2_block[k])) continue;
+                callback( table, id, (i * L2_COUNT + j) * L3_COUNT + k );
+            }
+            free( l2_block );
+        }
+        free( l1_block );
+    }
+}
+
+static GLuint alloc_client_id( struct object_table *table, GLuint host_id, UINT range )
+{
+    /* if we don't need implicit allocations, use the host allocated ids directly */
+    if (!table->implicit) return host_id;
+
+    /* otherwise we need to allocate client id ourselves, lookup for a free id */
+    for (GLuint id = table->min_free + 1, n = range, *ids; id != 0; id++)
+    {
+        if (!(ids = alloc_object_ids( table->host_ids, id ))) return 0;
+        if (ids[id % L3_COUNT]) n = range;
+        else if (!n--) return table->min_free = id - range;
+    }
+
+    return 0;
+}
+
+static GLuint set_object( struct object_table *table, GLuint client_id, GLuint host_id )
+{
+    GLuint *ids;
+
+    if (!(ids = alloc_object_ids( table->host_ids, client_id ))) goto failed;
+    ids[client_id % L3_COUNT] = host_id;
+
+    if (table->implicit || table->type == OBJ_TYPE_SHADER /* for destruction check */)
+    {
+        if (!(ids = alloc_object_ids( table->client_ids, host_id ))) goto failed;
+        ids[host_id % L3_COUNT] = client_id;
+    }
+
+    TRACE( "Inserted %s client %#x, host %#x\n", debugstr_object_type(table->type), client_id, host_id );
+    return client_id;
+
+failed:
+    ERR( "Failed to allocate object id block\n" );
+    return -1;
+}
+
+static GLuint del_object( struct object_table *table, GLuint client_id )
+{
+    GLuint *object, host_id = 0;
+
+    if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return -1;
+    table->min_free = min( table->min_free, client_id - 1 );
+    host_id = *object;
+    if (table->type != OBJ_TYPE_SHADER) *object = 0; /* shader objects may outlive their deletion */
+    if (host_id && (object = find_object_id( table->client_ids, host_id ))) *object = 0;
+
+    TRACE( "Deleting %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    return host_id ? host_id : -1;
+}
+
+static GLuint get_object( struct object_table *table, GLuint client_id, BOOL check )
+{
+    const GLuint *object = find_object_id( table->host_ids, client_id );
+    GLuint host_id = object ? *object : 0;
+
+    TRACE( "Found %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    return check || host_id ? host_id : -1;
+}
+
+#define MAKE_OBJECT_CALL( func, ... )                                                              \
+    struct func##_params args = { .teb = NtCurrentTeb(), __VA_ARGS__ };                            \
+    UNIX_CALL( func, &args )
+
+static GLuint create_object( enum object_type type )
+{
+    GLuint object;
+
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
+    case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glGenLists, .range = 1 ); return args.ret; }
+    case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
+    case OBJ_TYPE_MEMORY: assert( 0 ); return 0;
+    case OBJ_TYPE_PATH: { MAKE_OBJECT_CALL( glGenPathsNV, .range = 1 ); return args.ret; }
+    case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glGenProgramsARB, .n = 1, .programs = &object ); return object; }
+    case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
+    case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
+    case OBJ_TYPE_SEMAPHORE: { MAKE_OBJECT_CALL( glGenSemaphoresEXT, .n = 1, .semaphores = &object ); return object; }
+    case OBJ_TYPE_SHADER: assert( 0 ); return 0;
+    case OBJ_TYPE_SHADER_ATI: { MAKE_OBJECT_CALL( glGenFragmentShadersATI, .range = 1 ); return args.ret; }
+    case OBJ_TYPE_SHADER_EXT: { MAKE_OBJECT_CALL( glGenVertexShadersEXT, .range = 1 ); return args.ret; }
+    case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
+    case OBJ_TYPE_COUNT: break;
+    }
+
+    return 0;
+}
+
+static void destroy_object( enum object_type type, GLuint object )
+{
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glDeleteBuffers, .n = 1, .buffers = &object ); return; }
+    case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glDeleteLists, .range = 1, .list = object ); return; }
+    case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glDeleteFramebuffers, .n = 1, .framebuffers = &object ); return; }
+    case OBJ_TYPE_MEMORY: { MAKE_OBJECT_CALL( glDeleteMemoryObjectsEXT, .n = 1, .memoryObjects = &object ); return; }
+    case OBJ_TYPE_PATH: { MAKE_OBJECT_CALL( glDeletePathsNV, .range = 1, .path = object ); return; }
+    case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glDeleteProgramsARB, .n = 1, .programs = &object ); return; }
+    case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glDeleteRenderbuffers, .n = 1, .renderbuffers = &object ); return; }
+    case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glDeleteSamplers, .count = 1, .samplers = &object ); return; }
+    case OBJ_TYPE_SEMAPHORE: { MAKE_OBJECT_CALL( glDeleteSemaphoresEXT, .n = 1, .semaphores = &object ); return; }
+    case OBJ_TYPE_SHADER: { MAKE_OBJECT_CALL( glDeleteObjectARB, .obj = object ); return; }
+    case OBJ_TYPE_SHADER_ATI: { MAKE_OBJECT_CALL( glDeleteFragmentShaderATI, .id = object ); return; }
+    case OBJ_TYPE_SHADER_EXT: { MAKE_OBJECT_CALL( glDeleteVertexShaderEXT, .id = object ); return; }
+    case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glDeleteTextures, .n = 1, .textures = &object ); return; }
+    case OBJ_TYPE_COUNT: return;
+    }
+}
+
+#undef MAKE_OBJECT_CALL
+
+static void destroy_host_object( struct object_table *table, GLuint host_id, GLuint client_id )
+{
+    WARN( "Destroying %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    destroy_object( table->type, host_id );
+}
+
+static void destroy_host_shader( struct object_table *table, GLuint host_id, GLuint client_id )
+{
+    GLuint *object;
+    if (!(object = find_object_id( table->client_ids, host_id )) || !(client_id = *object)) return;
+    WARN( "Destroying %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    destroy_object( table->type, host_id );
+}
+
+static void free_object_table( struct object_table *table, BOOL destroy )
+{
+    if (table->type == OBJ_TYPE_SHADER) free_object_ids( table, table->host_ids, destroy ? destroy_host_shader : NULL );
+    else free_object_ids( table, table->host_ids, destroy ? destroy_host_object : NULL );
+    free_object_ids( table, table->client_ids, NULL );
+}
+
+static void init_object_table( struct object_table *table, enum object_type type )
+{
+    InitializeSRWLock( &table->lock );
+    table->type = type;
+}
+
+struct display_lists
+{
+    LONG                refcount;
+    LONG                modified;
+    struct object_table tables[OBJ_TYPE_COUNT];
+    struct handle_table syncs;
+};
+
+static struct display_lists *display_lists_create(void)
+{
+    struct display_lists *lists;
+
+    if (!(lists = calloc( 1, sizeof(*lists) ))) return NULL;
+    lists->refcount = 1;
+
+    for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
+        init_object_table( lists->tables + i, i );
+    InitializeSRWLock( &lists->syncs.lock );
+
+    return lists;
+}
+
+static struct display_lists *display_lists_acquire( struct display_lists *lists )
+{
+    InterlockedIncrement( &lists->refcount );
+    return lists;
+}
+
+static void display_lists_release( struct display_lists *lists, BOOL destroy )
+{
+    struct glDeleteSync_params delete_sync = { .teb = NtCurrentTeb() };
+
+    if (InterlockedDecrement( &lists->refcount )) return;
+
+    for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
+        free_object_table( lists->tables + i, destroy );
+
+    for (int i = 0; i < lists->syncs.count; i++)
+    {
+        struct handle_entry *entry = lists->syncs.handles + i;
+        if (LOWORD(entry->handle) == 0xffff) continue;
+        WARN( "Leaking sync client %#x, host %p\n", entry->handle, entry->user_data );
+        delete_sync.sync = entry->user_data;
+        if (destroy) UNIX_CALL( glDeleteSync, &delete_sync );
+        free( entry->user_data );
+    }
+
+    free( lists );
+}
+
+/* context state management */
+
+struct light_model_state
+{
+    GLfloat ambient[4];
+    GLint two_side;
+};
+
+struct lighting_state
+{
+    struct light_model_state model;
+    GLenum shade_model;
+};
+
+struct depth_buffer_state
+{
+    GLenum depth_func;
+};
+
+struct viewport_state
+{
+    GLint x;
+    GLint y;
+    GLsizei w;
+    GLsizei h;
+};
+
+struct enable_state
+{
+    GLboolean cull_face;
+    GLboolean depth_test;
+    GLboolean dither;
+    GLboolean fog;
+    GLboolean lighting;
+    GLboolean normalize;
+};
+
+struct color_buffer_state
+{
+    GLfloat clear_color[4];
+};
+
+struct hint_state
+{
+    GLenum perspective_correction;
+    GLenum point_smooth;
+    GLenum line_smooth;
+    GLenum polygon_smooth;
+    GLenum fog;
+    GLenum multisample_nv;
+};
+
+struct context
+{
+    struct opengl_client_context base;
+    struct display_lists *lists;
+
+    /* semi-stub state tracker for wglCopyContext */
+    GLbitfield used;                            /* context state used bits */
+    struct lighting_state lighting;             /* GL_LIGHTING_BIT */
+    struct depth_buffer_state depth_buffer;     /* GL_DEPTH_BUFFER_BIT */
+    struct viewport_state viewport;             /* GL_VIEWPORT_BIT */
+    struct enable_state enable;                 /* GL_ENABLE_BIT */
+    struct color_buffer_state color_buffer;     /* GL_COLOR_BUFFER_BIT */
+    struct hint_state hint;                     /* GL_HINT_BIT */
+};
+
+static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
+{
+    return CONTAINING_RECORD( base, struct context, base );
+}
+
+static struct opengl_client_context *opengl_client_context_from_handle( HGLRC handle )
+{
+    struct handle_entry *ptr;
+    if (!(ptr = get_handle_ptr( &contexts, handle ))) return NULL;
+    return ptr->context;
+}
+
+static struct context *context_from_handle( HGLRC handle )
+{
+    return context_from_opengl_client_context( opengl_client_context_from_handle( handle ) );
+}
+
+BOOL get_context_from_handle( HGLRC handle, HGLRC *obj )
+{
+    struct context *context = context_from_handle( handle );
+    *obj = context ? &context->base.obj : NULL;
+    return context || !handle;
+}
+
+static struct handle_entry *alloc_client_context( struct context *share )
+{
+    struct context *context;
+    struct handle_entry *ptr;
+
+    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+    if (!(context->lists = share ? display_lists_acquire( share->lists ) : display_lists_create())) goto failed;
+    if ((ptr = alloc_handle( &contexts, context ))) return ptr;
+
+    display_lists_release( context->lists, share ? !share->base.broken_sharing : TRUE );
+failed:
+    free( context );
+    return NULL;
+}
+
+static void free_client_context( struct handle_entry *ptr )
+{
+    struct context *context = context_from_opengl_client_context( ptr->context );
+
+    display_lists_release( context->lists, !context->base.broken_sharing );
+
+    free_handle( &contexts, ptr );
+    free( context );
+}
+
+static struct context *get_current_context(void)
+{
+    HGLRC current = NtCurrentTeb()->glCurrentRC;
+    return current ? context_from_handle( current ) : NULL;
+}
+
+void set_gl_error( GLenum error )
+{
+    struct opengl_client_context *context;
+    if (!(context = opengl_client_context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
+    if (!context->last_error && !(context->last_error = glGetError())) context->last_error = error;
+}
+
+static struct object_table *get_object_table( struct context *ctx, enum object_type type, BOOL write )
+{
+    if (write) InterlockedExchange( &ctx->lists->modified, 1 );
+    return type < OBJ_TYPE_COUNT ? ctx->lists->tables + type : NULL;
+}
+
+void put_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context())) return;
+    if (!(table = get_object_table( ctx, type, TRUE ))) return;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, alloc_client_id( table, handles[i], 0 ), handles[i] ) : 0;
+    ReleaseSRWLockExclusive( &table->lock );
+}
+
+GLuint put_context_object_range( enum object_type type, UINT range, GLuint base )
+{
+    struct object_table *table;
+    struct context *ctx;
+    GLuint first;
+
+    if (!(ctx = get_current_context())) return base;
+    if (!(table = get_object_table( ctx, type, TRUE ))) return base;
+
+    AcquireSRWLockExclusive( &table->lock );
+    first = alloc_client_id( table, base, range );
+    for (UINT i = 0; i < range; i++) set_object( table, first + i, base + i );
+    ReleaseSRWLockExclusive( &table->lock );
+
+    return first;
+}
+
+static void alloc_client_objects( struct context *ctx, enum object_type type, UINT n, const GLuint *handles )
+{
+    struct object_table *table;
+
+    if (!(table = get_object_table( ctx, type, TRUE ))) return;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++)
+    {
+        if (!handles[i] || get_object( table, handles[i], TRUE )) continue;
+        WARN( "Creating implicit %s client %#x\n", debugstr_object_type( type ), handles[i] );
+        set_object( table, handles[i], create_object( table->type ) );
+        table->implicit = TRUE; /* from now on we cannot rely on host-allocated ids */
+    }
+    ReleaseSRWLockExclusive( &table->lock );
+}
+
+static BOOL is_core_context( struct opengl_client_context *ctx )
+{
+    if (ctx->major_version < 3) return FALSE;
+    if (ctx->major_version > 3) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->minor_version > 1) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->minor_version == 1) return !ctx->extensions[GL_ARB_compatibility];
+    return !!(ctx->context_flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT);
+}
+
+BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension )
+{
+    BOOL alloc_client, needs_client = FALSE;
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!handles || !(ctx = get_current_context())) return TRUE;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return TRUE;
+
+    /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
+    switch (type)
+    {
+    case OBJ_TYPE_DISPLAY_LIST:
+        if (is_core_context( &ctx->base )) return FALSE;
+        alloc_client = TRUE;
+        break;
+    case OBJ_TYPE_FRAMEBUFFER:
+    case OBJ_TYPE_RENDERBUFFER:
+    case OBJ_TYPE_PROGRAM:
+    case OBJ_TYPE_SHADER_EXT:
+    case OBJ_TYPE_SHADER_ATI:
+    case OBJ_TYPE_SEMAPHORE:
+    case OBJ_TYPE_PATH:
+        alloc_client = extension;
+        break;
+    case OBJ_TYPE_SAMPLER:
+    case OBJ_TYPE_MEMORY:
+    case OBJ_TYPE_SHADER:
+        alloc_client = FALSE;
+        break;
+    default:
+        alloc_client = !is_core_context( &ctx->base );
+        break;
+    }
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < n && !needs_client; i++)
+        needs_client = handles[i] && !get_object( table, handles[i], TRUE );
+    ReleaseSRWLockShared( &table->lock );
+    if (!needs_client) return TRUE;
+
+    if (alloc_client) alloc_client_objects( ctx, type, n, handles );
+    else set_gl_error( GL_INVALID_OPERATION );
+
+    return alloc_client;
+}
+
+GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!handles || !(ctx = get_current_context())) return handles;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++) handles[i] = del_object( table, handles[i] );
+    ReleaseSRWLockExclusive( &table->lock );
+
+    return handles;
+}
+
+GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!handles || !(ctx = get_current_context())) return handles;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
+
+    AcquireSRWLockShared( &table->lock );
+    while (n--) handles[n] = handles[n] ? get_object( table, handles[n], FALSE ) : 0;
+    ReleaseSRWLockShared( &table->lock );
+
+    return handles;
+}
+
+static GLuint get_pname_object_type( GLenum pname )
+{
+    switch (pname)
+    {
+    case GL_ARRAY_BUFFER_BINDING:
+    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
+    case GL_COLOR_ARRAY_BUFFER_BINDING:
+    case GL_COPY_READ_BUFFER_BINDING:
+    case GL_COPY_WRITE_BUFFER_BINDING:
+    case GL_DISPATCH_INDIRECT_BUFFER_BINDING:
+    case GL_DRAW_INDIRECT_BUFFER_BINDING:
+    case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING:
+    case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+    case GL_FOG_COORD_ARRAY_BUFFER_BINDING:
+    case GL_INDEX_ARRAY_BUFFER_BINDING:
+    case GL_NORMAL_ARRAY_BUFFER_BINDING:
+    case GL_PARAMETER_BUFFER_BINDING:
+    case GL_PIXEL_PACK_BUFFER_BINDING:
+    case GL_PIXEL_UNPACK_BUFFER_BINDING:
+    case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
+    case GL_QUERY_BUFFER_BINDING:
+    case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING:
+    case GL_SHADER_STORAGE_BUFFER_BINDING:
+    case GL_TEXTURE_BUFFER_DATA_STORE_BINDING:
+    case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
+    case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+    case GL_UNIFORM_BLOCK_BINDING:
+    case GL_UNIFORM_BUFFER_BINDING:
+    case GL_UNIFORM_BUFFER_BINDING_EXT:
+    case GL_VERTEX_ARRAY_BUFFER_BINDING:
+    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING:
+    case GL_VERTEX_BINDING_BUFFER:
+    case GL_VIDEO_BUFFER_BINDING_NV:
+    case GL_WEIGHT_ARRAY_BUFFER_BINDING:
+    case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
+        return OBJ_TYPE_BUFFER;
+    case GL_READ_FRAMEBUFFER_BINDING:
+    case GL_DRAW_FRAMEBUFFER_BINDING:
+        return OBJ_TYPE_FRAMEBUFFER;
+    case GL_RENDERBUFFER_BINDING:
+    case GL_TEXTURE_RENDERBUFFER_DATA_STORE_BINDING_NV:
+        return OBJ_TYPE_RENDERBUFFER;
+    case GL_TEXTURE_BINDING_1D:
+    case GL_TEXTURE_BINDING_1D_ARRAY:
+    case GL_TEXTURE_BINDING_2D:
+    case GL_TEXTURE_BINDING_2D_ARRAY:
+    case GL_TEXTURE_BINDING_2D_MULTISAMPLE:
+    case GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY:
+    case GL_TEXTURE_BINDING_3D:
+    case GL_TEXTURE_BINDING_BUFFER:
+    case GL_TEXTURE_BINDING_CUBE_MAP:
+    case GL_TEXTURE_BINDING_CUBE_MAP_ARRAY:
+    case GL_TEXTURE_BINDING_EXTERNAL_OES:
+    case GL_TEXTURE_BINDING_RECTANGLE:
+    case GL_TEXTURE_BUFFER_BINDING:
+    case GL_TEXTURE_BINDING_RENDERBUFFER_NV:
+    case GL_TEXTURE_1D_STACK_BINDING_MESAX:
+    case GL_TEXTURE_2D_STACK_BINDING_MESAX:
+    case GL_TEXTURE_4D_BINDING_SGIS:
+    case GL_DETAIL_TEXTURE_2D_BINDING_SGIS:
+    case GL_SHADING_RATE_IMAGE_BINDING_NV:
+    case GL_IMAGE_BINDING_NAME:
+        return OBJ_TYPE_TEXTURE;
+    case GL_SAMPLER_BINDING:
+        return OBJ_TYPE_SAMPLER;
+    case GL_LIST_INDEX:
+        return OBJ_TYPE_DISPLAY_LIST;
+    case GL_PROGRAM_BINDING_ARB:
+    case GL_VERTEX_PROGRAM_BINDING_NV:
+    case GL_FRAGMENT_PROGRAM_BINDING_NV:
+        return OBJ_TYPE_PROGRAM;
+    case GL_COMPUTE_SHADER:
+    case GL_CURRENT_PROGRAM:
+    case GL_FRAGMENT_SHADER:
+    case GL_GEOMETRY_SHADER:
+    case GL_TESS_CONTROL_SHADER:
+    case GL_TESS_EVALUATION_SHADER:
+    case GL_VERTEX_SHADER:
+    case GL_ACTIVE_PROGRAM:
+        return OBJ_TYPE_SHADER;
+    case GL_VERTEX_SHADER_BINDING_EXT:
+        return OBJ_TYPE_SHADER_EXT;
+    }
+
+    return OBJ_TYPE_COUNT;
+}
+
+static BOOL map_client_objects( enum object_type type, GLuint host_id, GLuint *ret )
+{
+    GLuint *object, client_id = host_id;
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!host_id || type == OBJ_TYPE_COUNT) return FALSE;
+    if (!(ctx = get_current_context())) return FALSE;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return FALSE;
+
+    AcquireSRWLockShared( &table->lock );
+    if ((object = find_object_id( table->client_ids, host_id ))) client_id = *object;
+    ReleaseSRWLockShared( &table->lock );
+
+    *ret = client_id;
+    return TRUE;
+}
+
+static void map_framebuffer_attachment_param( GLenum target, GLenum attachment, GLenum pname, GLint *params )
+{
+    GLint type, value;
+
+    if (pname != GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME) return;
+    glGetFramebufferAttachmentParameteriv( target, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type );
+    if (type == GL_RENDERBUFFER && map_client_objects( OBJ_TYPE_RENDERBUFFER, *params, (GLuint *)&value )) *params = value;
+    if (type == GL_TEXTURE && map_client_objects( OBJ_TYPE_TEXTURE, *params, (GLuint *)&value )) *params = value;
+}
+
+void WINAPI glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint *params )
+{
+    struct glGetFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
+    NTSTATUS status;
+
+    TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
+
+    if ((status = UNIX_CALL( glGetFramebufferAttachmentParameteriv, &args ))) WARN( "glGetFramebufferAttachmentParameteriv returned %#lx\n", status );
+    map_framebuffer_attachment_param( target, attachment, pname, params );
+}
+
+void WINAPI glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint *params )
+{
+    struct glGetFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
+    NTSTATUS status;
+
+    TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
+
+    if ((status = UNIX_CALL( glGetFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetFramebufferAttachmentParameterivEXT returned %#lx\n", status );
+    map_framebuffer_attachment_param( target, attachment, pname, params );
+}
+
+static void map_named_framebuffer_attachment_param( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
+{
+    GLint type, value;
+
+    if (pname != GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME) return;
+    glGetNamedFramebufferAttachmentParameteriv( framebuffer, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type );
+    if (type == GL_RENDERBUFFER && map_client_objects( OBJ_TYPE_RENDERBUFFER, *params, (GLuint *)&value )) *params = value;
+    if (type == GL_TEXTURE && map_client_objects( OBJ_TYPE_TEXTURE, *params, (GLuint *)&value )) *params = value;
+}
+
+void WINAPI glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
+{
+    struct glGetNamedFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
+    GLuint host_framebuffer = framebuffer;
+    NTSTATUS status;
+
+    TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
+
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &host_framebuffer );
+    if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameteriv, &args ))) WARN( "glGetNamedFramebufferAttachmentParameteriv returned %#lx\n", status );
+    map_named_framebuffer_attachment_param( framebuffer, attachment, pname, params );
+}
+
+void WINAPI glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
+{
+    struct glGetNamedFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
+    GLuint host_framebuffer = framebuffer;
+    NTSTATUS status;
+
+    TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
+
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &host_framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &host_framebuffer );
+    if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetNamedFramebufferAttachmentParameterivEXT returned %#lx\n", status );
+    map_named_framebuffer_attachment_param( framebuffer, attachment, pname, params );
+}
+
+HGLRC WINAPI wglCreateContext( HDC hdc )
+{
+    static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0, 0 };
+    TRACE( "hdc %p\n", hdc );
+    return wglCreateContextAttribsARB( hdc, NULL, attribs );
+}
+
+HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+{
+    struct wglCreateContextAttribsARB_params args = { .teb = NtCurrentTeb(), .hDC = hdc, .attribList = attribs };
+    struct context *share_context = NULL;
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "hdc %p, share %p, attribs %p\n", hdc, share, attribs );
+
+    if (share && !(share_context = context_from_handle( share )))
+    {
+        SetLastError( ERROR_INVALID_OPERATION );
+        return NULL;
+    }
+    if (share_context && share_context->base.broken_sharing)
+    {
+        ERR( "Shared context %p has broken display list sharing\n", share );
+        share = NULL;
+    }
+    if (share) args.hShareContext = &share_context->base.obj;
+
+    if (!(ptr = alloc_client_context( share ? share_context : NULL ))) return NULL;
+    args.ret = &ptr->context->obj;
+
+    if ((status = UNIX_CALL( wglCreateContextAttribsARB, &args ))) WARN( "wglCreateContextAttribsARB returned %#lx\n", status );
+    assert( args.ret == &ptr->context->obj || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_context( ptr );
+    return NULL;
+}
+
+BOOL WINAPI wglDeleteContext( HGLRC handle )
+{
+    TEB *teb = NtCurrentTeb();
+    struct wglDeleteContext_params args = {.teb = teb};
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "handle %p\n", handle );
+
+    if (!(ptr = get_handle_ptr( &contexts, handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    args.oldContext = &ptr->context->obj;
+
+    if (handle == teb->glCurrentRC) wglMakeCurrent( NULL, NULL );
+    if (ptr->context->current_tid)
+    {
+        SetLastError( ERROR_BUSY );
+        return FALSE;
+    }
+
+    if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#lx\n", status );
+    if (status || !args.ret) return FALSE;
+
+    /* make sure there's a (dummy) context before releasing and destroying display list objects */
+    if (!teb->glCurrentRC) wglMakeContextCurrentARB( NULL, NULL, NULL );
+    free_client_context( ptr );
+    return TRUE;
+}
+
+BOOL WINAPI wglMakeCurrent( HDC hdc, HGLRC handle )
+{
+    TRACE( "hdc %p, handle %p\n", hdc, handle );
+    if (!hdc && !handle && !NtCurrentTeb()->glCurrentRC)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    return wglMakeContextCurrentARB( hdc, hdc, handle );
+}
+
+BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC handle )
+{
+    TEB *teb = NtCurrentTeb();
+    struct wglMakeContextCurrentARB_params args = { .teb = teb, .hDrawDC = draw_hdc, .hReadDC = read_hdc };
+    struct opengl_client_context *context = NULL, *previous = opengl_client_context_from_handle( teb->glCurrentRC );
+    NTSTATUS status;
+
+    TRACE( "draw_hdc %p, read_hdc %p, handle %p\n", draw_hdc, read_hdc, handle );
+
+    if (!get_context_from_handle( handle, &args.hglrc )) return FALSE;
+    if ((context = opengl_client_context_from_handle( handle )) &&
+        context->current_tid && context->current_tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_BUSY );
+        return FALSE;
+    }
+
+    if ((status = UNIX_CALL( wglMakeContextCurrentARB, &args ))) WARN( "wglMakeContextCurrentARB returned %#lx\n", status );
+    if (status || !args.ret) return FALSE;
+
+    if (context) context->current_tid = GetCurrentThreadId();
+    if (previous) previous->current_tid = 0;
+    teb->glCurrentRC = handle;
+    teb->glReserved1[0] = draw_hdc;
+    teb->glReserved1[1] = read_hdc;
     return TRUE;
 }
 
 /***********************************************************************
- *		wglMakeCurrent (OPENGL32.@)
+ *      wglShareLists
  */
-BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
+BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
 {
-    BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_context_ptr();
+    struct context *src_context, *dst_context;
+    struct display_lists *lists;
 
-    if (hglrc)
+    TRACE( "src_handle %p, dst_handle %p\n", src_handle, dst_handle );
+
+    if (!(src_context = context_from_handle( src_handle ))) return FALSE;
+    if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
+    if (ReadNoFence( &dst_context->lists->modified )) return FALSE;
+
+    if (src_context->base.broken_sharing || dst_context->base.broken_sharing)
     {
-        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
-        {
-            ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->u.context->drv_ctx );
-            if (ret)
-            {
-                if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = GetCurrentThreadId();
-                ptr->u.context->draw_dc = hdc;
-                ptr->u.context->read_dc = hdc;
-                NtCurrentTeb()->glCurrentRC = hglrc;
-                NtCurrentTeb()->glTable = ptr->funcs;
-            }
-        }
+        ERR( "Either source or destination context has broken sharing\n" );
+        return FALSE;
+    }
+
+    lists = display_lists_acquire( src_context->lists );
+    lists = InterlockedExchangePointer( (void *)&dst_context->lists, lists );
+    display_lists_release( lists, TRUE );
+
+    return TRUE;
+}
+
+struct context_attribute_desc
+{
+    GLenum name;
+    GLbitfield bit;
+    unsigned short offset;
+    unsigned short size;
+};
+
+static struct context_attribute_desc context_attributes[] =
+{
+#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) { name, bit, offsetof(struct context, field), sizeof(((struct context *)0)->field) }
+    CONTEXT_ATTRIBUTE_DESC( GL_COLOR_BUFFER_BIT, GL_COLOR_CLEAR_VALUE, color_buffer.clear_color ),
+    CONTEXT_ATTRIBUTE_DESC( GL_DEPTH_BUFFER_BIT, GL_DEPTH_FUNC, depth_buffer.depth_func ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_CULL_FACE, enable.cull_face ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DEPTH_TEST, enable.depth_test ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DITHER, enable.dither ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_FOG, enable.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_LIGHTING, enable.lighting ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_NORMALIZE, enable.normalize ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_PERSPECTIVE_CORRECTION_HINT, hint.perspective_correction ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POINT_SMOOTH_HINT, hint.point_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_LINE_SMOOTH_HINT, hint.line_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POLYGON_SMOOTH_HINT, hint.polygon_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_FOG_HINT, hint.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_MULTISAMPLE_FILTER_HINT_NV, hint.multisample_nv ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_AMBIENT, lighting.model.ambient ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_TWO_SIDE, lighting.model.two_side ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_SHADE_MODEL, lighting.shade_model ),
+    CONTEXT_ATTRIBUTE_DESC( GL_VIEWPORT_BIT, GL_VIEWPORT, viewport ),
+#undef CONTEXT_ATTRIBUTE_DESC
+};
+
+static int compare_context_attributes( const void *v1, const void *v2 )
+{
+    const struct context_attribute_desc *a1 = v1, *a2 = v2;
+
+    return (int)a1->name - (int)a2->name;
+};
+
+void set_context_attribute( GLenum name, const void *value, size_t size )
+{
+    struct context_attribute_desc key = { .name = name };
+    const struct context_attribute_desc *desc;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context())) return;
+
+    if (name == GL_FRAMEBUFFER)
+    {
+        set_context_attribute( GL_READ_FRAMEBUFFER, value, size );
+        name = GL_DRAW_FRAMEBUFFER;
+    }
+
+    if (name != -1 && (desc = bsearch( &key, context_attributes, ARRAY_SIZE(context_attributes),
+                                       sizeof(*context_attributes), compare_context_attributes )))
+    {
+        if (size && size != desc->size) ERR( "Invalid state attrib %#x parameter size %#Ix\n", name, size );
         else
         {
-            SetLastError( ERROR_BUSY );
-            ret = FALSE;
+            memcpy( (char *)ctx + desc->offset, value, desc->size );
+            ctx->used |= desc->bit;
         }
-        release_handle_ptr( ptr );
     }
-    else if (prev)
+    else
     {
-        if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->u.context->tid = 0;
-        NtCurrentTeb()->glCurrentRC = 0;
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        if (ctx->used != -1) WARN( "Unsupported attribute on context %p\n", ctx );
+        ctx->used |= -1;
     }
-    else if (!hdc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        ret = FALSE;
-    }
-    return ret;
 }
 
 /***********************************************************************
- *		wglCreateContextAttribsARB
- *
- * Provided by the WGL_ARB_create_context extension.
+ *      wglCopyContext
  */
-HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+BOOL WINAPI wglCopyContext( HGLRC src_handle, HGLRC dst_handle, UINT mask )
 {
-    HGLRC ret = 0;
-    struct wgl_context *drv_ctx;
-    struct wgl_handle *share_ptr = NULL;
-    struct opengl_context *context;
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
+    HGLRC context = NtCurrentTeb()->glCurrentRC;
+    struct context *src, *dst;
+    HDC hdc = NULL;
+    HWND hwnd;
 
-    if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT ))) return 0;
-    if ((drv_ctx = funcs->ext.p_wglCreateContextAttribsARB( hdc,
-                                              share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
+    if (dst_handle == context)
     {
-        if ((context = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context) )))
-        {
-            context->drv_ctx = drv_ctx;
-            if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
-                HeapFree( GetProcessHeap(), 0, context );
-        }
-        if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return FALSE;
     }
-    release_handle_ptr( share_ptr );
-    return ret;
+    if (!(src = context_from_handle( src_handle ))) return FALSE;
+    if (!(dst = context_from_handle( dst_handle ))) return FALSE;
 
-}
+    if (!mask) return TRUE;
+    if (src->used == -1) FIXME( "Unsupported attributes on context %p\n", src );
+    if (src != dst && dst->used == -1) FIXME( "Unsupported attributes on context %p\n", dst );
 
-/***********************************************************************
- *		wglMakeContextCurrentARB
- *
- * Provided by the WGL_ARB_make_current_read extension.
- */
-BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
-{
-    BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_context_ptr();
-
-    if (hglrc)
+    if (!(hwnd = CreateWindowExW( 0, L"static", L"static", WS_POPUP, 0, 0, 0, 0, NULL, NULL, NULL, NULL )) ||
+        !(hdc = GetWindowDC( hwnd )) || !SetPixelFormat( hdc, dst->base.format, NULL ))
     {
-        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
-        {
-            ret = (ptr->funcs->ext.p_wglMakeContextCurrentARB &&
-                   ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc,
-                                                               ptr->u.context->drv_ctx ));
-            if (ret)
-            {
-                if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = GetCurrentThreadId();
-                ptr->u.context->draw_dc = draw_hdc;
-                ptr->u.context->read_dc = read_hdc;
-                NtCurrentTeb()->glCurrentRC = hglrc;
-                NtCurrentTeb()->glTable = ptr->funcs;
-            }
-        }
-        else
-        {
-            SetLastError( ERROR_BUSY );
-            ret = FALSE;
-        }
-        release_handle_ptr( ptr );
+        WARN( "Failed to create dummy window to update context attributes\n" );
+        if (hdc) ReleaseDC( hwnd, hdc );
+        if (hwnd) DestroyWindow( hwnd );
+        return FALSE;
     }
-    else if (prev)
+
+    wglMakeContextCurrentARB( hdc, hdc, dst_handle );
+
+    if (mask & GL_COLOR_BUFFER_BIT)
     {
-        if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->u.context->tid = 0;
-        NtCurrentTeb()->glCurrentRC = 0;
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        const GLfloat *floats = src->color_buffer.clear_color;
+        glClearColor( floats[0], floats[1], floats[2], floats[3] );
+        dst->color_buffer = src->color_buffer;
     }
-    return ret;
+    if (mask & GL_DEPTH_BUFFER_BIT)
+    {
+        glDepthFunc( src->depth_buffer.depth_func );
+        dst->depth_buffer = src->depth_buffer;
+    }
+    if (mask & GL_ENABLE_BIT)
+    {
+        if (src->enable.cull_face) glEnable( GL_CULL_FACE );
+        else glDisable( GL_CULL_FACE );
+        if (src->enable.depth_test) glEnable( GL_DEPTH_TEST );
+        else glDisable( GL_DEPTH_TEST );
+        if (src->enable.dither) glEnable( GL_DITHER );
+        else glDisable( GL_DITHER );
+        if (src->enable.fog) glEnable( GL_FOG );
+        else glDisable( GL_FOG );
+        if (src->enable.lighting) glEnable( GL_LIGHTING );
+        else glDisable( GL_LIGHTING );
+        if (src->enable.normalize) glEnable( GL_NORMALIZE );
+        else glDisable( GL_NORMALIZE );
+        dst->enable = src->enable;
+    }
+    if (mask & GL_HINT_BIT)
+    {
+        if (src->hint.perspective_correction) glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
+        if (src->hint.point_smooth)           glHint( GL_POINT_SMOOTH_HINT, src->hint.point_smooth );
+        if (src->hint.line_smooth)            glHint( GL_LINE_SMOOTH_HINT, src->hint.line_smooth );
+        if (src->hint.polygon_smooth)         glHint( GL_POLYGON_SMOOTH_HINT, src->hint.polygon_smooth );
+        if (src->hint.fog)                    glHint( GL_FOG_HINT, src->hint.fog );
+        if (src->hint.multisample_nv)         glHint( GL_MULTISAMPLE_FILTER_HINT_NV, src->hint.multisample_nv );
+        dst->hint = src->hint;
+    }
+    if (mask & GL_LIGHTING_BIT)
+    {
+        glLightModelfv( GL_LIGHT_MODEL_AMBIENT, src->lighting.model.ambient );
+        glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, src->lighting.model.two_side );
+        glShadeModel( src->lighting.shade_model );
+        dst->lighting = src->lighting;
+    }
+    if (mask & GL_VIEWPORT_BIT)
+    {
+        glViewport( src->viewport.x, src->viewport.y, src->viewport.w, src->viewport.h );
+        dst->viewport = src->viewport;
+    }
+    dst->used |= (src->used & mask);
+
+    if (!context) wglMakeContextCurrentARB( NULL, NULL, NULL );
+    else wglMakeContextCurrentARB( draw_hdc, read_hdc, context );
+
+    ReleaseDC( hwnd, hdc );
+    DestroyWindow( hwnd );
+
+    return dst->used != -1 && src->used != -1;
 }
 
 /***********************************************************************
@@ -333,29 +1275,8 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
  */
 HDC WINAPI wglGetCurrentReadDCARB(void)
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-
-    if (!ptr) return 0;
-    return ptr->u.context->read_dc;
-}
-
-/***********************************************************************
- *		wglShareLists (OPENGL32.@)
- */
-BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
-{
-    BOOL ret = FALSE;
-    struct wgl_handle *src, *dst;
-
-    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
-    {
-        if (src->funcs != dst->funcs) SetLastError( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->wgl.p_wglShareLists( src->u.context->drv_ctx, dst->u.context->drv_ctx );
-    }
-    release_handle_ptr( dst );
-    release_handle_ptr( src );
-    return ret;
+    if (!NtCurrentTeb()->glCurrentRC) return 0;
+    return NtCurrentTeb()->glReserved1[1];
 }
 
 /***********************************************************************
@@ -363,32 +1284,8 @@ BOOL WINAPI wglShareLists(HGLRC hglrcSrc, HGLRC hglrcDst)
  */
 HDC WINAPI wglGetCurrentDC(void)
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-
-    if (!ptr) return 0;
-    return ptr->u.context->draw_dc;
-}
-
-/***********************************************************************
- *		wglCreateContext (OPENGL32.@)
- */
-HGLRC WINAPI wglCreateContext(HDC hdc)
-{
-    HGLRC ret = 0;
-    struct wgl_context *drv_ctx;
-    struct opengl_context *context;
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs) return 0;
-    if (!(drv_ctx = funcs->wgl.p_wglCreateContext( hdc ))) return 0;
-    if ((context = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context) )))
-    {
-        context->drv_ctx = drv_ctx;
-        if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
-            HeapFree( GetProcessHeap(), 0, context );
-    }
-    if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
-    return ret;
+    if (!NtCurrentTeb()->glCurrentRC) return 0;
+    return NtCurrentTeb()->glReserved1[0];
 }
 
 /***********************************************************************
@@ -400,16 +1297,6 @@ HGLRC WINAPI wglGetCurrentContext(void)
 }
 
 /***********************************************************************
- *		wglDescribePixelFormat (OPENGL32.@)
- */
-INT WINAPI wglDescribePixelFormat(HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
-{
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
-    return funcs->wgl.p_wglDescribePixelFormat( hdc, format, size, descr );
-}
-
-/***********************************************************************
  *		wglChoosePixelFormat (OPENGL32.@)
  */
 INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
@@ -417,15 +1304,18 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     PIXELFORMATDESCRIPTOR format, best;
     int i, count, best_format;
     int bestDBuffer = -1, bestStereo = -1;
+    DWORD is_memdc;
 
-    TRACE_(wgl)( "%p %p: size %u version %u flags %u type %u color %u %u,%u,%u,%u "
-                 "accum %u depth %u stencil %u aux %u\n",
-                 hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
-                 ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
-                 ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
+    TRACE( "%p %p: size %u version %u flags %lu type %u color %u %u,%u,%u,%u "
+           "accum %u depth %u stencil %u aux %u\n",
+           hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
+           ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
+           ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
 
     count = wglDescribePixelFormat( hdc, 0, 0, NULL );
     if (!count) return 0;
+
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc )) is_memdc = 0;
 
     best_format = 0;
     best.dwFlags = 0;
@@ -434,21 +1324,42 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     best.cDepthBits = -1;
     best.cStencilBits = -1;
     best.cAuxBuffers = -1;
+    best.cAccumBits = -1;
 
     for (i = 1; i <= count; i++)
     {
         if (!wglDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
 
-        if (ppfd->iPixelType != format.iPixelType)
+        if ((ppfd->iPixelType == PFD_TYPE_COLORINDEX) != (format.iPixelType == PFD_TYPE_COLORINDEX))
         {
             TRACE( "pixel type mismatch for iPixelFormat=%d\n", i );
             continue;
         }
 
-        /* only use bitmap capable for formats for bitmap rendering */
-        if( (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) != (format.dwFlags & PFD_DRAW_TO_BITMAP))
+        if ((ppfd->dwFlags & PFD_DRAW_TO_BITMAP) && !(format.dwFlags & PFD_DRAW_TO_BITMAP))
         {
-            TRACE( "PFD_DRAW_TO_BITMAP mismatch for iPixelFormat=%d\n", i );
+            TRACE( "PFD_DRAW_TO_BITMAP required but not found for iPixelFormat=%d\n", i );
+            continue;
+        }
+        if ((ppfd->dwFlags & PFD_DRAW_TO_WINDOW) && !(format.dwFlags & PFD_DRAW_TO_WINDOW))
+        {
+            TRACE( "PFD_DRAW_TO_WINDOW required but not found for iPixelFormat=%d\n", i );
+            continue;
+        }
+
+        if ((ppfd->dwFlags & PFD_SUPPORT_GDI) && !(format.dwFlags & PFD_SUPPORT_GDI))
+        {
+            TRACE( "PFD_SUPPORT_GDI required but not found for iPixelFormat=%d\n", i );
+            continue;
+        }
+        if ((ppfd->dwFlags & PFD_SUPPORT_OPENGL) && !(format.dwFlags & PFD_SUPPORT_OPENGL))
+        {
+            TRACE( "PFD_SUPPORT_OPENGL required but not found for iPixelFormat=%d\n", i );
+            continue;
+        }
+        if (is_memdc && ppfd->cColorBits == 16 && ppfd->cAlphaBits != 1)
+        {
+            TRACE( "Ignoring iPixelFormat=%d RGB565 format on memory DC\n", i );
             continue;
         }
 
@@ -480,6 +1391,8 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
             if (bestDBuffer != -1 && (format.dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer) continue;
         }
+        else if (!best_format)
+            goto found;
 
         /* Stereo, see the comments above. */
         if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE))
@@ -490,6 +1403,8 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
             if (bestStereo != -1 && (format.dwFlags & PFD_STEREO) != bestStereo) continue;
         }
+        else if (!best_format)
+            goto found;
 
         /* Below we will do a number of checks to select the 'best' pixelformat.
          * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.
@@ -523,18 +1438,6 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                 continue;
             }
         }
-        if (ppfd->cDepthBits)
-        {
-            if (((ppfd->cDepthBits > best.cDepthBits) && (format.cDepthBits > best.cDepthBits)) ||
-                ((format.cDepthBits >= ppfd->cDepthBits) && (format.cDepthBits < best.cDepthBits)))
-                goto found;
-
-            if (best.cDepthBits != format.cDepthBits)
-            {
-                TRACE( "depth mismatch for iPixelFormat=%d\n", i );
-                continue;
-            }
-        }
         if (ppfd->cStencilBits)
         {
             if (((ppfd->cStencilBits > best.cStencilBits) && (format.cStencilBits > best.cStencilBits)) ||
@@ -544,6 +1447,18 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
             if (best.cStencilBits != format.cStencilBits)
             {
                 TRACE( "stencil mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cDepthBits && !(ppfd->dwFlags & PFD_DEPTH_DONTCARE))
+        {
+            if (((ppfd->cDepthBits > best.cDepthBits) && (format.cDepthBits > best.cDepthBits)) ||
+                ((format.cDepthBits >= ppfd->cDepthBits) && (format.cDepthBits < best.cDepthBits)))
+                goto found;
+
+            if (best.cDepthBits != format.cDepthBits)
+            {
+                TRACE( "depth mismatch for iPixelFormat=%d\n", i );
                 continue;
             }
         }
@@ -559,6 +1474,28 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                 continue;
             }
         }
+        if (ppfd->cAccumBits)
+        {
+            if (((ppfd->cAccumBits > best.cAccumBits) && (format.cAccumBits > best.cAccumBits)) ||
+                ((format.cAccumBits >= ppfd->cAccumBits) && (format.cAccumBits < best.cAccumBits)))
+                goto found;
+
+            if (best.cAccumBits != format.cAccumBits)
+            {
+                TRACE( "cAccumBits mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->dwFlags & PFD_DEPTH_DONTCARE)
+        {
+            if (format.cDepthBits < best.cDepthBits)
+                goto found;
+            continue;
+        }
+
+        if (!ppfd->cDepthBits && format.cDepthBits > best.cDepthBits)
+            goto found;
+
         continue;
 
     found:
@@ -572,24 +1509,579 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     return best_format;
 }
 
+static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
+                                                   UINT *num_onscreen_formats )
+{
+    struct get_pixel_formats_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
+    PVOID *glReserved = NtCurrentTeb()->glReserved1;
+    NTSTATUS status;
+    DWORD is_memdc;
+
+    *num_formats = *num_onscreen_formats = 0;
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+
+    if (glReserved[WINE_GL_RESERVED_FORMATS_HDC] == hdc)
+    {
+        *num_formats = PtrToUlong( glReserved[WINE_GL_RESERVED_FORMATS_NUM] );
+        *num_onscreen_formats = PtrToUlong( glReserved[WINE_GL_RESERVED_FORMATS_ONSCREEN] );
+        return glReserved[WINE_GL_RESERVED_FORMATS_PTR];
+    }
+
+    if ((status = UNIX_CALL( get_pixel_formats, &args ))) goto error;
+    /* Clear formats memory since not all drivers deal with all wgl_pixel_format
+     * fields at the moment. */
+    if (!(args.formats = calloc( args.num_formats, sizeof(*args.formats) ))) goto error;
+    args.max_formats = args.num_formats;
+    if ((status = UNIX_CALL( get_pixel_formats, &args ))) goto error;
+
+    if (is_memdc) args.num_onscreen_formats = args.num_formats;
+
+    *num_formats = args.num_formats;
+    *num_onscreen_formats = args.num_onscreen_formats;
+
+    free( glReserved[WINE_GL_RESERVED_FORMATS_PTR] );
+    glReserved[WINE_GL_RESERVED_FORMATS_HDC] = hdc;
+    glReserved[WINE_GL_RESERVED_FORMATS_PTR] = args.formats;
+    glReserved[WINE_GL_RESERVED_FORMATS_NUM] = ULongToPtr( args.num_formats );
+    glReserved[WINE_GL_RESERVED_FORMATS_ONSCREEN] = ULongToPtr( args.num_onscreen_formats );
+
+    return args.formats;
+
+error:
+    *num_formats = *num_onscreen_formats = 0;
+    free( args.formats );
+    return NULL;
+}
+
+static BOOL wgl_attrib_uses_layer( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_ACCELERATION_ARB:
+    case WGL_TRANSPARENT_ARB:
+    case WGL_SHARE_DEPTH_ARB:
+    case WGL_SHARE_STENCIL_ARB:
+    case WGL_SHARE_ACCUM_ARB:
+    case WGL_TRANSPARENT_RED_VALUE_ARB:
+    case WGL_TRANSPARENT_GREEN_VALUE_ARB:
+    case WGL_TRANSPARENT_BLUE_VALUE_ARB:
+    case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
+    case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+    case WGL_SUPPORT_GDI_ARB:
+    case WGL_SUPPORT_OPENGL_ARB:
+    case WGL_DOUBLE_BUFFER_ARB:
+    case WGL_STEREO_ARB:
+    case WGL_PIXEL_TYPE_ARB:
+    case WGL_COLOR_BITS_ARB:
+    case WGL_RED_BITS_ARB:
+    case WGL_RED_SHIFT_ARB:
+    case WGL_GREEN_BITS_ARB:
+    case WGL_GREEN_SHIFT_ARB:
+    case WGL_BLUE_BITS_ARB:
+    case WGL_BLUE_SHIFT_ARB:
+    case WGL_ALPHA_BITS_ARB:
+    case WGL_ALPHA_SHIFT_ARB:
+    case WGL_ACCUM_BITS_ARB:
+    case WGL_ACCUM_RED_BITS_ARB:
+    case WGL_ACCUM_GREEN_BITS_ARB:
+    case WGL_ACCUM_BLUE_BITS_ARB:
+    case WGL_ACCUM_ALPHA_BITS_ARB:
+    case WGL_DEPTH_BITS_ARB:
+    case WGL_STENCIL_BITS_ARB:
+    case WGL_AUX_BUFFERS_ARB:
+    case WGL_SAMPLE_BUFFERS_ARB:
+    case WGL_SAMPLES_ARB:
+    case WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB:
+    case WGL_FLOAT_COMPONENTS_NV:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static BOOL wgl_pixel_format_get_attrib( const struct wgl_pixel_format *fmt, int attrib, int *value )
+{
+    int val = 0;
+    int valid = -1;
+
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB: val = !!(fmt->pfd.dwFlags & PFD_DRAW_TO_WINDOW); break;
+    case WGL_DRAW_TO_BITMAP_ARB: val = !!(fmt->pfd.dwFlags & PFD_DRAW_TO_BITMAP); break;
+    case WGL_ACCELERATION_ARB:
+        if (fmt->pfd.dwFlags & PFD_GENERIC_ACCELERATED)
+            val = WGL_GENERIC_ACCELERATION_ARB;
+        else if (fmt->pfd.dwFlags & PFD_GENERIC_FORMAT)
+            val = WGL_NO_ACCELERATION_ARB;
+        else
+            val = WGL_FULL_ACCELERATION_ARB;
+        break;
+    case WGL_NEED_PALETTE_ARB: val = !!(fmt->pfd.dwFlags & PFD_NEED_PALETTE); break;
+    case WGL_NEED_SYSTEM_PALETTE_ARB: val = !!(fmt->pfd.dwFlags & PFD_NEED_SYSTEM_PALETTE); break;
+    case WGL_SWAP_LAYER_BUFFERS_ARB: val = !!(fmt->pfd.dwFlags & PFD_SWAP_LAYER_BUFFERS); break;
+    case WGL_SWAP_METHOD_ARB: val = fmt->swap_method; break;
+    case WGL_NUMBER_OVERLAYS_ARB:
+    case WGL_NUMBER_UNDERLAYS_ARB:
+        /* We don't support any overlays/underlays. */
+        val = 0;
+        break;
+    case WGL_TRANSPARENT_ARB: val = fmt->transparent; break;
+    case WGL_SHARE_DEPTH_ARB:
+    case WGL_SHARE_STENCIL_ARB:
+    case WGL_SHARE_ACCUM_ARB:
+        /* We support only a main plane at the moment which by definition
+         * shares the depth/stencil/accum buffers with itself. */
+        val = GL_TRUE;
+        break;
+    case WGL_SUPPORT_GDI_ARB: val = !!(fmt->pfd.dwFlags & PFD_SUPPORT_GDI); break;
+    case WGL_SUPPORT_OPENGL_ARB: val = !!(fmt->pfd.dwFlags & PFD_SUPPORT_OPENGL); break;
+    case WGL_DOUBLE_BUFFER_ARB: val = !!(fmt->pfd.dwFlags & PFD_DOUBLEBUFFER); break;
+    case WGL_STEREO_ARB: val = !!(fmt->pfd.dwFlags & PFD_STEREO); break;
+    case WGL_PIXEL_TYPE_ARB: val = fmt->pixel_type; break;
+    case WGL_COLOR_BITS_ARB: val = fmt->pfd.cColorBits; break;
+    case WGL_RED_BITS_ARB: val = fmt->pfd.cRedBits; break;
+    case WGL_RED_SHIFT_ARB: val = fmt->pfd.cRedShift; break;
+    case WGL_GREEN_BITS_ARB: val = fmt->pfd.cGreenBits; break;
+    case WGL_GREEN_SHIFT_ARB: val = fmt->pfd.cGreenShift; break;
+    case WGL_BLUE_BITS_ARB: val = fmt->pfd.cBlueBits; break;
+    case WGL_BLUE_SHIFT_ARB: val = fmt->pfd.cBlueShift; break;
+    case WGL_ALPHA_BITS_ARB: val = fmt->pfd.cAlphaBits; break;
+    case WGL_ALPHA_SHIFT_ARB: val = fmt->pfd.cAlphaShift; break;
+    case WGL_ACCUM_BITS_ARB: val = fmt->pfd.cAccumBits; break;
+    case WGL_ACCUM_RED_BITS_ARB: val = fmt->pfd.cAccumRedBits; break;
+    case WGL_ACCUM_GREEN_BITS_ARB: val = fmt->pfd.cAccumGreenBits; break;
+    case WGL_ACCUM_BLUE_BITS_ARB: val = fmt->pfd.cAccumBlueBits; break;
+    case WGL_ACCUM_ALPHA_BITS_ARB: val = fmt->pfd.cAccumAlphaBits; break;
+    case WGL_DEPTH_BITS_ARB: val = fmt->pfd.cDepthBits; break;
+    case WGL_STENCIL_BITS_ARB: val = fmt->pfd.cStencilBits; break;
+    case WGL_AUX_BUFFERS_ARB: val = fmt->pfd.cAuxBuffers; break;
+    case WGL_DRAW_TO_PBUFFER_ARB: val = fmt->draw_to_pbuffer; break;
+    case WGL_MAX_PBUFFER_PIXELS_ARB: val = fmt->max_pbuffer_pixels; break;
+    case WGL_MAX_PBUFFER_WIDTH_ARB: val = fmt->max_pbuffer_width; break;
+    case WGL_MAX_PBUFFER_HEIGHT_ARB: val = fmt->max_pbuffer_height; break;
+    case WGL_TRANSPARENT_RED_VALUE_ARB:
+        val = fmt->transparent_red_value;
+        valid = !!fmt->transparent_red_value_valid;
+        break;
+    case WGL_TRANSPARENT_GREEN_VALUE_ARB:
+        val = fmt->transparent_green_value;
+        valid = !!fmt->transparent_green_value_valid;
+        break;
+    case WGL_TRANSPARENT_BLUE_VALUE_ARB:
+        val = fmt->transparent_blue_value;
+        valid = !!fmt->transparent_blue_value_valid;
+        break;
+    case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
+        val = fmt->transparent_alpha_value;
+        valid = !!fmt->transparent_alpha_value_valid;
+        break;
+    case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+        val = fmt->transparent_index_value;
+        valid = !!fmt->transparent_index_value_valid;
+        break;
+    case WGL_SAMPLE_BUFFERS_ARB: val = fmt->sample_buffers; break;
+    case WGL_SAMPLES_ARB: val = fmt->samples; break;
+    case WGL_BIND_TO_TEXTURE_RGB_ARB: val = fmt->bind_to_texture_rgb; break;
+    case WGL_BIND_TO_TEXTURE_RGBA_ARB: val = fmt->bind_to_texture_rgba; break;
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV: val = fmt->bind_to_texture_rectangle_rgb; break;
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV: val = fmt->bind_to_texture_rectangle_rgba; break;
+    case WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB: val = fmt->framebuffer_srgb_capable; break;
+    case WGL_FLOAT_COMPONENTS_NV: val = fmt->float_components; break;
+    default:
+        FIXME( "unsupported 0x%x WGL attribute\n", attrib );
+        valid = 0;
+        break;
+    }
+
+    /* If we haven't already determined validity, use the default check */
+    if (valid == -1) valid = val != -1;
+    if (valid) *value = val;
+
+    return valid;
+}
+
+enum attrib_match
+{
+    ATTRIB_MATCH_INVALID = -1,
+    ATTRIB_MATCH_IGNORE,
+    ATTRIB_MATCH_EXACT,
+    ATTRIB_MATCH_MINIMUM,
+};
+
+static enum attrib_match wgl_attrib_match_criteria( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB:
+    case WGL_DRAW_TO_BITMAP_ARB:
+    case WGL_ACCELERATION_ARB:
+    case WGL_NEED_PALETTE_ARB:
+    case WGL_NEED_SYSTEM_PALETTE_ARB:
+    case WGL_SWAP_LAYER_BUFFERS_ARB:
+    case WGL_SHARE_DEPTH_ARB:
+    case WGL_SHARE_STENCIL_ARB:
+    case WGL_SHARE_ACCUM_ARB:
+    case WGL_SUPPORT_GDI_ARB:
+    case WGL_SUPPORT_OPENGL_ARB:
+    case WGL_DOUBLE_BUFFER_ARB:
+    case WGL_STEREO_ARB:
+    case WGL_PIXEL_TYPE_ARB:
+    case WGL_DRAW_TO_PBUFFER_ARB:
+    case WGL_BIND_TO_TEXTURE_RGB_ARB:
+    case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV:
+    case WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB:
+    case WGL_FLOAT_COMPONENTS_NV:
+        return ATTRIB_MATCH_EXACT;
+    case WGL_NUMBER_OVERLAYS_ARB:
+    case WGL_NUMBER_UNDERLAYS_ARB:
+    case WGL_COLOR_BITS_ARB:
+    case WGL_RED_BITS_ARB:
+    case WGL_GREEN_BITS_ARB:
+    case WGL_BLUE_BITS_ARB:
+    case WGL_ALPHA_BITS_ARB:
+    case WGL_ACCUM_BITS_ARB:
+    case WGL_ACCUM_RED_BITS_ARB:
+    case WGL_ACCUM_GREEN_BITS_ARB:
+    case WGL_ACCUM_BLUE_BITS_ARB:
+    case WGL_ACCUM_ALPHA_BITS_ARB:
+    case WGL_DEPTH_BITS_ARB:
+    case WGL_STENCIL_BITS_ARB:
+    case WGL_AUX_BUFFERS_ARB:
+    case WGL_SAMPLE_BUFFERS_ARB:
+    case WGL_SAMPLES_ARB:
+        return ATTRIB_MATCH_MINIMUM;
+    case WGL_NUMBER_PIXEL_FORMATS_ARB:
+    case WGL_RED_SHIFT_ARB:
+    case WGL_GREEN_SHIFT_ARB:
+    case WGL_BLUE_SHIFT_ARB:
+    case WGL_ALPHA_SHIFT_ARB:
+    case WGL_TRANSPARENT_ARB:
+    case WGL_TRANSPARENT_RED_VALUE_ARB:
+    case WGL_TRANSPARENT_GREEN_VALUE_ARB:
+    case WGL_TRANSPARENT_BLUE_VALUE_ARB:
+    case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
+    case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+    case WGL_SWAP_METHOD_ARB:
+        return ATTRIB_MATCH_IGNORE;
+    default:
+        return ATTRIB_MATCH_INVALID;
+    }
+}
+
+static void filter_format_array( const struct wgl_pixel_format **array,
+                                 UINT num_formats, int attrib, int value )
+{
+    enum attrib_match match = wgl_attrib_match_criteria( attrib );
+    int fmt_value;
+    UINT i;
+
+    assert(match != ATTRIB_MATCH_INVALID);
+
+    if (match == ATTRIB_MATCH_IGNORE && attrib != WGL_SWAP_METHOD_ARB) return;
+
+    for (i = 0; i < num_formats; ++i)
+    {
+        if (!array[i]) continue;
+        if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ) ||
+            (match == ATTRIB_MATCH_EXACT && fmt_value != value) ||
+            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value) ||
+            (attrib == WGL_SWAP_METHOD_ARB && ((fmt_value == WGL_SWAP_COPY_ARB) ^ (value == WGL_SWAP_COPY_ARB))))
+        {
+            array[i] = NULL;
+        }
+    }
+}
+
+static int wgl_attrib_sort_priority( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB: return 1;
+    case WGL_DRAW_TO_BITMAP_ARB: return 2;
+    case WGL_ACCELERATION_ARB: return 3;
+    case WGL_COLOR_BITS_ARB: return 4;
+    case WGL_ACCUM_BITS_ARB: return 5;
+    case WGL_PIXEL_TYPE_ARB: return 6;
+    case WGL_ALPHA_BITS_ARB: return 7;
+    case WGL_AUX_BUFFERS_ARB: return 8;
+    case WGL_DEPTH_BITS_ARB: return 9;
+    case WGL_STENCIL_BITS_ARB: return 10;
+    case WGL_DOUBLE_BUFFER_ARB: return 11;
+    case WGL_SWAP_METHOD_ARB: return 12;
+    default: return 100;
+    }
+}
+
+static int compare_attribs( const void *a, const void *b )
+{
+    return wgl_attrib_sort_priority( *(int *)a ) - wgl_attrib_sort_priority( *(int *)b );
+}
+
+static int wgl_attrib_value_priority( int value )
+{
+    switch (value)
+    {
+    case WGL_SWAP_UNDEFINED_ARB: return 1;
+    case WGL_SWAP_EXCHANGE_ARB: return 2;
+    case WGL_SWAP_COPY_ARB: return 3;
+
+    case WGL_FULL_ACCELERATION_ARB: return 1;
+    case WGL_GENERIC_ACCELERATION_ARB: return 2;
+    case WGL_NO_ACCELERATION_ARB: return 3;
+
+    case WGL_TYPE_RGBA_ARB: return 1;
+    case WGL_TYPE_RGBA_FLOAT_ATI: return 2;
+    case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT: return 3;
+    case WGL_TYPE_COLORINDEX_ARB: return 4;
+
+    default: return 100;
+    }
+}
+
+struct compare_formats_ctx
+{
+    int attribs[256];
+    UINT num_attribs;
+};
+
+static int compare_formats( void *arg, const void *a, const void *b )
+{
+    const struct wgl_pixel_format *fmt_a = *(void **)a, *fmt_b = *(void **)b;
+    struct compare_formats_ctx *ctx = arg;
+    int attrib, val_a, val_b;
+    UINT i;
+
+    if (!fmt_a) return 1;
+    if (!fmt_b) return -1;
+
+    for (i = 0; i < ctx->num_attribs; ++i)
+    {
+        attrib = ctx->attribs[2 * i];
+        if (wgl_pixel_format_get_attrib( fmt_a, attrib, &val_a ) &&
+            wgl_pixel_format_get_attrib( fmt_b, attrib, &val_b ) &&
+            val_a != val_b)
+        {
+            switch (attrib)
+            {
+            case WGL_ACCELERATION_ARB:
+            case WGL_SWAP_METHOD_ARB:
+            case WGL_PIXEL_TYPE_ARB:
+                return wgl_attrib_value_priority( val_a ) -
+                       wgl_attrib_value_priority( val_b );
+            case WGL_COLOR_BITS_ARB:
+                /* Prefer 32bpp over other values */
+                if (val_a >= 32 && val_b >= 32) return val_a - val_b;
+                else return val_b - val_a;
+            default:
+                /* Smaller values first */
+                return val_a - val_b;
+            }
+        }
+    }
+
+    /* Maintain pixel format id order */
+    return fmt_a - fmt_b;
+}
+
+static void compare_formats_ctx_set_attrib( struct compare_formats_ctx *ctx,
+                                            int attrib, int value )
+{
+    UINT i;
+
+    /* Overwrite attribute if it exists already */
+    for (i = 0; i < ctx->num_attribs; ++i)
+        if (ctx->attribs[2 * i] == attrib) break;
+
+    assert(i < ARRAY_SIZE(ctx->attribs) / 2);
+
+    ctx->attribs[2 * i] = attrib;
+    ctx->attribs[2 * i + 1] = value;
+    if (i == ctx->num_attribs) ++ctx->num_attribs;
+}
+
+/***********************************************************************
+ *		wglChoosePixelFormatARB (OPENGL32.@)
+ */
+BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *attribs_int, const FLOAT *attribs_float,
+                                     UINT max_formats, int *formats, UINT *num_formats )
+{
+    struct wgl_pixel_format *wgl_formats;
+    UINT i, num_wgl_formats, num_wgl_onscreen_formats;
+    const struct wgl_pixel_format **format_array;
+    struct compare_formats_ctx ctx = { 0 };
+    DWORD is_memdc;
+
+    TRACE( "hdc %p, attribs_int %p, attribs_float %p, max_formats %u, formats %p, num_formats %p\n",
+           hdc, attribs_int, attribs_float, max_formats, formats, num_formats );
+
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc )) is_memdc = 0;
+
+    wgl_formats = get_pixel_formats( hdc, &num_wgl_formats, &num_wgl_onscreen_formats );
+
+    /* Gather, validate and deduplicate all attributes */
+    for (i = 0; attribs_int && attribs_int[i]; i += 2)
+    {
+        if (wgl_attrib_match_criteria( attribs_int[i] ) == ATTRIB_MATCH_INVALID) return FALSE;
+        compare_formats_ctx_set_attrib( &ctx, attribs_int[i], attribs_int[i + 1] );
+    }
+    for (i = 0; attribs_float && attribs_float[i]; i += 2)
+    {
+        if (wgl_attrib_match_criteria( attribs_float[i] ) == ATTRIB_MATCH_INVALID) return FALSE;
+        compare_formats_ctx_set_attrib( &ctx, attribs_float[i], attribs_float[i + 1] );
+    }
+
+    /* Initialize the format_array with (pointers to) all wgl formats */
+    format_array = malloc( num_wgl_formats * sizeof(*format_array) );
+    if (!format_array) return FALSE;
+    for (i = 0; i < num_wgl_formats; ++i)
+    {
+        struct wgl_pixel_format *format = wgl_formats + i;
+        if (is_memdc && format->pfd.cColorBits == 16 && format->pfd.cAlphaBits != 1) format_array[i] = NULL;
+        else format_array[i] = &wgl_formats[i];
+    }
+
+    /* Remove formats that are not acceptable */
+    for (i = 0; i < ctx.num_attribs; ++i)
+        filter_format_array( format_array, num_wgl_formats, ctx.attribs[2 * i],
+                             ctx.attribs[2 * i + 1] );
+
+    /* Some attributes we always want to sort by (values don't matter for sorting) */
+    compare_formats_ctx_set_attrib( &ctx, WGL_ACCELERATION_ARB, 0 );
+    compare_formats_ctx_set_attrib( &ctx, WGL_COLOR_BITS_ARB, 0 );
+    compare_formats_ctx_set_attrib( &ctx, WGL_ACCUM_BITS_ARB, 0 );
+
+    /* Arrange attributes in the order which we want to check them */
+    qsort( ctx.attribs, ctx.num_attribs, 2 * sizeof(*ctx.attribs), compare_attribs );
+
+    /* Sort pixel formats based on the specified attributes */
+    qsort_s( format_array, num_wgl_formats, sizeof(*format_array), compare_formats, &ctx );
+
+    /* Return the best max_formats format ids */
+    *num_formats = 0;
+    for (i = 0; i < num_wgl_formats && i < max_formats && format_array[i]; ++i)
+    {
+        ++*num_formats;
+        formats[i] = format_array[i] - wgl_formats + 1;
+    }
+
+    free( format_array );
+    return TRUE;
+}
+
+INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDESCRIPTOR *ppfd )
+{
+    struct wgl_pixel_format *formats;
+    UINT num_formats, num_onscreen_formats;
+
+    TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, size, ppfd );
+
+    if (!(formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats ))) return 0;
+    if (!ppfd) return num_onscreen_formats;
+    if (size < sizeof(*ppfd)) return 0;
+    if (index <= 0 || index > num_onscreen_formats) return 0;
+
+    *ppfd = formats[index - 1].pfd;
+
+    return num_onscreen_formats;
+}
+
+/***********************************************************************
+ *		wglGetPixelFormatAttribivARB (OPENGL32.@)
+ */
+BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int index, int plane, UINT count,
+                                          const int *attributes, int *values )
+{
+    static const DWORD invalid_data_error = 0xC007000D;
+    struct wgl_pixel_format *formats;
+    UINT i, num_formats, num_onscreen_formats;
+
+    TRACE( "hdc %p, index %d, plane %d, count %u, attributes %p, values %p\n",
+           hdc, index, plane, count, attributes, values );
+
+    formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats );
+
+    if (!count) return TRUE;
+    if (count == 1 && attributes[0] == WGL_NUMBER_PIXEL_FORMATS_ARB)
+    {
+        values[0] = num_formats;
+        return TRUE;
+    }
+    if (index <= 0 || index > num_formats)
+    {
+        SetLastError( invalid_data_error );
+        return FALSE;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        int attrib = attributes[i];
+
+        if (attrib == WGL_NUMBER_PIXEL_FORMATS_ARB)
+        {
+            values[i] = num_formats;
+        }
+        else if ((plane != 0 && wgl_attrib_uses_layer( attrib )) ||
+                 !wgl_pixel_format_get_attrib( &formats[index - 1], attrib, &values[i] ))
+        {
+            SetLastError( invalid_data_error );
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *		wglGetPixelFormatAttribfvARB (OPENGL32.@)
+ */
+BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int index, int plane, UINT count,
+                                          const int *attributes, FLOAT *values )
+{
+    int *ivalues;
+    BOOL ret;
+    UINT i;
+
+    TRACE( "hdc %p, index %d, plane %d, count %u, attributes %p, values %p\n",
+           hdc, index, plane, count, attributes, values );
+
+    if (!(ivalues = malloc( count * sizeof(int) ))) return FALSE;
+
+    /* For now we can piggy-back on wglGetPixelFormatAttribivARB, since we don't support
+     * any non-integer attributes. */
+    ret = wglGetPixelFormatAttribivARB( hdc, index, plane, count, attributes, ivalues );
+    if (ret)
+    {
+        for (i = 0; i < count; i++)
+            values[i] = ivalues[i];
+    }
+
+    free( ivalues );
+    return ret;
+}
+
 /***********************************************************************
  *		wglGetPixelFormat (OPENGL32.@)
  */
 INT WINAPI wglGetPixelFormat(HDC hdc)
 {
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
-    return funcs->wgl.p_wglGetPixelFormat( hdc );
-}
+    struct wglGetPixelFormat_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
+    NTSTATUS status;
 
-/***********************************************************************
- *		 wglSetPixelFormat(OPENGL32.@)
- */
-BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
-{
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
-    return funcs->wgl.p_wglSetPixelFormat( hdc, format, descr );
+    TRACE( "hdc %p\n", hdc );
+
+    if ((status = UNIX_CALL( wglGetPixelFormat, &args )))
+    {
+        WARN( "wglGetPixelFormat returned %#lx\n", status );
+        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+    }
+
+    return args.ret;
 }
 
 /***********************************************************************
@@ -597,12 +2089,11 @@ BOOL WINAPI wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
 {
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    struct wglSwapBuffers_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
+    NTSTATUS status;
 
-    if (!funcs || !funcs->wgl.p_wglSwapBuffers) return FALSE;
-    if (!funcs->wgl.p_wglSwapBuffers( hdc )) return FALSE;
-
-    if (TRACE_ON(fps))
+    if ((status = UNIX_CALL( wglSwapBuffers, &args ))) WARN( "wglSwapBuffers returned %#lx\n", status );
+    else if (TRACE_ON(fps))
     {
         static long prev_time, start_time;
         static unsigned long frames, frames_total;
@@ -620,22 +2111,21 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
             if (start_time == 0) start_time = time;
         }
     }
-    return TRUE;
+
+    return args.ret;
 }
 
 /***********************************************************************
  *		wglCreateLayerContext (OPENGL32.@)
  */
-HGLRC WINAPI wglCreateLayerContext(HDC hdc,
-				   int iLayerPlane) {
-  TRACE("(%p,%d)\n", hdc, iLayerPlane);
+HGLRC WINAPI wglCreateLayerContext( HDC hdc, int iLayerPlane )
+{
+    TRACE("(%p,%d)\n", hdc, iLayerPlane);
 
-  if (iLayerPlane == 0) {
-      return wglCreateContext(hdc);
-  }
-  FIXME("no handler for layer %d\n", iLayerPlane);
+    if (iLayerPlane == 0) return wglCreateContext( hdc );
 
-  return NULL;
+    FIXME("no handler for layer %d\n", iLayerPlane);
+    return NULL;
 }
 
 /***********************************************************************
@@ -654,86 +2144,10 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
 /***********************************************************************
  *		wglGetLayerPaletteEntries (OPENGL32.@)
  */
-int WINAPI wglGetLayerPaletteEntries(HDC hdc,
-				     int iLayerPlane,
-				     int iStart,
-				     int cEntries,
-				     const COLORREF *pcr) {
-  FIXME("(): stub!\n");
-
-  return 0;
-}
-
-/* check if the extension is present in the list */
-static BOOL has_extension( const char *list, const char *ext, size_t len )
+int WINAPI wglGetLayerPaletteEntries( HDC hdc, int plane, int start, int count, COLORREF *colors )
 {
-    while (list)
-    {
-        while (*list == ' ') list++;
-        if (!strncmp( list, ext, len ) && (!list[len] || list[len] == ' ')) return TRUE;
-        list = strchr( list, ' ' );
-    }
-    return FALSE;
-}
-
-static int compar(const void *elt_a, const void *elt_b) {
-  return strcmp(((const OpenGL_extension *) elt_a)->name,
-		((const OpenGL_extension *) elt_b)->name);
-}
-
-/* Check if a GL extension is supported */
-static BOOL is_extension_supported(const char* extension)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const char *gl_ext_string = (const char*)glGetString(GL_EXTENSIONS);
-    size_t len;
-
-    TRACE("Checking for extension '%s'\n", extension);
-
-    if(!gl_ext_string) {
-        ERR("No OpenGL extensions found, check if your OpenGL setup is correct!\n");
-        return FALSE;
-    }
-
-    /* We use the GetProcAddress function from the display driver to retrieve function pointers
-     * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
-     * using glXGetProcAddress. This function is quite unreliable in the sense that its specs don't
-     * require the function to return NULL when an extension isn't found. For this reason we check
-     * if the OpenGL extension required for the function we are looking up is supported. */
-
-    while ((len = strcspn(extension, " ")) != 0)
-    {
-        /* Check if the extension is part of the GL extension string to see if it is supported. */
-        if (has_extension(gl_ext_string, extension, len))
-            return TRUE;
-
-        /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
-         * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
-         * suffix as well. In the extension table, these functions contain GL_VERSION_major_minor.
-         * Check if we are searching for a core GL function */
-        if(strncmp(extension, "GL_VERSION_", 11) == 0)
-        {
-            const GLubyte *gl_version = funcs->gl.p_glGetString(GL_VERSION);
-            const char *version = extension + 11; /* Move past 'GL_VERSION_' */
-
-            if(!gl_version) {
-                ERR("No OpenGL version found!\n");
-                return FALSE;
-            }
-
-            /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
-             * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-            if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
-                return TRUE;
-            }
-            WARN("The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n", version[0], version[2], gl_version[0], gl_version[2]);
-        }
-
-        if (extension[len] == ' ') len++;
-        extension += len;
-    }
-
-    return FALSE;
+    FIXME( "hdc %p, plane %d, start %d, count %d, colors %p, stub!\n", hdc, plane, start, count, colors );
+    return 0;
 }
 
 /***********************************************************************
@@ -741,48 +2155,36 @@ static BOOL is_extension_supported(const char* extension)
  */
 PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
-    struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    void **func_ptr;
-    OpenGL_extension  ext;
-    const OpenGL_extension *ext_ret;
+    const struct registry_entry *func;
+    const enum opengl_extension *ext;
+    struct context *ctx;
 
-    if (!name) return NULL;
+    if (!(ctx = get_current_context())) return NULL;
 
-    /* Without an active context opengl32 doesn't know to what
-     * driver it has to dispatch wglGetProcAddress.
-     */
-    if (!get_current_context_ptr())
+    if (!(func = get_function_entry( name )))
     {
-        WARN("No active WGL context found\n");
+        WARN( "Function %s unknown\n", name );
         return NULL;
     }
 
-    ext.name = name;
-    ext_ret = bsearch(&ext, extension_registry, extension_registry_size, sizeof(ext), compar);
-    if (!ext_ret)
+    if (!strncmp( name, "wglGetExtensionsString", 22 ))
     {
-        WARN("Function %s unknown\n", name);
-        return NULL;
+        EnterCriticalSection( &wgl_cs );
+        if (!wgl_extensions) init_wgl_extensions( ctx->base.extensions );
+        LeaveCriticalSection( &wgl_cs );
     }
 
-    func_ptr = (void **)&funcs->ext + (ext_ret - extension_registry);
-    if (!*func_ptr)
+    if (func->major && (ctx->base.major_version > func->major
+                        || (ctx->base.major_version == func->major && ctx->base.minor_version >= func->minor)))
+        return func->func;
+
+    for (ext = func->extensions; *ext != GL_EXTENSION_COUNT; ext++)
     {
-        void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
-
-        if (!is_extension_supported(ext_ret->extension))
-            WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
-
-        if (driver_func == NULL)
-        {
-            WARN("Function %s not supported by driver\n", name);
-            return NULL;
-        }
-        *func_ptr = driver_func;
+        if (ctx->base.extensions[*ext]) return func->func;
     }
 
-    TRACE("returning %s -> %p\n", name, ext_ret->func);
-    return ext_ret->func;
+    WARN( "Extensions required for %s not supported\n", name );
+    return NULL;
 }
 
 /***********************************************************************
@@ -810,10 +2212,19 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
 }
 
 /***********************************************************************
+ *		wglGetDefaultProcAddress (OPENGL32.@)
+ */
+PROC WINAPI wglGetDefaultProcAddress( LPCSTR name )
+{
+    FIXME( "%s: stub\n", debugstr_a(name));
+    return NULL;
+}
+
+/***********************************************************************
  *		wglSwapLayerBuffers (OPENGL32.@)
  */
-BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
-				UINT fuPlanes) {
+BOOL WINAPI DECLSPEC_HOTPATCH wglSwapLayerBuffers(HDC hdc, UINT fuPlanes)
+{
   TRACE("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
@@ -829,283 +2240,20 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 }
 
 /***********************************************************************
- *		wglAllocateMemoryNV
- *
- * Provided by the WGL_NV_vertex_array_range extension.
- */
-void * WINAPI wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglAllocateMemoryNV) return NULL;
-    return funcs->ext.p_wglAllocateMemoryNV( size, readfreq, writefreq, priority );
-}
-
-/***********************************************************************
- *		wglFreeMemoryNV
- *
- * Provided by the WGL_NV_vertex_array_range extension.
- */
-void WINAPI wglFreeMemoryNV( void *pointer )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (funcs->ext.p_wglFreeMemoryNV) funcs->ext.p_wglFreeMemoryNV( pointer );
-}
-
-/***********************************************************************
- *		wglBindTexImageARB
- *
- * Provided by the WGL_ARB_render_texture extension.
- */
-BOOL WINAPI wglBindTexImageARB( HPBUFFERARB handle, int buffer )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    BOOL ret;
-
-    if (!ptr) return FALSE;
-    ret = ptr->funcs->ext.p_wglBindTexImageARB( ptr->u.pbuffer, buffer );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglReleaseTexImageARB
- *
- * Provided by the WGL_ARB_render_texture extension.
- */
-BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    BOOL ret;
-
-    if (!ptr) return FALSE;
-    ret = ptr->funcs->ext.p_wglReleaseTexImageARB( ptr->u.pbuffer, buffer );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglSetPbufferAttribARB
- *
- * Provided by the WGL_ARB_render_texture extension.
- */
-BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    BOOL ret;
-
-    if (!ptr) return FALSE;
-    ret = ptr->funcs->ext.p_wglSetPbufferAttribARB( ptr->u.pbuffer, attribs );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglChoosePixelFormatARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *iattribs, const FLOAT *fattribs,
-                                     UINT max, int *formats, UINT *count )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglChoosePixelFormatARB) return FALSE;
-    return funcs->ext.p_wglChoosePixelFormatARB( hdc, iattribs, fattribs, max, formats, count );
-}
-
-/***********************************************************************
- *		wglGetPixelFormatAttribivARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
-                                          int *values )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribivARB) return FALSE;
-    return funcs->ext.p_wglGetPixelFormatAttribivARB( hdc, format, layer, count, attribs, values );
-}
-
-/***********************************************************************
- *		wglGetPixelFormatAttribfvARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
-                                          FLOAT *values )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribfvARB) return FALSE;
-    return funcs->ext.p_wglGetPixelFormatAttribfvARB( hdc, format, layer, count, attribs, values );
-}
-
-/***********************************************************************
- *		wglCreatePbufferARB
- *
- * Provided by the WGL_ARB_pbuffer extension.
- */
-HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
-{
-    HPBUFFERARB ret = 0;
-    struct wgl_pbuffer *pbuffer;
-    struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglCreatePbufferARB) return 0;
-    if (!(pbuffer = funcs->ext.p_wglCreatePbufferARB( hdc, format, width, height, attribs ))) return 0;
-    ret = alloc_handle( HANDLE_PBUFFER, funcs, pbuffer );
-    if (!ret) funcs->ext.p_wglDestroyPbufferARB( pbuffer );
-    return ret;
-}
-
-/***********************************************************************
- *		wglGetPbufferDCARB
- *
- * Provided by the WGL_ARB_pbuffer extension.
- */
-HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB handle )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    HDC ret;
-
-    if (!ptr) return 0;
-    ret = ptr->funcs->ext.p_wglGetPbufferDCARB( ptr->u.pbuffer );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglReleasePbufferDCARB
- *
- * Provided by the WGL_ARB_pbuffer extension.
- */
-int WINAPI wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    BOOL ret;
-
-    if (!ptr) return FALSE;
-    ret = ptr->funcs->ext.p_wglReleasePbufferDCARB( ptr->u.pbuffer, hdc );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglDestroyPbufferARB
- *
- * Provided by the WGL_ARB_pbuffer extension.
- */
-BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-
-    if (!ptr) return FALSE;
-    ptr->funcs->ext.p_wglDestroyPbufferARB( ptr->u.pbuffer );
-    free_handle_ptr( ptr );
-    return TRUE;
-}
-
-/***********************************************************************
- *		wglQueryPbufferARB
- *
- * Provided by the WGL_ARB_pbuffer extension.
- */
-BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
-{
-    struct wgl_handle *ptr = get_handle_ptr( handle, HANDLE_PBUFFER );
-    BOOL ret;
-
-    if (!ptr) return FALSE;
-    ret = ptr->funcs->ext.p_wglQueryPbufferARB( ptr->u.pbuffer, attrib, value );
-    release_handle_ptr( ptr );
-    return ret;
-}
-
-/***********************************************************************
- *		wglGetExtensionsStringARB
- *
- * Provided by the WGL_ARB_extensions_string extension.
- */
-const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetExtensionsStringARB) return NULL;
-    return (const char *)funcs->ext.p_wglGetExtensionsStringARB( hdc );
-}
-
-/***********************************************************************
- *		wglGetExtensionsStringEXT
- *
- * Provided by the WGL_EXT_extensions_string extension.
- */
-const char * WINAPI wglGetExtensionsStringEXT(void)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglGetExtensionsStringEXT) return NULL;
-    return (const char *)funcs->ext.p_wglGetExtensionsStringEXT();
-}
-
-/***********************************************************************
- *		wglSwapIntervalEXT
- *
- * Provided by the WGL_EXT_swap_control extension.
- */
-BOOL WINAPI wglSwapIntervalEXT( int interval )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglSwapIntervalEXT) return FALSE;
-    return funcs->ext.p_wglSwapIntervalEXT( interval );
-}
-
-/***********************************************************************
- *		wglGetSwapIntervalEXT
- *
- * Provided by the WGL_EXT_swap_control extension.
- */
-int WINAPI wglGetSwapIntervalEXT(void)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglGetSwapIntervalEXT) return FALSE;
-    return funcs->ext.p_wglGetSwapIntervalEXT();
-}
-
-/***********************************************************************
- *		wglSetPixelFormatWINE
- *
- * Provided by the WGL_WINE_pixel_format_passthrough extension.
- */
-BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglSetPixelFormatWINE) return FALSE;
-    return funcs->ext.p_wglSetPixelFormatWINE( hdc, format );
-}
-
-/***********************************************************************
  *		wglUseFontBitmaps_common
  */
 static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD listBase, BOOL unicode )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
      GLYPHMETRICS gm;
      unsigned int glyph, size = 0;
      void *bitmap = NULL, *gl_bitmap = NULL;
      int org_alignment;
      BOOL ret = TRUE;
 
-     funcs->gl.p_glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
-     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+     glGetIntegerv( GL_UNPACK_ALIGNMENT, &org_alignment );
+     glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
      for (glyph = first; glyph < first + count; glyph++) {
-         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
          unsigned int needed_size, height, width, width_int;
 
          if (unicode)
@@ -1113,7 +2261,7 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
          else
              needed_size = GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
 
-         TRACE("Glyph: %3d / List: %d size %d\n", glyph, listBase, needed_size);
+         TRACE("Glyph: %3d / List: %ld size %d\n", glyph, listBase, needed_size);
          if (needed_size == GDI_ERROR) {
              ret = FALSE;
              break;
@@ -1121,23 +2269,28 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
 
          if (needed_size > size) {
              size = needed_size;
-             HeapFree(GetProcessHeap(), 0, bitmap);
-             HeapFree(GetProcessHeap(), 0, gl_bitmap);
-             bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-             gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+             free( bitmap );
+             free( gl_bitmap );
+             bitmap = calloc( 1, size );
+             gl_bitmap = calloc( 1, size );
          }
-         if (unicode)
-             ret = (GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
-         else
-             ret = (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &identity) != GDI_ERROR);
-         if (!ret) break;
+         if (needed_size != 0) {
+             if (unicode)
+                 ret = (GetGlyphOutlineW(hdc, glyph, GGO_BITMAP, &gm,
+                                         size, bitmap, &identity) != GDI_ERROR);
+             else
+                 ret = (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm,
+                                         size, bitmap, &identity) != GDI_ERROR);
+             if (!ret) break;
+         }
 
-         if (TRACE_ON(wgl)) {
+         if (TRACE_ON(opengl))
+         {
              unsigned int bitmask;
              unsigned char *bitmap_ = bitmap;
 
              TRACE("  - bbox: %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-             TRACE("  - origin: (%d, %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - origin: (%ld, %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
              TRACE("  - increment: %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
              if (needed_size != 0) {
                  TRACE("  - bitmap:\n");
@@ -1172,22 +2325,20 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              }
          }
 
-         funcs->gl.p_glNewList(listBase++, GL_COMPILE);
+         glNewList( listBase++, GL_COMPILE );
          if (needed_size != 0) {
-             funcs->gl.p_glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-                     0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
-                     gm.gmCellIncX, gm.gmCellIncY,
-                     gl_bitmap);
+             glBitmap( gm.gmBlackBoxX, gm.gmBlackBoxY, 0 - gm.gmptGlyphOrigin.x,
+                       (int)gm.gmBlackBoxY - gm.gmptGlyphOrigin.y, gm.gmCellIncX, gm.gmCellIncY, gl_bitmap );
          } else {
              /* This is the case of 'empty' glyphs like the space character */
-             funcs->gl.p_glBitmap(0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL);
+             glBitmap( 0, 0, 0, 0, gm.gmCellIncX, gm.gmCellIncY, NULL );
          }
-         funcs->gl.p_glEndList();
+         glEndList();
      }
 
-     funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
-     HeapFree(GetProcessHeap(), 0, bitmap);
-     HeapFree(GetProcessHeap(), 0, gl_bitmap);
+     glPixelStorei( GL_UNPACK_ALIGNMENT, org_alignment );
+     free( bitmap );
+     free( gl_bitmap );
      return ret;
 }
 
@@ -1207,82 +2358,11 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     return wglUseFontBitmaps_common( hdc, first, count, listBase, TRUE );
 }
 
-/* FIXME: should probably have a glu.h header */
-
-typedef struct GLUtesselator GLUtesselator;
-typedef void (WINAPI *_GLUfuncptr)(void);
-
-#define GLU_TESS_BEGIN  100100
-#define GLU_TESS_VERTEX 100101
-#define GLU_TESS_END    100102
-
-static GLUtesselator * (WINAPI *pgluNewTess)(void);
-static void (WINAPI *pgluDeleteTess)(GLUtesselator *tess);
-static void (WINAPI *pgluTessNormal)(GLUtesselator *tess, GLdouble x, GLdouble y, GLdouble z);
-static void (WINAPI *pgluTessBeginPolygon)(GLUtesselator *tess, void *polygon_data);
-static void (WINAPI *pgluTessEndPolygon)(GLUtesselator *tess);
-static void (WINAPI *pgluTessCallback)(GLUtesselator *tess, GLenum which, _GLUfuncptr fn);
-static void (WINAPI *pgluTessBeginContour)(GLUtesselator *tess);
-static void (WINAPI *pgluTessEndContour)(GLUtesselator *tess);
-static void (WINAPI *pgluTessVertex)(GLUtesselator *tess, GLdouble *location, GLvoid* data);
-
-static HMODULE load_libglu(void)
-{
-    static const WCHAR glu32W[] = {'g','l','u','3','2','.','d','l','l',0};
-    static int already_loaded;
-    static HMODULE module;
-
-    if (already_loaded) return module;
-    already_loaded = 1;
-
-    TRACE("Trying to load GLU library\n");
-    module = LoadLibraryW( glu32W );
-    if (!module)
-    {
-        WARN("Failed to load glu32\n");
-        return NULL;
-    }
-#define LOAD_FUNCPTR(f) p##f = (void *)GetProcAddress( module, #f )
-    LOAD_FUNCPTR(gluNewTess);
-    LOAD_FUNCPTR(gluDeleteTess);
-    LOAD_FUNCPTR(gluTessBeginContour);
-    LOAD_FUNCPTR(gluTessNormal);
-    LOAD_FUNCPTR(gluTessBeginPolygon);
-    LOAD_FUNCPTR(gluTessCallback);
-    LOAD_FUNCPTR(gluTessEndContour);
-    LOAD_FUNCPTR(gluTessEndPolygon);
-    LOAD_FUNCPTR(gluTessVertex);
-#undef LOAD_FUNCPTR
-    return module;
-}
-
 static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
 {
-    vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;  
-    vertex[1] = (fixed.y.value + (GLdouble)fixed.y.fract / (1 << 16)) / em_size;  
+    vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;
+    vertex[1] = (fixed.y.value + (GLdouble)fixed.y.fract / (1 << 16)) / em_size;
     vertex[2] = 0.0;
-}
-
-static void WINAPI tess_callback_vertex(GLvoid *vertex)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    GLdouble *dbl = vertex;
-    TRACE("%f, %f, %f\n", dbl[0], dbl[1], dbl[2]);
-    funcs->gl.p_glVertex3dv(vertex);
-}
-
-static void WINAPI tess_callback_begin(GLenum which)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    TRACE("%d\n", which);
-    funcs->gl.p_glBegin(which);
-}
-
-static void WINAPI tess_callback_end(void)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    TRACE("\n");
-    funcs->gl.p_glEnd();
 }
 
 typedef struct _bezier_vector {
@@ -1290,7 +2370,7 @@ typedef struct _bezier_vector {
     GLdouble y;
 } bezier_vector;
 
-static double bezier_deviation_squared(const bezier_vector *p)
+static BOOL bezier_fits_deviation(const bezier_vector *p, FLOAT max_deviation)
 {
     bezier_vector deviation;
     bezier_vector vertex;
@@ -1298,25 +2378,36 @@ static double bezier_deviation_squared(const bezier_vector *p)
     double base_length;
     double dot;
 
+    max_deviation *= max_deviation;
+
     vertex.x = (p[0].x + p[1].x*2 + p[2].x)/4 - p[0].x;
     vertex.y = (p[0].y + p[1].y*2 + p[2].y)/4 - p[0].y;
 
     base.x = p[2].x - p[0].x;
     base.y = p[2].y - p[0].y;
 
-    base_length = sqrt(base.x*base.x + base.y*base.y);
-    base.x /= base_length;
-    base.y /= base_length;
+    base_length = base.x * base.x + base.y * base.y;
+    if (base_length <= max_deviation)
+    {
+        base.x = 0.0;
+        base.y = 0.0;
+    }
+    else
+    {
+        base_length = sqrt(base_length);
+        base.x /= base_length;
+        base.y /= base_length;
 
-    dot = base.x*vertex.x + base.y*vertex.y;
-    dot = min(max(dot, 0.0), base_length);
-    base.x *= dot;
-    base.y *= dot;
+        dot = base.x*vertex.x + base.y*vertex.y;
+        dot = min(max(dot, 0.0), base_length);
+        base.x *= dot;
+        base.y *= dot;
+    }
 
     deviation.x = vertex.x-base.x;
     deviation.y = vertex.y-base.y;
 
-    return deviation.x*deviation.x + deviation.y*deviation.y;
+    return deviation.x*deviation.x + deviation.y*deviation.y <= max_deviation;
 }
 
 static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLOAT deviation)
@@ -1326,7 +2417,7 @@ static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLO
     bezier_vector vertex;
     int total_vertices;
 
-    if(bezier_deviation_squared(p) <= deviation*deviation)
+    if (bezier_fits_deviation(p, deviation))
     {
         if(points)
             *points = p[2];
@@ -1366,16 +2457,14 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                       LPGLYPHMETRICSFLOAT lpgmf,
                                       BOOL unicode)
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     UINT glyph;
-    const MAT2 identity = {{0,1},{0,0},{0,0},{0,1}};
     GLUtesselator *tess = NULL;
     LOGFONTW lf;
     HFONT old_font, unscaled_font;
     UINT em_size = 1024;
     RECT rc;
 
-    TRACE("(%p, %d, %d, %d, %f, %f, %d, %p, %s)\n", hdc, first, count,
+    TRACE("(%p, %ld, %ld, %ld, %f, %f, %d, %p, %s)\n", hdc, first, count,
           listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
 
     if(deviation <= 0.0)
@@ -1383,17 +2472,15 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 
     if(format == WGL_FONT_POLYGONS)
     {
-        if (!load_libglu())
+        tess = gluNewTess();
+        if(!tess)
         {
             ERR("glu32 is required for this function but isn't available\n");
             return FALSE;
         }
-
-        tess = pgluNewTess();
-        if(!tess) return FALSE;
-        pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
-        pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
-        pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
+        gluTessCallback( tess, GLU_TESS_VERTEX, (void *)glVertex3dv );
+        gluTessCallback( tess, GLU_TESS_BEGIN, (void *)glBegin );
+        gluTessCallback( tess, GLU_TESS_END, glEnd );
     }
 
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
@@ -1423,7 +2510,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
         if(needed == GDI_ERROR)
             goto error;
 
-        buf = HeapAlloc(GetProcessHeap(), 0, needed);
+        buf = malloc( needed );
 
         if(unicode)
             GetGlyphOutlineW(hdc, glyph, GGO_NATIVE, &gm, needed, buf, &identity);
@@ -1442,23 +2529,22 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
             lpgmf->gmfCellIncY = (float)gm.gmCellIncY / em_size;
 
             TRACE("%fx%f at %f,%f inc %f,%f\n", lpgmf->gmfBlackBoxX, lpgmf->gmfBlackBoxY,
-                  lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY); 
+                  lpgmf->gmfptGlyphOrigin.x, lpgmf->gmfptGlyphOrigin.y, lpgmf->gmfCellIncX, lpgmf->gmfCellIncY);
             lpgmf++;
         }
 
-        funcs->gl.p_glNewList(listBase++, GL_COMPILE);
-        funcs->gl.p_glFrontFace(GL_CCW);
+        glNewList( listBase++, GL_COMPILE );
+        glFrontFace( GL_CCW );
         if(format == WGL_FONT_POLYGONS)
         {
-            funcs->gl.p_glNormal3d(0.0, 0.0, 1.0);
-            pgluTessNormal(tess, 0, 0, 1);
-            pgluTessBeginPolygon(tess, NULL);
+            glNormal3d( 0.0, 0.0, 1.0 );
+            gluTessNormal(tess, 0, 0, 1);
+            gluTessBeginPolygon(tess, NULL);
         }
 
         while(!vertices)
         {
-            if(vertex_total != -1)
-                vertices = HeapAlloc(GetProcessHeap(), 0, vertex_total * 3 * sizeof(GLdouble));
+            if (vertex_total != -1) vertices = malloc( vertex_total * 3 * sizeof(GLdouble) );
             vertex_total = 0;
 
             pph = (TTPOLYGONHEADER*)buf;
@@ -1470,18 +2556,14 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                 if(vertices)
                     TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
 
-                if(format == WGL_FONT_POLYGONS)
-                    pgluTessBeginContour(tess);
-                else
-                    funcs->gl.p_glBegin(GL_LINE_LOOP);
+                if (format == WGL_FONT_POLYGONS) gluTessBeginContour( tess );
+                else glBegin( GL_LINE_LOOP );
 
                 if(vertices)
                 {
                     fixed_to_double(pph->pfxStart, em_size, vertices);
-                    if(format == WGL_FONT_POLYGONS)
-                        pgluTessVertex(tess, vertices, vertices);
-                    else
-                        funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
+                    if (format == WGL_FONT_POLYGONS) gluTessVertex( tess, vertices, vertices );
+                    else glVertex3d( vertices[0], vertices[1], vertices[2] );
                     vertices += 3;
                 }
                 vertex_total++;
@@ -1501,10 +2583,8 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                 TRACE("\t\tline to %d, %d\n",
                                       ppc->apfx[i].x.value, ppc->apfx[i].y.value);
                                 fixed_to_double(ppc->apfx[i], em_size, vertices);
-                                if(format == WGL_FONT_POLYGONS)
-                                    pgluTessVertex(tess, vertices, vertices);
-                                else
-                                    funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                if (format == WGL_FONT_POLYGONS) gluTessVertex( tess, vertices, vertices );
+                                else glVertex3d( vertices[0], vertices[1], vertices[2] );
                                 vertices += 3;
                             }
                             fixed_to_double(ppc->apfx[i], em_size, previous);
@@ -1538,7 +2618,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                 curve[2].y = (curve[1].y + curve[2].y)/2;
                             }
                             num = bezier_approximate(curve, NULL, deviation);
-                            points = HeapAlloc(GetProcessHeap(), 0, num*sizeof(bezier_vector));
+                            points = malloc( num * sizeof(bezier_vector) );
                             num = bezier_approximate(curve, points, deviation);
                             vertex_total += num;
                             if(vertices)
@@ -1549,51 +2629,44 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
                                     vertices[0] = points[j].x;
                                     vertices[1] = points[j].y;
                                     vertices[2] = 0.0;
-                                    if(format == WGL_FONT_POLYGONS)
-                                        pgluTessVertex(tess, vertices, vertices);
-                                    else
-                                        funcs->gl.p_glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                    if (format == WGL_FONT_POLYGONS) gluTessVertex( tess, vertices, vertices );
+                                    else glVertex3d( vertices[0], vertices[1], vertices[2] );
                                     vertices += 3;
                                 }
                             }
-                            HeapFree(GetProcessHeap(), 0, points);
+                            free( points );
                             previous[0] = curve[2].x;
                             previous[1] = curve[2].y;
                         }
                         break;
                     default:
                         ERR("\t\tcurve type = %d\n", ppc->wType);
-                        if(format == WGL_FONT_POLYGONS)
-                            pgluTessEndContour(tess);
-                        else
-                            funcs->gl.p_glEnd();
+                        if (format == WGL_FONT_POLYGONS) gluTessEndContour( tess );
+                        else glEnd();
                         goto error_in_list;
                     }
 
                     ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
                                          (ppc->cpfx - 1) * sizeof(POINTFX));
                 }
-                if(format == WGL_FONT_POLYGONS)
-                    pgluTessEndContour(tess);
-                else
-                    funcs->gl.p_glEnd();
+                if (format == WGL_FONT_POLYGONS) gluTessEndContour( tess );
+                else glEnd();
                 pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
             }
         }
 
 error_in_list:
-        if(format == WGL_FONT_POLYGONS)
-            pgluTessEndPolygon(tess);
-        funcs->gl.p_glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
-        funcs->gl.p_glEndList();
-        HeapFree(GetProcessHeap(), 0, buf);
-        HeapFree(GetProcessHeap(), 0, vertices);
+        if (format == WGL_FONT_POLYGONS) gluTessEndPolygon( tess );
+        glTranslated( (GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0 );
+        glEndList();
+        free( buf );
+        free( vertices );
     }
 
  error:
     DeleteObject(SelectObject(hdc, old_font));
     if(format == WGL_FONT_POLYGONS)
-        pgluDeleteTess(tess);
+        gluDeleteTess(tess);
     return TRUE;
 
 }
@@ -1628,6 +2701,79 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
     return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, TRUE);
 }
 
+GLhandleARB WINAPI glGetHandleARB( GLenum pname )
+{
+    struct glGetHandleARB_params args = { .teb = NtCurrentTeb(), .pname = pname };
+    GLuint *object, client_id = 0;
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "pname %d\n", pname );
+
+    if ((status = UNIX_CALL( glGetHandleARB, &args ))) WARN( "glGetHandleARB returned %#lx\n", status );
+    if (!args.ret) return args.ret;
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return 0;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return 0;
+
+    AcquireSRWLockShared( &table->lock );
+    if ((object = find_object_id( table->client_ids, args.ret ))) client_id = *object;
+    ReleaseSRWLockShared( &table->lock );
+
+    return client_id;
+}
+
+void WINAPI glGetAttachedObjectsARB( GLhandleARB container, GLsizei max_count, GLsizei *count, GLhandleARB *obj )
+{
+    struct glGetAttachedObjectsARB_params args = { .teb = NtCurrentTeb(), .maxCount = max_count, .count = count };
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+    GLuint *object;
+
+    TRACE( "container %d, max_count %d, count %p, obj %p\n", container, max_count, count, obj );
+
+    args.containerObj = *map_context_objects( OBJ_TYPE_SHADER, 1, &container );
+    if ((status = UNIX_CALL( glGetAttachedObjectsARB, &args ))) WARN( "glGetAttachedObjectsARB returned %#lx\n", status );
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return;
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < max_count; ++i)
+    {
+        if (!obj[i] || !(object = find_object_id( table->client_ids, obj[i] ))) continue;
+        obj[i] = *object;
+    }
+    ReleaseSRWLockShared( &table->lock );
+}
+
+void WINAPI glGetAttachedShaders( GLuint program, GLsizei max_count, GLsizei *count, GLuint *shaders )
+{
+    struct glGetAttachedShaders_params args = { .teb = NtCurrentTeb(), .maxCount = max_count, .count = count };
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+    GLuint *object;
+
+    TRACE( "program %d, max_count %d, count %p, shaders %p\n", program, max_count, count, shaders );
+
+    args.program = *map_context_objects( OBJ_TYPE_SHADER, 1, &program );
+    if ((status = UNIX_CALL( glGetAttachedShaders, &args ))) WARN( "glGetAttachedShaders returned %#lx\n", status );
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return;
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < max_count; ++i)
+    {
+        if (!shaders[i] || !(object = find_object_id( table->client_ids, shaders[i] ))) continue;
+        shaders[i] = *object;
+    }
+    ReleaseSRWLockShared( &table->lock );
+}
+
 /***********************************************************************
  *              glDebugEntry (OPENGL32.@)
  */
@@ -1636,64 +2782,189 @@ GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
     return 0;
 }
 
-/* build the extension string by filtering out the disabled extensions */
-static GLubyte *filter_extensions( const char *extensions )
+static GLsync sync_from_handle( GLsync handle )
 {
-    static const char *disabled;
-    char *p, *str;
-    const char *end;
+    struct handle_entry *ptr;
+    struct context *ctx;
 
-    TRACE( "GL_EXTENSIONS:\n" );
+    if (!(ctx = get_current_context())) return NULL;
+    if (!(ptr = get_handle_ptr( &ctx->lists->syncs, handle ))) return NULL;
+    return ptr->user_data;
+}
 
-    if (!extensions) extensions = "";
+BOOL get_sync_from_handle( GLsync handle, GLsync *obj )
+{
+    *obj = sync_from_handle( handle );
+    return *obj || !handle;
+}
 
-    if (!disabled)
+static struct handle_entry *alloc_client_sync( struct context *ctx )
+{
+    struct handle_entry *ptr;
+    GLsync sync;
+
+    if (!(sync = calloc( 1, sizeof(*sync) ))) return NULL;
+    if (!(ptr = alloc_handle( &ctx->lists->syncs, sync ))) free( sync );
+    else InterlockedExchange( &ctx->lists->modified, 1 );
+    return ptr;
+}
+
+static void free_client_sync( struct context *ctx, struct handle_entry *ptr )
+{
+    GLsync sync = ptr->user_data;
+    InterlockedExchange( &ctx->lists->modified, 1 );
+    free_handle( &ctx->lists->syncs, ptr );
+    free( sync );
+}
+
+GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glCreateSyncFromCLeventARB_params args = { .teb = teb, .context = context, .event = event, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "context %p, event %p, flags %d\n", context, event, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glCreateSyncFromCLeventARB, &args ))) WARN( "glCreateSyncFromCLeventARB returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_sync( ctx, ptr );
+    return NULL;
+}
+
+void WINAPI glDeleteSync( GLsync sync )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glDeleteSync_params args = { .teb = teb };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "sync %p\n", sync );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return;
+    if (!(ptr = get_handle_ptr( &ctx->lists->syncs, sync ))) return set_gl_error( GL_INVALID_VALUE );
+    args.sync = ptr->user_data;
+
+    if ((status = UNIX_CALL( glDeleteSync, &args ))) WARN( "glDeleteSync returned %#lx\n", status );
+    if (!status) free_client_sync( ctx, ptr );
+}
+
+GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glFenceSync_params args = { .teb = teb, .condition = condition, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "condition %d, flags %d\n", condition, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glFenceSync, &args ))) WARN( "glFenceSync returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_sync( ctx, ptr );
+    return NULL;
+}
+
+GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glImportSyncEXT_params args = { .teb = teb, .external_sync_type = external_sync_type, .external_sync = external_sync, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "external_sync_type %d, external_sync %Id, flags %d\n", external_sync_type, external_sync, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glImportSyncEXT, &args ))) WARN( "glImportSyncEXT returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_sync( ctx, ptr );
+    return NULL;
+}
+
+BOOL get_integer( GLenum name, GLuint index, GLint value, GLint *data )
+{
+    struct context *ctx;
+
+    if (!(ctx = get_current_context())) return FALSE;
+
+    switch (name)
     {
-        HKEY hkey;
-        DWORD size;
-
-        str = NULL;
-        /* @@ Wine registry key: HKCU\Software\Wine\OpenGL */
-        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey ))
-        {
-            if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size ))
-            {
-                str = HeapAlloc( GetProcessHeap(), 0, size );
-                if (RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (BYTE *)str, &size )) *str = 0;
-            }
-            RegCloseKey( hkey );
-        }
-        if (str)
-        {
-            if (InterlockedCompareExchangePointer( (void **)&disabled, str, NULL ))
-                HeapFree( GetProcessHeap(), 0, str );
-        }
-        else disabled = "";
+    case GL_CONTEXT_FLAGS:
+        *data = ctx->base.context_flags;
+        return TRUE;
+    case GL_CONTEXT_PROFILE_MASK:
+        *data = ctx->base.profile_mask;
+        return TRUE;
+    case GL_MAJOR_VERSION:
+        *data = ctx->base.major_version;
+        return TRUE;
+    case GL_MINOR_VERSION:
+        *data = ctx->base.minor_version;
+        return TRUE;
+    case GL_NUM_EXTENSIONS:
+        *data = ctx->base.extension_count;
+        return TRUE;
     }
 
-    if (!disabled[0]) return NULL;
-    if ((str = HeapAlloc( GetProcessHeap(), 0, strlen(extensions) + 2 )))
+    return map_client_objects( get_pname_object_type( name ), value, (GLuint *)data );
+}
+
+const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
+{
+    struct glGetStringi_params args =
     {
-        p = str;
-        for (;;)
-        {
-            while (*extensions == ' ') extensions++;
-            if (!*extensions) break;
-            if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
-            memcpy( p, extensions, end - extensions );
-            p[end - extensions] = 0;
-            if (!has_extension( disabled, p , strlen( p )))
-            {
-                TRACE("++ %s\n", p );
-                p += end - extensions;
-                *p++ = ' ';
-            }
-            else TRACE("-- %s (disabled by config)\n", p );
-            extensions = end;
-        }
-        *p = 0;
+        .teb = NtCurrentTeb(),
+        .name = name,
+        .index = index,
+    };
+    NTSTATUS status;
+    struct context *ctx;
+#ifndef _WIN64
+    GLubyte *wow64_str = NULL;
+#endif
+
+    TRACE( "name %d, index %d\n", name, index );
+
+    if (!(ctx = get_current_context())) return NULL;
+
+    switch (name)
+    {
+    case GL_EXTENSIONS:
+        if (index < ctx->base.extension_count)
+            return (const GLubyte *)extension_names[ctx->base.extension_array[index]];
+        set_gl_error( GL_INVALID_VALUE );
+        return NULL;
     }
-    return (GLubyte *)str;
+
+#ifndef _WIN64
+    if (UNIX_CALL( glGetStringi, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
+#endif
+    if ((status = UNIX_CALL( glGetStringi, &args ))) WARN( "glGetStringi returned %#lx\n", status );
+#ifndef _WIN64
+    if (args.ret != wow64_str) free( wow64_str );
+    else if (args.ret) append_wow64_string( (char *)args.ret );
+#endif
+    return args.ret;
 }
 
 /***********************************************************************
@@ -1701,17 +2972,105 @@ static GLubyte *filter_extensions( const char *extensions )
  */
 const GLubyte * WINAPI glGetString( GLenum name )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const GLubyte *ret = funcs->gl.p_glGetString( name );
+    struct glGetString_params args = { .teb = NtCurrentTeb(), .name = name };
+    struct context *ctx;
+    NTSTATUS status;
+#ifndef _WIN64
+    GLubyte *wow64_str = NULL;
+#endif
 
-    if (name == GL_EXTENSIONS && ret)
+    TRACE( "name %d\n", name );
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+
+    switch (name)
     {
-        struct wgl_handle *ptr = get_current_context_ptr();
-        if (ptr->u.context->extensions ||
-            ((ptr->u.context->extensions = filter_extensions( (const char *)ret ))))
-            ret = ptr->u.context->extensions;
+    case GL_VENDOR: return (const GLubyte *)ctx->base.vendor_name;
+    case GL_RENDERER: return (const GLubyte *)ctx->base.device_name;
+    case GL_VERSION: return (const GLubyte *)ctx->base.version_str;
     }
-    return ret;
+
+#ifndef _WIN64
+    if (UNIX_CALL( glGetString, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
+#endif
+    if ((status = UNIX_CALL( glGetString, &args ))) WARN( "glGetString returned %#lx\n", status );
+#ifndef _WIN64
+    if (args.ret != wow64_str) free( wow64_str );
+    else if (args.ret) append_wow64_string( (char *)args.ret );
+#endif
+    return args.ret;
+}
+
+const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
+{
+    TRACE( "hdc %p\n", hdc );
+    return wgl_extensions;
+}
+
+const char * WINAPI wglGetExtensionsStringEXT(void)
+{
+    TRACE( "\n" );
+    return wgl_extensions;
+}
+
+const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute )
+{
+    struct wglQueryCurrentRendererStringWINE_params args = { .teb = NtCurrentTeb(), .attribute = attribute };
+    NTSTATUS status;
+#ifndef _WIN64
+    char *wow64_str = NULL;
+#endif
+
+    TRACE( "attribute %d\n", attribute );
+
+#ifndef _WIN64
+    if (UNIX_CALL( wglQueryCurrentRendererStringWINE, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
+#endif
+    if ((status = UNIX_CALL( wglQueryCurrentRendererStringWINE, &args ))) WARN( "wglQueryCurrentRendererStringWINE returned %#lx\n", status );
+#ifndef _WIN64
+    if (args.ret != wow64_str) free( wow64_str );
+    else if (args.ret) append_wow64_string( wow64_str );
+#endif
+    return args.ret;
+}
+
+const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
+{
+    struct wglQueryRendererStringWINE_params args =
+    {
+        .teb = NtCurrentTeb(),
+        .dc = dc,
+        .renderer = renderer,
+        .attribute = attribute,
+    };
+    NTSTATUS status;
+#ifndef _WIN64
+    char *wow64_str = NULL;
+#endif
+
+    TRACE( "dc %p, renderer %d, attribute %d\n", dc, renderer, attribute );
+
+#ifndef _WIN64
+    if (UNIX_CALL( wglQueryRendererStringWINE, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
+#endif
+    if ((status = UNIX_CALL( wglQueryRendererStringWINE, &args ))) WARN( "wglQueryRendererStringWINE returned %#lx\n", status );
+#ifndef _WIN64
+    if (args.ret != wow64_str) free( wow64_str );
+    else if (args.ret) append_wow64_string( wow64_str );
+#endif
+    return args.ret;
+}
+
+typedef void (WINAPI *gl_debug_message)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+
+static NTSTATUS WINAPI call_gl_debug_message_callback( void *args, ULONG size )
+{
+    struct gl_debug_message_callback_params *params = args;
+    gl_debug_message callback = (void *)(UINT_PTR)params->debug_callback;
+    const void *user = (void *)(UINT_PTR)params->debug_user;
+    callback( params->source, params->type, params->id, params->severity,
+              params->length, params->message, user );
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -1719,15 +3078,44 @@ const GLubyte * WINAPI glGetString( GLenum name )
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
+    struct process_attach_params params =
+    {
+        .call_gl_debug_message_callback = (UINT_PTR)call_gl_debug_message_callback,
+    };
+    struct context *context;
+    NTSTATUS status;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinst);
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
-        break;
+        if ((status = __wine_init_unix_call()) ||
+            (status = UNIX_CALL( process_attach, &params )))
+        {
+            ERR( "Failed to load unixlib, status %#lx\n", status );
+            return FALSE;
+        }
+        qsort( context_attributes, ARRAY_SIZE(context_attributes), sizeof(*context_attributes), compare_context_attributes );
+
+        /* fallthrough */
     case DLL_THREAD_ATTACH:
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        if ((status = UNIX_CALL( thread_attach, NtCurrentTeb() )))
+        {
+            WARN( "Failed to initialize thread, status %#lx\n", status );
+            return FALSE;
+        }
         break;
+
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        UNIX_CALL( process_detach, NULL );
+#ifndef _WIN64
+        cleanup_wow64_strings();
+#endif
+        /* fallthrough */
+    case DLL_THREAD_DETACH:
+        if ((context = get_current_context())) context->base.current_tid = 0;
+        free( NtCurrentTeb()->glReserved1[WINE_GL_RESERVED_FORMATS_PTR] );
+        return TRUE;
     }
     return TRUE;
 }

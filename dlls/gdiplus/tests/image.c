@@ -3539,6 +3539,141 @@ static void test_rotateflip(void)
     GdipDisposeImage(bitmap);
 }
 
+static BYTE get_index(const BitmapData *data, PixelFormat format, UINT x, UINT y)
+{
+    const BYTE *row = (const BYTE *)data->Scan0 + data->Stride * y;
+
+    if (format == PixelFormat1bppIndexed)
+        return (row[x/8] >> (7 - x%8)) & 1;
+    if (format == PixelFormat4bppIndexed)
+        return (x & 1) ? (row[x/2] & 0xf) : (row[x/2] >> 4);
+    return row[x];
+}
+
+static void set_index(BitmapData *data, PixelFormat format, UINT x, UINT y, BYTE index)
+{
+    BYTE *row = (BYTE *)data->Scan0 + data->Stride * y;
+
+    if (format == PixelFormat1bppIndexed)
+        row[x/8] = (row[x/8] & ~(1<<(7-x%8))) | ((index & 1)<<(7-x%8));
+    else if (format == PixelFormat4bppIndexed)
+        row[x/2] = (x & 1) ? ((row[x/2] & 0xf0) | (index & 0xf))
+                           : ((row[x/2] & 0x0f) | ((index & 0xf)<<4));
+    else
+        row[x] = index;
+}
+
+static GpBitmap *make_indexed_bitmap(PixelFormat format, const BYTE *indices, UINT width, UINT height)
+{
+    GpBitmap *bitmap = NULL;
+    BitmapData data;
+    GpStatus stat;
+    UINT x, y;
+
+    stat = GdipCreateBitmapFromScan0(width, height, 0, format, NULL, &bitmap);
+    expect(Ok, stat);
+    if (stat != Ok) return NULL;
+
+    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeWrite, format, &data);
+    expect(Ok, stat);
+    for (y = 0; y < height; y++)
+        for (x = 0; x < width; x++)
+            set_index(&data, format, x, y, indices[y*width + x]);
+    GdipBitmapUnlockBits(bitmap, &data);
+
+    return bitmap;
+}
+
+static void test_rotateflip_indexed(void)
+{
+    static const BYTE indices_1bpp[] = { 1,1,0,1,
+                                         0,1,0,0 };
+    static const BYTE indices_4bpp[] = { 1,2,3,4,
+                                         5,6,7,8 };
+    static const BYTE expect_1bpp_rotate90[] = { 0,1,
+                                                 1,1,
+                                                 0,0,
+                                                 0,1 };
+    static const struct
+    {
+        PixelFormat format;
+        const BYTE *indices;
+    }
+    tests[] =
+    {
+        { PixelFormat1bppIndexed, indices_1bpp },
+        { PixelFormat4bppIndexed, indices_4bpp },
+    };
+    static const UINT src_width = 4, src_height = 2;
+    unsigned int i;
+    RotateFlipType type;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        PixelFormat format = tests[i].format;
+
+        for (type = RotateNoneFlipNone; type <= Rotate270FlipX; type++)
+        {
+            UINT width, height, got_width, got_height, x, y;
+            GpBitmap *bitmap, *reference;
+            BitmapData data, ref_data;
+            GpStatus stat;
+
+            bitmap = make_indexed_bitmap(format, tests[i].indices, src_width, src_height);
+            reference = make_indexed_bitmap(PixelFormat8bppIndexed, tests[i].indices, src_width, src_height);
+            if (!bitmap || !reference)
+            {
+                if (bitmap) GdipDisposeImage((GpImage *)bitmap);
+                if (reference) GdipDisposeImage((GpImage *)reference);
+                continue;
+            }
+
+            stat = GdipImageRotateFlip((GpImage *)bitmap, type);
+            ok(stat == Ok, "format %#x, type %d: GdipImageRotateFlip returned %d\n", format, type, stat);
+            stat = GdipImageRotateFlip((GpImage *)reference, type);
+            expect(Ok, stat);
+
+            width = (type & 1) ? src_height : src_width;
+            height = (type & 1) ? src_width : src_height;
+
+            stat = GdipGetImageWidth((GpImage *)bitmap, &got_width);
+            expect(Ok, stat);
+            ok(got_width == width, "format %#x, type %d: width %u, expected %u\n",
+               format, type, got_width, width);
+            stat = GdipGetImageHeight((GpImage *)bitmap, &got_height);
+            expect(Ok, stat);
+            ok(got_height == height, "format %#x, type %d: height %u, expected %u\n",
+               format, type, got_height, height);
+
+            stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, format, &data);
+            expect(Ok, stat);
+            stat = GdipBitmapLockBits(reference, NULL, ImageLockModeRead, PixelFormat8bppIndexed, &ref_data);
+            expect(Ok, stat);
+
+            for (y = 0; y < height; y++)
+                for (x = 0; x < width; x++)
+                {
+                    BYTE got = get_index(&data, format, x, y);
+                    BYTE expected = get_index(&ref_data, PixelFormat8bppIndexed, x, y);
+
+                    ok(got == expected, "format %#x, type %d, pixel (%u,%u): index %u, expected %u\n",
+                       format, type, x, y, got, expected);
+
+                    if (format == PixelFormat1bppIndexed && type == Rotate90FlipNone)
+                        ok(got == expect_1bpp_rotate90[y*width + x],
+                           "type %d, pixel (%u,%u): index %u, expected %u\n",
+                           type, x, y, got, expect_1bpp_rotate90[y*width + x]);
+                }
+
+            GdipBitmapUnlockBits(reference, &ref_data);
+            GdipBitmapUnlockBits(bitmap, &data);
+
+            GdipDisposeImage((GpImage *)reference);
+            GdipDisposeImage((GpImage *)bitmap);
+        }
+    }
+}
+
 static void test_remaptable(void)
 {
     GpStatus stat;
@@ -6769,6 +6904,7 @@ START_TEST(image)
     test_gamma();
     test_multiframegif();
     test_rotateflip();
+    test_rotateflip_indexed();
     test_remaptable();
     test_colorkey();
     test_dispose();

@@ -90,10 +90,10 @@ struct listbox_stat {
 };
 
 struct listbox_test {
-  struct listbox_stat  init,  init_todo;
-  struct listbox_stat click, click_todo;
-  struct listbox_stat  step,  step_todo;
-  struct listbox_stat   sel,   sel_todo;
+  struct listbox_stat  init;
+  struct listbox_stat click;
+  struct listbox_stat  step;
+  struct listbox_stat   sel;
 };
 
 static void
@@ -131,14 +131,11 @@ keypress (HWND handle, WPARAM keycode, BYTE scancode, BOOL extended)
   ok (t.s.f==got.f, "style %#lx, step " #s ", field " #f \
       ": expected %d, got %d\n", style, t.s.f, got.f)
 
-#define listbox_todo_field_ok(t, s, f, got) \
-  todo_wine_if (t.s##_todo.f) { listbox_field_ok(t, s, f, got); }
-
 #define listbox_ok(t, s, got) \
-  listbox_todo_field_ok(t, s, selected, got); \
-  listbox_todo_field_ok(t, s, anchor, got); \
-  listbox_todo_field_ok(t, s, caret, got); \
-  listbox_todo_field_ok(t, s, selcount, got)
+  listbox_field_ok(t, s, selected, got); \
+  listbox_field_ok(t, s, anchor, got); \
+  listbox_field_ok(t, s, caret, got); \
+  listbox_field_ok(t, s, selcount, got)
 
 static void
 check (DWORD style, const struct listbox_test test)
@@ -1521,12 +1518,20 @@ static void test_listbox_dlgdir(void)
     int itemCount_justFiles;
     int itemCount_justDrives;
     int i;
+    char curdir[MAX_PATH];
+    char path[MAX_PATH];
     char pathBuffer[MAX_PATH];
     char itemBuffer[MAX_PATH];
     char tempBuffer[MAX_PATH];
     char * p;
     char driveletter;
     HANDLE file;
+
+    GetCurrentDirectoryA(ARRAY_SIZE(curdir), curdir);
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    res = SetCurrentDirectoryA(path);
+    ok(res, "Failed to set current directory.\n");
 
     file = CreateFileA( "wtest1.tmp.c", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %ld\n", GetLastError());
@@ -1950,6 +1955,7 @@ static void test_listbox_dlgdir(void)
        "GetLastError should return 0x589, got 0x%lX\n",GetLastError());
 
     DestroyWindow(hWnd);
+    SetCurrentDirectoryA(curdir);
 }
 
 static void test_set_count( void )
@@ -2536,50 +2542,151 @@ static void test_LB_FINDSTRING(void)
     DestroyWindow( listbox );
 }
 
+static void test_integral_resize(void)
+{
+    int scroll_height = GetSystemMetrics(SM_CYHSCROLL);
+    int edge_width = GetSystemMetrics(SM_CXEDGE);
+    int edge_height = GetSystemMetrics(SM_CYEDGE);
+    HWND parent, listbox;
+    RECT rect, expect;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowExA(WS_EX_CLIENTEDGE, "listbox", NULL,
+            WS_CHILD | WS_HSCROLL, 0, 0, 199, 199, parent, NULL, NULL, NULL);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    ret = SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 300, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETITEMHEIGHT, 0, 40);
+    ok(!ret, "got %d\n", ret);
+
+    SetWindowPos(listbox, 0, 0, 0, 199, 199, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
+
+    /* The whole point of this functionality is to force an integral number of
+     * items to be onscreen, but native fails to account for the scrollbar. */
+
+    GetWindowRect(listbox, &rect);
+    SetRect(&expect, 100, 100, 299, 260 + (edge_height * 2));
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    GetClientRect(listbox, &rect);
+    SetRect(&expect, 0, 0, 199 - (edge_width * 2), 160 - scroll_height);
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
+static void test_LB_SETTOPINDEX(void)
+{
+    HWND parent, listbox;
+    int i;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowA("listbox", "TestList",
+        WS_CHILD | WS_VISIBLE, 0, 0, 200, 100, parent, NULL, NULL, 0);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    for (i = 0; i < 10; i++)
+    {
+        SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item");
+    }
+
+    /* Normal range */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 3, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 3, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 0, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* Less than item count, but greater than max top index (to which it gets clamped) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 5, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    /* Reset to a non-boundary top item */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 2, 0);
+    ok(!ret, "got %d\n", ret);
+
+    /* Greater than or equal to item count (out of bounds) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 10, 0);
+    ok(ret == LB_ERR, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 20, 0);
+    ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    /* Negative (out of bounds) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, -1, 0);
+    ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
 /*   {add_style} */
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
-/* {selected, anchor,  caret, selcount}{TODO fields} */
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
+/* {selected, anchor,  caret, selcount} */
   const struct listbox_test SS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test MS =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      1,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      1,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test MS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test ES =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      2,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test ES_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test EMS =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      2,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test EMS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
 
   trace (" Testing single selection...\n");
   check (0, SS);
@@ -2636,4 +2743,6 @@ START_TEST(listbox)
   test_LB_SETSEL();
   test_LBS_NODATA();
   test_LB_FINDSTRING();
+  test_integral_resize();
+  test_LB_SETTOPINDEX();
 }

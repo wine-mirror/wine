@@ -416,7 +416,7 @@
 @ stub IoGetLowerDeviceObject
 @ stdcall IoGetRelatedDeviceObject(ptr)
 @ stdcall IoGetRequestorProcess(ptr)
-@ stub IoGetRequestorProcessId
+@ stdcall IoGetRequestorProcessId(ptr)
 @ stub IoGetRequestorSessionId
 @ stdcall IoGetStackLimits(ptr ptr)
 @ stub IoGetTopLevelIrp
@@ -558,6 +558,7 @@
 @ stub KeFindConfigurationNextEntry
 @ stub KeFlushEntireTb
 @ stdcall KeFlushQueuedDpcs()
+@ stdcall -arch=x86_64 KeGetCurrentIrql()
 @ stdcall KeGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
 @ stdcall KeGetCurrentProcessorNumberEx(ptr)
 @ stdcall KeGetCurrentThread()

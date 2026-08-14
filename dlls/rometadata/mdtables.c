@@ -1,7 +1,7 @@
 /*
  * IMetaDataTables, IMetaDataImport implementation
  *
- * Copyright 2025 Vibhav Pant
+ * Copyright 2025-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -789,15 +789,62 @@ static HRESULT WINAPI import_ResolveTypeRef(IMetaDataImport *iface, mdTypeRef ty
 static HRESULT WINAPI import_EnumMembers(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
                                          mdToken *member_defs, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %p, %lu, %p): stub!\n", iface, henum, type_def, member_defs, len, count);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %p, %lu, %p)\n", iface, henum, debugstr_mdToken(type_def), member_defs, len, count);
+    return IMetaDataImport_EnumMembersWithName(iface, henum, type_def, NULL, member_defs, len, count);
 }
 
 static HRESULT WINAPI import_EnumMembersWithName(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef token,
                                                  const WCHAR *name, mdToken *member_defs, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %s, %p, %lu, %p): stub!\n", iface, henum, token, debugstr_w(name), member_defs, len, count);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %s, %p, %lu, %p)\n", iface, henum, debugstr_mdToken(token), debugstr_w(name), member_defs, len,
+          count);
+
+    if (!*henum)
+    {
+        HCORENUM methods_enum = NULL, fields_enum = NULL;
+        ULONG methods_len, fields_len;
+        mdToken *tokens = NULL;
+        HRESULT hr;
+
+        if (FAILED((hr = IMetaDataImport_EnumMethodsWithName(iface, &methods_enum, token, name, NULL, 0, NULL))))
+            return hr;
+        if (FAILED((hr = IMetaDataImport_CountEnum(iface, methods_enum, &methods_len)))) goto done;
+
+        if (FAILED((hr = IMetaDataImport_EnumFieldsWithName(iface, &fields_enum, token, name, NULL, 0, NULL))))
+            goto done;
+        if (FAILED((hr = IMetaDataImport_CountEnum(iface, fields_enum, &fields_len)))) goto done;
+
+        if (!methods_len && !fields_len)
+        {
+            hr = S_FALSE;
+            goto done;
+        }
+        if (!(tokens = calloc(methods_len + fields_len, sizeof(*tokens))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto done;
+        }
+        if (methods_len)
+        {
+            hr = IMetaDataImport_EnumMethodsWithName(iface, &methods_enum, token, name, tokens, methods_len, NULL);
+            if (FAILED(hr)) goto done;
+        }
+        if (fields_len)
+        {
+            hr = IMetaDataImport_EnumFieldsWithName(iface, &fields_enum, token, name, &tokens[methods_len], fields_len,
+                                                    NULL);
+            if (FAILED(hr)) goto done;
+        }
+    done:
+        IMetaDataImport_CloseEnum(iface, methods_enum);
+        IMetaDataImport_CloseEnum(iface, fields_enum);
+        if (hr == S_OK)
+            hr = token_enum_list_create(henum, methods_len + fields_len, tokens);
+        free(tokens);
+        if (hr != S_OK) return hr;
+    }
+
+    return token_enum_get_entries(*henum, member_defs, len, count);
 }
 
 static HRESULT table_create_enum_from_token_list(IMetaDataTables *iface, enum table table, enum table list_table,
@@ -1068,8 +1115,19 @@ static HRESULT WINAPI import_EnumPermissionSets(IMetaDataImport *iface, HCORENUM
 static HRESULT WINAPI import_FindMember(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,
                                         const COR_SIGNATURE *sig_blob, ULONG len, mdToken *member_ref)
 {
-    FIXME("(%p, %#x, %s, %p, %lu, %p): stub!\n", iface, type_def, debugstr_w(name), sig_blob, len, member_ref);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p, %lu, %p)\n", iface, debugstr_mdToken(type_def), debugstr_w(name), sig_blob, len,
+          member_ref);
+
+    if (!name) return E_INVALIDARG;
+    if (IsNilToken(type_def) || TypeFromToken(type_def) != mdtTypeDef) return S_FALSE;
+
+    /* If a method and a field have the same name, native returns the method. */
+    hr = IMetaDataImport_FindMethod(iface, type_def, name, sig_blob, len, member_ref);
+    if (hr == CLDB_E_RECORD_NOTFOUND)
+        hr = IMetaDataImport_FindField(iface, type_def, name, sig_blob, len, member_ref);
+    return hr;
 }
 
 static HRESULT WINAPI import_FindMethod(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,

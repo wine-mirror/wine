@@ -21,9 +21,9 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -31,26 +31,39 @@
 #include "ntgdi.h"
 
 #include "wine/opengl_driver.h"
-
-struct registry_entry
-{
-    const char *name;      /* name of the extension */
-    const char *extension; /* name of the GL/WGL extension */
-    size_t offset;         /* offset in the opengl_funcs table */
-};
-
-extern const struct registry_entry extension_registry[];
-extern const int extension_registry_size;
+#include "unix_thunks.h"
 
 extern struct opengl_funcs null_opengl_funcs;
 
 static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
 {
-    const struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_OPENGL_DRIVER_VERSION );
-    if (!funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
-    return funcs;
+    DWORD has_opengl;
+
+    if (NtGdiGetDCDword( hdc, NtGdiHasOpenGL, &has_opengl ) && has_opengl)
+        return __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
+
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    return &null_opengl_funcs;
 }
+
+static inline const struct opengl_funcs *get_pbuffer_funcs( HPBUFFERARB client_pbuffer )
+{
+    struct opengl_client_pbuffer *client = opengl_client_pbuffer_from_client( client_pbuffer );
+    return client_pbuffer ? (struct opengl_funcs *)(UINT_PTR)client->unix_funcs : NULL;
+}
+
+static inline const struct opengl_funcs *get_context_funcs( HGLRC client_context )
+{
+    struct opengl_client_context *client = opengl_client_context_from_client( client_context );
+    return client_context ? (struct opengl_funcs *)(UINT_PTR)client->unix_funcs : NULL;
+}
+
+static inline GLsync get_unix_sync( GLsync sync )
+{
+    return (GLsync)(UINT_PTR)sync->unix_handle;
+}
+
+#ifdef _WIN64
 
 static inline void *copy_wow64_ptr32s( UINT_PTR address, ULONG count )
 {
@@ -67,5 +80,19 @@ static inline TEB *get_teb64( ULONG teb32 )
     TEB32 *teb32_ptr = ULongToPtr( teb32 );
     return (TEB *)((char *)teb32_ptr + teb32_ptr->WowTebOffset);
 }
+
+extern NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str );
+
+#endif
+
+extern NTSTATUS process_attach( void *args );
+extern NTSTATUS thread_attach( void *args );
+extern NTSTATUS process_detach( void *args );
+extern NTSTATUS get_pixel_formats( void *args );
+extern void set_current_fbo( TEB *teb, GLenum target, GLuint framebuffer );
+extern GLuint get_default_fbo( TEB *teb, GLenum target );
+extern void push_default_fbo( TEB *teb );
+extern void pop_default_fbo( TEB *teb );
+extern void resolve_default_fbo( TEB *teb, BOOL read );
 
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

@@ -24,7 +24,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -70,8 +69,7 @@ static const SecPkgInfoW infoW =
     kerberos_comment_W
 };
 
-static ULONG kerberos_package_id;
-static LSA_DISPATCH_TABLE lsa_dispatch;
+static LSA_SECPKG_FUNCTION_TABLE *lsa_funcs;
 
 struct cred_handle
 {
@@ -136,18 +134,15 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
             ERR( "no Kerberos support, expect problems\n" );
     }
 
-    kerberos_package_id = package_id;
-    lsa_dispatch = *dispatch;
-
-    kerberos_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
+    kerberos_name = dispatch->AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
     if (!kerberos_name) return STATUS_NO_MEMORY;
 
     memcpy(kerberos_name, MICROSOFT_KERBEROS_NAME_A, sizeof(MICROSOFT_KERBEROS_NAME_A));
 
-    *package_name = lsa_dispatch.AllocateLsaHeap(sizeof(**package_name));
+    *package_name = dispatch->AllocateLsaHeap(sizeof(**package_name));
     if (!*package_name)
     {
-        lsa_dispatch.FreeLsaHeap(kerberos_name);
+        dispatch->FreeLsaHeap(kerberos_name);
         return STATUS_NO_MEMORY;
     }
 
@@ -164,11 +159,11 @@ static NTSTATUS copy_to_client( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_CACH
     char *client_str;
     KERB_QUERY_TKT_CACHE_RESPONSE *client_resp;
 
-    status = lsa_dispatch.AllocateClientBuffer( lsa_req, size, out );
+    status = lsa_funcs->AllocateClientBuffer( lsa_req, size, out );
     if (status != STATUS_SUCCESS) return status;
 
     client_resp = *out;
-    status = lsa_dispatch.CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets),
+    status = lsa_funcs->CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets),
                                              client_resp, resp);
     if (status != STATUS_SUCCESS) goto fail;
 
@@ -190,25 +185,25 @@ static NTSTATUS copy_to_client( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_CACH
         RtlSecondsSince1970ToTime( resp->Tickets[i].EndTime.QuadPart, &ticket.EndTime );
         RtlSecondsSince1970ToTime( resp->Tickets[i].RenewTime.QuadPart, &ticket.RenewTime );
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.RealmName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.RealmName.MaximumLength,
                                                  client_str, ticket.RealmName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.RealmName.Buffer = (WCHAR *)client_str;
         client_str += ticket.RealmName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
                                                  client_str, ticket.ServerName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
         if (status != STATUS_SUCCESS) goto fail;
     }
     return STATUS_SUCCESS;
 
 fail:
-    lsa_dispatch.FreeClientBuffer(lsa_req, client_resp);
+    lsa_funcs->FreeClientBuffer(lsa_req, client_resp);
     return status;
 }
 
@@ -220,11 +215,11 @@ static NTSTATUS copy_to_client_ex( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_C
     char *client_str;
     KERB_QUERY_TKT_CACHE_EX_RESPONSE *client_resp;
 
-    status = lsa_dispatch.AllocateClientBuffer( lsa_req, size, out );
+    status = lsa_funcs->AllocateClientBuffer( lsa_req, size, out );
     if (status != STATUS_SUCCESS) return status;
 
     client_resp = *out;
-    status = lsa_dispatch.CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_EX_RESPONSE, Tickets),
+    status = lsa_funcs->CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_EX_RESPONSE, Tickets),
                                              client_resp, resp);
     if (status != STATUS_SUCCESS) goto fail;
 
@@ -238,37 +233,37 @@ static NTSTATUS copy_to_client_ex( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_C
         RtlSecondsSince1970ToTime( resp->Tickets[i].EndTime.QuadPart, &ticket.EndTime );
         RtlSecondsSince1970ToTime( resp->Tickets[i].RenewTime.QuadPart, &ticket.RenewTime );
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ClientRealm.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ClientRealm.MaximumLength,
                                                  client_str, ticket.ClientRealm.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ClientRealm.Buffer = (WCHAR *)client_str;
         client_str += ticket.ClientRealm.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ClientName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ClientName.MaximumLength,
                                                  client_str, ticket.ClientName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ClientName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ClientName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerRealm.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerRealm.MaximumLength,
                                                  client_str, ticket.ServerRealm.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerRealm.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerRealm.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
                                                  client_str, ticket.ServerName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
         if (status != STATUS_SUCCESS) goto fail;
     }
     return STATUS_SUCCESS;
 
 fail:
-    lsa_dispatch.FreeClientBuffer(lsa_req, client_resp);
+    lsa_funcs->FreeClientBuffer(lsa_req, client_resp);
     return status;
 }
 
@@ -405,13 +400,133 @@ static char *get_password_unixcp( const WCHAR *passwd, ULONG passwd_len )
     return ret;
 }
 
+static NTSTATUS map_auth_data( void *auth_data, SEC_WINNT_AUTH_IDENTITY_W **ret )
+{
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    SECPKG_CALL_INFO info;
+    ULONG size, char_size;
+    NTSTATUS status;
+    BYTE *p;
+
+    if (!auth_data)
+    {
+        *ret = NULL;
+        return SEC_E_OK;
+    }
+
+    lsa_funcs->GetCallInfo( &info );
+    if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+    {
+        struct {
+            ULONG User;
+            ULONG UserLength;
+            ULONG Domain;
+            ULONG DomainLength;
+            ULONG Password;
+            ULONG PasswordLength;
+            ULONG Flags;
+        } id32;
+
+        status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(id32), &id32, auth_data );
+        if (status) return status;
+
+        id.User = (void *)(ULONG_PTR)id32.User;
+        id.UserLength = id32.UserLength;
+        id.Domain = (void *)(ULONG_PTR)id32.Domain;
+        id.DomainLength = id32.DomainLength;
+        id.Password = (void *)(ULONG_PTR)id32.Password;
+        id.PasswordLength = id32.PasswordLength;
+        id.Flags = id32.Flags;
+    }
+    else
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(id), &id, auth_data );
+        if (status) return status;
+    }
+
+    if (*((ULONG *)&id) == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct {
+                ULONG Version;
+                ULONG Length;
+                ULONG User;
+                ULONG UserLength;
+                ULONG Domain;
+                ULONG DomainLength;
+                ULONG Password;
+                ULONG PasswordLength;
+                ULONG Flags;
+                ULONG PackageList;
+                ULONG PackageListLength;
+            } idex32;
+
+            status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(idex32), &idex32, auth_data );
+            if (status) return status;
+            if (idex32.PackageList) FIXME( "ignoring package list\n" );
+            id.User = (void *)(ULONG_PTR)idex32.User;
+            id.UserLength = idex32.UserLength;
+            id.Domain = (void *)(ULONG_PTR)idex32.Domain;
+            id.DomainLength = idex32.DomainLength;
+            id.Password = (void *)(ULONG_PTR)idex32.Password;
+            id.PasswordLength = idex32.PasswordLength;
+            id.Flags = idex32.Flags;
+        }
+        else
+        {
+            SEC_WINNT_AUTH_IDENTITY_EXA idex;
+
+            status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(idex), &idex, auth_data );
+            if (status) return status;
+            if (idex.PackageList) FIXME( "ignoring package list\n" );
+            id.User = idex.User;
+            id.UserLength = idex.UserLength;
+            id.Domain = idex.Domain;
+            id.DomainLength = idex.DomainLength;
+            id.Password = idex.Password;
+            id.PasswordLength = idex.PasswordLength;
+            id.Flags = idex.Flags;
+        }
+    }
+
+    char_size = (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? 1 : 2);
+    size = sizeof(id) + (id.UserLength + id.DomainLength + id.PasswordLength) * char_size;
+    *ret = malloc( size );
+    if (!*ret) return SEC_E_INSUFFICIENT_MEMORY;
+
+    p = (BYTE *)(*ret + 1);
+    if (id.UserLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.UserLength * char_size, p, id.User );
+        id.User = p;
+        p += id.UserLength * char_size;
+    }
+    if (!status && id.DomainLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.DomainLength * char_size, p, id.Domain );
+        id.Domain = p;
+        p += id.DomainLength * char_size;
+    }
+    if (!status && id.PasswordLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.PasswordLength * char_size, p, id.Password );
+        id.Password = p;
+        p += id.PasswordLength * char_size;
+    }
+    memcpy( *ret, &id, sizeof(id) );
+
+    if (status) free( *ret );
+    return status;
+}
+
 static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
     void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
     char *principal = NULL, *username = NULL,  *password = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W *id = auth_data;
-    NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    SEC_WINNT_AUTH_IDENTITY_W *id = NULL;
+    NTSTATUS status;
     struct cred_handle *cred_handle;
     ULONG exptime;
 
@@ -419,6 +534,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
     if (principal_us && !(principal = get_str_unixcp( principal_us ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if ((status = map_auth_data( auth_data, &id ))) goto done;
     if (id)
     {
         if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
@@ -449,6 +565,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
 
 done:
     free( principal );
+    free( id );
     free( username );
     free( password );
     return status;
@@ -477,7 +594,8 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
                                    ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
-                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE | ISC_REQ_ALLOCATE_MEMORY;
+                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE | ISC_REQ_ALLOCATE_MEMORY |
+                                   ISC_REQ_EXTENDED_ERROR;
     char *target = NULL;
     NTSTATUS status;
     ULONG exptime;
@@ -619,22 +737,47 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
     return status;
 }
 
-static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
+static NTSTATUS build_package_info( const SecPkgInfoW *info, SecPkgInfoW **ret,
+        const SECPKG_CALL_INFO *call_info )
 {
-    SecPkgInfoW *ret;
     DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
     DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
+    SecPkgInfoW pkg_info;
+    NTSTATUS status;
 
-    if (!(ret = malloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
-    ret->fCapabilities = info->fCapabilities;
-    ret->wVersion      = info->wVersion;
-    ret->wRPCID        = info->wRPCID;
-    ret->cbMaxToken    = info->cbMaxToken;
-    ret->Name          = (SEC_WCHAR *)(ret + 1);
-    memcpy( ret->Name, info->Name, size_name );
-    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
-    memcpy( ret->Comment, info->Comment, size_comment );
-    return ret;
+    pkg_info = *info;
+    status = lsa_funcs->AllocateClientBuffer( NULL,
+            sizeof(pkg_info) + size_name + size_comment, (void **)ret );
+    if (status) return status;
+
+    pkg_info.Name = (SEC_WCHAR *)((*ret) + 1);
+    pkg_info.Comment = (SEC_WCHAR *)((char *)pkg_info.Name + size_name);
+    lsa_funcs->CopyToClientBuffer( NULL, size_name, pkg_info.Name, info->Name );
+    lsa_funcs->CopyToClientBuffer( NULL, size_comment, pkg_info.Comment, info->Comment );
+
+    if (call_info->Attributes & SECPKG_CALL_WOWCLIENT)
+    {
+        struct
+        {
+            ULONG fCapabilities;
+            USHORT wVersion;
+            USHORT wRPCID;
+            ULONG cbMaxToken;
+            ULONG Name;
+            ULONG Comment;
+        } pkg_info32 =
+        {
+            pkg_info.fCapabilities,
+            pkg_info.wVersion,
+            pkg_info.wRPCID,
+            pkg_info.cbMaxToken,
+            (ULONG_PTR)pkg_info.Name,
+            (ULONG_PTR)pkg_info.Comment
+        };
+
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(pkg_info32), *ret, &pkg_info32 );
+    }
+    return lsa_funcs->CopyToClientBuffer( NULL, sizeof(pkg_info), *ret, &pkg_info );
 }
 
 static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
@@ -662,32 +805,72 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
 #undef X
     case SECPKG_ATTR_SESSION_KEY:
     {
-        SecPkgContext_SessionKey key = { 128 };
+        unsigned char tmp[128];
+        SecPkgContext_SessionKey key = { 128, tmp };
         struct query_context_attributes_params params = { context_handle->handle, attribute, &key };
+        SECPKG_CALL_INFO info;
         NTSTATUS status;
 
-        if (!(key.SessionKey = RtlAllocateHeap( GetProcessHeap(), 0, key.SessionKeyLength ))) return STATUS_NO_MEMORY;
-
         if ((status = KRB5_CALL( query_context_attributes, &params )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, key.SessionKey );
             return status;
-        }
 
-        *(SecPkgContext_SessionKey *)buffer = key;
-        return SEC_E_OK;
+        status = lsa_funcs->AllocateClientBuffer( NULL, key.SessionKeyLength, (void **)&key.SessionKey );
+        if (status) return status;
+        lsa_funcs->CopyToClientBuffer( NULL, key.SessionKeyLength, key.SessionKey, tmp );
+
+        lsa_funcs->GetCallInfo( &info );
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG SessionKeyLength;
+                ULONG SessionKey;
+            } key32 =
+            {
+                key.SessionKeyLength,
+                (ULONG_PTR)key.SessionKey
+            };
+
+            return lsa_funcs->CopyToClientBuffer( NULL, sizeof(key32), buffer, &key32 );
+        }
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(key), buffer, &key );
     }
     case SECPKG_ATTR_SIZES:
     {
-        struct query_context_attributes_params params = { context_handle->handle, attribute, buffer };
-        return KRB5_CALL( query_context_attributes, &params );
+        SecPkgContext_Sizes sizes;
+        struct query_context_attributes_params params = { context_handle->handle, attribute, &sizes };
+        NTSTATUS status;
+
+        status = KRB5_CALL( query_context_attributes, &params );
+        if (status) return status;
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(sizes), buffer, &sizes );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {
-        SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buffer;
-        if (!(info->PackageInfo = build_package_info( &infoW ))) return SEC_E_INSUFFICIENT_MEMORY;
-        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
-        return SEC_E_OK;
+        SecPkgContext_NegotiationInfoW info;
+        SECPKG_CALL_INFO call_info;
+        NTSTATUS status;
+
+        lsa_funcs->GetCallInfo( &call_info );
+        status = build_package_info( &infoW, &info.PackageInfo, &call_info );
+        if (status) return status;
+        info.NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+
+        if (call_info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG PackageInfo;
+                ULONG NegotiationState;
+            } info32 =
+            {
+                (ULONG_PTR)info.PackageInfo,
+                info.NegotiationState
+            };
+
+            return lsa_funcs->CopyToClientBuffer( NULL, sizeof(info32), buffer, &info32 );
+        }
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(info), buffer, &info );
     }
     default:
         FIXME( "unknown attribute %lu\n", attribute );
@@ -701,6 +884,8 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
     TRACE("%Iu, %p, %p\n", package_id, params, lsa_function_table);
+
+    lsa_funcs = lsa_function_table;
 
     if (!__wine_unixlib_handle)
     {
@@ -867,16 +1052,30 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     {
         struct context_handle *context_handle = (void *)context;
         struct unseal_message_params params;
-        int data_idx, token_idx;
+        int stream_idx, data_idx, token_idx = -1;
 
+        if ((stream_idx = get_buffer_index( message, SECBUFFER_STREAM )) == -1 &&
+            (token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
         if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-        if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
 
         params.context = context_handle->handle;
-        params.data_length = message->pBuffers[data_idx].cbBuffer;
-        params.data = message->pBuffers[data_idx].pvBuffer;
-        params.token_length = message->pBuffers[token_idx].cbBuffer;
-        params.token = message->pBuffers[token_idx].pvBuffer;
+
+        if (token_idx != -1)
+        {
+            params.stream_length = 0;
+            params.stream = NULL;
+            params.token_length = message->pBuffers[token_idx].cbBuffer;
+            params.token = message->pBuffers[token_idx].pvBuffer;
+        }
+        else
+        {
+            params.stream_length = message->pBuffers[stream_idx].cbBuffer;
+            params.stream = message->pBuffers[stream_idx].pvBuffer;
+            params.token_length = 0;
+            params.token = NULL;
+        }
+        params.data_length = &message->pBuffers[data_idx].cbBuffer;
+        params.data = (BYTE **)&message->pBuffers[data_idx].pvBuffer;
         params.qop = quality_of_protection;
 
         return KRB5_CALL( unseal_message, &params );

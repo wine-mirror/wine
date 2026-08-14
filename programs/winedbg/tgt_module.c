@@ -49,9 +49,19 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
     WCHAR* nameW;
     unsigned len;
 
+    if (dbg_curr_process)
+    {
+        dbg_printf("WineDbg can't debug several processes at once.\nEither 'detach' from current one, or use another instance of WineDbg\n");
+        return start_error_init;
+    }
     SymSetOptions((opts & ~(SYMOPT_UNDNAME|SYMOPT_DEFERRED_LOADS)) |
                   SYMOPT_LOAD_LINES | SYMOPT_AUTO_PUBLICS);
     native = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+
+    dbg_curr_process = dbg_add_process(&be_process_module_io, 1, hDummy);
+    dbg_curr_pid = 1;
+    dbg_curr_thread = dbg_add_thread(dbg_curr_process, 2, NULL, NULL);
+
     if (!dbg_init(hDummy, NULL, FALSE))
         return start_error_init;
     len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
@@ -76,12 +86,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
     {
         dbg_printf("Non supported mode... errors may occur\n"
                    "Use at your own risks\n");
-        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
-        dbg_curr_process = dbg_add_process(&be_process_module_io, 1, hDummy);
-        dbg_curr_pid = 1;
-        dbg_curr_thread = dbg_add_thread(dbg_curr_process, 2, NULL, NULL);
-
-        /* FIXME: missing thread creation, fetching frames, restoring dbghelp's options... */
+        /* FIXME: fetching frames, restoring dbghelp's options... */
     }
     else
     {

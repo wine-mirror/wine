@@ -3046,11 +3046,9 @@ static void test_process_security(void)
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     TEST_GRANTED_ACCESS2( info.hThread, THREAD_ALL_ACCESS_NT4,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
-    wait_child_process( info.hProcess );
+    wait_child_process( &info );
 
     FreeSid(EveryoneSid);
-    CloseHandle( info.hProcess );
-    CloseHandle( info.hThread );
     CloseHandle( event );
     free(group);
     free(owner);
@@ -4271,6 +4269,16 @@ static void test_ConvertStringSecurityDescriptor(void)
         "D:P(A;;GRGW;;;BA)(A;;GRGW;;;S-1-5-21-0-0-0-1000)S:(ML;;NWNR;;;S-1-16-12288)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_DATATYPE) /* win2k */,
        "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %lu\n", GetLastError());
+    if (ret) LocalFree(pSD);
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "D: (D;OICI;GA;;;BG) (D;OICI;GA;;;AN) (A;OICI;GAGRGWGX;;;AU) (A;OICI;GA;;;BA)", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_DATATYPE) /* win2k */,
+       "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %lu\n", GetLastError());
+    acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
+    ok(acl->AclSize == sizeof(*acl) * 12 /* 96 */, "got %u\n", acl->AclSize);
+    ok(acl->AceCount == 4, "got %u\n", acl->AceCount);
     if (ret) LocalFree(pSD);
 
     /* empty DACL */
@@ -7370,9 +7378,7 @@ static void test_token_security_descriptor(void)
     sprintf(buffer, "%s security test_token_sd", myARGV[0]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess failed with error %lu\n", GetLastError());
-    wait_child_process(info.hProcess);
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
 
     LocalFree(acl_child);
     free(sd2);
@@ -8561,6 +8567,46 @@ static void test_elevation(void)
     CloseHandle(token);
 }
 
+static void test_admin_elevation(void)
+{
+    /* Tokens with elevation type TokenElevationTypeDefault should still come
+       back as elevated from a TokenElevation query if they belong to the admin
+       group. The owner of the desktop window should have such a token. */
+    DWORD tid, pid;
+    HANDLE hproc, htok;
+    TOKEN_ELEVATION_TYPE elevation_type;
+    TOKEN_ELEVATION elevation;
+    DWORD size;
+    BOOL ret;
+
+    tid = GetWindowThreadProcessId(GetDesktopWindow(), &pid);
+    ok(tid, "got error %lu\n", GetLastError());
+
+    hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!hproc)
+    {
+        skip("could not open process, error %lu\n", GetLastError());
+        return;
+    }
+
+    ret = OpenProcessToken(hproc, TOKEN_READ, &htok);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    CloseHandle(hproc);
+
+    size = sizeof(elevation_type);
+    ret = GetTokenInformation(htok, TokenElevationType, &elevation_type, size, &size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(elevation_type == TokenElevationTypeDefault, "unexpected elevation type %d\n", elevation_type);
+
+    size = sizeof(elevation);
+    ret = GetTokenInformation(htok, TokenElevation, &elevation, size, &size);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(elevation.TokenIsElevated, "expected token to be elevated\n");
+
+    CloseHandle(htok);
+}
+
 static void test_group_as_file_owner(void)
 {
     char sd_buffer[200], sid_buffer[100];
@@ -8747,6 +8793,7 @@ START_TEST(security)
     test_duplicate_token();
     test_GetKernelObjectSecurity();
     test_elevation();
+    test_admin_elevation();
     test_group_as_file_owner();
     test_IsValidSecurityDescriptor();
     test_window_security();

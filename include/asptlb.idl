@@ -130,3 +130,49 @@ interface IResponse : IDispatch
     [propput]
     HRESULT LCID([in] LONG lcid);
 }
+
+[
+    object,
+    dual,
+    uuid(d97a6da0-a861-11cf-93ae-00a0c90c2bd8)
+]
+interface IRequest : IDispatch
+{
+    [propget]
+    HRESULT Item(
+        [in] BSTR var,
+        [retval, out] IDispatch **object
+    );
+    [propget]
+    HRESULT QueryString(
+        [retval, out] IRequestDictionary **dict
+    );
+    [propget]
+    HRESULT Form(
+        [retval, out] IRequestDictionary **dict
+    );
+    [hidden, propget]
+    HRESULT Body(
+        [retval, out] IRequestDictionary **dict
+    );
+    [propget]
+    HRESULT ServerVariables(
+        [retval, out] IRequestDictionary **dict
+    );
+    [propget]
+    HRESULT ClientCertificate(
+        [retval, out] IRequestDictionary **dict
+    );
+    [propget]
+    HRESULT Cookies(
+        [retval, out] IRequestDictionary **dict
+    );
+    [propget]
+    HRESULT TotalBytes(
+        [retval, out] LONG *value
+    );
+    HRESULT BinaryRead(
+        [in, out] VARIANT *length,
+        [retval, out] VARIANT *out
+    );
+}

@@ -3730,6 +3730,190 @@ static void test_query_data_alignment(void)
     }
 }
 
+static void test_query_numa_map(void)
+{
+    ULONG len, node_count, proc_info_node_count, info_size, expected, group_count;
+    char buffer[sizeof(SYSTEM_NUMA_INFORMATION) + 32];
+    SYSTEM_NUMA_INFORMATION *info = (SYSTEM_NUMA_INFORMATION *)buffer;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info, *p;
+    PROCESSOR_NUMBER proc_num;
+    GROUP_AFFINITY mask;
+    ULONGLONG mask64;
+    NTSTATUS status;
+    unsigned int i;
+    USHORT node;
+    BOOL bret;
+
+    group_count = GetActiveProcessorGroupCount();
+    ok( group_count, "got 0.\n" );
+    if (group_count > 1)
+    {
+        win_skip( "Group count > 1 is not supported in this test, skipping.\n" );
+        return;
+    }
+
+    bret = GetNumaHighestNodeNumber( &node_count );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ++node_count;
+
+    info_size = offsetof(SYSTEM_NUMA_INFORMATION, ActiveProcessorsGroupAffinity[node_count]);
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, NULL, 0, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status );
+    expected = is_wow64 && !old_wow64 ? 0xdeadbeef : sizeof(ULONG);
+    ok( len == expected, "got %lu, expected %lu.\n", len, expected );
+
+    len = 0xdeadbeef;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, 3, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status );
+    expected = is_wow64 && !old_wow64 ? 0xdeadbeef : sizeof(ULONG);
+    ok( len == expected, "got %lu, expected %lu.\n", len, expected );
+    ok( info->HighestNodeNumber == 0xcccccccc, "got %#lx.\n", info->HighestNodeNumber );
+
+    len = 0xdeadbeef;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, 4, &len );
+    ok( !status, "got %#lx.\n", status );
+    ok( len == sizeof(ULONG), "got %lu.\n", len );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+    ok( info->ActiveProcessorsGroupAffinity[0].Group == 0xcccc, "got %#x.\n", info->ActiveProcessorsGroupAffinity[0].Group );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, 4, NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+    ok( info->ActiveProcessorsGroupAffinity[0].Group == 0xcccc, "got %#x.\n", info->ActiveProcessorsGroupAffinity[0].Group );
+
+    len = 0xdeadbeef;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, info_size - 1, &len );
+    ok( !status, "got %#lx.\n", status );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+    ok( len == sizeof(ULONG), "got %lu.\n", len );
+    ok( info->ActiveProcessorsGroupAffinity[0].Group == 0xcccc, "got %#x.\n", info->ActiveProcessorsGroupAffinity[0].Group );
+
+    len = 0xdeadbeef;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, info_size + 1, &len );
+    ok( !status, "got %#lx.\n", status );
+    if (is_wow64 && !old_wow64)
+    {
+        ok( len == sizeof(ULONG), "got %lu.\n", len );
+        ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+        ok( info->ActiveProcessorsGroupAffinity[0].Group == 0xcccc, "got %#x.\n", info->ActiveProcessorsGroupAffinity[0].Group );
+    }
+    else
+    {
+        ok( len == info_size, "got %lu.\n", len );
+        ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+        ok( info->ActiveProcessorsGroupAffinity[0].Group != 0xcccc, "got %#x.\n", info->ActiveProcessorsGroupAffinity[0].Group );
+    }
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, sizeof(*info), NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+
+    len = 0xdeadbeef;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, sizeof(*info), &len );
+    ok( !status, "got %#lx.\n", status );
+    ok( len == info_size, "got %lu, expected %lu.\n", len, info_size );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+
+    len = 0;
+    bret = pGetLogicalProcessorInformationEx( RelationNumaNode, NULL, &len );
+    ok(!bret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u, error %lu.\n", bret, GetLastError());
+    proc_info = malloc( len );
+    bret = pGetLogicalProcessorInformationEx( RelationNumaNode, proc_info, &len );
+    ok( bret, "got error %lu.\n", GetLastError() );
+
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %lu.\n", info->Reserved );
+    p = proc_info;
+    proc_info_node_count = 0;
+    memset( &proc_num, 0, sizeof(proc_num) );
+    while ((BYTE *)p - (BYTE *)proc_info < len)
+    {
+        NUMA_NODE_RELATIONSHIP *n = &p->NumaNode;
+        GROUP_AFFINITY *a = &info->ActiveProcessorsGroupAffinity[n->NodeNumber];
+
+        winetest_push_context( "node %lu, %lu", proc_info_node_count, n->NodeNumber );
+        ok( p->Relationship == RelationNumaNode, "got %d.\n", p->Relationship );
+        ok( !a->Group, "got %u.\n", a->Group );
+        ok( a->Mask == n->GroupMask.Mask, "got %#Ix, %#Ix.\n", a->Mask, n->GroupMask.Mask );
+        ok( a->Mask, "got 0.\n" );
+        for (i = 0; i < sizeof(ULONG_PTR) * 8; ++i)
+        {
+            if (a->Mask & ((ULONG_PTR)1 << i))
+            {
+                proc_num.Group = 0;
+                proc_num.Number = i;
+                bret = GetNumaProcessorNodeEx( &proc_num, &node );
+                ok( bret, "got error %lu.\n", GetLastError() );
+                ok( node == n->NodeNumber, "i %u, got %u, expected %lu.\n", i, node, n->NodeNumber );
+            }
+        }
+        memset( &mask, 0xcc, sizeof(mask) );
+        bret = GetNumaNodeProcessorMaskEx( n->NodeNumber, &mask );
+        ok( bret, "got error %lu.\n", GetLastError() );
+        ok( mask.Group == n->GroupMask.Group, "got %u, %u.\n", mask.Group, n->GroupMask.Group );
+        ok( mask.Mask == n->GroupMask.Mask, "got %#Ix, %#Ix.\n", mask.Mask, n->GroupMask.Mask );
+
+        memset( &mask64, 0xcc, sizeof(mask64) );
+        bret = GetNumaNodeProcessorMask( n->NodeNumber, &mask64 );
+        ok( bret, "got error %lu.\n", GetLastError() );
+        ok( mask64 == n->GroupMask.Mask, "got %#I64x, %#Ix.\n", mask64, n->GroupMask.Mask );
+
+        p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)p + p->Size);
+        winetest_pop_context();
+        ++proc_info_node_count;
+    }
+    ok( proc_info_node_count == node_count, "got %lu, node_count %lu.\n", proc_info_node_count, node_count );
+
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNode( 255, (UCHAR *)&node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xff, "got %#x.\n", node );
+
+    proc_num.Number = 255;
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNodeEx( &proc_num, &node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xffff, "got %#x.\n", node );
+
+    proc_num.Number = 0;
+    proc_num.Reserved = 1;
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNodeEx( &proc_num, &node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xffff, "got %#x.\n", node );
+
+    memset( &mask, 0xcc, sizeof(mask) );
+    bret = GetNumaNodeProcessorMaskEx( 1024, &mask );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( mask.Group == 0xcccc, "got %u.\n", mask.Group );
+    ok( mask.Mask == (ULONG_PTR)0xcccccccccccccccc, "got %#Ix.\n", mask.Mask );
+
+    memset( &mask64, 0xcc, sizeof(mask64) );
+    bret = GetNumaNodeProcessorMask( 255, &mask64 );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( mask64 == 0xcccccccccccccccc, "got %#I64x.\n", mask64 );
+
+    free( proc_info );
+}
+
 static void test_thread_lookup(void)
 {
     OBJECT_BASIC_INFORMATION obj_info;
@@ -4370,6 +4554,7 @@ START_TEST(info)
     test_query_cpusetinfo();
     test_query_firmware();
     test_query_data_alignment();
+    test_query_numa_map();
 
     /* NtPowerInformation */
     test_query_battery();

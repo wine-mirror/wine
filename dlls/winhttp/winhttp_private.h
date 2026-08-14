@@ -131,6 +131,7 @@ typedef struct
     int socket;
     BOOL secure; /* SSL active on connection? */
     CtxtHandle ssl_ctx;
+    const CERT_CHAIN_CONTEXT *chain;
     SecPkgContext_StreamSizes ssl_sizes;
     char *ssl_buf;
     char *extra_buf;

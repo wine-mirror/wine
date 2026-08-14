@@ -34,6 +34,7 @@
 #include <process.h>
 #include <fenv.h>
 #include <malloc.h>
+#include <complex.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -115,6 +116,43 @@ void** __cdecl __current_exception(void);
 int* __cdecl __processing_throw(void);
 
 #define _MAX__TIME64_T     (((__time64_t)0x00000007 << 32) | 0x93406FFF)
+
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    return compare_uint(x, y, ulps);
+}
+
+static inline BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    ULONGLONG x = *(ULONGLONG *)&f;
+    ULONGLONG y = *(ULONGLONG *)&g;
+
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
+
+    return (x>y ? x-y : y-x) <= ulps;
+}
 
 static void test__initialize_onexit_table(void)
 {
@@ -457,9 +495,7 @@ static void test__get_narrow_winmain_command_line(char *path)
     CreateProcessA(path, cmd, NULL, NULL, TRUE,
             CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
             NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
-    CloseHandle(proc.hProcess);
-    CloseHandle(proc.hThread);
+    wait_child_process(&proc);
 }
 
 static void test__sopen_dispatch(void)
@@ -493,23 +529,27 @@ static void test__sopen_dispatch(void)
 
 static void test__sopen_s(void)
 {
-    int ret, fd;
+    int ret, fd, fd2;
     char *tempf;
 
     tempf = _tempnam(".", "wne");
 
     fd = 0;
-    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
+    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, _S_IWRITE);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
-    unlink(tempf);
+    ret = _close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     /* _open() does not validate pmode */
     fd = _open(tempf, _O_CREAT, 0xff);
     ok(fd > 0, "got fd %d\n", fd);
-    _close(fd);
-    unlink(tempf);
+    ret = _close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     /* _sopen_s() invokes invalid parameter handler on invalid pmode */
     SET_EXPECT(global_invalid_parameter_handler);
@@ -518,6 +558,32 @@ static void test__sopen_s(void)
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
+
+    fd = 0;
+    ret = _sopen_s(&fd, tempf, _O_CREAT | _O_WRONLY, _SH_SECURE, _S_IWRITE);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    fd2 = 0;
+    ret = _sopen_s(&fd2, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(ret == EACCES, "got %d\n", ret);
+    ok(fd2 == -1, "got fd %d\n", fd2);
+    ret = _close(fd);
+    ok(!ret, "close() returned %d\n", ret);
+
+    fd = 0;
+    ret = _sopen_s(&fd, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    fd2 = 0;
+    ret = _sopen_s(&fd2, tempf, _O_RDONLY, _SH_SECURE, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd2 > 0, "got fd %d\n", fd2);
+    ret = close(fd);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = close(fd2);
+    ok(!ret, "_close() returned %d\n", ret);
+    ret = unlink(tempf);
+    ok(!ret, "unlink() returned %d\n", ret);
 
     free(tempf);
 }
@@ -776,9 +842,6 @@ static void test_math_errors(void)
 
     __setusermatherr(matherr_callback);
     module = GetModuleHandleW(L"ucrtbase.dll");
-
-    /* necessary so that exp(1e100)==INFINITY on glibc, we can remove this if we change our implementation */
-    fesetround(FE_TONEAREST);
 
     for(i = 0; i < ARRAY_SIZE(testsd); i++) {
         p_funcd = (void*)GetProcAddress(module, testsd[i].func);
@@ -1608,7 +1671,7 @@ static void test_fopen_exclusive( void )
 }
 
 #if defined(__i386__)
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct rewind_thunk {
     BYTE push_esp[4]; /* push [esp+0x4] */
     BYTE call_rewind; /* call */
@@ -1616,7 +1679,7 @@ struct rewind_thunk {
     BYTE pop_eax; /* pop eax */
     BYTE ret; /* ret */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static FILE * (CDECL *test_rewind_wrapper)(FILE *fp);
 
@@ -1725,6 +1788,340 @@ static void test__get_heap_handle(void)
     ok((HANDLE)_get_heap_handle() == GetProcessHeap(), "Expected _get_heap_handle() to return GetProcessHeap()\n");
 }
 
+static void test_exp(void)
+{
+    static const struct {
+        double x, exp;
+        int type;
+        errno_t e;
+    } tests[] = {
+        {  NAN,               NAN,                                      },
+        { -NAN,              -NAN,                                      },
+        {  INFINITY,          INFINITY                                  },
+        { -INFINITY,          0.0                                       },
+        {  0.0,               1.0                                       },
+        {  1.0,               2.7182818284590451                        },
+        {  709.7,             1.6549840276802644e+308                   },
+        {  709.782712893384,  1.7976931348622732e+308                   },
+        {  709.782712893385,  INFINITY,               _OVERFLOW, ERANGE },
+    };
+    errno_t e;
+    double r;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        errno = -1;
+        exception.type = -1;
+        r = exp(tests[i].x);
+        e = errno;
+
+        if(_isnan(tests[i].exp))
+            ok(_isnan(r), "expected NAN, got %0.16e for %d\n", r, i);
+        else
+            ok(compare_double(r, tests[i].exp, 16), "expected %0.16e, got %0.16e for %d\n", tests[i].exp, r, i);
+        ok(signbit(r) == signbit(tests[i].exp), "expected sign %x, got %x for %d\n",
+            signbit(tests[i].exp), signbit(r), i);
+
+        ok(e == (tests[i].e ? tests[i].e : -1),
+            "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
+
+        ok(exception.type == (tests[i].type ? tests[i].type : -1),
+            "expected %d, got %d for %d\n", tests[i].type, exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
+static void test_expf(void)
+{
+#ifndef __i386__
+    static const struct {
+        float x, exp;
+        int type;
+        errno_t e;
+    } tests[] = {
+        {  NAN,      NAN,                             },
+        { -NAN,      NAN,                             },
+        {  INFINITY, INFINITY                         },
+        { -INFINITY, 0.0f                             },
+        {  0.0f,     1.0f                             },
+        {  1.0f,     2.7182817f                       },
+        {  88.72f,   3.3931806e+38                    },
+        {  88.73f,   INFINITY,      _OVERFLOW, ERANGE },
+        { -103.97f,  1.4012985e-45                    },
+        { -103.98f,  0.0f,          _UNDERFLOW        },
+    };
+    errno_t e;
+    float r;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        errno = -1;
+        exception.type = -1;
+        r = expf(tests[i].x);
+        e = errno;
+
+        if(isnan(tests[i].exp))
+            ok(isnan(r), "expected NAN, got %0.7e for %d\n", r, i);
+        else{
+            ok(compare_float(r, tests[i].exp, 0),
+                "expected %0.7e, got %0.7e for %d\n", tests[i].exp, r, i);
+            ok(signbit(r) == signbit(tests[i].exp),
+                "expected sign %x, got %x for %d\n", signbit(tests[i].exp), signbit(r), i);
+        }
+
+        ok(e == (tests[i].e ? tests[i].e : -1),
+            "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
+        ok(exception.type == (tests[i].type ? tests[i].type : -1),
+            "expected %d, got %d for %d\n", tests[i].type, exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+#endif
+}
+
+static void test_cexp(void)
+{
+    static const struct {
+        double r, i;
+        double rexp, iexp;
+        errno_t e;
+    } tests[] = {
+        {  INFINITY,  0.0,       INFINITY,  0.0           },
+        {  INFINITY, -0.0,       INFINITY, -0.0           },
+        { -INFINITY,  0.0,       0.0,       0.0           },
+        { -INFINITY, -0.0,       0.0,      -0.0           },
+        {    0.0,     INFINITY,  NAN,       NAN,     EDOM },
+        {   -0.0,     INFINITY,  NAN,       NAN,     EDOM },
+        {    0.0,    -INFINITY,  NAN,       NAN,     EDOM },
+        {   -0.0,    -INFINITY,  NAN,       NAN,     EDOM },
+        {  100.0,     INFINITY,  NAN,       NAN,     EDOM },
+        { -100.0,     INFINITY,  NAN,       NAN,     EDOM },
+        {  100.0,    -INFINITY,  NAN,       NAN,     EDOM },
+        { -100.0,    -INFINITY,  NAN,       NAN,     EDOM },
+        { -INFINITY,  2.0,      -0.0,       0.0           },
+        { -INFINITY,  4.0,      -0.0,      -0.0           },
+        {  INFINITY,  2.0,      -INFINITY,  INFINITY      },
+        {  INFINITY,  4.0,      -INFINITY, -INFINITY      },
+        {  INFINITY,  INFINITY,  INFINITY,  NAN,     EDOM },
+        {  INFINITY, -INFINITY,  INFINITY,  NAN,     EDOM },
+        { -INFINITY,  INFINITY,  0.0,       0.0           },
+        { -INFINITY, -INFINITY,  0.0,      -0.0           },
+        { -INFINITY,  NAN,       0.0,       0.0           },
+        {  INFINITY,  NAN,       INFINITY,  NAN           },
+        {  NAN,       0.0,       NAN,       0.0           },
+        {  NAN,      -0.0,       NAN,      -0.0           },
+        {  NAN,       1.0,       NAN,       NAN           },
+        {  NAN,       INFINITY,  NAN,       NAN           },
+        {  0.0,       NAN,       NAN,       NAN           },
+        {  1.0,       NAN,       NAN,       NAN           },
+        {  NAN,       NAN,       NAN,       NAN           },
+    };
+    static const struct {
+        double r, i;
+        double rexp, iexp;
+        errno_t e;
+    } tests2[] = {
+        { 0.0,                M_PI, -1.0,                     1.2246467991473532e-016          },
+        { 709.7,              0.0,   1.6549840276802644e+308, 0.0                              },
+        { 709.78271289338397, 0.0,   1.7976931348622734e+308, 0.0                              },
+        { 709.8,              0.0,   INFINITY,                0.0,                      ERANGE },
+        { 746.0,              0.0,   INFINITY,                0.0,                      ERANGE },
+        { 747.0,              0.0,   INFINITY,                0.0,                      ERANGE },
+        { 1454.3,             0.0,   INFINITY,                0.0,                      ERANGE },
+        { 709.7,              M_PI, -1.6549840276802644e+308, 2.0267708921386307e+292          },
+        { 709.78271289338397, M_PI, -1.7976931348622734e+308, 2.2015391434582545e+292          },
+        { 709.8,              M_PI, -INFINITY,                2.2399282475936458e+292,  ERANGE },
+        { 746.0,              M_PI, -INFINITY,                1.1794902399837951e+308,  ERANGE },
+        { 747.0,              M_PI, -INFINITY,                INFINITY,                 ERANGE },
+        { 1454.3,             M_PI, -INFINITY,                INFINITY,                 ERANGE },
+    };
+    _Dcomplex c, r;
+    errno_t e;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        c = _Cbuild(tests[i].r, tests[i].i);
+        errno = -1;
+        exception.type = -1;
+        r = cexp(c);
+        e = errno;
+
+        if(_isnan(tests[i].rexp))
+            ok(_isnan(r._Val[0]), "expected NAN, got %0.16e for %d\n", r._Val[0], i);
+        else {
+            ok(r._Val[0] == tests[i].rexp, "expected %0.16e, got %0.16e for %d\n", tests[i].rexp, r._Val[0], i);
+            ok(signbit(r._Val[0]) == signbit(tests[i].rexp), "expected sign %x, got %x for %d\n",
+                signbit(tests[i].rexp), signbit(r._Val[0]), i);
+        }
+        if(_isnan(tests[i].iexp))
+            ok(_isnan(r._Val[1]), "expected NAN, got %0.16e for %d\n", r._Val[1], i);
+        else {
+            ok(r._Val[1] == tests[i].iexp, "expected %0.16e, got %0.16e for %d\n", tests[i].iexp, r._Val[1], i);
+            ok(signbit(r._Val[1]) == signbit(tests[i].iexp), "expected sign %x, got %x for %d\n",
+                signbit(tests[i].iexp), signbit(r._Val[1]), i);
+        }
+
+        ok(e == (tests[i].e ? tests[i].e : -1),
+            "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
+        ok(exception.type == -1, "got %d for %d\n", exception.type, i);
+    }
+
+    for(i=0; i<ARRAY_SIZE(tests2); i++) {
+        errno = -1;
+        exception.type = -1;
+        c = _Cbuild(tests2[i].r, tests2[i].i);
+        r = cexp(c);
+        e = errno;
+
+        ok(compare_double(r._Val[0], tests2[i].rexp, 1), "expected %0.16e, got %0.16e for real %d\n", tests2[i].rexp, r._Val[0], i);
+        ok(compare_double(r._Val[1], tests2[i].iexp, 1), "expected %0.16e, got %0.16e for imag %d\n", tests2[i].iexp, r._Val[1], i);
+        ok(e == (tests2[i].e ? tests2[i].e : -1),
+            "expected errno %d, but got %d for %d\n", tests2[i].e, e, i);
+        ok(exception.type == -1, "got %d for %d\n", exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
+static void test_carg(void)
+{
+    const double M_PI_3_4 = M_PI_2 + M_PI_4;
+    static const struct {
+        double r, i, expect;
+    } tests[] = {
+        {  NAN,       NAN,       NAN      },
+        {  INFINITY,   2.0,      0.0      },
+        {  INFINITY,  -2.0,     -0.0      },
+        {  10.0,      INFINITY,  M_PI_2   },
+        {  10.0,     -INFINITY, -M_PI_2   },
+        { -INFINITY,  10.0,      M_PI     },
+        { -INFINITY, -10.0,     -M_PI     },
+        {  INFINITY, -INFINITY, -M_PI_4   },
+        { -INFINITY,  INFINITY,  M_PI_3_4 },
+        {  INFINITY,  INFINITY,  M_PI_4   },
+        { -INFINITY, -INFINITY, -M_PI_3_4 },
+        {  2.0,       0.0,       0.0      },
+        {  2.0,      -0.0,      -0.0      },
+        {  0.0,       0.0,       0.0      },
+        {  0.0,      -0.0,      -0.0      },
+        { -2.0,       0.0,       M_PI     },
+        { -2.0,      -0.0,      -M_PI     },
+        { -0.0,       0.0,       M_PI     },
+        { -0.0,      -0.0,      -M_PI     },
+        {  0.0,       2.0,       M_PI_2   },
+        { -0.0,       2.0,       M_PI_2   },
+        {  0.0,      -2.0,      -M_PI_2   },
+        { -0.0,      -2.0,      -M_PI_2   },
+    };
+    _Dcomplex c;
+    errno_t e;
+    double z;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        c = _Cbuild(tests[i].r, tests[i].i);
+        errno = -1;
+        exception.type = -1;
+        z = carg(c);
+        e = errno;
+
+        ok(compare_double(z, tests[i].expect, 0),
+            "expected %0.16e, got %0.16e for %d\n", tests[i].expect, z, i);
+        ok(signbit(z) == signbit(tests[i].expect), "expected sign %x, got %x for %d\n",
+            signbit(tests[i].expect), signbit(z), i);
+
+        ok(e == -1, "expected errno -1, but got %d for %d\n", e, i);
+        ok(exception.type == -1, "expected -1, got %d for %d\n", exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
+static void test_cargf(void)
+{
+    const double M_PI_3_4 = M_PI_2 + M_PI_4;
+    static const struct {
+        float r, i, expect;
+    } tests[] = {
+        {  NAN,       NAN,       NAN      },
+        {  INFINITY,  2.0f,      0.0      },
+        {  INFINITY, -2.0f,     -0.0      },
+        {  10.0f,     INFINITY,  M_PI_2   },
+        {  10.0f,    -INFINITY, -M_PI_2   },
+        { -INFINITY,  10.0f,     M_PI     },
+        { -INFINITY, -10.0f,    -M_PI     },
+        {  INFINITY, -INFINITY, -M_PI_4   },
+        { -INFINITY,  INFINITY,  M_PI_3_4 },
+        {  INFINITY,  INFINITY,  M_PI_4   },
+        { -INFINITY, -INFINITY, -M_PI_3_4 },
+        {  2.0f,      0.0f,      0.0      },
+        {  2.0f,     -0.0f,     -0.0      },
+        {  0.0f,      0.0f,      0.0      },
+        {  0.0f,     -0.0f,     -0.0      },
+        { -2.0f,      0.0f,      M_PI     },
+        { -2.0f,     -0.0f,     -M_PI     },
+        { -0.0f,      0.0f,      M_PI     },
+        { -0.0f,     -0.0f,     -M_PI     },
+        {  0.0f,      2.0f,      M_PI_2   },
+        { -0.0f,      2.0f,      M_PI_2   },
+        {  0.0f,     -2.0f,     -M_PI_2   },
+        { -0.0f,     -2.0f,     -M_PI_2   },
+    };
+    _Fcomplex c;
+    errno_t e;
+    float z;
+    int i;
+
+    __setusermatherr(matherr_callback);
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        c = _FCbuild(tests[i].r, tests[i].i);
+        errno = -1;
+        exception.type = -1;
+        z = cargf(c);
+        e = errno;
+
+        ok(compare_float(z, tests[i].expect, 0),
+            "expected %0.7e, got %0.7e for %d\n", tests[i].expect, z, i);
+        ok(signbit(z) == signbit(tests[i].expect), "expected sign %x, got %x for %d\n",
+            signbit(tests[i].expect), signbit(z), i);
+
+        ok(e == -1, "expected errno -1, but got %d for %d\n", e, i);
+        ok(exception.type == -1, "expected -1, got %d for %d\n", exception.type, i);
+    }
+
+    __setusermatherr(NULL);
+}
+
+static void test_rint(void)
+{
+    int rounding_mode = fegetround();
+    double ret;
+
+    ok(!fesetround(FE_DOWNWARD), "fesetround failed\n");
+    ret = rint(-3.3);
+    ok(ret == -4.0, "ret = %lf\n", ret);
+    ret = rint(3.3);
+    ok(ret == 3.0, "ret = %lf\n", ret);
+
+    ok(!fesetround(FE_UPWARD), "fesetround failed\n");
+    ret = rint(-3.3);
+    ok(ret == -3.0, "ret = %lf\n", ret);
+    ret = rint(3.3);
+    ok(ret == 4.0, "ret = %lf\n", ret);
+
+    fesetround(rounding_mode);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1772,4 +2169,10 @@ START_TEST(misc)
 #endif
     test_gmtime64();
     test__get_heap_handle();
+    test_exp();
+    test_expf();
+    test_cexp();
+    test_carg();
+    test_cargf();
+    test_rint();
 }

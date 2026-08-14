@@ -45,7 +45,7 @@ Winen kääntämiseen tarvitaan jokin seuraavista:
 - FreeBSD 12.4 tai uudempi
 - Solaris x86 9 tai uudempi
 - NetBSD-current
-- macOS 10.12 tai uudempi
+- macOS 10.15 tai uudempi
 
 Wine vaatii kerneliltä tuen säikeille. Tämän takia toistaiseksi vain yllä
 mainittuja käyttöjärjestelmiä tuetaan; tulevaisuudessa saatetaan lisätä tuki
@@ -65,8 +65,6 @@ muillekin käyttöjärjestelmille, joissa on tarvittava tuki säikeille.
 
 **Tietoa Mac OS X:lle**:
   Winen kääntämiseen tarvitaan Xcode Command Line Tools tai Apple cctools.
-  Vähimmäisversiot ovat clang 3.8, MacOSX10.10.sdk ja mingw-w64 v8.
-  MacOSX10.14.sdk ja myöhemmät sopivat vain wine64:n kääntämiseen.
 
 **Tuetut tiedostojärjestelmät**:
   Wine toimii useimmilla tiedostojärjestelmillä, mutta Samban kanssa on

@@ -37,7 +37,7 @@ d'exploitation suivants :
 - FreeBSD 12.4 ou ultérieur
 - Solaris x86 9 ou ultérieur
 - NetBSD-current
-- macOS 10.12 ou ultérieur
+- macOS 10.15 ou ultérieur
 
 Étant donné que Wine nécessite une implémentation des « threads »
 (processus légers) au niveau du noyau, seuls les systèmes d'exploitation
@@ -63,8 +63,6 @@ futur.
 
 **Informations Mac OS X** :
   Xcode 2.4 ou ultérieur est nécessaire pour compiler Wine sous x86.
-  Le pilote Mac requiert OS X 10.6 ou ultérieur et ne pourra être
-  compilé sous 10.5.
 
 **Systèmes de fichiers pris en charge** :
   Wine devrait fonctionner sur la plupart des systèmes de fichiers.

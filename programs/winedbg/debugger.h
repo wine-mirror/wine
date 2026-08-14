@@ -188,7 +188,7 @@ struct dbg_breakpoint
     unsigned int        info;
     struct              /* only used for watchpoints */
     {
-        BYTE		len : 2;
+        BYTE		len;
         DWORD64		oldval;
     } w;
     struct expr*        condition;

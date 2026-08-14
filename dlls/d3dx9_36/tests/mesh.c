@@ -11832,6 +11832,297 @@ static void test_mesh_optimize(void)
     free_test_context(test_context);
 }
 
+static void test_intersect(void)
+{
+    /* Two quads facing the ray: faces 0 and 1 at z = 1.0 (attribute group 0),
+     * faces 2 and 3 at z = 2.0 (attribute group 1). */
+    static const D3DXVECTOR3 vertices[] =
+    {
+        {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 2.0f}, {1.0f, 0.0f, 2.0f}, {0.0f, 1.0f, 2.0f}, {1.0f, 1.0f, 2.0f},
+    };
+    static const DWORD indices[] = {0, 1, 2, 3, 2, 1, 4, 5, 6, 7, 6, 5};
+    static const DWORD attributes[] = {0, 0, 1, 1};
+    static const DWORD options[] = {D3DXMESH_MANAGED, D3DXMESH_MANAGED | D3DXMESH_32BIT};
+    static const D3DVERTEXELEMENT9 decl_no_position[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 decl_position4[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 *position_decls[] = {decl_no_position, decl_position4};
+    static const D3DXVECTOR3 ray_dir = {0.0f, 0.0f, 1.0f};
+    static const D3DXVECTOR3 ray_pos = {0.25f, 0.25f, 0.0f};
+    static const D3DXVECTOR3 ray_pos_second = {0.75f, 0.75f, 0.0f};
+    static const D3DXVECTOR3 ray_pos_miss = {2.0f, 2.0f, 0.0f};
+    const D3DXINTERSECTINFO *hit_info;
+    struct test_context *test_context;
+    IDirect3DDevice9 *device;
+    DWORD face_index, count, attrib_table_size;
+    D3DXATTRIBUTERANGE attrib_ranges[3];
+    ID3DXBuffer *all_hits;
+    DWORD *attribute_data;
+    float u, v, dist;
+    void *vertex_data;
+    void *index_data;
+    unsigned int i, j;
+    ID3DXMesh *mesh;
+    HRESULT hr;
+    BOOL hit;
+
+    if (!(test_context = new_test_context()))
+    {
+        skip("Couldn't create test context.\n");
+        return;
+    }
+    device = test_context->device;
+
+    for (i = 0; i < ARRAY_SIZE(options); i++)
+    {
+        winetest_push_context("options %#lx", options[i]);
+
+        hr = D3DXCreateMeshFVF(ARRAY_SIZE(attributes), ARRAY_SIZE(vertices), options[i],
+                D3DFVF_XYZ, device, &mesh);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, &vertex_data);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        memcpy(vertex_data, vertices, sizeof(vertices));
+        hr = mesh->lpVtbl->UnlockVertexBuffer(mesh);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, &index_data);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        if (options[i] & D3DXMESH_32BIT)
+        {
+            memcpy(index_data, indices, sizeof(indices));
+        }
+        else
+        {
+            WORD *indices_16bit = index_data;
+
+            for (j = 0; j < ARRAY_SIZE(indices); j++)
+                indices_16bit[j] = indices[j];
+        }
+        hr = mesh->lpVtbl->UnlockIndexBuffer(mesh);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = mesh->lpVtbl->LockAttributeBuffer(mesh, 0, &attribute_data);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        memcpy(attribute_data, attributes, sizeof(attributes));
+        hr = mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = D3DXIntersect(NULL, &ray_pos, &ray_dir, &hit, &face_index, &u, &v, &dist, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, NULL, &ray_dir, &hit, &face_index, &u, &v, &dist, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, NULL, &hit, &face_index, &u, &v, &dist, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, &face_index, NULL, NULL, NULL, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, NULL, &count);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, &all_hits, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, &hit, NULL, NULL, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hit = FALSE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        u = v = dist = -1.0f;
+        all_hits = NULL;
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, &all_hits, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 2, "Got unexpected hit count %lu.\n", count);
+        ok(!!all_hits, "Expected a hit buffer.\n");
+        if (all_hits)
+        {
+            ok(ID3DXBuffer_GetBufferSize(all_hits) == 2 * sizeof(*hit_info),
+                    "Got unexpected buffer size %lu.\n", ID3DXBuffer_GetBufferSize(all_hits));
+            hit_info = ID3DXBuffer_GetBufferPointer(all_hits);
+            ok(!hit_info[0].FaceIndex, "Got unexpected face index %lu.\n", hit_info[0].FaceIndex);
+            ok(compare(hit_info[0].U, 0.25f), "Got unexpected u %.8e.\n", hit_info[0].U);
+            ok(compare(hit_info[0].V, 0.25f), "Got unexpected v %.8e.\n", hit_info[0].V);
+            ok(compare(hit_info[0].Dist, 1.0f), "Got unexpected distance %.8e.\n", hit_info[0].Dist);
+            ok(hit_info[1].FaceIndex == 2, "Got unexpected face index %lu.\n", hit_info[1].FaceIndex);
+            ok(compare(hit_info[1].U, 0.25f), "Got unexpected u %.8e.\n", hit_info[1].U);
+            ok(compare(hit_info[1].V, 0.25f), "Got unexpected v %.8e.\n", hit_info[1].V);
+            ok(compare(hit_info[1].Dist, 2.0f), "Got unexpected distance %.8e.\n", hit_info[1].Dist);
+            ID3DXBuffer_Release(all_hits);
+        }
+
+        hit = FALSE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        dist = -1.0f;
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos_second, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, NULL, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(face_index == 1, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 2, "Got unexpected hit count %lu.\n", count);
+
+        hit = TRUE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        u = v = dist = -1.0f;
+        all_hits = NULL;
+        hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos_miss, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, &all_hits, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!hit, "Expected no hit.\n");
+        ok(!count, "Got unexpected hit count %lu.\n", count);
+        ok(!all_hits, "Expected no hit buffer.\n");
+        ok(face_index == 0xdeadbeef, "Got unexpected face index %lu.\n", face_index);
+        ok(u == -1.0f, "Got unexpected u %.8e.\n", u);
+        ok(v == -1.0f, "Got unexpected v %.8e.\n", v);
+        ok(dist == -1.0f, "Got unexpected distance %.8e.\n", dist);
+
+        hr = D3DXIntersectSubset(NULL, 0, &ray_pos, &ray_dir, &hit, NULL, NULL, NULL, NULL, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, NULL,
+                NULL, NULL, NULL, NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+
+        hr = mesh->lpVtbl->OptimizeInplace(mesh, D3DXMESHOPT_ATTRSORT, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        attrib_table_size = 0;
+        hr = mesh->lpVtbl->GetAttributeTable(mesh, NULL, &attrib_table_size);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(attrib_table_size == 2, "Got unexpected attribute table size %lu.\n", attrib_table_size);
+
+        hit = FALSE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        u = v = dist = -1.0f;
+        all_hits = NULL;
+        hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, &all_hits, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
+        ok(!!all_hits, "Expected a hit buffer.\n");
+        if (all_hits)
+        {
+            ok(ID3DXBuffer_GetBufferSize(all_hits) == sizeof(*hit_info),
+                    "Got unexpected buffer size %lu.\n", ID3DXBuffer_GetBufferSize(all_hits));
+            hit_info = ID3DXBuffer_GetBufferPointer(all_hits);
+            ok(!hit_info[0].FaceIndex, "Got unexpected face index %lu.\n", hit_info[0].FaceIndex);
+            ok(compare(hit_info[0].U, 0.25f), "Got unexpected u %.8e.\n", hit_info[0].U);
+            ok(compare(hit_info[0].V, 0.25f), "Got unexpected v %.8e.\n", hit_info[0].V);
+            ok(compare(hit_info[0].Dist, 1.0f), "Got unexpected distance %.8e.\n", hit_info[0].Dist);
+            ID3DXBuffer_Release(all_hits);
+        }
+
+        hit = FALSE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        dist = -1.0f;
+        u = v = -1.0f;
+        hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 1, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, NULL, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(face_index == 2, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 2.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
+
+        hit = TRUE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        u = v = dist = -1.0f;
+        all_hits = NULL;
+        hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 2, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, &all_hits, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!hit, "Expected no hit.\n");
+        ok(face_index == 0xdeadbeef, "Got unexpected face index %lu.\n", face_index);
+        ok(u == -1.0f, "Got unexpected u %.8e.\n", u);
+        ok(v == -1.0f, "Got unexpected v %.8e.\n", v);
+        ok(dist == -1.0f, "Got unexpected distance %.8e.\n", dist);
+        ok(count == 0xdeadbeef, "Got unexpected hit count %lu.\n", count);
+        ok(!all_hits, "Expected no hit buffer.\n");
+
+        attrib_ranges[0].AttribId = 0;
+        attrib_ranges[0].FaceStart = 0;
+        attrib_ranges[0].FaceCount = 1;
+        attrib_ranges[0].VertexStart = 0;
+        attrib_ranges[0].VertexCount = ARRAY_SIZE(vertices);
+        attrib_ranges[1].AttribId = 1;
+        attrib_ranges[1].FaceStart = 1;
+        attrib_ranges[1].FaceCount = 1;
+        attrib_ranges[1].VertexStart = 0;
+        attrib_ranges[1].VertexCount = ARRAY_SIZE(vertices);
+        attrib_ranges[2].AttribId = 0;
+        attrib_ranges[2].FaceStart = 2;
+        attrib_ranges[2].FaceCount = 1;
+        attrib_ranges[2].VertexStart = 0;
+        attrib_ranges[2].VertexCount = ARRAY_SIZE(vertices);
+        hr = mesh->lpVtbl->SetAttributeTable(mesh, attrib_ranges, ARRAY_SIZE(attrib_ranges));
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hit = FALSE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        dist = -1.0f;
+        hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, NULL, &count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
+
+        mesh->lpVtbl->Release(mesh);
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(position_decls); i++)
+    {
+        ID3DXMesh *decl_mesh;
+
+        winetest_push_context("decl %u", i);
+
+        hr = D3DXCreateMesh(ARRAY_SIZE(attributes), ARRAY_SIZE(vertices), D3DXMESH_MANAGED,
+                position_decls[i], device, &decl_mesh);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hit = TRUE;
+        face_index = 0xdeadbeef;
+        count = 0xdeadbeef;
+        hr = D3DXIntersect((ID3DXBaseMesh *)decl_mesh, &ray_pos, &ray_dir, &hit, &face_index,
+                &u, &v, &dist, NULL, &count);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+
+        decl_mesh->lpVtbl->Release(decl_mesh);
+        winetest_pop_context();
+    }
+
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -11839,6 +12130,7 @@ START_TEST(mesh)
     D3DXComputeBoundingSphereTest();
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
+    test_intersect();
     D3DXCreateMeshTest();
     D3DXCreateMeshFVFTest();
     D3DXLoadMeshTest();

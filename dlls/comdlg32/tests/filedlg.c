@@ -1326,6 +1326,66 @@ static void test_ole_initialization(void)
     UnhookWindowsHookEx(hook);
 }
 
+static UINT_PTR CALLBACK cdm_setcontroltext_hook_proc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    NMHDR *nmh = (NMHDR *)lParam;
+    HWND control, hwnd;
+    char buffer[64];
+
+    if (msg == WM_NOTIFY && nmh->code == CDN_INITDONE)
+    {
+        hwnd = GetParent(hDlg);
+
+        control = GetDlgItem(hwnd, edt1);
+        ok(!control, "Unexpected control.\n");
+        control = GetDlgItem(hwnd, cmb13);
+        ok(!!control, "Unexpected control.\n");
+
+        SendMessageA(hwnd, CDM_SETCONTROLTEXT, edt1, (LPARAM)"test-edt1");
+
+        buffer[0] = 0;
+        GetDlgItemTextA(hwnd, cmb13, buffer, 64);
+        ok(!strcmp(buffer, "test-edt1"), "Unexpected text %s.\n", debugstr_a(buffer));
+
+        PostMessageA(hwnd, WM_COMMAND, IDCANCEL, FALSE);
+    }
+
+    return 0;
+}
+
+static void test_CDM_SETCONTROLTEXT(void)
+{
+    char filename[MAX_PATH] = "";
+    char dir[MAX_PATH];
+    OPENFILENAMEA ofn;
+    BOOL result;
+
+    GetSystemDirectoryA(dir, MAX_PATH);
+
+    memset(&ofn, 0, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLEHOOK;
+    ofn.lpstrDefExt = "txt";
+    ofn.lpfnHook = cdm_setcontroltext_hook_proc;
+    ofn.lpstrInitialDir = dir;
+
+    /* Newer structure version is needed for trigger cmb13 vs edt1 usage */
+    ok(ofn.lStructSize > OPENFILENAME_SIZE_VERSION_400A, "Unexpected structure size.\n");
+
+    result = GetOpenFileNameA(&ofn);
+    ok(!result, "Unexpected result %d.\n", result);
+    ok(!CommDlgExtendedError(), "Unexpected error %ld.\n", CommDlgExtendedError());
+
+    result = GetSaveFileNameA(&ofn);
+    ok(!result, "Unexpected result %d.\n", result);
+    ok(!CommDlgExtendedError(), "Unexpected error %ld.\n", CommDlgExtendedError());
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
@@ -1341,4 +1401,5 @@ START_TEST(filedlg)
     test_null_filename();
     test_directory_filename();
     test_ole_initialization();
+    test_CDM_SETCONTROLTEXT();
 }

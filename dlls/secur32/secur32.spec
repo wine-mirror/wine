@@ -73,7 +73,9 @@
 @ stdcall SspiEncodeStringsAsAuthIdentity(wstr wstr wstr ptr) sspicli.SspiEncodeStringsAsAuthIdentity
 @ stdcall SspiFreeAuthIdentity(ptr) sspicli.SspiFreeAuthIdentity
 @ stdcall SspiLocalFree(ptr) sspicli.SspiLocalFree
+@ stdcall SspiMarshalAuthIdentity(ptr ptr ptr) sspicli.SspiMarshalAuthIdentity
 @ stdcall SspiPrepareForCredWrite(ptr wstr ptr ptr ptr ptr ptr) sspicli.SspiPrepareForCredWrite
+@ stdcall SspiUnmarshalAuthIdentity(long ptr ptr) sspicli.SspiUnmarshalAuthIdentity
 @ stdcall SspiZeroAuthIdentity(ptr) sspicli.SspiZeroAuthIdentity
 @ stdcall TranslateNameA(str long long ptr ptr)
 @ stdcall TranslateNameW(wstr long long ptr ptr)

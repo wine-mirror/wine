@@ -104,7 +104,14 @@ static const char *debugstr_ok( const char *cond )
         POINT v = (r);                                                                             \
         ok( !memcmp( &v, &(e), sizeof(v) ), "%s %s\n", debugstr_ok(#r), wine_dbgstr_point(&v) );   \
     } while (0)
+#define ok_ex( r, op, e, t, f, ... )                                                               \
+    do                                                                                             \
+    {                                                                                              \
+        t v = (r);                                                                                 \
+        ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
+    } while (0)
 #define ok_ret( e, r ) ok_eq( e, r, UINT_PTR, "%Iu, error %ld", GetLastError() )
+#define ok_ptr( r, op, e ) ok_ex( r, op, e, void *, "%p" )
 
 enum user_function
 {
@@ -4534,293 +4541,465 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
-struct wnd_event
+struct test_AttachThreadInput_params
 {
     HWND hwnd;
     HANDLE wait_event;
     HANDLE start_event;
     DWORD attach_from;
     DWORD attach_to;
-    BOOL setWindows;
+    DWORD attach_count;
+    BOOL activate;
+    HWND active_hwnd;
 };
 
-static DWORD WINAPI thread_proc(void *param)
+static DWORD WINAPI test_AttachThreadInput_thread(void *param)
 {
+    struct test_AttachThreadInput_params *args = param;
     MSG msg;
-    struct wnd_event *wnd_event = param;
-    BOOL ret;
 
-    if (wnd_event->wait_event)
+    if (args->wait_event)
     {
-        ok(WaitForSingleObject(wnd_event->wait_event, INFINITE) == WAIT_OBJECT_0,
-           "WaitForSingleObject failed\n");
-        CloseHandle(wnd_event->wait_event);
+        ok_ret( 0, WaitForSingleObject( args->wait_event, 1000 ) );
+        CloseHandle( args->wait_event );
     }
 
-    if (wnd_event->attach_from)
+    for (UINT i = 0; i < max( 1, args->attach_count ); i++)
     {
-        ret = AttachThreadInput(wnd_event->attach_from, GetCurrentThreadId(), TRUE);
-        ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+        if (args->attach_from) ok_ret( 1, AttachThreadInput( args->attach_from, GetCurrentThreadId(), TRUE ) );
+        if (args->attach_to) ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), args->attach_to, TRUE ) );
     }
 
-    if (wnd_event->attach_to)
+    args->hwnd = CreateWindowExA( 0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
+                                       100, 100, 200, 200, 0, 0, 0, NULL );
+    ok_ptr( args->hwnd, !=, NULL );
+
+    if (args->activate)
     {
-        ret = AttachThreadInput(GetCurrentThreadId(), wnd_event->attach_to, TRUE);
-        ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+        SetFocus( args->hwnd );
+        SetActiveWindow( args->hwnd );
+    }
+    else if (args->active_hwnd)
+    {
+        SetFocus( args->active_hwnd );
+        SetActiveWindow( args->active_hwnd );
+        ok_ptr( GetActiveWindow(), ==, args->active_hwnd );
+        ok_ptr( GetFocus(), ==, args->active_hwnd );
     }
 
-    wnd_event->hwnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
-                                      100, 100, 200, 200, 0, 0, 0, NULL);
-    ok(wnd_event->hwnd != 0, "Failed to create overlapped window\n");
+    SetEvent( args->start_event );
 
-    if (wnd_event->setWindows)
+    while (GetMessageA( &msg, 0, 0, 0 ))
     {
-        SetFocus(wnd_event->hwnd);
-        SetActiveWindow(wnd_event->hwnd);
-    }
-
-    SetEvent(wnd_event->start_event);
-
-    while (GetMessageA(&msg, 0, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
+        TranslateMessage( &msg );
+        DispatchMessageA( &msg );
     }
 
     return 0;
 }
 
-static void test_attach_input(void)
+static void test_AttachThreadInput(void)
 {
-    HANDLE hThread;
-    HWND ourWnd, Wnd2;
-    DWORD ret, tid;
-    struct wnd_event wnd_event;
-    WNDCLASSA cls;
-
-    cls.style = 0;
-    cls.lpfnWndProc = MsgCheckProcA;
-    cls.cbClsExtra = 0;
-    cls.cbWndExtra = 0;
-    cls.hInstance = GetModuleHandleA(0);
-    cls.hIcon = 0;
-    cls.hCursor = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW);
-    cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    cls.lpszMenuName = NULL;
-    cls.lpszClassName = "TestWindowClass";
-    if(!RegisterClassA(&cls)) return;
-
-    wnd_event.wait_event = NULL;
-    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.attach_from = 0;
-    wnd_event.attach_to = 0;
-    wnd_event.setWindows = FALSE;
-    if (!wnd_event.start_event)
+    HANDLE thread1, thread2, thread3;
+    HWND hwnd, hwnd2;
+    DWORD tid1, tid2, tid3;
+    struct test_AttachThreadInput_params args1, args2, args3;
+    const WNDCLASSA cls =
     {
-        win_skip("skipping interthread message test under win9x\n");
-        return;
+        .lpfnWndProc = MsgCheckProcA,
+        .hInstance = GetModuleHandleA( 0 ),
+        .hCursor = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW ),
+        .hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+        .lpszClassName = "TestWindowClass",
+    };
+
+    ok_ret( 1, !!RegisterClassA( &cls ) );
+
+
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    thread1 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1 );
+    ok_ptr( thread1, !=, NULL );
+
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 1000 ) );
+    CloseHandle( args1.start_event );
+
+    hwnd = CreateWindowExA( 0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, 0, 0, 0, NULL );
+    ok_ptr( hwnd, !=, NULL );
+    hwnd2 = CreateWindowExA( 0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, 0, 0, 0, NULL );
+    ok_ptr( hwnd2, !=, NULL );
+
+    SetFocus( hwnd );
+    SetActiveWindow( hwnd );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    ok_ptr( GetActiveWindow(), ==, hwnd );
+    ok_ptr( GetFocus(), ==, hwnd );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)hwnd );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, hwnd );
+    ok_ptr( GetFocus(), ==, hwnd );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, 0 );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+
+    ok_ptr( GetActiveWindow(), ==, hwnd );
+    ok_ptr( GetFocus(), ==, hwnd );
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)hwnd );
+
+    SetActiveWindow( hwnd2 );
+    SetFocus( hwnd2 );
+    ok_ptr( GetActiveWindow(), ==, hwnd2 );
+    ok_ptr( GetFocus(), ==, hwnd2 );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)hwnd2 );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, hwnd2 );
+    ok_ptr( GetFocus(), ==, hwnd2 );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, 0 );
+
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
+    CloseHandle( thread1 );
+
+
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.activate = TRUE;
+
+    thread1 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1 );
+    ok_ptr( thread1, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 1000 ) );
+    CloseHandle( args1.start_event );
+
+    SetFocus( hwnd );
+    SetActiveWindow( hwnd );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+
+    ok( GetActiveWindow() == args1.hwnd, "expected active %p, got %p\n", args1.hwnd, GetActiveWindow() );
+    ok( GetFocus() == args1.hwnd, "expected focus %p, got %p\n", args1.hwnd, GetFocus() );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)args1.hwnd );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+
+    ok( GetActiveWindow() == 0, "expected active 0, got %p\n", GetActiveWindow() );
+    ok( GetFocus() == 0, "expected focus 0, got %p\n", GetFocus() );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)args1.hwnd );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+
+    ok( GetActiveWindow() == args1.hwnd, "expected active %p, got %p\n", args1.hwnd, GetActiveWindow() );
+    ok( GetFocus() == args1.hwnd, "expected focus %p, got %p\n", args1.hwnd, GetFocus() );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)args1.hwnd );
+
+    SetFocus( hwnd2 );
+    SetActiveWindow( hwnd2 );
+    ok_ptr( GetActiveWindow(), ==, hwnd2 );
+    ok_ptr( GetFocus(), ==, hwnd2 );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, (LPARAM)hwnd2 );
+
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+
+    ok_ptr( GetActiveWindow(), ==, hwnd2 );
+    ok_ptr( GetFocus(), ==, hwnd2 );
+
+    SendMessageA( args1.hwnd, WM_USER + 1, 0, 0 );
+
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
+    CloseHandle( thread1 );
+
+
+    memset( &args1, 0, sizeof(args1) );
+    args1.wait_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.activate = TRUE;
+
+    thread1 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1 );
+    ok_ptr( thread1, !=, NULL );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
+
+    SetEvent( args1.wait_event );
+
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 1000 ) );
+    CloseHandle( args1.start_event );
+
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
+    CloseHandle( thread1 );
+
+
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.attach_from = GetCurrentThreadId();
+
+    SetFocus( hwnd );
+    SetActiveWindow( hwnd );
+
+    thread1 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1 );
+    ok_ptr( thread1, !=, NULL );
+
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 1000 ) );
+    CloseHandle( args1.start_event );
+
+    ok_ptr( GetActiveWindow(), ==, hwnd );
+    ok_ptr( GetFocus(), ==, hwnd );
+
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
+    CloseHandle( thread1 );
+
+
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.attach_to = GetCurrentThreadId();
+
+    SetFocus( hwnd );
+    SetActiveWindow( hwnd );
+
+    thread1 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1 );
+    ok_ptr( thread1, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 1000 ) );
+    CloseHandle( args1.start_event );
+
+    ok_ptr( GetActiveWindow(), ==, hwnd );
+    ok_ptr( GetFocus(), ==, hwnd );
+
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
+    CloseHandle( thread1 );
+
+
+    /* thread input attachments are refcounted */
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.attach_from = GetCurrentThreadId();
+
+    thread1 = CreateThread(  NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1  );
+    ok_ptr( thread1, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args1.start_event ) );
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
     }
 
-    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
 
-    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(wnd_event.start_event);
+    /* from / to parameters order don't really matter wrt. refcounting */
+    for (UINT i = 0; i < 1; i++)
+    {
+        todo_wine_if(i) ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+        todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
 
-    ourWnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
-                            0, 0, 0, 0, 0, 0, 0, NULL);
-    ok(ourWnd!= 0, "failed to create ourWnd window\n");
+    for (UINT i = 0; i < 3; i++)
+    {
+        todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+        todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
 
-    Wnd2 = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
-                            0, 0, 0, 0, 0, 0, 0, NULL);
-    ok(Wnd2!= 0, "failed to create Wnd2 window\n");
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
 
-    SetFocus(ourWnd);
-    SetActiveWindow(ourWnd);
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    /* attaching from/to another thread while attached shares the thread input between every thread */
 
-    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
-    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
+    /* attach main -> thread1 once */
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)ourWnd);
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    /* attach main -> thread2 two times */
+    args2.attach_from = GetCurrentThreadId();
+    args2.attach_count = 2;
+    args2.active_hwnd = args1.hwnd;
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
-    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
-    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    ok_ptr( GetFocus(), ==, args2.hwnd );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
 
-    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
-    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)ourWnd);
+    /* thread2 destruction releases all its references on the thread input, we only have one left */
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
 
-    SetActiveWindow(Wnd2);
-    SetFocus(Wnd2);
-    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
-    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)Wnd2);
+    /* attach thread1 -> main two times */
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
-    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
-    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    /* attach thread2 -> main two times */
+    args2.attach_to = GetCurrentThreadId();
+    args2.attach_count = 2;
+    args2.active_hwnd = args1.hwnd;
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    ok_ptr( GetFocus(), ==, args2.hwnd );
 
-    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok(ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(hThread);
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
 
-    wnd_event.wait_event = NULL;
-    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.attach_from = 0;
-    wnd_event.attach_to = 0;
-    wnd_event.setWindows = TRUE;
+    /* need to detach thread1 -> main two times */
+    ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
 
-    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(wnd_event.start_event);
 
-    SetFocus(ourWnd);
-    SetActiveWindow(ourWnd);
+    /* test cyclic and complex attachment graph */
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
 
-    ok(GetActiveWindow() == wnd_event.hwnd, "expected active %p, got %p\n", wnd_event.hwnd, GetActiveWindow());
-    ok(GetFocus() == wnd_event.hwnd, "expected focus %p, got %p\n", wnd_event.hwnd, GetFocus());
+    memset( &args3, 0, sizeof(args3) );
+    args3.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args3.attach_from = tid2; /* attach thread2 -> thread3 */
+    args3.activate = TRUE;
+    thread3 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args3, 0, &tid3 );
+    ok_ptr( thread3, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args3.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args3.start_event ) );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+    /* attach main -> thread1 */
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    /* attach thread1 -> thread2 */
+    ok_ret( 1, AttachThreadInput( tid1, tid2, TRUE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
 
-    ok(GetActiveWindow() == 0, "expected active 0, got %p\n", GetActiveWindow());
-    ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
+    /* attach thread3 -> thread1 */
+    ok_ret( 1, AttachThreadInput( tid3, tid1, TRUE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+    /* all threads are attached */
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args2.hwnd );
 
-    ok(GetActiveWindow() == wnd_event.hwnd, "expected active %p, got %p\n", wnd_event.hwnd, GetActiveWindow());
-    ok(GetFocus() == wnd_event.hwnd, "expected focus %p, got %p\n", wnd_event.hwnd, GetFocus());
+    SetFocus( args3.hwnd );
+    SetActiveWindow( args3.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
 
-    SetFocus(Wnd2);
-    SetActiveWindow(Wnd2);
-    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
-    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+    /* we are still attached to thread3 from its attachment to thread1 */
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)Wnd2);
+    /* we are not attached to thread3 directly and cannot detach */
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( tid3, GetCurrentThreadId(), FALSE ) );
+    todo_wine ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( GetCurrentThreadId(), tid3, FALSE ) );
+    todo_wine ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
-    ok(ret, "AttachThreadInput error %ld\n", GetLastError());
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
 
-    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
-    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+    /* we lose our attachment to thread3 after thread1 exits */
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 5000 ) );
+    ok_ret( 1, CloseHandle( thread1 ) );
 
-    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
+    todo_wine ok_ptr( GetActiveWindow(), ==, NULL );
+    todo_wine ok_ptr( GetFocus(), ==, NULL );
 
-    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok(ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
+    ok_ret( 1, PostMessageA( args3.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread3, 5000 ) );
+    ok_ret( 1, CloseHandle( thread3 ) );
 
-    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(hThread);
 
-    wnd_event.wait_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.attach_from = 0;
-    wnd_event.attach_to = 0;
-    wnd_event.setWindows = TRUE;
-
-    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
-    ok(!ret, "AttachThreadInput succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef) /* <= Win XP */,
-       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = AttachThreadInput(tid, GetCurrentThreadId(), TRUE);
-    ok(!ret, "AttachThreadInput succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef) /* <= Win XP */,
-       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-
-    SetEvent(wnd_event.wait_event);
-
-    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(wnd_event.start_event);
-
-    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok(ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
-
-    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(hThread);
-
-    wnd_event.wait_event = NULL;
-    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.attach_from = GetCurrentThreadId();
-    wnd_event.attach_to = 0;
-    wnd_event.setWindows = FALSE;
-
-    SetFocus(ourWnd);
-    SetActiveWindow(ourWnd);
-
-    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
-
-    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(wnd_event.start_event);
-
-    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
-    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
-
-    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok(ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
-
-    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(hThread);
-
-    wnd_event.wait_event = NULL;
-    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
-    wnd_event.attach_from = 0;
-    wnd_event.attach_to = GetCurrentThreadId();
-    wnd_event.setWindows = FALSE;
-
-    SetFocus(ourWnd);
-    SetActiveWindow(ourWnd);
-
-    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
-    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
-
-    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(wnd_event.start_event);
-
-    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
-    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
-
-    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
-    ok(ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
-
-    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
-    CloseHandle(hThread);
-    DestroyWindow(ourWnd);
-    DestroyWindow(Wnd2);
+    DestroyWindow( hwnd );
+    DestroyWindow( hwnd2 );
+    UnregisterClassA( cls.lpszClassName, cls.hInstance );
 }
 
 struct get_key_state_test_desc
@@ -5473,6 +5652,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( class, "RegisterClassW failed: %lu\n", GetLastError() );
 
     ret = pGetPointerInfo( 1, invalid_ptr );
+    todo_wine_if( ret == STATUS_ACCESS_VIOLATION )
     ok( !ret, "GetPointerInfo succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* w10 32bit */,
@@ -6347,7 +6527,7 @@ START_TEST(input)
     test_keyboard_layout_name();
     test_ActivateKeyboardLayout( argv );
     test_key_names();
-    test_attach_input();
+    test_AttachThreadInput();
     test_GetKeyState();
     test_OemKeyScan();
     test_rawinput(argv[0]);

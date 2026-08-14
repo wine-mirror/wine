@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1999 - 2001 D A Pickles
  * Copyright (C) 2007 J Edmeades
+ * Copyright (C) 2025 Joe Souza (tab-completion support)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,34 +33,443 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
+/* Delimiters for tab-completion support */
+#define BASE_DELIMS             L",=;~!^&()+{}[]"
+#define PATH_SEPARATION_DELIMS  L" " BASE_DELIMS
+#define INTRA_PATH_DELIMS       L"\\:" BASE_DELIMS
+
+typedef struct _SEARCH_CONTEXT
+{
+    WIN32_FIND_DATAW *fd;
+    BOOL have_quotes;
+    BOOL user_specified_quotes;
+    BOOL is_dir_search;
+    int search_pos;
+    int insert_pos;
+    int entry_count;
+    int current_entry;
+    WCHAR searchstr[MAXSTRING];
+} SEARCH_CONTEXT;
+
 extern const WCHAR inbuilt[][10];
 extern struct env_stack *pushd_directories;
 
-BATCH_CONTEXT *context = NULL;
+struct batch_context *context = NULL;
 int errorlevel;
 WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
-BOOL  interactive;
 FOR_CONTEXT *forloopcontext; /* The 'for' loop context */
 BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
 
-int defaultColor = 7;
-BOOL echo_mode = TRUE;
-
 WCHAR anykey[100], version_string[100];
 
-static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
+static BOOL unicodeOutput = FALSE;
+
+/* input handling */
+static HANDLE console_input;
+BOOL echo_mode = TRUE;
+
+/* Output handling */
+static DWORD orig_console_mode;
+static DWORD internal_console_mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+                                     | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
 /* Variables pertaining to paging */
 static BOOL paged_mode;
 static const WCHAR *pagedMessage = NULL;
 static int line_count;
 static int max_height;
-static int max_width;
-static int numChars;
 
 static HANDLE control_c_event;
 
 #define MAX_WRITECONSOLE_SIZE 65535
+
+static BOOL is_directory_operation(WCHAR *inputBuffer)
+{
+    WCHAR *param = NULL, *first_param;
+    BOOL ret = FALSE;
+
+    first_param = WCMD_parameter(inputBuffer, 0, &param, TRUE, FALSE);
+
+    if (!wcsicmp(first_param, L"cd") ||
+        !wcsicmp(first_param, L"rd") ||
+        !wcsicmp(first_param, L"md") ||
+        !wcsicmp(first_param, L"chdir") ||
+        !wcsicmp(first_param, L"rmdir") ||
+        !wcsicmp(first_param, L"mkdir")) {
+
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static void clear_console_characters(const HANDLE hOutput, SHORT cCount, const SHORT width)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD written;
+    SHORT chars;
+
+    GetConsoleScreenBufferInfo(hOutput, &csbi);
+
+    /* Need to handle clearing multiple lines, in case user resized console window. */
+    while (cCount) {
+        chars = min(width - csbi.dwCursorPosition.X, cCount);
+        FillConsoleOutputCharacterW(hOutput, L' ', chars, csbi.dwCursorPosition, &written);
+        csbi.dwCursorPosition.Y++;      /* Bump to next row. */
+        csbi.dwCursorPosition.X = 0;    /* First column in the row. */
+        cCount -= chars;
+    }
+}
+
+static void set_cursor_visible(const HANDLE hOutput, const BOOL visible)
+{
+    CONSOLE_CURSOR_INFO cursorInfo;
+
+    if (GetConsoleCursorInfo(hOutput, &cursorInfo)) {
+        cursorInfo.bVisible = visible;
+        SetConsoleCursorInfo(hOutput, &cursorInfo);
+    }
+}
+
+static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
+{
+    int cc = 0, nn = 0;
+    WCHAR *param = NULL, *last_param, *stripped_copy = NULL;
+    WCHAR last_stripped_copy[MAXSTRING] = L"\0";
+    BOOL need_wildcard = TRUE;
+
+    sc->searchstr[0] = L'\0';
+
+    /* Parse the buffer to find the last parameter in the buffer, where tab was pressed. */
+    do {
+        last_param = param;
+        if (stripped_copy) {
+            wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
+        }
+        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, PATH_SEPARATION_DELIMS);
+    } while (param);
+
+    if (last_param) {
+        cc = last_param - inputBuffer;
+    }
+
+    if (inputBuffer[cc] == L'\"') {
+        sc->user_specified_quotes = TRUE;
+        sc->have_quotes = TRUE;
+        cc++;
+    }
+
+    if (last_stripped_copy[0]) {
+        /* We used the stripped version of the path for the search string, and also use
+         * it to replace the user's text in case and only if we find a match.
+         * It's legal to have quotes in strange places in the path, and WCMD_parameter
+         * removes them for us.
+         */
+        wcsncpy_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), last_stripped_copy, _TRUNCATE);
+        if (wcschr(sc->searchstr, L'?') || wcschr(sc->searchstr, L'*')) {
+            need_wildcard = FALSE;
+        }
+    }
+
+    /* If the user specified quotes then we treat delimiters in the path as literals and ignore them.
+     * Otherwise if inputBuffer ends in one of our delimiters then override the parsing above and use
+     * that as the search pos (i.e. a wildcard search).
+     * We do this after the parsing because the parsing is needed to determine if the user specified
+     * quotes on the current path that is subject to tab completion.
+     */
+    if (!sc->user_specified_quotes && len && wcschr(PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
+        cc = len;
+        sc->searchstr[0] = L'\0';
+        need_wildcard = TRUE;
+    }
+
+    sc->search_pos = cc;
+    if (need_wildcard) {
+        wcsncat_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), L"*", _TRUNCATE);
+    }
+}
+
+static void find_insert_pos(const WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
+{
+    int cc = len - 1;
+
+    /* Handle paths here.  Find last '\\' or other delimiter.
+     * If not found then insert pos is the same as search pos.
+     */
+    if (sc->user_specified_quotes) {
+        /* If the user specified quotes then treat the usual delimiters as literals
+         * and ignore them.
+         */
+        while (cc > sc->search_pos && inputBuffer[cc] != L'\\') {
+            cc--;
+        }
+
+        if (inputBuffer[cc] == L'\"' || inputBuffer[cc] == L'\\') {
+            cc++;
+        }
+    } else {
+        while (cc > sc->search_pos && !wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+            cc--;
+        }
+
+        if (inputBuffer[cc] == L'\"' || wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+            cc++;
+        }
+    }
+
+    sc->insert_pos = cc;
+}
+
+/* Based on code in WCMD_list_directory.
+ * Could have used a linked-list, but array is more efficient for
+ * build once / read mostly.
+ */
+static void build_directory_entry_list(SEARCH_CONTEXT *sc)
+{
+    HANDLE hff;
+
+    sc->entry_count = 0;
+    sc->current_entry = -1;
+
+    sc->fd = xalloc(sizeof(WIN32_FIND_DATAW));
+
+    WINE_TRACE("Looking for matches to '%s'\n", wine_dbgstr_w(sc->searchstr));
+    hff = FindFirstFileW(sc->searchstr, &sc->fd[sc->entry_count]);
+    if (hff != INVALID_HANDLE_VALUE) {
+        do {
+            /* Always skip "." and ".." entries. */
+            if (wcscmp(sc->fd[sc->entry_count].cFileName, L".") && wcscmp(sc->fd[sc->entry_count].cFileName, L"..")) {
+                if (!sc->is_dir_search || sc->fd[sc->entry_count].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    sc->entry_count++;
+                    sc->fd = xrealloc(sc->fd, (sc->entry_count + 1) * sizeof(WIN32_FIND_DATAW));
+                }
+            }
+        } while (FindNextFileW(hff, &sc->fd[sc->entry_count]));
+
+        FindClose(hff);
+    }
+}
+
+static void free_directory_entry_list(SEARCH_CONTEXT *sc)
+{
+    free(sc->fd);
+    sc->fd = NULL;
+    sc->entry_count = 0;
+    sc->current_entry = 0;
+}
+
+static void get_next_matching_directory_entry(SEARCH_CONTEXT *sc, BOOL reverse)
+{
+    if (reverse) {
+        sc->current_entry--;
+        if (sc->current_entry < 0) {
+            sc->current_entry = sc->entry_count - 1;
+        }
+    } else {
+        sc->current_entry++;
+        if (sc->current_entry >= sc->entry_count) {
+            sc->current_entry = 0;
+        }
+    }
+}
+
+static void update_input_buffer(WCHAR *inputBuffer, const DWORD inputBufferLength, SEARCH_CONTEXT *sc)
+{
+    BOOL needQuotes = FALSE;
+    BOOL removeQuotes = FALSE;
+    int len;
+
+    /* We have found the insert position for the results.  Terminate the string here. */
+    inputBuffer[sc->insert_pos] = L'\0';
+
+    /* If there are no spaces or delimiters in the path then we can remove quotes when appending
+     * the search result, unless the search result itself requires them.
+     */
+    if (sc->have_quotes && !sc->user_specified_quotes && !wcspbrk(&inputBuffer[sc->search_pos], PATH_SEPARATION_DELIMS)) {
+        TRACE("removeQuotes = TRUE\n");
+        removeQuotes = TRUE;
+    }
+
+    /* Online documentation states that paths or filenames should be quoted if they are long
+     * file names or contain spaces.  In practice, modern Windows seems to quote paths/files
+     * only if they contain spaces or delimiters.
+     */
+    needQuotes = !!wcspbrk(sc->fd[sc->current_entry].cFileName, PATH_SEPARATION_DELIMS);
+    len = lstrlenW(inputBuffer);
+    /* Remove starting quotes, if able. */
+    if (removeQuotes && !needQuotes) {
+        /* Quotes are at search_pos-1 if they were already present at the start of this search.
+         * Otherwise quotes are at search_pos if we added them.
+         */
+        if (inputBuffer[sc->search_pos] == L'"') {
+            memmove(&inputBuffer[sc->search_pos], &inputBuffer[sc->search_pos+1], (len - sc->search_pos) * sizeof(WCHAR));
+            sc->have_quotes = FALSE;
+            sc->insert_pos--;
+        }
+    } else
+    /* Add starting quotes if needed. */
+    if (needQuotes && !sc->have_quotes) {
+        if (len < inputBufferLength - 1) {
+            if (sc->search_pos <= len) {
+                memmove(&inputBuffer[sc->search_pos+1], &inputBuffer[sc->search_pos], (len - sc->search_pos + 1) * sizeof(WCHAR));
+                inputBuffer[sc->search_pos] = L'\"';
+                sc->have_quotes = TRUE;
+                sc->insert_pos++;
+            }
+        }
+    }
+    wcsncat_s(inputBuffer, inputBufferLength, sc->fd[sc->current_entry].cFileName, _TRUNCATE);
+    /* Add closing quotes if needed. */
+    if (needQuotes || (sc->have_quotes && !removeQuotes)) {
+        len = lstrlenW(inputBuffer);
+        if (len < inputBufferLength - 1) {
+            inputBuffer[len] = L'\"';
+            inputBuffer[len+1] = L'\0';
+        }
+    }
+}
+
+/* Intended as a mostly drop-in replacement for ReadConsole, but with tab-completion support.
+ */
+BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead)
+{
+    HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    SEARCH_CONTEXT sc = {0};
+    WCHAR *lastResult = NULL;
+    CONSOLE_SCREEN_BUFFER_INFO startConsoleInfo, lastConsoleInfo;
+    DWORD numWritten;
+    UINT oldCurPos, curPos;
+    BOOL done = FALSE;
+    BOOL ret = FALSE;
+    int maxLen = 0;  /* Track maximum length in case user fetches a long string from a previous iteration in history. */
+
+    if (!VerifyConsoleIoHandle(hInput) || !inputBuffer || !inputBufferLength) {
+        return FALSE;
+    }
+
+    /* Get starting cursor position and size */
+    if (!GetConsoleScreenBufferInfo(hOutput, &startConsoleInfo)) {
+        return FALSE;
+    }
+    lastConsoleInfo = startConsoleInfo;
+
+    *inputBuffer = L'\0';
+    curPos = 0;
+
+    while (!done) {
+        CONSOLE_READCONSOLE_CONTROL inputControl;
+        int len;
+
+        len = lstrlenW(inputBuffer);
+
+        /* Update current input display in console */
+        set_cursor_visible(hOutput, FALSE);
+        SetConsoleCursorPosition(hOutput, startConsoleInfo.dwCursorPosition);
+
+        WriteConsoleW(hOutput, inputBuffer, len, &numWritten, NULL);
+        if (maxLen > len) {
+            clear_console_characters(hOutput, maxLen - len, lastConsoleInfo.dwSize.X); /* width at time of last console update */
+        }
+        maxLen = len;
+        set_cursor_visible(hOutput, TRUE);
+
+        /* Remember current dimensions in case user resizes console window. */
+        GetConsoleScreenBufferInfo(hOutput, &lastConsoleInfo);
+
+        inputControl.nLength = sizeof(inputControl);
+        inputControl.nInitialChars = len;
+        inputControl.dwCtrlWakeupMask = (1 << '\t');
+        inputControl.dwControlKeyState = 0;
+
+        /* Allow room for NULL terminator. inputBufferLength is at least 1 due to check above. */
+        ret = ReadConsoleW(hInput, inputBuffer, inputBufferLength - 1, numRead, &inputControl);
+        if (!ret) {
+            break;
+        }
+
+        inputBuffer[*numRead] = L'\0';
+        TRACE("ReadConsole: [%lu][%s]\n", *numRead, wine_dbgstr_w(inputBuffer));
+        len = *numRead;
+        if (len > maxLen) {
+            maxLen = len;
+        }
+        oldCurPos = curPos;
+        curPos = 0;
+        while (curPos < len && inputBuffer[curPos] != L'\t') {
+            curPos++;
+        }
+        /* curPos is often numRead - 1, but not always, as in the case where history is retrieved
+         * and then user backspaces to somewhere mid-string and then hits Tab.
+         */
+        TRACE("numRead: %lu, curPos: %u\n", *numRead, curPos);
+
+        switch (inputBuffer[curPos]) {
+        case L'\t':
+            TRACE("TAB: [%s]\n", wine_dbgstr_w(inputBuffer));
+            inputBuffer[curPos] = L'\0';
+
+            /* See if we need to conduct a new search. */
+            if (curPos != oldCurPos || (!lastResult || wcscmp(inputBuffer, lastResult))) {
+                /* New search */
+
+                sc.have_quotes = FALSE;
+                sc.user_specified_quotes = FALSE;
+                sc.search_pos = 0;
+                sc.insert_pos = 0;
+
+                build_search_string(inputBuffer, curPos, &sc);
+                TRACE("***** New search: [%s]\n", wine_dbgstr_w(sc.searchstr));
+
+                sc.is_dir_search = is_directory_operation(inputBuffer);
+
+                free_directory_entry_list(&sc);
+                build_directory_entry_list(&sc);
+            }
+
+            if (sc.entry_count) {
+                get_next_matching_directory_entry(&sc, (inputControl.dwControlKeyState & SHIFT_PRESSED) ? TRUE : FALSE);
+
+                /* If this is our first time through here for this search, we need to find the insert position
+                 * for the results.  Note that this is very likely not the same location as the search position.
+                 */
+                if (!sc.insert_pos) {
+                    /* Replace the user's path with the stripped version (i.e. the search string), in case the user
+                     * had quotes in unexpected places.
+                     */
+                    wcsncpy_s(&inputBuffer[sc.search_pos], inputBufferLength - sc.search_pos, sc.searchstr, _TRUNCATE);
+                    curPos = lstrlenW(inputBuffer);
+
+                    find_insert_pos(inputBuffer, curPos, &sc);
+                }
+
+                /* Copy search results to input buffer. */
+                update_input_buffer(inputBuffer, inputBufferLength, &sc);
+
+                /* Save last result in case user edits existing portion of the string before hitting tab again. */
+                free(lastResult);
+                lastResult = xstrdupW(inputBuffer);
+
+                /* Update cursor position to end of buffer. */
+                curPos = lstrlenW(inputBuffer);
+                if (curPos > maxLen) {
+                    maxLen = curPos;
+                }
+            }
+            break;
+
+        default:
+            TRACE("RETURN: [%s]\n", wine_dbgstr_w(inputBuffer));
+            done = TRUE;
+            break;
+        }
+    }
+
+    /* Cleanup any existing search results and related data before exiting. */
+    free_directory_entry_list(&sc);
+    free(lastResult);
+
+    return ret;
+}
 
 /*
  * Returns a buffer for reading from/writing to file
@@ -74,72 +484,35 @@ static char *get_file_buffer(void)
 }
 
 /*******************************************************************
- * WCMD_output_asis_len - send output to current standard output
+ * WCMD_output_unbuffered - send output to a given handle
  *
- * Output a formatted unicode string. Ideally this will go to the console
- *  and hence required WriteConsoleW to output it, however if file i/o is
- *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  */
-static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
+static void WCMD_output_unbuffered(const WCHAR *message, DWORD len, HANDLE handle)
 {
-    DWORD   nOut= 0;
-    DWORD   res = 0;
+    BOOL usedDefaultChar = FALSE;
+    DWORD convertedChars;
+    char *buffer;
+    DWORD nOut;
 
     /* If nothing to write, return (MORE does this sometimes) */
+    if ((int)len == -1) len = wcslen(message);
     if (!len) return;
 
     /* Try to write as unicode assuming it is to a console */
-    res = WriteConsoleW(device, message, len, &nOut, NULL);
-
-    /* If writing to console fails, assume it's file
-       i/o so convert to OEM codepage and output                  */
-    if (!res) {
-      BOOL usedDefaultChar = FALSE;
-      DWORD convertedChars;
-      char *buffer;
-
-      if (!unicodeOutput) {
-
+    if (WriteConsoleW(handle, message, len, &nOut, NULL)) return;
+    if (!unicodeOutput)
+    {
         if (!(buffer = get_file_buffer()))
             return;
 
         /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, message,
-                            len, buffer, MAX_WRITECONSOLE_SIZE,
-                            "?", &usedDefaultChar);
-        WriteFile(device, buffer, convertedChars,
-                  &nOut, FALSE);
-      } else {
-        WriteFile(device, message, len*sizeof(WCHAR),
-                  &nOut, FALSE);
-      }
+        convertedChars = WideCharToMultiByte(GetOEMCP(), 0, message,
+                                             len, buffer, MAX_WRITECONSOLE_SIZE,
+                                             "?", &usedDefaultChar);
+        WriteFile(handle, buffer, convertedChars, &nOut, FALSE);
     }
-    return;
-}
-
-/*******************************************************************
- * WCMD_output - send output to current standard output device.
- *
- */
-
-void WINAPIV WCMD_output (const WCHAR *format, ...) {
-
-  va_list ap;
-  WCHAR* string;
-  DWORD len;
-
-  va_start(ap,format);
-  string = NULL;
-  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                       format, 0, 0, (LPWSTR)&string, 0, &ap);
-  va_end(ap);
-  if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
-  else
-  {
-    WCMD_output_asis_len(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
-    LocalFree(string);
-  }
+    else
+        WriteFile(handle, message, len * sizeof(WCHAR), &nOut, FALSE);
 }
 
 /*******************************************************************
@@ -147,24 +520,24 @@ void WINAPIV WCMD_output (const WCHAR *format, ...) {
  *
  */
 
-void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
+void WINAPIV WCMD_output_stderr(const WCHAR *format, ...)
+{
+    va_list ap;
+    WCHAR* string;
+    DWORD len;
 
-  va_list ap;
-  WCHAR* string;
-  DWORD len;
-
-  va_start(ap,format);
-  string = NULL;
-  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                       format, 0, 0, (LPWSTR)&string, 0, &ap);
-  va_end(ap);
-  if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
-  else
-  {
-    WCMD_output_asis_len(string, len, GetStdHandle(STD_ERROR_HANDLE));
-    LocalFree(string);
-  }
+    va_start(ap,format);
+    string = NULL;
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         format, 0, 0, (LPWSTR)&string, 0, &ap);
+    va_end(ap);
+    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    else
+    {
+        WCMD_output_unbuffered(string, len, GetStdHandle(STD_ERROR_HANDLE));
+        LocalFree(string);
+    }
 }
 
 /*******************************************************************
@@ -192,20 +565,14 @@ WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...)
 
 void WCMD_enter_paged_mode(const WCHAR *msg)
 {
-  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
-  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo)) {
     /* Use console window dimensions, not screen buffer dimensions. */
-    max_height = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
-    max_width  = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
-  } else {
-    max_height = 25;
-    max_width  = 80;
-  }
-  paged_mode = TRUE;
-  line_count = 0;
-  numChars   = 0;
-  pagedMessage = (msg==NULL)? anykey : msg;
+    max_height = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo) ?
+        consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1 : 65535;
+    paged_mode = TRUE;
+    line_count = 0;
+    pagedMessage = msg ? msg : anykey;
 }
 
 void WCMD_leave_paged_mode(void)
@@ -240,26 +607,25 @@ static BOOL has_pending_char_events(HANDLE h)
  */
 RETURN_CODE WCMD_wait_for_input(HANDLE hIn)
 {
+    HANDLE h[2] = {hIn, control_c_event};
     RETURN_CODE return_code;
     DWORD oldmode;
     DWORD count;
-    WCHAR key;
+    char key;
 
-    return_code = ERROR_INVALID_FUNCTION;
+    return_code = ERROR_SIGNAL_PENDING; /* some never returned value */
     if (GetConsoleMode(hIn, &oldmode))
     {
-        HANDLE h[2] = {hIn, control_c_event};
-
         SetConsoleMode(hIn, oldmode & ~ENABLE_LINE_INPUT);
         FlushConsoleInputBuffer(hIn);
-        while (return_code == ERROR_INVALID_FUNCTION)
+        while (return_code == ERROR_SIGNAL_PENDING)
         {
             switch (WaitForMultipleObjects(2, h, FALSE, INFINITE))
             {
             case WAIT_OBJECT_0:
                 if (has_pending_char_events(hIn))
                     return_code = NO_ERROR;
-                /* will make both hIn no long signaled, and also process the pending input record */
+                /* will make both hIn no longer signaled, and also process the pending input record */
                 FlushConsoleInputBuffer(hIn);
                 break;
             case WAIT_OBJECT_0 + 1:
@@ -270,82 +636,87 @@ RETURN_CODE WCMD_wait_for_input(HANDLE hIn)
         }
         SetConsoleMode(hIn, oldmode);
     }
-    else if (WCMD_ReadFile(hIn, &key, 1, &count) && count)
-        return_code = NO_ERROR;
     else
-        return_code = ERROR_INVALID_FUNCTION;
+    {
+        while (return_code == ERROR_SIGNAL_PENDING)
+        {
+            switch (WaitForMultipleObjects(2, h, FALSE, INFINITE))
+            {
+            case WAIT_OBJECT_0:
+                if (ReadFile(hIn, &key, 1, &count, NULL) && count)
+                    return_code = NO_ERROR;
+                else
+                    return_code = ERROR_INVALID_FUNCTION;
+                break;
+            case WAIT_OBJECT_0 + 1:
+                return_code = STATUS_CONTROL_C_EXIT;
+                break;
+            default: break;
+            }
+        }
+    }
+
     return return_code;
 }
 
-/***************************************************************************
- * WCMD_ReadFile
- *
- *	Read characters in from a console/file, returning result in Unicode
- */
-BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead)
+RETURN_CODE WCMD_wait_for_console_input(void)
 {
-    DWORD numRead;
-    char *buffer;
-
-    /* Try to read from console as Unicode */
-    if (VerifyConsoleIoHandle(hIn) && ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL)) return TRUE;
-
-    /* We assume it's a file handle and read then convert from assumed OEM codepage */
-    if (!(buffer = get_file_buffer()))
-        return FALSE;
-
-    if (!ReadFile(hIn, buffer, maxChars, &numRead, NULL))
-        return FALSE;
-
-    *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead, intoBuf, maxChars);
-
-    return TRUE;
-}
-
-/*******************************************************************
- * WCMD_output_asis_handle
- *
- * Send output to specified handle without formatting e.g. when message contains '%'
- */
-static RETURN_CODE WCMD_output_asis_handle (DWORD std_handle, const WCHAR *message) {
-  RETURN_CODE return_code = NO_ERROR;
-  const WCHAR* ptr;
-  HANDLE handle = GetStdHandle(std_handle);
-
-  if (paged_mode) {
-    do {
-      ptr = message;
-      while (*ptr && *ptr!='\n' && (numChars < max_width)) {
-        numChars++;
-        ptr++;
-      };
-      if (*ptr == '\n') ptr++;
-      WCMD_output_asis_len(message, ptr - message, handle);
-      numChars = 0;
-      if (++line_count >= max_height - 1) {
-        line_count = 0;
-        WCMD_output_asis_len(pagedMessage, lstrlenW(pagedMessage), handle);
-        return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
-        WCMD_output_asis_len(L"\r\n", 2, handle);
-        if (return_code)
-          break;
-      }
-    } while (((message = ptr) != NULL) && (*ptr));
-  } else {
-    WCMD_output_asis_len(message, lstrlenW(message), handle);
-  }
-
-  return return_code;
+    return WCMD_wait_for_input(console_input);
 }
 
 /*******************************************************************
  * WCMD_output_asis
  *
- * Send output to current standard output device, without formatting
- * e.g. when message contains '%'
+ * Send output to OUTPUT, buffering the content.
  */
-RETURN_CODE WCMD_output_asis (const WCHAR *message) {
-    return WCMD_output_asis_handle(STD_OUTPUT_HANDLE, message);
+RETURN_CODE WCMD_output_asis(const WCHAR *message)
+{
+    static WCHAR out_buffer[MAXSTRING];
+    RETURN_CODE return_code = NO_ERROR;
+    const WCHAR* ptr;
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dummy;
+    BOOL is_output_console = GetConsoleMode(handle, &dummy);
+
+    if (!message) /* Hack for flushing */
+    {
+        WCMD_output_unbuffered(out_buffer, -1, handle);
+        out_buffer[0] = L'\0';
+    }
+    for (ptr = message; ptr && return_code == NO_ERROR; )
+    {
+        WCHAR *next = wcschr(ptr, L'\n');
+        if (next)
+        {
+            next++;
+            WCMD_output_unbuffered(out_buffer, -1, handle);
+            out_buffer[0] = L'\0';
+            WCMD_output_unbuffered(ptr, next - ptr, handle);
+            if (paged_mode && ++line_count >= max_height - 1)
+            {
+                line_count = 0;
+                if (is_output_console)
+                    WCMD_output_unbuffered(pagedMessage, -1, handle);
+                return_code = WCMD_wait_for_input(console_input);
+                if (is_output_console)
+                    WCMD_output_unbuffered(L"\r", 1, handle);
+            }
+        }
+        else
+        {
+            size_t fblen = wcslen(out_buffer), len = wcslen(ptr);
+            if (len && (fblen + len + 1) < ARRAY_SIZE(out_buffer))
+                memcpy(out_buffer + fblen, ptr, (len + 1) * sizeof(WCHAR));
+        }
+        ptr = next;
+    }
+
+    return return_code;
+}
+
+RETURN_CODE WCMD_output_flush(void)
+{
+    return WCMD_output_asis(NULL);
 }
 
 /*******************************************************************
@@ -354,8 +725,34 @@ RETURN_CODE WCMD_output_asis (const WCHAR *message) {
  * Send output to current standard error device, without formatting
  * e.g. when message contains '%'
  */
-RETURN_CODE WCMD_output_asis_stderr (const WCHAR *message) {
-    return WCMD_output_asis_handle(STD_ERROR_HANDLE, message);
+RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message)
+{
+    WCMD_output_unbuffered(message, -1, GetStdHandle(STD_ERROR_HANDLE));
+    return NO_ERROR;
+}
+
+/*******************************************************************
+ * WCMD_output - send formated output to current standard output device.
+ *
+ */
+void WINAPIV WCMD_output(const WCHAR *format, ...)
+{
+    va_list ap;
+    WCHAR* string;
+    DWORD len;
+
+    va_start(ap,format);
+    string = NULL;
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         format, 0, 0, (LPWSTR)&string, 0, &ap);
+    va_end(ap);
+    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    else
+    {
+        WCMD_output_asis(string);
+        LocalFree(string);
+    }
 }
 
 /****************************************************************************
@@ -363,26 +760,25 @@ RETURN_CODE WCMD_output_asis_stderr (const WCHAR *message) {
  *
  * Print the message for GetLastError
  */
+void WCMD_print_error(void)
+{
+    LPVOID lpMsgBuf;
+    DWORD error_code;
+    int status;
 
-void WCMD_print_error (void) {
-  LPVOID lpMsgBuf;
-  DWORD error_code;
-  int status;
+    error_code = GetLastError();
+    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                            NULL, error_code, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
+    if (!status)
+    {
+        WINE_FIXME("Cannot display message for error %ld, status %ld\n",
+                   error_code, GetLastError());
+        return;
+    }
 
-  error_code = GetLastError ();
-  status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			  NULL, error_code, 0, (LPWSTR) &lpMsgBuf, 0, NULL);
-  if (!status) {
-    WINE_FIXME ("Cannot display message for error %ld, status %ld\n",
-			error_code, GetLastError());
-    return;
-  }
-
-  WCMD_output_asis_len(lpMsgBuf, lstrlenW(lpMsgBuf),
-                       GetStdHandle(STD_ERROR_HANDLE));
-  LocalFree (lpMsgBuf);
-  WCMD_output_asis_len(L"\r\n", lstrlenW(L"\r\n"), GetStdHandle(STD_ERROR_HANDLE));
-  return;
+    WCMD_output_unbuffered(lpMsgBuf, -1, GetStdHandle(STD_ERROR_HANDLE));
+    LocalFree(lpMsgBuf);
+    WCMD_output_unbuffered(L"\r\n", 2, GetStdHandle(STD_ERROR_HANDLE));
 }
 
 /******************************************************************************
@@ -441,6 +837,8 @@ static void WCMD_show_prompt(void)
 	  break;
 	case 'H':
 	  *q++ = '\b';
+	  *q++ = ' ';
+	  *q++ = '\b';
 	  break;
 	case 'L':
 	  *q++ = '<';
@@ -487,6 +885,7 @@ static void WCMD_show_prompt(void)
     }
   }
   WCMD_output_asis (out_string);
+  WCMD_output_flush();
 }
 
 void *xrealloc(void *ptr, size_t size)
@@ -543,12 +942,6 @@ WCHAR *WCMD_skip_leading_spaces(WCHAR *string)
     return string;
 }
 
-static WCHAR *WCMD_strip_for_command_start(WCHAR *string)
-{
-    while (*string == L' ' || *string == L'\t' || *string == L'@') string++;
-    return string;
-}
-
 /***************************************************************************
  * WCMD_keyword_ws_found
  *
@@ -594,7 +987,7 @@ static inline int read_int_in_range(const WCHAR *from, WCHAR **after, int low, i
 /*************************************************************************
  * WCMD_expand_envvar
  *
- *	Expands environment variables, allowing for WCHARacter substitution
+ *	Expands environment variables, allowing for character substitution
  */
 static WCHAR *WCMD_expand_envvar(WCHAR *start)
 {
@@ -609,7 +1002,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     endOfVar = wcschr(start + 1, *start);
     if (!endOfVar)
         /* no corresponding closing char... either skip startchar in batch, or leave untouched otherwise */
-        return context ? WCMD_strsubstW(start, start + 1, NULL, 0) : start + 1;
+        return WCMD_is_in_context(NULL) ? WCMD_strsubstW(start, start + 1, NULL, 0) : start + 1;
 
     memcpy(thisVar, start + 1, (endOfVar - start - 1) * sizeof(WCHAR));
     thisVar[endOfVar - start - 1] = L'\0';
@@ -650,7 +1043,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     if (!len)
     {
         /* Command line - just ignore this */
-        if (context == NULL) return endOfVar + 1;
+        if (!WCMD_is_in_context(NULL)) return endOfVar + 1;
 
         /* Batch - replace unknown env var with nothing */
         if (colonpos == NULL)
@@ -777,7 +1170,9 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
   WCHAR *t;
   int   i;
   BOOL delayed = atExecute ? delayedsubst : FALSE;
+  WCHAR *delayedp = NULL;
   WCHAR  startchar = '%';
+  WCHAR *normalp;
 
   /* Display the FOR variables in effect */
   for (i=0;i<ARRAY_SIZE(forloopcontext->variable);i++) {
@@ -789,24 +1184,13 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
   for (;;)
   {
-    /* Find the next variable delimiter or caret escape */
-    if (delayed)
-        p = wcspbrk(p, L"%!^");
-    else
-        p = wcschr(p, '%');
+    /* Find the next environment variable delimiter */
+    normalp = wcschr(p, '%');
+    if (delayed) delayedp = wcschr(p, '!');
+    if (!normalp) p = delayedp;
+    else if (!delayedp) p = normalp;
+    else p = min(p,delayedp);
     if (!p) break;
-
-    /* Handle caret escape: if caret precedes ! during delayed expansion,
-     * consume the caret and treat the ! as literal. Other caret sequences
-     * (e.g. ^% in pipe payloads) are left untouched for subprocesses.   */
-    if (*p == L'^')
-    {
-        if (p[1] != L'!') { p++; continue; }
-        p = WCMD_strsubstW(p, p + 1, NULL, 0);  /* remove the caret */
-        p++;  /* skip the now-literal exclamation mark */
-        continue;
-    }
-
     startchar = *p;
 
     WINE_TRACE("Translate command:%s %d (at: %s)\n",
@@ -815,23 +1199,23 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
     /* handle consecutive % or ! */
     if ((!atExecute || startchar == L'!') && p[1] == startchar) {
-        if (context) WCMD_strsubstW(p, p + 1, NULL, 0);
-        if (!context || startchar == L'%') p++;
+        if (WCMD_is_in_context(NULL)) WCMD_strsubstW(p, p + 1, NULL, 0);
+        if (!WCMD_is_in_context(NULL) || startchar == L'%') p++;
     /* Replace %~ modifications if in batch program */
     } else if (p[1] == L'~' && p[2] && !iswspace(p[2])) {
       WCMD_HandleTildeModifiers(&p, atExecute);
       p++;
 
     /* Replace use of %0...%9 if in batch program*/
-    } else if (!atExecute && context && (i >= 0) && (i <= 9) && startchar == '%') {
-      t = WCMD_parameter(context -> command, i + context -> shift_count[i],
+    } else if (!atExecute && WCMD_is_in_context(NULL) && (i >= 0) && (i <= 9) && startchar == L'%') {
+      t = WCMD_parameter(context->command, i + context->shift_count[i],
                          NULL, TRUE, TRUE);
       p = WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
-    } else if (!atExecute && context && *(p+1)=='*' && startchar == '%') {
+    } else if (!atExecute && WCMD_is_in_context(NULL) && p[1] == L'*' && startchar == L'%') {
       WCHAR *startOfParms = NULL;
-      WCHAR *thisParm = WCMD_parameter(context -> command, 0, &startOfParms, TRUE, TRUE);
+      WCHAR *thisParm = WCMD_parameter(context->command, 0, &startOfParms, TRUE, TRUE);
       if (startOfParms != NULL) {
         startOfParms += lstrlenW(thisParm);
         while (*startOfParms==' ' || *startOfParms == '\t') startOfParms++;
@@ -845,9 +1229,21 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[p[1]], -1);
       } else if (!atExecute || startchar == L'!') {
         BOOL first = p == cmd;
+        /* env var delimited by % have been expanded at parse time, but there could still be
+         * loop variables nested inside env var delimited by !
+         */
+        if (startchar == L'!')
+        {
+            WCHAR *ptr;
+            for (ptr = p + 1; *ptr && *ptr != startchar; ptr++)
+                if (*ptr == L'%' && for_var_is_valid(ptr[1]) && forloopcontext->variable[ptr[1]]) {
+                    /* Replace the 2 characters, % and for variable character */
+                    ptr = WCMD_strsubstW(ptr, ptr + 2, forloopcontext->variable[ptr[1]], -1);
+                }
+        }
         p = WCMD_expand_envvar(p);
         /* FIXME: maybe this more likely calls for a specific handling of first arg? */
-        if (context && startchar == L'!' && first)
+        if (WCMD_is_in_context(NULL) && startchar == L'!' && first)
         {
             WCHAR *last;
             for (last = p; *last == startchar; last++) {}
@@ -1266,18 +1662,22 @@ void node_dispose_tree(CMD_NODE *node)
         for_control_dispose(&node->for_ctrl);
         node_dispose_tree(node->do_block);
         break;
+    case CMD_BLOCK:
+        node_dispose_tree(node->block);
+        break;
     }
     redirection_dispose_list(node->redirects);
     free(node);
 }
 
-static CMD_NODE *node_create_single(WCHAR *c)
+static CMD_NODE *node_create_single(WCHAR *c, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
     new->op = CMD_SINGLE;
     new->command = c;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
@@ -1290,11 +1690,12 @@ static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
     new->left = l;
     new->right = r;
     new->redirects = NULL;
+    new->do_echo = TRUE; /* always TRUE */
 
     return new;
 }
 
-static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CMD_NODE *else_block)
+static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CMD_NODE *else_block, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
@@ -1303,11 +1704,12 @@ static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CM
     new->then_block = then_block;
     new->else_block = else_block;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
 
-static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block)
+static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
@@ -1315,6 +1717,19 @@ static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block)
     new->for_ctrl = *for_ctrl;
     new->do_block = do_block;
     new->redirects = NULL;
+    new->do_echo = do_echo;
+
+    return new;
+}
+
+static CMD_NODE *node_create_block(CMD_NODE *block, BOOL do_echo)
+{
+    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
+
+    new->op = CMD_BLOCK;
+    new->block = block;
+    new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
@@ -1371,34 +1786,16 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
 }
 
 /* Attempt to open a file at a known path. */
-static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL called)
+static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdline, HANDLE *handle, BOOL *cui_subsystem)
 {
-    const WCHAR *ext = wcsrchr(file, '.');
     STARTUPINFOW si = {.cb = sizeof(si)};
-    DWORD console, exit_code;
+    DWORD console;
     WCHAR exe_path[MAX_PATH];
     PROCESS_INFORMATION pi;
     SHFILEINFOW psfi;
-    HANDLE handle;
     BOOL ret;
 
     TRACE("%s\n", debugstr_w(file));
-
-    if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd")))
-    {
-        RETURN_CODE return_code;
-        BOOL oldinteractive = interactive;
-
-        interactive = FALSE;
-        return_code = WCMD_call_batch(file, full_cmdline);
-        interactive = oldinteractive;
-        if (context && !called)
-        {
-            TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
-            context->skip_rest = TRUE;
-        }
-        return return_code;
-    }
 
     if ((INT_PTR)FindExecutableW(file, NULL, exe_path) < 32)
         console = 0;
@@ -1406,13 +1803,15 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
         console = SHGetFileInfoW(exe_path, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
 
     init_msvcrt_io_block(&si);
+    if (console && !HIWORD(console))
+        SetConsoleMode( GetStdHandle(STD_OUTPUT_HANDLE), orig_console_mode );
     ret = CreateProcessW(file, full_cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     free(si.lpReserved2);
 
     if (ret)
     {
         CloseHandle(pi.hThread);
-        handle = pi.hProcess;
+        *handle = pi.hProcess;
     }
     else
     {
@@ -1434,22 +1833,47 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
 
         if (ShellExecuteExW(&sei) && (INT_PTR)sei.hInstApp >= 32)
         {
-            handle = sei.hProcess;
+            *handle = sei.hProcess;
         }
         else
         {
             errorlevel = GetLastError();
-            return errorlevel;
+            return ERROR_INVALID_FUNCTION;
         }
     }
 
-    if (!interactive || (console && !HIWORD(console)))
-        WaitForSingleObject(handle, INFINITE);
-    GetExitCodeProcess(handle, &exit_code);
-    errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
+    if (cui_subsystem) *cui_subsystem = console && !HIWORD(console);
+    return NO_ERROR;
+}
 
-    CloseHandle(handle);
+static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
+{
+    HANDLE handle;
+    BOOL waitable;
+    DWORD exit_code;
+
+    if (spawn_external_full_path(file, full_cmdline, &handle, &waitable) == NO_ERROR)
+    {
+        if (context || waitable)
+            WaitForSingleObject(handle, INFINITE);
+        GetExitCodeProcess(handle, &exit_code);
+        errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
+
+        CloseHandle(handle);
+    }
     return errorlevel;
+}
+
+static RETURN_CODE run_command_file(const WCHAR *file, WCHAR *full_cmdline)
+{
+    RETURN_CODE return_code;
+    BOOL prev_echo_mode = echo_mode;
+
+    return_code = WCMD_call_batch(file, full_cmdline);
+
+    if (!context)
+        echo_mode = prev_echo_mode;
+    return return_code;
 }
 
 struct search_command
@@ -1457,6 +1881,7 @@ struct search_command
     WCHAR path[MAX_PATH];
     BOOL has_path; /* if input has path part (ie cannot be a builtin command) */
     BOOL has_extension; /* if extension was given to input */
+    BOOL is_command_file; /* when has_path is set, tells whether its a command file, or an external executable */
     int cmd_index; /* potential index to builtin command */
 };
 
@@ -1553,6 +1978,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     /* Quick way to get the filename is to extract the first argument. */
     firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
 
+    sc->has_path = sc->has_extension = sc->is_command_file = FALSE;
     sc->cmd_index = WCMD_EXIT + 1;
 
     if (!firstParam[0])
@@ -1657,7 +2083,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
 
             /* Remove quotes */
             length = wcslen(sc->path);
-            if (sc->path[length - 1] == L'"')
+            if (length && sc->path[length - 1] == L'"')
                 sc->path[length - 1] = 0;
 
             if (*sc->path != L'"')
@@ -1691,18 +2117,44 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
         }
         /* if foo.bat was given but not found, try to match foo.bat.bat (or any valid ext) */
         if (!found) found = search_in_pathext(sc->path);
-        if (found) return NO_ERROR;
+        if (found)
+        {
+            const WCHAR *ext = wcsrchr(sc->path, '.');
+            sc->is_command_file = ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"));
+            return NO_ERROR;
+        }
     }
     return RETURN_CODE_CANT_LAUNCH;
 }
 
-static BOOL set_std_redirections(CMD_REDIRECTION *redir)
+static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+
+static void pop_std_redirections(HANDLE saved[3])
 {
-    static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+    unsigned int i;
+
+    /* Restore old handles */
+    for (i = 0; i < 3; i++)
+    {
+        if (saved[i] != GetStdHandle(std_index[i]))
+        {
+            if (std_index[i] == STD_OUTPUT_HANDLE)
+                WCMD_output_flush();
+            CloseHandle(GetStdHandle(std_index[i]));
+            SetStdHandle(std_index[i], saved[i]);
+        }
+    }
+}
+
+static BOOL push_std_redirections(CMD_REDIRECTION *redir, HANDLE saved[3])
+{
     static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
     WCHAR expanded_filename[MAXSTRING];
     HANDLE h;
+    unsigned int i;
 
+    for (i = 0; i < ARRAY_SIZE(std_index); i++)
+        saved[i] = GetStdHandle(std_index[i]);
     for (; redir; redir = redir->next)
     {
         CMD_REDIRECTION *next;
@@ -1763,7 +2215,10 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
         if (redir->fd > 2)
             CloseHandle(h);
         else
+        {
+            if (std_index[redir->fd] == STD_OUTPUT_HANDLE) WCMD_output_flush();
             SetStdHandle(std_index[redir->fd], h);
+        }
     }
     return TRUE;
 }
@@ -1787,7 +2242,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
     switch (cmd_index)
     {
     case WCMD_CALL:
-        return_code = WCMD_call(parms_start);
+        return_code = WCMD_call(&cmd[count]);
         break;
     case WCMD_CD:
     case WCMD_CHDIR:
@@ -1959,10 +2414,32 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_run_builtin_command(sc.cmd_index, cmd);
     else
     {
-        BOOL prev_echo_mode = echo_mode;
         if (*sc.path)
-            return_code = run_full_path(sc.path, cmd, FALSE);
-        echo_mode = prev_echo_mode;
+        {
+            if (sc.is_command_file)
+            {
+                return_code = run_command_file(sc.path, cmd);
+                if (context)
+                {
+                    TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
+                    context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+                    if (return_code == RETURN_CODE_ABORTED)
+                        return_code = RETURN_CODE_EXITED;
+                }
+                else
+                {
+                    if (return_code == RETURN_CODE_ABORTED || return_code == RETURN_CODE_EXITED)
+                        return_code = errorlevel;
+                    else if (return_code == RETURN_CODE_GOTO)
+                        return_code = NO_ERROR;
+                    else if (return_code != NO_ERROR)
+                        errorlevel = return_code;
+                }
+            }
+            else
+                return_code = run_external_full_path(sc.path, cmd);
+        }
+
     }
     free(cmd);
     return return_code;
@@ -1976,10 +2453,17 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
   return_code = search_command(command, &sc, FALSE);
   if (return_code == NO_ERROR)
   {
-      unsigned old_echo_mode = echo_mode;
       if (!*sc.path) return NO_ERROR;
-      return_code = run_full_path(sc.path, command, TRUE);
-      if (interactive) echo_mode = old_echo_mode;
+      if (sc.is_command_file)
+      {
+          return_code = run_command_file(sc.path, command);
+          if (WCMD_is_break(return_code))
+              return_code = errorlevel;
+          else if (return_code != NO_ERROR)
+              errorlevel = return_code;
+      }
+      else
+          return_code = run_external_full_path(sc.path, command);
       return return_code;
   }
 
@@ -2036,22 +2520,18 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     CMD_FOR_CONTROL *for_ctrl;
     enum for_control_operator for_op;
     WCHAR mode = L' ', option;
-    WCHAR options[MAXSTRING];
-    WCHAR *arg;
+    WCHAR *arg, *last;
     unsigned flags = 0;
-    int arg_index;
     unsigned varidx;
 
-    options[0] = L'\0';
     /* native allows two options only in the /D /R case, a repetition of the option
      * and prints an error otherwise
      */
-    for (arg_index = 0; ; arg_index++)
+    for (arg = opts_var; *arg != L'\0'; arg++)
     {
-        arg = WCMD_parameter(opts_var, arg_index, NULL, FALSE, FALSE);
-
-        if (!arg || *arg != L'/') break;
-        option = towupper(arg[1]);
+        arg = WCMD_skip_leading_spaces(arg);
+        if (*arg != L'/') break;
+        option = towupper(*++arg);
         if (mode != L' ' && (mode != L'D' || option != 'R') && mode != option)
             break;
         switch (option)
@@ -2102,45 +2582,45 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
         FIXME("Unexpected situation\n");
         return NULL;
     }
-
-    if (mode == L'F' || mode == L'R')
+    arg = WCMD_skip_leading_spaces(arg);
+    last = arg + wcslen(arg);
+    while (arg < last && iswspace(last[-1])) last--;
+    /* grab variable at end of string */
+    if (arg + 2 > last || !for_var_is_valid(last[-1]) || last[-2] != L'%' || (last >= arg + 3 && !iswspace(last[-3])))
+        return NULL;
+    varidx = last[-1];
+    /* NOTE: we need to handle commands like:
+     * > FOR /F delim=^  %%i IN...
+     * so we have to be careful about the handling of "^ " (which will be already translated into " " here)
+     * and to discriminate between the delimiter before %<var> and potential trailing spaces before
+     * FIXME: perhaps a better alternative would be to construct the array of words in command
+     * at translation time and not afterwards like here.
+     */
+    last -= min(last - arg, 3);
+    /* skip surrounding double-quotes */
+    if (*arg == L'"')
     {
-        /* Retrieve next parameter to see if is root/options (raw form required
-         * with for /f, or unquoted in for /r)
-         */
-        arg = WCMD_parameter(opts_var, arg_index, NULL, for_op == CMD_FOR_FILE_SET, FALSE);
-
-        /* Next parm is either qualifier, path/options or variable -
-         * only care about it if it is the path/options
-         */
-        if (arg && *arg != L'/' && *arg != L'%')
+        while (arg < last && iswspace(last[-1])) last--;
+        if (last > arg + 1 && last[-1] == L'"')
         {
-            arg_index++;
-            wcscpy(options, arg);
+            arg++;
+            last--;
         }
     }
+    *last = L'\0';
+    if (mode != 'R' && mode != 'F' && last > arg) return NULL;
+    TRACE("var %c\n", varidx);
 
-    /* Ensure line continues with variable */
-    arg = WCMD_parameter(opts_var, arg_index++, NULL, FALSE, FALSE);
-    if (!arg || *arg != L'%' || !for_var_is_valid(arg[1]))
-        goto syntax_error; /* FIXME native prints the offending token "%<whatever>" was unexpected at this time */
-    varidx = arg[1];
     for_ctrl = xalloc(sizeof(*for_ctrl));
     if (for_op == CMD_FOR_FILE_SET)
     {
-        size_t len = wcslen(options);
-        WCHAR *p = options, *end;
+        WCHAR *p, *end;
         WCHAR eol = L'\0';
         int num_lines_to_skip = 0;
         BOOL use_backq = FALSE;
         WCHAR *delims = NULL, *tokens = NULL;
-        /* strip enclosing double-quotes when present */
-        if (len >= 2 && p[0] == L'"' && p[len - 1] == L'"')
-        {
-            p[len - 1] = L'\0';
-            p++;
-        }
-        for ( ; *(p = WCMD_skip_leading_spaces(p)); p = end)
+
+        for (p = arg; *(p = WCMD_skip_leading_spaces(p)); p = end)
         {
             /* Save End of line character (Ignore line if first token (based on delims) starts with it) */
             if ((end = for_fileset_option_split(p, L"eol=")))
@@ -2192,7 +2672,7 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
                                    tokens ? tokens : xstrdupW(L"1"), for_ctrl);
     }
     else
-        for_control_create(for_op, flags, options, varidx, for_ctrl);
+        for_control_create(for_op, flags, arg, varidx, for_ctrl);
     return for_ctrl;
 syntax_error:
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
@@ -2215,7 +2695,7 @@ struct node_builder
     {
         enum builder_token
         {
-            TKN_EOF, TKN_EOL, TKN_REDIRECTION, TKN_FOR, TKN_IN, TKN_DO, TKN_IF, TKN_ELSE,
+            TKN_EOF, TKN_EOL, TKN_REDIRECTION, TKN_NOECHO, TKN_FOR, TKN_IN, TKN_DO, TKN_IF, TKN_ELSE,
             TKN_OPENPAR, TKN_CLOSEPAR, TKN_AMP, TKN_BARBAR, TKN_AMPAMP, TKN_BAR, TKN_COMMAND,
         } token;
         union token_parameter parameter;
@@ -2226,7 +2706,7 @@ struct node_builder
 
 static const char* debugstr_token(enum builder_token tkn, union token_parameter tkn_pmt)
 {
-    static const char *tokens[] = {"EOF", "EOL", "REDIR", "FOR", "IN", "DO", "IF", "ELSE",
+    static const char *tokens[] = {"EOF", "EOL", "REDIR", "NOECHO", "FOR", "IN", "DO", "IF", "ELSE",
                                    "(", ")", "&", "||", "&&", "|", "CMD"};
 
     if (tkn >= ARRAY_SIZE(tokens)) return "<<<>>>";
@@ -2339,23 +2819,26 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
     CMD_FOR_CONTROL *for_ctrl = NULL;
     union token_parameter pmt;
     enum builder_token tkn;
-    BOOL done;
+    BOOL done = FALSE, do_echo = TRUE;
 
 #define ERROR_IF(x) if (x) {bogus_line = __LINE__; goto error_handling;}
     do
     {
         tkn = node_builder_peek_next_token(builder, &pmt);
-        done = FALSE;
-
         TRACE("\t%u/%u) %s\n", builder->pos, builder->num, debugstr_token(tkn, pmt));
+
         switch (tkn)
         {
-        case TKN_EOF:
-            /* always an error to read past end of tokens */
+        case TKN_EOF:    /* always an error to read past end of tokens */
             ERROR_IF(TRUE);
             break;
         case TKN_EOL:
             done = TRUE;
+            break;
+        case TKN_NOECHO: /* should have already been handled */
+            ERROR_IF(left);
+            node_builder_consume(builder);
+            do_echo = FALSE;
             break;
         case TKN_OPENPAR:
             ERROR_IF(left);
@@ -2369,11 +2852,12 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             {
                 ERROR_IF(tkn != TKN_EOL);
                 node_builder_consume(builder);
-                /* FIXME potential empty here?? */
                 ERROR_IF(!node_builder_parse(builder, 0, &right));
-                left = node_create_binary(CMD_CONCAT, left, right);
+                if (right)
+                    left = node_create_binary(CMD_CONCAT, left, right);
             }
             node_builder_consume(builder);
+            left = node_create_block(left, do_echo);
             /* if we had redirection before '(', add them up front */
             if (redir)
             {
@@ -2407,7 +2891,8 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     break;
                 }
                 ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
-                left = node_create_binary(CMD_CONCAT, left, right);
+                if (right)
+                    left = node_create_binary(CMD_CONCAT, left, right);
             }
             break;
         case TKN_AMPAMP:
@@ -2439,10 +2924,11 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             break;
         case TKN_COMMAND:
             ERROR_IF(left);
-            left = node_create_single(pmt.command);
+            left = node_create_single(pmt.command, do_echo);
             node_builder_consume(builder);
             left->redirects = redir;
             redir = NULL;
+            do_echo = TRUE;
             break;
         case TKN_IF:
             ERROR_IF(left);
@@ -2460,7 +2946,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 {
                     node_builder_consume(builder);
                     free(pmt.command);
-                    left = node_create_single(command_create(L"help if", 7));
+                    left = node_create_single(command_create(L"help if", 7), do_echo);
                     break;
                 }
                 ERROR_IF(!if_condition_parse(pmt.command, &end, &cond));
@@ -2484,7 +2970,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 }
                 else
                     else_block = NULL;
-                left = node_create_if(&cond, then_block, else_block);
+                left = node_create_if(&cond, then_block, else_block, do_echo);
             }
             break;
         case TKN_FOR:
@@ -2500,7 +2986,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 {
                     node_builder_consume(builder);
                     free(pmt.command);
-                    left = node_create_single(command_create(L"help for", 8));
+                    left = node_create_single(command_create(L"help for", 8), do_echo);
                     break;
                 }
                 node_builder_consume(builder);
@@ -2528,7 +3014,8 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 } while (tkn != TKN_CLOSEPAR);
                 ERROR_IF(!node_builder_expect_token(builder, TKN_DO));
                 ERROR_IF(!node_builder_parse(builder, 0, &do_block));
-                left = node_create_for(for_ctrl, do_block);
+                if (!for_ctrl->set) for_control_append_set(for_ctrl, L"");
+                left = node_create_for(for_ctrl, do_block, do_echo);
                 for_ctrl = NULL;
             }
             break;
@@ -2665,7 +3152,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
+                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
                     tkn_pmt.redirection = redirection_create_file(REDIR_READ_FROM, 0, filename);
                 }
             }
@@ -2703,48 +3190,53 @@ static void lexer_push_command(struct node_builder *builder,
     *copyTo       = command;
 }
 
-static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
+static WCHAR *fetch_next_line(BOOL first_line, WCHAR* buffer)
 {
-    /* display prompt */
-    if (interactive && !context)
+    BOOL ret;
+
+    if (!context) /* interactive mode */
     {
         /* native does is this way... not symmetrical wrt. echo_mode */
         if (!first_line)
             WCMD_output_asis(WCMD_LoadMessage(WCMD_MOREPROMPT));
         else if (echo_mode)
             WCMD_show_prompt();
+        ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));
     }
-
-    if (feed)
+    else if (context->batch_file) /* command file */
     {
-        BOOL ret;
-        if (context)
+        LARGE_INTEGER zeroli = {.QuadPart = 0};
+        HANDLE h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                               NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE)
         {
-            LARGE_INTEGER zeroli = {.QuadPart = 0};
-            HANDLE h = CreateFileW(context->batchfileW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (h == INVALID_HANDLE_VALUE)
-            {
-                SetLastError(ERROR_FILE_NOT_FOUND);
-                WCMD_print_error();
-                ret = FALSE;
-            }
-            else
-            {
-                ret = SetFilePointerEx(h, context->file_position, NULL, FILE_BEGIN) &&
-                    !!WCMD_fgets(buffer, MAXSTRING, h) &&
-                    SetFilePointerEx(h, zeroli, &context->file_position, FILE_CURRENT);
-                CloseHandle(h);
-            }
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            WCMD_print_error();
+            ret = FALSE;
         }
         else
-            ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));
-        if (!ret)
         {
-            buffer[0] = L'\0';
-            return NULL;
+            ret = SetFilePointerEx(h, context->file_position, NULL, FILE_BEGIN) &&
+                !!WCMD_fgets(buffer, MAXSTRING, h) &&
+                SetFilePointerEx(h, zeroli, &context->file_position, FILE_CURRENT);
+            CloseHandle(h);
         }
     }
+    else  /* /c or /k string from command line */
+    {
+        if ((ret = (context->file_position.QuadPart == 0)))
+        {
+            wcscpy(buffer, context->command);
+            context->file_position.QuadPart += wcslen(context->command) + 1;
+        }
+    }
+
+    if (!ret)
+    {
+        buffer[0] = L'\0';
+        return NULL;
+    }
+
     /* Handle truncated input - issue warning */
     if (wcslen(buffer) == MAXSTRING - 1)
     {
@@ -2756,36 +3248,334 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
     handleExpansion(buffer, FALSE);
 
     buffer = WCMD_skip_leading_spaces(buffer);
-    /* Show prompt before batch line IF echo is on and in batch program */
-    if (context && echo_mode && *buffer && *buffer != '@')
-    {
-        if (first_line)
-        {
-            const size_t len = wcslen(L"echo.");
-            size_t curr_size = wcslen(buffer);
-            size_t min_len = curr_size < len ? curr_size : len;
-            WCMD_output_asis(L"\r\n");
-            WCMD_show_prompt();
-            WCMD_output_asis(buffer);
-            /* I don't know why Windows puts a space here but it does */
-            /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
-            if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                               buffer, min_len, L"echo.", len) != CSTR_EQUAL
-                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                  buffer, min_len, L"echo:", len) != CSTR_EQUAL
-                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                  buffer, min_len, L"echo/", len) != CSTR_EQUAL)
-            {
-                WCMD_output_asis(L" ");
-            }
-        }
-        else
-            WCMD_output_asis(buffer);
+    return buffer;
+}
 
-        WCMD_output_asis(L"\r\n");
+struct command_rebuild
+{
+    WCHAR *buffer;
+    size_t buffer_size;
+    size_t pos;
+};
+
+struct rebuild_flags
+{
+    unsigned in_echo : 1,
+             depth;
+};
+
+static BOOL rebuild_append(struct command_rebuild *rb, const WCHAR *toappend)
+{
+    size_t len = wcslen(toappend);
+    if (rb->pos + len >= rb->buffer_size) return FALSE;
+    wcscpy(rb->buffer + rb->pos, toappend);
+    rb->pos += len;
+    return TRUE;
+}
+
+static BOOL rebuild_expand_and_append(struct command_rebuild *rb, const WCHAR *toappend, BOOL expand)
+{
+    WCHAR output[MAXSTRING];
+
+    if (!expand) return rebuild_append(rb, toappend);
+    /* it would be better to expand in place in rb, but handleExpansion doesn't take a string size */
+    wcscpy(output, toappend);
+    handleExpansion(output, TRUE);
+    return rebuild_append(rb, output);
+}
+
+static BOOL rebuild_sprintf(struct command_rebuild *rb, const WCHAR *format, ...)
+{
+   int ret;
+   va_list args;
+
+   va_start( args, format );
+   ret = vswprintf(rb->buffer + rb->pos, rb->buffer_size - rb->pos, format, args);
+   va_end( args );
+   if (ret < 0 || rb->pos + ret > rb->buffer_size) return FALSE;
+   rb->pos += ret;
+   return TRUE;
+}
+
+static BOOL rebuild_insert(struct command_rebuild *rb, unsigned pos, const WCHAR *toinsert)
+{
+    size_t len = wcslen(toinsert);
+    if (rb->pos + len >= rb->buffer_size) return FALSE;
+    if (pos > rb->pos) return FALSE;
+    memmove(rb->buffer + pos + len, rb->buffer + pos, (rb->pos - pos + 1) * sizeof(WCHAR));
+    memcpy(rb->buffer + pos, toinsert, len * sizeof(WCHAR));
+    rb->pos += len;
+    return TRUE;
+}
+
+static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_REDIRECTION *redir, BOOL expand)
+{
+    WCHAR number[2] = {L'0' + redir->fd, L'\0'};
+    WCHAR clonestr[2] = {};
+    const WCHAR *op;
+    const WCHAR *dst = redir->file;
+
+    switch (redir->kind)
+    {
+    case REDIR_READ_FROM:
+        op = L"<";
+        break;
+    case REDIR_WRITE_TO:
+        op = L">";
+        break;
+    case REDIR_WRITE_APPEND:
+        op = L">>";
+        break;
+    case REDIR_WRITE_CLONE:
+        op = L">&";
+        clonestr[0] = L'0' + redir->clone;
+        dst = clonestr;
+        break;
+    default: return FALSE;
+    }
+    return rebuild_append(rb, number) &&
+        rebuild_append(rb, op) &&
+        rebuild_expand_and_append(rb, dst, expand);
+}
+
+static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CMD_NODE *node, BOOL expand)
+{
+    CMD_REDIRECTION *redir;
+    BOOL ret = TRUE;
+
+    for (redir = node->redirects; ret && redir != NULL; redir = redir->next)
+    {
+        if (rb->pos && !iswspace(rb->buffer[rb->pos - 1]))
+            ret = ret && rebuild_append(rb, L" ");
+        ret = ret && rebuild_append_redirection(rb, redir, expand);
+    }
+    return ret;
+}
+
+static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags);
+
+static BOOL rebuild_shall_echo(const CMD_NODE *node)
+{
+    if (!node->do_echo) return FALSE;
+    switch (node->op)
+    {
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        return rebuild_shall_echo(node->left) && rebuild_shall_echo(node->right);
+    default:
+        return TRUE;
+    }
+}
+
+static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    const WCHAR *op_string;
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
+    BOOL ret;
+
+    switch (node->op)
+    {
+    case CMD_PIPE:       op_string = L"|";  break;
+    case CMD_CONCAT:     op_string = L"&";  break;
+    case CMD_ONFAILURE:  op_string = L"||"; break;
+    case CMD_ONSUCCESS:  op_string = L"&&"; break;
+    default: return FALSE;
     }
 
-    return buffer;
+    ret = rebuild_append_command(rb, node->left, new_rbflags) &&
+        ((node->left->op == CMD_SINGLE && node->op == CMD_CONCAT) ? rebuild_append(rb, L" ") : TRUE);
+    if (!rbflags.in_echo || rebuild_shall_echo(node->left))
+    {
+        ret = ret && rebuild_append(rb, op_string);
+        ret = ret && rebuild_append_command(rb, node->right, new_rbflags);
+    }
+    return ret;
+}
+
+static BOOL rebuild_command_if(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    const WCHAR *unop = NULL, *binop = NULL;
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
+    BOOL ret;
+
+    ret = rebuild_append(rb, L"if ");
+    if (node->condition.case_insensitive) ret = ret && rebuild_append(rb, L"/i ");
+    if (node->condition.negated)          ret = ret && rebuild_append(rb, L"not ");
+
+    switch (node->condition.op)
+    {
+    case CMD_IF_ERRORLEVEL:   unop = L"errorlevel "; break;
+    case CMD_IF_EXIST:        unop = L"exist "; break;
+    case CMD_IF_DEFINED:      unop = L"defined "; break;
+    case CMD_IF_BINOP_EQUAL:  binop = L" == "; break;
+    case CMD_IF_BINOP_LSS:    binop = L" LSS "; break;
+    case CMD_IF_BINOP_LEQ:    binop = L" LEQ "; break;
+    case CMD_IF_BINOP_EQU:    binop = L" EQU "; break;
+    case CMD_IF_BINOP_NEQ:    binop = L" NEQ "; break;
+    case CMD_IF_BINOP_GEQ:    binop = L" GEQ "; break;
+    case CMD_IF_BINOP_GTR:    binop = L" GTR "; break;
+    default:
+        FIXME("Unexpected condition operator %u\n", node->condition.op);
+        ret = FALSE;
+        break;
+    }
+    if (unop)
+    {
+        ret = ret && rebuild_append(rb, unop);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.operand, rbflags.depth == 0);
+    }
+    else if (binop)
+    {
+        ret = ret && rebuild_expand_and_append(rb, node->condition.left, rbflags.depth == 0);
+        ret = ret && rebuild_append(rb, binop);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.right, rbflags.depth == 0);
+    }
+    else
+        return FALSE;
+    ret = ret && rebuild_append(rb, L" ");
+    if (node->else_block)
+    {
+        ret = ret && rebuild_append(rb, L"(");
+        ret = ret && rebuild_append_command(rb, node->then_block, new_rbflags);
+        ret = ret && rebuild_append(rb, L" ) else ( ");
+        ret = ret && rebuild_append_command(rb, node->else_block, new_rbflags);
+        ret = ret && rebuild_append(rb, L" ) ");
+    }
+    else
+        ret = ret && rebuild_append_command(rb, node->then_block, new_rbflags);
+
+    return ret;
+}
+
+static const WCHAR *state_to_delim(int state)
+{
+    if (!state) return L"\"";
+    return (state == 1) ? L"" : L",";
+}
+
+static BOOL rebuild_command_for(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    const CMD_FOR_CONTROL *for_ctrl = &node->for_ctrl;
+    struct rebuild_flags new_rflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
+    const WCHAR *opt = NULL;
+    BOOL ret;
+
+    ret = rebuild_append(rb, L"for ");
+
+    /* append qualifiers (if needed) */
+    switch (for_ctrl->operator)
+    {
+    case CMD_FOR_FILETREE:
+        switch (for_ctrl->flags)
+        {
+        case CMD_FOR_FLAG_TREE_INCLUDE_FILES: opt = L""; break;
+        case CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES: opt = L"/D "; break;
+        case CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES|CMD_FOR_FLAG_TREE_RECURSE: opt = L"/D/R "; break;
+        case CMD_FOR_FLAG_TREE_INCLUDE_FILES|CMD_FOR_FLAG_TREE_RECURSE: opt = L"/R "; break;
+        default: FIXME("Shouldn't happen\n"); break;
+        }
+        break;
+    case CMD_FOR_NUMBERS: opt = L"/L "; break;
+    case CMD_FOR_FILE_SET: opt = L"/F "; break;
+    }
+    if (opt)
+        ret = ret && rebuild_append(rb, opt);
+
+    /* append options (when needed) */
+    switch (for_ctrl->operator)
+    {
+    case CMD_FOR_FILETREE:
+        if ((for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE) && for_ctrl->root_dir)
+            ret = ret && rebuild_expand_and_append(rb, for_ctrl->root_dir, rbflags.depth == 0) &&
+                rebuild_append(rb, L" ");
+        break;
+    case CMD_FOR_FILE_SET:
+        {
+            int state = 0;
+
+            if (for_ctrl->eol != L'\0')
+                ret = ret && rebuild_append(rb, state_to_delim(state++)) &&
+                    rebuild_sprintf(rb, L"eol=%c", for_ctrl->eol);
+            if (for_ctrl->num_lines_to_skip)
+                ret = ret && rebuild_append(rb, state_to_delim(state++)) &&
+                    rebuild_sprintf(rb, L"skip=%d", for_ctrl->num_lines_to_skip);
+            if (for_ctrl->use_backq)
+                ret = ret && rebuild_append(rb, state_to_delim(state++)) &&
+                    rebuild_append(rb, L"useback");
+            if (for_ctrl->delims[0])
+                ret = ret && rebuild_append(rb, state_to_delim(state++)) &&
+                    rebuild_sprintf(rb, L"delims=%s", for_ctrl->delims);
+            if (for_ctrl->tokens[0])
+                ret = ret && rebuild_append(rb, state_to_delim(state++)) &&
+                    rebuild_sprintf(rb, L"tokens=%s", for_ctrl->tokens);
+            if (state)
+                ret = ret && rebuild_append(rb, L"\" ");
+        }
+        break;
+    default:
+        break;
+    }
+
+    /* append variable and the rest */
+    ret = ret && rebuild_sprintf(rb, L"%%%c in (", for_ctrl->variable_index) &&
+        rebuild_expand_and_append(rb, for_ctrl->set, rbflags.depth == 0) &&
+        rebuild_append(rb, L") do ") &&
+        rebuild_append_command(rb, node->do_block, new_rflags);
+    if (ret && node->do_block->op == CMD_SINGLE)
+        ret = rebuild_append(rb, L" ");
+    return ret;
+}
+
+static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
+{
+    BOOL ret;
+
+    if (!node->do_echo)
+    {
+        if (rbflags.in_echo) return TRUE;
+        if (!rebuild_append(rb, L"@")) return FALSE;
+    }
+    switch (node->op)
+    {
+    case CMD_SINGLE:
+        ret = rebuild_expand_and_append(rb, node->command, rbflags.depth == 0);
+        /* I don't know why Windows puts a space here but it does */
+        /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
+        if (rbflags.in_echo &&
+            (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, node->command, 4, L"echo", 4) != CSTR_EQUAL ||
+             node->command[4] == L'\0' ||
+             wcschr(L".:/", node->command[4]) == NULL))
+            rebuild_append(rb, L" ");
+        break;
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        ret = rebuild_command_binary(rb, node, rbflags);
+        break;
+    case CMD_IF:
+        ret = rebuild_command_if(rb, node, rbflags);
+        break;
+    case CMD_FOR:
+        ret = rebuild_command_for(rb, node, rbflags);
+        break;
+    case CMD_BLOCK:
+        {
+            struct rebuild_flags new_rbflags = {.depth = rbflags.depth = 1, .in_echo = rbflags.in_echo};
+            ret = rebuild_append(rb, L"( ") &&
+                rebuild_append_command(rb, node->block, new_rbflags) &&
+                rebuild_append(rb, L" ) ");
+        }
+        break;
+    default:
+        FIXME("Shouldn't happen\n");
+        ret = FALSE;
+    }
+    ret = ret && rebuild_append_all_redirections(rb, node, rbflags.depth == 0);
+
+    return ret;
 }
 
 static BOOL lexer_can_accept_do(const struct node_builder *builder)
@@ -2800,7 +3590,10 @@ static BOOL lexer_can_accept_do(const struct node_builder *builder)
 
 static BOOL lexer_at_command_start(const struct node_builder *builder)
 {
-    switch (node_builder_top(builder, 0))
+    int idx = 0;
+    if (node_builder_top(builder, 0) == TKN_NOECHO) idx++;
+
+    switch (node_builder_top(builder, idx))
     {
     case TKN_EOF:
     case TKN_EOL:
@@ -2810,10 +3603,23 @@ static BOOL lexer_at_command_start(const struct node_builder *builder)
     case TKN_AMPAMP:
     case TKN_BAR:
     case TKN_BARBAR:   return TRUE;
-    case TKN_OPENPAR:  return node_builder_top(builder, 1) != TKN_IN;
-    case TKN_COMMAND:  return node_builder_top(builder, 1) == TKN_IF;
+    case TKN_OPENPAR:  return node_builder_top(builder, idx + 1) != TKN_IN;
+    case TKN_COMMAND:  return node_builder_top(builder, idx + 1) == TKN_IF;
     default:           return FALSE;
     }
+}
+
+static WCHAR *lexer_strip_for_command_start(struct node_builder *builder, WCHAR *string)
+{
+    BOOL do_echo = TRUE;
+    while (*string == L' ' || *string == L'\t' || *string == L'@')
+    {
+        if (*string == L'@') do_echo = FALSE;
+        string++;
+    }
+    if (!do_echo) node_builder_push_token(builder, TKN_NOECHO);
+
+    return string;
 }
 
 static BOOL lexer_white_space_only(const WCHAR *string, int len)
@@ -2839,7 +3645,7 @@ static BOOL lexer_white_space_only(const WCHAR *string, int len)
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output)
+enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
 {
     WCHAR    *curPos;
     WCHAR     curString[MAXSTRING];
@@ -2857,10 +3663,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     if (!extraSpace)
         extraSpace = xalloc((MAXSTRING + 1) * sizeof(WCHAR));
 
-    /* If initial command read in, use that, otherwise get input from handle */
-    if (optionalcmd)
-        wcscpy(extraSpace, optionalcmd);
-    if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, extraSpace)))
+    if (!(curPos = fetch_next_line(TRUE, extraSpace)))
         return RPL_EOF;
 
     TRACE("About to parse line (%ls)\n", extraSpace);
@@ -2873,7 +3676,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     curCopyTo    = curString;
     curLen       = &curStringLen;
 
-    curPos = WCMD_strip_for_command_start(curPos);
+    curPos = lexer_strip_for_command_start(&builder, curPos);
     /* Parse every character on the line being processed */
     for (;;) {
       /* Debugging AID:
@@ -2896,8 +3699,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           node_builder_push_token(&builder, TKN_EOL);
 
           /* If we have reached the end of the string, see if bracketing is outstanding */
-          if (builder.opened_parenthesis > 0 && optionalcmd == NULL &&
-              (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
+          if (builder.opened_parenthesis > 0 && (curPos = fetch_next_line(FALSE, extraSpace)))
           {
               TRACE("Need to read more data as outstanding brackets or carets\n");
           }
@@ -2906,7 +3708,8 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        if (lexer_at_command_start(&builder) && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
+        if (lexer_at_command_start(&builder) && !*(curPos = lexer_strip_for_command_start(&builder, curPos)))
+            continue;
         /* If command starts with 'rem ' or identifies a label, use whole line */
         if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == L':') {
             size_t line_len = wcslen(curPos);
@@ -3010,7 +3813,8 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           /* See if 1>, 2> etc, in which case we have some patching up
              to do (provided there's a preceding whitespace, and enough
              chars read so far) */
-          if (curPos[-1] >= L'1' && curPos[-1] <= L'9' && (curStringLen == 1 || iswspace(curPos[-2])))
+          if (curStringLen && curPos[-1] >= L'1' && curPos[-1] <= L'9' &&
+              (curStringLen == 1 || iswspace(curPos[-2])))
           {
               curStringLen--;
               curString[curStringLen] = L'\0';
@@ -3080,13 +3884,12 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           if (curPos[1] == L'\0') {
               TRACE("Caret found at end of line\n");
               extraSpace[0] = L'^';
-              if (optionalcmd) break;
-              if (!fetch_next_line(TRUE, FALSE, extraSpace + 1))
+              if (!fetch_next_line(FALSE, extraSpace + 1))
                   break;
               if (!extraSpace[1]) /* empty line */
               {
                   extraSpace[1] = L'\r';
-                  if (!fetch_next_line(TRUE, FALSE, extraSpace + 2))
+                  if (!fetch_next_line(FALSE, extraSpace + 2))
                       break;
               }
               curPos = extraSpace;
@@ -3117,6 +3920,9 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                  curRedirs, &curRedirsLen,
                                  &curCopyTo, &curLen);
               node_builder_push_token(&builder, TKN_CLOSEPAR);
+          } else if (curStringLen == 0 && curCopyTo == curString) {
+              /* unmatched closing ')': silently skip rest of line */
+              curPos += wcslen(curPos) - 1;
           } else {
               curCopyTo[(*curLen)++] = *curPos;
           }
@@ -3227,6 +4033,8 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     if (cond->negated) *test ^= 1;
     return TRUE;
 }
+
+static RETURN_CODE node_execute_with_echo(CMD_NODE *node, BOOL with_echo);
 
 struct for_loop_variables
 {
@@ -3358,7 +4166,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
     /* Execute the body of the for loop with these values */
     if (forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol)
     {
-        return_code = node_execute(node);
+        return_code = node_execute_with_echo(node, echo_mode);
     }
     else
     {
@@ -3427,7 +4235,7 @@ static RETURN_CODE for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE
     RETURN_CODE return_code = NO_ERROR;
 
     /* Read line by line until end of file */
-    while (return_code != RETURN_CODE_ABORTED && fgetws(buffer, ARRAY_SIZE(buffer), input))
+    while (!WCMD_is_break(return_code) && fgetws(buffer, ARRAY_SIZE(buffer), input))
     {
         size_t len;
 
@@ -3495,7 +4303,7 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     }
     else
     {
-        for (i = 0; return_code != RETURN_CODE_ABORTED; i++)
+        for (i = 0; !WCMD_is_break(return_code); i++)
         {
             WCHAR *element = WCMD_parameter(args, i, NULL, TRUE, FALSE);
             if (!element || !*element) break;
@@ -3536,7 +4344,7 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
 
     wcscpy(set, for_ctrl->set);
     handleExpansion(set, TRUE);
-    for (i = 0; return_code != RETURN_CODE_ABORTED; i++)
+    for (i = 0; !WCMD_is_break(return_code); i++)
     {
         WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
         if (!element || !*element) break;
@@ -3549,8 +4357,12 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
         if (wcspbrk(element, L"?*"))
         {
             WIN32_FIND_DATAW fd;
-            HANDLE hff = FindFirstFileW(buffer, &fd);
-            size_t insert_pos = (wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0);
+            HANDLE hff;
+            size_t insert_pos;
+
+            if (*buffer == L'"') WCMD_strip_quotes(buffer);
+            hff = FindFirstFileW(buffer, &fd);
+            insert_pos = wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0;
 
             if (hff == INVALID_HANDLE_VALUE)
             {
@@ -3571,14 +4383,14 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
                 if (insert_pos + wcslen(fd.cFileName) + 1 >= ARRAY_SIZE(buffer)) continue;
                 wcscpy(&buffer[insert_pos], fd.cFileName);
                 WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-                return_code = node_execute(node);
-            } while (return_code != RETURN_CODE_ABORTED && FindNextFileW(hff, &fd) != 0);
+                return_code = node_execute_with_echo(node, echo_mode);
+            } while (!WCMD_is_break(return_code) && FindNextFileW(hff, &fd) != 0);
             FindClose(hff);
         }
         else
         {
             WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-            return_code = node_execute(node);
+            return_code = node_execute_with_echo(node, echo_mode);
         }
     }
     return return_code;
@@ -3601,7 +4413,7 @@ static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD
     else dirs_to_walk = WCMD_dir_stack_create(NULL, NULL);
     ref_len = wcslen(dirs_to_walk->dirName);
 
-    while (return_code != RETURN_CODE_ABORTED && dirs_to_walk)
+    while (!WCMD_is_break(return_code) && dirs_to_walk)
     {
         TRACE("About to walk %p %ls for %s\n", dirs_to_walk, dirs_to_walk->dirName, debugstr_for_control(for_ctrl));
         if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
@@ -3623,13 +4435,8 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     int numbers[3] = {0, 0, 0}, var;
     int i;
 
-    if (for_ctrl->set)
-    {
-        wcscpy(set, for_ctrl->set);
-        handleExpansion(set, TRUE);
-    }
-    else
-        set[0] = L'\0';
+    wcscpy(set, for_ctrl->set);
+    handleExpansion(set, TRUE);
 
     /* Note: native doesn't check the actual number of parameters, and set
      * them by default to 0.
@@ -3645,7 +4452,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     }
 
     for (var = numbers[0];
-         return_code != RETURN_CODE_ABORTED && ((numbers[1] < 0) ? var >= numbers[2] : var <= numbers[2]);
+         !WCMD_is_break(return_code) && ((numbers[1] < 0) ? var >= numbers[2] : var <= numbers[2]);
          var += numbers[1])
     {
         WCHAR tmp[32];
@@ -3653,7 +4460,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
         swprintf(tmp, ARRAY_SIZE(tmp), L"%d", var);
         WCMD_set_for_loop_variable(for_ctrl->variable_index, tmp);
         TRACE("Processing FOR number %s\n", wine_dbgstr_w(tmp));
-        return_code = node_execute(node);
+        return_code = node_execute_with_echo(node, echo_mode);
     }
     return return_code;
 }
@@ -3662,7 +4469,7 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
 {
     RETURN_CODE return_code;
 
-    if (!for_ctrl->set && for_ctrl->operator != CMD_FOR_NUMBERS) return NO_ERROR;
+    if (!for_ctrl->set[0] && for_ctrl->operator != CMD_FOR_NUMBERS) return NO_ERROR;
 
     WCMD_save_for_loop_context(FALSE);
 
@@ -3688,18 +4495,151 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
     return return_code;
 }
 
-RETURN_CODE node_execute(CMD_NODE *node)
+static RETURN_CODE spawn_pipe_sub_command(CMD_NODE *node, HANDLE *child)
 {
-    HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
-                                GetStdHandle (STD_OUTPUT_HANDLE),
-                                GetStdHandle (STD_ERROR_HANDLE)};
-    static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
-
+    WCHAR cmd_string[MAXSTRING];
+    WCHAR comspec[MAX_PATH];
+    struct command_rebuild rb = {cmd_string, ARRAY_SIZE(cmd_string), 0};
+    struct rebuild_flags rbflags = {};
     RETURN_CODE return_code;
-    int i, test;
+
+    switch (node->op)
+    {
+    case CMD_SINGLE:
+        {
+            struct search_command sc;
+
+            /* command isn't delayed expanded... */
+            return_code = search_command(node->command, &sc, TRUE);
+            if (return_code != NO_ERROR && sc.cmd_index == WCMD_EXIT + 1)
+                return RETURN_CODE_CANT_LAUNCH;
+            if ((sc.cmd_index <= WCMD_EXIT && (return_code != NO_ERROR || (!sc.has_path && !sc.has_extension))) ||
+                (sc.has_path && sc.is_command_file))
+            {
+                if (!rebuild_append_command(&rb, node, rbflags))
+                    return ERROR_INVALID_FUNCTION;
+            }
+            else
+            {
+                HANDLE saved[3];
+
+                if (!push_std_redirections(node->redirects, saved))
+                {
+                    WCMD_print_error();
+                    return ERROR_INVALID_FUNCTION;
+                }
+
+                return_code = spawn_external_full_path(sc.path, node->command, child, NULL);
+                pop_std_redirections(saved);
+                return return_code;
+            }
+        }
+        break;
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+    case CMD_IF:
+    case CMD_FOR:
+    case CMD_BLOCK:
+        if (!rebuild_append_command(&rb, node, rbflags))
+            return ERROR_INVALID_FUNCTION;
+        break;
+    default:
+        FIXME("Shouldn't happen\n");
+        return ERROR_INVALID_FUNCTION;
+    }
+
+    /* Any node except a single external command must be run in an alternate cmd.exe instance for concurrency.
+     * Native doesn't use COMSPEC for IF and FOR commands (likely for historical reasons as command.com
+     * didn't support these commands).
+     */
+    if (node->op == CMD_IF || node->op == CMD_FOR ||
+        !GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
+    {
+        if (!GetModuleFileNameW(NULL, comspec, ARRAY_SIZE(comspec)))
+            wcscpy(comspec, L"cmd.exe");
+    }
+
+    /* testings show that none of the options (extended commands, delayed expansions...) are passed as parameters */
+    if (rebuild_insert(&rb, 0, L" /S /D /C \"") &&
+        rebuild_insert(&rb, 0, comspec) &&
+        rebuild_append(&rb, L"\""))
+        return_code = spawn_external_full_path(comspec, rb.buffer, child, NULL);
+    else
+        return_code = ERROR_INVALID_FUNCTION;
+
+    return return_code;
+}
+
+static RETURN_CODE handle_pipe_command(CMD_NODE *node)
+{
+    static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
+    HANDLE lhs_child, rhs_child;
+    HANDLE read_pipe, write_pipe;
+    HANDLE saved_output;
+    RETURN_CODE return_code;
+
+    if (!CreatePipe(&read_pipe, &write_pipe, &sa, 0))
+        return ERROR_INVALID_FUNCTION;
+    saved_output = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetStdHandle(STD_OUTPUT_HANDLE, write_pipe);
+    return_code = spawn_pipe_sub_command(node->left, &lhs_child);
+    CloseHandle(write_pipe);
+    SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
+    if (return_code == RETURN_CODE_CANT_LAUNCH && context) ExitProcess(255);
+    if (return_code == NO_ERROR)
+    {
+        SetStdHandle(STD_INPUT_HANDLE, read_pipe);
+        return_code = spawn_pipe_sub_command(node->right, &rhs_child);
+        if (return_code == NO_ERROR)
+        {
+            HANDLE h[2] = {lhs_child, rhs_child};
+            DWORD exit_code, result;
+            /* We wait even on a GUI processes to terminate!
+             * but no direct ctrl-c support here (shall be inherited & handled by sub processes though)
+             */
+            if ((result = WaitForMultipleObjects(ARRAY_SIZE(h), h, TRUE, INFINITE)) == WAIT_OBJECT_0)
+            {
+                if (!GetExitCodeProcess(rhs_child, &exit_code)) exit_code = 255;
+                return_code = exit_code;
+            }
+            else FIXME("Wait shouldn't fail %lx\n", result);
+            CloseHandle(rhs_child);
+        }
+        else
+        {
+            TerminateProcess(lhs_child, 255);
+            if (return_code == RETURN_CODE_CANT_LAUNCH && context) ExitProcess(255);
+        }
+        CloseHandle(lhs_child);
+    }
+    CloseHandle(read_pipe);
+
+    return errorlevel = return_code;
+}
+
+static RETURN_CODE node_execute_with_echo(CMD_NODE *node, BOOL with_echo)
+{
+    HANDLE saved[3];
+    RETURN_CODE return_code;
+    int test;
 
     if (!node) return NO_ERROR;
-    if (!set_std_redirections(node->redirects))
+    if (with_echo && node->do_echo && (node->op != CMD_SINGLE || node->command[0] != L':'))
+    {
+        WCHAR buffer[MAXSTRING];
+        struct command_rebuild rb = {buffer, ARRAY_SIZE(buffer), 0};
+        struct rebuild_flags rbflags = {.depth = 0, .in_echo = 1};
+        if (rebuild_append_command(&rb, node, rbflags))
+        {
+            WCMD_output_asis(L"\r\n");
+            WCMD_show_prompt();
+            WCMD_output_asis(buffer);
+            WCMD_output_asis(L"\r\n");
+        }
+    }
+    if (!push_std_redirections(node->redirects, saved))
     {
         WCMD_print_error();
         return_code = ERROR_INVALID_FUNCTION;
@@ -3712,106 +4652,53 @@ RETURN_CODE node_execute(CMD_NODE *node)
         else return_code = NO_ERROR;
         break;
     case CMD_CONCAT:
-        return_code = node_execute(node->left);
-        if (return_code != RETURN_CODE_ABORTED)
-            return_code = node_execute(node->right);
+        return_code = node_execute_with_echo(node->left, FALSE);
+        if (!WCMD_is_break(return_code))
+            return_code = node_execute_with_echo(node->right, FALSE);
         break;
     case CMD_ONSUCCESS:
-        return_code = node_execute(node->left);
+        return_code = node_execute_with_echo(node->left, FALSE);
         if (return_code == NO_ERROR)
-            return_code = node_execute(node->right);
+            return_code = node_execute_with_echo(node->right, FALSE);
         break;
     case CMD_ONFAILURE:
-        return_code = node_execute(node->left);
-        if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
+        return_code = node_execute_with_echo(node->left, FALSE);
+        if (return_code != NO_ERROR && !WCMD_is_break(return_code))
         {
             /* that's needed for commands (POPD, RMDIR) that don't set errorlevel in case of failure. */
             errorlevel = return_code;
-            return_code = node_execute(node->right);
+            return_code = node_execute_with_echo(node->right, FALSE);
         }
         break;
     case CMD_PIPE:
-        {
-            static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
-            WCHAR temp_path[MAX_PATH];
-            WCHAR filename[MAX_PATH];
-            CMD_REDIRECTION *output;
-            HANDLE saved_output;
-            BATCH_CONTEXT *saved_context = context;
-
-            /* pipe LHS & RHS are run outside of any batch context */
-            context = NULL;
-            /* FIXME: a real pipe instead of writing to an intermediate file would be
-             * better.
-             * But waiting for completion of commands will require more work.
-             */
-            /* FIXME check precedence (eg foo > a | more)
-             * with following code, | has higher precedence than > a
-             * (which is likely wrong IIRC, and not what previous code was doing)
-             */
-            /* Generate a unique temporary filename */
-            GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
-            GetTempFileNameW(temp_path, L"CMD", 0, filename);
-            TRACE("Using temporary file of %ls\n", filename);
-
-            saved_output = GetStdHandle(STD_OUTPUT_HANDLE);
-            /* set output for left hand side command */
-            output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
-            if (set_std_redirections(output))
-            {
-                RETURN_CODE return_code_left = node_execute(node->left);
-                CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
-                SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
-
-                if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
-                    ExitProcess(255);
-                return_code = ERROR_INVALID_FUNCTION;
-                if (return_code_left != RETURN_CODE_ABORTED && errorlevel != RETURN_CODE_CANT_LAUNCH)
-                {
-                    HANDLE h = CreateFileW(filename, GENERIC_READ,
-                                           FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
-                                           FILE_ATTRIBUTE_NORMAL, NULL);
-                    if (h != INVALID_HANDLE_VALUE)
-                    {
-                        SetStdHandle(STD_INPUT_HANDLE, h);
-                        return_code = node_execute(node->right);
-                        if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
-                            ExitProcess(255);
-                    }
-                }
-                DeleteFileW(filename);
-                errorlevel = return_code;
-            }
-            else return_code = ERROR_INVALID_FUNCTION;
-            redirection_dispose_list(output);
-            context = saved_context;
-        }
+        return_code = handle_pipe_command(node);
         break;
     case CMD_IF:
         if (if_condition_evaluate(&node->condition, &test))
-            return_code = node_execute(test ? node->then_block : node->else_block);
+            return_code = node_execute_with_echo(test ? node->then_block : node->else_block, FALSE);
         else
             return_code = ERROR_INVALID_FUNCTION;
         break;
     case CMD_FOR:
         return_code = for_control_execute(&node->for_ctrl, node->do_block);
         break;
+    case CMD_BLOCK:
+        return_code = node_execute_with_echo(node->block, FALSE);
+        break;
     default:
         FIXME("Unexpected operator %u\n", node->op);
         return_code = ERROR_INVALID_FUNCTION;
     }
-    /* Restore old handles */
-    for (i = 0; i < 3; i++)
-    {
-        if (old_stdhandles[i] != GetStdHandle(idx_stdhandles[i]))
-        {
-            CloseHandle(GetStdHandle(idx_stdhandles[i]));
-            SetStdHandle(idx_stdhandles[i], old_stdhandles[i]);
-        }
-    }
+    pop_std_redirections(saved);
+
     return return_code;
 }
 
+RETURN_CODE node_execute(CMD_NODE *node)
+{
+    SetConsoleMode( GetStdHandle(STD_OUTPUT_HANDLE), internal_console_mode );
+    return node_execute_with_echo(node, echo_mode && WCMD_is_in_context(NULL));
+}
 
 RETURN_CODE WCMD_ctrlc_status(void)
 {
@@ -3828,397 +4715,301 @@ static BOOL WINAPI my_event_handler(DWORD ctrl)
     return ctrl == CTRL_C_EVENT;
 }
 
+static BOOL query_default_color_key(HKEY from_key, DWORD *value)
+{
+    HKEY key;
+    BOOL ret = FALSE;
+
+    if (RegOpenKeyExW(from_key, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &key) == ERROR_SUCCESS)
+    {
+        DWORD size, type;
+
+        /* See if DWORD or REG_SZ */
+        if (RegQueryValueExW(key, L"DefaultColor", NULL, &type, NULL, NULL) == ERROR_SUCCESS)
+        {
+            if (type == REG_DWORD)
+            {
+                size = sizeof(DWORD);
+                ret = RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)value, &size);
+            }
+            else if (type == REG_SZ)
+            {
+                WCHAR  strvalue[4];
+
+                size = sizeof(strvalue);
+                if (RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size))
+                {
+                    WCHAR *end;
+                    *value = wcstoul(strvalue, &end, 10);
+                    ret = *end == L'\0';
+                }
+            }
+        }
+        RegCloseKey(key);
+    }
+    return ret;
+}
+
+static void set_console_default_color(unsigned color)
+{
+    if (color >= 0x100) /* no value from command line */
+    {
+        /* Check HKCU\Software\Microsoft\Command Processor
+         * Then  HKLM\Software\Microsoft\Command Processor
+         *    for defaultcolor value
+         *    Note  Can be supplied as DWORD or REG_SZ
+         *    Note2 When supplied as REG_SZ it's in decimal!!!
+         */
+        DWORD value;
+        if (query_default_color_key(HKEY_CURRENT_USER, &value) ||
+            query_default_color_key(HKEY_LOCAL_MACHINE, &value))
+            color = value;
+    }
+    if (color < 0x100 && ((color >> 4) != (color & 0xf)))
+    {
+        swprintf(param1, ARRAY_SIZE(param1), L"%x", color);
+        WCMD_color();
+    }
+    else color = 7;
+}
+
+struct cmd_parameters
+{
+    unsigned default_color;
+    BOOL opt_c, opt_q, opt_k;
+    WCHAR* initial_command;
+};
+
+static void parse_command_line_parameters(struct cmd_parameters *parameters)
+{
+    WCHAR *cmd_line, *arg;
+    BOOL opt_s;
+
+    parameters->default_color = 0x100;
+    parameters->opt_c = parameters->opt_k = parameters->opt_q = FALSE;
+    parameters->initial_command = NULL;
+
+    opt_s = FALSE;
+    /* Can't use argc/argv as it will have stripped quotes from parameters
+     * meaning cmd.exe /C echo "quoted string" is impossible
+     */
+    cmd_line = GetCommandLineW();
+    WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmd_line));
+
+    while (*cmd_line && *cmd_line != L'/') ++cmd_line;
+
+    for (arg = cmd_line; *arg; ++arg)
+    {
+        if (arg[0] != L'/')
+            continue;
+
+        switch (towlower(arg[1]))
+        {
+        case L'a':
+            unicodeOutput = FALSE;
+            break;
+        case L'c':
+            parameters->opt_c = TRUE;
+            break;
+        case L'k':
+            parameters->opt_k = TRUE;
+            break;
+        case L'q':
+            parameters->opt_q = TRUE;
+            break;
+        case L's':
+            opt_s = TRUE;
+            break;
+        case L't':
+            if (arg[2] == ':')
+            {
+                WCHAR *end;
+                unsigned long v = wcstoul(arg + 3, &end, 16);
+                if (end == arg + 5 && !*end)
+                    parameters->default_color = v;
+            }
+            break;
+        case L'u':
+            unicodeOutput = TRUE;
+            break;
+        case L'v':
+            if (arg[2] == L':')
+                delayedsubst = wcsnicmp(&arg[3], L"OFF", 3);
+            break;
+        }
+
+        if (parameters->opt_c || parameters->opt_k)
+        {
+            arg += 2;
+            break;
+        }
+    }
+
+    while (*arg && wcschr(L" \t,=;", *arg)) arg++;
+
+    if (parameters->opt_c || parameters->opt_k)
+    {
+        WCHAR *q1 = NULL, *q2 = NULL, *p;
+
+        /* Take a copy */
+        parameters->initial_command = xstrdupW(arg);
+
+        /* opt_s left unflagged if the command starts with and contains exactly
+         * one quoted string (exactly two quote characters). The quoted string
+         * must be an executable name that has whitespace and must not have the
+         * following characters: &<>@^|
+         */
+
+        /* 1. Confirm there is at least one quote */
+        if (!opt_s && !(q1 = wcschr(arg, L'"'))) opt_s = TRUE;
+        /* 2. Confirm there is a second quote */
+        if (!opt_s && !(q2 = wcschr(q1 + 1, L'"'))) opt_s = TRUE;
+        /* 3. Ensure there are no more quotes */
+        if (!opt_s && wcschr(q2 + 1, L'"')) opt_s = TRUE;
+
+        /* check first parameter for a space and invalid characters. There must not be any
+         * invalid characters, but there must be one or more whitespace
+         */
+        if (!opt_s)
+        {
+            opt_s = TRUE;
+            for (p = q1; p != q2; p++)
+            {
+                if (wcschr(L"&<>@^'", *p))
+                {
+                    opt_s = TRUE;
+                    break;
+                }
+                if (iswspace(*p)) opt_s = FALSE;
+            }
+        }
+
+        WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(parameters->initial_command));
+
+        /* Finally, we only stay in new mode IF the first parameter is quoted and
+         * is a valid executable, i.e. must exist, otherwise drop back to old mode
+         */
+        if (!opt_s)
+        {
+            struct search_command sc;
+
+            if (search_command(parameters->initial_command, &sc, TRUE) != NO_ERROR) /* no command found */
+            {
+                WINE_TRACE("Binary not found, dropping back to old behaviour\n");
+                opt_s = TRUE;
+            }
+        }
+
+        /* strip first and last quote characters if opt_s; check for invalid
+         * executable is done later */
+        if (opt_s && *parameters->initial_command == L'\"')
+            WCMD_strip_quotes(parameters->initial_command);
+    }
+}
+
+static void WCMD_setup(void)
+{
+    WCHAR string[MAX_PATH];
+    RTL_OSVERSIONINFOEXW osv;
+    char osver[50];
+    WCHAR *cmd;
+
+    srand(time(NULL));
+
+    /* initialize some env variables */
+    if (!GetEnvironmentVariableW(L"COMSPEC", string, ARRAY_SIZE(string)))
+    {
+        GetModuleFileNameW(NULL, string, ARRAY_SIZE(string));
+        SetEnvironmentVariableW(L"COMSPEC", string);
+    }
+    if (!GetEnvironmentVariableW(L"PROMPT", string, ARRAY_SIZE(string)))
+        SetEnvironmentVariableW(L"PROMPT", L"$P$G");
+
+    /* Save cwd into appropriate env var (Must be before the /c processing */
+    GetCurrentDirectoryW(ARRAY_SIZE(string), string);
+    if (IsCharAlphaW(string[0]) && string[1] == ':')
+    {
+        WCHAR envvar[4];
+        wsprintfW(envvar, L"=%c:", string[0]);
+        SetEnvironmentVariableW(envvar, string);
+        WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
+    }
+
+    /* Get the windows version being emulated */
+    osv.dwOSVersionInfoSize = sizeof(osv);
+    RtlGetVersion(&osv);
+
+    /* Pre initialize some messages */
+    lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
+    sprintf(osver, "%ld.%ld.%ld", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
+    cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
+    lstrcpyW(version_string, cmd);
+    LocalFree(cmd);
+
+    /* init for loop context */
+    forloopcontext = NULL;
+    WCMD_save_for_loop_context(TRUE);
+    GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &orig_console_mode);
+}
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
  * winmain().
  */
-
-int __cdecl wmain (int argc, WCHAR *argvW[])
+int __cdecl wmain(int argc, WCHAR *argvW[])
 {
-  WCHAR  *cmdLine = NULL;
-  WCHAR  *cmd     = NULL;
-  WCHAR string[1024];
-  WCHAR envvar[4];
-  BOOL opt_q;
-  int opt_t = 0;
-  WCHAR comspec[MAX_PATH];
-  CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
-  RTL_OSVERSIONINFOEXW osv;
-  char osver[50];
-  STARTUPINFOW startupInfo;
-  const WCHAR *arg;
-  enum read_parse_line rpl_status;
+    struct cmd_parameters parameters;
+    CMD_NODE *toExecute = NULL;
+    STARTUPINFOW startupInfo;
+    enum read_parse_line rpl_status;
 
-  if (!GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
-  {
-      GetSystemDirectoryW(comspec, ARRAY_SIZE(comspec) - ARRAY_SIZE(L"\\cmd.exe"));
-      lstrcatW(comspec, L"\\cmd.exe");
-      SetEnvironmentVariableW(L"COMSPEC", comspec);
-  }
+    WCMD_setup();
 
-  srand(time(NULL));
+    parse_command_line_parameters(&parameters);
+    if (parameters.opt_q) WCMD_echo(L"OFF");
 
-  /* Get the windows version being emulated */
-  osv.dwOSVersionInfoSize = sizeof(osv);
-  RtlGetVersion(&osv);
+    control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    SetConsoleCtrlHandler(my_event_handler, TRUE);
+    console_input = CreateFileW(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL, 0);
 
-  /* Pre initialize some messages */
-  lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
-  sprintf(osver, "%ld.%ld.%ld", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber);
-  cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), osver);
-  lstrcpyW(version_string, cmd);
-  LocalFree(cmd);
-  cmd = NULL;
+    if (parameters.opt_c)
+    {
+        RETURN_CODE return_code = WCMD_call_batch(NULL, parameters.initial_command);
+        if (return_code == RETURN_CODE_GOTO) return NO_ERROR;
+        if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_EXITED && return_code != NO_ERROR)
+            return return_code;
+        return errorlevel;
+    }
 
-  /* init for loop context */
-  forloopcontext = NULL;
-  WCMD_save_for_loop_context(TRUE);
+    GetStartupInfoW(&startupInfo);
+    SetConsoleTitleW(startupInfo.lpTitle ? startupInfo.lpTitle : WCMD_LoadMessage(WCMD_CONSTITLE));
 
-  /* Initialize the event here because the command loop at the bottom will
-   * reset it unconditionally even if the Control-C handler is not installed.
-   */
-  control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    /* Note: cmd.exe /c dir does not get a new color, /k dir does */
+    set_console_default_color(parameters.default_color);
 
-  /* Can't use argc/argv as it will have stripped quotes from parameters
-   * meaning cmd.exe /C echo "quoted string" is impossible
-   */
-  cmdLine = GetCommandLineW();
-  WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmdLine));
+    if (parameters.opt_k)
+    {
+        RETURN_CODE return_code = WCMD_call_batch(NULL, parameters.initial_command);
+        if (return_code == RETURN_CODE_ABORTED)
+            return errorlevel;
+    }
+    else
+        WCMD_output_asis(version_string);
 
-  while (*cmdLine && *cmdLine != '/') ++cmdLine;
-
-  opt_c = opt_k = opt_q = opt_s = FALSE;
-
-  for (arg = cmdLine; *arg; ++arg)
-  {
-        if (arg[0] != '/')
-            continue;
-
-        switch (towlower(arg[1]))
+    /* Loop forever getting commands and executing them. */
+    if (echo_mode) WCMD_output_asis(L"\r\n");
+    /* Read until EOF (which for std input is never, but if redirect in place, may occur */
+    while ((rpl_status = WCMD_ReadAndParseLine(&toExecute)) != RPL_EOF)
+    {
+        if (rpl_status == RPL_SUCCESS && toExecute)
         {
-        case 'a':
-            unicodeOutput = FALSE;
-            break;
-        case 'c':
-            opt_c = TRUE;
-            break;
-        case 'k':
-            opt_k = TRUE;
-            break;
-        case 'q':
-            opt_q = TRUE;
-            break;
-        case 's':
-            opt_s = TRUE;
-            break;
-        case 't':
-            if (arg[2] == ':')
-                opt_t = wcstoul(&arg[3], NULL, 16);
-            break;
-        case 'u':
-            unicodeOutput = TRUE;
-            break;
-        case 'v':
-            if (arg[2] == ':')
-                delayedsubst = wcsnicmp(&arg[3], L"OFF", 3);
-            break;
+            ResetEvent(control_c_event);
+            node_execute(toExecute);
+            node_dispose_tree(toExecute);
+            if (echo_mode) WCMD_output_asis(L"\r\n");
         }
+    }
 
-        if (opt_c || opt_k)
-        {
-            arg += 2;
-            break;
-        }
-  }
-
-  while (*arg && wcschr(L" \t,=;", *arg)) arg++;
-
-  if (opt_q) {
-    WCMD_echo(L"OFF");
-  }
-
-  /* Until we start to read from the keyboard, stay as non-interactive */
-  interactive = FALSE;
-
-  SetEnvironmentVariableW(L"PROMPT", L"$P$G");
-
-  if (opt_c || opt_k) {
-      int     len;
-      WCHAR   *q1 = NULL,*q2 = NULL,*p;
-
-      /* Take a copy */
-      cmd = xstrdupW(arg);
-
-      /* opt_s left unflagged if the command starts with and contains exactly
-       * one quoted string (exactly two quote characters). The quoted string
-       * must be an executable name that has whitespace and must not have the
-       * following characters: &<>()@^| */
-
-      if (!opt_s) {
-        /* 1. Confirm there is at least one quote */
-        q1 = wcschr(arg, '"');
-        if (!q1) opt_s=1;
-      }
-
-      if (!opt_s) {
-          /* 2. Confirm there is a second quote */
-          q2 = wcschr(q1+1, '"');
-          if (!q2) opt_s=1;
-      }
-
-      if (!opt_s) {
-          /* 3. Ensure there are no more quotes */
-          if (wcschr(q2+1, '"')) opt_s=1;
-      }
-
-      /* check first parameter for a space and invalid characters. There must not be any
-       * invalid characters, but there must be one or more whitespace                    */
-      if (!opt_s) {
-          opt_s = TRUE;
-          p=q1;
-          while (p!=q2) {
-              if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
-                  || *p=='@' || *p=='^' || *p=='|') {
-                  opt_s = TRUE;
-                  break;
-              }
-              if (*p==' ' || *p=='\t')
-                  opt_s = FALSE;
-              p++;
-          }
-      }
-
-      WINE_TRACE("/c command line: '%s'\n", wine_dbgstr_w(cmd));
-
-      /* Finally, we only stay in new mode IF the first parameter is quoted and
-         is a valid executable, i.e. must exist, otherwise drop back to old mode  */
-      if (!opt_s) {
-        WCHAR *thisArg = WCMD_parameter(cmd, 0, NULL, FALSE, TRUE);
-        WCHAR  pathext[MAXSTRING];
-        BOOL found = FALSE;
-
-        /* Now extract PATHEXT */
-        len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
-        if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-          lstrcpyW(pathext, L".bat;.com;.cmd;.exe");
-        }
-
-        /* If the supplied parameter has any directory information, look there */
-        WINE_TRACE("First parameter is '%s'\n", wine_dbgstr_w(thisArg));
-        if (wcschr(thisArg, '\\') != NULL) {
-
-          if (!WCMD_get_fullpath(thisArg, ARRAY_SIZE(string), string, NULL)) return FALSE;
-          WINE_TRACE("Full path name '%s'\n", wine_dbgstr_w(string));
-          p = string + lstrlenW(string);
-
-          /* Does file exist with this name? */
-          if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-            WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          } else {
-            WCHAR *thisExt = pathext;
-
-            /* No - try with each of the PATHEXT extensions */
-            while (!found && thisExt) {
-              WCHAR *nextExt = wcschr(thisExt, ';');
-
-              if (nextExt) {
-                memcpy(p, thisExt, (nextExt-thisExt) * sizeof(WCHAR));
-                p[(nextExt-thisExt)] = 0x00;
-                thisExt = nextExt+1;
-              } else {
-                lstrcpyW(p, thisExt);
-                thisExt = NULL;
-              }
-
-              /* Does file exist with this extension appended? */
-              if (GetFileAttributesW(string) != INVALID_FILE_ATTRIBUTES) {
-                WINE_TRACE("Found file as '%s'\n", wine_dbgstr_w(string));
-                found = TRUE;
-              }
-            }
-          }
-
-        /* Otherwise we now need to look in the path to see if we can find it */
-        } else {
-          /* Does file exist with this name? */
-          if (SearchPathW(NULL, thisArg, NULL, ARRAY_SIZE(string), string, NULL) != 0)  {
-            WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));
-            found = TRUE;
-          } else {
-            WCHAR *thisExt = pathext;
-
-            /* No - try with each of the PATHEXT extensions */
-            while (!found && thisExt) {
-              WCHAR *nextExt = wcschr(thisExt, ';');
-
-              if (nextExt) {
-                *nextExt = 0;
-                nextExt = nextExt+1;
-              } else {
-                nextExt = NULL;
-              }
-
-              /* Does file exist with this extension? */
-              if (SearchPathW(NULL, thisArg, thisExt, ARRAY_SIZE(string), string, NULL) != 0)  {
-                WINE_TRACE("Found on path as '%s' with extension '%s'\n", wine_dbgstr_w(string),
-                           wine_dbgstr_w(thisExt));
-                found = TRUE;
-              }
-              thisExt = nextExt;
-            }
-          }
-        }
-
-        /* If not found, drop back to old behaviour */
-        if (!found) {
-          WINE_TRACE("Binary not found, dropping back to old behaviour\n");
-          opt_s = TRUE;
-        }
-
-      }
-
-      /* strip first and last quote characters if opt_s; check for invalid
-       * executable is done later */
-      if (opt_s && *cmd=='\"')
-          WCMD_strip_quotes(cmd);
-  }
-  else
-  {
-      SetConsoleCtrlHandler(my_event_handler, TRUE);
-  }
-
-  /* Save cwd into appropriate env var (Must be before the /c processing */
-  GetCurrentDirectoryW(ARRAY_SIZE(string), string);
-  if (IsCharAlphaW(string[0]) && string[1] == ':') {
-    wsprintfW(envvar, L"=%c:", string[0]);
-    SetEnvironmentVariableW(envvar, string);
-    WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
-  }
-
-  if (opt_c) {
-      /* If we do a "cmd /c command", we don't want to allocate a new
-       * console since the command returns immediately. Rather, we use
-       * the currently allocated input and output handles. This allows
-       * us to pipe to and read from the command interpreter.
-       */
-
-      /* Parse the command string, without reading any more input */
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          node_execute(toExecute);
-          node_dispose_tree(toExecute);
-      }
-      else if (rpl_status == RPL_SYNTAXERROR)
-          errorlevel = RETURN_CODE_SYNTAX_ERROR;
-
-      return errorlevel;
-  }
-
-  GetStartupInfoW(&startupInfo);
-  if (startupInfo.lpTitle != NULL)
-      SetConsoleTitleW(startupInfo.lpTitle);
-  else
-      SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
-
-  /* Note: cmd.exe /c dir does not get a new color, /k dir does */
-  if (opt_t) {
-      if (!(((opt_t & 0xF0) >> 4) == (opt_t & 0x0F))) {
-          defaultColor = opt_t & 0xFF;
-          param1[0] = 0x00;
-          WCMD_color();
-      }
-  } else {
-      /* Check HKCU\Software\Microsoft\Command Processor
-         Then  HKLM\Software\Microsoft\Command Processor
-           for defaultcolour value
-           Note  Can be supplied as DWORD or REG_SZ
-           Note2 When supplied as REG_SZ it's in decimal!!! */
-      HKEY key;
-      DWORD type;
-      DWORD value=0, size=4;
-      static const WCHAR regKeyW[] = L"Software\\Microsoft\\Command Processor";
-
-      if (RegOpenKeyExW(HKEY_CURRENT_USER, regKeyW,
-                       0, KEY_READ, &key) == ERROR_SUCCESS) {
-          WCHAR  strvalue[4];
-
-          /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type, NULL, NULL) == ERROR_SUCCESS) {
-              if (type == REG_DWORD) {
-                  size = sizeof(DWORD);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
-              } else if (type == REG_SZ) {
-                  size = sizeof(strvalue);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
-                  value = wcstoul(strvalue, NULL, 10);
-              }
-          }
-          RegCloseKey(key);
-      }
-
-      if (value == 0 && RegOpenKeyExW(HKEY_LOCAL_MACHINE, regKeyW,
-                       0, KEY_READ, &key) == ERROR_SUCCESS) {
-          WCHAR  strvalue[4];
-
-          /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type,
-                     NULL, NULL) == ERROR_SUCCESS) {
-              if (type == REG_DWORD) {
-                  size = sizeof(DWORD);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
-              } else if (type == REG_SZ) {
-                  size = sizeof(strvalue);
-                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
-                  value = wcstoul(strvalue, NULL, 10);
-              }
-          }
-          RegCloseKey(key);
-      }
-
-      /* If one found, set the screen to that colour */
-      if (!(((value & 0xF0) >> 4) == (value & 0x0F))) {
-          defaultColor = value & 0xFF;
-          param1[0] = 0x00;
-          WCMD_color();
-      }
-
-  }
-
-  if (opt_k)
-  {
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
-      /* Parse the command string, without reading any more input */
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          node_execute(toExecute);
-          node_dispose_tree(toExecute);
-      }
-      else if (rpl_status == RPL_SYNTAXERROR)
-          errorlevel = RETURN_CODE_SYNTAX_ERROR;
-      free(cmd);
-  }
-
-/*
- *	Loop forever getting commands and executing them.
- */
-
-  interactive = TRUE;
-  if (!opt_k) WCMD_output_asis(version_string);
-  if (echo_mode) WCMD_output_asis(L"\r\n");
-  /* Read until EOF (which for std input is never, but if redirect in place, may occur */
-  while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute)) != RPL_EOF)
-  {
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          ResetEvent(control_c_event);
-          node_execute(toExecute);
-          node_dispose_tree(toExecute);
-          if (echo_mode) WCMD_output_asis(L"\r\n");
-      }
-  }
-  CloseHandle(control_c_event);
-  return 0;
+    return 0;
 }

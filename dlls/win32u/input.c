@@ -31,7 +31,6 @@
 #endif
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
@@ -40,6 +39,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
+
+#define HIMETRIC_PER_INCH 2540
+
+static const struct ratio no_dpi;
 
 static const WCHAR keyboard_layouts_keyW[] =
 {
@@ -398,13 +401,23 @@ static const KBDTABLES kbdus_tables =
     .pKeyNames = (VSC_LPWSTR *)key_names,
     .pKeyNamesExt = (VSC_LPWSTR *)key_names_ext,
     .pusVSCtoVK = (USHORT *)vsc_to_vk,
-    .bMaxVSCtoVK = ARRAY_SIZE(vsc_to_vk),
+    .bMaxVSCtoVK = ARRAY_SIZE(vsc_to_vk) - 1,
     .pVSCtoVK_E0 = (VSC_VK *)vsc_to_vk_e0,
     .pVSCtoVK_E1 = (VSC_VK *)vsc_to_vk_e1,
     .fLocaleFlags = MAKELONG(0, KBD_VERSION),
 };
 
 static LONG clipping_cursor; /* clipping thread counter */
+static LONG enable_mouse_in_pointer = -1;
+static LONG last_frame = 0;
+
+struct pointer
+{
+    UINT32 id;
+    struct list entry;
+    POINTER_INPUT_TYPE type;
+    POINTER_INFO info;
+};
 
 BOOL grab_pointer = TRUE;
 BOOL grab_fullscreen = FALSE;
@@ -619,9 +632,9 @@ static void update_mouse_coords( INPUT *input )
         RECT rc;
 
         if (input->mi.dwFlags & MOUSEEVENTF_VIRTUALDESK)
-            rc = get_virtual_screen_rect( 0, MDT_DEFAULT );
+            rc = get_virtual_screen_rect( no_dpi, MDT_DEFAULT );
         else
-            rc = get_primary_monitor_rect( 0 );
+            rc = get_primary_monitor_rect( no_dpi );
 
         input->mi.dx = rc.left + ((input->mi.dx * (rc.right - rc.left)) >> 16);
         input->mi.dy = rc.top  + ((input->mi.dy * (rc.bottom - rc.top)) >> 16);
@@ -646,6 +659,71 @@ static void update_mouse_coords( INPUT *input )
             if (abs( input->mi.dy ) > accel[1] && accel[2] == 2) input->mi.dy *= 2;
         }
     }
+}
+
+static const char *debugstr_mouseinput( const MOUSEINPUT *mi )
+{
+    return wine_dbg_sprintf( "pos %s, flags %#x, data %#x, time %d", wine_dbgstr_point( (POINT *)&mi->dx ),
+                             mi->dwFlags, mi->mouseData, mi->time );
+}
+
+static NTSTATUS send_mouse_motion( UINT flags )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    INPUT input = info->mouse_motion;
+    NTSTATUS status;
+
+    if (!input.mi.dwFlags && !input.mi.mouseData && !info->raw_mouse.count) return STATUS_SUCCESS; /* ignore empty inputs */
+
+    TRACE( "Sending %s (%u raw frames)\n", debugstr_mouseinput( &input.mi ), info->raw_mouse.count );
+    status = server_send_hardware_message( info->mouse_hwnd, flags, &input, (LPARAM)&info->raw_mouse );
+    memset( &info->mouse_motion, 0, sizeof(info->mouse_motion) );
+    info->raw_mouse.count = 0;
+    info->mouse_hwnd = NULL;
+
+    return status;
+}
+
+static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input, const struct raw_mouse *raw )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    BOOL send;
+
+    /* don't accumulate if there's button / wheel / MOUSEEVENTF_MOVE_NOCOALESCE */
+    send = input.mi.mouseData || (input.mi.dwFlags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE));
+    if (send || info->mouse_hwnd != hwnd) send_mouse_motion( flags );
+    else if (info->raw_mouse.count + raw->count > ARRAY_SIZE(raw->data)) send_mouse_motion( flags );
+
+    input.mi.dwFlags &= ~MOUSEEVENTF_MOVE_NOCOALESCE;
+    if (!input.mi.dwFlags) input = info->mouse_motion; /* only MOUSEEVENTF_MOVE_NOCOALESCE or raw */
+    else if (!(input.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
+    {
+        input.mi.dwFlags |= (info->mouse_motion.mi.dwFlags & MOUSEEVENTF_ABSOLUTE);
+        input.mi.dx += info->mouse_motion.mi.dx;
+        input.mi.dy += info->mouse_motion.mi.dy;
+    }
+
+    info->mouse_hwnd = hwnd;
+    info->mouse_motion = input;
+    memcpy( info->raw_mouse.data + info->raw_mouse.count, raw->data, raw->count * sizeof(*raw->data) );
+    info->raw_mouse.count += raw->count;
+
+    if (send) return send_mouse_motion( flags );
+
+    TRACE( "Keeping %s (%u raw frames)\n", debugstr_mouseinput( &info->mouse_motion.mi ), info->raw_mouse.count );
+    return STATUS_SUCCESS;
+}
+
+/* NtUserSendHardwareInput, for user drivers to feed host device input to wineserver */
+NTSTATUS send_hardware_input( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
+{
+    if (input->type == INPUT_MOUSE)
+    {
+        const struct raw_mouse empty_raw = {0}, *raw = lparam ? (void *)lparam : &empty_raw;
+        return accum_mouse_motion( hwnd, flags, *input, raw );
+    }
+
+    return server_send_hardware_message( hwnd, flags, input, lparam );
 }
 
 /***********************************************************************
@@ -684,7 +762,7 @@ UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
             update_mouse_coords( &input );
             /* fallthrough */
         case INPUT_KEYBOARD:
-            status = send_hardware_message( 0, SEND_HWMSG_INJECTED, &input, 0 );
+            status = server_send_hardware_message( 0, SEND_HWMSG_INJECTED, &input, 0 );
             break;
         case INPUT_HARDWARE:
             RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
@@ -730,9 +808,9 @@ BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
 }
 
 /***********************************************************************
- *	     get_cursor_pos
+ *	     NtUserGetCursorPos (win32u.@)
  */
-BOOL get_cursor_pos( POINT *pt )
+BOOL WINAPI NtUserGetCursorPos( POINT *pt )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const desktop_shm_t *desktop_shm;
@@ -783,23 +861,8 @@ BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
         info->flags = CURSOR_SHOWING;
     }
 
-    get_cursor_pos( &info->ptScreenPos );
+    NtUserGetCursorPos( &info->ptScreenPos );
     return TRUE;
-}
-
-static void check_for_events( UINT flags )
-{
-    struct peek_message_filter filter =
-    {
-        .internal = TRUE,
-        .flags = PM_REMOVE,
-    };
-    MSG msg;
-
-    if (!user_driver->pProcessEvents( flags ))
-        flush_window_surfaces( TRUE );
-
-    peek_message( &msg, &filter );
 }
 
 /**********************************************************************
@@ -815,7 +878,7 @@ SHORT WINAPI NtUserGetAsyncKeyState( INT key )
 
     if (key < 0 || key >= 256) return 0;
 
-    check_for_events( QS_INPUT );
+    check_for_events( QS_ALLINPUT );
 
     while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
         state = desktop_shm->keystate[key];
@@ -886,8 +949,16 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
     return ret;
 }
 
+/***********************************************************************
+ *           NtUserGetMessagePos (win32u.@)
+ */
+DWORD WINAPI NtUserGetMessagePos(void)
+{
+    return get_user_thread_info()->message_pos;
+}
+
 /*******************************************************************
- *           NtUserGetThreadInfo (win32u.@)
+ *           NtUserGetThreadState (win32u.@)
  */
 ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
 {
@@ -914,7 +985,7 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
         return (ULONG_PTR)get_default_ime_window( 0 );
 
     case UserThreadStateDefaultInputContext:
-        return NtUserGetThreadInfo()->default_imc;
+        return (ULONG_PTR)get_default_input_context();
 
     case UserThreadStateInputState:
         return get_input_state();
@@ -923,19 +994,30 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
         return (ULONG_PTR)NtUserGetCursor();
 
     case UserThreadStateExtraInfo:
-        return NtUserGetThreadInfo()->message_extra;
+        return get_user_thread_info()->message_extra;
 
     case UserThreadStateInSendMessage:
-        return NtUserGetThreadInfo()->receive_flags;
+        return get_send_message_flags();
 
     case UserThreadStateMessageTime:
-        return NtUserGetThreadInfo()->message_time;
+        return get_user_thread_info()->message_time;
 
     case UserThreadStateIsForeground:
     default:
         WARN( "unsupported class %u\n", cls );
         return 0;
     }
+}
+
+/***********************************************************************
+ *           NtUserSetMessageExtraInfo (win32u.@)
+ */
+LPARAM WINAPI NtUserSetMessageExtraInfo( LPARAM lparam )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    LPARAM old_value = thread_info->message_extra;
+    thread_info->message_extra = lparam;
+    return old_value;
 }
 
 /***********************************************************************
@@ -958,7 +1040,7 @@ DWORD get_last_input_time(void)
 {
     DWORD ret;
 
-    SERVER_START_REQ( get_last_input_time )
+    SERVER_START_REQ( set_user_input_time )
     {
         wine_server_call( req );
         ret = reply->time;
@@ -992,9 +1074,6 @@ static HKL get_locale_kbd_layout(void)
 
 /***********************************************************************
  *	     NtUserGetKeyboardLayout    (win32u.@)
- *
- * Device handle for keyboard layout defaulted to
- * the language id. This is the way Windows default works.
  */
 HKL WINAPI NtUserGetKeyboardLayout( DWORD thread_id )
 {
@@ -1002,7 +1081,7 @@ HKL WINAPI NtUserGetKeyboardLayout( DWORD thread_id )
     HKL layout = thread->kbd_layout;
 
     if (thread_id && thread_id != GetCurrentThreadId())
-        FIXME( "couldn't return keyboard layout for thread %04x\n", (int)thread_id );
+        FIXME( "couldn't return keyboard layout for thread %04x\n", thread_id );
 
     if (!layout) return get_locale_kbd_layout();
     return layout;
@@ -1019,14 +1098,25 @@ SHORT WINAPI NtUserGetKeyState( INT vkey )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const input_shm_t *input_shm;
+    UINT64 keystate_serial = 0;
     BOOL ret = FALSE;
     SHORT retval = 0;
     NTSTATUS status;
 
     while ((status = get_shared_input( GetCurrentThreadId(), &lock, &input_shm )) == STATUS_PENDING)
     {
-        ret = !!input_shm->keystate_lock; /* needs a request for sync_input_keystate */
+        ret = !!input_shm->keystate_lock; /* needs a request for sync_input_keystate if desktop keystate differs. */
+        keystate_serial = input_shm->keystate_serial;
         retval = (signed char)(input_shm->keystate[vkey & 0xff] & 0x81);
+    }
+
+    if (!ret)
+    {
+        struct object_lock lock = OBJECT_LOCK_INIT;
+        const desktop_shm_t *desktop_shm;
+
+        while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
+            ret = keystate_serial == desktop_shm->keystate_serial;
     }
 
     if (!ret) SERVER_START_REQ( get_key_state )
@@ -1203,13 +1293,13 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
  *
  * Map a scancode to a virtual key with KBD information.
  */
-USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout )
+USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout, UINT *mapped )
 {
     const KBDTABLES *kbd_tables;
     USHORT vsc2vk[0x300];
     UINT vkey;
 
-    if ((vkey = user_driver->pMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout )) != -1) return vkey;
+    if ((vkey = user_driver->pMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout )) != -1) goto done;
 
     if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
 
@@ -1220,6 +1310,15 @@ USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout )
 
     if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
+    /* remap some scancodes as native does */
+done:
+    switch (vkey & 0xff)
+    {
+    case VK_PAUSE: *mapped = 0x45; break;
+    case VK_RSHIFT: *mapped = 0x136; break;
+    case VK_NUMLOCK: *mapped = 0x145; break;
+    default: *mapped = scan; break;
+    }
     return vkey;
 }
 
@@ -1233,7 +1332,7 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     const KBDTABLES *kbd_tables;
     VSC_LPWSTR *key_name;
 
-    TRACE_(keyboard)( "lparam %#x, buffer %p, size %d.\n", (int)lparam, buffer, size );
+    TRACE_(keyboard)( "lparam %#x, buffer %p, size %d.\n", lparam, buffer, size );
 
     if (!buffer || !size) return 0;
     if ((len = user_driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
@@ -1461,11 +1560,10 @@ BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
 
     layout = NtUserGetKeyboardLayout( 0 );
     id = HandleToUlong( layout );
-    if (HIWORD( id ) == LOWORD( id )) id = LOWORD( id );
+    if (!(HIWORD( id ) & 0xf000)) id = HIWORD( id );
     snprintf( buffer, sizeof(buffer), "%08X", id );
     asciiz_to_unicode( name, buffer );
-
-    if ((hkey = reg_open_key( NULL, keyboard_layouts_keyW, sizeof(keyboard_layouts_keyW) )))
+    if ((HIWORD( id ) & 0x1000) && (hkey = reg_open_key( NULL, keyboard_layouts_keyW, sizeof(keyboard_layouts_keyW) )))
     {
         while (!NtEnumerateKey( hkey, i++, KeyNodeInformation, key,
                                 sizeof(buffer) - sizeof(WCHAR), &len ))
@@ -1569,7 +1667,7 @@ int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOV
     unsigned int i;
 
 
-    TRACE( "%d, %p, %p, %d, %d\n", size, ptin, ptout, count, (int)resolution );
+    TRACE( "%d, %p, %p, %d, %d\n", size, ptin, ptout, count, resolution );
 
     if ((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > ARRAY_SIZE( positions )))
     {
@@ -1644,79 +1742,106 @@ static WORD get_key_state(void)
     return ret;
 }
 
-struct tracking_list
+static struct mouse_tracking_info *get_mouse_tracking_info(void)
 {
-    TRACKMOUSEEVENT info;
-    POINT pos; /* center of hover rectangle */
-};
+    struct user_thread_info *thread_info = get_user_thread_info();
+    if (!thread_info->mouse_tracking_info)
+        thread_info->mouse_tracking_info = calloc(1, sizeof(*thread_info->mouse_tracking_info));
+    return thread_info->mouse_tracking_info;
+}
 
-/* FIXME: move tracking stuff into per-thread data */
-static struct tracking_list tracking_info;
-
-static void check_mouse_leave( HWND hwnd, int hittest )
+void update_current_mouse_window( HWND hwnd, INT hittest, POINT pos )
 {
-    if (tracking_info.info.hwndTrack != hwnd)
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
+
+    tracking->last_mouse_message_hwnd = hwnd;
+    tracking->last_mouse_message_hittest = hittest;
+    tracking->last_mouse_message_pos = pos;
+}
+
+static void check_mouse_leave( HWND hwnd, int hittest, struct mouse_tracking_info *tracking )
+{
+    if (tracking->info.hwndTrack != hwnd)
     {
-        if (tracking_info.info.dwFlags & TME_NONCLIENT)
-            NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
+        if (tracking->info.dwFlags & TME_NONCLIENT)
+            NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
         else
-            NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
+            NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
 
-        tracking_info.info.dwFlags &= ~TME_LEAVE;
+        tracking->info.dwFlags &= ~TME_LEAVE;
     }
     else
     {
         if (hittest == HTCLIENT)
         {
-            if (tracking_info.info.dwFlags & TME_NONCLIENT)
+            if (tracking->info.dwFlags & TME_NONCLIENT)
             {
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
-                tracking_info.info.dwFlags &= ~TME_LEAVE;
+                NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
+                tracking->info.dwFlags &= ~TME_LEAVE;
             }
         }
         else
         {
-            if (!(tracking_info.info.dwFlags & TME_NONCLIENT))
+            if (!(tracking->info.dwFlags & TME_NONCLIENT))
             {
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
-                tracking_info.info.dwFlags &= ~TME_LEAVE;
+                NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSELEAVE, 0, 0 );
+                tracking->info.dwFlags &= ~TME_LEAVE;
             }
         }
     }
 }
 
+static HWND get_mouse_window( HWND hwnd, INT *hittest, POINT *ret_pos, struct mouse_tracking_info *tracking )
+{
+    POINT pos;
+    HWND ret;
+
+    NtUserGetCursorPos( &pos );
+    ret = window_from_point( hwnd, pos, hittest, FALSE );
+    if (ret && ret == tracking->last_mouse_message_hwnd)
+    {
+        *hittest = tracking->last_mouse_message_hittest;
+        *ret_pos = tracking->last_mouse_message_pos;
+    }
+    else
+    {
+        tracking->last_mouse_message_hwnd = NULL;
+        *ret_pos = pos;
+    }
+    TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), ret, *hittest );
+    return ret;
+}
+
 void update_mouse_tracking_info( HWND hwnd )
 {
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
     int hover_width = 0, hover_height = 0, hittest;
     POINT pos;
 
     TRACE( "hwnd %p\n", hwnd );
 
-    get_cursor_pos( &pos );
-    hwnd = window_from_point( hwnd, pos, &hittest );
-
-    TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest );
+    hwnd = get_mouse_window( hwnd, &hittest, &pos, tracking );
 
     NtUserSystemParametersInfo( SPI_GETMOUSEHOVERWIDTH, 0, &hover_width, 0 );
     NtUserSystemParametersInfo( SPI_GETMOUSEHOVERHEIGHT, 0, &hover_height, 0 );
 
     TRACE( "tracked pos %s, current pos %s, hover width %d, hover height %d\n",
-           wine_dbgstr_point(&tracking_info.pos), wine_dbgstr_point(&pos),
+           wine_dbgstr_point(&tracking->pos), wine_dbgstr_point(&pos),
            hover_width, hover_height );
 
-    if (tracking_info.info.dwFlags & TME_LEAVE)
-        check_mouse_leave( hwnd, hittest );
+    if (tracking->info.dwFlags & TME_LEAVE)
+        check_mouse_leave( hwnd, hittest, tracking );
 
-    if (tracking_info.info.hwndTrack != hwnd)
-        tracking_info.info.dwFlags &= ~TME_HOVER;
+    if (tracking->info.hwndTrack != hwnd)
+        tracking->info.dwFlags &= ~TME_HOVER;
 
-    if (tracking_info.info.dwFlags & TME_HOVER)
+    if (tracking->info.dwFlags & TME_HOVER)
     {
         /* has the cursor moved outside the rectangle centered around pos? */
-        if ((abs( pos.x - tracking_info.pos.x ) > (hover_width / 2)) ||
-            (abs( pos.y - tracking_info.pos.y ) > (hover_height / 2)))
+        if ((abs( pos.x - tracking->pos.x ) > (hover_width / 2)) ||
+            (abs( pos.y - tracking->pos.y ) > (hover_height / 2)))
         {
-            tracking_info.pos = pos;
+            tracking->pos = pos;
         }
         else
         {
@@ -1725,28 +1850,28 @@ void update_mouse_tracking_info( HWND hwnd )
                 screen_to_client(hwnd, &pos);
                 TRACE( "client cursor pos %s\n", wine_dbgstr_point(&pos) );
 
-                NtUserPostMessage( tracking_info.info.hwndTrack, WM_MOUSEHOVER,
+                NtUserPostMessage( tracking->info.hwndTrack, WM_MOUSEHOVER,
                                    get_key_state(), MAKELPARAM( pos.x, pos.y ) );
             }
             else
             {
-                if (tracking_info.info.dwFlags & TME_NONCLIENT)
-                    NtUserPostMessage( tracking_info.info.hwndTrack, WM_NCMOUSEHOVER,
+                if (tracking->info.dwFlags & TME_NONCLIENT)
+                    NtUserPostMessage( tracking->info.hwndTrack, WM_NCMOUSEHOVER,
                                        hittest, MAKELPARAM( pos.x, pos.y ) );
             }
 
             /* stop tracking mouse hover */
-            tracking_info.info.dwFlags &= ~TME_HOVER;
+            tracking->info.dwFlags &= ~TME_HOVER;
         }
     }
 
     /* stop the timer if the tracking list is empty */
-    if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
+    if (!(tracking->info.dwFlags & (TME_HOVER | TME_LEAVE)))
     {
-        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-        tracking_info.info.hwndTrack = 0;
-        tracking_info.info.dwFlags = 0;
-        tracking_info.info.dwHoverTime = 0;
+        NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        tracking->info.hwndTrack = 0;
+        tracking->info.dwFlags = 0;
+        tracking->info.dwHoverTime = 0;
     }
 }
 
@@ -1755,24 +1880,25 @@ void update_mouse_tracking_info( HWND hwnd )
  */
 BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 {
+    struct mouse_tracking_info *tracking = get_mouse_tracking_info();
     DWORD hover_time;
     int hittest;
     HWND hwnd;
     POINT pos;
 
     TRACE( "size %u, flags %#x, hwnd %p, time %u\n",
-           (int)info->cbSize, (int)info->dwFlags, info->hwndTrack, (int)info->dwHoverTime );
+           info->cbSize, info->dwFlags, info->hwndTrack, info->dwHoverTime );
 
     if (info->cbSize != sizeof(TRACKMOUSEEVENT))
     {
-        WARN( "wrong size %u\n", (int)info->cbSize );
+        WARN( "wrong size %u\n", info->cbSize );
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
     if (info->dwFlags & TME_QUERY)
     {
-        *info = tracking_info.info;
+        *info = tracking->info;
         info->cbSize = sizeof(TRACKMOUSEEVENT);
         return TRUE;
     }
@@ -1783,31 +1909,33 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
         return FALSE;
     }
 
+    if (!is_current_thread_window( info->hwndTrack ))
+        return send_notify_message( info->hwndTrack, WM_WINE_TRACKMOUSEEVENT, info->dwFlags, info->dwHoverTime, FALSE );
+
     hover_time = (info->dwFlags & TME_HOVER) ? info->dwHoverTime : HOVER_DEFAULT;
 
     if (hover_time == HOVER_DEFAULT || hover_time == 0)
         NtUserSystemParametersInfo( SPI_GETMOUSEHOVERTIME, 0, &hover_time, 0 );
 
-    get_cursor_pos( &pos );
-    hwnd = window_from_point( info->hwndTrack, pos, &hittest );
+    hwnd = get_mouse_window( info->hwndTrack, &hittest, &pos, tracking );
     TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest );
 
     if (info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT))
-        FIXME( "ignoring flags %#x\n", (int)info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT) );
+        FIXME( "ignoring flags %#x\n", info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT) );
 
     if (info->dwFlags & TME_CANCEL)
     {
-        if (tracking_info.info.hwndTrack == info->hwndTrack)
+        if (tracking->info.hwndTrack == info->hwndTrack)
         {
-            tracking_info.info.dwFlags &= ~(info->dwFlags & ~TME_CANCEL);
+            tracking->info.dwFlags &= ~(info->dwFlags & ~TME_CANCEL);
 
             /* if we aren't tracking on hover or leave remove this entry */
-            if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
+            if (!(tracking->info.dwFlags & (TME_HOVER | TME_LEAVE)))
             {
-                NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-                tracking_info.info.hwndTrack = 0;
-                tracking_info.info.dwFlags = 0;
-                tracking_info.info.dwHoverTime = 0;
+                NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+                tracking->info.hwndTrack = 0;
+                tracking->info.dwFlags = 0;
+                tracking->info.dwHoverTime = 0;
             }
         }
     }
@@ -1827,24 +1955,24 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
         /* In our implementation, it's possible that another window will receive
          * WM_MOUSEMOVE and call TrackMouseEvent before TrackMouseEventProc is
          * called. In such a situation, post the WM_MOUSELEAVE now. */
-        if ((tracking_info.info.dwFlags & TME_LEAVE) && tracking_info.info.hwndTrack != NULL)
-            check_mouse_leave(hwnd, hittest);
+        if ((tracking->info.dwFlags & TME_LEAVE) && tracking->info.hwndTrack != NULL)
+            check_mouse_leave( hwnd, hittest, tracking );
 
-        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
-        tracking_info.info.hwndTrack = 0;
-        tracking_info.info.dwFlags = 0;
-        tracking_info.info.dwHoverTime = 0;
+        NtUserKillSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        tracking->info.hwndTrack = 0;
+        tracking->info.dwFlags = 0;
+        tracking->info.dwHoverTime = 0;
 
         if (info->hwndTrack == hwnd)
         {
             /* Adding new mouse event to the tracking list */
-            tracking_info.info = *info;
-            tracking_info.info.dwHoverTime = hover_time;
+            tracking->info = *info;
+            tracking->info.dwHoverTime = hover_time;
 
             /* Initialize HoverInfo variables even if not hover tracking */
-            tracking_info.pos = pos;
+            tracking->pos = pos;
 
-            NtUserSetSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time );
+            NtUserSetSystemTimer( tracking->info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time );
         }
     }
 
@@ -1877,7 +2005,7 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
     if (ret)
     {
-        user_driver->pSetCapture( hwnd, gui_flags );
+        user_driver->pSetCapture( NtUserGetAncestor( hwnd, GA_ROOT ), gui_flags, NtUserGetAncestor( previous, GA_ROOT ) );
 
         if (previous)
             NtUserNotifyWinEvent( EVENT_SYSTEM_CAPTUREEND, previous, OBJID_WINDOW, 0 );
@@ -1969,6 +2097,9 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     DWORD old_thread, new_thread;
     CBTACTIVATESTRUCT cbt;
 
+    TRACE( "hwnd %p, previous %p, mouse %u, focus %u, new_active_thread_id %04x\n",
+           hwnd, previous, mouse, focus, new_active_thread_id );
+
     if (previous == hwnd)
     {
         if (prev) *prev = hwnd;
@@ -1984,7 +2115,7 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     {
         send_message( previous, WM_NCACTIVATE, FALSE, (LPARAM)hwnd );
         send_message( previous, WM_ACTIVATE,
-                      MAKEWPARAM( WA_INACTIVE, is_iconic(previous) ), (LPARAM)hwnd );
+                      MAKEWPARAM( WA_INACTIVE, is_iconic(previous) ? 0x20 : 0 ), (LPARAM)hwnd );
     }
 
     SERVER_START_REQ( set_active_window )
@@ -2043,7 +2174,7 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     {
         send_message( hwnd, WM_NCACTIVATE, hwnd == NtUserGetForegroundWindow(), (LPARAM)previous );
         send_message( hwnd, WM_ACTIVATE,
-                      MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, is_iconic(hwnd) ),
+                      MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, is_iconic(hwnd) ? 0x20 : 0 ),
                       (LPARAM)previous );
         if (NtUserGetAncestor( hwnd, GA_PARENT ) == get_desktop_window())
             NtUserPostMessage( get_desktop_window(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
@@ -2142,7 +2273,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
         if (call_hooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous, 0 )) return 0;
 
         /* activate hwndTop if needed. */
-        if (!(active = get_active_window()) && !set_foreground_window( hwndTop, FALSE )) return 0;
+        if (!(active = get_active_window()) && !set_foreground_window( hwndTop, FALSE, FALSE )) return 0;
         if (hwndTop != active)
         {
             if (!set_active_window( hwndTop, NULL, FALSE, FALSE, 0 )) return 0;
@@ -2167,13 +2298,13 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
  */
 BOOL WINAPI NtUserSetForegroundWindow( HWND hwnd )
 {
-    return set_foreground_window( hwnd, FALSE );
+    return set_foreground_window( hwnd, FALSE, FALSE );
 }
 
 /*******************************************************************
  *		set_foreground_window
  */
-BOOL set_foreground_window( HWND hwnd, BOOL mouse )
+BOOL set_foreground_window( HWND hwnd, BOOL mouse, BOOL internal )
 {
     BOOL ret, send_msg_old = FALSE, send_msg_new = FALSE;
     DWORD new_thread_id;
@@ -2185,6 +2316,7 @@ BOOL set_foreground_window( HWND hwnd, BOOL mouse )
     SERVER_START_REQ( set_foreground_window )
     {
         req->handle = wine_server_user_handle( hwnd );
+        req->internal = internal;
         if ((ret = !wine_server_call_err( req )))
         {
             previous = wine_server_ptr_handle( reply->previous );
@@ -2193,6 +2325,8 @@ BOOL set_foreground_window( HWND hwnd, BOOL mouse )
         }
     }
     SERVER_END_REQ;
+
+    TRACE( "hwnd %p, mouse %u, internal %u -> ret %u, previous %p\n", hwnd, mouse, internal, ret, previous );
 
     if (ret && previous != hwnd)
     {
@@ -2431,7 +2565,7 @@ BOOL set_ime_composition_rect( HWND hwnd, RECT rect )
 {
     if (!NtUserIsWindow( hwnd )) return FALSE;
     NtUserMapWindowPoints( hwnd, 0, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
-    rect = map_rect_virt_to_raw( rect, 0 /* per-monitor DPI */ );
+    rect = map_rect_virt_to_raw( rect, no_dpi /* per-monitor DPI */ );
     return user_driver->pSetIMECompositionRect( NtUserGetAncestor( hwnd, GA_ROOT ), rect );
 }
 
@@ -2576,15 +2710,22 @@ void toggle_caret( HWND hwnd )
     if (ret && !hidden) display_caret( hwnd, &r );
 }
 
-
 /**********************************************************************
  *       NtUserEnableMouseInPointer    (win32u.@)
  */
 BOOL WINAPI NtUserEnableMouseInPointer( BOOL enable )
 {
-    FIXME( "enable %u stub!\n", enable );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    LONG prev;
+
+    TRACE( "enable %u\n", enable );
+
+    if ((prev = InterlockedCompareExchange( &enable_mouse_in_pointer, !!enable, -1 )) != -1 && prev != enable)
+    {
+        RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /**********************************************************************
@@ -2602,9 +2743,14 @@ BOOL WINAPI NtUserEnableMouseInPointerForThread( void )
  */
 BOOL WINAPI NtUserIsMouseInPointerEnabled(void)
 {
-    FIXME( "stub!\n" );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    BOOL ret = ReadNoFence( &enable_mouse_in_pointer ) == 1;
+    TRACE( "-> %d.\n", ret );
+    return ret;
+}
+
+BOOL is_mouse_in_pointer_enabled( HWND hwnd )
+{
+    return ReadNoFence( &enable_mouse_in_pointer ) == 1;
 }
 
 static BOOL is_captured_by_system(void)
@@ -2612,6 +2758,12 @@ static BOOL is_captured_by_system(void)
     GUITHREADINFO info;
     info.cbSize = sizeof(info);
     return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) && info.hwndCapture && (info.flags & (GUI_INMOVESIZE | GUI_INMENUMODE));
+}
+
+static BOOL is_fullscreen( const MONITORINFO *info, const RECT *rect )
+{
+    return rect->left <= info->rcMonitor.left && rect->right >= info->rcMonitor.right &&
+           rect->top <= info->rcMonitor.top && rect->bottom >= info->rcMonitor.bottom;
 }
 
 /***********************************************************************
@@ -2623,9 +2775,9 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
-    RECT rect, virtual_rect;
+    RECT monitor_rect, window_rect, virtual_rect;
     DWORD style;
-    UINT dpi, ctx;
+    UINT ctx;
     BOOL ret;
 
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
@@ -2637,18 +2789,18 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
 
-    dpi = get_dpi_for_window( hwnd );
-    if (!get_window_rect( hwnd, &rect, dpi )) return FALSE;
-    if (!is_window_rect_full_screen( &rect, dpi )) return FALSE;
+    ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
+    if (!(ret = get_present_rect( hwnd, &window_rect, get_thread_dpi() )))
+        ret = get_window_rect( hwnd, &window_rect, get_thread_dpi() );
+    monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
+    virtual_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
+    monitor_rect = map_rect_virt_to_raw( monitor_info.rcMonitor, get_thread_dpi() );
+    set_thread_dpi_awareness_context( ctx );
+
+    if (!ret || !is_fullscreen( &monitor_info, &window_rect )) return FALSE;
     if (is_captured_by_system()) return FALSE;
     if (NtGetTickCount() - thread_info->clipping_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
-
-    ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
-    monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
-    virtual_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
-    rect = map_rect_virt_to_raw( monitor_info.rcMonitor, get_thread_dpi() );
-    set_thread_dpi_awareness_context( ctx );
 
     if (!grab_fullscreen)
     {
@@ -2661,7 +2813,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     SERVER_START_REQ( set_cursor )
     {
         req->flags = SET_CURSOR_CLIP | SET_CURSOR_FSCLIP;
-        req->clip  = wine_server_rectangle( rect );
+        req->clip  = wine_server_rectangle( monitor_rect );
         ret = !wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2669,19 +2821,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     return ret;
 }
 
-/**********************************************************************
- *       NtUserGetPointerInfoList    (win32u.@)
- */
-BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR unk0, UINT_PTR unk1, SIZE_T size,
-                                      UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info )
-{
-    FIXME( "id %#x, type %#x, unk0 %#zx, unk1 %#zx, size %#zx, entry_count %p, pointer_count %p, pointer_info %p stub!\n",
-           id, (int)type, (size_t)unk0, (size_t)unk1, (size_t)size, entry_count, pointer_count, pointer_info );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-
-static BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type )
+static BOOL get_clip_cursor( RECT *rect, struct ratio dpi, MONITOR_DPI_TYPE type )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const desktop_shm_t *desktop_shm;
@@ -2699,12 +2839,12 @@ static BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type )
 BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    RECT rect, virtual_rect = get_virtual_screen_rect( 0, MDT_RAW_DPI );
-    BOOL was_clipping, empty = !!(flags & SET_CURSOR_NOCLIP);
+    RECT rect, virtual_rect = get_virtual_screen_rect( no_dpi, MDT_RAW_DPI );
+    BOOL empty = !!(flags & SET_CURSOR_NOCLIP);
 
     TRACE( "hwnd %p, flags %#x, reset %u\n", hwnd, flags, reset );
 
-    if ((was_clipping = thread_info->clipping_cursor)) InterlockedDecrement( &clipping_cursor );
+    if (thread_info->clipping_cursor) InterlockedDecrement( &clipping_cursor );
     thread_info->clipping_cursor = FALSE;
 
     if (reset)
@@ -2716,13 +2856,13 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
     if (!grab_pointer) return TRUE;
 
     /* we are clipping if the clip rectangle is smaller than the screen */
-    get_clip_cursor( &rect, 0, MDT_RAW_DPI );
+    get_clip_cursor( &rect, no_dpi, MDT_RAW_DPI );
     intersect_rect( &rect, &rect, &virtual_rect );
     if (EqualRect( &rect, &virtual_rect )) empty = TRUE;
     if (empty && !(flags & SET_CURSOR_FSCLIP))
     {
-        /* if currently clipping, check if we should switch to fullscreen clipping */
-        if (was_clipping && clip_fullscreen_window( hwnd, TRUE )) return TRUE;
+        /* check if we should switch to fullscreen clipping */
+        if (clip_fullscreen_window( hwnd, TRUE )) return TRUE;
         return user_driver->pClipCursor( NULL, FALSE );
     }
 
@@ -2745,6 +2885,7 @@ BOOL WINAPI NtUserGetClipCursor( RECT *rect )
  */
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
+    struct ratio dpi = get_thread_dpi();
     RECT new_rect;
     BOOL ret;
 
@@ -2752,8 +2893,14 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
 
     if (rect)
     {
+        HWND foreground = NtUserGetForegroundWindow();
+        if (IsRectEmpty( rect ) && get_present_rect( foreground, &new_rect, dpi ))
+        {
+            WARN( "Fullscreen clipping fixup to %s\n", wine_dbgstr_rect(&new_rect) );
+            rect = &new_rect;
+        }
         if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
-        new_rect = map_rect_virt_to_raw( *rect, get_thread_dpi() );
+        new_rect = map_rect_virt_to_raw( *rect, dpi );
         rect = &new_rect;
     }
 
@@ -2781,4 +2928,259 @@ BOOL WINAPI NtUserRegisterTouchPadCapable( BOOL capable )
     FIXME( "capable %u stub!\n", capable );
     RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
+}
+
+/**********************************************************************
+ *       NtUserScheduleDispatchNotification    (win32u.@)
+ */
+INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
+{
+    FIXME("hwnd %p stub!\n", hwnd);
+
+    if (is_window(hwnd))
+        return 2;
+
+    return 0;
+}
+
+void destroy_thread_pointers(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( pointer, next, &thread_info->known_pointers, struct pointer, entry )
+    {
+        list_remove( &pointer->entry );
+        free( pointer );
+    }
+}
+
+static struct pointer *pointer_create( UINT32 id, POINTER_INPUT_TYPE type )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer;
+
+    TRACE( "allocating pointer id %d, type %#x\n", id, type );
+
+    if (!(pointer = calloc( 1, sizeof(*pointer) ))) return NULL;
+    pointer->id = id;
+    pointer->type = type;
+    list_add_tail( &thread_info->known_pointers, &pointer->entry );
+
+    return pointer;
+}
+
+static struct pointer *find_pointer( UINT32 id )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer;
+
+    TRACE( "looking for pointer id %d\n", id );
+
+    LIST_FOR_EACH_ENTRY( pointer, &thread_info->known_pointers, struct pointer, entry )
+        if (pointer->id == id) return pointer;
+
+    WARN( "failed to find pointer with id %d\n", id );
+    return NULL;
+}
+
+static POINTER_INFO pointer_info_from_msg( const MSG *msg )
+{
+    POINT location = { LOWORD( msg->lParam ), HIWORD( msg->lParam ) };
+    LARGE_INTEGER counter;
+    POINTER_INFO info =
+    {
+        .pointerId = GET_POINTERID_WPARAM( msg->wParam ),
+        .sourceDevice = INVALID_HANDLE_VALUE,
+        .frameId = InterlockedIncrement( &last_frame ),
+        .hwndTarget = msg->hwnd,
+        .historyCount = 1,
+        .dwTime = msg->time,
+    };
+
+    info.pointerFlags = HIWORD( msg->wParam );
+    switch (msg->message)
+    {
+    case WM_POINTERUPDATE: info.pointerFlags |= POINTER_FLAG_UPDATE; break;
+    case WM_POINTERDOWN: info.pointerFlags |= POINTER_FLAG_DOWN; break;
+    case WM_POINTERUP: info.pointerFlags |= POINTER_FLAG_UP; break;
+    }
+    info.ptPixelLocation = info.ptPixelLocationRaw = location;
+
+    info.ptHimetricLocation.x = location.x * HIMETRIC_PER_INCH / system_dpi;
+    info.ptHimetricLocation.y = location.y * HIMETRIC_PER_INCH / system_dpi;
+    info.ptHimetricLocationRaw = info.ptHimetricLocation;
+
+    NtQueryPerformanceCounter( &counter, NULL );
+    info.PerformanceCount = counter.QuadPart;
+
+    return info;
+}
+
+static POINTER_BUTTON_CHANGE_TYPE compare_button( const POINTER_INFO *old, const POINTER_INFO *new )
+{
+    POINTER_BUTTON_CHANGE_TYPE change = POINTER_CHANGE_NONE;
+    static const struct
+    {
+        POINTER_FLAGS flag;
+        POINTER_BUTTON_CHANGE_TYPE down, up;
+    } map[] =
+    {
+        { POINTER_FLAG_FIRSTBUTTON, POINTER_CHANGE_FIRSTBUTTON_DOWN, POINTER_CHANGE_FIRSTBUTTON_UP },
+        { POINTER_FLAG_SECONDBUTTON, POINTER_CHANGE_SECONDBUTTON_DOWN, POINTER_CHANGE_SECONDBUTTON_UP },
+        { POINTER_FLAG_THIRDBUTTON, POINTER_CHANGE_THIRDBUTTON_DOWN, POINTER_CHANGE_THIRDBUTTON_UP },
+        { POINTER_FLAG_FOURTHBUTTON, POINTER_CHANGE_FOURTHBUTTON_DOWN, POINTER_CHANGE_FOURTHBUTTON_UP },
+        { POINTER_FLAG_FIFTHBUTTON, POINTER_CHANGE_FIFTHBUTTON_DOWN, POINTER_CHANGE_FIFTHBUTTON_UP },
+    };
+    POINTER_FLAGS down = ~old->pointerFlags & new->pointerFlags, up = old->pointerFlags & ~new->pointerFlags;
+
+    for (size_t i = 0; i < ARRAY_SIZE(map); i++)
+    {
+        if (down & map[i].flag) change |= map[i].down;
+        if (up & map[i].flag) change |= map[i].up;
+    }
+    return change;
+}
+
+void update_pointer_from_msg( POINTER_INPUT_TYPE type, const MSG *msg )
+{
+    POINTER_INFO info = pointer_info_from_msg( msg );
+    POINTER_BUTTON_CHANGE_TYPE buttons;
+    struct pointer *pointer;
+
+    TRACE( "updating pointer id %d.\n", info.pointerId );
+
+    if (!(pointer = find_pointer( info.pointerId )) && !(pointer = pointer_create( info.pointerId, type ))) return;
+
+    buttons = compare_button( &pointer->info, &info );
+    pointer->info = info;
+    pointer->info.pointerType = pointer->type;
+    pointer->info.ButtonChangeType = buttons;
+}
+
+static POINTER_INPUT_TYPE pointer_type_from_hw( const struct hw_msg_source *source )
+{
+    switch (source->origin)
+    {
+    case IMDT_PEN: return PT_PEN;
+    case IMDT_MOUSE: return PT_MOUSE;
+    case IMDT_TOUCH: return PT_TOUCH;
+    case IMDT_TOUCHPAD: return PT_TOUCHPAD;
+    default: return PT_POINTER;
+    }
+}
+
+/***********************************************************************
+ *          process_pointer_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
+ */
+BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
+{
+    update_pointer_from_msg( pointer_type_from_hw( &msg_data->source ), msg );
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserInitializeTouchInjection    (win32u.@)
+ */
+BOOL WINAPI NtUserInitializeTouchInjection( UINT max_count, UINT mode )
+{
+    FIXME( "max_count %u, mode %#x stub!\n", max_count, mode );
+    return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserGetPointerType    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
+{
+    struct pointer *pointer;
+
+    TRACE( "%u, %p\n", id, type );
+
+    /* pointerid 1 is always the mouse */
+    if (id == 1 && type)
+    {
+        *type = PT_MOUSE;
+        return TRUE;
+    }
+
+    if (!id || !type || !(pointer = find_pointer( id )))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    *type = pointer->type;
+    return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserGetPointerInfoList    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR unk0, UINT_PTR unk1, SIZE_T size,
+                                      UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info )
+{
+    struct pointer *pointer;
+    size_t target_size = 0;
+
+    TRACE( "id %d, type %#x, unk0 %#lx, unk1 %#lx, size %#lx, entry_count %p, pointer_count %p, pointer_info %p\n",
+            id, type, (long)unk0, (long)unk1, size, entry_count, pointer_count, pointer_info );
+
+    /* same checks in wow64_NtUserGetPointerInfoList */
+    switch (type)
+    {
+    case PT_MOUSE:
+    case PT_PEN: target_size = sizeof(POINTER_PEN_INFO); break;
+    case PT_POINTER: target_size = sizeof(POINTER_INFO); break;
+    case PT_TOUCHPAD:
+    case PT_TOUCH: target_size = sizeof(POINTER_TOUCH_INFO); break;
+    }
+
+    if (type == PT_MOUSE || size != target_size)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(pointer = find_pointer( id )))
+    {
+        TRACE( "pointer id %d not found.\n", id );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (type != PT_POINTER) FIXME( "Pointer type %#x not implemented\n", type );
+
+    *entry_count = 1;
+    *pointer_count = 1;
+
+    memset( pointer_info, 0, size );
+    *(POINTER_INFO *)pointer_info = pointer->info;
+    return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserGetPointerDeviceRects    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT *display_rect )
+{
+    RECT rect;
+
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        FIXME( "Pointer devices are not implemented!\n" );
+        RtlSetLastWin32Error( ERROR_NO_DATA );
+        return FALSE;
+    }
+
+    rect = get_virtual_screen_rect( no_dpi, MDT_DEFAULT );
+    SetRect( device_rect, 0, 0, (rect.right - rect.left) * HIMETRIC_PER_INCH / system_dpi,
+             (rect.bottom - rect.top) * HIMETRIC_PER_INCH / system_dpi );
+    *display_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
+
+    TRACE( "returning device %s, display %s\n", wine_dbgstr_rect(device_rect), wine_dbgstr_rect(display_rect) );
+    return TRUE;
 }

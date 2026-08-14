@@ -26,6 +26,7 @@
 
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "mmsystem.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
@@ -2059,6 +2060,20 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     return STATUS_SUCCESS;
 }
 
+static void play_console_beep( struct console *console )
+{
+    if (console->is_unix)
+    {
+        tty_write( console, "\a", 1 );
+        tty_flush( console );
+    }
+    else
+    {
+        if (!PlaySoundW( L"console_beep", GetModuleHandleW( NULL ), SND_RESOURCE | SND_ASYNC ))
+            ERR( "Failed to play console beep using PlaySoundW\n" );
+    }
+}
+
 static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR *buffer, size_t len )
 {
     RECT update_rect;
@@ -2094,7 +2109,7 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
                 }
                 continue;
             case '\a':
-                FIXME( "beep\n" );
+                play_console_beep( screen_buffer->console );
                 continue;
             case '\r':
                 screen_buffer->cursor_x = 0;
@@ -2762,11 +2777,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_BEEP:
         if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
-        if (console->is_unix)
-        {
-            tty_write( console, "\a", 1 );
-            tty_sync( console );
-        }
+        play_console_beep( console );
         return STATUS_SUCCESS;
 
     case IOCTL_CONDRV_FLUSH:

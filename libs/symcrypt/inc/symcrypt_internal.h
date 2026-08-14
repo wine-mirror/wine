@@ -165,7 +165,7 @@
 #undef  SYMCRYPT_CPU_UNKNOWN
 #define SYMCRYPT_CPU_UNKNOWN    1
 #define SYMCRYPT_CALL
-#define SYMCRYPT_ALIGN_VALUE    16
+#define SYMCRYPT_ALIGN_VALUE    4
 
 #ifndef _PREFAST_
 #pragma warning(push)

@@ -40,6 +40,25 @@ extern "C" {
 #define SECPKG_INTERFACE_VERSION_7                  0x400000
 #define SECPKG_INTERFACE_VERSION_8                  0x800000
 
+#define SECPKG_CALL_KERNEL_MODE                      0x00001
+#define SECPKG_CALL_ANSI                             0x00002
+#define SECPKG_CALL_URGENT                           0x00004
+#define SECPKG_CALL_RECURSIVE                        0x00008
+#define SECPKG_CALL_IN_PROC                          0x00010
+#define SECPKG_CALL_CLEANUP                          0x00020
+#define SECPKG_CALL_WOWCLIENT                        0x00040
+#define SECPKG_CALL_THREAD_TERM                      0x00080
+#define SECPKG_CALL_PROCESS_TERM                     0x00100
+#define SECPKG_CALL_IS_TCB                           0x00200
+#define SECPKG_CALL_NETWORK_ONLY                     0x00400
+#define SECPKG_CALL_WINLOGON                         0x00800
+#define SECPKG_CALL_ASYNC_UPDATE                     0x01000
+#define SECPKG_CALL_SYSTEM_PROC                      0x02000
+#define SECPKG_CALL_NEGO                             0x04000
+#define SECPKG_CALL_NEGO_EXTENDER                    0x08000
+#define SECPKG_CALL_BUFFER_MARSHAL                   0x10000
+#define SECPKG_CALL_UNLOCK                           0x20000
+
 /* enum definitions for Secure Service Provider/Authentication Packages */
 typedef enum _LSA_TOKEN_INFORMATION_TYPE {
     LsaTokenInformationNull,

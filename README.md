@@ -46,7 +46,7 @@ To compile and run Wine, you must have one of the following:
 - FreeBSD 12.4 or later
 - Solaris x86 9 or later
 - NetBSD-current
-- macOS 10.12 or later
+- macOS 10.15 or later
 
 As Wine requires kernel-level thread support to run, only the operating
 systems mentioned above are supported.  Other operating systems which
@@ -66,10 +66,7 @@ support kernel threads may be supported in the future.
   turned on in your kernel.
 
 **macOS info**:
-  You need Xcode/Xcode Command Line Tools or Apple cctools.  The
-  minimum requirements for compiling Wine are clang 3.8 with the
-  MacOSX10.13.sdk and mingw-w64 v12 for 32-bit wine.  The
-  MacOSX10.14.sdk and later can build 64-bit wine.
+  You need Xcode/Xcode Command Line Tools or Apple cctools.
 
 **Supported file systems**:
   Wine should run on most file systems. A few compatibility problems

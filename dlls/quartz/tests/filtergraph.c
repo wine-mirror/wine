@@ -28,6 +28,17 @@
 
 static const GUID testguid = {0xabbccdde};
 
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+}
+
 static BOOL compare_time(ULONGLONG x, ULONGLONG y, unsigned int max_diff)
 {
     ULONGLONG diff = x > y ? x - y : y - x;
@@ -5973,6 +5984,1370 @@ static void test_event_dispatch(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+
+struct test_renderer_call
+{
+    const char *name;
+    ULONG64 p[4];
+};
+
+static struct test_renderer_call test_renderer_calls[256];
+static unsigned int test_renderer_call_count;
+static HWND test_renderer_hwnd, test_drain_hwnd;
+
+static void reset_renderer_calls(void)
+{
+    test_renderer_call_count = 0;
+}
+
+#define RENDERER_CALL() do { \
+        memset(&test_renderer_calls[test_renderer_call_count], 0, sizeof(*test_renderer_calls)); \
+        test_renderer_calls[test_renderer_call_count++].name = __FUNCTION__; \
+    } while (0)
+
+#define RENDERER_CALL_1(p1) do { \
+        memset(&test_renderer_calls[test_renderer_call_count], 0, sizeof(*test_renderer_calls)); \
+        test_renderer_calls[test_renderer_call_count].p[0] = (p1); \
+        test_renderer_calls[test_renderer_call_count++].name = __FUNCTION__; \
+    } while (0)
+
+#define RENDERER_CALL_4(p1, p2, p3, p4) do { \
+        memset(&test_renderer_calls[test_renderer_call_count], 0, sizeof(*test_renderer_calls)); \
+        test_renderer_calls[test_renderer_call_count].p[0] = (p1); \
+        test_renderer_calls[test_renderer_call_count].p[1] = (p2); \
+        test_renderer_calls[test_renderer_call_count].p[2] = (p3); \
+        test_renderer_calls[test_renderer_call_count].p[3] = (p4); \
+        test_renderer_calls[test_renderer_call_count++].name = __FUNCTION__; \
+    } while (0)
+
+struct expected_renderer_call
+{
+    struct test_renderer_call call;
+};
+
+#define RENDERER_VIDEO_WIDTH 128
+#define RENDERER_VIDEO_HEIGHT 128
+
+#define RENDERER_CALL_DYNAMIC ((ULONG64)0xd128)
+#define RENDER_CALL_DISPLAY_LEFT ((RENDERER_CALL_DYNAMIC << 48) | 1)
+#define RENDER_CALL_DISPLAY_TOP ((RENDERER_CALL_DYNAMIC << 48) | 2)
+#define RENDER_CALL_DISPLAY_WIDTH ((RENDERER_CALL_DYNAMIC << 48) | 3)
+#define RENDER_CALL_DISPLAY_HEIGHT ((RENDERER_CALL_DYNAMIC << 48) | 4)
+#define RENDER_CALL_DEST_POS_X ((RENDERER_CALL_DYNAMIC << 48) | 5)
+#define RENDER_CALL_DEST_POS_Y ((RENDERER_CALL_DYNAMIC << 48) | 6)
+#define RENDER_CALL_DRAIN_HWND ((RENDERER_CALL_DYNAMIC << 48) | 7)
+
+static ULONG64 renderer_call_get_expected_value(ULONG64 val)
+{
+    MONITORINFO info = { .cbSize = sizeof(info) };
+    unsigned int screen_x, screen_y, screen_cx, screen_cy;
+
+    if ((val >> 48) != RENDERER_CALL_DYNAMIC)
+        return val;
+
+    if (GetMonitorInfoW(MonitorFromWindow(test_renderer_hwnd, MONITOR_DEFAULTTONEAREST), &info))
+    {
+        screen_x = info.rcMonitor.left;
+        screen_y = info.rcMonitor.top;
+        screen_cx = info.rcMonitor.right - info.rcMonitor.left;
+        screen_cy = info.rcMonitor.bottom - info.rcMonitor.top;
+    }
+    else
+    {
+        screen_x = screen_y = 0;
+        screen_cx = GetSystemMetrics(SM_CXSCREEN);
+        screen_cy = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    switch (val)
+    {
+        case RENDER_CALL_DISPLAY_LEFT:
+            return screen_x;
+        case RENDER_CALL_DISPLAY_TOP:
+            return screen_y;
+        case RENDER_CALL_DISPLAY_WIDTH:
+            return screen_cx;
+        case RENDER_CALL_DISPLAY_HEIGHT:
+            return screen_cy;
+        case RENDER_CALL_DEST_POS_X:
+            /* Assume landscape display orientation. */
+            return (screen_cx - screen_cy) / 2;
+        case RENDER_CALL_DEST_POS_Y:
+            return 0;
+        case RENDER_CALL_DRAIN_HWND:
+            return (ULONG_PTR)test_drain_hwnd;
+        default:
+            ok(0, "unhandled val %#I64x\n", val);
+            return val;
+    }
+}
+
+#define check_renderer_calls(a) check_renderer_calls_(__LINE__, (a))
+static void check_renderer_calls_(unsigned int line, const struct expected_renderer_call *expected)
+{
+    ULONG64 expected_val;
+    unsigned int i, j;
+
+    i = 0;
+    while (expected[i].call.name && i < test_renderer_call_count)
+    {
+        winetest_push_context("%u", i);
+        if (strcmp(expected[i].call.name, test_renderer_calls[i].name))
+        {
+            ok_(__FILE__, line)(0, "expected %s, got %s.\n", expected[i].call.name, test_renderer_calls[i].name);
+            winetest_pop_context();
+            break;
+        }
+        ++i;
+        winetest_pop_context();
+    }
+    ok_(__FILE__,line)(i == test_renderer_call_count && !expected[i].call.name, "Mismatched sequence:\n");
+    if (!(i == test_renderer_call_count && !expected[i].call.name))
+    {
+        for (i = 0; i < test_renderer_call_count; ++i)
+        {
+            ok_(__FILE__,line)(0, "[%u] %s %#I64x %#I64x %#I64x %#I64x.\n", i, test_renderer_calls[i].name,
+                    test_renderer_calls[i].p[0], test_renderer_calls[i].p[1], test_renderer_calls[i].p[2],
+                    test_renderer_calls[i].p[3]);
+        }
+        return;
+    }
+    for (i = 0; i < test_renderer_call_count; ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(expected[i].call.p); ++j)
+        {
+            expected_val = renderer_call_get_expected_value(expected[i].call.p[j]);
+            ok_(__FILE__, line)(expected_val == test_renderer_calls[i].p[j],
+                    "%s, parameter %u, expected %#I64x, got %#I64x.\n",
+                    expected[i].call.name, j, expected_val, test_renderer_calls[i].p[j]);
+        }
+    }
+}
+
+struct test_renderer
+{
+    struct strmbase_renderer renderer;
+    IVideoWindow IVideoWindow_iface;
+    IBasicVideo IBasicVideo_iface;
+
+    IOverlay IOverlay_iface;
+};
+
+static inline struct test_renderer *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_renderer, renderer);
+}
+
+static HRESULT test_renderer_render(struct strmbase_renderer *iface, IMediaSample *pSample)
+{
+    return S_OK;
+}
+
+static HRESULT test_renderer_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static void test_renderer_destroy(struct strmbase_renderer *iface)
+{
+    struct test_renderer *filter = impl_from_strmbase_renderer(iface);
+
+    strmbase_renderer_cleanup(&filter->renderer);
+    free(filter);
+}
+
+static HRESULT test_renderer_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
+{
+    struct test_renderer *filter = impl_from_strmbase_renderer(iface);
+
+    if (IsEqualGUID(iid, &IID_IBasicVideo))
+        *out = &filter->IBasicVideo_iface;
+    else if (IsEqualGUID(iid, &IID_IVideoWindow))
+        *out = &filter->IVideoWindow_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT test_renderer_pin_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
+{
+    struct test_renderer *filter = impl_from_strmbase_renderer(iface);
+
+    if (IsEqualGUID(iid, &IID_IOverlay))
+        *out = &filter->IOverlay_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static void test_renderer_stop_stream(struct strmbase_renderer *iface)
+{
+}
+
+static void test_renderer_init_stream(struct strmbase_renderer *iface)
+{
+}
+
+static HRESULT test_renderer_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static const struct strmbase_renderer_ops test_renderer_ops =
+{
+    .renderer_query_accept = test_renderer_query_accept,
+    .renderer_render = test_renderer_render,
+    .renderer_init_stream = test_renderer_init_stream,
+    .renderer_stop_stream = test_renderer_stop_stream,
+    .renderer_destroy = test_renderer_destroy,
+    .renderer_query_interface = test_renderer_query_interface,
+    .renderer_pin_query_interface = test_renderer_pin_query_interface,
+    .renderer_connect = test_renderer_connect,
+};
+
+static inline struct test_renderer *impl_from_IOverlay(IOverlay *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_renderer, IOverlay_iface);
+}
+
+static HRESULT WINAPI overlay_QueryInterface(IOverlay *iface, REFIID iid, void **out)
+{
+    struct test_renderer *filter = impl_from_IOverlay(iface);
+    return IPin_QueryInterface(&filter->renderer.sink.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI overlay_AddRef(IOverlay *iface)
+{
+    struct test_renderer *filter = impl_from_IOverlay(iface);
+    return IPin_AddRef(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static ULONG WINAPI overlay_Release(IOverlay *iface)
+{
+    struct test_renderer *filter = impl_from_IOverlay(iface);
+    return IPin_Release(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static HRESULT WINAPI overlay_GetPalette(IOverlay *iface, DWORD *count, PALETTEENTRY **palette)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetPalette(IOverlay *iface, DWORD count, PALETTEENTRY *palette)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetDefaultColorKey(IOverlay *iface, COLORKEY *key)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
+{
+    RENDERER_CALL();
+    *window = test_renderer_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI overlay_GetClipList(IOverlay *iface, RECT *source, RECT *dest, RGNDATA **region)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetVideoPosition(IOverlay *iface, RECT *source, RECT *dest)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Advise(IOverlay *iface, IOverlayNotify *sink, DWORD flags)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Unadvise(IOverlay *iface)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static const IOverlayVtbl test_overlay_vtbl =
+{
+    overlay_QueryInterface,
+    overlay_AddRef,
+    overlay_Release,
+    overlay_GetPalette,
+    overlay_SetPalette,
+    overlay_GetDefaultColorKey,
+    overlay_GetColorKey,
+    overlay_SetColorKey,
+    overlay_GetWindowHandle,
+    overlay_GetClipList,
+    overlay_GetVideoPosition,
+    overlay_Advise,
+    overlay_Unadvise,
+};
+
+
+static inline struct test_renderer *impl_from_IVideoWindow(IVideoWindow *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_renderer, IVideoWindow_iface);
+}
+
+HRESULT WINAPI test_window_QueryInterface(IVideoWindow *iface, REFIID iid, void **out)
+{
+    struct test_renderer *filter = impl_from_IVideoWindow(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+ULONG WINAPI test_window_AddRef(IVideoWindow *iface)
+{
+    struct test_renderer *filter = impl_from_IVideoWindow(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+ULONG WINAPI test_window_Release(IVideoWindow *iface)
+{
+    struct test_renderer *filter = impl_from_IVideoWindow(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+HRESULT WINAPI test_window_GetTypeInfoCount(IVideoWindow *iface, UINT *count)
+{
+    *count = 1;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_GetTypeInfo(IVideoWindow *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
+{
+    return strmbase_get_typeinfo(IVideoWindow_tid, typeinfo);
+}
+
+HRESULT WINAPI test_window_GetIDsOfNames(IVideoWindow *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IVideoWindow_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+HRESULT WINAPI test_window_Invoke(IVideoWindow *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    RENDERER_CALL();
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IVideoWindow_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+HRESULT WINAPI test_window_put_Caption(IVideoWindow *iface, BSTR caption)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Caption(IVideoWindow *iface, BSTR *caption)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_WindowStyle(IVideoWindow *iface, LONG style)
+{
+    RENDERER_CALL_1((ULONG)style);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_WindowStyle(IVideoWindow *iface, LONG *style)
+{
+    RENDERER_CALL();
+    *style = 0xdeadbeef;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_WindowStyleEx(IVideoWindow *iface, LONG style)
+{
+    RENDERER_CALL_1((ULONG)style);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_WindowStyleEx(IVideoWindow *iface, LONG *style)
+{
+    RENDERER_CALL();
+    *style = 0xdeadbeef;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_AutoShow(IVideoWindow *iface, LONG AutoShow)
+{
+    RENDERER_CALL_1(AutoShow);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_AutoShow(IVideoWindow *iface, LONG *AutoShow)
+{
+    RENDERER_CALL();
+    *AutoShow = OATRUE;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_WindowState(IVideoWindow *iface, LONG state)
+{
+    RENDERER_CALL_1(state);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_WindowState(IVideoWindow *iface, LONG *state)
+{
+    RENDERER_CALL();
+    *state = SW_SHOW;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_BackgroundPalette(IVideoWindow *iface, LONG BackgroundPalette)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_BackgroundPalette(IVideoWindow *iface, LONG *pBackgroundPalette)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Visible(IVideoWindow *iface, LONG visible)
+{
+    RENDERER_CALL_1(visible);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Visible(IVideoWindow *iface, LONG *visible)
+{
+    RENDERER_CALL();
+    *visible = OATRUE;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Left(IVideoWindow *iface, LONG left)
+{
+    RENDERER_CALL_1(left);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Left(IVideoWindow *iface, LONG *left)
+{
+    RENDERER_CALL();
+    *left = 0;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Width(IVideoWindow *iface, LONG width)
+{
+    RENDERER_CALL_1(width);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Width(IVideoWindow *iface, LONG *width)
+{
+    RENDERER_CALL();
+    *width = 256;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Top(IVideoWindow *iface, LONG top)
+{
+    RENDERER_CALL_1(top);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Top(IVideoWindow *iface, LONG *top)
+{
+    RENDERER_CALL();
+    *top = 0;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Height(IVideoWindow *iface, LONG height)
+{
+    RENDERER_CALL_1(height);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Height(IVideoWindow *iface, LONG *height)
+{
+    RENDERER_CALL();
+    *height = 256;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_Owner(IVideoWindow *iface, OAHWND owner)
+{
+    RENDERER_CALL_1((ULONG_PTR)owner);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_Owner(IVideoWindow *iface, OAHWND *Owner)
+{
+    RENDERER_CALL();
+    *(HWND*)Owner = (HWND)0xdeadbeef;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_MessageDrain(IVideoWindow *iface, OAHWND Drain)
+{
+    RENDERER_CALL_1((ULONG_PTR)Drain);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_MessageDrain(IVideoWindow *iface, OAHWND *Drain)
+{
+    RENDERER_CALL();
+    *Drain = 0xdeadbeef;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_BorderColor(IVideoWindow *iface, LONG *Color)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_put_BorderColor(IVideoWindow *iface, LONG Color)
+{
+    RENDERER_CALL_1(Color);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_get_FullScreenMode(IVideoWindow *iface, LONG *FullScreenMode)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI test_window_put_FullScreenMode(IVideoWindow *iface, LONG fullscreen)
+{
+    RENDERER_CALL_1(fullscreen);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI test_window_SetWindowForeground(IVideoWindow *iface, LONG focus)
+{
+    RENDERER_CALL_1(focus);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_SetWindowPosition(IVideoWindow *iface,
+        LONG left, LONG top, LONG width, LONG height)
+{
+    RENDERER_CALL_4(left, top, width, height);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_GetWindowPosition(IVideoWindow *iface,
+        LONG *left, LONG *top, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *left = 100;
+    *top = 100;
+    *width = 256;
+    *height = 256;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_NotifyOwnerMessage(IVideoWindow *iface,
+        OAHWND hwnd, LONG message, LONG_PTR wparam, LONG_PTR lparam)
+{
+    RENDERER_CALL_1(message);
+    return 0xbeef;
+}
+
+HRESULT WINAPI test_window_GetMinIdealImageSize(IVideoWindow *iface, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *width = 256;
+    *height = 256;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_GetMaxIdealImageSize(IVideoWindow *iface, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *width = 256;
+    *height = 256;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_GetRestorePosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight)
+{
+    RENDERER_CALL();
+    *pLeft = 0;
+    *pTop = 0;
+    *pWidth = 100;
+    *pHeight = 100;
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_HideCursor(IVideoWindow *iface, LONG hide)
+{
+    RENDERER_CALL_1(hide);
+    return S_OK;
+}
+
+HRESULT WINAPI test_window_IsCursorHidden(IVideoWindow *iface, LONG *CursorHidden)
+{
+    RENDERER_CALL();
+    *CursorHidden = OAFALSE;
+    return S_OK;
+}
+
+
+static const IVideoWindowVtbl test_window_vtbl =
+{
+    test_window_QueryInterface,
+    test_window_AddRef,
+    test_window_Release,
+    test_window_GetTypeInfoCount,
+    test_window_GetTypeInfo,
+    test_window_GetIDsOfNames,
+    test_window_Invoke,
+    test_window_put_Caption,
+    test_window_get_Caption,
+    test_window_put_WindowStyle,
+    test_window_get_WindowStyle,
+    test_window_put_WindowStyleEx,
+    test_window_get_WindowStyleEx,
+    test_window_put_AutoShow,
+    test_window_get_AutoShow,
+    test_window_put_WindowState,
+    test_window_get_WindowState,
+    test_window_put_BackgroundPalette,
+    test_window_get_BackgroundPalette,
+    test_window_put_Visible,
+    test_window_get_Visible,
+    test_window_put_Left,
+    test_window_get_Left,
+    test_window_put_Width,
+    test_window_get_Width,
+    test_window_put_Top,
+    test_window_get_Top,
+    test_window_put_Height,
+    test_window_get_Height,
+    test_window_put_Owner,
+    test_window_get_Owner,
+    test_window_put_MessageDrain,
+    test_window_get_MessageDrain,
+    test_window_get_BorderColor,
+    test_window_put_BorderColor,
+    test_window_get_FullScreenMode,
+    test_window_put_FullScreenMode,
+    test_window_SetWindowForeground,
+    test_window_NotifyOwnerMessage,
+    test_window_SetWindowPosition,
+    test_window_GetWindowPosition,
+    test_window_GetMinIdealImageSize,
+    test_window_GetMaxIdealImageSize,
+    test_window_GetRestorePosition,
+    test_window_HideCursor,
+    test_window_IsCursorHidden
+};
+
+static inline struct test_renderer *impl_from_IBasicVideo(IBasicVideo *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_renderer, IBasicVideo_iface);
+}
+
+static HRESULT WINAPI basic_video_QueryInterface(IBasicVideo *iface, REFIID iid, void **out)
+{
+    struct test_renderer *filter = impl_from_IBasicVideo(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI basic_video_AddRef(IBasicVideo *iface)
+{
+    struct test_renderer *filter = impl_from_IBasicVideo(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI basic_video_Release(IBasicVideo *iface)
+{
+    struct test_renderer *filter = impl_from_IBasicVideo(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI basic_video_GetTypeInfoCount(IBasicVideo *iface, UINT *count)
+{
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetTypeInfo(IBasicVideo *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
+{
+    return strmbase_get_typeinfo(IBasicVideo_tid, typeinfo);
+}
+
+static HRESULT WINAPI basic_video_GetIDsOfNames(IBasicVideo *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicVideo_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI basic_video_Invoke(IBasicVideo *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    RENDERER_CALL();
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicVideo_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIME *reftime)
+{
+    RENDERER_CALL();
+    *reftime = 1.0;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_BitRate(IBasicVideo *iface, LONG *rate)
+{
+    RENDERER_CALL();
+    *rate = 60;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_BitErrorRate(IBasicVideo *iface, LONG *rate)
+{
+    RENDERER_CALL();
+    *rate = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_VideoWidth(IBasicVideo *iface, LONG *width)
+{
+    RENDERER_CALL();
+    *width = RENDERER_VIDEO_WIDTH;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_VideoHeight(IBasicVideo *iface, LONG *height)
+{
+    RENDERER_CALL();
+    *height = RENDERER_VIDEO_HEIGHT;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceLeft(IBasicVideo *iface, LONG left)
+{
+    RENDERER_CALL_1(left);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceLeft(IBasicVideo *iface, LONG *left)
+{
+    RENDERER_CALL();
+    *left = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceWidth(IBasicVideo *iface, LONG width)
+{
+    RENDERER_CALL_1(width);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceWidth(IBasicVideo *iface, LONG *width)
+{
+    RENDERER_CALL();
+    *width = 640;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceTop(IBasicVideo *iface, LONG top)
+{
+    RENDERER_CALL_1(top);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceTop(IBasicVideo *iface, LONG *top)
+{
+    RENDERER_CALL();
+    *top = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceHeight(IBasicVideo *iface, LONG height)
+{
+    RENDERER_CALL_1(height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceHeight(IBasicVideo *iface, LONG *height)
+{
+    RENDERER_CALL();
+    *height = 480;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationLeft(IBasicVideo *iface, LONG left)
+{
+    RENDERER_CALL_1(left);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationLeft(IBasicVideo *iface, LONG *left)
+{
+    RENDERER_CALL();
+    *left = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationWidth(IBasicVideo *iface, LONG width)
+{
+    RENDERER_CALL_1(width);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationWidth(IBasicVideo *iface, LONG *width)
+{
+    RENDERER_CALL();
+    *width = 320;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationTop(IBasicVideo *iface, LONG top)
+{
+    RENDERER_CALL_1(top);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationTop(IBasicVideo *iface, LONG *top)
+{
+    RENDERER_CALL();
+    *top = 10;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationHeight(IBasicVideo *iface, LONG height)
+{
+    RENDERER_CALL_1(height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationHeight(IBasicVideo *iface, LONG *height)
+{
+    RENDERER_CALL();
+    *height = 240;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetSourcePosition(IBasicVideo *iface,
+        LONG left, LONG top, LONG width, LONG height)
+{
+    RENDERER_CALL_4(left, top, width, height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetSourcePosition(IBasicVideo *iface,
+        LONG *left, LONG *top, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *left = 10;
+    *top = 10;
+    *width = 640;
+    *height = 480;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetDefaultSourcePosition(IBasicVideo *iface)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetDestinationPosition(IBasicVideo *iface,
+        LONG left, LONG top, LONG width, LONG height)
+{
+    RENDERER_CALL_4(left, top, width, height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetDestinationPosition(IBasicVideo *iface,
+        LONG *left, LONG *top, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *left = 100;
+    *top = 100;
+    *width = 320;
+    *height = 240;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *iface)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetVideoSize(IBasicVideo *iface, LONG *width, LONG *height)
+{
+    RENDERER_CALL();
+    *width = RENDERER_VIDEO_WIDTH;
+    *height = RENDERER_VIDEO_HEIGHT;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetVideoPaletteEntries(IBasicVideo *iface,
+        LONG start, LONG count, LONG *ret_count, LONG *palette)
+{
+    RENDERER_CALL();
+    return VFW_E_NO_PALETTE_AVAILABLE;
+}
+
+static HRESULT WINAPI basic_video_GetCurrentImage(IBasicVideo *iface, LONG *size, LONG *image)
+{
+    RENDERER_CALL();
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI basic_video_IsUsingDefaultSource(IBasicVideo *iface)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_IsUsingDefaultDestination(IBasicVideo *iface)
+{
+    RENDERER_CALL();
+    return S_OK;
+}
+
+static const IBasicVideoVtbl basic_video_vtbl =
+{
+    basic_video_QueryInterface,
+    basic_video_AddRef,
+    basic_video_Release,
+    basic_video_GetTypeInfoCount,
+    basic_video_GetTypeInfo,
+    basic_video_GetIDsOfNames,
+    basic_video_Invoke,
+    basic_video_get_AvgTimePerFrame,
+    basic_video_get_BitRate,
+    basic_video_get_BitErrorRate,
+    basic_video_get_VideoWidth,
+    basic_video_get_VideoHeight,
+    basic_video_put_SourceLeft,
+    basic_video_get_SourceLeft,
+    basic_video_put_SourceWidth,
+    basic_video_get_SourceWidth,
+    basic_video_put_SourceTop,
+    basic_video_get_SourceTop,
+    basic_video_put_SourceHeight,
+    basic_video_get_SourceHeight,
+    basic_video_put_DestinationLeft,
+    basic_video_get_DestinationLeft,
+    basic_video_put_DestinationWidth,
+    basic_video_get_DestinationWidth,
+    basic_video_put_DestinationTop,
+    basic_video_get_DestinationTop,
+    basic_video_put_DestinationHeight,
+    basic_video_get_DestinationHeight,
+    basic_video_SetSourcePosition,
+    basic_video_GetSourcePosition,
+    basic_video_SetDefaultSourcePosition,
+    basic_video_SetDestinationPosition,
+    basic_video_GetDestinationPosition,
+    basic_video_SetDefaultDestinationPosition,
+    basic_video_GetVideoSize,
+    basic_video_GetVideoPaletteEntries,
+    basic_video_GetCurrentImage,
+    basic_video_IsUsingDefaultSource,
+    basic_video_IsUsingDefaultDestination
+};
+
+static void test_renderer_create(IUnknown **out)
+{
+    struct test_renderer *object;
+
+    object = calloc(1, sizeof(*object));
+    strmbase_renderer_init(&object->renderer, NULL, &CLSID_VideoRenderer, L"In", &test_renderer_ops);
+    wcscpy(object->renderer.sink.pin.name, L"Input");
+
+    object->IOverlay_iface.lpVtbl = &test_overlay_vtbl;
+    object->IVideoWindow_iface.lpVtbl = &test_window_vtbl;
+    object->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;
+    *out = &object->renderer.filter.IUnknown_inner;
+}
+
+
+static void test_implicit_fullscreen_support(void)
+{
+    static const struct expected_renderer_call empty_seq[] =
+    {
+        {{NULL}}
+    };
+    static const struct expected_renderer_call set_fullscreen_seq[] =
+    {
+        {{"test_window_get_FullScreenMode"}},
+        {{"test_window_get_AutoShow"}},
+        {{"test_window_put_AutoShow"}},
+        {{"basic_video_GetVideoSize"}},
+        {{"overlay_GetWindowHandle"}},
+        {{"test_window_GetMaxIdealImageSize"}},
+        {{"test_window_put_AutoShow", {OATRUE}}},
+        {{"test_window_put_Visible"}},
+        {{"test_window_IsCursorHidden"}},
+        {{"test_window_HideCursor", {OATRUE}}},
+        {{"basic_video_GetSourcePosition"}},
+        {{"basic_video_GetDestinationPosition"}},
+        {{"basic_video_IsUsingDefaultSource"}},
+        {{"basic_video_IsUsingDefaultDestination"}},
+        {{"basic_video_SetDefaultSourcePosition"}},
+        {{"basic_video_SetDestinationPosition", {RENDER_CALL_DEST_POS_X, RENDER_CALL_DEST_POS_Y, RENDER_CALL_DISPLAY_HEIGHT, RENDER_CALL_DISPLAY_HEIGHT}}},
+        {{"test_window_GetRestorePosition"}},
+        {{"test_window_get_WindowStyle"}},
+        {{"test_window_put_WindowStyle", {WS_POPUP}}},
+        {{"test_window_get_Owner"}},
+        {{"test_window_put_Owner"}},
+        {{"overlay_GetWindowHandle"}},
+        {{"test_window_SetWindowPosition", {RENDER_CALL_DISPLAY_LEFT, RENDER_CALL_DISPLAY_TOP, RENDER_CALL_DISPLAY_WIDTH, RENDER_CALL_DISPLAY_HEIGHT}}},
+        {{"test_window_get_MessageDrain"}},
+        {{"test_window_put_MessageDrain", {RENDER_CALL_DRAIN_HWND}}},
+        {{"test_window_put_Visible", {OATRUE}}},
+        {{"test_window_SetWindowForeground", {OATRUE}}},
+        {{"test_window_get_WindowStyleEx"}},
+        {{"test_window_put_WindowStyleEx", {WS_EX_TOPMOST}}},
+        {{NULL}}
+    };
+    static const struct expected_renderer_call restore_seq[] =
+    {
+        {{"test_window_SetWindowPosition"}},
+        {{"test_window_put_WindowStyleEx", {0xdeadbeef}}},
+        {{"test_window_put_Visible"}},
+        {{"test_window_put_WindowStyle", {0xdeadbeef}}},
+        {{"test_window_put_MessageDrain", {0xdeadbeef}}},
+        {{"test_window_HideCursor"}},
+        {{"basic_video_SetSourcePosition", {10, 10, 640, 480}}},
+        {{"basic_video_SetDestinationPosition", {100, 100, 320, 240}}},
+        {{"basic_video_SetDefaultSourcePosition"}},      /* only if basic_video_IsUsingDefaultSource() returns S_OK */
+        {{"basic_video_SetDefaultDestinationPosition"}}, /* only if basic_video_IsUsingDefaultDestination() returns S_OK */
+        {{"test_window_put_Owner", {0xdeadbeef}}},
+        {{"test_window_SetWindowPosition", {0, 0, 100, 100}}},
+        {{"test_window_put_WindowState", {SW_NORMAL}}},
+        {{NULL}}
+    };
+    static const struct expected_renderer_call get_win_pos_seq[] =
+    {
+        {{"test_window_GetWindowPosition"}},
+        {{NULL}}
+    };
+
+    WCHAR *filename = load_resource(L"test.avi");
+    IUnknown *renderer_unk;
+    IBaseFilter *renderer;
+    IFilterGraph2 *graph;
+    IVideoWindow *window;
+    LONG x, y, cx, cy;
+    OAHWND oawnd;
+    HRESULT hr;
+    BSTR bstr;
+    LONG val;
+
+    test_renderer_hwnd = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 50, 50, 150, 150, NULL, NULL, NULL, NULL);
+    ok(!!test_renderer_hwnd, "got NULL.\n");
+
+    test_drain_hwnd = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW, 50, 50, 150, 150, NULL, NULL, NULL, NULL);
+    ok(!!test_drain_hwnd, "got NULL.\n");
+
+    pump_messages();
+    graph = create_graph();
+
+    test_renderer_create(&renderer_unk);
+    hr = IUnknown_QueryInterface(renderer_unk, &IID_IBaseFilter, (void **)&renderer);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, renderer, L"Test Renderer");
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IUnknown_Release(renderer_unk);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IVideoWindow_put_MessageDrain(window, (OAHWND)test_drain_hwnd);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IVideoWindow_put_Owner(window, (OAHWND)test_drain_hwnd);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    reset_renderer_calls();
+    hr = IVideoWindow_get_FullScreenMode(window, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(val == OAFALSE, "got %ld.\n", val);
+    todo_wine check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    reset_renderer_calls();
+
+    reset_renderer_calls();
+    hr = IVideoWindow_get_FullScreenMode(window, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(val == OAFALSE, "got %ld.\n", val);
+    todo_wine check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_put_FullScreenMode(window, OATRUE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_renderer_calls(set_fullscreen_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_put_FullScreenMode(window, OATRUE);
+    ok(hr == S_FALSE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_FullScreenMode(window, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    /* All video window calls in fullscreen mode. Nothing is forwarded, everything but NotifyOwnerMessage
+     * returns VFW_E_IN_FULLSCREEN_MODE. */
+    hr = IVideoWindow_get_Caption(window, &bstr);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Caption(window, (BSTR)L"test");
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_WindowStyle(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_WindowStyle(window, WS_POPUP);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_WindowStyleEx(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_WindowStyleEx(window, WS_EX_TOOLWINDOW);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_AutoShow(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_AutoShow(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_WindowState(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_WindowState(window, SW_SHOW);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_BackgroundPalette(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_BackgroundPalette(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_Visible(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Visible(window, OATRUE);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_Left(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Left(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_get_Width(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Width(window, 128);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_get_Top(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Top(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_get_Height(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Height(window, 128);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_Owner(window, &oawnd);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_Owner(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_MessageDrain(window, &oawnd);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_MessageDrain(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_get_BorderColor(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_put_BorderColor(window, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_SetWindowForeground(window, OATRUE);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_NotifyOwnerMessage(window, (OAHWND)test_renderer_hwnd, WM_USER, 0, 0);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_GetWindowPosition(window, &x, &y, &cx, &cy);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_SetWindowPosition(window, 0, 0, 100, 100);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_GetMinIdealImageSize(window, &cx, &cy);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_GetMaxIdealImageSize(window, &cx, &cy);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_GetRestorePosition(window, &x, &y, &cx, &cy);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_IsCursorHidden(window, &val);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+    hr = IVideoWindow_HideCursor(window, OATRUE);
+    ok(hr == VFW_E_IN_FULLSCREEN_MODE, "got %#lx.\n", hr);
+    check_renderer_calls(empty_seq);
+    reset_renderer_calls();
+
+    /* Restore from fullscreen mode. */
+    hr = IVideoWindow_put_FullScreenMode(window, OAFALSE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_renderer_calls(restore_seq);
+    reset_renderer_calls();
+
+    hr = IVideoWindow_GetWindowPosition(window, &x, &y, &cx, &cy);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_renderer_calls(get_win_pos_seq);
+    reset_renderer_calls();
+
+    IVideoWindow_Release(window);
+    IFilterGraph2_Release(graph);
+    DeleteFileW(filename);
+    DestroyWindow(test_renderer_hwnd);
+    DestroyWindow(test_drain_hwnd);
+    pump_messages();
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -6002,6 +7377,7 @@ START_TEST(filtergraph)
     test_set_notify_flags();
     test_events();
     test_event_dispatch();
+    test_implicit_fullscreen_support();
 
     CoUninitialize();
     test_render_with_multithread();

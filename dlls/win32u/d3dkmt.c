@@ -22,27 +22,155 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <pthread.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "ntgdi_private.h"
 #include "win32u_private.h"
 #include "ntuser_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
+#include <d3d9types.h>
+#include <dxgi.h>
+#include <d3d10.h>
+#include <d3d11.h>
+#include <d3d12.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3dkmt);
+
+/* D3DKMT runtime descriptors */
+
+struct d3dkmt_dxgi_desc
+{
+    UINT                        size;
+    UINT                        version;
+    UINT                        width;
+    UINT                        height;
+    DXGI_FORMAT                 format;
+    UINT                        unknown_0;
+    UINT                        unknown_1;
+    UINT                        keyed_mutex;
+    D3DKMT_HANDLE               mutex_handle;
+    D3DKMT_HANDLE               sync_handle;
+    UINT                        nt_shared;
+    UINT                        unknown_2;
+    UINT                        unknown_3;
+    UINT                        unknown_4;
+};
+
+struct d3dkmt_d3d9_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    D3DFORMAT                   format;
+    D3DRESOURCETYPE             type;
+    UINT                        usage;
+    union
+    {
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                height;
+            UINT                levels;
+            UINT                depth;
+        } texture;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                unknown_1;
+            UINT                unknown_2;
+            UINT                width;
+            UINT                height;
+        } surface;
+        struct
+        {
+            UINT                unknown_0;
+            UINT                width;
+            UINT                format;
+            UINT                unknown_1;
+            UINT                unknown_2;
+        } buffer;
+    };
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d9_desc) == 0x58 );
+
+struct d3dkmt_d3d11_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    D3D11_RESOURCE_DIMENSION    dimension;
+    union
+    {
+        D3D10_BUFFER_DESC       d3d10_buf;
+        D3D10_TEXTURE1D_DESC    d3d10_1d;
+        D3D10_TEXTURE2D_DESC    d3d10_2d;
+        D3D10_TEXTURE3D_DESC    d3d10_3d;
+        D3D11_BUFFER_DESC       d3d11_buf;
+        D3D11_TEXTURE1D_DESC    d3d11_1d;
+        D3D11_TEXTURE2D_DESC    d3d11_2d;
+        D3D11_TEXTURE3D_DESC    d3d11_3d;
+    };
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d11_desc) == 0x68 );
+
+struct d3dkmt_d3d12_desc
+{
+    struct d3dkmt_d3d11_desc    d3d11;
+    UINT                        unknown_5[4];
+    UINT                        resource_size;
+    UINT                        unknown_6[7];
+    UINT                        resource_align;
+    UINT                        unknown_7[9];
+    union
+    {
+        D3D12_RESOURCE_DESC     desc;
+        D3D12_RESOURCE_DESC1    desc1;
+    };
+    UINT64                      unknown_8[1];
+};
+
+C_ASSERT( sizeof(struct d3dkmt_d3d12_desc) == 0x108 );
+C_ASSERT( offsetof(struct d3dkmt_d3d12_desc, unknown_5) == sizeof(struct d3dkmt_d3d11_desc) );
+
+union d3dkmt_desc
+{
+    struct d3dkmt_dxgi_desc     dxgi;
+    struct d3dkmt_d3d9_desc     d3d9;
+    struct d3dkmt_d3d11_desc    d3d11;
+    struct d3dkmt_d3d12_desc    d3d12;
+};
+
+struct d3dkmt_object
+{
+    enum d3dkmt_type    type;           /* object type */
+    D3DKMT_HANDLE       local;          /* object local handle */
+    D3DKMT_HANDLE       global;         /* object global handle */
+    BOOL                shared;         /* object is shared using nt handles */
+    HANDLE              handle;         /* internal handle of the server object */
+};
+
+struct d3dkmt_mutex
+{
+    struct d3dkmt_object obj;
+    BOOL owned;
+};
+
+struct d3dkmt_resource
+{
+    struct d3dkmt_object obj;
+    D3DKMT_HANDLE allocation;
+};
 
 struct d3dkmt_adapter
 {
-    D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
-    struct list entry;                  /* List entry */
-    VkPhysicalDevice vk_device;         /* Vulkan physical device */
+    struct d3dkmt_object obj;
+    struct vulkan_physical_device *physical_device;
 };
 
 struct d3dkmt_device
 {
-    D3DKMT_HANDLE handle;               /* Kernel mode graphics device handle*/
-    struct list entry;                  /* List entry */
+    struct d3dkmt_object obj;
 };
 
 struct d3dkmt_vidpn_source
@@ -54,76 +182,248 @@ struct d3dkmt_vidpn_source
 };
 
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
-static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
-static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
 static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
-static VkInstance d3dkmt_vk_instance; /* Vulkan instance for D3DKMT functions */
-static PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
-static PFN_vkGetPhysicalDeviceMemoryProperties pvkGetPhysicalDeviceMemoryProperties;
-static PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
-static PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
+static struct d3dkmt_object **objects, **objects_end, **objects_next;
+
+#define D3DKMT_HANDLE_BIT  0x40000000
+
+static BOOL is_d3dkmt_global( D3DKMT_HANDLE handle )
+{
+    return (handle & 0xc0000000) && (handle & 0x3f) == 2;
+}
+
+static D3DKMT_HANDLE index_to_handle( int index )
+{
+    return (index << 6) | D3DKMT_HANDLE_BIT;
+}
+
+static int handle_to_index( D3DKMT_HANDLE handle )
+{
+    return (handle & ~0xc0000000) >> 6;
+}
+
+static NTSTATUS init_handle_table(void)
+{
+    if (!(objects = calloc( 1024, sizeof(*objects) ))) return STATUS_NO_MEMORY;
+    objects_end = objects + 1024;
+    objects_next = objects;
+    return STATUS_SUCCESS;
+}
+
+static struct d3dkmt_object **grow_handle_table(void)
+{
+    size_t old_capacity = objects_end - objects, max_capacity = handle_to_index( D3DKMT_HANDLE_BIT - 1 );
+    unsigned int new_capacity = old_capacity * 3 / 2;
+    struct d3dkmt_object **tmp;
+
+    if (new_capacity > max_capacity) new_capacity = max_capacity;
+    if (new_capacity <= old_capacity) return NULL; /* exhausted handle capacity */
+
+    if (!(tmp = realloc( objects, new_capacity * sizeof(*objects) ))) return NULL;
+    memset( tmp + old_capacity, 0, (new_capacity - old_capacity) * sizeof(*tmp) );
+
+    objects = tmp;
+    objects_end = tmp + new_capacity;
+    objects_next = tmp + old_capacity;
+
+    return objects_next;
+}
+
+/* allocate a d3dkmt object with a local handle */
+static NTSTATUS alloc_object_handle( struct d3dkmt_object *object )
+{
+    struct d3dkmt_object **entry;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    if (!objects && init_handle_table()) goto done;
+
+    for (entry = objects_next; entry < objects_end; entry++) if (!*entry) break;
+    if (entry == objects_end)
+    {
+        for (entry = objects; entry < objects_next; entry++) if (!*entry) break;
+        if (entry == objects_next && !(entry = grow_handle_table())) goto done;
+    }
+
+    object->local = index_to_handle( entry - objects );
+    objects_next = entry + 1;
+    *entry = object;
+
+done:
+    pthread_mutex_unlock( &d3dkmt_lock );
+    return object->local ? STATUS_SUCCESS : STATUS_NO_MEMORY;
+}
+
+/* free a d3dkmt local object handle */
+static void free_object_handle( struct d3dkmt_object *object )
+{
+    unsigned int index = handle_to_index( object->local );
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    assert( objects + index < objects_end && objects[index] == object );
+    objects[index] = NULL;
+    object->local = 0;
+    pthread_mutex_unlock( &d3dkmt_lock );
+}
+
+/* return a pointer to a d3dkmt object from its local handle */
+static void *get_d3dkmt_object( D3DKMT_HANDLE local, enum d3dkmt_type type )
+{
+    unsigned int index = handle_to_index( local );
+    struct d3dkmt_object *object;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    if (objects + index >= objects_end) object = NULL;
+    else object = objects[index];
+    pthread_mutex_unlock( &d3dkmt_lock );
+
+    if (!object || object->local != local || (type != -1 && object->type != type)) return NULL;
+    return object;
+}
+
+static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **obj )
+{
+    struct d3dkmt_object *object;
+
+    if (!(object = calloc( 1, size ))) return STATUS_NO_MEMORY;
+    object->type = type;
+
+    *obj = object;
+    return STATUS_SUCCESS;
+}
+
+/* create a global D3DKMT object, either with a global handle or later shareable */
+static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, UINT value, BOOL shared,
+                                      const void *runtime, UINT runtime_size )
+{
+    NTSTATUS status;
+
+    if (fd >= 0) wine_server_send_fd( fd );
+
+    SERVER_START_REQ( d3dkmt_object_create )
+    {
+        req->type = object->type;
+        req->fd = fd;
+        req->value = value;
+        if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
+        status = wine_server_call( req );
+        object->handle = wine_server_ptr_handle( reply->handle );
+        object->global = reply->global;
+        object->shared = shared;
+    }
+    SERVER_END_REQ;
+
+    if (!status) status = alloc_object_handle( object );
+
+    if (status) WARN( "Failed to create global object for %p, status %#x\n", object, status );
+    else TRACE( "Created global object %#x for %p/%#x\n", object->global, object, object->local );
+    return status;
+}
+
+static NTSTATUS d3dkmt_object_update( struct d3dkmt_object *object, const void *runtime, UINT runtime_size )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( d3dkmt_object_update )
+    {
+        req->type = object->type;
+        req->global = object->global;
+        if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (status) WARN( "Failed to update object %#x/%p global %#x, status %#x\n", object->local, object, object->global, status );
+    else TRACE( "Updated object %#x/%p global %#x\n", object->local, object, object->global );
+    return status;
+}
+
+static NTSTATUS d3dkmt_object_open( struct d3dkmt_object *obj, D3DKMT_HANDLE global, HANDLE handle,
+                                    void *runtime, UINT *runtime_size )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( d3dkmt_object_open )
+    {
+        req->type = obj->type;
+        req->global = global;
+        req->handle = wine_server_obj_handle( handle );
+        if (runtime) wine_server_set_reply( req, runtime, *runtime_size );
+        status = wine_server_call( req );
+        obj->handle = wine_server_ptr_handle( reply->handle );
+        obj->global = reply->global;
+        obj->shared = !global;
+        *runtime_size = reply->runtime_size;
+    }
+    SERVER_END_REQ;
+    if (!status) status = alloc_object_handle( obj );
+
+    if (status) WARN( "Failed to open global object %#x/%p, status %#x\n", global, handle, status );
+    else TRACE( "Opened global object %#x/%p as %p/%#x\n", global, handle, obj, obj->local );
+    return status;
+}
+
+static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global, HANDLE handle,
+                                     UINT *runtime_size )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( d3dkmt_object_query )
+    {
+        req->type = type;
+        req->global = global;
+        req->handle = wine_server_obj_handle( handle );
+        status = wine_server_call( req );
+        *runtime_size = reply->runtime_size;
+    }
+    SERVER_END_REQ;
+
+    if (status) WARN( "Failed to query global object %#x/%p, status %#x\n", global, handle, status );
+    else TRACE( "Found global object %#x/%p with runtime size %#x\n", global, handle, *runtime_size );
+    return status;
+}
+
+static void d3dkmt_object_free( struct d3dkmt_object *object )
+{
+    TRACE( "object %p/%#x, global %#x\n", object, object->local, object->global );
+    if (object->local) free_object_handle( object );
+    if (object->handle) NtClose( object->handle );
+    free( object );
+}
+
+static struct vulkan_instance *d3dkmt_vulkan_instance; /* Vulkan instance for D3DKMT functions */
 
 static void d3dkmt_init_vulkan(void)
 {
-    static const char *extensions[] =
+    static const struct vulkan_instance_extensions extensions =
     {
-        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-        VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+        .has_VK_KHR_get_physical_device_properties2 = 1,
+        .has_VK_KHR_external_fence_capabilities = 1,
     };
-    VkInstanceCreateInfo create_info =
-    {
-        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .enabledExtensionCount = ARRAY_SIZE( extensions ),
-        .ppEnabledExtensionNames = extensions,
-    };
-    PFN_vkDestroyInstance p_vkDestroyInstance;
-    PFN_vkCreateInstance p_vkCreateInstance;
-    VkResult vr;
 
-    if (!vulkan_init())
-    {
-        WARN( "Failed to open the Vulkan driver\n" );
-        return;
-    }
-
-    p_vkCreateInstance = (PFN_vkCreateInstance)p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
-    if ((vr = p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
-    {
-        WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
-        return;
-    }
-
-    p_vkDestroyInstance = (PFN_vkDestroyInstance)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
-#define LOAD_VK_FUNC( f )                                                                      \
-    if (!(p##f = (void *)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, #f )))                   \
-    {                                                                                          \
-        WARN( "Failed to load " #f ".\n" );                                                    \
-        p_vkDestroyInstance( d3dkmt_vk_instance, NULL );                                       \
-        d3dkmt_vk_instance = NULL;                                                             \
-        return;                                                                                \
-    }
-    LOAD_VK_FUNC( vkEnumeratePhysicalDevices )
-    LOAD_VK_FUNC( vkGetPhysicalDeviceProperties2KHR )
-    LOAD_VK_FUNC( vkGetPhysicalDeviceMemoryProperties )
-    LOAD_VK_FUNC( vkGetPhysicalDeviceMemoryProperties2KHR )
-#undef LOAD_VK_FUNC
+    d3dkmt_vulkan_instance = vulkan_instance_create( &extensions );
+    if (!d3dkmt_vulkan_instance) WARN( "Failed to create the vulkan instance\n" );
 }
 
-static BOOL d3dkmt_use_vulkan(void)
+static struct vulkan_instance *get_d3dkmt_vulkan_instance(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once( &once, d3dkmt_init_vulkan );
-    return !!d3dkmt_vk_instance;
+    return d3dkmt_vulkan_instance;
 }
 
-/* d3dkmt_lock must be held */
-static struct d3dkmt_adapter *find_adapter_from_handle( D3DKMT_HANDLE handle )
+static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 {
-    struct d3dkmt_adapter *adapter;
-    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
-        if (adapter->handle == handle) return adapter;
-    return NULL;
+    if (!attr || attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
+
+    if (attr->ObjectName)
+    {
+        if ((ULONG_PTR)attr->ObjectName->Buffer & (sizeof(WCHAR) - 1)) return STATUS_DATATYPE_MISALIGNMENT;
+        if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
+    }
+    else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
+
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -140,8 +440,40 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
 {
-    FIXME( "(%p): stub\n", desc );
-    return STATUS_NO_MEMORY;
+    switch (desc->Type)
+    {
+    case D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE:
+    {
+        struct d3dkmt_resource *resource;
+
+        TRACE( "D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE hContext %#x, pPrivateDriverData %p, PrivateDriverDataSize %#x\n",
+               desc->hContext, desc->pPrivateDriverData, desc->PrivateDriverDataSize );
+
+        if (!(resource = get_d3dkmt_object( desc->hContext, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
+        return d3dkmt_object_update( &resource->obj, desc->pPrivateDriverData, desc->PrivateDriverDataSize );
+    }
+
+    case D3DKMT_ESCAPE_SET_PRESENT_RECT_WINE:
+    {
+        HWND hwnd = UlongToHandle( desc->hContext );
+        RECT *rect = desc->pPrivateDriverData;
+        struct ratio dpi = get_dpi_for_window( hwnd );
+        WND *win;
+
+        if (desc->PrivateDriverDataSize != sizeof(*rect)) return STATUS_INVALID_PARAMETER;
+
+        TRACE( "hwnd %p, rect %s\n", hwnd, wine_dbgstr_rect( rect ) );
+        if (!(win = get_win_ptr( hwnd ))) return STATUS_INVALID_PARAMETER;
+        win->present_rect = map_dpi_rect( *rect, get_thread_dpi(), dpi );
+        release_win_ptr( win );
+
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        FIXME( "(%p): stub\n", desc );
+        return STATUS_NO_MEMORY;
+    }
 }
 
 /******************************************************************************
@@ -149,90 +481,38 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
-    struct d3dkmt_adapter *adapter;
+    struct d3dkmt_object *adapter;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hAdapter) return STATUS_INVALID_PARAMETER;
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    if ((adapter = find_adapter_from_handle( desc->hAdapter )))
-    {
-        list_remove( &adapter->entry );
-        status = STATUS_SUCCESS;
-    }
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    free( adapter );
-    return status;
-}
-
-/******************************************************************************
- *           NtGdiDdDDIOpenAdapterFromDeviceName    (win32u.@)
- */
-NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc )
-{
-    D3DKMT_OPENADAPTERFROMLUID desc_luid;
-    NTSTATUS status;
-
-    FIXME( "desc %p stub.\n", desc );
-
-    if (!desc || !desc->pDeviceName) return STATUS_INVALID_PARAMETER;
-
-    memset( &desc_luid, 0, sizeof(desc_luid) );
-    if ((status = NtGdiDdDDIOpenAdapterFromLuid( &desc_luid ))) return status;
-
-    desc->AdapterLuid = desc_luid.AdapterLuid;
-    desc->hAdapter = desc_luid.hAdapter;
+    d3dkmt_object_free( adapter );
     return STATUS_SUCCESS;
 }
 
-static UINT get_vulkan_physical_devices( VkPhysicalDevice **devices )
+static struct vulkan_physical_device *get_vulkan_physical_device( struct vulkan_instance *instance, const LUID *luid )
 {
-    UINT device_count;
-    VkResult vr;
+    GUID uuid;
 
-    if ((vr = pvkEnumeratePhysicalDevices( d3dkmt_vk_instance, &device_count, NULL )))
+    if (!get_gpu_uuid_from_luid( luid, &uuid ))
     {
-        WARN( "vkEnumeratePhysicalDevices returned %d\n", vr );
-        return 0;
+        WARN( "Failed to find Vulkan device with LUID %08x:%08x.\n", luid->HighPart, luid->LowPart );
+        return NULL;
     }
 
-    if (!device_count || !(*devices = malloc( device_count * sizeof(**devices) ))) return 0;
-
-    if ((vr = pvkEnumeratePhysicalDevices( d3dkmt_vk_instance, &device_count, *devices )))
-    {
-        WARN( "vkEnumeratePhysicalDevices returned %d\n", vr );
-        free( *devices );
-        return 0;
-    }
-
-    return device_count;
-}
-
-static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
-{
-    VkPhysicalDevice *devices, device;
-    UINT device_count, i;
-
-    if (!(device_count = get_vulkan_physical_devices( &devices ))) return VK_NULL_HANDLE;
-
-    for (i = 0, device = VK_NULL_HANDLE; i < device_count; ++i)
+    for (UINT i = 0; i < instance->physical_device_count; ++i)
     {
         VkPhysicalDeviceIDProperties id = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
         VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
+        struct vulkan_physical_device *physical_device = instance->physical_devices + i;
 
-        pvkGetPhysicalDeviceProperties2KHR( devices[i], &properties2 );
-        if (IsEqualGUID( uuid, id.deviceUUID ))
-        {
-            device = devices[i];
-            break;
-        }
+        instance->p_vkGetPhysicalDeviceProperties2KHR( physical_device->host.physical_device, &properties2 );
+        if (IsEqualGUID( &uuid, id.deviceUUID )) return physical_device;
     }
 
-    free( devices );
-    return device;
+    return NULL;
 }
 
 /******************************************************************************
@@ -240,26 +520,23 @@ static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
 {
-    static D3DKMT_HANDLE handle_start = 0;
+    struct vulkan_instance *instance;
     struct d3dkmt_adapter *adapter;
-    GUID uuid = {0};
+    NTSTATUS status;
 
-    if (!(adapter = calloc( 1, sizeof(*adapter) ))) return STATUS_NO_MEMORY;
+    if ((status = d3dkmt_object_alloc( sizeof(*adapter), D3DKMT_ADAPTER, (void **)&adapter ))) return status;
+    if ((status = alloc_object_handle( &adapter->obj ))) goto failed;
 
-    if (!d3dkmt_use_vulkan())
-        WARN( "Vulkan is unavailable.\n" );
-    else if (!get_vulkan_uuid_from_luid( &desc->AdapterLuid, &uuid ))
-        WARN( "Failed to find Vulkan device with LUID %08x:%08x.\n",
-              (int)desc->AdapterLuid.HighPart, (int)desc->AdapterLuid.LowPart );
-    else if (!(adapter->vk_device = get_vulkan_physical_device( &uuid )))
-        WARN( "Failed to find vulkan device with GUID %s\n", debugstr_guid( &uuid ) );
+    if (!(instance = get_d3dkmt_vulkan_instance())) WARN( "Vulkan is unavailable.\n" );
+    else adapter->physical_device = get_vulkan_physical_device( instance, &desc->AdapterLuid );
+    if (!adapter->physical_device) WARN( "Failed to find Vulkan physical device\n" );
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    desc->hAdapter = adapter->handle = ++handle_start;
-    list_add_tail( &d3dkmt_adapters, &adapter->entry );
-    pthread_mutex_unlock( &d3dkmt_lock );
-
+    desc->hAdapter = adapter->obj.local;
     return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &adapter->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -267,33 +544,25 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
  */
 NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
 {
-    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
     struct d3dkmt_device *device;
-    BOOL found = FALSE;
+    NTSTATUS status;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc) return STATUS_INVALID_PARAMETER;
+    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout) FIXME( "Flags unsupported.\n" );
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    found = !!find_adapter_from_handle( desc->hAdapter );
-    pthread_mutex_unlock( &d3dkmt_lock );
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+    if ((status = d3dkmt_object_alloc( sizeof(*device), D3DKMT_DEVICE, (void **)&device ))) return status;
+    if ((status = alloc_object_handle( &device->obj ))) goto failed;
 
-    if (!found) return STATUS_INVALID_PARAMETER;
-
-    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout)
-        FIXME( "Flags unsupported.\n" );
-
-    device = calloc( 1, sizeof(*device) );
-    if (!device) return STATUS_NO_MEMORY;
-
-    pthread_mutex_lock( &d3dkmt_lock );
-    device->handle = ++handle_start;
-    list_add_tail( &d3dkmt_devices, &device->entry );
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    desc->hDevice = device->handle;
+    desc->hDevice = device->obj.local;
     return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &device->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -302,29 +571,17 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
 NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 {
     D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
-    struct d3dkmt_device *device, *found = NULL;
+    struct d3dkmt_object *device;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hDevice) return STATUS_INVALID_PARAMETER;
-
-    pthread_mutex_lock( &d3dkmt_lock );
-    LIST_FOR_EACH_ENTRY( device, &d3dkmt_devices, struct d3dkmt_device, entry )
-    {
-        if (device->handle == desc->hDevice)
-        {
-            list_remove( &device->entry );
-            found = device;
-            break;
-        }
-    }
-    pthread_mutex_unlock( &d3dkmt_lock );
-
-    if (!found) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( desc->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
 
     set_owner_desc.hDevice = desc->hDevice;
     NtGdiDdDDISetVidPnSourceOwner( &set_owner_desc );
-    free( found );
+
+    d3dkmt_object_free( device );
     return STATUS_SUCCESS;
 }
 
@@ -357,7 +614,7 @@ NTSTATUS WINAPI NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc )
         if (desc->PrivateDriverDataSize < sizeof(*value))
             return STATUS_INVALID_PARAMETER;
 
-        *value = KMT_DRIVERVERSION_WDDM_1_3;
+        *value = KMT_DRIVERVERSION_WDDM_3_1;
         return STATUS_SUCCESS;
     }
     default:
@@ -383,6 +640,7 @@ NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats )
 NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
 {
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budget;
+    struct vulkan_physical_device *physical_device;
     VkPhysicalDeviceMemoryProperties2 properties2;
     struct d3dkmt_adapter *adapter;
     OBJECT_BASIC_INFORMATION info;
@@ -404,19 +662,23 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
     if (status != STATUS_SUCCESS) return status;
     if (!(info.GrantedAccess & PROCESS_QUERY_INFORMATION)) return STATUS_ACCESS_DENIED;
 
+    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+
     desc->Budget = 0;
     desc->CurrentUsage = 0;
     desc->CurrentReservation = 0;
     desc->AvailableForReservation = 0;
 
-    pthread_mutex_lock( &d3dkmt_lock );
-    if ((adapter = find_adapter_from_handle( desc->hAdapter )) && adapter->vk_device)
+    if ((physical_device = adapter->physical_device))
     {
+        struct vulkan_instance *instance = physical_device->instance;
+
         memset( &budget, 0, sizeof(budget) );
         budget.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
         properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
         properties2.pNext = &budget;
-        pvkGetPhysicalDeviceMemoryProperties2KHR( adapter->vk_device, &properties2 );
+
+        instance->p_vkGetPhysicalDeviceMemoryProperties2KHR( physical_device->host.physical_device, &properties2 );
         for (i = 0; i < properties2.memoryProperties.memoryHeapCount; ++i)
         {
             if ((desc->MemorySegmentGroup == D3DKMT_MEMORY_SEGMENT_GROUP_LOCAL &&
@@ -425,14 +687,16 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
                  !(properties2.memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)))
             {
                 desc->Budget += budget.heapBudget[i];
-                desc->CurrentUsage += budget.heapUsage[i];
+                desc->CurrentUsage += min( budget.heapBudget[i], budget.heapUsage[i] );
             }
         }
-        desc->AvailableForReservation = desc->Budget / 2;
-    }
-    pthread_mutex_unlock( &d3dkmt_lock );
 
-    return adapter ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
+        desc->AvailableForReservation = desc->Budget / 2;
+        return STATUS_SUCCESS;
+    }
+
+    WARN( "Failed to find Vulkan physical device\n" );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -560,6 +824,12 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI NtGdiDdDDICheckOcclusion( const D3DKMT_CHECKOCCLUSION *desc )
+{
+    FIXME( "desc %p stub!\n", desc );
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
 /******************************************************************************
  *           NtGdiDdDDICheckVidPnExclusiveOwnership    (win32u.@)
  */
@@ -608,31 +878,29 @@ static int compare_vulkan_physical_devices( const void *v1, const void *v2 )
 
 BOOL get_vulkan_gpus( struct list *gpus )
 {
+    struct vulkan_instance *instance;
     struct vk_physdev_info *devinfo;
-    VkPhysicalDevice *devices;
-    UINT i, j, count;
+    UINT i, j;
 
-    if (!d3dkmt_use_vulkan()) return FALSE;
-    if (!(count = get_vulkan_physical_devices( &devices ))) return FALSE;
+    if (!(instance = get_d3dkmt_vulkan_instance())) return FALSE;
+    if (!(devinfo = calloc( instance->physical_device_count, sizeof(*devinfo) ))) return FALSE;
 
-    if (!(devinfo = calloc( count, sizeof(*devinfo) )))
+    for (i = 0; i < instance->physical_device_count; ++i)
     {
-        free( devices );
-        return FALSE;
-    }
-    for (i = 0; i < count; ++i)
-    {
+        struct vulkan_physical_device *physical_device = instance->physical_devices + i;
+
         devinfo[i].id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
         devinfo[i].properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
         devinfo[i].properties2.pNext = &devinfo[i].id;
-        pvkGetPhysicalDeviceProperties2KHR( devices[i], &devinfo[i].properties2 );
-        pvkGetPhysicalDeviceMemoryProperties( devices[i], &devinfo[i].mem_properties );
-    }
-    qsort( devinfo, count, sizeof(*devinfo), compare_vulkan_physical_devices );
 
-    for (i = 0; i < count; ++i)
+        instance->p_vkGetPhysicalDeviceProperties2KHR( physical_device->host.physical_device, &devinfo[i].properties2 );
+        instance->p_vkGetPhysicalDeviceMemoryProperties( physical_device->host.physical_device, &devinfo[i].mem_properties );
+    }
+    qsort( devinfo, instance->physical_device_count, sizeof(*devinfo), compare_vulkan_physical_devices );
+
+    for (i = 0; i < instance->physical_device_count; ++i)
     {
-        struct vulkan_gpu *gpu;
+        struct gpu_info *gpu;
 
         if (!(gpu = calloc( 1, sizeof(*gpu) ))) break;
         memcpy( &gpu->uuid, devinfo[i].id.deviceUUID, sizeof(gpu->uuid) );
@@ -650,14 +918,7 @@ BOOL get_vulkan_gpus( struct list *gpus )
     }
 
     free( devinfo );
-    free( devices );
     return TRUE;
-}
-
-void free_vulkan_gpu( struct vulkan_gpu *gpu )
-{
-    free( gpu->name );
-    free( gpu );
 }
 
 /******************************************************************************
@@ -666,8 +927,59 @@ void free_vulkan_gpu( struct vulkan_gpu *gpu )
 NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr,
                                         UINT access, HANDLE *handle )
 {
-    FIXME( "count %u, handles %p, attr %p, access %#x, handle %p stub!\n", count, handles, attr, access, handle );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *object, *resource = NULL, *sync = NULL, *mutex = NULL;
+    struct object_attributes *objattr;
+    data_size_t len;
+    NTSTATUS status;
+
+    TRACE( "count %u, handles %p, attr %p, access %#x, handle %p\n", count, handles, attr, access, handle );
+
+    if (count == 1)
+    {
+        if (!(object = get_d3dkmt_object( handles[0], -1 )) || !object->shared) goto failed;
+        if (object->type == D3DKMT_RESOURCE) resource = object;
+        else if (object->type == D3DKMT_SYNC) sync = object;
+        else goto failed;
+    }
+    else if (count == 3)
+    {
+        if (!(object = get_d3dkmt_object( handles[0], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_RESOURCE) goto failed;
+        resource = object;
+
+        if (!(object = get_d3dkmt_object( handles[1], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_MUTEX) goto failed;
+        mutex = object;
+
+        if (!(object = get_d3dkmt_object( handles[2], -1 )) || !object->shared) goto failed;
+        if (object->type != D3DKMT_SYNC) goto failed;
+        sync = object;
+    }
+    else goto failed;
+
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( d3dkmt_share_objects )
+    {
+        req->access = access | STANDARD_RIGHTS_ALL;
+        if (resource) req->resource = resource->global;
+        if (mutex) req->mutex = mutex->global;
+        if (sync) req->sync = sync->global;
+        wine_server_add_data( req, objattr, len );
+        status = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    free( objattr );
+
+    if (status) WARN( "Failed to share objects, status %#x\n", status );
+    else TRACE( "Shared objects with handle %p\n", *handle );
+    return status;
+
+failed:
+    WARN( "Unsupported object count / types / handles\n" );
+    return STATUS_INVALID_PARAMETER;
 }
 
 /******************************************************************************
@@ -675,8 +987,65 @@ NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles
  */
 NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_CREATESTANDARDALLOCATION *standard;
+    struct d3dkmt_resource *resource = NULL;
+    D3DDDI_ALLOCATIONINFO *alloc_info;
+    struct d3dkmt_object *allocation;
+    struct d3dkmt_device *device;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (!params->Flags.StandardAllocation) return STATUS_INVALID_PARAMETER;
+    if (params->PrivateDriverDataSize) return STATUS_INVALID_PARAMETER;
+
+    if (params->NumAllocations != 1) return STATUS_INVALID_PARAMETER;
+    if (!(alloc_info = params->pAllocationInfo)) return STATUS_INVALID_PARAMETER;
+
+    if (!(standard = params->pStandardAllocation)) return STATUS_INVALID_PARAMETER;
+    if (standard->Type != D3DKMT_STANDARDALLOCATIONTYPE_EXISTINGHEAP) return STATUS_INVALID_PARAMETER;
+    if (standard->ExistingHeapData.Size & 0xfff) return STATUS_INVALID_PARAMETER;
+    if (!params->Flags.ExistingSysMem) return STATUS_INVALID_PARAMETER;
+    if (!alloc_info->pSystemMem) return STATUS_INVALID_PARAMETER;
+
+    if (params->Flags.CreateResource)
+    {
+        if (params->hResource && !(resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE )))
+            return STATUS_INVALID_HANDLE;
+        if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
+        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+
+        if (!params->Flags.CreateShared) status = alloc_object_handle( &resource->obj );
+        else status = d3dkmt_object_create( &resource->obj, -1, 0, params->Flags.NtSecuritySharing,
+                                            params->pPrivateRuntimeData, params->PrivateRuntimeDataSize );
+        if (status) goto failed;
+
+        params->hGlobalShare = resource->obj.shared ? 0 : resource->obj.global;
+        params->hResource = resource->obj.local;
+    }
+    else
+    {
+        if (params->Flags.CreateShared) return STATUS_INVALID_PARAMETER;
+        if (params->hResource)
+        {
+            resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE );
+            return resource ? STATUS_INVALID_PARAMETER : STATUS_INVALID_HANDLE;
+        }
+        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) return status;
+        params->hGlobalShare = 0;
+    }
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if (resource) resource->allocation = allocation->local;
+    alloc_info->hAllocation = allocation->local;
+    return STATUS_SUCCESS;
+
+failed:
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -684,8 +1053,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
  */
 NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    return NtGdiDdDDICreateAllocation2( params );
 }
 
 /******************************************************************************
@@ -693,8 +1061,37 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *allocation;
+    D3DKMT_HANDLE alloc_handle = 0;
+    UINT i;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (params->AllocationCount && !params->phAllocationList) return STATUS_INVALID_PARAMETER;
+
+    if (params->hResource)
+    {
+        struct d3dkmt_resource *resource;
+        if (!(resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE )))
+            return STATUS_INVALID_PARAMETER;
+        alloc_handle = resource->allocation;
+        d3dkmt_object_free( &resource->obj );
+    }
+
+    for (i = 0; i < params->AllocationCount; i++)
+    {
+        if (!(allocation = get_d3dkmt_object( params->phAllocationList[i], D3DKMT_ALLOCATION )))
+            return STATUS_INVALID_PARAMETER;
+        d3dkmt_object_free( allocation );
+    }
+
+    if (alloc_handle && (allocation = get_d3dkmt_object( alloc_handle, D3DKMT_ALLOCATION )))
+        d3dkmt_object_free( allocation );
+
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -702,8 +1099,17 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *p
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_DESTROYALLOCATION2 params2 = {0};
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    params2.hDevice = params->hDevice;
+    params2.hResource = params->hResource;
+    params2.phAllocationList = params->phAllocationList;
+    params2.AllocationCount = params->AllocationCount;
+    return NtGdiDdDDIDestroyAllocation2( &params2 );
 }
 
 /******************************************************************************
@@ -711,8 +1117,42 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *par
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *allocation;
+    D3DDDI_OPENALLOCATIONINFO *alloc_info;
+    struct d3dkmt_resource *resource;
+    UINT runtime_size;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hGlobalShare )) return STATUS_INVALID_PARAMETER;
+    if (params->ResourcePrivateDriverDataSize) return STATUS_INVALID_PARAMETER;
+
+    if (!params->NumAllocations) return STATUS_INVALID_PARAMETER;
+    if (!(alloc_info = params->pOpenAllocationInfo)) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+
+    runtime_size = params->PrivateRuntimeDataSize;
+    if ((status = d3dkmt_object_open( &resource->obj, params->hGlobalShare, NULL, params->pPrivateRuntimeData, &runtime_size ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+    alloc_info->hAllocation = allocation->local;
+    alloc_info->PrivateDriverDataSize = 0;
+
+    params->hResource = resource->obj.local;
+    params->PrivateRuntimeDataSize = runtime_size;
+    params->TotalPrivateDriverDataBufferSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &resource->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -720,8 +1160,42 @@ NTSTATUS WINAPI NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *allocation;
+    D3DDDI_OPENALLOCATIONINFO2 *alloc_info;
+    struct d3dkmt_resource *resource;
+    UINT runtime_size;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hGlobalShare )) return STATUS_INVALID_PARAMETER;
+    if (params->ResourcePrivateDriverDataSize) return STATUS_INVALID_PARAMETER;
+
+    if (!params->NumAllocations) return STATUS_INVALID_PARAMETER;
+    if (!(alloc_info = params->pOpenAllocationInfo2)) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+
+    runtime_size = params->PrivateRuntimeDataSize;
+    if ((status = d3dkmt_object_open( &resource->obj, params->hGlobalShare, NULL, params->pPrivateRuntimeData, &runtime_size ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+    alloc_info->hAllocation = allocation->local;
+    alloc_info->PrivateDriverDataSize = 0;
+
+    params->hResource = resource->obj.local;
+    params->PrivateRuntimeDataSize = runtime_size;
+    params->TotalPrivateDriverDataBufferSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &resource->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -729,17 +1203,107 @@ NTSTATUS WINAPI NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *sync = NULL;
+    struct d3dkmt_mutex *mutex = NULL;
+    struct d3dkmt_resource *resource = NULL;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!params->pPrivateRuntimeData) return STATUS_INVALID_PARAMETER;
+    if (!params->pTotalPrivateDriverDataBuffer) return STATUS_INVALID_PARAMETER;
+    if (!params->pOpenAllocationInfo2) return STATUS_INVALID_PARAMETER;
+    if (!params->NumAllocations) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
+    if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+
+    if ((status = d3dkmt_object_open( &resource->obj, 0, params->hNtHandle, params->pPrivateRuntimeData,
+                                      &params->PrivateRuntimeDataSize )))
+        goto failed;
+
+    if (d3dkmt_object_open( &mutex->obj, 0, params->hNtHandle, params->pKeyedMutexPrivateRuntimeData, &params->KeyedMutexPrivateRuntimeDataSize ))
+    {
+        d3dkmt_object_free( &mutex->obj );
+        mutex = NULL;
+    }
+
+    if (d3dkmt_object_open( sync, 0, params->hNtHandle, NULL, &dummy ))
+    {
+        d3dkmt_object_free( sync );
+        sync = NULL;
+    }
+
+    params->hResource = resource->obj.local;
+    params->hKeyedMutex = mutex ? mutex->obj.local : 0;
+    params->hSyncObject = sync ? sync->local : 0;
+    params->TotalPrivateDriverDataBufferSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    return STATUS_SUCCESS;
+
+failed:
+    if (sync) d3dkmt_object_free( sync );
+    if (mutex) d3dkmt_object_free( &mutex->obj );
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return status;
 }
+
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenNtHandleFromName    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenNtHandleFromName( D3DKMT_OPENNTHANDLEFROMNAME *params )
+{
+    OBJECT_ATTRIBUTES *attr = params->pObjAttrib;
+    DWORD access = params->dwDesiredAccess;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    params->hNtHandle = 0;
+    if ((status = validate_open_object_attributes( attr ))) return status;
+
+    SERVER_START_REQ( d3dkmt_object_open_name )
+    {
+        req->type       = D3DKMT_RESOURCE;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName) wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        params->hNtHandle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    return status;
+}
+
 
 /******************************************************************************
  *           NtGdiDdDDIQueryResourceInfo    (win32u.@)
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hGlobalShare )) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, params->hGlobalShare, NULL,
+                                       &params->PrivateRuntimeDataSize )))
+        return status;
+
+    params->TotalPrivateDriverDataSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    params->NumAllocations = 1;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -747,8 +1311,18 @@ NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, 0, params->hNtHandle,
+                                       &params->PrivateRuntimeDataSize )))
+        return status;
+
+    params->TotalPrivateDriverDataSize = 0;
+    params->ResourcePrivateDriverDataSize = 0;
+    params->NumAllocations = 1;
+    return STATUS_SUCCESS;
 }
 
 
@@ -757,8 +1331,25 @@ NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINF
  */
 NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_mutex *mutex;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
+    if ((status = d3dkmt_object_create( &mutex->obj, -1, params->InitialValue, params->Flags.NtSecuritySharing,
+                                        params->pPrivateRuntimeData, params->PrivateRuntimeDataSize )))
+        goto failed;
+
+    params->hSharedHandle = mutex->obj.shared ? 0 : mutex->obj.global;
+    params->hKeyedMutex = mutex->obj.local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &mutex->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -766,8 +1357,46 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
  */
 NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_CREATEKEYEDMUTEX2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    params2.InitialValue = params->InitialValue;
+    status = NtGdiDdDDICreateKeyedMutex2( &params2 );
+    params->hSharedHandle = params2.hSharedHandle;
+    params->hKeyedMutex = params2.hKeyedMutex;
+    return status;
+}
+
+NTSTATUS d3dkmt_destroy_mutex( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_mutex *mutex;
+    BOOL owned;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(mutex = get_d3dkmt_object( local, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    pthread_mutex_lock( &d3dkmt_lock );
+    owned = mutex->owned;
+    pthread_mutex_unlock( &d3dkmt_lock );
+
+    if (owned)
+    {
+        SERVER_START_REQ( d3dkmt_mutex_release )
+        {
+            req->mutex = mutex->obj.global;
+            req->abandon = 1;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    d3dkmt_object_free( &mutex->obj );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -775,8 +1404,9 @@ NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE( "params %p\n", params );
+
+    return d3dkmt_destroy_mutex( params->hKeyedMutex );
 }
 
 /******************************************************************************
@@ -784,8 +1414,27 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *par
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex2( D3DKMT_OPENKEYEDMUTEX2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_mutex *mutex;
+    UINT runtime_size;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hSharedHandle )) return STATUS_INVALID_PARAMETER;
+    if (params->PrivateRuntimeDataSize && !params->pPrivateRuntimeData) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
+
+    runtime_size = params->PrivateRuntimeDataSize;
+    if ((status = d3dkmt_object_open( &mutex->obj, params->hSharedHandle, NULL, params->pPrivateRuntimeData, &runtime_size ))) goto failed;
+
+    params->hKeyedMutex = mutex->obj.local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &mutex->obj );
+    return status;
 }
 
 /******************************************************************************
@@ -793,8 +1442,17 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex2( D3DKMT_OPENKEYEDMUTEX2 *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex( D3DKMT_OPENKEYEDMUTEX *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_OPENKEYEDMUTEX2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    params2.hSharedHandle = params->hSharedHandle;
+    status = NtGdiDdDDIOpenKeyedMutex2( &params2 );
+    params->hKeyedMutex = params2.hKeyedMutex;
+    return status;
 }
 
 /******************************************************************************
@@ -802,8 +1460,139 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex( D3DKMT_OPENKEYEDMUTEX *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_mutex *mutex;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) return status;
+    if ((status = d3dkmt_object_open( &mutex->obj, 0, params->hNtHandle, params->pPrivateRuntimeData,
+                                      &params->PrivateRuntimeDataSize )))
+        goto failed;
+
+    params->hKeyedMutex = mutex->obj.local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( &mutex->obj );
+    return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIAcquireKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    LARGE_INTEGER now, *timeout;
+    struct d3dkmt_mutex *mutex;
+    HANDLE wait_handle = NULL;
+
+    TRACE( "params %p\n", params );
+
+    if ((timeout = params->pTimeout) && timeout->QuadPart < 0)
+    {
+        NtQuerySystemTime( &now );
+        now.QuadPart -= timeout->QuadPart;
+        timeout = &now;
+    }
+
+    if (!(mutex = get_d3dkmt_object( params->hKeyedMutex, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    do
+    {
+        if (wait_handle) status = NtWaitForSingleObject( wait_handle, FALSE, timeout );
+        SERVER_START_REQ( d3dkmt_mutex_acquire )
+        {
+            req->mutex = mutex->obj.global;
+            req->key_value = params->Key;
+            req->wait_handle = wine_server_obj_handle( wait_handle );
+            req->wait_status = status;
+
+            status = wine_server_call( req );
+            params->FenceValue = reply->fence_value;
+            /* server never creates a new handle if one is provided, and always returns a handle if pending */
+            if (reply->wait_handle) wait_handle = wine_server_ptr_handle( reply->wait_handle );
+            else if (wait_handle) NtClose( wait_handle );
+        }
+        SERVER_END_REQ;
+    } while (status == STATUS_PENDING);
+
+    if (!status)
+    {
+        pthread_mutex_lock( &d3dkmt_lock );
+        mutex->owned = TRUE;
+        pthread_mutex_unlock( &d3dkmt_lock );
+    }
+    return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIAcquireKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex( D3DKMT_ACQUIREKEYEDMUTEX *params )
+{
+    D3DKMT_ACQUIREKEYEDMUTEX2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    params2.hKeyedMutex = params->hKeyedMutex;
+    params2.pTimeout = params->pTimeout;
+    params2.Key = params->Key;
+    params2.FenceValue = params->FenceValue;
+    status = NtGdiDdDDIAcquireKeyedMutex2( &params2 );
+    params->FenceValue = params2.FenceValue;
+
+    return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIReleaseKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params )
+{
+    struct d3dkmt_mutex *mutex;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!(mutex = get_d3dkmt_object( params->hKeyedMutex, D3DKMT_MUTEX ))) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( d3dkmt_mutex_release )
+    {
+        req->mutex = mutex->obj.global;
+        req->key_value = params->Key;
+        req->fence_value = params->FenceValue;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (!status)
+    {
+        pthread_mutex_lock( &d3dkmt_lock );
+        mutex->owned = FALSE;
+        pthread_mutex_unlock( &d3dkmt_lock );
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIReleaseKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex( D3DKMT_RELEASEKEYEDMUTEX *params )
+{
+    D3DKMT_RELEASEKEYEDMUTEX2 params2 = {0};
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    params2.hKeyedMutex = params->hKeyedMutex;
+    params2.Key = params->Key;
+    params2.FenceValue = params->FenceValue;
+    return NtGdiDdDDIReleaseKeyedMutex2( &params2 );
 }
 
 
@@ -812,8 +1601,32 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMN
  */
 NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *device, *sync;
+    NTSTATUS status;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type < D3DDDI_SYNCHRONIZATION_MUTEX || params->Info.Type > D3DDDI_MONITORED_FENCE)
+        return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type == D3DDDI_CPU_NOTIFICATION && !params->Info.CPUNotification.Event) return STATUS_INVALID_HANDLE;
+    if (params->Info.Flags.NtSecuritySharing && !params->Info.Flags.Shared) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
+    if (!params->Info.Flags.Shared) status = alloc_object_handle( sync );
+    else status = d3dkmt_object_create( sync, -1, 0, params->Info.Flags.NtSecuritySharing, NULL, 0 );
+    if (status) goto failed;
+
+    if (params->Info.Flags.Shared) params->Info.SharedHandle = sync->shared ? 0 : sync->global;
+    params->hSyncObject = sync->local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( sync );
+    return status;
 }
 
 /******************************************************************************
@@ -821,8 +1634,23 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZA
  */
 NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 params2 = {0};
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    if (params->Info.Type != D3DDDI_SYNCHRONIZATION_MUTEX && params->Info.Type != D3DDDI_SEMAPHORE)
+        return STATUS_INVALID_PARAMETER;
+
+    params2.hDevice = params->hDevice;
+    params2.Info.Type = params->Info.Type;
+    params2.Info.Flags.Shared = 1;
+    memcpy( &params2.Info.Reserved, &params->Info.Reserved, sizeof(params->Info.Reserved) );
+    status = NtGdiDdDDICreateSynchronizationObject2( &params2 );
+    params->hSyncObject = params2.hSyncObject;
+    return status;
 }
 
 /******************************************************************************
@@ -830,8 +1658,26 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZAT
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *sync, *device;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!(device = get_d3dkmt_object( params->hDevice, D3DKMT_DEVICE ))) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
+    if ((status = d3dkmt_object_open( sync, 0, params->hNtHandle, NULL, &dummy ))) goto failed;
+
+    params->hSyncObject = sync->local;
+    params->MonitoredFence.FenceValueCPUVirtualAddress = 0;
+    params->MonitoredFence.FenceValueGPUVirtualAddress = 0;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( sync );
+    return status;
 }
 
 /******************************************************************************
@@ -839,8 +1685,23 @@ NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROM
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *sync;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    FIXME( "params %p semi-stub!\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
+    if ((status = d3dkmt_object_open( sync, 0, params->hNtHandle, NULL, &dummy ))) goto failed;
+
+    params->hSyncObject = sync->local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( sync );
+    return status;
 }
 
 /******************************************************************************
@@ -848,8 +1709,28 @@ NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMN
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    OBJECT_ATTRIBUTES *attr = params->pObjAttrib;
+    DWORD access = params->dwDesiredAccess;
+    NTSTATUS status;
+
+    TRACE( "params %p\n", params );
+
+    params->hNtHandle = 0;
+    if ((status = validate_open_object_attributes( attr ))) return status;
+
+    SERVER_START_REQ( d3dkmt_object_open_name )
+    {
+        req->type       = D3DKMT_SYNC;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName) wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        params->hNtHandle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************
@@ -857,8 +1738,24 @@ NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTN
  */
 NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONOBJECT *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_object *sync;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    TRACE( "params %p\n", params );
+
+    if (!params) return STATUS_INVALID_PARAMETER;
+    if (!is_d3dkmt_global( params->hSharedHandle )) return STATUS_INVALID_PARAMETER;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) return status;
+    if ((status = d3dkmt_object_open( sync, params->hSharedHandle, NULL, NULL, &dummy ))) goto failed;
+
+    params->hSyncObject = sync->local;
+    return STATUS_SUCCESS;
+
+failed:
+    d3dkmt_object_free( sync );
+    return status;
 }
 
 /******************************************************************************
@@ -866,6 +1763,201 @@ NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONO
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params )
 {
+    TRACE( "params %p\n", params );
+
+    return d3dkmt_destroy_sync( params->hSyncObject );
+}
+
+/******************************************************************************
+ *           NtGdiDdDDISignalSynchronizationObjectFromCpu    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
     FIXME( "params %p stub!\n", params );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIWaitForSynchronizationObjectFromCpu    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static void get_resource_global_keyed_mutex( struct d3dkmt_dxgi_desc *desc, D3DKMT_HANDLE *mutex_global, D3DKMT_HANDLE *sync_global )
+{
+    if ((desc->size != sizeof(struct d3dkmt_d3d9_desc) && desc->size != sizeof(struct d3dkmt_d3d11_desc)) ||
+        (desc->version != 0 && desc->version != 1 && desc->version != 4))
+        WARN( "Unsupported runtime data size %#x version %#x\n", desc->size, desc->version );
+    else if (desc->keyed_mutex && !desc->nt_shared)
+    {
+        *mutex_global = desc->mutex_handle;
+        *sync_global = desc->sync_handle;
+    }
+}
+
+/* get a locally opened D3DKMT object host-specific fd */
+int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *object;
+    NTSTATUS status;
+    int fd;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(object = get_d3dkmt_object( local, -1 ))) return -1;
+    if ((status = wine_server_handle_to_fd( object->handle, GENERIC_ALL, &fd, NULL )))
+    {
+        WARN( "Failed to receive object %p/%#x fd, status %#x\n", object, local, status );
+        return -1;
+    }
+
+    return fd;
+}
+
+/* create a D3DKMT global or shared resource from a host-specific fd */
+D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
+{
+    struct d3dkmt_resource *resource = NULL;
+    struct d3dkmt_object *allocation = NULL;
+    NTSTATUS status;
+
+    TRACE( "fd %d, global %p\n", fd, global );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+    if ((status = d3dkmt_object_create( &resource->obj, fd, 0, !global, NULL, 0 ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+
+    if (global) *global = resource->obj.global;
+    return resource->obj.local;
+
+failed:
+    WARN( "Failed to create resource, status %#x\n", status );
+    if (allocation) d3dkmt_object_free( allocation );
+    if (resource) d3dkmt_object_free( &resource->obj );
+    return 0;
+}
+
+/* open a D3DKMT global or shared resource */
+D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local )
+{
+    struct d3dkmt_object *allocation = NULL, *mutex = NULL, *sync = NULL;
+    UINT runtime_size, mutex_size = 0, sync_size = 0;
+    D3DKMT_HANDLE mutex_global = 0, sync_global = 0;
+    struct d3dkmt_resource *resource = NULL;
+    void *runtime_data = NULL;
+    NTSTATUS status;
+
+    TRACE( "global %#x, shared %p\n", global, shared );
+
+    if ((status = d3dkmt_object_query( D3DKMT_RESOURCE, global, shared, &runtime_size ))) goto failed;
+    if (runtime_size && !(runtime_data = malloc( runtime_size ))) goto failed;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
+    if ((status = d3dkmt_object_open( &resource->obj, global, shared, runtime_data, &runtime_size ))) goto failed;
+
+    if ((status = alloc_object_handle( allocation ))) goto failed;
+    resource->allocation = allocation->local;
+
+    if (!runtime_data || runtime_size <= sizeof(struct d3dkmt_dxgi_desc)) WARN( "Unsupported runtime data size %#x\n", runtime_size );
+    else get_resource_global_keyed_mutex( runtime_data, &mutex_global, &sync_global );
+
+    if (!d3dkmt_object_open( mutex, mutex_global, shared, NULL, &mutex_size ) &&
+        !d3dkmt_object_open( sync, sync_global, shared, NULL, &sync_size ))
+    {
+        *mutex_local = mutex->local;
+        *sync_local = sync->local;
+    }
+    else
+    {
+        d3dkmt_object_free( mutex );
+        d3dkmt_object_free( sync );
+        *mutex_local = *sync_local = 0;
+    }
+
+    free( runtime_data );
+    return resource->obj.local;
+
+failed:
+    WARN( "Failed to open resource, status %#x\n", status );
+    if (allocation) d3dkmt_object_free( allocation );
+    if (resource) d3dkmt_object_free( &resource->obj );
+    if (mutex) d3dkmt_object_free( mutex );
+    if (sync) d3dkmt_object_free( sync );
+    free( runtime_data );
+    return 0;
+}
+
+/* destroy a locally opened D3DKMT resource */
+NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_resource *resource;
+    struct d3dkmt_object *allocation;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(resource = get_d3dkmt_object( local, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
+    if ((allocation = get_d3dkmt_object( resource->allocation, D3DKMT_ALLOCATION ))) d3dkmt_object_free( allocation );
+    d3dkmt_object_free( &resource->obj );
+
+    return STATUS_SUCCESS;
+}
+
+/* create a D3DKMT global or shared sync */
+D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global )
+{
+    struct d3dkmt_object *sync = NULL;
+    NTSTATUS status;
+
+    TRACE( "global %p\n", global );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+    if ((status = d3dkmt_object_create( sync, fd, 0, !global, NULL, 0 ))) goto failed;
+    if (global) *global = sync->global;
+    return sync->local;
+
+failed:
+    WARN( "Failed to create sync, status %#x\n", status );
+    if (sync) d3dkmt_object_free( sync );
+    return 0;
+}
+
+/* open a D3DKMT global or shared sync */
+D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared )
+{
+    struct d3dkmt_object *sync = NULL;
+    NTSTATUS status;
+    UINT dummy = 0;
+
+    TRACE( "global %#x, shared %p\n", global, shared );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
+    if ((status = d3dkmt_object_open( sync, global, shared, NULL, &dummy ))) goto failed;
+    return sync->local;
+
+failed:
+    WARN( "Failed to open sync, status %#x\n", status );
+    if (sync) d3dkmt_object_free( sync );
+    return 0;
+}
+
+/* destroy a locally opened D3DKMT sync */
+NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *sync;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(sync = get_d3dkmt_object( local, D3DKMT_SYNC ))) return STATUS_INVALID_PARAMETER;
+    d3dkmt_object_free( sync );
+
+    return STATUS_SUCCESS;
 }

@@ -1,6 +1,6 @@
 MODULE    = conhost.exe
 IMPORTS   = user32 gdi32 advapi32
-DELAYIMPORTS = comctl32
+DELAYIMPORTS = comctl32 winmm
 
 EXTRADLLFLAGS = -mwindows -municode
 

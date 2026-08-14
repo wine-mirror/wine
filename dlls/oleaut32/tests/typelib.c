@@ -671,12 +671,15 @@ static void test_CreateDispTypeInfo(void)
     HRESULT hr;
     INTERFACEDATA ifdata;
     METHODDATA methdata[4];
+    VARIANT args[1], res;
     PARAMDATA parms1[2];
     PARAMDATA parms3[1];
     TYPEATTR *pTypeAttr;
     HREFTYPE href;
     FUNCDESC *pFuncDesc;
+    UINT argerr = 0;
     MEMBERID memid;
+    DISPPARAMS dp;
 
     static WCHAR func1[] = {'f','u','n','c','1',0};
     static const WCHAR func2[] = {'f','u','n','c','2',0};
@@ -813,6 +816,10 @@ static void test_CreateDispTypeInfo(void)
     ok(hr == S_OK, "hr 0x%08lx\n", hr);
     ok(memid == 0x123, "memid 0x%08lx\n", memid);
 
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &methdata[1].szName, 1, &memid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(memid == 0x124, "Unexpected id %#lx.\n", memid);
+
     ITypeInfo_Release(pTI2);
     ITypeInfo_Release(pTypeInfo);
 
@@ -823,6 +830,46 @@ static void test_CreateDispTypeInfo(void)
     SysFreeString(methdata[1].szName);
     SysFreeString(methdata[2].szName);
     SysFreeString(methdata[3].szName);
+
+    /* Invoke test */
+    memset(methdata, 0, sizeof(methdata));
+    methdata[0].szName = SysAllocString(L"get_test");
+    methdata[0].dispid = DISPID_VALUE;
+    methdata[0].iMeth = 7;
+    methdata[0].cc = CC_STDCALL;
+    methdata[0].wFlags = DISPATCH_PROPERTYGET;
+    methdata[0].vtReturn = VT_I4;
+    methdata[0].ppdata = parms1;
+    methdata[0].cArgs = 1;
+    memset(parms1, 0, sizeof(parms1));
+    parms1[0].szName = SysAllocString(L"param");
+    parms1[0].vt = VT_I4;
+
+    ifdata.pmethdata = methdata;
+    ifdata.cMembers = 1;
+
+    hr = CreateDispTypeInfo(&ifdata, LOCALE_NEUTRAL, &pTypeInfo);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &methdata[0].szName, 1, &memid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(memid == DISPID_VALUE, "Unexpected id %#lx.\n", memid);
+
+    memset(&dp, 0, sizeof(dp));
+    dp.cArgs = 1;
+    dp.rgvarg = args;
+
+    V_VT(&args[0]) = VT_I4;
+    V_I4(&args[0]) = 0;
+
+    memset(&res, 0, sizeof(res));
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, DISPID_VALUE, DISPATCH_PROPERTYGET, &dp, &res, NULL, &argerr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&res) == VT_I4, "Unexpected return type %d.\n", V_VT(&res));
+    ok(V_I4(&res) == 1, "Unexpected value %ld.\n", V_I4(&res));
+
+    SysFreeString(methdata[0].szName);
+    ITypeInfo_Release(pTypeInfo);
 }
 
 static void write_typelib(int res_no, const WCHAR *filename)

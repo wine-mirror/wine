@@ -85,6 +85,7 @@ static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RE
     CGImageAlphaInfo alpha_info = (window_surface->alpha_mask ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
     CGColorSpaceRef colorspace;
     CGImageRef image;
+    struct macdrv_win_data *data;
 
     colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     image = CGImageCreate(color_info->bmiHeader.biWidth, abs(color_info->bmiHeader.biHeight), 8, 32,
@@ -118,6 +119,19 @@ static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RE
             macdrv_window_set_shape_image(surface->window, image);
             CGImageRelease(image);
         }
+    }
+
+    /* The window may have been previously drawn with client_surface, for example, when the window
+     * had been a target for a D3D swapchain. Hide the client_view so that it doesn't occlude the
+     * content in the window_surface */
+    if ((data = get_win_data(window_surface->hwnd)))
+    {
+        if (data->client_view)
+        {
+            macdrv_set_view_hidden(data->client_view, TRUE);
+            data->client_view = NULL;
+        }
+        release_win_data(data);
     }
 
     return TRUE;

@@ -40,6 +40,14 @@
 typedef LONG NTSTATUS;
 #endif
 
+#ifndef BCRYPT_SUCCESS
+#define BCRYPT_SUCCESS(st) ((NTSTATUS)(st) >= 0)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define BCRYPT_ALGORITHM_NAME       L"AlgorithmName"
 #define BCRYPT_AUTH_TAG_LENGTH      L"AuthTagLength"
@@ -50,6 +58,7 @@ typedef LONG NTSTATUS;
 #define BCRYPT_HASH_BLOCK_LENGTH    L"HashBlockLength"
 #define BCRYPT_HASH_LENGTH          L"HashDigestLength"
 #define BCRYPT_HASH_OID_LIST        L"HashOIDList"
+#define BCRYPT_INITIALIZATION_VECTOR L"IV"
 #define BCRYPT_KEY_LENGTH           L"KeyLength"
 #define BCRYPT_KEY_LENGTHS          L"KeyLengths"
 #define BCRYPT_KEY_OBJECT_LENGTH    L"KeyObjectLength"
@@ -86,17 +95,23 @@ typedef LONG NTSTATUS;
 
 #define BCRYPT_3DES_ALGORITHM       L"3DES"
 #define BCRYPT_AES_ALGORITHM        L"AES"
+#define BCRYPT_AES_GMAC_ALGORITHM   L"AES-GMAC"
+#define BCRYPT_CHACHA20_POLY1305_ALGORITHM L"CHACHA20_POLY1305"
 #define BCRYPT_DES_ALGORITHM        L"DES"
 #define BCRYPT_DH_ALGORITHM         L"DH"
 #define BCRYPT_DSA_ALGORITHM        L"DSA"
+#define BCRYPT_ECDH_ALGORITHM       L"ECDH"
 #define BCRYPT_ECDH_P256_ALGORITHM  L"ECDH_P256"
 #define BCRYPT_ECDH_P384_ALGORITHM  L"ECDH_P384"
+#define BCRYPT_ECDH_P521_ALGORITHM  L"ECDH_P521"
+#define BCRYPT_ECDSA_ALGORITHM      L"ECDSA"
 #define BCRYPT_ECDSA_P256_ALGORITHM L"ECDSA_P256"
 #define BCRYPT_ECDSA_P384_ALGORITHM L"ECDSA_P384"
 #define BCRYPT_ECDSA_P521_ALGORITHM L"ECDSA_P521"
 #define BCRYPT_MD2_ALGORITHM        L"MD2"
 #define BCRYPT_MD4_ALGORITHM        L"MD4"
 #define BCRYPT_MD5_ALGORITHM        L"MD5"
+#define BCRYPT_PBKDF2_ALGORITHM     L"PBKDF2"
 #define BCRYPT_RC2_ALGORITHM        L"RC2"
 #define BCRYPT_RC4_ALGORITHM        L"RC4"
 #define BCRYPT_RNG_ALGORITHM        L"RNG"
@@ -106,7 +121,13 @@ typedef LONG NTSTATUS;
 #define BCRYPT_SHA256_ALGORITHM     L"SHA256"
 #define BCRYPT_SHA384_ALGORITHM     L"SHA384"
 #define BCRYPT_SHA512_ALGORITHM     L"SHA512"
-#define BCRYPT_PBKDF2_ALGORITHM     L"PBKDF2"
+#define BCRYPT_TLS1_1_KDF_ALGORITHM L"TLS1_1_KDF"
+#define BCRYPT_TLS1_2_KDF_ALGORITHM L"TLS1_2_KDF"
+#define BCRYPT_HKDF_ALGORITHM       L"HKDF"
+
+#define BCRYPT_HKDF_HASH_ALGORITHM      L"HkdfHashAlgorithm"
+#define BCRYPT_HKDF_SALT_AND_FINALIZE   L"HkdfSaltAndFinalize"
+#define BCRYPT_HKDF_PRK_AND_FINALIZE    L"HkdfPrkAndFinalize"
 
 #define BCRYPT_CHAIN_MODE_NA        L"ChainingModeN/A"
 #define BCRYPT_CHAIN_MODE_CBC       L"ChainingModeCBC"
@@ -115,13 +136,24 @@ typedef LONG NTSTATUS;
 #define BCRYPT_CHAIN_MODE_CCM       L"ChainingModeCCM"
 #define BCRYPT_CHAIN_MODE_GCM       L"ChainingModeGCM"
 
+#define BCRYPT_ECC_CURVE_NAME             L"ECCCurveName"
+#define BCRYPT_ECC_CURVE_25519            L"curve25519"
+#define BCRYPT_ECC_CURVE_BRAINPOOLP256R1  L"brainpoolP256r1"
+#define BCRYPT_ECC_CURVE_BRAINPOOLP384R1  L"brainpoolP384r1"
+#define BCRYPT_ECC_CURVE_SECP256R1        L"secP256r1"
+#define BCRYPT_ECC_CURVE_SECP384R1        L"secP384r1"
+#define BCRYPT_ECC_CURVE_SECP521R1        L"secP521r1"
+
 #define BCRYPT_KDF_HASH             L"HASH"
 #define BCRYPT_KDF_HMAC             L"HMAC"
 #define BCRYPT_KDF_TLS_PRF          L"TLS_PRF"
 #define BCRYPT_KDF_SP80056A_CONCAT  L"SP800_56A_CONCAT"
 #define BCRYPT_KDF_RAW_SECRET       L"TRUNCATE"
+#define BCRYPT_KDF_HKDF             L"HKDF"
 
 #define BCRYPT_DH_PARAMETERS        L"DHParameters"
+
+#define BCRYPT_MESSAGE_BLOCK_LENGTH L"MessageBlockLength"
 #else
 static const WCHAR BCRYPT_ALGORITHM_NAME[] = {'A','l','g','o','r','i','t','h','m','N','a','m','e',0};
 static const WCHAR BCRYPT_AUTH_TAG_LENGTH[] = {'A','u','t','h','T','a','g','L','e','n','g','t','h',0};
@@ -132,6 +164,7 @@ static const WCHAR BCRYPT_EFFECTIVE_KEY_LENGTH[] = {'E','f','f','e','c','t','i',
 static const WCHAR BCRYPT_HASH_BLOCK_LENGTH[] = {'H','a','s','h','B','l','o','c','k','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_HASH_LENGTH[] = {'H','a','s','h','D','i','g','e','s','t','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_HASH_OID_LIST[] = {'H','a','s','h','O','I','D','L','i','s','t',0};
+static const WCHAR BCRYPT_INITIALIZATION_VECTOR[] = {'I','V',0};
 static const WCHAR BCRYPT_KEY_LENGTH[] = {'K','e','y','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_KEY_LENGTHS[] = {'K','e','y','L','e','n','g','t','h','s',0};
 static const WCHAR BCRYPT_KEY_OBJECT_LENGTH[] = {'K','e','y','O','b','j','e','c','t','L','e','n','g','t','h',0};
@@ -170,17 +203,23 @@ static const WCHAR MS_PLATFORM_CRYPTO_PROVIDER[] = \
 
 static const WCHAR BCRYPT_3DES_ALGORITHM[] = {'3','D','E','S',0};
 static const WCHAR BCRYPT_AES_ALGORITHM[] = {'A','E','S',0};
+static const WCHAR BCRYPT_AES_GMAC_ALGORITHM[] = {'A','E','S','-','G','M','A','C',0};
+static const WCHAR BCRYPT_CHACHA20_POLY1305_ALGORITHM[] = {'C','H','A','C','H','A','2','0','_','P','O','L','Y','1','3','0','5',0};
 static const WCHAR BCRYPT_DES_ALGORITHM[] = {'D','E','S',0};
 static const WCHAR BCRYPT_DH_ALGORITHM[] = {'D','H',0};
 static const WCHAR BCRYPT_DSA_ALGORITHM[] = {'D','S','A',0};
+static const WCHAR BCRYPT_ECDH_ALGORITHM[] = {'E','C','D','H',0};
 static const WCHAR BCRYPT_ECDH_P256_ALGORITHM[] = {'E','C','D','H','_','P','2','5','6',0};
 static const WCHAR BCRYPT_ECDH_P384_ALGORITHM[] = {'E','C','D','H','_','P','3','8','4',0};
+static const WCHAR BCRYPT_ECDH_P521_ALGORITHM[] = {'E','C','D','H','_','P','5','2','1',0};
+static const WCHAR BCRYPT_ECDSA_ALGORITHM[] = {'E','C','D','S','A',0};
 static const WCHAR BCRYPT_ECDSA_P256_ALGORITHM[] = {'E','C','D','S','A','_','P','2','5','6',0};
 static const WCHAR BCRYPT_ECDSA_P384_ALGORITHM[] = {'E','C','D','S','A','_','P','3','8','4',0};
 static const WCHAR BCRYPT_ECDSA_P521_ALGORITHM[] = {'E','C','D','S','A','_','P','5','2','1',0};
 static const WCHAR BCRYPT_MD2_ALGORITHM[] = {'M','D','2',0};
 static const WCHAR BCRYPT_MD4_ALGORITHM[] = {'M','D','4',0};
 static const WCHAR BCRYPT_MD5_ALGORITHM[] = {'M','D','5',0};
+static const WCHAR BCRYPT_PBKDF2_ALGORITHM[] = {'P','B','K','D','F','2',0};
 static const WCHAR BCRYPT_RC2_ALGORITHM[] = {'R','C','2',0};
 static const WCHAR BCRYPT_RC4_ALGORITHM[] = {'R','C','4',0};
 static const WCHAR BCRYPT_RNG_ALGORITHM[] = {'R','N','G',0};
@@ -190,7 +229,13 @@ static const WCHAR BCRYPT_SHA1_ALGORITHM[] = {'S','H','A','1',0};
 static const WCHAR BCRYPT_SHA256_ALGORITHM[] = {'S','H','A','2','5','6',0};
 static const WCHAR BCRYPT_SHA384_ALGORITHM[] = {'S','H','A','3','8','4',0};
 static const WCHAR BCRYPT_SHA512_ALGORITHM[] = {'S','H','A','5','1','2',0};
-static const WCHAR BCRYPT_PBKDF2_ALGORITHM[] = {'P','B','K','D','F','2',0};
+static const WCHAR BCRYPT_TLS1_1_KDF_ALGORITHM[] = {'T','L','S','1','_','1','_','K','D','F',0};
+static const WCHAR BCRYPT_TLS1_2_KDF_ALGORITHM[] = {'T','L','S','1','_','2','_','K','D','F',0};
+static const WCHAR BCRYPT_HKDF_ALGORITHM[] = {'H','K','D','F',0};
+
+static const WCHAR BCRYPT_HKDF_HASH_ALGORITHM[] = {'H','k','d','f','H','a','s','h','A','l','g','o','r','i','t','h','m',0};
+static const WCHAR BCRYPT_HKDF_SALT_AND_FINALIZE[] = {'H','k','d','f','S','a','l','t','A','n','d','F','i','n','a','l','i','z','e',0};
+static const WCHAR BCRYPT_HKDF_PRK_AND_FINALIZE[] = {'H','k','d','f','P','r','k','A','n','d','F','i','n','a','l','i','z','e',0};
 
 static const WCHAR BCRYPT_CHAIN_MODE_NA[] = {'C','h','a','i','n','i','n','g','M','o','d','e','N','/','A',0};
 static const WCHAR BCRYPT_CHAIN_MODE_CBC[] = {'C','h','a','i','n','i','n','g','M','o','d','e','C','B','C',0};
@@ -199,13 +244,23 @@ static const WCHAR BCRYPT_CHAIN_MODE_CFB[] = {'C','h','a','i','n','i','n','g','M
 static const WCHAR BCRYPT_CHAIN_MODE_CCM[] = {'C','h','a','i','n','i','n','g','M','o','d','e','C','C','M',0};
 static const WCHAR BCRYPT_CHAIN_MODE_GCM[] = {'C','h','a','i','n','i','n','g','M','o','d','e','G','C','M',0};
 
+static const WCHAR BCRYPT_ECC_CURVE_NAME[] = {'E','C','C','C','u','r','v','e','N','a','m','e',0};
+static const WCHAR BCRYPT_ECC_CURVE_25519[] = {'c','u','r','v','e','2','5','5','1','9',0};
+static const WCHAR BCRYPT_ECC_CURVE_BRAINPOOLP256R1[] = {'b','r','a','i','n','p','o','o','l','P','2','5','6','r','1',0};
+static const WCHAR BCRYPT_ECC_CURVE_BRAINPOOLP384R1[] = {'b','r','a','i','n','p','o','o','l','P','3','8','4','r','1',0};
+static const WCHAR BCRYPT_ECC_CURVE_SECP256R1[] = {'s','e','c','P','2','5','6','r','1',0};
+static const WCHAR BCRYPT_ECC_CURVE_SECP384R1[] = {'s','e','c','P','3','8','4','r','1',0};
+static const WCHAR BCRYPT_ECC_CURVE_SECP521R1[] = {'s','e','c','P','5','2','1','r','1',0};
+
 static const WCHAR BCRYPT_KDF_HASH[] = {'H','A','S','H',0};
 static const WCHAR BCRYPT_KDF_HMAC[] = {'H','M','A','C',0};
 static const WCHAR BCRYPT_KDF_TLS_PRF[] = {'T','L','S','_','P','R','F',0};
 static const WCHAR BCRYPT_KDF_SP80056A_CONCAT[] = {'S','P','8','0','0','_','5','6','A','_','C','O','N','C','A','T',0};
 static const WCHAR BCRYPT_KDF_RAW_SECRET[] = {'T','R','U','N','C','A','T','E',0};
+static const WCHAR BCRYPT_KDF_HKDF[] = {'H','K','D','F',0};
 
 static const WCHAR BCRYPT_DH_PARAMETERS[] = {'D','H','P','a','r','a','m','e','t','e','r','s',0};
+static const WCHAR BCRYPT_MESSAGE_BLOCK_LENGTH[] = {'M','e','s','s','a','g','e','B','l','o','c','k','L','e','n','g','t','h',0};
 #endif
 
 #define BCRYPT_ECDSA_PUBLIC_P256_MAGIC  0x31534345
@@ -221,6 +276,12 @@ static const WCHAR BCRYPT_DH_PARAMETERS[] = {'D','H','P','a','r','a','m','e','t'
 #define BCRYPT_ECDH_PRIVATE_P384_MAGIC 0x344b4345
 #define BCRYPT_ECDH_PUBLIC_P521_MAGIC  0x354b4345
 #define BCRYPT_ECDH_PRIVATE_P521_MAGIC 0x364b4345
+
+#define BCRYPT_ECDH_PUBLIC_GENERIC_MAGIC  0x504b4345
+#define BCRYPT_ECDH_PRIVATE_GENERIC_MAGIC 0x564b4345
+
+#define BCRYPT_ECDSA_PUBLIC_GENERIC_MAGIC  0x50444345
+#define BCRYPT_ECDSA_PRIVATE_GENERIC_MAGIC 0x56444345
 
 #define BCRYPT_CIPHER_OPERATION                 0x00000001
 #define BCRYPT_HASH_OPERATION                   0x00000002
@@ -433,6 +494,7 @@ typedef struct _BCRYPT_KEY_DATA_BLOB_HEADER
 #define KDF_CONTEXT             0x0e
 #define KDF_SALT                0x0f
 #define KDF_ITERATION_COUNT     0x10
+#define KDF_HKDF_INFO           0x14
 
 typedef struct _BCryptBuffer
 {
@@ -518,6 +580,7 @@ typedef PVOID BCRYPT_SECRET_HANDLE;
 #define BCRYPT_TLS1_2_KDF_ALG_HANDLE        ((BCRYPT_ALG_HANDLE)0x00000371)
 #define BCRYPT_XTS_AES_ALG_HANDLE           ((BCRYPT_ALG_HANDLE)0x00000381)
 #define BCRYPT_HKDF_ALG_HANDLE              ((BCRYPT_ALG_HANDLE)0x00000391)
+#define BCRYPT_CHACHA20_POLY1305_ALG_HANDLE ((BCRYPT_ALG_HANDLE)0x000003a1)
 
 /* Flags for BCryptGenRandom */
 #define BCRYPT_RNG_USE_ENTROPY_IN_BUFFER 0x00000001
@@ -576,5 +639,9 @@ NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, BCRY
 NTSTATUS WINAPI BCryptSetProperty(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG);
 NTSTATUS WINAPI BCryptSignHash(BCRYPT_KEY_HANDLE, void *, PUCHAR, ULONG, PUCHAR, ULONG, ULONG *, ULONG);
 NTSTATUS WINAPI BCryptVerifySignature(BCRYPT_KEY_HANDLE, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_BCRYPT_H */

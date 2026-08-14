@@ -4416,6 +4416,15 @@ PEPROCESS WINAPI IoGetRequestorProcess(IRP *irp)
     return irp->Tail.Overlay.Thread->kthread.process;
 }
 
+/***********************************************************************
+ *           IoGetRequestorProcessId   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI IoGetRequestorProcessId(IRP *irp)
+{
+    TRACE("irp %p.\n", irp);
+    return irp->Tail.Overlay.Thread->kthread.process->info.UniqueProcessId;
+}
+
 #ifdef _WIN64
 /***********************************************************************
  *           IoIs32bitProcess   (NTOSKRNL.EXE.@)
@@ -4665,6 +4674,12 @@ void WINAPI KfRaiseIrql(KIRQL new, KIRQL *old)
 void WINAPI KeLowerIrql(KIRQL new)
 {
     FIXME("new %u: stub.\n", new);
+}
+
+KIRQL WINAPI KeGetCurrentIrql(void)
+{
+    FIXME("stub.\n");
+    return 0;
 }
 
 #endif

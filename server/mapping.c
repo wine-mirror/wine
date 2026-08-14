@@ -1623,8 +1623,11 @@ DECL_HANDLER(map_image_view)
         if (add_process_view( current, view ))
         {
             current->entry_point = view->base + req->entry;
-            current->process->machine = (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady) ?
-                                         native_machine : req->machine;
+            if (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady)
+                current->process->machine = is_machine_64bit( native_machine )
+                    ? IMAGE_FILE_MACHINE_AMD64 : native_machine;
+            else
+                current->process->machine = req->machine;
         }
 
         if (view->base != (mapping->image.map_addr ? mapping->image.map_addr : mapping->image.base))

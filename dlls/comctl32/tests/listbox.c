@@ -56,7 +56,7 @@ static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
 
     /* ignore events not from a listbox control */
     if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
-        strcmp(class_name, WC_LISTBOXA) != 0)
+        stricmp(class_name, WC_LISTBOXA) != 0)
         return;
 
     msg.message = event;
@@ -2959,6 +2959,107 @@ static void test_keypresses(void)
     DestroyWindow(list);
 }
 
+static void test_integral_resize(void)
+{
+    int scroll_height = GetSystemMetrics(SM_CYHSCROLL);
+    int edge_width = GetSystemMetrics(SM_CXEDGE);
+    int edge_height = GetSystemMetrics(SM_CYEDGE);
+    HWND parent, listbox;
+    RECT rect, expect;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowExA(WS_EX_CLIENTEDGE, WC_LISTBOXA, NULL,
+            WS_CHILD | WS_HSCROLL, 0, 0, 199, 199, parent, NULL, NULL, NULL);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    ret = SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 300, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETITEMHEIGHT, 0, 40);
+    ok(!ret, "got %d\n", ret);
+
+    SetWindowPos(listbox, 0, 0, 0, 199, 199, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
+
+    /* The whole point of this functionality is to force an integral number of
+     * items to be onscreen, but native fails to account for the scrollbar. */
+
+    GetWindowRect(listbox, &rect);
+    SetRect(&expect, 100, 100, 299, 260 + (edge_height * 2));
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    GetClientRect(listbox, &rect);
+    SetRect(&expect, 0, 0, 199 - (edge_width * 2), 160 - scroll_height);
+    ok(EqualRect(&rect, &expect), "expected %s, got %s\n", wine_dbgstr_rect(&expect), wine_dbgstr_rect(&rect));
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
+static void test_LB_SETTOPINDEX(void)
+{
+    HWND parent, listbox;
+    int i;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowA(WC_LISTBOXA, "TestList",
+        WS_CHILD | WS_VISIBLE, 0, 0, 200, 100, parent, NULL, NULL, 0);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    for (i = 0; i < 10; i++)
+    {
+        SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item");
+    }
+
+    /* Normal range */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 3, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 3, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 0, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* Less than item count, but greater than max top index (to which it gets clamped) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 5, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    /* Reset to a non-boundary top item */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 2, 0);
+    ok(!ret, "got %d\n", ret);
+
+    /* Greater than or equal to item count (out of bounds) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 10, 0);
+    ok(ret == LB_ERR, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, 20, 0);
+    ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    /* Negative (out of bounds) */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, -1, 0);
+    ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
+
+    ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(ret == 2, "got %d\n", ret);
+
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
     ULONG_PTR ctx_cookie;
@@ -2992,6 +3093,8 @@ START_TEST(listbox)
     test_LBS_NODATA();
     test_LB_FINDSTRING();
     test_keypresses();
+    test_integral_resize();
+    test_LB_SETTOPINDEX();
 
     uninit_winevent_hook();
 

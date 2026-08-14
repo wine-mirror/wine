@@ -1604,7 +1604,7 @@
 @ cdecl _o_erff(float) erff
 @ cdecl _o_erfl(double) erf
 @ cdecl _o_exit(long) exit
-@ cdecl _o_exp(double) exp
+@ cdecl _o_exp(double) MSVCRT_exp
 @ cdecl _o_exp2(double) exp2
 @ cdecl _o_exp2f(float) exp2f
 @ cdecl _o_exp2l(double) exp2
@@ -2275,7 +2275,7 @@
 @ cdecl erff(float)
 @ cdecl erfl(double) erf
 @ cdecl exit(long)
-@ cdecl exp(double)
+@ cdecl exp(double) MSVCRT_exp
 @ cdecl exp2(double)
 @ cdecl exp2f(float)
 @ cdecl exp2l(double) exp2

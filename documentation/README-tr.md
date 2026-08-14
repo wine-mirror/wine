@@ -36,7 +36,7 @@ olmanız gerekir:
 - FreeBSD 12.4 veya sonrası
 - Solaris x86 9 veya sonrası
 - NetBSD-current
-- macOS 10.12 veya sonrası
+- macOS 10.15 veya sonrası
 
 Wine çalışmak için çekirdek düzeyinde iş parçacığı desteğine ihtiyaç
 duyduğundan sadece yukarıda söz edilen işletim sistemleri

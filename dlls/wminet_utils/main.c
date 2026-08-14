@@ -165,3 +165,31 @@ HRESULT WINAPI GetMethodQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR w
 
     return IWbemClassObject_GetMethodQualifierSet(ptr, wszMethod, ppQualSet);
 }
+
+HRESULT WINAPI QualifierSet_Get(int vFunc, IWbemQualifierSet* ptr, LPCWSTR wszName, LONG lFlags, VARIANT *pVal, LONG *plFlavor)
+{
+    TRACE("%i %p %s %lx %p %p\n", vFunc, ptr, debugstr_w(wszName), lFlags, pVal, plFlavor);
+
+    return IWbemQualifierSet_Get(ptr, wszName, lFlags, pVal, plFlavor);
+}
+
+HRESULT WINAPI GetPropertyQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR wszProperty, IWbemQualifierSet **ppQualSet)
+{
+    TRACE("%i %p %s %p\n", vFunc, ptr, debugstr_w(wszProperty), ppQualSet);
+
+    return IWbemClassObject_GetPropertyQualifierSet(ptr, wszProperty, ppQualSet);
+}
+
+IErrorInfo* WINAPI wminet_utils_GetErrorInfo(void)
+{
+    IErrorInfo *error_info = NULL;
+    HRESULT hr;
+
+    hr = GetErrorInfo(0, &error_info);
+    TRACE("returning %p, hr %#lx\n", error_info, hr);
+
+    if (FAILED(hr))
+        return NULL;
+
+    return error_info;
+}
