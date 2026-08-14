@@ -4672,6 +4672,7 @@ static HRESULT WINAPI HTMLElement6_setAttributeNode(IHTMLElement6 *iface, IHTMLD
         return hres;
 
     hres = IHTMLElement4_setAttributeNode(&This->IHTMLElement4_iface, attr, &ret_attr);
+    IHTMLDOMAttribute_Release(attr);
     if(FAILED(hres))
         return hres;
 
