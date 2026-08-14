@@ -309,6 +309,7 @@ extern void output_spec32_file( DLLSPEC *spec );
 extern void output_fake_module( DLLSPEC *spec );
 extern void output_data_module( DLLSPEC *spec );
 extern void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only );
+extern void output_spec_file( DLLSPEC *spec );
 extern void output_apiset_lib( DLLSPEC *spec, const struct apiset *apiset );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );

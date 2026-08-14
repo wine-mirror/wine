@@ -22415,6 +22415,7 @@ wine_fn_config_makefile dlls/avifil32 enable_avifil32
 wine_fn_config_makefile dlls/avifil32/tests enable_tests
 wine_fn_config_makefile dlls/avifile.dll16 enable_win16
 wine_fn_config_makefile dlls/avrt enable_avrt
+wine_fn_config_makefile dlls/aygshell enable_aygshell
 wine_fn_config_makefile dlls/bcp47langs enable_bcp47langs
 wine_fn_config_makefile dlls/bcp47langs/tests enable_tests
 wine_fn_config_makefile dlls/bcrypt enable_bcrypt
@@ -22448,6 +22449,7 @@ wine_fn_config_makefile dlls/comdlg32 enable_comdlg32
 wine_fn_config_makefile dlls/comdlg32/tests enable_tests
 wine_fn_config_makefile dlls/coml2 enable_coml2
 wine_fn_config_makefile dlls/comm.drv16 enable_win16
+wine_fn_config_makefile dlls/commctrl enable_commctrl
 wine_fn_config_makefile dlls/commdlg.dll16 enable_win16
 wine_fn_config_makefile dlls/compobj.dll16 enable_win16
 wine_fn_config_makefile dlls/compstui enable_compstui
@@ -22457,6 +22459,7 @@ wine_fn_config_makefile dlls/comsvcs/tests enable_tests
 wine_fn_config_makefile dlls/concrt140 enable_concrt140
 wine_fn_config_makefile dlls/concrt140/tests enable_tests
 wine_fn_config_makefile dlls/connect enable_connect
+wine_fn_config_makefile dlls/coredll enable_coredll
 wine_fn_config_makefile dlls/coremessaging enable_coremessaging
 wine_fn_config_makefile dlls/coremessaging/tests enable_tests
 wine_fn_config_makefile dlls/credui enable_credui
@@ -23381,6 +23384,7 @@ wine_fn_config_makefile dlls/wpc/tests enable_tests
 wine_fn_config_makefile dlls/wpcap enable_wpcap
 wine_fn_config_makefile dlls/wpcap/tests enable_tests
 wine_fn_config_makefile dlls/ws2_32 enable_ws2_32
+wine_fn_config_makefile dlls/ws2 enable_ws2
 wine_fn_config_makefile dlls/ws2_32/tests enable_tests
 wine_fn_config_makefile dlls/wsdapi enable_wsdapi
 wine_fn_config_makefile dlls/wsdapi/tests enable_tests

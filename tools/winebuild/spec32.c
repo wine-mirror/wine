@@ -1464,6 +1464,34 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
 
 
 /*******************************************************************
+ *         output_spec_file
+ *
+ * Build a spec file from a def file.
+ */
+void output_spec_file( DLLSPEC *spec )
+{
+    const char *name;
+    int i;
+
+    for (i = 0; i < spec->exports.nb_entry_points; i++)
+    {
+        const ORDDEF *odp = spec->exports.entry_points[i];
+
+        if (!odp) continue;
+
+        if (odp->name) name = odp->name;
+        else if (odp->export_name) name = odp->export_name;
+        else continue;
+
+        output( "%d stub", odp->ordinal );
+        if (!odp->name || (odp->flags & (FLAG_NONAME|FLAG_ORDINAL))) output( " -noname" );
+        if (odp->flags & FLAG_PRIVATE) output( " -private" );
+        output( " %s\n", name );
+    }
+}
+
+
+/*******************************************************************
  *         make_builtin_files
  */
 void make_builtin_files( struct strarray files )
