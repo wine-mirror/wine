@@ -1631,14 +1631,76 @@ static HRESULT WINAPI d3d12_surface_buffer_SetCurrentLength(IMFMediaBuffer *ifac
     return S_OK;
 }
 
+static HRESULT d3d12_surface_buffer_lock(struct buffer *buffer, MF2DBuffer_LockFlags flags,
+        BYTE **scanline0, LONG *pitch, BYTE **buffer_start, DWORD *buffer_length)
+{
+    HRESULT hr = S_OK;
+
+    if (buffer->_2d.linear_buffer)
+        hr = MF_E_UNEXPECTED;
+    else if (!buffer->_2d.locks)
+        hr = d3d12_surface_buffer_map(buffer, flags);
+    else if (buffer->_2d.lock_flags == MF2DBuffer_LockFlags_Write && flags != MF2DBuffer_LockFlags_Write)
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_LOCKED);
+
+    if (SUCCEEDED(hr))
+    {
+        if (!buffer->_2d.locks)
+            buffer->_2d.lock_flags = flags;
+        buffer->_2d.locks++;
+        *scanline0 = buffer->d3d12_surface.data;
+        *pitch = buffer->d3d12_surface.layout.Footprint.RowPitch;
+        if (buffer_start)
+            *buffer_start = *scanline0;
+        if (buffer_length)
+            *buffer_length = *pitch * buffer->_2d.height;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI d3d12_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p, %p.\n", iface, scanline0, pitch);
+
+    if (!scanline0 || !pitch)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    hr = d3d12_surface_buffer_lock(buffer, MF2DBuffer_LockFlags_ReadWrite, scanline0, pitch, NULL, NULL);
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (buffer->_2d.locks)
+    {
+        if (!--buffer->_2d.locks)
+        {
+            hr = d3d12_surface_buffer_unmap(buffer, buffer->_2d.lock_flags);
+            buffer->_2d.lock_flags = 0;
+        }
+    }
+    else
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
