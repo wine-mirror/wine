@@ -11802,12 +11802,19 @@ static void test_d3d12_surface_buffer(void)
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
     if (hr == E_INVALIDARG)
     {
-        todo_wine
         win_skip("D3D12 resource buffers are not supported.\n");
         ID3D12Resource_Release(resource);
         goto notsupported;
     }
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+
+    if (winetest_platform_is_wine)
+    {
+        skip("Skipping D3D12 resource buffer tests.\n");
+        IMFMediaBuffer_Release(buffer);
+        ID3D12Resource_Release(resource);
+        goto notsupported;
+    }
 
 if (SUCCEEDED(hr))
 {

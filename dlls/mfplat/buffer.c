@@ -24,6 +24,7 @@
 #include "rtworkq.h"
 
 #include "d3d11.h"
+#include "mfd3d12.h"
 #include "initguid.h"
 #include "d3d9.h"
 #include "evr.h"
@@ -72,6 +73,14 @@ struct buffer
         D3D11_MAPPED_SUBRESOURCE map_desc;
         struct attributes attributes;
     } dxgi_surface;
+    struct
+    {
+        ID3D12Device *device;
+        ID3D12Resource *resource;
+        IMFD3D12SynchronizationObject *sync_obj;
+        IMFD3D12SynchronizationObjectCommands *sync_cmd;
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+    } d3d12_surface;
 
     CRITICAL_SECTION cs;
 };
@@ -169,6 +178,14 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
             ID3D11Texture2D_Release(buffer->dxgi_surface.texture);
             if (buffer->dxgi_surface.rb_texture)
                 ID3D11Texture2D_Release(buffer->dxgi_surface.rb_texture);
+            clear_attributes_object(&buffer->dxgi_surface.attributes);
+        }
+        if (buffer->d3d12_surface.resource)
+        {
+            ID3D12Device_Release(buffer->d3d12_surface.device);
+            ID3D12Resource_Release(buffer->d3d12_surface.resource);
+            if (buffer->d3d12_surface.sync_obj) IMFD3D12SynchronizationObject_Release(buffer->d3d12_surface.sync_obj);
+            if (buffer->d3d12_surface.sync_cmd) IMFD3D12SynchronizationObjectCommands_Release(buffer->d3d12_surface.sync_cmd);
             clear_attributes_object(&buffer->dxgi_surface.attributes);
         }
         DeleteCriticalSection(&buffer->cs);
@@ -1332,6 +1349,92 @@ static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
     dxgi_buffer_SetUnknown,
 };
 
+static HRESULT WINAPI d3d12_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *max_length,
+        DWORD *current_length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_Unlock(IMFMediaBuffer *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_GetCurrentLength(IMFMediaBuffer *iface, DWORD *current_length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD current_length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags,
+        BYTE **scanline0, LONG *pitch, BYTE **buffer_start, DWORD *buffer_length)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_surface_buffer_GetResource(IMFDXGIBuffer *iface, REFIID riid, void **obj)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFMediaBufferVtbl d3d12_surface_1d_buffer_vtbl =
+{
+    dxgi_1d_2d_buffer_QueryInterface,
+    memory_buffer_AddRef,
+    memory_buffer_Release,
+    d3d12_surface_buffer_Lock,
+    d3d12_surface_buffer_Unlock,
+    d3d12_surface_buffer_GetCurrentLength,
+    d3d12_surface_buffer_SetCurrentLength,
+    memory_buffer_GetMaxLength,
+};
+
+static const IMF2DBuffer2Vtbl d3d12_surface_buffer_vtbl =
+{
+    memory_2d_buffer_QueryInterface,
+    memory_2d_buffer_AddRef,
+    memory_2d_buffer_Release,
+    d3d12_surface_buffer_Lock2D,
+    d3d12_surface_buffer_Unlock2D,
+    d3d12_surface_buffer_GetScanline0AndPitch,
+    memory_2d_buffer_IsContiguousFormat,
+    memory_2d_buffer_GetContiguousLength,
+    memory_2d_buffer_ContiguousCopyTo,
+    memory_2d_buffer_ContiguousCopyFrom,
+    d3d12_surface_buffer_Lock2DSize,
+    memory_2d_buffer_Copy2DTo,
+};
+
+static const IMFDXGIBufferVtbl d3d12_surface_dxgi_buffer_vtbl =
+{
+    dxgi_buffer_QueryInterface,
+    dxgi_buffer_AddRef,
+    dxgi_buffer_Release,
+    d3d12_surface_buffer_GetResource,
+    dxgi_buffer_GetSubresourceIndex,
+    dxgi_buffer_GetUnknown,
+    dxgi_buffer_SetUnknown,
+};
+
 static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
@@ -1623,6 +1726,102 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
     return S_OK;
 }
 
+static HRESULT create_d3d12_surface_buffer(IUnknown *surface, unsigned int sub_resource_idx,
+        BOOL bottom_up, IMFMediaBuffer **buffer)
+{
+    struct buffer *object = NULL;
+    ID3D12Device *device = NULL;
+    ID3D12Resource *resource = NULL;
+    D3D12_RESOURCE_DESC desc;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+    UINT64 total_bytes;
+    unsigned int stride;
+    D3DFORMAT format;
+    GUID subtype;
+    BOOL is_yuv;
+    HRESULT hr;
+
+    if (FAILED(hr = IUnknown_QueryInterface(surface, &IID_ID3D12Resource, (void **)&resource)))
+    {
+        WARN("Failed to get resource interface, hr %#lx.\n", hr);
+        goto end;
+    }
+
+    if (FAILED(hr = ID3D12Resource_GetDevice(resource, &IID_ID3D12Device, (void **) &device)))
+        goto end;
+
+    desc = ID3D12Resource_GetDesc(resource);
+    ID3D12Device_GetCopyableFootprints(device, &desc, sub_resource_idx, 1, 0, &layout, NULL, NULL, &total_bytes);
+    TRACE("format %#x, %u x %u.\n", layout.Footprint.Format, layout.Footprint.Width, layout.Footprint.Height);
+
+    if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+    {
+        hr = MF_E_INVALIDMEDIATYPE;
+        goto end;
+    }
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = format = MFMapDXGIFormatToDX9Format(layout.Footprint.Format);
+
+    if (!(stride = mf_format_get_stride(&subtype, layout.Footprint.Width, &is_yuv)))
+    {
+        hr = MF_E_INVALIDMEDIATYPE;
+        goto end;
+    }
+
+    if (!(object = calloc(1, sizeof(*object))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    object->IMFMediaBuffer_iface.lpVtbl = &d3d12_surface_1d_buffer_vtbl;
+    object->IMF2DBuffer2_iface.lpVtbl = &d3d12_surface_buffer_vtbl;
+    object->IMFDXGIBuffer_iface.lpVtbl = &d3d12_surface_dxgi_buffer_vtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+    object->d3d12_surface.layout = layout;
+    object->d3d12_surface.device = device;
+    object->d3d12_surface.resource = resource;
+    object->dxgi_surface.sub_resource_idx = sub_resource_idx;
+
+    device = NULL;
+    resource = NULL;
+
+    MFGetPlaneSize(format,
+        layout.Footprint.Width, layout.Footprint.Height, &object->_2d.plane_size);
+    object->_2d.width = stride;
+    object->_2d.height = layout.Footprint.Height;
+    object->_2d.copy_image = get_2d_buffer_copy_func(format);
+
+    object->max_length = total_bytes;
+
+    if (FAILED(hr = init_attributes_object(&object->dxgi_surface.attributes, 0)))
+        goto end;
+
+    if (FAILED(hr = MFCreateD3D12SynchronizationObject(object->d3d12_surface.device,
+            &IID_IMFD3D12SynchronizationObject, (void **) &object->d3d12_surface.sync_obj)))
+        goto end;
+
+    if (FAILED(hr = IMFD3D12SynchronizationObject_QueryInterface(object->d3d12_surface.sync_obj,
+            &IID_IMFD3D12SynchronizationObjectCommands, (void **) &object->d3d12_surface.sync_cmd)))
+        goto end;
+
+    IMFDXGIBuffer_SetUnknown(&object->IMFDXGIBuffer_iface,
+        &MF_D3D12_SYNCHRONIZATION_OBJECT, (IUnknown *) object->d3d12_surface.sync_obj);
+    IMFDXGIBuffer_SetUnknown(&object->IMFDXGIBuffer_iface,
+        &MF_D3D12_SYNCHRONIZATION_OBJECT, (IUnknown *) object->d3d12_surface.sync_cmd);
+
+    *buffer = &object->IMFMediaBuffer_iface;
+    hr = S_OK;
+
+end:
+    if (device) ID3D12Device_Release(device);
+    if (resource) ID3D12Resource_Release(resource);
+    if (FAILED(hr) && object) IMFMediaBuffer_Release(&object->IMFMediaBuffer_iface);
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateMemoryBuffer (mfplat.@)
  */
@@ -1674,10 +1873,12 @@ HRESULT WINAPI MFCreateDXGISurfaceBuffer(REFIID riid, IUnknown *surface, UINT su
 {
     TRACE("%s, %p, %u, %d, %p.\n", debugstr_guid(riid), surface, subresource, bottom_up, buffer);
 
-    if (!IsEqualIID(riid, &IID_ID3D11Texture2D))
+    if (IsEqualIID(riid, &IID_ID3D11Texture2D))
+        return create_dxgi_surface_buffer(surface, subresource, bottom_up, buffer);
+    else if (IsEqualIID(riid, &IID_ID3D12Resource))
+        return create_d3d12_surface_buffer(surface, subresource, bottom_up, buffer);
+    else
         return E_INVALIDARG;
-
-    return create_dxgi_surface_buffer(surface, subresource, bottom_up, buffer);
 }
 
 static unsigned int buffer_get_aligned_length(unsigned int length, unsigned int alignment)
