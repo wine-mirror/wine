@@ -918,6 +918,10 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
     DBG_IVAR(BreakOnDllLoad) = 0;
 
+    /* Nobody is watching an automatic crash report go by, so it must not be
+     * written through a handle that can block: see dbg_outputA(). */
+    dbg_output_to_diag = TRUE;
+
     /* auto mode */
     argc--; argv++;
     ds = dbg_active_attach(argc, argv);
@@ -929,6 +933,8 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     switch (display_crash_dialog())
     {
     case ID_DEBUG:
+        /* a user asked for a debugger, so there is a console to talk to */
+        dbg_output_to_diag = FALSE;
         AllocConsole();
         dbg_init_console();
         dbg_start_interactive(NULL, INVALID_HANDLE_VALUE);
@@ -936,7 +942,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     case ID_DETAILS:
         event = CreateEventW( NULL, TRUE, FALSE, NULL );
         if (event) thread = display_crash_details( event );
-        if (thread) dbg_houtput = output = create_temp_file();
+        if (thread) { dbg_houtput = output = create_temp_file(); dbg_output_to_diag = FALSE; }
         break;
     }
 

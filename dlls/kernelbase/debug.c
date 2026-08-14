@@ -532,6 +532,13 @@ static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, i
 }
 
 
+/* How long start_debugger() will wait for a configured debugger to attach
+ * before giving up on it.  Generous on purpose: this is not a deadline for the
+ * debugging session, only for the debugger reaching the point where it signals
+ * the event, so overshooting costs nothing while undershooting would abandon a
+ * debugger that was about to work. */
+#define DEBUGGER_ATTACH_TIMEOUT  60000
+
 /******************************************************************
  *		start_debugger
  *
@@ -662,10 +669,28 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     {
         /* wait for debugger to come up... */
         HANDLE handles[2];
+        DWORD res;
+
         CloseHandle( info.hThread );
         handles[0] = event;
         handles[1] = info.hProcess;
-        WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
+        /* Two escapes were already here, and both still win the race if they
+         * happen first: handles[0] is signalled once the debugger has attached,
+         * handles[1] once the debugger process exits, so a debugger that
+         * crashes or fails to start has always been handled.  The third case is
+         * the one neither covers -- a debugger that stays alive, never attaches
+         * and never exits.  Then this wait never returned, and because the
+         * faulting thread is held here the *debuggee* never exits either: both
+         * processes were orphaned for the life of the machine.  Measured on
+         * ppc64: winedbg --auto blocked in a console write, 0% CPU, forever.
+         * The timeout is deliberately far longer than any real attach so that a
+         * merely slow debugger still reaches SetEvent() first. */
+        res = WaitForMultipleObjects( 2, handles, FALSE, DEBUGGER_ATTACH_TIMEOUT );
+        if (res == WAIT_TIMEOUT)
+            ERR( "Debugger %s did not attach within %lu ms and has not exited; "
+                 "continuing without it.\n"
+                 "The exception will be handled as if no debugger were configured.\n",
+                 debugstr_w(cmdline), (DWORD)DEBUGGER_ATTACH_TIMEOUT );
         CloseHandle( info.hProcess );
     }
     else ERR( "Couldn't start debugger %s (%ld)\n"

@@ -182,6 +182,7 @@ static const char* get_machine_str(DWORD machine)
     case IMAGE_FILE_MACHINE_AMD64: return "x86_64";
     case IMAGE_FILE_MACHINE_I386:  return "i386";
     case IMAGE_FILE_MACHINE_ARM64: return "arm64";
+    case IMAGE_FILE_MACHINE_POWERPC64: return "ppc64";
     case IMAGE_FILE_MACHINE_ARM:
     case IMAGE_FILE_MACHINE_ARMNT: return "arm";
     default: sprintf(tmp, "<%lx>", machine); return tmp;

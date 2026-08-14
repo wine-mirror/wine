@@ -312,6 +312,7 @@ extern	DWORD	                dbg_curr_tid;
 extern  dbg_ctx_t               dbg_context;
 extern  BOOL                    dbg_interactiveP;
 extern  HANDLE                  dbg_houtput;
+extern  BOOL                    dbg_output_to_diag;
 extern  struct list             dbg_process_list;
 
 struct dbg_internal_var

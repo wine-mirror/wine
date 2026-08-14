@@ -1329,14 +1329,24 @@ static const char *get_target_machine(void)
 {
     static const char *machine_names[] =
     {
-        [CPU_i386]    = "x86",
-        [CPU_x86_64]  = "x64",
-        [CPU_ARM]     = "arm",
-        [CPU_ARM64]   = "arm64",
-        [CPU_ARM64EC] = "arm64ec",
+        [CPU_i386]      = "x86",
+        [CPU_x86_64]    = "x64",
+        [CPU_ARM]       = "arm",
+        [CPU_ARM64]     = "arm64",
+        [CPU_ARM64EC]   = "arm64ec",
+        /* No PE linker accepts a ppc64 -machine:, so there is no name to give.
+         * The entry still has to exist: without it the array has CPU_ARM64EC+1
+         * elements and the unconditional index below reads past the end for
+         * CPU_POWERPC64.  Unreachable today -- this is only called on the
+         * link.exe/lld-link path, which ppc64 never takes -- but an
+         * out-of-bounds read that turns into a silent bad -machine: argument is
+         * not what the next person to touch this block should find. */
+        [CPU_POWERPC64] = NULL,
     };
+    const char *name = machine_names[target.cpu];
 
-    return machine_names[target.cpu];
+    if (!name) fatal_error( "no PE linker -machine: name for cpu %d\n", target.cpu );
+    return name;
 }
 
 /* build a library from the current asm files and any additional object files in argv */

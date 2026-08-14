@@ -1845,6 +1845,10 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct reply_buf
         reply_buffer_append_str(reply, "<architecture>aarch64</architecture>");
         feature_prefix = "org.gnu.gdb.aarch64.";
         break;
+    case IMAGE_FILE_MACHINE_POWERPC64:
+        reply_buffer_append_str(reply, "<architecture>powerpc:common64</architecture>");
+        feature_prefix = "org.gnu.gdb.power.";
+        break;
     }
 
     for (i = 0; i < cpu->gdb_num_regs; ++i)

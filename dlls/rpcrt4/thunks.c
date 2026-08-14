@@ -557,14 +557,27 @@ __ASM_GLOBAL_FUNC( call_server_func,
  * parameter will therefore receive garbage.
  *
  * r31 is the only non-volatile used, and 24(r1) is written only after our own
- * frame has been pushed. */
+ * frame has been pushed.
+ *
+ * The __ASM_CFI() directives are required: __ASM_GLOBAL_FUNC always emits
+ * .cfi_startproc/.cfi_endproc, and with nothing between them the FDE is empty,
+ * which tells every unwinder that the CFA is the current r1 and that the return
+ * address is still in lr -- both false from the stdu onwards, and this frame is
+ * live for the whole of the call below.  probes/empty-fde-scan.py finds frames
+ * in that state; see dlls/vcomp/fork.c for the same fix and why it matters. */
 __ASM_GLOBAL_FUNC( call_server_func,
                    /* r3 = func, r4 = args, r5 = stack_size, r6 = header */
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "stdu 1, -0x70(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x70\n\t")
                    "std 31, 0x60(1)\n\t"
+                   __ASM_CFI(".cfi_offset 31, -16\n\t")
                    "mr 31, 1\n\t"
+                   /* r1 moves again by a run-time amount (the stdux below), so
+                    * from here the CFA has to be expressed against r31 */
+                   __ASM_CFI(".cfi_def_cfa_register 31\n\t")
                    "addi 7, 5, 15\n\t"
                    "rldicr 7, 7, 0, 59\n\t"    /* round the argument block up to 16 */
                    "cmpldi 7, 64\n\t"
@@ -597,8 +610,11 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "bctrl\n\t"
                    "ld 2, 24(1)\n\t"
                    "mr 1, 31\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 1\n\t")
                    "ld 31, 0x60(1)\n\t"
+                   __ASM_CFI(".cfi_restore 31\n\t")
                    "addi 1, 1, 0x70\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
                    "ld 0, 16(1)\n\t"
                    "mtlr 0\n\t"
                    "blr" )

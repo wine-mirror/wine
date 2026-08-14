@@ -13200,8 +13200,8 @@ then :
 else case e in #(
   e)
                 case $HOST_ARCH in
-                  aarch64)
-                                                            as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d000000" ;;
+                  aarch64|ppc64)
+                                                                                                                                    as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d000000" ;;
                   *)
                     as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d00000000" ;;
                 esac

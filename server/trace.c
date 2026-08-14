@@ -888,6 +888,7 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uint64( ",dar=", &ctx.ctl.powerpc64_regs.dar );
             dump_uint64( ",dsisr=", &ctx.ctl.powerpc64_regs.dsisr );
             dump_uint64( ",trap=", &ctx.ctl.powerpc64_regs.trap );
+            dump_uint64( ",gpr1=", &ctx.ctl.powerpc64_regs.gpr1 );
         }
         if (ctx.flags & SERVER_CTX_INTEGER)
         {

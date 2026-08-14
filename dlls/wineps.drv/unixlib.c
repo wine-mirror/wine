@@ -1729,11 +1729,18 @@ static NTSTATUS free_printer_info(void *arg)
     {
         free(pi);
     }
+    /* The heads must be re-initialised, not just emptied: entries are freed
+     * without being unlinked, so a second call walks freed memory and
+     * double-frees every element.  Wine's loader guarantees a second call --
+     * ntdll/loader.c calls DLL_PROCESS_DETACH after a failed PROCESS_ATTACH --
+     * so this fires whenever this driver's attach fails for any reason. */
+    list_init(&printer_info_list);
 
     LIST_FOR_EACH_ENTRY_SAFE(font, font_next, &fonts, struct font_data, entry)
     {
         free_font_data(font);
     }
+    list_init(&fonts);
     return 0;
 }
 

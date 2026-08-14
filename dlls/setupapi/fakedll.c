@@ -51,6 +51,12 @@ static const char current_arch[] = "arm";
 #elif defined __aarch64__
 static const WCHAR pe_dir[] = L"\\aarch64-windows";
 static const char current_arch[] = "arm64";
+#elif defined __powerpc64__
+/* Must match dlls/ntdll/loader.c's pe_dir and the <arch>-windows directory
+ * winebuild emits.  current_arch stays "none" to agree with actctx.c's
+ * current_archW, which has no ppc64 name either. */
+static const WCHAR pe_dir[] = L"\\ppc64-windows";
+static const char current_arch[] = "none";
 #else
 static const WCHAR pe_dir[] = L"";
 static const char current_arch[] = "none";
@@ -297,6 +303,13 @@ static BOOL build_fake_dll( HANDLE file, const WCHAR *name )
 #elif defined __arm__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
 #else
+    /* NOTE (ppc64): this falls through to I386 on ppc64le, which is wrong on
+     * its face -- but stamping IMAGE_FILE_MACHINE_POWERPC64 here was measured
+     * to break prefix creation outright (wineboot -u dies at the very first
+     * [FakeDllsPreInstall] entry with "could not load kernel32.dll",
+     * c0000135, leaving 2 files in the prefix instead of 808).  Left as-is
+     * deliberately; the placeholder's machine field is not consulted for
+     * builtins, and correcting it needs the loader side investigated first. */
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 #endif
     nt->FileHeader.TimeDateStamp = 0;

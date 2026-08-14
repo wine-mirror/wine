@@ -42,6 +42,7 @@ static const struct machine_dir
     {IMAGE_FILE_MACHINE_AMD64, L"\\x86_64-windows\\",  L"\\x86_64-unix\\"},
     {IMAGE_FILE_MACHINE_ARMNT, L"\\arm-windows\\",     L"\\arm-unix\\"},
     {IMAGE_FILE_MACHINE_ARM64, L"\\aarch64-windows\\", L"\\aarch64-unix\\"},
+    {IMAGE_FILE_MACHINE_POWERPC64, L"\\ppc64-windows\\", L"\\ppc64-unix\\"},
 };
 
 static inline BOOL is_sepA(char ch) {return ch == '/' || ch == '\\';}

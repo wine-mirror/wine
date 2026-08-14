@@ -1103,9 +1103,12 @@ case $host_os in
                             [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static-pie"])],
             [
                 case $HOST_ARCH in
-                  aarch64)
+                  aarch64|ppc64)
                     dnl AArch64 kernels may be limited to 39 bits of address
                     dnl space; limit the text section load address to that.
+                    dnl PowerPC64 needs the same treatment: execve() of an
+                    dnl ET_EXEC with a segment at 0x7d7d00000000 fails with
+                    dnl ENOMEM, and so does 0x400000000000.
                     AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d000000"]) ;;
                   *)
                     AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d00000000"]) ;;

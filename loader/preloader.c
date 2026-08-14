@@ -651,6 +651,109 @@ unsigned long long __aeabi_uidivmod(unsigned int num, unsigned int den)
     return ((unsigned long long)num << 32) | quota;
 }
 
+#elif defined(__powerpc64__)
+
+/*
+ * The _start function is the entry and exit point of this program
+ *
+ *  It calls wld_start, passing a pointer to the args it receives
+ *  then jumps to the address wld_start returns.
+ *
+ * ELFv2 process entry: the kernel puts the entry point itself in r12 (see
+ * start_thread() in arch/powerpc/kernel/process.c), which is what lets the
+ * usual global-entry prologue below establish r2 -- exactly how glibc's own
+ * static _start does it. Nothing else is guaranteed except r1, which points at
+ * argc/argv/envp/auxv.
+ *
+ * No thread pointer is set up here, unlike the x86-64 and aarch64 versions.
+ * Those install a fake TLS block because their code can reach for one; nothing
+ * on this path does, and setting r13 would need the TOC that this prologue is
+ * still in the middle of establishing. If anything in the preloader ever grows
+ * a __thread variable or a stack protector, this is where it breaks.
+ */
+void _start(void);
+extern char _end[];
+__ASM_GLOBAL_FUNC(_start,
+                  "addis 2, 12, .TOC.-" __ASM_NAME("_start") "@ha\n\t"
+                  "addi 2, 2, .TOC.-" __ASM_NAME("_start") "@l\n\t"
+                  ".localentry " __ASM_NAME("_start") ", .-" __ASM_NAME("_start") "\n\t"
+                  "mr 9, 1\n\t"           /* original stack pointer */
+                  "addi 1, 1, -144\n\t"   /* allocate some space for extra aux values */
+                  "std 9, 0(1)\n\t"       /* orig stack pointer, i.e. *stack */
+                  "mr 3, 1\n\t"           /* ptr to orig stack pointer */
+                  "stdu 1, -112(1)\n\t"   /* a real frame for the call */
+                  "li 0, 0\n\t"
+                  "mtlr 0\n\t"
+                  "bl " __ASM_NAME("wld_start") "\n\t"
+                  "ld 1, 112(1)\n\t"      /* new stack pointer, written by wld_start */
+                  "mr 12, 3\n\t"          /* ELF interpreter entry point */
+                  "mtctr 12\n\t"
+                  "li 0, 0\n\t"
+                  "mtlr 0\n\t"
+                  "li 3, 0\n\t"
+                  "li 4, 0\n\t"
+                  "li 5, 0\n\t"
+                  "li 6, 0\n\t"
+                  "li 7, 0\n\t"
+                  "li 8, 0\n\t"
+                  "li 9, 0\n\t"
+                  "li 10, 0\n\t"
+                  "li 11, 0\n\t"
+                  "bctr")
+
+/* ppc64 Linux: syscall number in r0, args in r3-r8, result in r3, and failure
+ * signalled by cr0.SO rather than by a negative return value. r9-r12 and cr0
+ * are clobbered by "sc"; these are leaf functions, so that costs nothing. */
+#define SYSCALL_FUNC( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "li 0, " #nr "\n\t" \
+                       "sc\n\t" \
+                       "bnslr+\n\t" \
+                       "li 3, -1\n\t" \
+                       "blr" )
+
+#define SYSCALL_NOERR( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "li 0, " #nr "\n\t" \
+                       "sc\n\t" \
+                       "blr" )
+
+void wld_exit( int code ) __attribute__((noreturn));
+SYSCALL_NOERR( wld_exit, 1 /* SYS_exit */ );
+
+ssize_t wld_read( int fd, void *buffer, size_t len );
+SYSCALL_FUNC( wld_read, 3 /* SYS_read */ );
+
+ssize_t wld_write( int fd, const void *buffer, size_t len );
+SYSCALL_FUNC( wld_write, 4 /* SYS_write */ );
+
+int wld_open( const char *name, int flags );
+SYSCALL_FUNC( wld_open, 5 /* SYS_open */ );
+
+int wld_close( int fd );
+SYSCALL_FUNC( wld_close, 6 /* SYS_close */ );
+
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
+SYSCALL_FUNC( wld_mmap, 90 /* SYS_mmap */ );
+
+int wld_mprotect( const void *addr, size_t len, int prot );
+SYSCALL_FUNC( wld_mprotect, 125 /* SYS_mprotect */ );
+
+int wld_prctl( int code, long arg );
+SYSCALL_FUNC( wld_prctl, 171 /* SYS_prctl */ );
+
+uid_t wld_getuid(void);
+SYSCALL_NOERR( wld_getuid, 24 /* SYS_getuid */ );
+
+gid_t wld_getgid(void);
+SYSCALL_NOERR( wld_getgid, 47 /* SYS_getgid */ );
+
+uid_t wld_geteuid(void);
+SYSCALL_NOERR( wld_geteuid, 49 /* SYS_geteuid */ );
+
+gid_t wld_getegid(void);
+SYSCALL_NOERR( wld_getegid, 50 /* SYS_getegid */ );
+
 #else
 #error preloader not implemented for this CPU
 #endif
@@ -954,6 +1057,9 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 #elif defined(__arm__)
     if( header->e_machine != EM_ARM )
         fatal_error("%s: not an arm ELF binary... don't know how to load it\n", name );
+#elif defined(__powerpc64__)
+    if( header->e_machine != EM_PPC64 )
+        fatal_error("%s: not a ppc64 ELF binary... don't know how to load it\n", name );
 #endif
 
     if (header->e_phnum > sizeof(loadcmds)/sizeof(loadcmds[0]))
@@ -1451,6 +1557,14 @@ void* wld_start( void **stack )
             if (preload_info[i].addr >= (void *)0x10000
 #ifdef __aarch64__
                 && preload_info[i].addr < (void *)0x7fffffffff /* ARM64 address space might end here*/
+#endif
+#ifdef __powerpc64__
+                /* This kernel hands out 64TB of user address space and no
+                 * more: a MAP_FIXED at 0x400000000000 or above fails, which
+                 * takes out the 0x7ffffe000000 top-down range below. Wine
+                 * copes (the range is dropped and virtual.c allocates
+                 * elsewhere), so don't warn about it on every single launch. */
+                && preload_info[i].addr < (void *)0x400000000000
 #endif
             )
                 wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",

@@ -3115,7 +3115,18 @@ typedef struct _IMAGE_VXD_HEADER {
 #define IMAGE_FILE_MACHINE_AM33         0x01d3
 #define IMAGE_FILE_MACHINE_POWERPC      0x01f0
 #define IMAGE_FILE_MACHINE_POWERPCFP    0x01f1
-#define IMAGE_FILE_MACHINE_POWERPC64    0x01f2 /* Wine extension */
+#define IMAGE_FILE_MACHINE_POWERPC64    0x01f3 /* Wine extension */
+/* 0x01f3 rather than the adjacent 0x01f2: nothing standard claims either, but
+ * file(1) 5.47 maps 0x01f2 to "PowerPC 64-bit (big-endian)" and so actively
+ * misreports this port's little-endian output, while 0x01f3 reports "Unknown
+ * processor" -- a tool saying it does not know beats a tool saying the wrong
+ * thing.  (0x01f1 is IMAGE_FILE_MACHINE_POWERPCFP above; there was never a
+ * collision.)  The constant is this fork's own invention, so no external
+ * consumer depends on the old value.  Changing it invalidates every PE header
+ * already written, so the whole tree -- including every fake module under a
+ * ppc64-windows directory -- has to be rebuilt together.  tools/winebuild has
+ * its own copy of this constant (spec32.c) because it cannot include this
+ * header; the two must stay in step. */
 #define IMAGE_FILE_MACHINE_IA64         0x0200
 #define IMAGE_FILE_MACHINE_MIPS16       0x0266
 #define IMAGE_FILE_MACHINE_ALPHA64      0x0284

@@ -132,7 +132,7 @@ struct context_data
                  unsigned int cs, ss, flags, __pad; } x86_64_regs;
         struct { unsigned int sp, lr, pc, cpsr; } arm_regs;
         struct { unsigned __int64 sp, pc, pstate; } arm64_regs;
-        struct { unsigned __int64 iar, msr, ctr, lr, dar, dsisr, trap, __pad; } powerpc64_regs;
+        struct { unsigned __int64 iar, msr, ctr, lr, dar, dsisr, trap, gpr1; } powerpc64_regs;
     } ctl;
     union
     {
@@ -7183,6 +7183,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 961
+#define SERVER_PROTOCOL_VERSION 962
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

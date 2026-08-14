@@ -293,39 +293,45 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "std 0, 0x228(3)\n\t"         /* Lr */
                    "mfctr 0\n\t"
                    "std 0, 0x230(3)\n\t"         /* Ctr */
-                   "li 0, 0x2a0\n\t"
-                   "stvx 0, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 1, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 2, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 3, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 4, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 5, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 6, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 7, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 8, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 9, 3, 0\n\t"  "addi 0, 0, 16\n\t"
-                   "stvx 10, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 11, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 12, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 13, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 14, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 15, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 16, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 17, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 18, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 19, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 20, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 21, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 22, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 23, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 24, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 25, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 26, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 27, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 28, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 29, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 30, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 31, 3, 0\n\t"
+                   /* v0-v31.  The index register must not be r0: "addi 0,0,16"
+                    * is not "r0 += 16" -- addi reads RA=0 as the literal zero, so
+                    * it assembles to li 0,16 and every store after the first landed
+                    * at Context+16, i.e. on top of Fpr2/Fpr3, while v1-v31 were
+                    * never saved at all.  r11 is volatile in ELFv2 and the caller's
+                    * value is already in Gpr11 by the time we get here. */
+                   "li 11, 0x2a0\n\t"
+                   "stvx 0, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 1, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 2, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 3, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 4, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 5, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 6, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 7, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 8, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 9, 3, 11\n\t"  "addi 11, 11, 16\n\t"
+                   "stvx 10, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 11, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 12, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 13, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 14, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 15, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 16, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 17, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 18, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 19, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 20, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 21, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 22, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 23, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 24, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 25, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 26, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 27, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 28, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 29, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 30, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 31, 3, 11\n\t"
                    "lis 0, 0x80\n\t"             /* CONTEXT_FULL = 0x00800017 */
                    "ori 0, 0, 0x17\n\t"
                    "std 0, 0x238(3)\n\t"
@@ -825,6 +831,18 @@ LONG WINAPI __C_ExecuteExceptionFilter( void *record, void *frame,
  * rather than at RtlCaptureContext, and hand it to raise_exception_from_asm().
  * The 0x4c0-byte frame is CONTEXT (0x4a0, 16-byte aligned at offset 0x20 from
  * the new r1) plus the 32-byte ELFv2 linkage area.
+ *
+ * The two __ASM_CFI() directives are required, not cosmetic: __ASM_GLOBAL_FUNC
+ * always emits .cfi_startproc/.cfi_endproc, so with no directives between them
+ * the FDE is empty, and an empty FDE claims CFA = current r1 and "return address
+ * still in lr" -- both false once the stdu has run.  glibc's forced unwind
+ * (pthread_exit, cancellation) loops forever on a frame like that, burning a core
+ * for the life of the process while the thread join still succeeds.  This frame
+ * stays live across the whole of raise_exception_from_asm() below, which is
+ * reached by a plain branch, so it is on the stack for the entire exception
+ * dispatch.  (No FDE at all would have been safe; libgcc returns END_OF_STACK.)
+ * probes/empty-fde-scan.py enumerates frames in this state and is a gate
+ * component -- see probes/check-empty-fde.sh.
  */
 extern void DECLSPEC_NORETURN raise_exception_from_asm( EXCEPTION_RECORD *rec, CONTEXT *context );
 __ASM_GLOBAL_FUNC( RtlRaiseException,
@@ -833,8 +851,10 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    ".localentry " __ASM_NAME("RtlRaiseException") ", .-" __ASM_NAME("RtlRaiseException") "\n\t"
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "std 3, -8(1)\n\t"            /* stash rec in the red zone */
                    "stdu 1, -0x4e0(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x4e0\n\t")
                    "addi 3, 1, 0x20\n\t"         /* &context */
                    "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
                    "addi 4, 1, 0x20\n\t"         /* context */
@@ -911,19 +931,19 @@ __ASM_GLOBAL_FUNC( NTDLL__setjmpex,
                    "stfd 29, 304(3)\n\t"
                    "stfd 30, 312(3)\n\t"
                    "stfd 31, 320(3)\n\t"
-                   "li   0, 336\n\t"
-                   "stvx 20, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 21, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 22, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 23, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 24, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 25, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 26, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 27, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 28, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 29, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 30, 3, 0\n\t" "addi 0, 0, 16\n\t"
-                   "stvx 31, 3, 0\n\t"
+                   "li  11, 336\n\t"    /* v20-v31; r11, not r0: see RtlCaptureContext */
+                   "stvx 20, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 21, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 22, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 23, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 24, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 25, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 26, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 27, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 28, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 29, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 30, 3, 11\n\t" "addi 11, 11, 16\n\t"
+                   "stvx 31, 3, 11\n\t"
                    "li 3, 0\n\t"
                    "blr" )
 

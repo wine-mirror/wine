@@ -33,6 +33,9 @@
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <sys/syscall.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -356,9 +359,73 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     BOOL self = (handle == GetCurrentThread());
     NTSTATUS ret;
     DWORD i;
+    /* Function scope on purpose: the cross-thread arm below can repoint
+     * "context" at it, and the local-frame path further down may still read it. */
+    CONTEXT merged;
 
     if (!self)
     {
+        /* One read-modify-write *is* needed, for the floating-point half.  The
+         * server keeps the FPRs and the VMX registers in a single wire block
+         * (fp.powerpc64_regs holds fpr[]/fpscr *and* vr[]/vscr/vrsave) behind a
+         * single SERVER_CTX_FLOATING_POINT flag, while CONTEXT has two
+         * independent flags for those halves.  context_to_server() memsets the
+         * wire context, so a request naming only one half shipped the other half
+         * as zeros and the server installed the whole block: a VECTOR-only set
+         * wiped the target's f0-f31 and Fpscr (measured -- probes/vector-only-set.c
+         * reported "sent 1000.25, read back 0"), and an FP-only set wiped
+         * Vr/Vscr/Vrsave the same way.  Read the half the caller did not send out
+         * of the target and send both halves, so that a partial set is still a
+         * set of exactly what was asked for.
+         *
+         * No such read-modify-write is needed for a CONTROL-only request: Gpr1
+         * has its own slot in the server's control block
+         * (ctl.powerpc64_regs.gpr1), so the stack pointer travels without
+         * dragging the integer block -- which copy_context() copies wholesale,
+         * and which used to arrive with 31 zeroed GPRs and a zeroed Cr/Xer when a
+         * CONTROL-only set faked the integer flag.
+         * probes/check-thread-context.sh covers both cases. */
+        /* "flags" already has the CONTEXT_PPC64 base bit stripped, so the
+         * constants must have it stripped too -- these are equality tests, not
+         * the loose bit tests the rest of this function gets away with. */
+        const DWORD fp_both = (CONTEXT_FLOATING_POINT | CONTEXT_VECTOR) & ~CONTEXT_PPC64;
+        DWORD fp_half = flags & fp_both;
+
+        if (fp_half && fp_half != fp_both)
+        {
+            CONTEXT cur;
+            BOOL cur_self = FALSE;
+
+            memset( &cur, 0, sizeof(cur) );
+            cur.ContextFlags = CONTEXT_FLOATING_POINT | CONTEXT_VECTOR;
+            ret = get_thread_context( handle, &cur, &cur_self, IMAGE_FILE_MACHINE_POWERPC64 );
+            if (ret) return ret;
+            /* A real handle to this very thread: the server never filled cur, and
+             * the frame path below already applies only the requested half, so
+             * there is nothing to merge. */
+            if (!cur_self)
+            {
+                merged = *context;
+                if (fp_half == (CONTEXT_VECTOR & ~CONTEXT_PPC64))   /* refill the FPR half */
+                {
+                    /* memcpy, not assignment: these are 64-bit register images,
+                     * and a double copy of a signalling NaN is allowed to
+                     * quieten the bit pattern.  Same reason Fpscr is memcpy'd on
+                     * the wire in dlls/ntdll/unix/thread.c. */
+                    memcpy( &merged.Fpr0, &cur.Fpr0, 32 * sizeof(merged.Fpr0) );
+                    memcpy( &merged.Fpscr, &cur.Fpscr, sizeof(merged.Fpscr) );
+                }
+                else
+                {
+                    memcpy( merged.Vr, cur.Vr, sizeof(merged.Vr) );
+                    merged.Vscr   = cur.Vscr;
+                    merged.Vrsave = cur.Vrsave;
+                }
+                merged.ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_VECTOR;
+                context = &merged;
+                flags   = merged.ContextFlags & ~CONTEXT_PPC64;
+            }
+        }
         ret = set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_POWERPC64 );
         if (ret || !self) return ret;
     }
@@ -407,6 +474,12 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (!self)
     {
+        /* A real handle to this thread comes back self=TRUE and is handled below;
+         * a genuine cross-thread request is served entirely by the conversion
+         * arms in thread.c.  The buffer-left-untouched case that used to make
+         * this return STATUS_SUCCESS over uninitialised memory is now caught
+         * inside get_thread_context() itself, which is the only layer that can
+         * see the server returned no context blocks. */
         NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_POWERPC64 );
         if (ret || !self) return ret;
     }
@@ -526,6 +599,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_P
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
     ULONG64 sp = context ? context->Gpr1 : frame->gpr[1];
+    ULONG64 caller_sp = sp;
     struct apc_stack_layout *stack;
 
     if (flags) FIXME( "flags %#x are not supported.\n", flags );
@@ -543,7 +617,12 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_P
         NtGetContextThread( GetCurrentThread(), &stack->context );
         stack->context.Gpr3 = status;
     }
-    stack->linkage[0] = sp;  /* back chain */
+    /* Back chain points at the interrupted frame, not at `sp`: `sp` is the
+     * cursor after the red-zone skip, so it addresses the middle of the 288-byte
+     * gap rather than a frame.  A back-chain walk -- this port's only unwinder --
+     * would read uninitialized red zone there.  setup_raise_exception stores
+     * SP_sig for the same reason. */
+    stack->linkage[0] = caller_sp;  /* back chain */
 
     frame->gpr[1] = (ULONG64)stack;
     frame->gpr[3] = (ULONG64)&stack->context;
@@ -579,7 +658,7 @@ NTSTATUS call_user_exception_dispatcher( struct thread_data *data, EXCEPTION_REC
     stack = (struct exc_stack_layout *)sp - 1;
     memmove( &stack->context, context, sizeof(*context) );
     memmove( &stack->rec, rec, sizeof(*rec) );
-    stack->linkage[0] = sp;  /* back chain */
+    stack->linkage[0] = context->Gpr1;  /* back chain: the interrupted frame */
 
     frame->gpr[1] = (ULONG64)stack;
     frame->gpr[3] = (ULONG64)&stack->rec;
@@ -625,6 +704,76 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
 
 
 /***********************************************************************
+ *           unwind information for the assembly below
+ *
+ * __ASM_GLOBAL_FUNC wraps every routine in .cfi_startproc/.cfi_endproc.  With
+ * no directives in between the FDE is *empty*, so the CIE's initial rules --
+ * CFA = r1+0, and no rule at all for the return address column (65, i.e. lr) --
+ * describe the entire function.  That is not just uninformative, it hangs:
+ * pthread_exit() runs a forced unwind over the exiting thread's own stack, and
+ * on a frame whose CFA does not advance and whose return address does not
+ * change, libgcc keeps unwinding the same frame forever.  Every Win32 thread
+ * exit goes out through NtTerminateThread on the kernel stack, i.e. through the
+ * syscall dispatcher, so every thread exit burned a core -- invisibly, because
+ * the server reports the thread dead before pthread_exit() is reached and the
+ * join therefore succeeds.  probes/check-thread-exit-spin.sh measures this.
+ *
+ * The dispatchers cannot be described in terms of r1: they run on the kernel
+ * stack, and below them are PE frames with no unwind information whatsoever.
+ * They are stitched onto the last unix-side frame instead, as x86_64 does:
+ * the CFA is frame->syscall_cfa, which signal_start_thread and
+ * call_user_mode_callback each set to their own CFA before entering user mode.
+ * Both of them save lr at CFA+16, r2 at CFA+24 and r14-r31 at CFA-0x90..CFA-8,
+ * so a single set of rules describes either entry path.
+ */
+
+/* CFA = *(r31 + 0x140) == frame->syscall_cfa.  DW_CFA_def_cfa_expression (0x0f)
+ * with a 4-byte expression: DW_OP_breg31 (0x8f), sleb128 0x140 (0xc0 0x02),
+ * DW_OP_deref (0x06).  The offset is the one C_ASSERTed above. */
+#define __ASM_CFI_CFA_IS_SYSCALL_CFA \
+    __ASM_CFI(".cfi_escape 0x0f, 0x04, 0x8f, 0xc0, 0x02, 0x06\n\t")
+
+/* the nonvolatile GPRs, at the slots both user-mode entry paths use */
+#define __ASM_CFI_ENTRY_FRAME_GPRS \
+    __ASM_CFI(".cfi_offset 14, -0x90\n\t") \
+    __ASM_CFI(".cfi_offset 15, -0x88\n\t") \
+    __ASM_CFI(".cfi_offset 16, -0x80\n\t") \
+    __ASM_CFI(".cfi_offset 17, -0x78\n\t") \
+    __ASM_CFI(".cfi_offset 18, -0x70\n\t") \
+    __ASM_CFI(".cfi_offset 19, -0x68\n\t") \
+    __ASM_CFI(".cfi_offset 20, -0x60\n\t") \
+    __ASM_CFI(".cfi_offset 21, -0x58\n\t") \
+    __ASM_CFI(".cfi_offset 22, -0x50\n\t") \
+    __ASM_CFI(".cfi_offset 23, -0x48\n\t") \
+    __ASM_CFI(".cfi_offset 24, -0x40\n\t") \
+    __ASM_CFI(".cfi_offset 25, -0x38\n\t") \
+    __ASM_CFI(".cfi_offset 26, -0x30\n\t") \
+    __ASM_CFI(".cfi_offset 27, -0x28\n\t") \
+    __ASM_CFI(".cfi_offset 28, -0x20\n\t") \
+    __ASM_CFI(".cfi_offset 29, -0x18\n\t") \
+    __ASM_CFI(".cfi_offset 30, -0x10\n\t") \
+    __ASM_CFI(".cfi_offset 31, -0x08\n\t")
+
+/* lr and r2 live in the caller's frame on ppc64, hence the positive offsets */
+#define __ASM_CFI_ENTRY_FRAME_LINKAGE \
+    __ASM_CFI(".cfi_offset 65, 16\n\t") \
+    __ASM_CFI(".cfi_offset 2, 24\n\t")
+
+/* the whole stitch: unwind straight out of the kernel stack into the caller of
+ * whichever routine entered user mode, skipping the PE frames in between */
+#define __ASM_CFI_STITCH_TO_ENTRY_FRAME \
+    __ASM_CFI_CFA_IS_SYSCALL_CFA \
+    __ASM_CFI_ENTRY_FRAME_LINKAGE \
+    __ASM_CFI_ENTRY_FRAME_GPRS
+
+/* "the return address is not recoverable from here" -- terminates an unwind
+ * cleanly (libgcc reports END_OF_STACK) instead of letting it spin.  Used where
+ * the next frame up is PE code, which has no unwind information at all. */
+#define __ASM_CFI_RA_UNRECOVERABLE \
+    __ASM_CFI(".cfi_undefined 65\n\t")
+
+
+/***********************************************************************
  *           call_user_mode_callback
  */
 extern NTSTATUS call_user_mode_callback( ULONG_PTR user_sp, void **ret_ptr, ULONG *ret_len,
@@ -635,24 +784,30 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "std 0, 16(1)\n\t"
                    "std 2, 24(1)\n\t"
                    "stdu 1, -0x100(1)\n\t"
-                   "std 14, 0x60(1)\n\t"
-                   "std 15, 0x68(1)\n\t"
-                   "std 16, 0x70(1)\n\t"
-                   "std 17, 0x78(1)\n\t"
-                   "std 18, 0x80(1)\n\t"
-                   "std 19, 0x88(1)\n\t"
-                   "std 20, 0x90(1)\n\t"
-                   "std 21, 0x98(1)\n\t"
-                   "std 22, 0xa0(1)\n\t"
-                   "std 23, 0xa8(1)\n\t"
-                   "std 24, 0xb0(1)\n\t"
-                   "std 25, 0xb8(1)\n\t"
-                   "std 26, 0xc0(1)\n\t"
-                   "std 27, 0xc8(1)\n\t"
-                   "std 28, 0xd0(1)\n\t"
-                   "std 29, 0xd8(1)\n\t"
-                   "std 30, 0xe0(1)\n\t"
-                   "std 31, 0xe8(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x100\n\t")
+                   __ASM_CFI_ENTRY_FRAME_LINKAGE
+                   /* r14-r31 go at CFA-0x90..CFA-8, the same slots
+                    * signal_start_thread uses, so that the dispatchers can be
+                    * stitched to either frame with one set of rules */
+                   "std 14, 0x70(1)\n\t"
+                   "std 15, 0x78(1)\n\t"
+                   "std 16, 0x80(1)\n\t"
+                   "std 17, 0x88(1)\n\t"
+                   "std 18, 0x90(1)\n\t"
+                   "std 19, 0x98(1)\n\t"
+                   "std 20, 0xa0(1)\n\t"
+                   "std 21, 0xa8(1)\n\t"
+                   "std 22, 0xb0(1)\n\t"
+                   "std 23, 0xb8(1)\n\t"
+                   "std 24, 0xc0(1)\n\t"
+                   "std 25, 0xc8(1)\n\t"
+                   "std 26, 0xd0(1)\n\t"
+                   "std 27, 0xd8(1)\n\t"
+                   "std 28, 0xe0(1)\n\t"
+                   "std 29, 0xe8(1)\n\t"
+                   "std 30, 0xf0(1)\n\t"
+                   "std 31, 0xf8(1)\n\t"
+                   __ASM_CFI_ENTRY_FRAME_GPRS
                    "addi 8, 1, 0x100\n\t"           /* syscall_cfa */
                    "std 4, 0x20(1)\n\t"             /* ret_ptr */
                    "std 5, 0x28(1)\n\t"             /* ret_len */
@@ -719,6 +874,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "lwz 10, 0x68(3)\n\t"            /* stack->len */
                    "lwz 11, 0x6c(3)\n\t"            /* stack->id */
                    "mr 1, 3\n\t"
+                   /* r1 is the user stack from here on, so keep describing our
+                    * own frame through the new syscall frame in r9: CFA =
+                    * *(r9 + 0x140), which is the CFA the rules above use. */
+                   __ASM_CFI(".cfi_escape 0x0f, 0x04, 0x79, 0xc0, 0x02, 0x06\n\t")
                    "mr 3, 11\n\t"
                    "mr 4, 0\n\t"
                    "mr 5, 10\n\t"
@@ -732,6 +891,15 @@ extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG re
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    /* r3 = ret_ptr, r4 = ret_len, r5 = status, r6 = teb */
+                   /* Reached from PE callback code, which carries no unwind
+                    * information, and this body then reloads r1 from the frame
+                    * and mtlr's -- so the empty FDE __ASM_GLOBAL_FUNC would
+                    * otherwise leave describes a frame identical to this one and
+                    * a forced unwind crossing it never advances.  Terminate the
+                    * unwind here instead; same reasoning as
+                    * __wine_unix_call_dispatcher below.
+                    * Gated by probes/check-empty-fde.sh. */
+                   __ASM_CFI_RA_UNRECOVERABLE
                    "ld 7, 0x378(6)\n\t"             /* thread_data->syscall_frame */
                    "ld 8, 0x138(7)\n\t"             /* frame->prev_frame */
                    "std 8, 0x378(6)\n\t"
@@ -792,24 +960,25 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "beq 2f\n\t"
                    "stw 4, 0(10)\n"
                    "2:\tmr 3, 5\n\t"
-                   "ld 14, 0x60(1)\n\t"
-                   "ld 15, 0x68(1)\n\t"
-                   "ld 16, 0x70(1)\n\t"
-                   "ld 17, 0x78(1)\n\t"
-                   "ld 18, 0x80(1)\n\t"
-                   "ld 19, 0x88(1)\n\t"
-                   "ld 20, 0x90(1)\n\t"
-                   "ld 21, 0x98(1)\n\t"
-                   "ld 22, 0xa0(1)\n\t"
-                   "ld 23, 0xa8(1)\n\t"
-                   "ld 24, 0xb0(1)\n\t"
-                   "ld 25, 0xb8(1)\n\t"
-                   "ld 26, 0xc0(1)\n\t"
-                   "ld 27, 0xc8(1)\n\t"
-                   "ld 28, 0xd0(1)\n\t"
-                   "ld 29, 0xd8(1)\n\t"
-                   "ld 30, 0xe0(1)\n\t"
-                   "ld 31, 0xe8(1)\n\t"
+                   /* the slots call_user_mode_callback saved these in */
+                   "ld 14, 0x70(1)\n\t"
+                   "ld 15, 0x78(1)\n\t"
+                   "ld 16, 0x80(1)\n\t"
+                   "ld 17, 0x88(1)\n\t"
+                   "ld 18, 0x90(1)\n\t"
+                   "ld 19, 0x98(1)\n\t"
+                   "ld 20, 0xa0(1)\n\t"
+                   "ld 21, 0xa8(1)\n\t"
+                   "ld 22, 0xb0(1)\n\t"
+                   "ld 23, 0xb8(1)\n\t"
+                   "ld 24, 0xc0(1)\n\t"
+                   "ld 25, 0xc8(1)\n\t"
+                   "ld 26, 0xd0(1)\n\t"
+                   "ld 27, 0xd8(1)\n\t"
+                   "ld 28, 0xe0(1)\n\t"
+                   "ld 29, 0xe8(1)\n\t"
+                   "ld 30, 0xf0(1)\n\t"
+                   "ld 31, 0xf8(1)\n\t"
                    "addi 1, 1, 0x100\n\t"
                    "ld 0, 16(1)\n\t"
                    "ld 2, 24(1)\n\t"
@@ -824,6 +993,19 @@ extern void DECLSPEC_NORETURN user_mode_abort_thread( int status, struct syscall
 __ASM_GLOBAL_FUNC( user_mode_abort_thread,
                    "ld 1, 0x140(4)\n\t"             /* frame->syscall_cfa */
                    "stdu 1, -0x60(1)\n\t"
+                   /* abort_thread() ends in pthread_exit(), whose forced unwind
+                    * climbs straight back through here: r1 is the entry frame's
+                    * CFA minus this 0x60 linkage area, so say so.  r20-r31 are
+                    * *not* described: this frame is written over their slots,
+                    * which is harmless only because we never return. */
+                   __ASM_CFI(".cfi_def_cfa_offset 0x60\n\t")
+                   __ASM_CFI_ENTRY_FRAME_LINKAGE
+                   __ASM_CFI(".cfi_offset 14, -0x90\n\t")
+                   __ASM_CFI(".cfi_offset 15, -0x88\n\t")
+                   __ASM_CFI(".cfi_offset 16, -0x80\n\t")
+                   __ASM_CFI(".cfi_offset 17, -0x78\n\t")
+                   __ASM_CFI(".cfi_offset 18, -0x70\n\t")
+                   __ASM_CFI(".cfi_offset 19, -0x68\n\t")
                    "bl " __ASM_NAME("abort_thread") "\n\t"
                    "trap" )
 
@@ -911,6 +1093,307 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context,
 
 
 /**********************************************************************
+ *              fault forensics
+ *
+ * Debug aid, enabled by setting WINE_FAULTDUMP=1 in the environment.  It
+ * reports a fault in terms of the *ELF* mappings the code is actually
+ * executing out of, read fresh from /proc/self/maps, rather than the PE view
+ * that map_so_dll() synthesises -- an address printed by +seh or by
+ * build_module cannot be turned into a .so file offset by naive arithmetic,
+ * because those two views of a builtin module do not share a base.
+ *
+ * Everything here runs on the signal stack with the faulting thread's state
+ * still intact, so it only uses write(2), open(2) and read(2), and it
+ * validates every pointer it dereferences against the mapping table first.
+ */
+
+#define FD_MAPS_BUF   (512 * 1024)
+#define FD_MAX_RANGES 2048
+
+struct fd_range
+{
+    ULONG_PTR start, end;
+    char      perms[4];
+    const char *name;
+};
+
+static char            fd_maps[FD_MAPS_BUF];
+static struct fd_range fd_ranges[FD_MAX_RANGES];
+static unsigned int    fd_nranges;
+
+static void fd_out( const char *str, size_t len )
+{
+    ssize_t ret;
+    while (len)
+    {
+        ret = write( 2, str, len );
+        if (ret <= 0) return;
+        str += ret;
+        len -= ret;
+    }
+}
+
+static void fd_str( const char *str )
+{
+    size_t len = 0;
+    while (str[len]) len++;
+    fd_out( str, len );
+}
+
+static void fd_hex( ULONG_PTR val )
+{
+    char buf[19] = "0x0000000000000000";
+    int i;
+    for (i = 17; i >= 2; i--)
+    {
+        buf[i] = "0123456789abcdef"[val & 0xf];
+        val >>= 4;
+    }
+    fd_out( buf, 18 );
+}
+
+static void fd_dec( ULONG_PTR val )
+{
+    char buf[24];
+    int i = sizeof(buf);
+    if (!val) buf[--i] = '0';
+    while (val) { buf[--i] = '0' + (val % 10); val /= 10; }
+    fd_out( buf + i, sizeof(buf) - i );
+}
+
+/* read /proc/self/maps into fd_maps and index it into fd_ranges */
+static void fd_read_maps(void)
+{
+    int fd, i;
+    ssize_t ret;
+    size_t total = 0;
+    char *p, *end;
+
+    fd_nranges = 0;
+    if ((fd = open( "/proc/self/maps", O_RDONLY )) == -1) return;
+    while (total < sizeof(fd_maps) - 1)
+    {
+        ret = read( fd, fd_maps + total, sizeof(fd_maps) - 1 - total );
+        if (ret <= 0) break;
+        total += ret;
+    }
+    close( fd );
+    fd_maps[total] = 0;
+
+    p = fd_maps;
+    end = fd_maps + total;
+    while (p < end && fd_nranges < FD_MAX_RANGES)
+    {
+        struct fd_range *r = &fd_ranges[fd_nranges];
+        char *line = p, *eol = p;
+
+        while (eol < end && *eol != '\n') eol++;
+        if (eol < end) *eol = 0;
+        p = eol + 1;
+
+        r->start = 0;
+        while (*line && *line != '-')
+        {
+            int d = (*line >= 'a') ? *line - 'a' + 10 : *line - '0';
+            if (d < 0 || d > 15) break;
+            r->start = r->start * 16 + d;
+            line++;
+        }
+        if (*line != '-') continue;
+        line++;
+        r->end = 0;
+        while (*line && *line != ' ')
+        {
+            int d = (*line >= 'a') ? *line - 'a' + 10 : *line - '0';
+            if (d < 0 || d > 15) break;
+            r->end = r->end * 16 + d;
+            line++;
+        }
+        if (*line != ' ') continue;
+        line++;
+        for (i = 0; i < 4 && line[i] && line[i] != ' '; i++) r->perms[i] = line[i];
+        while (i < 4) r->perms[i++] = '-';
+        r->perms[3] = 0;
+        /* skip perms, offset, dev, inode; what remains is the pathname */
+        for (i = 0; i < 4; i++)
+        {
+            while (*line && *line != ' ') line++;
+            while (*line == ' ') line++;
+        }
+        r->name = line;
+        fd_nranges++;
+    }
+}
+
+static const struct fd_range *fd_find( ULONG_PTR addr )
+{
+    unsigned int i;
+    for (i = 0; i < fd_nranges; i++)
+        if (addr >= fd_ranges[i].start && addr < fd_ranges[i].end) return &fd_ranges[i];
+    return NULL;
+}
+
+/* first mapping of the same file: the ELF load base that addr2line wants */
+static ULONG_PTR fd_module_base( const struct fd_range *r )
+{
+    unsigned int i;
+    const char *name = r->name;
+    if (!name || !name[0]) return 0;
+    for (i = 0; i < fd_nranges; i++)
+    {
+        const char *a = fd_ranges[i].name, *b = name;
+        if (!a) continue;
+        while (*a && *a == *b) { a++; b++; }
+        if (!*a && !*b) return fd_ranges[i].start;
+    }
+    return 0;
+}
+
+static BOOL fd_readable( ULONG_PTR addr, size_t len )
+{
+    const struct fd_range *r = fd_find( addr );
+    if (!r || r->perms[0] != 'r') return FALSE;
+    return addr + len <= r->end;
+}
+
+/* "<addr>  <perms> <file>+<elf offset>" -- the offset is what to feed addr2line */
+static void fd_describe( const char *label, ULONG_PTR addr )
+{
+    const struct fd_range *r;
+
+    fd_str( "  " );
+    fd_str( label );
+    fd_str( " = " );
+    fd_hex( addr );
+    if (!(r = fd_find( addr )))
+    {
+        fd_str( "  <unmapped>\n" );
+        return;
+    }
+    fd_str( "  " );
+    fd_out( r->perms, 3 );
+    fd_str( "  " );
+    if (r->name && r->name[0])
+    {
+        ULONG_PTR base = fd_module_base( r );
+        fd_str( r->name );
+        if (base)
+        {
+            fd_str( "+" );
+            fd_hex( addr - base );
+        }
+    }
+    else fd_str( "<anon>" );
+    fd_str( "  [map " );
+    fd_hex( r->start );
+    fd_str( "-" );
+    fd_hex( r->end );
+    fd_str( "]\n" );
+}
+
+static void fd_dump_words( const char *label, ULONG_PTR addr, int count )
+{
+    int i;
+    if (!fd_readable( addr, count * 8 ))
+    {
+        fd_str( "  " );
+        fd_str( label );
+        fd_str( ": <unreadable>\n" );
+        return;
+    }
+    for (i = 0; i < count; i++)
+    {
+        ULONG_PTR val = ((ULONG_PTR *)addr)[i];
+        fd_str( "  " );
+        fd_str( label );
+        fd_str( "[" );
+        fd_dec( i );
+        fd_str( "]" );
+        fd_describe( " ->", val );
+    }
+}
+
+/* walk the ELFv2 back chain; the LR a frame saved lives at offset 16 of its
+ * caller's frame, so each step reports who called the frame we are standing in */
+static void fd_backtrace( ULONG_PTR sp, ULONG_PTR lr )
+{
+    int depth;
+
+    fd_str( "  --- back chain ---\n" );
+    fd_describe( "lr  ", lr );
+    for (depth = 0; depth < 24; depth++)
+    {
+        ULONG_PTR next;
+        char lbl[8] = "#00 ";
+
+        if (!fd_readable( sp, 24 )) break;
+        next = *(ULONG_PTR *)sp;
+        if (!next || next <= sp) break;
+        if (!fd_readable( next, 24 )) break;
+        lbl[1] = '0' + depth / 10;
+        lbl[2] = '0' + depth % 10;
+        fd_describe( lbl, ((ULONG_PTR *)next)[2] );
+        sp = next;
+    }
+}
+
+static void faultdump( int signal, siginfo_t *siginfo, ucontext_t *context )
+{
+    static const char *names[32] = {
+        "r0 ","r1 ","r2 ","r3 ","r4 ","r5 ","r6 ","r7 ","r8 ","r9 ","r10","r11",
+        "r12","r13","r14","r15","r16","r17","r18","r19","r20","r21","r22","r23",
+        "r24","r25","r26","r27","r28","r29","r30","r31" };
+    ULONG_PTR nip = NIP_sig(context), lr = GPR_sig(PPC64_PT_LNK,context);
+    ULONG_PTR ctr = GPR_sig(PPC64_PT_CTR,context);
+    int i;
+
+    fd_read_maps();
+
+    fd_str( "\n=== FAULTDUMP pid=" );
+    fd_dec( getpid() );
+    fd_str( " tid=" );
+    fd_dec( syscall( SYS_gettid ) );
+    fd_str( " sig=" );
+    fd_dec( signal );
+    fd_str( " code=" );
+    if (siginfo->si_code < 0) { fd_str( "-" ); fd_dec( -(LONG_PTR)siginfo->si_code ); }
+    else fd_dec( siginfo->si_code );
+    fd_str( " trap=" );
+    fd_hex( TRAP_sig(context) );
+    fd_str( " dsisr=" );
+    fd_hex( DSISR_sig(context) );
+    fd_str( " ===\n" );
+
+    fd_describe( "si_addr", (ULONG_PTR)siginfo->si_addr );
+    fd_describe( "nip    ", nip );
+    fd_describe( "ctr    ", ctr );
+    fd_describe( "lr     ", lr );
+
+    fd_str( "  --- gprs ---\n" );
+    for (i = 0; i < 32; i++) fd_describe( names[i], GPR_sig(i,context) );
+
+    /* an indirect call through a bad pointer leaves the pointer in r12/ctr and
+     * the slot it was loaded from usually still addressable via r11 or r2 */
+    fd_str( "  --- r2 (TOC) window ---\n" );
+    fd_dump_words( "toc", GPR_sig(2,context) - 32, 8 );
+
+    fd_backtrace( SP_sig(context), lr );
+    fd_str( "=== END FAULTDUMP ===\n" );
+}
+
+static BOOL faultdump_enabled(void)
+{
+    static int cached = -1;
+    if (cached == -1)
+    {
+        const char *v = getenv( "WINE_FAULTDUMP" );
+        cached = (v && v[0] && v[0] != '0');
+    }
+    return cached;
+}
+
+
+/**********************************************************************
  *		segv_handler
  *
  * Handler for SIGSEGV, SIGBUS and SIGILL.
@@ -945,6 +1428,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     }
 
     if (handle_syscall_fault( data, context, &rec )) return;
+    if (faultdump_enabled()) faultdump( signal, siginfo, context );
     save_context( &ctx, context );
     setup_raise_exception( data, context, &rec, &ctx );
 }
@@ -1060,6 +1544,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
                              .ExceptionFlags = EXCEPTION_NONCONTINUABLE,
                              .ExceptionAddress = (void *)NIP_sig(context) };
 
+    if (faultdump_enabled()) faultdump( signal, siginfo, context );
     save_context( &ctx, context );
     setup_raise_exception( data, context, &rec, &ctx );
 }
@@ -1139,6 +1624,13 @@ void signal_init_process( TEB *teb )
     ppc64_unix_teb = teb;
     alloc_syscall_frame( sizeof(struct syscall_frame) );
     signal_alloc_thread( teb );
+
+    /* Debug aid: with kernel.yama.ptrace_scope=1 (the default) a sampler that
+     * is not an ancestor of this process cannot read /proc/<tid>/syscall or
+     * attach gdb.  WINE_ALLOW_PTRACE=1 opts this process in, so that
+     * probes/wine-snap.py can see where its threads are stuck. */
+    if (getenv( "WINE_ALLOW_PTRACE" ))
+        prctl( PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0 );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
@@ -1228,6 +1720,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "std 0, 16(1)\n\t"
                    "std 2, 24(1)\n\t"
                    "stdu 1, -0xd0(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0xd0\n\t")
+                   __ASM_CFI_ENTRY_FRAME_LINKAGE
                    "std 14, 0x40(1)\n\t"
                    "std 15, 0x48(1)\n\t"
                    "std 16, 0x50(1)\n\t"
@@ -1246,6 +1740,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "std 29, 0xb8(1)\n\t"
                    "std 30, 0xc0(1)\n\t"
                    "std 31, 0xc8(1)\n\t"
+                   __ASM_CFI_ENTRY_FRAME_GPRS
                    "addi 8, 1, 0xd0\n\t"            /* syscall_cfa */
                    /* set up the syscall frame */
                    "ld 9, 0x378(5)\n\t"             /* thread_data->syscall_frame */
@@ -1263,6 +1758,10 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mr 30, 5\n\t"
                    /* switch to the kernel stack */
                    "addi 1, 9, -0x60\n\t"
+                   /* r1 no longer describes this frame; frame->syscall_cfa
+                    * (just stored from r8) still does, and r31 holds the frame
+                    * from here through the dispatcher tail we branch into. */
+                   __ASM_CFI_CFA_IS_SYSCALL_CFA
                    "std 0, 0(1)\n\t"                /* back chain terminator */
                    "std 2, 24(1)\n\t"
                    "bl " __ASM_NAME("init_syscall_frame") "\n\t"
@@ -1297,6 +1796,11 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  * also what keeps the linker from interposing a "std r2,24(r1)" stub.
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   /* Until the kernel stack is entered below we are still on
+                    * the PE caller's frame, and PE code carries no unwind
+                    * information: an unwinder must stop here rather than walk
+                    * into it (or, with the CIE's empty rules, spin on us). */
+                   __ASM_CFI_RA_UNRECOVERABLE
                    "std 2, -24(1)\n\t"              /* red zone: the caller's TOC */
                    "addis 2, 12, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@ha\n\t"
                    "addi 2, 2, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@l\n\t"
@@ -1363,8 +1867,16 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "stfd 29, 0x238(31)\n\t"
                    "stfd 30, 0x240(31)\n\t"
                    "stfd 31, 0x248(31)\n\t"
-                   "mffs 31\n\t"                    /* f31 is saved, reuse it for FPSCR */
-                   "stfd 31, 0x128(31)\n\t"
+                   /* FPSCR.  This must go through a *volatile* FPR: the restore
+                    * path below only reloads f14-f31 when restore_flags carries
+                    * CONTEXT_FLOATING_POINT, which an ordinary syscall return
+                    * does not, so anything this leaves in a non-volatile FPR is
+                    * handed back to the caller.  f0 is volatile in ELFv2 and the
+                    * dispatcher is entered by an ordinary call, so the caller has
+                    * already written it off; f31 is not, and using it here silently
+                    * replaced the caller's f31 with the FPSCR on every syscall. */
+                   "mffs 31\n\t"                    /* GATE-SABOTAGE */
+                   "stfd 31, 0x128(31)\n\t"            /* GATE-SABOTAGE */
                    /* non-volatile VRs; stvx needs an index register, and r11 is
                     * free now that the syscall id is in the frame */
                    "li 11, 0x390\n\t"               /* 0x250 + 20*16 */
@@ -1394,6 +1906,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* switch to the kernel stack: the frame sits at the top of it */
                    "ld 0, 0x008(31)\n\t"
                    "addi 1, 31, -0x60\n\t"
+                   /* Stitch the unwind onto the last unix-side frame.  Everything
+                    * called from here (the syscall handlers, and so exit_thread ->
+                    * pthread_exit -> forced unwind) unwinds through this rule; r1
+                    * is useless for it, since the frame moves again for stack
+                    * arguments and the frames below are PE. */
+                   __ASM_CFI_STITCH_TO_ENTRY_FRAME
                    "std 0, 0(1)\n\t"                /* back chain into the user stack */
                    /* look the syscall up */
                    "lwz 11, 0x134(31)\n\t"          /* syscall id */
@@ -1563,8 +2081,18 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mtcr 16\n\t"
                    "ld 16, 0x118(31)\n\t"           /* frame->xer */
                    "mtxer 16\n\t"
-                   "ld 16, 0x120(31)\n\t"           /* frame->pc */
+                   "ld 16, 0x108(31)\n\t"           /* frame->ctr -- the user's */
                    "mtctr 16\n\t"
+                   /* The resume address goes in TAR, not CTR.  CTR carries the
+                    * user's own value, and on ppc64 GCC keeps counted-loop state
+                    * there (bdnz), so branching through CTR silently rewrites the
+                    * loop counter of any code resumed by a handler returning
+                    * EXCEPTION_CONTINUE_EXECUTION -- guard-page and lazy-commit
+                    * handlers being exactly the pattern that does this.
+                    * TAR is ISA 2.07, so this is POWER8-safe.  TAR itself is not
+                    * preserved across the resume; CONTEXT has no field for it. */
+                   "ld 16, 0x120(31)\n\t"           /* frame->pc */
+                   "mtspr 815, 16\n\t"              /* 815 = TAR */
                    "ld 2, 0x010(31)\n\t"
                    "ld 14, 0x070(31)\n\t"
                    "ld 15, 0x078(31)\n\t"
@@ -1585,7 +2113,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ld 30, 0x0f0(31)\n\t"
                    "ld 1, 0x008(31)\n\t"            /* back to the user stack */
                    "ld 31, 0x0f8(31)\n\t"
-                   "bctr\n"
+                   "bctar 20, 0, 0\n"
 
                    __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
                    /* Spill the register arguments into frame->gpr[3..10], which
@@ -1654,6 +2182,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
                    "addis 2, 12, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher_return") "@ha\n\t"
                    "addi 2, 2, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher_return") "@l\n\t"
                    "addi 1, 31, -0x60\n\t"
+                   __ASM_CFI_STITCH_TO_ENTRY_FRAME
                    "li 0, 0\n\t"
                    "std 0, 0(1)\n\t"
                    "ld 30, 0x148(31)\n\t"           /* frame->teb */
@@ -1673,6 +2202,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    /* r3 = handle, r4 = code, r5 = args */
+                   __ASM_CFI_RA_UNRECOVERABLE       /* PE caller, see the dispatcher above */
                    "std 2, -8(1)\n\t"               /* red zone: stash the caller's TOC */
                    "addis 2, 12, .TOC.-" __ASM_NAME("__wine_unix_call_dispatcher") "@ha\n\t"
                    "addi 2, 2, .TOC.-" __ASM_NAME("__wine_unix_call_dispatcher") "@l\n\t"
@@ -1738,8 +2268,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "stfd 29, 0x238(31)\n\t"
                    "stfd 30, 0x240(31)\n\t"
                    "stfd 31, 0x248(31)\n\t"
-                   "mffs 31\n\t"
-                   "stfd 31, 0x128(31)\n\t"
+                   /* FPSCR through a volatile FPR -- see __wine_syscall_dispatcher */
+                   "mffs 31\n\t"                    /* GATE-SABOTAGE */
+                   "stfd 31, 0x128(31)\n\t"            /* GATE-SABOTAGE */
                    "li 11, 0x390\n\t"
                    "stvx 20, 31, 11\n\t"
                    "addi 11, 11, 16\n\t"
@@ -1770,6 +2301,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "mr 3, 5\n\t"
                    "ld 0, 0x008(31)\n\t"
                    "addi 1, 31, -0x60\n\t"
+                   __ASM_CFI_STITCH_TO_ENTRY_FRAME
                    "std 0, 0(1)\n\t"
                    "std 2, 24(1)\n\t"
                    "mtctr 12\n\t"

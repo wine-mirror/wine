@@ -165,4 +165,90 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "ldp x29, x30, [SP], #16\n\t"
                    "ret" )
 
+#elif defined __powerpc64__
+
+/* ELFv2: r3 = wrapper, r4 = nargs, r5 = args.
+ *
+ * The __ASM_CFI() directives are load-bearing, not decoration.  __ASM_GLOBAL_FUNC
+ * wraps this in .cfi_startproc/.cfi_endproc unconditionally, so without them the
+ * assembler emits an *empty* FDE: one that says the CFA is the current r1 and
+ * that the return address is still in lr, which is false for every instruction
+ * after the stdu below.  A forced unwind (pthread_exit, cancellation) that
+ * reaches such a frame never advances and spins forever -- and this wrapper is
+ * on an OpenMP worker thread's stack by construction, with user code above it.
+ * Having no FDE at all would be safe (libgcc reports END_OF_STACK); having an
+ * empty one is not.  probes/empty-fde-scan.py finds frames in this state.
+ *
+ * The first eight arguments go in r3-r10 and every argument also gets a slot in
+ * the parameter save area at 32(r1) of the frame that is live at the call, so
+ * build that area, copy all nargs words into it, then load the first eight back
+ * out of it. The area is always given at least 64 bytes so the eight loads are
+ * in bounds even when nargs is smaller.
+ *
+ * r12 must hold the target address: the callee may be a global entry point that
+ * derives its TOC from r12. The caller's TOC is saved in the caller's frame at
+ * 24(r1) -- the slot the ABI reserves for exactly this -- because the callee is
+ * free to leave r2 pointing at its own module. */
+__ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"          /* LR into the caller's frame */
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
+                   "std 2, 24(1)\n\t"          /* TOC into the caller's frame */
+                   "stdu 1, -48(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 48\n\t")
+                   "std 31, 32(1)\n\t"
+                   __ASM_CFI(".cfi_offset 31, -16\n\t")
+                   "mr 31, 1\n\t"              /* remember our fixed frame */
+                   /* From here r1 moves by an amount only known at run time
+                    * (the stdux below), so the CFA has to be expressed against
+                    * r31 instead -- otherwise the FDE describes the wrong frame
+                    * for the whole body, including the callee's execution. */
+                   __ASM_CFI(".cfi_def_cfa_register 31\n\t")
+
+                   "mr 12, 3\n\t"              /* target address */
+                   "mr 11, 5\n\t"              /* args */
+                   "extsw 4, 4\n\t"            /* nargs is an int */
+
+                   /* frame = 32 (linkage) + max( nargs * 8, 64 ), rounded to 16 */
+                   "sldi 10, 4, 3\n\t"
+                   "cmpdi 10, 64\n\t"
+                   "bge 1f\n\t"
+                   "li 10, 64\n"
+                   "1:\taddi 10, 10, 32+15\n\t"
+                   "rldicr 10, 10, 0, 59\n\t"
+                   "neg 10, 10\n\t"
+                   "stdux 1, 1, 10\n\t"        /* allocate, writing the back chain */
+
+                   /* copy the arguments into the parameter save area */
+                   "cmpwi 4, 0\n\t"
+                   "beq 3f\n\t"
+                   "mtctr 4\n\t"
+                   "addi 9, 1, 24\n\t"         /* &param_save_area[0] - 8 */
+                   "addi 11, 11, -8\n"
+                   "2:\tldu 0, 8(11)\n\t"
+                   "stdu 0, 8(9)\n\t"
+                   "bdnz 2b\n"
+
+                   "3:\tld 3, 32(1)\n\t"
+                   "ld 4, 40(1)\n\t"
+                   "ld 5, 48(1)\n\t"
+                   "ld 6, 56(1)\n\t"
+                   "ld 7, 64(1)\n\t"
+                   "ld 8, 72(1)\n\t"
+                   "ld 9, 80(1)\n\t"
+                   "ld 10, 88(1)\n\t"
+                   "mtctr 12\n\t"
+                   "bctrl\n\t"
+
+                   "mr 1, 31\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 1\n\t")
+                   "ld 31, 32(1)\n\t"
+                   __ASM_CFI(".cfi_restore 31\n\t")
+                   "addi 1, 1, 48\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
+                   "ld 0, 16(1)\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
+
 #endif

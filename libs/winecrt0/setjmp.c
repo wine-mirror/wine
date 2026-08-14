@@ -300,30 +300,36 @@ __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "stfd 29, 304(3)\n\t"
                    "stfd 30, 312(3)\n\t"
                    "stfd 31, 320(3)\n\t"    /* FP31 */
-                   "li   0, 336\n\t"        /* v20-v31, non-volatile in ELFv2 */
-                   "stvx 20, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 21, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 22, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 23, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 24, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 25, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 26, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 27, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 28, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 29, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 30, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "stvx 31, 3, 0\n\t"
+                   /* v20-v31, non-volatile in ELFv2.  The index register must
+                    * not be r0: "addi 0,0,16" is not "r0 += 16", because addi
+                    * reads RA=0 as the literal zero, so it assembles to li 0,16
+                    * and every store after the first landed at buf+16 -- on top
+                    * of the GPR15 and GPR16 slots.  r11 is volatile in ELFv2 and
+                    * has no other role here. */
+                   "li  11, 336\n\t"
+                   "stvx 20, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 21, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 22, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 23, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 24, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 25, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 26, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 27, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 28, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 29, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 30, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "stvx 31, 3, 11\n\t"
                    "li 3, 0\n\t"            /* return 0 */
                    "blr" )
 
@@ -346,6 +352,21 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "ld 29, 128(3)\n\t"
                    "ld 30, 136(3)\n\t"
                    "ld 31, 144(3)\n\t"      /* GPR31 */
+                   /* From here on this frame is a lie: r1 becomes the *target*
+                    * frame's stack pointer and mtlr overwrites the return
+                    * address, so the empty FDE __ASM_GLOBAL_FUNC would otherwise
+                    * leave behind ("CFA = current r1, return address still in
+                    * lr") describes a frame identical to this one.  glibc's
+                    * forced unwind (pthread_exit, cancellation) steps such a
+                    * frame forever, burning a core while the join still
+                    * succeeds -- measured for the same FDE class in
+                    * __wine_syscall_dispatcher, probes/check-thread-exit-spin.sh.
+                    * There is no honest caller to unwind to in the middle of a
+                    * longjmp, so say so: .cfi_undefined on the return address
+                    * column makes libgcc report END_OF_STACK, which glibc
+                    * handles by longjmp'ing to the thread's exit point.
+                    * probes/empty-fde-scan.py gates this. */
+                   __ASM_CFI(".cfi_undefined 65\n\t")
                    "ld  1, 152(3)\n\t"      /* SP */
                    "ld  2, 160(3)\n\t"      /* TOC */
                    "lwz  0, 168(3)\n\t"     /* CR (32-bit) */
@@ -370,30 +391,30 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "lfd 29, 304(3)\n\t"
                    "lfd 30, 312(3)\n\t"
                    "lfd 31, 320(3)\n\t"     /* FP31 */
-                   "li   0, 336\n\t"        /* v20-v31 */
-                   "lvx 20, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 21, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 22, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 23, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 24, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 25, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 26, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 27, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 28, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 29, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 30, 3, 0\n\t"
-                   "addi 0, 0, 16\n\t"
-                   "lvx 31, 3, 0\n\t"
+                   "li  11, 336\n\t"        /* v20-v31; see __wine_setjmpex on r11 */
+                   "lvx 20, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 21, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 22, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 23, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 24, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 25, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 26, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 27, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 28, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 29, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 30, 3, 11\n\t"
+                   "addi 11, 11, 16\n\t"
+                   "lvx 31, 3, 11\n\t"
                    "mr 3, 4\n\t"            /* return retval */
                    "blr" )
 

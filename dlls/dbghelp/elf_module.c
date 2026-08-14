@@ -131,6 +131,7 @@ static DWORD elf_get_machine(unsigned mach)
     case /*EM_386*/       3: return IMAGE_FILE_MACHINE_I386;
     case /*EM_ARM*/      40: return IMAGE_FILE_MACHINE_ARMNT;
     case /*EM_X86_64*/   62: return IMAGE_FILE_MACHINE_AMD64;
+    case /*EM_PPC64*/    21: return IMAGE_FILE_MACHINE_POWERPC64;
     case /*EM_AARCH64*/ 183: return IMAGE_FILE_MACHINE_ARM64;
     }
 }

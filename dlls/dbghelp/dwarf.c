@@ -3217,8 +3217,12 @@ enum reg_rule
     RULE_VAL_EXPRESSION  /* value specified by expression */
 };
 
-/* make it large enough for all CPUs */
-#define NB_FRAME_REGS 64
+/* make it large enough for all CPUs.
+ * PowerPC64 needs more than 64: its DWARF numbering puts lr (which is also the
+ * return address column, so rules[] is indexed with it) at 65, ctr at 66,
+ * cr0-cr7 at 68-75, xer at 76, v0-v31 at 77-108 and vrsave/vscr at 109/110.
+ * At 64 entries, dwarf2_virtual_unwind() indexed rules[65] out of bounds. */
+#define NB_FRAME_REGS 112
 #define MAX_SAVED_STATES 16
 
 struct frame_state
@@ -3321,7 +3325,22 @@ static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info*
     case 3:
         info->code_align = dwarf2_leb128_as_unsigned(ctx);
         info->data_align = dwarf2_leb128_as_signed(ctx);
-        info->retaddr_reg = version == 1 ? dwarf2_parse_byte(ctx) :dwarf2_leb128_as_unsigned(ctx);
+        {
+            ULONG_PTR retaddr_reg = version == 1 ? dwarf2_parse_byte(ctx) : dwarf2_leb128_as_unsigned(ctx);
+
+            /* state.rules[]/regs[] are indexed with this column, unchecked, in
+             * dwarf2_virtual_unwind() and compute_call_frame_cfa(); a CIE naming
+             * a column we do not track has to be rejected here rather than read
+             * past the end of struct frame_state.  (It also does not fit the
+             * unsigned char below: ppc64's return address column is 65, but
+             * nothing bounds what a producer may write.) */
+            if (retaddr_reg >= NB_FRAME_REGS)
+            {
+                FIXME("unsupported return address column %Iu at %p\n", retaddr_reg, ctx->data);
+                return FALSE;
+            }
+            info->retaddr_reg = retaddr_reg;
+        }
         break;
     default:
         ;
@@ -3674,10 +3693,14 @@ static void execute_cfa_instructions(struct module* module, dwarf2_traverse_cont
 static DWORD64 get_context_reg(const struct module* module, struct cpu_stack_walk *csw, union ctx *context,
     ULONG_PTR dw_reg)
 {
-    unsigned regno = csw->cpu->map_dwarf_register(dw_reg, module, TRUE), sz;
+    unsigned regno = csw->cpu->map_dwarf_register(dw_reg, module, TRUE), sz = 0;
     void* ptr = csw->cpu->fetch_context_reg(context, regno, &sz);
 
     if (csw->cpu != module->cpu) FIXME("mismatch in cpu\n");
+    /* not every dwarf register has storage in a CONTEXT (ppc64: the cr fields
+     * and the vector registers, both of which gcc emits rules for in ordinary
+     * code); fetch_context_reg() returns NULL for those */
+    if (!ptr) return 0;
     if (sz == 8)
         return *(DWORD64 *)ptr;
     else if (sz == 4)
@@ -3691,10 +3714,18 @@ static DWORD64 get_context_reg(const struct module* module, struct cpu_stack_wal
 static void set_context_reg(const struct module* module, struct cpu_stack_walk* csw, union ctx *context,
     ULONG_PTR dw_reg, ULONG_PTR val, BOOL isdebuggee)
 {
-    unsigned regno = csw->cpu->map_dwarf_register(dw_reg, module, TRUE), sz;
+    unsigned regno = csw->cpu->map_dwarf_register(dw_reg, module, TRUE), sz = 0;
     ULONG_PTR* ptr = csw->cpu->fetch_context_reg(context, regno, &sz);
 
     if (csw->cpu != module->cpu) FIXME("mismatch in cpu\n");
+    /* a register with no CONTEXT storage: dropping the rule is the only option,
+     * and is what the unwinders do.  Without this the memcpy() below wrote
+     * through a NULL pointer with a size that fetch_context_reg() never set. */
+    if (!ptr || !sz)
+    {
+        WARN("Cannot assign to register %Iu/%u\n", dw_reg, regno);
+        return;
+    }
     if (isdebuggee)
     {
         char    tmp[16];
@@ -3727,12 +3758,17 @@ static void copy_context_reg(const struct module* module, struct cpu_stack_walk 
     union ctx *dstcontext, ULONG_PTR dwregdst,
     union ctx *srccontext, ULONG_PTR dwregsrc)
 {
-    unsigned regdstno = csw->cpu->map_dwarf_register(dwregdst, module, TRUE), szdst;
-    unsigned regsrcno = csw->cpu->map_dwarf_register(dwregsrc, module, TRUE), szsrc;
+    unsigned regdstno = csw->cpu->map_dwarf_register(dwregdst, module, TRUE), szdst = 0;
+    unsigned regsrcno = csw->cpu->map_dwarf_register(dwregsrc, module, TRUE), szsrc = 0;
     ULONG_PTR* ptrdst = csw->cpu->fetch_context_reg(dstcontext, regdstno, &szdst);
     ULONG_PTR* ptrsrc = csw->cpu->fetch_context_reg(srccontext, regsrcno, &szsrc);
 
     if (csw->cpu != module->cpu) FIXME("mismatch in cpu\n");
+    if (!ptrdst || !ptrsrc || !szdst)
+    {
+        WARN("Cannot copy register %Iu/%u => %Iu/%u\n", dwregsrc, regsrcno, dwregdst, regdstno);
+        return;
+    }
     if (szdst != szsrc)
     {
         FIXME("Cannot copy register %Iu/%u => %Iu/%u because of size mismatch (%u => %u)\n",
@@ -3996,8 +4032,14 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
     /* if at very beginning of function, return and use default unwinder */
     if (ip == info.ip) return FALSE;
 
-    /* if there is no information about retaddr, use default unwinder */
-    if (info.state.rules[info.retaddr_reg] == RULE_UNSET) return FALSE;
+    /* if there is no information about retaddr, use default unwinder.
+     * RULE_UNDEFINED counts as no information: DW_CFA_undefined on the return
+     * address column is how asm declares "the caller cannot be reached from
+     * here" (the ppc64 syscall dispatchers do, where the frame above is PE code
+     * with no unwind data at all), and applying it would leave the previous
+     * frame's value in place and report it as a caller. */
+    if (info.state.rules[info.retaddr_reg] == RULE_UNSET ||
+        info.state.rules[info.retaddr_reg] == RULE_UNDEFINED) return FALSE;
 
     apply_frame_state(pair.effective, csw, context, &info.state, cfa);
 

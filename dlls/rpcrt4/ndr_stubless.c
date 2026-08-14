@@ -990,8 +990,19 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
  * before pushing our own frame makes the whole argument list contiguous from
  * there on, with any ninth-and-later argument already in place.  24(r1) is the
  * caller's own TOC save slot and is left alone; 16(r1) is the LR save slot,
- * which is ours to write. */
+ * which is ours to write.
+ *
+ * The __ASM_CFI() directives are required: __ASM_GLOBAL_FUNC always emits
+ * .cfi_startproc/.cfi_endproc, and with nothing between them the FDE is empty,
+ * which tells every unwinder that the CFA is the current r1 and that the return
+ * address is still in lr -- both false from the stdu onwards, and this frame is
+ * live for the whole of the call below.  probes/empty-fde-scan.py finds frames
+ * in that state; see dlls/vcomp/fork.c for the same fix and why it matters. */
 __ASM_GLOBAL_FUNC( NdrClientCall2,
+                   /* these are reached from MIDL client stubs in other
+                    * modules, and the "bl" below lands on a local entry
+                    * point that assumes rpcrt4's TOC is already in r2 */
+                   __ASM_PPC64_GLOBAL_ENTRY(NdrClientCall2)
                    "std 3, 32(1)\n\t"
                    "std 4, 40(1)\n\t"
                    "std 5, 48(1)\n\t"
@@ -1002,13 +1013,16 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "std 10, 88(1)\n\t"
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "stdu 1, -0x60(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x60\n\t")
                    "addi 5, 1, 0x90\n\t"    /* stack: &args[2] */
                    "li 6, 0\n\t"            /* fpu_stack */
                    "std 2, 24(1)\n\t"
                    "bl " __ASM_NAME("NdrpClientCall2") "\n\t"
                    "ld 2, 24(1)\n\t"
                    "addi 1, 1, 0x60\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
                    "ld 0, 16(1)\n\t"
                    "mtlr 0\n\t"
                    "blr" )
@@ -1848,6 +1862,10 @@ cleanup:
 
 #ifdef __powerpc64__
 __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   /* these are reached from MIDL client stubs in other
+                    * modules, and the "bl" below lands on a local entry
+                    * point that assumes rpcrt4's TOC is already in r2 */
+                   __ASM_PPC64_GLOBAL_ENTRY(NdrAsyncClientCall)
                    "std 3, 32(1)\n\t"
                    "std 4, 40(1)\n\t"
                    "std 5, 48(1)\n\t"
@@ -1858,13 +1876,16 @@ __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
                    "std 10, 88(1)\n\t"
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "stdu 1, -0x60(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x60\n\t")
                    "addi 5, 1, 0x90\n\t"    /* stack: &args[2] */
                    "li 6, 0\n\t"            /* fpu_stack */
                    "std 2, 24(1)\n\t"
                    "bl " __ASM_NAME("ndr_async_client_call") "\n\t"
                    "ld 2, 24(1)\n\t"
                    "addi 1, 1, 0x60\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
                    "ld 0, 16(1)\n\t"
                    "mtlr 0\n\t"
                    "blr" )
@@ -2249,6 +2270,10 @@ LONG_PTR CDECL ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
 
 #ifdef __powerpc64__
 __ASM_GLOBAL_FUNC( NdrClientCall3,
+                   /* these are reached from MIDL client stubs in other
+                    * modules, and the "bl" below lands on a local entry
+                    * point that assumes rpcrt4's TOC is already in r2 */
+                   __ASM_PPC64_GLOBAL_ENTRY(NdrClientCall3)
                    "std 3, 32(1)\n\t"
                    "std 4, 40(1)\n\t"
                    "std 5, 48(1)\n\t"
@@ -2259,12 +2284,15 @@ __ASM_GLOBAL_FUNC( NdrClientCall3,
                    "std 10, 88(1)\n\t"
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "stdu 1, -0x60(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x60\n\t")
                    "addi 6, 1, 0x98\n\t"    /* stack: &args[3] */
                    "std 2, 24(1)\n\t"
                    "bl " __ASM_NAME("ndr64_client_call") "\n\t"
                    "ld 2, 24(1)\n\t"
                    "addi 1, 1, 0x60\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
                    "ld 0, 16(1)\n\t"
                    "mtlr 0\n\t"
                    "blr" )
@@ -2339,6 +2367,10 @@ LONG_PTR CDECL ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
 
 #ifdef __powerpc64__
 __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
+                   /* these are reached from MIDL client stubs in other
+                    * modules, and the "bl" below lands on a local entry
+                    * point that assumes rpcrt4's TOC is already in r2 */
+                   __ASM_PPC64_GLOBAL_ENTRY(Ndr64AsyncClientCall)
                    "std 3, 32(1)\n\t"
                    "std 4, 40(1)\n\t"
                    "std 5, 48(1)\n\t"
@@ -2349,13 +2381,16 @@ __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
                    "std 10, 88(1)\n\t"
                    "mflr 0\n\t"
                    "std 0, 16(1)\n\t"
+                   __ASM_CFI(".cfi_offset 65, 16\n\t")
                    "stdu 1, -0x60(1)\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0x60\n\t")
                    "addi 6, 1, 0x98\n\t"    /* stack: &args[3] */
                    "li 7, 0\n\t"            /* fpu_stack */
                    "std 2, 24(1)\n\t"
                    "bl " __ASM_NAME("ndr64_async_client_call") "\n\t"
                    "ld 2, 24(1)\n\t"
                    "addi 1, 1, 0x60\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
                    "ld 0, 16(1)\n\t"
                    "mtlr 0\n\t"
                    "blr" )

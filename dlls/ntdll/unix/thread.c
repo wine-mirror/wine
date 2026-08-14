@@ -203,6 +203,15 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_ARM64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
         break;
+    case IMAGE_FILE_MACHINE_POWERPC64:
+        flags = ((const PPC64_NT_CONTEXT *)context)->ContextFlags & ~CONTEXT_PPC64;
+        if (flags & CONTEXT_PPC64_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_PPC64_INTEGER) ret |= SERVER_CTX_INTEGER;
+        /* VMX shares the server's fp block (vr/vscr/vrsave live beside fpr). */
+        if (flags & (CONTEXT_PPC64_FLOATING_POINT | CONTEXT_PPC64_VECTOR))
+            ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_PPC64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+        break;
     }
     if (flags & CONTEXT_EXCEPTION_REQUEST) ret |= SERVER_CTX_EXEC_SPACE;
     return ret;
@@ -614,6 +623,65 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bvr[i] = from->Bvr[i];
             for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wcr[i] = from->Wcr[i];
             for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wvr[i] = from->Wvr[i];
+        }
+        exception_request_flags_to_server( to, flags );
+        return STATUS_SUCCESS;
+    }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_POWERPC64, IMAGE_FILE_MACHINE_POWERPC64 ):
+    {
+        const PPC64_NT_CONTEXT *from = src;
+        const DWORD64 *gpr = &from->Gpr0;
+
+        flags = from->ContextFlags & ~CONTEXT_PPC64;
+        if (flags & CONTEXT_PPC64_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->ctl.powerpc64_regs.iar   = from->Iar;
+            to->ctl.powerpc64_regs.msr   = from->Msr;
+            to->ctl.powerpc64_regs.ctr   = from->Ctr;
+            to->ctl.powerpc64_regs.lr    = from->Lr;
+            to->ctl.powerpc64_regs.dar   = from->Dar;
+            to->ctl.powerpc64_regs.dsisr = from->Dsisr;
+            to->ctl.powerpc64_regs.trap  = from->Trap;
+            /* Gpr1 is the stack pointer, so it belongs to the control block --
+             * ctl.powerpc64_regs.gpr1 is where every other machine keeps its sp
+             * (x86_64 rsp, arm64 sp).  It is also still gpr[1] of the integer
+             * block below; the two agree whenever both blocks are sent, and the
+             * control copy is the one that makes CONTROL-only requests whole. */
+            to->ctl.powerpc64_regs.gpr1  = from->Gpr1;
+        }
+        if (flags & CONTEXT_PPC64_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            for (i = 0; i < 32; i++) to->integer.powerpc64_regs.gpr[i] = gpr[i];
+            to->integer.powerpc64_regs.cr  = from->Cr;
+            to->integer.powerpc64_regs.xer = from->Xer;
+        }
+        if (flags & CONTEXT_PPC64_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            for (i = 0; i < 32; i++) to->fp.powerpc64_regs.fpr[i] = (&from->Fpr0)[i];
+            /* Fpscr is a double in CONTEXT and an integer on the wire: it is a
+             * 64-bit register, not a number, so reinterpret rather than convert
+             * -- a cast would round the bit pattern to garbage. */
+            memcpy( &to->fp.powerpc64_regs.fpscr, &from->Fpscr, sizeof(to->fp.powerpc64_regs.fpscr) );
+        }
+        if (flags & CONTEXT_PPC64_VECTOR)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            for (i = 0; i < 32; i++)
+            {
+                to->fp.powerpc64_regs.vr[i].low  = from->Vr[i].Low;
+                to->fp.powerpc64_regs.vr[i].high = from->Vr[i].High;
+            }
+            to->fp.powerpc64_regs.vscr   = from->Vscr;
+            to->fp.powerpc64_regs.vrsave = from->Vrsave;
+        }
+        if (flags & CONTEXT_PPC64_DEBUG_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+            for (i = 0; i < 8; i++) to->debug.powerpc64_regs.dr[i] = (&from->Dr0)[i];
         }
         exception_request_flags_to_server( to, flags );
         return STATUS_SUCCESS;
@@ -1037,6 +1105,76 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm64_regs.wvr[i];
         }
         exception_request_flags_from_server( &to->ContextFlags, from );
+        return STATUS_SUCCESS;
+    }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_POWERPC64, IMAGE_FILE_MACHINE_POWERPC64 ):
+    {
+        PPC64_NT_CONTEXT *to = dst;
+        DWORD64 *gpr = &to->Gpr0;
+
+        to_flags = to->ContextFlags & ~CONTEXT_PPC64;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_PPC64_CONTROL))
+        {
+            to->ContextFlags |= CONTEXT_PPC64_CONTROL;
+            to->Iar   = from->ctl.powerpc64_regs.iar;
+            to->Msr   = from->ctl.powerpc64_regs.msr;
+            to->Ctr   = from->ctl.powerpc64_regs.ctr;
+            to->Lr    = from->ctl.powerpc64_regs.lr;
+            to->Dar   = from->ctl.powerpc64_regs.dar;
+            to->Dsisr = from->ctl.powerpc64_regs.dsisr;
+            to->Trap  = from->ctl.powerpc64_regs.trap;
+            to->Gpr1  = from->ctl.powerpc64_regs.gpr1;
+        }
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_PPC64_INTEGER))
+        {
+            to->ContextFlags |= CONTEXT_PPC64_INTEGER;
+            for (i = 0; i < 32; i++)
+            {
+                /* gpr[1] is the stack pointer, and the control block owns it.
+                 * The two copies agree whenever a single context_to_server()
+                 * wrote both blocks, but a CONTROL-only set updates only the
+                 * control block, so the integer block's copy can be stale --
+                 * and this loop runs after the control block above, so without
+                 * this the stale copy would win and a CONTROL-only stack
+                 * pointer change would be invisible to the next full read. */
+                if (i == 1 && (from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_PPC64_CONTROL))
+                    continue;
+                gpr[i] = from->integer.powerpc64_regs.gpr[i];
+            }
+            to->Cr  = from->integer.powerpc64_regs.cr;
+            to->Xer = from->integer.powerpc64_regs.xer;
+        }
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_PPC64_FLOATING_POINT))
+        {
+            to->ContextFlags |= CONTEXT_PPC64_FLOATING_POINT;
+            for (i = 0; i < 32; i++) (&to->Fpr0)[i] = from->fp.powerpc64_regs.fpr[i];
+            /* Bit pattern, not a value -- see the to_server side. */
+            memcpy( &to->Fpscr, &from->fp.powerpc64_regs.fpscr, sizeof(to->Fpscr) );
+        }
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_PPC64_VECTOR))
+        {
+            to->ContextFlags |= CONTEXT_PPC64_VECTOR;
+            for (i = 0; i < 32; i++)
+            {
+                to->Vr[i].Low  = from->fp.powerpc64_regs.vr[i].low;
+                to->Vr[i].High = from->fp.powerpc64_regs.vr[i].high;
+            }
+            to->Vscr   = from->fp.powerpc64_regs.vscr;
+            to->Vrsave = from->fp.powerpc64_regs.vrsave;
+        }
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_PPC64_DEBUG_REGISTERS))
+        {
+            to->ContextFlags |= CONTEXT_PPC64_DEBUG_REGISTERS;
+            for (i = 0; i < 8; i++) (&to->Dr0)[i] = from->debug.powerpc64_regs.dr[i];
+        }
+        /* ContextFlags is DWORD64 here, unlike every other machine, so it cannot
+         * be passed by address to the shared DWORD-based helper. */
+        {
+            DWORD ctx_flags = to->ContextFlags;
+            exception_request_flags_from_server( &ctx_flags, from );
+            to->ContextFlags = ctx_flags;
+        }
         return STATUS_SUCCESS;
     }
 
@@ -1929,6 +2067,16 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
     {
         ret = context_from_server( context, &server_contexts[0], machine );
         if (!ret && count > 1) ret = context_from_server( context, &server_contexts[1], machine );
+    }
+    else if (!ret && flags)
+    {
+        /* We asked the server for registers and it returned no context blocks at
+         * all, so the caller's buffer was never written.  Returning success here
+         * hands back whatever happened to be in that buffer, with no way for the
+         * caller to tell -- which is exactly how a machine with no arm in
+         * get_server_context_flags() (flags == 0, so a zero-length reply) used to
+         * fail silently.  Fail loudly instead. */
+        ret = STATUS_UNSUCCESSFUL;
     }
     return ret;
 }

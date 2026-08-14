@@ -219,6 +219,24 @@ static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
     apc_count++;
 }
 
+/* Everything from here down to the end of the aarch64 branch far below is one
+ * four-way per-architecture ladder (i386 / x86_64 / arm / aarch64). Each arm
+ * defines the same eight tests:
+ *
+ *   run_rtlraiseexception_test()  test_rtlraiseexception()
+ *   test_debug_service()          test_debugger()
+ *   test_thread_context()         test_KiUserExceptionDispatcher()
+ *   test_KiUserApcDispatcher()    test_KiUserCallbackDispatcher()
+ *
+ * and there is no arm for PowerPC64, so on this port they do not exist at all.
+ * main() calls them unconditionally, which is what stopped this file from
+ * compiling. Guard those calls on HAVE_ARCH_TESTS so that the (much larger)
+ * architecture-independent part of the suite can be built and run; the guarded
+ * calls announce themselves with skip() rather than vanishing silently. */
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
+#define HAVE_ARCH_TESTS
+#endif
+
 #if defined(__i386__) || defined(__x86_64__)
 static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, enum debugger_stages stage)
 {
@@ -9928,6 +9946,16 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %p\n", (void *)rec->ExceptionInformation[0]);
     context->Pc += 4;
+#elif defined(__powerpc64__)
+    /* setup_raise_exception() in ntdll backs Iar up onto the trap instruction
+     * before dispatching, so the handler is what steps over it -- the same
+     * contract as arm64, and the reason this test is worth having here. */
+    ok(context->Iar == (DWORD_PTR)code_mem, "expected pc = %p, got %p\n", code_mem, (void *)context->Iar);
+    ok(rec->ExceptionAddress == code_mem, "expected address %p, got %p\n", code_mem, rec->ExceptionAddress);
+    ok(rec->NumberParameters == 1, "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 0,
+       "got ExceptionInformation[0] = %p\n", (void *)rec->ExceptionInformation[0]);
+    context->Iar += 4;
 #endif
 
     breakpoint_exceptions++;
@@ -9940,6 +9968,8 @@ static const BYTE breakpoint_code[] = { 0xcd, 0x03, 0xc3 };   /* int $0x3; ret *
 static const DWORD breakpoint_code[] = { 0xdefe, 0x4770 };  /* udf #0xfe; bx lr */
 #elif defined(__aarch64__)
 static const DWORD breakpoint_code[] = { 0xd43e0000, 0xd65f03c0 };  /* brk #0xf000; ret */
+#elif defined(__powerpc64__)
+static const DWORD breakpoint_code[] = { 0x7fe00008, 0x4e800020 };  /* trap; blr */
 #endif
 
 static void test_breakpoint(DWORD numexc)
@@ -9950,6 +9980,11 @@ static void test_breakpoint(DWORD numexc)
     memcpy(code_mem, breakpoint_code, sizeof(breakpoint_code));
 #ifdef __arm__
     func = (void *)((char *)code_mem + 1);  /* thumb */
+#endif
+#ifdef __powerpc64__
+    /* PowerPC's instruction cache is not coherent with the data cache: without
+     * an explicit flush the CPU may fetch whatever was in code_mem before. */
+    __builtin___clear_cache((char *)code_mem, (char *)code_mem + sizeof(breakpoint_code));
 #endif
     vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &breakpoint_handler);
     ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
@@ -12862,6 +12897,7 @@ START_TEST(exception)
             return;
         }
 
+#ifdef HAVE_ARCH_TESTS
         if (pRtlRaiseException)
         {
             test_stage = STAGE_RTLRAISE_NOT_HANDLED;
@@ -12874,6 +12910,9 @@ START_TEST(exception)
             run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
         }
         else skip( "RtlRaiseException not found\n" );
+#else
+        skip( "no run_rtlraiseexception_test() for this architecture\n" );
+#endif
 
         test_stage = STAGE_OUTPUTDEBUGSTRINGA_CONTINUE;
 
@@ -12890,10 +12929,14 @@ START_TEST(exception)
         test_ripevent(0);
         test_stage = STAGE_RIPEVENT_NOT_HANDLED;
         test_ripevent(1);
+#ifdef HAVE_ARCH_TESTS
         test_stage = STAGE_SERVICE_CONTINUE;
         test_debug_service(0);
         test_stage = STAGE_SERVICE_NOT_HANDLED;
         test_debug_service(1);
+#else
+        skip( "no test_debug_service() for this architecture\n" );
+#endif
         test_stage = STAGE_BREAKPOINT_CONTINUE;
         test_breakpoint(0);
         test_stage = STAGE_BREAKPOINT_NOT_HANDLED;
@@ -13000,6 +13043,7 @@ START_TEST(exception)
 
 #endif
 
+#ifdef HAVE_ARCH_TESTS
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
     test_KiUserCallbackDispatcher();
@@ -13009,6 +13053,11 @@ START_TEST(exception)
     test_debugger(DBG_EXCEPTION_HANDLED, TRUE);
     test_debugger(DBG_CONTINUE, TRUE);
     test_thread_context();
+#else
+    skip( "no test_KiUserExceptionDispatcher()/test_KiUserApcDispatcher()/"
+          "test_KiUserCallbackDispatcher()/test_rtlraiseexception()/test_debugger()/"
+          "test_thread_context() for this architecture\n" );
+#endif
     test_outputdebugstring(FALSE, 1, FALSE, 0, 0);
     if (pWaitForDebugEventEx)
     {

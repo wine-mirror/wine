@@ -9,6 +9,7 @@ SOURCES = \
 	be_arm.c \
 	be_arm64.c \
 	be_i386.c \
+	be_ppc64.c \
 	be_x86_64.c \
 	break.c \
 	crashdlg.c \

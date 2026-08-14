@@ -108,6 +108,35 @@
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
 
+#ifdef __powerpc64__
+/* The ELFv2 global entry prologue, for hand-written __ASM_GLOBAL_FUNC bodies.
+ *
+ * A function reached from another module is entered at its *global* entry
+ * point, where the caller guarantees only that r12 holds the entry address.
+ * The function must derive its own TOC from r12 before it touches anything
+ * TOC-relative -- and that includes an ordinary "bl" to a function in the same
+ * module, because the linker sends such a branch to the callee's *local* entry
+ * point, which assumes r2 already holds this module's TOC.
+ *
+ * GCC emits this for every non-static function it compiles.  Assembly written
+ * by hand does not get it for free, and leaving it out fails silently and far
+ * from the cause: the function runs on the caller's TOC, so every global it
+ * forms an address for resolves into some other DLL's image.  Use this as the
+ * first element of the body of any __ASM_GLOBAL_FUNC that is callable from
+ * another module and either uses r2 or does a local "bl".
+ *
+ * Do NOT use it in a function whose contract is to capture the *caller's* TOC
+ * -- __wine_setjmpex saves r2 into the jmp_buf on purpose, and a prologue here
+ * would make it save the wrong one.
+ *
+ * probes/ppc64-toc-audit.py checks built objects for functions that need this
+ * and do not have it. */
+# define __ASM_PPC64_GLOBAL_ENTRY(name) \
+    "addis 2, 12, .TOC.-" __ASM_NAME(#name) "@ha\n\t" \
+    "addi 2, 2, .TOC.-" __ASM_NAME(#name) "@l\n\t" \
+    ".localentry " __ASM_NAME(#name) ", .-" __ASM_NAME(#name) "\n\t"
+#endif
+
 #ifdef _WIN64
 #define __ASM_DEFINE_POINTER(sec,decl,value)  \
     __ASM_BLOCK_BEGIN(__LINE__) \

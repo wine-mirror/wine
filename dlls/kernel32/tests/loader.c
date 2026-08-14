@@ -104,6 +104,8 @@ static const IMAGE_NT_HEADERS nt_header_template =
       IMAGE_FILE_MACHINE_ARMNT, /* Machine */
 #elif defined __aarch64__
       IMAGE_FILE_MACHINE_ARM64, /* Machine */
+#elif defined __powerpc64__
+      IMAGE_FILE_MACHINE_POWERPC64, /* Machine */
 #else
 # error You must specify the machine type
 #endif

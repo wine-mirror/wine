@@ -34,7 +34,11 @@
 #define IMAGE_FILE_MACHINE_UNKNOWN   0
 #define IMAGE_FILE_MACHINE_I386      0x014c
 #define IMAGE_FILE_MACHINE_POWERPC   0x01f0
-#define IMAGE_FILE_MACHINE_POWERPC64 0x01f2  /* Wine extension, see include/winnt.h */
+#define IMAGE_FILE_MACHINE_POWERPC64 0x01f3  /* Wine extension; keep in step with
+                                              * include/winnt.h, which explains the
+                                              * value.  winebuild cannot include
+                                              * winnt.h, so this copy is the one that
+                                              * actually stamps every PE header. */
 #define IMAGE_FILE_MACHINE_AMD64     0x8664
 #define IMAGE_FILE_MACHINE_ARMNT     0x01c4
 #define IMAGE_FILE_MACHINE_ARM64     0xaa64

@@ -82,6 +82,8 @@ DWORD	                dbg_curr_pid = 0;
 dbg_ctx_t               dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 HANDLE                  dbg_houtput = 0;
+/* write through Wine's diagnostic stream rather than dbg_houtput; see dbg_outputA */
+BOOL                    dbg_output_to_diag = FALSE;
 struct list             dbg_process_list = LIST_INIT(dbg_process_list);
 
 struct dbg_internal_var         dbg_internal_vars[DBG_IV_LAST];
@@ -106,7 +108,19 @@ static void dbg_outputA(const char* buffer, int len)
             if (len > 0) i = line_pos;  /* buffer is full, flush anyway */
             else break;
         }
-        WriteFile(dbg_houtput, line_buff, i, &w, NULL);
+        /* dbg_houtput is a handle inherited from the crashing process, and in
+         * --auto mode there is nobody to notice if writing to it never returns.
+         * It can be a console whose server no longer answers -- measured on this
+         * port: one winedbg --auto per prefix bootstrap blocked forever inside
+         * WriteFile() on such a handle, taking the crashed process with it
+         * because kernelbase's start_debugger() waits on the debugger.  Wine's
+         * own diagnostic stream is the unix stderr of the process, never a Win32
+         * console object, so it cannot block that way -- and it is already where
+         * "wine: ... starting debugger..." and every ERR/FIXME of the crash go. */
+        if (dbg_output_to_diag)
+            MESSAGE("%.*s", i, line_buff);
+        else
+            WriteFile(dbg_houtput, line_buff, i, &w, NULL);
         memmove( line_buff, line_buff + i, line_pos - i );
         line_pos -= i;
     }
@@ -250,6 +264,8 @@ extern struct backend_cpu be_x86_64;
 extern struct backend_cpu be_arm;
 #elif defined(__aarch64__) && !defined(__AARCH64EB__)
 extern struct backend_cpu be_arm64;
+#elif defined(__powerpc64__)
+extern struct backend_cpu be_ppc64;
 #else
 # error CPU unknown
 #endif
@@ -301,6 +317,8 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->be_cpu = &be_arm;
 #elif defined(__aarch64__) && !defined(__AARCH64EB__)
     p->be_cpu = &be_arm64;
+#elif defined(__powerpc64__)
+    p->be_cpu = &be_ppc64;
 #else
 # error CPU unknown
 #endif
@@ -730,8 +748,6 @@ int main(int argc, char** argv)
         if (retv == -1) dbg_winedbg_usage(FALSE);
         return retv;
     }
-    dbg_init_console();
-
     SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS |
                   SYMOPT_INCLUDE_32BIT_MODULES);
@@ -757,6 +773,27 @@ int main(int argc, char** argv)
         case start_error_init:  return -1;
         }
     }
+
+    /* Only now, once the two non-interactive modes have been dispatched, touch
+     * the console.  --auto and --minidump run with nobody at the keyboard: they
+     * need neither a control-C handler nor a window title, they already pick
+     * their own output handle (dbg_houtput above, or a temp file / stderr), and
+     * --auto's interactive branch calls AllocConsole()+dbg_init_console() for
+     * itself once a user has asked for a debugger.
+     *
+     * Doing it unconditionally hung every automatic crash report on this port.
+     * winedbg --auto inherits the crashing process's console handle, and
+     * SetConsoleTitleA() below is a synchronous IOCTL_CONDRV_SET_TITLE on it
+     * with no timeout: when whatever serves that console is gone or is itself
+     * stopped -- routine when a process crashes during prefix startup -- the
+     * ioctl never completes.  winedbg then never reached main()'s --auto branch,
+     * so no backtrace was ever produced, and because the crashing process waits
+     * on the debugger (kernelbase's start_debugger()) both processes stayed
+     * alive forever.  Measured: winedbg blocked in anon_pipe_read at 0% CPU with
+     * SetConsoleTitleA as its last breadcrumb, reproducibly.
+     */
+    dbg_init_console();
+
     /* parse options */
     while (argc > 0 && argv[0][0] == '-')
     {

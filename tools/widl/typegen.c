@@ -466,6 +466,19 @@ static unsigned int get_stack_size( const var_t *var, unsigned int *stack_align,
             align = pointer_size;
             by_val = 1;
             break;
+        case CPU_POWERPC64:
+            /* ELFv2 passes an aggregate by value in consecutive doublewords of
+             * the parameter save area whatever its size; there is no
+             * hidden-reference rule like the one x86-64 has for aggregates that
+             * are not 1, 2, 4 or 8 bytes.  Falling out of this switch with
+             * by_val still 0 described no ABI at all: the generated client stub
+             * hands the aggregate to variadic NdrClientCall2 by value, so the
+             * interpreter would have read its first doubleword as a pointer.
+             * (A homogeneous float aggregate goes in f1-f13 instead and is not
+             * representable here, but rpcrt4 does not deliver floating point
+             * arguments on this architecture at all - see dlls/rpcrt4/thunks.c.) */
+            by_val = 1;
+            break;
         }
         break;
     default:
@@ -1662,6 +1675,16 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
         break;
     }
     case CPU_i386:
+    /* PowerPC64 needs no payload after the extension header.  ELFv2 requires
+     * the caller of a variadic function to pass floating-point arguments in
+     * GPRs as well as FPRs and to allocate the parameter save area itself, so
+     * rpcrt4's NdrClientCall2 only has to spill r3-r10 to get a flat argument
+     * block; there is no register map for args_regs_to_stack() to replay and
+     * no floating point mask for the x86-64 fixup to apply.  Without this arm
+     * nothing at all was emitted here while *offset still advanced by
+     * extra_size, so every proc offset widl wrote into its own stubs was 8
+     * bytes too large from the second procedure on. */
+    case CPU_POWERPC64:
         print_file( file, indent, "0x%02x,\n", extra_size );
         print_file( file, indent, "0x%02x,\n", ext_flags );
         print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
