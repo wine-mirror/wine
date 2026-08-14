@@ -80,6 +80,19 @@ struct buffer
         IMFD3D12SynchronizationObject *sync_obj;
         IMFD3D12SynchronizationObjectCommands *sync_cmd;
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+        void *data;
+        BOOL keep_transfer;
+        ID3D12Resource *upload, *readback, *transfer;
+        ID3D12CommandQueue *queue;
+        ID3D12Fence *fence;
+        UINT64 fence_value;
+        size_t alloc_index;
+        ID3D12GraphicsCommandList *list;
+        struct d3d12_list_allocator
+        {
+            UINT64 free_value;
+            ID3D12CommandAllocator *allocator;
+        } alloc[2];
     } d3d12_surface;
 
     CRITICAL_SECTION cs;
@@ -186,6 +199,13 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
             ID3D12Resource_Release(buffer->d3d12_surface.resource);
             if (buffer->d3d12_surface.sync_obj) IMFD3D12SynchronizationObject_Release(buffer->d3d12_surface.sync_obj);
             if (buffer->d3d12_surface.sync_cmd) IMFD3D12SynchronizationObjectCommands_Release(buffer->d3d12_surface.sync_cmd);
+            if (buffer->d3d12_surface.readback) ID3D12Resource_Release(buffer->d3d12_surface.readback);
+            if (buffer->d3d12_surface.upload) ID3D12Resource_Release(buffer->d3d12_surface.upload);
+            if (buffer->d3d12_surface.queue) ID3D12CommandQueue_Release(buffer->d3d12_surface.queue);
+            if (buffer->d3d12_surface.fence) ID3D12Fence_Release(buffer->d3d12_surface.fence);
+            if (buffer->d3d12_surface.list) ID3D12GraphicsCommandList_Release(buffer->d3d12_surface.list);
+            if (buffer->d3d12_surface.alloc[0].allocator) ID3D12CommandAllocator_Release(buffer->d3d12_surface.alloc[0].allocator);
+            if (buffer->d3d12_surface.alloc[1].allocator) ID3D12CommandAllocator_Release(buffer->d3d12_surface.alloc[1].allocator);
             clear_attributes_object(&buffer->dxgi_surface.attributes);
         }
         DeleteCriticalSection(&buffer->cs);
@@ -1349,15 +1369,249 @@ static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
     dxgi_buffer_SetUnknown,
 };
 
+static HRESULT d3d12_surface_buffer_copy_transfer_resource(struct buffer *buffer, MF2DBuffer_LockFlags flags)
+{
+    struct d3d12_list_allocator *current_alloc = &buffer->d3d12_surface.alloc[buffer->d3d12_surface.alloc_index];
+    D3D12_RESOURCE_BARRIER pre_barrier, post_barrier;
+    D3D12_TEXTURE_COPY_LOCATION res_loc, tx_loc;
+    HRESULT hr;
+
+    if (!buffer->d3d12_surface.queue)
+    {
+        D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
+        hr = ID3D12Device_CreateCommandQueue(buffer->d3d12_surface.device, &queue_desc,
+            &IID_ID3D12CommandQueue, (void **) &buffer->d3d12_surface.queue);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (!buffer->d3d12_surface.fence)
+    {
+        hr = ID3D12Device_CreateFence(buffer->d3d12_surface.device, 0, 0, &IID_ID3D12Fence, (void **) &buffer->d3d12_surface.fence);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    /* If the standby allocator has finished execution we switch to it. */
+    if (ID3D12Fence_GetCompletedValue(buffer->d3d12_surface.fence) >=
+            buffer->d3d12_surface.alloc[!buffer->d3d12_surface.alloc_index].free_value)
+    {
+        buffer->d3d12_surface.alloc_index = !buffer->d3d12_surface.alloc_index;
+        current_alloc = &buffer->d3d12_surface.alloc[buffer->d3d12_surface.alloc_index];
+
+        if (!current_alloc->allocator)
+        {
+            hr = ID3D12Device_CreateCommandAllocator(buffer->d3d12_surface.device, D3D12_COMMAND_LIST_TYPE_COPY,
+                &IID_ID3D12CommandAllocator, (void **) &current_alloc->allocator);
+            if (FAILED(hr))
+                return hr;
+        }
+        else
+        {
+            hr = ID3D12CommandAllocator_Reset(current_alloc->allocator);
+            if (FAILED(hr))
+                return hr;
+        }
+    }
+
+    if (!buffer->d3d12_surface.list)
+    {
+        hr = ID3D12Device_CreateCommandList(buffer->d3d12_surface.device, 0, D3D12_COMMAND_LIST_TYPE_COPY,
+            current_alloc->allocator, NULL, &IID_ID3D12GraphicsCommandList, (void **) &buffer->d3d12_surface.list);
+        if (FAILED(hr))
+            return hr;
+    }
+    else
+    {
+        hr = ID3D12GraphicsCommandList_Reset(buffer->d3d12_surface.list, current_alloc->allocator, NULL);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    res_loc.pResource = buffer->d3d12_surface.resource;
+    res_loc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    res_loc.SubresourceIndex = buffer->dxgi_surface.sub_resource_idx;
+    tx_loc.pResource = buffer->d3d12_surface.transfer;
+    tx_loc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    tx_loc.PlacedFootprint = buffer->d3d12_surface.layout;
+
+    pre_barrier.Type = post_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    pre_barrier.Flags = post_barrier.Flags = 0;
+    pre_barrier.Transition.pResource = post_barrier.Transition.pResource = buffer->d3d12_surface.resource;
+    pre_barrier.Transition.Subresource = post_barrier.Transition.Subresource = buffer->dxgi_surface.sub_resource_idx;
+    pre_barrier.Transition.StateBefore = post_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+    pre_barrier.Transition.StateAfter = post_barrier.Transition.StateBefore =
+        flags == MF2DBuffer_LockFlags_Write ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+    ID3D12GraphicsCommandList_ResourceBarrier(buffer->d3d12_surface.list, 1, &pre_barrier);
+    ID3D12GraphicsCommandList_CopyTextureRegion(buffer->d3d12_surface.list,
+        flags == MF2DBuffer_LockFlags_Write ? &res_loc : &tx_loc, 0, 0, 0,
+        flags == MF2DBuffer_LockFlags_Write ? &tx_loc : &res_loc, NULL);
+    ID3D12GraphicsCommandList_ResourceBarrier(buffer->d3d12_surface.list, 1, &post_barrier);
+    hr = ID3D12GraphicsCommandList_Close(buffer->d3d12_surface.list);
+    if (FAILED(hr))
+        return hr;
+
+    if (flags != MF2DBuffer_LockFlags_Write)
+        IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(buffer->d3d12_surface.sync_cmd, buffer->d3d12_surface.queue);
+
+    ID3D12CommandQueue_ExecuteCommandLists(buffer->d3d12_surface.queue, 1, (ID3D12CommandList **) &buffer->d3d12_surface.list);
+    buffer->d3d12_surface.fence_value++;
+    current_alloc->free_value = buffer->d3d12_surface.fence_value;
+    ID3D12CommandQueue_Signal(buffer->d3d12_surface.queue, buffer->d3d12_surface.fence, buffer->d3d12_surface.fence_value);
+
+    if (flags == MF2DBuffer_LockFlags_Write)
+    {
+        IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(buffer->d3d12_surface.sync_cmd, buffer->d3d12_surface.queue);
+    }
+    else
+    {
+        IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(buffer->d3d12_surface.sync_cmd, buffer->d3d12_surface.queue);
+
+        ID3D12Fence_SetEventOnCompletion(buffer->d3d12_surface.fence, buffer->d3d12_surface.fence_value, NULL);
+    }
+
+    return S_OK;
+}
+
+static HRESULT d3d12_surface_buffer_create_transfer_resource(struct buffer *buffer, ID3D12Resource **resource, MF2DBuffer_LockFlags flags)
+{
+    D3D12_HEAP_PROPERTIES heap_prop = { .Type = flags == MF2DBuffer_LockFlags_Write ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_READBACK };
+    D3D12_RESOURCE_DESC desc;
+    D3D12_SUBRESOURCE_FOOTPRINT footprint = buffer->d3d12_surface.layout.Footprint;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = footprint.RowPitch * footprint.Height;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    return ID3D12Device_CreateCommittedResource(buffer->d3d12_surface.device, &heap_prop, D3D12_HEAP_FLAG_NONE, &desc,
+        flags == MF2DBuffer_LockFlags_Write ? D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST,
+        NULL, &IID_ID3D12Resource, (void **) resource);
+}
+
+static HRESULT d3d12_surface_buffer_map(struct buffer *buffer, MF2DBuffer_LockFlags flags)
+{
+    HRESULT hr = S_OK;
+    D3D12_RANGE empty_range = { 0, 0 };
+
+    if (!buffer->d3d12_surface.transfer)
+    {
+        ID3D12Resource **transfer = flags == MF2DBuffer_LockFlags_Write ? &buffer->d3d12_surface.upload : &buffer->d3d12_surface.readback;
+        if (!*transfer)
+            hr = d3d12_surface_buffer_create_transfer_resource(buffer, transfer, flags);
+        buffer->d3d12_surface.transfer = *transfer;
+
+        if (SUCCEEDED(hr) && flags != MF2DBuffer_LockFlags_Write)
+            hr = d3d12_surface_buffer_copy_transfer_resource(buffer, flags);
+    }
+
+    if (SUCCEEDED(hr))
+        hr = ID3D12Resource_Map(buffer->d3d12_surface.transfer, 0, flags == MF2DBuffer_LockFlags_Write ? &empty_range : NULL, &buffer->d3d12_surface.data);
+
+    if (FAILED(hr))
+        buffer->d3d12_surface.transfer = NULL;
+    return hr;
+}
+
+static HRESULT d3d12_surface_buffer_unmap(struct buffer *buffer, MF2DBuffer_LockFlags flags)
+{
+    HRESULT hr = S_OK;
+    D3D12_RANGE empty_range = { 0, 0 };
+    ID3D12Resource_Unmap(buffer->d3d12_surface.transfer, 0, (flags == MF2DBuffer_LockFlags_Write && !buffer->d3d12_surface.keep_transfer) ? NULL : &empty_range);
+
+    if (flags == MF2DBuffer_LockFlags_Read)
+        buffer->d3d12_surface.keep_transfer = FALSE;
+    else if (flags == MF2DBuffer_LockFlags_ReadWrite)
+        buffer->d3d12_surface.keep_transfer = TRUE;
+
+    if (buffer->d3d12_surface.keep_transfer)
+        hr = E_INVALIDARG;
+    else
+    {
+        if (flags == MF2DBuffer_LockFlags_Write)
+            hr = d3d12_surface_buffer_copy_transfer_resource(buffer, flags);
+
+        buffer->d3d12_surface.transfer = NULL;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI d3d12_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *max_length,
         DWORD *current_length)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p, %p, %p.\n", iface, data, max_length, current_length);
+
+    if (!data)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (!buffer->_2d.linear_buffer && buffer->_2d.locks)
+        hr = MF_E_INVALIDREQUEST;
+    else if (!buffer->_2d.linear_buffer)
+    {
+        if (!(buffer->_2d.linear_buffer = malloc(buffer->_2d.plane_size)))
+            hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+        {
+            hr = d3d12_surface_buffer_map(buffer, MF2DBuffer_LockFlags_Read);
+            if (SUCCEEDED(hr))
+            {
+                copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->d3d12_surface.data,
+                    buffer->d3d12_surface.layout.Footprint.RowPitch, buffer->_2d.width, buffer->_2d.height);
+                d3d12_surface_buffer_unmap(buffer, MF2DBuffer_LockFlags_Read);
+            }
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        ++buffer->_2d.locks;
+        *data = buffer->_2d.linear_buffer;
+        if (max_length)
+            *max_length = buffer->_2d.plane_size;
+        if (current_length)
+            *current_length = buffer->_2d.plane_size;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_Unlock(IMFMediaBuffer *iface)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (!buffer->_2d.linear_buffer)
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+    else if (!--buffer->_2d.locks)
+    {
+        free(buffer->_2d.linear_buffer);
+        buffer->_2d.linear_buffer = NULL;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_GetCurrentLength(IMFMediaBuffer *iface, DWORD *current_length)
