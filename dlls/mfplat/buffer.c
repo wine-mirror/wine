@@ -1735,7 +1735,21 @@ static HRESULT WINAPI d3d12_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *if
 static HRESULT WINAPI d3d12_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags,
         BYTE **scanline0, LONG *pitch, BYTE **buffer_start, DWORD *buffer_length)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %#x, %p, %p, %p, %p.\n", iface, flags, scanline0, pitch, buffer_start, buffer_length);
+
+    if (!scanline0 || !pitch || !buffer_start || !buffer_length)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    hr = d3d12_surface_buffer_lock(buffer, flags, scanline0, pitch, buffer_start, buffer_length);
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_GetResource(IMFDXGIBuffer *iface, REFIID riid, void **obj)
