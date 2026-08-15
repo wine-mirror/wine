@@ -314,6 +314,9 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
       infoPtr->uFocus = iItem;
       if (infoPtr->iSelected != iItem)
       {
+        if (infoPtr->iSelected != -1)
+          TAB_GetItem(infoPtr, infoPtr->iSelected)->dwState &= ~TCIS_BUTTONPRESSED;
+        TAB_GetItem(infoPtr, iItem)->dwState |= TCIS_BUTTONPRESSED;
         if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))  {
           infoPtr->iSelected = iItem;
           TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);

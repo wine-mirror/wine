@@ -786,7 +786,6 @@ static void test_curfocus(void)
     item.dwStateMask = TCIS_BUTTONPRESSED;
     ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
     ok(ret == 1, "Unexpected ret value %d.\n", ret);
-    todo_wine
     ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
     ret = SendMessageA(hTab, TCM_SETCURFOCUS, 1, 0);
     ok(!ret, "Unexpected ret value %d.\n", ret);
