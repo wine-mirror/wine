@@ -308,21 +308,21 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
         TAB_SendSimpleNotify(infoPtr, TCN_FOCUSCHANGE);
         NotifyWinEvent(EVENT_OBJECT_FOCUS, infoPtr->hwnd, OBJID_CLIENT, iItem + 1);
       }
-    } else {
-      INT oldFocus = infoPtr->uFocus;
-      if (infoPtr->iSelected != iItem || oldFocus == -1 ) {
-        infoPtr->uFocus = iItem;
-        if (oldFocus != -1) {
-          if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))  {
-            infoPtr->iSelected = iItem;
-            TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
-          }
-          else
-            infoPtr->iSelected = iItem;
-          TAB_EnsureSelectionVisible(infoPtr);
-          TAB_InvalidateTabArea(infoPtr);
-          NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, iItem + 1);
+    }
+    else
+    {
+      infoPtr->uFocus = iItem;
+      if (infoPtr->iSelected != iItem)
+      {
+        if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))  {
+          infoPtr->iSelected = iItem;
+          TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
         }
+        else
+          infoPtr->iSelected = iItem;
+        TAB_EnsureSelectionVisible(infoPtr);
+        TAB_InvalidateTabArea(infoPtr);
+        NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, iItem + 1);
       }
     }
   }

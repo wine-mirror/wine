@@ -251,6 +251,7 @@ static const struct message insert_focus_seq[] = {
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEMA, sent|wparam, 3 },
     { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 3 }, /* sent on Wine */
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -822,7 +823,6 @@ static void test_curfocus(void)
     ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
     ok(!ret, "Unexpected ret value %d.\n", ret);
     ret = SendMessageA(hTab, TCM_GETCURSEL, 0, 0);
-    todo_wine
     ok(!ret, "Unexpected index %d.\n", ret);
     ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
     ok(!ret, "Unexpected index %d.\n", ret);
