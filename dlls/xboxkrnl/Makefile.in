@@ -1,0 +1,8 @@
+MODULE    = xboxkrnl.exe
+IMPORTLIB = xboxkrnl
+IMPORTS   = kernel32 ntdll
+
+SOURCES = \
+	generated_data.c \
+	generated_stubs.c \
+	main.c

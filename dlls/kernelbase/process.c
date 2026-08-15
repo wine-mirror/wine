@@ -814,6 +814,283 @@ done:
 }
 
 
+/* ---------------------------------------------------------------------
+ * Original Xbox (.xbe) executable recognition.
+ *
+ * Unlike the Xbox 360 above, the original Xbox's CPU is a Coppermine-
+ * based Intel Celeron/Pentium III: plain x86, the same instruction set
+ * family Wine's host already runs. There is no CPU-architecture barrier
+ * here. What *is* still missing, and is not attempted by this function,
+ * is (a) an XBE-aware loader path that maps a file's sections at their
+ * absolute virtual addresses and starts a thread at its (XOR-encoded)
+ * entry point instead of going through the ordinary NT/PE loader in
+ * create_nt_process(), and (b) a working implementation of the ~378
+ * ordinal-only xboxkrnl.exe kernel exports that mapped code calls
+ * through its "kernel thunk table" - a flat array of function/variable
+ * addresses indexed by ordinal, filled in at load time, rather than an
+ * ordinary PE import directory. Part (b) is implemented separately as
+ * dlls/xboxkrnl (see there for exactly which of the 378 ordinals are
+ * real forwards to Wine/NT equivalents vs. FIXME stubs); part (a) - the
+ * loader path itself - is not implemented anywhere yet. Both are large
+ * undertakings on their own; what follows is real XBE container parsing
+ * (header, certificate, section table, library versions, kernel thunk
+ * table address), exactly analogous in scope to parse_xex2_file() above.
+ *
+ * Struct layouts, the entry-point/kernel-thunk-table XOR keys, and the
+ * debug/retail/chihiro image type detection algorithm are taken
+ * directly from Cxbx-Reloaded: src/common/xbe/Xbe.h (struct Xbe::Header,
+ * Xbe::Certificate, Xbe::SectionHeader, Xbe::LibraryVersion and the
+ * XOR_EP_ / XOR_KT_ constants) and src/common/xbe/Xbe.cpp (the
+ * Xbe::Xbe() constructor's read order/offsets and Xbe::GetXbeType()).
+ * --------------------------------------------------------------------- */
+
+#define XBE_MAGIC 0x48454258  /* "XBEH", native little-endian - XBE is a native x86 format */
+#define XBE_PARSE_BUFFER_SIZE 0x10000  /* generous; real XBE header+certificate+sections are a few KB */
+
+/* Xbe::GetXbeType() constants (src/common/AddressRanges.h) */
+#define XBE_KSEG0_BASE               0x80000000
+#define XBE_WRITE_COMBINED_BASE      0xF0000000
+#define XBE_SEGABOOT_EP_XOR          0x40000000
+
+/* entry point / kernel thunk table XOR keys (Xbe.h), indexed by xbe_image_type */
+enum xbe_image_type { XBE_TYPE_RETAIL, XBE_TYPE_DEBUG, XBE_TYPE_CHIHIRO };
+static const UINT32 xbe_xor_ep_key[3] = { 0xA8FC57AB, 0x94859D4B, 0x40B5C16E };
+static const UINT32 xbe_xor_kt_key[3] = { 0x5B6D40B6, 0xEFB1F152, 0x2290059D };
+static const char *const xbe_image_type_name[3] = { "retail", "debug", "Chihiro (arcade)" };
+
+#include <pshpack1.h>
+struct xbe_header
+{
+    UINT32 magic;                          /* 0x0000 */
+    BYTE   digital_signature[256];         /* 0x0004 */
+    UINT32 base_addr;                      /* 0x0104 */
+    UINT32 sizeof_headers;                 /* 0x0108 */
+    UINT32 sizeof_image;                   /* 0x010C */
+    UINT32 sizeof_image_header;            /* 0x0110 */
+    UINT32 timedate;                       /* 0x0114 */
+    UINT32 certificate_addr;               /* 0x0118 */
+    UINT32 sections;                       /* 0x011C */
+    UINT32 section_headers_addr;           /* 0x0120 */
+    UINT32 init_flags;                     /* 0x0124 */
+    UINT32 entry_addr;                     /* 0x0128 - XOR-encoded, see xbe_xor_ep_key */
+    UINT32 tls_addr;                       /* 0x012C */
+    UINT32 pe_stack_commit;                /* 0x0130 */
+    UINT32 pe_heap_reserve;                /* 0x0134 */
+    UINT32 pe_heap_commit;                 /* 0x0138 */
+    UINT32 pe_base_addr;                   /* 0x013C */
+    UINT32 pe_sizeof_image;                /* 0x0140 */
+    UINT32 pe_checksum;                    /* 0x0144 */
+    UINT32 pe_timedate;                    /* 0x0148 */
+    UINT32 debug_pathname_addr;            /* 0x014C */
+    UINT32 debug_filename_addr;            /* 0x0150 */
+    UINT32 debug_unicode_filename_addr;    /* 0x0154 */
+    UINT32 kernel_image_thunk_addr;        /* 0x0158 - XOR-encoded, see xbe_xor_kt_key */
+    UINT32 non_kernel_import_dir_addr;     /* 0x015C */
+    UINT32 library_versions;               /* 0x0160 */
+    UINT32 library_versions_addr;          /* 0x0164 */
+    UINT32 kernel_library_version_addr;    /* 0x0168 */
+    UINT32 xapi_library_version_addr;      /* 0x016C */
+    UINT32 logo_bitmap_addr;               /* 0x0170 */
+    UINT32 sizeof_logo_bitmap;             /* 0x0174 */
+};
+
+struct xbe_certificate
+{
+    UINT32 size;                           /* 0x0000 */
+    UINT32 timedate;                       /* 0x0004 */
+    UINT32 title_id;                       /* 0x0008 */
+    WCHAR  title_name[40];                 /* 0x000C */
+    UINT32 alternate_title_id[16];         /* 0x005C */
+    UINT32 allowed_media;                  /* 0x009C */
+    UINT32 game_region;                    /* 0x00A0 */
+    UINT32 game_ratings;                   /* 0x00A4 */
+    UINT32 disc_number;                    /* 0x00A8 */
+    UINT32 version;                        /* 0x00AC */
+    BYTE   lan_key[16];                    /* 0x00B0 */
+    BYTE   signature_key[16];              /* 0x00C0 */
+    /* fields below aren't present in every XBE; bounded by certificate.size */
+    BYTE   title_alternate_signature_key[16][16]; /* 0x00D0 */
+    UINT32 original_certificate_size;      /* 0x01D0 */
+    UINT32 online_service;                 /* 0x01D4 */
+    UINT32 security_flags;                 /* 0x01D8 */
+    BYTE   code_enc_key[16];               /* 0x01DC */
+};
+#define XBE_CERTIFICATE_MIN_SIZE 0x1D0  /* up to and including signature_key */
+
+struct xbe_section_header
+{
+    UINT32 flags;
+    UINT32 virtual_addr;
+    UINT32 virtual_size;
+    UINT32 raw_addr;
+    UINT32 sizeof_raw;
+    UINT32 section_name_addr;
+    UINT32 section_ref_count;
+    UINT32 head_shared_ref_count_addr;
+    UINT32 tail_shared_ref_count_addr;
+    BYTE   section_digest[20];
+};
+
+struct xbe_library_version
+{
+    char   name[8];
+    UINT16 major_version;
+    UINT16 minor_version;
+    UINT16 build_version;
+    UINT16 flags;
+};
+#include <poppack.h>
+
+#define XBEIMAGE_SECTION_WRITEABLE          0x00000001
+#define XBEIMAGE_SECTION_PRELOAD            0x00000002
+#define XBEIMAGE_SECTION_EXECUTABLE         0x00000004
+#define XBEIMAGE_SECTION_INSERTFILE         0x00000008
+#define XBEIMAGE_SECTION_HEAD_PAGE_READONLY 0x00000010
+#define XBEIMAGE_SECTION_TAIL_PAGE_READONLY 0x00000020
+
+/* Translate a virtual address that lies within the XBE's header/certificate/
+ * section-header area to an offset in our in-memory read buffer. This only
+ * works for addresses inside the initial "headers" region (which is always
+ * mapped 1:1 with file offset 0, i.e. buffer offset == vaddr - base_addr) -
+ * exactly the assumption Xbe::Xbe()'s fseek()s make for the certificate and
+ * section header table. Section *contents* are addressed by raw file offset
+ * instead (dwRawAddr), not by this translation - again matching Xbe.cpp. */
+static const BYTE *xbe_translate( const BYTE *data, UINT32 buf_size, UINT32 base_addr, UINT32 vaddr, UINT32 need )
+{
+    UINT32 off;
+    if (vaddr < base_addr) return NULL;
+    off = vaddr - base_addr;
+    if (off > buf_size || need > buf_size - off) return NULL;
+    return data + off;
+}
+
+/* Read and validate an XBE file's header, certificate and section table,
+ * logging everything recognised via TRACE. Returns TRUE if "path" is a
+ * well-formed enough XBE to be confidently identified as an original Xbox
+ * executable (regardless of whether we can run it), FALSE otherwise. */
+static BOOL parse_xbe_file( const WCHAR *path )
+{
+    BYTE *data;
+    HANDLE file;
+    DWORD read = 0;
+    const struct xbe_header *hdr;
+    const struct xbe_certificate *cert;
+    enum xbe_image_type type;
+    UINT32 entry_point, kernel_thunk_addr;
+    UINT32 i;
+    BOOL ret = FALSE;
+
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        WARN( "can't open %s\n", debugstr_w(path) );
+        return FALSE;
+    }
+
+    if (!(data = RtlAllocateHeap( GetProcessHeap(), 0, XBE_PARSE_BUFFER_SIZE )))
+    {
+        CloseHandle( file );
+        return FALSE;
+    }
+
+    if (!ReadFile( file, data, XBE_PARSE_BUFFER_SIZE, &read, NULL ) || read < sizeof(*hdr) )
+    {
+        WARN( "failed to read XBE header from %s\n", debugstr_w(path) );
+        goto done;
+    }
+
+    hdr = (const struct xbe_header *)data;
+    if (hdr->magic != XBE_MAGIC)
+    {
+        WARN( "%s has .xbe extension but bad magic %#x (expected \"XBEH\")\n", debugstr_w(path), hdr->magic );
+        goto done;
+    }
+
+    if (hdr->sections > (XBE_PARSE_BUFFER_SIZE - sizeof(*hdr)) / sizeof(struct xbe_section_header))
+    {
+        WARN( "%s claims an implausible %u sections, rejecting\n", debugstr_w(path), hdr->sections );
+        goto done;
+    }
+
+    /* GetXbeType(): entry point / kernel thunk XOR key depends on whether this
+     * is a debug, retail, or Chihiro (Sega arcade derivative) build - detected
+     * from telltale bit patterns left in the still-XOR-encoded fields. */
+    if ((hdr->entry_addr & XBE_WRITE_COMBINED_BASE) == XBE_SEGABOOT_EP_XOR)
+        type = XBE_TYPE_CHIHIRO;
+    else if (hdr->kernel_image_thunk_addr & XBE_KSEG0_BASE)
+        type = XBE_TYPE_DEBUG;
+    else
+        type = XBE_TYPE_RETAIL;
+
+    entry_point = hdr->entry_addr ^ xbe_xor_ep_key[type];
+    kernel_thunk_addr = hdr->kernel_image_thunk_addr ^ xbe_xor_kt_key[type];
+
+    TRACE( "%s: XBE header - %s image, base %#x, %u section(s), timestamp %#x\n",
+           debugstr_w(path), xbe_image_type_name[type], hdr->base_addr, hdr->sections, hdr->timedate );
+    TRACE( "  size of headers %#x, size of image %#x, size of image header %#x\n",
+           hdr->sizeof_headers, hdr->sizeof_image, hdr->sizeof_image_header );
+    TRACE( "  entry point (decoded) %#x, kernel thunk table (decoded) %#x\n", entry_point, kernel_thunk_addr );
+    TRACE( "  TLS directory %#x, PE stack commit %#x, PE heap reserve/commit %#x/%#x\n",
+           hdr->tls_addr, hdr->pe_stack_commit, hdr->pe_heap_reserve, hdr->pe_heap_commit );
+    TRACE( "  original PE base %#x, size %#x, checksum %#x, timestamp %#x\n",
+           hdr->pe_base_addr, hdr->pe_sizeof_image, hdr->pe_checksum, hdr->pe_timedate );
+
+    cert = (const struct xbe_certificate *)xbe_translate( data, read, hdr->base_addr, hdr->certificate_addr,
+                                                            XBE_CERTIFICATE_MIN_SIZE );
+    if (cert)
+    {
+        TRACE( "  certificate: size %#x, title id %#x, title %s\n",
+               cert->size, cert->title_id, debugstr_wn( cert->title_name, ARRAY_SIZE(cert->title_name) ) );
+        TRACE( "  allowed media %#x, game region %#x, ratings %#x, disc %u, version %u.%u\n",
+               cert->allowed_media, cert->game_region, cert->game_ratings, cert->disc_number,
+               cert->version & 0xFF, (cert->version & 0xFFFFFF00) >> 8 );
+    }
+    else WARN( "  certificate at %#x out of range\n", hdr->certificate_addr );
+
+    if (hdr->sections)
+    {
+        const struct xbe_section_header *sections = (const struct xbe_section_header *)
+            xbe_translate( data, read, hdr->base_addr, hdr->section_headers_addr,
+                            hdr->sections * sizeof(struct xbe_section_header) );
+        if (sections)
+        {
+            for (i = 0; i < hdr->sections; i++)
+            {
+                const struct xbe_section_header *sec = &sections[i];
+                const char *name = (const char *)xbe_translate( data, read, hdr->base_addr, sec->section_name_addr, 1 );
+                TRACE( "  section[%u]: %s flags %#x (%s%s%s), virt %#x/%#x, raw file offset %#x/%#x\n", i,
+                       name ? debugstr_an( name, 9 ) : "?", sec->flags,
+                       (sec->flags & XBEIMAGE_SECTION_WRITEABLE) ? "W" : "-",
+                       (sec->flags & XBEIMAGE_SECTION_EXECUTABLE) ? "X" : "-",
+                       (sec->flags & XBEIMAGE_SECTION_PRELOAD) ? "P" : "-",
+                       sec->virtual_addr, sec->virtual_size, sec->raw_addr, sec->sizeof_raw );
+            }
+        }
+        else WARN( "  section header table at %#x out of range\n", hdr->section_headers_addr );
+    }
+
+    if (hdr->library_versions && hdr->library_versions_addr)
+    {
+        const struct xbe_library_version *libs = (const struct xbe_library_version *)
+            xbe_translate( data, read, hdr->base_addr, hdr->library_versions_addr,
+                            hdr->library_versions * sizeof(struct xbe_library_version) );
+        if (libs)
+        {
+            for (i = 0; i < hdr->library_versions; i++)
+                TRACE( "  library[%u]: %s version %u.%u.%u\n", i, debugstr_an( libs[i].name, 8 ),
+                       libs[i].major_version, libs[i].minor_version, libs[i].build_version );
+        }
+    }
+
+    ret = TRUE;
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, data );
+    CloseHandle( file );
+    return ret;
+}
+
+
 /*********************************************************************
  *           CloseHandle   (kernelbase.@)
  */
@@ -1087,6 +1364,31 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
             else
             {
                 WARN( "%s has a .xex extension but is not a recognisable XEX2 image\n", debugstr_w(app_name) );
+                status = STATUS_INVALID_IMAGE_FORMAT;
+            }
+        }
+        else if (!wcsicmp( p, L".xbe" ))
+        {
+            /* Real XBE container parsing (see parse_xbe_file() above). Unlike
+             * the .xex case, the original Xbox *is* x86 - there's no CPU
+             * mismatch - but Wine has no XBE-aware loader path yet (mapping
+             * sections at their absolute addresses and starting a thread at
+             * the decoded entry point instead of going through the normal
+             * NT/PE loader) and no complete implementation of the ~378
+             * xboxkrnl.exe kernel ordinals the code would call through its
+             * kernel thunk table (dlls/xboxkrnl has a partial one). So a
+             * recognised XBE is honestly reported as parsed-but-not-runnable
+             * with STATUS_NOT_IMPLEMENTED, rather than either pretending to
+             * launch it or misreporting it as a bad/foreign-arch image. */
+            if (parse_xbe_file( app_name ))
+            {
+                WARN( "%s is a recognised original Xbox (XBE) executable; header/certificate/section "
+                      "parsing only, Wine has no XBE process loader yet\n", debugstr_w(app_name) );
+                status = STATUS_NOT_IMPLEMENTED;
+            }
+            else
+            {
+                WARN( "%s has a .xbe extension but is not a recognisable XBE image\n", debugstr_w(app_name) );
                 status = STATUS_INVALID_IMAGE_FORMAT;
             }
         }
