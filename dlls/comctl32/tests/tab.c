@@ -812,6 +812,21 @@ static void test_curfocus(void)
     todo_wine
     ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
 
+    /* Set focus to -1, then to valid item index */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURSEL, 0, 0);
+    ok(ret == -1, "Unexpected index %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == -1, "Unexpected index %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURSEL, 0, 0);
+    todo_wine
+    ok(!ret, "Unexpected index %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(!ret, "Unexpected index %d.\n", ret);
+
     DestroyWindow(hTab);
 
     /* TCS_BUTTONS */
