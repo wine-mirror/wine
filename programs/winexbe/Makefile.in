@@ -1,0 +1,6 @@
+MODULE    = winexbe.exe
+
+EXTRADLLFLAGS = -mconsole -municode
+
+SOURCES = \
+	winexbe.c

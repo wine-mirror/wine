@@ -473,6 +473,39 @@ static NTSTATUS create_vdm_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBU
 
 
 /***********************************************************************
+ *           create_xbe_process
+ *
+ * Launch winexbe.exe with the XBE path as its command-line argument.
+ * winexbe.exe handles section mapping, kernel thunk resolution, and
+ * thread creation — exactly as winevdm.exe handles Win16/DOS images.
+ */
+static NTSTATUS create_xbe_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
+                                    SECURITY_ATTRIBUTES *tsa, DWORD flags,
+                                    RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info,
+                                    const WCHAR *xbe_path, const WCHAR *orig_cmdline )
+{
+    const WCHAR *winexbe = (is_win64 || is_wow64 ?
+                            L"C:\\windows\\syswow64\\winexbe.exe" :
+                            L"C:\\windows\\system32\\winexbe.exe");
+    WCHAR *newcmdline;
+    NTSTATUS status;
+    UINT len;
+
+    len = lstrlenW(winexbe) + lstrlenW(xbe_path) + 4;
+    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    swprintf( newcmdline, len, L"%s \"%s\"", winexbe, xbe_path );
+    RtlInitUnicodeString( &params->ImagePathName, winexbe );
+    RtlInitUnicodeString( &params->CommandLine, newcmdline );
+    status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, newcmdline );
+    return status;
+}
+
+
+/***********************************************************************
  *           create_cmd_process
  */
 static NTSTATUS create_cmd_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
@@ -1369,22 +1402,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         }
         else if (!wcsicmp( p, L".xbe" ))
         {
-            /* Real XBE container parsing (see parse_xbe_file() above). Unlike
-             * the .xex case, the original Xbox *is* x86 - there's no CPU
-             * mismatch - but Wine has no XBE-aware loader path yet (mapping
-             * sections at their absolute addresses and starting a thread at
-             * the decoded entry point instead of going through the normal
-             * NT/PE loader) and no complete implementation of the ~378
-             * xboxkrnl.exe kernel ordinals the code would call through its
-             * kernel thunk table (dlls/xboxkrnl has a partial one). So a
-             * recognised XBE is honestly reported as parsed-but-not-runnable
-             * with STATUS_NOT_IMPLEMENTED, rather than either pretending to
-             * launch it or misreporting it as a bad/foreign-arch image. */
+            /* Original Xbox (.xbe) is x86 — dispatch to winexbe.exe, which maps
+             * sections at their absolute VAs, resolves the kernel thunk table
+             * (loading xboxkrnl.exe by-ordinal), and launches a thread at the
+             * decoded entry point.  Unrecognised magic → bad image format. */
             if (parse_xbe_file( app_name ))
             {
-                WARN( "%s is a recognised original Xbox (XBE) executable; header/certificate/section "
-                      "parsing only, Wine has no XBE process loader yet\n", debugstr_w(app_name) );
-                status = STATUS_NOT_IMPLEMENTED;
+                TRACE( "starting %s as XBE via winexbe.exe\n", debugstr_w(app_name) );
+                status = create_xbe_process( token, debug, process_attr, thread_attr,
+                                             nt_flags, params, &rtl_info,
+                                             app_name, tidy_cmdline );
             }
             else
             {
