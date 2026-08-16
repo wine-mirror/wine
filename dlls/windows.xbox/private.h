@@ -139,3 +139,6 @@ extern IActivationFactory *xbox_controller_factory;
 
 /* user.c */
 extern IActivationFactory *xbox_user_factory;
+
+/* storage.c */
+extern IActivationFactory *xbox_storage_factory;

@@ -112,6 +112,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         return S_OK;
     }
 
+    if (!wcscmp( name, L"Windows.Xbox.Storage.ConnectedStorageSpace" ))
+    {
+        TRACE( "Windows.Xbox.Storage.ConnectedStorageSpace\n" );
+        *factory = xbox_storage_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
     if (!wcsncmp( name, L"Windows.Xbox.System.", 20 ))
     {
         FIXME("Windows.Xbox.System stub for %s\n", debugstr_w(name));
