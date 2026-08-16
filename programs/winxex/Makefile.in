@@ -1,0 +1,6 @@
+MODULE    = winxex.exe
+
+EXTRADLLFLAGS = -mconsole -municode
+
+SOURCES = \
+	winxex.c
