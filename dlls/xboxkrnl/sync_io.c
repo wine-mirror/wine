@@ -600,3 +600,13 @@ INT64 WINAPI XBOXKRNL_RtlExtendedLargeIntegerDivide(INT64 Dividend, ULONG Diviso
     if (Remainder) *Remainder = (ULONG)((ULONGLONG)Dividend % Divisor);
     return (INT64)((ULONGLONG)Dividend / Divisor);
 }
+
+/* KeSetEventBoostPriority: signal event, ignore thread boost (usermode) */
+void WINAPI XBOXKRNL_KeSetEventBoostPriority(void *Event, void **Thread)
+{
+    HANDLE h;
+    RtlEnterCriticalSection(&xbox_obj_cs);
+    h = xbox_obj_lookup(Event);
+    RtlLeaveCriticalSection(&xbox_obj_cs);
+    if (h) NtSetEvent(h, NULL);
+}

@@ -5,7 +5,7 @@
  * THIS FILE IS GENERATED (see the codegen notes in the project commit that
  * added it) from the real ordinal table in Cxbx-Reloaded's
  * src/core/kernel/exports/KernelThunk.cpp and the per-function signatures in
- * src/core/kernel/common/*.h. Every export below is a real, correctly-named,
+ * src/core/kernel/common/[*].h. Every export below is a real, correctly-named,
  * correctly-numbered xboxkrnl.exe ordinal; what's NOT real is any behaviour -
  * each one only logs a FIXME and returns a plausible-but-inert value
  * (STATUS_NOT_IMPLEMENTED for NTSTATUS-returning exports, NULL for
@@ -25,7 +25,8 @@
 #include "wine/asm.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(xboxkrnl);
+/* debug channel retained for future stubs */
+/* WINE_DEFAULT_DEBUG_CHANNEL(xboxkrnl); */
 
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ExInterlockedAddLargeStatistic,8)
 void FASTCALL XBOXKRNL_ExInterlockedAddLargeStatistic( void *a0, LONG a1 );
@@ -45,7 +46,6 @@ DEFINE_FASTCALL_WRAPPER(XBOXKRNL_IofCallDriver,8)
 LONG FASTCALL XBOXKRNL_IofCallDriver( void *a0, void *a1 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_IofCompleteRequest,8)
 void FASTCALL XBOXKRNL_IofCompleteRequest( void *a0, LONG a1 );
-void WINAPI XBOXKRNL_KeSetEventBoostPriority( void *a0, void *a1 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_KfRaiseIrql,4)
 LONG FASTCALL XBOXKRNL_KfRaiseIrql( LONG a0 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_KfLowerIrql,4)
@@ -160,10 +160,6 @@ void FASTCALL XBOXKRNL_ObfReferenceObject( void *a0 );
 
 
 
-void WINAPI XBOXKRNL_KeSetEventBoostPriority( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 146u, "KeSetEventBoostPriority", 2u );
-}
 
 
 
