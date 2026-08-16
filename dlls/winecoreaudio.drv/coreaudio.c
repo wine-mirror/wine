@@ -699,9 +699,56 @@ static AudioDeviceID dev_id_from_device(const char *device)
     return id;
 }
 
+static HRESULT get_device_period_frame_range(AudioDeviceID dev_id, EDataFlow flow,
+                                             unsigned int *min_period_frames,
+                                             unsigned int *max_period_frames)
+{
+    AudioObjectPropertyAddress addr;
+    AudioValueRange range;
+    UInt32 size;
+    OSStatus sc;
+
+    addr.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
+    addr.mScope = get_scope(flow);
+    addr.mElement = kAudioObjectPropertyElementMain;
+    size = sizeof(range);
+    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &range);
+    if (sc != noErr)
+    {
+        WARN("Failed to get device buffer frame size range: %x\n", (int)sc);
+        return osstatus_to_hresult(sc);
+    }
+
+    *min_period_frames = range.mMinimum;
+    *max_period_frames = range.mMaximum;
+    return S_OK;
+}
+
+static HRESULT set_device_period_frame_size(AudioDeviceID dev_id, EDataFlow flow,
+                                            unsigned int period_frames)
+{
+    AudioObjectPropertyAddress addr;
+    UInt32 size;
+    OSStatus sc;
+
+    addr.mSelector = kAudioDevicePropertyBufferFrameSize;
+    addr.mScope = get_scope(flow);
+    addr.mElement = kAudioObjectPropertyElementMain;
+    size = sizeof(period_frames);
+    sc = AudioObjectSetPropertyData(dev_id, &addr, 0, NULL, size, &period_frames);
+    if (sc != noErr)
+    {
+        WARN("Failed to set device buffer frame size: %x\n", (int)sc);
+        return osstatus_to_hresult(sc);
+    }
+
+    return S_OK;
+}
+
 static NTSTATUS unix_create_stream(void *args)
 {
     struct create_stream_params *params = args;
+    unsigned int min_period_frames, max_period_frames;
     struct coreaudio_stream *stream;
     AURenderCallbackStruct input;
     OSStatus sc;
@@ -720,9 +767,7 @@ static NTSTATUS unix_create_stream(void *args)
         goto end;
     }
 
-    stream->period = params->period;
     stream->period_frames = muldiv(params->period, stream->fmt->nSamplesPerSec, 10000000);
-
     if (stream->period_frames == 0)
     {
         params->result = E_INVALIDARG;
@@ -733,6 +778,16 @@ static NTSTATUS unix_create_stream(void *args)
     stream->flow = params->flow;
     stream->flags = params->flags;
     stream->share = params->share;
+
+    if (FAILED(params->result = get_device_period_frame_range(stream->dev_id, stream->flow,
+                                                              &min_period_frames,
+                                                              &max_period_frames)))
+        goto end;
+
+    stream->period_frames = max(min_period_frames, min(stream->period_frames, max_period_frames));
+    stream->period = muldiv(stream->period_frames, 10000000, stream->fmt->nSamplesPerSec);
+    if (FAILED(params->result = set_device_period_frame_size(stream->dev_id, stream->flow, stream->period_frames)))
+        goto end;
 
     stream->bufsize_frames = muldiv(params->duration, stream->fmt->nSamplesPerSec, 10000000);
     if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
