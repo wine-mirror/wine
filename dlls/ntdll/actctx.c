@@ -2439,8 +2439,10 @@ static void parse_maxversiontested_elem( xmlbuf_t *xmlbuf, struct assembly *asse
             }
             parse_version( &attr.value, &version );
             compat->Type = ACTCTX_COMPATIBILITY_ELEMENT_TYPE_MAXVERSIONTESTED;
-            compat->MaxVersionTested = (ULONGLONG)version.major << 48 |
-                (ULONGLONG)version.minor << 32 | version.build << 16 | version.revision;
+            compat->MaxVersionTested =  ((ULONGLONG)version.major << 48) |
+                                        ((ULONGLONG)version.minor << 32) |
+                                        ((ULONGLONG)version.build << 16) |
+                                        (ULONGLONG)version.revision;
         }
         else if (!is_xmlns_attr( &attr ))
         {
