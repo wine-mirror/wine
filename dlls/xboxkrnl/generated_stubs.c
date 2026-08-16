@@ -31,24 +31,11 @@ LONG WINAPI XBOXKRNL_AvGetSavedDataAddress( void );
 void WINAPI XBOXKRNL_AvSendTVEncoderOption( void *a0, LONG a1, LONG a2, void *a3 );
 LONG WINAPI XBOXKRNL_AvSetDisplayMode( void *a0, LONG a1, LONG a2, LONG a3, LONG a4, LONG a5 );
 void WINAPI XBOXKRNL_AvSetSavedDataAddress( void *a0 );
-void WINAPI XBOXKRNL_DbgBreakPointWithStatus( LONG a0 );
-LONG WINAPI XBOXKRNL_DbgLoadImageSymbols( void *a0, void *a1, LONG a2 );
 LONG WINAPI XBOXKRNL_HalReadSMCTrayState( void *a0, void *a1 );
-LONG WINAPI XBOXKRNL_DbgPrompt( void *a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_DbgUnLoadImageSymbols( void *a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_ExAcquireReadWriteLockExclusive( void *a0 );
-void WINAPI XBOXKRNL_ExAcquireReadWriteLockShared( void *a0 );
-void WINAPI XBOXKRNL_ExInitializeReadWriteLock( void *a0 );
-LONG WINAPI XBOXKRNL_ExInterlockedAddLargeInteger( void *a0, INT64 a1, void *a2 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ExInterlockedAddLargeStatistic,8)
 void FASTCALL XBOXKRNL_ExInterlockedAddLargeStatistic( void *a0, LONG a1 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ExInterlockedCompareExchange64,12)
 LONG FASTCALL XBOXKRNL_ExInterlockedCompareExchange64( void *a0, void *a1, void *a2 );
-LONG WINAPI XBOXKRNL_ExQueryPoolBlockSize( void *a0 );
-LONG WINAPI XBOXKRNL_ExQueryNonVolatileSetting( LONG a0, void *a1, void *a2, LONG a3, void *a4 );
-LONG WINAPI XBOXKRNL_ExReadWriteRefurbInfo( void *a0, LONG a1, LONG a2 );
-void WINAPI XBOXKRNL_ExReleaseReadWriteLock( void *a0 );
-LONG WINAPI XBOXKRNL_ExSaveNonVolatileSetting( LONG a0, LONG a1, void *a2, LONG a3 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ExfInterlockedInsertHeadList,8)
 LONG FASTCALL XBOXKRNL_ExfInterlockedInsertHeadList( void *a0, void *a1 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ExfInterlockedInsertTailList,8)
@@ -97,52 +84,23 @@ DEFINE_FASTCALL_WRAPPER(XBOXKRNL_IofCompleteRequest,8)
 void FASTCALL XBOXKRNL_IofCompleteRequest( void *a0, LONG a1 );
 LONG WINAPI XBOXKRNL_IoDismountVolume( void *a0 );
 LONG WINAPI XBOXKRNL_IoDismountVolumeByName( void *a0 );
-LONG WINAPI XBOXKRNL_KeBoostPriorityThread( void *a0, LONG a1 );
-LONG WINAPI XBOXKRNL_KeConnectInterrupt( void *a0 );
-void WINAPI XBOXKRNL_KeDisconnectInterrupt( void *a0 );
-void WINAPI XBOXKRNL_KeEnterCriticalRegion( LONG a0 );
-LONG WINAPI XBOXKRNL_KeGetCurrentIrql( void );
 void WINAPI XBOXKRNL_KeInitializeApc( void *a0, void *a1, void *a2, void *a3, void *a4, LONG a5, void *a6 );
-void WINAPI XBOXKRNL_KeInitializeDeviceQueue( void *a0 );
 void WINAPI XBOXKRNL_KeInitializeDpc( void *a0, void *a1, void *a2 );
-void WINAPI XBOXKRNL_KeInitializeInterrupt( void *a0, void *a1, void *a2, LONG a3, LONG a4, LONG a5, LONG a6 );
 void WINAPI XBOXKRNL_KeInitializeQueue( void *a0, LONG a1 );
-LONG WINAPI XBOXKRNL_KeInsertByKeyDeviceQueue( void *a0, void *a1, LONG a2 );
-LONG WINAPI XBOXKRNL_KeInsertDeviceQueue( void *a0, void *a1 );
 LONG WINAPI XBOXKRNL_KeInsertHeadQueue( void *a0, void *a1 );
 LONG WINAPI XBOXKRNL_KeInsertQueue( void *a0, void *a1 );
 LONG WINAPI XBOXKRNL_KeInsertQueueApc( void *a0, void *a1, void *a2, LONG a3 );
 LONG WINAPI XBOXKRNL_KeInsertQueueDpc( void *a0, void *a1, void *a2 );
-LONG WINAPI XBOXKRNL_KeIsExecutingDpc( void );
-void WINAPI XBOXKRNL_KeLeaveCriticalRegion( LONG a0 );
-LONG WINAPI XBOXKRNL_KeRaiseIrqlToDpcLevel( void );
-LONG WINAPI XBOXKRNL_KeRaiseIrqlToSynchLevel( void );
-LONG WINAPI XBOXKRNL_KeRemoveByKeyDeviceQueue( void *a0, LONG a1 );
-LONG WINAPI XBOXKRNL_KeRemoveDeviceQueue( void *a0 );
-LONG WINAPI XBOXKRNL_KeRemoveEntryDeviceQueue( void *a0, void *a1 );
 LONG WINAPI XBOXKRNL_KeRemoveQueue( void *a0, LONG a1, void *a2 );
 LONG WINAPI XBOXKRNL_KeRemoveQueueDpc( void *a0 );
-LONG WINAPI XBOXKRNL_KeRestoreFloatingPointState( void *a0 );
 LONG WINAPI XBOXKRNL_KeRundownQueue( void *a0 );
-LONG WINAPI XBOXKRNL_KeSaveFloatingPointState( void *a0 );
-LONG WINAPI XBOXKRNL_KeSetDisableBoostThread( void *a0, LONG a1 );
 void WINAPI XBOXKRNL_KeSetEventBoostPriority( void *a0, void *a1 );
-LONG WINAPI XBOXKRNL_KeSynchronizeExecution( void *a0, void *a1, void *a2 );
-LONG WINAPI XBOXKRNL_KeTestAlertThread( LONG a0 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_KfRaiseIrql,4)
 LONG FASTCALL XBOXKRNL_KfRaiseIrql( LONG a0 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_KfLowerIrql,4)
 void FASTCALL XBOXKRNL_KfLowerIrql( LONG a0 );
 DEFINE_FASTCALL_WRAPPER(XBOXKRNL_KiUnlockDispatcherDatabase,4)
 void FASTCALL XBOXKRNL_KiUnlockDispatcherDatabase( LONG a0 );
-LONG WINAPI XBOXKRNL_MmClaimGpuInstanceMemory( LONG a0, void *a1 );
-void WINAPI XBOXKRNL_MmLockUnlockBufferPages( void *a0, LONG a1, LONG a2 );
-void WINAPI XBOXKRNL_MmLockUnlockPhysicalPage( LONG a0, LONG a1 );
-LONG WINAPI XBOXKRNL_MmMapIoSpace( LONG a0, LONG a1, LONG a2 );
-void WINAPI XBOXKRNL_MmPersistContiguousMemory( void *a0, LONG a1, LONG a2 );
-LONG WINAPI XBOXKRNL_MmQueryAddressProtect( void *a0 );
-void WINAPI XBOXKRNL_MmSetAddressProtect( void *a0, LONG a1, LONG a2 );
-void WINAPI XBOXKRNL_MmUnmapIoSpace( void *a0, LONG a1 );
 void WINAPI XBOXKRNL_NtUserIoApcDispatcher( void *a0, void *a1, LONG a2 );
 LONG WINAPI XBOXKRNL_ObCreateObject( void *a0, void *a1, LONG a2, void *a3 );
 LONG WINAPI XBOXKRNL_ObInsertObject( void *a0, void *a1, LONG a2, void *a3 );
@@ -158,21 +116,8 @@ DEFINE_FASTCALL_WRAPPER(XBOXKRNL_ObfReferenceObject,4)
 void FASTCALL XBOXKRNL_ObfReferenceObject( void *a0 );
 LONG WINAPI XBOXKRNL_PhyGetLinkState( LONG a0 );
 LONG WINAPI XBOXKRNL_PhyInitialize( LONG a0, void *a1 );
-void WINAPI XBOXKRNL_RtlCaptureContext( void *a0 );
-LONG WINAPI XBOXKRNL_RtlCaptureStackBackTrace( LONG a0, LONG a1, void *a2, void *a3 );
-void WINAPI XBOXKRNL_RtlEnterCriticalSectionAndRegion( void *a0 );
-void WINAPI XBOXKRNL_RtlGetCallersAddress( void *a0, void *a1 );
-void WINAPI XBOXKRNL_RtlLeaveCriticalSectionAndRegion( void *a0 );
-void WINAPI XBOXKRNL_RtlUnwind( void *a0, void *a1, void *a2, void *a3 );
-LONG WINAPI XBOXKRNL_RtlWalkFrameChain( void *a0, LONG a1, LONG a2 );
 LONG WINAPI XBOXKRNL_XeLoadSection( void *a0 );
 LONG WINAPI XBOXKRNL_XeUnloadSection( void *a0 );
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_UCHAR( LONG a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_USHORT( LONG a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_ULONG( LONG a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_UCHAR( LONG a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_USHORT( LONG a0, void *a1, LONG a2 );
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_ULONG( LONG a0, void *a1, LONG a2 );
 void WINAPI XBOXKRNL_XcSHAInit( void *a0 );
 void WINAPI XBOXKRNL_XcSHAUpdate( void *a0, void *a1, LONG a2 );
 void WINAPI XBOXKRNL_XcSHAFinal( void *a0, void *a1 );
@@ -190,7 +135,6 @@ void WINAPI XBOXKRNL_XcBlockCrypt( LONG a0, void *a1, void *a2, void *a3, LONG a
 void WINAPI XBOXKRNL_XcBlockCryptCBC( LONG a0, LONG a1, void *a2, void *a3, void *a4, LONG a5, void *a6 );
 LONG WINAPI XBOXKRNL_XcCryptService( LONG a0, void *a1 );
 void WINAPI XBOXKRNL_XcUpdateCrypto( void *a0, void *a1 );
-void WINAPI XBOXKRNL_RtlRip( void *a0, void *a1, void *a2 );
 LONG WINAPI XBOXKRNL_HalIsResetOrShutdownPending( void );
 LONG WINAPI XBOXKRNL_IoMarkIrpMustComplete( void *a0 );
 LONG WINAPI XBOXKRNL_HalInitiateShutdown( void );
@@ -203,11 +147,6 @@ LONG WINAPI XBOXKRNL_XProfpControl( LONG a0, LONG a1 );
 LONG WINAPI XBOXKRNL_XProfpGetData( void );
 LONG WINAPI XBOXKRNL_IrtClientInitFast( void );
 LONG WINAPI XBOXKRNL_IrtSweep( void );
-LONG WINAPI XBOXKRNL_MmDbgAllocateMemory( LONG a0, LONG a1 );
-LONG WINAPI XBOXKRNL_MmDbgFreeMemory( void *a0, LONG a1 );
-LONG WINAPI XBOXKRNL_MmDbgQueryAvailablePages( void );
-void WINAPI XBOXKRNL_MmDbgReleaseAddress( void *a0, void *a1 );
-LONG WINAPI XBOXKRNL_MmDbgWriteCheck( void *a0, void *a1 );
 
 LONG WINAPI XBOXKRNL_AvGetSavedDataAddress( void )
 {
@@ -231,16 +170,7 @@ void WINAPI XBOXKRNL_AvSetSavedDataAddress( void *a0 )
     FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 4u, "AvSetSavedDataAddress", 1u );
 }
 
-void WINAPI XBOXKRNL_DbgBreakPointWithStatus( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 6u, "DbgBreakPointWithStatus", 1u );
-}
 
-LONG WINAPI XBOXKRNL_DbgLoadImageSymbols( void *a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 7u, "DbgLoadImageSymbols", 3u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
 LONG WINAPI XBOXKRNL_HalReadSMCTrayState( void *a0, void *a1 )
 {
@@ -248,97 +178,23 @@ LONG WINAPI XBOXKRNL_HalReadSMCTrayState( void *a0, void *a1 )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-LONG WINAPI XBOXKRNL_DbgPrompt( void *a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 10u, "DbgPrompt", 3u );
-    return 0;
-}
-
-void WINAPI XBOXKRNL_DbgUnLoadImageSymbols( void *a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 11u, "DbgUnLoadImageSymbols", 3u );
-}
-
-void WINAPI XBOXKRNL_ExAcquireReadWriteLockExclusive( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 12u, "ExAcquireReadWriteLockExclusive", 1u );
-}
-
-void WINAPI XBOXKRNL_ExAcquireReadWriteLockShared( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 13u, "ExAcquireReadWriteLockShared", 1u );
-}
-
-void WINAPI XBOXKRNL_ExInitializeReadWriteLock( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 18u, "ExInitializeReadWriteLock", 1u );
-}
-
-LONG WINAPI XBOXKRNL_ExInterlockedAddLargeInteger( void *a0, INT64 a1, void *a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 19u, "ExInterlockedAddLargeInteger", 3u );
-    return 0;
-}
-
-void FASTCALL XBOXKRNL_ExInterlockedAddLargeStatistic( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 20u, "ExInterlockedAddLargeStatistic", 2u );
-}
-
-LONG FASTCALL XBOXKRNL_ExInterlockedCompareExchange64( void *a0, void *a1, void *a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 21u, "ExInterlockedCompareExchange64", 3u );
-    return 0;
-}
-
-LONG WINAPI XBOXKRNL_ExQueryPoolBlockSize( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 23u, "ExQueryPoolBlockSize", 1u );
-    return 0;
-}
-
-LONG WINAPI XBOXKRNL_ExQueryNonVolatileSetting( LONG a0, void *a1, void *a2, LONG a3, void *a4 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 24u, "ExQueryNonVolatileSetting", 5u );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-LONG WINAPI XBOXKRNL_ExReadWriteRefurbInfo( void *a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 25u, "ExReadWriteRefurbInfo", 3u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
 
 
-void WINAPI XBOXKRNL_ExReleaseReadWriteLock( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 28u, "ExReleaseReadWriteLock", 1u );
-}
 
-LONG WINAPI XBOXKRNL_ExSaveNonVolatileSetting( LONG a0, LONG a1, void *a2, LONG a3 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 29u, "ExSaveNonVolatileSetting", 4u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
-LONG FASTCALL XBOXKRNL_ExfInterlockedInsertHeadList( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 32u, "ExfInterlockedInsertHeadList", 2u );
-    return 0;
-}
 
-LONG FASTCALL XBOXKRNL_ExfInterlockedInsertTailList( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 33u, "ExfInterlockedInsertTailList", 2u );
-    return 0;
-}
 
-LONG FASTCALL XBOXKRNL_ExfInterlockedRemoveHeadList( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 34u, "ExfInterlockedRemoveHeadList", 1u );
-    return 0;
-}
+
+
+
+
+
+
+
+
+
+
 
 LONG WINAPI XBOXKRNL_FscGetCacheSize( void )
 {
@@ -556,33 +412,10 @@ LONG WINAPI XBOXKRNL_IoDismountVolumeByName( void *a0 )
 
 
 
-LONG WINAPI XBOXKRNL_KeBoostPriorityThread( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 94u, "KeBoostPriorityThread", 2u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
-LONG WINAPI XBOXKRNL_KeConnectInterrupt( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 98u, "KeConnectInterrupt", 1u );
-    return 0;
-}
 
-void WINAPI XBOXKRNL_KeDisconnectInterrupt( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 100u, "KeDisconnectInterrupt", 1u );
-}
 
-void WINAPI XBOXKRNL_KeEnterCriticalRegion( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 101u, "KeEnterCriticalRegion", 1u );
-}
 
-LONG WINAPI XBOXKRNL_KeGetCurrentIrql( void )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 103u, "KeGetCurrentIrql", 0u );
-    return 0;
-}
 
 
 void WINAPI XBOXKRNL_KeInitializeApc( void *a0, void *a1, void *a2, void *a3, void *a4, LONG a5, void *a6 )
@@ -590,37 +423,19 @@ void WINAPI XBOXKRNL_KeInitializeApc( void *a0, void *a1, void *a2, void *a3, vo
     FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 105u, "KeInitializeApc", 7u );
 }
 
-void WINAPI XBOXKRNL_KeInitializeDeviceQueue( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 106u, "KeInitializeDeviceQueue", 1u );
-}
 
 void WINAPI XBOXKRNL_KeInitializeDpc( void *a0, void *a1, void *a2 )
 {
     FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 107u, "KeInitializeDpc", 3u );
 }
 
-void WINAPI XBOXKRNL_KeInitializeInterrupt( void *a0, void *a1, void *a2, LONG a3, LONG a4, LONG a5, LONG a6 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 109u, "KeInitializeInterrupt", 7u );
-}
 
 void WINAPI XBOXKRNL_KeInitializeQueue( void *a0, LONG a1 )
 {
     FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 111u, "KeInitializeQueue", 2u );
 }
 
-LONG WINAPI XBOXKRNL_KeInsertByKeyDeviceQueue( void *a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 114u, "KeInsertByKeyDeviceQueue", 3u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_KeInsertDeviceQueue( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 115u, "KeInsertDeviceQueue", 2u );
-    return 0;
-}
 
 LONG WINAPI XBOXKRNL_KeInsertHeadQueue( void *a0, void *a1 )
 {
@@ -646,48 +461,14 @@ LONG WINAPI XBOXKRNL_KeInsertQueueDpc( void *a0, void *a1, void *a2 )
     return 0;
 }
 
-LONG WINAPI XBOXKRNL_KeIsExecutingDpc( void )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 121u, "KeIsExecutingDpc", 0u );
-    return 0;
-}
-
-void WINAPI XBOXKRNL_KeLeaveCriticalRegion( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 122u, "KeLeaveCriticalRegion", 1u );
-}
 
 
 
-LONG WINAPI XBOXKRNL_KeRaiseIrqlToDpcLevel( void )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 129u, "KeRaiseIrqlToDpcLevel", 0u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_KeRaiseIrqlToSynchLevel( void )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 130u, "KeRaiseIrqlToSynchLevel", 0u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_KeRemoveByKeyDeviceQueue( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 133u, "KeRemoveByKeyDeviceQueue", 2u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_KeRemoveDeviceQueue( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 134u, "KeRemoveDeviceQueue", 1u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_KeRemoveEntryDeviceQueue( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 135u, "KeRemoveEntryDeviceQueue", 2u );
-    return 0;
-}
+
 
 LONG WINAPI XBOXKRNL_KeRemoveQueue( void *a0, LONG a1, void *a2 )
 {
@@ -701,11 +482,6 @@ LONG WINAPI XBOXKRNL_KeRemoveQueueDpc( void *a0 )
     return 0;
 }
 
-LONG WINAPI XBOXKRNL_KeRestoreFloatingPointState( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 139u, "KeRestoreFloatingPointState", 1u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
 
 LONG WINAPI XBOXKRNL_KeRundownQueue( void *a0 )
@@ -714,18 +490,8 @@ LONG WINAPI XBOXKRNL_KeRundownQueue( void *a0 )
     return 0;
 }
 
-LONG WINAPI XBOXKRNL_KeSaveFloatingPointState( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 142u, "KeSaveFloatingPointState", 1u );
-    return STATUS_NOT_IMPLEMENTED;
-}
 
 
-LONG WINAPI XBOXKRNL_KeSetDisableBoostThread( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 144u, "KeSetDisableBoostThread", 2u );
-    return 0;
-}
 
 
 void WINAPI XBOXKRNL_KeSetEventBoostPriority( void *a0, void *a1 )
@@ -736,83 +502,25 @@ void WINAPI XBOXKRNL_KeSetEventBoostPriority( void *a0, void *a1 )
 
 
 
-LONG WINAPI XBOXKRNL_KeSynchronizeExecution( void *a0, void *a1, void *a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 153u, "KeSynchronizeExecution", 3u );
-    return 0;
-}
-
-LONG WINAPI XBOXKRNL_KeTestAlertThread( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 155u, "KeTestAlertThread", 1u );
-    return 0;
-}
-
-LONG FASTCALL XBOXKRNL_KfRaiseIrql( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 160u, "KfRaiseIrql", 1u );
-    return 0;
-}
-
-void FASTCALL XBOXKRNL_KfLowerIrql( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 161u, "KfLowerIrql", 1u );
-}
-
-void FASTCALL XBOXKRNL_KiUnlockDispatcherDatabase( LONG a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 163u, "KiUnlockDispatcherDatabase", 1u );
-}
-
-
-
-LONG WINAPI XBOXKRNL_MmClaimGpuInstanceMemory( LONG a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 168u, "MmClaimGpuInstanceMemory", 2u );
-    return 0;
-}
 
 
 
 
 
-void WINAPI XBOXKRNL_MmLockUnlockBufferPages( void *a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 175u, "MmLockUnlockBufferPages", 3u );
-}
-
-void WINAPI XBOXKRNL_MmLockUnlockPhysicalPage( LONG a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 176u, "MmLockUnlockPhysicalPage", 2u );
-}
-
-LONG WINAPI XBOXKRNL_MmMapIoSpace( LONG a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 177u, "MmMapIoSpace", 3u );
-    return 0;
-}
-
-void WINAPI XBOXKRNL_MmPersistContiguousMemory( void *a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 178u, "MmPersistContiguousMemory", 3u );
-}
-
-LONG WINAPI XBOXKRNL_MmQueryAddressProtect( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 179u, "MmQueryAddressProtect", 1u );
-    return 0;
-}
 
 
-void WINAPI XBOXKRNL_MmSetAddressProtect( void *a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 182u, "MmSetAddressProtect", 3u );
-}
 
-void WINAPI XBOXKRNL_MmUnmapIoSpace( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 183u, "MmUnmapIoSpace", 2u );
-}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -893,32 +601,6 @@ LONG WINAPI XBOXKRNL_PhyInitialize( LONG a0, void *a1 )
 
 
 
-void WINAPI XBOXKRNL_RtlCaptureContext( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 265u, "RtlCaptureContext", 1u );
-}
-
-LONG WINAPI XBOXKRNL_RtlCaptureStackBackTrace( LONG a0, LONG a1, void *a2, void *a3 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 266u, "RtlCaptureStackBackTrace", 4u );
-    return 0;
-}
-
-void WINAPI XBOXKRNL_RtlEnterCriticalSectionAndRegion( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 278u, "RtlEnterCriticalSectionAndRegion", 1u );
-}
-
-
-void WINAPI XBOXKRNL_RtlGetCallersAddress( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 288u, "RtlGetCallersAddress", 2u );
-}
-
-void WINAPI XBOXKRNL_RtlLeaveCriticalSectionAndRegion( void *a0 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 295u, "RtlLeaveCriticalSectionAndRegion", 1u );
-}
 
 
 
@@ -926,19 +608,15 @@ void WINAPI XBOXKRNL_RtlLeaveCriticalSectionAndRegion( void *a0 )
 
 
 
-void WINAPI XBOXKRNL_RtlUnwind( void *a0, void *a1, void *a2, void *a3 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 312u, "RtlUnwind", 4u );
-}
 
 
 
 
-LONG WINAPI XBOXKRNL_RtlWalkFrameChain( void *a0, LONG a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 319u, "RtlWalkFrameChain", 3u );
-    return 0;
-}
+
+
+
+
+
 
 LONG WINAPI XBOXKRNL_XeLoadSection( void *a0 )
 {
@@ -952,35 +630,11 @@ LONG WINAPI XBOXKRNL_XeUnloadSection( void *a0 )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_UCHAR( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 329u, "READ_PORT_BUFFER_UCHAR", 3u );
-}
 
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_USHORT( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 330u, "READ_PORT_BUFFER_USHORT", 3u );
-}
 
-void WINAPI XBOXKRNL_READ_PORT_BUFFER_ULONG( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 331u, "READ_PORT_BUFFER_ULONG", 3u );
-}
 
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_UCHAR( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 332u, "WRITE_PORT_BUFFER_UCHAR", 3u );
-}
 
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_USHORT( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 333u, "WRITE_PORT_BUFFER_USHORT", 3u );
-}
 
-void WINAPI XBOXKRNL_WRITE_PORT_BUFFER_ULONG( LONG a0, void *a1, LONG a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 334u, "WRITE_PORT_BUFFER_ULONG", 3u );
-}
 
 void WINAPI XBOXKRNL_XcSHAInit( void *a0 )
 {
@@ -1073,10 +727,6 @@ void WINAPI XBOXKRNL_XcUpdateCrypto( void *a0, void *a1 )
     FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 351u, "XcUpdateCrypto", 2u );
 }
 
-void WINAPI XBOXKRNL_RtlRip( void *a0, void *a1, void *a2 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 352u, "RtlRip", 3u );
-}
 
 LONG WINAPI XBOXKRNL_HalIsResetOrShutdownPending( void )
 {
@@ -1153,31 +803,7 @@ LONG WINAPI XBOXKRNL_IrtSweep( void )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-LONG WINAPI XBOXKRNL_MmDbgAllocateMemory( LONG a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 374u, "MmDbgAllocateMemory", 2u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_MmDbgFreeMemory( void *a0, LONG a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 375u, "MmDbgFreeMemory", 2u );
-    return 0;
-}
 
-LONG WINAPI XBOXKRNL_MmDbgQueryAvailablePages( void )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 376u, "MmDbgQueryAvailablePages", 0u );
-    return 0;
-}
 
-void WINAPI XBOXKRNL_MmDbgReleaseAddress( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 377u, "MmDbgReleaseAddress", 2u );
-}
 
-LONG WINAPI XBOXKRNL_MmDbgWriteCheck( void *a0, void *a1 )
-{
-    FIXME( "ordinal %u (%s): stub, %u arg(s) ignored\n", 378u, "MmDbgWriteCheck", 2u );
-    return 0;
-}
