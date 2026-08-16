@@ -23,6 +23,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdkc);
 
+static HRESULT xgameui_complete_inline( XAsyncBlock *async, HRESULT hr, const void *data, SIZE_T size )
+{
+    struct xasync_state *state = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*state) );
+    if (!state) return E_OUTOFMEMORY;
+    state->result    = hr;
+    state->completed = TRUE;
+    if (size && data) {
+        state->result_buf = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!state->result_buf) { HeapFree( GetProcessHeap(), 0, state ); return E_OUTOFMEMORY; }
+        memcpy( state->result_buf, data, size );
+        state->result_size = size;
+    }
+    async->internal[0] = state;
+    if (async->callback) async->callback( async );
+    return S_OK;
+}
+
 struct x_game_ui
 {
     IXGameUiImpl4 IXGameUiImpl4_iface;
@@ -73,104 +90,114 @@ static ULONG WINAPI x_game_ui_Release( IXGameUiImpl4 *iface )
 
 static HRESULT WINAPI x_game_ui_XGameUiShowMessageDialogAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, const char *titleText, const char *contentText, const char *firstButtonText, const char *secondButtonText, const char *thirdButtonText, XGameUiMessageDialogButton defaultButton, XGameUiMessageDialogButton cancelButton )
 {
-    FIXME( "iface %p, async %p, titleText %s, contentText %s, firstButtonText %s, secondButtonText %s, thirdButtonText %s, defaultButton %d, cancelButton %d stub!\n", iface, async, debugstr_a( titleText ), debugstr_a( contentText ), debugstr_a( firstButtonText ), debugstr_a( secondButtonText ), debugstr_a( thirdButtonText ), defaultButton, cancelButton );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, title %s, content %s — auto-selecting default button %d\n", iface, async, debugstr_a( titleText ), debugstr_a( contentText ), defaultButton );
+    return xgameui_complete_inline( async, S_OK, &defaultButton, sizeof(defaultButton) );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowMessageDialogResult( IXGameUiImpl4 *iface, XAsyncBlock *async, XGameUiMessageDialogButton *resultButton )
 {
-    FIXME( "iface %p, async %p, resultButton %p stub!\n", iface, async, resultButton );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p, resultButton %p\n", iface, async, resultButton );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, sizeof(*resultButton), resultButton, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowSendGameInviteAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, const char *sessionConfigurationId, const char *sessionTemplateName, const char *sessionId, const char *invitationText, const char *customActivationContext )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, sessionConfigurationId %s, sessionTemplateName %s, sessionId %s, invitationText %s, customActivationContext %s stub!\n", iface, async, requestingUser, debugstr_a( sessionConfigurationId ), debugstr_a( sessionTemplateName ), debugstr_a( sessionId ), debugstr_a( invitationText ), debugstr_a( customActivationContext ) );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, sessionId %s — no Xbox Live, no-op\n", iface, async, debugstr_a( sessionId ) );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowSendGameInviteResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowPlayerProfileCardAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, UINT64 targetPlayer )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, targetPlayer %llu stub!\n", iface, async, requestingUser, targetPlayer );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p — no-op\n", iface, async );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowPlayerProfileCardResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p, async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowAchievementsAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, UINT32 titleId )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, titleId %u stub!\n", iface, async, requestingUser, titleId );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, titleId %u — no-op\n", iface, async, titleId );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowAchievementsResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p, async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowPlayerPickerAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, const char *promptText, UINT32 selectFromPlayersCount, const UINT64 *selectFromPlayers, UINT32 preSelectedPlayersCount, UINT64 *preSelectedPlayers, UINT32 minSelectionCount, UINT32 maxSelectionCount )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, promptText %s, selectFromPlayersCount %u, selectFromPlayers %p, preSelectedPlayersCount %u, preSelectedPlayers %p, minSelectionCount %u, maxSelectionCount %u stub!\n", iface, async, requestingUser, debugstr_a( promptText ), selectFromPlayersCount, selectFromPlayers, preSelectedPlayersCount, preSelectedPlayers, minSelectionCount, maxSelectionCount );
-    return E_NOTIMPL;
+    UINT32 zero = 0;
+    FIXME( "iface %p, async %p — no-op, 0 players selected\n", iface, async );
+    return xgameui_complete_inline( async, S_OK, &zero, sizeof(zero) );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowPlayerPickerResultCount( IXGameUiImpl4 *iface, XAsyncBlock *async, UINT32 *resultPlayersCount )
 {
-    FIXME( "iface %p, async %p, resultPlayersCount %p stub!\n", iface, async, resultPlayersCount );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p, resultPlayersCount %p\n", iface, async, resultPlayersCount );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, sizeof(*resultPlayersCount), resultPlayersCount, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowPlayerPickerResult( IXGameUiImpl4 *iface, XAsyncBlock *async, UINT32 resultPlayersCount, UINT64 *resultPlayers, UINT32 *resultPlayersUsed )
 {
-    FIXME( "iface %p, async %p, resultPlayersCount %u, resultPlayers %p, resultPlayersUsed %p stub!\n", iface, async, resultPlayersCount, resultPlayers, resultPlayersUsed );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p, resultPlayersCount %u\n", iface, async, resultPlayersCount );
+    if (resultPlayersUsed) *resultPlayersUsed = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowErrorDialogAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, HRESULT errorCode, const char *context )
 {
-    FIXME( "iface %p, async %p, errorCode %#lx, context %s stub!\n", iface, async, errorCode, debugstr_a( context ) );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, errorCode %#lx — no-op\n", iface, async, errorCode );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowErrorDialogResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p, async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetNotificationPositionHint( IXGameUiImpl4 *iface, XGameUiNotificationPositionHint position )
 {
-    FIXME( "iface %p, position %d stub!\n", iface, position );
-    return E_NOTIMPL;
+    TRACE( "iface %p, position %d\n", iface, position );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowTextEntryAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, const char *titleText, const char *descriptionText, const char *defaultText, XGameUiTextEntryInputScope inputScope, UINT32 maxTextLength )
 {
-    FIXME( "iface %p, async %p, titleText %s, descriptionText %s, defaultText %s, inputScope %d, maxTextLength %u stub!\n", iface, async, debugstr_a( titleText ), debugstr_a( descriptionText ), debugstr_a( defaultText ), inputScope, maxTextLength );
-    return E_NOTIMPL;
+    const char *text = defaultText ? defaultText : "";
+    FIXME( "iface %p, async %p, title %s — returning defaultText\n", iface, async, debugstr_a( titleText ) );
+    return xgameui_complete_inline( async, S_OK, text, strlen(text) + 1 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowTextEntryResultSize( IXGameUiImpl4 *iface, XAsyncBlock *async, UINT32 *resultTextBufferSize )
 {
-    FIXME( "iface %p, async %p, resultTextBufferSize %p stub!\n", iface, async, resultTextBufferSize );
-    return E_NOTIMPL;
+    struct xasync_state *state = (struct xasync_state *)async->internal[0];
+    TRACE( "iface %p, async %p, resultTextBufferSize %p\n", iface, async, resultTextBufferSize );
+    if (!state || !state->completed) return 0x8000000E;
+    *resultTextBufferSize = (UINT32)state->result_size;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowTextEntryResult( IXGameUiImpl4 *iface, XAsyncBlock *async, UINT32 resultTextBufferSize, char *resultTextBuffer, UINT32 *resultTextBufferUsed )
 {
-    FIXME( "iface %p, async %p, resultTextBufferSize %u, resultTextBuffer %p, resultTextBufferUsed %p stub!\n", iface, async, resultTextBufferSize, resultTextBuffer, resultTextBufferUsed );
-    return E_NOTIMPL;
+    HRESULT hr;
+    SIZE_T used = 0;
+    TRACE( "iface %p, async %p, resultTextBufferSize %u, resultTextBuffer %p\n", iface, async, resultTextBufferSize, resultTextBuffer );
+    hr = IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, resultTextBufferSize, resultTextBuffer, &used );
+    if (resultTextBufferUsed) *resultTextBufferUsed = (UINT32)used;
+    return hr;
 }
 
 static HRESULT WINAPI __PADDING__( IXGameUiImpl4 *iface )
@@ -199,26 +226,29 @@ static HRESULT WINAPI __PADDING_4__( IXGameUiImpl4 *iface )
 
 static HRESULT WINAPI x_game_ui_XGameUiShowWebAuthenticationAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, const char *requestUri, const char *completionUri )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, requestUri %s, completionUri %s stub!\n", iface, async, requestingUser, debugstr_a( requestUri ), debugstr_a( completionUri ) );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, requestUri %s — no browser support\n", iface, async, debugstr_a( requestUri ) );
+    return xgameui_complete_inline( async, E_NOTIMPL, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowWebAuthenticationResultSize( IXGameUiImpl4 *iface, XAsyncBlock *async, SIZE_T *bufferSize )
 {
-    FIXME( "iface %p, async %p, bufferSize %p stub!\n", iface, async, bufferSize );
-    return E_NOTIMPL;
+    struct xasync_state *state = (struct xasync_state *)async->internal[0];
+    TRACE( "iface %p, async %p\n", iface, async );
+    if (!state || !state->completed) return 0x8000000E;
+    *bufferSize = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowWebAuthenticationResult( IXGameUiImpl4 *iface, XAsyncBlock *async, SIZE_T bufferSize, void *buffer, XGameUiWebAuthenticationResultData **ptrToBuffer, SIZE_T *bufferUsed )
 {
-    FIXME( "iface %p, async %p, bufferSize %Iu, buffer %p, ptrToBuffer %p, bufferUsed %p stub!\n", iface, async, bufferSize, buffer, ptrToBuffer, bufferUsed );
+    TRACE( "iface %p, async %p\n", iface, async );
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowWebAuthenticationWithOptionsAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, const char *requestUri, const char *completionUri, XGameUiWebAuthenticationOptions options )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, requestUri %s, completionUri %s, options %d stub!\n", iface, async, requestingUser, debugstr_a( requestUri ), debugstr_a( completionUri ), options );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, requestUri %s — no browser support\n", iface, async, debugstr_a( requestUri ) );
+    return xgameui_complete_inline( async, E_NOTIMPL, NULL, 0 );
 }
 
 static HRESULT WINAPI __PADDING_5__( IXGameUiImpl4 *iface )
@@ -235,14 +265,14 @@ static HRESULT WINAPI __PADDING_6__( IXGameUiImpl4 *iface )
 
 static HRESULT WINAPI x_game_ui_XGameUiShowMultiplayerActivityGameInviteAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser )
 {
-    FIXME( "iface %p, async %p, requestingUser %p stub!\n", iface, async, requestingUser );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p — no Xbox Live, no-op\n", iface, async );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowMultiplayerActivityGameInviteResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p, async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI __PADDING_7__( IXGameUiImpl4 *iface )
@@ -295,68 +325,68 @@ static HRESULT WINAPI x_game_ui_XGameUiTextEntryUpdateVisibility( IXGameUiImpl4 
 
 static HRESULT WINAPI x_game_ui_XGameUiShowStateShareAsync( IXGameUiImpl4 *iface, XAsyncBlock *async, XUserHandle requestingUser, const char *linkToken )
 {
-    FIXME( "iface %p, async %p, requestingUser %p, linkToken %s stub!\n", iface, async, requestingUser, debugstr_a( linkToken ) );
-    return E_NOTIMPL;
+    FIXME( "iface %p, async %p, linkToken %s — no-op\n", iface, async, debugstr_a( linkToken ) );
+    return xgameui_complete_inline( async, S_OK, NULL, 0 );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiShowStateShareResult( IXGameUiImpl4 *iface, XAsyncBlock *async )
 {
-    FIXME( "iface %p, async %p stub!\n", iface, async );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async %p\n", iface, async );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, async, NULL, 0, NULL, NULL );
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetUiCallbacks( IXGameUiImpl4 *iface, const XGameUiUiCallbacks *callbacks, BOOLEAN useSystemUiIfAvailable )
 {
-    FIXME( "iface %p, callbacks %p, useSystemUiIfAvailable %d stub!\n", iface, callbacks, useSystemUiIfAvailable );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbacks %p, useSystemUiIfAvailable %d\n", iface, callbacks, useSystemUiIfAvailable );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetMessageDialogUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle, XGameUiMessageDialogButton response )
 {
-    FIXME( "iface %p, callbackHandle %p, response %d stub!\n", iface, callbackHandle, response );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p, response %d\n", iface, callbackHandle, response );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetPlayerPickerUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle, UINT32 playerCount, const UINT64 *players )
 {
-    FIXME( "iface %p, callbackHandle %p, playerCount %u, players %p stub!\n", iface, callbackHandle, playerCount, players );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p, playerCount %u\n", iface, callbackHandle, playerCount );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetTextEntryUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle, const char *response )
 {
-    FIXME( "iface %p, callbackHandle %p, response %s stub!\n", iface, callbackHandle, debugstr_a( response ) );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p, response %s\n", iface, callbackHandle, debugstr_a( response ) );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetPlayerProfileCardUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle )
 {
-    FIXME( "iface %p, callbackHandle %p stub!\n", iface, callbackHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p\n", iface, callbackHandle );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetSendGameInviteUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle )
 {
-    FIXME( "iface %p, callbackHandle %p stub!\n", iface, callbackHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p\n", iface, callbackHandle );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetAchievementsUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle )
 {
-    FIXME( "iface %p, callbackHandle %p stub!\n", iface, callbackHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p\n", iface, callbackHandle );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetMultiplayerActivityGameInviteUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle )
 {
-    FIXME( "iface %p, callbackHandle %p stub!\n", iface, callbackHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p\n", iface, callbackHandle );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_game_ui_XGameUiSetErrorDialogUiResponse( IXGameUiImpl4 *iface, XGameUiCallbackHandle callbackHandle )
 {
-    FIXME( "iface %p, callbackHandle %p stub!\n", iface, callbackHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callbackHandle %p\n", iface, callbackHandle );
+    return S_OK;
 }
 
 static const struct IXGameUiImpl4Vtbl x_game_ui_vtbl =

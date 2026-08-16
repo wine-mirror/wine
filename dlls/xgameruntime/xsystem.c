@@ -114,26 +114,32 @@ static HRESULT WINAPI x_system_XSystemGetXboxLiveSandboxId( IXSystemImpl5 *iface
 
 static HRESULT WINAPI x_system_XSystemGetAppSpecificDeviceId( IXSystemImpl5 *iface, INT32 appSpecificDeviceIdSize, char *appSpecificDeviceId, SIZE_T *appSpecificDeviceIdUsed )
 {
-    FIXME( "iface %p, appSpecificDeviceIdSize %d, appSpecificDeviceId %p, appSpecificDeviceIdUsed %p stub!\n", iface, appSpecificDeviceIdSize, appSpecificDeviceId, appSpecificDeviceIdUsed );
-    return E_NOTIMPL;
+    /* Fake device ID — 44 chars + NUL = XSystemAppSpecificDeviceIdBytes */
+    const char *id = "WINEEX000000000000000000000000000000000000000";
+    TRACE( "iface %p\n", iface );
+    if (!appSpecificDeviceId || !appSpecificDeviceIdUsed) return E_POINTER;
+    if (appSpecificDeviceIdSize < (INT32)XSystemAppSpecificDeviceIdBytes)
+        return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+    strcpy_s( appSpecificDeviceId, appSpecificDeviceIdSize, id );
+    *appSpecificDeviceIdUsed = strlen( id ) + 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_system_XSystemHandleTrack( IXSystemImpl5 *iface, XSystemHandleCallback callback, void *context )
 {
-    FIXME( "iface %p, callback %p, context %p stub!\n", iface, callback, context );
-    return E_NOTIMPL;
+    TRACE( "iface %p, callback %p, context %p\n", iface, callback, context );
+    return S_OK;
 }
 
 static BOOLEAN WINAPI x_system_XSystemIsHandleValid( IXSystemImpl5 *iface, XSystemHandle handle )
 {
-    /* always assume it's valid. */
-    FIXME( "iface %p, handle %p stub!\n", iface, handle );
-    return TRUE;
+    TRACE( "iface %p, handle %p\n", iface, handle );
+    return handle != NULL;
 }
 
 static void WINAPI x_system_XSystemAllowFullDownloadBandwidth( IXSystemImpl5 *iface, BOOLEAN enable )
 {
-    FIXME( "iface %p, enable %d stub!\n", iface, enable );
+    TRACE( "iface %p, enable %d\n", iface, enable );
 }
 
 static const struct IXSystemImpl5Vtbl x_system_vtbl =

@@ -69,34 +69,54 @@ static ULONG WINAPI x_networking_Release( IXNetworkingImpl2 *iface )
     return ref;
 }
 
+static HRESULT xnet_complete_inline( XAsyncBlock *async, HRESULT hr, const void *data, SIZE_T size )
+{
+    struct xasync_state *state = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*state) );
+    if (!state) return E_OUTOFMEMORY;
+    state->result    = hr;
+    state->completed = TRUE;
+    if (size && data) {
+        state->result_buf = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!state->result_buf) { HeapFree( GetProcessHeap(), 0, state ); return E_OUTOFMEMORY; }
+        memcpy( state->result_buf, data, size );
+        state->result_size = size;
+    }
+    async->internal[0] = state;
+    if (async->callback) async->callback( async );
+    return S_OK;
+}
+
 static HRESULT WINAPI x_networking_XNetworkingQueryPreferredLocalUdpMultiplayerPort( IXNetworkingImpl2 *iface, UINT16 *preferredLocalUdpMultiplayerPort )
 {
-    FIXME( "iface %p, preferredLocalUdpMultiplayerPort %p stub!\n", iface, preferredLocalUdpMultiplayerPort );
-    return E_NOTIMPL;
+    TRACE( "iface %p\n", iface );
+    *preferredLocalUdpMultiplayerPort = 3074;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingQueryPreferredLocalUdpMultiplayerPortAsync( IXNetworkingImpl2 *iface, XAsyncBlock *asyncBlock )
 {
-    FIXME( "iface %p, asyncBlock %p stub!\n", iface, asyncBlock );
-    return E_NOTIMPL;
+    UINT16 port = 3074;
+    TRACE( "iface %p, asyncBlock %p\n", iface, asyncBlock );
+    return xnet_complete_inline( asyncBlock, S_OK, &port, sizeof(port) );
 }
 
 static HRESULT WINAPI x_networking_XNetworkingQueryPreferredLocalUdpMultiplayerPortAsyncResult( IXNetworkingImpl2 *iface, XAsyncBlock *asyncBlock, UINT16 *preferredLocalUdpMultiplayerPort )
 {
-    FIXME( "iface %p, asyncBlock %p, preferredLocalUdpMultiplayerPort %p stub!\n", iface, asyncBlock, preferredLocalUdpMultiplayerPort );
-    return E_NOTIMPL;
+    TRACE( "iface %p, asyncBlock %p\n", iface, asyncBlock );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, asyncBlock, NULL, sizeof(*preferredLocalUdpMultiplayerPort), preferredLocalUdpMultiplayerPort, NULL );
 }
 
 static HRESULT WINAPI x_networking_XNetworkingRegisterPreferredLocalUdpMultiplayerPortChanged( IXNetworkingImpl2 *iface, XTaskQueueHandle queue, void *context, XNetworkingPreferredLocalUdpMultiplayerPortChangedCallback *callback, XTaskQueueRegistrationToken *token )
 {
-    FIXME( "iface %p, queue %p, context %p, callback %p, token %p stub!\n", iface, queue, context, callback, token );
-    return E_NOTIMPL;
+    TRACE( "iface %p, queue %p, token %p\n", iface, queue, token );
+    token->value = 1;
+    return S_OK;
 }
 
 static BOOLEAN WINAPI x_networking_XNetworkingUnregisterPreferredLocalUdpMultiplayerPortChanged( IXNetworkingImpl2 *iface, XTaskQueueRegistrationToken token, BOOLEAN wait )
 {
-    FIXME( "iface %p, token %p, wait %d stub!\n", iface, &token, wait );
-    return FALSE;
+    TRACE( "iface %p\n", iface );
+    return TRUE;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingQuerySecurityInformationForUrlAsync( IXNetworkingImpl2 *iface, const char *url, XAsyncBlock *asyncBlock )
@@ -143,38 +163,45 @@ static HRESULT WINAPI x_networking_XNetworkingVerifyServerCertificate( IXNetwork
 
 static HRESULT WINAPI x_networking_XNetworkingGetConnectivityHint( IXNetworkingImpl2 *iface, XNetworkingConnectivityHint *connectivityHint )
 {
-    FIXME( "iface %p, connectivityHint %p stub!\n", iface, connectivityHint );
-    return E_NOTIMPL;
+    TRACE( "iface %p, connectivityHint %p\n", iface, connectivityHint );
+    if (!connectivityHint) return E_POINTER;
+    memset( connectivityHint, 0, sizeof(*connectivityHint) );
+    connectivityHint->connectivityLevel    = XNetworkingConnectivityLevelHint_InternetAccess;
+    connectivityHint->connectivityCost     = XNetworkingConnectivityCostHint_Unrestricted;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingRegisterConnectivityHintChanged( IXNetworkingImpl2 *iface, XTaskQueueHandle queue, void *context, XNetworkingConnectivityHintChangedCallback *callback, XTaskQueueRegistrationToken *token )
 {
-    FIXME( "iface %p, queue %p, context %p, callback %p, token %p stub!\n", iface, queue, context, callback, token );
-    return E_NOTIMPL;
+    TRACE( "iface %p, queue %p, token %p\n", iface, queue, token );
+    token->value = 1;
+    return S_OK;
 }
 
 static BOOLEAN WINAPI x_networking_XNetworkingUnregisterConnectivityHintChanged( IXNetworkingImpl2 *iface, XTaskQueueRegistrationToken token, BOOLEAN wait )
 {
-    FIXME( "iface %p, token %p, wait %d stub!\n", iface, &token, wait );
-    return FALSE;
+    TRACE( "iface %p\n", iface );
+    return TRUE;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingQueryConfigurationSetting( IXNetworkingImpl2 *iface, XNetworkingConfigurationSetting configurationSetting, UINT64 *value )
 {
-    FIXME( "iface %p, configurationSetting %d, value %p stub!\n", iface, configurationSetting, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, configurationSetting %d, value %p\n", iface, configurationSetting, value );
+    if (value) *value = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingSetConfigurationSetting( IXNetworkingImpl2 *iface, XNetworkingConfigurationSetting configurationParameter, UINT64 value )
 {
-    FIXME( "iface %p, configurationParameter %d, value %llu stub!\n", iface, configurationParameter, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, configurationParameter %d, value %llu\n", iface, configurationParameter, value );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_networking_XNetworkingQueryStatistics( IXNetworkingImpl2 *iface, XNetworkingStatisticsType statisticsType, XNetworkingStatisticsBuffer *statisticsBuffer )
 {
-    FIXME( "iface %p, statisticsType %d, statisticsBuffer %p stub!\n", iface, statisticsType, statisticsBuffer );
-    return E_NOTIMPL;
+    TRACE( "iface %p, statisticsType %d, statisticsBuffer %p\n", iface, statisticsType, statisticsBuffer );
+    if (statisticsBuffer) memset( statisticsBuffer, 0, sizeof(*statisticsBuffer) );
+    return S_OK;
 }
 
 static const struct IXNetworkingImpl2Vtbl x_networking_vtbl =
