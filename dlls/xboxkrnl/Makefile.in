@@ -5,4 +5,5 @@ IMPORTS   = kernel32 ntdll
 SOURCES = \
 	generated_data.c \
 	generated_stubs.c \
-	main.c
+	main.c \
+	sync_io.c
