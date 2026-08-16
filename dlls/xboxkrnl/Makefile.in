@@ -1,11 +1,13 @@
 MODULE    = xboxkrnl.exe
 IMPORTLIB = xboxkrnl
-IMPORTS   = kernel32 ntdll
+IMPORTS   = bcrypt kernel32 ntdll
 
 SOURCES = \
 	generated_data.c \
 	generated_stubs.c \
+	hal_ob_stubs.c \
 	keirql_misc.c \
 	main.c \
 	misc.c \
-	sync_io.c
+	sync_io.c \
+	xc_crypto.c
