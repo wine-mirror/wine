@@ -103,9 +103,6 @@ struct coreaudio_stream
     BYTE *local_buffer, *cap_buffer, *wrap_buffer, *resamp_buffer, *tmp_buffer;
 };
 
-static const REFERENCE_TIME def_period = 100000;
-static const REFERENCE_TIME min_period = 50000;
-
 static ULONG_PTR zero_bits = 0;
 
 static NTSTATUS unix_not_implemented(void *args)
@@ -724,6 +721,27 @@ static HRESULT get_device_period_frame_range(AudioDeviceID dev_id, EDataFlow flo
     return S_OK;
 }
 
+static HRESULT get_device_period_frame_size(AudioDeviceID dev_id, EDataFlow flow,
+                                            unsigned int *period_frames)
+{
+    AudioObjectPropertyAddress addr;
+    UInt32 size;
+    OSStatus sc;
+
+    addr.mSelector = kAudioDevicePropertyBufferFrameSize;
+    addr.mScope = get_scope(flow);
+    addr.mElement = kAudioObjectPropertyElementMain;
+    size = sizeof(*period_frames);
+    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, period_frames);
+    if (sc != noErr)
+    {
+        WARN("Failed to get device buffer frame size: %x\n", (int)sc);
+        return osstatus_to_hresult(sc);
+    }
+
+    return S_OK;
+}
+
 static HRESULT set_device_period_frame_size(AudioDeviceID dev_id, EDataFlow flow,
                                             unsigned int period_frames)
 {
@@ -1181,11 +1199,33 @@ static NTSTATUS unix_is_format_supported(void *args)
 static NTSTATUS unix_get_device_period(void *args)
 {
     struct get_device_period_params *params = args;
+    unsigned int n_samples_per_sec;
+    AudioDeviceID dev_id;
+
+    dev_id = dev_id_from_device(params->device);
+    if (FAILED(params->result = get_device_sample_rate(dev_id, params->flow, &n_samples_per_sec)))
+        return STATUS_SUCCESS;
 
     if (params->def_period)
-        *params->def_period = def_period;
+    {
+        unsigned int period_frames;
+
+        if (FAILED(params->result = get_device_period_frame_size(dev_id, params->flow, &period_frames)))
+            return STATUS_SUCCESS;
+
+        *params->def_period = muldiv(period_frames, 10000000, n_samples_per_sec);
+    }
+
     if (params->min_period)
-        *params->min_period = min_period;
+    {
+        unsigned int min_period_frames, max_period_frames;
+
+        if (FAILED(params->result = get_device_period_frame_range(dev_id, params->flow,
+                                                                  &min_period_frames, &max_period_frames)))
+            return STATUS_SUCCESS;
+
+        *params->min_period = muldiv(min_period_frames, 10000000, n_samples_per_sec);
+    }
 
     params->result = S_OK;
 

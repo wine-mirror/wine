@@ -1357,8 +1357,9 @@ static void test_padding(void)
      * 441 observed with Vista, 448 with w7 on the same HW! */
     hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
     ok(hr == S_OK, "GetDevicePeriod failed: %08lx\n", hr);
-    /* some wineXYZ.drv use 20ms, not seen on native */
-    ok(defp == 100000 || broken(defp == 101587) || defp == 200000,
+    /* some wineXYZ.drv use 20ms, not seen on native
+     * winecoreaudio.drv uses 512 frames at 48KHz by default, so the period is ~10.66ms */
+    ok(defp == 100000 || broken(defp == 101587) || defp == 200000 || defp == 106667,
        "Expected 10ms default period: %lu\n", (ULONG)defp);
     ok(minp != 0, "Minimum period is 0\n");
     ok(minp <= defp, "Minimum period is greater than default period\n");
