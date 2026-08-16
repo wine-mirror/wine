@@ -4590,14 +4590,60 @@ static BOOL check_jscript(void)
     return parse_script(0, L"if(!('localeCompare' in String.prototype)) throw 1;") == S_OK;
 }
 
+static BOOL is_jscript9legacy(void)
+{
+    VARIANT output;
+    HRESULT hres = parse_script_expr(L"ScriptEngineMajorVersion()", &output, NULL);
+    return hres == S_OK && V_VT(&output) == VT_I4 && V_I4(&output) >= 11;
+}
+
+static const WCHAR* jscript_replacement_value = L"JScriptReplacement";
+
+static BOOL revert_to_jscript(HKEY* jscript_reg_key)
+{
+    LSTATUS status;
+    DWORD new_value = 0;
+    status = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Policies\\Microsoft\\Internet Explorer\\Main",
+        0, NULL, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, NULL, jscript_reg_key, NULL);
+
+    if (status != ERROR_SUCCESS) {
+        trace("Failed to create/open registry key: %ld\n", status);
+        return FALSE;
+    }
+
+    status = RegSetValueExW(*jscript_reg_key, jscript_replacement_value, 0, REG_DWORD,
+        (const BYTE*)&new_value, sizeof(new_value));
+
+    if (status != ERROR_SUCCESS) {
+        trace("Failed to set registry value: %ld\n", status);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 START_TEST(run)
 {
     int argc;
     char **argv;
+    BOOL jscript9legacy = FALSE;
+    HKEY jscript_reg_key;
 
     argc = winetest_get_mainargs(&argv);
 
     CoInitialize(NULL);
+
+    if (is_jscript9legacy()) {
+        BOOL success;
+        jscript9legacy = TRUE;
+        trace("JScript9Legacy engine detected, temporarily reverting to JScript engine\n");
+        success = revert_to_jscript(&jscript_reg_key);
+        if (!success)
+        {
+            win_skip("Couldn't revert to JScript engine\n");
+            goto cleanup;
+        }
+    }
 
     if(!check_jscript()) {
         win_skip("Broken engine, probably too old\n");
@@ -4622,5 +4668,11 @@ START_TEST(run)
             run_benchmarks();
     }
 
+    if (jscript9legacy) {
+        trace("Restoring JScript9Legacy engine\n");
+        RegDeleteValueW(jscript_reg_key, jscript_replacement_value);
+    }
+
+cleanup:
     CoUninitialize();
 }

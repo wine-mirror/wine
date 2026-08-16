@@ -2643,6 +2643,50 @@ static void test_LB_SETTOPINDEX(void)
     DestroyWindow(parent);
 }
 
+static void test_multicolumn_redraw(void)
+{
+    HWND parent, listbox;
+    int top_index_before, top_index_after;
+    int i, initial_items = 7;
+    int ret;
+
+    parent = create_parent();
+    listbox = CreateWindowA("listbox", "TestList",
+        WS_CHILD | WS_VISIBLE | LBS_MULTICOLUMN,
+        0, 0, 200, 100, parent, NULL, NULL, 0);
+    ok(!!listbox, "got error %lu\n", GetLastError());
+
+    /* Add enough items to span multiple columns */
+    for (i = 0; i < initial_items; i++)
+    {
+        SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"item");
+    }
+
+    /* Scroll to bottom of list */
+    ret = SendMessageA(listbox, LB_SETTOPINDEX, initial_items - 1, 0);
+    ok(!ret, "got %d\n", ret);
+
+    top_index_before = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(top_index_before > 0, "Expected non-zero top index.\n");
+
+    ret = SendMessageA(listbox, WM_SETREDRAW, FALSE, 0);
+    ok(!ret, "got %d\n", ret);
+
+    /* Force LBS_DISPLAYCHANGED */
+    SendMessageA(listbox, LB_ADDSTRING, 0, (LPARAM)"new item");
+
+    ret = SendMessageA(listbox, WM_SETREDRAW, TRUE, 0);
+    ok(!ret, "got %d\n", ret);
+
+    /* Ensure top_index is correct after redraw */
+    top_index_after = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
+    ok(top_index_after == top_index_before,
+        "Expected top index %d after WM_SETREDRAW, got %d\n",
+        top_index_before, top_index_after);
+
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -2745,4 +2789,5 @@ START_TEST(listbox)
   test_LB_FINDSTRING();
   test_integral_resize();
   test_LB_SETTOPINDEX();
+  test_multicolumn_redraw();
 }

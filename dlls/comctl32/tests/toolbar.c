@@ -3102,6 +3102,54 @@ static void test_WM_PAINT(BOOL v6)
     UnregisterClassW(wc.lpszClassName, 0);
 }
 
+static void test_wrap(void)
+{
+    TBBUTTON buttons[] =
+    {
+        { I_IMAGENONE, 0, TBSTATE_ENABLED, BTNS_BUTTON | BTNS_AUTOSIZE, { 0 }, 0, (INT_PTR)".." },
+        { I_IMAGENONE, 1, TBSTATE_ENABLED, BTNS_BUTTON | BTNS_AUTOSIZE, { 0 }, 0, (INT_PTR)"................" },
+    };
+    HWND hToolbar;
+    int i, result, toolbar_width = 0;
+
+    hToolbar = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | CCS_NORESIZE,
+            0, 0, 500, 30, hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    SendMessageA(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+    SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons);
+    for (i = 0; i < 2; i++)
+    {
+        RECT rect;
+        SendMessageA(hToolbar, TB_GETITEMRECT, i, (LPARAM)&rect);
+        toolbar_width += rect.right - rect.left;
+    }
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | CCS_NORESIZE | TBSTYLE_WRAPABLE,
+            0, 0, toolbar_width, 30, hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    SendMessageA(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+
+    SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons);
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
+    result = SendMessageA(hToolbar, TB_GETROWS, 0, 0);
+    ok(result == 1, "Got unexpected nRows: %d.\n", result);
+
+    DestroyWindow(hToolbar);
+
+    hToolbar = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | CCS_NORESIZE | TBSTYLE_WRAPABLE,
+            0, 0, toolbar_width, 30, hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    SendMessageA(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+
+    SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons);
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
+
+    SetWindowPos(hToolbar, NULL, 0, 0, toolbar_width - 1, 30, SWP_NOMOVE | SWP_NOZORDER);
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
+    result = SendMessageA(hToolbar, TB_GETROWS, 0, 0);
+    ok(result == 2, "Got unexpected nRows: %d.\n", result);
+
+    DestroyWindow(hToolbar);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -3157,6 +3205,7 @@ START_TEST(toolbar)
     test_unicode_format();
     test_WM_ERASEBKGND(FALSE);
     test_WM_PAINT(FALSE);
+    test_wrap();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -3167,6 +3216,7 @@ START_TEST(toolbar)
     test_unicode_format();
     test_WM_ERASEBKGND(TRUE);
     test_WM_PAINT(TRUE);
+    test_wrap();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {

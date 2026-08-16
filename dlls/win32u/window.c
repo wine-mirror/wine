@@ -5668,11 +5668,11 @@ void destroy_thread_windows(void)
 static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name, HINSTANCE class_instance,
                                   const CREATESTRUCTW *cs, BOOL ansi, DWORD style, DWORD ex_style )
 {
+    struct ratio dpi = { system_dpi, 1 }, raw_dpi = { system_dpi, 1 };
     RECT rect = { cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy };
     UINT dpi_context = get_thread_dpi_awareness_context();
     HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
-    struct ratio dpi, raw_dpi;
     WND *win;
 
     if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( dpi_context ) && dpi_context != NTUSER_DPI_PER_MONITOR_AWARE)
@@ -5681,8 +5681,11 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
     }
 
-    if (parent && parent != get_desktop_window()) dpi = get_win_monitor_dpi( parent, &raw_dpi );
-    else dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
+    if (!is_desktop_class( name ))
+    {
+        if (parent && parent != get_desktop_window()) dpi = get_win_monitor_dpi( parent, &raw_dpi );
+        else dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
+    }
 
     SERVER_START_REQ( create_window )
     {

@@ -6,6 +6,7 @@ SOURCES = \
 	acmwrapper.c \
 	avidec.c \
 	avisplit.c \
+	colorconv.c \
 	dsoundrender.c \
 	filesource.c \
 	filtergraph.c \
