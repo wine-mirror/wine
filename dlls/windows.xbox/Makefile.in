@@ -2,6 +2,7 @@ MODULE    = windows.xbox.dll
 IMPORTS   = combase shell32 uuid
 
 SOURCES = \
+	appmodel.c \
 	classes.idl \
 	controller.c \
 	gamepad.c \

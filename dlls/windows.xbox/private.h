@@ -142,3 +142,6 @@ extern IActivationFactory *xbox_user_factory;
 
 /* storage.c */
 extern IActivationFactory *xbox_storage_factory;
+
+/* appmodel.c */
+extern IActivationFactory *xbox_appmodel_core_factory;

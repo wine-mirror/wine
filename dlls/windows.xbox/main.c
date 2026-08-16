@@ -128,6 +128,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         return S_OK;
     }
 
+    if (!wcscmp( name, L"Windows.Xbox.ApplicationModel.Core.CoreApplicationContext" ))
+    {
+        TRACE( "Windows.Xbox.ApplicationModel.Core.CoreApplicationContext\n" );
+        *factory = xbox_appmodel_core_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
     if (!wcsncmp( name, L"Windows.Xbox.ApplicationModel.", 30 ))
     {
         FIXME("Windows.Xbox.ApplicationModel stub for %s\n", debugstr_w(name));
