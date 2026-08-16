@@ -745,6 +745,29 @@ static HRESULT set_device_period_frame_size(AudioDeviceID dev_id, EDataFlow flow
     return S_OK;
 }
 
+static HRESULT get_device_sample_rate(AudioDeviceID dev_id, EDataFlow flow,
+                                      unsigned int *n_samples_per_sec)
+{
+    AudioObjectPropertyAddress addr;
+    Float64 rate;
+    UInt32 size;
+    OSStatus sc;
+
+    addr.mSelector = kAudioDevicePropertyNominalSampleRate;
+    addr.mScope = get_scope(flow);
+    addr.mElement = kAudioObjectPropertyElementMain;
+    size = sizeof(Float64);
+    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &rate);
+    if (sc != noErr)
+    {
+        WARN("Unable to get device nominal sample rate: %x\n", (int)sc);
+        return osstatus_to_hresult(sc);
+    }
+
+    *n_samples_per_sec = rate;
+    return S_OK;
+}
+
 static NTSTATUS unix_create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -1048,7 +1071,6 @@ static NTSTATUS unix_get_mix_format(void *args)
     AudioObjectPropertyAddress addr;
     AudioChannelLayout *layout;
     AudioBufferList *buffers;
-    Float64 rate;
     UInt32 size;
     OSStatus sc;
     int i;
@@ -1121,15 +1143,8 @@ static NTSTATUS unix_get_mix_format(void *args)
         params->fmt->dwChannelMask = get_channel_mask(params->fmt->Format.nChannels);
     }
 
-    addr.mSelector = kAudioDevicePropertyNominalSampleRate;
-    size = sizeof(Float64);
-    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &rate);
-    if(sc != noErr){
-        WARN("Unable to get _NominalSampleRate property: %x\n", (int)sc);
-        params->result = osstatus_to_hresult(sc);
+    if(FAILED(params->result = get_device_sample_rate(dev_id, params->flow, &params->fmt->Format.nSamplesPerSec)))
         return STATUS_SUCCESS;
-    }
-    params->fmt->Format.nSamplesPerSec = rate;
 
     params->fmt->Format.wBitsPerSample = 32;
     params->fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
