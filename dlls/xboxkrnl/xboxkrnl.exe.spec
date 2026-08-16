@@ -370,8 +370,8 @@
 358 stdcall -noname HalIsResetOrShutdownPending() XBOXKRNL_HalIsResetOrShutdownPending
 359 stdcall -noname IoMarkIrpMustComplete(ptr) XBOXKRNL_IoMarkIrpMustComplete
 360 stdcall -noname HalInitiateShutdown() XBOXKRNL_HalInitiateShutdown
-361 stdcall -noname RtlSnprintf(ptr long ptr long) XBOXKRNL_RtlSnprintf
-362 stdcall -noname RtlSprintf(ptr ptr long) XBOXKRNL_RtlSprintf
+361 cdecl -noname RtlSnprintf(ptr long ptr) XBOXKRNL_RtlSnprintf
+362 cdecl -noname RtlSprintf(ptr ptr) XBOXKRNL_RtlSprintf
 363 stdcall -noname RtlVsnprintf(ptr long ptr long) XBOXKRNL_RtlVsnprintf
 364 stdcall -noname RtlVsprintf(ptr ptr long) XBOXKRNL_RtlVsprintf
 365 stdcall -noname HalEnableSecureTrayEject() XBOXKRNL_HalEnableSecureTrayEject

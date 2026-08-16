@@ -6,4 +6,5 @@ SOURCES = \
 	generated_data.c \
 	generated_stubs.c \
 	main.c \
+	misc.c \
 	sync_io.c
