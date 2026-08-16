@@ -127,8 +127,15 @@ DEFINE_GUID(IID_IControllerStatics, 0x26e6d177,0xb1bb,0x4dd5,0x8f,0x79,0xc3,0xb0
 static const WCHAR RuntimeClass_Windows_Xbox_Input_Controller[] =
     L"Windows.Xbox.Input.Controller";
 
+/* Windows.Xbox.System.User GUIDs (WinDurango Windows.Xbox.System.idl, MIT) */
+DEFINE_GUID(IID_IUser,        0xa21a0e79,0x9a70,0x4f56,0xb1,0xc2,0x3e,0x30,0xfd,0xd7,0xab,0x4a);
+DEFINE_GUID(IID_IUserStatics, 0x7a9b5cd3,0x47cb,0x4c89,0x9a,0x82,0xdc,0xe7,0xe6,0x02,0x3f,0x23);
+
 /* gamepad.c */
 extern IActivationFactory *xbox_gamepad_factory;
 
 /* controller.c */
 extern IActivationFactory *xbox_controller_factory;
+
+/* user.c */
+extern IActivationFactory *xbox_user_factory;

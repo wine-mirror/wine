@@ -7,6 +7,7 @@ SOURCES = \
 	gamepad.c \
 	input.idl \
 	main.c \
+	user.c \
 	vector.c \
 	version.rc \
 	wgi_backend.c

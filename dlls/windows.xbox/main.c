@@ -104,6 +104,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         return S_OK;
     }
 
+    if (!wcscmp( name, L"Windows.Xbox.System.User" ))
+    {
+        TRACE( "Windows.Xbox.System.User\n" );
+        *factory = xbox_user_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
     if (!wcsncmp( name, L"Windows.Xbox.System.", 20 ))
     {
         FIXME("Windows.Xbox.System stub for %s\n", debugstr_w(name));
