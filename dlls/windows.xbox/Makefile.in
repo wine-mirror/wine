@@ -9,6 +9,7 @@ SOURCES = \
 	input.idl \
 	main.c \
 	storage.c \
+	sysui.c \
 	user.c \
 	vector.c \
 	version.rc \
