@@ -160,6 +160,29 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         return S_OK;
     }
 
+    if (!wcscmp( name, L"Windows.Xbox.Multiplayer.Manager" ) ||
+        !wcsncmp( name, L"Windows.Xbox.Multiplayer.", 25 ))
+    {
+        if (!wcscmp( name, L"Windows.Xbox.Multiplayer.Manager" ))
+            TRACE( "Windows.Xbox.Multiplayer.Manager\n" );
+        else
+            FIXME("Windows.Xbox.Multiplayer stub for %s\n", debugstr_w(name));
+        *factory = xbox_multiplayer_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
+    if (!wcscmp( name, L"Windows.Xbox.Networking.ManagedNetwork" ) ||
+        !wcscmp( name, L"Windows.Xbox.Networking.SecureDeviceAssociation" ) ||
+        !wcsncmp( name, L"Windows.Xbox.Networking.", 24 ))
+    {
+        if (!wcsncmp( name, L"Windows.Xbox.Networking.", 24 ))
+            FIXME("Windows.Xbox.Networking stub for %s\n", debugstr_w(name));
+        *factory = xbox_networking_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
     if (!wcsncmp( name, L"Windows.Xbox.", 13 ))
     {
         FIXME("Windows.Xbox generic stub for %s\n", debugstr_w(name));

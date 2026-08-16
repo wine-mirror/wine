@@ -8,6 +8,8 @@ SOURCES = \
 	gamepad.c \
 	input.idl \
 	main.c \
+	multiplayer.c \
+	networking.c \
 	storage.c \
 	sysui.c \
 	user.c \
