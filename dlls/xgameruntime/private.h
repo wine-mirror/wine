@@ -90,3 +90,23 @@ extern IXUserImpl *x_user_impl;
 extern IXUserDeviceImpl *x_user_device_impl;
 
 HRESULT WINAPI QueryApiImpl( const GUID *classId, REFIID interfaceId, void **out );
+
+/* Internal XAsync state — stored in asyncBlock->internal[0].
+ * XAsyncBegin allocs this; XAsyncGetResult/Cleanup frees it. */
+struct xasync_state {
+    HRESULT        result;
+    void          *result_buf;
+    SIZE_T         result_size;
+    const void    *identity;
+    XAsyncProvider *provider;
+    void          *context;
+    BOOL           completed;
+};
+
+/* Opaque XUserHandle backing struct */
+struct XUser {
+    UINT64 xuid;
+    char   gamertag[16];
+};
+
+extern struct XUser xuser_fake_instance;
