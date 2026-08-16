@@ -71,38 +71,42 @@ static ULONG WINAPI x_accessibility_Release( IXAccessibilityImpl2 *iface )
 
 static HRESULT WINAPI x_accessibility_XClosedCaptionGetProperties( IXAccessibilityImpl2 *iface, XClosedCaptionProperties *properties )
 {
-    FIXME( "iface %p, properties %p stub!\n", iface, properties );
-    return E_NOTIMPL;
+    TRACE( "iface %p, properties %p\n", iface, properties );
+    if (!properties) return E_POINTER;
+    memset( properties, 0, sizeof(*properties) );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XClosedCaptionSetEnabled( IXAccessibilityImpl2 *iface, BOOLEAN enabled )
 {
-    FIXME( "iface %p, enabled %d stub!\n", iface, enabled );
-    return E_NOTIMPL;
+    TRACE( "iface %p, enabled %d\n", iface, enabled );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XHighContrastGetMode( IXAccessibilityImpl2 *iface, XHighContrastMode *mode )
 {
-    FIXME( "iface %p, mode %p stub!\n", iface, mode );
-    return E_NOTIMPL;
+    TRACE( "iface %p, mode %p\n", iface, mode );
+    if (!mode) return E_POINTER;
+    *mode = XHighContrastMode_None;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextSetPositionHint( IXAccessibilityImpl2 *iface, XSpeechToTextPositionHint position )
 {
-    FIXME( "iface %p, position %d stub!\n", iface, position );
-    return E_NOTIMPL;
+    TRACE( "iface %p, position %d\n", iface, position );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextSendString( IXAccessibilityImpl2 *iface, const char *speakerName, const char *content, XSpeechToTextType type )
 {
-    FIXME( "iface %p, speakerName %s, content %s, type %d stub!\n", iface, debugstr_a( speakerName ), debugstr_a( content ), type );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speakerName %s, content %s, type %d\n", iface, debugstr_a( speakerName ), debugstr_a( content ), type );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerEnumerateInstalledVoices( IXAccessibilityImpl2 *iface, void *context, XSpeechSynthesizerInstalledVoicesCallback *callback )
 {
-    FIXME( "iface %p, context %p, callback %p stub!\n", iface, context, callback );
-    return E_NOTIMPL;
+    TRACE( "iface %p, context %p, callback %p\n", iface, context, callback );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCreate( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle *speechSynthesizer )
@@ -113,20 +117,20 @@ static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCreate( IXAccessibilityI
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCloseHandle( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle speechSynthesizer )
 {
-    FIXME( "iface %p, speechSynthesizer %p stub!\n", iface, speechSynthesizer );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speechSynthesizer %p\n", iface, speechSynthesizer );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerSetDefaultVoice( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle speechSynthesizer )
 {
-    FIXME( "iface %p, speechSynthesizer %p stub!\n", iface, speechSynthesizer );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speechSynthesizer %p\n", iface, speechSynthesizer );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerSetCustomVoice( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle speechSynthesizer, const char *voiceId )
 {
-    FIXME( "iface %p, speechSynthesizer %p, voiceId %s stub!\n", iface, speechSynthesizer, debugstr_a( voiceId ) );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speechSynthesizer %p, voiceId %s\n", iface, speechSynthesizer, debugstr_a( voiceId ) );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCreateStreamFromText( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle speechSynthesizer, const char *text, XSpeechSynthesizerStreamHandle *speechSynthesisStream )
@@ -137,8 +141,8 @@ static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCreateStreamFromText( IX
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCloseStreamHandle( IXAccessibilityImpl2 *iface, XSpeechSynthesizerStreamHandle speechSynthesisStream )
 {
-    FIXME( "iface %p, speechSynthesisStream %p stub!\n", iface, speechSynthesisStream );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speechSynthesisStream %p\n", iface, speechSynthesisStream );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerGetStreamDataSize( IXAccessibilityImpl2 *iface, XSpeechSynthesizerStreamHandle speechSynthesisStream, SIZE_T *bufferSize )
@@ -155,26 +159,27 @@ static HRESULT WINAPI x_accessibility_XSpeechSynthesizerGetStreamData( IXAccessi
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextBeginHypothesisString( IXAccessibilityImpl2 *iface, const char *speakerName, const char *content, XSpeechToTextType type, UINT32 *hypothesisId )
 {
-    FIXME( "iface %p, speakerName %s, content %s, type %d, hypothesisId %p stub!\n", iface, debugstr_a( speakerName ), debugstr_a( content ), type, hypothesisId );
-    return E_NOTIMPL;
+    TRACE( "iface %p, speakerName %s, content %s, type %d, hypothesisId %p\n", iface, debugstr_a( speakerName ), debugstr_a( content ), type, hypothesisId );
+    if (hypothesisId) *hypothesisId = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextUpdateHypothesisString( IXAccessibilityImpl2 *iface, UINT32 hypothesisId, const char *content )
 {
-    FIXME( "iface %p, hypothesisId %u, content %s stub!\n", iface, hypothesisId, debugstr_a( content ) );
-    return E_NOTIMPL;
+    TRACE( "iface %p, hypothesisId %u, content %s\n", iface, hypothesisId, debugstr_a( content ) );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextFinalizeHypothesisString( IXAccessibilityImpl2 *iface, UINT32 hypothesisId, const char *content )
 {
-    FIXME( "iface %p, hypothesisId %u, content %s stub!\n", iface, hypothesisId, debugstr_a( content ) );
-    return E_NOTIMPL;
+    TRACE( "iface %p, hypothesisId %u, content %s\n", iface, hypothesisId, debugstr_a( content ) );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechToTextCancelHypothesisString( IXAccessibilityImpl2 *iface, UINT32 hypothesisId )
 {
-    FIXME( "iface %p, hypothesisId %u stub!\n", iface, hypothesisId );
-    return E_NOTIMPL;
+    TRACE( "iface %p, hypothesisId %u\n", iface, hypothesisId );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_accessibility_XSpeechSynthesizerCreateStreamFromSsml( IXAccessibilityImpl2 *iface, XSpeechSynthesizerHandle speechSynthesizer, const char *ssml, XSpeechSynthesizerStreamHandle *speechSynthesisStream )

@@ -20,6 +20,7 @@
  */
 
 #include "private.h"
+#include <shlobj.h>
 
 struct x_persistent_local_storage
 {
@@ -70,40 +71,85 @@ static ULONG WINAPI x_persistent_local_storage_Release( IXPersistentLocalStorage
     return ref;
 }
 
+static HRESULT pls_get_path_utf8( char *buf, SIZE_T buf_size, SIZE_T *used )
+{
+    WCHAR appdata[MAX_PATH];
+    WCHAR wide[MAX_PATH + 32];
+    int len;
+
+    if (!SHGetSpecialFolderPathW( NULL, appdata, CSIDL_LOCAL_APPDATA, TRUE ))
+        return E_FAIL;
+
+    swprintf( wide, ARRAY_SIZE(wide), L"%s\\WineEX\\PLS\\", appdata );
+    len = WideCharToMultiByte( CP_UTF8, 0, wide, -1, buf, buf ? (int)buf_size : 0, NULL, NULL );
+    if (!len) return HRESULT_FROM_WIN32( GetLastError() );
+    if (used) *used = (SIZE_T)len;
+    return S_OK;
+}
+
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStorageGetPath( IXPersistentLocalStorageImpl3 *iface, SIZE_T pathSize, char *path, SIZE_T *pathUsed )
 {
-    FIXME( "iface %p, pathSize %Iu, path %p, pathUsed %p stub!\n", iface, pathSize, path, pathUsed );
-    return E_NOTIMPL;
+    HRESULT hr;
+    SIZE_T needed = 0;
+
+    TRACE( "iface %p, pathSize %Iu, path %p, pathUsed %p\n", iface, pathSize, path, pathUsed );
+
+    if (!path || !pathUsed) return E_POINTER;
+
+    hr = pls_get_path_utf8( NULL, 0, &needed );
+    if (FAILED(hr)) return hr;
+
+    if (pathSize < needed) return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+
+    return pls_get_path_utf8( path, pathSize, pathUsed );
 }
 
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStorageGetPathSize( IXPersistentLocalStorageImpl3 *iface, SIZE_T *pathSize )
 {
-    FIXME( "iface %p, pathSize %p stub!\n", iface, pathSize );
-    return E_NOTIMPL;
+    TRACE( "iface %p, pathSize %p\n", iface, pathSize );
+    if (!pathSize) return E_POINTER;
+    return pls_get_path_utf8( NULL, 0, pathSize );
 }
 
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStorageGetSpaceInfo( IXPersistentLocalStorageImpl3 *iface, XPersistentLocalStorageSpaceInfo *info )
 {
-    FIXME( "iface %p, info %p stub!\n", iface, info );
-    return E_NOTIMPL;
+    TRACE( "iface %p, info %p\n", iface, info );
+    if (!info) return E_POINTER;
+    memset( info, 0, sizeof(*info) );
+    /* Report 100 GiB total / free — ample for any game */
+    info->totalBytes     = (UINT64)100 * 1024 * 1024 * 1024;
+    info->freeBytes      = (UINT64)100 * 1024 * 1024 * 1024;
+    info->allocatedBytes = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStorageMountForPackage( IXPersistentLocalStorageImpl3 *iface, const char *packageIdentifier, XPackageMountHandle *mountHandle )
 {
-    FIXME( "iface %p, packageIdentifier %s, mountHandle %p stub!\n", iface, debugstr_a( packageIdentifier ), mountHandle );
-    return E_NOTIMPL;
+    TRACE( "iface %p, packageIdentifier %s, mountHandle %p\n", iface, debugstr_a( packageIdentifier ), mountHandle );
+    if (!mountHandle) return E_POINTER;
+    *mountHandle = (XPackageMountHandle)(ULONG_PTR)0x1;
+    return S_OK;
 }
 
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStoragePromptUserForSpaceAsync( IXPersistentLocalStorageImpl3 *iface, UINT64 requestedBytes, XAsyncBlock *asyncBlock )
 {
-    FIXME( "iface %p, requestedBytes %llu, asyncBlock %p stub!\n", iface, requestedBytes, asyncBlock );
-    return E_NOTIMPL;
+    struct xasync_state *state;
+
+    TRACE( "iface %p, requestedBytes %llu, asyncBlock %p\n", iface, requestedBytes, asyncBlock );
+
+    state = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*state) );
+    if (!state) return E_OUTOFMEMORY;
+    state->result    = S_OK;
+    state->completed = TRUE;
+    asyncBlock->internal[0] = state;
+    if (asyncBlock->callback) asyncBlock->callback( asyncBlock );
+    return S_OK;
 }
 
 static HRESULT WINAPI x_persistent_local_storage_XPersistentLocalStoragePromptUserForSpaceResult( IXPersistentLocalStorageImpl3 *iface, XAsyncBlock *asyncBlock )
 {
-    FIXME( "iface %p, asyncBlock %p stub!\n", iface, asyncBlock );
-    return E_NOTIMPL;
+    TRACE( "iface %p, asyncBlock %p\n", iface, asyncBlock );
+    return IXThreadingImpl_XAsyncGetResult( x_threading_impl, asyncBlock, NULL, 0, NULL, NULL );
 }
 
 static const struct IXPersistentLocalStorageImpl3Vtbl x_persistent_local_storage_vtbl =
