@@ -41,13 +41,19 @@ namespace Windows.Xbox.Input {
     interface IGamepad;
     interface IGamepadReading;
     interface IGamepadStatics;
+    interface IController;
+    interface IControllerStatics;
     runtimeclass Gamepad;
     runtimeclass GamepadReading;
+    runtimeclass Controller;
 
     declare {
         interface Windows.Foundation.Collections.IIterator<Windows.Xbox.Input.IGamepad *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Xbox.Input.IGamepad *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Xbox.Input.IGamepad *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Xbox.Input.IController *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Xbox.Input.IController *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Xbox.Input.IController *>;
     }
 
     [flags]
@@ -161,5 +167,39 @@ namespace Windows.Xbox.Input {
     runtimeclass Gamepad
     {
         [default] interface Windows.Xbox.Input.IGamepad;
+    }
+
+    /* IController: base interface for any connected Xbox One controller.
+     * GUIDs taken from WinDurango idl/Windows.Xbox.Input.idl (MIT). */
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Xbox.Input.Controller),
+        uuid(b8a54bbe-9f82-4bb2-a9aa-668899406780)
+    ]
+    interface IController : IInspectable
+    {
+        [propget] HRESULT Type([out, retval] HSTRING *value);
+        [propget] HRESULT Id([out, retval] UINT64 *value);
+        [propget] HRESULT IsWireless([out, retval] boolean *value);
+    }
+
+    [
+        object,
+        uuid(26e6d177-b1bb-4dd5-8f79-c3b0c3bc3c7b)
+    ]
+    interface IControllerStatics : IInspectable
+    {
+        [propget] HRESULT Controllers([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Xbox.Input.IController *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Xbox.Input.IControllerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass Controller
+    {
+        [default] interface Windows.Xbox.Input.IController;
     }
 }

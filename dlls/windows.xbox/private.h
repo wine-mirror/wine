@@ -92,5 +92,43 @@ struct vector_view_iids
 extern HRESULT vector_view_create( const struct vector_view_iids *iids, IInspectable **elements,
                                    UINT32 count, void **out );
 
+/* Minimal IController/IControllerStatics definitions.
+ * widl cannot currently regenerate input.h, so these are hand-written to
+ * match the interface declarations in input.idl / WinDurango (MIT). */
+
+typedef struct IController IController;
+typedef struct IControllerVtbl {
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(IController*, REFIID, void**);
+    ULONG   (STDMETHODCALLTYPE *AddRef)(IController*);
+    ULONG   (STDMETHODCALLTYPE *Release)(IController*);
+    HRESULT (STDMETHODCALLTYPE *GetIids)(IController*, ULONG*, IID**);
+    HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName)(IController*, HSTRING*);
+    HRESULT (STDMETHODCALLTYPE *GetTrustLevel)(IController*, TrustLevel*);
+    HRESULT (STDMETHODCALLTYPE *get_Type)(IController*, HSTRING*);
+    HRESULT (STDMETHODCALLTYPE *get_Id)(IController*, UINT64*);
+    HRESULT (STDMETHODCALLTYPE *get_IsWireless)(IController*, boolean*);
+} IControllerVtbl;
+struct IController { CONST_VTBL IControllerVtbl *lpVtbl; };
+DEFINE_GUID(IID_IController, 0xb8a54bbe,0x9f82,0x4bb2,0xa9,0xaa,0x66,0x88,0x99,0x40,0x67,0x80);
+
+typedef struct IControllerStatics IControllerStatics;
+typedef struct IControllerStaticsVtbl {
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(IControllerStatics*, REFIID, void**);
+    ULONG   (STDMETHODCALLTYPE *AddRef)(IControllerStatics*);
+    ULONG   (STDMETHODCALLTYPE *Release)(IControllerStatics*);
+    HRESULT (STDMETHODCALLTYPE *GetIids)(IControllerStatics*, ULONG*, IID**);
+    HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName)(IControllerStatics*, HSTRING*);
+    HRESULT (STDMETHODCALLTYPE *GetTrustLevel)(IControllerStatics*, TrustLevel*);
+    HRESULT (STDMETHODCALLTYPE *get_Controllers)(IControllerStatics*, void**);
+} IControllerStaticsVtbl;
+struct IControllerStatics { CONST_VTBL IControllerStaticsVtbl *lpVtbl; };
+DEFINE_GUID(IID_IControllerStatics, 0x26e6d177,0xb1bb,0x4dd5,0x8f,0x79,0xc3,0xb0,0xc3,0xbc,0x3c,0x7b);
+
+static const WCHAR RuntimeClass_Windows_Xbox_Input_Controller[] =
+    L"Windows.Xbox.Input.Controller";
+
 /* gamepad.c */
 extern IActivationFactory *xbox_gamepad_factory;
+
+/* controller.c */
+extern IActivationFactory *xbox_controller_factory;

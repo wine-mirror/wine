@@ -88,6 +88,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         return S_OK;
     }
 
+    if (!wcscmp( name, RuntimeClass_Windows_Xbox_Input_Controller ))
+    {
+        TRACE( "Windows.Xbox.Input.Controller\n" );
+        *factory = xbox_controller_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
+
     if (!wcsncmp( name, L"Windows.Xbox.Input.", 19 ))
     {
         FIXME("Windows.Xbox.Input stub for %s\n", debugstr_w(name));

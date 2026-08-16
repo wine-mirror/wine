@@ -3,6 +3,7 @@ IMPORTS   = combase uuid
 
 SOURCES = \
 	classes.idl \
+	controller.c \
 	gamepad.c \
 	input.idl \
 	main.c \
