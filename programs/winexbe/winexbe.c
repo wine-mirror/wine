@@ -142,15 +142,10 @@ static BOOL map_xbe_sections( HANDLE file, UINT32 base_addr, UINT32 sizeof_image
     void *region;
     DWORD old_prot;
 
-    /* Reserve entire image range */
+    /* Reserve entire image range; ignore failure — sections commit individually */
     region = VirtualAlloc( (void *)(ULONG_PTR)base_addr, sizeof_image,
                            MEM_RESERVE, PAGE_NOACCESS );
-    if (!region)
-    {
-        /* Already mapped? Just proceed — sections will commit individually */
-        if (GetLastError() != ERROR_INVALID_ADDRESS)
-            return FALSE;
-    }
+    (void)region;
 
     for (i = 0; i < nsec; i++)
     {
@@ -227,11 +222,11 @@ int __cdecl wmain( int argc, WCHAR **argv )
     hdr = (const struct xbe_header *)hdr_buf;
     if (hdr->magic != XBE_MAGIC) xbe_fatal( "not an XBE file (bad magic)" );
 
-    /* Decode image type */
-    if ((hdr->entry_addr & XBE_WRITE_COMBINED_BASE) == XBE_SEGABOOT_EP_XOR)
-        type = XBE_CHIHIRO;
-    else if (hdr->kernel_image_thunk_addr & XBE_KSEG0_BASE)
+    /* Decode image type (Cxbx-Reloaded algorithm: XOR candidate then range-check) */
+    if ((hdr->entry_addr ^ xbe_xor_ep[XBE_DEBUG]) < 0x01000000u)
         type = XBE_DEBUG;
+    else if ((hdr->entry_addr ^ xbe_xor_ep[XBE_CHIHIRO]) < 0x01000000u)
+        type = XBE_CHIHIRO;
     else
         type = XBE_RETAIL;
 
