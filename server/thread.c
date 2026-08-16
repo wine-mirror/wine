@@ -1602,6 +1602,7 @@ static void copy_context( struct context_data *to, const struct context_data *fr
     if (flags & SERVER_CTX_EXTENDED_REGISTERS) to->ext = from->ext;
     if (flags & SERVER_CTX_YMM_REGISTERS) to->ymm = from->ymm;
     if (flags & SERVER_CTX_EXEC_SPACE) to->exec_space = from->exec_space;
+    if (flags & SERVER_CTX_TLS) to->tls = from->tls;
 }
 
 /* gets the current impersonation token */

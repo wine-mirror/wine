@@ -847,10 +847,22 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         }
         if (ctx.flags & SERVER_CTX_INTEGER)
         {
-            for (i = 0; i < 31; i++)
+            for (i = 0; i < 18; i++)
             {
                 fprintf( stderr, ",x%u=", i );
-                dump_uint64( "", &ctx.integer.arm64_regs.x[i] );
+                dump_uint64( "", &ctx.integer.arm64_regs.x0[i] );
+            }
+        }
+        if (ctx.flags & SERVER_CTX_TLS)
+        {
+            dump_uint64( ",x18=", &ctx.tls.arm64_x18 );
+        }
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            for (i = 19; i < 31; i++)
+            {
+                fprintf( stderr, ",x%u=", i );
+                dump_uint64( "", &ctx.integer.arm64_regs.x19[i - 19] );
             }
         }
         if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)

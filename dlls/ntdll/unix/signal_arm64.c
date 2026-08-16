@@ -311,7 +311,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
     DWORD i;
 
-    context->ContextFlags = CONTEXT_FULL;
+    context->ContextFlags = CONTEXT_FULL | CONTEXT_ARM64_X18;
     context->Fp   = FP_sig(sigcontext);     /* Frame pointer */
     context->Lr   = LR_sig(sigcontext);     /* Link register */
     context->Sp   = SP_sig(sigcontext);     /* Stack pointer */
@@ -469,7 +469,9 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (needed_flags & CONTEXT_INTEGER)
     {
-        memcpy( context->X, frame->x, sizeof(context->X[0]) * 29 );
+        memcpy( context->X, frame->x, sizeof(context->X[0]) * 18 );
+        /* skip x18 */
+        memcpy( context->X + 19, frame->x + 19, sizeof(context->X[0]) * 10 );
         context->ContextFlags |= CONTEXT_INTEGER;
     }
     if (needed_flags & CONTEXT_CONTROL)
@@ -487,6 +489,11 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         context->Fpsr = frame->fpsr;
         memcpy( context->V, frame->v, sizeof(context->V) );
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    }
+    if (needed_flags & CONTEXT_ARM64_X18)
+    {
+        context->X[18] = frame->x[18];
+        context->ContextFlags |= CONTEXT_ARM64_X18;
     }
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
     set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
@@ -1389,7 +1396,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     }
     else if (is_inside_syscall( data, SP_sig(sigcontext) ))
     {
-        context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
+        context.ContextFlags = CONTEXT_FULL | CONTEXT_ARM64_X18 | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context );
         wait_suspend( &context );
         NtSetContextThread( GetCurrentThread(), &context );
@@ -1572,7 +1579,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 
     ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
     *ctx = context;
-    ctx->ContextFlags = CONTEXT_FULL;
+    ctx->ContextFlags = CONTEXT_FULL | CONTEXT_ARM64_X18;
     signal_set_full_context( ctx );
 
     frame->sp    = (ULONG64)ctx;

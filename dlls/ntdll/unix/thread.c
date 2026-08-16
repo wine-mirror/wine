@@ -201,6 +201,7 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_ARM64_CONTROL) ret |= SERVER_CTX_CONTROL;
         if (flags & CONTEXT_ARM64_INTEGER) ret |= SERVER_CTX_INTEGER;
         if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_ARM64_X18) ret |= SERVER_CTX_TLS;
         if (flags & CONTEXT_ARM64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
         break;
     }
@@ -585,8 +586,8 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
         if (flags & CONTEXT_ARM64_CONTROL)
         {
             to->flags |= SERVER_CTX_CONTROL;
-            to->integer.arm64_regs.x[29] = from->Fp;
-            to->integer.arm64_regs.x[30] = from->Lr;
+            to->integer.arm64_regs.x19[10] = from->Fp;
+            to->integer.arm64_regs.x19[11] = from->Lr;
             to->ctl.arm64_regs.sp     = from->Sp;
             to->ctl.arm64_regs.pc     = from->Pc;
             to->ctl.arm64_regs.pstate = from->Cpsr;
@@ -594,7 +595,8 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
         if (flags & CONTEXT_ARM64_INTEGER)
         {
             to->flags |= SERVER_CTX_INTEGER;
-            for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->X[i];
+            for (i = 0; i < 18; i++) to->integer.arm64_regs.x0[i] = from->X[i];
+            for (i = 19; i <= 28; i++) to->integer.arm64_regs.x19[i - 19] = from->X[i];
         }
         if (flags & CONTEXT_ARM64_FLOATING_POINT)
         {
@@ -606,6 +608,11 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             }
             to->fp.arm64_regs.fpcr = from->Fpcr;
             to->fp.arm64_regs.fpsr = from->Fpsr;
+        }
+        if (flags & CONTEXT_ARM64_X18)
+        {
+            to->flags |= SERVER_CTX_TLS;
+            to->tls.arm64_x18 = from->X[18];
         }
         if (flags & CONTEXT_ARM64_DEBUG_REGISTERS)
         {
@@ -1006,8 +1013,8 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
         if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_ARM64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_ARM64_CONTROL;
-            to->Fp   = from->integer.arm64_regs.x[29];
-            to->Lr   = from->integer.arm64_regs.x[30];
+            to->Fp   = from->integer.arm64_regs.x19[10];
+            to->Lr   = from->integer.arm64_regs.x19[11];
             to->Sp   = from->ctl.arm64_regs.sp;
             to->Pc   = from->ctl.arm64_regs.pc;
             to->Cpsr = from->ctl.arm64_regs.pstate;
@@ -1015,7 +1022,8 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
         if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_ARM64_INTEGER))
         {
             to->ContextFlags |= CONTEXT_ARM64_INTEGER;
-            for (i = 0; i <= 28; i++) to->X[i] = from->integer.arm64_regs.x[i];
+            for (i = 0; i < 18; i++) to->X[i] = from->integer.arm64_regs.x0[i];
+            for (i = 19; i <= 28; i++) to->X[i] = from->integer.arm64_regs.x19[i - 19];
         }
         if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM64_FLOATING_POINT))
         {
@@ -1027,6 +1035,11 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             }
             to->Fpcr = from->fp.arm64_regs.fpcr;
             to->Fpsr = from->fp.arm64_regs.fpsr;
+        }
+        if (from->flags & SERVER_CTX_TLS)
+        {
+            to->ContextFlags |= CONTEXT_ARM64_X18;
+            to->X[18] = from->tls.arm64_x18;
         }
         if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_ARM64_DEBUG_REGISTERS))
         {

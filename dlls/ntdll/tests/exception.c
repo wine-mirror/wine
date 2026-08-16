@@ -7788,9 +7788,15 @@ static void test_restore_context(void)
 
 #elif defined(__aarch64__)
 
+static DWORD WINAPI dummy_thread( void *dummy )
+{
+    return 0;
+}
+
 static void test_thread_context(void)
 {
-    CONTEXT context;
+    CONTEXT context, orig_context;
+    HANDLE thread;
     NTSTATUS status;
     struct expected
     {
@@ -7799,6 +7805,8 @@ static void test_thread_context(void)
         ULONG Cpsr, Fpcr, Fpsr;
     } expect;
     NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
+
+    static const ULONG64 fill = 0xccccccccccccccccllu;
 
     static const DWORD call_func[] =
     {
@@ -7950,6 +7958,86 @@ static void test_thread_context(void)
         (char *)context.Pc <= (char *)pNtGetContextThread + 32,
         "wrong Pc %p/%p\n", (void *)context.Pc, pNtGetContextThread );
 #undef COMPARE
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FULL;
+    status = pNtGetContextThread( GetCurrentThread(), &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[18] == fill, "unexpected x18 = %Ix\n", context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_X18;
+    status = pNtGetContextThread( GetCurrentThread(), &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[18] == (DWORD_PTR)NtCurrentTeb(), "unexpected x18 = %Ix\n", context.X[18] );
+
+    thread = CreateThread( NULL, 0, dummy_thread, NULL, CREATE_SUSPENDED, NULL );
+    ok( thread != INVALID_HANDLE_VALUE, "CreateThread failed with %ld\n", GetLastError() );
+
+    memset( &orig_context, 0xcc, sizeof(orig_context) );
+    orig_context.ContextFlags = CONTEXT_ARM64_ALL;
+    status = pNtGetContextThread( thread, &orig_context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( orig_context.X[0] && orig_context.X[0] != fill, "unexpected x0 = %Ix\n", orig_context.X[0] );
+    ok( orig_context.X[18] && orig_context.X[18] != fill, "unexpected x18 = %Ix\n", orig_context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FULL;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[0] == orig_context.X[0], "unexpected x0 = %Ix\n", context.X[0] );
+    ok( context.X[18] == fill, "unexpected x18 = %Ix\n", context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_X18;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[0] == fill, "unexpected x0 = %Ix\n", context.X[0] );
+    ok( context.X[18] == orig_context.X[18], "unexpected x18 = %Ix\n", context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_X18;
+    context.X[18] = 1;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_ALL;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[0] == orig_context.X[0], "unexpected x0 = %Ix\n", context.X[0] );
+    ok( context.X[18] == 1, "unexpected x18 = %Ix\n", context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FULL;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_ALL;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[0] == fill, "unexpected x0 = %Ix\n", context.X[0] );
+    ok( context.X[18] == 1, "unexpected x18 = %Ix\n", context.X[18] );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_ALL;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_ALL;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.X[0] == fill, "unexpected x0 = %Ix\n", context.X[0] );
+    ok( context.X[18] == fill, "unexpected x18 = %Ix\n", context.X[18] );
+
+    status = pNtSetContextThread( thread, &orig_context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    ResumeThread( thread );
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
 }
 
 static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
