@@ -1206,21 +1206,26 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
     for (i = 0, attachment_count = 0, layer_count = 1; i < rt_count; ++i)
     {
+        struct wined3d_texture *texture;
+        bool view_dependent;
+
         if (!(view = fb->render_targets[i]))
             continue;
+        texture = texture_from_resource(view->resource);
 
         /* Don't delay typeless clears because the data written into the resource depends on the
-         * view format. Except all-zero clears, those should result in zeros in either case.
+         * view format. Except all-zero clears, those should result in zeros in either case. The
+         * same applies to swapchain backbuffers as they may have views with an RGB/sRGB mismatch.
          *
          * We could store the clear format along with the clear value, but then we'd have to
          * create a matching RTV at draw time, which would need its own render pass, thus mooting
          * the point of the delayed clear. (Unless we are lucky enough that the application
          * draws with the same RTV as it clears.) */
+        view_dependent = wined3d_format_is_typeless(texture->resource.format) || texture->swapchain;
+
         if (wined3d_rendertarget_view_is_full_clear(view, draw_rect, clear_rects)
-                && (!wined3d_format_is_typeless(view->resource->format) || (!colour->r && !colour->g
-                && !colour->b && !colour->a)))
+                && (!view_dependent || (!colour->r && !colour->g && !colour->b && !colour->a)))
         {
-            struct wined3d_texture *texture = texture_from_resource(view->resource);
             wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
             wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
             texture->sub_resources[view->sub_resource_idx].clear_value.colour = *colour;
