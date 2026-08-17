@@ -2782,29 +2782,41 @@ DECL_HANDLER(get_window_rectangles)
 
     reply->window  = win->window_rect;
     reply->client  = win->client_rect;
+    reply->visible  = win->visible_rect;
 
     switch (req->relative)
     {
     case COORDS_CLIENT:
         offset_rect( &reply->window, -win->client_rect.left, -win->client_rect.top );
         offset_rect( &reply->client, -win->client_rect.left, -win->client_rect.top );
-        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_rect( &win->client_rect, &reply->window );
+        offset_rect( &reply->visible, -win->client_rect.left, -win->client_rect.top );
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->client_rect, &reply->window );
+            mirror_rect( &win->client_rect, &reply->visible );
+        }
         break;
     case COORDS_WINDOW:
         offset_rect( &reply->window, -win->window_rect.left, -win->window_rect.top );
         offset_rect( &reply->client, -win->window_rect.left, -win->window_rect.top );
-        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_rect( &win->window_rect, &reply->client );
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->window_rect, &reply->client );
+            mirror_rect( &win->window_rect, &reply->visible );
+        }
         break;
     case COORDS_PARENT:
         if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
         {
             mirror_rect( &win->parent->client_rect, &reply->window );
             mirror_rect( &win->parent->client_rect, &reply->client );
+            mirror_rect( &win->parent->client_rect, &reply->visible );
         }
         break;
     case COORDS_SCREEN:
         client_to_screen_rect( win->parent, &reply->window );
         client_to_screen_rect( win->parent, &reply->client );
+        client_to_screen_rect( win->parent, &reply->visible );
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
@@ -2812,6 +2824,7 @@ DECL_HANDLER(get_window_rectangles)
     }
     map_dpi_rect( win, &reply->window, get_window_dpi( win ), req->dpi );
     map_dpi_rect( win, &reply->client, get_window_dpi( win ), req->dpi );
+    map_dpi_rect( win, &reply->visible, get_window_dpi( win ), req->dpi );
 }
 
 

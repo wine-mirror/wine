@@ -2830,6 +2830,7 @@ enum message_type
 @REPLY
     struct rectangle window;      /* window rectangle */
     struct rectangle client;      /* client rectangle */
+    struct rectangle visible;     /* visible rectangle */
 @END
 enum coords_relative
 {

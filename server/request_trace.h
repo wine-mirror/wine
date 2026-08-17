@@ -1890,6 +1890,7 @@ static void dump_get_window_rectangles_reply( const struct get_window_rectangles
 {
     dump_rectangle( " window=", &req->window );
     dump_rectangle( ", client=", &req->client );
+    dump_rectangle( ", visible=", &req->visible );
 }
 
 static void dump_get_window_text_request( const struct get_window_text_request *req )

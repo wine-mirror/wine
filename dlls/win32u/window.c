@@ -1958,7 +1958,7 @@ other_process:
         {
             rects->window = wine_server_get_rect( reply->window );
             rects->client = wine_server_get_rect( reply->client );
-            rects->visible = rects->window;
+            rects->visible = wine_server_get_rect( reply->visible );
         }
     }
     SERVER_END_REQ;

@@ -3789,6 +3789,7 @@ struct get_window_rectangles_reply
     struct reply_header __header;
     struct rectangle window;
     struct rectangle client;
+    struct rectangle visible;
 };
 enum coords_relative
 {
@@ -7182,6 +7183,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 960
+#define SERVER_PROTOCOL_VERSION 961
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
