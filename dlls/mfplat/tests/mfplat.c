@@ -11695,6 +11695,51 @@ static void test_d3d11_surface_buffer(void)
     ID3D11Device_Release(device);
 }
 
+enum test_d3d12_buffer_lock_kind
+{
+    TEST_D3D12_BUFFER_LOCK = 0,
+    TEST_D3D12_BUFFER_LOCK2D,
+    TEST_D3D12_BUFFER_LOCK2DSIZE_READ,
+    TEST_D3D12_BUFFER_LOCK2DSIZE_READWRITE,
+    TEST_D3D12_BUFFER_LOCK_COUNT,
+};
+
+struct test_d3d12_buffer_lock_param
+{
+    IMFMediaBuffer *buffer;
+    IMF2DBuffer2 *_2dbuffer2;
+    enum test_d3d12_buffer_lock_kind kind;
+};
+
+static DWORD CALLBACK test_d3d12_buffer_lock_thread(void *arg)
+{
+    struct test_d3d12_buffer_lock_param *param = arg;
+    BYTE *scanline0, *start;
+    LONG pitch;
+    DWORD max_length, cur_length;
+    HRESULT hr = S_OK;
+
+    switch (param->kind)
+    {
+        case TEST_D3D12_BUFFER_LOCK:
+            hr = IMFMediaBuffer_Lock(param->buffer, &scanline0, &max_length, &cur_length);
+            break;
+        case  TEST_D3D12_BUFFER_LOCK2D:
+            hr = IMF2DBuffer2_Lock2D(param->_2dbuffer2, &scanline0, &pitch);
+            break;
+        case TEST_D3D12_BUFFER_LOCK2DSIZE_READ:
+            hr = IMF2DBuffer2_Lock2DSize(param->_2dbuffer2, MF2DBuffer_LockFlags_Read, &scanline0, &pitch, &start, &max_length);
+            break;
+        case TEST_D3D12_BUFFER_LOCK2DSIZE_READWRITE:
+            hr = IMF2DBuffer2_Lock2DSize(param->_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &scanline0, &pitch, &start, &max_length);
+            break;
+        default: break;
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return 0;
+}
+
 static void test_d3d12_surface_buffer(void)
 {
     IMFDXGIBuffer *dxgi_buffer;
@@ -11709,14 +11754,17 @@ static void test_d3d12_surface_buffer(void)
     IUnknown *obj;
     IMFD3D12SynchronizationObject *sync_obj;
     IMFD3D12SynchronizationObjectCommands *sync_cmd;
+    struct test_d3d12_buffer_lock_param buffer_lock_param;
     ID3D12CommandQueue *queue;
     D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
     DWORD max_length, cur_length, length, color;
-    BYTE *data, *data2;
+    BYTE *data, *data2, *buffer_start;
     LONG pitch, pitch2;
     UINT index;
     UINT64 total_bytes;
+    HANDLE event, thread;
+    DWORD status;
     HRESULT hr;
 
     /* d3d12 */
@@ -12138,8 +12186,91 @@ if (SUCCEEDED(hr))
     IMFMediaBuffer_Release(buffer);
     IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
 
+    /* Read blocks on ResourceReady, issues ResourceRelease */
+    event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    for (enum test_d3d12_buffer_lock_kind kind = 0; kind < TEST_D3D12_BUFFER_LOCK_COUNT; kind++)
+    {
+        hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **) &dxgi_buffer);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **) &_2dbuffer2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT,
+                &IID_IMFD3D12SynchronizationObject, (void **)&sync_obj);
+        hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT,
+                &IID_IMFD3D12SynchronizationObjectCommands, (void **)&sync_cmd);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        buffer_lock_param.buffer = buffer;
+        buffer_lock_param._2dbuffer2 = _2dbuffer2;
+        buffer_lock_param.kind = kind;
+
+        thread = CreateThread(NULL, 0, test_d3d12_buffer_lock_thread, &buffer_lock_param, 0, NULL);
+
+        status = WaitForSingleObject(thread, 100);
+        ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+        hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        status = WaitForSingleObject(event, 100);
+        ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+        hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        status = WaitForSingleObject(thread, 100);
+        ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+        status = WaitForSingleObject(event, 100);
+        ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+        CloseHandle(thread);
+
+        if (kind == TEST_D3D12_BUFFER_LOCK)
+            hr = IMFMediaBuffer_Unlock(buffer);
+        else
+            hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+        if (kind == TEST_D3D12_BUFFER_LOCK2D || kind == TEST_D3D12_BUFFER_LOCK2DSIZE_READWRITE)
+            ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        else
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IMFD3D12SynchronizationObject_Release(sync_obj);
+        IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+        IMFDXGIBuffer_Release(dxgi_buffer);
+        IMF2DBuffer2_Release(_2dbuffer2);
+        IMFMediaBuffer_Release(buffer);
+    }
+
+    /* Write signals ResourceReady */
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **) &_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **) &dxgi_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT,
+            &IID_IMFD3D12SynchronizationObjectCommands, (void **)&sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &buffer_start, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMF2DBuffer2_Release(_2dbuffer2);
+    IMFMediaBuffer_Release(buffer);
+
     ID3D12Resource_Release(resource);
 
+    CloseHandle(event);
     ID3D12CommandQueue_Release(queue);
 }
 
