@@ -516,6 +516,200 @@ static void put_d3d11_texture_color(ID3D11Texture2D *texture, unsigned int x, un
     release_d3d11_resource_readback(&rb, TRUE);
 }
 
+struct d3d12_resource_readback
+{
+    BOOL upload;
+    ID3D12Resource *resource;
+    ID3D12Resource *parent_resource;
+    IMFD3D12SynchronizationObjectCommands *sync;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+    unsigned int sub_resource_idx;
+    unsigned int x, y;
+    void *data;
+};
+
+static HRESULT copy_d3d12_resource_readback(struct d3d12_resource_readback *rb)
+{
+    D3D12_RESOURCE_DESC resource_desc;
+    D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
+    D3D12_RESOURCE_BARRIER pre_barrier, post_barrier;
+    D3D12_TEXTURE_COPY_LOCATION res_loc, rb_loc;
+    ID3D12Device *device = NULL;
+    ID3D12CommandAllocator *allocator = NULL;
+    ID3D12GraphicsCommandList *list = NULL;
+    ID3D12CommandQueue *queue = NULL;
+    ID3D12Fence *fence = NULL;
+    D3D12_BOX src_box = { 0 };
+    unsigned int dst_x = 0, dst_y = 0;
+    HRESULT hr;
+
+    hr = ID3D12Resource_GetDevice(rb->resource, &IID_ID3D12Device, (void **) &device);
+    if (FAILED(hr)) goto end;
+
+    hr = ID3D12Device_CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_COPY,
+        &IID_ID3D12CommandAllocator, (void **) &allocator);
+    if (FAILED(hr)) goto end;
+
+    hr = ID3D12Device_CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_COPY, allocator, NULL,
+        &IID_ID3D12GraphicsCommandList, (void **) &list);
+    if (FAILED(hr)) goto end;
+
+    hr = ID3D12Device_CreateCommandQueue(device, &queue_desc, &IID_ID3D12CommandQueue, (void **) &queue);
+    if (FAILED(hr)) goto end;
+
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    if (FAILED(hr)) goto end;
+
+    res_loc.pResource = rb->parent_resource;
+    res_loc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    res_loc.SubresourceIndex = rb->sub_resource_idx;
+    rb_loc.pResource = rb->resource;
+    rb_loc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    resource_desc = ID3D12Resource_GetDesc(rb->parent_resource);
+    rb_loc.PlacedFootprint.Offset = 0;
+    rb_loc.PlacedFootprint.Footprint.Format = resource_desc.Format;
+    rb_loc.PlacedFootprint.Footprint.Width = 1;
+    rb_loc.PlacedFootprint.Footprint.Height = 1;
+    rb_loc.PlacedFootprint.Footprint.Depth = 1;
+    rb_loc.PlacedFootprint.Footprint.RowPitch = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
+
+    pre_barrier.Type = post_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    pre_barrier.Flags = post_barrier.Flags = 0;
+    pre_barrier.Transition.pResource = post_barrier.Transition.pResource = rb->parent_resource;
+    pre_barrier.Transition.Subresource = post_barrier.Transition.Subresource = rb->sub_resource_idx;
+    pre_barrier.Transition.StateBefore = post_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+    pre_barrier.Transition.StateAfter = post_barrier.Transition.StateBefore = rb->upload ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+    if (rb->upload)
+    {
+        dst_x = rb->x;
+        dst_y = rb->y;
+    }
+    else
+    {
+        src_box.left = rb->x;
+        src_box.top = rb->y;
+    }
+    src_box.right = src_box.left + 1;
+    src_box.bottom = src_box.top + 1;
+    src_box.back = src_box.front + 1;
+
+    ID3D12GraphicsCommandList_ResourceBarrier(list, 1, &pre_barrier);
+    ID3D12GraphicsCommandList_CopyTextureRegion(list, rb->upload ? &res_loc : &rb_loc, dst_x, dst_y, 0, rb->upload ? &rb_loc : &res_loc, &src_box);
+    ID3D12GraphicsCommandList_ResourceBarrier(list, 1, &post_barrier);
+    hr = ID3D12GraphicsCommandList_Close(list);
+    if (FAILED(hr)) goto end;
+
+    if (!rb->upload)
+        IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(rb->sync, queue);
+
+    ID3D12CommandQueue_ExecuteCommandLists(queue, 1, (ID3D12CommandList **) &list);
+
+    if (rb->upload)
+        IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(rb->sync, queue);
+
+    ID3D12CommandQueue_Signal(queue, fence, 1);
+    ID3D12Fence_SetEventOnCompletion(fence, 1, NULL);
+
+    hr = S_OK;
+
+end:
+    if (device) ID3D12Device_Release(device);
+    if (allocator) ID3D12CommandAllocator_Release(allocator);
+    if (list) ID3D12GraphicsCommandList_Release(list);
+    if (queue) ID3D12CommandQueue_Release(queue);
+    if (fence) ID3D12Fence_Release(fence);
+
+    return hr;
+}
+
+static HRESULT get_d3d12_resource_readback(ID3D12Resource *resource, IMFD3D12SynchronizationObjectCommands *sync,
+         unsigned int sub_resource_idx, unsigned int x, unsigned int y, struct d3d12_resource_readback *rb, BOOL upload)
+{
+    D3D12_HEAP_PROPERTIES heap_prop = { .Type = upload ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_READBACK };
+    D3D12_RESOURCE_DESC desc;
+    D3D12_RANGE empty_range = { 0, 0 };
+    ID3D12Device *device = NULL;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+
+    rb->upload = upload;
+    rb->parent_resource = resource;
+    rb->sub_resource_idx = sub_resource_idx;
+    rb->x = x;
+    rb->y = y;
+    rb->sync = sync;
+
+    hr = ID3D12Resource_GetDevice(rb->parent_resource, &IID_ID3D12Device, (void **) &device);
+    if (FAILED(hr)) goto end;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = 4;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    hr = ID3D12Device_CreateCommittedResource(device, &heap_prop, D3D12_HEAP_FLAG_NONE, &desc,
+        rb->upload ? D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST, NULL,
+        &IID_ID3D12Resource, (void **) &rb->resource);
+    if (FAILED(hr)) goto end;
+
+    if (!rb->upload)
+    {
+        hr = copy_d3d12_resource_readback(rb);
+        if (FAILED(hr)) goto end;
+    }
+
+    hr = ID3D12Resource_Map(rb->resource, 0, rb->upload ? &empty_range : NULL, &rb->data);
+
+end:
+    if (FAILED(hr) && rb->resource)
+    {
+        ID3D12Resource_Release(rb->resource);
+        rb->resource = NULL;
+    }
+    if (device) ID3D12Device_Release(device);
+    return hr;
+}
+
+static void release_d3d12_resource_readback(struct d3d12_resource_readback *rb)
+{
+    D3D12_RANGE empty_range = { 0, 0 };
+
+    if (rb->resource)
+    {
+        ID3D12Resource_Unmap(rb->resource, 0, rb->upload ? NULL : &empty_range);
+        if (rb->upload)
+        {
+            HRESULT hr = copy_d3d12_resource_readback(rb);
+            ok(SUCCEEDED(hr), "unexpected hr: %#08lx\n", hr);
+        }
+        ID3D12Resource_Release(rb->resource);
+    }
+}
+
+static DWORD get_d3d12_texture_color(ID3D12Resource *resource, IMFD3D12SynchronizationObjectCommands *sync, unsigned int sub_resource_idx, unsigned int x, unsigned int y)
+{
+    struct d3d12_resource_readback rb;
+    DWORD color;
+    HRESULT hr;
+
+    hr = get_d3d12_resource_readback(resource, sync, sub_resource_idx, x, y, &rb, FALSE);
+    ok(SUCCEEDED(hr), "unexpected hr: %#08lx\n", hr);
+    color = *(DWORD *) rb.data;
+    release_d3d12_resource_readback(&rb);
+
+    return color;
+}
+
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
@@ -11504,8 +11698,11 @@ static void test_d3d12_surface_buffer(void)
     IUnknown *obj;
     IMFD3D12SynchronizationObject *sync_obj;
     IMFD3D12SynchronizationObjectCommands *sync_cmd;
+    ID3D12CommandQueue *queue;
+    D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
-    DWORD max_length, cur_length, length;
+    DWORD max_length, cur_length, length, color;
+    BYTE *data;
     UINT index;
     UINT64 total_bytes;
     HRESULT hr;
@@ -11516,6 +11713,9 @@ static void test_d3d12_surface_buffer(void)
         skip("Failed to create a D3D12 device, skipping tests.\n");
         return;
     }
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
     memset(&heap_props, 0, sizeof(heap_props));
     heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -11628,6 +11828,39 @@ if (SUCCEEDED(hr))
     hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = ID3D12Device_CreateCommandQueue(device, &queue_desc, &IID_ID3D12CommandQueue, (void **) &queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock() is readonly */
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    max_length = cur_length = 0;
+    data = NULL;
+    hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(max_length && max_length == cur_length, "Unexpected length %lu.\n", max_length);
+    if (data) *(DWORD *)data = ~0u;
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*(DWORD *)data, "Unexpected buffer %#lx.\n", *(DWORD *)data);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     IMF2DBuffer_Release(_2d_buffer);
     IMF2DBuffer2_Release(_2dbuffer2);
     IMFDXGIBuffer_Release(dxgi_buffer);
@@ -11635,9 +11868,14 @@ if (SUCCEEDED(hr))
     IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
 
     ID3D12Resource_Release(resource);
+
+    ID3D12CommandQueue_Release(queue);
 }
 
 notsupported:
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
     refcount = ID3D12Device_Release(device);
     ok(!refcount, "Unexpected device refcount %u.\n", refcount);
 }
