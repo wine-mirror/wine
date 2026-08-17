@@ -626,6 +626,12 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
         idx = get_buffer_index( input, SECBUFFER_TOKEN );
         if (idx != -1)
         {
+            status = lsa_funcs->MapBuffer( input->pBuffers + idx, input->pBuffers + idx );
+            if (status)
+            {
+                free( target );
+                return status;
+            }
             params.input_token = input->pBuffers[idx].pvBuffer;
             params.input_token_length = input->pBuffers[idx].cbBuffer;
         }
@@ -644,6 +650,15 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
                 return STATUS_NO_MEMORY;
             }
             output->pBuffers[idx].cbBuffer = KERBEROS_MAX_BUF;
+        }
+        else
+        {
+            status = lsa_funcs->MapBuffer( output->pBuffers + idx, output->pBuffers + idx );
+            if (status)
+            {
+                free( target );
+                return status;
+            }
         }
         params.output_token = output->pBuffers[idx].pvBuffer;
         params.output_token_length = &output->pBuffers[idx].cbBuffer;
@@ -700,10 +715,14 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
         if (input)
         {
             if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+            status = lsa_funcs->MapBuffer( input->pBuffers + idx, input->pBuffers + idx );
+            if (status) return status;
             params.input_token  = input->pBuffers[idx].pvBuffer;
             params.input_token_length = input->pBuffers[idx].cbBuffer;
         }
         if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        status = lsa_funcs->MapBuffer( output->pBuffers + idx, output->pBuffers + idx );
+        if (status) return status;
         params.output_token = output->pBuffers[idx].pvBuffer;
         params.output_token_length = &output->pBuffers[idx].cbBuffer;
 
