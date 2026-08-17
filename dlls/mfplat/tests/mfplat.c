@@ -710,6 +710,17 @@ static DWORD get_d3d12_texture_color(ID3D12Resource *resource, IMFD3D12Synchroni
     return color;
 }
 
+static void put_d3d12_texture_color(ID3D12Resource *resource, IMFD3D12SynchronizationObjectCommands *sync, unsigned int sub_resource_idx, unsigned int x, unsigned int y, DWORD color)
+{
+    struct d3d12_resource_readback rb;
+    HRESULT hr;
+
+    hr = get_d3d12_resource_readback(resource, sync, sub_resource_idx, x, y, &rb, TRUE);
+    ok(SUCCEEDED(hr), "unexpected hr: %#08lx\n", hr);
+    *(DWORD *) rb.data = color;
+    release_d3d12_resource_readback(&rb);
+}
+
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
@@ -11702,7 +11713,8 @@ static void test_d3d12_surface_buffer(void)
     D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
     DWORD max_length, cur_length, length, color;
-    BYTE *data;
+    BYTE *data, *data2;
+    LONG pitch;
     UINT index;
     UINT64 total_bytes;
     HRESULT hr;
@@ -11859,6 +11871,81 @@ if (SUCCEEDED(hr))
     ok(!*(DWORD *)data, "Unexpected buffer %#lx.\n", *(DWORD *)data);
 
     hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock2DSize(Write) -> Unlock2D() success */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock2DSize(ReadWrite) -> Unlock2D() failure */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock2DSize(Write) -> Unlock2D() now fails */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    put_d3d12_texture_color(resource, sync_cmd, 0, 1, 0, 0xcdcdcdcd);
+
+    /* Lock2DSize(Read) -> Unlock2D() success */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Recent write was not picked up */
+    ok(!((DWORD *)data)[1], "Unexpected dword %#lx.\n", ((DWORD *)data)[1]);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock2DSize(Write) -> Unlock2D() succeeds again after read */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Lock2D() is readonly, Unlock2D() fails */
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (data) *(DWORD *)data = ~0u;
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    /* Lock2DSize() with ReadWrite is readonly, Unlock2D() fails */
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (data) *(DWORD *)data = ~0u;
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(!color, "Unexpected texture color %#lx.\n", color);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMF2DBuffer_Release(_2d_buffer);
