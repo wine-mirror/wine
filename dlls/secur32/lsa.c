@@ -910,6 +910,11 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* SetContextAttributesA */
 };
 
+static NTSTATUS NTAPI lsa_MapBuffer( SecBuffer *in, SecBuffer *out )
+{
+    return SEC_E_OK;
+}
+
 static BOOLEAN NTAPI lsa_GetCallInfo( SECPKG_CALL_INFO *info )
 {
     memset( info, 0, sizeof(*info) );
@@ -940,7 +945,7 @@ static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
     NULL, /* GetClientInfo */
     NULL, /* RegisterNotification */
     NULL, /* CancelNotification */
-    NULL, /* MapBuffer */
+    lsa_MapBuffer,
     NULL, /* CreateToken */
     NULL, /* AuditLogon */
     NULL, /* CallPackage */

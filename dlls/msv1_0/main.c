@@ -1299,6 +1299,8 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
             goto done;
         }
 
+        status = lsa_secpkg_table->MapBuffer( input->pBuffers + idx, input->pBuffers + idx );
+        if (status) goto done;
         challenge = input->pBuffers[idx].pvBuffer;
         ctx->req_attrs |= ctx_req;
         *ctx_attr = 0;
@@ -1384,7 +1386,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
     if (ctx_req & ISC_REQ_ALLOCATE_MEMORY)
     {
         /* freed with secur32.FreeContextBuffer */
-        if (!(output->pBuffers[idx].pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, bin_len )))
+        if (!(output->pBuffers[idx].pvBuffer = lsa_secpkg_table->AllocateLsaHeap( bin_len )))
         {
             status = SEC_E_INSUFFICIENT_MEMORY;
             goto done;
@@ -1396,6 +1398,15 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
         if (!ctx_handle && !input) *new_ctx_handle = 0;
         status = SEC_E_BUFFER_TOO_SMALL;
         goto done;
+    }
+    else
+    {
+        NTSTATUS ret = lsa_secpkg_table->MapBuffer( output->pBuffers + idx, output->pBuffers + idx );
+        if (ret)
+        {
+            status = ret;
+            goto done;
+        }
     }
 
     if (!output->pBuffers[idx].pvBuffer)
@@ -1482,6 +1493,8 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
             status = SEC_E_INVALID_TOKEN;
             goto done;
         }
+        status = lsa_secpkg_table->MapBuffer( input->pBuffers, input->pBuffers );
+        if (status) goto done;
         negotiate = input->pBuffers[0].pvBuffer;
 
         if (!(ctx = calloc( 1, sizeof(*ctx) ))) goto done;
@@ -1566,6 +1579,8 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         }
         output->pBuffers[0].cbBuffer = bin_len;
         output->pBuffers[0].BufferType = SECBUFFER_TOKEN;
+        status = lsa_secpkg_table->MapBuffer( output->pBuffers, output->pBuffers );
+        if (status) goto done;
         memcpy( output->pBuffers[0].pvBuffer, bin, bin_len );
 
         *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
@@ -1595,6 +1610,8 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
             goto done;
         }
         else bin_len = input->pBuffers[0].cbBuffer;
+        status = lsa_secpkg_table->MapBuffer( input->pBuffers, input->pBuffers );
+        if (status) goto done;
         memcpy( bin, input->pBuffers[0].pvBuffer, bin_len );
         authenticate = input->pBuffers[0].pvBuffer;
 
