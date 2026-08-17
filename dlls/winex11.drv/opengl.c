@@ -348,6 +348,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     Window win = 0, root = 0;
     const char *gl_version;
     const char *gl_renderer;
+    const char *gl_extensions;
     BOOL glx_direct;
     XVisualInfo *vis;
     GLXContext ctx = NULL;
@@ -397,7 +398,8 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     }
     gl_renderer = (const char *)pglGetString(GL_RENDERER);
     gl_version  = (const char *)pglGetString(GL_VERSION);
-    glExtensions = (const char *) pglGetString(GL_EXTENSIONS);
+    gl_extensions = (const char *)pglGetString(GL_EXTENSIONS);
+    glExtensions = gl_extensions ? strdup( gl_extensions ) : NULL;
 
     /* Get the common GLX version supported by GLX client and server ( major/minor) */
     pglXQueryVersion(gdi_display, &glxVersion[0], &glxVersion[1]);
