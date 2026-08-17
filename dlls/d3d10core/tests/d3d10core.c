@@ -11021,14 +11021,18 @@ static void test_swapchain_formats(void)
 
 static void test_swapchain_views(void)
 {
+    ID3D10RenderTargetView *rtv_rgb, *rtv_srgb;
     struct d3d10core_test_context test_context;
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
     ID3D10ShaderResourceView *srv;
-    ID3D10RenderTargetView *rtv;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+
+    static const struct vec4 color = {0.2f, 0.3f, 0.5f, 1.0f};
+    static const RECT r1 = {15, 15, 16, 16};
+    static const RECT r2 = {5, 5, 6, 6};
 
     if (!init_test_context(&test_context))
         return;
@@ -11038,14 +11042,31 @@ static void test_swapchain_views(void)
     refcount = get_refcount(test_context.backbuffer);
     ok(refcount == 1, "Got refcount %lu.\n", refcount);
 
+    draw_color_quad(&test_context, &color);
+    check_texture_color(test_context.backbuffer, 0xff7f4c33, 1);
+
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
     rtv_desc.Texture2D.MipSlice = 0;
-    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)test_context.backbuffer, &rtv_desc, &rtv);
-    /* This seems to work only on Windows 7. */
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)test_context.backbuffer,
+            &rtv_desc, &rtv_srgb);
+    /* This does not work on some Windows versions. */
     ok(hr == S_OK || broken(hr == E_INVALIDARG), "Failed to create render target view, hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ID3D10RenderTargetView_Release(rtv);
+    if (FAILED(hr))
+        goto done;
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)test_context.backbuffer,
+            &rtv_desc, &rtv_rgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv_srgb, NULL);
+
+    refcount = get_refcount(test_context.backbuffer);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
+
+    draw_color_quad(&test_context, &color);
+    check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
@@ -11056,6 +11077,17 @@ static void test_swapchain_views(void)
     if (SUCCEEDED(hr))
         ID3D10ShaderResourceView_Release(srv);
 
+    /* Clear with an RGB view, draw with sRGB view and make sure the clear color has no sRGB
+     * correction applied. */
+    ID3D10Device_ClearRenderTargetView(device, rtv_rgb, (const float *)&color);
+    set_viewport(device, 0.0f, 0.0f, 10.0f, 10.0f, 0.0f, 1.0f);
+    draw_color_quad(&test_context, &color);
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &r1, 0xff7f4c33, 1);
+    check_texture_sub_resource_color(test_context.backbuffer, 0, &r2, 0xffbc957c, 1);
+
+    ID3D10RenderTargetView_Release(rtv_srgb);
+    ID3D10RenderTargetView_Release(rtv_rgb);
+done:
     release_test_context(&test_context);
 }
 
