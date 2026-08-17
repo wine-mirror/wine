@@ -11497,9 +11497,17 @@ static void test_d3d12_surface_buffer(void)
     D3D12_RESOURCE_DESC desc;
     ID3D12Resource *resource;
     IMFMediaBuffer *buffer;
+    IMF2DBuffer *_2d_buffer;
+    IMF2DBuffer2 *_2dbuffer2;
     unsigned int refcount;
     ID3D12Device *device;
     IUnknown *obj;
+    IMFD3D12SynchronizationObject *sync_obj;
+    IMFD3D12SynchronizationObjectCommands *sync_cmd;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+    DWORD max_length, cur_length, length;
+    UINT index;
+    UINT64 total_bytes;
     HRESULT hr;
 
     /* d3d12 */
@@ -11525,6 +11533,8 @@ static void test_d3d12_surface_buffer(void)
     desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+    ID3D12Device_GetCopyableFootprints(device, &desc, 0, 1, 0, &layout, NULL, NULL, &total_bytes);
+
     hr = ID3D12Device_CreateCommittedResource(device, &heap_props, D3D12_HEAP_FLAG_NONE,
             &desc, D3D12_RESOURCE_STATE_RENDER_TARGET, NULL, &IID_ID3D12Resource, (void **)&resource);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -11534,6 +11544,7 @@ static void test_d3d12_surface_buffer(void)
     {
         todo_wine
         win_skip("D3D12 resource buffers are not supported.\n");
+        ID3D12Resource_Release(resource);
         goto notsupported;
     }
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
@@ -11545,20 +11556,88 @@ if (SUCCEEDED(hr))
     check_interface(buffer, &IID_IMFDXGIBuffer, TRUE);
     check_interface(buffer, &IID_IMFGetService, FALSE);
 
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
     ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
 
+    max_length = 0;
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &max_length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(max_length == total_bytes, "Unexpected length %lu.\n", max_length);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &cur_length);
+    ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
+    ok(!cur_length, "Unexpected length %lu.\n", cur_length);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 4096);
+    ok(hr == S_OK, "Failed to set length, hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &cur_length);
+    ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
+    ok(!cur_length, "Unexpected length %lu.\n", cur_length);
+
+    hr = IMF2DBuffer_GetContiguousLength(_2d_buffer, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMF2DBuffer_GetContiguousLength(_2d_buffer, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == desc.Height * desc.Width * 4, "Unexpected length %lu.\n", length);
+
+    EXPECT_REF(resource, 2);
     hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D12Resource, (void **)&obj);
     ok(hr == S_OK, "Failed to get resource, hr %#lx.\n", hr);
+    EXPECT_REF(resource, 3);
     ok(obj == (IUnknown *)resource, "Unexpected resource pointer.\n");
     IUnknown_Release(obj);
 
+    hr = IMFDXGIBuffer_GetSubresourceIndex(dxgi_buffer, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_GetSubresourceIndex(dxgi_buffer, &index);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(index == 0, "Unexpected subresource index.\n");
+
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, (void *)device);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, (void *)device);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_OBJECT_ALREADY_EXISTS), "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, &IID_ID3D12Device, (void **)&obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(obj == (IUnknown *)device, "Unexpected pointer.\n");
+    IUnknown_Release(obj);
+
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, &IID_IUnknown, (void **)&obj);
+    ok(hr == MF_E_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMF2DBuffer_Release(_2d_buffer);
+    IMF2DBuffer2_Release(_2dbuffer2);
     IMFDXGIBuffer_Release(dxgi_buffer);
     IMFMediaBuffer_Release(buffer);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    ID3D12Resource_Release(resource);
 }
 
 notsupported:
-    ID3D12Resource_Release(resource);
     refcount = ID3D12Device_Release(device);
     ok(!refcount, "Unexpected device refcount %u.\n", refcount);
 }
