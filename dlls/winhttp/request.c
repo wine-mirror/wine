@@ -1043,7 +1043,8 @@ static WCHAR *build_request_string( struct request *request )
     return ret;
 }
 
-#define QUERY_MODIFIER_MASK (WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_FLAG_SYSTEMTIME | WINHTTP_QUERY_FLAG_NUMBER)
+#define QUERY_MODIFIER_MASK (WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_FLAG_SYSTEMTIME | WINHTTP_QUERY_FLAG_NUMBER \
+                             | WINHTTP_QUERY_FLAG_NUMBER64)
 
 static DWORD query_headers( struct request *request, DWORD level, const WCHAR *name, void *buffer, DWORD *buflen,
                             DWORD *index )
@@ -1198,6 +1199,23 @@ static DWORD query_headers( struct request *request, DWORD level, const WCHAR *n
             ret = ERROR_SUCCESS;
         }
         *buflen = sizeof(DWORD);
+    }
+    else if (level & WINHTTP_QUERY_FLAG_NUMBER64)
+    {
+        if (attr != WINHTTP_QUERY_CONTENT_LENGTH)
+        {
+            WARN( "WINHTTP_QUERY_FLAG_NUMBER64 with attr %lu.\n", attr );
+            return ERROR_WINHTTP_INVALID_QUERY_REQUEST;
+        }
+        if (!buffer || sizeof(ULONG64) > *buflen) ret = ERROR_INSUFFICIENT_BUFFER;
+        else
+        {
+            ULONG64 *number = buffer;
+            *number = wcstoull( header->value, NULL, 10 );
+            TRACE( "returning number: %I64u\n", *number );
+            ret = ERROR_SUCCESS;
+        }
+        *buflen = sizeof(ULONG64);
     }
     else if (level & WINHTTP_QUERY_FLAG_SYSTEMTIME)
     {

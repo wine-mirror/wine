@@ -1342,6 +1342,7 @@ static void test_request_parameter_defaults(void)
     HINTERNET ses, con, req;
     DWORD size, status, error;
     WCHAR *version;
+    ULONG64 val64;
     BOOL ret;
 
     ses = WinHttpOpen(L"winetest", 0, NULL, NULL, 0);
@@ -1370,6 +1371,16 @@ static void test_request_parameter_defaults(void)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %lu\n", GetLastError());
     ok(status == HTTP_STATUS_OK, "request failed unexpectedly %lu\n", status);
+
+    val64 = 0xdeadbeeffeedcafe;
+    size = sizeof(val64) * 2;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER64, NULL, &val64, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "succeeded unexpectedly\n");
+    ok(size == sizeof(val64) * 2, "got %#lx.\n", size);
+    ok(error == ERROR_WINHTTP_INVALID_QUERY_REQUEST, "got %lu.\n", error);
+    ok(val64 == 0xdeadbeeffeedcafe, "got %#I64x.\n", val64);
 
     WinHttpCloseHandle(req);
 
@@ -3516,6 +3527,7 @@ static void test_websocket(int port)
     WCHAR header[32];
     char buf[128], *large_buf;
     USHORT close_status;
+    ULONG64 val64;
     BOOL ret;
 
     if (!pWinHttpWebSocketCompleteUpgrade)
@@ -3632,6 +3644,13 @@ static void test_websocket(int port)
                               &size, NULL);
     ok(ret, "failure\n");
     ok(len == 4, "got %lu\n", len);
+
+    val64 = 0xdeadbeeffeedcafe;
+    size = sizeof(val64) * 2;
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER64, NULL, &val64, &size, NULL);
+    ok(ret, "failed unexpectedly %lu\n", GetLastError());
+    ok(size == sizeof(val64), "got %lu.\n", size);
+    ok(val64 == 4, "request failed unexpectedly %lu\n", status);
 
     index = 0;
     size = sizeof(buf);
