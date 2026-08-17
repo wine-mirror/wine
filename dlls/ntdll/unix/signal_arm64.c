@@ -1403,6 +1403,15 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         save_context( &context, sigcontext );
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
         wait_suspend( &context );
+        if (is_arm64ec() && !is_ec_code( context.Pc ))
+        {
+            CONTEXT *user_context = (CONTEXT *)((context.Sp - sizeof(CONTEXT)) & ~15);
+
+            *user_context = context;
+            user_context->ContextFlags = CONTEXT_FULL;
+            context.Sp = (ULONG_PTR)user_context;
+            context.Pc = (ULONG_PTR)pKiUserEmulationDispatcher;
+        }
         restore_context( &context, sigcontext );
     }
 }
