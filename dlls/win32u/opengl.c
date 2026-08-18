@@ -445,31 +445,30 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
     make_client_context_current();
 }
 
-static void framebuffer_surface_resize( struct opengl_drawable *drawable )
-{
-    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
-    SIZE size = drawable->virtual_size;
-
-    make_null_context_current( NULL );
-
-    read_desc.samples = read_desc.sample_buffers = 0;
-
-    TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, size.cx, size.cy );
-    resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size.cx, size.cy );
-
-    if (drawable->draw_fbo != drawable->read_fbo)
-    {
-        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, size.cx, size.cy );
-        resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, size.cx, size.cy );
-    }
-
-    make_client_context_current();
-}
-
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
 {
     TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
-    if (flags & GL_FLUSH_UPDATED && drawable->read_fbo) framebuffer_surface_resize( drawable );
+
+    make_null_context_current( NULL );
+
+    if (flags & GL_FLUSH_UPDATED && drawable->read_fbo)
+    {
+        struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
+        SIZE size = drawable->virtual_size;
+
+        read_desc.samples = read_desc.sample_buffers = 0;
+
+        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, size.cx, size.cy );
+        resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size.cx, size.cy );
+
+        if (drawable->draw_fbo != drawable->read_fbo)
+        {
+            TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, size.cx, size.cy );
+            resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, size.cx, size.cy );
+        }
+    }
+
+    make_client_context_current();
 }
 
 static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
@@ -522,7 +521,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
 
     make_client_context_current();
 
-    framebuffer_surface_resize( &surface->base );
+    framebuffer_surface_flush( &surface->base, GL_FLUSH_UPDATED );
     return &surface->base;
 }
 
