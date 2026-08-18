@@ -4725,7 +4725,7 @@ void CDECL wined3d_device_context_generate_mipmaps(struct wined3d_device_context
     }
 
     texture = texture_from_resource(view->resource);
-    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
+    if (!(texture->resource.usage & WINED3DUSAGE_GENERATE_MIPMAPS))
     {
         WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
         return;

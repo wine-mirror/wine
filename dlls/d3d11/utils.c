@@ -456,6 +456,8 @@ uint32_t wined3d_usage_from_d3d11(enum D3D11_USAGE usage, UINT misc_flags)
         wined3d_usage |= WINED3DUSAGE_SHARED | WINED3DUSAGE_SHARED_KEYED_MUTEX;
     if (misc_flags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE)
         wined3d_usage |= WINED3DUSAGE_SHARED_NT_HANDLE;
+    if (misc_flags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+        wined3d_usage |= WINED3DUSAGE_GENERATE_MIPMAPS;
 
     return wined3d_usage;
 }

@@ -957,6 +957,7 @@ enum wined3d_memory_segment_group
 #define WINED3DUSAGE_SHARED                                     0x00000001
 #define WINED3DUSAGE_SHARED_NT_HANDLE                           0x00000002
 #define WINED3DUSAGE_SHARED_KEYED_MUTEX                         0x00000004
+#define WINED3DUSAGE_GENERATE_MIPMAPS                           0x00000008
 #define WINED3DUSAGE_SCRATCH                                    0x00400000
 #define WINED3DUSAGE_CS                                         0x00800000
 #define WINED3DUSAGE_LEGACY_CUBEMAP                             0x01000000
@@ -1591,7 +1592,6 @@ enum wined3d_memory_segment_group
 #define WINED3D_TEXTURE_CREATE_DISCARD                          0x00000002
 #define WINED3D_TEXTURE_CREATE_GET_DC_LENIENT                   0x00000004
 #define WINED3D_TEXTURE_CREATE_GET_DC                           0x00000008
-#define WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS                 0x00000010
 #define WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS             0x00000020
 
 #define WINED3D_STANDARD_MULTISAMPLE_PATTERN                    0xffffffff

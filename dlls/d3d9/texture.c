@@ -1234,7 +1234,7 @@ static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
 };
 
 static HRESULT d3d9_texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
-        const struct wined3d_resource_desc *desc, D3DPOOL pool, DWORD usage,
+        struct wined3d_resource_desc *desc, D3DPOOL pool, DWORD usage,
         unsigned int layer_count, unsigned int level_count)
 {
     struct wined3d_adapter *wined3d_adapter;
@@ -1290,7 +1290,7 @@ static HRESULT d3d9_texture_init(struct d3d9_texture *texture, struct d3d9_devic
         wined3d_mutex_unlock();
         if (hr == D3D_OK)
         {
-            flags |= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
+            desc->usage |= WINED3DUSAGE_GENERATE_MIPMAPS;
             level_count = 0;
         }
         else
@@ -1325,7 +1325,7 @@ static HRESULT d3d9_texture_init(struct d3d9_texture *texture, struct d3d9_devic
 
         managed_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
         managed_desc.bind_flags = desc->bind_flags;
-        flags &= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
+        managed_desc.usage &= ~WINED3DUSAGE_GENERATE_MIPMAPS;
         if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &managed_desc, layer_count, level_count, flags,
                 NULL, texture, &d3d9_texture_wined3d_parent_ops, &texture->draw_texture)))
         {

@@ -1477,13 +1477,14 @@ HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined
         texture->flags |= WINED3D_TEXTURE_GET_DC;
     if (flags & WINED3D_TEXTURE_CREATE_DISCARD)
         texture->flags |= WINED3D_TEXTURE_DISCARD;
-    if (flags & WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS)
+    if (desc->usage & WINED3DUSAGE_GENERATE_MIPMAPS)
     {
         if (!(texture->resource.format_caps & WINED3D_FORMAT_CAP_GEN_MIPMAP))
+        {
             WARN("Format doesn't support mipmaps generation, "
                     "ignoring WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS flag.\n");
-        else
-            texture->flags |= WINED3D_TEXTURE_GENERATE_MIPMAPS;
+            texture->resource.usage &= WINED3DUSAGE_GENERATE_MIPMAPS;
+        }
     }
 
     if (flags & WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS)
