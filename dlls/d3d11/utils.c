@@ -444,12 +444,18 @@ unsigned int wined3d_getdata_flags_from_d3d11_async_getdata_flags(unsigned int d
     return WINED3DGETDATA_FLUSH;
 }
 
-DWORD wined3d_usage_from_d3d11(enum D3D11_USAGE usage)
+uint32_t wined3d_usage_from_d3d11(enum D3D11_USAGE usage, UINT misc_flags)
 {
     DWORD wined3d_usage = 0;
 
     if (usage == D3D11_USAGE_DYNAMIC)
         wined3d_usage |= WINED3DUSAGE_DYNAMIC;
+    if (misc_flags & D3D11_RESOURCE_MISC_SHARED)
+        wined3d_usage |= WINED3DUSAGE_SHARED;
+    if (misc_flags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)
+        wined3d_usage |= WINED3DUSAGE_SHARED | WINED3DUSAGE_SHARED_KEYED_MUTEX;
+    if (misc_flags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE)
+        wined3d_usage |= WINED3DUSAGE_SHARED_NT_HANDLE;
 
     return wined3d_usage;
 }

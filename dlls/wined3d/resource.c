@@ -108,6 +108,12 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     if (!size)
         ERR("Attempting to create a zero-sized resource.\n");
 
+    if ((usage & WINED3DUSAGE_SHARED) && (access & WINED3D_RESOURCE_ACCESS_CPU))
+    {
+        FIXME("CPU shared resources are not implemented.\n");
+        return E_NOTIMPL;
+    }
+
     for (i = 0; i < ARRAY_SIZE(resource_types); ++i)
     {
         if (resource_types[i].type != type
