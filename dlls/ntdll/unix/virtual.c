@@ -5271,6 +5271,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
         union apc_result result;
         unsigned int status;
 
+        if (is_old_wow64() && !zero_bits) zero_bits = ~0u;
+
         memset( &call, 0, sizeof(call) );
 
         call.virtual_alloc.type         = APC_VIRTUAL_ALLOC;
@@ -5411,6 +5413,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
     {
         union apc_call call;
         union apc_result result;
+
+        if (is_old_wow64() && !limit_high && !*ret) limit_high = ~0u;
 
         memset( &call, 0, sizeof(call) );
 
@@ -6359,6 +6363,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         union apc_call call;
         union apc_result result;
 
+        if (is_old_wow64() && !zero_bits) zero_bits = ~0u;
+
         memset( &call, 0, sizeof(call) );
 
         call.map_view.type         = APC_MAP_VIEW;
@@ -6432,6 +6438,8 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
     {
         union apc_call call;
         union apc_result result;
+
+        if (is_old_wow64() && !limit_high && !*addr_ptr) limit_high = ~0u;
 
         memset( &call, 0, sizeof(call) );
 
