@@ -2825,7 +2825,6 @@ static void test_drawimage_record(void) {
 
     stat = GdipBitmapGetPixel(bitmap, 0, 99, &color);
     expect(Ok, stat);
-    todo_wine
     expect(0xffff0000, color);
 
     GdipDisposeImage((GpImage*)bitmap);

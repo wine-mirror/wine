@@ -3240,8 +3240,8 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 points[0].Y = draw->RectData.rect.Y;
                 points[1].X = points[0].X + draw->RectData.rect.Width;
                 points[1].Y = points[0].Y;
-                points[2].X = points[1].X;
-                points[2].Y = points[1].Y + draw->RectData.rect.Height;
+                points[2].X = points[0].X;
+                points[2].Y = points[0].Y + draw->RectData.rect.Height;
             }
             else
             {
@@ -3249,8 +3249,8 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 points[0].Y = draw->RectData.rectF.Y;
                 points[1].X = points[0].X + draw->RectData.rectF.Width;
                 points[1].Y = points[0].Y;
-                points[2].X = points[1].X;
-                points[2].Y = points[1].Y + draw->RectData.rectF.Height;
+                points[2].X = points[0].X;
+                points[2].Y = points[0].Y + draw->RectData.rectF.Height;
             }
 
             return GdipDrawImagePointsRect(real_metafile->playback_graphics, real_metafile->objtable[image].u.image,
