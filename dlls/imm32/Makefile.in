@@ -1,6 +1,6 @@
 MODULE    = imm32.dll
 IMPORTLIB = imm32
-IMPORTS   = user32 gdi32 advapi32 kernelbase win32u
+IMPORTS   = user32 gdi32 advapi32 kernel32 kernelbase win32u
 DELAYIMPORTS = ole32
 
 VER_PRODUCTVERSION = 5,1,2600,2180
