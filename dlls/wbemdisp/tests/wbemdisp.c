@@ -138,6 +138,8 @@ static void test_ParseDisplayName(void)
                         DISPID dispid;
                         DISPPARAMS params;
                         UINT arg_err;
+                        ISWbemObjectPath *objpath;
+                        BSTR dispname;
 
                         fetched = 0xdeadbeef;
                         hr = IEnumVARIANT_Next( enumvar, 0, &var, &fetched );
@@ -238,6 +240,42 @@ static void test_ParseDisplayName(void)
                         ok( V_VT( &res ) == VT_BSTR, "got %u\n", V_VT( &res ) );
                         ok( V_BSTR( &res ) != (BSTR)0xdeadbeef, "got %u\n", V_VT( &res ) );
                         VariantClear( &res );
+
+                        str = SysAllocString( L"Path_" );
+                        dispid = 0xdeadbeef;
+                        hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
+                        SysFreeString( str );
+                        ok( hr == S_OK, "got %#lx\n", hr );
+                        ok( dispid == 0x18, "got %#lx\n", dispid );
+
+                        V_VT( &res ) = VT_ERROR;
+                        V_DISPATCH( &res ) = (IDispatch *)0xdeadbeef;
+                        memset( &params, 0, sizeof(params) );
+                        hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, english,
+                                               DISPATCH_METHOD|DISPATCH_PROPERTYGET,
+                                               &params, &res, NULL, NULL );
+                        todo_wine
+                        ok( hr == S_OK, "got %#lx\n", hr );
+                        ok( params.rgvarg == NULL, "got %p\n", params.rgvarg );
+                        ok( params.rgdispidNamedArgs == NULL, "got %p\n", params.rgdispidNamedArgs );
+                        ok( !params.cArgs, "got %u\n", params.cArgs );
+                        ok( !params.cNamedArgs, "got %u\n", params.cNamedArgs );
+                        ok( V_VT( &res ) == VT_DISPATCH, "got %u\n", V_VT( &res ) );
+
+                        if (hr == S_OK)
+                        {
+                        hr = IDispatch_QueryInterface( V_DISPATCH( &res ), &IID_ISWbemObjectPath, (void**)&objpath );
+                        ok( hr == S_OK, "got %#lx\n", hr );
+                        VariantClear( &res );
+
+                        dispname = NULL;
+                        hr = ISWbemObjectPath_get_DisplayName( objpath, &dispname );
+                        todo_wine
+                        ok( hr == S_OK, "got %#lx\n", hr );
+                        SysFreeString( dispname );
+                        ISWbemObjectPath_Release( objpath );
+                        }
+
                         VariantClear( &var );
 
                         fetched = 0xdeadbeef;
