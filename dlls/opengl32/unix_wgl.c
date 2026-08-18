@@ -1106,6 +1106,7 @@ void pop_default_fbo( TEB *teb )
     if (!ctx->has_viewport && draw->draw_fbo && draw->client)
     {
         funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
         ctx->has_viewport = GL_TRUE;
     }
 }
