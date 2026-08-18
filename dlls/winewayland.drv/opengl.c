@@ -67,19 +67,6 @@ static EGLConfig egl_config_for_format(int format)
     return egl->configs[(format - 1) % egl->config_count];
 }
 
-static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
-{
-    int client_width, client_height;
-    RECT client_rect = {0};
-
-    NtUserGetClientRect(gl->base.client->hwnd, &client_rect, NtUserGetDpiForWindow(gl->base.client->hwnd));
-    client_width = client_rect.right - client_rect.left;
-    client_height = client_rect.bottom - client_rect.top;
-    if (client_width == 0 || client_height == 0) client_width = client_height = 1;
-
-    wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
-}
-
 static BOOL wayland_opengl_surface_create(struct client_surface *client, int format, struct opengl_drawable **drawable)
 {
     struct wayland_client_surface *surface = impl_from_client_surface(client);
@@ -87,13 +74,8 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
     EGLint attribs[4], *attrib = attribs;
     struct wayland_gl_drawable *gl;
     HWND hwnd = client->hwnd;
-    RECT rect;
 
     TRACE("client=%s format=%d\n", debugstr_client_surface(client), format);
-
-    NtUserGetClientRect(hwnd, &rect, NtUserGetDpiForWindow(hwnd));
-    if (rect.right == rect.left) rect.right = rect.left + 1;
-    if (rect.bottom == rect.top) rect.bottom = rect.top + 1;
 
     if (!egl->has_EGL_EXT_present_opaque)
         WARN("Missing EGL_EXT_present_opaque extension\n");
@@ -111,7 +93,7 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
     opengl_drawable_map_buffer(&gl->base, GL_FRONT_AND_BACK, GL_BACK);
     if (gl->base.stereo) opengl_drawable_map_buffer(&gl->base, GL_FRONT_RIGHT, GL_BACK_RIGHT);
 
-    if (!(gl->wl_egl_window = wl_egl_window_create(surface->wl_surface, rect.right, rect.bottom))) goto err;
+    if (!(gl->wl_egl_window = wl_egl_window_create(surface->wl_surface, gl->base.virtual_size.cx, gl->base.virtual_size.cy))) goto err;
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->wl_egl_window, attribs))) goto err;
     set_client_surface(hwnd, surface);
 
@@ -143,7 +125,7 @@ static void wayland_drawable_flush(struct opengl_drawable *base, UINT flags)
 
     /* Since context_flush is called from operations that may latch the native size,
      * perform any pending resizes before calling them. */
-    if (flags & GL_FLUSH_UPDATED) wayland_gl_drawable_sync_size(gl);
+    if (flags & GL_FLUSH_UPDATED) wl_egl_window_resize(gl->wl_egl_window, gl->base.virtual_size.cx, gl->base.virtual_size.cy, 0, 0);
 }
 
 static BOOL wayland_drawable_swap(struct opengl_drawable *base)

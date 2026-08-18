@@ -1099,15 +1099,13 @@ void pop_default_fbo( TEB *teb )
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
     struct opengl_context *ctx;
-    RECT rect;
 
     if (!(ctx = get_current_context( teb, &draw, &read, NULL ))) return;
     if (!ctx->draw_fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->draw_fbo );
     if (!ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->read_fbo );
     if (!ctx->has_viewport && draw->draw_fbo && draw->client)
     {
-        NtUserGetClientRect( draw->client->hwnd, &rect, NtUserGetDpiForWindow( draw->client->hwnd ) );
-        funcs->p_glViewport( 0, 0, rect.right, rect.bottom );
+        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
         ctx->has_viewport = GL_TRUE;
     }
 }

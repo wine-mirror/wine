@@ -443,6 +443,24 @@ void client_surface_update( struct client_surface *surface )
     pthread_mutex_unlock( &surfaces_lock );
 }
 
+BOOL client_surface_get_size( struct client_surface *surface, SIZE *virtual_size, SIZE *monitor_size )
+{
+    BOOL updated;
+
+    pthread_mutex_lock( &surfaces_lock );
+
+    virtual_size->cx = max( 1, surface->virtual_rect.right - surface->virtual_rect.left );
+    virtual_size->cy = max( 1, surface->virtual_rect.bottom - surface->virtual_rect.top );
+    monitor_size->cx = max( 1, surface->monitor_rect.right - surface->monitor_rect.left );
+    monitor_size->cy = max( 1, surface->monitor_rect.bottom - surface->monitor_rect.top );
+    updated = surface->updated;
+    surface->updated = FALSE;
+
+    pthread_mutex_unlock( &surfaces_lock );
+
+    return updated;
+}
+
 void use_window_client_surface( struct client_surface *surface, BOOL use )
 {
     TRACE( "surface %s, use %u\n", debugstr_client_surface( surface ), use );

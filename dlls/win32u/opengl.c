@@ -126,7 +126,12 @@ void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *fun
     drawable->interval = INT_MIN;
     drawable->doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
     drawable->stereo = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_STEREO);
-    if ((drawable->client = client)) client_surface_add_ref( client );
+
+    if ((drawable->client = client))
+    {
+        client_surface_get_size( client, &drawable->virtual_size, &drawable->monitor_size );
+        client_surface_add_ref( client );
+    }
 
     opengl_drawable_map_buffer( drawable, GL_FRONT_LEFT, GL_FRONT_LEFT );
     opengl_drawable_map_buffer( drawable, GL_FRONT, GL_FRONT );
@@ -180,7 +185,9 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 {
     if (!is_client_surface_window( drawable->client, 0 )) return;
 
-    if (InterlockedCompareExchange( &drawable->client->updated, 0, 1 )) flags |= GL_FLUSH_UPDATED;
+    if (client_surface_get_size( drawable->client, &drawable->virtual_size, &drawable->monitor_size ))
+        flags |= GL_FLUSH_UPDATED;
+
     if (interval != drawable->interval)
     {
         drawable->interval = interval;
@@ -441,23 +448,19 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 static void framebuffer_surface_resize( struct opengl_drawable *drawable )
 {
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
-    RECT rect;
+    SIZE size = drawable->virtual_size;
 
     make_null_context_current( NULL );
 
-    NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
-    if (!rect.right) rect.right = 1;
-    if (!rect.bottom) rect.bottom = 1;
-
     read_desc.samples = read_desc.sample_buffers = 0;
 
-    TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, rect.right, rect.bottom );
-    resize_framebuffer( drawable, &read_desc, drawable->read_fbo, rect.right, rect.bottom );
+    TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->read_fbo, size.cx, size.cy );
+    resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size.cx, size.cy );
 
     if (drawable->draw_fbo != drawable->read_fbo)
     {
-        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, rect.right, rect.bottom );
-        resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, rect.right, rect.bottom );
+        TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, size.cx, size.cy );
+        resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, size.cx, size.cy );
     }
 
     make_client_context_current();

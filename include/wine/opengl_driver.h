@@ -242,6 +242,8 @@ struct opengl_drawable
     HDC                                 owner_hdc;      /* HDC owning the drawable, if any (for pbuffer / D3D swapchains) */
     int                                 format;         /* pixel format of the drawable */
     int                                 interval;       /* last set surface swap interval */
+    SIZE                                virtual_size;   /* size in virtual coordinate space */
+    SIZE                                monitor_size;   /* size in raw physical coordinate space */
     BOOL                                doublebuffer;   /* pixel format is double buffered */
     BOOL                                stereo;         /* pixel format is stereo buffered */
     EGLSurface                          surface;        /* surface for EGL based drivers */

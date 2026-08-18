@@ -325,6 +325,7 @@ extern HWND get_progman_window(void);
 extern HWND get_taskman_window(void);
 extern BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd );
 extern void client_surface_update( struct client_surface *surface );
+extern BOOL client_surface_get_size( struct client_surface *surface, SIZE *virtual_size, SIZE *monitor_size );
 extern void use_window_client_surface( struct client_surface *surface, BOOL use );
 extern struct client_surface *get_unused_client_surface( HWND hwnd, int format );
 extern HICON get_window_icon_info( HWND hwnd, UINT type, HICON icon, ICONINFO *ret );
