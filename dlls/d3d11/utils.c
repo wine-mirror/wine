@@ -604,10 +604,44 @@ static BOOL d3d11_bind_flags_are_gpu_read_only(UINT bind_flags)
     return !(bind_flags & ~read_only_bind_flags);
 }
 
-BOOL validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION resource_dimension,
-        D3D11_USAGE usage, UINT bind_flags, UINT cpu_access_flags, D3D_FEATURE_LEVEL feature_level)
+bool validate_d3d11_resource_flags(D3D11_RESOURCE_DIMENSION resource_dimension, D3D11_USAGE usage,
+        UINT bind_flags, UINT cpu_access_flags, UINT misc_flags, D3D_FEATURE_LEVEL feature_level)
 {
     const BOOL is_texture = resource_dimension != D3D11_RESOURCE_DIMENSION_BUFFER;
+
+    if ((misc_flags & D3D11_RESOURCE_MISC_SHARED) && (misc_flags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX))
+    {
+        WARN("D3D11_RESOURCE_MISC_SHARED used with D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX.\n");
+        return FALSE;
+    }
+
+    if ((misc_flags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE)
+            && !(misc_flags & (D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)))
+    {
+        WARN("D3D11_RESOURCE_MISC_SHARED_NTHANDLE used without sharing flags.\n");
+        return FALSE;
+    }
+
+    if (misc_flags & (D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX))
+    {
+        if (usage == D3D11_USAGE_DYNAMIC || usage == D3D11_USAGE_IMMUTABLE)
+        {
+            WARN("Resource sharing used with usage %#x.\n", usage);
+            return FALSE;
+        }
+
+        if (feature_level < D3D_FEATURE_LEVEL_10_0)
+        {
+            WARN("Resource sharing used with feature level %#x.\n", feature_level);
+            return FALSE;
+        }
+    }
+
+    if ((misc_flags & D3D11_RESOURCE_MISC_SHARED_NTHANDLE) && usage == D3D11_USAGE_STAGING)
+    {
+        WARN("D3D11_RESOURCE_MISC_SHARED_NTHANDLE used with D3D11_USAGE_STAGING.\n");
+        return FALSE;
+    }
 
     switch (usage)
     {

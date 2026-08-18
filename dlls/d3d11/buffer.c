@@ -406,8 +406,8 @@ static const struct wined3d_parent_ops d3d_buffer_wined3d_parent_ops =
 
 static BOOL validate_buffer_desc(D3D11_BUFFER_DESC *desc, D3D_FEATURE_LEVEL feature_level)
 {
-    if (!validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION_BUFFER,
-            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, feature_level))
+    if (!validate_d3d11_resource_flags(D3D11_RESOURCE_DIMENSION_BUFFER,
+            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, feature_level))
         return FALSE;
 
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)

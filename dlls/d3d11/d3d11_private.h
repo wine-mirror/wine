@@ -73,9 +73,8 @@ UINT d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(UINT cpu_access_flags);
 UINT d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(UINT resource_misc_flags);
 UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc_flags);
 
-BOOL validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION resource_dimension,
-        D3D11_USAGE usage, UINT bind_flags, UINT cpu_access_flags,
-        D3D_FEATURE_LEVEL feature_level);
+bool validate_d3d11_resource_flags(D3D11_RESOURCE_DIMENSION resource_dimension, D3D11_USAGE usage,
+        UINT bind_flags, UINT cpu_access_flags, UINT misc_flags, D3D_FEATURE_LEVEL feature_level);
 
 HRESULT d3d_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data);

@@ -3066,7 +3066,7 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R8G8B8A8_SNORM,          1, D3D11_BIND_RENDER_TARGET,    0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_SINT,           1, D3D11_BIND_RENDER_TARGET,    0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_UNORM,          1, D3D11_BIND_RENDER_TARGET,    D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
-                FALSE, TRUE},
+                FALSE, FALSE},
         {DXGI_FORMAT_D24_UNORM_S8_UINT,       1, D3D11_BIND_SHADER_RESOURCE,  0, FALSE, TRUE},
         {DXGI_FORMAT_D24_UNORM_S8_UINT,       1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_SHADER_RESOURCE,  0, FALSE, TRUE},
@@ -35222,7 +35222,7 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
                     || broken(hr == E_OUTOFMEMORY) /* software device before Win8 */,
                     "got %#lx.\n", hr);
         else
-            todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+            ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
         if (FAILED(hr))
             goto test_done;
 

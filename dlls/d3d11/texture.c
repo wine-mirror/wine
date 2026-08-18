@@ -932,8 +932,8 @@ static BOOL is_gdi_compatible_texture(const D3D11_TEXTURE2D_DESC *desc)
 
 static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc, D3D_FEATURE_LEVEL feature_level)
 {
-    if (!validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION_TEXTURE2D,
-            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, feature_level))
+    if (!validate_d3d11_resource_flags(D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, desc->MiscFlags, feature_level))
         return FALSE;
 
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE
