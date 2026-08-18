@@ -802,6 +802,7 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     VkImageSubresourceRange vk_range;
     VkImageUsageFlags vk_usage;
     VkImageType vk_image_type;
+    VkImageCreateInfo desc;
     unsigned int flags = 0;
 
     if (texture_vk->t.flags & WINED3D_TEXTURE_RGB_ALLOCATED)
@@ -872,12 +873,14 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
-    if (!wined3d_context_vk_create_image(context_vk, vk_image_type, vk_usage, format_vk->vk_format,
-            resource->width, resource->height, resource->depth, max(1, wined3d_resource_get_sample_count(resource)),
-            texture_vk->t.level_count, texture_vk->t.layer_count, flags, NULL, &texture_vk->image))
-    {
+    wined3d_init_vk_image_info(&desc, vk_image_type, vk_usage, format_vk->vk_format,
+            resource->width, resource->height, resource->depth);
+    desc.flags = flags;
+    desc.samples = max(1, wined3d_resource_get_sample_count(resource));
+    desc.mipLevels = texture_vk->t.level_count;
+    desc.arrayLayers = texture_vk->t.layer_count;
+    if (!wined3d_context_vk_create_image(context_vk, &desc, &texture_vk->image))
         return FALSE;
-    }
 
     /* We can't use a zero src access mask without synchronization2. Set the last-used bind mask to something
      * non-zero to avoid this. */
@@ -1740,10 +1743,12 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         if (src_format_vk->vk_format != vk_format)
         {
             struct wined3d_image_vk src_image;
+            VkImageCreateInfo image_desc;
 
-            if (!wined3d_context_vk_create_image(context_vk, vk_image_type, usage, vk_format,
-                    resolve_region.extent.width, resolve_region.extent.height, 1,
-                    src_sample_count, 1, 1, 0, NULL, &src_image))
+            wined3d_init_vk_image_info(&image_desc, vk_image_type, usage, vk_format,
+                    resolve_region.extent.width, resolve_region.extent.height, 1);
+            image_desc.samples = src_sample_count;
+            if (!wined3d_context_vk_create_image(context_vk, &image_desc, &src_image))
                 goto barrier_next;
 
             wined3d_context_vk_reference_image(context_vk, &src_image);
@@ -1811,10 +1816,11 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         if (dst_format_vk->vk_format != vk_format || !raw)
         {
             struct wined3d_image_vk dst_image;
+            VkImageCreateInfo image_desc;
 
-            if (!wined3d_context_vk_create_image(context_vk, vk_image_type, usage, vk_format,
-                    resolve_region.extent.width, resolve_region.extent.height, 1,
-                    VK_SAMPLE_COUNT_1_BIT, 1, 1, 0, NULL, &dst_image))
+            wined3d_init_vk_image_info(&image_desc, vk_image_type, usage, vk_format,
+                    resolve_region.extent.width, resolve_region.extent.height, 1);
+            if (!wined3d_context_vk_create_image(context_vk, &image_desc, &dst_image))
                 goto barrier_next;
 
             wined3d_context_vk_reference_image(context_vk, &dst_image);

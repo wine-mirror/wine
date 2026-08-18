@@ -369,13 +369,13 @@ static bool wined3d_decoder_vk_create_image(struct wined3d_decoder_vk *decoder_v
     const struct wined3d_format *output_format = wined3d_get_format(
             decoder_vk->d.device->adapter, decoder_vk->d.desc.output_format, 0);
     VkVideoProfileListInfoKHR profile_list = {.sType = VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR};
-    unsigned int layer_count = decoder_vk->layered_dpb ? ARRAY_SIZE(decoder_vk->images) : 1;
     VkImageViewCreateInfo view_desc = {.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
     VkVideoProfileInfoKHR profile = {.sType = VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR};
     struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_vk->d.device);
     VkFormat vk_format = wined3d_format_vk(output_format)->vk_format;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     VkImageSubresourceRange vk_range = {0};
+    VkImageCreateInfo image_desc;
     VkResult vr;
 
     if (!decoder_vk->distinct_dpb)
@@ -385,8 +385,11 @@ static bool wined3d_decoder_vk_create_image(struct wined3d_decoder_vk *decoder_v
     profile_list.pProfiles = &profile;
     fill_vk_profile_info(&profile, &decoder_vk->d.desc.codec, decoder_vk->d.desc.output_format);
 
-    if (!wined3d_context_vk_create_image(context_vk, VK_IMAGE_TYPE_2D, usage, vk_format,
-            decoder_vk->d.width, decoder_vk->d.height, 1, 1, 1, layer_count, 0, &profile_list, image))
+    wined3d_init_vk_image_info(&image_desc, VK_IMAGE_TYPE_2D, usage, vk_format,
+            decoder_vk->d.width, decoder_vk->d.height, 1);
+    image_desc.arrayLayers = decoder_vk->layered_dpb ? ARRAY_SIZE(decoder_vk->images) : 1;
+    image_desc.pNext = &profile_list;
+    if (!wined3d_context_vk_create_image(context_vk, &image_desc, image))
     {
         ERR("Failed to create output image.\n");
         return false;
@@ -394,7 +397,7 @@ static bool wined3d_decoder_vk_create_image(struct wined3d_decoder_vk *decoder_v
 
     vk_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     vk_range.levelCount = 1;
-    vk_range.layerCount = layer_count;
+    vk_range.layerCount = image_desc.arrayLayers;
 
     wined3d_context_vk_image_barrier(context_vk, decoder_vk->command_buffer.vk_command_buffer,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0,

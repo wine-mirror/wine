@@ -381,6 +381,28 @@ struct wined3d_image_vk
     uint64_t command_buffer_id;
 };
 
+static inline void wined3d_init_vk_image_info(VkImageCreateInfo *desc, VkImageType type,
+        VkImageUsageFlags usage, VkFormat vk_format, unsigned int width, unsigned int height, unsigned int depth)
+{
+    desc->sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    desc->pNext = NULL;
+    desc->flags = 0;
+    desc->imageType = type;
+    desc->format = vk_format;
+    desc->extent.width = width;
+    desc->extent.height = height;
+    desc->extent.depth = depth;
+    desc->mipLevels = 1;
+    desc->arrayLayers = 1;
+    desc->samples = 1;
+    desc->tiling = VK_IMAGE_TILING_OPTIMAL;
+    desc->usage = usage;
+    desc->sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    desc->queueFamilyIndexCount = 0;
+    desc->pQueueFamilyIndices = NULL;
+    desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 struct wined3d_query_pool_vk
 {
     struct list entry;
@@ -750,10 +772,8 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk);
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo);
-BOOL wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk, VkImageType vk_image_type,
-        VkImageUsageFlags usage, VkFormat vk_format, unsigned int width, unsigned int height, unsigned int depth,
-        unsigned int sample_count, unsigned int mip_levels, unsigned int layer_count, unsigned int flags,
-        const void *next, struct wined3d_image_vk *image);
+bool wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk,
+        const VkImageCreateInfo *desc, struct wined3d_image_vk *image);
 void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *context_vk,
         struct wined3d_allocator_block *block, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,

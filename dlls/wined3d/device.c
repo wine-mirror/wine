@@ -794,22 +794,21 @@ static bool wined3d_null_image_vk_init(struct wined3d_image_vk *image, struct wi
 {
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     VkImageSubresourceRange range;
-    uint32_t flags = 0;
+    VkImageCreateInfo desc;
 
     static const VkClearColorValue colour = {{0}};
 
     TRACE("image %p, context_vk %p, vk_command_buffer %p, type %#x, layer_count %u, sample_count %u.\n",
             image, context_vk, vk_command_buffer, type, layer_count, sample_count);
 
+    wined3d_init_vk_image_info(&desc, type, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM, 1, 1, 1);
+    desc.samples = sample_count;
+    desc.arrayLayers = layer_count;
     if (type == VK_IMAGE_TYPE_2D && layer_count >= 6)
-        flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-
-    if (!wined3d_context_vk_create_image(context_vk, type,
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM,
-            1, 1, 1, sample_count, 1, layer_count, flags, NULL, image))
-    {
+        desc.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+    if (!wined3d_context_vk_create_image(context_vk, &desc, image))
         return false;
-    }
 
     wined3d_context_vk_reference_image(context_vk, image);
 
