@@ -1377,6 +1377,18 @@ PTP_TIMER WINAPI DECLSPEC_HOTPATCH CreateThreadpoolTimer( PTP_TIMER_CALLBACK cal
 
 
 /***********************************************************************
+ *           SetThreadpoolTimerEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetThreadpoolTimerEx( PTP_TIMER timer, PFILETIME due_time,
+                                                    DWORD period, DWORD window_length )
+{
+    BOOL was_set = TpIsTimerSet( timer );
+    TpSetTimer( timer, (LARGE_INTEGER *)due_time, period, window_length );
+    return was_set;
+}
+
+
+/***********************************************************************
  *           CreateThreadpoolWait   (kernelbase.@)
  */
 PTP_WAIT WINAPI DECLSPEC_HOTPATCH CreateThreadpoolWait( PTP_WAIT_CALLBACK callback, PVOID userdata,

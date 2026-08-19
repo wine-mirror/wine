@@ -56,6 +56,7 @@ WINBASEAPI BOOL        WINAPI SetThreadpoolStackInformation(PTP_POOL,PTP_POOL_ST
 WINBASEAPI void        WINAPI SetThreadpoolThreadMaximum(PTP_POOL,DWORD);
 WINBASEAPI BOOL        WINAPI SetThreadpoolThreadMinimum(PTP_POOL,DWORD);
 WINBASEAPI void        WINAPI SetThreadpoolTimer(PTP_TIMER,FILETIME*,DWORD,DWORD);
+WINBASEAPI BOOL        WINAPI SetThreadpoolTimerEx(PTP_TIMER,FILETIME*,DWORD,DWORD);
 WINBASEAPI void        WINAPI SetThreadpoolWait(PTP_WAIT,HANDLE,FILETIME *);
 WINBASEAPI void        WINAPI StartThreadpoolIo(TP_IO*);
 WINBASEAPI void        WINAPI SubmitThreadpoolWork(PTP_WORK);

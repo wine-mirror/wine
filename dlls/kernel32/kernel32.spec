@@ -1512,6 +1512,7 @@
 @ stdcall SetThreadpoolThreadMaximum(ptr long) NTDLL.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) NTDLL.TpSetPoolMinThreads
 @ stdcall SetThreadpoolTimer(ptr ptr long long) NTDLL.TpSetTimer
+@ stdcall -import SetThreadpoolTimerEx(ptr ptr long long)
 @ stdcall SetThreadpoolWait(ptr long ptr) NTDLL.TpSetWait
 @ stdcall -import SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
