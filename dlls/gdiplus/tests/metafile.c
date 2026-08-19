@@ -2655,6 +2655,172 @@ static void test_drawimage(void)
     expect(Ok, stat);
 }
 
+typedef struct {
+    EmfPlusRecordHeader Header;
+    DWORD ImageAttributesID;
+} DrawImageBaseRecord;
+
+typedef struct {
+    EmfPlusRecordHeader Header;
+    DWORD ImageAttributesID;
+    DWORD SrcUnit;
+    GpRectF SrcRect;
+    GpRectF rectF;
+} DrawImageRecord;
+
+typedef struct {
+    EmfPlusRecordHeader Header;
+    DWORD ImageAttributesID;
+    DWORD SrcUnit;
+    GpRectF SrcRect;
+    DWORD count;
+    GpPointF pointsF[3];
+} DrawImagePointsRecord;
+
+typedef struct {
+    GpMetafile* metafile;
+    DrawImageBaseRecord* record;
+    BOOL executed;
+} play_draw_image_ctx;
+
+static BOOL CALLBACK play_drawimage_proc(EmfPlusRecordType recordType, UINT flags,
+    UINT dataSize, const BYTE* data, void* callbackData) {
+    play_draw_image_ctx* ctx = callbackData;
+    GpStatus stat;
+
+    if (recordType == EmfPlusRecordTypeObject && !ctx->executed) {
+        stat = GdipPlayMetafileRecord(ctx->metafile, recordType, flags, dataSize, data);
+        expect(Ok, stat);
+
+        ctx->executed = TRUE;
+        ctx->record->Header.Flags = flags;
+
+        /* Out of bounds image attribute ids are ignored */
+        ctx->record->ImageAttributesID = (DWORD)-1;
+        stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
+            ctx->record->Header.Flags, ctx->record->Header.DataSize,
+            (const BYTE*)&ctx->record->ImageAttributesID);
+        todo_wine
+        expect(Ok, stat);
+
+        ctx->record->ImageAttributesID = (DWORD)-2;
+        stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
+            ctx->record->Header.Flags, ctx->record->Header.DataSize,
+            (const BYTE*)&ctx->record->ImageAttributesID);
+        todo_wine
+        expect(Ok, stat);
+
+        ctx->record->ImageAttributesID = (DWORD)64;
+        stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
+            ctx->record->Header.Flags, ctx->record->Header.DataSize,
+            (const BYTE*)&ctx->record->ImageAttributesID);
+        todo_wine
+        expect(Ok, stat);
+
+        /* Within bounds, but missing */
+        ctx->record->ImageAttributesID = (DWORD)1;
+        stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
+            ctx->record->Header.Flags, ctx->record->Header.DataSize,
+            (const BYTE*)&ctx->record->ImageAttributesID);
+        todo_wine
+        expect(Ok, stat);
+    }
+
+    return TRUE;
+}
+
+static void check_play_drawimage(DrawImageBaseRecord* record) {
+    static const GpRectF frame = { 0.0f, 0.0f, 100.0f, 100.0f };
+    GpMetafile* metafile;
+    GpGraphics* graphics;
+    GpBitmap* bitmap;
+    play_draw_image_ctx ctx;
+    GpStatus stat;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDrawImage(graphics, (GpImage*)bitmap, 0.0f, 0.0f);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, stat);
+
+    ctx.metafile = metafile;
+    ctx.record = record;
+    ctx.executed = FALSE;
+
+    stat = GdipEnumerateMetafileDestRect(graphics, metafile, &frame,
+        play_drawimage_proc, &ctx, NULL);
+    expect(Ok, stat);
+    expect(TRUE, ctx.executed);
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)metafile);
+    DeleteDC(hdc);
+}
+
+static void test_drawimage_record(void) {
+    DrawImageRecord record;
+
+    record.Header.Type = EmfPlusRecordTypeDrawImage;
+    record.Header.Flags = 0;
+    record.Header.Size = sizeof(record);
+    record.Header.DataSize = sizeof(record) - sizeof(EmfPlusRecordHeader);
+
+    record.ImageAttributesID = (DWORD)-1;
+    record.SrcUnit = UnitPixel;
+    record.SrcRect.X = 0.0f;
+    record.SrcRect.Y = 0.0f;
+    record.SrcRect.Width = 100.0f;
+    record.SrcRect.Height = 100.0f;
+    record.rectF.X = 0.0f;
+    record.rectF.Y = 0.0f;
+    record.rectF.Width = 100.0f;
+    record.rectF.Height = 100.0f;
+
+    check_play_drawimage((DrawImageBaseRecord*)&record);
+}
+
+static void test_drawimagepoints_record(void) {
+    DrawImagePointsRecord record;
+
+    record.Header.Type = EmfPlusRecordTypeDrawImagePoints;
+    record.Header.Flags = 0;
+    record.Header.Size = sizeof(record);
+    record.Header.DataSize = sizeof(record) - sizeof(EmfPlusRecordHeader);
+
+    record.ImageAttributesID = (DWORD)-1;
+    record.SrcUnit = UnitPixel;
+    record.SrcRect.X = 0.0f;
+    record.SrcRect.Y = 0.0f;
+    record.SrcRect.Width = 100.0f;
+    record.SrcRect.Height = 100.0f;
+
+    record.count = 3;
+    record.pointsF[0].X = 0.0f;
+    record.pointsF[0].Y = 0.0f;
+    record.pointsF[1].X = 100.0f;
+    record.pointsF[1].Y = 0.0f;
+    record.pointsF[2].X = 0.0f;
+    record.pointsF[2].Y = 100.0f;
+
+    check_play_drawimage((DrawImageBaseRecord*)&record);
+}
+
 static const emfplus_record properties_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
@@ -4041,6 +4207,8 @@ START_TEST(metafile)
     test_clipping();
     test_gditransform();
     test_drawimage();
+    test_drawimage_record();
+    test_drawimagepoints_record();
     test_properties();
     test_drawpath();
     test_fillpath();
