@@ -261,7 +261,6 @@ static void test_ParseDisplayName(void)
                         hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, english,
                                                DISPATCH_METHOD|DISPATCH_PROPERTYGET,
                                                &params, &res, NULL, NULL );
-                        todo_wine
                         ok( hr == S_OK, "got %#lx\n", hr );
                         ok( params.rgvarg == NULL, "got %p\n", params.rgvarg );
                         ok( params.rgdispidNamedArgs == NULL, "got %p\n", params.rgdispidNamedArgs );
@@ -269,8 +268,6 @@ static void test_ParseDisplayName(void)
                         ok( !params.cNamedArgs, "got %u\n", params.cNamedArgs );
                         ok( V_VT( &res ) == VT_DISPATCH, "got %u\n", V_VT( &res ) );
 
-                        if (hr == S_OK)
-                        {
                         hr = IDispatch_QueryInterface( V_DISPATCH( &res ), &IID_ISWbemObjectPath, (void**)&objpath );
                         ok( hr == S_OK, "got %#lx\n", hr );
                         VariantClear( &res );
@@ -281,7 +278,6 @@ static void test_ParseDisplayName(void)
                         ok( hr == S_OK, "got %#lx\n", hr );
                         SysFreeString( dispname );
                         ISWbemObjectPath_Release( objpath );
-                        }
 
                         hr = IDispatch_QueryInterface( dispatch, &IID_ISWbemObject, (void**)&object );
                         ok( hr == S_OK, "got %#lx\n", hr );
