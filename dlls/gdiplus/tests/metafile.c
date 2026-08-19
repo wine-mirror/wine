@@ -2700,21 +2700,18 @@ static BOOL CALLBACK play_drawimage_proc(EmfPlusRecordType recordType, UINT flag
         stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
             ctx->record->Header.Flags, ctx->record->Header.DataSize,
             (const BYTE*)&ctx->record->ImageAttributesID);
-        todo_wine
         expect(Ok, stat);
 
         ctx->record->ImageAttributesID = (DWORD)-2;
         stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
             ctx->record->Header.Flags, ctx->record->Header.DataSize,
             (const BYTE*)&ctx->record->ImageAttributesID);
-        todo_wine
         expect(Ok, stat);
 
         ctx->record->ImageAttributesID = (DWORD)64;
         stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
             ctx->record->Header.Flags, ctx->record->Header.DataSize,
             (const BYTE*)&ctx->record->ImageAttributesID);
-        todo_wine
         expect(Ok, stat);
 
         /* Within bounds, but missing */
@@ -2722,7 +2719,6 @@ static BOOL CALLBACK play_drawimage_proc(EmfPlusRecordType recordType, UINT flag
         stat = GdipPlayMetafileRecord(ctx->metafile, ctx->record->Header.Type,
             ctx->record->Header.Flags, ctx->record->Header.DataSize,
             (const BYTE*)&ctx->record->ImageAttributesID);
-        todo_wine
         expect(Ok, stat);
     }
 

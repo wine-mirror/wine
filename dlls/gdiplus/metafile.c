@@ -3218,6 +3218,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             EmfPlusDrawImage *draw = (EmfPlusDrawImage *)header;
             BYTE image = flags & 0xff;
+            GpImageAttributes *attributes;
             GpPointF points[3];
 
             if (image >= EmfPlusObjectTableSize || real_metafile->objtable[image].type != ObjectTypeImage)
@@ -3229,7 +3230,9 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (draw->ImageAttributesID >= EmfPlusObjectTableSize ||
                     real_metafile->objtable[draw->ImageAttributesID].type != ObjectTypeImageAttributes)
-                return InvalidParameter;
+                attributes = NULL;
+            else
+                attributes = real_metafile->objtable[draw->ImageAttributesID].u.image_attributes;
 
             if (flags & 0x4000) /* C */
             {
@@ -3252,7 +3255,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return GdipDrawImagePointsRect(real_metafile->playback_graphics, real_metafile->objtable[image].u.image,
                 points, 3, draw->SrcRect.X, draw->SrcRect.Y, draw->SrcRect.Width, draw->SrcRect.Height, draw->SrcUnit,
-                real_metafile->objtable[draw->ImageAttributesID].u.image_attributes, NULL, NULL);
+                attributes, NULL, NULL);
         }
         case EmfPlusRecordTypeDrawImagePoints:
         {
@@ -3260,6 +3263,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             static const UINT fixed_part_size = FIELD_OFFSET(EmfPlusDrawImagePoints, PointData) -
                 FIELD_OFFSET(EmfPlusDrawImagePoints, ImageAttributesID);
             BYTE image = flags & 0xff;
+            GpImageAttributes* attributes;
             GpPointF points[3];
             unsigned int i;
             UINT size;
@@ -3273,7 +3277,9 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (draw->ImageAttributesID >= EmfPlusObjectTableSize ||
                     real_metafile->objtable[draw->ImageAttributesID].type != ObjectTypeImageAttributes)
-                return InvalidParameter;
+                attributes = NULL;
+            else
+                attributes = real_metafile->objtable[draw->ImageAttributesID].u.image_attributes;
 
             if (draw->count != 3)
                 return InvalidParameter;
@@ -3314,7 +3320,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return GdipDrawImagePointsRect(real_metafile->playback_graphics, real_metafile->objtable[image].u.image,
                 points, 3, draw->SrcRect.X, draw->SrcRect.Y, draw->SrcRect.Width, draw->SrcRect.Height, draw->SrcUnit,
-                real_metafile->objtable[draw->ImageAttributesID].u.image_attributes, NULL, NULL);
+                attributes, NULL, NULL);
         }
         case EmfPlusRecordTypeFillPath:
         {
