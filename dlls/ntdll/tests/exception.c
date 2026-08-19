@@ -3716,18 +3716,16 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
     trace( "exception: %08lx flags:%lx addr:%p context: Rip:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (void *)context->Rip );
 
-    if (is_arm64ec) /* addr points to RtlRaiseException entry thunk */
+    ok( addr == (char *)code_mem + 0x0c || broken( addr == code_mem || !addr ) /* 2008 */,
+        "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0x0c );
+    if (is_arm64ec)
     {
-        ok( ((ULONG *)addr)[-1] == 0xd63f0120 /* blr x9 */,
-            "ExceptionAddress not in entry thunk %p (ntdll+%Ix)\n",
-            addr, (char *)addr - (char *)hntdll );
-        ok( context->ContextFlags == (CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL),
+        todo_wine
+        ok( context->ContextFlags == (CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_UNWOUND_TO_CALL),
             "wrong context flags %lx\n", context->ContextFlags );
     }
     else
     {
-        ok( addr == (char *)code_mem + 0x0c || broken( addr == code_mem || !addr ) /* 2008 */,
-            "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0x0c );
         ok( context->ContextFlags == CONTEXT_ALL || context->ContextFlags == (CONTEXT_ALL | CONTEXT_XSTATE)
             || context->ContextFlags == (CONTEXT_FULL | CONTEXT_SEGMENTS)
             || context->ContextFlags == (CONTEXT_FULL | CONTEXT_SEGMENTS | CONTEXT_XSTATE),
@@ -3737,7 +3735,7 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
     /* check that pc is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
      */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage && !is_arm64ec)
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
         ok( context->Rip == (UINT_PTR)addr - 1,
             "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)addr - 1 );
     else
@@ -3818,18 +3816,13 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
     void *addr = rec->ExceptionAddress;
 
-    if (is_arm64ec) /* addr points to RtlRaiseException entry thunk */
-        ok( ((ULONG *)addr)[-1] == 0xd63f0120 /* blr x9 */,
-            "ExceptionAddress not in entry thunk %p (ntdll+%Ix)\n",
-            addr, (char *)addr - (char *)hntdll );
-    else
-        ok( addr == (char *)code_mem + 0xc || broken(addr == code_mem || !addr ) /* 2008 */,
-            "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0xc );
+    ok( addr == (char *)code_mem + 0xc || broken(addr == code_mem || !addr ) /* 2008 */,
+        "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0xc );
 
     /* check that Rip is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
      */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage && !is_arm64ec)
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
         ok( context->Rip == (UINT_PTR)addr - 1,
             "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)addr - 1 );
     else
@@ -3900,13 +3893,8 @@ static void run_rtlraiseexception_test(DWORD exceptioncode)
     rtlraiseexception_teb_handler_called = 0;
     rtlraiseexception_unhandled_handler_called = 0;
     func(pRtlRaiseException, &record);
-    if (is_arm64ec) /* addr points to RtlRaiseException entry thunk */
-        ok( ((ULONG *)record.ExceptionAddress)[-1] == 0xd63f0120 /* blr x9 */,
-            "ExceptionAddress not in entry thunk %p (ntdll+%Ix)\n",
-            record.ExceptionAddress, (char *)record.ExceptionAddress - (char *)hntdll );
-    else
-        ok( record.ExceptionAddress == (char *)code_mem + 0x0c,
-            "address set to %p instead of %p\n", record.ExceptionAddress, (char *)code_mem + 0x0c );
+    ok( record.ExceptionAddress == (char *)code_mem + 0x0c,
+        "address set to %p instead of %p\n", record.ExceptionAddress, (char *)code_mem + 0x0c );
 
     todo_wine
     ok( !rtlraiseexception_teb_handler_called, "Frame TEB handler called\n" );

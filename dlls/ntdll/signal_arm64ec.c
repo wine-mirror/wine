@@ -1407,23 +1407,25 @@ static void unwind_one_frame( CONTEXT *context )
     RtlVirtualUnwind( UNW_FLAG_NHANDLER, base, pc, func, context, &data, &frame, NULL );
 }
 
+static void __attribute__((used)) unwind_entry_thunk( CONTEXT *context )
+{
+    CONTEXT unwind_context = *context;
+    unwind_one_frame( &unwind_context );
+    /* if the caller is emulated, we're in an entry thunk, so use the caller's context instead */
+    if (!RtlIsEcCode( unwind_context.Rip ))
+        memcpy( &context->Rax, &unwind_context.Rax, offsetof(CONTEXT,FltSave) - offsetof(CONTEXT,Rax) );
+}
+
 /* capture context information; helper for RtlCaptureContext */
 static void __attribute__((used)) capture_context( CONTEXT *context, UINT cpsr, UINT fpcr, UINT fpsr )
 {
-    CONTEXT unwind_context;
-
     context->ContextFlags = CONTEXT_AMD64_FULL;
     context->EFlags = cpsr_to_eflags( cpsr );
     context->MxCsr = fpcsr_to_mxcsr( fpcr, fpsr );
     context->FltSave.ControlWord = 0x27f;
     context->FltSave.StatusWord = 0;
     context->FltSave.MxCsr = context->MxCsr;
-
-    /* unwind one level to get register values from caller function */
-    unwind_context = *context;
-    unwind_one_frame( &unwind_context );
-    if (!RtlIsEcCode( unwind_context.Rip ))
-        memcpy( &context->Rax, &unwind_context.Rax, offsetof(CONTEXT,FltSave) - offsetof(CONTEXT,Rax) );
+    unwind_entry_thunk( context );
 }
 
 /***********************************************************************
@@ -2041,17 +2043,21 @@ void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
          ".seh_endprologue\n\t"
          "add x0, sp, #0x20\n\t"
          "bl \"#RtlCaptureContext\"\n\t"
-         "add x1, sp, #0x20\n\t"       /* context pointer */
-         "add x0, x1, #0x4d0\n\t"      /* orig stack pointer */
-         "str x0, [x1, #0x98]\n\t"     /* context->Rsp */
+         "add x0, sp, #0x20\n\t"       /* context pointer */
+         "add x1, x0, #0x4d0\n\t"      /* orig stack pointer */
+         "str x1, [x0, #0x98]\n\t"     /* context->Rsp */
+         "ldr x1, [sp, #0x10]\n\t"     /* rec */
+         "str x1, [x0, #0x80]\n\t"     /* context->Rcx */
+         "ldr x1, [sp, #0x08]\n\t"     /* return address */
+         "str x1, [x0, #0xf8]\n\t"     /* context->Rip */
+         "ldr w1, [x0, #0x30]\n\t"     /* context->ContextFlags */
+         "orr w1, w1, #0x20000000\n\t" /* CONTEXT_UNWOUND_TO_CALL */
+         "str w1, [x0, #0x30]\n\t"
+         "bl \"#unwind_entry_thunk\"\n\t"
          "ldr x0, [sp, #0x10]\n\t"     /* rec */
-         "str x0, [x1, #0x80]\n\t"     /* context->Rcx */
-         "ldr x2, [sp, #0x08]\n\t"     /* return address */
-         "str x2, [x1, #0xf8]\n\t"     /* context->Rip */
+         "add x1, sp, #0x20\n\t"       /* context pointer */
+         "ldr x2, [x1, #0xf8]\n\t"     /* ctx->Rip */
          "str x2, [x0, #0x10]\n\t"     /* rec->ExceptionAddress */
-         "ldr w2, [x1, #0x30]\n\t"     /* context->ContextFlags */
-         "orr w2, w2, #0x20000000\n\t" /* CONTEXT_UNWOUND_TO_CALL */
-         "str w2, [x1, #0x30]\n\t"
          "ldr x3, [x18, #0x60]\n\t"    /* peb */
          "ldrb w2, [x3, #2]\n\t"       /* peb->BeingDebugged */
          "cbnz w2, 1f\n\t"
