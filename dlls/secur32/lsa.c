@@ -500,6 +500,27 @@ static SECURITY_STATUS WINAPI lsa_FreeCredentialsHandle(CredHandle *credential)
     return status;
 }
 
+static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
+{
+    struct lsa_handle *lsa_ctx;
+    SECURITY_STATUS status;
+
+    TRACE("%p\n", context);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_ctx->package->lsa_api || !lsa_ctx->package->lsa_api->DeleteContext)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    if (lsa_ctx->package->user_api && lsa_ctx->package->user_api->DeleteUserModeContext)
+        lsa_ctx->package->user_api->DeleteUserModeContext(lsa_ctx->handle);
+    status = lsa_ctx->package->lsa_api->DeleteContext(lsa_ctx->handle);
+    free(lsa_ctx);
+    return status;
+}
+
 static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
     CredHandle *credential, CtxtHandle *context, SEC_WCHAR *target_name, ULONG context_req,
     ULONG reserved1, ULONG target_data_rep, SecBufferDesc *input, ULONG reserved2,
@@ -509,8 +530,9 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
     struct lsa_handle *lsa_cred = NULL, *lsa_ctx = NULL, *new_lsa_ctx;
     struct lsa_package *package = NULL;
     UNICODE_STRING target_name_us;
-    BOOLEAN mapped_context;
+    BOOLEAN mapped_context = FALSE;
     LSA_SEC_HANDLE new_handle;
+    SecBuffer ctx_data = { 0 };
 
     TRACE("%p %p %s %#lx %ld %ld %p %ld %p %p %p %p\n", credential, context,
         debugstr_w(target_name), context_req, reserved1, target_data_rep, input,
@@ -536,16 +558,32 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
     if (target_name)
         RtlInitUnicodeString(&target_name_us, target_name);
 
+    if (!(new_lsa_ctx = alloc_lsa_handle(LSA_MAGIC_CONTEXT))) return STATUS_NO_MEMORY;
+
     status = package->lsa_api->InitLsaModeContext(lsa_cred ? lsa_cred->handle : 0,
         lsa_ctx ? lsa_ctx->handle : 0, target_name ? &target_name_us : NULL, context_req, target_data_rep,
-        input, &new_handle, output, context_attr, ts_expiry, &mapped_context, NULL /* FIXME */);
+        input, &new_handle, output, context_attr, ts_expiry, &mapped_context, &ctx_data);
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
-        if (!(new_lsa_ctx = alloc_lsa_handle(LSA_MAGIC_CONTEXT))) return STATUS_NO_MEMORY;
         new_lsa_ctx->package = package;
         new_lsa_ctx->handle = new_handle;
         new_context->dwLower = (ULONG_PTR)new_lsa_ctx;
         new_context->dwUpper = 0;
+
+        if (mapped_context)
+        {
+            NTSTATUS ret = package->user_api->InitUserModeContext( new_handle, &ctx_data );
+            FreeContextBuffer( ctx_data.pvBuffer );
+            if (ret)
+            {
+                lsa_DeleteSecurityContext( new_context );
+                return ret;
+            }
+        }
+    }
+    else
+    {
+        free( new_lsa_ctx );
     }
     return status;
 }
@@ -617,25 +655,6 @@ static SECURITY_STATUS WINAPI lsa_AcceptSecurityContext(
         new_context->dwLower = (ULONG_PTR)new_lsa_ctx;
         new_context->dwUpper = 0;
     }
-    return status;
-}
-
-static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
-{
-    struct lsa_handle *lsa_ctx;
-    SECURITY_STATUS status;
-
-    TRACE("%p\n", context);
-
-    if (!context) return SEC_E_INVALID_HANDLE;
-    lsa_ctx = (struct lsa_handle *)context->dwLower;
-    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_ctx->package->lsa_api || !lsa_ctx->package->lsa_api->DeleteContext)
-        return SEC_E_UNSUPPORTED_FUNCTION;
-
-    status = lsa_ctx->package->lsa_api->DeleteContext(lsa_ctx->handle);
-    free(lsa_ctx);
     return status;
 }
 

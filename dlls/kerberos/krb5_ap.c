@@ -672,7 +672,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 
             if (status == SEC_E_OK)
             {
-                *mapped_context = TRUE;
+                /* FIXME: *mapped_context = TRUE; */
                 expiry_to_timestamp( exptime, expiry );
             }
         }
@@ -732,7 +732,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
             *new_context = create_context_handle( context_handle, new_context_handle );
         if (!status)
         {
-            *mapped_context = TRUE;
+            /* FIXME: *mapped_context = TRUE; */
             expiry_to_timestamp( exptime, expiry );
         }
         /* FIXME: initialize context_data */
