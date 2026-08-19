@@ -136,6 +136,7 @@ struct opengl_context
     GLuint                      read_fbo;           /* currently bound read FBO name */
     GLenum                      read_buffer;        /* currently bound default FBO read buffers */
     GLenum                      draw_buffers[16];   /* currently bound default FBO draw buffers */
+    GLuint                      draw_buffer_count;  /* number of draw buffers set */
 };
 
 static inline struct opengl_context *opengl_context_from_handle( HGLRC client_context )

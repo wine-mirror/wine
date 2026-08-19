@@ -904,6 +904,25 @@ static void flush_context( TEB *teb, void (*flush)(void) )
     }
 }
 
+static void set_default_fbo_buffers( TEB *teb, struct opengl_context *ctx )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw = ctx->draw;
+
+    if (!ctx->draw_fbo)
+    {
+        if (!ctx->draw_buffer_count) wrap_glDrawBuffer( teb, ctx->draw_buffers[0], funcs->p_glDrawBuffer );
+        else wrap_glDrawBuffers( teb, ctx->draw_buffer_count, ctx->draw_buffers, funcs->p_glDrawBuffers );
+    }
+    if (!ctx->read_fbo) wrap_glReadBuffer( teb, ctx->read_buffer, funcs->p_glReadBuffer );
+    if (!ctx->has_viewport && draw->draw_fbo && draw->client)
+    {
+        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+        ctx->has_viewport = GL_TRUE;
+    }
+}
+
 void wrap_glFinish( TEB *teb, PFN_glFinish p_glFinish )
 {
     resolve_default_fbo( teb, FALSE );
@@ -991,6 +1010,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glTable = (void *)funcs;
         if (!client->major_version) init_client_context( teb, client );
         pop_default_fbo( teb );
+        set_default_fbo_buffers( teb, ctx );
     }
     else
     {
@@ -1103,12 +1123,6 @@ void pop_default_fbo( TEB *teb )
     if (!(ctx = get_current_context( teb, &draw, &read, NULL ))) return;
     if (!ctx->draw_fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, draw->draw_fbo );
     if (!ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->read_fbo );
-    if (!ctx->has_viewport && draw->draw_fbo && draw->client)
-    {
-        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        ctx->has_viewport = GL_TRUE;
-    }
 }
 
 void resolve_default_fbo( TEB *teb, BOOL read )
@@ -1189,6 +1203,7 @@ static GLenum *set_default_fbo_draw_buffers( struct opengl_context *ctx, struct 
         else ctx->draw_buffers[i] = src[i];
     }
 
+    ctx->draw_buffer_count = count;
     return dst;
 }
 
@@ -1238,6 +1253,7 @@ static GLenum set_default_fbo_draw_buffer( struct opengl_context *ctx, struct op
     }
     memset( ctx->draw_buffers, 0, sizeof(ctx->draw_buffers) );
     ctx->draw_buffers[0] = src;
+    ctx->draw_buffer_count = 0;
     return dst;
 }
 
