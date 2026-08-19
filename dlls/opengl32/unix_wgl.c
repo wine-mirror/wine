@@ -425,36 +425,45 @@ static void set_gl_error( TEB *teb, GLenum error )
     if (!client->last_error && !(client->last_error = funcs->p_glGetError())) client->last_error = error;
 }
 
-static BOOL get_default_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
-                                     GLenum pname, GLint *data )
+static BOOL get_named_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
+                                   GLuint fbo, GLenum pname, GLint *data )
 {
-    if (pname == GL_READ_BUFFER && !ctx->read_fbo)
+    if (fbo) return FALSE;
+
+    if (pname == GL_READ_BUFFER)
     {
         *data = ctx->read_buffer;
         return TRUE;
     }
-    if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo)
+    if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0))
     {
         *data = ctx->draw_buffers[0];
         return TRUE;
     }
-    if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo)
+    if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15)
     {
         *data = ctx->draw_buffers[pname - GL_DRAW_BUFFER0];
         return TRUE;
     }
-    if (pname == GL_DOUBLEBUFFER && !ctx->draw_fbo)
+    if (pname == GL_DOUBLEBUFFER)
     {
         *data = draw->doublebuffer;
         return TRUE;
     }
-    if (pname == GL_STEREO && !ctx->draw_fbo)
+    if (pname == GL_STEREO)
     {
         *data = draw->stereo;
         return TRUE;
     }
 
     return FALSE;
+}
+
+static BOOL get_default_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
+                                     GLenum pname, GLint *data )
+{
+    if (pname == GL_READ_BUFFER) return get_named_fbo_integer( ctx, draw, read, ctx->read_fbo, pname, data );
+    return get_named_fbo_integer( ctx, draw, read, ctx->draw_fbo, pname, data );
 }
 
 static BOOL get_target_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
@@ -1406,7 +1415,7 @@ void wrap_glGetFramebufferParameterivEXT( TEB *teb, GLuint fbo, GLenum pname, GL
 
     if ((ctx = get_current_context( teb, &draw, &read, NULL )) && !fbo)
     {
-        if (get_default_fbo_integer( ctx, draw, read, pname, params )) return;
+        if (get_named_fbo_integer( ctx, draw, read, fbo, pname, params )) return;
         fbo = draw->draw_fbo;
     }
 
