@@ -2725,25 +2725,33 @@ static BOOL CALLBACK play_drawimage_proc(EmfPlusRecordType recordType, UINT flag
     return TRUE;
 }
 
-static void check_play_drawimage(DrawImageBaseRecord* record) {
+static GpBitmap* check_play_drawimage(DrawImageBaseRecord* record) {
     static const GpRectF frame = { 0.0f, 0.0f, 100.0f, 100.0f };
     GpMetafile* metafile;
     GpGraphics* graphics;
     GpBitmap* bitmap;
     play_draw_image_ctx ctx;
     GpStatus stat;
+    ARGB color = 0;
     HDC hdc;
 
     hdc = CreateCompatibleDC(0);
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+    stat = GdipGraphicsClear(graphics, 0xffff0000);
+    expect(Ok, stat);
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
     expect(Ok, stat);
 
     stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
     expect(Ok, stat);
-
-    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppARGB, NULL, &bitmap);
-    expect(Ok, stat);
-
     stat = GdipDrawImage(graphics, (GpImage*)bitmap, 0.0f, 0.0f);
     expect(Ok, stat);
 
@@ -2752,7 +2760,9 @@ static void check_play_drawimage(DrawImageBaseRecord* record) {
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
 
-    stat = GdipCreateFromHDC(hdc, &graphics);
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, stat);
 
     ctx.metafile = metafile;
@@ -2764,13 +2774,36 @@ static void check_play_drawimage(DrawImageBaseRecord* record) {
     expect(Ok, stat);
     expect(TRUE, ctx.executed);
 
+    stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 99, 0, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 99, 99, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 100, 100, &color);
+    expect(InvalidParameter, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, -1, -1, &color);
+    expect(InvalidParameter, stat);
+
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)metafile);
     DeleteDC(hdc);
+
+    return bitmap;
 }
 
 static void test_drawimage_record(void) {
     DrawImageRecord record;
+    GpStatus stat;
+    ARGB color = 0;
+    GpBitmap* bitmap;
 
     record.Header.Type = EmfPlusRecordTypeDrawImage;
     record.Header.Flags = 0;
@@ -2788,11 +2821,21 @@ static void test_drawimage_record(void) {
     record.rectF.Width = 100.0f;
     record.rectF.Height = 100.0f;
 
-    check_play_drawimage((DrawImageBaseRecord*)&record);
+    bitmap = check_play_drawimage((DrawImageBaseRecord*)&record);
+
+    stat = GdipBitmapGetPixel(bitmap, 0, 99, &color);
+    expect(Ok, stat);
+    todo_wine
+    expect(0xffff0000, color);
+
+    GdipDisposeImage((GpImage*)bitmap);
 }
 
 static void test_drawimagepoints_record(void) {
     DrawImagePointsRecord record;
+    GpStatus stat;
+    ARGB color = 0;
+    GpBitmap* bitmap;
 
     record.Header.Type = EmfPlusRecordTypeDrawImagePoints;
     record.Header.Flags = 0;
@@ -2814,7 +2857,13 @@ static void test_drawimagepoints_record(void) {
     record.pointsF[2].X = 0.0f;
     record.pointsF[2].Y = 100.0f;
 
-    check_play_drawimage((DrawImageBaseRecord*)&record);
+    bitmap = check_play_drawimage((DrawImageBaseRecord*)&record);
+
+    stat = GdipBitmapGetPixel(bitmap, 0, 99, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    GdipDisposeImage((GpImage*)bitmap);
 }
 
 static const emfplus_record properties_records[] = {
