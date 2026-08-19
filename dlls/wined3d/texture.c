@@ -2090,6 +2090,8 @@ void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsign
     unsigned int height = wined3d_texture_get_level_height(texture, level);
     unsigned int depth = wined3d_texture_get_level_depth(texture, level);
     struct wined3d_box src_box;
+    uint32_t location;
+    bool full_box;
 
     if (upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP)
     {
@@ -2101,20 +2103,43 @@ void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsign
             wined3d_context_unmap_bo_address(context, (const struct wined3d_bo_address *)&upload_bo->addr, 0, NULL);
     }
 
-    /* Only load the sub-resource for partial updates. */
-    if (!box->left && !box->top && !box->front
-            && box->right == width && box->bottom == height && box->back == depth)
-        wined3d_texture_prepare_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
+    full_box = !box->left && !box->top && !box->front
+            && box->right == width && box->bottom == height && box->back == depth;
+
+    if (texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU || !full_box)
+        location = WINED3D_LOCATION_TEXTURE_RGB;
+    else if (upload_bo->addr.buffer_object)
+        location = WINED3D_LOCATION_BUFFER;
     else
-        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
+        location = WINED3D_LOCATION_SYSMEM;
+
+    /* Only load the sub-resource for partial updates. */
+    if (!full_box)
+        wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
+    else
+        wined3d_texture_load_location(texture, sub_resource_idx, context, location);
 
     wined3d_box_set(&src_box, 0, 0, box->right - box->left, box->bottom - box->top, 0, box->back - box->front);
-    texture->texture_ops->texture_upload_data(context, &upload_bo->addr, texture->resource.format,
-            &src_box, row_pitch, slice_pitch, texture, sub_resource_idx,
-            WINED3D_LOCATION_TEXTURE_RGB, box->left, box->top, box->front);
+    if (location == WINED3D_LOCATION_TEXTURE_RGB)
+    {
+        texture->texture_ops->texture_upload_data(context, &upload_bo->addr, texture->resource.format,
+                &src_box, row_pitch, slice_pitch, texture, sub_resource_idx,
+                WINED3D_LOCATION_TEXTURE_RGB, box->left, box->top, box->front);
+    }
+    else
+    {
+        struct wined3d_bo_address dst_addr;
+        struct wined3d_range range;
 
-    wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, &dst_addr, location);
+        range.offset = 0;
+        range.size = texture->sub_resources[sub_resource_idx].size;
+        wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)&upload_bo->addr,
+                1, &range, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
+    }
+
+    wined3d_texture_validate_location(texture, sub_resource_idx, location);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~location);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_texture_acquire_identity_srv(struct wined3d_texture *texture)
