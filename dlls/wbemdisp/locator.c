@@ -1064,8 +1064,8 @@ static HRESULT WINAPI object_GetTypeInfo(
     ITypeInfo **info )
 {
     struct object *object = impl_from_ISWbemObject( iface );
-    FIXME( "%p, %u, %#lx, %p\n", object, index, lcid, info );
-    return E_NOTIMPL;
+    TRACE( "%p, %u, %#lx, %p\n", object, index, lcid, info );
+    return get_typeinfo( ISWbemObject_tid, info );
 }
 
 static BOOL object_reserve_member( struct object *object, unsigned int count, unsigned int *capacity )
