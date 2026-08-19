@@ -457,6 +457,27 @@ static BOOL get_default_fbo_integer( struct opengl_context *ctx, struct opengl_d
     return FALSE;
 }
 
+static BOOL get_target_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
+                                    GLenum target, GLenum pname, GLint *data )
+{
+
+    struct opengl_drawable *drawable = target == GL_READ_FRAMEBUFFER ? read : draw;
+    GLuint fbo = target == GL_READ_FRAMEBUFFER ? ctx->read_fbo : ctx->draw_fbo;
+
+    if (pname == GL_DOUBLEBUFFER && !fbo)
+    {
+        *data = drawable->doublebuffer;
+        return TRUE;
+    }
+    if (pname == GL_STEREO && !fbo)
+    {
+        *data = drawable->stereo;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
@@ -1369,7 +1390,16 @@ void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data, PFN_glGetInteg
     else p_glGetInteger64v( pname, data );
 }
 
-void wrap_glGetFramebufferParameteriv( TEB *teb, GLuint fbo, GLenum pname, GLint *params, PFN_glGetFramebufferParameteriv p_glGetFramebufferParameteriv )
+void wrap_glGetFramebufferParameteriv( TEB *teb, GLenum target, GLenum pname, GLint *params, PFN_glGetFramebufferParameteriv p_glGetFramebufferParameteriv )
+{
+    struct opengl_drawable *draw, *read;
+    struct opengl_context *ctx;
+
+    if ((ctx = get_current_context( teb, &draw, &read, NULL )) && get_target_fbo_integer( ctx, draw, read, target, pname, params )) return;
+    p_glGetFramebufferParameteriv( target, pname, params );
+}
+
+void wrap_glGetFramebufferParameterivEXT( TEB *teb, GLuint fbo, GLenum pname, GLint *params, PFN_glGetFramebufferParameterivEXT p_glGetFramebufferParameterivEXT )
 {
     struct opengl_drawable *draw, *read;
     struct opengl_context *ctx;
@@ -1380,7 +1410,7 @@ void wrap_glGetFramebufferParameteriv( TEB *teb, GLuint fbo, GLenum pname, GLint
         fbo = draw->draw_fbo;
     }
 
-    p_glGetFramebufferParameteriv( fbo, pname, params );
+    p_glGetFramebufferParameterivEXT( fbo, pname, params );
 }
 
 GLenum wrap_glGetError( TEB *teb, PFN_glGetError p_glGetError )

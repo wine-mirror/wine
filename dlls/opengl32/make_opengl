@@ -221,6 +221,7 @@ sub manual_unix_thunks($)
 
     return "glDrawPixels"                   if $name =~ /^glDrawPixels/;
     return "glReadPixels"                   if $name =~ /^glReadPixels/;
+    return "glGetFramebufferParameterivEXT" if $name =~ /^glGetFramebufferParameterivEXT$/;
     return "glGetFramebufferParameteriv"    if $name =~ /^glGetFramebufferParameteriv/;
 
     return "wglCopyContext"                 if $name =~ /^wglCopyContext/;

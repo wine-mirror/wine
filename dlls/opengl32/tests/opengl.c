@@ -3828,7 +3828,7 @@ static void test_framebuffer(void)
 
     ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FALSE );
+    ok_x4( value, ==, GL_FALSE );
     ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_STEREO, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_FALSE );
