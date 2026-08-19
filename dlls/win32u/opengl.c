@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 struct opengl_thread_data
 {
-    void                   *null_context;  /* dummy context when no client context is active */
+    struct opengl_context  *null_context;  /* dummy context when no client context is active */
     struct opengl_drawable *null_surface;  /* dummy surface when no client context is active */
 };
 
@@ -77,7 +77,7 @@ static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_
 static struct list devices_egl = LIST_INIT( devices_egl );
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
-static void *global_context;
+static struct opengl_context *global_context;
 
 static BOOLEAN global_extensions[GL_EXTENSION_COUNT];
 static struct wgl_pixel_format *pixel_formats;
@@ -197,12 +197,14 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
-static void *internal_context_create( void *share, int *context_format )
+static struct opengl_context *internal_context_create(void)
 {
     static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0 };
-    BOOL shared = TRUE;
-    void *context;
+    struct opengl_context *context, *share = global_context ? global_context->driver_private : NULL;
+    BOOL shared = TRUE, doublebuffer;
     int format;
+
+    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
 
     for (format = 1; format <= formats_count; format++)
     {
@@ -210,28 +212,51 @@ static void *internal_context_create( void *share, int *context_format )
         if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
-        if (!driver_funcs->p_context_create( format, share, attribs, &context, &shared )) continue;
-        if (context_format) *context_format = format;
+
+        doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+        if (!driver_funcs->p_context_create( format, share, attribs, &context->driver_private, &shared )) continue;
+        context->format = format;
+        context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
+        context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
+
+        TRACE( "Created internal %s context %p\n", global_context ? "global" : "thread", context );
         return context;
     }
 
-    WARN( "Failed to create internal %s context\n", global_context ? "global" : "thread" );
-    return NULL;
+    ERR( "Failed to create internal %s context\n", global_context ? "global" : "thread" );
+    return context; /* return a valid pointer nonetheless */
+}
+
+static struct opengl_drawable *get_null_surface( struct opengl_context *context )
+{
+    struct opengl_thread_data *data = get_opengl_thread_data();
+
+    if (!driver_funcs->p_null_surface_create) return NULL;
+    if (!data->null_surface || data->null_surface->format != context->format)
+    {
+        if (data->null_surface) opengl_drawable_release( data->null_surface );
+        driver_funcs->p_null_surface_create( context->format, &data->null_surface );
+        TRACE( "created null surface %p with format %d\n", data->null_surface, context->format );
+    }
+
+    return data->null_surface;
+}
+
+static struct opengl_context *get_null_context(void)
+{
+    struct opengl_thread_data *data = get_opengl_thread_data();
+    if (!data->null_context) data->null_context = internal_context_create();
+    return data->null_context;
 }
 
 static BOOL make_null_context_current( struct opengl_drawable *drawable )
 {
-    struct opengl_thread_data *data = get_opengl_thread_data();
-    int format;
+    struct opengl_context *context = get_null_context();
 
-    if (!data->null_context)
-    {
-        if (!(data->null_context = internal_context_create( global_context, &format ))) return FALSE;
-        if (driver_funcs->p_null_surface_create) driver_funcs->p_null_surface_create( format, &data->null_surface );
-    }
+    if (!drawable) drawable = get_null_surface( context );
 
-    if (!drawable) drawable = data->null_surface;
-    return driver_funcs->p_make_current( drawable, drawable, data->null_context );
+    if (!driver_funcs->p_make_current( drawable, drawable, context->driver_private )) return FALSE;
+    return TRUE;
 }
 
 static void make_client_context_current(void)
@@ -1251,11 +1276,6 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
     TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
-    if (egl == &display_egl)
-    {
-        if (core_context) core_context = InterlockedExchangePointer( &global_context, core_context );
-        else if (compat_context) compat_context = InterlockedExchangePointer( &global_context, compat_context );
-    }
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
 
@@ -2288,7 +2308,7 @@ static int get_window_swap_interval( HWND hwnd )
 
 static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
 {
-    struct opengl_context *context;
+    struct opengl_context *context, *share = global_context ? global_context->driver_private : NULL;
     BOOL shared = TRUE, doublebuffer;
     int format;
 
@@ -2308,7 +2328,7 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
         return NULL;
     }
-    if (!driver_funcs->p_context_create( format, global_context, attribs, &context->driver_private, &shared ))
+    if (!driver_funcs->p_context_create( format, share, attribs, &context->driver_private, &shared ))
     {
         WARN( "Failed to create driver context for context %p\n", context );
         free( context );
@@ -2796,7 +2816,7 @@ static void display_funcs_init(void)
             init_device_info( egl, &display_funcs );
     }
 
-    if (!global_context) global_context = internal_context_create( NULL, NULL );
+    global_context = internal_context_create();
 }
 
 /***********************************************************************
@@ -2858,7 +2878,7 @@ void cleanup_opengl_thread(void)
     }
 
     if (!(data = info->opengl_data)) return;
-    if (data->null_context) driver_funcs->p_context_destroy( data->null_context );
+    if (data->null_context) win32u_context_destroy( data->null_context );
     if (data->null_surface) opengl_drawable_release( data->null_surface );
     free( data );
 }
