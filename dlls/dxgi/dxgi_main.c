@@ -145,7 +145,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, feature_levels %p, level_count %u, device %p.\n",
             d3d10core, factory, adapter, flags, feature_levels, level_count, device);
 
-    if (flags)
+    if (flags & ~D3D11_CREATE_DEVICE_VIDEO_SUPPORT)
         FIXME("Ignoring flags %#x.\n", flags);
 
     if (TRACE_ON(dxgi))
@@ -191,7 +191,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         return E_OUTOFMEMORY;
     }
 
-    hr = dxgi_device_init(dxgi_device, &d3d10_layer, factory, adapter, feature_levels, level_count);
+    hr = dxgi_device_init(dxgi_device, &d3d10_layer, factory, adapter, flags, feature_levels, level_count);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);

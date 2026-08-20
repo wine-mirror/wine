@@ -485,7 +485,7 @@ static const struct IWineDXGISwapChainFactoryVtbl dxgi_swapchain_factory_vtbl =
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
-        IDXGIFactory *factory, IDXGIAdapter *adapter,
+        IDXGIFactory *factory, IDXGIAdapter *adapter, unsigned int flags,
         const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
 {
     struct wined3d_device_parent *wined3d_device_parent;
@@ -509,6 +509,32 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     {
         WARN("This is not the adapter we're looking for.\n");
         return E_FAIL;
+    }
+
+    /* Unlike other flags, this flag does not change device behaviour, but
+     * instead causes creation to fail if "video support" is not available.
+     *
+     * The name implies this means d3d11 video decode support. The documentation
+     * is less clear, and states that the display driver must support WDDM 1.2.
+     * WDDM 1.2 seems to include d3d11 video support, among other things.
+     *
+     * What muddies the issue is that it's not clear that WDDM 1.2 requires that
+     * the device is capable of actually decoding any specific codec. In
+     * practice, probably the only WDDM 1.2 driver which doesn't support any
+     * video codecs is WARP, which, confusingly, fails when D3D11CreateDevice()
+     * is called with the WARP adapter, but succeeds when called with a NULL
+     * adapter (assuming of course no hardware display driver is available.)
+     * Also, Media Foundation documents that this flag must be used on devices
+     * used with IMFDXGIDeviceManager, but Media Foundation as a whole does not
+     * depend on hardware decoding or video processing.
+     *
+     * Known applications using this flag seem to either directly use decode
+     * APIs, or IMFDXGIDeviceManager. */
+    if ((flags & D3D11_CREATE_DEVICE_VIDEO_SUPPORT)
+            && !wined3d_adapter_get_decode_profile_count(dxgi_adapter->wined3d_adapter))
+    {
+        WARN("Device does not support video decode; returning DXGI_ERROR_UNSUPPORTED.\n");
+        return DXGI_ERROR_UNSUPPORTED;
     }
 
     device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;

@@ -37736,7 +37736,8 @@ static void test_video_support(void)
         else if (driver_types[i] == D3D_DRIVER_TYPE_UNKNOWN || driver_types[i] == D3D_DRIVER_TYPE_SOFTWARE)
             todo_wine ok(hr == E_INVALIDARG, "Got %#lx.\n", hr);
         else
-            todo_wine ok(hr == DXGI_ERROR_UNSUPPORTED, "Got %#lx.\n", hr);
+            todo_wine_if(driver_types[i] != D3D_DRIVER_TYPE_WARP || damavand)
+                ok(hr == DXGI_ERROR_UNSUPPORTED, "Got %#lx.\n", hr);
         if (hr == S_OK)
             ID3D11Device_Release(device);
 
@@ -37755,7 +37756,7 @@ static void test_video_support(void)
                 ok(hr == S_OK, "Got %#lx.\n", hr);
 
                 count = ID3D11VideoDevice_GetVideoDecoderProfileCount(video_device);
-                todo_wine ok(count > 0, "Got no decoder profiles.\n");
+                ok(count > 0, "Got no decoder profiles.\n");
 
                 ID3D11Device_Release(device);
             }
@@ -37771,7 +37772,7 @@ static void test_video_support(void)
 
             hr = D3D11CreateDevice(adapter, driver_types[i], NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT, NULL, 0, D3D11_SDK_VERSION, &device, NULL, NULL);
             if (driver_types[i] == D3D_DRIVER_TYPE_UNKNOWN)
-                todo_wine ok(hr == DXGI_ERROR_UNSUPPORTED, "Got %#lx.\n", hr);
+                todo_wine_if(damavand) ok(hr == DXGI_ERROR_UNSUPPORTED, "Got %#lx.\n", hr);
             else
                 todo_wine ok(hr == E_INVALIDARG, "Got %#lx.\n", hr);
             if (hr == S_OK)

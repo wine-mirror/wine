@@ -183,6 +183,11 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
     }
     else
     {
+        /* Windows allows device creation to succeed in this case even if the
+         * chosen device lacks video support. See also dxgi_device_init(). */
+        if (driver_type == D3D_DRIVER_TYPE_HARDWARE)
+            flags &= ~D3D11_CREATE_DEVICE_VIDEO_SUPPORT;
+
         hr = CreateDXGIFactory1(&IID_IDXGIFactory, (void **)&factory);
         if (FAILED(hr))
         {

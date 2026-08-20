@@ -32,6 +32,7 @@
 
 #include "dxgi1_6.h"
 #include "d3d10_1.h"
+#include "d3d11.h"
 #include "d3d12.h"
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
@@ -138,7 +139,7 @@ struct dxgi_device
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
-        IDXGIFactory *factory, IDXGIAdapter *adapter,
+        IDXGIFactory *factory, IDXGIAdapter *adapter, unsigned int flags,
         const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count);
 
 /* IDXGIOutput */
