@@ -751,62 +751,34 @@ void msvcrt_init_io(void)
     }
   }
 
-  fdinfo = get_ioinfo_alloc_fd(STDIN_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD flags = WX_OPEN | WX_TEXT;
-    DWORD type = GetFileType(h);
+  for (i = 0; i < 3; ++i)
+  {
+    static const DWORD std_handle[3] = { STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE };
+    DWORD flags = WX_OPEN | WX_TEXT, type;
+    HANDLE h;
 
-    if (type == FILE_TYPE_UNKNOWN) {
-        h = MSVCRT_NO_CONSOLE;
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_CHAR) {
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_PIPE) {
-        flags |= WX_PIPE;
+    fdinfo = get_ioinfo_alloc_fd(i);
+    if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE)
+    {
+        h = GetStdHandle(std_handle[i]);
+        type = GetFileType(h);
+        if (type == FILE_TYPE_UNKNOWN)
+        {
+            h = MSVCRT_NO_CONSOLE;
+            flags |= WX_TTY;
+        }
+        else if ((type & 0xf) == FILE_TYPE_CHAR)
+        {
+            flags |= WX_TTY;
+        }
+        else if ((type & 0xf) == FILE_TYPE_PIPE)
+        {
+            flags |= WX_PIPE;
+        }
+        msvcrt_set_fd(fdinfo, h, flags);
     }
-
-    msvcrt_set_fd(fdinfo, h, flags);
+    release_ioinfo(fdinfo);
   }
-  release_ioinfo(fdinfo);
-
-  fdinfo = get_ioinfo_alloc_fd(STDOUT_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD flags = WX_OPEN | WX_TEXT;
-    DWORD type = GetFileType(h);
-
-    if (type == FILE_TYPE_UNKNOWN) {
-        h = MSVCRT_NO_CONSOLE;
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_CHAR) {
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_PIPE) {
-        flags |= WX_PIPE;
-    }
-
-    msvcrt_set_fd(fdinfo, h, flags);
-  }
-  release_ioinfo(fdinfo);
-
-  fdinfo = get_ioinfo_alloc_fd(STDERR_FILENO);
-  if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
-    HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
-    DWORD flags = WX_OPEN | WX_TEXT;
-    DWORD type = GetFileType(h);
-
-    if (type == FILE_TYPE_UNKNOWN) {
-        h = MSVCRT_NO_CONSOLE;
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_CHAR) {
-        flags |= WX_TTY;
-    } else if ((type & 0xf) == FILE_TYPE_PIPE) {
-        flags |= WX_PIPE;
-    }
-
-    msvcrt_set_fd(fdinfo, h, flags);
-  }
-  release_ioinfo(fdinfo);
 
   TRACE(":handles (%p)(%p)(%p)\n", get_ioinfo_nolock(STDIN_FILENO)->handle,
         get_ioinfo_nolock(STDOUT_FILENO)->handle,
