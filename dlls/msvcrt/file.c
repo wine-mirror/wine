@@ -743,7 +743,7 @@ void msvcrt_init_io(void)
       {
         fdinfo = get_ioinfo_alloc_fd(i);
         if(fdinfo != &MSVCRT___badioinfo)
-            msvcrt_set_fd(fdinfo, *handle_ptr, *wxflag_ptr);
+            msvcrt_set_fd(fdinfo, *handle_ptr, *wxflag_ptr | (i < 3 ? WX_TEXT : 0));
         release_ioinfo(fdinfo);
       }
 

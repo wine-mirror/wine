@@ -1635,29 +1635,56 @@ static void test_file_write_read( void )
 
 static void test_file_inherit_child(const char* fd_s, const char *handle_str)
 {
-    HANDLE handle_value;
+    HANDLE handle_value = (HANDLE)0x1, handle;
     int fd = atoi(fd_s);
     HANDLE *handle_ptr;
     unsigned int count;
     char buffer[32];
     STARTUPINFOA si;
-    int ret;
+    int expected;
+    int ret, pos;
+    BYTE *wxflags;
+    ioinfo *info;
 
     GetStartupInfoA(&si);
     count = *(unsigned *)si.lpReserved2;
+    wxflags = (BYTE *)si.lpReserved2 + sizeof(unsigned);
     if (handle_str)
     {
-        ok(count == 3, "Got unexpected count %u.\n", count);
+        ok(count >= 3, "Got unexpected count %u.\n", count);
         sscanf(handle_str, "%p", &handle_value);
         handle_ptr = (HANDLE *)(si.lpReserved2 + sizeof(unsigned) + count);
-        ok(handle_value == handle_ptr[1], "Got unexpected handle %p.\n", handle_ptr[1]);
+        ok(handle_value == handle_ptr[fd], "Got unexpected handle %p.\n", handle_ptr[1]);
+        if (handle_value && handle_value != (HANDLE)0xdeadbeef  && handle_value != INVALID_HANDLE_VALUE)
+        {
+            handle = (HANDLE)_get_osfhandle(fd);
+            ok(handle == handle_value, "got %p, %p.\n", handle, handle_value);
+        }
+    }
+    if (si.cbReserved2 < sizeof(unsigned) + sizeof(BYTE) * count + sizeof(HANDLE) * count)
+        count = 0;
+
+    if (count > fd)
+    {
+        info = &__pioinfo[fd / MSVCRT_FD_BLOCK_SIZE][fd % MSVCRT_FD_BLOCK_SIZE];
+        expected = wxflags[fd];
+        if (fd < 3)
+            expected |= WX_TEXT;
+        if (!handle_value || handle_value == INVALID_HANDLE_VALUE || handle_value == (HANDLE)0xdeadbeef)
+            expected &= ~WX_APPEND;
+        ok(info->wxflag == expected, "got %#x, expected %#x, fd %d, handle %p.\n", info->wxflag, expected, fd, handle_value);
     }
 
+    pos = lseek(fd, 0, SEEK_CUR);
     ret = write(fd, "Success", 8);
     ok( ret == 8, "Couldn't write in child process on %d (%s)\n", fd, strerror(errno));
-    lseek(fd, 0, SEEK_SET);
-    ok(read(fd, buffer, sizeof (buffer)) == 8, "Couldn't read back the data\n");
-    ok(memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
+
+    lseek(fd, pos, SEEK_SET);
+    ret = read(fd, buffer, sizeof (buffer));
+    if (ret == -1 && errno == EBADF)
+        return;
+    ok(ret == 8, "Couldn't read back the data, got %d, errno %d\n", ret, errno);
+    ok(memcmp(buffer, "Success", 8) == 0, "Read back data mismatch\n");
 }
 
 static void test_file_inherit_child_no(const char* fd_s)
@@ -1670,7 +1697,7 @@ static void test_file_inherit_child_no(const char* fd_s)
        "Wrong write result in child process on %d (%s)\n", fd, strerror(errno));
 }
 
-static void create_io_inherit_block( STARTUPINFOA *startup, unsigned int count, const HANDLE *handles )
+static void create_io_inherit_block( STARTUPINFOA *startup, unsigned int count, const HANDLE *handles, BYTE wxflag )
 {
     static BYTE block[1024];
     BYTE *wxflag_ptr;
@@ -1685,7 +1712,7 @@ static void create_io_inherit_block( STARTUPINFOA *startup, unsigned int count, 
     *(unsigned*)block = count;
     for (i = 0; i < count; i++)
     {
-        wxflag_ptr[i] = 0x81;
+        wxflag_ptr[i] = wxflag;
         handle_ptr[i] = handles[i];
     }
 }
@@ -1701,7 +1728,7 @@ static const char *read_file( HANDLE file )
 }
 
 static void test_stdout_handle( STARTUPINFOA *startup, char *cmdline, HANDLE hstdout, BOOL expect_stdout,
-                                const char *descr )
+                                const char *descr, BOOL set_invalid_stdout )
 {
     const char *data;
     HANDLE hErrorFile;
@@ -1717,7 +1744,7 @@ static void test_stdout_handle( STARTUPINFOA *startup, char *cmdline, HANDLE hst
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
     startup->dwFlags    = STARTF_USESTDHANDLES;
     startup->hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
-    startup->hStdOutput = hErrorFile;
+    startup->hStdOutput = set_invalid_stdout ? INVALID_HANDLE_VALUE : hErrorFile;
     startup->hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
     CreateProcessA( NULL, cmdline, NULL, NULL, TRUE,
@@ -1734,7 +1761,7 @@ static void test_stdout_handle( STARTUPINFOA *startup, char *cmdline, HANDLE hst
     {
         data = read_file( hstdout );
         if (expect_stdout)
-            ok( !strcmp( data, "Success" ), "%s: Wrong stdout data (%s)\n", descr, data );
+            ok( !strcmp( data, "Success" ), "%s: Wrong stdout data (%s)\n", descr, debugstr_a(data) );
         else
             ok( strcmp( data, "Success" ), "%s: Stdout file shouldn't contain data\n", descr );
     }
@@ -1763,10 +1790,11 @@ static void test_file_inherit( const char* selfname )
     char cmdline[MAX_PATH];
     STARTUPINFOA startup;
     SECURITY_ATTRIBUTES sa;
-    HANDLE handles[3];
+    HANDLE handles[4];
     HANDLE thread_handle;
     int pipefds[2];
     intptr_t ret;
+    int mode, i;
 
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
@@ -1782,6 +1810,19 @@ static void test_file_inherit( const char* selfname )
     ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
     close (fd);
     ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");
+
+    /* For std handle binary mode on it is not going to be inherited and set to default text mode instead. */
+    mode = _setmode(1, O_BINARY);
+    ok(mode != -1, "got %#x.\n", mode);
+    arg_v[0] = get_base_name(selfname);
+    arg_v[1] = "file";
+    arg_v[2] = "inherit";
+    arg_v[3] = buffer; sprintf(buffer, "%d", 1);
+    arg_v[4] = 0;
+    ret = _spawnvp(_P_WAIT, selfname, arg_v);
+    mode = _setmode(1, mode);
+    ok(ret == 0, "_spawnvp returned %Id, errno %d\n", ret, errno);
+    ok(mode == O_BINARY, "got %#x.\n", mode);
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
@@ -1829,70 +1870,106 @@ static void test_file_inherit( const char* selfname )
     /* init an empty Reserved2, which should not be recognized as inherit-block */
     ZeroMemory(&startup, sizeof(startup));
     startup.cb = sizeof(startup);
-    create_io_inherit_block( &startup, 0, NULL );
-    test_stdout_handle( &startup, cmdline, 0, FALSE, "empty block" );
+    create_io_inherit_block( &startup, 0, NULL, WX_OPEN );
+    test_stdout_handle( &startup, cmdline, 0, FALSE, "empty block", FALSE );
 
     /* test with valid inheritblock */
     handles[0] = GetStdHandle( STD_INPUT_HANDLE );
     handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
     handles[2] = GetStdHandle( STD_ERROR_HANDLE );
-    create_io_inherit_block( &startup, 3, handles );
-    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "valid block" );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
+    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "valid block", FALSE );
     CloseHandle( handles[1] );
     DeleteFileA("fdopen.tst");
 
     /* test inherit block starting with unsigned zero */
     handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     *(unsigned int *)startup.lpReserved2 = 0;
-    test_stdout_handle( &startup, cmdline, handles[1], FALSE, "zero count block" );
+    test_stdout_handle( &startup, cmdline, handles[1], FALSE, "zero count block", FALSE );
     CloseHandle( handles[1] );
     DeleteFileA("fdopen.tst");
 
     /* test inherit block with smaller size */
     handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     startup.cbReserved2 -= 3;
-    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "small size block" );
+    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "small size block", FALSE );
     CloseHandle( handles[1] );
     DeleteFileA("fdopen.tst");
 
     /* test inherit block with even smaller size */
     handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     startup.cbReserved2 = sizeof(unsigned int) + sizeof(HANDLE) + sizeof(char);
-    test_stdout_handle( &startup, cmdline, handles[1], FALSE, "smaller size block" );
+    test_stdout_handle( &startup, cmdline, handles[1], FALSE, "smaller size block", FALSE );
     CloseHandle( handles[1] );
     DeleteFileA("fdopen.tst");
 
     /* test inherit block with larger size */
     handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     startup.cbReserved2 += 7;
-    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "large size block" );
+    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "large size block", FALSE );
     CloseHandle( handles[1] );
     DeleteFileA("fdopen.tst");
 
     /* test inherit block with invalid handle */
     handles[1] = INVALID_HANDLE_VALUE;
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     sprintf(cmdline, "%s file inherit 1 %p", selfname, handles[1]);
-    test_stdout_handle( &startup, cmdline, NULL, FALSE, "INVALID_HANDLE_VALUE stdout handle" );
+    test_stdout_handle( &startup, cmdline, NULL, FALSE, "INVALID_HANDLE_VALUE stdout handle", FALSE );
 
     handles[1] = NULL;
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     sprintf(cmdline, "%s file inherit 1 %p", selfname, handles[1]);
-    test_stdout_handle( &startup, cmdline, NULL, FALSE, "NULL stdout handle" );
+    test_stdout_handle( &startup, cmdline, NULL, FALSE, "NULL stdout handle", FALSE );
 
     handles[1] = (void *)0xdeadbeef;
-    create_io_inherit_block( &startup, 3, handles );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
     sprintf(cmdline, "%s file inherit 1 %p", selfname, handles[1]);
-    test_stdout_handle( &startup, cmdline, NULL, FALSE, "invalid stdout handle" );
+    test_stdout_handle( &startup, cmdline, NULL, FALSE, "invalid stdout handle", FALSE );
+
+    /* std handle doesn't respect binary mode from inherited block, while non-std handle does. */
+    for (i = 1; i < 8; ++i)
+    {
+        mode = WX_OPEN | (1 << i);
+        if (mode & (WX_ATEOF | WX_READNL))
+            continue;
+        winetest_push_context("wxflags %#x", mode);
+        handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
+        create_io_inherit_block( &startup, 3, handles, mode );
+        sprintf(cmdline, "%s file inherit 1 %p", selfname, handles[1]);
+        test_stdout_handle( &startup, cmdline, handles[1], TRUE, "stdout mode", FALSE );
+        CloseHandle( handles[1] );
+        DeleteFileA("fdopen.tst");
+        winetest_pop_context();
+    }
+    handles[3] = CreateFileA( "fdopen2.tst", GENERIC_READ|GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
+    handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
+    create_io_inherit_block( &startup, 4, handles, WX_OPEN );
+    sprintf(cmdline, "%s file inherit 3 %p", selfname, handles[3]);
+    test_stdout_handle( &startup, cmdline, handles[3], TRUE, "non-std handle", FALSE );
+    CloseHandle( handles[3] );
+    CloseHandle( handles[1] );
+    DeleteFileA("fdopen.tst");
+    DeleteFileA("fdopen2.tst");
+
+    handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );
+    create_io_inherit_block( &startup, 3, handles, WX_OPEN );
+    sprintf(cmdline, "%s file inherit 1 %p", selfname, handles[1]);
+    test_stdout_handle( &startup, cmdline, handles[1], TRUE, "valid CRT, invalid kernelbase", TRUE );
+    CloseHandle( handles[1] );
+    DeleteFileA("fdopen.tst");
 }
 
 static void test_invalid_stdin_child( void )
