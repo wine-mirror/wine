@@ -272,9 +272,7 @@ static void test_ParseDisplayName(void)
                         ok( hr == S_OK, "got %#lx\n", hr );
                         VariantClear( &res );
 
-                        dispname = NULL;
                         hr = ISWbemObjectPath_get_DisplayName( objpath, &dispname );
-                        todo_wine
                         ok( hr == S_OK, "got %#lx\n", hr );
                         SysFreeString( dispname );
                         ISWbemObjectPath_Release( objpath );

@@ -3694,8 +3694,26 @@ static HRESULT WINAPI objectpath_get_ParentNamespace( ISWbemObjectPath *iface, B
 
 static HRESULT WINAPI objectpath_get_DisplayName( ISWbemObjectPath *iface, BSTR *strDisplayName )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct objectpath *objectpath = impl_from_ISWbemObjectPath( iface );
+    ULONG len = 0;
+    WCHAR *buf;
+    HRESULT hr;
+
+    FIXME( "%p, %p semi-stub\n", objectpath, strDisplayName );
+
+    if (FAILED( hr = IWbemPath_GetText( objectpath->path, WBEMPATH_GET_SERVER_TOO, &len, NULL ) )) return hr;
+    if (!(buf = SysAllocStringLen( L"winmgmts:", len + ARRAY_SIZE( L"winmgmts:" ) - 2 ) )) return E_OUTOFMEMORY;
+    /* TODO: add 'authenticationLevel' and 'impersonationLevel' from the security object. Native also
+     * includes 'Name', 'SoftwareElementID', 'SoftwareElementState' and 'TargetOperatingSystem' values.
+     * The last three are currently missing from the properties. */
+    if (FAILED( hr = IWbemPath_GetText( objectpath->path, WBEMPATH_GET_SERVER_TOO, &len, buf + wcslen( buf ) ) ))
+    {
+        SysFreeString( buf );
+        buf = NULL;
+    }
+
+    *strDisplayName = buf;
+    return hr;
 }
 
 static HRESULT WINAPI objectpath_put_DisplayName( ISWbemObjectPath *iface, BSTR strDisplayName )
