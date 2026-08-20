@@ -1659,6 +1659,11 @@ static void test_file_inherit_child(const char* fd_s, const char *handle_str)
         {
             handle = (HANDLE)_get_osfhandle(fd);
             ok(handle == handle_value, "got %p, %p.\n", handle, handle_value);
+            if (fd == 1)
+            {
+                handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                ok(handle != handle_value, "got equal handles %p.\n", handle);
+            }
         }
     }
     if (si.cbReserved2 < sizeof(unsigned) + sizeof(BYTE) * count + sizeof(HANDLE) * count)

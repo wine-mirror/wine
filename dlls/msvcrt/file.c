@@ -574,7 +574,7 @@ static void msvcrt_free_fd(int fd)
   release_ioinfo(fdinfo);
 }
 
-static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
+static void msvcrt_set_fdinfo(ioinfo *fdinfo, HANDLE hand, int flag)
 {
   fdinfo->handle = hand;
   fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE | WX_TTY));
@@ -583,7 +583,11 @@ static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
   fdinfo->lookahead[2] = '\n';
   ioinfo_set_unicode(fdinfo, FALSE);
   ioinfo_set_textmode(fdinfo, TEXTMODE_ANSI);
+}
 
+static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
+{
+  msvcrt_set_fdinfo(fdinfo, hand, flag);
   if (hand != MSVCRT_NO_CONSOLE)
   {
     switch (fdinfo-MSVCRT___pioinfo[0])
@@ -743,7 +747,7 @@ void msvcrt_init_io(void)
       {
         fdinfo = get_ioinfo_alloc_fd(i);
         if(fdinfo != &MSVCRT___badioinfo)
-            msvcrt_set_fd(fdinfo, *handle_ptr, *wxflag_ptr | (i < 3 ? WX_TEXT : 0));
+            msvcrt_set_fdinfo(fdinfo, *handle_ptr, *wxflag_ptr | (i < 3 ? WX_TEXT : 0));
         release_ioinfo(fdinfo);
       }
 
@@ -775,7 +779,7 @@ void msvcrt_init_io(void)
         {
             flags |= WX_PIPE;
         }
-        msvcrt_set_fd(fdinfo, h, flags);
+        msvcrt_set_fdinfo(fdinfo, h, flags);
     }
     release_ioinfo(fdinfo);
   }
