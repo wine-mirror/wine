@@ -516,6 +516,8 @@ static void test_locator(void)
     hr = ISWbemObjectSet_get__NewEnum( object_set, (IUnknown**)&enum_var );
     ok( hr == S_OK, "got %#lx\n", hr );
 
+    hr = IEnumVARIANT_Next( enum_var, 1, NULL, NULL );
+    ok( hr == S_FALSE, "got %#lx\n", hr );
     VariantInit( &var );
     hr = IEnumVARIANT_Next( enum_var, 1, &var, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );

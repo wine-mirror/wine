@@ -2020,6 +2020,8 @@ static HRESULT WINAPI enumvar_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *va
 
     TRACE( "%p, %lu, %p, %p\n", iface, celt, var, fetched );
 
+    if (!var) return S_FALSE;
+
     if (celt) IEnumWbemClassObject_Next( enumvar->objectenum, WBEM_INFINITE, 1, &obj, &count );
     if (count)
     {
