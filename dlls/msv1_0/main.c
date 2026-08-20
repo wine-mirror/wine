@@ -155,6 +155,48 @@ static CRITICAL_SECTION_DEBUG local_auth_debug =
 };
 static CRITICAL_SECTION local_auth_cs = { &local_auth_debug, -1, 0, 0, 0, 0 };
 
+struct user_context_data
+{
+    enum mode mode;
+    unsigned int flags;
+    char session_key[16];
+};
+
+struct user_ctx
+{
+    struct list entry;
+    LSA_SEC_HANDLE handle;
+
+    enum mode mode;
+    unsigned int flags;
+    struct
+    {
+        unsigned int seq_no;
+        struct arc4_info arc4info;
+    } ntlm;
+    struct
+    {
+        char send_sign_key[16];
+        char send_seal_key[16];
+        char recv_sign_key[16];
+        char recv_seal_key[16];
+        unsigned int send_seq_no;
+        unsigned int recv_seq_no;
+        struct arc4_info send_arc4info;
+        struct arc4_info recv_arc4info;
+    } ntlm2;
+};
+
+static struct list user_ctx_list = LIST_INIT(user_ctx_list);
+static CRITICAL_SECTION user_ctx_cs;
+static CRITICAL_SECTION_DEBUG user_ctx_debug =
+{
+    0, 0, &user_ctx_cs,
+    { &user_ctx_debug.ProcessLocksList, &user_ctx_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": user_ctx_cs") }
+};
+static CRITICAL_SECTION user_ctx_cs = { &user_ctx_debug, -1, 0, 0, 0, 0 };
+
 static const char *debugstr_challenge( const BYTE challenge[8] )
 {
     return wine_dbg_sprintf( "%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -951,21 +993,21 @@ static const char client_to_server_seal_constant[] = "session key to client-to-s
 static const char server_to_client_sign_constant[] = "session key to server-to-client signing key magic constant";
 static const char server_to_client_seal_constant[] = "session key to server-to-client sealing key magic constant";
 
-static void create_ntlm2_subkeys( struct ntlm_ctx *ctx )
+static void create_ntlm2_subkeys( struct user_ctx *ctx, const char *session_key )
 {
     if (ctx->mode == MODE_CLIENT)
     {
-        calc_ntlm2_subkey( ctx->session_key, client_to_server_sign_constant, ctx->crypt.ntlm2.send_sign_key );
-        calc_ntlm2_subkey( ctx->session_key, client_to_server_seal_constant, ctx->crypt.ntlm2.send_seal_key );
-        calc_ntlm2_subkey( ctx->session_key, server_to_client_sign_constant, ctx->crypt.ntlm2.recv_sign_key );
-        calc_ntlm2_subkey( ctx->session_key, server_to_client_seal_constant, ctx->crypt.ntlm2.recv_seal_key );
+        calc_ntlm2_subkey( session_key, client_to_server_sign_constant, ctx->ntlm2.send_sign_key );
+        calc_ntlm2_subkey( session_key, client_to_server_seal_constant, ctx->ntlm2.send_seal_key );
+        calc_ntlm2_subkey( session_key, server_to_client_sign_constant, ctx->ntlm2.recv_sign_key );
+        calc_ntlm2_subkey( session_key, server_to_client_seal_constant, ctx->ntlm2.recv_seal_key );
     }
     else
     {
-        calc_ntlm2_subkey( ctx->session_key, server_to_client_sign_constant, ctx->crypt.ntlm2.send_sign_key );
-        calc_ntlm2_subkey( ctx->session_key, server_to_client_seal_constant, ctx->crypt.ntlm2.send_seal_key );
-        calc_ntlm2_subkey( ctx->session_key, client_to_server_sign_constant, ctx->crypt.ntlm2.recv_sign_key );
-        calc_ntlm2_subkey( ctx->session_key, client_to_server_seal_constant, ctx->crypt.ntlm2.recv_seal_key );
+        calc_ntlm2_subkey( session_key, server_to_client_sign_constant, ctx->ntlm2.send_sign_key );
+        calc_ntlm2_subkey( session_key, server_to_client_seal_constant, ctx->ntlm2.send_seal_key );
+        calc_ntlm2_subkey( session_key, client_to_server_sign_constant, ctx->ntlm2.recv_sign_key );
+        calc_ntlm2_subkey( session_key, client_to_server_seal_constant, ctx->ntlm2.recv_seal_key );
     }
 }
 
@@ -1419,14 +1461,24 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
     output->pBuffers[idx].cbBuffer = bin_len;
     memcpy( output->pBuffers[idx].pvBuffer, bin, bin_len );
 
-    arc4_init( &ctx->crypt.ntlm.arc4info, ctx->session_key, 16 );
-    ctx->crypt.ntlm.seq_no = 0;
-    create_ntlm2_subkeys( ctx );
-    arc4_init( &ctx->crypt.ntlm2.send_arc4info, ctx->crypt.ntlm2.send_seal_key, 16 );
-    arc4_init( &ctx->crypt.ntlm2.recv_arc4info, ctx->crypt.ntlm2.recv_seal_key, 16 );
-    ctx->crypt.ntlm2.send_seq_no = 0;
-    ctx->crypt.ntlm2.recv_seq_no = 0;
+    if (status == SEC_E_OK)
+    {
+        struct user_context_data *data = lsa_secpkg_table->AllocateLsaHeap( sizeof( *data ));
 
+        if (!data)
+        {
+            if (!ctx_handle && !input) *new_ctx_handle = 0;
+            status = SEC_E_INSUFFICIENT_MEMORY;
+            goto done;
+        }
+        data->mode = ctx->mode;
+        data->flags = ctx->flags;
+        memcpy( data->session_key, ctx->session_key, sizeof(data->session_key) );
+
+        *mapped_ctx = TRUE;
+        ctx_data->cbBuffer = sizeof( *data );
+        ctx_data->pvBuffer = data;
+    }
 done:
     if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED && !ctx_handle && !input)
     {
@@ -1730,15 +1782,24 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
 done:
     if (status == SEC_E_OK)
     {
-        arc4_init( &ctx->crypt.ntlm.arc4info, ctx->session_key, 16 );
-        ctx->crypt.ntlm.seq_no = 0;
-        create_ntlm2_subkeys( ctx );
-        arc4_init( &ctx->crypt.ntlm2.send_arc4info, ctx->crypt.ntlm2.send_seal_key, 16 );
-        arc4_init( &ctx->crypt.ntlm2.recv_arc4info, ctx->crypt.ntlm2.recv_seal_key, 16 );
-        ctx->crypt.ntlm2.send_seq_no = 0;
-        ctx->crypt.ntlm2.recv_seq_no = 0;
+        struct user_context_data *data = lsa_secpkg_table->AllocateLsaHeap( sizeof( *data ));
 
-        *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
+        if (!data)
+        {
+            status = SEC_E_INSUFFICIENT_MEMORY;
+        }
+        else
+        {
+            data->mode = ctx->mode;
+            data->flags = ctx->flags;
+            memcpy( data->session_key, ctx->session_key, sizeof(data->session_key) );
+
+            *mapped_ctx = TRUE;
+            ctx_data->cbBuffer = sizeof( *data );
+            ctx_data->pvBuffer = data;
+
+            *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
+        }
     }
 
     if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED && !ctx_handle)
@@ -2038,7 +2099,62 @@ static NTSTATUS NTAPI ntlm_SpInstanceInit( ULONG version, SECPKG_DLL_FUNCTIONS *
     return STATUS_SUCCESS;
 }
 
-static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg,
+static struct user_ctx* find_user_ctx( LSA_SEC_HANDLE handle )
+{
+    struct user_ctx *ret;
+
+    EnterCriticalSection( &user_ctx_cs );
+    LIST_FOR_EACH_ENTRY( ret, &user_ctx_list, struct user_ctx, entry )
+    {
+        if (ret->handle == handle)
+        {
+            LeaveCriticalSection( &user_ctx_cs );
+            return ret;
+        }
+    }
+    LeaveCriticalSection( &user_ctx_cs );
+    return NULL;
+}
+
+static NTSTATUS NTAPI ntlm_SpInitUserModeContext( LSA_SEC_HANDLE handle, SecBuffer *buf )
+{
+    struct user_context_data *data = buf->pvBuffer;
+    struct user_ctx *ctx;
+
+    TRACE( "%Ix, %p\n", handle, buf);
+
+    if (buf->cbBuffer != sizeof( *data ))
+        return SEC_E_INTERNAL_ERROR;
+
+    EnterCriticalSection( &user_ctx_cs );
+    ctx = find_user_ctx( handle );
+    if (!ctx)
+    {
+        ctx = malloc( sizeof(*ctx) );
+        if (!ctx)
+        {
+            LeaveCriticalSection( &user_ctx_cs );
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        list_add_head( &user_ctx_list, &ctx->entry );
+    }
+
+    ctx->handle = handle;
+    ctx->mode = data->mode;
+    ctx->flags = data->flags;
+
+    arc4_init( &ctx->ntlm.arc4info, data->session_key, 16 );
+    ctx->ntlm.seq_no = 0;
+    create_ntlm2_subkeys( ctx, data->session_key );
+    arc4_init( &ctx->ntlm2.send_arc4info, ctx->ntlm2.send_seal_key, 16 );
+    arc4_init( &ctx->ntlm2.recv_arc4info, ctx->ntlm2.recv_seal_key, 16 );
+    ctx->ntlm2.send_seq_no = 0;
+    ctx->ntlm2.recv_seq_no = 0;
+    LeaveCriticalSection( &user_ctx_cs );
+    return STATUS_SUCCESS;
+}
+
+static SECURITY_STATUS create_signature( struct user_ctx *ctx, unsigned int flags, SecBufferDesc *msg,
                                          SecBuffer *sig_buf, enum sign_direction dir, BOOL encrypt )
 {
     unsigned int i, sign_version = 1;
@@ -2051,23 +2167,23 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
 
         if (dir == SIGN_SEND)
         {
-            seq_no[0] = (ctx->crypt.ntlm2.send_seq_no >>  0) & 0xff;
-            seq_no[1] = (ctx->crypt.ntlm2.send_seq_no >>  8) & 0xff;
-            seq_no[2] = (ctx->crypt.ntlm2.send_seq_no >> 16) & 0xff;
-            seq_no[3] = (ctx->crypt.ntlm2.send_seq_no >> 24) & 0xff;
-            ctx->crypt.ntlm2.send_seq_no++;
+            seq_no[0] = (ctx->ntlm2.send_seq_no >>  0) & 0xff;
+            seq_no[1] = (ctx->ntlm2.send_seq_no >>  8) & 0xff;
+            seq_no[2] = (ctx->ntlm2.send_seq_no >> 16) & 0xff;
+            seq_no[3] = (ctx->ntlm2.send_seq_no >> 24) & 0xff;
+            ctx->ntlm2.send_seq_no++;
 
-            hmac_md5_init( &hmac_md5, ctx->crypt.ntlm2.send_sign_key, 16 );
+            hmac_md5_init( &hmac_md5, ctx->ntlm2.send_sign_key, 16 );
         }
         else
         {
-            seq_no[0] = (ctx->crypt.ntlm2.recv_seq_no >>  0) & 0xff;
-            seq_no[1] = (ctx->crypt.ntlm2.recv_seq_no >>  8) & 0xff;
-            seq_no[2] = (ctx->crypt.ntlm2.recv_seq_no >> 16) & 0xff;
-            seq_no[3] = (ctx->crypt.ntlm2.recv_seq_no >> 24) & 0xff;
-            ctx->crypt.ntlm2.recv_seq_no++;
+            seq_no[0] = (ctx->ntlm2.recv_seq_no >>  0) & 0xff;
+            seq_no[1] = (ctx->ntlm2.recv_seq_no >>  8) & 0xff;
+            seq_no[2] = (ctx->ntlm2.recv_seq_no >> 16) & 0xff;
+            seq_no[3] = (ctx->ntlm2.recv_seq_no >> 24) & 0xff;
+            ctx->ntlm2.recv_seq_no++;
 
-            hmac_md5_init( &hmac_md5, ctx->crypt.ntlm2.recv_sign_key, 16 );
+            hmac_md5_init( &hmac_md5, ctx->ntlm2.recv_sign_key, 16 );
         }
 
         hmac_md5_update( &hmac_md5, seq_no, 4 );
@@ -2081,9 +2197,9 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
         if (encrypt && flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
         {
             if (dir == SIGN_SEND)
-                arc4_process( &ctx->crypt.ntlm2.send_arc4info, digest, 8 );
+                arc4_process( &ctx->ntlm2.send_arc4info, digest, 8 );
             else
-                arc4_process( &ctx->crypt.ntlm2.recv_arc4info, digest, 8 );
+                arc4_process( &ctx->ntlm2.recv_arc4info, digest, 8 );
         }
 
         sig[0] = (sign_version >>  0) & 0xff;
@@ -2116,13 +2232,13 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
         sig[9] = (crc >>  8) & 0xff;
         sig[10] = (crc >> 16) & 0xff;
         sig[11] = (crc >> 24) & 0xff;
-        sig[12] = (ctx->crypt.ntlm.seq_no >>  0) & 0xff;
-        sig[13] = (ctx->crypt.ntlm.seq_no >>  8) & 0xff;
-        sig[14] = (ctx->crypt.ntlm.seq_no >> 16) & 0xff;
-        sig[15] = (ctx->crypt.ntlm.seq_no >> 24) & 0xff;
-        ctx->crypt.ntlm.seq_no++;
+        sig[12] = (ctx->ntlm.seq_no >>  0) & 0xff;
+        sig[13] = (ctx->ntlm.seq_no >>  8) & 0xff;
+        sig[14] = (ctx->ntlm.seq_no >> 16) & 0xff;
+        sig[15] = (ctx->ntlm.seq_no >> 24) & 0xff;
+        ctx->ntlm.seq_no++;
 
-        if (encrypt) arc4_process( &ctx->crypt.ntlm.arc4info, sig + 4, 12 );
+        if (encrypt) arc4_process( &ctx->ntlm.arc4info, sig + 4, 12 );
         return SEC_E_OK;
     }
 
@@ -2140,7 +2256,7 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
 
 static NTSTATUS NTAPI ntlm_SpMakeSignature( LSA_SEC_HANDLE handle, ULONG qop, SecBufferDesc *msg, ULONG msg_seq_no )
 {
-    struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+    struct user_ctx *ctx;
     int idx;
 
     TRACE( "%#Ix, %#lx, %p, %lu\n", handle, qop, msg, msg_seq_no );
@@ -2151,11 +2267,12 @@ static NTSTATUS NTAPI ntlm_SpMakeSignature( LSA_SEC_HANDLE handle, ULONG qop, Se
     if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1)
         return SEC_E_INVALID_TOKEN;
     if (msg->pBuffers[idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+    if (!(ctx = find_user_ctx( handle ))) return SEC_E_INVALID_HANDLE;
 
     return create_signature( ctx, ctx->flags, msg, &msg->pBuffers[idx], SIGN_SEND, TRUE );
 }
 
-static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg, SecBuffer *sig_buf )
+static NTSTATUS verify_signature( struct user_ctx *ctx, unsigned int flags, SecBufferDesc *msg, SecBuffer *sig_buf )
 {
     NTSTATUS status;
     unsigned int i, sig_idx = 0;
@@ -2198,7 +2315,7 @@ static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecB
 
 static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
 {
-    struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+    struct user_ctx *ctx;
     int idx;
 
     TRACE( "%#Ix, %p, %lu, %p\n", handle, msg, msg_seq_no, qop );
@@ -2208,6 +2325,7 @@ static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDe
     if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1)
         return SEC_E_INVALID_TOKEN;
     if (msg->pBuffers[idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+    if (!(ctx = find_user_ctx( handle ))) return SEC_E_INVALID_HANDLE;
 
     return verify_signature( ctx, ctx->flags, msg, &msg->pBuffers[idx] );
 }
@@ -2215,13 +2333,14 @@ static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDe
 static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecBufferDesc *msg, ULONG msg_seq_no )
 {
     int token_idx, data_idx;
-    struct ntlm_ctx *ctx;
+    struct user_ctx *ctx;
 
     TRACE( "%#Ix, %#lx, %p %lu\n", handle, qop, msg, msg_seq_no );
     if (qop) FIXME( "ignoring quality of protection %#lx\n", qop );
     if (msg_seq_no) FIXME( "ignoring message sequence number %lu\n", msg_seq_no );
 
     if (!handle) return SEC_E_INVALID_HANDLE;
+    if (!(ctx = find_user_ctx( handle ))) return SEC_E_INVALID_HANDLE;
 
     if (!msg || !msg->pBuffers || msg->cBuffers < 2 ||
         (token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1 ||
@@ -2229,15 +2348,14 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
 
     if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
 
-    ctx = (struct ntlm_ctx *)handle;
     if (ctx->flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY && ctx->flags & NTLMSSP_NEGOTIATE_SEAL)
     {
         create_signature( ctx, ctx->flags, msg, &msg->pBuffers[token_idx], SIGN_SEND, FALSE );
 
-        arc4_process( &ctx->crypt.ntlm2.send_arc4info, msg->pBuffers[data_idx].pvBuffer,
+        arc4_process( &ctx->ntlm2.send_arc4info, msg->pBuffers[data_idx].pvBuffer,
                       msg->pBuffers[data_idx].cbBuffer );
         if (ctx->flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
-            arc4_process( &ctx->crypt.ntlm2.send_arc4info, (char *)msg->pBuffers[token_idx].pvBuffer + 4, 8 );
+            arc4_process( &ctx->ntlm2.send_arc4info, (char *)msg->pBuffers[token_idx].pvBuffer + 4, 8 );
     }
     else
     {
@@ -2245,8 +2363,8 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
 
         create_signature( ctx, ctx->flags | NTLMSSP_NEGOTIATE_SIGN, msg, &msg->pBuffers[token_idx], SIGN_SEND, FALSE );
 
-        arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer, msg->pBuffers[data_idx].cbBuffer );
-        arc4_process( &ctx->crypt.ntlm.arc4info, sig + 4, 12 );
+        arc4_process( &ctx->ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer, msg->pBuffers[data_idx].cbBuffer );
+        arc4_process( &ctx->ntlm.arc4info, sig + 4, 12 );
 
         if (ctx->flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || !ctx->flags) memset( sig + 4, 0, 4 );
     }
@@ -2258,12 +2376,13 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 {
     int i, data_idx, stream_idx, token_idx;
     SecBuffer token_buf;
-    struct ntlm_ctx *ctx;
+    struct user_ctx *ctx;
 
     TRACE( "%#Ix, %p, %lu, %p\n", handle, msg, msg_seq_no, qop );
     if (msg_seq_no) FIXME( "ignoring message sequence number %lu\n", msg_seq_no );
 
     if (!handle) return SEC_E_INVALID_HANDLE;
+    if (!(ctx = find_user_ctx( handle ))) return SEC_E_INVALID_HANDLE;
 
     if (!msg || !msg->pBuffers || msg->cBuffers < 2) return SEC_E_INVALID_TOKEN;
 
@@ -2291,13 +2410,12 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
         token_buf = msg->pBuffers[token_idx];
     }
 
-    ctx = (struct ntlm_ctx *)handle;
     if (ctx->flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY && ctx->flags & NTLMSSP_NEGOTIATE_SEAL)
     {
         for (i = 0; i < msg->cBuffers; i++)
         {
             if (msg->pBuffers[i].BufferType != SECBUFFER_DATA) continue;
-            arc4_process( &ctx->crypt.ntlm2.recv_arc4info, msg->pBuffers[i].pvBuffer,
+            arc4_process( &ctx->ntlm2.recv_arc4info, msg->pBuffers[i].pvBuffer,
                           msg->pBuffers[i].cbBuffer );
         }
     }
@@ -2306,7 +2424,7 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
         for (i = 0; i < msg->cBuffers; i++)
         {
             if (msg->pBuffers[i].BufferType != SECBUFFER_DATA) continue;
-            arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[i].pvBuffer,
+            arc4_process( &ctx->ntlm.arc4info, msg->pBuffers[i].pvBuffer,
                           msg->pBuffers[i].cbBuffer);
         }
     }
@@ -2316,10 +2434,26 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
     return verify_signature( ctx, ctx->flags | NTLMSSP_NEGOTIATE_SIGN, msg, &token_buf );
 }
 
+static NTSTATUS NTAPI ntlm_SpDeleteUserModeContext( LSA_SEC_HANDLE handle )
+{
+    struct user_ctx *user_ctx;
+    TRACE( "%Ix\n", handle );
+
+    EnterCriticalSection( &user_ctx_cs );
+    user_ctx = find_user_ctx( handle );
+    if (user_ctx)
+    {
+        list_remove( &user_ctx->entry );
+        free( user_ctx );
+    }
+    LeaveCriticalSection( &user_ctx_cs );
+    return STATUS_SUCCESS;
+}
+
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
 {
     ntlm_SpInstanceInit,
-    NULL, /* SpInitUserModeContext */
+    ntlm_SpInitUserModeContext,
     ntlm_SpMakeSignature,
     ntlm_SpVerifySignature,
     ntlm_SpSealMessage,
@@ -2327,7 +2461,7 @@ static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
     NULL, /* SpGetContextToken */
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpCompleteAuthToken */
-    NULL, /* SpDeleteContext */
+    ntlm_SpDeleteUserModeContext,
     NULL, /* SpFormatCredentialsFn */
     NULL, /* SpMarshallSupplementalCreds */
     NULL, /* SpExportSecurityContext */

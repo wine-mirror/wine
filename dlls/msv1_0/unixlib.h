@@ -86,25 +86,6 @@ struct ntlm_ctx
     char        *negotiate;
     HANDLE       token; /* local authentication token */
     struct hmac_md5_ctx mic; /* local authentication MIC */
-    struct
-    {
-        struct
-        {
-            unsigned int seq_no;
-            struct arc4_info arc4info;
-        } ntlm;
-        struct
-        {
-            char send_sign_key[16];
-            char send_seal_key[16];
-            char recv_sign_key[16];
-            char recv_seal_key[16];
-            unsigned int send_seq_no;
-            unsigned int recv_seq_no;
-            struct arc4_info send_arc4info;
-            struct arc4_info recv_arc4info;
-        } ntlm2;
-    } crypt;
 };
 
 
