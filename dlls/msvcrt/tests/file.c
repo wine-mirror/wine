@@ -1944,8 +1944,6 @@ static void test_file_inherit( const char* selfname )
     for (i = 1; i < 8; ++i)
     {
         mode = WX_OPEN | (1 << i);
-        if (mode & (WX_ATEOF | WX_READNL))
-            continue;
         winetest_push_context("wxflags %#x", mode);
         handles[1] = CreateFileA( "fdopen.tst", GENERIC_READ|GENERIC_WRITE,
                                   FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, CREATE_ALWAYS, 0, NULL );

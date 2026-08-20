@@ -577,7 +577,7 @@ static void msvcrt_free_fd(int fd)
 static void msvcrt_set_fdinfo(ioinfo *fdinfo, HANDLE hand, int flag)
 {
   fdinfo->handle = hand;
-  fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE | WX_TTY));
+  fdinfo->wxflag = WX_OPEN | flag;
   fdinfo->lookahead[0] = '\n';
   fdinfo->lookahead[1] = '\n';
   fdinfo->lookahead[2] = '\n';
@@ -587,6 +587,7 @@ static void msvcrt_set_fdinfo(ioinfo *fdinfo, HANDLE hand, int flag)
 
 static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
 {
+  flag &= ~(WX_ATEOF | WX_READNL);
   msvcrt_set_fdinfo(fdinfo, hand, flag);
   if (hand != MSVCRT_NO_CONSOLE)
   {
