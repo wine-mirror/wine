@@ -19,6 +19,8 @@
 @ cdecl wined3d_restore_display_modes(ptr)
 @ cdecl wined3d_unregister_windows(ptr)
 
+@ cdecl wined3d_adapter_get_decode_profile_count(ptr)
+@ cdecl wined3d_adapter_get_decode_profile(ptr long ptr)
 @ cdecl wined3d_adapter_get_identifier(ptr long ptr)
 @ cdecl wined3d_adapter_get_output(ptr long)
 @ cdecl wined3d_adapter_get_output_count(ptr)
@@ -83,8 +85,6 @@
 @ cdecl wined3d_device_get_state(ptr)
 @ cdecl wined3d_device_get_swapchain(ptr long)
 @ cdecl wined3d_device_get_swapchain_count(ptr)
-@ cdecl wined3d_device_get_video_decode_profile_count(ptr)
-@ cdecl wined3d_device_get_video_decode_profile(ptr long ptr)
 @ cdecl wined3d_device_get_wined3d(ptr)
 @ cdecl wined3d_device_incref(ptr)
 @ cdecl wined3d_device_process_vertices(ptr ptr long long long ptr ptr long long)

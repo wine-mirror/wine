@@ -1818,6 +1818,33 @@ HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapt
     return WINED3D_OK;
 }
 
+unsigned int CDECL wined3d_adapter_get_decode_profile_count(struct wined3d_adapter *adapter)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("adapter %p.\n", adapter);
+
+    adapter->decoder_ops->get_profiles(adapter, &count, profiles);
+    return count;
+}
+
+HRESULT CDECL wined3d_adapter_get_decode_profile(struct wined3d_adapter *adapter, unsigned int idx, GUID *profile)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("adapter %p, idx %u.\n", adapter, idx);
+
+    adapter->decoder_ops->get_profiles(adapter, &count, profiles);
+
+    if (idx >= count)
+        return E_INVALIDARG;
+
+    *profile = profiles[idx];
+    return S_OK;
+}
+
 HRESULT CDECL wined3d_output_get_raster_status(const struct wined3d_output *output,
         struct wined3d_raster_status *raster_status)
 {
