@@ -2384,8 +2384,8 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
     attr.backing_store = NotUseful;
     attr.border_pixel = 0;
 
-    x = data->rects.client.left - data->rects.visible.left;
-    y = data->rects.client.top - data->rects.visible.top;
+    x = client_rect.left;
+    y = client_rect.top;
     cx = min( max( 1, client_rect.right - client_rect.left ), 65535 );
     cy = min( max( 1, client_rect.bottom - client_rect.top ), 65535 );
 

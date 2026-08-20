@@ -347,8 +347,12 @@ static RECT get_client_surface_rects( HWND toplevel, HWND hwnd, RECT *monitor_re
 
     get_win_monitor_dpi( hwnd, &raw_dpi );
     *monitor_rect = map_dpi_rect( rect, dpi, raw_dpi );
+
+    /* use toplevel visible rect relative position, so drivers can then assume it */
     OffsetRect( monitor_rect, monitor_rects.client.left - monitor_rects.visible.left,
                 monitor_rects.client.top - monitor_rects.visible.top );
+    OffsetRect( &rect, rects.client.left - rects.visible.left,
+                rects.client.top - rects.visible.top );
 
     return rect;
 }
