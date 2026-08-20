@@ -39,11 +39,39 @@ struct sec_handle
 {
     SECPKG_FUNCTION_TABLE      *krb;
     SECPKG_FUNCTION_TABLE      *ntlm;
-    SECPKG_USER_FUNCTION_TABLE *user_krb;
-    SECPKG_USER_FUNCTION_TABLE *user_ntlm;
     LSA_SEC_HANDLE              handle_krb;
     LSA_SEC_HANDLE              handle_ntlm;
 };
+
+struct user_context_data
+{
+    enum
+    {
+        SSP_KERBEROS,
+        SSP_NTLM
+    } ssp;
+    BOOLEAN mapped_ctx;
+    /* BYTE ssp_context_data[]; */
+};
+
+struct user_ctx
+{
+    struct list entry;
+    LSA_SEC_HANDLE handle;
+    SECPKG_USER_FUNCTION_TABLE *funcs;
+};
+
+static struct list user_ctx_list = LIST_INIT(user_ctx_list);
+static CRITICAL_SECTION user_ctx_cs;
+static CRITICAL_SECTION_DEBUG user_ctx_debug =
+{
+    0, 0, &user_ctx_cs,
+    { &user_ctx_debug.ProcessLocksList, &user_ctx_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": user_ctx_cs") }
+};
+static CRITICAL_SECTION user_ctx_cs = { &user_ctx_debug, -1, 0, 0, 0, 0 };
+
+static LSA_SECPKG_FUNCTION_TABLE *lsa_funcs;
 
 #define WINE_NO_CACHED_CREDENTIALS 0x10000000
 #define NEGO_MAX_TOKEN 48256
@@ -115,6 +143,8 @@ static NTSTATUS NTAPI nego_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table )
 {
     TRACE( "%Iu, %p, %p\n", package_id, params, lsa_function_table );
+
+    lsa_funcs = lsa_function_table;
     return STATUS_SUCCESS;
 }
 
@@ -158,10 +188,7 @@ static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
         ret = package->SpAcquireCredentialsHandle( principal_us, credential_use, logon_id, auth_data,
                                                    get_key_fn, get_key_arg, &cred->handle_krb, expiry );
         if (ret == SEC_E_OK)
-        {
             cred->krb = package;
-            cred->user_krb = user;
-        }
     }
 
     if ((package = lsa_find_package( "NTLM", &user )))
@@ -171,10 +198,7 @@ static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
         ret = package->SpAcquireCredentialsHandle( principal_us, cred_use, logon_id, auth_data,
                                                    get_key_fn, get_key_arg, &cred->handle_ntlm, expiry );
         if (ret == SEC_E_OK)
-        {
             cred->ntlm = package;
-            cred->user_ntlm = user;
-        }
     }
 
     if (cred->krb || cred->ntlm)
@@ -225,8 +249,6 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
         ctxt->krb  = cred->krb;
         ctxt->ntlm = cred->ntlm;
-        ctxt->user_krb  = cred->user_krb;
-        ctxt->user_ntlm = cred->user_ntlm;
     }
     if (!handle) return SEC_E_INVALID_HANDLE;
 
@@ -238,14 +260,12 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
-            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
         else
         {
             ctxt->krb = NULL;
-            ctxt->user_krb = NULL;
         }
     }
 
@@ -257,10 +277,35 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
-            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
+    }
+
+    if (ret == SEC_E_OK)
+    {
+        struct user_context_data *data;
+        ULONG size = sizeof( *data ) + context_data->cbBuffer;
+        SecBuffer negotiate_data;
+
+        data = lsa_funcs->AllocateLsaHeap( size );
+        if (!data)
+        {
+            lsa_funcs->FreeLsaHeap( context_data->pvBuffer );
+            free( new_ctxt );
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        negotiate_data.cbBuffer = size;
+        negotiate_data.pvBuffer = data;
+        negotiate_data.BufferType = context_data->BufferType;
+        data->ssp = ctxt->krb ? SSP_KERBEROS : SSP_NTLM;
+        data->mapped_ctx = *mapped_context;
+        memcpy( data + 1, context_data->pvBuffer, context_data->cbBuffer );
+        lsa_funcs->FreeLsaHeap( context_data->pvBuffer );
+
+
+        *mapped_context = TRUE;
+        *context_data = negotiate_data;
     }
 
     free( new_ctxt );
@@ -287,8 +332,6 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
         ctxt->krb  = cred->krb;
         ctxt->ntlm = cred->ntlm;
-        ctxt->user_krb  = cred->user_krb;
-        ctxt->user_ntlm = cred->user_ntlm;
     }
     if (!handle) return SEC_E_INVALID_HANDLE;
 
@@ -301,14 +344,12 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
-            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
         else
         {
             ctxt->krb = NULL;
-            ctxt->user_krb = NULL;
         }
     }
 
@@ -321,10 +362,34 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
-            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
+    }
+
+    if (ret == SEC_E_OK)
+    {
+        struct user_context_data *data;
+        ULONG size = sizeof( *data ) + context_data->cbBuffer;
+        SecBuffer negotiate_data;
+
+        data = lsa_funcs->AllocateLsaHeap( size );
+        if (!data)
+        {
+            lsa_funcs->FreeLsaHeap( context_data->pvBuffer );
+            free( new_ctxt );
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        negotiate_data.cbBuffer = size;
+        negotiate_data.pvBuffer = data;
+        negotiate_data.BufferType = context_data->BufferType;
+        data->ssp = ctxt->krb ? SSP_KERBEROS : SSP_NTLM;
+        data->mapped_ctx = *mapped_context;
+        memcpy( data + 1, context_data->pvBuffer, context_data->cbBuffer );
+        lsa_funcs->FreeLsaHeap( context_data->pvBuffer );
+
+        *mapped_context = TRUE;
+        *context_data = negotiate_data;
     }
 
     free( new_ctxt );
@@ -432,98 +497,141 @@ static NTSTATUS NTAPI nego_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *d
     return STATUS_SUCCESS;
 }
 
+static struct user_ctx* find_user_ctx( LSA_SEC_HANDLE handle )
+{
+    struct user_ctx *ret;
+
+    EnterCriticalSection( &user_ctx_cs );
+    LIST_FOR_EACH_ENTRY( ret, &user_ctx_list, struct user_ctx, entry )
+    {
+        if (ret->handle == handle)
+        {
+            LeaveCriticalSection( &user_ctx_cs );
+            return ret;
+        }
+    }
+    LeaveCriticalSection( &user_ctx_cs );
+    return NULL;
+}
+
+static NTSTATUS NTAPI nego_SpInitUserModeContext( LSA_SEC_HANDLE handle, SecBuffer *buf )
+{
+    struct user_context_data *data = buf->pvBuffer;
+    SECPKG_FUNCTION_TABLE *package;
+    struct user_ctx *ctx;
+    SecBuffer ctx_data;
+    NTSTATUS status = SEC_E_OK;
+
+    TRACE( "%Ix, %p\n", handle, buf);
+
+    if (buf->cbBuffer < sizeof( *data ))
+        return SEC_E_INTERNAL_ERROR;
+
+    EnterCriticalSection( &user_ctx_cs );
+    ctx = find_user_ctx( handle );
+    if (!ctx)
+    {
+        ctx = malloc( sizeof(*ctx) );
+        if (!ctx)
+        {
+            LeaveCriticalSection( &user_ctx_cs );
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        list_add_head( &user_ctx_list, &ctx->entry );
+    }
+    LeaveCriticalSection( &user_ctx_cs );
+
+    ctx_data.cbBuffer = buf->cbBuffer - sizeof(*data);
+    ctx_data.BufferType = buf->BufferType;
+    ctx_data.pvBuffer = data + 1;
+
+    ctx->handle = handle;
+
+    if (data->ssp == SSP_KERBEROS)
+        package = lsa_find_package( "Kerberos", &ctx->funcs );
+    else
+        package = lsa_find_package( "NTLM", &ctx->funcs );
+    if (!package)
+        status = SEC_E_INTERNAL_ERROR;
+
+    if (!status && data->mapped_ctx)
+        status = ctx->funcs->InitUserModeContext( handle, &ctx_data );
+    if (status)
+    {
+        EnterCriticalSection( &user_ctx_cs );
+        list_remove( &ctx->entry );
+        free( ctx );
+        LeaveCriticalSection( &user_ctx_cs );
+        return status;
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS NTAPI nego_SpMakeSignature( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
+    struct user_ctx *ctxt;
 
     TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)context;
-    if (ctxt->user_krb)
-    {
-        ret = ctxt->user_krb->MakeSignature( ctxt->handle_krb, quality_of_protection, message, message_seq_no );
-    }
-    else if (ctxt->user_ntlm)
-    {
-        ret = ctxt->user_ntlm->MakeSignature( ctxt->handle_ntlm, quality_of_protection, message, message_seq_no );
-    }
-    return ret;
+    if (!(ctxt = find_user_ctx( context ))) return SEC_E_INVALID_HANDLE;
+    return ctxt->funcs->MakeSignature( ctxt->handle, quality_of_protection, message, message_seq_no );
 }
 
 static NTSTATUS NTAPI nego_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
+    struct user_ctx *ctxt;
 
     TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)context;
-    if (ctxt->user_krb)
-    {
-        ret = ctxt->user_krb->VerifySignature( ctxt->handle_krb, message, message_seq_no, quality_of_protection );
-    }
-    else if (ctxt->user_ntlm)
-    {
-        ret = ctxt->user_ntlm->VerifySignature( ctxt->handle_ntlm, message, message_seq_no, quality_of_protection );
-    }
-    return ret;
+    if (!(ctxt = find_user_ctx( context ))) return SEC_E_INVALID_HANDLE;
+    return ctxt->funcs->VerifySignature( ctxt->handle, message, message_seq_no, quality_of_protection );
 }
 
 static NTSTATUS NTAPI nego_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
+    struct user_ctx *ctxt;
 
     TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-
-    ctxt = (struct sec_handle *)context;
-    if (ctxt->user_krb)
-    {
-        ret = ctxt->user_krb->SealMessage( ctxt->handle_krb, quality_of_protection, message, message_seq_no );
-    }
-    else if (ctxt->user_ntlm)
-    {
-        ret = ctxt->user_ntlm->SealMessage( ctxt->handle_ntlm, quality_of_protection, message, message_seq_no );
-    }
-    return ret;
+    if (!(ctxt = find_user_ctx( context ))) return SEC_E_INVALID_HANDLE;
+    return ctxt->funcs->SealMessage( ctxt->handle, quality_of_protection, message, message_seq_no );
 }
 
 static NTSTATUS NTAPI nego_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-    SECURITY_STATUS ret = SEC_E_INVALID_HANDLE;
-    struct sec_handle *ctxt;
+    struct user_ctx *ctxt;
 
     TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
+    if (!(ctxt = find_user_ctx( context ))) return SEC_E_INVALID_HANDLE;
+    return ctxt->funcs->UnsealMessage( ctxt->handle, message, message_seq_no, quality_of_protection );
+}
 
-    ctxt = (struct sec_handle *)context;
-    if (ctxt->user_krb)
+static NTSTATUS NTAPI nego_SpDeleteUserModeContext( LSA_SEC_HANDLE handle )
+{
+    struct user_ctx *user_ctx;
+
+    TRACE( "%Ix\n", handle );
+
+    EnterCriticalSection( &user_ctx_cs );
+    user_ctx = find_user_ctx( handle );
+    if (user_ctx)
     {
-        ret = ctxt->user_krb->UnsealMessage( ctxt->handle_krb, message, message_seq_no, quality_of_protection );
+        list_remove( &user_ctx->entry );
+        free( user_ctx );
     }
-    else if (ctxt->user_ntlm)
-    {
-        ret = ctxt->user_ntlm->UnsealMessage( ctxt->handle_ntlm, message, message_seq_no, quality_of_protection );
-    }
-    return ret;
+    LeaveCriticalSection( &user_ctx_cs );
+    return STATUS_SUCCESS;
 }
 
 static SECPKG_USER_FUNCTION_TABLE nego_user_table =
 {
     nego_SpInstanceInit,
-    NULL, /* SpInitUserModeContext */
+    nego_SpInitUserModeContext,
     nego_SpMakeSignature,
     nego_SpVerifySignature,
     nego_SpSealMessage,
@@ -531,7 +639,7 @@ static SECPKG_USER_FUNCTION_TABLE nego_user_table =
     NULL, /* SpGetContextToken */
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpCompleteAuthToken */
-    NULL, /* SpDeleteContext */
+    nego_SpDeleteUserModeContext,
     NULL, /* SpFormatCredentialsFn */
     NULL, /* SpMarshallSupplementalCreds */
     NULL, /* SpExportSecurityContext */
