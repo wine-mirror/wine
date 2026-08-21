@@ -618,7 +618,6 @@ static void test_VirtualAlloc(void)
             "got %ld\n", GetLastError());
         ok( !VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE ),
             "MEM_LARGE_PAGES succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "got %ld\n", GetLastError());
 
         SetLastError( 0xdeadbeef );
