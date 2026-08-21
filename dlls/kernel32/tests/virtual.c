@@ -30,6 +30,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "excpt.h"
+#include "ddk/wdm.h"
 #include "wine/test.h"
 
 #define NUM_THREADS 4
@@ -2425,6 +2426,7 @@ static void test_write_watch(void)
 
 static void test_largepages(void)
 {
+    const KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
     SIZE_T size;
 
     if (!pGetLargePageMinimum) {
@@ -2435,6 +2437,9 @@ static void test_largepages(void)
 
     ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024),
         "GetLargePageMinimum reports %Id size\n", size);
+
+    ok( user_shared_data->LargePageMinimum == size, "wrong large page minimum %lx / %Ix\n",
+        user_shared_data->LargePageMinimum, size );
 }
 
 #if defined(__i386__) || defined(__x86_64__)
