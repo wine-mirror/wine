@@ -580,6 +580,73 @@ static void test_VirtualAlloc(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %ld, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+
+    SetLastError( 0xdeadbeef );
+    ok( !VirtualAlloc( 0, 0x2000, MEM_PHYSICAL, PAGE_READWRITE ), "MEM_PHYSICAL succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+    SetLastError( 0xdeadbeef );
+    ok( !VirtualAlloc( 0, 0x2000, MEM_RESERVE | MEM_COMMIT | MEM_PHYSICAL, PAGE_READWRITE ),
+        "MEM_PHYSICAL succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+    addr1 = VirtualAlloc( 0, 0x2000, MEM_RESERVE | MEM_PHYSICAL, PAGE_READWRITE );
+    todo_wine
+    ok( addr1 != NULL, "MEM_PHYSICAL failed err %ld\n", GetLastError() );
+    if (addr1)
+    ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+
+    if (pGetLargePageMinimum && pGetLargePageMinimum())
+    {
+        SIZE_T size = pGetLargePageMinimum();
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, size, MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, size, MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_PRIVILEGE_NOT_HELD),
+            "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, size / 2, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_PRIVILEGE_NOT_HELD),
+            "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, size + size / 2, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_PRIVILEGE_NOT_HELD),
+            "got %ld\n", GetLastError());
+        ok( !VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_LARGE_PAGES succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "got %ld\n", GetLastError());
+
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, size, MEM_PHYSICAL | MEM_LARGE_PAGES, PAGE_READWRITE ),
+            "MEM_PHYSICAL | MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, 0x2000, MEM_RESERVE | MEM_PHYSICAL | MEM_LARGE_PAGES,
+                           PAGE_READWRITE ), "MEM_PHYSICAL | MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        ok( !VirtualAlloc( 0, 0x2000, MEM_RESERVE | MEM_COMMIT | MEM_PHYSICAL | MEM_LARGE_PAGES,
+                           PAGE_READWRITE ), "MEM_PHYSICAL | MEM_LARGE_PAGES succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        /* only 64K alignment is required */
+        addr1 = VirtualAlloc( 0, 0x10000, MEM_RESERVE | MEM_PHYSICAL | MEM_LARGE_PAGES, PAGE_READWRITE );
+        todo_wine
+        ok( addr1 != NULL || broken(!addr1 && GetLastError() == ERROR_INVALID_PARAMETER),
+            "MEM_PHYSICAL | MEM_LARGE_PAGES failed err %ld\n", GetLastError() );
+        if (addr1) ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+        SetLastError( 0xdeadbeef );
+        addr1 = VirtualAlloc( 0, 0x10000, MEM_RESERVE | MEM_COMMIT | MEM_PHYSICAL | MEM_LARGE_PAGES, PAGE_READWRITE );
+        todo_wine
+        ok( addr1 != NULL || broken(!addr1 && GetLastError() == ERROR_INVALID_PARAMETER),
+            "MEM_PHYSICAL | MEM_LARGE_PAGES failed err %ld\n", GetLastError() );
+        if (addr1) ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+    }
 }
 
 static void test_MapViewOfFile(void)
