@@ -40,6 +40,7 @@ static SYSTEM_INFO si;
 static BOOL is_wow64;
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
+static SIZE_T (WINAPI *pGetLargePageMinimum)(void);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
                                            const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
@@ -2422,6 +2423,20 @@ static void test_write_watch(void)
     VirtualFree( base, 0, MEM_RELEASE );
 }
 
+static void test_largepages(void)
+{
+    SIZE_T size;
+
+    if (!pGetLargePageMinimum) {
+        win_skip("No GetLargePageMinimum support.\n");
+        return;
+    }
+    size = pGetLargePageMinimum();
+
+    ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024),
+        "GetLargePageMinimum reports %Id size\n", size);
+}
+
 #if defined(__i386__) || defined(__x86_64__)
 
 static DWORD WINAPI stack_commit_func( void *arg )
@@ -4795,6 +4810,7 @@ START_TEST(virtual)
 
     pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
+    pGetLargePageMinimum = (void *)GetProcAddress(hkernel32, "GetLargePageMinimum");
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
     pNtCreateSection = (void *)GetProcAddress( hntdll, "NtCreateSection" );
@@ -4834,6 +4850,7 @@ START_TEST(virtual)
     test_IsBadWritePtr();
     test_IsBadCodePtr();
     test_write_watch();
+    test_largepages();
     test_PrefetchVirtualMemory();
     test_ReadProcessMemory();
     test_FlushProcessWriteBuffers();

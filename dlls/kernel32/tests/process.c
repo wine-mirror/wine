@@ -87,7 +87,6 @@ static BOOL   (WINAPI *pProcess32Next)(HANDLE, PROCESSENTRY32*);
 static BOOL   (WINAPI *pThread32First)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pThread32Next)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
-static SIZE_T (WINAPI *pGetLargePageMinimum)(void);
 static BOOL   (WINAPI *pGetSystemCpuSetInformation)(SYSTEM_CPU_SET_INFORMATION*,ULONG,ULONG*,HANDLE,ULONG);
 static BOOL   (WINAPI *pInitializeProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD, SIZE_T*);
 static BOOL   (WINAPI *pUpdateProcThreadAttribute)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD_PTR, void *,SIZE_T,void*,SIZE_T*);
@@ -275,7 +274,6 @@ static BOOL init(void)
     pThread32First = (void *)GetProcAddress(hkernel32, "Thread32First");
     pThread32Next = (void *)GetProcAddress(hkernel32, "Thread32Next");
     pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
-    pGetLargePageMinimum = (void *)GetProcAddress(hkernel32, "GetLargePageMinimum");
     pGetSystemCpuSetInformation = (void *)GetProcAddress(hkernel32, "GetSystemCpuSetInformation");
     pInitializeProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "InitializeProcThreadAttributeList");
     pUpdateProcThreadAttribute = (void *)GetProcAddress(hkernel32, "UpdateProcThreadAttribute");
@@ -4501,19 +4499,6 @@ static void test_GetSystemCpuSetInformation(void)
     free(info);
 }
 
-static void test_largepages(void)
-{
-    SIZE_T size;
-
-    if (!pGetLargePageMinimum) {
-        win_skip("No GetLargePageMinimum support.\n");
-        return;
-    }
-    size = pGetLargePageMinimum();
-
-    ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024), "GetLargePageMinimum reports %Id size\n", size);
-}
-
 struct proc_thread_attr
 {
     DWORD_PTR attr;
@@ -5845,7 +5830,6 @@ START_TEST(process)
     test_session_info();
     test_GetLogicalProcessorInformationEx();
     test_GetSystemCpuSetInformation();
-    test_largepages();
     test_ProcThreadAttributeList();
     test_SuspendProcessState();
     test_SuspendProcessNewThread();
