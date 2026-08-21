@@ -389,15 +389,12 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
     if (!hdc) return;
     window = X11DRV_get_whole_window( toplevel );
 
-    if (NtUserGetPresentRect( toplevel, &rect, -1 /* raw dpi */ ))
-    {
-        region = 0; /* window is exclusive fullscreen, ignore everything else */
-        if (toplevel != hwnd) return; /* toplevel is exclusive fullscreen, don't present */
-    }
-    else
-    {
-        region = get_dc_monitor_region( hwnd, hdc ); /* otherwise use the window region for clipping rules */
-    }
+    /* if window is exclusive fullscreen, ignore the window region clipping rules */
+    if (hwnd == toplevel && NtUserGetPresentRect( toplevel, &rect, -1 /* raw dpi */ )) region = 0;
+    else region = get_dc_monitor_region( hwnd, hdc );
+
+    TRACE( "hwnd %p %s to toplevel %p %s region %p\n", hwnd, wine_dbgstr_rect(&rect_src),
+           toplevel, wine_dbgstr_rect(&rect_dst), region );
 
     if (get_dc_drawable( surface->hdc_dst, &rect ) != window || !EqualRect( &rect, &rect_dst ))
         set_dc_drawable( surface->hdc_dst, window, &rect_dst, IncludeInferiors );
