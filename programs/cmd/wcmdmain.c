@@ -1338,12 +1338,15 @@ static void redirection_dispose_list(CMD_REDIRECTION *redir)
 
 static CMD_REDIRECTION *redirection_create_file(enum CMD_REDIRECTION_KIND kind, unsigned fd, const WCHAR *file)
 {
-    size_t len = wcslen(file) + 1;
+    size_t len = (file ? wcslen(file) : 0) + 1;
     CMD_REDIRECTION *redir = xalloc(offsetof(CMD_REDIRECTION, file[len]));
 
     redir->kind = kind;
     redir->fd = fd;
-    memcpy(redir->file, file, len * sizeof(WCHAR));
+    if (file)
+        memcpy(redir->file, file, len * sizeof(WCHAR));
+    else
+        redir->file[0] = L'\0';
     redir->next = NULL;
 
     return redir;
@@ -3243,6 +3246,7 @@ static void lexer_push_command(struct node_builder *builder,
         for (pos = redirs; pos; )
         {
             WCHAR *p = find_chr(pos, last, L"<>");
+            size_t filename_length;
             WCHAR *filename;
 
             if (!p) break;
@@ -3260,8 +3264,10 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p, 0, NULL, FALSE);
+                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length) ?
+                        WCMD_dup_unquoted(filename, filename_length) : NULL;
                     tkn_pmt.redirection = redirection_create_file(REDIR_READ_FROM, 0, filename);
+                    free(filename);
                 }
             }
             else
@@ -3278,8 +3284,10 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p, 0, NULL, FALSE);
+                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length) ?
+                        WCMD_dup_unquoted(filename, filename_length) : NULL;
                     tkn_pmt.redirection = redirection_create_file(op, fd, filename);
+                    free(filename);
                 }
             }
             pos = p + 1;
