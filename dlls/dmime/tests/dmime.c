@@ -1661,6 +1661,14 @@ static void test_midi(void)
         0x3c,                   /* event data, middle C */
         0x0,
     };
+    DMUS_OBJECTDESC collection_desc =
+    {
+        .dwSize = sizeof(DMUS_OBJECTDESC),
+        .dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS,
+        .guidClass = CLSID_DirectMusicCollection,
+        .guidObject = GUID_DefaultGMCollection,
+    };
+    IDirectMusicCollection *collection = NULL;
     IDirectMusicSegment8 *segment = NULL;
     IDirectMusicTrack *track = NULL;
     IDirectMusicLoader8 *loader;
@@ -1674,6 +1682,7 @@ static void test_midi(void)
     WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
     HRESULT hr;
     ULONG ret;
+    ULONG ref;
     DWORD track_length, trace2_length;
     MUSIC_TIME next;
     DMUS_PMSG *msg;
@@ -1709,6 +1718,11 @@ static void test_midi(void)
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicLoader8, (void **)&loader);
     ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicLoader8_GetObject(loader, &collection_desc, &IID_IDirectMusicCollection,
+            (void **)&collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
     hr = IDirectMusicLoader8_LoadObjectFromFile(loader, &CLSID_DirectMusicSegment,
             &IID_IDirectMusicSegment, test_mid, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -2020,6 +2034,8 @@ static void test_midi(void)
     IDirectMusicTool_Release(tool);
     IDirectMusicSegment_Release(segment);
     IDirectMusicLoader8_Release(loader);
+    ref = IDirectMusicCollection_Release(collection);
+    todo_wine ok(!ref, "collection ref count got %ld expected 0\n", ref);
 }
 
 static void _add_track(IDirectMusicSegment8 *seg, REFCLSID class, const char *name, DWORD group)
