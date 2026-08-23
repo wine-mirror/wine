@@ -624,11 +624,10 @@ static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigne
  * after output[].
  */
 void downsample_sse(LONG64 opos_num, DWORD opos_num_step, float rem_float, float rem_step_float,
-        float firgain_float, UINT required_input, float *input, float *output)
+        UINT required_input, float *input, float *output)
 {
     __m128 rem = _mm_set1_ps(rem_float);
     __m128 rem_step = _mm_set1_ps(rem_step_float);
-    __m128 firgain = _mm_set_ss(firgain_float);
     __m128 one = _mm_set1_ps(1.0f);
     int j;
 
@@ -638,8 +637,7 @@ void downsample_sse(LONG64 opos_num, DWORD opos_num_step, float rem_float, float
         UINT idx = ~(DWORD)opos_num >> (FREQ_ADJUST_SHIFT - FIR_STEP_SHIFT) << FIR_WIDTH_SHIFT;
         __m128 rem_inv = _mm_sub_ps(one, rem);
 
-        __m128 input_value_ss = _mm_mul_ss(_mm_load_ss(&input[j]), firgain);
-        __m128 input_value = _mm_shuffle_ps(input_value_ss, input_value_ss, 0);
+        __m128 input_value = _mm_load1_ps(&input[j]);
         __m128 input_value0 = _mm_mul_ps(rem_inv, input_value);
         __m128 input_value1 = _mm_mul_ps(rem, input_value);
 
@@ -665,8 +663,8 @@ void downsample_sse(LONG64 opos_num, DWORD opos_num_step, float rem_float, float
  * Note that this function will overwrite up to FIR_WIDTH - 1 frames before and
  * after output[].
  */
-static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgain,
-        UINT required_input, float *input, float *output)
+static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, UINT required_input,
+        float *input, float *output)
 {
     /* Both opos_num and rem are calculated in an incremental fashion,
      * independently of each other. This improves performance a bit, presumably
@@ -696,7 +694,7 @@ static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgai
     float rem_step = FIXED_0_32_TO_FLOAT(-opos_num_step << FIR_STEP_SHIFT);
 
 #ifdef __SSE__
-    downsample_sse(opos_num, opos_num_step, rem, rem_step, firgain, required_input, input, output);
+    downsample_sse(opos_num, opos_num_step, rem, rem_step, required_input, input, output);
 #else
     int j;
     for (j = 0; j < required_input; ++j) {
@@ -704,7 +702,7 @@ static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgai
         int opos = (int)(opos_num >> FREQ_ADJUST_SHIFT) - FIR_WIDTH;
         UINT idx = ~(DWORD)opos_num >> (FREQ_ADJUST_SHIFT - FIR_STEP_SHIFT) << FIR_WIDTH_SHIFT;
 
-        float input_value = input[j] * firgain;
+        float input_value = input[j];
         float input_value0 = (1.0f - rem) * input_value;
         float input_value1 = rem * input_value;
 
@@ -822,7 +820,7 @@ static void upsample(DWORD freq_adjust_num, DWORD freq_acc_start, UINT count, fl
  * after output[].
  */
 static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_acc_start,
-        float firgain, UINT required_input, UINT count, float *input, float *output)
+        UINT required_input, UINT count, float *input, float *output)
 {
     if (freq_adjust_num > freq_adjust_den) {
         /* Take a reciprocal of the resampling ratio and convert it to a 0.32
@@ -835,8 +833,7 @@ static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_ac
                 + freq_adjust_den - 1) / freq_adjust_den;
 
         memset(output, 0, count * sizeof(float));
-        downsample(freq_adjust_fixed_den, freq_acc_fixed_start, firgain, required_input, input,
-                output);
+        downsample(freq_adjust_fixed_den, freq_acc_fixed_start, required_input, input, output);
     } else {
         /* Convert the resampling ratio to a 0.32 fixed point. Round down to
          * prevent input buffer overflow. */
@@ -854,6 +851,7 @@ static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_ac
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, float *vols, float *mix_buffer,
         UINT count, DWORD *freqAccNum)
 {
+    float vols_firgain[DS_MAX_CHANNELS];
     UINT channel;
 
     LONG64 freqAcc_start = *freqAccNum;
@@ -945,11 +943,14 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, float *vols, float *
         memcpy(channel_input_tail, channel_input + max_ipos, dsb->input_delay * sizeof(float));
 
         resample(dsb->freqAdjustNum, dsb->freqAdjustDen, freqAcc_equalized % dsb->freqAdjustDen,
-                dsb->firgain, required_input, count,
-                channel_input + freqAcc_equalized / dsb->freqAdjustDen, channel_output);
+                required_input, count, channel_input + freqAcc_equalized / dsb->freqAdjustDen,
+                channel_output);
     }
 
-    put_samples(dsb, count, channels, count + FIR_WIDTH - 1, vols, output, mix_buffer);
+    for (channel = 0; channel < DS_MAX_CHANNELS; ++channel)
+        vols_firgain[channel] = vols[channel] * dsb->firgain;
+
+    put_samples(dsb, count, channels, count + FIR_WIDTH - 1, vols_firgain, output, mix_buffer);
 
     dsb->input_tail_valid = TRUE;
 
