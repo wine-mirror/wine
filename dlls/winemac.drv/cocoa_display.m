@@ -21,6 +21,7 @@
 #include "config.h"
 
 #import <AppKit/AppKit.h>
+#define NO_CFPLUGIN
 #import <IOKit/graphics/IOGraphicsLib.h>
 #import <Metal/Metal.h>
 #include <dlfcn.h>
