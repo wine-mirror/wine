@@ -27,3 +27,5 @@ extern HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerforman
 HRESULT band_add_instrument(IDirectMusicBand *iface, DMUS_IO_INSTRUMENT *instrument);
 
 extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
+extern HRESULT band_track_add_band(IDirectMusicTrack *iface, MUSIC_TIME time,
+        MUSIC_TIME time_physical, IDirectMusicBand *band);
