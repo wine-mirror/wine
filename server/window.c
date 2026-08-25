@@ -234,6 +234,16 @@ static bool is_rtl( const struct window *win )
     return win && (win->ex_style & WS_EX_LAYOUTRTL);
 }
 
+static bool has_clipsiblings( const struct window *win )
+{
+    return win->style & WS_CLIPSIBLINGS;
+}
+
+static bool has_clipchildren( const struct window *win )
+{
+    return win->style & WS_CLIPCHILDREN;
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -1348,7 +1358,7 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
         while (!is_desktop_window( win->parent ))
         {
             /* we don't clip out top-level siblings as that's up to the native windowing system */
-            if (win->style & WS_CLIPSIBLINGS)
+            if (has_clipsiblings( win ))
             {
                 if (!clip_children( win->parent, win, region, 0, 0 )) goto error;
                 if (is_region_empty( region )) break;
@@ -1667,7 +1677,7 @@ static void validate_parents( struct window *child )
         offset_x += win->client_rect.left - win->window_rect.left;
         offset_y += win->client_rect.top - win->window_rect.top;
 
-        if (win->update_region && !(win->style & WS_CLIPCHILDREN))
+        if (win->update_region && !has_clipchildren( win ))
         {
             if (!tmp && !(tmp = create_empty_region())) return;
             offset_region( child->update_region, offset_x, offset_y );
@@ -1738,7 +1748,7 @@ static void redraw_window( struct window *win, struct region *region, unsigned i
 
     if (flags & RDW_NOCHILDREN) return;
     if (is_minimized( win )) return;
-    if ((win->style & WS_CLIPCHILDREN) && !(flags & RDW_ALLCHILDREN)) return;
+    if (has_clipchildren( win ) && !(flags & RDW_ALLCHILDREN)) return;
 
     if (!(tmp = crop_region_to_win_rect( win, region, 0 ))) return;
 
@@ -1816,7 +1826,7 @@ static unsigned int get_child_update_flags( struct window *win, struct window *f
      * here we only want to repaint children of windows that clip them, others
      * need to wait for WM_PAINT to be done in the parent first.
      */
-    if (!(flags & UPDATE_ALLCHILDREN) && !(win->style & WS_CLIPCHILDREN)) return 0;
+    if (!(flags & UPDATE_ALLCHILDREN) && !has_clipchildren( win )) return 0;
 
     LIST_FOR_EACH_ENTRY( ptr, &win->children, struct window, entry )
     {
@@ -1859,14 +1869,13 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
     {
         for (ptr = win->parent; ptr; ptr = ptr->parent)
         {
-            if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr ))
-                return 0;
+            if (!has_clipchildren( ptr ) && win_needs_repaint( ptr )) return 0;
         }
         if (from_child && !(flags & UPDATE_ALLCHILDREN))
         {
             for (ptr = from_sibling ? from_sibling : from_child; ptr; ptr = ptr->parent)
             {
-                if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr )) from_sibling = ptr;
+                if (!has_clipchildren( ptr ) && win_needs_repaint( ptr )) from_sibling = ptr;
                 if (ptr == win) break;
             }
         }
@@ -3082,7 +3091,7 @@ DECL_HANDLER(get_update_region)
             free_region( region );
             return;
         }
-        if ((flags & UPDATE_CLIPCHILDREN) && (win->style & WS_CLIPCHILDREN))
+        if ((flags & UPDATE_CLIPCHILDREN) && (has_clipchildren( win )))
             clip_children( win, NULL, region, win->client_rect.left - win->window_rect.left,
                            win->client_rect.top - win->window_rect.top );
         map_win_region_to_screen( win, region );
