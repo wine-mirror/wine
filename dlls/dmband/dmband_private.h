@@ -36,9 +36,4 @@
 #include "dmusicf.h"
 #include "dmusics.h"
 
-/*****************************************************************************
- * ClassFactory
- */
-extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
-
 #endif	/* __WINE_DMBAND_PRIVATE_H */

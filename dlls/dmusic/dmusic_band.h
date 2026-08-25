@@ -25,3 +25,5 @@ extern HRESULT band_connect_to_collection(IDirectMusicBand *iface, IDirectMusicC
 extern HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *performance,
         IDirectMusicGraph *graph, MUSIC_TIME time, DWORD track_id);
 HRESULT band_add_instrument(IDirectMusicBand *iface, DMUS_IO_INSTRUMENT *instrument);
+
+extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
