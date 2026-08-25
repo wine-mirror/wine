@@ -219,6 +219,16 @@ static bool is_clickable( const struct window *win )
     return !is_minimized( win ) && !is_disabled( win );
 }
 
+static bool is_transparent( const struct window *win )
+{
+    return win && (win->ex_style & WS_EX_TRANSPARENT);
+}
+
+static bool is_layered( const struct window *win )
+{
+    return win->ex_style & WS_EX_LAYERED;
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -928,7 +938,7 @@ int is_window_transparent( user_handle_t window )
 {
     struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
     if (!win) return 0;
-    return (win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT);
+    return is_layered( win ) && is_transparent( win );
 }
 
 static bool is_window_using_parent_dc( struct window *win )
@@ -951,8 +961,7 @@ static int is_point_in_window( struct window *win, int *x, int *y, struct ratio 
 {
     if (!is_visible( win )) return 0;
     if (is_disabled( win ) && is_child( win )) return 0;
-    if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
-        return 0;  /* transparent */
+    if (is_layered( win ) && is_transparent( win )) return 0;
     map_dpi_point( win, x, y, dpi, get_window_dpi( win ) );
     if (!point_in_rect( &win->visible_rect, *x, *y ))
         return 0;  /* not in window */
@@ -1154,13 +1163,12 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
         if (ret) break;
     }
 
-    if (ret && (ret->ex_style & WS_EX_TRANSPARENT))
+    if (is_transparent( ret ))
     {
         /* transparent window, check for non-transparent sibling to paint first */
         for (ptr = get_next_window(ret); ptr; ptr = get_next_window(ptr))
         {
-            if (!is_visible( ptr )) continue;
-            if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+            if (!is_visible( ptr ) || is_transparent( ptr )) continue;
             if (ptr->thread != thread) continue;
             if (win_needs_repaint( ptr )) return ptr;
         }
@@ -1236,8 +1244,7 @@ static struct region *clip_children( struct window *parent, struct window *last,
     LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
     {
         if (ptr == last) break;
-        if (!is_visible( ptr )) continue;
-        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+        if (!is_visible( ptr ) || is_transparent( ptr )) continue;
         set_region_rect( tmp, &ptr->visible_rect );
         if (ptr->win_region && !intersect_window_region( tmp, ptr ))
         {
@@ -1374,9 +1381,7 @@ static struct region *clip_pixel_format_children( struct window *parent, struct 
 
     LIST_FOR_EACH_ENTRY_REV( ptr, &parent->children, struct window, entry )
     {
-        if (!is_visible( ptr )) continue;
-        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
-
+        if (!is_visible( ptr ) || is_transparent( ptr )) continue;
         /* add the visible rect */
         set_region_rect( clip, &ptr->visible_rect );
         if (ptr->win_region && !intersect_window_region( clip, ptr )) break;
@@ -2242,7 +2247,7 @@ static void set_window_ex_style( struct window *win, unsigned int ex_style )
     /* WS_EX_TOPMOST can only be changed for unlinked windows */
     if (!win->is_linked) win->ex_style = ex_style;
     else win->ex_style = (ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
-    if (!(win->ex_style & WS_EX_LAYERED)) win->is_layered = 0;
+    if (!is_layered( win )) win->is_layered = 0;
 }
 
 
@@ -2760,7 +2765,7 @@ DECL_HANDLER(set_window_pos)
     }
 
     /* windows that use UpdateLayeredWindow don't trigger repaints */
-    if ((win->ex_style & WS_EX_LAYERED) && !win->is_layered) flags |= SWP_NOREDRAW;
+    if (is_layered( win ) && !win->is_layered) flags |= SWP_NOREDRAW;
 
     /* window rectangle must be ordered properly */
     if (req->window.right < req->window.left || req->window.bottom < req->window.top)
@@ -3115,8 +3120,7 @@ void set_window_rect_visible( user_handle_t window, struct rectangle rect )
     LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
     {
         if (ptr == win) break;
-        if (!is_visible( ptr )) continue;
-        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+        if (!is_visible( ptr ) || is_transparent( ptr )) continue;
         if (ptr->is_layered && (ptr->layered_flags & LWA_COLORKEY)) continue;
         tmp = rect;
         map_dpi_rect( win, &tmp, get_window_dpi( win->parent ), get_window_dpi( win ) );
@@ -3339,7 +3343,7 @@ DECL_HANDLER(set_window_layered_info)
 
     if (!win) return;
 
-    if (win->ex_style & WS_EX_LAYERED)
+    if (is_layered( win ))
     {
         int was_layered = win->is_layered;
 
