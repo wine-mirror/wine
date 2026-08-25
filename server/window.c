@@ -229,6 +229,11 @@ static bool is_layered( const struct window *win )
     return win->ex_style & WS_EX_LAYERED;
 }
 
+static bool is_rtl( const struct window *win )
+{
+    return win && (win->ex_style & WS_EX_LAYOUTRTL);
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -1993,7 +1998,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     if (is_toplevel( win )) set_window_monitor_dpi( win );
 
     /* keep children at the same position relative to top right corner when the parent is mirrored */
-    if (win->ex_style & WS_EX_LAYOUTRTL)
+    if (is_rtl( win ))
     {
         struct window *child;
         int old_size = old_client_rect.right - old_client_rect.left;
@@ -2782,7 +2787,7 @@ DECL_HANDLER(set_window_pos)
     else surface_rect = visible_rect;
     if (get_req_data_size() >= 3 * sizeof(struct rectangle)) valid_rect = extra_rects[2];
     else valid_rect = empty_rect;
-    if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
+    if (is_rtl( win->parent ))
     {
         mirror_rect( &win->parent->client_rect, &window_rect );
         mirror_rect( &win->parent->client_rect, &visible_rect );
@@ -2830,7 +2835,7 @@ DECL_HANDLER(get_window_rectangles)
         offset_rect( &reply->window, -win->client_rect.left, -win->client_rect.top );
         offset_rect( &reply->client, -win->client_rect.left, -win->client_rect.top );
         offset_rect( &reply->visible, -win->client_rect.left, -win->client_rect.top );
-        if (win->ex_style & WS_EX_LAYOUTRTL)
+        if (is_rtl( win ))
         {
             mirror_rect( &win->client_rect, &reply->window );
             mirror_rect( &win->client_rect, &reply->visible );
@@ -2839,14 +2844,14 @@ DECL_HANDLER(get_window_rectangles)
     case COORDS_WINDOW:
         offset_rect( &reply->window, -win->window_rect.left, -win->window_rect.top );
         offset_rect( &reply->client, -win->window_rect.left, -win->window_rect.top );
-        if (win->ex_style & WS_EX_LAYOUTRTL)
+        if (is_rtl( win ))
         {
             mirror_rect( &win->window_rect, &reply->client );
             mirror_rect( &win->window_rect, &reply->visible );
         }
         break;
     case COORDS_PARENT:
-        if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
+        if (is_rtl( win->parent ))
         {
             mirror_rect( &win->parent->client_rect, &reply->window );
             mirror_rect( &win->parent->client_rect, &reply->client );
@@ -2907,7 +2912,7 @@ DECL_HANDLER(get_windows_offset)
     if (req->from)
     {
         if (!(win = get_window( req->from ))) return;
-        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_from = 1;
+        if (is_rtl( win )) mirror_from = 1;
         x = mirror_from ? win->client_rect.right - win->client_rect.left : 0;
         y = 0;
         client_to_screen( win, &x, &y );
@@ -2918,7 +2923,7 @@ DECL_HANDLER(get_windows_offset)
     if (req->to)
     {
         if (!(win = get_window( req->to ))) return;
-        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_to = 1;
+        if (is_rtl( win )) mirror_to = 1;
         x = mirror_to ? win->client_rect.right - win->client_rect.left : 0;
         y = 0;
         client_to_screen( win, &x, &y );
@@ -2991,7 +2996,7 @@ DECL_HANDLER(get_window_region)
 
     if (!win->win_region) return;
 
-    if (win->ex_style & WS_EX_LAYOUTRTL)
+    if (is_rtl( win ))
     {
         struct region *region = create_empty_region();
 
@@ -3022,7 +3027,7 @@ DECL_HANDLER(set_window_region)
     {
         if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
             return;
-        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_region( &win->window_rect, region );
+        if (is_rtl( win )) mirror_region( &win->window_rect, region );
     }
     set_window_region( win, region, req->redraw );
 }
@@ -3171,7 +3176,7 @@ DECL_HANDLER(redraw_window)
         {
             if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
                 return;
-            if (win->ex_style & WS_EX_LAYOUTRTL) mirror_region( &win->client_rect, region );
+            if (is_rtl( win )) mirror_region( &win->client_rect, region );
         }
     }
 
