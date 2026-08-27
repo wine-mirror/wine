@@ -477,7 +477,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     {
         fputws( L"wmic:root\\cli>", stdout );
 
-        while (fgetws( cmd, sizeof(cmd), stdin ) != NULL)
+        while (fgetws( cmd, ARRAY_SIZE(cmd), stdin ))
         {
             const WCHAR *stripped;
 
