@@ -33,16 +33,6 @@
 #define GetProcessInformation MacGetProcessInformation
 #define LoadResource MacLoadResource
 #define Polygon MacPolygon
-#ifdef __i386__
-#  define CheckMenuItem MacCheckMenuItem
-#  define DeleteMenu MacDeleteMenu
-#  define DrawMenuBar MacDrawMenuBar
-#  define EnableMenuItem MacEnableMenuItem
-#  define GetMenu MacGetMenu
-#  define IsWindowVisible MacIsWindowVisible
-#  define MoveWindow MacMoveWindow
-#  define ShowWindow MacShowWindow
-#endif
 
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
@@ -52,16 +42,6 @@
 #undef GetProcessInformation
 #undef LoadResource
 #undef Polygon
-#ifdef __i386__
-#  undef CheckMenuItem
-#  undef DeleteMenu
-#  undef DrawMenuBar
-#  undef EnableMenuItem
-#  undef GetMenu
-#  undef IsWindowVisible
-#  undef MoveWindow
-#  undef ShowWindow
-#endif
 
 #include <pthread.h>
 #include <stdbool.h>

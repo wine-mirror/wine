@@ -194,16 +194,6 @@ static inline BOOL stage_manager_enabled(void)
 @end
 
 
-#ifndef MAC_OS_X_VERSION_10_14
-@protocol NSViewLayerContentScaleDelegate <NSObject>
-@optional
-
-    - (BOOL) layer:(CALayer*)layer shouldInheritContentsScale:(CGFloat)newScale fromWindow:(NSWindow*)window;
-
-@end
-#endif
-
-
 @interface CAShapeLayer (WineShapeMaskExtensions)
 
 @property(readonly, nonatomic, getter=isEmptyShaped) BOOL emptyShaped;
@@ -613,22 +603,6 @@ static inline BOOL stage_manager_enabled(void)
         [self layer].contentsScale = mode ? 2.0 : 1.0;
         [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
         [self layer].magnificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
-
-        /* On macOS 10.13 and earlier, the desired minificationFilter seems to be
-         * ignored and "nearest" filtering is used, which looks terrible.
-         * Enabling rasterization seems to work around this, only enable
-         * it when there may be down-scaling (retina mode enabled).
-         */
-        if (floor(NSAppKitVersionNumber) < 1671 /*NSAppKitVersionNumber10_14*/)
-        {
-            if (mode)
-            {
-                [self layer].shouldRasterize = YES;
-                [self layer].rasterizationScale = 2.0;
-            }
-            else
-                [self layer].shouldRasterize = NO;
-        }
     }
 
     - (void) setRetinaMode:(BOOL)mode

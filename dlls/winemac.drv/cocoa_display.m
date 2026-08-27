@@ -201,10 +201,10 @@ static int macdrv_get_gpu_info_from_mtldevice(struct macdrv_gpu* gpu, id<MTLDevi
     int ret;
     if ((ret = macdrv_get_gpu_info_from_registry_id(gpu, [device registryID])))
         return ret;
-#if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+
     /* Apple GPUs aren't PCI devices and therefore have no device ID
      * Use the Metal GPUFamily as the device ID */
-    if (!gpu->device_id && [device respondsToSelector:@selector(supportsFamily:)] && [device supportsFamily:MTLGPUFamilyApple1])
+    if (!gpu->device_id && [device supportsFamily:MTLGPUFamilyApple1])
     {
         MTLGPUFamily highest = MTLGPUFamilyApple1;
         while (1)
@@ -218,7 +218,6 @@ static int macdrv_get_gpu_info_from_mtldevice(struct macdrv_gpu* gpu, id<MTLDevi
         }
         gpu->device_id = highest;
     }
-#endif
     return 0;
 }
 
@@ -240,9 +239,6 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
     int primary_index = 0, i;
     int gpu_count = 0;
 
-    /* Test if Metal is available */
-    if (&MTLCopyAllDevices == NULL)
-        return -1;
     NSArray<id<MTLDevice>>* devices = [MTLCopyAllDevices() autorelease];
     if (!devices.count)
         return -1;
@@ -312,10 +308,6 @@ static int macdrv_get_gpu_info_from_display_id_using_metal(struct macdrv_gpu* gp
 @autoreleasepool
 {
     id<MTLDevice> device;
-
-    /* Test if Metal is available */
-    if (&CGDirectDisplayCopyCurrentMetalDevice == NULL)
-        return -1;
 
     device = [CGDirectDisplayCopyCurrentMetalDevice(display_id) autorelease];
     if (device)
@@ -969,11 +961,7 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
                     CFRelease(edid_data);
                 }
 
-                monitors[monitor_count].hdr_enabled = false;
-#if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
-                if (@available(macOS 10.15, *))
-                    monitors[monitor_count].hdr_enabled = (screen.maximumPotentialExtendedDynamicRangeColorComponentValue > 1.0) ? true : false;
-#endif
+                monitors[monitor_count].hdr_enabled = (screen.maximumPotentialExtendedDynamicRangeColorComponentValue > 1.0) ? true : false;
                 monitor_count++;
                 break;
             }

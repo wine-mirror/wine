@@ -27,15 +27,6 @@
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
 
-#if !defined(MAC_OS_X_VERSION_10_14) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_14
-/* For older SDKs, #define the new names of constants deprecated/renamed in macOS 10.14. */
-#define NSBitmapImageFileTypeBMP        NSBMPFileType
-#define NSBitmapImageFileTypeGIF        NSGIFFileType
-#define NSBitmapImageFileTypeJPEG       NSJPEGFileType
-#define NSBitmapImageFileTypePNG        NSPNGFileType
-#define NSBitmapImageFileTypeTIFF       NSTIFFFileType
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 static int owned_change_count = -1;
