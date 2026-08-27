@@ -668,7 +668,7 @@ LONG WINAPI SCardGetStatusChangeW( SCARDCONTEXT context, DWORD timeout, SCARD_RE
     params.timeout = timeout;
     params.states = states_utf8;
     params.count = count;
-    if (!(ret = UNIX_CALL( scard_get_status_change, &params )))
+    if (!(ret = UNIX_CALL( scard_get_status_change, &params )) && states)
     {
         map_states_out( states_utf8, (SCARD_READERSTATEA *)states, count );
     }
