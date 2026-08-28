@@ -109,6 +109,30 @@ static void check_dmus_note_pmsg_(int line, DMUS_NOTE_PMSG *msg, MUSIC_TIME time
     ok_(__FILE__, line)(!msg->cTranspose, "got cTranspose %u\n", msg->cTranspose);
 }
 
+#define check_downloaded_instrument(performance, collection, patch, expected, todo) \
+        check_downloaded_instrument_(__LINE__, performance, collection, patch, expected, todo)
+static void check_downloaded_instrument_(int line, IDirectMusicPerformance *performance,
+        IDirectMusicCollection *collection, DWORD patch, BOOL expected, BOOL todo)
+{
+    IDirectMusicDownloadedInstrument *downloaded;
+    IDirectMusicInstrument *instrument;
+    IDirectMusicPort *port;
+    DWORD channel;
+    DWORD group;
+    HRESULT hr;
+
+    hr = IDirectMusicCollection_GetInstrument(collection, patch, &instrument);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_DownloadInstrument(performance, instrument, 0, &downloaded, NULL,
+            0, &port, &group, &channel);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    todo_wine_if(todo) ok_(__FILE__, line)(hr == (expected ? S_FALSE : S_OK), "got %#lx\n", hr);
+    IDirectMusicDownloadedInstrument_Release(downloaded);
+    IDirectMusicPort_Release(port);
+    IDirectMusicInstrument_Release(instrument);
+}
+
 static void load_resource(const WCHAR *name, WCHAR *filename)
 {
     static WCHAR path[MAX_PATH];
@@ -1681,6 +1705,7 @@ static void test_midi(void)
     ULARGE_INTEGER position = { .QuadPart = 0 };
     WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
     HRESULT hr;
+    DWORD chan;
     ULONG ret;
     ULONG ref;
     DWORD track_length, trace2_length;
@@ -2030,6 +2055,255 @@ static void test_midi(void)
         hr = IDirectMusicPerformance_FreePMsg(performance, msg);
         ok(hr == S_OK, "got %#lx\n", hr);
     }
+
+    hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* download the segment and check the downloaded instruments */
+
+    hr = IDirectMusicPerformance_AddPort(performance, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, TRUE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    start_time += 1000;
+    hr = IDirectMusicPerformance_PlaySegment(performance, (IDirectMusicSegment *)segment, 0, start_time, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, TRUE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicPerformance_Release(performance);
+    IDirectMusicTool_Release(tool);
+
+    /* setting GUID_StandardMIDIFile enables the default bands */
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_StandardMIDIFile, -1, DMUS_SEG_ALLTRACKS, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+    /* now play the segment, and check produced messages */
+    hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    start_time += 1000;
+    hr = IDirectMusicPerformance_PlaySegment(performance, (IDirectMusicSegment *)segment, 0, start_time, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx, expected DIRTY\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    for (chan = 0; chan < 16; ++chan)
+    {
+        if (chan == 1)
+            continue;
+
+        ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+        todo_wine_if(chan >= 8) ok(!ret, "got %#lx\n", ret);
+        if (ret)
+            break;
+        todo_wine_if(chan) ok(msg->dwType == DMUS_PMSGT_PATCH, "got msg type %#lx, expected PATCH\n", msg->dwType);
+        todo_wine ok(msg->dwPChannel == chan, "got pchannel %lu, expected %lu\n", msg->dwPChannel, chan);
+        todo_wine ok(msg->mtTime == start_time, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time);
+        if (msg->dwType != DMUS_PMSGT_PATCH)
+            continue;
+        patch = (DMUS_PATCH_PMSG *)msg;
+        todo_wine ok(!patch->byInstrument, "got instrument %#x, expected 0\n", patch->byInstrument);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_PATCH, "got msg type %#lx, expected PATCH\n", msg->dwType);
+        ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
+        ok(msg->mtTime == start_time + 23, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 23);
+        patch = (DMUS_PATCH_PMSG *)msg;
+        ok(patch->byInstrument == 0x30, "got instrument %#x, expected 0x30\n", patch->byInstrument);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
+        ok(msg->mtTime == start_time + 24, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 24);
+        note = (DMUS_NOTE_PMSG *)msg;
+        ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
+        ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
+        ok(note->mtDuration == 600, "got mtDuration %lu, expected 600\n", note->mtDuration);
+        ok(note->dwPChannel == 1, "got pchannel %lu, expected 1\n", note->dwPChannel);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
+        ok(msg->mtTime == start_time + 49, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 49);
+        note = (DMUS_NOTE_PMSG *)msg;
+        ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
+        ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
+        ok(note->mtDuration == 50, "got mtDuration %lu, expected 50\n", note->mtDuration);
+        ok(note->dwPChannel == 1, "got pchannel %lu, expected 1\n", note->dwPChannel);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
+        ok(msg->mtTime == start_time + 74, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 74);
+        note = (DMUS_NOTE_PMSG *)msg;
+        ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
+        ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
+        ok(note->mtDuration == 1, "got mtDuration %lu, expected 1\n", note->mtDuration);
+        ok(note->dwPChannel == 1, "got pchannel %lu, expected 1\n", note->dwPChannel);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
+        ok(msg->mtTime == start_time + 124, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 124);
+        note = (DMUS_NOTE_PMSG *)msg;
+        ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
+        ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
+        ok(note->mtDuration == 1, "got mtDuration %ld, expected 1\n", note->mtDuration);
+        ok(note->dwPChannel == 1, "got pchannel %lu, expected 1\n", note->dwPChannel);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+        ok(msg->dwType == DMUS_PMSGT_MIDI, "got msg type %#lx, expected MIDI\n", msg->dwType);
+        ok(msg->mtTime == start_time + 649, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 649);
+        ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
+        midi = (DMUS_MIDI_PMSG *)msg;
+        ok(midi->bStatus == 0xb0, "got status %#x, expected 0xb1\n", midi->bStatus);
+        ok(midi->bByte1 == 0x07, "got byte1 %#x, expected 0x07\n", midi->bByte1);
+        ok(midi->bByte2 == 0x40, "got byte2 %#x, expected 0x40\n", midi->bByte2);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    /* wine generates an extra DIRTY event. */
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    ok(ret == WAIT_TIMEOUT, "unexpected message\n");
+    if (!ret)
+    {
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* download the segment and check the downloaded instruments */
+
+    hr = IDirectMusicPerformance_AddPort(performance, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, TRUE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, TRUE, TRUE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, TRUE, TRUE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, FALSE, FALSE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE, FALSE);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    start_time += 1000;
+    hr = IDirectMusicPerformance_PlaySegment(performance, (IDirectMusicSegment *)segment, 0, start_time, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_downloaded_instrument(performance, collection, 48, TRUE, FALSE);
+    check_downloaded_instrument(performance, collection, 0, TRUE, TRUE);
+    check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, TRUE, TRUE);
+
+    hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_CloseDown(performance);
     ok(hr == S_OK, "got %#lx\n", hr);
