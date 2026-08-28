@@ -672,7 +672,8 @@ HRESULT band_track_add_band(IDirectMusicTrack *iface, MUSIC_TIME time, MUSIC_TIM
         IDirectMusicBand *band, BOOL std_midi)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8((IDirectMusicTrack8 *)iface);
-    struct band_entry *new_entry = NULL, *entry, *next_entry;
+    struct band_entry *new_entry = NULL;
+    struct list *entry;
 
     if (!band)
         return E_POINTER;
@@ -686,17 +687,16 @@ HRESULT band_track_add_band(IDirectMusicTrack *iface, MUSIC_TIME time, MUSIC_TIM
     new_entry->std_midi = std_midi;
     IDirectMusicBand_AddRef(new_entry->band);
 
-    if (list_empty(&This->bands))
-        list_add_tail(&This->bands, &new_entry->entry);
-    else
+    entry = This->bands.next;
+    for (;;)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(entry, next_entry, &This->bands, struct band_entry, entry)
-            if (entry->entry.next == &This->bands || next_entry->head.lBandTimeLogical > time)
-            {
-                list_add_after(&entry->entry, &new_entry->entry);
-                break;
-            }
+        if (entry == &This->bands)
+            break;
+        if (LIST_ENTRY(entry, struct band_entry, entry)->head.lBandTimeLogical > time)
+            break;
+        entry = entry->next;
     }
+    list_add_before(entry, &new_entry->entry);
 
     return S_OK;
 }

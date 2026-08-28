@@ -2150,10 +2150,10 @@ static void test_midi(void)
         ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
         ok(!ret, "got %#lx\n", ret);
         ok(msg->dwType == DMUS_PMSGT_PATCH, "got msg type %#lx, expected PATCH\n", msg->dwType);
-        todo_wine ok(msg->dwPChannel == chan, "got pchannel %lu, expected %lu\n", msg->dwPChannel, chan);
-        todo_wine_if(!chan) ok(msg->mtTime == start_time, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time);
+        ok(msg->dwPChannel == chan, "got pchannel %lu, expected %lu\n", msg->dwPChannel, chan);
+        ok(msg->mtTime == start_time, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time);
         patch = (DMUS_PATCH_PMSG *)msg;
-        todo_wine_if(!chan) ok(!patch->byInstrument, "got instrument %#x, expected 0\n", patch->byInstrument);
+        ok(!patch->byInstrument, "got instrument %#x, expected 0\n", patch->byInstrument);
         hr = IDirectMusicPerformance_FreePMsg(performance, msg);
         ok(hr == S_OK, "got %#lx\n", hr);
     }
@@ -2161,10 +2161,10 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_PATCH, "got msg type %#lx, expected PATCH\n", msg->dwType);
-    todo_wine ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
+    ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
     todo_wine ok(msg->mtTime == start_time + 23, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 23);
     patch = (DMUS_PATCH_PMSG *)msg;
-    todo_wine ok(patch->byInstrument == 0x30, "got instrument %#x, expected 0x30\n", patch->byInstrument);
+    ok(patch->byInstrument == 0x30, "got instrument %#x, expected 0x30\n", patch->byInstrument);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
 
