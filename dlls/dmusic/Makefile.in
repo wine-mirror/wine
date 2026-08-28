@@ -1,5 +1,5 @@
 MODULE    = dmusic.dll
-IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm
+IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm msacm32
 
 VER_FILEDESCRIPTION_STR = "Wine DirectMusic"
 VER_PRODUCTVERSION      = 5,3,1,904

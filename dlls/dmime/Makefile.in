@@ -1,5 +1,5 @@
 MODULE    = dmime.dll
-IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
+IMPORTS   = dxguid uuid dsound ole32 user32 advapi32 msacm32
 ENABLE_ARCHS = i386
 PARENTSRC = ../dmusic
 

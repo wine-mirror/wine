@@ -17,6 +17,8 @@
  */
 
 #include "dmusic_private.h"
+#include "mmreg.h"
+#include "msacm.h"
 #include "soundfont.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
@@ -29,6 +31,13 @@ struct sample
 
 C_ASSERT(sizeof(struct sample) == offsetof(struct sample, loops[0]));
 
+struct pcm_format
+{
+    BYTE reserved1;
+    BYTE reserved2;
+    WAVEFORMATEX format;
+};
+
 struct wave
 {
     IUnknown IUnknown_iface;
@@ -36,9 +45,12 @@ struct wave
     LONG ref;
 
     struct sample *sample;
+    struct pcm_format pcm_format;
     WAVEFORMATEX *format;
     UINT data_size;
     IStream *data;
+    HACMSTREAM has;
+    DWORD pcm_size;
 };
 
 static inline struct wave *impl_from_IUnknown(IUnknown *iface)
@@ -95,6 +107,7 @@ static ULONG WINAPI wave_Release(IUnknown *iface)
 
     if (!ref)
     {
+        if (This->has) acmStreamClose(This->has, 0);
         free(This->format);
         if (This->data) IStream_Release(This->data);
         free(This->sample);
@@ -144,6 +157,10 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
     {
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
+        case mmioFOURCC('w','a','v','u'):
+            hr = stream_chunk_get_data(stream, &chunk, &This->pcm_format, sizeof(This->pcm_format));
+            break;
+
         case mmioFOURCC('f','m','t',' '):
             if (!(This->format = malloc(chunk.size))) return E_OUTOFMEMORY;
             hr = stream_chunk_get_data(stream, &chunk, This->format, chunk.size);
@@ -159,7 +176,6 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
             hr = parse_wsmp_chunk(This, stream, &chunk);
             break;
 
-        case mmioFOURCC('w','a','v','u'):
         case mmioFOURCC('s','m','p','l'):
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_INFO_LIST):
             break;
@@ -172,8 +188,46 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
         if (FAILED(hr)) break;
     }
 
-    if (This->format && This->data) return S_OK;
-    return hr;
+    if (!This->format || !This->data) return hr;
+
+    if (This->has)
+    {
+        acmStreamClose(This->has, 0);
+        This->has = NULL;
+    }
+
+    if (This->format->wFormatTag == WAVE_FORMAT_PCM)
+    {
+        This->pcm_format.format = *This->format;
+        This->pcm_size = This->data_size;
+        return S_OK;
+    }
+
+    if (!This->pcm_format.reserved1)
+    {
+        This->pcm_format.format.wFormatTag = WAVE_FORMAT_PCM;
+        This->pcm_format.format.nChannels = This->format->nChannels;
+        This->pcm_format.format.nSamplesPerSec = This->format->nSamplesPerSec;
+        This->pcm_format.format.wBitsPerSample = 16;
+        This->pcm_format.format.nBlockAlign = This->pcm_format.format.nChannels
+                * This->pcm_format.format.wBitsPerSample / 8;
+        This->pcm_format.format.nAvgBytesPerSec = This->pcm_format.format.nSamplesPerSec
+                * This->pcm_format.format.nBlockAlign;
+        This->pcm_format.format.cbSize = 0;
+    }
+
+    if (acmStreamOpen(&This->has, NULL, This->format, &This->pcm_format.format, NULL, 0, 0,
+            ACM_STREAMOPENF_NONREALTIME))
+        return E_INVALIDARG;
+
+    if (acmStreamSize(This->has, This->data_size, &This->pcm_size, ACM_STREAMSIZEF_SOURCE))
+    {
+        acmStreamClose(This->has, 0);
+        This->has = NULL;
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 static inline struct wave *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
@@ -374,8 +428,10 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
 
     This = impl_from_IDirectMusicObject(iface);
     This->format = format;
+    This->pcm_format.format = *format;
     This->sample = sample;
     This->data_size = data_size;
+    This->pcm_size = data_size;
     This->data = stream;
 
     if (TRACE_ON(dmusic))
@@ -417,16 +473,62 @@ failed:
 
 static HRESULT wave_read_data(struct wave *This, void *data, DWORD *data_size)
 {
+    ACMSTREAMHEADER header;
     IStream *stream;
+    DWORD src_size;
     HRESULT hr;
+    void *src;
 
-    if (SUCCEEDED(hr = IStream_Clone(This->data, &stream)))
+    if (FAILED(hr = IStream_Clone(This->data, &stream)))
+        return hr;
+
+    if (This->format->wFormatTag == WAVE_FORMAT_PCM)
     {
         hr = IStream_Read(stream, data, This->data_size, data_size);
         IStream_Release(stream);
+        return hr;
     }
 
-    return hr;
+    if (!(src = malloc(This->data_size)))
+    {
+        IStream_Release(stream);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IStream_Read(stream, src, This->data_size, &src_size);
+    IStream_Release(stream);
+    if (FAILED(hr))
+    {
+        free(src);
+        return hr;
+    }
+
+    memset(&header, 0, sizeof(header));
+    header.cbStruct = sizeof(header);
+    header.pbSrc = src;
+    header.cbSrcLength = src_size;
+    header.pbDst = data;
+    header.cbDstLength = This->pcm_size;
+
+    if (acmStreamPrepareHeader(This->has, &header, 0))
+    {
+        free(src);
+        return DMUS_E_BADWAVE;
+    }
+
+    if (acmStreamConvert(This->has, &header, ACM_STREAMCONVERTF_START | ACM_STREAMCONVERTF_END))
+    {
+        acmStreamUnprepareHeader(This->has, &header, 0);
+        free(src);
+        return DMUS_E_BADWAVE;
+    }
+
+    *data_size = header.cbDstLengthUsed;
+
+    acmStreamUnprepareHeader(This->has, &header, 0);
+    free(src);
+
+    return S_OK;
 }
 
 HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownload *port, DWORD *id)
@@ -440,7 +542,7 @@ HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownloa
     } *buffer;
 
     struct wave *This = impl_from_IDirectMusicObject(iface);
-    DWORD size = offsetof(struct download_buffer, data.byData[This->data_size]);
+    DWORD size = offsetof(struct download_buffer, data.byData[This->pcm_size]);
     IDirectMusicDownload *download;
     HRESULT hr;
 
@@ -456,7 +558,7 @@ HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownloa
         buffer->offsets[0] = offsetof(struct download_buffer, wave);
         buffer->offsets[1] = offsetof(struct download_buffer, data);
 
-        buffer->wave.WaveformatEx = *This->format;
+        buffer->wave.WaveformatEx = This->pcm_format.format;
         buffer->wave.ulWaveDataIdx = 1;
         buffer->wave.ulCopyrightIdx = 0;
         buffer->wave.ulFirstExtCkIdx = 0;
@@ -479,8 +581,8 @@ HRESULT wave_download_to_dsound(IDirectMusicObject *iface, IDirectSound *dsound,
     DSBUFFERDESC desc =
     {
         .dwSize = sizeof(desc),
-        .dwBufferBytes = This->data_size,
-        .lpwfxFormat = This->format,
+        .dwBufferBytes = This->pcm_size,
+        .lpwfxFormat = &This->pcm_format.format,
     };
     IDirectSoundBuffer *buffer;
     HRESULT hr;
@@ -495,7 +597,7 @@ HRESULT wave_download_to_dsound(IDirectMusicObject *iface, IDirectSound *dsound,
         return hr;
     }
 
-    if (SUCCEEDED(hr = IDirectSoundBuffer_Lock(buffer, 0, This->data_size, &data, &size, NULL, 0, 0)))
+    if (SUCCEEDED(hr = IDirectSoundBuffer_Lock(buffer, 0, This->pcm_size, &data, &size, NULL, 0, 0)))
     {
         if (FAILED(hr = wave_read_data(This, data, &size)))
             WARN("Failed to read wave data from stream, hr %#lx\n", hr);
