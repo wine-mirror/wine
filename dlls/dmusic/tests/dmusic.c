@@ -1227,11 +1227,11 @@ static void test_port_download(void)
 static void test_download_instrument(void)
 {
     static const LARGE_INTEGER zero = {0};
-    IDirectMusicDownloadedInstrument *downloaded;
+    IDirectMusicDownloadedInstrument *downloaded, *downloaded2;
     IDirectMusicCollection *collection;
     IDirectMusicInstrument *instrument, *tmp_instrument;
     IPersistStream *persist;
-    IDirectMusicPort *port;
+    IDirectMusicPort *port, *port2;
     IDirectMusic *dmusic;
     WCHAR name[MAX_PATH];
     IStream *stream;
@@ -1239,6 +1239,7 @@ static void test_download_instrument(void)
     HRESULT hr;
 
     port = create_synth_port(&dmusic);
+    port2 = create_synth_port(&dmusic);
 
     hr = CoCreateInstance(&CLSID_DirectMusicCollection, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicCollection, (void **)&collection);
@@ -1367,18 +1368,37 @@ static void test_download_instrument(void)
 
     hr = IDirectMusicPort_DownloadInstrument(port, instrument, &downloaded, NULL, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
+    downloaded2 = NULL;
+    hr = IDirectMusicPort_DownloadInstrument(port, instrument, &downloaded2, NULL, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(downloaded == downloaded2, "downloaded instruments didn't match\n");
 
     check_interface(downloaded, &IID_IDirectMusicObject, FALSE);
     check_interface(downloaded, &IID_IDirectMusicDownload, FALSE);
     check_interface(downloaded, &IID_IDirectMusicInstrument, FALSE);
 
-    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    hr = IDirectMusicPort_DownloadInstrument(port2, instrument, &downloaded2, NULL, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(downloaded != downloaded2, "downloaded instruments are the same\n");
+
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded2);
+    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    hr = IDirectMusicPort_UnloadInstrument(port2, downloaded2);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPort_UnloadInstrument(port2, downloaded2);
+    ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    IDirectMusicDownloadedInstrument_Release(downloaded2);
+
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicDownloadedInstrument_Release(downloaded);
 
     IDirectMusicInstrument_Release(instrument);
 
     IDirectMusicCollection_Release(collection);
+    IDirectMusicPort_Release(port2);
     IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
 }
