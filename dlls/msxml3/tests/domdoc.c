@@ -5430,6 +5430,17 @@ static void test_XPath(void)
         "    </elem>"
         "</root>";
 
+    static const char ns[] =
+        "<?xml version='1.0' encoding='utf-8'?>"
+        "<root xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+        "    <elem>"
+        "       <inner xsi:type=\"foo\" />"
+        "    </elem>"
+        "    <elem>"
+        "       <inner xsi:type=\"bar\" />"
+        "    </elem>"
+        "</root>";
+
     static const struct query_test node_value_cmp_test[] =
     {
         { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1" },
@@ -5452,6 +5463,15 @@ static void test_XPath(void)
         { "//elem/processing-instruction('pi')", "P1.E1.E2.D1" },
         { "//elem/processing-instruction(\"pi2\")", "P1.E2.E2.D1" },
         { "//elem/processing-instruction(\'*\')", "" },
+        { NULL },
+    };
+
+    static const struct query_test ns_test[] =
+    {
+        { "//*[@xsi:type='foo']", "E1.E1.E2.D1" },
+        { "//*[@xsi:type='bar']", "E1.E2.E2.D1" },
+        { "//*[@xsi:type='foobar']", "" },
+        { "//*[@xsi:type]", "E1.E1.E2.D1 E1.E2.E2.D1" },
         { NULL },
     };
 
@@ -5876,6 +5896,26 @@ static void test_XPath(void)
         IXMLDOMDocument2_Release(doc);
         ptr++;
         free_bstrs();
+    }
+
+    if (!winetest_platform_is_wine) { /* crashes on wine */
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(ns), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (xptest = ns_test; xptest->query; xptest++)
+    {
+        winetest_push_context("Test %s", xptest->query);
+
+        hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(xptest->query), &list);
+        test_query_result(xptest, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
+
+        winetest_pop_context();
+    }
+    IXMLDOMDocument2_Release(doc);
     }
 
     free_bstrs();
