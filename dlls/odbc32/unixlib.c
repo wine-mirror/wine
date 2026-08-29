@@ -514,7 +514,7 @@ static void get_drivers( struct drivers *drivers )
         {
             info_max_size = info_size;
             if (!(info = realloc( info, info_max_size ))) goto error;
-            status = NtEnumerateValueKey( key, idx, KeyValueFullInformation, info, info_max_size, &info_size );
+            status = NtEnumerateValueKey( key, idx, KeyValueBasicInformation, info, info_max_size, &info_size );
         }
 
         if (status == STATUS_NO_MORE_ENTRIES)
