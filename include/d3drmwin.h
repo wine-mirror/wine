@@ -81,7 +81,7 @@ DECLARE_INTERFACE_(IDirect3DRMWinDevice,IDirect3DRMObject)
 /*** IUnknown methods ***/
 #define IDirect3DRMWinDevice_QueryInterface(p,a,b)        (p)->QueryInterface(a,b)
 #define IDirect3DRMWinDevice_AddRef(p)                    (p)->AddRef()
-#define IDirect3DRMwinDevice_Release(p)                   (p)->Release()
+#define IDirect3DRMWinDevice_Release(p)                   (p)->Release()
 /*** IDirect3DRMObject methods ***/
 #define IDirect3DRMWinDevice_Clone(p,a,b,c)               (p)->Clone(a,b,c)
 #define IDirect3DRMWinDevice_AddDestroyCallback(p,a,b)    (p)->AddDestroyCallback(a,b)

@@ -1395,19 +1395,19 @@ DECLARE_INTERFACE_(IDirect3DRMFrame2,IDirect3DRMFrame)
     STDMETHOD(AddMoveCallback2)(THIS_ D3DRMFRAMEMOVECALLBACK cb, void *ctx, DWORD flags) PURE;
     STDMETHOD(GetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD_(BOOL, GetBoxEnable)(THIS) PURE;
-    STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up);
+    STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up) PURE;
     STDMETHOD(GetMaterial)(THIS_ struct IDirect3DRMMaterial **material) PURE;
-    STDMETHOD_(BOOL, GetInheritAxes)(THIS);
+    STDMETHOD_(BOOL, GetInheritAxes)(THIS) PURE;
     STDMETHOD(GetHierarchyBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBoxEnable)(THIS_ BOOL) PURE;
-    STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz);
-    STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
+    STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz) PURE;
+    STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent) PURE;
     STDMETHOD(SetMaterial)(THIS_ struct IDirect3DRMMaterial *material) PURE;
     STDMETHOD(SetQuaternion)(THIS_ IDirect3DRMFrame *reference, D3DRMQUATERNION *q) PURE;
     STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame *reference, D3DRMRAY *ray, DWORD flags,
             struct IDirect3DRMPicked2Array **return_visuals) PURE;
-    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags);
+    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags) PURE;
 };
 #undef INTERFACE
 
@@ -1675,19 +1675,19 @@ DECLARE_INTERFACE_(IDirect3DRMFrame3,IDirect3DRMVisual)
     STDMETHOD(Transform)(THIS_ D3DVECTOR *d, D3DVECTOR *s) PURE;
     STDMETHOD(GetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD_(BOOL, GetBoxEnable)(THIS) PURE;
-    STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up);
+    STDMETHOD(GetAxes)(THIS_ D3DVECTOR *dir, D3DVECTOR *up) PURE;
     STDMETHOD(GetMaterial)(THIS_ struct IDirect3DRMMaterial2 **material) PURE;
-    STDMETHOD_(BOOL, GetInheritAxes)(THIS);
+    STDMETHOD_(BOOL, GetInheritAxes)(THIS) PURE;
     STDMETHOD(GetHierarchyBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBox)(THIS_ D3DRMBOX *box) PURE;
     STDMETHOD(SetBoxEnable)(THIS_ BOOL) PURE;
-    STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz);
-    STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent);
+    STDMETHOD(SetAxes)(THIS_ D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux, D3DVALUE uy, D3DVALUE uz) PURE;
+    STDMETHOD(SetInheritAxes)(THIS_ BOOL inherit_from_parent) PURE;
     STDMETHOD(SetMaterial)(THIS_ struct IDirect3DRMMaterial2 *material) PURE;
     STDMETHOD(SetQuaternion)(THIS_ IDirect3DRMFrame3 *reference, D3DRMQUATERNION *q) PURE;
     STDMETHOD(RayPick)(THIS_ IDirect3DRMFrame3 *reference, D3DRMRAY *ray, DWORD flags,
             struct IDirect3DRMPicked2Array **return_visuals) PURE;
-    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags);
+    STDMETHOD(Save)(THIS_ const char *filename, D3DRMXOFFORMAT format, D3DRMSAVEOPTIONS flags) PURE;
     STDMETHOD(TransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
             D3DVECTOR *dst_vectors, D3DVECTOR *src_vectors) PURE;
     STDMETHOD(InverseTransformVectors)(THIS_ IDirect3DRMFrame3 *reference, DWORD vector_count,
@@ -2563,8 +2563,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
 #define IDirect3DRMMeshBuilder_Load(p,a,b,c,d,e)                 (p)->lpVtbl->Load(p,a,b,c,d,e)
 #define IDirect3DRMMeshBuilder_Save(p,a,b,c)                     (p)->lpVtbl->Save(p,a,b,c)
 #define IDirect3DRMMeshBuilder_Scale(p,a,b,c)                    (p)->lpVtbl->Scale(p,a,b,c)
-#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->lpVtbl->Translate(p,a)
-#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->lpVtbl->SetColorSource(p,a,b,c)
+#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->lpVtbl->Translate(p,a,b,c)
+#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->lpVtbl->SetColorSource(p,a)
 #define IDirect3DRMMeshBuilder_GetBox(p,a)                       (p)->lpVtbl->GetBox(p,a)
 #define IDirect3DRMMeshBuilder_GenerateNormals(p)                (p)->lpVtbl->GenerateNormals(p)
 #define IDirect3DRMMeshBuilder_GetColorSource(p)                 (p)->lpVtbl->GetColorSource(p)
@@ -2616,12 +2616,12 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder,IDirect3DRMVisual)
 #define IDirect3DRMMeshBuilder_Load(p,a,b,c,d,e)                 (p)->Load(a,b,c,d,e)
 #define IDirect3DRMMeshBuilder_Save(p,a,b,c)                     (p)->Save(a,b,c)
 #define IDirect3DRMMeshBuilder_Scale(p,a,b,c)                    (p)->Scale(a,b,c)
-#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->Translate(a)
-#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->SetColorSource(a,b,c)
+#define IDirect3DRMMeshBuilder_Translate(p,a,b,c)                (p)->Translate(a,b,c)
+#define IDirect3DRMMeshBuilder_SetColorSource(p,a)               (p)->SetColorSource(a)
 #define IDirect3DRMMeshBuilder_GetBox(p,a)                       (p)->GetBox(a)
 #define IDirect3DRMMeshBuilder_GenerateNormals(p)                (p)->GenerateNormals()
 #define IDirect3DRMMeshBuilder_GetColorSource(p)                 (p)->GetColorSource()
-#define IDirect3DRMMeshBuilder_AddMesh(p,a)                      (p)-->AddMesh(a)
+#define IDirect3DRMMeshBuilder_AddMesh(p,a)                      (p)->AddMesh(a)
 #define IDirect3DRMMeshBuilder_AddMeshBuilder(p,a)               (p)->AddMeshBuilder(a)
 #define IDirect3DRMMeshBuilder_AddFrame(p,a)                     (p)->AddFrame(a)
 #define IDirect3DRMMeshBuilder_AddFace(p,a)                      (p)->AddFace(a)
@@ -2738,8 +2738,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
 #define IDirect3DRMMeshBuilder2_Load(p,a,b,c,d,e)                (p)->lpVtbl->Load(p,a,b,c,d,e)
 #define IDirect3DRMMeshBuilder2_Save(p,a,b,c)                    (p)->lpVtbl->Save(p,a,b,c)
 #define IDirect3DRMMeshBuilder2_Scale(p,a,b,c)                   (p)->lpVtbl->Scale(p,a,b,c)
-#define IDirect3DRMMeshBuilder2_Translate(p,a,b,c)               (p)->lpVtbl->Translate(p,a)
-#define IDirect3DRMMeshBuilder2_SetColorSource(p,a)              (p)->lpVtbl->SetColorSource(p,a,b,c)
+#define IDirect3DRMMeshBuilder2_Translate(p,a,b,c)               (p)->lpVtbl->Translate(p,a,b,c)
+#define IDirect3DRMMeshBuilder2_SetColorSource(p,a)              (p)->lpVtbl->SetColorSource(p,a)
 #define IDirect3DRMMeshBuilder2_GetBox(p,a)                      (p)->lpVtbl->GetBox(p,a)
 #define IDirect3DRMMeshBuilder2_GenerateNormals(p)               (p)->lpVtbl->GenerateNormals(p)
 #define IDirect3DRMMeshBuilder2_GetColorSource(p)                (p)->lpVtbl->GetColorSource(p)
@@ -2794,12 +2794,12 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder2,IDirect3DRMMeshBuilder)
 #define IDirect3DRMMeshBuilder2_Load(p,a,b,c,d,e)                (p)->Load(a,b,c,d,e)
 #define IDirect3DRMMeshBuilder2_Save(p,a,b,c)                    (p)->Save(a,b,c)
 #define IDirect3DRMMeshBuilder2_Scale(p,a,b,c)                   (p)->Scale(a,b,c)
-#define IDirect3DRMMeshBuilder2_Translate(p,a,b,c)               (p)->Translate(a)
-#define IDirect3DRMMeshBuilder2_SetColorSource(p,a)              (p)->SetColorSource(a,b,c)
+#define IDirect3DRMMeshBuilder2_Translate(p,a,b,c)               (p)->Translate(a,b,c)
+#define IDirect3DRMMeshBuilder2_SetColorSource(p,a)              (p)->SetColorSource(a)
 #define IDirect3DRMMeshBuilder2_GetBox(p,a)                      (p)->GetBox(a)
 #define IDirect3DRMMeshBuilder2_GenerateNormals(p)               (p)->GenerateNormals()
 #define IDirect3DRMMeshBuilder2_GetColorSource(p)                (p)->GetColorSource()
-#define IDirect3DRMMeshBuilder2_AddMesh(p,a)                     (p)-->AddMesh(a)
+#define IDirect3DRMMeshBuilder2_AddMesh(p,a)                     (p)->AddMesh(a)
 #define IDirect3DRMMeshBuilder2_AddMeshBuilder(p,a)              (p)->AddMeshBuilder(a)
 #define IDirect3DRMMeshBuilder2_AddFrame(p,a)                    (p)->AddFrame(a)
 #define IDirect3DRMMeshBuilder2_AddFace(p,a)                     (p)->AddFace(a)
@@ -2938,8 +2938,8 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
 #define IDirect3DRMMeshBuilder3_Load(p,a,b,c,d,e)                (p)->lpVtbl->Load(p,a,b,c,d,e)
 #define IDirect3DRMMeshBuilder3_Save(p,a,b,c)                    (p)->lpVtbl->Save(p,a,b,c)
 #define IDirect3DRMMeshBuilder3_Scale(p,a,b,c)                   (p)->lpVtbl->Scale(p,a,b,c)
-#define IDirect3DRMMeshBuilder3_Translate(p,a,b,c)               (p)->lpVtbl->Translate(p,a)
-#define IDirect3DRMMeshBuilder3_SetColorSource(p,a)              (p)->lpVtbl->SetColorSource(p,a,b,c)
+#define IDirect3DRMMeshBuilder3_Translate(p,a,b,c)               (p)->lpVtbl->Translate(p,a,b,c)
+#define IDirect3DRMMeshBuilder3_SetColorSource(p,a)              (p)->lpVtbl->SetColorSource(p,a)
 #define IDirect3DRMMeshBuilder3_GetBox(p,a)                      (p)->lpVtbl->GetBox(p,a)
 #define IDirect3DRMMeshBuilder3_GenerateNormals(p,a,b)           (p)->lpVtbl->GenerateNormals(p,a,b)
 #define IDirect3DRMMeshBuilder3_GetColorSource(p)                (p)->lpVtbl->GetColorSource(p)
@@ -3013,12 +3013,12 @@ DECLARE_INTERFACE_(IDirect3DRMMeshBuilder3,IDirect3DRMVisual)
 #define IDirect3DRMMeshBuilder3_Load(p,a,b,c,d,e)                (p)->Load(a,b,c,d,e)
 #define IDirect3DRMMeshBuilder3_Save(p,a,b,c)                    (p)->Save(a,b,c)
 #define IDirect3DRMMeshBuilder3_Scale(p,a,b,c)                   (p)->Scale(a,b,c)
-#define IDirect3DRMMeshBuilder3_Translate(p,a,b,c)               (p)->Translate(a)
-#define IDirect3DRMMeshBuilder3_SetColorSource(p,a)              (p)->SetColorSource(a,b,c)
+#define IDirect3DRMMeshBuilder3_Translate(p,a,b,c)               (p)->Translate(a,b,c)
+#define IDirect3DRMMeshBuilder3_SetColorSource(p,a)              (p)->SetColorSource(a)
 #define IDirect3DRMMeshBuilder3_GetBox(p,a)                      (p)->GetBox(a)
 #define IDirect3DRMMeshBuilder3_GenerateNormals(p,a,b)           (p)->GenerateNormals(a,b)
 #define IDirect3DRMMeshBuilder3_GetColorSource(p)                (p)->GetColorSource()
-#define IDirect3DRMMeshBuilder3_AddMesh(p,a)                     (p)-->AddMesh(a)
+#define IDirect3DRMMeshBuilder3_AddMesh(p,a)                     (p)->AddMesh(a)
 #define IDirect3DRMMeshBuilder3_AddMeshBuilder(p,a)              (p)->AddMeshBuilder(a)
 #define IDirect3DRMMeshBuilder3_AddFrame(p,a)                    (p)->AddFrame(a)
 #define IDirect3DRMMeshBuilder3_AddFace(p,a)                     (p)->AddFace(a)
