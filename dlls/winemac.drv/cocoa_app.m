@@ -608,7 +608,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             }
         }
 
-        NSDisableScreenUpdates();
+        [NSAnimationContext beginGrouping];
 
         // Go from back to front so that all windows in front of one which is
         // elevated for full-screen are also elevated.
@@ -661,7 +661,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             prev = window;
         }];
 
-        NSEnableScreenUpdates();
+        [NSAnimationContext endGrouping];
 
         [wineWindows release];
 

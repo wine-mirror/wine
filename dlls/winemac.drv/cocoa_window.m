@@ -1605,7 +1605,7 @@ static inline BOOL stage_manager_enabled(void)
             if (activate)
                 [controller tryToActivateIgnoringOtherApps:YES];
 
-            NSDisableScreenUpdates();
+            [NSAnimationContext beginGrouping];
 
             if ([self becameEligibleParentOrChild])
                 needAdjustWindowLevels = TRUE;
@@ -1692,7 +1692,7 @@ static inline BOOL stage_manager_enabled(void)
                 pendingMinimize = FALSE;
             }
 
-            NSEnableScreenUpdates();
+            [NSAnimationContext endGrouping];
 
             /* Cocoa may adjust the frame when the window is ordered onto the screen.
                Generate a frame-changed event just in case.  The back end will ignore
@@ -1826,7 +1826,7 @@ static inline BOOL stage_manager_enabled(void)
             if (!NSEqualRects(frame, oldFrame))
             {
                 BOOL equalSizes = NSEqualSizes(frame.size, oldFrame.size);
-                BOOL needEnableScreenUpdates = FALSE;
+                BOOL needAnimationContextEndGrouping = NO;
 
                 if ([self preventResizing])
                 {
@@ -1847,8 +1847,8 @@ static inline BOOL stage_manager_enabled(void)
                     NSRect bogusFrame = frame;
                     bogusFrame.size.width++;
 
-                    NSDisableScreenUpdates();
-                    needEnableScreenUpdates = TRUE;
+                    [NSAnimationContext beginGrouping];
+                    needAnimationContextEndGrouping = YES;
 
                     ignore_windowResize = TRUE;
                     [self setFrame:bogusFrame display:NO];
@@ -1862,8 +1862,8 @@ static inline BOOL stage_manager_enabled(void)
                     [self setContentMaxSize:contentRect.size];
                 }
 
-                if (needEnableScreenUpdates)
-                    NSEnableScreenUpdates();
+                if (needAnimationContextEndGrouping)
+                    [NSAnimationContext endGrouping];
 
                 if (!enteringFullScreen &&
                     [[NSProcessInfo processInfo] systemUptime] - enteredFullScreenTime > 1.0)
