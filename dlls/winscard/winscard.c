@@ -282,6 +282,8 @@ LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DW
     TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!names_len) return SCARD_E_INVALID_PARAMETER;
+
     if (atr_len && *atr_len == SCARD_AUTOALLOCATE)
     {
         FIXME( "SCARD_AUTOALLOCATE not supported for attr\n" );
@@ -384,6 +386,8 @@ LONG WINAPI SCardStatusW( SCARDHANDLE connect, WCHAR *names, DWORD *names_len, D
     TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
 
     if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!names_len) return SCARD_E_INVALID_PARAMETER;
+
     if (atr_len && *atr_len == SCARD_AUTOALLOCATE)
     {
         FIXME( "SCARD_AUTOALLOCATE not supported for attr\n" );
