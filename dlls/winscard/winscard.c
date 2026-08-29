@@ -478,7 +478,6 @@ LONG WINAPI SCardListReadersW( SCARDCONTEXT context, const WCHAR *groups, WCHAR 
     params.readers_len = &readers_len_utf8;
     if ((ret = UNIX_CALL( scard_list_readers, &params ))) goto done;
 
-    params.handle = handle->unix_handle;
     if (!(params.readers = malloc( readers_len_utf8 )))
     {
         free( (void *)params.groups );
@@ -529,7 +528,6 @@ LONG WINAPI SCardListReaderGroupsA( SCARDCONTEXT context, char *groups, DWORD *g
     params.groups_len = &groups_len_utf8;
     if ((ret = UNIX_CALL( scard_list_reader_groups, &params ))) goto done;
 
-    params.handle = handle->unix_handle;
     if (!(params.groups = malloc( groups_len_utf8 ))) return SCARD_E_NO_MEMORY;
     if (!(ret = UNIX_CALL( scard_list_reader_groups, &params )))
     {
