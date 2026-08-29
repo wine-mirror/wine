@@ -5898,7 +5898,6 @@ static void test_XPath(void)
         free_bstrs();
     }
 
-    if (!winetest_platform_is_wine) { /* crashes on wine */
     doc = create_document(&IID_IXMLDOMDocument2);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(ns), NULL);
@@ -5916,7 +5915,6 @@ static void test_XPath(void)
         winetest_pop_context();
     }
     IXMLDOMDocument2_Release(doc);
-    }
 
     free_bstrs();
 }

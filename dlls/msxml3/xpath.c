@@ -4128,7 +4128,7 @@ static int xpath_node_collect_and_test(struct xpath_parser_context *ctxt,
 
                                 if (prefix)
                                 {
-                                    if (node_uri && !wcscmp(uri, node_uri))
+                                    if (!uri || (node_uri && !wcscmp(uri, node_uri)))
                                     {
                                         XP_TEST_HIT
                                     }
