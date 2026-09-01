@@ -1136,9 +1136,22 @@ static BOOL CSignedMsgData_UpdateAuthenticatedAttributes(
                 LPBYTE encodedAttrs;
                 DWORD size;
 
-                ret = CryptEncodeObjectEx(X509_ASN_ENCODING, PKCS_ATTRIBUTES,
-                 &msg_data->info->rgSignerInfo[i].AuthAttrs,
-                 CRYPT_ENCODE_ALLOC_FLAG, NULL, &encodedAttrs, &size);
+                /* The signature covers the authenticated attributes exactly
+                 * as the signer encoded them, and that encoding is not
+                 * required to be in canonical DER SET OF order.  Sorting
+                 * them here would change the digest and reject a valid
+                 * signature, so preserve the decoded order when verifying.
+                 * When signing, sort as DER requires.
+                 */
+                if (flag == Verify)
+                    ret = CRYPT_AsnEncodePKCSAttributesUnsorted(
+                     &msg_data->info->rgSignerInfo[i].AuthAttrs,
+                     &encodedAttrs, &size);
+                else
+                    ret = CryptEncodeObjectEx(X509_ASN_ENCODING,
+                     PKCS_ATTRIBUTES,
+                     &msg_data->info->rgSignerInfo[i].AuthAttrs,
+                     CRYPT_ENCODE_ALLOC_FLAG, NULL, &encodedAttrs, &size);
                 if (ret)
                 {
                     ret = CryptHashData(

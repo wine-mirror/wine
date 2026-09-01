@@ -31,6 +31,16 @@ BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded
  * NULL on failure. */
 WCHAR *CRYPT32_AllocateUniqueContainerName(void);
 
+/* Encodes attributes as a SET OF while preserving the order in which they
+ * appear in attributes->rgAttr, rather than sorting them into DER order.
+ * Needed when hashing PKCS#7 authenticated attributes in order to verify a
+ * signature: the signature covers the attributes exactly as the signer
+ * encoded them, and that encoding is not required to be canonical.
+ * On success *pbEncoded is LocalAlloc'd and the caller frees it.
+ */
+BOOL CRYPT_AsnEncodePKCSAttributesUnsorted(const CRYPT_ATTRIBUTES *attributes,
+ BYTE **pbEncoded, DWORD *pcbEncoded);
+
 /* a few asn.1 tags we need */
 #define ASN_BOOL            (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x01)
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)

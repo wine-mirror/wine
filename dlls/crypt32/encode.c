@@ -1234,6 +1234,7 @@ struct DERSetDescriptor
     size_t                  itemSize;
     size_t                  itemOffset;
     CryptEncodeObjectExFunc encode;
+    BOOL                    noSort;
 };
 
 static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
@@ -1291,8 +1292,9 @@ static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
         {
             if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
                 pbEncoded = *(BYTE **)pbEncoded;
-            qsort(setOf.rgBlob, setOf.cBlob, sizeof(CRYPT_DER_BLOB),
-             BLOBComp);
+            if (!desc->noSort)
+                qsort(setOf.rgBlob, setOf.cBlob, sizeof(CRYPT_DER_BLOB),
+                 BLOBComp);
             *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SETOF;
             CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &lenBytes);
             pbEncoded += lenBytes;
@@ -1903,7 +1905,7 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSAttributes(DWORD dwCertEncodingType,
     {
         const CRYPT_ATTRIBUTES *attributes = pvStructInfo;
         struct DERSetDescriptor desc = { attributes->cAttr, attributes->rgAttr,
-         sizeof(CRYPT_ATTRIBUTE), 0, CRYPT_AsnEncodePKCSAttribute };
+         sizeof(CRYPT_ATTRIBUTE), 0, CRYPT_AsnEncodePKCSAttribute, FALSE };
 
         ret = CRYPT_DEREncodeItemsAsSet(X509_ASN_ENCODING, lpszStructType,
          &desc, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
@@ -1914,6 +1916,16 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSAttributes(DWORD dwCertEncodingType,
     }
     __ENDTRY
     return ret;
+}
+
+BOOL CRYPT_AsnEncodePKCSAttributesUnsorted(const CRYPT_ATTRIBUTES *attributes,
+ BYTE **pbEncoded, DWORD *pcbEncoded)
+{
+    struct DERSetDescriptor desc = { attributes->cAttr, attributes->rgAttr,
+     sizeof(CRYPT_ATTRIBUTE), 0, CRYPT_AsnEncodePKCSAttribute, TRUE };
+
+    return CRYPT_DEREncodeItemsAsSet(X509_ASN_ENCODING, NULL, &desc,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)pbEncoded, pcbEncoded);
 }
 
 /* Like CRYPT_AsnEncodePKCSContentInfo, but allows the OID to be NULL */
