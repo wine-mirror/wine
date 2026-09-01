@@ -1426,6 +1426,7 @@ static HRESULT WINAPI ddraw_sink_BeginFlush(IPin *iface)
     stream->flushing = TRUE;
     stream->eos = FALSE;
     WakeConditionVariable(&stream->update_queued_cv);
+    WakeAllConditionVariable(&stream->allocator_cv);
 
     LeaveCriticalSection(&stream->cs);
 
@@ -1616,10 +1617,10 @@ static HRESULT WINAPI ddraw_mem_allocator_GetBuffer(IMemAllocator *iface,
 
     EnterCriticalSection(&stream->cs);
 
-    while (stream->committed && !(sample = get_pending_sample(stream)))
+    while (stream->committed && !stream->flushing && !(sample = get_pending_sample(stream)))
         SleepConditionVariableCS(&stream->allocator_cv, &stream->cs, INFINITE);
 
-    if (!stream->committed)
+    if (!stream->committed || stream->flushing)
     {
         LeaveCriticalSection(&stream->cs);
         return VFW_E_NOT_COMMITTED;

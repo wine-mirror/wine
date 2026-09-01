@@ -9055,6 +9055,25 @@ static void test_ddrawstream_mem_allocator(void)
     hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    hr = IMemAllocator_GetBuffer(ddraw_allocator, &media_sample1, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+    hr = IMemAllocator_Commit(mem_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemAllocator_GetBuffer(ddraw_allocator, &media_sample1, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (0)
+    {
+        /* hangs, mem allocator is still committed after _EndFlush(). */
+        hr = IMemAllocator_GetBuffer(ddraw_allocator, &media_sample1, NULL, NULL, 0);
+        ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
+    }
+    hr = IMemAllocator_Decommit(mem_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     /* Connect with a bottom-up format. Note that the media type set on the
      * returned samples is top-down regardless. */
     connect_video_info = rgb555_video_info;
