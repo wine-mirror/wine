@@ -720,6 +720,9 @@ struct async_callback
     IMFSourceReaderCallback IMFSourceReaderCallback_iface;
     LONG refcount;
     HANDLE event;
+    BOOL expected;
+    HRESULT expected_hr;
+    DWORD expected_stream_index;
 };
 
 static struct async_callback *impl_from_IMFSourceReaderCallback(IMFSourceReaderCallback *iface)
@@ -761,8 +764,20 @@ static ULONG WINAPI async_callback_Release(IMFSourceReaderCallback *iface)
 static HRESULT WINAPI async_callback_OnReadSample(IMFSourceReaderCallback *iface, HRESULT hr, DWORD stream_index,
         DWORD stream_flags, LONGLONG timestamp, IMFSample *sample)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct async_callback *callback = impl_from_IMFSourceReaderCallback(iface);
+
+    ok(callback->expected, "Unexpected call.\n");
+    if (callback->expected)
+    {
+        ok(callback->expected_hr == hr, "Unexpected hr %#lx (expected %#lx)\n", hr,
+                callback->expected_hr);
+        ok(callback->expected_stream_index == stream_index, "Unexpected stream_index %lu\n",
+                stream_index);
+        SetEvent(callback->event);
+        callback->expected = FALSE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI async_callback_OnFlush(IMFSourceReaderCallback *iface, DWORD stream_index)
@@ -794,6 +809,7 @@ static struct async_callback *create_async_callback(void)
     callback = calloc(1, sizeof(*callback));
     callback->IMFSourceReaderCallback_iface.lpVtbl = &async_callback_vtbl;
     callback->refcount = 1;
+    callback->event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     return callback;
 }
@@ -1420,7 +1436,7 @@ static void test_source_reader_from_media_source(void)
     struct test_source *test_source;
     IMFMediaType *media_type;
     HRESULT hr;
-    DWORD actual_index, stream_flags;
+    DWORD actual_index, stream_flags, wait_result;
     IMFSample *sample;
     LONGLONG timestamp;
     IMFAttributes *attributes;
@@ -1654,6 +1670,71 @@ static void test_source_reader_from_media_source(void)
     hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(get_refcount(attributes) > refcount, "Unexpected refcount.\n");
+
+    /* Test ReadSample with various indices before selection. */
+    callback->expected = TRUE;
+    callback->expected_hr = MF_E_INVALIDREQUEST;
+    callback->expected_stream_index = MF_SOURCE_READER_ANY_STREAM;
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, NULL, NULL, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    wait_result = WaitForSingleObject(callback->event, 1000);
+    ok(!wait_result, "Callback not called\n");
+
+    /* After this point, almost all request on reader returns E_INVALIDREQUEST.
+     * so recreate the reader & source. */
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    source = create_test_source(audio_streams, 3);
+    ok(!!source, "Failed to create test source.\n");
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback->expected = TRUE;
+    callback->expected_stream_index = 0;
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    wait_result = WaitForSingleObject(callback->event, 1000);
+    ok(!wait_result, "Callback not called\n");
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    source = create_test_source(audio_streams, 3);
+    ok(!!source, "Failed to create test source.\n");
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback->expected = TRUE;
+    callback->expected_stream_index = MF_SOURCE_READER_FIRST_AUDIO_STREAM;
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, NULL, NULL, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    wait_result = WaitForSingleObject(callback->event, 1000);
+    ok(!wait_result, "Callback not called\n");
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    source = create_test_source(audio_streams, 3);
+    ok(!!source, "Failed to create test source.\n");
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback->expected = TRUE;
+    callback->expected_hr = MF_E_INVALIDSTREAMNUMBER;
+    callback->expected_stream_index = MF_SOURCE_READER_FIRST_VIDEO_STREAM;
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, NULL, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    wait_result = WaitForSingleObject(callback->event, 1000);
+    ok(!wait_result, "Callback not called\n");
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    source = create_test_source(audio_streams, 3);
+    ok(!!source, "Failed to create test source.\n");
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
