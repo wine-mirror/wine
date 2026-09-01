@@ -1387,8 +1387,14 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
 
         case IRP_MN_QUERY_CAPABILITIES:
+        {
+            DEVICE_CAPABILITIES *caps = irpsp->Parameters.DeviceCapabilities.Capabilities;
+
+            caps->UniqueID = 1;
+            caps->Removable = 1;
             status = STATUS_SUCCESS;
             break;
+        }
 
         case IRP_MN_START_DEVICE:
             RtlEnterCriticalSection(&ext->cs);
