@@ -542,11 +542,15 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC client_context )
     return TRUE;
 }
 
-static void set_default_fbo_buffers( TEB *teb, struct opengl_context *ctx )
+static void pop_default_fbo_buffers( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    struct opengl_drawable *draw = ctx->draw;
+    struct opengl_drawable *draw;
+    struct opengl_context *ctx;
 
+    pop_default_fbo( teb );
+
+    if (!(ctx = get_current_context( teb, &draw, NULL, NULL ))) return;
     if (!ctx->draw_fbo)
     {
         if (!ctx->draw_buffer_count) wrap_glDrawBuffer( teb, ctx->draw_buffers[0], funcs->p_glDrawBuffer );
@@ -730,8 +734,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glReserved1[1] = read_hdc;
         teb->glTable = (void *)funcs;
         if (!client->major_version) init_client_context( teb, client, ctx );
-        pop_default_fbo( teb );
-        set_default_fbo_buffers( teb, ctx );
+        pop_default_fbo_buffers( teb );
     }
     else
     {
@@ -901,8 +904,7 @@ void resolve_default_fbo( TEB *teb, BOOL read )
         if (drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
         else if (!drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
 
-        pop_default_fbo( teb );
-        set_default_fbo_buffers( teb, ctx );
+        pop_default_fbo_buffers( teb );
     }
 }
 
