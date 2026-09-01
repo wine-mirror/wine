@@ -542,6 +542,25 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC client_context )
     return TRUE;
 }
 
+static void set_default_fbo_buffers( TEB *teb, struct opengl_context *ctx )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw = ctx->draw;
+
+    if (!ctx->draw_fbo)
+    {
+        if (!ctx->draw_buffer_count) wrap_glDrawBuffer( teb, ctx->draw_buffers[0], funcs->p_glDrawBuffer );
+        else wrap_glDrawBuffers( teb, ctx->draw_buffer_count, ctx->draw_buffers, funcs->p_glDrawBuffers );
+    }
+    if (!ctx->read_fbo) wrap_glReadBuffer( teb, ctx->read_buffer, funcs->p_glReadBuffer );
+    if (!ctx->has_viewport && draw->draw_fbo && draw->client)
+    {
+        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+        ctx->has_viewport = GL_TRUE;
+    }
+}
+
 static GLenum drawable_buffer_from_buffer( struct opengl_drawable *drawable, GLenum buffer )
 {
     if (buffer == GL_NONE) return GL_NONE;
@@ -627,25 +646,6 @@ static void flush_context( TEB *teb, void (*flush)(void) )
         funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
         if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, ctx->read_fbo );
         else funcs->p_glReadBuffer( drawable_buffer_from_buffer( read, ctx->read_buffer ) );
-    }
-}
-
-static void set_default_fbo_buffers( TEB *teb, struct opengl_context *ctx )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct opengl_drawable *draw = ctx->draw;
-
-    if (!ctx->draw_fbo)
-    {
-        if (!ctx->draw_buffer_count) wrap_glDrawBuffer( teb, ctx->draw_buffers[0], funcs->p_glDrawBuffer );
-        else wrap_glDrawBuffers( teb, ctx->draw_buffer_count, ctx->draw_buffers, funcs->p_glDrawBuffers );
-    }
-    if (!ctx->read_fbo) wrap_glReadBuffer( teb, ctx->read_buffer, funcs->p_glReadBuffer );
-    if (!ctx->has_viewport && draw->draw_fbo && draw->client)
-    {
-        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        ctx->has_viewport = GL_TRUE;
     }
 }
 
