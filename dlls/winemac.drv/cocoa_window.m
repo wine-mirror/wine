@@ -3853,7 +3853,7 @@ void macdrv_set_view_backing_size(WineContentView *view, const int backing_size[
  *              macdrv_window_background_color
  *
  * Returns the standard Mac window background color as a 32-bit value of
- * the form 0x00rrggbb.
+ * the form 0xaarrggbb.
  */
 uint32_t macdrv_window_background_color(void)
 {
@@ -3865,14 +3865,14 @@ uint32_t macdrv_window_background_color(void)
     // of it is to draw with it.
     dispatch_once(&once, ^{
         OnMainThread(^{
-            unsigned char rgbx[4];
-            unsigned char *planes = rgbx;
+            unsigned char rgba[4];
+            unsigned char *planes = rgba;
             NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:&planes
                                                                                pixelsWide:1
                                                                                pixelsHigh:1
                                                                             bitsPerSample:8
-                                                                          samplesPerPixel:3
-                                                                                 hasAlpha:NO
+                                                                          samplesPerPixel:4
+                                                                                 hasAlpha:YES
                                                                                  isPlanar:NO
                                                                            colorSpaceName:NSCalibratedRGBColorSpace
                                                                              bitmapFormat:0
@@ -3884,7 +3884,7 @@ uint32_t macdrv_window_background_color(void)
             NSRectFill(NSMakeRect(0, 0, 1, 1));
             [NSGraphicsContext restoreGraphicsState];
             [bitmap release];
-            result = rgbx[0] << 16 | rgbx[1] << 8 | rgbx[2];
+            result = rgba[0] << 16 | rgba[1] << 8 | rgba[2] | rgba[3] << 24;
         });
     });
 
