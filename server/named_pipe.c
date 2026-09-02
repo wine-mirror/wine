@@ -191,6 +191,7 @@ static const struct fd_ops pipe_server_fd_ops =
     .write           = pipe_end_write,
     .flush           = pipe_end_flush,
     .get_file_info   = pipe_end_get_file_info,
+    .set_file_info   = default_fd_set_file_info,
     .get_volume_info = pipe_end_get_volume_info,
     .ioctl           = pipe_server_ioctl,
     .reselect_async  = pipe_end_reselect_async,
@@ -221,6 +222,7 @@ static const struct fd_ops pipe_client_fd_ops =
     .write           = pipe_end_write,
     .flush           = pipe_end_flush,
     .get_file_info   = pipe_end_get_file_info,
+    .set_file_info   = default_fd_set_file_info,
     .get_volume_info = pipe_end_get_volume_info,
     .ioctl           = pipe_client_ioctl,
     .reselect_async  = pipe_end_reselect_async,
@@ -269,6 +271,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
 {
     .get_fd_type   = named_pipe_device_file_get_fd_type,
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = named_pipe_device_ioctl,
     .queue_async   = default_fd_queue_async,
 };
@@ -299,6 +302,7 @@ static const struct object_ops named_pipe_dir_ops =
 static const struct fd_ops named_pipe_dir_fd_ops =
 {
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = named_pipe_dir_ioctl,
     .queue_async   = default_fd_queue_async,
 };

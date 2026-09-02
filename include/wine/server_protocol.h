@@ -2026,6 +2026,23 @@ struct get_file_info_reply
 };
 
 
+struct set_file_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    struct async_data async;
+    unsigned int info_class;
+    /* VARARG(data,bytes); */
+    char __pad_60[4];
+};
+struct set_file_info_reply
+{
+    struct reply_header __header;
+    obj_handle_t wait;
+    char __pad_12[4];
+};
+
+
 struct get_volume_info_request
 {
     struct request_header __header;
@@ -6346,6 +6363,7 @@ enum request
     REQ_get_directory_cache_entry,
     REQ_flush,
     REQ_get_file_info,
+    REQ_set_file_info,
     REQ_get_volume_info,
     REQ_lock_file,
     REQ_unlock_file,
@@ -6664,6 +6682,7 @@ union generic_request
     struct get_directory_cache_entry_request get_directory_cache_entry_request;
     struct flush_request flush_request;
     struct get_file_info_request get_file_info_request;
+    struct set_file_info_request set_file_info_request;
     struct get_volume_info_request get_volume_info_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
@@ -6980,6 +6999,7 @@ union generic_reply
     struct get_directory_cache_entry_reply get_directory_cache_entry_reply;
     struct flush_reply flush_reply;
     struct get_file_info_reply get_file_info_reply;
+    struct set_file_info_reply set_file_info_reply;
     struct get_volume_info_reply get_volume_info_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
@@ -7241,6 +7261,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 973
+#define SERVER_PROTOCOL_VERSION 974
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

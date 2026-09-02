@@ -727,6 +727,19 @@ static void dump_get_file_info_reply( const struct get_file_info_reply *req )
     dump_varargs_bytes( " data=", cur_size );
 }
 
+static void dump_set_file_info_request( const struct set_file_info_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    dump_async_data( ", async=", &req->async );
+    fprintf( stderr, ", info_class=%08x", req->info_class );
+    dump_varargs_bytes( ", data=", cur_size );
+}
+
+static void dump_set_file_info_reply( const struct set_file_info_reply *req )
+{
+    fprintf( stderr, " wait=%04x", req->wait );
+}
+
 static void dump_get_volume_info_request( const struct get_volume_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -3619,6 +3632,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_directory_cache_entry_request,
     (dump_func)dump_flush_request,
     (dump_func)dump_get_file_info_request,
+    (dump_func)dump_set_file_info_request,
     (dump_func)dump_get_volume_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -3934,6 +3948,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_directory_cache_entry_reply,
     (dump_func)dump_flush_reply,
     (dump_func)dump_get_file_info_reply,
+    (dump_func)dump_set_file_info_reply,
     (dump_func)dump_get_volume_info_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
@@ -4249,6 +4264,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_directory_cache_entry",
     "flush",
     "get_file_info",
+    "set_file_info",
     "get_volume_info",
     "lock_file",
     "unlock_file",

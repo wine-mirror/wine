@@ -96,6 +96,7 @@ static const struct fd_ops serial_fd_ops =
 {
     .get_fd_type    = serial_get_fd_type,
     .get_file_info  = default_fd_get_file_info,
+    .set_file_info  = default_fd_set_file_info,
     .ioctl          = serial_ioctl,
     .queue_async    = serial_queue_async,
     .reselect_async = serial_reselect_async,

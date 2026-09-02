@@ -4871,6 +4871,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
 }
 
 
+static NTSTATUS server_set_file_info( HANDLE handle, IO_STATUS_BLOCK *io,
+                                      void *ptr, ULONG len, FILE_INFORMATION_CLASS class );
+
+
 /******************************************************************************
  *              NtSetInformationFile   (NTDLL.@)
  */
@@ -5190,9 +5194,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         break;
 
     default:
-        FIXME("Unsupported class (%d)\n", class);
-        status = STATUS_NOT_IMPLEMENTED;
-        break;
+        return server_set_file_info( handle, io, ptr, len, class );
     }
     io->Information = 0;
     return io->Status = status;
@@ -6334,6 +6336,44 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
     }
     return status;
+}
+
+
+static NTSTATUS server_set_file_info( HANDLE handle, IO_STATUS_BLOCK *io,
+                                      void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
+{
+    struct async_irp *async;
+    HANDLE wait_handle;
+    NTSTATUS ret;
+
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion )))
+        return STATUS_NO_MEMORY;
+    async->buffer  = NULL;
+    async->size    = 0;
+
+    SERVER_START_REQ( set_file_info )
+    {
+        req->async = server_async( handle, &async->io, NULL, NULL, NULL, iosb_client_ptr(io) );
+        req->handle = wine_server_obj_handle( handle );
+        req->info_class = class;
+        wine_server_add_data( req, ptr, len );
+        ret = wine_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        if (wait_handle && ret != STATUS_PENDING)
+        {
+            io->Status      = ret;
+            io->Information = 0;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret != STATUS_PENDING) free( async );
+
+    if (wait_handle) ret = wait_async( wait_handle, FALSE );
+
+    if (ret == STATUS_NOT_IMPLEMENTED)
+        FIXME( "unimplemented class %#x\n", class );
+    return ret;
 }
 
 

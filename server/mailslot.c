@@ -107,6 +107,7 @@ static const struct fd_ops mailslot_fd_ops =
     .read          = mailslot_read,
     .write         = mailslot_write,
     .get_file_info = mailslot_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = default_fd_ioctl,
 };
 
@@ -146,6 +147,7 @@ static const struct fd_ops mail_writer_fd_ops =
     .read          = mail_writer_read,
     .write         = mail_writer_write,
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = default_fd_ioctl,
     .queue_async   = default_fd_queue_async,
 };
@@ -204,6 +206,7 @@ static const struct fd_ops mailslot_device_fd_ops =
 {
     .get_fd_type   = mailslot_device_file_get_fd_type,
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = default_fd_ioctl,
     .queue_async   = default_fd_queue_async,
 };

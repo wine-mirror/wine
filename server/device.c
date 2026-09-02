@@ -193,6 +193,7 @@ static const struct fd_ops device_file_fd_ops =
     .write           = device_file_write,
     .flush           = device_file_flush,
     .get_file_info   = default_fd_get_file_info,
+    .set_file_info   = default_fd_set_file_info,
     .get_volume_info = device_file_get_volume_info,
     .ioctl           = device_file_ioctl,
     .cancel_async    = device_file_cancel_async,
