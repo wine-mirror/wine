@@ -4934,10 +4934,26 @@ static void test_lighting(void)
         {{ -9.0f,  -9.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
         {{ -9.0f, -11.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
     };
+    static struct vertex_normal_w
+    {
+        struct vec3 position;
+        float w;
+        struct vec3 normal;
+        DWORD diffuse;
+    }
+    translatedquadw[] =
+    {
+        {{-11.0f, -11.0f, -10.0f}, 0.2f, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{-11.0f,  -9.0f, -10.0f}, 0.4f, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f,  -9.0f, -10.0f}, 0.5f, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f, -11.0f, -10.0f}, 1.0f, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+    };
+
     static WORD indices[] = {0, 1, 2, 2, 3, 0};
     static const struct
     {
         D3DMATRIX *world_matrix;
+        D3DMATRIX *world_matrix2;
         void *quad;
         DWORD expected, expected_process_vertices;
         const char *message;
@@ -4945,14 +4961,16 @@ static void test_lighting(void)
     }
     tests[] =
     {
-        {&mat, nquad, 0x000000ff, 0xff0000ff, "Lit quad with light"},
-        {&mat_singular, nquad, 0x000000ff, 0xff000000, "Lit quad with singular world matrix", TRUE},
-        {&mat_transf, rotatedquad, 0x000000ff, 0xff0000ff, "Lit quad with transformation matrix"},
-        {&mat_nonaffine, translatedquad, 0x00000000, 0xff000000, "Lit quad with non-affine matrix"},
+        {&mat, NULL, nquad, 0x000000ff, 0xff0000ff, "Lit quad with light"},
+        {&mat_singular, NULL, nquad, 0x000000ff, 0xff000000, "Lit quad with singular world matrix", TRUE},
+        {&mat_transf, NULL, rotatedquad, 0x000000ff, 0xff0000ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, NULL, translatedquad, 0x00000000, 0xff000000, "Lit quad with non-affine matrix"},
+        {&mat_transf, &mat, translatedquadw, 0x00ffffff, 0xff0000cc, "Lit quad with vertex blending", TRUE},
     };
 
+    IDirect3DVertexBuffer7 *src_vb1, *src_vb2, *src_vb3, *dst_vb;
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
-    IDirect3DVertexBuffer7 *src_vb1, *src_vb2, *dst_vb;
+    static struct vertex_normal_w *src_data3;
     DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
     struct vertex_normal *src_data2;
     D3DVERTEXBUFFERDESC vb_desc;
@@ -5123,16 +5141,46 @@ static void test_lighting(void)
     hr = IDirect3DDevice7_LightEnable(device, 0, TRUE);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZB1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    vb_desc.dwNumVertices = 2;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &src_vb3, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        hr = IDirect3DVertexBuffer7_Lock(src_vb2, 0, (void **)&src_data2, NULL);
-        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        memcpy(src_data2, tests[i].quad, sizeof(*src_data2));
-        hr = IDirect3DVertexBuffer7_Unlock(src_vb2);
-        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        DWORD fvf;
 
         hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, tests[i].world_matrix);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        if (tests[i].world_matrix2)
+        {
+            hr = IDirect3DVertexBuffer7_Lock(src_vb3, 0, (void **)&src_data3, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            memcpy(src_data3, tests[i].quad, sizeof(*src_data3));
+            hr = IDirect3DVertexBuffer7_Unlock(src_vb3);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, tests[i].world_matrix);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD1, tests[i].world_matrix2);
+            ok(hr == DD_OK, "got %#lx.\n", hr);
+            hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_VERTEXBLEND, D3DVBLEND_1WEIGHT);
+            ok(hr == DD_OK, "got %#lx.\n", hr);
+            fvf = D3DFVF_XYZB1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+        }
+        else
+        {
+            hr = IDirect3DVertexBuffer7_Lock(src_vb2, 0, (void **)&src_data2, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            memcpy(src_data2, tests[i].quad, sizeof(*src_data2));
+            hr = IDirect3DVertexBuffer7_Unlock(src_vb2);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_VERTEXBLEND, D3DVBLEND_DISABLE);
+            ok(hr == DD_OK, "got %#lx.\n", hr);
+            fvf = nfvf;
+        }
 
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5141,10 +5189,10 @@ static void test_lighting(void)
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb, D3DVOP_TRANSFORM | D3DVOP_LIGHT, 0,
-                1, src_vb2, 0, device, 0);
+                1, tests[i].world_matrix2 ? src_vb3 : src_vb2, 0, device, 0);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, tests[i].quad,
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, tests[i].quad,
                 4, indices, 6, 0);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -5169,6 +5217,7 @@ static void test_lighting(void)
 
     IDirect3DVertexBuffer7_Release(src_vb1);
     IDirect3DVertexBuffer7_Release(src_vb2);
+    IDirect3DVertexBuffer7_Release(src_vb3);
     IDirect3DVertexBuffer7_Release(dst_vb);
 
     IDirectDrawSurface7_Release(rt);
