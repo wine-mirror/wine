@@ -510,6 +510,67 @@ static HRESULT table_get_num_rows(IMetaDataTables *iface, enum table table, ULON
     return IMetaDataTables_GetTableInfo(iface, table, &row_size, rows, &cols, &key_idx, &name);
 }
 
+enum column_value_type
+{
+    VAL_RAW, /* ULONG * */
+    VAL_STRING, /* const char ** */
+    VAL_BLOB /* ULONG *, const BYTE ** */
+};
+
+/* Get multiple columns from a table row, arguments should be in the order <column>, <column_value_type>, <ptr>. The last
+ * argument should be -1 to mark the end of the argument list. */
+static HRESULT WINAPIV table_get_columns(IMetaDataTables *iface, enum table table, ULONG row, ULONG col_first, ...)
+{
+    ULONG col = col_first;
+    HRESULT hr = S_OK;
+    va_list args;
+
+    va_start(args, col_first);
+    while (col != -1)
+    {
+        enum column_value_type type;
+        HRESULT hr;
+        ULONG val;
+
+        hr = IMetaDataTables_GetColumn(iface, table, col, row, &val);
+        if (FAILED(hr)) break;
+
+        type = va_arg(args, enum column_value_type);
+        switch (type)
+        {
+        case VAL_RAW:
+        {
+            ULONG *raw = va_arg(args, ULONG *);
+
+            *raw = val;
+            break;
+        }
+        case VAL_STRING:
+        {
+            const char **str = va_arg(args, const char **);
+
+            hr = IMetaDataTables_GetString(iface, val, str);
+            break;
+        }
+        case VAL_BLOB:
+        {
+            ULONG *size = va_arg(args, ULONG *);
+            const BYTE **blob = va_arg(args, const BYTE **);
+
+            hr = IMetaDataTables_GetBlob(iface, val, size, blob);
+            break;
+        }
+        DEFAULT_UNREACHABLE;
+        }
+        if (FAILED(hr)) break;
+
+        col = va_arg(args, ULONG);
+    }
+    va_end(args);
+
+    return hr;
+}
+
 static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef *typedefs, ULONG len, ULONG *count)
 {
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
@@ -607,30 +668,6 @@ static BOOL clr_type_path_join(const struct clr_type_path *path, WCHAR *out, ULO
     return TRUE;
 }
 
-static HRESULT table_get_column_as_string(IMetaDataTables *iface, enum table table, ULONG col, ULONG row,
-                                          const char **str)
-{
-    ULONG str_idx;
-    HRESULT hr;
-
-    TRACE("(%p, %#x, %lu, %lu, %p)\n", iface, table, col, row, str);
-
-    if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row, &str_idx)))) return hr;
-    return IMetaDataTables_GetString(iface, str_idx, str);
-}
-
-static HRESULT table_get_column_as_blob(IMetaDataTables *iface, enum table table, ULONG col, ULONG row, ULONG *blob_len,
-                                        const BYTE **blob)
-{
-    ULONG blob_idx;
-    HRESULT hr;
-
-    TRACE("(%p, %#x, %lu, %lu, %p, %p)\n", iface, table, col, row, blob_len, blob);
-
-    if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row, &blob_idx)))) return hr;
-    return IMetaDataTables_GetBlob(iface, blob_idx, blob_len, blob);
-}
-
 static HRESULT token_typedeforref_get_type_path(IMetaDataTables *iface, mdToken token, struct clr_type_path *type_path)
 {
     const ULONG row = RidFromToken(token);
@@ -644,8 +681,8 @@ static HRESULT token_typedeforref_get_type_path(IMetaDataTables *iface, mdToken 
     assert(type == mdtTypeDef || type == mdtTypeRef);
 
     /* The TypeDef and TypeRef use the same column indices for the name and namespace. */
-    if (FAILED((hr = table_get_column_as_string(iface, table, 1, row, &name)))) return hr;
-    if (FAILED((hr = table_get_column_as_string(iface, table, 2, row, &namespace)))) return hr;
+    if (FAILED((hr = table_get_columns(iface, table, row, 1, VAL_STRING, &name, 2, VAL_STRING, &namespace, -1))))
+        return hr;
 
     type_path->namespace = namespace;
     type_path->ns_len = strlen(namespace);
@@ -743,12 +780,11 @@ static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef t
         struct clr_type_path type_path;
         HRESULT hr;
 
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 0, row, &flags))))
-            return hr;
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, row, 0, VAL_RAW, &flags, 3, VAL_RAW,
+                               &extends, -1);
+        if (FAILED(hr)) return hr;
         hr = token_typedeforref_get_type_path(&impl->IMetaDataTables_iface, type_def, &type_path);
         if (FAILED(hr)) return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 3, row, &extends))))
-            return hr;
         if (!clr_type_path_join(&type_path, name, len, &needed)) return E_OUTOFMEMORY;
         /* Native replaces tokens with rid 0 with mdTypeRefNil. */
         if (IsNilToken(extends))
@@ -1279,15 +1315,8 @@ static HRESULT WINAPI import_GetMethodProps(IMetaDataImport *iface, mdMethodDef 
         const char *nameA = NULL;
         HRESULT hr;
 
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 0, row, &addr))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 1, row, &impl_flags))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 2, row, &attrs))))
-            return hr;
-        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, &nameA);
-        if (FAILED((hr))) return hr;
-        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 4, row, &sig_len, &sig_blob);
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_METHODDEF, row, 0, VAL_RAW, &addr, 1, VAL_RAW,
+                               &impl_flags, 2, VAL_RAW, &attrs, 3, VAL_STRING, &nameA, 4, VAL_BLOB, &sig_len, &sig_blob, -1);
         if (FAILED((hr))) return hr;
 
         if (FAILED((hr = methoddef_get_parent_typedef(iface, method_def, &parent))))
@@ -1564,13 +1593,14 @@ static HRESULT token_get_constant_value(IMetaDataImport *iface, mdToken token, U
             break;
         if (parent == token)
         {
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CONSTANT, 0, row, value_type);
-            if (FAILED(hr)) break;
-            hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_CONSTANT, 2, row, &len, value);
+            hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_CONSTANT, row, 0, VAL_RAW, value_type, 2,
+                                   VAL_BLOB, &len, value, -1);
             if (FAILED(hr)) break;
 
             if (*value_type == ELEMENT_TYPE_STRING)
                 *value_len = len / sizeof(WCHAR);
+            else
+                *value_len = 0; /* For non-strings, native sets len to 0. */
             break;
         }
     }
@@ -1605,13 +1635,9 @@ static HRESULT WINAPI import_GetFieldProps(IMetaDataImport *iface, mdFieldDef fi
         const char *nameA;
         HRESULT hr;
 
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_FIELD, 0, row, &attrs))))
-            return hr;
-        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_FIELD, 1, row, &nameA);
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_FIELD, row, 0, VAL_RAW, &attrs, 1, VAL_STRING,
+                               &nameA, 2, VAL_BLOB, &sig_len, &sig_blob, -1);
         if (FAILED((hr))) return hr;
-        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_FIELD, 2, row, &sig_len, &sig_blob);
-        if (FAILED((hr))) return hr;
-
         if (FAILED((hr = fielddef_get_parent_typedef(iface, fielddef, &parent))))
             return hr;
         if (FAILED((hr = token_get_constant_value(iface, fielddef, &val_type, &val_blob, &val_len))))
@@ -1676,11 +1702,8 @@ static HRESULT WINAPI import_GetPropertyProps(IMetaDataImport *iface, mdProperty
         const ULONG row = RidFromToken(prop);
         const char *nameA;
 
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 0, row, &flags))))
-            return hr;
-        if (FAILED((hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 1, row, &nameA))))
-            return hr;
-        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_PROPERTY  , 2, row, &sig_len, &sig_blob);
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_PROPERTY, row, 0, VAL_RAW, &flags, 1, VAL_STRING,
+                               &nameA, 2, VAL_BLOB, &sig_len, &sig_blob, -1);
         if (FAILED(hr)) return hr;
         if (FAILED((hr = property_get_parent_typedef(&impl->IMetaDataImport_iface, prop, &parent))))
             return hr;
@@ -1694,16 +1717,10 @@ static HRESULT WINAPI import_GetPropertyProps(IMetaDataImport *iface, mdProperty
         {
             ULONG assoc_token, semantic, method;
 
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 2, semantic_row,
-                                           &assoc_token);
+            hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, semantic_row, 0, VAL_RAW,
+                &semantic, 1, VAL_RAW, &method, 2, VAL_RAW, &assoc_token, -1);
             if (FAILED(hr)) return hr;
             if (assoc_token != prop) continue;
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 0, semantic_row,
-                                           &semantic);
-            if (FAILED(hr)) return hr;
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 1, semantic_row,
-                                           &method);
-            if (FAILED(hr)) return hr;
             if (IsNilToken(get_method) && semantic & msGetter)
                 get_method = TokenFromRid(method, mdtMethodDef);
             else if (IsNilToken(set_method) && semantic & msSetter)
@@ -1800,14 +1817,14 @@ static HRESULT token_hascustomattribute_get_name(IMetaDataImport *iface, mdToken
     {
         ULONG parent_class;
 
-        hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_MEMBERREF, 0, row, &parent_class);
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_MEMBERREF, row, 0, VAL_RAW, &parent_class, 1,
+                               VAL_STRING, ctor_name, -1);
         if (FAILED(hr)) return hr;
         if (FAILED((hr = token_memberrefparent_get_type_path(iface, parent_class, attr_type_path)))) return hr;
-        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_MEMBERREF, 1, row, ctor_name);
     }
     else /* mdtMethodDef */
     {
-        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, ctor_name);
+        hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_METHODDEF, row, 3, VAL_STRING, ctor_name, -1);
         if (FAILED(hr)) return hr;
         hr = token_memberrefparent_get_type_path(iface, token, attr_type_path);
     }
@@ -1850,7 +1867,8 @@ static HRESULT WINAPI import_GetCustomAttributeByName(IMetaDataImport *iface, md
             struct clr_type_path cur_type_path;
             const char *cur_ctor_name;
 
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, 1, row, &type);
+            hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, row, 1, VAL_RAW, &type, 2,
+                                   VAL_BLOB, &data_len, &data_blob, -1);
             if (FAILED(hr)) goto done;
             hr = token_hascustomattribute_get_name(&impl->IMetaDataImport_iface, type, &cur_ctor_name, &cur_type_path);
             if (FAILED(hr)) goto done;
@@ -1861,9 +1879,6 @@ static HRESULT WINAPI import_GetCustomAttributeByName(IMetaDataImport *iface, md
                 continue;
             }
             if (!clr_type_path_equals(&attr_type_path, &cur_type_path)) continue;
-            hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, 2, row, &data_len,
-                                          &data_blob);
-            if (FAILED(hr)) goto done;
             found = TRUE;
             break;
         }
