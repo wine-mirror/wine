@@ -4300,6 +4300,76 @@ static void test_CancelSynchronousIo(void)
     CloseHandle(pipe);
 }
 
+static DWORD CALLBACK pipe_client_thread(VOID *param)
+{
+    const CHAR expected_name[] = { 0xff, 0xff, 0xff, 0xff, 0xff };
+    const ULONG name_len = ARRAY_SIZE(expected_name);
+    HANDLE pipe, event = param;
+    CHAR name[5];
+    BOOL ret;
+
+    pipe = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(!!pipe, "CreateFileA failed, last error %lu\n", GetLastError());
+
+    memset(name, 0xff, name_len);
+    ret = GetNamedPipeClientComputerNameA(pipe, name, name_len);
+    ok(!ret, "GetNamedPipeClientComputerNameA unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_PIPE_LOCAL, "got unexpected last error %lu\n", GetLastError());
+    ok(!memcmp(name, expected_name, ARRAY_SIZE(expected_name)), "GetNamedPipeClientComputerNameA returned unexpected buffer\n");
+
+    WaitForSingleObject(event, INFINITE);
+
+    CloseHandle(pipe);
+
+    return 0;
+}
+
+static void test_GetNamedPipeClientComputerName(void)
+{
+    const CHAR expected_name[] = { 0xff, 0xff, 0xff, 0xff, 0xff };
+    const ULONG name_len = ARRAY_SIZE(expected_name);
+    HANDLE pipe, thread, event;
+    CHAR name[5];
+    BOOL ret;
+
+    pipe = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+            1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(pipe != INVALID_HANDLE_VALUE, "CreateNamedPipe failed, last error %lu\n", GetLastError());
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!event, "CreateEventW failed, last error %lu\n", GetLastError());
+
+    thread = CreateThread(NULL, 0 , pipe_client_thread, event, 0, NULL);
+    ok(!!thread, "CreateThread failed, last error %lu\n", GetLastError());
+
+    ret = ConnectNamedPipe(pipe, NULL);
+    ok(ret, "ConnectNamedPipe failed, last error %lu\n", GetLastError());
+
+    ret = GetNamedPipeClientComputerNameA(pipe, NULL, 0);
+    ok(!ret, "GetNamedPipeClientComputerNameA unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got unexpected last error %lu\n", GetLastError());
+
+    ret = GetNamedPipeClientComputerNameA(pipe, name, 0);
+    ok(!ret, "GetNamedPipeClientComputerNameA unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got unexpected last error %lu\n", GetLastError());
+
+    ret = GetNamedPipeClientComputerNameA(pipe, NULL, name_len);
+    ok(!ret, "GetNamedPipeClientComputerNameA unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_PIPE_LOCAL, "got unexpected last error %lu\n", GetLastError());
+
+    memset(name, 0xff, name_len);
+    ret = GetNamedPipeClientComputerNameA(pipe, name, name_len);
+    ok(!ret, "GetNamedPipeClientComputerNameA unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_PIPE_LOCAL, "got unexpected last error %lu\n", GetLastError());
+    ok(!memcmp(name, expected_name, ARRAY_SIZE(expected_name)), "GetNamedPipeClientComputerNameA returned unexpected buffer\n");
+
+    SetEvent(event);
+
+    CloseHandle(thread);
+    CloseHandle(event);
+    CloseHandle(pipe);
+}
+
 START_TEST(pipe)
 {
     char **argv;
@@ -4382,4 +4452,5 @@ START_TEST(pipe)
     test_GetOverlappedResultEx();
     test_exit_process_async();
     test_CancelSynchronousIo();
+    test_GetNamedPipeClientComputerName();
 }
