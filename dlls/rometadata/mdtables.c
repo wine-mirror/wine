@@ -400,6 +400,51 @@ static HRESULT token_enum_get_entries(struct token_enum *henum, mdToken *buf, UL
     return !!n ? S_OK : S_FALSE;
 }
 
+struct token_array
+{
+    ULONG count;
+    ULONG size;
+    mdToken *buf;
+};
+
+static HRESULT token_array_init(struct token_array *arr)
+{
+    if (!((arr->buf = malloc(8 * sizeof(*arr->buf))))) return E_OUTOFMEMORY;
+    arr->count = 0;
+    arr->size = 8;
+    return S_OK;
+}
+
+static void token_array_free(struct token_array arr)
+{
+    free(arr.buf);
+}
+
+static HRESULT token_array_append(struct token_array *arr, mdToken token)
+{
+    if (arr->count == arr->size)
+    {
+        ULONG size = arr->size * 2;
+        void *tmp;
+
+        if (!((tmp = realloc(arr->buf, size * sizeof(*arr->buf))))) return E_OUTOFMEMORY;
+        arr->size = size;
+        arr->buf = tmp;
+    }
+
+    arr->buf[arr->count++] = token;
+    return S_OK;
+}
+
+static HRESULT token_array_to_enum(const struct token_array *arr, HCORENUM *out)
+{
+    HRESULT hr;
+
+    if (arr->count && FAILED((hr = token_enum_list_create(out, arr->count, arr->buf)))) return hr;
+    return arr->count ? S_OK : S_FALSE;
+}
+
+
 static void WINAPI import_CloseEnum(IMetaDataImport *iface, HCORENUM henum)
 {
     TRACE("(%p, %p)\n", iface, henum);
@@ -951,32 +996,26 @@ static HRESULT WINAPI import_EnumMethodsWithName(IMetaDataImport *iface, HCORENU
 
     if (!*ret_henum)
     {
-        mdMethodDef cur_method, *methods;
-        ULONG cur_name_len = 80, count;
         HCORENUM all_methods = NULL;
+        struct token_array methods;
+        ULONG cur_name_len = 80;
+        mdMethodDef cur_method;
         WCHAR *cur_name, *tmp;
         HRESULT hr;
 
-        if (!(cur_name = malloc(sizeof(WCHAR) * cur_name_len))) return E_OUTOFMEMORY;
+        if (FAILED((hr = token_array_init(&methods)))) return hr;
+        if (!(cur_name = malloc(sizeof(WCHAR) * cur_name_len)))
+        {
+            token_array_free(methods);
+            return E_OUTOFMEMORY;
+        }
         hr = IMetaDataImport_EnumMethods(iface, &all_methods, type_def, &cur_method, 1, NULL);
         if (hr != S_OK)
         {
+            token_array_free(methods);
             free(cur_name);
             return hr;
         }
-        if (FAILED((hr = IMetaDataImport_CountEnum(iface, all_methods, &count))))
-        {
-            free(cur_name);
-            IMetaDataImport_CloseEnum(iface, all_methods);
-            return hr;
-        }
-        if (!(methods = calloc(count, sizeof(*methods))))
-        {
-            free(cur_name);
-            IMetaDataImport_CloseEnum(iface, all_methods);
-            return E_OUTOFMEMORY;
-        }
-        count = 0;
         while (hr == S_OK)
         {
             ULONG reqd;
@@ -997,21 +1036,17 @@ static HRESULT WINAPI import_EnumMethodsWithName(IMetaDataImport *iface, HCORENU
             }
             else if (FAILED(hr))
                 break;
-            if (!wcsncmp(cur_name, name, reqd))
-                methods[count++] = cur_method;
+            if (!wcsncmp(cur_name, name, reqd) && FAILED((hr = token_array_append(&methods, cur_method))))
+                break;
             hr = IMetaDataImport_EnumMethods(iface, &all_methods, type_def, &cur_method, 1, NULL);
         }
 
+        if (SUCCEEDED(hr))
+            hr = token_array_to_enum(&methods, ret_henum);
+        token_array_free(methods);
         free(cur_name);
         IMetaDataImport_CloseEnum(iface, all_methods);
-        if (FAILED(hr) || !count)
-        {
-            free(methods);
-            return FAILED(hr) ? hr : S_FALSE;
-        }
-        hr = token_enum_list_create(ret_henum, count, methods);
-        free(methods);
-        if (FAILED(hr)) return hr;
+        if (hr != S_OK) return hr;
     }
     return token_enum_get_entries(*ret_henum, method_defs, len, ret_count);
 }
@@ -1055,32 +1090,26 @@ static HRESULT WINAPI import_EnumFieldsWithName(IMetaDataImport *iface, HCORENUM
 
     if (!*ret_henum)
     {
-        ULONG cur_name_len = 80, count;
-        mdFieldDef cur_field, *fields;
         HCORENUM all_fields = NULL;
+        struct token_array fields;
+        ULONG cur_name_len = 80;
         WCHAR *cur_name, *tmp;
+        mdFieldDef cur_field;
         HRESULT hr;
 
-        if (!(cur_name = malloc(sizeof(WCHAR) * cur_name_len))) return E_OUTOFMEMORY;
+        if ((FAILED(hr = token_array_init(&fields)))) return hr;
+        if (!(cur_name = malloc(sizeof(WCHAR) * cur_name_len)))
+        {
+            token_array_free(fields);
+            return E_OUTOFMEMORY;
+        }
         hr = IMetaDataImport_EnumFields(iface, &all_fields, token, &cur_field, 1, NULL);
         if (hr != S_OK)
         {
+            token_array_free(fields);
             free(cur_name);
             return hr;
         }
-        if (FAILED((hr = IMetaDataImport_CountEnum(iface, all_fields, &count))))
-        {
-            IMetaDataImport_CloseEnum(iface, all_fields);
-            free(cur_name);
-            return hr;
-        }
-        if (!(fields = calloc(count, sizeof(*fields))))
-        {
-            IMetaDataImport_CloseEnum(iface, all_fields);
-            free(cur_name);
-            return E_OUTOFMEMORY;
-        }
-        count = 0;
         while (hr == S_OK)
         {
             ULONG reqd;
@@ -1101,21 +1130,16 @@ static HRESULT WINAPI import_EnumFieldsWithName(IMetaDataImport *iface, HCORENUM
             }
             else if (FAILED(hr))
                 break;
-            if (!wcsncmp(cur_name, name, reqd))
-                fields[count++] = cur_field;
+            if (!wcsncmp(cur_name, name, reqd) && FAILED((hr = token_array_append(&fields, cur_field)))) break;
             hr = IMetaDataImport_EnumFields(iface, &all_fields, token, &cur_field, 1, NULL);
         }
 
+        if (SUCCEEDED(hr))
+            hr = token_array_to_enum(&fields, ret_henum);
+        token_array_free(fields);
         free(cur_name);
         IMetaDataImport_CloseEnum(iface, all_fields);
-        if (FAILED(hr) || !count)
-        {
-            free(fields);
-            return FAILED(hr) ? hr : S_FALSE;
-        }
-        hr = token_enum_list_create(ret_henum, count, fields);
-        free(fields);
-        if (FAILED(hr)) return hr;
+        if (hr != S_OK) return hr;
     }
     return token_enum_get_entries(*ret_henum, field_defs, len, ret_count);
 }
