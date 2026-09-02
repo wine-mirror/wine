@@ -961,6 +961,33 @@ static void test_prop_method_token_(int line, IMetaDataImport *md_import, mdType
     ok_(__FILE__, line)(!impl, "got impl %#lx\n", impl);
 }
 
+#define test_custom_attr_value(iface, type, blob, blob_len) test_custom_attr_value_(__LINE__, iface, type, blob, blob_len)
+static void test_custom_attr_value_(int line, IMetaDataImport *md_import, mdToken type, const BYTE *blob, ULONG blob_len)
+{
+    /* Partition II.23.3 */
+    static const BYTE prolog[] = { 1, 0 };
+
+    CorTokenType type_type = TypeFromToken(type);
+    const char *name = NULL;
+    HRESULT hr;
+
+    if (!blob)
+        ok_(__FILE__, line)(!blob_len, "got blob_len %lu != 0\n", blob_len);
+    else
+        ok_(__FILE__, line)(blob_len >= 2, "got blob_len %lu\n", blob_len);
+
+    ok_(__FILE__, line)(!IsNilToken(type) && (type_type == mdtMethodDef || type_type == mdtMemberRef), "got type %s\n",
+                        debugstr_mdToken(type));
+    hr = IMetaDataImport_GetNameFromToken(md_import, type, &name);
+    todo_wine ok_(__FILE__, line)(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine_if(FAILED(hr)) ok_(__FILE__, line)(name && !strcmp(name, ".ctor"), "got name %s\n", debugstr_a(name));
+
+    if (blob && blob_len >= 2)
+        ok_(__FILE__, line)(!memcmp(blob, prolog, ARRAY_SIZE(prolog)), "invalid CustomAttribute value prolog: {%#x, %#x}\n",
+                            blob[0], blob[1]);
+    /* TODO: Add tests for well-known WinRT custom attributes. */
+}
+
 static void test_IMetaDataImport(void)
 {
     static const struct type_info type_defs[] =
@@ -1503,6 +1530,12 @@ static void test_IMetaDataImport(void)
         winetest_pop_context();
     }
 
+    hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum, mdTokenNil, mdTokenNil, &token, 1, NULL);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum, TokenFromRid(1, mdtCustomAttribute), mdTokenNil,
+                                              &token, 1, NULL);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+
     henum = NULL;
     buf_count = 0;
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, &typedef1, 1, &buf_count);
@@ -1527,9 +1560,7 @@ static void test_IMetaDataImport(void)
             hr = IMetaDataImport_GetCustomAttributeProps(md_import, attr, &obj, &type, &blob, &blob_len);
             ok(hr == S_OK, "got hr %#lx\n", hr);
             ok(obj == typedef1, "got obj %s != %s\n", debugstr_mdToken(obj), debugstr_mdToken(typedef1));
-            ok(TypeFromToken(type) == mdtMemberRef || TypeFromToken(type) == mdtMethodDef, "got type %s\n", debugstr_mdToken(type));
-            ok(!!blob, "got blob %p\n", blob);
-            ok(!!blob_len, "got blob_len %lu\n", blob_len);
+            test_custom_attr_value(md_import, type, blob, blob_len);
             if (++j < buf_count2)
             {
                 hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum2, typedef1, mdTokenNil, &attr, 1, NULL);
