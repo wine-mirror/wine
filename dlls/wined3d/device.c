@@ -46,8 +46,9 @@ struct lights_settings
 {
     struct light_transformed lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
     struct wined3d_color ambient_light;
-    struct wined3d_matrix modelview_matrix;
-    struct wined3d_matrix normal_matrix;
+    struct wined3d_matrix modelview_matrix[4];
+    struct wined3d_matrix normal_matrix[4];
+    struct wined3d_matrix normal_matrix_blended;
     struct wined3d_vec4 position_transformed;
 
     float fog_start, fog_end, fog_density;
@@ -62,7 +63,9 @@ struct lights_settings
     uint32_t localviewer                : 1;
     uint32_t fog_coord_mode             : 2;
     uint32_t fog_mode                   : 2;
-    uint32_t padding                    : 24;
+    uint32_t vertexblends               : 2;
+    uint32_t have_normals               : 1;
+    uint32_t padding                    : 21;
 };
 
 /* Define the default light parameters as specified by MSDN. */
@@ -2929,8 +2932,8 @@ static void wined3d_color_rgb_mul_add(struct wined3d_color *dst, const struct wi
     dst->b += src->b * c;
 }
 
-static void init_transformed_lights(struct lights_settings *ls,
-        const struct wined3d_stateblock_state *state, BOOL legacy_lighting, BOOL compute_lighting)
+static void init_transformed_lights(struct lights_settings *ls, const struct wined3d_stateblock_state *state,
+        BOOL legacy_lighting, BOOL compute_lighting, unsigned int vertexblends, BOOL have_normals)
 {
     const struct wined3d_light_info *lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
     const struct wined3d_light_info *light_info;
@@ -2949,17 +2952,21 @@ static void init_transformed_lights(struct lights_settings *ls,
     ls->fog_start = int_to_float(state->rs[WINED3D_RS_FOGSTART]);
     ls->fog_end = int_to_float(state->rs[WINED3D_RS_FOGEND]);
     ls->fog_density = int_to_float(state->rs[WINED3D_RS_FOGDENSITY]);
+    ls->vertexblends = vertexblends;
+    ls->have_normals = !!have_normals;
 
     if (ls->fog_mode == WINED3D_FOG_NONE && !compute_lighting)
         return;
 
-    multiply_matrix(&ls->modelview_matrix, &state->transforms[WINED3D_TS_VIEW],
-            &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
+    for (i = 0; i < vertexblends + 1; ++i)
+        multiply_matrix(&ls->modelview_matrix[i], &state->transforms[WINED3D_TS_VIEW],
+                &state->transforms[WINED3D_TS_WORLD_MATRIX(i)]);
 
     if (!compute_lighting)
         return;
 
-    compute_normal_matrix(&ls->normal_matrix, legacy_lighting, &ls->modelview_matrix);
+    for (i = 0; i < vertexblends + 1; ++i)
+        compute_normal_matrix(&ls->normal_matrix[i], legacy_lighting, &ls->modelview_matrix[i]);
 
     wined3d_color_from_d3dcolor(&ls->ambient_light, state->rs[WINED3D_RS_AMBIENT]);
     ls->legacy_lighting = !!legacy_lighting;
@@ -3129,13 +3136,18 @@ static void get_blended_matrix(struct wined3d_matrix *m, unsigned int vertexblen
 }
 
 static void light_set_vertex_data(struct lights_settings *ls,
-        const struct wined3d_vec4 *position)
+        const struct wined3d_vec4 *position, const float blendweights[4])
 {
+    struct wined3d_matrix m;
+
     if (ls->fog_mode == WINED3D_FOG_NONE && !ls->lighting)
         return;
 
-    wined3d_vec4_transform(&ls->position_transformed, position, &ls->modelview_matrix);
+    get_blended_matrix(&m, ls->vertexblends, ls->modelview_matrix, blendweights);
+    wined3d_vec4_transform(&ls->position_transformed, position, &m);
     wined3d_vec3_scale((struct wined3d_vec3 *)&ls->position_transformed, 1.0f / ls->position_transformed.w);
+    if (ls->lighting && ls->have_normals)
+        get_blended_matrix(&ls->normal_matrix_blended, ls->vertexblends, ls->normal_matrix, blendweights);
 }
 
 static void compute_light(struct wined3d_color *ambient, struct wined3d_color *diffuse,
@@ -3154,7 +3166,7 @@ static void compute_light(struct wined3d_color *ambient, struct wined3d_color *d
 
     if (normal)
     {
-        wined3d_vec3_transform(&normal_transformed, normal, &ls->normal_matrix);
+        wined3d_vec3_transform(&normal_transformed, normal, &ls->normal_matrix_blended);
         if (ls->normalise)
             wined3d_vec3_normalise(&normal_transformed);
     }
@@ -3444,7 +3456,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
     material_specular_state_colour = state->rs[WINED3D_RS_SPECULARENABLE]
             ? &state->material.specular : &black;
     init_transformed_lights(&ls, state, device->adapter->d3d_info.wined3d_creation_flags
-            & WINED3D_LEGACY_FFP_LIGHTING, lighting);
+            & WINED3D_LEGACY_FFP_LIGHTING, lighting, vertexblends, stream_info->use_map & (1u << WINED3D_FFP_NORMAL));
 
     wined3d_viewport_get_z_range(&vp, &min_z, &max_z);
 
@@ -3475,7 +3487,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
         position.z = p[2];
         position.w = 1.0f;
 
-        light_set_vertex_data(&ls, &position);
+        light_set_vertex_data(&ls, &position, blendweights);
 
         if ( ((dst_fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZ ) ||
              ((dst_fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {

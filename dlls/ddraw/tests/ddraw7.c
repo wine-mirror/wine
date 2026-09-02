@@ -4965,7 +4965,7 @@ static void test_lighting(void)
         {&mat_singular, NULL, nquad, 0x000000ff, 0xff000000, "Lit quad with singular world matrix", TRUE},
         {&mat_transf, NULL, rotatedquad, 0x000000ff, 0xff0000ff, "Lit quad with transformation matrix"},
         {&mat_nonaffine, NULL, translatedquad, 0x00000000, 0xff000000, "Lit quad with non-affine matrix"},
-        {&mat_transf, &mat, translatedquadw, 0x00ffffff, 0xff0000cc, "Lit quad with vertex blending", TRUE},
+        {&mat_transf, &mat, translatedquadw, 0x00ffffff, 0xff0000cc, "Lit quad with vertex blending"},
     };
 
     IDirect3DVertexBuffer7 *src_vb1, *src_vb2, *src_vb3, *dst_vb;
