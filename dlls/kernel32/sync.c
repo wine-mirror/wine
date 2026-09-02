@@ -556,6 +556,15 @@ BOOL WINAPI GetNamedPipeServerSessionId( HANDLE pipe, ULONG *id )
 }
 
 /***********************************************************************
+ *           GetNamedPipeClientComputerNameA  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeClientComputerNameA( HANDLE pipe, LPSTR name, ULONG name_length )
+{
+    FIXME( "%p, %p, %lu\n", pipe, name, name_length );
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetNamedPipeHandleStateA  (KERNEL32.@)
  */
 BOOL WINAPI GetNamedPipeHandleStateA(

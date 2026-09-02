@@ -606,7 +606,7 @@
 @ stdcall GetNLSVersionEx(long wstr ptr)
 @ stub GetNamedLocaleHashNode
 @ stub GetNamedPipeAttribute
-@ stub GetNamedPipeClientComputerNameW
+@ stdcall GetNamedPipeClientComputerNameW(long wstr long)
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr ptr long)
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNativeSystemInfo(ptr)

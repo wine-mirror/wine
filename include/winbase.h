@@ -1837,6 +1837,9 @@ WINBASEAPI HMODULE     WINAPI GetModuleHandleW(LPCWSTR);
 WINBASEAPI BOOL        WINAPI GetModuleHandleExA(DWORD,LPCSTR,HMODULE*);
 WINBASEAPI BOOL        WINAPI GetModuleHandleExW(DWORD,LPCWSTR,HMODULE*);
 #define                       GetModuleHandleEx WINELIB_NAME_AW(GetModuleHandleEx)
+WINBASEAPI BOOL        WINAPI GetNamedPipeClientComputerNameA(HANDLE,LPSTR,ULONG);
+WINBASEAPI BOOL        WINAPI GetNamedPipeClientComputerNameW(HANDLE,LPWSTR,ULONG);
+#define                       GetNamedPipeClientComputerName WINELIB_NAME_AW(GetNamedPipeClientComputerName)
 WINBASEAPI BOOL        WINAPI GetNamedPipeClientProcessId(HANDLE,PULONG);
 WINBASEAPI BOOL        WINAPI GetNamedPipeClientSessionId(HANDLE,PULONG);
 WINBASEAPI BOOL        WINAPI GetNamedPipeHandleStateA(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPSTR,DWORD);

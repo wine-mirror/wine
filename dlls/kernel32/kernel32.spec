@@ -745,8 +745,8 @@
 @ stdcall -import GetNLSVersion(long long ptr)
 @ stdcall -import GetNLSVersionEx(long wstr ptr)
 # @ stub GetNamedPipeAttribute
-# @ stub GetNamedPipeClientComputerNameA
-# @ stub GetNamedPipeClientComputerNameW
+@ stdcall GetNamedPipeClientComputerNameA(long str long)
+@ stdcall GetNamedPipeClientComputerNameW(long wstr long)
 @ stdcall GetNamedPipeClientProcessId(long ptr)
 @ stdcall GetNamedPipeClientSessionId(long ptr)
 @ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr ptr long)

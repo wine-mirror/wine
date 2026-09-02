@@ -1512,6 +1512,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH DisconnectNamedPipe( HANDLE pipe )
                                           FSCTL_PIPE_DISCONNECT, NULL, 0, NULL, 0 ));
 }
 
+/***********************************************************************
+ *           GetNamedPipeClientComputerNameW   (kernelbase.@)
+ */
+BOOL WINAPI GetNamedPipeClientComputerNameW( HANDLE pipe, LPWSTR name, ULONG name_length )
+{
+    FIXME( "%p, %p, %lu\n", pipe, name, name_length );
+    return FALSE;
+}
 
 /***********************************************************************
  *           GetNamedPipeHandleStateW   (kernelbase.@)
