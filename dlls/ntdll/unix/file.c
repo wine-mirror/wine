@@ -4932,22 +4932,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         else status = STATUS_INVALID_PARAMETER_3;
         break;
 
-    case FileEndOfFileInformation:
-        if (len >= sizeof(FILE_END_OF_FILE_INFORMATION))
-        {
-            const FILE_END_OF_FILE_INFORMATION *info = ptr;
-
-            SERVER_START_REQ( set_fd_eof_info )
-            {
-                req->handle   = wine_server_obj_handle( handle );
-                req->eof      = info->EndOfFile.QuadPart;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-        }
-        else status = STATUS_INVALID_PARAMETER_3;
-        break;
-
     case FileCompletionInformation:
         if (len >= sizeof(FILE_COMPLETION_INFORMATION))
         {

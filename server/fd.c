@@ -2613,6 +2613,42 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
     }
 }
 
+static void set_fd_eof( struct fd *fd, file_pos_t eof )
+{
+    struct stat st;
+
+    if (!fd->inode)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (fd->unix_fd == -1)
+    {
+        set_error( fd->no_fd_status );
+        return;
+    }
+    if (fstat( fd->unix_fd, &st) == -1)
+    {
+        file_set_error();
+        return;
+    }
+    if (eof < st.st_size)
+    {
+        struct fd *fd_ptr;
+        LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
+        {
+            if (fd_ptr->access & FILE_MAPPING_ACCESS)
+            {
+                set_error( STATUS_USER_MAPPED_FILE );
+                return;
+            }
+        }
+        if (ftruncate( fd->unix_fd, eof ) == -1) file_set_error();
+    }
+    else grow_file( fd->unix_fd, eof );
+}
+
 /* default set_file_info() routine */
 void default_fd_set_file_info( struct fd *fd, struct async *async, unsigned int info_class )
 {
@@ -2638,6 +2674,20 @@ void default_fd_set_file_info( struct fd *fd, struct async *async, unsigned int 
                                                 | FILE_SKIP_SET_USER_EVENT_ON_FAST_IO );
             }
             else set_error( STATUS_INVALID_PARAMETER );
+            break;
+        }
+
+    case FileEndOfFileInformation:
+        {
+            const FILE_END_OF_FILE_INFORMATION *info = get_req_data();
+
+            if (get_req_data_size() < sizeof(*info))
+            {
+                set_error( STATUS_INVALID_PARAMETER_3 );
+                return;
+            }
+
+            set_fd_eof( fd, info->EndOfFile.QuadPart );
             break;
         }
 
@@ -2893,42 +2943,6 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
 
 failed:
     free( name );
-}
-
-static void set_fd_eof( struct fd *fd, file_pos_t eof )
-{
-    struct stat st;
-
-    if (!fd->inode)
-    {
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        return;
-    }
-
-    if (fd->unix_fd == -1)
-    {
-        set_error( fd->no_fd_status );
-        return;
-    }
-    if (fstat( fd->unix_fd, &st) == -1)
-    {
-        file_set_error();
-        return;
-    }
-    if (eof < st.st_size)
-    {
-        struct fd *fd_ptr;
-        LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
-        {
-            if (fd_ptr->access & FILE_MAPPING_ACCESS)
-            {
-                set_error( STATUS_USER_MAPPED_FILE );
-                return;
-            }
-        }
-        if (ftruncate( fd->unix_fd, eof ) == -1) file_set_error();
-    }
-    else grow_file( fd->unix_fd, eof );
 }
 
 struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
@@ -3259,17 +3273,6 @@ DECL_HANDLER(set_fd_name_info)
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );
-}
-
-/* set fd eof information */
-DECL_HANDLER(set_fd_eof_info)
-{
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
-    if (fd)
-    {
-        set_fd_eof( fd, req->eof );
-        release_object( fd );
-    }
 }
 
 DECL_HANDLER(unmount_device)

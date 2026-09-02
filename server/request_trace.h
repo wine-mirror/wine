@@ -3190,12 +3190,6 @@ static void dump_set_fd_name_info_request( const struct set_fd_name_info_request
     dump_varargs_string( ", filename=", cur_size );
 }
 
-static void dump_set_fd_eof_info_request( const struct set_fd_eof_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    dump_uint64( ", eof=", &req->eof );
-}
-
 static void dump_get_window_layered_info_request( const struct get_window_layered_info_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
@@ -3829,7 +3823,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_add_fd_completion_request,
     (dump_func)dump_set_fd_disp_info_request,
     (dump_func)dump_set_fd_name_info_request,
-    (dump_func)dump_set_fd_eof_info_request,
     (dump_func)dump_get_window_layered_info_request,
     (dump_func)dump_set_window_layered_info_request,
     (dump_func)dump_alloc_user_handle_request,
@@ -4138,7 +4131,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_remove_completion_reply,
     (dump_func)dump_get_thread_completion_reply,
     (dump_func)dump_query_completion_reply,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -4455,7 +4447,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "add_fd_completion",
     "set_fd_disp_info",
     "set_fd_name_info",
-    "set_fd_eof_info",
     "get_window_layered_info",
     "set_window_layered_info",
     "alloc_user_handle",
@@ -4566,6 +4557,7 @@ static const struct
     { "INVALID_OWNER",               STATUS_INVALID_OWNER },
     { "INVALID_PARAMETER",           STATUS_INVALID_PARAMETER },
     { "INVALID_PARAMETER_2",         STATUS_INVALID_PARAMETER_2 },
+    { "INVALID_PARAMETER_3",         STATUS_INVALID_PARAMETER_3 },
     { "INVALID_PIPE_STATE",          STATUS_INVALID_PIPE_STATE },
     { "INVALID_READ_MODE",           STATUS_INVALID_READ_MODE },
     { "INVALID_SECURITY_DESCR",      STATUS_INVALID_SECURITY_DESCR },
