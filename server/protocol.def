@@ -2664,12 +2664,6 @@ enum message_type
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 #define NAMED_PIPE_SERVER_END           0x8000
 
-/* Set named pipe information by handle */
-@REQ(set_named_pipe_info)
-    obj_handle_t   handle;
-    unsigned int   flags;
-@END
-
 /* Create a window */
 @REQ(create_window)
     user_handle_t  parent;      /* parent window */

@@ -4948,29 +4948,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         else status = STATUS_INVALID_PARAMETER_3;
         break;
 
-    case FilePipeInformation:
-        if (len >= sizeof(FILE_PIPE_INFORMATION))
-        {
-            FILE_PIPE_INFORMATION *info = ptr;
-
-            if ((info->CompletionMode | info->ReadMode) & ~1)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                break;
-            }
-
-            SERVER_START_REQ( set_named_pipe_info )
-            {
-                req->handle = wine_server_obj_handle( handle );
-                req->flags  = (info->CompletionMode ? NAMED_PIPE_NONBLOCKING_MODE    : 0) |
-                              (info->ReadMode       ? NAMED_PIPE_MESSAGE_STREAM_READ : 0);
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-        }
-        else status = STATUS_INVALID_PARAMETER_3;
-        break;
-
     case FileMailslotSetInformation:
         {
             FILE_MAILSLOT_SET_INFORMATION *info = ptr;

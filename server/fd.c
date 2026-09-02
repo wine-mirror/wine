@@ -2952,10 +2952,19 @@ DECL_HANDLER(get_file_info)
     }
 }
 
+static unsigned int get_set_info_class_access( unsigned int class )
+{
+    switch (class)
+    {
+        case FilePipeInformation: return FILE_WRITE_ATTRIBUTES;
+        default: return 0;
+    }
+}
+
 /* set file info */
 DECL_HANDLER(set_file_info)
 {
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, get_set_info_class_access( req->info_class ));
     struct async *async;
 
     if (!fd) return;

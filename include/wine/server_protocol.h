@@ -3533,19 +3533,6 @@ struct create_named_pipe_reply
 #define NAMED_PIPE_SERVER_END           0x8000
 
 
-struct set_named_pipe_info_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-    unsigned int   flags;
-    char __pad_20[4];
-};
-struct set_named_pipe_info_reply
-{
-    struct reply_header __header;
-};
-
-
 struct create_window_request
 {
     struct request_header __header;
@@ -6454,7 +6441,6 @@ enum request
     REQ_ioctl,
     REQ_set_irp_result,
     REQ_create_named_pipe,
-    REQ_set_named_pipe_info,
     REQ_create_window,
     REQ_destroy_window,
     REQ_get_desktop_window,
@@ -6773,7 +6759,6 @@ union generic_request
     struct ioctl_request ioctl_request;
     struct set_irp_result_request set_irp_result_request;
     struct create_named_pipe_request create_named_pipe_request;
-    struct set_named_pipe_info_request set_named_pipe_info_request;
     struct create_window_request create_window_request;
     struct destroy_window_request destroy_window_request;
     struct get_desktop_window_request get_desktop_window_request;
@@ -7090,7 +7075,6 @@ union generic_reply
     struct ioctl_reply ioctl_reply;
     struct set_irp_result_reply set_irp_result_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
-    struct set_named_pipe_info_reply set_named_pipe_info_reply;
     struct create_window_reply create_window_reply;
     struct destroy_window_reply destroy_window_reply;
     struct get_desktop_window_reply get_desktop_window_reply;
@@ -7261,6 +7245,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 974
+#define SERVER_PROTOCOL_VERSION 975
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

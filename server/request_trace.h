@@ -1701,12 +1701,6 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
     fprintf( stderr, ", created=%d", req->created );
 }
 
-static void dump_set_named_pipe_info_request( const struct set_named_pipe_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
 static void dump_create_window_request( const struct create_window_request *req )
 {
     fprintf( stderr, " parent=%08x", req->parent );
@@ -3723,7 +3717,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_ioctl_request,
     (dump_func)dump_set_irp_result_request,
     (dump_func)dump_create_named_pipe_request,
-    (dump_func)dump_set_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
     (dump_func)dump_get_desktop_window_request,
@@ -4039,7 +4032,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_ioctl_reply,
     NULL,
     (dump_func)dump_create_named_pipe_reply,
-    NULL,
     (dump_func)dump_create_window_reply,
     NULL,
     (dump_func)dump_get_desktop_window_reply,
@@ -4355,7 +4347,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "ioctl",
     "set_irp_result",
     "create_named_pipe",
-    "set_named_pipe_info",
     "create_window",
     "destroy_window",
     "get_desktop_window",
