@@ -34,8 +34,10 @@
 #define LoadResource MacLoadResource
 #define Polygon MacPolygon
 
+#include <Accelerate/Accelerate.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
+#include <IOSurface/IOSurface.h>
 
 #undef GetCurrentProcess
 #undef GetCurrentThread
@@ -483,8 +485,8 @@ extern void macdrv_hide_cocoa_window(WineWindow *window);
 extern void macdrv_set_cocoa_window_frame(WineWindow *window, const CGRect* new_frame);
 extern void macdrv_get_cocoa_window_frame(WineWindow *window, CGRect* out_frame);
 extern void macdrv_set_cocoa_parent_window(WineWindow *window, WineWindow *parent);
-extern void macdrv_window_set_color_image(WineWindow *window, CGImageRef image, CGRect rect, CGRect dirty);
-extern void macdrv_window_set_shape_image(WineWindow *window, CGImageRef image);
+extern void macdrv_window_set_io_surface(WineWindow *window, IOSurfaceRef s, CGRect rect, CGRect dirty);
+extern void macdrv_window_shape_changed(WineWindow *window, bool has_shape);
 extern void macdrv_set_window_shape(WineWindow *window, const CGRect *rects, int count);
 extern void macdrv_set_window_alpha(WineWindow *window, CGFloat alpha);
 extern void macdrv_window_use_per_pixel_alpha(WineWindow *window, bool use_per_pixel_alpha);

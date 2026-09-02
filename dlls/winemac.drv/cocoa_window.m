@@ -22,6 +22,7 @@
 #import "macdrv.h"
 
 #define GL_SILENCE_DEPRECATION
+#import <IOSurface/IOSurfaceObjC.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
 #include <dlfcn.h>
@@ -227,8 +228,8 @@ static inline BOOL stage_manager_enabled(void)
 @interface WineContentView : WineBaseView <NSTextInput, NSViewLayerContentScaleDelegate>
 {
     CGRect surfaceRect;
-    CGImageRef colorImage;
-    CGImageRef shapeImage;
+    IOSurface* _ioSurface;
+    BOOL _hasShape;
 
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
@@ -368,8 +369,7 @@ static inline BOOL stage_manager_enabled(void)
         [glContexts release];
         [pendingGlContexts release];
         [_caLayerHosts release];
-        CGImageRelease(colorImage);
-        CGImageRelease(shapeImage);
+        [_ioSurface release];
         [super dealloc];
     }
 
@@ -386,8 +386,6 @@ static inline BOOL stage_manager_enabled(void)
     - (void) updateLayer
     {
         WineWindow* window = (WineWindow*)[self window];
-        CGImageRef image, maskedImage;
-        CGRect imageRect;
         CALayer* layer = [self layer];
 
         if ([window contentView] != self)
@@ -396,32 +394,17 @@ static inline BOOL stage_manager_enabled(void)
         if (window.closing)
             return;
 
-        imageRect = layer.bounds;
-        imageRect.origin.x *= layer.contentsScale;
-        imageRect.origin.y *= layer.contentsScale;
-        imageRect.size.width *= layer.contentsScale;
-        imageRect.size.height *= layer.contentsScale;
+        layer.position = surfaceRect.origin;
+        layer.contents = _ioSurface;
+        [window windowDidDrawContent];
 
-        maskedImage = shapeImage ? CGImageCreateWithMask(colorImage, shapeImage)
-                                 : CGImageRetain(colorImage);
-        image = CGImageCreateWithImageInRect(maskedImage, imageRect);
-        CGImageRelease(maskedImage);
-
-        if (image)
+        // If the window may be transparent, then we have to invalidate the
+        // shadow every time we draw.  Also, if this is the first time we've
+        // drawn since changing from transparent to opaque.
+        if (_hasShape || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw)
         {
-            layer.position = surfaceRect.origin;
-            layer.contents = (id)image;
-            CFRelease(image);
-            [window windowDidDrawContent];
-
-            // If the window may be transparent, then we have to invalidate the
-            // shadow every time we draw.  Also, if this is the first time we've
-            // drawn since changing from transparent to opaque.
-            if (shapeImage || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw)
-            {
-                window.shapeChangedSinceLastDraw = FALSE;
-                [window invalidateShadow];
-            }
+            window.shapeChangedSinceLastDraw = NO;
+            [window invalidateShadow];
         }
     }
 
@@ -430,21 +413,21 @@ static inline BOOL stage_manager_enabled(void)
         surfaceRect = rect;
     }
 
-    - (void) setColorImage:(CGImageRef)image
+    - (void) setIOSurface:(IOSurface*)surface
     {
-        CGImageRelease(colorImage);
-        colorImage = CGImageRetain(image);
+        [surface retain];
+        [_ioSurface release];
+        _ioSurface = surface;
     }
 
-    - (void) setShapeImage:(CGImageRef)image
+    - (void) setHasShape:(BOOL)has_shape
     {
-        CGImageRelease(shapeImage);
-        shapeImage = CGImageRetain(image);
+        _hasShape = has_shape;
     }
 
-    - (BOOL) hasShapeImage
+    - (BOOL) hasShape
     {
-        return !!shapeImage;
+        return _hasShape;
     }
 
     - (void) viewWillDraw
@@ -1908,7 +1891,7 @@ static inline BOOL stage_manager_enabled(void)
     - (BOOL) needsTransparency
     {
         WineContentView *view = self.contentView;
-        return self.contentView.layer.mask || [view hasShapeImage] || self.usePerPixelAlpha ||
+        return self.contentView.layer.mask || [view hasShape] || self.usePerPixelAlpha ||
                 (gl_surface_mode == GL_SURFACE_BEHIND && [view hasGLDescendant]);
     }
 
@@ -3260,47 +3243,45 @@ void macdrv_set_cocoa_parent_window(WineWindow *window, WineWindow *parent)
 
 
 /***********************************************************************
- *              macdrv_window_set_color_image
+ *              macdrv_window_set_io_surface
  *
  * Push a window surface color pixel update in a specified rect (in non-client
  * area coordinates).
  */
-void macdrv_window_set_color_image(WineWindow *window, CGImageRef image, CGRect rect, CGRect dirty)
+void macdrv_window_set_io_surface(WineWindow *window, IOSurfaceRef s, CGRect rect, CGRect dirty)
 {
 @autoreleasepool
 {
-    CGImageRetain(image);
+    IOSurface* surface = (IOSurface*)s;
+
+    [surface retain];
 
     OnMainThreadAsync(^{
         WineContentView *view = [window contentView];
 
-        [view setColorImage:image];
+        [view setIOSurface:surface];
         [view setSurfaceRect:cgrect_mac_from_win(rect)];
         [view setNeedsDisplayInRect:NSRectFromCGRect(cgrect_mac_from_win(dirty))];
 
-        CGImageRelease(image);
+        [surface release];
     });
 }
 }
 
 
 /***********************************************************************
- *              macdrv_window_set_shape_image
+ *              macdrv_window_shape_changed
  */
-void macdrv_window_set_shape_image(WineWindow *window, CGImageRef image)
+void macdrv_window_shape_changed(WineWindow *window, bool has_shape)
 {
 @autoreleasepool
 {
-    CGImageRetain(image);
-
     OnMainThreadAsync(^{
         WineContentView *view = [window contentView];
 
-        [view setShapeImage:image];
-        [view setNeedsDisplay:true];
+        [view setHasShape:has_shape];
+        [view setNeedsDisplay:YES];
         [window checkTransparency];
-
-        CGImageRelease(image);
     });
 }
 }

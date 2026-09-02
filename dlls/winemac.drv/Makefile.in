@@ -4,10 +4,12 @@ IMPORTS   = uuid rpcrt4 user32 gdi32 win32u
 DELAYIMPORTS = ole32 shell32 imm32
 UNIX_LIBS    = \
 	-lwin32u \
+	-framework Accelerate \
 	-framework AppKit \
 	-framework Carbon \
 	-framework Foundation \
 	-framework IOKit \
+	-framework IOSurface \
 	-framework Metal \
 	-framework OpenGL \
 	-framework QuartzCore \
