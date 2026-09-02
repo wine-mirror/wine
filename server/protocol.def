@@ -3686,18 +3686,6 @@ struct handle_info
 @END
 
 
-/* Set mailslot information */
-@REQ(set_mailslot_info)
-    obj_handle_t   handle;        /* handle to the mailslot */
-    timeout_t      read_timeout;
-    unsigned int   flags;
-@REPLY
-    timeout_t      read_timeout;
-    unsigned int   max_msgsize;
-@END
-#define MAILSLOT_SET_READ_TIMEOUT  1
-
-
 /* Create a directory object */
 @REQ(create_directory)
     unsigned int   access;        /* access flags */

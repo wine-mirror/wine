@@ -100,6 +100,7 @@ static enum server_fd_type mailslot_get_fd_type( struct fd *fd );
 static void mailslot_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void mailslot_write( struct fd *fd, struct async *async, file_pos_t pos );
 static void mailslot_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
+static void mailslot_set_file_info( struct fd *fd, struct async *async, unsigned int info_class );
 
 static const struct fd_ops mailslot_fd_ops =
 {
@@ -107,7 +108,7 @@ static const struct fd_ops mailslot_fd_ops =
     .read          = mailslot_read,
     .write         = mailslot_write,
     .get_file_info = mailslot_get_file_info,
-    .set_file_info = default_fd_set_file_info,
+    .set_file_info = mailslot_set_file_info,
     .ioctl         = default_fd_ioctl,
 };
 
@@ -343,6 +344,31 @@ static void mailslot_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
     }
 }
 
+static void mailslot_set_file_info( struct fd *fd, struct async *async, unsigned int info_class )
+{
+    struct mailslot *mailslot = get_fd_user( fd );
+
+    switch (info_class)
+    {
+    case FileMailslotSetInformation:
+        {
+            const FILE_MAILSLOT_SET_INFORMATION *info = get_req_data();
+
+            if (get_req_data_size() < sizeof(*info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            mailslot->read_timeout = info->ReadTimeout.QuadPart;
+            break;
+        }
+
+    default:
+        default_fd_set_file_info( fd, async, info_class );
+    }
+}
+
 static struct fd *mailslot_get_fd( struct object *obj )
 {
     struct mailslot *mailslot = (struct mailslot *) obj;
@@ -565,13 +591,6 @@ static unsigned int mail_writer_map_access( struct object *obj, unsigned int acc
     return default_map_access( obj, access ) & FILE_GENERIC_WRITE;
 }
 
-static struct mailslot *get_mailslot_obj( struct process *process, obj_handle_t handle,
-                                          unsigned int access )
-{
-    return (struct mailslot *)get_handle_obj( process, handle, access, &mailslot_ops );
-}
-
-
 /* create a mailslot */
 DECL_HANDLER(create_mailslot)
 {
@@ -607,20 +626,4 @@ DECL_HANDLER(create_mailslot)
     }
 
     if (params.root) release_object( params.root );
-}
-
-
-/* set mailslot information */
-DECL_HANDLER(set_mailslot_info)
-{
-    struct mailslot *mailslot = get_mailslot_obj( current->process, req->handle, 0 );
-
-    if (mailslot)
-    {
-        if (req->flags & MAILSLOT_SET_READ_TIMEOUT)
-            mailslot->read_timeout = req->read_timeout;
-        reply->max_msgsize = mailslot->max_msgsize;
-        reply->read_timeout = mailslot->read_timeout;
-        release_object( mailslot );
-    }
 }

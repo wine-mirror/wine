@@ -247,7 +247,6 @@ DECL_HANDLER(get_system_handles);
 DECL_HANDLER(get_tcp_connections);
 DECL_HANDLER(get_udp_endpoints);
 DECL_HANDLER(create_mailslot);
-DECL_HANDLER(set_mailslot_info);
 DECL_HANDLER(create_directory);
 DECL_HANDLER(open_directory);
 DECL_HANDLER(get_directory_entries);
@@ -562,7 +561,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_tcp_connections,
     (req_handler)req_get_udp_endpoints,
     (req_handler)req_create_mailslot,
-    (req_handler)req_set_mailslot_info,
     (req_handler)req_create_directory,
     (req_handler)req_open_directory,
     (req_handler)req_get_directory_entries,
@@ -2052,13 +2050,6 @@ C_ASSERT( offsetof(struct create_mailslot_request, max_msgsize) == 32 );
 C_ASSERT( sizeof(struct create_mailslot_request) == 40 );
 C_ASSERT( offsetof(struct create_mailslot_reply, handle) == 8 );
 C_ASSERT( sizeof(struct create_mailslot_reply) == 16 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, read_timeout) == 16 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, flags) == 24 );
-C_ASSERT( sizeof(struct set_mailslot_info_request) == 32 );
-C_ASSERT( offsetof(struct set_mailslot_info_reply, read_timeout) == 8 );
-C_ASSERT( offsetof(struct set_mailslot_info_reply, max_msgsize) == 16 );
-C_ASSERT( sizeof(struct set_mailslot_info_reply) == 24 );
 C_ASSERT( offsetof(struct create_directory_request, access) == 12 );
 C_ASSERT( sizeof(struct create_directory_request) == 16 );
 C_ASSERT( offsetof(struct create_directory_reply, handle) == 8 );

@@ -2827,19 +2827,6 @@ static void dump_create_mailslot_reply( const struct create_mailslot_reply *req 
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
-static void dump_set_mailslot_info_request( const struct set_mailslot_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    dump_timeout( ", read_timeout=", &req->read_timeout );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
-static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
-{
-    dump_timeout( " read_timeout=", &req->read_timeout );
-    fprintf( stderr, ", max_msgsize=%08x", req->max_msgsize );
-}
-
 static void dump_create_directory_request( const struct create_directory_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -3814,7 +3801,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_tcp_connections_request,
     (dump_func)dump_get_udp_endpoints_request,
     (dump_func)dump_create_mailslot_request,
-    (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
     (dump_func)dump_open_directory_request,
     (dump_func)dump_get_directory_entries_request,
@@ -4129,7 +4115,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_tcp_connections_reply,
     (dump_func)dump_get_udp_endpoints_reply,
     (dump_func)dump_create_mailslot_reply,
-    (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
     (dump_func)dump_open_directory_reply,
     (dump_func)dump_get_directory_entries_reply,
@@ -4444,7 +4429,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_tcp_connections",
     "get_udp_endpoints",
     "create_mailslot",
-    "set_mailslot_info",
     "create_directory",
     "open_directory",
     "get_directory_entries",

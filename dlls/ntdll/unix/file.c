@@ -4948,21 +4948,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         else status = STATUS_INVALID_PARAMETER_3;
         break;
 
-    case FileMailslotSetInformation:
-        {
-            FILE_MAILSLOT_SET_INFORMATION *info = ptr;
-
-            SERVER_START_REQ( set_mailslot_info )
-            {
-                req->handle = wine_server_obj_handle( handle );
-                req->flags = MAILSLOT_SET_READ_TIMEOUT;
-                req->read_timeout = info->ReadTimeout.QuadPart;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-        }
-        break;
-
     case FileCompletionInformation:
         if (len >= sizeof(FILE_COMPLETION_INFORMATION))
         {

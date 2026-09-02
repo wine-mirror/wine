@@ -5155,25 +5155,6 @@ struct create_mailslot_reply
 
 
 
-struct set_mailslot_info_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-    timeout_t      read_timeout;
-    unsigned int   flags;
-    char __pad_28[4];
-};
-struct set_mailslot_info_reply
-{
-    struct reply_header __header;
-    timeout_t      read_timeout;
-    unsigned int   max_msgsize;
-    char __pad_20[4];
-};
-#define MAILSLOT_SET_READ_TIMEOUT  1
-
-
-
 struct create_directory_request
 {
     struct request_header __header;
@@ -6538,7 +6519,6 @@ enum request
     REQ_get_tcp_connections,
     REQ_get_udp_endpoints,
     REQ_create_mailslot,
-    REQ_set_mailslot_info,
     REQ_create_directory,
     REQ_open_directory,
     REQ_get_directory_entries,
@@ -6856,7 +6836,6 @@ union generic_request
     struct get_tcp_connections_request get_tcp_connections_request;
     struct get_udp_endpoints_request get_udp_endpoints_request;
     struct create_mailslot_request create_mailslot_request;
-    struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
     struct open_directory_request open_directory_request;
     struct get_directory_entries_request get_directory_entries_request;
@@ -7172,7 +7151,6 @@ union generic_reply
     struct get_tcp_connections_reply get_tcp_connections_reply;
     struct get_udp_endpoints_reply get_udp_endpoints_reply;
     struct create_mailslot_reply create_mailslot_reply;
-    struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
     struct open_directory_reply open_directory_reply;
     struct get_directory_entries_reply get_directory_entries_reply;
@@ -7245,6 +7223,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 975
+#define SERVER_PROTOCOL_VERSION 976
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
