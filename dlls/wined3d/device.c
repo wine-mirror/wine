@@ -3105,6 +3105,29 @@ static void update_light_diffuse_specular(struct wined3d_color *diffuse, struct 
         wined3d_color_rgb_mul_add(specular, &light->specular, att * powf(t, material_shininess));
 }
 
+static void get_blended_matrix(struct wined3d_matrix *m, unsigned int vertexblends, const struct wined3d_matrix *mat,
+        const float *blendweights)
+{
+    unsigned int i, j;
+    const float *s;
+    float *d;
+
+    if (!vertexblends)
+    {
+        *m = mat[0];
+        return;
+    }
+
+    memset(m, 0, sizeof(*m));
+    d = (float *)m;
+    for (i = 0; i < vertexblends + 1; ++i)
+    {
+        s = (const float *)&mat[i];
+        for (j = 0; j < 16; ++j)
+            d[j] += blendweights[i] * s[j];
+    }
+}
+
 static void light_set_vertex_data(struct lights_settings *ls,
         const struct wined3d_vec4 *position)
 {
@@ -3296,20 +3319,21 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
 {
     enum wined3d_material_color_source diffuse_source, specular_source, ambient_source, emissive_source;
     const struct wined3d_state *device_state = device->cs->c.state;
-    const struct wined3d_matrix *proj_mat, *view_mat, *world_mat;
+    const struct wined3d_matrix *proj_mat, *view_mat, *world_mat[4];
     const struct wined3d_color *material_specular_state_colour;
     const struct wined3d_format *output_colour_format;
     static const struct wined3d_color black;
     struct wined3d_map_desc map_desc;
+    unsigned int vertexblends = 0;
     struct wined3d_box box = {0};
+    struct wined3d_matrix mat[4];
     struct wined3d_viewport vp;
     unsigned int texture_count;
     struct lights_settings ls;
-    struct wined3d_matrix mat;
     unsigned int vertex_size;
     BOOL do_clip, lighting;
     float min_z, max_z;
-    unsigned int i;
+    unsigned int i, j;
     BYTE *dest_ptr;
     HRESULT hr;
 
@@ -3350,9 +3374,33 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
     }
     dest_ptr = map_desc.data;
 
+    switch (state->rs[WINED3D_RS_VERTEXBLEND])
+    {
+        case WINED3D_VBF_DISABLE:
+        case WINED3D_VBF_1WEIGHTS:
+        case WINED3D_VBF_2WEIGHTS:
+        case WINED3D_VBF_3WEIGHTS:
+            vertexblends = state->rs[WINED3D_RS_VERTEXBLEND];
+            break;
+        default:
+            FIXME("Unsupported vertex blending: %d\n", state->rs[WINED3D_RS_VERTEXBLEND]);
+            break;
+    }
+    if (vertexblends && stream_info->use_map & (1u << WINED3D_FFP_BLENDINDICES))
+    {
+        FIXME("Indexed vertex blending is not supported.\n");
+        vertexblends = 0;
+    }
+    if (vertexblends && !(stream_info->use_map & (1u << WINED3D_FFP_BLENDWEIGHT)))
+    {
+        ERR("Vertex blend without blend weights.\n");
+        vertexblends = 0;
+    }
+
     view_mat = &state->transforms[WINED3D_TS_VIEW];
     proj_mat = &state->transforms[WINED3D_TS_PROJECTION];
-    world_mat = &state->transforms[WINED3D_TS_WORLD];
+    for (i = 0; i < vertexblends + 1; ++i)
+        world_mat[i] = &state->transforms[WINED3D_TS_WORLD_MATRIX(i)];
 
     TRACE("View mat:\n");
     TRACE("%.8e %.8e %.8e %.8e\n", view_mat->_11, view_mat->_12, view_mat->_13, view_mat->_14);
@@ -3366,19 +3414,25 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
     TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_31, proj_mat->_32, proj_mat->_33, proj_mat->_34);
     TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_41, proj_mat->_42, proj_mat->_43, proj_mat->_44);
 
-    TRACE("World mat:\n");
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_11, world_mat->_12, world_mat->_13, world_mat->_14);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_21, world_mat->_22, world_mat->_23, world_mat->_24);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_31, world_mat->_32, world_mat->_33, world_mat->_34);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_41, world_mat->_42, world_mat->_43, world_mat->_44);
+    for (i = 0; i < vertexblends + 1; ++i)
+    {
+        TRACE("World mat %u:\n", i);
+        TRACE("%.8e %.8e %.8e %.8e\n", world_mat[i]->_11, world_mat[i]->_12, world_mat[i]->_13, world_mat[i]->_14);
+        TRACE("%.8e %.8e %.8e %.8e\n", world_mat[i]->_21, world_mat[i]->_22, world_mat[i]->_23, world_mat[i]->_24);
+        TRACE("%.8e %.8e %.8e %.8e\n", world_mat[i]->_31, world_mat[i]->_32, world_mat[i]->_33, world_mat[i]->_34);
+        TRACE("%.8e %.8e %.8e %.8e\n", world_mat[i]->_41, world_mat[i]->_42, world_mat[i]->_43, world_mat[i]->_44);
+    }
 
     /* Get the viewport */
     wined3d_device_context_get_viewports(&device->cs->c, NULL, &vp);
     TRACE("viewport x %.8e, y %.8e, width %.8e, height %.8e, min_z %.8e, max_z %.8e.\n",
           vp.x, vp.y, vp.width, vp.height, vp.min_z, vp.max_z);
 
-    multiply_matrix(&mat, view_mat, world_mat);
-    multiply_matrix(&mat, proj_mat, &mat);
+    for (i = 0; i < vertexblends + 1; ++i)
+    {
+        multiply_matrix(&mat[i], view_mat, world_mat[i]);
+        multiply_matrix(&mat[i], proj_mat, &mat[i]);
+    }
 
     texture_count = (dst_fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
 
@@ -3400,8 +3454,22 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
         const float *p = (const float *)&position_element->data.addr[i * position_element->stride];
         struct wined3d_color ambient, diffuse, specular;
         struct wined3d_vec4 position;
+        struct wined3d_matrix m;
         unsigned int tex_index;
+        float blendweights[4];
 
+        if (vertexblends)
+        {
+            const struct wined3d_stream_info_element *weight_element = &stream_info->elements[WINED3D_FFP_BLENDWEIGHT];
+            const float *w = (const float *)&weight_element->data.addr[i * weight_element->stride];
+
+            blendweights[vertexblends] = 1.0f;
+            for (j = 0; j < vertexblends; ++j)
+            {
+                blendweights[j] = w[j];
+                blendweights[vertexblends] -= w[j];
+            }
+        }
         position.x = p[0];
         position.y = p[1];
         position.z = p[2];
@@ -3416,10 +3484,11 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device,
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
             /* Multiplication with world, view and projection matrix. */
-            x   = (p[0] * mat._11) + (p[1] * mat._21) + (p[2] * mat._31) + mat._41;
-            y   = (p[0] * mat._12) + (p[1] * mat._22) + (p[2] * mat._32) + mat._42;
-            z   = (p[0] * mat._13) + (p[1] * mat._23) + (p[2] * mat._33) + mat._43;
-            rhw = (p[0] * mat._14) + (p[1] * mat._24) + (p[2] * mat._34) + mat._44;
+            get_blended_matrix(&m, vertexblends, mat, blendweights);
+            x   = (p[0] * m._11) + (p[1] * m._21) + (p[2] * m._31) + m._41;
+            y   = (p[0] * m._12) + (p[1] * m._22) + (p[2] * m._32) + m._42;
+            z   = (p[0] * m._13) + (p[1] * m._23) + (p[2] * m._33) + m._43;
+            rhw = (p[0] * m._14) + (p[1] * m._24) + (p[2] * m._34) + m._44;
 
             TRACE("x=%f y=%f z=%f rhw=%f\n", x, y, z, rhw);
 

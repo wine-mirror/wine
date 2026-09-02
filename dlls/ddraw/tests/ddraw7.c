@@ -1183,13 +1183,13 @@ static void test_process_vertices(void)
 
     hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(compare_vec4(&dst_data[0], +1.280e+2f, +7.680e+1f, +8.000e-1f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[0], +1.280e+2f, +7.680e+1f, +8.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
-    todo_wine ok(compare_vec4(&dst_data[1], +1.707e+2f, +6.400e+1f, +6.667e-1f, +6.667e-1f, 4096),
+    ok(compare_vec4(&dst_data[1], +1.707e+2f, +6.400e+1f, +6.667e-1f, +6.667e-1f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
-    todo_wine ok(compare_vec4(&dst_data[2], +6.982e+1f, +1.745e+2f, +5.455e-1f, +9.091e-1f, 4096),
+    ok(compare_vec4(&dst_data[2], +6.982e+1f, +1.745e+2f, +5.455e-1f, +9.091e-1f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
     ok(compare_vec4(&dst_data[3], +1.600e+2f, +1.600e+2f, +2.500e-1f, +1.000e+0f, 4096),
