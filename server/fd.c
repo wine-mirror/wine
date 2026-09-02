@@ -2618,6 +2618,29 @@ void default_fd_set_file_info( struct fd *fd, struct async *async, unsigned int 
 {
     switch (info_class)
     {
+    case FileIoCompletionNotificationInformation:
+        {
+            const FILE_IO_COMPLETION_NOTIFICATION_INFORMATION *info = get_req_data();
+
+            if (get_req_data_size() < sizeof(*info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            if (is_fd_overlapped( fd ))
+            {
+                if (info->Flags & FILE_SKIP_SET_EVENT_ON_HANDLE)
+                    set_fd_signaled( fd, 0 );
+                /* removing flags is not allowed */
+                fd->comp_flags |= info->Flags & ( FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
+                                                | FILE_SKIP_SET_EVENT_ON_HANDLE
+                                                | FILE_SKIP_SET_USER_EVENT_ON_FAST_IO );
+            }
+            else set_error( STATUS_INVALID_PARAMETER );
+            break;
+        }
+
     default:
         set_error( STATUS_NOT_IMPLEMENTED );
     }
@@ -3190,27 +3213,6 @@ DECL_HANDLER(add_fd_completion)
     {
         if (fd->completion && (req->async || !(fd->comp_flags & FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)))
             add_completion( fd->completion, fd->comp_key, req->cvalue, req->status, req->information );
-        release_object( fd );
-    }
-}
-
-/* set fd completion information */
-DECL_HANDLER(set_fd_completion_mode)
-{
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
-    if (fd)
-    {
-        if (is_fd_overlapped( fd ))
-        {
-            if (req->flags & FILE_SKIP_SET_EVENT_ON_HANDLE)
-                set_fd_signaled( fd, 0 );
-            /* removing flags is not allowed */
-            fd->comp_flags |= req->flags & ( FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
-                                           | FILE_SKIP_SET_EVENT_ON_HANDLE
-                                           | FILE_SKIP_SET_USER_EVENT_ON_FAST_IO );
-        }
-        else
-            set_error( STATUS_INVALID_PARAMETER );
         release_object( fd );
     }
 }

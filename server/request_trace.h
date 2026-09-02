@@ -3173,12 +3173,6 @@ static void dump_add_fd_completion_request( const struct add_fd_completion_reque
     fprintf( stderr, ", async=%d", req->async );
 }
 
-static void dump_set_fd_completion_mode_request( const struct set_fd_completion_mode_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
 static void dump_set_fd_disp_info_request( const struct set_fd_disp_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -3833,7 +3827,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_query_completion_request,
     (dump_func)dump_set_completion_info_request,
     (dump_func)dump_add_fd_completion_request,
-    (dump_func)dump_set_fd_completion_mode_request,
     (dump_func)dump_set_fd_disp_info_request,
     (dump_func)dump_set_fd_name_info_request,
     (dump_func)dump_set_fd_eof_info_request,
@@ -4150,7 +4143,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     NULL,
     NULL,
     NULL,
-    NULL,
     (dump_func)dump_get_window_layered_info_reply,
     NULL,
     (dump_func)dump_alloc_user_handle_reply,
@@ -4461,7 +4453,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "query_completion",
     "set_completion_info",
     "add_fd_completion",
-    "set_fd_completion_mode",
     "set_fd_disp_info",
     "set_fd_name_info",
     "set_fd_eof_info",
