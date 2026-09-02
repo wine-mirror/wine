@@ -1531,10 +1531,10 @@ static void test_IMetaDataImport(void)
     }
 
     hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum, mdTokenNil, mdTokenNil, &token, 1, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
     hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum, TokenFromRid(1, mdtCustomAttribute), mdTokenNil,
                                               &token, 1, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
 
     henum = NULL;
     buf_count = 0;
@@ -1549,7 +1549,7 @@ static void test_IMetaDataImport(void)
         henum2 = NULL;
         winetest_push_context("i=%lu,typedef1=%s", i, debugstr_mdToken(typedef1));
         hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum2, typedef1, mdTokenNil, &attr, 1, &buf_count2);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
         while (hr == S_OK && j < buf_count2)
         {
             mdToken obj = mdTokenNil, type = mdTokenNil;

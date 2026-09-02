@@ -1560,18 +1560,73 @@ static HRESULT WINAPI import_GetParamForMethodIndex(IMetaDataImport *iface, mdMe
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_EnumCustomAttributes(IMetaDataImport *iface, HCORENUM *henum, mdToken token,
-                                                  mdToken token_type, mdCustomAttribute *attrs, ULONG len, ULONG *count)
+static HRESULT WINAPI import_EnumCustomAttributes(IMetaDataImport *iface, HCORENUM *ret_henum, mdToken parent,
+                                                  mdToken token_type, mdCustomAttribute *ret_attrs, ULONG len,
+                                                  ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %#x, %p, %lu, %p): stub!\n", iface, henum, token, token_type, attrs, len, count);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(parent), debugstr_mdToken(token_type),
+          ret_attrs, len, count);
+
+    if (IsNilToken(parent) || TypeFromToken(parent) == mdtCustomAttribute) return S_FALSE;
+    if (token_type != mdTokenNil && token_type != mdtMethodDef && token_type != mdtMemberRef) return S_FALSE;
+
+    if (!*ret_henum)
+    {
+        struct token_array attrs;
+        ULONG rows, row;
+
+        if (FAILED((hr = token_array_init(&attrs)))) return hr;
+        if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, &rows))))
+        {
+            token_array_free(attrs);
+            return hr;
+        }
+
+        for (row = 1; row <= rows; row++)
+        {
+            mdToken cur_parent, ctor;
+
+            hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, row, 0, VAL_RAW, &cur_parent, 1,
+                                   VAL_RAW, &ctor, -1);
+            if (FAILED(hr)) break;
+            if (parent == cur_parent && (token_type == mdTokenNil || TypeFromToken(ctor) == token_type) &&
+                FAILED((hr = token_array_append(&attrs, TokenFromRid(row, mdtCustomAttribute)))))
+                break;
+        }
+
+        if (SUCCEEDED(hr))
+            hr = token_array_to_enum(&attrs, ret_henum);
+        token_array_free(attrs);
+        if (hr != S_OK) return hr;
+    }
+
+    return token_enum_get_entries(*ret_henum, ret_attrs, len, count);
 }
 
-static HRESULT WINAPI import_GetCustomAttributeProps(IMetaDataImport *iface, mdCustomAttribute custom_attr, mdToken *obj,
-                                                     mdToken *attr_type, const BYTE **blob, ULONG *len)
+static HRESULT WINAPI import_GetCustomAttributeProps(IMetaDataImport *iface, mdCustomAttribute custom_attr, mdToken *ret_parent,
+                                                     mdToken *ret_type, const BYTE **ret_blob, ULONG *ret_len)
 {
-    FIXME("(%p, %#x, %p, %p, %p, %p): stub!\n", iface, custom_attr, obj, attr_type, blob, len);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    mdToken parent, ctor;
+    const BYTE *val;
+    ULONG val_len;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p, %p, %p, %p)\n", iface, debugstr_mdToken(custom_attr), ret_parent, ret_type, ret_blob, ret_len);
+
+    hr = table_get_columns(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, RidFromToken(custom_attr), 0, VAL_RAW,
+                           &parent, 1, VAL_RAW, &ctor, 2, VAL_BLOB, &val_len, &val, -1);
+    if (FAILED(hr)) return hr;
+
+    if (ret_parent) *ret_parent = parent;
+    if (ret_type) *ret_type = ctor;
+    if (ret_blob) *ret_blob = val;
+    if (ret_len) *ret_len = val_len;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI import_FindTypeRef(IMetaDataImport *iface, mdToken resolution_scope, const WCHAR *name,
