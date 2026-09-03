@@ -3873,6 +3873,11 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
                 case CALG_RC4:
                 {
                     KEYCONTAINER *pKeyContainer = get_key_container(pCryptKey->hProv);
+                    if (!pKeyContainer)
+                    {
+                        SetLastError(NTE_BAD_UID);
+                        return FALSE;
+                    }
                     if (!pbData)
                     {
                         SetLastError(ERROR_INVALID_PARAMETER);
@@ -3922,7 +3927,11 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
                     DWORD keylen, deflen;
                     BOOL ret = TRUE;
                     KEYCONTAINER *pKeyContainer = get_key_container(pCryptKey->hProv);
-
+                    if (!pKeyContainer)
+                    {
+                        SetLastError(NTE_BAD_UID);
+                        return FALSE;
+                    }
                     if (!pbData)
                     {
                         SetLastError(ERROR_INVALID_PARAMETER);
