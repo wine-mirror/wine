@@ -1277,6 +1277,164 @@ static void test_signed_msg_update(void)
      CRYPT_DELETEKEYSET);
 }
 
+static void test_signed_msg_attributes(void)
+{
+    static const BYTE attr[] = { 2,1,1 };
+    static BYTE attr_encoded[] = { 0x30,0x09,0x06,0x02,0x2a,0x03,0x31,0x03,0x02,0x01,0x01 };
+    static const BYTE data[] = "Hello World!";
+    static char oid[] = "1.2.3";
+    HCRYPTMSG msg;
+    DWORD size, ret, type;
+    CMSG_SIGNED_ENCODE_INFO info;
+    CMSG_SIGNER_ENCODE_INFO signer;
+    CERT_INFO cert_info;
+    HCRYPTKEY key;
+    void *content;
+    CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA signer_attr;
+    CMSG_SIGNER_INFO *signer_info;
+    CRYPT_ATTRIBUTES *attrs;
+
+    memset(&cert_info, 0, sizeof(cert_info));
+    cert_info.SerialNumber.cbData = sizeof(serialNum);
+    cert_info.SerialNumber.pbData = serialNum;
+    cert_info.Issuer.cbData = sizeof(encodedCommonName);
+    cert_info.Issuer.pbData = encodedCommonName;
+
+    memset(&signer, 0, sizeof(signer));
+    signer.cbSize = sizeof(signer);
+    signer.pCertInfo = &cert_info;
+    signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    info.cSigners = 1;
+    info.rgSigners = &signer;
+
+    ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    if (!ret && GetLastError() == NTE_EXISTS)
+        ret = CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL, PROV_RSA_FULL, 0);
+    ok(ret, "CryptAcquireContext error %#lx\n", GetLastError());
+
+    ret = CryptImportKey(signer.hCryptProv, privKey, sizeof(privKey), 0, 0, &key);
+    ok(ret, "CryptImportKey error %#lx\n", GetLastError());
+
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &info, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode error %#lx\n", GetLastError());
+
+    ret = CryptMsgUpdate(msg, data, sizeof(data), TRUE);
+    ok(ret, "CryptMsgUpdate error %#lx\n", GetLastError());
+
+    size = 0xdeadbeef;
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam should fail\n");
+    ok(GetLastError() == CRYPT_E_INVALID_MSG_TYPE, "unexpected error %#lx\n", GetLastError());
+    todo_wine
+    ok(size == 0, "unexpected size: %lu\n", size);
+
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    content = malloc(size);
+    ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, content, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToDecode error %#lx\n", GetLastError());
+
+    ret = CryptMsgUpdate(msg, content, size, TRUE);
+    ok(ret, "CryptMsgUpdate error %#lx\n", GetLastError());
+
+    free(content);
+
+    signer_attr.cbSize = sizeof(signer_attr);
+    signer_attr.dwSignerIndex = 0;
+    signer_attr.blob.pbData = attr_encoded;
+    signer_attr.blob.cbData = sizeof(attr_encoded);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR, &signer_attr);
+    ok(ret, "CryptMsgControl error %#lx\n", GetLastError());
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(!ret, "CryptMsgGetParam should fail\n");
+    todo_wine
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %#lx\n", GetLastError());
+    todo_wine
+    ok(size == 0, "unexpected size: %lu\n", size);
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_AUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam should fail\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %#lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
+
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    signer_info = malloc(size);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, (BYTE *)signer_info, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    ok(signer_info->UnauthAttrs.cAttr == 1, "got %lu\n", signer_info->UnauthAttrs.cAttr);
+    ok(!strcmp(signer_info->UnauthAttrs.rgAttr[0].pszObjId, oid), "got %s\n", signer_info->UnauthAttrs.rgAttr[0].pszObjId);
+    ok(signer_info->UnauthAttrs.rgAttr[0].cValue == 1, "got %lu\n", signer_info->UnauthAttrs.rgAttr[0].cValue);
+    ok(signer_info->UnauthAttrs.rgAttr[0].rgValue->cbData == sizeof(attr), "got %#lx\n", signer_info->UnauthAttrs.rgAttr[0].rgValue->cbData);
+    ok(!memcmp(signer_info->UnauthAttrs.rgAttr[0].rgValue->pbData, attr, sizeof(attr)), "data mismatch\n");
+    free(signer_info);
+
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_MESSAGE, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    content = malloc(size);
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_MESSAGE, 0, content, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToDecode error %#lx\n", GetLastError());
+
+    ret = CryptMsgUpdate(msg, content, size, TRUE);
+    ok(ret, "CryptMsgUpdate error %#lx\n", GetLastError());
+
+    free(content);
+
+    type = 0xdeadbeef;
+    size = sizeof(type);
+    ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &type, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    ok(type == CMSG_SIGNED,  "got %lu\n", type);
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_AUTH_ATTR_PARAM, 0, NULL, &size);
+    ok(!ret, "CryptMsgGetParam should fail\n");
+    ok(GetLastError() == CRYPT_E_ATTRIBUTES_MISSING, "unexpected error %#lx\n", GetLastError());
+    ok(size == 0, "unexpected size: %lu\n", size);
+
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    if (ret)
+    {
+    attrs = malloc(size);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, (BYTE *)attrs, &size);
+    ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
+    ok(attrs->cAttr == 1, "got %lu\n", attrs->cAttr);
+    ok(!strcmp(attrs->rgAttr[0].pszObjId, oid), "got %s\n", attrs->rgAttr[0].pszObjId);
+    ok(attrs->rgAttr[0].cValue == 1, "got %lu\n", attrs->rgAttr[0].cValue);
+    ok(attrs->rgAttr[0].rgValue->cbData == sizeof(attr), "got %#lx\n", attrs->rgAttr[0].rgValue->cbData);
+    ok(!memcmp(attrs->rgAttr[0].rgValue->pbData, attr, sizeof(attr)), "data mismatch\n");
+    free(attrs);
+    }
+
+    CryptMsgClose(msg);
+
+    CryptReleaseContext(signer.hCryptProv, 0);
+    CryptDestroyKey(key);
+    CryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+}
+
 static const BYTE unsignedEmptyBareContent[] = {
 0x30,0x0b,0x02,0x01,0x01,0x31,0x00,0x30,0x02,0x06,0x00,0x31,0x00 };
 static const BYTE unsignedEmptyContent[] = {
@@ -2053,6 +2211,7 @@ static void test_signed_msg(void)
     test_signed_msg_update();
     test_signed_msg_encoding();
     test_signed_msg_get_param();
+    test_signed_msg_attributes();
 }
 
 static char oid_rsa_rc4[] = szOID_RSA_RC4;
