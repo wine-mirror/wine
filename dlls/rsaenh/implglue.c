@@ -460,8 +460,8 @@ BOOL export_public_key_impl( const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp )
     if (SymCryptRsakeyGetValue( ctx->rsa.key, modulus, modulus_size, &pubexp64, 1, NULL, NULL, 0,
                                 SYMCRYPT_NUMBER_FORMAT_LSB_FIRST, 0 ))
     {
-        return FALSE;
         SetLastError( NTE_FAIL );
+        return FALSE;
     }
     *pubexp = pubexp64;
     return TRUE;
@@ -510,8 +510,8 @@ BOOL export_private_key_impl( const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp )
     if (SymCryptRsakeyGetValue( ctx->rsa.key, modulus, modulus_size, &pubexp64, 1, primes, primes_sizes, 2,
                                 SYMCRYPT_NUMBER_FORMAT_LSB_FIRST, 0 ))
     {
-        return FALSE;
         SetLastError( NTE_FAIL );
+        return FALSE;
     }
 
     exponents[0] = primes[1]    + primes_sizes[1];
@@ -522,8 +522,8 @@ BOOL export_private_key_impl( const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp )
     if (SymCryptRsakeyGetCrtValue( ctx->rsa.key, exponents, primes_sizes, 2, coefficient, primes_sizes[0],
                                    private_exp, modulus_size, SYMCRYPT_NUMBER_FORMAT_LSB_FIRST, 0 ))
     {
-        return FALSE;
         SetLastError( NTE_FAIL );
+        return FALSE;
     }
 
     *pubexp = pubexp64;
