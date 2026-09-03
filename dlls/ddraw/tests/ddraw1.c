@@ -13913,6 +13913,239 @@ static void test_enum_surfaces(void)
     IDirectDraw_Release(ddraw);
 }
 
+#define EXEC_VERTEX_OFFSET 0
+#define EXEC_INSTR_OFFSET  1024
+
+static const D3DTLVERTEX exec_update_quad1[] =
+{
+    {{  0.0f}, {  0.0f}, {0.5f}, {1.0f}, {0xff00ff00}, {0x00000000}, {0.0f}, {0.0f}},
+    {{640.0f}, {  0.0f}, {0.5f}, {1.0f}, {0xff00ff00}, {0x00000000}, {0.0f}, {0.0f}},
+    {{  0.0f}, {480.0f}, {0.5f}, {1.0f}, {0xff00ff00}, {0x00000000}, {0.0f}, {0.0f}},
+    {{640.0f}, {480.0f}, {0.5f}, {1.0f}, {0xff00ff00}, {0x00000000}, {0.0f}, {0.0f}},
+};
+
+static const D3DTLVERTEX exec_update_quad2[] =
+{
+    {{  0.0f}, {  0.0f}, {0.5f}, {1.0f}, {0xff0000ff}, {0x00000000}, {0.0f}, {0.0f}},
+    {{640.0f}, {  0.0f}, {0.5f}, {1.0f}, {0xff0000ff}, {0x00000000}, {0.0f}, {0.0f}},
+    {{  0.0f}, {480.0f}, {0.5f}, {1.0f}, {0xff0000ff}, {0x00000000}, {0.0f}, {0.0f}},
+    {{640.0f}, {480.0f}, {0.5f}, {1.0f}, {0xff0000ff}, {0x00000000}, {0.0f}, {0.0f}},
+};
+
+/* A stream that processes four vertices and draws them. */
+static unsigned int write_draw_stream(void *at, WORD pv_start)
+{
+    void *ptr = at;
+
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, pv_start, 4);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    return (BYTE *)ptr - (BYTE *)at;
+}
+
+/* A valid stream that processes no vertices and draws nothing. */
+static unsigned int write_nodraw_stream(void *at)
+{
+    void *ptr = at;
+
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    emit_end(&ptr);
+    return (BYTE *)ptr - (BYTE *)at;
+}
+
+/* Lock() copies the buffer's own descriptor over the caller's, lpData and
+ * D3DDEB_LPDATA included, so it has to be rebuilt before creating another. */
+static IDirect3DExecuteBuffer *create_exec_buffer(IDirect3DDevice *device)
+{
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    HRESULT hr;
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 4096;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(hr == D3D_OK, "Failed to create execute buffer, hr %#lx.\n", hr);
+    return execute_buffer;
+}
+
+static BYTE *lock_exec_buffer(IDirect3DExecuteBuffer *execute_buffer)
+{
+    D3DEXECUTEBUFFERDESC exec_desc;
+    HRESULT hr;
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(hr == D3D_OK, "Failed to lock execute buffer, hr %#lx.\n", hr);
+    return exec_desc.lpData;
+}
+
+static D3DCOLOR execute_and_read(IDirect3DDevice *device, IDirect3DViewport *viewport,
+        IDirectDrawSurface *rt, IDirect3DExecuteBuffer *execute_buffer)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    HRESULT hr;
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(hr == D3D_OK, "Failed to clear viewport, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(hr == D3D_OK, "Failed to begin scene, hr %#lx.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "Failed to execute, hr %#lx.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(hr == D3D_OK, "Failed to end scene, hr %#lx.\n", hr);
+
+    return get_surface_color(rt, 320, 240);
+}
+
+/* The execute buffer's contents are read when Execute() runs, not when
+ * SetExecuteData() is called, so an application may write the vertices and the
+ * instruction stream at any point before executing, and may rewrite them
+ * between executions without calling SetExecuteData() again. */
+static void test_execute_buffer_updates(void)
+{
+    IDirect3DExecuteBuffer *execute_buffer;
+    IDirect3DMaterial *background;
+    IDirect3DViewport *viewport;
+    unsigned int inst_length;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw *ddraw;
+    D3DCOLOR color;
+    BYTE scratch[64];
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(hr == D3D_OK, "Failed to get the render target, hr %#lx.\n", hr);
+
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, background);
+
+    inst_length = write_draw_stream(scratch, 0);
+
+    /* Control: everything written before SetExecuteData(). */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* The instruction stream is read at Execute() time. */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    data = lock_exec_buffer(execute_buffer);
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* The vertex data is read at Execute() time as well. */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* Nothing at all needs to be written before SetExecuteData(). */
+    execute_buffer = create_exec_buffer(device);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* A stream with no D3DOP_PROCESSVERTICES may be replaced with one that has
+     * it after SetExecuteData(), and the replacement is what executes. */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    write_nodraw_stream(data + EXEC_INSTR_OFFSET);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    data = lock_exec_buffer(execute_buffer);
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* Rewriting the vertices between two Execute() calls, without calling
+     * SetExecuteData() again, draws the new vertices. */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 4, EXEC_INSTR_OFFSET, inst_length);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad2, sizeof(exec_update_quad2));
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    /* D3DEXECUTEDATA.dwVertexCount does not gate the draw. The number of
+     * vertices processed comes from the D3DOP_PROCESSVERTICES instruction. */
+    execute_buffer = create_exec_buffer(device);
+    data = lock_exec_buffer(execute_buffer);
+    memcpy(data + EXEC_VERTEX_OFFSET, exec_update_quad1, sizeof(exec_update_quad1));
+    write_draw_stream(data + EXEC_INSTR_OFFSET, 0);
+    IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    set_execute_data(execute_buffer, 0, EXEC_INSTR_OFFSET, inst_length);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    set_execute_data(execute_buffer, 1, EXEC_INSTR_OFFSET, inst_length);
+    color = execute_and_read(device, viewport, rt, execute_buffer);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08lx.\n", color);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+
+    IDirectDrawSurface_Release(rt);
+    destroy_viewport(device, viewport);
+    destroy_material(background);
+    IDirect3DDevice_Release(device);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 static void test_execute_data(void)
 {
     IDirect3DExecuteBuffer *execute_buffer;
@@ -17133,6 +17366,7 @@ START_TEST(ddraw1)
     test_clear();
     test_enum_surfaces();
     test_execute_data();
+    test_execute_buffer_updates();
     test_viewport();
     test_find_device();
     test_killfocus();
