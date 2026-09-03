@@ -2756,50 +2756,24 @@ static void box_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src
                 {
                     const BYTE *ptr = src_ptr + i * src_slice_pitch;
 
-                    format_to_d3dx_color(src_format, ptr, palette, &tmp);
-                    if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
-                        straight_alpha_from_premultiplied_alpha(&color.value);
-                    if (conv_flags & CONV_FLAG_SRGB_IN)
-                        linear_rgb_from_srgb(&color.value);
-                    if (color_key)
-                        check_color_key(&tmp, color_key, ck_format);
+                    linear_color_from_format(src_format, ptr, palette, color_key, conv_flags, &tmp);
                     vec4_add(&color.value, &tmp.value);
 
-                    format_to_d3dx_color(src_format, ptr + src_format->bytes_per_pixel, palette, &tmp);
-                    if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
-                        straight_alpha_from_premultiplied_alpha(&color.value);
-                    if (conv_flags & CONV_FLAG_SRGB_IN)
-                        linear_rgb_from_srgb(&color.value);
-                    if (color_key)
-                        check_color_key(&tmp, color_key, ck_format);
+                    linear_color_from_format(src_format, ptr + src_format->bytes_per_pixel, palette,
+                            color_key, conv_flags, &tmp);
                     vec4_add(&color.value, &tmp.value);
 
                     ptr += src_row_pitch;
-                    format_to_d3dx_color(src_format, ptr, palette, &tmp);
-                    if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
-                        straight_alpha_from_premultiplied_alpha(&color.value);
-                    if (conv_flags & CONV_FLAG_SRGB_IN)
-                        linear_rgb_from_srgb(&color.value);
-                    if (color_key)
-                        check_color_key(&tmp, color_key, ck_format);
+                    linear_color_from_format(src_format, ptr, palette, color_key, conv_flags, &tmp);
                     vec4_add(&color.value, &tmp.value);
 
-                    format_to_d3dx_color(src_format, ptr + src_format->bytes_per_pixel, palette, &tmp);
-                    if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
-                        straight_alpha_from_premultiplied_alpha(&color.value);
-                    if (conv_flags & CONV_FLAG_SRGB_IN)
-                        linear_rgb_from_srgb(&color.value);
-                    if (color_key)
-                        check_color_key(&tmp, color_key, ck_format);
+                    linear_color_from_format(src_format, ptr + src_format->bytes_per_pixel, palette,
+                            color_key, conv_flags, &tmp);
                     vec4_add(&color.value, &tmp.value);
                 }
 
                 vec4_scale(&color.value, src_size->depth > 1 ? 0.125f : 0.25f);
-                if (conv_flags & CONV_FLAG_SRGB_OUT)
-                    srgb_from_linear_rgb(&color.value);
-                if (conv_flags & CONV_FLAG_PM_ALPHA_OUT)
-                    premultiplied_alpha_from_straight_alpha(&color.value);
-                format_from_d3dx_color(dst_format, &color, dst_ptr);
+                format_from_linear_color(dst_format, &color, conv_flags, dst_ptr);
                 dst_ptr += dst_format->bytes_per_pixel;
             }
         }
