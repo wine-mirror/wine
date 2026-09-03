@@ -83,7 +83,7 @@ DECLARE_INTERFACE_(ID3DX10Mesh, IUnknown)
     STDMETHOD(GetPointRepBuffer)(THIS_ ID3DX10MeshBuffer **buffer) PURE;
     STDMETHOD(Discard)(THIS_ D3DX10_MESH_DISCARD_FLAGS flags) PURE;
     STDMETHOD(CloneMesh)(THIS_ UINT flags, const char *pos_semantic, const D3D10_INPUT_ELEMENT_DESC *desc,
-            UINT decl_count, ID3DX10Mesh **cloned_mesh);
+            UINT decl_count, ID3DX10Mesh **cloned_mesh) PURE;
     STDMETHOD(Optimize)(THIS_ UINT flags, UINT *face_remap, ID3D10Blob **vertex_remap) PURE;
     STDMETHOD(GenerateAttributeBufferFromTable)(THIS) PURE;
     STDMETHOD(Intersect)(THIS_ D3DXVECTOR3 *ray_pos, D3DXVECTOR3 *ray_dir, UINT *hit_count, UINT *face_index,
