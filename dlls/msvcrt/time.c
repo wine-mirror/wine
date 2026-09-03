@@ -1151,6 +1151,13 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
             alternate = FALSE;
         }
 
+#if _MSVCR_VER>=140
+        if(*format == 'O') {
+            format++;
+            FIXME("unsupported %%O%c\n", *format);
+        }
+#endif
+
         if(!MSVCRT_CHECK_PMT(mstm))
             goto einval_error;
 

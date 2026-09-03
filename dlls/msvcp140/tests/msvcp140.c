@@ -426,19 +426,6 @@ static void (__thiscall *p_basic_streambuf_char_setp_next)(basic_streambuf_char*
 static void (__thiscall *p_basic_streambuf_char_setg)(basic_streambuf_char*, char*, char*, char*);
 static void (__thiscall *p_basic_streambuf_char_dtor)(basic_streambuf_char*);
 
-static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
-
-static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
-        const wchar_t *function, const wchar_t *file,
-        unsigned line, uintptr_t arg)
-{
-    ok(expression == NULL, "expression is not NULL\n");
-    ok(function == NULL, "function is not NULL\n");
-    ok(file == NULL, "file is not NULL\n");
-    ok(line == 0, "line = %u\n", line);
-    ok(arg == 0, "arg = %Ix\n", arg);
-}
-
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -610,7 +597,6 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
     p_fclose = (void*)GetProcAddress(hdll, "fclose");
     p__unlink = (void*)GetProcAddress(hdll, "_unlink");
-    p_set_invalid_parameter_handler = (void*)GetProcAddress(hdll, "_set_invalid_parameter_handler");
 
     init_thiscall_thunk();
     return TRUE;
@@ -2607,7 +2593,6 @@ static void test_time_put(void)
         char format;
         char mod;
         struct tm tm;
-        BOOL todo;
     } tests[] = {
         {" 1", ' ', 'e', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
         {"23", ' ', 'H', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
@@ -2622,28 +2607,25 @@ static void test_time_put(void)
         {"05", ' ', 'W', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
         {"00", ' ', 'y', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
 
-        {" 1", ' ', 'e', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"23", ' ', 'H', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"11", ' ', 'I', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"02", ' ', 'm', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"34", ' ', 'M', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"56", ' ', 'S', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"2",  ' ', 'u', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"05", ' ', 'U', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"05", ' ', 'V', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"2",  ' ', 'w', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"05", ' ', 'W', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
-        {"00", ' ', 'y', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {" 1", ' ', 'e', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"23", ' ', 'H', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"11", ' ', 'I', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"02", ' ', 'm', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"34", ' ', 'M', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"56", ' ', 'S', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"2",  ' ', 'u', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'U', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'V', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"2",  ' ', 'w', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'W', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"00", ' ', 'y', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}},
     };
     ostreambuf_iterator_char dest;
     basic_streambuf_char strbuf;
     time_put_char time_put;
     char buf[16];
-    void *old;
     int i;
 
-    /* prevent crash on invalid parameter */
-    old = p_set_invalid_parameter_handler(test_invalid_parameter_handler);
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         memset(buf, 0, sizeof(buf));
 
@@ -2658,14 +2640,12 @@ static void test_time_put(void)
         call_func8_ptr_itr(p_time_put_char_put, &time_put, &dest, dest, (struct ios_base *)0xdeadbeef,
             tests[i].fill, &tests[i].tm, tests[i].format, tests[i].mod);
 
-        todo_wine_if(tests[i].todo)
         ok(!strcmp(buf, tests[i].expect), "%c %c: expected %s, got %s\n",
             tests[i].format, tests[i].mod ? tests[i].mod : '0',tests[i].expect, buf);
 
         call_func1(p_basic_streambuf_char_dtor, &strbuf);
         call_func1(p_time_put_char_dtor, &time_put);
     }
-    p_set_invalid_parameter_handler(old);
 }
 
 START_TEST(msvcp140)
