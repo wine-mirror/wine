@@ -9766,6 +9766,11 @@ ostreambuf_iterator_char* __thiscall time_put_char_put_format(const time_put *th
             if(*pat == '#') {
                 mod = '#';
                 pat++;
+#if _MSVCP_VER >= 140
+            }else if(*pat == 'O') {
+                mod = 'O';
+                pat++;
+#endif
             }else {
                 mod = 0;
             }
