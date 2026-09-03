@@ -76,6 +76,7 @@ static inline void _check_rect(unsigned int line, const RECT *rect, int left, in
 static void test_ID3DXBuffer(void)
 {
     ID3DXBuffer *buffer;
+    IUnknown *unknown;
     HRESULT hr;
     ULONG count;
     DWORD size;
@@ -85,6 +86,16 @@ static void test_ID3DXBuffer(void)
 
     hr = D3DXCreateBuffer(0, &buffer);
     ok(hr == D3D_OK, "D3DXCreateBuffer failed, got %#lx, expected %#lx\n", hr, D3D_OK);
+
+    hr = ID3DXBuffer_QueryInterface(buffer, &IID_IUnknown, (void **)&unknown);
+    ok(hr == D3D_OK, "Unexpected hr %#lx\n", hr);
+    ok(!!unknown, "Unexpected unknown %p\n", unknown);
+    count = IUnknown_Release(unknown);
+    ok(count == 1, "Unexpected refcount %lu\n", count);
+    unknown = (IUnknown *)(ULONG_PTR)0xdeadbeef;
+    hr = ID3DXBuffer_QueryInterface(buffer, &IID_ID3DXFont, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx\n", hr);
+    ok(!unknown, "Unexpected pointer %p\n", unknown);
 
     size = ID3DXBuffer_GetBufferSize(buffer);
     ok(!size, "GetBufferSize failed, got %lu, expected %u\n", size, 0);
