@@ -568,7 +568,7 @@ static void free_parameter_object_data(struct d3dx_parameter *param, const void 
             case D3DXPT_TEXTURECUBE:
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
-                if (*(IUnknown **)data)
+                if (((IUnknown **)data)[i])
                     IUnknown_Release(((IUnknown **)data)[i]);
                 break;
 
