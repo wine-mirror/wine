@@ -8809,11 +8809,13 @@ HRESULT WINAPI StgOpenStorage(
   if (grfMode & STGM_PRIORITY)
   {
     if (grfMode & (STGM_TRANSACTED|STGM_SIMPLE|STGM_NOSCRATCH|STGM_NOSNAPSHOT))
-      return STG_E_INVALIDFLAG;
-    if (grfMode & STGM_DELETEONRELEASE)
-      return STG_E_INVALIDFUNCTION;
-    if(STGM_ACCESS_MODE(grfMode) != STGM_READ)
-      return STG_E_INVALIDFLAG;
+      hr = STG_E_INVALIDFLAG;
+    else if (grfMode & STGM_DELETEONRELEASE)
+      hr = STG_E_INVALIDFUNCTION;
+    else if (STGM_ACCESS_MODE(grfMode) != STGM_READ)
+      hr = STG_E_INVALIDFLAG;
+    if (FAILED(hr))
+      goto end;
     grfMode &= ~0xf0; /* remove the existing sharing mode */
     grfMode |= STGM_SHARE_DENY_NONE;
   }
