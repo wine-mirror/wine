@@ -9102,6 +9102,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBackingStore(ID3
     if (!(v = d3d10_get_state_variable(v, index, &v->effect->blend_states)))
         return E_FAIL;
 
+    d3d10_effect_update_dependent_props(&v->u.state.dependencies, &v->u.state.desc);
+
     *desc = v->u.state.desc.blend;
 
     return S_OK;
@@ -9582,6 +9584,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetBackingStor
     if (!(v = d3d10_get_state_variable(v, index, &v->effect->rs_states)))
         return E_FAIL;
 
+    d3d10_effect_update_dependent_props(&v->u.state.dependencies, &v->u.state.desc);
+
     *desc = v->u.state.desc.rasterizer;
 
     return S_OK;
@@ -9820,6 +9824,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(I
 
     if (!(v = d3d10_get_state_variable(v, index, &v->effect->samplers)))
         return E_FAIL;
+
+    d3d10_effect_update_dependent_props(&v->u.state.dependencies, &v->u.state.desc);
 
     *desc = v->u.state.desc.sampler.desc;
 
