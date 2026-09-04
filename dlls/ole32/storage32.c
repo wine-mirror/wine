@@ -4444,7 +4444,7 @@ static HRESULT StorageImpl_StreamReadAt(StorageBaseImpl *base, DirRef index,
   hr = StorageImpl_ReadDirEntry(This, index, &data);
   if (FAILED(hr)) return hr;
 
-  if (data.size.QuadPart == 0)
+  if (data.size.QuadPart == 0 || offset.QuadPart >= data.size.QuadPart)
   {
     *bytesRead = 0;
     return S_OK;
