@@ -1131,6 +1131,7 @@ static void test_name_limits(void)
 
 static void test_directory(void)
 {
+    static const WCHAR embedded_null[] = L"\\BaseNamedObjects\\test\0dir";
     NTSTATUS status;
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
@@ -1182,6 +1183,40 @@ static void test_directory(void)
     pNtClose(h);
     pNtClose(dir1);
 
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\*?</>|\"");
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to create directory %08lx\n", status );
+    status = pNtOpenDirectoryObject( &dir1, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to open directory %08lx\n", status );
+    pNtClose(h);
+    pNtClose(dir1);
+
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\.");
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to create directory %08lx\n", status );
+    status = pNtOpenDirectoryObject( &dir1, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to open directory %08lx\n", status );
+    pNtClose(h);
+    pNtClose(dir1);
+
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\..");
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to create directory %08lx\n", status );
+    status = pNtOpenDirectoryObject( &dir1, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_SUCCESS, "Failed to open directory %08lx\n", status );
+    pNtClose(h);
+    pNtClose(dir1);
+
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\.\\subdir");
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "Failed to create directory %08lx\n", status );
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\..\\subdir");
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "Failed to create directory %08lx\n", status );
+    str.Buffer = (WCHAR *)embedded_null;
+    str.Length = str.MaximumLength = ARRAY_SIZE(embedded_null);
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "Failed to create directory %08lx\n", status );
 
     /* Use of root directory */
 
