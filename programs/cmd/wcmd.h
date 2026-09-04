@@ -187,7 +187,7 @@ RETURN_CODE WCMD_color(void);
 RETURN_CODE WCMD_copy(WCHAR *);
 RETURN_CODE WCMD_create_dir(struct word_iterator *);
 RETURN_CODE WCMD_delete(struct word_iterator *);
-RETURN_CODE WCMD_directory(WCHAR *);
+RETURN_CODE WCMD_directory(struct word_iterator *);
 RETURN_CODE WCMD_echo(const WCHAR *);
 RETURN_CODE WCMD_endlocal(void);
 void WCMD_enter_paged_mode(const WCHAR *);
@@ -250,7 +250,7 @@ struct word_iterator
 
 struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags);
 BOOL WCMD_word_iterator_advance(struct word_iterator *iterator);
-BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *opt, WCHAR **arg);
+BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *opt, BOOL optsep, WCHAR **arg);
 static inline void WCMD_word_iterator_dispose(struct word_iterator *iterator)
 {
     free(iterator->raw_argument);

@@ -313,24 +313,24 @@ RETURN_CODE WCMD_choice(struct word_iterator *iterator)
         if (!iterator->is_an_option) continue;
         if (!wcsicmp(iterator->unquoted_argument, L"/N")) opt_n = TRUE;
         else if (!wcsicmp(iterator->unquoted_argument, L"/CS")) opt_cs = TRUE;
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/C", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/C", FALSE, &arg))
         {
             if (opt_c)
                 return_code = ERROR_INVALID_FUNCTION;
             else
                 opt_c = xstrdupW(arg);
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/D", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/D", FALSE, &arg))
         {
             opt_default = *arg;
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", FALSE, &arg))
         {
             opt_timeout = wcstol(arg, &end, 10);
             if (end == arg || *end)
                 opt_timeout = 10000;
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/M", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/M", FALSE, &arg))
         {
             if (opt_m)
                 return_code = ERROR_INVALID_FUNCTION;
