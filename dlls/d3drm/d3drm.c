@@ -1551,13 +1551,15 @@ static HRESULT WINAPI d3drm3_CreateLight(IDirect3DRM3 *iface,
 
     TRACE("iface %p, type %#x, color 0x%08lx, light %p.\n", iface, type, color, light);
 
+    *light = NULL;
+
     if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
     {
         IDirect3DRMLight_SetType(&object->IDirect3DRMLight_iface, type);
         IDirect3DRMLight_SetColor(&object->IDirect3DRMLight_iface, color);
-    }
 
-    *light = &object->IDirect3DRMLight_iface;
+        *light = &object->IDirect3DRMLight_iface;
+    }
 
     return hr;
 }
@@ -1572,13 +1574,15 @@ static HRESULT WINAPI d3drm3_CreateLightRGB(IDirect3DRM3 *iface, D3DRMLIGHTTYPE 
     TRACE("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p.\n",
             iface, type, red, green, blue, light);
 
+    *light = NULL;
+
     if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
     {
         IDirect3DRMLight_SetType(&object->IDirect3DRMLight_iface, type);
         IDirect3DRMLight_SetColorRGB(&object->IDirect3DRMLight_iface, red, green, blue);
-    }
 
-    *light = &object->IDirect3DRMLight_iface;
+        *light = &object->IDirect3DRMLight_iface;
+    }
 
     return hr;
 }
@@ -1592,10 +1596,14 @@ static HRESULT WINAPI d3drm3_CreateMaterial(IDirect3DRM3 *iface,
 
     TRACE("iface %p, power %.8e, material %p.\n", iface, power, material);
 
+    *material = NULL;
+
     if (SUCCEEDED(hr = d3drm_material_create(&object, &d3drm->IDirect3DRM_iface)))
+    {
         IDirect3DRMMaterial2_SetPower(&object->IDirect3DRMMaterial2_iface, power);
 
-    *material = &object->IDirect3DRMMaterial2_iface;
+        *material = &object->IDirect3DRMMaterial2_iface;
+    }
 
     return hr;
 }
