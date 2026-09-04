@@ -406,9 +406,9 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
     }
     get_profile_header( profile, &header );
 
-    if (!buffer || header.phSize > *size)
+    if (!buffer || profile->size > *size)
     {
-        *size = header.phSize;
+        *size = profile->size;
         release_object( &profile->hdr );
         return FALSE;
     }
