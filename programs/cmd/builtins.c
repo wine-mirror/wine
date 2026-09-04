@@ -649,12 +649,9 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
  *
  */
 
-RETURN_CODE WCMD_copy(WCHAR * args)
+RETURN_CODE WCMD_copy(struct word_iterator *iterator)
 {
-  BOOL    opt_d, opt_v, opt_n, opt_z, opt_y, opt_noty;
-  WCHAR  *thisparam;
-  int     argno = 0;
-  WCHAR  *rawarg;
+  BOOL    opt_d, opt_v, opt_n, opt_z;
   WIN32_FIND_DATAW fd;
   HANDLE  hff = INVALID_HANDLE_VALUE;
   int     binarymode = -1;            /* -1 means use the default, 1 is binary, 0 ascii */
@@ -666,7 +663,6 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   WCHAR   destname[MAX_PATH];         /* Used in calculating the destination name       */
   BOOL    destisdirectory = FALSE;    /* Is the destination a directory?                */
   BOOL    status;
-  WCHAR   copycmd[4];
   DWORD   len;
   BOOL    dstisdevice = FALSE;
   unsigned numcopied = 0;
@@ -686,187 +682,186 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   COPY_FILES *prevcopy      = NULL;
   RETURN_CODE return_code;
 
-  /* Assume we were successful! */
-  return_code = NO_ERROR;
+    /* Assume we were successful! */
+    return_code = NO_ERROR;
 
-  /* If no args supplied at all, report an error */
-  if (param1[0] == 0x00) {
-    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
-    return errorlevel = ERROR_INVALID_FUNCTION;
-  }
+    opt_d = opt_v = opt_n = opt_z = FALSE;
+    /* By default, we will force the overwrite in batch mode and ask for
+     * confirmation in interactive mode.
+     */
+    prompt = !context;
 
-  opt_d = opt_v = opt_n = opt_z = opt_y = opt_noty = FALSE;
+    len = GetEnvironmentVariableW(L"COPYCMD", NULL, 0);
+    if (len)
+    {
+        WCHAR *copycmd = xalloc(len * sizeof(WCHAR));
+        struct word_iterator env_iterator;
 
-  /* Walk through all args, building up a list of files to process */
-  thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-  while (*(thisparam)) {
-    WCHAR *pos1, *pos2;
-    BOOL inquotes;
-
-    WINE_TRACE("Working on parameter '%s'\n", wine_dbgstr_w(thisparam));
-
-    /* Handle switches */
-    if (*thisparam == '/') {
-        while (*thisparam == '/') {
-        thisparam++;
-        if (towupper(*thisparam) == 'D') {
-          opt_d = TRUE;
-          if (opt_d) WINE_FIXME("copy /D support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'Y') {
-          opt_y = TRUE;
-        } else if (towupper(*thisparam) == '-' && towupper(*(thisparam+1)) == 'Y') {
-          opt_noty = TRUE;
-        } else if (towupper(*thisparam) == 'V') {
-          opt_v = TRUE;
-          if (opt_v) WINE_FIXME("copy /V support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'N') {
-          opt_n = TRUE;
-          if (opt_n) WINE_FIXME("copy /N support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'Z') {
-          opt_z = TRUE;
-          if (opt_z) WINE_FIXME("copy /Z support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'A') {
-          if (binarymode != 0) {
-            binarymode = 0;
-            WINE_TRACE("Subsequent files will be handled as ASCII\n");
-            if (destination != NULL) {
-              WINE_TRACE("file %s will be written as ASCII\n", wine_dbgstr_w(destination->name));
-              destination->binarycopy = binarymode;
-            } else if (lastcopyentry != NULL) {
-              WINE_TRACE("file %s will be read as ASCII\n", wine_dbgstr_w(lastcopyentry->name));
-              lastcopyentry->binarycopy = binarymode;
+        GetEnvironmentVariableW(L"COPYCMD", copycmd, len);
+        WCMD_word_iterator_init(&env_iterator, copycmd, STANDARD_DELIMS, WORD_WITH_OPT);
+        while (WCMD_word_iterator_advance(&env_iterator))
+        {
+            if (env_iterator.is_an_option)
+            {
+                if (!wcsicmp(iterator->raw_argument, L"/Y"))  prompt = FALSE;
+                else if (!wcsicmp(iterator->raw_argument, L"/-Y")) prompt = TRUE;
             }
-          }
-        } else if (towupper(*thisparam) == 'B') {
-          if (binarymode != 1) {
-            binarymode = 1;
-            WINE_TRACE("Subsequent files will be handled as binary\n");
-            if (destination != NULL) {
-              WINE_TRACE("file %s will be written as binary\n", wine_dbgstr_w(destination->name));
-              destination->binarycopy = binarymode;
-            } else if (lastcopyentry != NULL) {
-              WINE_TRACE("file %s will be read as binary\n", wine_dbgstr_w(lastcopyentry->name));
-              lastcopyentry->binarycopy = binarymode;
-            }
-          }
-        } else {
-          WINE_FIXME("Unexpected copy switch %s\n", wine_dbgstr_w(thisparam));
         }
-        thisparam++;
-      }
-
-      /* This parameter was purely switches, get the next one */
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-      continue;
+        WCMD_word_iterator_dispose(&env_iterator);
+        free(copycmd);
     }
 
-    /* We have found something which is not a switch. If could be anything of the form
-         sourcefilename (which could be destination too)
-         + (when filename + filename syntex used)
-         sourcefilename+sourcefilename
-         +sourcefilename
-         +/b[tests show windows then ignores to end of parameter]
-     */
+    /* Walk through all args, building up a list of files to process */
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            if (!wcsicmp(iterator->raw_argument, L"/D"))
+            {
+                opt_d = TRUE;
+                if (opt_d) WINE_FIXME("copy /D support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/Y")) prompt = FALSE;
+            else if (!wcsicmp(iterator->raw_argument, L"/-Y")) prompt = TRUE;
+            else if (!wcsicmp(iterator->raw_argument, L"/V"))
+            {
+                opt_v = TRUE;
+                WINE_FIXME("copy /V support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/N"))
+            {
+                opt_n = TRUE;
+                WINE_FIXME("copy /N support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"Z"))
+            {
+                opt_z = TRUE;
+                WINE_FIXME("copy /Z support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/A"))
+            {
+                if (binarymode != 0)
+                {
+                    binarymode = 0;
+                    WINE_TRACE("Subsequent files will be handled as ASCII\n");
+                    if (destination != NULL)
+                    {
+                        WINE_TRACE("file %s will be written as ASCII\n", wine_dbgstr_w(destination->name));
+                        destination->binarycopy = binarymode;
+                    }
+                    else if (lastcopyentry != NULL)
+                    {
+                        WINE_TRACE("file %s will be read as ASCII\n", wine_dbgstr_w(lastcopyentry->name));
+                        lastcopyentry->binarycopy = binarymode;
+                    }
+                }
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/B"))
+            {
+                if (binarymode != 1)
+                {
+                    binarymode = 1;
+                    WINE_TRACE("Subsequent files will be handled as binary\n");
+                    if (destination != NULL)
+                    {
+                        WINE_TRACE("file %s will be written as binary\n", wine_dbgstr_w(destination->name));
+                        destination->binarycopy = binarymode;
+                    }
+                    else if (lastcopyentry != NULL)
+                    {
+                        WINE_TRACE("file %s will be read as binary\n", wine_dbgstr_w(lastcopyentry->name));
+                        lastcopyentry->binarycopy = binarymode;
+                    }
+                }
+            }
+            else
+                WINE_FIXME("Unexpected copy switch %s\n", wine_dbgstr_w(iterator->raw_argument));
+        }
+        else
+        {
+            WCHAR *toadd = iterator->raw_argument;
+            struct word_iterator src_iterator;
+            /* We have found something which is not a switch. If could be anything of the form
+             * sourcefilename (which could be destination too)
+             * + (when filename + filename syntex used)
+             * sourcefilename+sourcefilename
+             * +sourcefilename
+             * /b[tests show windows then ignores to end of parameter]
+             */
+            if (toadd[0] == L'+')
+            {
+                if (lastcopyentry == NULL)
+                {
+                    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                    return_code = ERROR_INVALID_FUNCTION;
+                    goto exitreturn;
+                }
+                concatnextfilename = TRUE;
+                anyconcats = TRUE;
+                /* Move to next thing to process */
+                if (!*++toadd) continue;
+            }
+            WCMD_word_iterator_init(&src_iterator, toadd, L"+", WORD_WITH_EMPTY_LAST_ARG);
+            while (WCMD_word_iterator_advance(&src_iterator))
+            {
+                len = wcslen(src_iterator.unquoted_argument);
+                if (len)
+                {
+                    /* We have found something to process - build a COPY_FILE block to store it */
+                    thiscopy = xalloc(sizeof(COPY_FILES));
 
-    if (*thisparam=='+') {
-      if (lastcopyentry == NULL) {
+                    WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(src_iterator.unquoted_argument));
+
+                    thiscopy->concatenate = concatnextfilename;
+                    thiscopy->binarycopy  = binarymode;
+                    thiscopy->next        = NULL;
+                    /* Time to work out the name. Allocate at least enough space (deliberately too much to
+                     * leave space to append \*.* to the end).
+                     */
+                    len += 5;  /* 5 spare characters, null + \*.*      */
+                    thiscopy->name = xalloc(len * sizeof(WCHAR));
+                    wcscpy(thiscopy->name, src_iterator.unquoted_argument);
+
+                    /* This is either the first source, concatenated subsequent source or destination */
+                    if (sourcelist == NULL)
+                    {
+                        WINE_TRACE("Adding as first source part\n");
+                        sourcelist = thiscopy;
+                        lastcopyentry = thiscopy;
+                    }
+                    else if (concatnextfilename)
+                    {
+                        WINE_TRACE("Adding to source file list to be concatenated\n");
+                        lastcopyentry->next = thiscopy;
+                        lastcopyentry = thiscopy;
+                    }
+                    else if (destination == NULL)
+                    {
+                        destination = thiscopy;
+                    }
+                    else
+                    {
+                        /* We have processed sources and destinations and still found more to do - invalid */
+                        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                        return_code = ERROR_INVALID_FUNCTION;
+                        goto exitreturn;
+                    }
+                }
+                if ((concatnextfilename = WCMD_word_iterator_can_advance(&src_iterator)))
+                    anyconcats = TRUE;
+            }
+            WCMD_word_iterator_dispose(&src_iterator);
+        }
+    }
+
+    /* Ensure we have at least one source file */
+    if (!sourcelist)
+    {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
         return_code = ERROR_INVALID_FUNCTION;
         goto exitreturn;
-      } else {
-        concatnextfilename = TRUE;
-        anyconcats         = TRUE;
-      }
-
-      /* Move to next thing to process */
-      thisparam++;
-      if (*thisparam == 0x00)
-        thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-      continue;
     }
 
-    /* We have found something to process - build a COPY_FILE block to store it */
-    thiscopy = xalloc(sizeof(COPY_FILES));
-
-    WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(thisparam));
-    thiscopy->concatenate = concatnextfilename;
-    thiscopy->binarycopy  = binarymode;
-    thiscopy->next        = NULL;
-
-    /* Time to work out the name. Allocate at least enough space (deliberately too much to
-       leave space to append \* to the end) , then copy in character by character. Strip off
-       quotes if we find them.                                                               */
-    len = lstrlenW(thisparam) + (sizeof(WCHAR) * 5);  /* 5 spare characters, null + \*.*      */
-    thiscopy->name = xalloc(len * sizeof(WCHAR));
-    memset(thiscopy->name, 0x00, len);
-
-    pos1 = thisparam;
-    pos2 = thiscopy->name;
-    inquotes = FALSE;
-    while (*pos1 && (inquotes || (*pos1 != '+' && *pos1 != '/'))) {
-      if (*pos1 == '"') {
-        inquotes = !inquotes;
-        pos1++;
-      } else *pos2++ = *pos1++;
-    }
-    *pos2 = 0;
-    WINE_TRACE("Calculated file name %s\n", wine_dbgstr_w(thiscopy->name));
-
-    /* This is either the first source, concatenated subsequent source or destination */
-    if (sourcelist == NULL) {
-      WINE_TRACE("Adding as first source part\n");
-      sourcelist = thiscopy;
-      lastcopyentry = thiscopy;
-    } else if (concatnextfilename) {
-      WINE_TRACE("Adding to source file list to be concatenated\n");
-      lastcopyentry->next = thiscopy;
-      lastcopyentry = thiscopy;
-    } else if (destination == NULL) {
-      destination = thiscopy;
-    } else {
-      /* We have processed sources and destinations and still found more to do - invalid */
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      return_code = ERROR_INVALID_FUNCTION;
-      goto exitreturn;
-    }
-    concatnextfilename    = FALSE;
-
-    /* We either need to process the rest of the parameter or move to the next */
-    if (*pos1 == '/' || *pos1 == '+') {
-      thisparam = pos1;
-      continue;
-    } else {
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-    }
-  }
-
-  /* Ensure we have at least one source file */
-  if (!sourcelist) {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-    return_code = ERROR_INVALID_FUNCTION;
-    goto exitreturn;
-  }
-
-  /* Default whether automatic overwriting is on. If we are interactive then
-     we prompt by default, otherwise we overwrite by default
-     /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
-  if (opt_noty) prompt = TRUE;
-  else if (opt_y) prompt = FALSE;
-  else {
-    /* By default, we will force the overwrite in batch mode and ask for
-     * confirmation in interactive mode. */
-    prompt = !context;
-    /* If COPYCMD is set, then we force the overwrite with /Y and ask for
-     * confirmation with /-Y. If COPYCMD is neither of those, then we use the
-     * default behavior. */
-    len = GetEnvironmentVariableW(L"COPYCMD", copycmd, ARRAY_SIZE(copycmd));
-    if (len && len < ARRAY_SIZE(copycmd)) {
-      if (!lstrcmpiW(copycmd, L"/Y"))
-        prompt = FALSE;
-      else if (!lstrcmpiW(copycmd, L"/-Y"))
-        prompt = TRUE;
-    }
-  }
 
   /* Calculate the destination now - if none supplied, it's current dir +
      filename of first file in list*/
@@ -893,7 +888,10 @@ RETURN_CODE WCMD_copy(WCHAR * args)
 
     /* Convert to fully qualified path/filename */
     if (!WCMD_get_fullpath(destination->name, ARRAY_SIZE(destname), destname, &filenamepart))
-        return errorlevel = ERROR_INVALID_FUNCTION;
+    {
+        return_code = ERROR_INVALID_FUNCTION;
+        goto exitreturn;
+    }
     WINE_TRACE("Full dest name is '%s'\n", wine_dbgstr_w(destname));
 
     /* If parameter is a directory, ensure it ends in \ */
@@ -915,7 +913,8 @@ RETURN_CODE WCMD_copy(WCHAR * args)
      the copy defaults to an ascii copy (stop at EOF). We do not know the
      first source part yet (until we search) so flag as needing filling in. */
 
-  if (anyconcats) {
+  if (anyconcats)
+  {
     /* We have found an a+b type syntax, so destination has to be a filename
        and we need to default to ascii copying. If we have been supplied a
        directory as the destination, we need to defer calculating the name   */
@@ -2848,7 +2847,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
         size_t length;
 
         /* For a variable - just push it onto the stack */
-        if (WCMD_next_word(pos, mathDelims, &start, &length))
+        if (WCMD_next_word(pos, mathDelims, &start, &length, FALSE))
         {
             WCMD_pushnumber(WCMD_dup_unquoted(start, length), 0, &varstackhead);
             pos = start + length;

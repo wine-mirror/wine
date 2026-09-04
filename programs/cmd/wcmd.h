@@ -184,7 +184,7 @@ RETURN_CODE WCMD_call(WCHAR *command);
 RETURN_CODE WCMD_choice(struct word_iterator *);
 RETURN_CODE WCMD_clear_screen(struct word_iterator *);
 RETURN_CODE WCMD_color(void);
-RETURN_CODE WCMD_copy(WCHAR *);
+RETURN_CODE WCMD_copy(struct word_iterator *);
 RETURN_CODE WCMD_create_dir(struct word_iterator *);
 RETURN_CODE WCMD_delete(struct word_iterator *);
 RETURN_CODE WCMD_directory(struct word_iterator *);
@@ -229,7 +229,7 @@ RETURN_CODE WCMD_mklink(struct word_iterator *);
 RETURN_CODE WCMD_change_drive(WCHAR drive);
 
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD n, HANDLE stream);
-BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length);
+BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length, BOOL with_empty);
 WCHAR *WCMD_dup(const WCHAR *s, size_t length);
 WCHAR *WCMD_dup_unquoted(const WCHAR *s, size_t length);
 struct word_iterator
@@ -247,6 +247,7 @@ struct word_iterator
 };
 #define WORD_WITH_OPT 0x01
 #define WORD_WITH_QUOTED_OPT 0x02
+#define WORD_WITH_EMPTY_LAST_ARG 0x04
 
 struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags);
 BOOL WCMD_word_iterator_advance(struct word_iterator *iterator);
