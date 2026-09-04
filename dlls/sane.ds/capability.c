@@ -1238,7 +1238,7 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
     /* Twain specifies that you should return a 0 in response to QUERYSUPPORT,
      *   even if you don't formally support the capability */
     if (twCC == TWCC_CAPUNSUPPORTED && action == MSG_QUERYSUPPORT)
-        twCC = set_onevalue(pCapability, 0, TWTY_INT32);
+        twCC = set_onevalue(pCapability, TWTY_INT32, 0);
 
     if (twCC == TWCC_CAPUNSUPPORTED)
         TRACE("capability 0x%x/action=%d being reported as unsupported\n", pCapability->Cap, action);
