@@ -33,11 +33,11 @@
 
 #include "mscms_priv.h"
 
-static void basename( const WCHAR *path, WCHAR *name )
+static const WCHAR *basename( const WCHAR *path )
 {
-    int i = lstrlenW( path );
+    int i = wcslen( path );
     while (i > 0 && path[i - 1] != '\\' && path[i - 1] != '/') i--;
-    lstrcpyW( name, &path[i] );
+    return &path[i];
 }
 
 static inline WCHAR *strdupW( const char *str )
@@ -98,7 +98,8 @@ static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
     PROFILE profile;
     HPROFILE handle;
     HKEY icm_key, class_key;
-    WCHAR basenameW[MAX_PATH], classW[5];
+    WCHAR classW[5];
+    const WCHAR *basenameW;
 
     profile.dwType = PROFILE_FILENAME;
     profile.pProfileData = (PVOID)file;
@@ -119,7 +120,7 @@ static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM",
                      0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
 
-    basename( file, basenameW );
+    basenameW  = basename( file );
     swprintf( classW, ARRAY_SIZE(classW), L"%c%c%c%c",
               (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
               (header.phClass >> 8) & 0xff,  header.phClass & 0xff );
@@ -1017,23 +1018,30 @@ BOOL WINAPI InstallColorProfileA( PCSTR machine, PCSTR profile )
  */
 BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 {
-    WCHAR dest[MAX_PATH], base[MAX_PATH];
-    DWORD size = sizeof(dest);
+    const WCHAR *name;
+    BOOL ret = TRUE;
+    DWORD size;
+    WCHAR *dest;
 
     TRACE( "( %s )\n", debugstr_w(profile) );
 
     if (machine || !profile) return FALSE;
 
-    if (!GetColorDirectoryW( machine, dest, &size )) return FALSE;
+    name = basename( profile );
+    size = (MAX_PATH + wcslen(name)) * sizeof(WCHAR);
+    if (!(dest = malloc( size ))) return FALSE;
 
-    basename( profile, base );
-    lstrcatW( dest, L"\\" );
-    lstrcatW( dest, base );
+    if (!GetColorDirectoryW( NULL, dest, &size ))
+    {
+        free( dest );
+        return FALSE;
+    }
+    wcscat( dest, L"\\" );
+    wcscat( dest, name );
 
-    /* Is source equal to destination? */
-    if (!wcscmp( profile, dest )) return TRUE;
-
-    return CopyFileW( profile, dest, TRUE );
+    if (wcsicmp( profile, dest )) ret = CopyFileW( profile, dest, TRUE );
+    free( dest );
+    return ret;
 }
 
 /******************************************************************************
