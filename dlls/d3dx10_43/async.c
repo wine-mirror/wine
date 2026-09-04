@@ -385,6 +385,9 @@ HRESULT WINAPI D3DX10CreateAsyncFileLoaderA(const char *filename, ID3DX10DataLoa
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
     filename_w = malloc(len * sizeof(*filename_w));
+    if (!filename_w)
+        return E_OUTOFMEMORY;
+
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, len);
 
     hr = D3DX10CreateAsyncFileLoaderW(filename_w, loader);
