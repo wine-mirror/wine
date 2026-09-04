@@ -331,6 +331,7 @@ static void pres_not(float **args, unsigned int n, const struct preshader_instr 
 
     for (i = 0; i < instr->comp_count; ++i)
     {
+        /* This is logically wrong, but it's what native does (see tests). */
         int v = ~arg1[0];
         retval[i] = *(float *)&v;
     }
@@ -655,6 +656,7 @@ static void pres_or(float **args, unsigned int n, const struct preshader_instr *
 
     for (i = 0; i < instr->comp_count; ++i)
     {
+        /* This is logically wrong, but it's what native does (see tests). */
         unsigned int v = arg1[0] | arg2[0];
         retval[i] = *(float *)&v;
     }
