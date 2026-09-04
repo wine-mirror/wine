@@ -117,8 +117,8 @@ DECLARE_INTERFACE_(ID3DXBaseEffect, IUnknown)
     STDMETHOD_(D3DXHANDLE, GetTechniqueByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetPass)(THIS_ D3DXHANDLE technique, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetPassByName)(THIS_ D3DXHANDLE technique, const char *name) PURE;
-    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index);
-    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
+    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
@@ -227,8 +227,8 @@ DECLARE_INTERFACE_(ID3DXEffect, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetTechniqueByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetPass)(THIS_ D3DXHANDLE technique, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetPassByName)(THIS_ D3DXHANDLE technique, const char *name) PURE;
-    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index);
-    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
+    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
@@ -325,8 +325,8 @@ DECLARE_INTERFACE_(ID3DXEffectCompiler, ID3DXBaseEffect)
     STDMETHOD_(D3DXHANDLE, GetTechniqueByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetPass)(THIS_ D3DXHANDLE technique, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetPassByName)(THIS_ D3DXHANDLE technique, const char *name) PURE;
-    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index);
-    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name);
+    STDMETHOD_(D3DXHANDLE, GetFunction)(THIS_ UINT index) PURE;
+    STDMETHOD_(D3DXHANDLE, GetFunctionByName)(THIS_ const char *name) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotation)(THIS_ D3DXHANDLE object, UINT index) PURE;
     STDMETHOD_(D3DXHANDLE, GetAnnotationByName)(THIS_ D3DXHANDLE object, const char *name) PURE;
     STDMETHOD(SetValue)(THIS_ D3DXHANDLE parameter, const void *data, UINT bytes) PURE;
