@@ -2032,11 +2032,11 @@ static void test_sample_processing(
     struct image_data *rgb24_image, *rgb32_image;
     REFERENCE_TIME *time_start, *time_end;
     struct mem_allocator *sink_allocator;
+    LONGLONG color_diff, x_diff;
     VIDEOINFO *video_info_ptr;
     IMemAllocator *allocator;
     IMediaSample *sample;
     LONG image_size;
-    LONGLONG diff;
     HRESULT hr;
     BYTE *buff;
     int i;
@@ -2261,11 +2261,19 @@ static void test_sample_processing(
     image_size = IMediaSample_GetActualDataLength(sample);
     ok(image_size == rgb32_image->size, "Got image_size %ld.\n", image_size);
 
-    diff = 0;
-    for (unsigned int i = 0; i < image_size; ++i)
-        diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
-    diff = diff * 100 / 256 / image_size;
-    ok(diff == 0, "Got %I64u%% difference.\n", diff);
+    color_diff = x_diff = 0;
+    for (i = 0; i < image_size; ++i)
+    {
+        if (i % 4 == 3)
+            x_diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
+        else
+            color_diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
+    }
+    color_diff = color_diff * 100 / 255 / (image_size * 3 / 4);
+    x_diff = x_diff * 100 / 255 / (image_size / 4);
+    ok(color_diff == 0, "Got %I64u%% difference.\n", color_diff);
+    todo_wine
+    ok(x_diff == 0, "Got %I64u%% difference.\n", x_diff);
 
     free(rgb32_image);
     IMediaSample_Release(sample);
@@ -2331,12 +2339,20 @@ static void test_sample_processing(
     image_size = IMediaSample_GetSize(sample);
     ok(image_size == rgb32_image->size, "Got image_size %ld.\n", image_size);
 
-    diff = 0;
-    for (unsigned int i = 0; i < image_size; ++i)
-        diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
-    diff = diff * 100 / 256 / image_size;
+    color_diff = x_diff = 0;
+    for (i = 0; i < image_size; ++i)
+    {
+        if (i % 4 == 3)
+            x_diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
+        else
+            color_diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
+    }
+    color_diff = color_diff * 100 / 255 / (image_size * 3 / 4);
+    x_diff = x_diff * 100 / 255 / (image_size / 4);
     todo_wine
-    ok(diff == 0, "Got %I64u%% difference.\n", diff);
+    ok(color_diff == 0, "Got %I64u%% difference.\n", color_diff);
+    todo_wine
+    ok(x_diff == 0, "Got %I64u%% difference.\n", x_diff);
     free(rgb32_image);
 
     IMediaSample_Release(sample);
