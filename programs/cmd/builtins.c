@@ -2828,9 +2828,6 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
 
     /* If we have found anything other than an operator then it's a number/variable */
     if (wcschr(mathDelims, *pos) == NULL) {
-      WCHAR *parmstart, *parm, *dupparm;
-      WCHAR *nextpos;
-
       /* Cannot have an expression with var/number twice, without an operator
          in-between, nor or number following a half constructed << or >> operator */
       if (lastwasnumber || foundhalf) {
@@ -2840,6 +2837,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
       lastwasnumber = TRUE;
 
       if (iswdigit(*pos)) {
+        WCHAR *nextpos;
         /* For a number - just push it onto the stack */
         int num = wcstoul(pos, &nextpos, 0);
         WCMD_pushnumber(NULL, num, &varstackhead);
@@ -2851,12 +2849,15 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
           goto exprerrorreturn;
         }
       } else {
+        WCHAR *start;
+        size_t length;
 
         /* For a variable - just push it onto the stack */
-        parm = WCMD_parameter_with_delims(pos, 0, &parmstart, FALSE, mathDelims);
-        dupparm = xstrdupW(parm);
-        WCMD_pushnumber(dupparm, 0, &varstackhead);
-        pos = parmstart + lstrlenW(dupparm);
+        if (WCMD_next_word(pos, mathDelims, &start, &length))
+        {
+            WCMD_pushnumber(WCMD_dup_unquoted(start, length), 0, &varstackhead);
+            pos = start + length;
+        }
       }
       continue;
     }
