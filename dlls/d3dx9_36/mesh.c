@@ -1671,11 +1671,12 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
         return E_NOTIMPL;
     }
 
+    dword_indices = malloc(This->numfaces * 3 * sizeof(DWORD));
+    if (!dword_indices) return E_OUTOFMEMORY;
+
     hr = iface->lpVtbl->LockIndexBuffer(iface, 0, &indices);
     if (FAILED(hr)) goto cleanup;
 
-    dword_indices = malloc(This->numfaces * 3 * sizeof(DWORD));
-    if (!dword_indices) return E_OUTOFMEMORY;
     if (This->options & D3DXMESH_32BIT) {
         memcpy(dword_indices, indices, This->numfaces * 3 * sizeof(DWORD));
     } else {
