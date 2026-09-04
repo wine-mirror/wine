@@ -1030,7 +1030,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
     static const WCHAR* autofeeder[] = {L"Auto", L"ADF", L"ADF Front", L"ADF Back", L"adf",
         L"Automatic Document Feeder", L"Automatic Document Feeder(centrally aligned)",
         L"Automatic Document Feeder(center aligned)", L"Automatic Document Feeder(left aligned)",
-        L"ADF Simplex" L"DP", 0};
+        L"ADF Simplex", L"DP", 0};
     static const WCHAR* const* filter[] = {flatbed, autofeeder, 0};
 
     TRACE("CAP_FEEDERENABLED\n");
