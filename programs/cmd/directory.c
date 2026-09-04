@@ -729,7 +729,7 @@ static void init_time_format(void)
 
 RETURN_CODE WCMD_directory(WCHAR *args)
 {
-  WCHAR path[MAX_PATH], cwd[MAX_PATH];
+  WCHAR path[MAX_PATH];
   DWORD status;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   WCHAR *p;
@@ -941,38 +941,17 @@ RETURN_CODE WCMD_directory(WCHAR *args)
 
   argno         = 0;
   argN          = args;
-  GetCurrentDirectoryW(MAX_PATH, cwd);
-  lstrcatW(cwd, L"\\");
 
   /* Loop through all args, calculating full effective directory */
   fullParms = NULL;
   prevEntry = NULL;
   while (argN) {
-    WCHAR fullname[MAXSTRING];
     WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE);
     if (argN && argN[0] != '/') {
 
       WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(thisArg));
-      if (thisArg[1] == ':' && thisArg[2] == '\\') {
-        lstrcpyW(fullname, thisArg);
-      } else if (thisArg[1] == ':' && thisArg[2] != '\\') {
-        WCHAR envvar[4];
-        wsprintfW(envvar, L"=%c:", thisArg[0]);
-        if (!GetEnvironmentVariableW(envvar, fullname, MAX_PATH)) {
-          wsprintfW(fullname, L"%c:", thisArg[0]);
-        }
-        lstrcatW(fullname, L"\\");
-        lstrcatW(fullname, &thisArg[2]);
-      } else if (thisArg[0] == '\\') {
-        memcpy(fullname, cwd, 2 * sizeof(WCHAR));
-        lstrcpyW(fullname+2, thisArg);
-      } else {
-        lstrcpyW(fullname, cwd);
-        lstrcatW(fullname, thisArg);
-      }
-      WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
 
-      if (!WCMD_get_fullpath(fullname, ARRAY_SIZE(path), path, NULL)) continue;
+      if (!WCMD_get_fullpath(thisArg, ARRAY_SIZE(path), path, NULL)) continue;
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the
@@ -988,7 +967,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as
            GetFullPathName strips off the additional '.'                                  */
-        if (fullname[0] && fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, L".");
+        if (thisArg[0] && thisArg[wcslen(thisArg) - 1] == L'.') lstrcatW(path, L".");
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
@@ -1017,6 +996,10 @@ RETURN_CODE WCMD_directory(WCHAR *args)
 
   /* If just 'dir' entered, a '*' parameter is assumed */
   if (fullParms == NULL) {
+    WCHAR cwd[MAX_PATH];
+    GetCurrentDirectoryW(MAX_PATH, cwd);
+    lstrcatW(cwd, L"\\");
+
     WINE_TRACE("Inserting default '*'\n");
     fullParms = xalloc(sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;
