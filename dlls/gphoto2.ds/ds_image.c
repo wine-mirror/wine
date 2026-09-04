@@ -388,7 +388,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     if (bmpInfo->bmiHeader.biBitCount==8)
       {
 	/* Create a grayscale color palette */
-	for (int i=0; i<255; i++)
+	for (int i=0; i<256; i++)
 	  {
 	    bmpInfo->bmiColors[i].rgbBlue =
 	      bmpInfo->bmiColors[i].rgbGreen =
