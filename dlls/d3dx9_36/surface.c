@@ -187,6 +187,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileA(const char *file, D3DXIMAGE_INFO *info)
 
     strlength = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
     widename = malloc(strlength * sizeof(*widename));
+    if (!widename) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, file, -1, widename, strlength);
 
     hr = D3DXGetImageInfoFromFileW(widename, info);
@@ -420,6 +421,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(IDirect3DSurface9 *dst_surface,
 
     strlength = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0);
     src_file_w = malloc(strlength * sizeof(*src_file_w));
+    if (!src_file_w) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, src_file, -1, src_file_w, strlength);
 
     hr = D3DXLoadSurfaceFromFileW(dst_surface, dst_palette, dst_rect,

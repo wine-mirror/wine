@@ -792,6 +792,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileExA(struct IDirect3DDevice9 *device, con
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
     widename = malloc(len * sizeof(*widename));
+    if (!widename) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, widename, len);
 
     hr = D3DXCreateTextureFromFileExW(device, widename, width, height, miplevels,
