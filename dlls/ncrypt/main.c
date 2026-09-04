@@ -416,8 +416,9 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         WARN("Invalid flags %#lx\n", flags);
         return NTE_BAD_FLAGS;
     }
+    if (!header) return NTE_INVALID_PARAMETER;
 
-    switch(header->Magic)
+    switch (header->Magic)
     {
     case BCRYPT_RSAFULLPRIVATE_MAGIC:
     case BCRYPT_RSAPRIVATE_MAGIC:
