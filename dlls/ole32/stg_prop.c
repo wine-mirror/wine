@@ -1441,12 +1441,12 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
                 if (codepage == CP_UNICODE)
                 {
                     hr = buffer_read_len(buffer, *offset, prop->bstrVal, count);
-                    offset += ALIGNED_LENGTH(count, sizeof(DWORD) - 1);
+                    *offset += ALIGNED_LENGTH(count, sizeof(DWORD) - 1);
                 }
                 else
                 {
                     MultiByteToWideChar(codepage, 0, (LPCSTR)(buffer->data + *offset), count, prop->bstrVal, wcount);
-                    offset += ALIGNED_LENGTH(wcount, sizeof(DWORD) - 1);
+                    *offset += ALIGNED_LENGTH(wcount, sizeof(DWORD) - 1);
                 }
 
                 prop->bstrVal[wcount - 1] = '\0';
