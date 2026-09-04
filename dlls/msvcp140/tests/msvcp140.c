@@ -70,6 +70,32 @@ DEFINE_EXPECT(function_do_call);
 DEFINE_EXPECT(function_do_clean);
 #endif
 
+typedef unsigned char MSVCP_bool;
+typedef void (*vtable_ptr)(void);
+
+/* class basic_streambuf<char> */
+typedef struct {
+    const vtable_ptr *vtable;
+    char *rbuf;
+    char *wbuf;
+    char **prbuf;
+    char **pwbuf;
+    char *rpos;
+    char *wpos;
+    char **prpos;
+    char **pwpos;
+    int rsize;
+    int wsize;
+    int *prsize;
+    int *pwsize;
+    struct locale *loc;
+} basic_streambuf_char;
+
+typedef struct {
+    MSVCP_bool failed;
+    basic_streambuf_char *strbuf;
+} ostreambuf_iterator_char;
+
 #undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
@@ -93,10 +119,16 @@ struct thiscall_thunk
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void *a, const void *b,
+        const void *c );
 static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d );
 static void * (WINAPI *call_thiscall_func8)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d, const void *e, const void *f, const void *g );
+
+/* to silence compiler errors */
+static void * (WINAPI *call_thiscall_func8_ptr_itr)( void *func, void *this, const void *a,
+        ostreambuf_iterator_char b, const void *c, char d, const void *e, char f, char g );
 
 static void init_thiscall_thunk(void)
 {
@@ -109,27 +141,36 @@ static void init_thiscall_thunk(void)
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
+    call_thiscall_func4 = (void *)thunk;
     call_thiscall_func5 = (void *)thunk;
     call_thiscall_func8 = (void *)thunk;
+
+    call_thiscall_func8_ptr_itr = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c))
 #define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
         (const void*)(c), (const void*)(d))
 #define call_func8(func,_this,a,b,c,d,e,f,g) call_thiscall_func8(func,_this,(const void*)(a),(const void*)(b), \
         (const void*)(c), (const void*)(d), (const void*)(e), (const void*)(f), (const void*)(g))
+
+#define call_func8_ptr_itr(func,_this,a,b,c,d,e,f,g) call_thiscall_func8_ptr_itr(func,_this,a,b,c,d,e,f,g)
 
 #else
 
 #define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
+#define call_func4(func,_this,a,b,c) func(_this,a,b,c)
 #define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
 #define call_func8(func,_this,a,b,c,d,e,f,g) func(_this,a,b,c,d,e,f,g)
 
+#define call_func8_ptr_itr(func,_this,a,b,c,d,e,f,g) func(_this,a,b,c,d,e,f,g)
+
 #endif /* __i386__ */
-typedef unsigned char MSVCP_bool;
 
 typedef struct {
     void *unk0;
@@ -301,7 +342,6 @@ static int (__cdecl *p__unlink)(const char*);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
-typedef void (*vtable_ptr)(void);
 typedef SIZE_T MSVCP_size_t;
 
 /* class locale::facet */
@@ -362,6 +402,43 @@ typedef struct
 static void (__cdecl *p___ExceptionPtrSwap)(exception_ptr *a, exception_ptr *b);
 static unsigned int (__cdecl *pGetNextAsyncId)(void);
 
+struct ios_base;
+typedef struct {
+    void *timeptr;
+} _Timevec;
+
+/* class time_put<char> */
+typedef struct {
+    locale_facet facet;
+    _Timevec time;
+} time_put_char;
+
+/* time_put<char> */
+static time_put_char* (__thiscall *p_time_put_char_ctor)(time_put_char*);
+static ostreambuf_iterator_char* (__thiscall *p_time_put_char_put)(const time_put_char*,
+        ostreambuf_iterator_char*, ostreambuf_iterator_char, struct ios_base*,
+        char, const struct tm*, char, char);
+static void (__thiscall *p_time_put_char_dtor)(time_put_char*);
+
+/* basic_streambuf<char> */
+static basic_streambuf_char* (__thiscall *p_basic_streambuf_char_ctor)(basic_streambuf_char*);
+static void (__thiscall *p_basic_streambuf_char_setp_next)(basic_streambuf_char*, char*, char*, char*);
+static void (__thiscall *p_basic_streambuf_char_setg)(basic_streambuf_char*, char*, char*, char*);
+static void (__thiscall *p_basic_streambuf_char_dtor)(basic_streambuf_char*);
+
+static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
+
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, uintptr_t arg)
+{
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(arg == 0, "arg = %Ix\n", arg);
+}
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -408,6 +485,15 @@ static BOOL init(void)
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MEAA@XZ");
         SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEB_S1AEAPEB_SPEAD3AEAPEAD@Z");
         SET(p_codecvt_char16_do_in, "?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEBD1AEAPEBDPEA_S3AEAPEA_S@Z");
+
+        SET(p_time_put_char_ctor, "??_F?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ");
+        SET(p_time_put_char_put, "?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBUtm@@DD@Z");
+        SET(p_time_put_char_dtor, "??1?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ");
+
+        SET(p_basic_streambuf_char_ctor, "??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAA@XZ");
+        SET(p_basic_streambuf_char_setg, "?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z");
+        SET(p_basic_streambuf_char_setp_next, "?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z");
+        SET(p_basic_streambuf_char_dtor, "??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UEAA@XZ");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -427,6 +513,15 @@ static BOOL init(void)
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ(ptr)");
         SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z");
         SET(p_codecvt_char16_do_in, "?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z");
+
+        SET(p_time_put_char_ctor, "??_F?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAAXXZ");
+        SET(p_time_put_char_put, "?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@DD@Z");
+        SET(p_time_put_char_dtor, "??1?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAA@XZ");
+
+        SET(p_basic_streambuf_char_ctor, "??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAA@XZ");
+        SET(p_basic_streambuf_char_setg, "?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAAXPAD00@Z");
+        SET(p_basic_streambuf_char_setp_next, "?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAAXPAD00@Z");
+        SET(p_basic_streambuf_char_dtor, "??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAA@XZ");
 #else
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
         SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z");
@@ -445,6 +540,15 @@ static BOOL init(void)
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAE@XZ");
         SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z");
         SET(p_codecvt_char16_do_in, "?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z");
+
+        SET(p_time_put_char_ctor, "??_F?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ");
+        SET(p_time_put_char_put, "?put@?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBUtm@@DD@Z");
+        SET(p_time_put_char_dtor, "??1?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ");
+
+        SET(p_basic_streambuf_char_ctor, "??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@XZ");
+        SET(p_basic_streambuf_char_setg, "?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z");
+        SET(p_basic_streambuf_char_setp_next, "?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z");
+        SET(p_basic_streambuf_char_dtor, "??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAE@XZ");
 #endif
         SET(p___ExceptionPtrSwap, "?__ExceptionPtrSwap@@YAXPAX0@Z");
         SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z");
@@ -506,6 +610,7 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
     p_fclose = (void*)GetProcAddress(hdll, "fclose");
     p__unlink = (void*)GetProcAddress(hdll, "_unlink");
+    p_set_invalid_parameter_handler = (void*)GetProcAddress(hdll, "_set_invalid_parameter_handler");
 
     init_thiscall_thunk();
     return TRUE;
@@ -2494,6 +2599,75 @@ static void test_GetNextAsyncId(void)
     ok(id == 2, "Unexpected id %u.\n", id);
 }
 
+static void test_time_put(void)
+{
+    static const struct {
+        const char *expect;
+        char fill;
+        char format;
+        char mod;
+        struct tm tm;
+        BOOL todo;
+    } tests[] = {
+        {" 1", ' ', 'e', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"23", ' ', 'H', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"11", ' ', 'I', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"02", ' ', 'm', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"34", ' ', 'M', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"56", ' ', 'S', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"2",  ' ', 'u', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'U', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'V', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"2",  ' ', 'w', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"05", ' ', 'W', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+        {"00", ' ', 'y', 0,   {56, 34, 23, 1, 1, 100, 2, 31, 0}},
+
+        {" 1", ' ', 'e', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"23", ' ', 'H', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"11", ' ', 'I', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"02", ' ', 'm', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"34", ' ', 'M', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"56", ' ', 'S', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"2",  ' ', 'u', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"05", ' ', 'U', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"05", ' ', 'V', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"2",  ' ', 'w', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"05", ' ', 'W', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+        {"00", ' ', 'y', 'O', {56, 34, 23, 1, 1, 100, 2, 31, 0}, TRUE},
+    };
+    ostreambuf_iterator_char dest;
+    basic_streambuf_char strbuf;
+    time_put_char time_put;
+    char buf[16];
+    void *old;
+    int i;
+
+    /* prevent crash on invalid parameter */
+    old = p_set_invalid_parameter_handler(test_invalid_parameter_handler);
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        memset(buf, 0, sizeof(buf));
+
+        call_func1(p_time_put_char_ctor, &time_put);
+
+        call_func1(p_basic_streambuf_char_ctor, &strbuf);
+        call_func4(p_basic_streambuf_char_setp_next, &strbuf, buf, buf, &buf[ARRAY_SIZE(buf)]);
+        call_func4(p_basic_streambuf_char_setg, &strbuf, buf, buf, &buf[ARRAY_SIZE(buf)]);
+
+        dest.failed = 0;
+        dest.strbuf = &strbuf;
+        call_func8_ptr_itr(p_time_put_char_put, &time_put, &dest, dest, (struct ios_base *)0xdeadbeef,
+            tests[i].fill, &tests[i].tm, tests[i].format, tests[i].mod);
+
+        todo_wine_if(tests[i].todo)
+        ok(!strcmp(buf, tests[i].expect), "%c %c: expected %s, got %s\n",
+            tests[i].format, tests[i].mod ? tests[i].mod : '0',tests[i].expect, buf);
+
+        call_func1(p_basic_streambuf_char_dtor, &strbuf);
+        call_func1(p_time_put_char_dtor, &time_put);
+    }
+    p_set_invalid_parameter_handler(old);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -2527,5 +2701,6 @@ START_TEST(msvcp140)
     test_thread_library_reference();
     test_exception_pointer();
     test_GetNextAsyncId();
+    test_time_put();
     FreeLibrary(msvcp);
 }
