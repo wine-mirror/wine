@@ -420,11 +420,15 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
     else
       copySize = cb.LowPart;
 
-    IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
+    hr = IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
+    if (FAILED(hr))
+        break;
 
     totalBytesRead.QuadPart += bytesRead;
 
-    IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+    hr = IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+    if (FAILED(hr))
+        break;
 
     totalBytesWritten.QuadPart += bytesWritten;
 
