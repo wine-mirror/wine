@@ -2355,6 +2355,13 @@ typedef struct VkBufferCopy32
     VkDeviceSize DECLSPEC_ALIGN(8) size;
 } VkBufferCopy32;
 
+typedef struct VkBufferDeviceAddressAlignmentAllocateInfoVALVE32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t alignment;
+} VkBufferDeviceAddressAlignmentAllocateInfoVALVE32;
+
 typedef struct VkBufferDeviceAddressCreateInfoEXT32
 {
     VkStructureType sType;
@@ -2628,6 +2635,19 @@ typedef struct VkCooperativeMatrixFlexibleDimensionsPropertiesNV32
     VkScopeKHR scope;
     uint32_t workgroupInvocations;
 } VkCooperativeMatrixFlexibleDimensionsPropertiesNV32;
+
+typedef struct VkCooperativeMatrixProperties2EXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t MGranularity;
+    uint32_t NGranularity;
+    uint32_t KGranularity;
+    VkComponentTypeKHR AType;
+    VkComponentTypeKHR BType;
+    VkComponentTypeKHR CType;
+    VkComponentTypeKHR ResultType;
+} VkCooperativeMatrixProperties2EXT32;
 
 typedef struct VkCooperativeMatrixPropertiesKHR32
 {
@@ -4238,6 +4258,13 @@ typedef struct VkImageSwapchainCreateInfoKHR32
     VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
 } VkImageSwapchainCreateInfoKHR32;
 
+typedef struct VkImageTilingControlCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkImageTilingControlEXT tilingControl;
+} VkImageTilingControlCreateInfoEXT32;
+
 typedef struct VkImageUsageFlags2CreateInfoKHR32
 {
     VkStructureType sType;
@@ -4994,6 +5021,20 @@ typedef struct VkPhysicalDeviceBorderColorSwizzleFeaturesEXT32
     VkBool32 borderColorSwizzleFromImage;
 } VkPhysicalDeviceBorderColorSwizzleFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 bufferDeviceAddressAllocationAlignment;
+} VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32;
+
+typedef struct VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxBufferDeviceAddressAllocationAlignment;
+} VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE32;
+
 typedef struct VkPhysicalDeviceBufferDeviceAddressFeatures32
 {
     VkStructureType sType;
@@ -5171,6 +5212,27 @@ typedef struct VkPhysicalDeviceCooperativeMatrixFeaturesNV32
     VkBool32 cooperativeMatrix;
     VkBool32 cooperativeMatrixRobustBufferAccess;
 } VkPhysicalDeviceCooperativeMatrixFeaturesNV32;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixInfo2EXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkScopeKHR scope;
+    uint32_t invocations;
+    uint32_t subgroupSize;
+    VkCooperativeMatrixFlagsEXT flags;
+} VkPhysicalDeviceCooperativeMatrixInfo2EXT32;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 cooperativeMatrixProperties2;
+    VkBool32 cooperativeMatrixReductions;
+    VkBool32 cooperativeMatrixConversions;
+    VkBool32 cooperativeMatrixPerElementOperations;
+    VkBool32 cooperativeMatrixGetCoordinate;
+} VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32;
 
 typedef struct VkPhysicalDeviceCooperativeMatrixPropertiesKHR32
 {
@@ -6240,6 +6302,13 @@ typedef struct VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32
     VkBool32 imageSlicedViewOf3D;
 } VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceImageTilingControlFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 imageTilingControl;
+} VkPhysicalDeviceImageTilingControlFeaturesEXT32;
+
 typedef struct VkPhysicalDeviceImageViewImageFormatInfoEXT32
 {
     VkStructureType sType;
@@ -6887,12 +6956,13 @@ typedef struct VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR32
     VkBool32 pipelineExecutableInfo;
 } VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR32;
 
-typedef struct VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32
+typedef struct VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
     VkBool32 pipelineLibraryGroupHandles;
-} VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32;
+} VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32;
+typedef VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32;
 
 typedef struct VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32
 {
@@ -11185,6 +11255,17 @@ static void convert_VkMemoryAllocateInfo_win64_to_host(struct conversion_context
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE:
+        {
+            VkBufferDeviceAddressAlignmentAllocateInfoVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferDeviceAddressAlignmentAllocateInfoVALVE *in_ext = (const VkBufferDeviceAddressAlignmentAllocateInfoVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->alignment = in_ext->alignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV:
         {
             VkDedicatedAllocationMemoryAllocateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11352,6 +11433,17 @@ static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE:
+        {
+            VkBufferDeviceAddressAlignmentAllocateInfoVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferDeviceAddressAlignmentAllocateInfoVALVE32 *in_ext = (const VkBufferDeviceAddressAlignmentAllocateInfoVALVE32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->alignment = in_ext->alignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV:
         {
             VkDedicatedAllocationMemoryAllocateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -17261,6 +17353,17 @@ static void convert_VkBufferCreateInfo_win64_to_host(struct conversion_context *
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE:
+        {
+            VkBufferDeviceAddressAlignmentAllocateInfoVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferDeviceAddressAlignmentAllocateInfoVALVE *in_ext = (const VkBufferDeviceAddressAlignmentAllocateInfoVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->alignment = in_ext->alignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT:
         {
             VkBufferDeviceAddressCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -17500,6 +17603,17 @@ static void convert_VkBufferCreateInfo_win32_to_host(struct conversion_context *
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE:
+        {
+            VkBufferDeviceAddressAlignmentAllocateInfoVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferDeviceAddressAlignmentAllocateInfoVALVE32 *in_ext = (const VkBufferDeviceAddressAlignmentAllocateInfoVALVE32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->alignment = in_ext->alignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT:
         {
             VkBufferDeviceAddressCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19312,6 +19426,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->bufferDeviceAddressAllocationAlignment = in_ext->bufferDeviceAddressAllocationAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES:
         {
             VkPhysicalDeviceBufferDeviceAddressFeatures *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19488,6 +19613,21 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_ext->pNext = NULL;
             out_ext->cooperativeMatrix = in_ext->cooperativeMatrix;
             out_ext->cooperativeMatrixRobustBufferAccess = in_ext->cooperativeMatrixRobustBufferAccess;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT:
+        {
+            VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *in_ext = (const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixProperties2 = in_ext->cooperativeMatrixProperties2;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixGetCoordinate = in_ext->cooperativeMatrixGetCoordinate;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20328,6 +20468,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageTilingControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageTilingControlFeaturesEXT *in_ext = (const VkPhysicalDeviceImageTilingControlFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageTilingControl = in_ext->imageTilingControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
         {
             VkPhysicalDeviceImageViewMinLodFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20831,11 +20982,11 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR:
         {
-            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT;
+            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->pipelineLibraryGroupHandles = in_ext->pipelineLibraryGroupHandles;
             out_header->pNext = (void *)out_ext;
@@ -22709,6 +22860,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32 *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->bufferDeviceAddressAllocationAlignment = in_ext->bufferDeviceAddressAllocationAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES:
         {
             VkPhysicalDeviceBufferDeviceAddressFeatures *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -22885,6 +23047,21 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->pNext = NULL;
             out_ext->cooperativeMatrix = in_ext->cooperativeMatrix;
             out_ext->cooperativeMatrixRobustBufferAccess = in_ext->cooperativeMatrixRobustBufferAccess;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT:
+        {
+            VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32 *in_ext = (const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixProperties2 = in_ext->cooperativeMatrixProperties2;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixGetCoordinate = in_ext->cooperativeMatrixGetCoordinate;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23725,6 +23902,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageTilingControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageTilingControlFeaturesEXT32 *in_ext = (const VkPhysicalDeviceImageTilingControlFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageTilingControl = in_ext->imageTilingControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
         {
             VkPhysicalDeviceImageViewMinLodFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -24228,11 +24416,11 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR:
         {
-            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32 *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT;
+            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->pipelineLibraryGroupHandles = in_ext->pipelineLibraryGroupHandles;
             out_header->pNext = (void *)out_ext;
@@ -27145,6 +27333,17 @@ static void convert_VkImageCreateInfo_win64_to_host(struct conversion_context *c
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT:
+        {
+            VkImageTilingControlCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageTilingControlCreateInfoEXT *in_ext = (const VkImageTilingControlCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->tilingControl = in_ext->tilingControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_IMAGE_USAGE_FLAGS_2_CREATE_INFO_KHR:
         {
             VkImageUsageFlags2CreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -27361,6 +27560,17 @@ static void convert_VkImageCreateInfo_win32_to_host(struct conversion_context *c
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->swapchain = in_ext->swapchain ? vulkan_swapchain_from_handle(in_ext->swapchain)->host.swapchain : 0;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT:
+        {
+            VkImageTilingControlCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageTilingControlCreateInfoEXT32 *in_ext = (const VkImageTilingControlCreateInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->tilingControl = in_ext->tilingControl;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -32809,6 +33019,71 @@ static void convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_host
     }
 }
 
+static void convert_VkPhysicalDeviceCooperativeMatrixInfo2EXT_win32_to_host(const VkPhysicalDeviceCooperativeMatrixInfo2EXT32 *in, VkPhysicalDeviceCooperativeMatrixInfo2EXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->scope = in->scope;
+    out->invocations = in->invocations;
+    out->subgroupSize = in->subgroupSize;
+    out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static void convert_VkCooperativeMatrixProperties2EXT_win32_to_host(const VkCooperativeMatrixProperties2EXT32 *in, VkCooperativeMatrixProperties2EXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static VkCooperativeMatrixProperties2EXT *convert_VkCooperativeMatrixProperties2EXT_array_win32_to_host(struct conversion_context *ctx, const VkCooperativeMatrixProperties2EXT32 *in, uint32_t count)
+{
+    VkCooperativeMatrixProperties2EXT *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeMatrixProperties2EXT_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static void convert_VkCooperativeMatrixProperties2EXT_host_to_win32(const VkCooperativeMatrixProperties2EXT *in, VkCooperativeMatrixProperties2EXT32 *out)
+{
+    if (!in) return;
+
+    out->MGranularity = in->MGranularity;
+    out->NGranularity = in->NGranularity;
+    out->KGranularity = in->KGranularity;
+    out->AType = in->AType;
+    out->BType = in->BType;
+    out->CType = in->CType;
+    out->ResultType = in->ResultType;
+}
+
+static void convert_VkCooperativeMatrixProperties2EXT_array_host_to_win32(const VkCooperativeMatrixProperties2EXT *in, VkCooperativeMatrixProperties2EXT32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeMatrixProperties2EXT_host_to_win32(&in[i], &out[i]);
+    }
+}
+
 static void convert_VkCooperativeMatrixPropertiesKHR_win32_to_host(const VkCooperativeMatrixPropertiesKHR32 *in, VkCooperativeMatrixPropertiesKHR *out)
 {
     if (!in) return;
@@ -33318,6 +33593,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32 *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->bufferDeviceAddressAllocationAlignment = in_ext->bufferDeviceAddressAllocationAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES:
         {
             VkPhysicalDeviceBufferDeviceAddressFeatures *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -33494,6 +33780,21 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_ext->pNext = NULL;
             out_ext->cooperativeMatrix = in_ext->cooperativeMatrix;
             out_ext->cooperativeMatrixRobustBufferAccess = in_ext->cooperativeMatrixRobustBufferAccess;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT:
+        {
+            VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32 *in_ext = (const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixProperties2 = in_ext->cooperativeMatrixProperties2;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixGetCoordinate = in_ext->cooperativeMatrixGetCoordinate;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -34323,6 +34624,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageTilingControlFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageTilingControlFeaturesEXT32 *in_ext = (const VkPhysicalDeviceImageTilingControlFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->imageTilingControl = in_ext->imageTilingControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
         {
             VkPhysicalDeviceImageViewMinLodFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -34826,11 +35138,11 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR:
         {
-            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32 *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT;
+            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->pipelineLibraryGroupHandles = in_ext->pipelineLibraryGroupHandles;
             out_header->pNext = (void *)out_ext;
@@ -36497,6 +36809,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE);
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE;
+            out_ext->bufferDeviceAddressAllocationAlignment = in_ext->bufferDeviceAddressAllocationAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES:
         {
             VkPhysicalDeviceBufferDeviceAddressFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
@@ -36644,6 +36965,19 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV;
             out_ext->cooperativeMatrix = in_ext->cooperativeMatrix;
             out_ext->cooperativeMatrixRobustBufferAccess = in_ext->cooperativeMatrixRobustBufferAccess;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT:
+        {
+            VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT);
+            const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *in_ext = (const VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT;
+            out_ext->cooperativeMatrixProperties2 = in_ext->cooperativeMatrixProperties2;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixGetCoordinate = in_ext->cooperativeMatrixGetCoordinate;
             out_header = (void *)out_ext;
             break;
         }
@@ -37338,6 +37672,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT:
+        {
+            VkPhysicalDeviceImageTilingControlFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT);
+            const VkPhysicalDeviceImageTilingControlFeaturesEXT *in_ext = (const VkPhysicalDeviceImageTilingControlFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT;
+            out_ext->imageTilingControl = in_ext->imageTilingControl;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
         {
             VkPhysicalDeviceImageViewMinLodFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT);
@@ -37753,11 +38096,11 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR:
         {
-            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT);
-            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT;
+            VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR);
+            const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *in_ext = (const VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR;
             out_ext->pipelineLibraryGroupHandles = in_ext->pipelineLibraryGroupHandles;
             out_header = (void *)out_ext;
             break;
@@ -40095,6 +40438,17 @@ static void convert_VkPhysicalDeviceProperties2_win64_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->maxBufferDeviceAddressAllocationAlignment = in_ext->maxBufferDeviceAddressAllocationAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
         {
             VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -41244,6 +41598,15 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win64(const VkPhysicalDe
             out_ext->advancedBlendNonPremultipliedDstColor = in_ext->advancedBlendNonPremultipliedDstColor;
             out_ext->advancedBlendCorrelatedOverlap = in_ext->advancedBlendCorrelatedOverlap;
             out_ext->advancedBlendAllOperations = in_ext->advancedBlendAllOperations;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE);
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE;
+            out_ext->maxBufferDeviceAddressAllocationAlignment = in_ext->maxBufferDeviceAddressAllocationAlignment;
             out_header = (void *)out_ext;
             break;
         }
@@ -42880,6 +43243,17 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE32 *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE;
+            out_ext->pNext = NULL;
+            out_ext->maxBufferDeviceAddressAllocationAlignment = in_ext->maxBufferDeviceAddressAllocationAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
         {
             VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -44023,6 +44397,15 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             out_ext->advancedBlendNonPremultipliedDstColor = in_ext->advancedBlendNonPremultipliedDstColor;
             out_ext->advancedBlendCorrelatedOverlap = in_ext->advancedBlendCorrelatedOverlap;
             out_ext->advancedBlendAllOperations = in_ext->advancedBlendAllOperations;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE);
+            const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *in_ext = (const VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE;
+            out_ext->maxBufferDeviceAddressAllocationAlignment = in_ext->maxBufferDeviceAddressAllocationAlignment;
             out_header = (void *)out_ext;
             break;
         }
@@ -46548,11 +46931,8 @@ static void convert_VkVideoCapabilitiesKHR_win32_to_host(struct conversion_conte
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_FEEDBACK_2_CAPABILITIES_KHR:
         {
             VkVideoEncodeFeedback2CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkVideoEncodeFeedback2CapabilitiesKHR32 *in_ext = (const VkVideoEncodeFeedback2CapabilitiesKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_FEEDBACK_2_CAPABILITIES_KHR;
             out_ext->pNext = NULL;
-            out_ext->maxPerPartitionFeedbackEntries = in_ext->maxPerPartitionFeedbackEntries;
-            out_ext->supportedPerPartitionEncodeFeedbackFlags = in_ext->supportedPerPartitionEncodeFeedbackFlags;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -66092,6 +66472,44 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPr
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(void *args)
+{
+    struct vkGetPhysicalDeviceCooperativeMatrixProperties2EXT_params *params = args;
+
+    TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pCooperativeMatrixInfo, params->pPropertyCount, params->pProperties);
+
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pCooperativeMatrixInfo, params->pPropertyCount, params->pProperties);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(void *args)
+{
+    struct
+    {
+        PTR32 physicalDevice;
+        PTR32 pCooperativeMatrixInfo;
+        PTR32 pPropertyCount;
+        PTR32 pProperties;
+        VkResult result;
+    } *params = args;
+    VkPhysicalDeviceCooperativeMatrixInfo2EXT pCooperativeMatrixInfo_host;
+    VkCooperativeMatrixProperties2EXT *pProperties_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x, %#x\n", params->physicalDevice, params->pCooperativeMatrixInfo, params->pPropertyCount, params->pProperties);
+
+    init_conversion_context(ctx);
+    convert_VkPhysicalDeviceCooperativeMatrixInfo2EXT_win32_to_host((const VkPhysicalDeviceCooperativeMatrixInfo2EXT32 *)UlongToPtr(params->pCooperativeMatrixInfo), &pCooperativeMatrixInfo_host);
+    pProperties_host = convert_VkCooperativeMatrixProperties2EXT_array_win32_to_host(ctx, (VkCooperativeMatrixProperties2EXT32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pCooperativeMatrixInfo_host, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    convert_VkCooperativeMatrixProperties2EXT_array_host_to_win32(pProperties_host, (VkCooperativeMatrixProperties2EXT32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR_params *params = args;
@@ -72247,6 +72665,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
+    thunk64_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     thunk64_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
@@ -73003,6 +73422,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
+    thunk32_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     thunk32_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,

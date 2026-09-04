@@ -120,7 +120,7 @@ struct OH_NativeBuffer;
     #endif
 #endif
 #define VK_FALSE 0
-#define VK_HEADER_VERSION 357
+#define VK_HEADER_VERSION 362
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_LOD_CLAMP_NONE 1000.0F
 #define VK_LUID_SIZE 8
@@ -343,6 +343,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_EXT_CONDITIONAL_RENDERING_SPEC_VERSION 2
 #define VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME "VK_EXT_conservative_rasterization"
 #define VK_EXT_CONSERVATIVE_RASTERIZATION_SPEC_VERSION 1
+#define VK_EXT_COOPERATIVE_MATRIX_MAINTENANCE_1_EXTENSION_NAME "VK_EXT_cooperative_matrix_maintenance1"
+#define VK_EXT_COOPERATIVE_MATRIX_MAINTENANCE_1_SPEC_VERSION 1
 #define VK_EXT_CUSTOM_BORDER_COLOR_EXTENSION_NAME "VK_EXT_custom_border_color"
 #define VK_EXT_CUSTOM_BORDER_COLOR_SPEC_VERSION 12
 #define VK_EXT_CUSTOM_RESOLVE_EXTENSION_NAME "VK_EXT_custom_resolve"
@@ -433,6 +435,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_EXT_IMAGE_ROBUSTNESS_SPEC_VERSION 1
 #define VK_EXT_IMAGE_SLICED_VIEW_OF_3D_EXTENSION_NAME "VK_EXT_image_sliced_view_of_3d"
 #define VK_EXT_IMAGE_SLICED_VIEW_OF_3D_SPEC_VERSION 1
+#define VK_EXT_IMAGE_TILING_CONTROL_EXTENSION_NAME "VK_EXT_image_tiling_control"
+#define VK_EXT_IMAGE_TILING_CONTROL_SPEC_VERSION 1
 #define VK_EXT_IMAGE_VIEW_MIN_LOD_EXTENSION_NAME "VK_EXT_image_view_min_lod"
 #define VK_EXT_IMAGE_VIEW_MIN_LOD_SPEC_VERSION 1
 #define VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME "VK_EXT_index_type_uint8"
@@ -774,6 +778,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME "VK_KHR_pipeline_executable_properties"
 #define VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_SPEC_VERSION 1
 #define VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME "VK_KHR_pipeline_library"
+#define VK_KHR_PIPELINE_LIBRARY_GROUP_HANDLES_EXTENSION_NAME "VK_KHR_pipeline_library_group_handles"
+#define VK_KHR_PIPELINE_LIBRARY_GROUP_HANDLES_SPEC_VERSION 1
 #define VK_KHR_PIPELINE_LIBRARY_SPEC_VERSION 1
 #define VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME "VK_KHR_portability_enumeration"
 #define VK_KHR_PORTABILITY_ENUMERATION_SPEC_VERSION 1
@@ -988,7 +994,7 @@ typedef void* VkRemoteAddressNV;
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_EXTENSION_NAME "VK_NV_linear_color_attachment"
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_SPEC_VERSION 1
 #define VK_NV_LOW_LATENCY_2_EXTENSION_NAME "VK_NV_low_latency2"
-#define VK_NV_LOW_LATENCY_2_SPEC_VERSION 2
+#define VK_NV_LOW_LATENCY_2_SPEC_VERSION 3
 #define VK_NV_LOW_LATENCY_EXTENSION_NAME "VK_NV_low_latency"
 #define VK_NV_LOW_LATENCY_SPEC_VERSION 2
 #define VK_NV_MEMORY_DECOMPRESSION_EXTENSION_NAME "VK_NV_memory_decompression"
@@ -1103,6 +1109,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_STD_VULKAN_VIDEO_CODEC_H265_ENCODE_SPEC_VERSION VK_STD_VULKAN_VIDEO_CODEC_H265_ENCODE_API_VERSION_1_0_0
 #define VK_STD_VULKAN_VIDEO_CODEC_VP9_DECODE_EXTENSION_NAME "VK_STD_vulkan_video_codec_vp9_decode"
 #define VK_STD_VULKAN_VIDEO_CODEC_VP9_DECODE_SPEC_VERSION VK_STD_VULKAN_VIDEO_CODEC_VP9_DECODE_API_VERSION_1_0_0
+#define VK_VALVE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_EXTENSION_NAME "VK_VALVE_buffer_device_address_allocation_alignment"
+#define VK_VALVE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_SPEC_VERSION 1
 #define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_EXTENSION_NAME "VK_VALVE_descriptor_set_host_mapping"
 #define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_SPEC_VERSION 1
 #define VK_VALVE_FRAGMENT_DENSITY_MAP_LAYERED_EXTENSION_NAME "VK_VALVE_fragment_density_map_layered"
@@ -1257,6 +1265,7 @@ typedef VkFlags VkClusterAccelerationStructureClusterFlagsNV;
 typedef VkFlags VkCommandBufferUsageFlags;
 typedef VkFlags VkCommandPoolCreateFlags;
 typedef VkFlags VkConditionalRenderingFlagsEXT;
+typedef VkFlags VkCooperativeMatrixFlagsEXT;
 typedef VkFlags VkDataGraphOpticalFlowCreateFlagsARM;
 typedef VkFlags VkDataGraphOpticalFlowExecuteFlagsARM;
 typedef VkFlags VkDataGraphOpticalFlowGridSizeFlagsARM;
@@ -2608,6 +2617,12 @@ typedef enum VkConservativeRasterizationModeEXT
     VK_CONSERVATIVE_RASTERIZATION_MODE_EXT_MAX_ENUM = 0x7fffffff,
 } VkConservativeRasterizationModeEXT;
 
+typedef enum VkCooperativeMatrixFlagBitsEXT
+{
+    VK_COOPERATIVE_MATRIX_SATURATING_ACCUMULATION_BIT_EXT = 0x00000001,
+    VK_COOPERATIVE_MATRIX_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkCooperativeMatrixFlagBitsEXT;
+
 typedef enum VkCooperativeVectorMatrixLayoutNV
 {
     VK_COOPERATIVE_VECTOR_MATRIX_LAYOUT_ROW_MAJOR_NV = 0,
@@ -3107,6 +3122,7 @@ typedef enum VkDriverId
     VK_DRIVER_ID_MESA_KOSMICKRISP = 28,
     VK_DRIVER_ID_MESA_GFXSTREAM = 29,
     VK_DRIVER_ID_APE_SOFT = 30,
+    VK_DRIVER_ID_RESERVED_31 = 31,
     VK_DRIVER_ID_MAX_ENUM = 0x7fffffff,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
@@ -4223,6 +4239,14 @@ typedef enum VkImageTiling
     VK_IMAGE_TILING_MAX_ENUM = 0x7fffffff,
 } VkImageTiling;
 
+typedef enum VkImageTilingControlEXT
+{
+    VK_IMAGE_TILING_CONTROL_DEFAULT_EXT = 0,
+    VK_IMAGE_TILING_CONTROL_MIN_SIZE_EXT = 1,
+    VK_IMAGE_TILING_CONTROL_MAX_PERFORMANCE_EXT = 2,
+    VK_IMAGE_TILING_CONTROL_EXT_MAX_ENUM = 0x7fffffff,
+} VkImageTilingControlEXT;
+
 typedef enum VkImageType
 {
     VK_IMAGE_TYPE_1D = 0,
@@ -5310,6 +5334,12 @@ typedef enum VkPrimitiveTopology
     VK_PRIMITIVE_TOPOLOGY_PATCH_LIST = 10,
     VK_PRIMITIVE_TOPOLOGY_MAX_ENUM = 0x7fffffff,
 } VkPrimitiveTopology;
+
+typedef enum VkPrivateDataSlotCreateFlagBits
+{
+    VK_PRIVATE_DATA_SLOT_CREATE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
+} VkPrivateDataSlotCreateFlagBits;
+typedef VkPrivateDataSlotCreateFlagBits VkPrivateDataSlotCreateFlagBitsEXT;
 
 typedef enum VkProvokingVertexModeEXT
 {
@@ -6733,7 +6763,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT = 1000496000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM = 1000497000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM = 1000497001,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT = 1000498000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR = 1000498000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT = 1000499000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INTERNALLY_SYNCHRONIZED_QUEUES_FEATURES_KHR = 1000504000,
     VK_STRUCTURE_TYPE_LATENCY_SLEEP_MODE_INFO_NV = 1000505000,
@@ -6970,6 +7000,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV = 1000645001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_11_FEATURES_KHR = 1000657000,
     VK_STRUCTURE_TYPE_QUEUE_FAMILY_OPTIMAL_IMAGE_TRANSFER_GRANULARITY_PROPERTIES_KHR = 1000657001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT = 1000659000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_INFO_2_EXT = 1000659001,
+    VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_2_EXT = 1000659002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_PARTITIONED_FEATURES_EXT = 1000662000,
     VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_4_KHR = 1000668000,
     VK_STRUCTURE_TYPE_IMAGE_CREATE_FLAGS_2_CREATE_INFO_KHR = 1000668001,
@@ -6986,7 +7019,12 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM = 1000676001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM = 1000676002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT = 1000678000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT = 1000687000,
+    VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT = 1000687001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV = 1000689000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE = 1000709000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE = 1000709001,
+    VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE = 1000709002,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7fffffff,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
@@ -7222,6 +7260,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO,
     VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
     VK_STRUCTURE_TYPE_SHADER_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_KHR,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES,
     VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES,
@@ -11918,6 +11957,13 @@ typedef struct VkBufferCopy
     VkDeviceSize WINE_VK_ALIGN(8) size;
 } VkBufferCopy;
 
+typedef struct VkBufferDeviceAddressAlignmentAllocateInfoVALVE
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t alignment;
+} VkBufferDeviceAddressAlignmentAllocateInfoVALVE;
+
 typedef struct VkBufferDeviceAddressCreateInfoEXT
 {
     VkStructureType sType;
@@ -12300,6 +12346,19 @@ typedef struct VkCooperativeMatrixFlexibleDimensionsPropertiesNV
     VkScopeKHR scope;
     uint32_t workgroupInvocations;
 } VkCooperativeMatrixFlexibleDimensionsPropertiesNV;
+
+typedef struct VkCooperativeMatrixProperties2EXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t MGranularity;
+    uint32_t NGranularity;
+    uint32_t KGranularity;
+    VkComponentTypeKHR AType;
+    VkComponentTypeKHR BType;
+    VkComponentTypeKHR CType;
+    VkComponentTypeKHR ResultType;
+} VkCooperativeMatrixProperties2EXT;
 
 typedef struct VkCooperativeMatrixPropertiesKHR
 {
@@ -14070,6 +14129,13 @@ typedef struct VkImageSwapchainCreateInfoKHR
     VkSwapchainKHR WINE_VK_ALIGN(8) swapchain;
 } VkImageSwapchainCreateInfoKHR;
 
+typedef struct VkImageTilingControlCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageTilingControlEXT tilingControl;
+} VkImageTilingControlCreateInfoEXT;
+
 typedef struct VkImageUsageFlags2CreateInfoKHR
 {
     VkStructureType sType;
@@ -14980,6 +15046,20 @@ typedef struct VkPhysicalDeviceBorderColorSwizzleFeaturesEXT
     VkBool32 borderColorSwizzleFromImage;
 } VkPhysicalDeviceBorderColorSwizzleFeaturesEXT;
 
+typedef struct VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 bufferDeviceAddressAllocationAlignment;
+} VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentFeaturesVALVE;
+
+typedef struct VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t maxBufferDeviceAddressAllocationAlignment;
+} VkPhysicalDeviceBufferDeviceAddressAllocationAlignmentPropertiesVALVE;
+
 typedef struct VkPhysicalDeviceBufferDeviceAddressFeatures
 {
     VkStructureType sType;
@@ -15164,6 +15244,27 @@ typedef struct VkPhysicalDeviceCooperativeMatrixFeaturesNV
     VkBool32 cooperativeMatrix;
     VkBool32 cooperativeMatrixRobustBufferAccess;
 } VkPhysicalDeviceCooperativeMatrixFeaturesNV;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixInfo2EXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkScopeKHR scope;
+    uint32_t invocations;
+    uint32_t subgroupSize;
+    VkCooperativeMatrixFlagsEXT flags;
+} VkPhysicalDeviceCooperativeMatrixInfo2EXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 cooperativeMatrixProperties2;
+    VkBool32 cooperativeMatrixReductions;
+    VkBool32 cooperativeMatrixConversions;
+    VkBool32 cooperativeMatrixPerElementOperations;
+    VkBool32 cooperativeMatrixGetCoordinate;
+} VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT;
 
 typedef struct VkPhysicalDeviceCooperativeMatrixPropertiesKHR
 {
@@ -16255,6 +16356,13 @@ typedef struct VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT
     VkBool32 imageSlicedViewOf3D;
 } VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT;
 
+typedef struct VkPhysicalDeviceImageTilingControlFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 imageTilingControl;
+} VkPhysicalDeviceImageTilingControlFeaturesEXT;
+
 typedef struct VkPhysicalDeviceImageViewImageFormatInfoEXT
 {
     VkStructureType sType;
@@ -16918,12 +17026,13 @@ typedef struct VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR
     VkBool32 pipelineExecutableInfo;
 } VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR;
 
-typedef struct VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT
+typedef struct VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR
 {
     VkStructureType sType;
     void *pNext;
     VkBool32 pipelineLibraryGroupHandles;
-} VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT;
+} VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR;
+typedef VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesKHR VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT;
 
 typedef struct VkPhysicalDevicePipelineOpacityMicromapFeaturesARM
 {
@@ -21754,6 +21863,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkGetPerformanceParameterINTEL)(VkDevice device
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)(VkPhysicalDevice physicalDevice, uint32_t *pTimeDomainCount, VkTimeDomainKHR *pTimeDomains);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)(VkPhysicalDevice physicalDevice, uint32_t *pTimeDomainCount, VkTimeDomainKHR *pTimeDomains);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV)(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties);
+typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT)(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceCooperativeMatrixInfo2EXT *pCooperativeMatrixInfo, uint32_t *pPropertyCount, VkCooperativeMatrixProperties2EXT *pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR)(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesKHR *pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV)(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesNV *pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeVectorPropertiesNV)(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeVectorPropertiesNV *pProperties);
@@ -22517,6 +22627,7 @@ VkResult VKAPI_CALL vkGetPerformanceParameterINTEL(VkDevice device, VkPerformanc
 VkResult VKAPI_CALL vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice physicalDevice, uint32_t *pTimeDomainCount, VkTimeDomainKHR *pTimeDomains);
 VkResult VKAPI_CALL vkGetPhysicalDeviceCalibrateableTimeDomainsKHR(VkPhysicalDevice physicalDevice, uint32_t *pTimeDomainCount, VkTimeDomainKHR *pTimeDomains);
 VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties);
+VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceCooperativeMatrixInfo2EXT *pCooperativeMatrixInfo, uint32_t *pPropertyCount, VkCooperativeMatrixProperties2EXT *pProperties);
 VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesKHR *pProperties);
 VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesNV *pProperties);
 VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeVectorPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeVectorPropertiesNV *pProperties);
@@ -23422,6 +23533,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_EXT_color_write_enable) \
     USE_VK_EXT(VK_EXT_conditional_rendering) \
     USE_VK_EXT(VK_EXT_conservative_rasterization) \
+    USE_VK_EXT(VK_EXT_cooperative_matrix_maintenance1) \
     USE_VK_EXT(VK_EXT_custom_border_color) \
     USE_VK_EXT(VK_EXT_custom_resolve) \
     USE_VK_EXT(VK_EXT_debug_marker) \
@@ -23461,6 +23573,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_EXT_image_compression_control_swapchain) \
     USE_VK_EXT(VK_EXT_image_robustness) \
     USE_VK_EXT(VK_EXT_image_sliced_view_of_3d) \
+    USE_VK_EXT(VK_EXT_image_tiling_control) \
     USE_VK_EXT(VK_EXT_image_view_min_lod) \
     USE_VK_EXT(VK_EXT_index_type_uint8) \
     USE_VK_EXT(VK_EXT_inline_uniform_block) \
@@ -23611,6 +23724,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_KHR_pipeline_binary) \
     USE_VK_EXT(VK_KHR_pipeline_executable_properties) \
     USE_VK_EXT(VK_KHR_pipeline_library) \
+    USE_VK_EXT(VK_KHR_pipeline_library_group_handles) \
     USE_VK_EXT(VK_KHR_present_id) \
     USE_VK_EXT(VK_KHR_present_id2) \
     USE_VK_EXT(VK_KHR_present_mode_fifo_latest_ready) \
@@ -23756,6 +23870,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_QCOM_ycbcr_degamma) \
     USE_VK_EXT(VK_SEC_pipeline_cache_incremental_mode) \
     USE_VK_EXT(VK_SEC_throttle_hint) \
+    USE_VK_EXT(VK_VALVE_buffer_device_address_allocation_alignment) \
     USE_VK_EXT(VK_VALVE_descriptor_set_host_mapping) \
     USE_VK_EXT(VK_VALVE_fragment_density_map_layered) \
     USE_VK_EXT(VK_VALVE_mutable_descriptor_type) \
@@ -23798,6 +23913,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsEXT) \
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV) \
+    USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixProperties2EXT) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesNV) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeVectorPropertiesNV) \

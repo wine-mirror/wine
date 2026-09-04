@@ -62,7 +62,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.4.357"
+VK_XML_VERSION = "1.4.362"
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -100,6 +100,7 @@ UNSUPPORTED_EXTENSIONS = {
     "VK_KHR_video_maintenance2", # Also affected by StdVideoH265HrdParameters.
     "VK_NV_external_memory_rdma", # Needs shared resources work.
     "VK_NV_external_compute_queue", # Has a new dispatchable handle
+    "VK_NV_private_data_base_handle", # Questionable use case across wine boundary
 
     # Extensions for other platforms
     "VK_EXT_metal_objects",

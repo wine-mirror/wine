@@ -591,6 +591,7 @@ enum unix_call
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
+    unix_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     unix_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
@@ -5098,6 +5099,15 @@ struct vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV_params
     VkPhysicalDevice physicalDevice;
     uint32_t *pPropertyCount;
     VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceCooperativeMatrixProperties2EXT_params
+{
+    VkPhysicalDevice physicalDevice;
+    const VkPhysicalDeviceCooperativeMatrixInfo2EXT *pCooperativeMatrixInfo;
+    uint32_t *pPropertyCount;
+    VkCooperativeMatrixProperties2EXT *pProperties;
     VkResult result;
 };
 

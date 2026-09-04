@@ -5384,6 +5384,17 @@ VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsProperties
     return params.result;
 }
 
+VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceCooperativeMatrixInfo2EXT *pCooperativeMatrixInfo, uint32_t *pPropertyCount, VkCooperativeMatrixProperties2EXT *pProperties)
+{
+    struct vkGetPhysicalDeviceCooperativeMatrixProperties2EXT_params params;
+    params.physicalDevice = physicalDevice;
+    params.pCooperativeMatrixInfo = pCooperativeMatrixInfo;
+    params.pPropertyCount = pPropertyCount;
+    params.pProperties = pProperties;
+    UNIX_CALL_CHECKED(vkGetPhysicalDeviceCooperativeMatrixProperties2EXT, &params);
+    return params.result;
+}
+
 VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixPropertiesKHR *pProperties)
 {
     struct vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR_params params;
@@ -7777,6 +7788,7 @@ static const struct vulkan_func vk_phys_dev_dispatch_table[] =
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", vkGetPhysicalDeviceCalibrateableTimeDomainsEXT},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", vkGetPhysicalDeviceCalibrateableTimeDomainsKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV},
+    {"vkGetPhysicalDeviceCooperativeMatrixProperties2EXT", vkGetPhysicalDeviceCooperativeMatrixProperties2EXT},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR", vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
     {"vkGetPhysicalDeviceCooperativeVectorPropertiesNV", vkGetPhysicalDeviceCooperativeVectorPropertiesNV},
@@ -7855,6 +7867,7 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", vkGetPhysicalDeviceCalibrateableTimeDomainsEXT},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", vkGetPhysicalDeviceCalibrateableTimeDomainsKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV},
+    {"vkGetPhysicalDeviceCooperativeMatrixProperties2EXT", vkGetPhysicalDeviceCooperativeMatrixProperties2EXT},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR", vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
     {"vkGetPhysicalDeviceCooperativeVectorPropertiesNV", vkGetPhysicalDeviceCooperativeVectorPropertiesNV},
