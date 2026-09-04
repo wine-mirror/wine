@@ -1213,6 +1213,26 @@ static void test_CreateMultiProfileTransform( char *standardprofile, char *testp
         handle[1] = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle[1] != NULL, "got %lu\n", GetLastError() );
 
+        SetLastError( 0xdeadbeef );
+        transform = CreateMultiProfileTransform( NULL, 2, intents, 2, 0, 0 );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lu\n", GetLastError() );
+        ok( !transform, "success\n" );
+
+        SetLastError( 0xdeadbeef );
+        transform = CreateMultiProfileTransform( handle, 0, intents, 2, 0, 0 );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lu\n", GetLastError() );
+        ok( !transform, "success\n" );
+
+        SetLastError( 0xdeadbeef );
+        transform = CreateMultiProfileTransform( handle, 1, intents, 1, 0, 0 );
+        ok( GetLastError() == ERROR_INVALID_TRANSFORM, "got %lu\n", GetLastError() );
+        ok( !transform, "success\n" );
+
+        SetLastError( 0xdeadbeef );
+        transform = CreateMultiProfileTransform( handle, 2, NULL, 2, 0, 0 );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lu\n", GetLastError() );
+        ok( !transform, "success\n" );
+
         transform = CreateMultiProfileTransform( handle, 2, intents, 2, 0, 0 );
         ok( transform != NULL, "got %lu\n", GetLastError() );
 

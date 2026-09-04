@@ -200,8 +200,16 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
 
     TRACE( "( %p, %#lx, %p, %lu, %#lx, %#lx )\n", profiles, nprofiles, intents, nintents, flags, cmm );
 
-    if (!profiles || !nprofiles || !intents) return NULL;
-
+    if (!profiles || !intents || (nintents != 1 && nintents != nprofiles))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (nprofiles < 2)
+    {
+        SetLastError( ERROR_INVALID_TRANSFORM );
+        return NULL;
+    }
     if (nprofiles > 2)
     {
         FIXME("more than 2 profiles not supported\n");
