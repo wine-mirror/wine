@@ -45,28 +45,12 @@ struct macdrv_window_surface
 {
     struct window_surface   header;
     WineWindow             *window;
-    CGDataProviderRef       provider;
     IOSurfaceRef            front_buffer;
     IOSurfaceRef            back_buffer;
     vImage_Buffer           shape_mask;
 };
 
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
-
-static CGDataProviderRef data_provider_create(size_t size, void **bits)
-{
-    CGDataProviderRef provider;
-    CFMutableDataRef data;
-
-    if (!(data = CFDataCreateMutable(kCFAllocatorDefault, size))) return NULL;
-    CFDataSetLength(data, size);
-
-    if ((provider = CGDataProviderCreateWithCFData(data)))
-        *bits = CFDataGetMutableBytePtr(data);
-    CFRelease(data);
-
-    return provider;
-}
 
 static IOSurfaceRef create_io_surface(int width, int height)
 {
@@ -213,7 +197,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p\n", surface);
-    CGDataProviderRelease(surface->provider);
     free(surface->shape_mask.data);
     if (surface->back_buffer) CFRelease(surface->back_buffer);
     if (surface->front_buffer) CFRelease(surface->front_buffer);
@@ -241,14 +224,11 @@ static struct window_surface *create_surface(HWND hwnd, WineWindow *window, cons
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD window_background;
-    D3DKMT_CREATEDCFROMMEMORY desc = {.Format = D3DDDIFMT_A8R8G8B8};
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct window_surface *window_surface;
-    CGDataProviderRef provider;
     IOSurfaceRef io_surface1 = NULL, io_surface2 = NULL;
-    HBITMAP bitmap = 0;
-    UINT status;
+    HBITMAP bitmap;
     void *bits;
 
     memset(info, 0, sizeof(*info));
@@ -260,50 +240,32 @@ static struct window_surface *create_surface(HWND hwnd, WineWindow *window, cons
     info->bmiHeader.biSizeImage   = get_dib_image_size(info);
     info->bmiHeader.biCompression = BI_RGB;
 
-    if (!(provider = data_provider_create(info->bmiHeader.biSizeImage, &bits))) return NULL;
+    if (!(bitmap = NtGdiCreateDIBSection(0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, &bits)))
+        return NULL;
+
     window_background = macdrv_window_background_color();
 
     if (!(io_surface1 = create_io_surface(width, height)) ||
         !(io_surface2 = create_io_surface(width, height)))
     {
         if (io_surface1) CFRelease(io_surface1);
-        CGDataProviderRelease(provider);
+        NtGdiDeleteObjectApp(bitmap);
         return NULL;
     }
 
     fill_io_surface(io_surface1, window_background);
     fill_io_surface(io_surface2, window_background);
 
-    window_background &= 0x00ffffff;
-    memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
-
-    /* wrap the data in a HBITMAP so we can write to the surface pixels directly */
-    desc.Width = info->bmiHeader.biWidth;
-    desc.Height = abs(info->bmiHeader.biHeight);
-    desc.Pitch = info->bmiHeader.biSizeImage / abs(info->bmiHeader.biHeight);
-    desc.pMemory = bits;
-    desc.hDeviceDc = NtUserGetDCEx(hwnd, 0, DCX_CACHE | DCX_WINDOW);
-    if ((status = NtGdiDdDDICreateDCFromMemory(&desc)))
-        ERR("Failed to create HBITMAP, status %#x\n", status);
-    else
-    {
-        bitmap = desc.hBitmap;
-        NtGdiDeleteObjectApp(desc.hDc);
-    }
-    if (desc.hDeviceDc) NtUserReleaseDC(hwnd, desc.hDeviceDc);
-
     if (!(window_surface = window_surface_create(&macdrv_surface_funcs, hwnd, rect, info, bitmap)))
     {
-        if (bitmap) NtGdiDeleteObjectApp(bitmap);
+        NtGdiDeleteObjectApp(bitmap);
         CFRelease(io_surface1);
         CFRelease(io_surface2);
-        CGDataProviderRelease(provider);
     }
     else
     {
         surface = get_mac_surface(window_surface);
         surface->window = window;
-        surface->provider = provider;
         surface->front_buffer = io_surface1;
         surface->back_buffer = io_surface2;
         if (vImageBuffer_Init(&surface->shape_mask, height, width, 32, kvImageNoFlags))
@@ -311,6 +273,8 @@ static struct window_surface *create_surface(HWND hwnd, WineWindow *window, cons
             window_surface_release(window_surface);
             return NULL;
         }
+        window_background &= 0x00ffffff;
+        memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
     }
 
     return window_surface;
