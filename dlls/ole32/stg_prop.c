@@ -1637,16 +1637,20 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
             {
                 for (; i > 0; --i)
                 {
+                    if (prop->vt == (VT_VECTOR | VT_VARIANT))
+                        memcpy(&elem, prop->cac.pElems + elemsize * (i - 1), elemsize);
+                    else
+                        memcpy(&elem.lVal, prop->cac.pElems + elemsize * (i - 1), elemsize);
                     switch(elem.vt)
                     {
                     case VT_LPSTR:
                     case VT_LPWSTR:
                     case VT_CF:
                     case VT_CLSID:
-                        call_IMemoryAllocator_Free(pma, prop->calpwstr.pElems);
+                        call_IMemoryAllocator_Free(pma, elem.pwszVal);
                         break;
                     case VT_BSTR:
-                        SysFreeString(prop->cabstr.pElems[i -1]);
+                        SysFreeString(elem.bstrVal);
                         break;
                     }
                 }
