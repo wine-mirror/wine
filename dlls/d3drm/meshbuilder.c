@@ -1731,9 +1731,9 @@ static HRESULT WINAPI d3drm_mesh_builder3_SetMaterial(IDirect3DRMMeshBuilder3 *i
     TRACE("iface %p, material %p.\n", iface, material);
 
     if (material)
-        IDirect3DRMTexture2_AddRef(material);
+        IDirect3DRMMaterial2_AddRef(material);
     if (mesh_builder->material)
-        IDirect3DRMTexture2_Release(mesh_builder->material);
+        IDirect3DRMMaterial2_Release(mesh_builder->material);
     mesh_builder->material = material;
 
     return D3DRM_OK;
