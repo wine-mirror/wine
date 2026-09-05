@@ -2371,7 +2371,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_setshow_default(parms_start);
         break;
     case WCMD_CLS:
-        return_code = WCMD_clear_screen();
+        return_code = WCMD_clear_screen(&iterator);
         break;
     case WCMD_COPY:
         return_code = WCMD_copy(parms_start);

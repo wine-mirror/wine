@@ -253,29 +253,36 @@ static BOOL WCMD_ask_confirm(const WCHAR *message, BOOL showSureText, BOOL *opti
  * Clear the terminal screen.
  */
 
-RETURN_CODE WCMD_clear_screen(void)
+RETURN_CODE WCMD_clear_screen(struct word_iterator *iterator)
 {
-  /* Emulate by filling the screen from the top left to bottom right with
-        spaces, then moving the cursor to the top left afterwards */
-  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-  HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    /* Emulate by filling the screen from the top left to bottom right with
+       spaces, then moving the cursor to the top left afterwards */
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-  if (*quals)
-      return errorlevel = ERROR_INVALID_FUNCTION;
-  if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
-  {
-      COORD topLeft;
-      DWORD screenSize, written;
+    /* native fails on any option, but accepts any parameter */
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+    }
+    if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
+    {
+        COORD topLeft;
+        DWORD screenSize, written;
 
-      screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
+        screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
 
-      topLeft.X = 0;
-      topLeft.Y = 0;
-      FillConsoleOutputCharacterW(hStdOut, ' ', screenSize, topLeft, &written);
-      FillConsoleOutputAttribute(hStdOut, consoleInfo.wAttributes, screenSize, topLeft, &written);
-      SetConsoleCursorPosition(hStdOut, topLeft);
-  }
-  return NO_ERROR;
+        topLeft.X = 0;
+        topLeft.Y = 0;
+        FillConsoleOutputCharacterW(hStdOut, ' ', screenSize, topLeft, &written);
+        FillConsoleOutputAttribute(hStdOut, consoleInfo.wAttributes, screenSize, topLeft, &written);
+        SetConsoleCursorPosition(hStdOut, topLeft);
+    }
+    return NO_ERROR;
 }
 
 /****************************************************************************

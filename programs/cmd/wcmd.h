@@ -182,7 +182,7 @@ struct word_iterator;
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_call(WCHAR *command);
 RETURN_CODE WCMD_choice(struct word_iterator *);
-RETURN_CODE WCMD_clear_screen(void);
+RETURN_CODE WCMD_clear_screen(struct word_iterator *);
 RETURN_CODE WCMD_color(void);
 RETURN_CODE WCMD_copy(WCHAR *);
 RETURN_CODE WCMD_create_dir(struct word_iterator *);
