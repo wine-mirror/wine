@@ -691,18 +691,25 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     XFocusChangeEvent *event = &xev->xfocus;
     BOOL was_grabbed;
 
-    if (event->detail == NotifyPointer) return FALSE;
-    if (!hwnd) return FALSE;
+    TRACE( "window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
+           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
 
+    if (event->detail == NotifyPointer) return FALSE;
+    if (event->mode != NotifyWhileGrabbed && event->detail != NotifyVirtual && event->detail != NotifyNonlinearVirtual)
+        x11drv_xinput2_enable( event->display, DefaultRootWindow( event->display ) );
+
+    if (!hwnd)
+    {
+        WARN( "Ignoring destroyed window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p\n",
+              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+        return FALSE;
+    }
     if (window_has_pending_wm_state( hwnd, -1 ))
     {
         WARN( "Ignoring window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p during WM_STATE change\n",
               hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
         return FALSE;
     }
-
-    TRACE( "window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
-           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
 
     /* when focusing in the virtual desktop window, re-apply the cursor clipping rect */
     if (is_virtual_desktop() && hwnd == NtUserGetDesktopWindow()) reapply_cursor_clipping();
@@ -717,7 +724,6 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
-    x11drv_xinput2_enable( event->display, DefaultRootWindow( event->display ) );
     xim_set_focus( hwnd, TRUE );
 
     if (use_take_focus) return TRUE;
@@ -776,6 +782,9 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     HWND foreground = NtUserGetForegroundWindow();
     XFocusChangeEvent *event = &xev->xfocus;
 
+    TRACE( "window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
+           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+
     if (event->detail == NotifyPointer)
     {
         if (!hwnd && event->window == x11drv_thread_data()->clip_window)
@@ -787,8 +796,15 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         }
         return TRUE;
     }
-    if (!hwnd) return FALSE;
+    if (event->mode != NotifyWhileGrabbed && event->detail != NotifyVirtual && event->detail != NotifyNonlinearVirtual)
+        x11drv_xinput2_disable( event->display, DefaultRootWindow( event->display ) );
 
+    if (!hwnd)
+    {
+        WARN( "Ignoring destroyed window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n",
+              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+        return FALSE;
+    }
     if (window_has_pending_wm_state( hwnd, NormalState )) /* ignore FocusOut only if the window is being shown */
     {
         WARN( "Ignoring window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p during WM_STATE change\n",
@@ -802,16 +818,12 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         return FALSE;
     }
 
-    TRACE( "window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
-           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
-
     /* in virtual desktop mode or when keyboard is grabbed, release any cursor grab but keep the clipping rect */
     keyboard_grabbed = event->mode == NotifyGrab || event->mode == NotifyWhileGrabbed;
     if (is_virtual_desktop() || keyboard_grabbed) ungrab_clipping_window();
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
-    x11drv_xinput2_disable( event->display, DefaultRootWindow( event->display ) );
     focus_out( event->display, hwnd );
     return TRUE;
 }

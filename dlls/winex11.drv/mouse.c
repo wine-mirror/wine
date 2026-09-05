@@ -336,7 +336,9 @@ void x11drv_xinput2_enable( Display *display, Window window )
 
     if (window == DefaultRootWindow( display ))
     {
-        if (x11drv_thread_data()->root_window_users++) return;
+        struct x11drv_thread_data *data = x11drv_thread_data();
+        TRACE( "Incrementing root_window_users to %d\n", data->root_window_users + 1 );
+        if (data->root_window_users++) return;
         XISetMask( mask_bits, XI_DeviceChanged );
         XISetMask( mask_bits, XI_RawMotion );
         XISetMask( mask_bits, XI_RawButtonPress );
@@ -370,7 +372,9 @@ void x11drv_xinput2_disable( Display *display, Window window )
 
     if (window == DefaultRootWindow( display ))
     {
-        if (--x11drv_thread_data()->root_window_users) return;
+        struct x11drv_thread_data *data = x11drv_thread_data();
+        TRACE( "Decrementing root_window_users to %d\n", data->root_window_users - 1 );
+        if (--data->root_window_users) return;
         XISetMask( mask_bits, XI_DeviceChanged );
     }
 
