@@ -2534,6 +2534,18 @@ static void linear_color_from_format(const struct pixel_format_desc *format, con
         check_color_key(dst, color_key, ck_format);
 }
 
+static void format_from_linear_color(const struct pixel_format_desc *format, const struct d3dx_color *src,
+        uint32_t conv_flags, uint8_t *dst)
+{
+    struct d3dx_color color = *src;
+
+    if (conv_flags & CONV_FLAG_SRGB_OUT)
+        srgb_from_linear_rgb(&color.value);
+    if (conv_flags & CONV_FLAG_PM_ALPHA_OUT)
+        premultiplied_alpha_from_straight_alpha(&color.value);
+    format_from_d3dx_color(format, &color, dst);
+}
+
 static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format_desc *src_fmt,
         uint8_t *dst_ptr, const struct pixel_format_desc *dst_fmt, const PALETTEENTRY *palette,
         struct argb_conversion_info *conv_info, const struct d3dx_color_key *color_key,
@@ -2573,11 +2585,7 @@ static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format
         struct d3dx_color color;
 
         linear_color_from_format(src_fmt, src_ptr, palette, color_key, conv_flags, &color);
-        if (conv_flags & CONV_FLAG_SRGB_OUT)
-            srgb_from_linear_rgb(&color.value);
-        if (conv_flags & CONV_FLAG_PM_ALPHA_OUT)
-            premultiplied_alpha_from_straight_alpha(&color.value);
-        format_from_d3dx_color(dst_fmt, &color, dst_ptr);
+        format_from_linear_color(dst_fmt, &color, conv_flags, dst_ptr);
     }
 }
 
