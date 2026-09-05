@@ -8378,6 +8378,8 @@ static void test_create_effect_from_file(void)
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
         ID3DXBuffer_Release(messages);
     }
+    if (effect)
+        effect->lpVtbl->Release(effect);
 
     delete_file("effect1.fx");
     delete_file("effect2.fx");
@@ -8401,6 +8403,8 @@ static void test_create_effect_from_file(void)
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
         ID3DXBuffer_Release(messages);
     }
+    if (effect)
+        effect->lpVtbl->Release(effect);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
