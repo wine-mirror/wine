@@ -5475,6 +5475,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -8927,6 +8928,7 @@ static void test_effect_parameter_block(void)
 
     hr = D3DXCreateEffect(device, test_effect_parameter_value_blob_float, sizeof(test_effect_parameter_value_blob_float),
             NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->BeginParameterBlock(effect);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     mat_arr[0] = mat_arr[1] = test_mat;
