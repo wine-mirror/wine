@@ -170,7 +170,7 @@ DECLARE_INTERFACE_(IMAPISession,IUnknown)
 #define IMAPISession_CompareEntryIDs(p,a,b,c,d,e,f) (p)->lpVtbl->CompareEntryIDs(p,a,b,c,d,e,f)
 #define IMAPISession_Advise(p,a,b,c,d,e)            (p)->lpVtbl->Advise(p,a,b,c,d,e)
 #define IMAPISession_Unadvise(p,a)                  (p)->lpVtbl->Unadvise(p,a)
-#define IMAPISession_MessageOptions(p,a,b,c,d)      (p)->lpVtbl->MessageOptions)(p,a,b,c,d)
+#define IMAPISession_MessageOptions(p,a,b,c,d)      (p)->lpVtbl->MessageOptions(p,a,b,c,d)
 #define IMAPISession_QueryDefaultMessageOpt(p,a,b,c,d) \
                                                     (p)->lpVtbl->QueryDefaultMessageOpt(p,a,b,c,d)
 #define IMAPISession_EnumAdrTypes(p,a,b,c)          (p)->lpVtbl->EnumAdrTypes(p,a,b,c)
