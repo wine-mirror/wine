@@ -551,7 +551,10 @@ static void free_parameter_object_data(struct d3dx_parameter *param, const void 
     if (param->class != D3DXPC_OBJECT)
         return;
 
-    count = min(param->element_count ? param->element_count : 1, bytes / sizeof(void *));
+    if (is_param_type_sampler(param->type))
+        count = 1;
+    else
+        count = min(param->element_count ? param->element_count : 1, bytes / sizeof(void *));
 
     for (i = 0; i < count; ++i)
     {
