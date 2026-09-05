@@ -1089,7 +1089,7 @@ typedef struct tagCOMMPROP {
 #define PST_NETWORK_BRIDGE ((DWORD)0x100)
 #define PST_PARALLELPORT   ((DWORD)0x02)
 #define PST_RS232          ((DWORD)0x01)
-#define PST_RS442          ((DWORD)0x03)
+#define PST_RS422          ((DWORD)0x03)
 #define PST_RS423          ((DWORD)0x04)
 #define PST_RS449          ((DWORD)0x06)
 #define PST_SCANNER        ((DWORD)0x22)
