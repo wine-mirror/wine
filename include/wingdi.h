@@ -373,12 +373,6 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define PSIDENT_GDICENTRIC	0
 #define PSIDENT_PSCENTRIC	1
 
-
-#define QDI_SETDIBITS           1
-#define QDI_GETDIBITS           2
-#define QDI_DIBTOSCREEN         4
-#define QDI_STRETCHDIB          8
-
 /* Spooler Error Codes */
 #define	SP_NOTREPORTED	0x4000
 #define	SP_ERROR	(-1)
