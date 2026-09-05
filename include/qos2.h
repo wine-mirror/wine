@@ -40,7 +40,7 @@ typedef enum _QOS_FLOWRATE_REASON {
     QOSFlowRateCongestion,
     QOSFlowRateHigherContentEncoding,
     QOSFlowRateUserCaused
-} QOS_FLOWRATE_REASON, PQOS_FLOWRATE_REASON;
+} QOS_FLOWRATE_REASON, *PQOS_FLOWRATE_REASON;
 
 typedef enum _QOS_NOTIFY_FLOW {
     QOSNotifyCongested,
@@ -52,7 +52,7 @@ typedef enum _QOS_QUERY_FLOW {
     QOSQueryFlowFundamentals,
     QOSQueryPacketPriority,
     QOSQueryOutgoingRate
-} QOS_QUERY_FLOW;
+} QOS_QUERY_FLOW, *PQOS_QUERY_FLOW;
 
 typedef enum _QOS_SET_FLOW {
     QOSSetTrafficType,
