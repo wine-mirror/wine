@@ -6771,6 +6771,8 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
             device, srcdata, srcdatalen, defines, include,
             skip_constants, flags, pool, effect, compilation_errors);
 
+    if (effect)
+        *effect = NULL;
     if (compilation_errors)
         *compilation_errors = NULL;
 

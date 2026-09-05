@@ -7343,15 +7343,21 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     D3DXVECTOR4 fvect;
     unsigned int i;
 
+    effect = (ID3DXEffect *)(ULONG_PTR)0xdeadbeef;
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v3", 0, NULL, &effect, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
+    ok(!effect, "Unexpected effect %p.\n", effect);
+    effect = (ID3DXEffect *)(ULONG_PTR)0xdeadbeef;
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v4", 0, NULL, &effect, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
+    ok(!effect, "Unexpected effect %p.\n", effect);
+    effect = (ID3DXEffect *)(ULONG_PTR)0xdeadbeef;
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v1;v5;v4", 0, NULL, &effect, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
+    ok(!effect, "Unexpected effect %p.\n", effect);
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
