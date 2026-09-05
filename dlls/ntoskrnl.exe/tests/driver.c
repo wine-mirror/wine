@@ -511,6 +511,9 @@ static void test_current_thread(BOOL is_system)
     ok(PsGetThreadId((PETHREAD)KeGetCurrentThread()) == PsGetCurrentThreadId(), "thread IDs don't match\n");
     ok(PsIsSystemThread((PETHREAD)KeGetCurrentThread()) == is_system, "unexpected system thread\n");
     ok(ExGetPreviousMode() == is_system ? KernelMode : UserMode, "previous mode is not correct\n");
+    ok(PsGetThreadProcess(thread) == current, "got process %p, expected %p\n",
+       PsGetThreadProcess(thread), current);
+
     if (!is_system)
     {
         ok(create_caller_thread == KeGetCurrentThread(), "thread is not create caller thread\n");
