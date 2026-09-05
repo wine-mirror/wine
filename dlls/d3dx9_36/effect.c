@@ -6793,6 +6793,7 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     if (FAILED(hr))
     {
         WARN("Failed to create effect object, hr %#lx.\n", hr);
+        free(object);
         return hr;
     }
 
