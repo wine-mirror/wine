@@ -1352,6 +1352,8 @@ static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
 
     new_size = *size + sizeof(BITMAPFILEHEADER);
     new_data = malloc(new_size);
+    if (!new_data)
+        return FALSE;
     CopyMemory(new_data + sizeof(BITMAPFILEHEADER), *data, *size);
 
     /* Add BMP header */
