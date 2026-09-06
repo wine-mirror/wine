@@ -1854,16 +1854,25 @@ RETURN_CODE WCMD_pushd(struct word_iterator *iterator)
  *	Pop a directory from the stack
  */
 
-RETURN_CODE WCMD_popd(void)
+RETURN_CODE WCMD_popd(struct word_iterator *iterator)
 {
     struct env_stack *temp = pushd_directories;
+
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+    }
 
     if (!pushd_directories)
         return ERROR_INVALID_FUNCTION;
 
     /* pop the old environment from the stack, and make it the current dir */
     pushd_directories = temp->next;
-    SetCurrentDirectoryW(temp->strings);
+    SetCurrentDirectoryW(temp->strings); /* FIXME what happens if directory has been deleted after PUSHD? */
     free(temp->strings);
     free(temp);
     return NO_ERROR;

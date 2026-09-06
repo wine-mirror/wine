@@ -206,7 +206,7 @@ RETURN_CODE WCMD_output_asis(const WCHAR *message);
 RETURN_CODE WCMD_output_flush(void);
 RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message);
 RETURN_CODE WCMD_pause(void);
-RETURN_CODE WCMD_popd(void);
+RETURN_CODE WCMD_popd(struct word_iterator *);
 void WCMD_print_error (void);
 RETURN_CODE WCMD_pushd(struct word_iterator *);
 RETURN_CODE WCMD_remove_dir(struct word_iterator *);
