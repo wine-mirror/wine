@@ -15969,6 +15969,11 @@ msgstr ""
 msgid "Can't resolve current directory.\n"
 msgstr "Nemôžem zmazať aktuálny priečinok.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+msgid "The specified drive doesn't exist.\n"
+msgstr "Súbor neexistuje.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

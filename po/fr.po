@@ -16130,6 +16130,12 @@ msgstr "Chemin invalide.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Impossible de supprimer le répertoire courant.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Le site n'existe pas.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Taille du curseur"

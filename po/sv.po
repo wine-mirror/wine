@@ -16449,6 +16449,12 @@ msgstr "Ogiltig sökväg.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Kan inte ta bort aktuell katalog.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Sidan existerar inte.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Markörstorlek"

@@ -15772,6 +15772,12 @@ msgstr ""
 msgid "Can't resolve current directory.\n"
 msgstr ""
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Ejo estas neekzistanta.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kursor-grando"

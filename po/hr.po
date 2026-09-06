@@ -16290,6 +16290,12 @@ msgstr "Putanja je neispravna.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Ne mogu obrisati trenutni direktorij.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Mjesto ne postoji.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Veličina pokazivača"

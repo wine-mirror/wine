@@ -213,7 +213,7 @@ RETURN_CODE WCMD_remove_dir(struct word_iterator *);
 RETURN_CODE WCMD_rename(void);
 RETURN_CODE WCMD_setlocal(struct word_iterator *);
 RETURN_CODE WCMD_setshow_date(void);
-RETURN_CODE WCMD_setshow_default(const WCHAR *args);
+RETURN_CODE WCMD_setshow_directory(struct word_iterator *);
 RETURN_CODE WCMD_setshow_env(WCHAR *command);
 RETURN_CODE WCMD_setshow_path(const WCHAR *args);
 RETURN_CODE WCMD_setshow_prompt(void);
@@ -541,3 +541,4 @@ extern WCHAR version_string[];
 #define WCMD_NOCOPYTOSELF               1051
 #define WCMD_INVALID_DIRECTORY          1052
 #define WCMD_NO_CURRENT_DIRECTORY       1053
+#define WCMD_NO_DRIVE                   1054

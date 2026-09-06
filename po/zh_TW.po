@@ -15393,6 +15393,12 @@ msgstr "路徑無效。\n"
 msgid "Can't resolve current directory.\n"
 msgstr "無法刪除目前的目錄。\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "站臺不存在。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "游標大小"

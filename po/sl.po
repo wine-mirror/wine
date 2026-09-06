@@ -16748,6 +16748,12 @@ msgstr "Pot je neveljavna.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Trenutne mape ni mogoče izbrisati.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Stran ne obstaja.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kazalca"

@@ -15303,6 +15303,10 @@ msgstr "Path %1 isn't a valid directory.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Can't resolve current directory.\n"
 
+#: programs/cmd/cmd.rc:414
+msgid "The specified drive doesn't exist.\n"
+msgstr "The specified drive doesn't exist.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursor size"

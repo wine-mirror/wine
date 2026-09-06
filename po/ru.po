@@ -15285,6 +15285,12 @@ msgstr "Неверный путь.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Невозможно удалить текущий каталог.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Указанный сайт не существует.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

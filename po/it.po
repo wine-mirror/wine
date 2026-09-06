@@ -16794,6 +16794,12 @@ msgstr "Percorso non valido.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Impossibile eliminare la cartella corrente.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Sito inesistente.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Dimensione del cursore"

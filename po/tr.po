@@ -15555,6 +15555,12 @@ msgstr "Yol geçersiz.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Şimdiki klasör silinemiyor.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Site mevcut değil.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "İmleç boyutu"

@@ -15606,6 +15606,12 @@ msgstr "පෙත වලංගු නැහැ.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "වත්මන් ඩිරෙක්ටරිය මකන්න බැහැ.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "Service does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "සේවාව තියෙන්නේ නැහැ.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "කර්සරය ප්රමාණය"

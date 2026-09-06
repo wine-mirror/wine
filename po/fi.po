@@ -15448,6 +15448,12 @@ msgstr "Polku on viallinen.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Ei voida poistaa nykyistä hakemistoa.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Sivustoa ei ole.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kursorin koko"

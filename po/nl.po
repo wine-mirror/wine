@@ -15394,6 +15394,12 @@ msgstr "Pad is ongeldig.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "De huidige map kan niet verwijderd worden.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "De plek bestaat niet.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursorgrootte"

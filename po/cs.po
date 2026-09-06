@@ -16335,6 +16335,12 @@ msgstr "Neplatné zadání cesty.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Nelze smazat složku, ve které se právě nacházíte.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Doména neexistuje.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kurzoru"

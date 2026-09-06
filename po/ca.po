@@ -15635,6 +15635,12 @@ msgstr "El camí no és vàlid.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "No es pot suprimir el directori actual.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "El lloc no existeix.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Mida de cursor"

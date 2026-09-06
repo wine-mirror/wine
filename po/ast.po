@@ -15399,6 +15399,12 @@ msgstr "El camín ye inválidu.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Nun se pue desaniciar el direutoriu actual.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "El sitiu nun esiste.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamañu del cursor"

@@ -16197,6 +16197,11 @@ msgstr ""
 msgid "Can't resolve current directory.\n"
 msgstr "לא ניתן למחוק את התיקייה הנוכחית.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+msgid "The specified drive doesn't exist.\n"
+msgstr "הקובץ אינו קיים.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "גודל הסמן"

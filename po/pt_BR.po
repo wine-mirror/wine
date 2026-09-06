@@ -15735,6 +15735,12 @@ msgstr "Caminho inválido.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Não é possível apagar o diretório atual.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "O site não existe.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursor"

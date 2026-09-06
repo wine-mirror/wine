@@ -16210,6 +16210,12 @@ msgstr "Ruta inválida.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "No se ha podido borrar el directorio actual.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "El sitio no existe.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamaño del cursor"

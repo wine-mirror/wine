@@ -15412,6 +15412,12 @@ msgstr "パス名が不正です。\n"
 msgid "Can't resolve current directory.\n"
 msgstr "カレント ディレクトリを削除することはできません。\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "ネットワーク上の場所がありません。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"

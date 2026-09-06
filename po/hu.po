@@ -16718,6 +16718,12 @@ msgstr "Útvonal nem valós.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Nem lehet törölni az aktulális mappát.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Az oldal nem létezik.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kurzor mérete"

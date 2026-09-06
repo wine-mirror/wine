@@ -15260,6 +15260,12 @@ msgstr "유효하지 않은 경로입니다.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "현재 디렉터리 제거 실패.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "사이트가 없습니다.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"

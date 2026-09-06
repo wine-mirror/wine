@@ -2369,7 +2369,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         break;
     case WCMD_CD:
     case WCMD_CHDIR:
-        return_code = WCMD_setshow_default(parms_start);
+        return_code = WCMD_setshow_directory(&iterator);
         break;
     case WCMD_CLS:
         return_code = WCMD_clear_screen(&iterator);

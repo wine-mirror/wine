@@ -2372,113 +2372,90 @@ RETURN_CODE WCMD_endlocal(void)
 }
 
 /*****************************************************************************
- * WCMD_setshow_default
+ * WCMD_setshow_directory
  *
  *	Set/Show the current default directory
  */
 
-RETURN_CODE WCMD_setshow_default(const WCHAR *args)
+RETURN_CODE WCMD_setshow_directory(struct word_iterator *iterator)
 {
-  RETURN_CODE return_code;
-  BOOL status;
-  WCHAR string[1024];
-  WCHAR cwd[1024];
-  WCHAR *pos;
-  WIN32_FIND_DATAW fd;
-  HANDLE hff;
+    RETURN_CODE return_code = NOERROR;
+    BOOL change_drive = FALSE;
+    WCHAR path[MAX_PATH];
 
-  WINE_TRACE("Request change to directory '%s'\n", wine_dbgstr_w(args));
+    WINE_TRACE("Request change to directory '%s'\n", wine_dbgstr_w(&iterator->from[iterator->position]));
 
-  /* Skip /D and trailing whitespace if on the front of the command line */
-  if (lstrlenW(args) >= 2 &&
-      CompareStringW(LOCALE_USER_DEFAULT,
-                     NORM_IGNORECASE | SORT_STRINGSORT,
-                     args, 2, L"/D", -1) == CSTR_EQUAL) {
-    args += 2;
-    while (*args && (*args==' ' || *args=='\t'))
-      args++;
-  }
-
-  GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
-  return_code = NO_ERROR;
-
-  if (!*args) {
-    lstrcatW(cwd, L"\r\n");
-    WCMD_output_asis (cwd);
-  }
-  else {
-    /* Remove any double quotes, which may be in the
-       middle, eg. cd "C:\Program Files"\Microsoft is ok */
-    pos = string;
-    while (*args) {
-      if (*args != '"') *pos++ = *args;
-      args++;
-    }
-    while (pos > string && (*(pos-1) == ' ' || *(pos-1) == '\t'))
-      pos--;
-    *pos = 0x00;
-
-    /* Search for appropriate directory */
-    WINE_TRACE("Looking for directory '%s'\n", wine_dbgstr_w(string));
-    hff = FindFirstFileW(string, &fd);
-    if (hff != INVALID_HANDLE_VALUE) {
-      do {
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          WCHAR fpath[MAX_PATH];
-          WCHAR drive[10];
-          WCHAR dir[MAX_PATH];
-          WCHAR fname[MAX_PATH];
-          WCHAR ext[MAX_PATH];
-
-          /* Convert path into actual directory spec */
-          if (!WCMD_get_fullpath(string, ARRAY_SIZE(fpath), fpath, NULL))
-              return errorlevel = ERROR_INVALID_FUNCTION;
-
-          _wsplitpath(fpath, drive, dir, fname, ext);
-
-          /* Rebuild path */
-          wsprintfW(string, L"%s%s%s", drive, dir, fd.cFileName);
-          break;
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            if (!wcsicmp(iterator->raw_argument, L"/D")) change_drive = TRUE;
+            else
+            {
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                return errorlevel = ERROR_INVALID_FUNCTION;
+            }
+            continue;
         }
-      } while (FindNextFileW(hff, &fd) != 0);
-      FindClose(hff);
+        WCMD_word_iterator_extend_rest_of_line(iterator);
+
+        /* CD <drv>: show current directory of given drive */
+        if (!change_drive &&
+            iswalpha(iterator->unquoted_argument[0]) &&
+            iterator->unquoted_argument[1] == L':' &&
+            iterator->unquoted_argument[2] == L'\0')
+        {
+            WCHAR env[4] = {L'=', towupper(iterator->unquoted_argument[0]), L':', L'\0'};
+            DWORD len = GetEnvironmentVariableW(env, path, ARRAY_SIZE(path));
+            /* in case env var hasn't been set yet */
+            if (!len && (GetLogicalDrives() & (1ul << (env[1] - L'A'))))
+            {
+                path[0] = env[1];
+                path[1] = L':';
+                path[2] = L'\\';
+                path[3] = L'\0';
+                len = 4;
+            }
+            if (len && len < ARRAY_SIZE(path))
+            {
+                WCMD_output_asis(path);
+                WCMD_output_asis(L"\r\n");
+            }
+            else
+            {
+                WCMD_format_string(WCMD_LoadMessage(WCMD_NO_DRIVE));
+                return_code = ERROR_INVALID_FUNCTION;
+            }
+        }
+        else
+        {
+            return_code = set_current_directory(iterator->unquoted_argument, change_drive);
+            if (return_code != NO_ERROR)
+                WCMD_format_string(WCMD_LoadMessage(WCMD_INVALID_DIRECTORY), iterator->unquoted_argument);
+        }
+        return errorlevel = return_code;
     }
 
-    /* Change to that directory */
-    WINE_TRACE("Really changing to directory '%s'\n", wine_dbgstr_w(string));
-
-    status = SetCurrentDirectoryW(string);
-    if (!status) {
-      WCMD_print_error ();
-      return_code = ERROR_INVALID_FUNCTION;
-    } else {
-
-      /* Save away the actual new directory, to store as current location */
-      GetCurrentDirectoryW(ARRAY_SIZE(string), string);
-
-      /* Restore old directory if drive letter would change, and
-           CD x:\directory /D (or pushd c:\directory) not supplied */
-      if ((wcsstr(quals, L"/D") == NULL) &&
-          (param1[1] == ':') && (towupper(param1[0]) != towupper(cwd[0]))) {
-        SetCurrentDirectoryW(cwd);
-      }
+    /* no args passed, CD without args */
+    if (change_drive)
+    {
+        WCMD_format_string(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        return_code = ERROR_INVALID_FUNCTION;
     }
-
-    /* Set special =C: type environment variable, for drive letter of
-       change of directory, even if path was restored due to missing
-       /D (allows changing drive letter when not resident on that
-       drive                                                          */
-    if (IsCharAlphaW(string[0]) && string[1] == L':') {
-      WCHAR env[4];
-      lstrcpyW(env, L"=");
-      memcpy(env+1, string, 2 * sizeof(WCHAR));
-      env[3] = 0x00;
-      WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(string));
-      SetEnvironmentVariableW(env, string);
+    else
+    {
+        if (GetCurrentDirectoryW(ARRAY_SIZE(path), path))
+        {
+            WCMD_output_asis(path);
+            WCMD_output_asis(L"\r\n");
+        }
+        else
+        {
+            WCMD_format_string(WCMD_LoadMessage(WCMD_NO_CURRENT_DIRECTORY));
+            return_code = ERROR_INVALID_FUNCTION;
+        }
     }
-
-  }
-  return errorlevel = return_code;
+    return errorlevel = return_code;
 }
 
 /****************************************************************************

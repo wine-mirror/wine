@@ -15320,6 +15320,12 @@ msgstr "Neteisingas kelias.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Negalima pašalinti dabartinio katalogo.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Tinklavietė neegzistuoja.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Žymeklio dydis"

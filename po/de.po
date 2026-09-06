@@ -15614,6 +15614,12 @@ msgstr "Pfad ist ungültig.\n"
 msgid "Can't resolve current directory.\n"
 msgstr "Das Arbeitsverzeichnis kann nicht gelöscht werden.\n"
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Die Seite existiert nicht.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursorgröße"

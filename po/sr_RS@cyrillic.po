@@ -15981,6 +15981,11 @@ msgstr ""
 msgid "Can't resolve current directory.\n"
 msgstr ""
 
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+msgid "The specified drive doesn't exist.\n"
+msgstr "Датотека не постоји.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""
