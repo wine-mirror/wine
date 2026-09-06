@@ -2145,9 +2145,9 @@ __ASM_GLOBAL_FUNC( "#process_breakpoint",
                    "brk #0xf000\n\t"
                    "ret\n"
                    "process_breakpoint_handler:\n\t"
-                   "ldr x4, [x2, #0x108]\n\t" /* context->Pc */
+                   "ldr x4, [x2, #0xf8]\n\t"  /* context->Rip */
                    "add x4, x4, #4\n\t"
-                   "str x4, [x2, #0x108]\n\t"
+                   "str x4, [x2, #0xf8]\n\t"
                    "mov w0, #0\n\t"           /* ExceptionContinueExecution */
                    "ret" )
 
