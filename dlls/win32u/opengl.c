@@ -2743,20 +2743,11 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
 
     switch (buffer)
     {
-    case WGL_FRONT_LEFT_ARB:
-        if (desc.pfd.dwFlags & PFD_STEREO) source = GL_FRONT_LEFT;
-        else source = GL_FRONT;
-        break;
-    case WGL_FRONT_RIGHT_ARB:
-        source = GL_FRONT_RIGHT;
-        break;
-    case WGL_BACK_LEFT_ARB:
-        if (desc.pfd.dwFlags & PFD_STEREO) source = GL_BACK_LEFT;
-        else source = GL_BACK;
-        break;
-    case WGL_BACK_RIGHT_ARB:
-        source = GL_BACK_RIGHT;
-        break;
+    case WGL_FRONT_LEFT_ARB:  source = GL_FRONT_LEFT; break;
+    case WGL_FRONT_RIGHT_ARB: source = GL_FRONT_RIGHT; break;
+    case WGL_BACK_LEFT_ARB:   source = GL_BACK_LEFT; break;
+    case WGL_BACK_RIGHT_ARB:  source = GL_BACK_RIGHT; break;
+
     case WGL_AUX0_ARB: source = GL_AUX0; break;
     case WGL_AUX1_ARB: source = GL_AUX1; break;
     case WGL_AUX2_ARB: source = GL_AUX2; break;
