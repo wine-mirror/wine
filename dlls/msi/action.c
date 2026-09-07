@@ -230,6 +230,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
         while (ptr[len - 1] == ' ') len--;
 
         prop = malloc( (len + 1) * sizeof(WCHAR) );
+        if (!prop) return ERROR_OUTOFMEMORY;
         memcpy( prop, ptr, len * sizeof(WCHAR) );
         prop[len] = 0;
         if (!preserve_case) wcsupr( prop );
@@ -239,6 +240,11 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
 
         num_quotes = 0;
         val = malloc( (wcslen( ptr2 ) + 1) * sizeof(WCHAR) );
+        if (!val)
+        {
+            free( prop );
+            return ERROR_OUTOFMEMORY;
+        }
         len = parse_prop( ptr2, val, &num_quotes );
         if (num_quotes % 2)
         {
