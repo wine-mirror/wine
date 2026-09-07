@@ -876,7 +876,7 @@ int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, in
     T func;
     bool is_24bit = rvoice->dsp.sample->data24 != NULL;
 
-    if (rvoice->resonant_custom_filter.flags & FLUID_IIR_DISABLED)
+    if (rvoice->resonant_custom_filter.type == FLUID_IIR_DISABLED)
     {
         if (is_24bit)
         {
