@@ -1613,8 +1613,6 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     unsigned int i;
     HWND window;
 
-    wined3d_mutex_lock();
-
     if (desc->swap_effect != WINED3D_SWAP_EFFECT_DISCARD
             && desc->swap_effect != WINED3D_SWAP_EFFECT_SEQUENTIAL
             && desc->swap_effect != WINED3D_SWAP_EFFECT_COPY)
@@ -1622,6 +1620,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     if (FAILED(hr = wined3d_swapchain_desc_validate_flags(desc)))
         return hr;
+
+    wined3d_mutex_lock();
 
     window = desc->device_window ? desc->device_window : device->create_parms.focus_window;
     TRACE("Using target window %p.\n", window);
@@ -1648,7 +1648,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->max_frame_latency, LONG_MAX, NULL)))
     {
         ERR("Failed to create frame latency semaphore, error %lu.\n", GetLastError());
-        return HRESULT_FROM_WIN32(GetLastError());
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto err;
     }
 
     if (!(swapchain->dc = GetDCEx(swapchain->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
