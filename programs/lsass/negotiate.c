@@ -254,7 +254,7 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         }
     }
 
-    if (mapped_context)
+    if (*mapped_context)
     {
         struct user_context_data *data = lsa_funcs->AllocateLsaHeap( sizeof(*data) + context_data->cbBuffer );
 
@@ -323,7 +323,7 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         }
     }
 
-    if (mapped_context)
+    if (*mapped_context)
     {
         struct user_context_data *data = lsa_funcs->AllocateLsaHeap( sizeof(*data) + context_data->cbBuffer );
 
