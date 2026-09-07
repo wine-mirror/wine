@@ -78,6 +78,7 @@ void append_storage_to_db( MSIDATABASE *db, IStorage *stg )
     MSITRANSFORM *t;
 
     t = malloc( sizeof *t );
+    if (!t) return;
     t->stg = stg;
     IStorage_AddRef( stg );
     list_add_head( &db->transforms, &t->entry );
