@@ -1052,7 +1052,7 @@
 # @ stub PackageFamilyNameFromFullName
 # @ stub PackageFamilyNameFromId
 # @ stub PackageFamilyNameFromProductId
-# @ stub PackageFullNameFromId
+@ stdcall PackageFullNameFromId(ptr ptr ptr)
 # @ stub PackageFullNameFromProductId
 @ stdcall PackageIdFromFullName(wstr long ptr ptr)
 # @ stub PackageIdFromProductId

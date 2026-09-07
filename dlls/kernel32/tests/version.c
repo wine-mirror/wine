@@ -1113,7 +1113,6 @@ static void test_PackageFullNameFromId(void)
 
     if (!pPackageFullNameFromId)
     {
-        todo_wine
         win_skip("PackageFullNameFromId not available.\n");
         return;
     }
@@ -1166,6 +1165,7 @@ static void test_PackageFullNameFromId(void)
     id.publisherId = NULL;
     ret = pPackageFullNameFromId(&id, &length, buffer);
     ok(!ret, "Unexpected ret %ld.\n", ret);
+    todo_wine
     ok(!wcscmp(buffer, L"name_1.2.3.4_x86_resourceid_0mk95qz5wh294"),
              "Unexpected full name %s.\n", debugstr_w(buffer));
 }
