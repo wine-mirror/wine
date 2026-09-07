@@ -585,17 +585,6 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         return;
     }
 
-    src_level = src_sub_resource_idx % src_texture->level_count;
-    src_width = wined3d_texture_get_level_width(src_texture, src_level);
-    src_height = wined3d_texture_get_level_height(src_texture, src_level);
-    src_depth = wined3d_texture_get_level_depth(src_texture, src_level);
-    if (src_box->left || src_box->top || src_box->right != src_width || src_box->bottom != src_height
-            || src_box->front || src_box->back != src_depth)
-    {
-        FIXME("Unhandled source box %s.\n", debug_box(src_box));
-        return;
-    }
-
     if (dst_format->id != src_texture->resource.format->id)
     {
         FIXME("Unhandled format conversion (%s -> %s).\n",
