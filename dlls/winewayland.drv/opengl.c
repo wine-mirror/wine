@@ -241,7 +241,7 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     wayland_driver_funcs.p_init_extensions = (*driver_funcs)->p_init_extensions;
     wayland_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
     wayland_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
-    wayland_driver_funcs.p_make_current = (*driver_funcs)->p_make_current;
+    wayland_driver_funcs.p_context_activate = (*driver_funcs)->p_context_activate;
 
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;

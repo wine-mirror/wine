@@ -1161,16 +1161,16 @@ static void *x11drv_get_proc_address( const char *name )
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
-static BOOL x11drv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *context )
+static BOOL x11drv_context_activate( struct opengl_context *context, struct opengl_drawable *draw_base, struct opengl_drawable *read_base )
 {
     struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
     BOOL ret;
 
-    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ), context );
+    TRACE( "context %p, draw %s, read %s\n", context, debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ) );
 
-    if (!pglXMakeContextCurrent || !context) ret = pglXMakeCurrent( gdi_display, context ? draw->drawable : None, context );
-    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context );
-    if (ret) NtCurrentTeb()->glReserved2 = context;
+    if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, context->driver_private );
+    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context->driver_private );
+    if (ret) NtCurrentTeb()->glReserved2 = context->driver_private;
     return ret;
 }
 
@@ -1502,6 +1502,11 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
     return TRUE;
 }
 
+static BOOL x11drv_cleanup_thread(void)
+{
+    return pglXMakeCurrent( gdi_display, None, None );
+}
+
 static struct opengl_driver_funcs x11drv_driver_funcs =
 {
     .p_get_proc_address = x11drv_get_proc_address,
@@ -1511,11 +1516,12 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
     .p_surface_create = x11drv_surface_create,
     .p_context_create = x11drv_context_create,
     .p_context_destroy = x11drv_context_destroy,
-    .p_make_current = x11drv_make_current,
+    .p_context_activate = x11drv_context_activate,
     .p_pbuffer_create = x11drv_pbuffer_create,
     .p_pbuffer_updated = x11drv_pbuffer_updated,
     .p_pbuffer_bind = x11drv_pbuffer_bind,
     .p_null_surface_create = x11drv_null_surface_create,
+    .p_cleanup_thread = x11drv_cleanup_thread,
 };
 
 static const struct opengl_drawable_funcs x11drv_surface_funcs =

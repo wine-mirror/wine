@@ -462,7 +462,7 @@ static BOOL make_internal_context_current( struct opengl_context *context, struc
     if (!context) context = get_null_context();
     if (!drawable) drawable = get_null_surface( context );
 
-    if (!driver_funcs->p_make_current( drawable, drawable, context->driver_private )) return FALSE;
+    if (!driver_funcs->p_context_activate( context, drawable, drawable )) return FALSE;
     if (!context->initialized) opengl_context_init( context );
     get_opengl_thread_data()->client_current = FALSE;
     return TRUE;
@@ -620,7 +620,7 @@ static void make_client_context_current(void)
     struct opengl_context *context;
 
     if (!(context = NtCurrentTeb()->glContext) || thread_data->client_current) return;
-    driver_funcs->p_make_current( get_target( context->draw ), get_target( context->read ), context->driver_private );
+    driver_funcs->p_context_activate( context, get_target( context->draw ), get_target( context->read ) );
     thread_data->client_current = TRUE;
 }
 
@@ -1448,15 +1448,14 @@ static BOOL egldrv_context_destroy( void *context )
     return TRUE;
 }
 
-static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_drawable *read, void *context )
+static BOOL egldrv_context_activate( struct opengl_context *context, struct opengl_drawable *draw, struct opengl_drawable *read )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
 
-    TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw ), debugstr_opengl_drawable( read ), context );
+    TRACE( "context %p, draw %s, read %s\n", context, debugstr_opengl_drawable( draw ), debugstr_opengl_drawable( read ) );
 
-    if (!context) return funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, NULL );
-    return funcs->p_eglMakeCurrent( egl->display, draw ? draw->surface : EGL_NO_SURFACE, read ? read->surface : EGL_NO_SURFACE, context );
+    return funcs->p_eglMakeCurrent( egl->display, draw ? draw->surface : EGL_NO_SURFACE, read ? read->surface : EGL_NO_SURFACE, context->driver_private );
 }
 
 static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
@@ -1482,7 +1481,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
-    .p_make_current = egldrv_make_current,
+    .p_context_activate = egldrv_context_activate,
 };
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
@@ -1916,7 +1915,7 @@ static BOOL nulldrv_context_destroy( void *private )
     return FALSE;
 }
 
-static BOOL nulldrv_make_current( struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private )
+static BOOL nulldrv_context_activate( struct opengl_context *context, struct opengl_drawable *draw_base, struct opengl_drawable *read_base )
 {
     return FALSE;
 }
@@ -1933,7 +1932,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
-    .p_make_current = nulldrv_make_current,
+    .p_context_activate = nulldrv_context_activate,
 };
 
 static int win32u_wglGetPixelFormat( HDC hdc )
@@ -2439,7 +2438,7 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     if (previous == context && new_draw == context->draw && new_read == context->read) ret = TRUE;
     else if (previous) context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
 
-    if (!ret && (ret = driver_funcs->p_make_current( get_target( new_draw ), get_target( new_read ), context->driver_private )))
+    if (!ret && (ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
     {
         NtCurrentTeb()->glContext = context;
 
@@ -3409,10 +3408,16 @@ void cleanup_opengl_thread(void)
 {
     struct opengl_context *context = NtCurrentTeb()->glContext;
     struct user_thread_info *info = get_user_thread_info();
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
     struct opengl_thread_data *data;
+    BOOL ret = TRUE;
 
     /* unset current context, this is sometimes missing from host drivers and leaks memory */
-    if (driver_funcs->p_make_current( NULL, NULL, NULL ) && context)
+    if (driver_funcs->p_cleanup_thread) ret = driver_funcs->p_cleanup_thread();
+    else if (egl->display) ret = funcs->p_eglMakeCurrent( egl->display, NULL, NULL, NULL );
+
+    if (ret && context)
     {
         struct opengl_drawable *draw = NULL, *read = NULL;
 

@@ -223,7 +223,7 @@ UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, 
     android_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
     android_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
     android_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
-    android_driver_funcs.p_make_current = (*driver_funcs)->p_make_current;
+    android_driver_funcs.p_context_activate = (*driver_funcs)->p_context_activate;
 
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;

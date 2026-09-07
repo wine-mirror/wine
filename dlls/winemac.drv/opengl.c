@@ -2223,19 +2223,13 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     CGLReleasePBuffer(gl->pbuffer);
 }
 
-static BOOL macdrv_make_current(struct opengl_drawable *draw_base, struct opengl_drawable *read_base, void *private)
+static BOOL macdrv_context_activate(struct opengl_context *ctx, struct opengl_drawable *draw_base, struct opengl_drawable *read_base)
 {
     struct gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
-    struct macdrv_context *context = private;
+    struct macdrv_context *context = ctx->driver_private;
 
-    TRACE("draw %s, read %s, context %p\n", debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base), private);
+    TRACE("context %p, draw %s, read %s\n", context, debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base));
 
-    if (!private)
-    {
-        macdrv_make_context_current(NULL, NULL, CGRectNull);
-        NtCurrentTeb()->glReserved2 = NULL;
-        return TRUE;
-    }
     if (!draw || !read)
     {
         CGLSetCurrentContext(context->cglcontext);
@@ -2696,6 +2690,12 @@ static BOOL macdrv_surface_swap(struct opengl_drawable *base)
     return TRUE;
 }
 
+static BOOL macdrv_cleanup_thread(void)
+{
+    macdrv_make_context_current(NULL, NULL, CGRectNull);
+    return TRUE;
+}
+
 static const struct opengl_driver_funcs macdrv_driver_funcs =
 {
     .p_get_proc_address = macdrv_get_proc_address,
@@ -2705,10 +2705,11 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_surface_create = macdrv_surface_create,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
-    .p_make_current = macdrv_make_current,
+    .p_context_activate = macdrv_context_activate,
     .p_pbuffer_create = macdrv_pbuffer_create,
     .p_pbuffer_updated = macdrv_pbuffer_updated,
     .p_pbuffer_bind = macdrv_pbuffer_bind,
+    .p_cleanup_thread = macdrv_cleanup_thread,
 };
 
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
