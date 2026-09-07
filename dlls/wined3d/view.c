@@ -2199,7 +2199,6 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
     vk_writes[0].dstBinding = 1;
     vk_writes[0].dstArrayElement = 0;
     vk_writes[0].descriptorCount = 1;
-    vk_writes[0].pImageInfo = NULL;
     vk_writes[0].pTexelBufferView = &vk_buffer_view;
     vk_writes[0].pImageInfo = &vk_image_info;
 
