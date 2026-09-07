@@ -379,11 +379,12 @@ static BOOL init_package( const WCHAR *module, SpLsaModeInitializeFn init )
     }
     else if (packages_count + count > packages_size)
     {
-        struct packages *new_packages;
+        struct package *new_packages;
 
         new_packages = realloc( packages, sizeof(*packages) *
                 max(packages_size * 2, packages_count + count) );
         if (!new_packages) return FALSE;
+        packages = new_packages;
         packages_size = max( packages_size * 2, packages_count + count );
     }
 
