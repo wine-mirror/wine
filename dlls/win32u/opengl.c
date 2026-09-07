@@ -2483,10 +2483,6 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         if (old_read && old_read != new_draw && old_read != new_read && old_read->client)
             set_window_opengl_drawable( old_read->client->hwnd, old_read, FALSE );
 
-        /* all good, release previous context drawables if any */
-        if (old_draw) opengl_drawable_release( old_draw );
-        if (old_read) opengl_drawable_release( old_read );
-
         opengl_drawable_flush( new_read, new_read->interval, 0 );
         opengl_drawable_flush( new_draw, new_draw->interval, 0 );
     }
@@ -2503,6 +2499,8 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         assert( !old_draw && !old_read );
     }
 
+    if (old_draw) opengl_drawable_release( old_draw );
+    if (old_read) opengl_drawable_release( old_read );
     if (new_draw) opengl_drawable_release( new_draw );
     if (new_read) opengl_drawable_release( new_read );
     if (ret) get_opengl_thread_data()->client_current = TRUE;
