@@ -877,7 +877,7 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 
-    make_internal_context_current( NULL, surface->target );
+    make_internal_context_current( NULL, NULL );
 
     if (drawable->draw_fbo != drawable->read_fbo)
         destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
@@ -1066,7 +1066,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
         if (surface->base.doublebuffer) opengl_drawable_map_buffer( &surface->base, GL_BACK_RIGHT, GL_COLOR_ATTACHMENT3 );
     }
 
-    make_internal_context_current( NULL, surface->target );
+    make_internal_context_current( NULL, NULL );
 
     read_desc.samples = read_desc.sample_buffers = 0;
     surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc, surface->base.virtual_size );
