@@ -1976,13 +1976,18 @@ static HRESULT WINAPI video_renderer_clock_sink_OnClockStop(IMFClockStateSink *i
         for (i = 0; i < renderer->stream_count; ++i)
         {
             struct video_stream *stream = renderer->streams[i];
-            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStopped, &GUID_NULL, S_OK, NULL);
 
             EnterCriticalSection(&stream->cs);
             stream->flags &= ~(EVR_STREAM_PREROLLED | EVR_STREAM_SAMPLE_NEEDED);
             LeaveCriticalSection(&stream->cs);
         }
         renderer->state = EVR_STATE_STOPPED;
+    }
+
+    for (i = 0; i < renderer->stream_count; ++i)
+    {
+        struct video_stream *stream = renderer->streams[i];
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStopped, &GUID_NULL, S_OK, NULL);
     }
 
     LeaveCriticalSection(&renderer->cs);
