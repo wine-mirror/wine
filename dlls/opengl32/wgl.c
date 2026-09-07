@@ -518,9 +518,16 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
 
 static void display_lists_release( struct display_lists *lists, BOOL destroy )
 {
-    struct glDeleteSync_params delete_sync = { .teb = NtCurrentTeb() };
+    BOOL current;
 
     if (InterlockedDecrement( &lists->refcount )) return;
+
+    /* make sure there's a (dummy) context before destroying display list objects */
+    if ((current = destroy && !NtCurrentTeb()->glCurrentRC))
+    {
+        struct wglMakeContextCurrentARB_params args = { .teb = NtCurrentTeb(), .hglrc = (HGLRC)-1 };
+        UNIX_CALL( wglMakeContextCurrentARB, &args );
+    }
 
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
         free_object_table( lists->tables + i, destroy );
@@ -528,11 +535,17 @@ static void display_lists_release( struct display_lists *lists, BOOL destroy )
     for (int i = 0; i < lists->syncs.count; i++)
     {
         struct handle_entry *entry = lists->syncs.handles + i;
+        struct glDeleteSync_params delete_sync = { .teb = NtCurrentTeb(), .sync = entry->user_data };
         if (LOWORD(entry->handle) == 0xffff) continue;
         WARN( "Leaking sync client %#x, host %p\n", entry->handle, entry->user_data );
-        delete_sync.sync = entry->user_data;
         if (destroy) UNIX_CALL( glDeleteSync, &delete_sync );
         free( entry->user_data );
+    }
+
+    if (current)
+    {
+        struct wglMakeContextCurrentARB_params args = { .teb = NtCurrentTeb() };
+        UNIX_CALL( wglMakeContextCurrentARB, &args );
     }
 
     free( lists );
@@ -1117,8 +1130,6 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
     if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#lx\n", status );
     if (status || !args.ret) return FALSE;
 
-    /* make sure there's a (dummy) context before releasing and destroying display list objects */
-    if (!teb->glCurrentRC) wglMakeContextCurrentARB( NULL, NULL, NULL );
     free_client_context( ptr );
     return TRUE;
 }

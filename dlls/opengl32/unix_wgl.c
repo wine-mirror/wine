@@ -726,7 +726,13 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     struct opengl_client_context *client;
     struct opengl_context *ctx;
 
-    if (client_context)
+    if (HandleToULong( client_context ) == (UINT)-1)
+    {
+        const struct opengl_funcs *funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
+        if (!funcs->p_make_current( NULL, NULL, NULL )) return FALSE;
+        teb->glTable = (void *)funcs;
+    }
+    else if (client_context)
     {
         const struct opengl_funcs *funcs = get_context_funcs( client_context );
         if (!(client = opengl_client_context_from_client( client_context ))) return FALSE;
@@ -740,8 +746,9 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     }
     else
     {
-        const struct opengl_funcs *funcs = teb->glTable;
+        const struct opengl_funcs *funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
         if (!funcs->p_make_current( NULL, NULL, NULL )) return FALSE;
+        teb->glTable = (void *)&null_opengl_funcs;
     }
 
     return TRUE;
