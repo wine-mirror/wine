@@ -2343,6 +2343,7 @@ static const char *debugstr_wsaioctl(DWORD code)
         IOCTL_NAME(SIO_SET_QOS);
         IOCTL_NAME(SIO_TRANSLATE_HANDLE);
         IOCTL_NAME(SIO_UDP_CONNRESET);
+        IOCTL_NAME(SIO_UDP_NETRESET);
     }
 #undef IOCTL_NAME
 
@@ -2779,11 +2780,12 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     }
 
     case SIO_UDP_CONNRESET:
+    case SIO_UDP_NETRESET:
     {
         NTSTATUS status = STATUS_SUCCESS;
         DWORD ret;
 
-        FIXME( "SIO_UDP_CONNRESET stub\n" );
+        FIXME( "%s stub\n", debugstr_wsaioctl( code ) );
         ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
                                  NULL, 0, ret_size, overlapped, completion );
         SetLastError( ret );

@@ -6331,6 +6331,28 @@ static void test_circular_queueing(void)
         closesocket(s);
 }
 
+static void test_udp_reset_options(void)
+{
+    SOCKET s;
+    DWORD size;
+    BOOL enable;
+    int ret;
+
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ok(s != INVALID_SOCKET, "socket failed: %u\n", WSAGetLastError());
+    if (s == INVALID_SOCKET)
+        return;
+
+    enable = FALSE;
+    ret = WSAIoctl(s, SIO_UDP_CONNRESET, &enable, sizeof(enable), NULL, 0, &size, NULL, NULL);
+    ok(!ret, "SIO_UDP_CONNRESET failed: %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(s, SIO_UDP_NETRESET, &enable, sizeof(enable), NULL, 0, &size, NULL, NULL);
+    ok(!ret, "SIO_UDP_NETRESET failed: %u\n", WSAGetLastError());
+
+    closesocket(s);
+}
+
 static BOOL drain_pause = FALSE;
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
@@ -15093,6 +15115,7 @@ START_TEST( sock )
     test_sioAddressListChange();
     test_base_handle();
     test_circular_queueing();
+    test_udp_reset_options();
     test_unsupported_ioctls();
 
     test_WSASendMsg();
