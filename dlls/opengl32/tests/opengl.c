@@ -142,6 +142,8 @@ static void test_pbuffers( HDC old_hdc )
     unsigned int pixels[16 * 16];
     HDC hdc, pbuffer_dc, tmp_dc;
     HPBUFFERARB pbuffer;
+    GLint viewport[4];
+    RECT expect_rect;
     HGLRC rc, old_rc;
     int res, value;
     GLuint texture;
@@ -521,6 +523,11 @@ static void test_pbuffers( HDC old_hdc )
     ret = wglMakeCurrent( pbuffer_dc, rc );
     ok( ret == 1, "got %u\n", ret );
 
+    SetRect( &expect_rect, 0, 0, 16, 16 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
     if (!winetest_platform_is_wine) /* triggers a BadMatch */
     {
     glClearColor( (float)0x22 / 0xff, (float)0x33 / 0xff, (float)0x44 / 0xff, (float)0x11 / 0xff );
@@ -531,6 +538,92 @@ static void test_pbuffers( HDC old_hdc )
     ok( ret == 1, "got %u\n", ret );
     ret = wglDeleteContext( rc );
     ok( ret == 1, "got %u\n", ret );
+
+
+    rc = wglCreateContext( hdc );
+    ok( !!rc, "got %p\n", rc );
+
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 200, 200 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglMakeCurrent( pbuffer_dc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 200, 200 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
+
+
+    rc = wglCreateContext( hdc );
+    ok( !!rc, "got %p\n", rc );
+
+    ret = wglMakeCurrent( pbuffer_dc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 16, 16 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 16, 16 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
+
+
+    rc = wglCreateContext( pbuffer_dc );
+    ok( !!rc, "got %p\n", rc );
+
+    ret = wglMakeCurrent( pbuffer_dc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 16, 16 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 16, 16 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
+
+
+    rc = wglCreateContext( pbuffer_dc );
+    ok( !!rc, "got %p\n", rc );
+
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 200, 200 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglMakeCurrent( pbuffer_dc, rc );
+    ok( ret == 1, "got %u\n", ret );
+    SetRect( &expect_rect, 0, 0, 200, 200 );
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
+
+
     ret = ext.wglReleasePbufferDCARB( pbuffer, pbuffer_dc );
     ok( ret == 1, "got %u\n", ret );
 
