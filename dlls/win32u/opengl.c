@@ -2244,6 +2244,37 @@ failed:
     return NULL;
 }
 
+static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write, void (*flush)(void) )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    BOOL ret = TRUE;
+    BITMAPOBJ *bmp;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
+    else if (context && (bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
+    {
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        struct bitblt_coords src = {0};
+        struct gdi_image_bits bits;
+
+        if (flush) flush();
+
+        if (!get_image_from_bitmap( bmp, info, &bits, &src ))
+        {
+            int width = info->bmiHeader.biWidth, height = info->bmiHeader.biSizeImage / 4 / width;
+            if (write) funcs->p_glDrawPixels( width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
+            else funcs->p_glReadPixels( 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
+        }
+        GDI_ReleaseObj( dc->hBitmap );
+    }
+    release_dc_ptr( dc );
+
+    return ret;
+}
+
 static BOOL create_memory_pbuffer( HDC hdc )
 {
     dib_info dib = {.rect = {0, 0, 1, 1}};
@@ -2277,37 +2308,6 @@ static BOOL create_memory_pbuffer( HDC hdc )
             pbuffer_destroy( pbuffer );
         }
     }
-
-    return ret;
-}
-
-static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write, void (*flush)(void) )
-{
-    const struct opengl_funcs *funcs = &display_funcs;
-    BOOL ret = TRUE;
-    BITMAPOBJ *bmp;
-    DC *dc;
-
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
-    if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC) ret = FALSE;
-    else if (context && (bmp = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
-    {
-        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *info = (BITMAPINFO *)buffer;
-        struct bitblt_coords src = {0};
-        struct gdi_image_bits bits;
-
-        if (flush) flush();
-
-        if (!get_image_from_bitmap( bmp, info, &bits, &src ))
-        {
-            int width = info->bmiHeader.biWidth, height = info->bmiHeader.biSizeImage / 4 / width;
-            if (write) funcs->p_glDrawPixels( width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
-            else funcs->p_glReadPixels( 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
-        }
-        GDI_ReleaseObj( dc->hBitmap );
-    }
-    release_dc_ptr( dc );
 
     return ret;
 }
