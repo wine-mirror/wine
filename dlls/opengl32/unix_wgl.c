@@ -484,6 +484,7 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
 #undef USE_GL_EXT
     const char *vendor, *device, *version, *rest = "";
     const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_drawable *draw = ctx->draw;
     size_t count = 0, i, len;
 
     if (!(version = (const char *)funcs->p_glGetString( GL_VERSION ))) version = "1.0";
@@ -533,6 +534,9 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
     client->extension_count = count;
 
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", extension_names[client->extension_array[i]] );
+
+    funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+    funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
 }
 
 BOOL wrap_wglDeleteContext( TEB *teb, HGLRC client_context )
@@ -557,12 +561,6 @@ static void pop_default_fbo_buffers( TEB *teb )
         else wrap_glDrawBuffers( teb, ctx->draw_buffer_count, ctx->draw_buffers, funcs->p_glDrawBuffers );
     }
     if (!ctx->read_fbo) wrap_glReadBuffer( teb, ctx->read_buffer, funcs->p_glReadBuffer );
-    if (!ctx->has_viewport && draw->draw_fbo && draw->client)
-    {
-        funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
-        ctx->has_viewport = GL_TRUE;
-    }
 }
 
 static GLenum drawable_buffer_from_buffer( struct opengl_drawable *drawable, GLenum buffer )

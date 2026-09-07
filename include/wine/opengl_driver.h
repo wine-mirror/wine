@@ -136,7 +136,6 @@ struct opengl_context
     int                         format;             /* pixel format of the context */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
-    GLboolean                   has_viewport;       /* whether viewport has been initialized */
     GLuint                      draw_fbo;           /* currently bound draw FBO name */
     GLuint                      read_fbo;           /* currently bound read FBO name */
     GLenum                      read_buffer;        /* currently bound default FBO read buffers */
