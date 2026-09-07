@@ -424,6 +424,7 @@ static void ntlm_pool_release_ctx( struct ntlm_auth_ctx *ctx )
     if (ntlm_chat( ctx, buf, sizeof(buf), &len ) || strcmp( buf, "OK" ))
     {
         ntlm_cleanup( &elem->ctx );
+        free( elem->cmd );
         free( elem );
         return;
     }
@@ -447,6 +448,7 @@ static void ntlm_pool_cleanup( void )
     {
         list_remove( &cur->entry );
         ntlm_cleanup( &cur->ctx );
+        free( cur->cmd );
         free( cur );
     }
 }
