@@ -1413,10 +1413,7 @@ static void test_signed_msg_attributes(void)
     ok(size == 0, "unexpected size: %lu\n", size);
 
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, NULL, &size);
-    todo_wine
     ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
-    if (ret)
-    {
     attrs = malloc(size);
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_UNAUTH_ATTR_PARAM, 0, (BYTE *)attrs, &size);
     ok(ret, "CryptMsgGetParam error %#lx\n", GetLastError());
@@ -1426,7 +1423,6 @@ static void test_signed_msg_attributes(void)
     ok(attrs->rgAttr[0].rgValue->cbData == sizeof(attr), "got %#lx\n", attrs->rgAttr[0].rgValue->cbData);
     ok(!memcmp(attrs->rgAttr[0].rgValue->pbData, attr, sizeof(attr)), "data mismatch\n");
     free(attrs);
-    }
 
     CryptMsgClose(msg);
 
