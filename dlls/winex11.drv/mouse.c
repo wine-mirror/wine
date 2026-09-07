@@ -329,27 +329,26 @@ void x11drv_xinput2_enable( Display *display, Window window )
 
     if (!xinput2_available) return;
 
-    mask.mask     = mask_bits;
-    mask.mask_len = sizeof(mask_bits);
-    mask.deviceid = XIAllMasterDevices;
-    memset( mask_bits, 0, sizeof(mask_bits) );
-
     if (window == DefaultRootWindow( display ))
     {
         struct x11drv_thread_data *data = x11drv_thread_data();
         TRACE( "Incrementing root_window_users to %d\n", data->root_window_users + 1 );
         if (data->root_window_users++) return;
-        XISetMask( mask_bits, XI_DeviceChanged );
-        XISetMask( mask_bits, XI_RawMotion );
-        XISetMask( mask_bits, XI_RawButtonPress );
-        XISetMask( mask_bits, XI_RawButtonRelease );
+        XISetMask( data->root_mask, XI_RawMotion );
+        XISetMask( data->root_mask, XI_RawButtonPress );
+        XISetMask( data->root_mask, XI_RawButtonRelease );
+        pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
+        return;
     }
-    else
-    {
-        XISetMask( mask_bits, XI_TouchBegin );
-        XISetMask( mask_bits, XI_TouchUpdate );
-        XISetMask( mask_bits, XI_TouchEnd );
-    }
+
+    mask.mask     = mask_bits;
+    mask.mask_len = sizeof(mask_bits);
+    mask.deviceid = XIAllMasterDevices;
+    memset( mask_bits, 0, sizeof(mask_bits) );
+
+    XISetMask( mask_bits, XI_TouchBegin );
+    XISetMask( mask_bits, XI_TouchUpdate );
+    XISetMask( mask_bits, XI_TouchEnd );
 
     pXISelectEvents( display, window, &mask, 1 );
 }
@@ -365,18 +364,22 @@ void x11drv_xinput2_disable( Display *display, Window window )
 
     if (!xinput2_available) return;
 
-    mask.mask     = mask_bits;
-    mask.mask_len = sizeof(mask_bits);
-    mask.deviceid = XIAllMasterDevices;
-    memset( mask_bits, 0, sizeof(mask_bits) );
-
     if (window == DefaultRootWindow( display ))
     {
         struct x11drv_thread_data *data = x11drv_thread_data();
         TRACE( "Decrementing root_window_users to %d\n", data->root_window_users - 1 );
         if (--data->root_window_users) return;
-        XISetMask( mask_bits, XI_DeviceChanged );
+        XIClearMask( data->root_mask, XI_RawMotion );
+        XIClearMask( data->root_mask, XI_RawButtonPress );
+        XIClearMask( data->root_mask, XI_RawButtonRelease );
+        pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
+        return;
     }
+
+    mask.mask     = mask_bits;
+    mask.mask_len = sizeof(mask_bits);
+    mask.deviceid = XIAllMasterDevices;
+    memset( mask_bits, 0, sizeof(mask_bits) );
 
     pXISelectEvents( display, window, &mask, 1 );
 }
@@ -387,9 +390,7 @@ void x11drv_xinput2_disable( Display *display, Window window )
  */
 void x11drv_xinput2_init( struct x11drv_thread_data *data )
 {
-    unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     int major = 2, minor = 2;
-    XIEventMask mask;
     int count;
 
     if (!xinput2_available || pXIQueryVersion( data->display, &major, &minor ))
@@ -399,12 +400,12 @@ void x11drv_xinput2_init( struct x11drv_thread_data *data )
         return;
     }
 
-    mask.mask     = mask_bits;
-    mask.mask_len = sizeof(mask_bits);
-    mask.deviceid = XIAllMasterDevices;
-    memset( mask_bits, 0, sizeof(mask_bits) );
-    XISetMask( mask_bits, XI_DeviceChanged );
-    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
+    data->root_events.deviceid = XIAllMasterDevices;
+    data->root_events.mask_len = sizeof(data->root_mask);
+    data->root_events.mask = data->root_mask;
+
+    XISetMask( data->root_mask, XI_DeviceChanged );
+    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
 
     if (!pXIGetClientPointer( data->display, None, &data->xinput2_pointer ))
         WARN( "Failed to get xinput2 master pointer device\n" );

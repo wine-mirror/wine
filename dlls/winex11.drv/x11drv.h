@@ -426,6 +426,8 @@ struct x11drv_thread_data
     int      net_supported_count;  /* number of _NET_SUPPORTED atoms */
     UINT     net_wm_state_mask;    /* mask of supported _NET_WM_STATE *bits */
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    unsigned char       root_mask[XIMaskLen(XI_LASTEVENT)];
+    XIEventMask         root_events;
     XIValuatorClassInfo x_valuator;
     XIValuatorClassInfo y_valuator;
     double              raw_x;
