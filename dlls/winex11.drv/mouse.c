@@ -335,8 +335,6 @@ void x11drv_xinput2_enable( Display *display, Window window )
         TRACE( "Incrementing root_window_users to %d\n", data->root_window_users + 1 );
         if (data->root_window_users++) return;
         XISetMask( data->root_mask, XI_RawMotion );
-        XISetMask( data->root_mask, XI_RawButtonPress );
-        XISetMask( data->root_mask, XI_RawButtonRelease );
         pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
         return;
     }
@@ -370,8 +368,6 @@ void x11drv_xinput2_disable( Display *display, Window window )
         TRACE( "Decrementing root_window_users to %d\n", data->root_window_users - 1 );
         if (--data->root_window_users) return;
         XIClearMask( data->root_mask, XI_RawMotion );
-        XIClearMask( data->root_mask, XI_RawButtonPress );
-        XIClearMask( data->root_mask, XI_RawButtonRelease );
         pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
         return;
     }
@@ -472,6 +468,12 @@ static BOOL grab_clipping_window( const RECT *clip )
         return TRUE;
     }
 
+    if (!data->clipping_cursor)
+    {
+        XISetMask( data->root_mask, XI_ButtonPress );
+        pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
+    }
+
     TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
     if (!data->clipping_cursor) XUnmapWindow( data->display, clip_window );
@@ -528,6 +530,11 @@ void ungrab_clipping_window(void)
     if (clipping_cursor) XUngrabPointer( data->display, CurrentTime );
     clipping_cursor = FALSE;
     data->clipping_cursor = FALSE;
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    XIClearMask( data->root_mask, XI_ButtonPress );
+    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &data->root_events, 1 );
+#endif
 }
 
 /***********************************************************************
@@ -1567,7 +1574,6 @@ BOOL X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     POINT pt = { event->x, event->y }, root = { event->x_root, event->y_root };
     struct x11drv_win_data *data;
 
-    if (x11drv_thread_data()->root_window_users) return FALSE;
     if (button >= NB_BUTTONS) return FALSE;
     flags = button_down_flags[button];
 
@@ -1594,7 +1600,6 @@ BOOL X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     UINT button = event->button - 1, flags, time = EVENT_x11_time_to_win32_time( event->time );
     POINT pt = { event->x, event->y }, root = { event->x_root, event->y_root };
 
-    if (x11drv_thread_data()->root_window_users) return FALSE;
     if (button >= NB_BUTTONS || !(flags = button_up_flags[button])) return FALSE;
 
     TRACE( "hwnd %p/%lx button %u pos %s\n", hwnd, event->window, button, wine_dbgstr_point( &pt ) );
