@@ -487,6 +487,7 @@ static void test_current_thread(BOOL is_system)
     PEPROCESS current;
     PETHREAD thread;
     NTSTATUS ret;
+    PEB *peb;
 
     current = IoGetCurrentProcess();
     ok(current != NULL, "Expected current process to be non-NULL\n");
@@ -548,6 +549,9 @@ static void test_current_thread(BOOL is_system)
 
     create_time = PsGetProcessCreateTimeQuadPart(*pPsInitialSystemProcess);
     ok(create_time != 0, "got create time %#I64x for the system process\n", create_time);
+
+    peb = PsGetProcessPeb(current);
+    ok(peb == info.PebBaseAddress, "got peb %p, expected %p\n", peb, info.PebBaseAddress);
 
     ret = ZwClose(process_handle);
     ok(!ret, "ZwClose failed: %#lx\n", ret);
