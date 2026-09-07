@@ -8088,7 +8088,6 @@ static void test_evr(void)
     hr = IMFClockStateSink_OnClockPause(state_sink, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator *)stream_sink, callback, MEStreamSinkPaused, 1000, &propvar);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     PropVariantClear(&propvar);
 
