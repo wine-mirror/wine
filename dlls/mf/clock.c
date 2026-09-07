@@ -473,7 +473,9 @@ static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *ifac
         };
         struct clock_state_change_param param;
 
-        if (!clock->is_shut_down && clock->state != MFCLOCK_STATE_INVALID)
+        if (!clock->is_shut_down && clock->state != MFCLOCK_STATE_INVALID
+                /* Don't notify a sink that is also the time source */
+                && clock->time_source_sink != sink->state_sink)
         {
             param.u.offset = clock->start_offset;
             clock_notify_async_sink(clock, MFGetSystemTime(), param, notifications[clock->state], sink->state_sink);

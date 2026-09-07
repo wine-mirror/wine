@@ -4492,7 +4492,6 @@ static void test_presentation_clock(void)
 
     /* If the clock state sink is also the time source, no initial OnClock*() call is made after AddClockStateSink() */
 
-    SET_EXPECT(test_time_source_sink_OnClockStop); /* todo wine */
     hr = IMFPresentationClock_AddClockStateSink(clock, &test_time_source->IMFClockStateSink_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -4505,7 +4504,6 @@ static void test_presentation_clock(void)
     hr = IMFPresentationClock_RemoveClockStateSink(clock, &test_time_source->IMFClockStateSink_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    SET_EXPECT(test_time_source_sink_OnClockStart); /* todo wine */
     hr = IMFPresentationClock_AddClockStateSink(clock, &test_time_source->IMFClockStateSink_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFPresentationClock_RemoveClockStateSink(clock, &test_time_source->IMFClockStateSink_iface);
@@ -4517,7 +4515,6 @@ static void test_presentation_clock(void)
     Sleep(50);
     CHECK_CALLED(test_time_source_sink_OnClockStop);
 
-    SET_EXPECT(test_time_source_sink_OnClockStop); /* todo wine */
     hr = IMFPresentationClock_AddClockStateSink(clock, &test_time_source->IMFClockStateSink_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
