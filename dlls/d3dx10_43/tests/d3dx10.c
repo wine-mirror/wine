@@ -8466,6 +8466,15 @@ static void test_sprite_render(void)
     hr = ID3DX10Sprite_End(sprite);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    color = get_texture_color(test_context.backbuffer, 160, 120);
+    ok(compare_color(color, 0xff0000ff, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 480, 120);
+    ok(compare_color(color, 0xffff00ff, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 160, 360);
+    ok(compare_color(color, 0xffffffff, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 480, 360);
+    ok(compare_color(color, 0xffffffff, 0), "Got unexpected color 0x%08x.\n", color);
+
     ID3D10Texture2D_Release(texture);
     ID3D10ShaderResourceView_Release(srv);
 
