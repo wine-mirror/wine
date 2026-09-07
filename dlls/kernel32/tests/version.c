@@ -28,7 +28,9 @@
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
 static UINT (WINAPI * pEnumSystemFirmwareTables)(DWORD, void *, DWORD);
 static UINT (WINAPI * pGetSystemFirmwareTable)(DWORD, DWORD, void *, DWORD);
+static LONG (WINAPI * pPackageFullNameFromId)(const PACKAGE_ID *, UINT32 *, WCHAR *);
 static LONG (WINAPI * pPackageIdFromFullName)(const WCHAR *, UINT32, UINT32 *, BYTE *);
+
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
@@ -49,6 +51,7 @@ static void init_function_pointers(void)
     GET_PROC(GetProductInfo);
     GET_PROC(EnumSystemFirmwareTables);
     GET_PROC(GetSystemFirmwareTable);
+    GET_PROC(PackageFullNameFromId);
     GET_PROC(PackageIdFromFullName);
 
     hmod = GetModuleHandleA("ntdll.dll");
@@ -1101,6 +1104,72 @@ static void test_pe_os_version(void)
     }
 }
 
+static void test_PackageFullNameFromId(void)
+{
+    WCHAR buffer[100];
+    PACKAGE_ID id;
+    UINT32 length;
+    LONG ret;
+
+    if (!pPackageFullNameFromId)
+    {
+        todo_wine
+        win_skip("PackageFullNameFromId not available.\n");
+        return;
+    }
+
+    ret = pPackageFullNameFromId(NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    memset(&id, 0, sizeof(id));
+    ret = pPackageFullNameFromId(&id, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    length = 123;
+    ret = pPackageFullNameFromId(&id, &length, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    length = 0;
+    ret = pPackageFullNameFromId(&id, &length, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    length = 0;
+    id.processorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+    ret = pPackageFullNameFromId(&id, &length, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    length = 0;
+    id.processorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+    id.version.Major = 1;
+    ret = pPackageFullNameFromId(&id, &length, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected ret %ld.\n", ret);
+
+    length = 0;
+    id.processorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
+    id.version.Major = 1;
+    id.version.Minor = 2;
+    id.version.Build = 3;
+    id.version.Revision = 4;
+    id.name = (WCHAR *)L"name";
+    id.publisher = (WCHAR *)L"publisher";
+    id.resourceId = (WCHAR *)L"resourceid";
+    id.publisherId = (WCHAR *)L"1234567890abc";
+    ret = pPackageFullNameFromId(&id, &length, NULL);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "Unexpected ret %ld.\n", ret);
+
+    ret = pPackageFullNameFromId(&id, &length, buffer);
+    ok(!ret, "Unexpected ret %ld.\n", ret);
+    ok(!wcscmp(buffer, L"name_1.2.3.4_x86_resourceid_1234567890abc"),
+             "Unexpected full name %s.\n", debugstr_w(buffer));
+
+    /* Publisher ID is calculated if not provided. */
+    id.publisherId = NULL;
+    ret = pPackageFullNameFromId(&id, &length, buffer);
+    ok(!ret, "Unexpected ret %ld.\n", ret);
+    ok(!wcscmp(buffer, L"name_1.2.3.4_x86_resourceid_0mk95qz5wh294"),
+             "Unexpected full name %s.\n", debugstr_w(buffer));
+}
+
 START_TEST(version)
 {
     char **argv;
@@ -1128,4 +1197,5 @@ START_TEST(version)
     test_pe_os_version();
     test_SystemFirmwareTable();
     test_PackageIdFromFullName();
+    test_PackageFullNameFromId();
 }
