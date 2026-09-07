@@ -2966,7 +2966,7 @@ static HRESULT parse_skin_mesh_header(ID3DXFileData *filedata, struct mesh_data 
 static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD flags)
 {
     unsigned int index = mesh_data->skin_weights_info_count;
-    unsigned int influence_count;
+    uint32_t influence_count;
     const char *name;
     const BYTE *data;
     SIZE_T data_size;
@@ -2985,6 +2985,13 @@ static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data
 
     if (FAILED(hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data)))
         return hr;
+
+    if (data_size < sizeof(name) + sizeof(influence_count))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
+        filedata->lpVtbl->Unlock(filedata);
+        return E_FAIL;
+    }
 
     /* FIXME: String will have to be retrieved directly instead of through a
      * pointer once our ID3DXFileData implementation is fixed. */
