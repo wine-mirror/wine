@@ -656,9 +656,13 @@ static struct framebuffer_surface *framebuffer_from_opengl_drawable( struct open
     return CONTAINING_RECORD( base, struct framebuffer_surface, base );
 }
 
-static struct opengl_drawable *get_target( struct opengl_drawable *drawable )
+static struct opengl_drawable *get_target( struct opengl_drawable *drawable, struct opengl_context *context )
 {
-    if (drawable->funcs == &framebuffer_surface_funcs) return framebuffer_from_opengl_drawable( drawable )->target;
+    if (drawable->funcs == &framebuffer_surface_funcs)
+    {
+        struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+        return surface->target ? surface->target : get_null_surface( context );
+    }
     return drawable;
 }
 
@@ -669,7 +673,7 @@ static void make_client_context_current(void)
     struct opengl_drawable *old_draw = NULL, *old_read = NULL;
 
     if (!(context = NtCurrentTeb()->glContext) || thread_data->client_current) return;
-    if (!driver_funcs->p_context_activate( context, get_target( context->draw ), get_target( context->read ) ))
+    if (!driver_funcs->p_context_activate( context, get_target( context->draw, context ), get_target( context->read, context ) ))
     {
         ERR( "Failed to restore client context, expect trouble\n" );
         return;
@@ -2539,7 +2543,7 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     if ((ret = previous == context && new_draw == context->draw && new_read == context->read)) goto done;
 
     if (previous) context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
-    if ((ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
+    if ((ret = driver_funcs->p_context_activate( context, get_target( new_draw, context ), get_target( new_read, context ) )))
     {
         NtCurrentTeb()->glReserved2 = NtCurrentTeb()->glContext = context;
         /* set the new context drawables before doing anything else, something might expect to find them there */
