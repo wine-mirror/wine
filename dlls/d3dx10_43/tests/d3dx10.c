@@ -8484,13 +8484,11 @@ static void test_sprite_render(void)
     sprite_desc.TexSize.x = 0.25f;
     sprite_desc.TexSize.y = 0.25f;
     hr = ID3DX10Sprite_DrawSpritesImmediate(sprite, &sprite_desc, 1, sizeof(sprite_desc), 0);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     color = get_texture_color(test_context.backbuffer, 160, 120);
     ok(compare_color(color, 0xffffffff, 0), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 480, 120);
-    todo_wine
     ok(compare_color(color, 0xffff00ff, 0), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 160, 360);
     ok(compare_color(color, 0xffffffff, 0), "Got unexpected color 0x%08x.\n", color);

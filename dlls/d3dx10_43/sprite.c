@@ -348,9 +348,6 @@ static HRESULT WINAPI d3dx10_sprite_DrawSpritesImmediate(ID3DX10Sprite *iface,
     TRACE("iface %p, sprites %p, count %u, size %u, flags %#x.\n",
             iface, sprites, count, size, flags);
 
-    if (!(sprite->flags & D3DX10_SPRITE_READY))
-        return E_FAIL;
-
     d3dx10_sprite_draw(sprite, sprites, count, size);
 
     return S_OK;
