@@ -7848,12 +7848,16 @@ static void test_evr(void)
     IMFVideoSampleAllocator *allocator;
     IMFMediaTypeHandler *type_handler;
     IMFVideoRenderer *video_renderer;
+    IMFClockStateSink *state_sink;
     IMFPresentationClock *clock;
     IMFMediaSink *sink, *sink2;
+    IMFAsyncCallback *callback;
     IMFAttributes *attributes;
     UINT32 attr_count, value;
     IMFActivate *activate;
+    IMFMediaEvent *event;
     HWND window, window2;
+    PROPVARIANT propvar;
     IMFRateSupport *rs;
     DWORD flags, count;
     LONG sample_count;
@@ -8067,6 +8071,47 @@ static void test_evr(void)
 
     IMFMediaTypeHandler_Release(type_handler);
 
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&state_sink);
+    ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
+
+    callback = create_test_callback(TRUE);
+
+    while (SUCCEEDED(IMFStreamSink_GetEvent(stream_sink, MF_EVENT_FLAG_NO_WAIT, &event)))
+        IMFMediaEvent_Release(event);
+
+    /* State sink is in its initial state. */
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantInit(&propvar);
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator *)stream_sink, callback, MEStreamSinkStopped, 1000, &propvar);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    /* EVR allows stop -> paused. */
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator *)stream_sink, callback, MEStreamSinkPaused, 1000, &propvar);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator *)stream_sink, callback, MEStreamSinkStopped, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator *)stream_sink, callback, MEStreamSinkStopped, 1000, &propvar);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    IMFAsyncCallback_Release(callback);
+    IMFClockStateSink_Release(state_sink);
+
     /* Stream uses an allocator. */
     check_service_interface(stream_sink, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IMFVideoSampleAllocator, TRUE);
     check_service_interface(stream_sink, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
@@ -8151,7 +8196,7 @@ todo_wine {
     ref = IMFActivate_Release(activate);
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaSink_Release(sink);
-    todo_wine
+    flaky todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
 
     /* Set clock. */
