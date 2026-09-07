@@ -280,7 +280,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
 
         for (i = 0; i < ARRAY_SIZE(args->ps_alpha_swizzle); ++i)
         {
-            if (rt_alpha_swizzle && (1u << i))
+            if (rt_alpha_swizzle & (1u << i))
                 args->ps_alpha_swizzle[i] = VKD3D_SHADER_SWIZZLE(W, X, Y, Z);
             else
                 args->ps_alpha_swizzle[i] = VKD3D_SHADER_NO_SWIZZLE;
