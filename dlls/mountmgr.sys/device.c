@@ -1986,12 +1986,20 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
+static NTSTATUS WINAPI disk_create( DEVICE_OBJECT *device, IRP *irp )
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 /* driver entry point for the harddisk driver */
 NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     struct disk_device *device;
 
     disk_driver = driver;
+    driver->MajorFunction[IRP_MJ_CREATE] = disk_create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = disk_ioctl;
     driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = disk_query_volume;
 
