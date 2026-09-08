@@ -257,8 +257,21 @@ static struct buffer
     UINT  allocated;     /* allocated size in bytes */
     UINT  count;         /* number of entries written */
     BYTE *ptr;
-} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx, guids, tables[TABLE_MAX],
-  tables_idx[TABLE_MAX], tables_disk;
+} tables_disk;
+
+static UINT winmd_count;
+
+static struct winmd
+{
+    struct buffer strings, strings_idx;
+    struct buffer userstrings, userstrings_idx;
+    struct buffer blobs, blobs_idx;
+    struct buffer guids;
+    struct buffer tables[TABLE_MAX], tables_idx[TABLE_MAX];
+    char         *name;
+    char        **imports;
+    UINT          num_imports;
+} **winmd_list, *current_winmd;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -370,20 +383,22 @@ static void insert_index( struct buffer *buf_idx, UINT idx, UINT offset, UINT si
 
 static UINT add_string( const char *str )
 {
-    UINT insert_idx, size, offset = strings.offset;
+    struct buffer *strings = &current_winmd->strings;
+    struct buffer *strings_idx = &current_winmd->strings_idx;
+    UINT insert_idx, size, offset = strings->offset;
     const struct index *idx;
 
     if (!str) return 0;
     size = strlen( str ) + 1;
-    if ((idx = find_index( &strings_idx, &strings, (const BYTE *)str, size, FALSE, &insert_idx )))
+    if ((idx = find_index( strings_idx, strings, (const BYTE *)str, size, FALSE, &insert_idx )))
         return idx->offset;
 
-    grow_buffer( &strings, size );
-    memcpy( strings.ptr + offset, str, size );
-    strings.offset += size;
-    strings.count++;
+    grow_buffer( strings, size );
+    memcpy( strings->ptr + offset, str, size );
+    strings->offset += size;
+    strings->count++;
 
-    insert_index( &strings_idx, insert_idx, offset, size );
+    insert_index( strings_idx, insert_idx, offset, size );
     return offset;
 }
 
@@ -394,68 +409,75 @@ static inline int is_special_char( USHORT c )
 
 static UINT add_userstring( const USHORT *str, UINT size )
 {
+    struct buffer *userstrings = &current_winmd->userstrings;
+    struct buffer *userstrings_idx = &current_winmd->userstrings_idx;
     BYTE encoded[4], terminal = 0;
-    UINT i, insert_idx, offset = userstrings.offset, len = encode_int( size + (str ? 1 : 0), encoded );
+    UINT i, insert_idx, offset = userstrings->offset, len = encode_int( size + (str ? 1 : 0), encoded );
     const struct index *idx;
 
     if (!str && offset) return 0;
 
-    if ((idx = find_index( &userstrings_idx, &userstrings, (const BYTE *)str, size, TRUE, &insert_idx )))
+    if ((idx = find_index( userstrings_idx, userstrings, (const BYTE *)str, size, TRUE, &insert_idx )))
         return idx->offset;
 
-    grow_buffer( &userstrings, len + size + 1 );
-    memcpy( userstrings.ptr + userstrings.offset, encoded, len );
-    userstrings.offset += len;
+    grow_buffer( userstrings, len + size + 1 );
+    memcpy( userstrings->ptr + userstrings->offset, encoded, len );
+    userstrings->offset += len;
     if (str)
     {
         for (i = 0; i < size / sizeof(USHORT); i++)
         {
-            *(USHORT *)(userstrings.ptr + userstrings.offset) = str[i];
-            userstrings.offset += sizeof(USHORT);
+            *(USHORT *)(userstrings->ptr + userstrings->offset) = str[i];
+            userstrings->offset += sizeof(USHORT);
             if (is_special_char( str[i] )) terminal = 1;
         }
-        userstrings.ptr[userstrings.offset++] = terminal;
+        userstrings->ptr[userstrings->offset++] = terminal;
     }
-    userstrings.count++;
+    userstrings->count++;
 
-    insert_index( &userstrings_idx, insert_idx, offset, size );
+    insert_index( userstrings_idx, insert_idx, offset, size );
     return offset;
 }
 
 static UINT add_blob( const BYTE *blob, UINT size )
 {
+    struct buffer *blobs = &current_winmd->blobs;
+    struct buffer *blobs_idx = &current_winmd->blobs_idx;
     BYTE encoded[4];
-    UINT insert_idx, offset = blobs.offset, len = encode_int( size, encoded );
+    UINT insert_idx, offset = blobs->offset, len = encode_int( size, encoded );
     const struct index *idx;
 
     if (!blob && offset) return 0;
-    if ((idx = find_index( &blobs_idx, &blobs, blob, size, TRUE, &insert_idx ))) return idx->offset;
+    if ((idx = find_index( blobs_idx, blobs, blob, size, TRUE, &insert_idx ))) return idx->offset;
 
-    grow_buffer( &blobs, len + size );
-    memcpy( blobs.ptr + blobs.offset, encoded, len );
-    blobs.offset += len;
+    grow_buffer( blobs, len + size );
+    memcpy( blobs->ptr + blobs->offset, encoded, len );
+    blobs->offset += len;
     if (blob)
     {
-        memcpy( blobs.ptr + blobs.offset, blob, size );
-        blobs.offset += size;
+        memcpy( blobs->ptr + blobs->offset, blob, size );
+        blobs->offset += size;
     }
-    blobs.count++;
+    blobs->count++;
 
-    insert_index( &blobs_idx, insert_idx, offset, size );
+    insert_index( blobs_idx, insert_idx, offset, size );
     return offset;
 }
 
 static UINT add_guid( const GUID *guid )
 {
-    grow_buffer( &guids, sizeof(*guid) );
-    memcpy( guids.ptr + guids.offset, guid, sizeof(*guid) );
-    guids.offset += sizeof(*guid);
-    return ++guids.count;
+    struct buffer *guids = &current_winmd->guids;
+    grow_buffer( guids, sizeof(*guid) );
+    memcpy( guids->ptr + guids->offset, guid, sizeof(*guid) );
+    guids->offset += sizeof(*guid);
+    return ++guids->count;
 }
 
 /* returns row number */
 static UINT add_row( enum table table, const BYTE *row, UINT row_size )
 {
+    struct buffer *tables = current_winmd->tables;
+    struct buffer *tables_idx = current_winmd->tables_idx;
     const struct index *idx;
     UINT insert_idx, offset = tables[table].offset;
     BOOL sort = (table != TABLE_PARAM && table != TABLE_FIELD && table != TABLE_PROPERTY && table != TABLE_EVENT);
@@ -498,25 +520,25 @@ static void serialize_uint( UINT value )
 
 static void serialize_string_idx( UINT idx )
 {
-    UINT size = strings.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    UINT size = current_winmd->strings.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
 static void serialize_guid_idx( UINT idx )
 {
-    UINT size = guids.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    UINT size = current_winmd->guids.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
 static void serialize_blob_idx( UINT idx )
 {
-    UINT size = blobs.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    UINT size = current_winmd->blobs.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
 static void serialize_table_idx( UINT idx, enum table target )
 {
-    UINT size = tables[target].count >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    UINT size = current_winmd->tables[target].count >> 16 ? sizeof(UINT) : sizeof(USHORT);
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
@@ -640,7 +662,7 @@ static UINT add_module_row( UINT name, UINT mvid )
 
 static void serialize_module_table( void )
 {
-    const struct module_row *row = (const struct module_row *)tables[TABLE_MODULE].ptr;
+    const struct module_row *row = (const struct module_row *)current_winmd->tables[TABLE_MODULE].ptr;
 
     serialize_ushort( row->generation );
     serialize_string_idx( row->name );
@@ -664,10 +686,10 @@ static UINT add_typeref_row( UINT scope, UINT name, UINT namespace )
 
 static void serialize_typeref_table( void )
 {
-    const struct typeref_row *row = (const struct typeref_row *)tables[TABLE_TYPEREF].ptr;
+    const struct typeref_row *row = (const struct typeref_row *)current_winmd->tables[TABLE_TYPEREF].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_TYPEREF].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_TYPEREF].count; i++)
     {
         serialize_table_idx( row->scope, resolution_scope_to_table(row->scope) );
         serialize_string_idx( row->name );
@@ -690,18 +712,18 @@ static UINT add_typedef_row( UINT flags, UINT name, UINT namespace, UINT extends
 {
     struct typedef_row row = { flags, name, namespace, extends, fieldlist, methodlist };
 
-    if (!row.fieldlist) row.fieldlist = tables[TABLE_FIELD].count + 1;
-    if (!row.methodlist) row.methodlist = tables[TABLE_METHODDEF].count + 1;
+    if (!row.fieldlist) row.fieldlist = current_winmd->tables[TABLE_FIELD].count + 1;
+    if (!row.methodlist) row.methodlist = current_winmd->tables[TABLE_METHODDEF].count + 1;
     return add_row( TABLE_TYPEDEF, (const BYTE *)&row, sizeof(row) );
 }
 
 /* FIXME: enclosing classes should come before enclosed classes */
 static void serialize_typedef_table( void )
 {
-    const struct typedef_row *row = (const struct typedef_row *)tables[TABLE_TYPEDEF].ptr;
+    const struct typedef_row *row = (const struct typedef_row *)current_winmd->tables[TABLE_TYPEDEF].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_TYPEDEF].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_TYPEDEF].count; i++)
     {
         serialize_uint( row->flags );
         serialize_string_idx( row->name );
@@ -728,10 +750,10 @@ static UINT add_field_row( UINT flags, UINT name, UINT signature )
 
 static void serialize_field_table( void )
 {
-    const struct field_row *row = (const struct field_row *)tables[TABLE_FIELD].ptr;
+    const struct field_row *row = (const struct field_row *)current_winmd->tables[TABLE_FIELD].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_FIELD].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_FIELD].count; i++)
     {
         serialize_ushort( row->flags );
         serialize_string_idx( row->name );
@@ -754,16 +776,16 @@ static UINT add_methoddef_row( UINT implflags, UINT flags, UINT name, UINT signa
 {
     struct methoddef_row row = { 0, implflags, flags, name, signature, paramlist };
 
-    if (!row.paramlist) row.paramlist = tables[TABLE_PARAM].count + 1;
+    if (!row.paramlist) row.paramlist = current_winmd->tables[TABLE_PARAM].count + 1;
     return add_row( TABLE_METHODDEF, (const BYTE *)&row, sizeof(row) );
 }
 
 static void serialize_methoddef_table( void )
 {
-    const struct methoddef_row *row = (const struct methoddef_row *)tables[TABLE_METHODDEF].ptr;
+    const struct methoddef_row *row = (const struct methoddef_row *)current_winmd->tables[TABLE_METHODDEF].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_METHODDEF].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_METHODDEF].count; i++)
     {
         serialize_uint( row->rva );
         serialize_ushort( row->implflags );
@@ -790,10 +812,10 @@ static UINT add_param_row( USHORT flags, USHORT sequence, UINT name )
 
 static void serialize_param_table( void )
 {
-    const struct param_row *row = (const struct param_row *)tables[TABLE_PARAM].ptr;
+    const struct param_row *row = (const struct param_row *)current_winmd->tables[TABLE_PARAM].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_PARAM].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_PARAM].count; i++)
     {
         serialize_ushort( row->flags );
         serialize_ushort( row->sequence );
@@ -827,13 +849,14 @@ static int cmp_interfaceimpl_row( const void *a, const void *b )
 /* sorted by class, interface */
 static void serialize_interfaceimpl_table( void )
 {
-    const struct interfaceimpl_row *row = (const struct interfaceimpl_row *)tables[TABLE_INTERFACEIMPL].ptr;
+    const struct interfaceimpl_row *row =
+        (const struct interfaceimpl_row *)current_winmd->tables[TABLE_INTERFACEIMPL].ptr;
     UINT i;
 
-    qsort( tables[TABLE_INTERFACEIMPL].ptr, tables[TABLE_INTERFACEIMPL].count, sizeof(*row),
-           cmp_interfaceimpl_row );
+    qsort( current_winmd->tables[TABLE_INTERFACEIMPL].ptr, current_winmd->tables[TABLE_INTERFACEIMPL].count,
+           sizeof(*row), cmp_interfaceimpl_row );
 
-    for (i = 0; i < tables_idx[TABLE_INTERFACEIMPL].count; i++)
+    for (i = 0; i < current_winmd->tables_idx[TABLE_INTERFACEIMPL].count; i++)
     {
         serialize_table_idx( row->class, TABLE_TYPEDEF );
         serialize_table_idx( row->interface, typedef_or_ref_to_table(row->interface) );
@@ -856,10 +879,10 @@ static UINT add_memberref_row( UINT class, UINT name, UINT signature )
 
 static void serialize_memberref_table( void )
 {
-    const struct memberref_row *row = (const struct memberref_row *)tables[TABLE_MEMBERREF].ptr;
+    const struct memberref_row *row = (const struct memberref_row *)current_winmd->tables[TABLE_MEMBERREF].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_MEMBERREF].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_MEMBERREF].count; i++)
     {
         serialize_table_idx( row->class, memberref_parent_to_table(row->class) );
         serialize_string_idx( row->name );
@@ -893,12 +916,13 @@ static int cmp_constant_row( const void *a, const void *b )
 /* sorted by parent */
 static void serialize_constant_table( void )
 {
-    const struct constant_row *row = (const struct constant_row *)tables[TABLE_CONSTANT].ptr;
+    const struct constant_row *row = (const struct constant_row *)current_winmd->tables[TABLE_CONSTANT].ptr;
     UINT i;
 
-    qsort( tables[TABLE_CONSTANT].ptr, tables[TABLE_CONSTANT].count, sizeof(*row), cmp_constant_row );
+    qsort( current_winmd->tables[TABLE_CONSTANT].ptr, current_winmd->tables[TABLE_CONSTANT].count, sizeof(*row),
+           cmp_constant_row );
 
-    for (i = 0; i < tables_idx[TABLE_CONSTANT].count; i++)
+    for (i = 0; i < current_winmd->tables_idx[TABLE_CONSTANT].count; i++)
     {
         serialize_byte( row->type );
         serialize_byte( row->padding );
@@ -932,13 +956,14 @@ static int cmp_customattribute_row( const void *a, const void *b )
 /* sorted by parent */
 static void serialize_customattribute_table( void )
 {
-    const struct customattribute_row *row = (const struct customattribute_row *)tables[TABLE_CUSTOMATTRIBUTE].ptr;
+    const struct customattribute_row *row =
+        (const struct customattribute_row *)current_winmd->tables[TABLE_CUSTOMATTRIBUTE].ptr;
     UINT i;
 
-    qsort( tables[TABLE_CUSTOMATTRIBUTE].ptr, tables[TABLE_CUSTOMATTRIBUTE].count, sizeof(*row),
-           cmp_customattribute_row );
+    qsort( current_winmd->tables[TABLE_CUSTOMATTRIBUTE].ptr, current_winmd->tables[TABLE_CUSTOMATTRIBUTE].count,
+           sizeof(*row), cmp_customattribute_row );
 
-    for (i = 0; i < tables_idx[TABLE_CUSTOMATTRIBUTE].count; i++)
+    for (i = 0; i < current_winmd->tables_idx[TABLE_CUSTOMATTRIBUTE].count; i++)
     {
         serialize_table_idx( row->parent, has_customattribute_to_table(row->parent) );
         serialize_table_idx( row->type, customattribute_type_to_table(row->type) );
@@ -968,7 +993,7 @@ static UINT add_assembly_row( UINT name )
 
 static void serialize_assembly_table( void )
 {
-    const struct assembly_row *row = (const struct assembly_row *)tables[TABLE_ASSEMBLY].ptr;
+    const struct assembly_row *row = (const struct assembly_row *)current_winmd->tables[TABLE_ASSEMBLY].ptr;
 
     serialize_uint( row->hashalgid );
     serialize_ushort( row->majorversion );
@@ -1002,10 +1027,10 @@ static UINT add_assemblyref_row( UINT flags, UINT publickey, UINT name )
 
 static void serialize_assemblyref_table( void )
 {
-    const struct assemblyref_row *row = (const struct assemblyref_row *)tables[TABLE_ASSEMBLYREF].ptr;
+    const struct assemblyref_row *row = (const struct assemblyref_row *)current_winmd->tables[TABLE_ASSEMBLYREF].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_ASSEMBLYREF].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_ASSEMBLYREF].count; i++)
     {
         serialize_ushort( row->majorversion );
         serialize_ushort( row->minorversion );
@@ -1034,10 +1059,10 @@ static UINT add_propertymap_row( UINT parent, UINT proplist )
 
 static void serialize_propertymap_table( void )
 {
-    const struct propertymap_row *row = (const struct propertymap_row *)tables[TABLE_PROPERTYMAP].ptr;
+    const struct propertymap_row *row = (const struct propertymap_row *)current_winmd->tables[TABLE_PROPERTYMAP].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_PROPERTYMAP].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_PROPERTYMAP].count; i++)
     {
         serialize_table_idx( row->parent, TABLE_TYPEDEF );
         serialize_table_idx( row->proplist, TABLE_PROPERTY );
@@ -1060,10 +1085,10 @@ static UINT add_property_row( USHORT flags, UINT name, UINT type )
 
 static void serialize_property_table( void )
 {
-    const struct property_row *row = (const struct property_row *)tables[TABLE_PROPERTY].ptr;
+    const struct property_row *row = (const struct property_row *)current_winmd->tables[TABLE_PROPERTY].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_PROPERTY].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_PROPERTY].count; i++)
     {
         serialize_ushort( row->flags );
         serialize_string_idx( row->name );
@@ -1086,10 +1111,10 @@ static UINT add_eventmap_row( UINT parent, UINT eventlist )
 
 static void serialize_eventmap_table( void )
 {
-    const struct eventmap_row *row = (const struct eventmap_row *)tables[TABLE_EVENTMAP].ptr;
+    const struct eventmap_row *row = (const struct eventmap_row *)current_winmd->tables[TABLE_EVENTMAP].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_EVENTMAP].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_EVENTMAP].count; i++)
     {
         serialize_table_idx( row->parent, TABLE_TYPEDEF );
         serialize_table_idx( row->eventlist, TABLE_EVENT );
@@ -1112,10 +1137,10 @@ static UINT add_event_row( USHORT flags, UINT name, UINT type )
 
 static void serialize_event_table( void )
 {
-    const struct event_row *row = (const struct event_row *)tables[TABLE_EVENT].ptr;
+    const struct event_row *row = (const struct event_row *)current_winmd->tables[TABLE_EVENT].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_EVENT].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_EVENT].count; i++)
     {
         serialize_ushort( row->flags );
         serialize_string_idx( row->name );
@@ -1148,13 +1173,14 @@ static int cmp_methodsemantics_row( const void *a, const void *b )
 /* sorted by association */
 static void serialize_methodsemantics_table( void )
 {
-    const struct methodsemantics_row *row = (const struct methodsemantics_row *)tables[TABLE_METHODSEMANTICS].ptr;
+    const struct methodsemantics_row *row =
+        (const struct methodsemantics_row *)current_winmd->tables[TABLE_METHODSEMANTICS].ptr;
     UINT i;
 
-    qsort( tables[TABLE_METHODSEMANTICS].ptr, tables[TABLE_METHODSEMANTICS].count, sizeof(*row),
-           cmp_methodsemantics_row );
+    qsort( current_winmd->tables[TABLE_METHODSEMANTICS].ptr, current_winmd->tables[TABLE_METHODSEMANTICS].count,
+           sizeof(*row), cmp_methodsemantics_row );
 
-    for (i = 0; i < tables[TABLE_METHODSEMANTICS].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_METHODSEMANTICS].count; i++)
     {
         serialize_ushort( row->semantics );
         serialize_table_idx( row->method, TABLE_METHODDEF );
@@ -1178,10 +1204,10 @@ static UINT add_methodimpl_row( UINT class, UINT body, UINT declaration )
 
 static void serialize_methodimpl_table( void )
 {
-    const struct methodimpl_row *row = (const struct methodimpl_row *)tables[TABLE_METHODIMPL].ptr;
+    const struct methodimpl_row *row = (const struct methodimpl_row *)current_winmd->tables[TABLE_METHODIMPL].ptr;
     UINT i;
 
-    for (i = 0; i < tables[TABLE_METHODIMPL].count; i++)
+    for (i = 0; i < current_winmd->tables[TABLE_METHODIMPL].count; i++)
     {
         serialize_table_idx( row->class, TABLE_TYPEDEF );
         serialize_table_idx( row->body, methoddef_or_ref_to_table(row->body) );
@@ -1440,25 +1466,22 @@ enum
     SIG_TYPE_EXPLICITTHIS = 0x40
 };
 
-static char *assembly_name;     /* current module */
-static char **assembly_imports;
-static UINT num_assembly_imports;
-
-static void append_assembly_import( const char *import )
+static void append_import( const char *import )
 {
     char *ptr, *name = xstrdup( import );
+    UINT size = (current_winmd->num_imports + 1) * sizeof(*current_winmd->imports);
 
     if ((ptr = strrchr( name, '.' ))) *ptr = 0;
-    assembly_imports = xrealloc( assembly_imports, (num_assembly_imports + 1) * sizeof(*assembly_imports) );
-    assembly_imports[num_assembly_imports++] = name;
+    current_winmd->imports = xrealloc( current_winmd->imports, size );
+    current_winmd->imports[current_winmd->num_imports++] = name;
 }
 
-static const char *get_assembly_import( const char *name )
+static const char *get_import( const char *name )
 {
     UINT i;
-    for (i = 0; i < num_assembly_imports; i++)
+    for (i = 0; i < current_winmd->num_imports; i++)
     {
-        if (!strcasecmp( name, assembly_imports[i] )) return assembly_imports[i];
+        if (!strcasecmp( name, current_winmd->imports[i] )) return current_winmd->imports[i];
     }
     return NULL;
 }
@@ -1506,7 +1529,7 @@ static void create_typeref( type_t *type )
     namespace_str = format_namespace( base_type->namespace, "", ".", NULL, NULL );
     base_type->md.namespace = add_string( namespace_str );
 
-    if (base_type->md.namespace && (import_name = get_assembly_import( namespace_str )))
+    if (base_type->md.namespace && (import_name = get_import( namespace_str )))
     {
         assemblyref = add_assemblyref_row( 0x200, 0, add_string(import_name) );
         scope = resolution_scope( TABLE_ASSEMBLYREF, assemblyref );
@@ -3484,7 +3507,7 @@ static void build_tables( const statement_list_t *stmt_list )
     {
         type_t *type = stmt->u.type;
 
-        if (stmt->type == STMT_IMPORT) append_assembly_import( stmt->u.str );
+        if (stmt->type == STMT_IMPORT) append_import( stmt->u.str );
 
         if (stmt->type != STMT_TYPE) continue;
 
@@ -3558,37 +3581,21 @@ static void build_tables( const statement_list_t *stmt_list )
 
 static void build_table_stream( const statement_list_t *stmts )
 {
-    static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
-    static const BYTE token[] = { 0xb7, 0x7a, 0x5c, 0x56, 0x19, 0x34, 0xe0, 0x89 };
-    static const USHORT space = 0x20;
-    char *ptr;
     UINT i;
 
-    add_string( "" );
-    add_userstring( NULL, 0 );
-    add_userstring( &space, sizeof(space) );
-    add_blob( NULL, 0 );
+    for (i = 0; i < TABLE_MAX; i++) if (current_winmd->tables[i].count) tables_header.valid |= (1ull << i);
 
-    assembly_name = xstrdup( metadata_name );
-    if ((ptr = strrchr( assembly_name, '.' ))) *ptr = 0;
-
-    add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
-    add_assembly_row( add_string(assembly_name) );
-    add_module_row( add_string(metadata_name), add_guid(&guid) );
-    add_assemblyref_row( 0, add_blob(token, sizeof(token)), add_string("mscorlib") );
-
-    build_tables( stmts );
-
-    for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
-
-    if (strings.offset >> 16) tables_header.heap_sizes |= LARGE_STRING_HEAP;
-    if (guids.offset >> 16) tables_header.heap_sizes |= LARGE_GUID_HEAP;
-    if (blobs.offset >> 16) tables_header.heap_sizes |= LARGE_BLOB_HEAP;
+    if (current_winmd->strings.offset >> 16) tables_header.heap_sizes |= LARGE_STRING_HEAP;
+    if (current_winmd->guids.offset >> 16) tables_header.heap_sizes |= LARGE_GUID_HEAP;
+    if (current_winmd->blobs.offset >> 16) tables_header.heap_sizes |= LARGE_BLOB_HEAP;
 
     add_bytes( &tables_disk, (const BYTE *)&tables_header, sizeof(tables_header) );
 
     for (i = 0; i < TABLE_MAX; i++)
-        if (tables[i].count) add_bytes( &tables_disk, (const BYTE *)&tables[i].count, sizeof(tables[i].count) );
+    {
+        struct buffer *table = &current_winmd->tables[i];
+        if (table->count) add_bytes( &tables_disk, (const BYTE *)&table->count, sizeof(table->count) );
+    }
 
     serialize_module_table();
     serialize_typeref_table();
@@ -3623,26 +3630,26 @@ static void build_streams( const statement_list_t *stmts )
     streams[WINMD_STREAM_TABLE].data_size = tables_disk.offset;
     streams[WINMD_STREAM_TABLE].data = tables_disk.ptr;
 
-    len = (strings.offset + 3) & ~3;
-    add_bytes( &strings, pad, len - strings.offset );
+    len = (current_winmd->strings.offset + 3) & ~3;
+    add_bytes( &current_winmd->strings, pad, len - current_winmd->strings.offset );
 
-    streams[WINMD_STREAM_STRING].data_size = strings.offset;
-    streams[WINMD_STREAM_STRING].data = strings.ptr;
+    streams[WINMD_STREAM_STRING].data_size = current_winmd->strings.offset;
+    streams[WINMD_STREAM_STRING].data = current_winmd->strings.ptr;
 
-    len = (userstrings.offset + 3) & ~3;
-    add_bytes( &userstrings, pad, len - userstrings.offset );
+    len = (current_winmd->userstrings.offset + 3) & ~3;
+    add_bytes( &current_winmd->userstrings, pad, len - current_winmd->userstrings.offset );
 
-    streams[WINMD_STREAM_USERSTRING].data_size = userstrings.offset;
-    streams[WINMD_STREAM_USERSTRING].data = userstrings.ptr;
+    streams[WINMD_STREAM_USERSTRING].data_size = current_winmd->userstrings.offset;
+    streams[WINMD_STREAM_USERSTRING].data = current_winmd->userstrings.ptr;
 
-    len = (blobs.offset + 3) & ~3;
-    add_bytes( &blobs, pad, len - blobs.offset );
+    len = (current_winmd->blobs.offset + 3) & ~3;
+    add_bytes( &current_winmd->blobs, pad, len - current_winmd->blobs.offset );
 
-    streams[WINMD_STREAM_BLOB].data_size = blobs.offset;
-    streams[WINMD_STREAM_BLOB].data = blobs.ptr;
+    streams[WINMD_STREAM_BLOB].data_size = current_winmd->blobs.offset;
+    streams[WINMD_STREAM_BLOB].data = current_winmd->blobs.ptr;
 
-    streams[WINMD_STREAM_GUID].data_size = guids.offset;
-    streams[WINMD_STREAM_GUID].data = guids.ptr;
+    streams[WINMD_STREAM_GUID].data_size = current_winmd->guids.offset;
+    streams[WINMD_STREAM_GUID].data = current_winmd->guids.ptr;
 
     for (i = 0; i < WINMD_STREAM_MAX; i++)
     {
@@ -3667,6 +3674,38 @@ static void write_streams( void )
     }
 }
 
+static void init_winmd( struct winmd *winmd )
+{
+    static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
+    static const BYTE token[] = { 0xb7, 0x7a, 0x5c, 0x56, 0x19, 0x34, 0xe0, 0x89 };
+    static const USHORT space = 0x20;
+    char *ptr;
+
+    memset( winmd, 0, sizeof(*winmd) );
+
+    add_string( "" );
+    add_userstring( NULL, 0 );
+    add_userstring( &space, sizeof(space) );
+    add_blob( NULL, 0 );
+
+    winmd->name = xstrdup( metadata_name );
+    if ((ptr = strrchr( winmd->name, '.' ))) *ptr = 0;
+
+    add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
+    add_assembly_row( add_string(winmd->name) );
+    add_module_row( add_string(metadata_name), add_guid(&guid) );
+    add_assemblyref_row( 0, add_blob(token, sizeof(token)), add_string("mscorlib") );
+}
+
+static void add_winmd( void )
+{
+    struct winmd *winmd = current_winmd = xmalloc( sizeof(*winmd) );
+
+    init_winmd( winmd );
+    winmd_list = xrealloc( winmd_list, (winmd_count + 1) * sizeof(*winmd) );
+    winmd_list[winmd_count++] = winmd;
+}
+
 void write_metadata( const statement_list_t *stmts )
 {
     static const BYTE pad[FILE_ALIGNMENT];
@@ -3674,6 +3713,9 @@ void write_metadata( const statement_list_t *stmts )
 
     if (!do_metadata || !winrt_mode) return;
 
+    add_winmd();
+
+    build_tables( stmts );
     build_streams( stmts );
 
     image_size = FILE_ALIGNMENT + sizeof(cor_header) + 8 + sizeof(metadata_header);
@@ -3682,7 +3724,7 @@ void write_metadata( const statement_list_t *stmts )
     init_output_buffer();
 
     write_headers( image_size );
-    write_streams( );
+    write_streams();
 
     file_size = (image_size + FILE_ALIGNMENT - 1) & ~(FILE_ALIGNMENT - 1);
     put_data( pad, file_size - image_size );
