@@ -66,7 +66,7 @@ static UINT change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     LPWSTR source_dir;
     UINT r = IDRETRY;
 
-    source_dir = msi_dup_property(package->db, L"SourceDir");
+    if (!(source_dir = msi_dup_property(package->db, L"SourceDir"))) return ERROR_INSTALL_SOURCE_ABSENT;
     record = MSI_CreateRecord(2);
 
     while (r == IDRETRY && !source_matches_volume(mi, source_dir))
