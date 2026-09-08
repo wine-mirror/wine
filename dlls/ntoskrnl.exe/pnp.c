@@ -512,12 +512,13 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
 
     struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+    WCHAR container_id_str[MAX_GUID_STRING_LEN] = { 0 };
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     WCHAR parent_id[MAX_DEVICE_ID_LEN];
+    INT32 cm_devcaps, cm_devcaps_prev;
     DEVICE_CAPABILITIES caps;
     BOOL need_driver = TRUE;
-    INT32 cm_devcaps;
     NTSTATUS status;
     HKEY key;
     WCHAR *id;
@@ -586,6 +587,10 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
         RegCloseKey( key );
     }
 
+    if (!SetupDiGetDeviceRegistryPropertyW( set, &sp_device, SPDRP_CAPABILITIES, NULL, (BYTE *)&cm_devcaps_prev,
+            sizeof(cm_devcaps_prev), NULL ))
+        cm_devcaps_prev = 0;
+
     cm_devcaps = cm_devcaps_from_device_capabalities(&caps);
     SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_CAPABILITIES, (BYTE *)&cm_devcaps, sizeof(cm_devcaps) );
     if (!get_device_id(device, BusQueryContainerID, &id) && id)
@@ -593,6 +598,40 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
         SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)id,
             (lstrlenW( id ) + 1) * sizeof(WCHAR) );
         ExFreePool( id );
+    }
+    else
+    {
+        if (!caps.Removable)
+        {
+            NTSTATUS ret;
+            ULONG needed;
+
+            if ((ret = IoGetDeviceProperty( parent_device, DevicePropertyContainerID,
+                                sizeof(container_id_str), container_id_str, &needed )))
+                ERR( "Failed to get parent container ID, status %#lx.\n", ret );
+        }
+        else
+        {
+            /*
+             * If there isn't a preexisting container ID value, or the device
+             * _was_ removable but now is not, generate a container ID for
+             * this device.
+             */
+            if (!SetupDiGetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, NULL,
+                            (BYTE *)container_id_str, sizeof(container_id_str), NULL )
+                    || !(cm_devcaps_prev & CM_DEVCAP_REMOVABLE))
+            {
+                UUID uuid;
+
+                UuidCreateSequential(&uuid);
+                swprintf( container_id_str, ARRAY_SIZE(container_id_str), L"{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                        uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
+                        uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+            }
+        }
+        if (container_id_str[0])
+            SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)container_id_str,
+                (wcslen( container_id_str ) + 1) * sizeof(WCHAR) );
     }
 
     if (!get_device_text(device, DeviceTextDescription, &id) && id)
