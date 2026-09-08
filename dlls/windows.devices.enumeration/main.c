@@ -60,7 +60,7 @@ static HRESULT WINAPI devquery_params_QueryInterface( IUnknown *iface, REFIID ii
 
     *out = NULL;
     FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
-    return S_OK;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI devquery_params_AddRef( IUnknown *iface )
