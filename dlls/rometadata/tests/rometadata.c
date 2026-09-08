@@ -1584,17 +1584,17 @@ static void test_IMetaDataImport(void)
     henum = NULL;
     buf_count = 0;
     hr = IMetaDataImport_EnumInterfaceImpls(md_import, &henum, typedef1, &impl, 1, &buf_count);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_count == 1, "got buf_count %lu\n", buf_count);
-    todo_wine test_token(md_import, impl, mdtInterfaceImpl, FALSE);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(buf_count == 1, "got buf_count %lu\n", buf_count);
+    test_token(md_import, impl, mdtInterfaceImpl, FALSE);
     IMetaDataImport_CloseEnum(md_import, henum);
 
     token = typedef2 = mdTokenNil;
     hr = IMetaDataImport_GetInterfaceImplProps(md_import, impl, &typedef2, &token);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine test_token(md_import, typedef2, mdtTypeDef, FALSE);
-    todo_wine test_token(md_import, token, mdtTypeRef, FALSE);
-    todo_wine ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_token(md_import, typedef2, mdtTypeDef, FALSE);
+    test_token(md_import, token, mdtTypeRef, FALSE);
+    ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
 
     hr = IMetaDataImport_FindTypeRef(md_import, mdtModule | 1, L"Wine.Test.ITest3", &typeref);
     todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
