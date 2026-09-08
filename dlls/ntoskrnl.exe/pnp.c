@@ -1763,6 +1763,7 @@ void pnp_manager_stop(void)
 
 void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
 {
+    static const WCHAR root_container_id[] = L"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     static const WCHAR rootW[] = {'R','O','O','T',0};
     WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(driverW)], id[MAX_DEVICE_ID_LEN];
@@ -1820,6 +1821,9 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
         list_add_tail( &new_list, &pnp_device->entry );
         device->Flags |= DO_BUS_ENUMERATED_DEVICE;
         CONTAINING_RECORD(device, struct wine_device, device_obj)->level = 1;
+        if (!SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)root_container_id,
+                sizeof(root_container_id) ))
+            ERR("Failed to set container ID on root device %s.\n", debugstr_w(id));
 
         start_device( device, set, &sp_device );
     }

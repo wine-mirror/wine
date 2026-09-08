@@ -972,7 +972,7 @@ static void test_get_device_property(void)
     NTSTATUS status;
 
     status = IoGetDeviceProperty(bus_pdo, DevicePropertyContainerID, sizeof(buffer), buffer, &req_size);
-    todo_wine ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx.\n", status);
+    ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx.\n", status);
     if (status == STATUS_SUCCESS)
     {
         ok(req_size == sizeof(root_container_id), "Unexpected size %lu.\n", req_size);

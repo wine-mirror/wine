@@ -3082,10 +3082,10 @@ static void test_pnp_device_ids(void)
         size = sizeof(parent_container_id);
         cr = CM_Get_DevNode_PropertyW(parent_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
                 (BYTE *)&parent_container_id, &size, 0);
-        todo_wine_if(test_devices[i].dev_level == 1) ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
         if (test_devices[i].dev_level == 1)
         {
-            todo_wine ok(IsEqualGUID(&parent_container_id, &expected_root_container_id), "Expected GUID %s, got %s.\n",
+            ok(IsEqualGUID(&parent_container_id, &expected_root_container_id), "Expected GUID %s, got %s.\n",
                     debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
         }
 
