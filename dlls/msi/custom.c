@@ -767,9 +767,7 @@ static custom_action_info *do_msidbCustomActionTypeDll(
     RPC_STATUS status;
     BOOL ret;
 
-    info = malloc( sizeof *info );
-    if (!info)
-        return NULL;
+    if (!(info = calloc( 1, sizeof(*info) ))) return NULL;
 
     msiobj_addref( &package->hdr );
     info->package = package;
@@ -793,6 +791,7 @@ static custom_action_info *do_msidbCustomActionTypeDll(
         if (status != RPC_S_OK)
         {
             ERR("RpcServerUseProtseqEp failed: %#lx\n", status);
+            free_custom_action_data( info );
             return NULL;
         }
 
@@ -801,6 +800,7 @@ static custom_action_info *do_msidbCustomActionTypeDll(
         if (status != RPC_S_OK)
         {
             ERR("RpcServerRegisterIfEx failed: %#lx\n", status);
+            free_custom_action_data( info );
             return NULL;
         }
 
