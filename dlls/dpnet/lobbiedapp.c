@@ -185,10 +185,10 @@ static const IDirectPlay8LobbiedApplicationVtbl DirectPlay8LobbiedApplication_Vt
 
 
 
-HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) {
+HRESULT DPNET_CreateDirectPlay8LobbiedApp(REFIID riid, LPVOID *ppobj) {
   IDirectPlay8LobbiedApplicationImpl* app;
 
-  TRACE("(%p, %s, %p)\n", punkOuter, debugstr_guid(riid), ppobj);
+  TRACE("%s, %p\n", debugstr_guid(riid), ppobj);
 
   app = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8LobbiedApplicationImpl));
   if (NULL == app) {

@@ -150,7 +150,7 @@ static const IDirectPlay8ThreadPoolVtbl DirectPlay8ThreadPool_Vtbl =
     IDirectPlay8ThreadPoolImpl_DoWork
 };
 
-HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj)
+HRESULT DPNET_CreateDirectPlay8ThreadPool(REFIID riid, LPVOID *ppobj)
 {
     IDirectPlay8ThreadPoolImpl* Client;
 

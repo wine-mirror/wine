@@ -381,17 +381,14 @@ static const IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
     IDirectPlay8ClientImpl_RegisterLobby
 };
 
-HRESULT DPNET_CreateDirectPlay8Client(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
+HRESULT DPNET_CreateDirectPlay8Client(REFIID riid, void **ppv)
 {
     IDirectPlay8ClientImpl* client;
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
     *ppv = NULL;
-
-    if(pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
 
     client = calloc(1, sizeof(IDirectPlay8ClientImpl));
     if (!client)
@@ -557,12 +554,12 @@ static const IDirectPlay8LobbyClientVtbl DirectPlay8LobbiedClient_Vtbl =
     lobbyclient_SetConnectionSettings
 };
 
-HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown *outer, REFIID riid, void **obj)
+HRESULT DPNET_CreateDirectPlay8LobbyClient(REFIID riid, void **obj)
 {
     IDirectPlay8LobbyClientImpl *client;
     HRESULT ret;
 
-    TRACE("%p (%p, %s, %p)\n", iface, outer, debugstr_guid(riid), obj);
+    TRACE("%s, %p\n", debugstr_guid(riid), obj);
 
     client = calloc(1, sizeof(*client));
     if (!client)

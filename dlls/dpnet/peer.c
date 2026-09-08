@@ -633,7 +633,7 @@ void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps)
     dpnspcaps->dwSystemBufferSize = 0x10000;
 };
 
-HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, LPVOID *ppobj)
+HRESULT DPNET_CreateDirectPlay8Peer(REFIID riid, LPVOID *ppobj)
 {
     IDirectPlay8PeerImpl* Client;
     HRESULT ret;

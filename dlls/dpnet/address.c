@@ -177,7 +177,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(IDirectPlay8Address *ifa
     if(!ppdpaNewAddress)
         return E_POINTER;
 
-    hr = DPNET_CreateDirectPlay8Address(NULL, NULL, &IID_IDirectPlay8Address, (LPVOID*)&dup);
+    hr = DPNET_CreateDirectPlay8Address(&IID_IDirectPlay8Address, (LPVOID*)&dup);
     if(hr == S_OK)
     {
         IDirectPlay8AddressImpl *DupThis = impl_from_IDirectPlay8Address(dup);
@@ -691,12 +691,12 @@ static const IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl =
     IDirectPlay8AddressImpl_BuildFromDirectPlay4Address
 };
 
-HRESULT DPNET_CreateDirectPlay8Address(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, LPVOID *ppobj)
+HRESULT DPNET_CreateDirectPlay8Address(REFIID riid, LPVOID *ppobj)
 {
     IDirectPlay8AddressImpl* client;
     HRESULT ret;
 
-    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppobj);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppobj);
 
     *ppobj = NULL;
 

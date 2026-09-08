@@ -122,13 +122,13 @@ struct IDirectPlay8ThreadPoolImpl
 /**
  * factories
  */
-extern HRESULT DPNET_CreateDirectPlay8Client(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8Server(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
-extern HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj);
+extern HRESULT DPNET_CreateDirectPlay8Client(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8Server(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8Peer(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8Address(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8ThreadPool(REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8LobbyClient(REFIID riid, void **ppobj);
 
 extern void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps);
 extern void init_winsock(void);

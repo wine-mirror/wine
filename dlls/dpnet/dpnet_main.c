@@ -96,7 +96,7 @@ typedef struct
   IClassFactory IClassFactory_iface;
   LONG          ref;
   REFCLSID      rclsid;
-  HRESULT       (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
+  HRESULT       (*pfnCreateInstanceFactory)(REFIID riid, LPVOID *ppobj);
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -126,7 +126,10 @@ static HRESULT WINAPI DICF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,
   IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
   TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-  return This->pfnCreateInstanceFactory(iface, pOuter, riid, ppobj);
+  if(pOuter)
+      return CLASS_E_NOAGGREGATION;
+
+  return This->pfnCreateInstanceFactory(riid, ppobj);
 }
 
 static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {

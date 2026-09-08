@@ -448,17 +448,14 @@ static const IDirectPlay8ServerVtbl DirectPlay8ServerVtbl =
     IDirectPlay8ServerImpl_RegisterLobby
 };
 
-HRESULT DPNET_CreateDirectPlay8Server(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
+HRESULT DPNET_CreateDirectPlay8Server(REFIID riid, void **ppv)
 {
     IDirectPlay8ServerImpl *server;
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
+    TRACE("%s, %p\n", debugstr_guid(riid), ppv);
 
     *ppv = NULL;
-
-    if(pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
 
     server = calloc(1, sizeof(IDirectPlay8ServerImpl));
     if (!server)
