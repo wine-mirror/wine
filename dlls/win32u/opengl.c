@@ -3259,6 +3259,9 @@ void win32u_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum type, const 
 
 static void display_funcs_init(void)
 {
+#define USE_GL_FUNC(func) { .name = #func, .ptr = (void *)&display_funcs.p_ ## func },
+    static const struct { const char *name; void **ptr; } procs[] = { ALL_GL_FUNCS ALL_GL_EXT_FUNCS };
+#undef USE_GL_FUNC
     struct egl_platform *egl, *next;
     UINT status;
 
@@ -3274,12 +3277,11 @@ static void display_funcs_init(void)
     if (!(pixel_formats = malloc( formats_count * sizeof(*pixel_formats) ))) ERR( "Failed to allocate memory for pixel formats\n" );
     else for (int i = 0; i < formats_count; i++) driver_funcs->p_describe_pixel_format( i + 1, pixel_formats + i );
 
-#define USE_GL_FUNC(func) \
-    if (!display_funcs.p_##func && !(display_funcs.p_##func = driver_funcs->p_get_proc_address( #func ))) \
-        WARN( "%s not found.\n", #func );
-    ALL_GL_FUNCS
-    ALL_GL_EXT_FUNCS
-#undef USE_GL_FUNC
+    for (int i = 0; i < ARRAY_SIZE(procs); i++)
+    {
+        *procs[i].ptr = driver_funcs->p_get_proc_address( procs[i].name );
+        if (!*procs[i].ptr) WARN( "%s not found.\n", procs[i].name );
+    }
 
     display_funcs.p_wglGetProcAddress = win32u_wglGetProcAddress;
     display_funcs.p_get_pixel_formats = win32u_get_pixel_formats;
