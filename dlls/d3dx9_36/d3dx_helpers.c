@@ -1625,7 +1625,7 @@ static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_b
     const uint8_t *src_ptr = *src;
     uint32_t pixel_count = 0;
 
-    while (pixel_count != row_width)
+    while (src_bytes_left && pixel_count != row_width)
     {
         uint32_t rle_count = (src_ptr[0] & 0x7f) + 1;
         uint32_t rle_packet_size = 1;
@@ -1649,9 +1649,9 @@ static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_b
         src_ptr += rle_packet_size;
         src_bytes_left -= rle_packet_size;
         pixel_count += rle_count;
-        if (!src_bytes_left && pixel_count != row_width)
-            return D3DXERR_INVALIDDATA;
     }
+    if (pixel_count != row_width)
+        return D3DXERR_INVALIDDATA;
 
     *src = src_ptr;
     return D3D_OK;
