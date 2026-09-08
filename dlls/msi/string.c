@@ -142,14 +142,13 @@ static int st_find_free_entry( string_table *st )
     sz = st->maxcount + 1 + st->maxcount / 2;
     if (!(p = realloc( st->strings, sz * sizeof(*p) ))) return -1;
     memset( p + st->maxcount, 0, (sz - st->maxcount) * sizeof(*p) );
+    st->strings = p;
 
     if (!(s = realloc( st->sorted, sz * sizeof(*s) )))
     {
         free( p );
         return -1;
     }
-
-    st->strings = p;
     st->sorted = s;
 
     st->freeslot = st->maxcount;
