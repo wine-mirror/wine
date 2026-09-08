@@ -1074,7 +1074,12 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                     else
                     {
                         len = lstrlenW(divider) + 1;
-                        value = malloc(len * sizeof(WCHAR));
+                        if (!(value = malloc(len * sizeof(WCHAR))))
+                        {
+                            RegCloseKey(hkeydriver);
+                            RegCloseKey(hkey);
+                            return;
+                        }
                         lstrcpyW(value, divider);
                     }
 
