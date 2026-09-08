@@ -826,7 +826,7 @@ static DWORD is_uninstallable( MSIDATABASE *db )
     if (MSI_ViewFetch( view, &rec ) == ERROR_SUCCESS)
     {
         const WCHAR *value = MSI_RecordGetString( rec, 1 );
-        ret = wcstol( value, NULL, 10 );
+        if (value) ret = wcstol( value, NULL, 10 );
         msiobj_release( &rec->hdr );
     }
 
