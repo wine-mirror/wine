@@ -355,7 +355,7 @@ static HRESULT WINAPI d3dx9_skin_info_SetDeclaration(ID3DXSkinInfo *iface, const
 
     if (!declaration)
         return D3DERR_INVALIDCALL;
-    for (count = 0; declaration[count].Stream != 0xff; count++) {
+    for (count = 0; count < MAX_FVF_DECL_SIZE - 1 && declaration[count].Stream != 0xff; count++) {
         if (declaration[count].Stream != 0) {
             WARN("Invalid vertex element %u; contains non-zero stream %u\n",
                  count, declaration[count].Stream);
@@ -363,6 +363,11 @@ static HRESULT WINAPI d3dx9_skin_info_SetDeclaration(ID3DXSkinInfo *iface, const
         }
     }
     count++;
+    if (count >= MAX_FVF_DECL_SIZE)
+    {
+        WARN("Declaration is too long, ignoring.\n");
+        return D3D_OK;
+    }
 
     memcpy(skin->vertex_declaration, declaration, count * sizeof(*declaration));
 
