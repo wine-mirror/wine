@@ -31,6 +31,7 @@
 static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, const AM_MEDIA_TYPE *expected)
 {
     VIDEOINFO *got_video_info_ptr, *expected_video_info_ptr;
+    int i;
 
     ok_(__FILE__, line)(IsEqualGUID(&got->majortype, &expected->majortype), "Got major type %s.\n",
             wine_dbgstr_guid(&got->majortype));
@@ -69,6 +70,14 @@ static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, co
             "Got bitcount %d.\n", got_video_info_ptr->bmiHeader.biBitCount);
     ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biCompression == expected_video_info_ptr->bmiHeader.biCompression,
             "Got compression %lx.\n", got_video_info_ptr->bmiHeader.biCompression);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biClrUsed == expected_video_info_ptr->bmiHeader.biClrUsed,
+            "Got color used %lu.\n", got_video_info_ptr->bmiHeader.biClrUsed);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biClrImportant == expected_video_info_ptr->bmiHeader.biClrImportant,
+            "Got color important %lu.\n", got_video_info_ptr->bmiHeader.biClrImportant);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biXPelsPerMeter == expected_video_info_ptr->bmiHeader.biXPelsPerMeter,
+            "Got X pixels per meter %ld.\n", got_video_info_ptr->bmiHeader.biXPelsPerMeter);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biYPelsPerMeter == expected_video_info_ptr->bmiHeader.biYPelsPerMeter,
+            "Got Y pixels per meter %ld.\n", got_video_info_ptr->bmiHeader.biYPelsPerMeter);
 
     ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biSizeImage == expected_video_info_ptr->bmiHeader.biSizeImage,
             "Got image size %lu.\n", got_video_info_ptr->bmiHeader.biSizeImage);
@@ -90,6 +99,39 @@ static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, co
             "Got target right %ld.\n", got_video_info_ptr->rcTarget.right);
     ok_(__FILE__, line)(got_video_info_ptr->rcTarget.bottom == expected_video_info_ptr->rcTarget.bottom,
             "Got target bottom %ld.\n", got_video_info_ptr->rcTarget.bottom);
+
+    ok_(__FILE__, line)(got_video_info_ptr->dwBitRate == expected_video_info_ptr->dwBitRate, "Got bit rate %ld.\n",
+            got_video_info_ptr->dwBitRate);
+    ok_(__FILE__, line)(got_video_info_ptr->dwBitErrorRate == expected_video_info_ptr->dwBitErrorRate,
+            "Got bit error rate %ld.\n", got_video_info_ptr->dwBitErrorRate);
+    ok_(__FILE__, line)(got_video_info_ptr->AvgTimePerFrame == expected_video_info_ptr->AvgTimePerFrame,
+            "Got average time per frame %I64d.\n", got_video_info_ptr->AvgTimePerFrame);
+
+    if (got_video_info_ptr->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        for (i = 0; i < ARRAY_SIZE(got_video_info_ptr->dwBitMasks); i++)
+        {
+            ok_(__FILE__, line)(got_video_info_ptr->dwBitMasks[i] == expected_video_info_ptr->dwBitMasks[i],
+                    "Got bit mask %d %#lx.\n", i, got_video_info_ptr->dwBitMasks[i]);
+        }
+    }
+
+    if (got_video_info_ptr->bmiHeader.biBitCount == 8)
+    {
+        for (i = 0; i < ARRAY_SIZE(got_video_info_ptr->bmiColors); i++)
+        {
+            winetest_push_context("quad %d", i);
+            ok_(__FILE__, line)(got_video_info_ptr->bmiColors[i].rgbBlue == expected_video_info_ptr->bmiColors[i].rgbBlue,
+                    "Got blue value %d.\n", got_video_info_ptr->bmiColors[i].rgbBlue);
+            ok_(__FILE__, line)( got_video_info_ptr->bmiColors[i].rgbGreen == expected_video_info_ptr->bmiColors[i].rgbGreen,
+                    "Got green value %d.\n", got_video_info_ptr->bmiColors[i].rgbGreen);
+            ok_(__FILE__, line)(got_video_info_ptr->bmiColors[i].rgbRed == expected_video_info_ptr->bmiColors[i].rgbRed,
+                    "Got red value %d.\n", got_video_info_ptr->bmiColors[i].rgbRed);
+            ok_(__FILE__, line)( got_video_info_ptr->bmiColors[i].rgbReserved == expected_video_info_ptr->bmiColors[i].rgbReserved,
+                    "Got reserved value %d.\n", got_video_info_ptr->bmiColors[i].rgbBlue);
+            winetest_pop_context();
+        }
+    }
 }
 
 struct image_data
@@ -774,21 +816,38 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
+static const RGBQUAD color_prefix[] =
+{
+    { 0, 0, 0 },
+    { 0, 0, 128 },
+    { 0, 128, 0 },
+    { 0, 128, 128 },
+    { 128, 0, 0 },
+    { 128, 0, 128 },
+    { 128, 128, 0 },
+    { 192, 192, 192 },
+    { 192, 220, 192 },
+    { 240, 202, 166 },
+};
+
+static const BYTE color_pattern[] = { 1, 51, 102, 153, 204, 254 };
+
 static const struct
 {
     const GUID *guid;
     DWORD compression;
     WORD bitcount;
-    ULONG cbFormat;
+    ULONG format;
+    DWORD bitmasks[3];
 }
 subtypes[] =
 {
     { &MEDIASUBTYPE_ARGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
     { &MEDIASUBTYPE_RGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
     { &MEDIASUBTYPE_RGB24, BI_RGB, 24, sizeof(VIDEOINFOHEADER) },
-    { &MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
-    { &MEDIASUBTYPE_RGB555, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
-    { &MEDIASUBTYPE_RGB8, BI_RGB, 8, sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[256]) /* bmiColors */ },
+    { &MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]), { 0xf800, 0x7e0, 0x1f } },
+    { &MEDIASUBTYPE_RGB555, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]), { 0x7c00, 0x3e0, 0x1f } },
+    { &MEDIASUBTYPE_RGB8, BI_RGB, 8, sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[256]) },
 };
 
 static void test_registration(void)
@@ -1312,8 +1371,9 @@ static void test_media_types(void)
     IFilterGraph *graph;
     IBaseFilter *filter;
     DWORD image_size;
+    int i, r, g, b;
+    RGBQUAD *ptr;
     HRESULT hr;
-    int i;
 
     hr = create_color_conv(&filter);
     todo_wine
@@ -1351,7 +1411,7 @@ static void test_media_types(void)
         winetest_push_context("subtype %d", i);
 
         req_mt.subtype = *subtypes[i].guid;
-        req_mt.cbFormat = subtypes[i].cbFormat;
+        req_mt.cbFormat = subtypes[i].format;
         video_info.bmiHeader.biHeight = 240;
         hr = IPin_QueryAccept(sink, &req_mt);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1419,10 +1479,22 @@ static void test_media_types(void)
         image_size = 240 * 240 * (subtypes[i].bitcount / 8);
         mt.subtype = *subtypes[i].guid;
         mt.lSampleSize = image_size;
-        mt.cbFormat = subtypes[i].cbFormat;
+        mt.cbFormat = subtypes[i].format;
         video_info.bmiHeader.biSizeImage = image_size;
         video_info.bmiHeader.biBitCount = subtypes[i].bitcount;
         video_info.bmiHeader.biCompression = subtypes[i].compression;
+        memcpy(video_info.dwBitMasks, subtypes[i].bitmasks, sizeof(video_info.dwBitMasks));
+        if (i == 5)
+        {
+            video_info.bmiHeader.biClrUsed = 226;
+            video_info.bmiHeader.biClrImportant = 226;
+            memcpy(video_info.bmiColors, color_prefix, sizeof(color_prefix));
+            ptr = video_info.bmiColors + ARRAY_SIZE(color_prefix);
+            for (b = 0; b < ARRAY_SIZE(color_pattern); b++)
+                for (g = 0; g < ARRAY_SIZE(color_pattern); g++)
+                    for (r = 0; r < ARRAY_SIZE(color_pattern); r++)
+                        *ptr++ = (RGBQUAD){ color_pattern[b], color_pattern[g], color_pattern[r] };
+        }
 
         compare_media_types(media_types[i], &mt);
 
