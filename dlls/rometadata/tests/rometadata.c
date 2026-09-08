@@ -1,6 +1,7 @@
 /*
  * Copyright 2024 Zhiyi Zhang for CodeWeavers
  * Copyright 2025-2026 Vibhav Pant
+ * Copyright 2026 Vibhav Pant for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1595,6 +1596,13 @@ static void test_IMetaDataImport(void)
     test_token(md_import, typedef2, mdtTypeDef, FALSE);
     test_token(md_import, token, mdtTypeRef, FALSE);
     ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
+
+    hr = IMetaDataImport_FindTypeRef(md_import, TokenFromRid(1, mdtAssemblyRef), L"NonExistent.Type.Name", &typeref);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_FindTypeRef(md_import, mdTokenNil, L"Wine.Test.ITest3", &typeref);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_FindTypeRef(md_import, TokenFromRid(1, mdtTypeDef), L"Wine.Test.ITest3", &typeref);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
 
     hr = IMetaDataImport_FindTypeRef(md_import, mdtModule | 1, L"Wine.Test.ITest3", &typeref);
     todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
