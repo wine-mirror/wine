@@ -83,8 +83,27 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 HRESULT WINAPI DirectPlay8Create(REFGUID lpGUID, LPVOID *ppvInt, LPUNKNOWN punkOuter)
 {
+    HRESULT hr = E_INVALIDARG;
     TRACE("(%s, %p, %p): stub\n", debugstr_guid(lpGUID), ppvInt, punkOuter);
-    return S_OK;
+
+    if (!ppvInt)
+        return E_POINTER;
+
+    if (IsEqualGUID(lpGUID, &IID_IDirectPlay8Client))
+        hr = DPNET_CreateDirectPlay8Client(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8Server))
+        hr = DPNET_CreateDirectPlay8Server(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8Peer))
+        hr = DPNET_CreateDirectPlay8Peer(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8Address))
+        hr = DPNET_CreateDirectPlay8Address(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8LobbiedApplication))
+        hr = DPNET_CreateDirectPlay8LobbiedApp(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8LobbyClient))
+        hr = DPNET_CreateDirectPlay8LobbyClient(lpGUID, ppvInt);
+    else if (IsEqualGUID(lpGUID, &IID_IDirectPlay8ThreadPool))
+        hr = DPNET_CreateDirectPlay8ThreadPool(lpGUID, ppvInt);
+    return hr;
 }
 
 /*******************************************************************************

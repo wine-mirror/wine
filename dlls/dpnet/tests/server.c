@@ -19,8 +19,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 
-#include <dplay8.h>
 #define COBJMACROS
+#include <dplay8.h>
+#include <dplobby8.h>
 #include <netfw.h>
 #include "wine/test.h"
 
@@ -442,6 +443,56 @@ BOOL is_stub_dll(const char *filename)
     return isstub;
 }
 
+static void test_DirectPlay8Create(void)
+{
+    HRESULT hr;
+    IDirectPlay8Server *server = NULL;
+    IDirectPlay8Client *client;
+    IDirectPlay8Peer *peer;
+    IDirectPlay8Address *address;
+    IDirectPlay8LobbiedApplication *app;
+    IDirectPlay8LobbyClient *lobby;
+    IDirectPlay8ThreadPool *threadpool;
+
+    hr = DirectPlay8Create(&CLSID_DirectPlay8Server, (LPVOID*)&server, NULL);
+    ok( hr == E_INVALIDARG, "got %08lx\n", hr );
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8Server, (LPVOID*)&server, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( server != NULL, "got NULL\n" );
+    IDirectPlay8Server_Release(server);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8Client, (LPVOID*)&client, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( client != NULL, "got NULL\n" );
+    IDirectPlay8Client_Release(client);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8Peer, (LPVOID*)&peer, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( peer != NULL, "got NULL\n" );
+   IDirectPlay8Peer_Release(peer);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8Address, (LPVOID*)&address, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( address != NULL, "got NULL\n" );
+    IDirectPlay8Address_Release(address);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8LobbiedApplication, (LPVOID*)&app, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( address != NULL, "got NULL\n" );
+    IDirectPlay8LobbiedApplication_Release(app);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8LobbyClient, (LPVOID*)&lobby, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( address != NULL, "got NULL\n" );
+    IDirectPlay8LobbyClient_Release(lobby);
+
+    hr = DirectPlay8Create(&IID_IDirectPlay8LobbyClient, (LPVOID*)&threadpool, NULL);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( address != NULL, "got NULL\n" );
+    IDirectPlay8LobbyClient_Release(threadpool);
+}
+
 START_TEST(server)
 {
     HRESULT hr;
@@ -485,6 +536,7 @@ START_TEST(server)
     create_server();
     test_server_info();
     test_enum_service_providers();
+    test_DirectPlay8Create();
 
     CoUninitialize();
 
