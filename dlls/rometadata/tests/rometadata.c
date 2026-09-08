@@ -1602,6 +1602,52 @@ static void test_IMetaDataImport(void)
     todo_wine_if(token != mdTokenNil)
     ok(token == typeref, "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typeref));
 
+    henum = NULL;
+    typeref = mdTokenNil;
+    hr = IMetaDataImport_EnumTypeRefs(md_import, &henum, &typeref, 1, NULL);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    buf_count = 0;
+    hr = IMetaDataImport_CountEnum(md_import, henum, &buf_count);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_count, "got buf_count %lu\n", hr);
+
+    for (i = 0; i < buf_count && hr == S_OK; i++)
+    {
+        mdTypeRef typeref2 = mdTokenNil;
+        CorTokenType scope_type;
+        ULONG written, len;
+        mdToken scope;
+        WCHAR name[80];
+
+        winetest_push_context("i=%lu,typeref=%s", i, debugstr_mdToken(typeref));
+        todo_wine test_token(md_import, typeref, mdtTypeRef, FALSE);
+
+        name[0] = L'\0';
+        scope = mdTokenNil;
+        hr = IMetaDataImport_GetTypeRefProps(md_import, typeref, &scope, name, ARRAY_SIZE(name), &written);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+
+        todo_wine ok(name[0], "got name %s\n", debugstr_w(name));
+        len = wcslen(name);
+        todo_wine ok(written == len + 1, "got written %lu != %lu\n", written, len + 1);
+
+        scope_type = TypeFromToken(scope);
+        if (scope_type == mdtModule)
+            ok(RidFromToken(scope) == 1, "got scope %s\n", debugstr_mdToken(scope));
+        else
+            todo_wine test_token(md_import, scope, mdtAssemblyRef, FALSE);
+
+        hr = IMetaDataImport_FindTypeRef(md_import, scope, name, &typeref2);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(typeref == typeref2, "got hr %#lx\n", hr);
+
+        hr = IMetaDataImport_EnumTypeRefs(md_import, &henum, &typeref, 1, NULL);
+        ok(SUCCEEDED(hr), "got hr %#lx\n", hr);
+        winetest_pop_context();
+    }
+    todo_wine_if(buf_count) ok(i == buf_count, "got i %lu != %lu\n", i, buf_count);
+    IMetaDataImport_CloseEnum(md_import, henum);
+
     IMetaDataImport_Release(md_import);
 }
 
