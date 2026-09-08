@@ -397,7 +397,7 @@ static void test_msaa(void)
     }
 
     hr = ObjectFromLresult(lr, &IID_IAccessible, 0, (void**)&acc);
-    ok(hr == S_OK, "ObjectFromLresult failed, hr=%lx", hr);
+    ok(hr == S_OK, "ObjectFromLresult failed, hr=%lx\n", hr);
 
     VariantInit(&varChild);
     VariantInit(&varResult);
