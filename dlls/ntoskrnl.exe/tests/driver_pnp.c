@@ -964,6 +964,36 @@ static void test_child_device_registry_key(DEVICE_OBJECT *device)
     }
 }
 
+static void test_get_device_property(void)
+{
+    static const WCHAR root_container_id[] = L"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
+    WCHAR buffer[MAX_GUID_STRING_LEN] = {0};
+    ULONG req_size = 0;
+    NTSTATUS status;
+
+    status = IoGetDeviceProperty(bus_pdo, DevicePropertyContainerID, sizeof(buffer), buffer, &req_size);
+    todo_wine ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx.\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        ok(req_size == sizeof(root_container_id), "Unexpected size %lu.\n", req_size);
+        ok(!wcscmp(root_container_id, buffer), "Unexpected property value '%ls'\n", buffer);
+    }
+}
+
+static void test_child_get_device_property(DEVICE_OBJECT *device)
+{
+    static const WCHAR child_container_id[] = L"{12345678-1234-1234-1234-123456789123}";
+    WCHAR buffer[MAX_GUID_STRING_LEN] = {0};
+    ULONG req_size = 0;
+    NTSTATUS status;
+
+    status = IoGetDeviceProperty(device, DevicePropertyContainerID, sizeof(buffer), buffer, &req_size);
+    ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx.\n", status);
+    ok(req_size == sizeof(child_container_id), "Unexpected size %lu.\n", req_size);
+    if (status == STATUS_SUCCESS)
+        ok(!wcscmp(child_container_id, buffer), "Unexpected property value '%ls'\n", buffer);
+}
+
 static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 {
     switch (code)
@@ -972,6 +1002,7 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             test_bus_query();
             test_device_properties( bus_pdo );
             test_enumerator_name();
+            test_get_device_property();
             test_device_registry_key();
             return STATUS_SUCCESS;
 
@@ -1143,6 +1174,7 @@ static NTSTATUS pdo_ioctl(DEVICE_OBJECT *device_obj, IRP *irp, IO_STACK_LOCATION
             test_child_device_properties(device_obj);
             test_child_enumerator_name(device_obj);
             test_child_device_registry_key(device_obj);
+            test_child_get_device_property(device_obj);
             return STATUS_SUCCESS;
 
         default:

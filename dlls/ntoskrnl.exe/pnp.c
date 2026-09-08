@@ -1004,6 +1004,9 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
         case DevicePropertyRemovalPolicy:
             sp_property = SPDRP_REMOVAL_POLICY;
             break;
+        case DevicePropertyContainerID:
+            sp_property = SPDRP_BASE_CONTAINERID;
+            break;
         default:
             FIXME("Unhandled property %u.\n", property);
             return STATUS_NOT_IMPLEMENTED;
