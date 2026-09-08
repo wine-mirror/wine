@@ -1380,14 +1380,19 @@ static HRESULT WINAPI d3dx9_mesh_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEM
         return D3DERR_INVALIDCALL;
     }
 
-    /* New declaration must not contain non-zero Stream value  */
-    for (i = 0; declaration[i].Stream != 0xff; i++)
+    /* New declaration must not contain non-zero Stream values */
+    for (i = 0; i < MAX_FVF_DECL_SIZE && declaration[i].Stream != 0xff; i++)
     {
         if (declaration[i].Stream != 0)
         {
             WARN("Invalid declaration. New declaration contains non-zero Stream value.\n");
             return D3DERR_INVALIDCALL;
         }
+    }
+    if (i >= MAX_FVF_DECL_SIZE)
+    {
+        WARN("Declaration is too long, ignoring.\n");
+        return D3D_OK;
     }
 
     This->num_elem = i + 1;
