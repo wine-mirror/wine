@@ -402,9 +402,15 @@ static void cat_okfile(void)
 
 static ULONG64 modified_value;
 
+static DWORD WINAPI context_thread_proc(void *arg)
+{
+    return 0;
+}
+
 static void main_test(void)
 {
     struct main_test_input test_input;
+    HANDLE thread;
     DWORD size;
     BOOL res;
 
@@ -413,9 +419,20 @@ static void main_test(void)
     test_input.modified_value = &modified_value;
     modified_value = 0;
 
+    thread = CreateThread(NULL, 0, context_thread_proc, NULL, CREATE_SUSPENDED, &test_input.thread_id);
+    ok(!!thread, "CreateThread failed: %lu\n", GetLastError());
+    memset(&test_input.thread_context, 0, sizeof(test_input.thread_context));
+    test_input.thread_context.ContextFlags = CONTEXT_CONTROL;
+    res = GetThreadContext(thread, &test_input.thread_context);
+    ok(res, "GetThreadContext failed: %lu\n", GetLastError());
+
     res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, &test_input, sizeof(test_input), NULL, 0, &size, NULL);
     ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
     ok(!size, "got size %lu\n", size);
+
+    ResumeThread(thread);
+    ok(!WaitForSingleObject(thread, 5000), "wait timed out\n");
+    CloseHandle(thread);
 }
 
 static void test_basic_ioctl(void)

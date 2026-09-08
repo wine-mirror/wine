@@ -1814,6 +1814,42 @@ static void test_lookup_thread(void)
        "PsLookupThreadByThreadId returned %#lx\n", status);
 }
 
+static void test_context_thread(const struct main_test_input *test_input)
+{
+    NTSTATUS (WINAPI *pZwAllocateVirtualMemory)(HANDLE,void**,ULONG_PTR,SIZE_T*,ULONG,ULONG);
+    NTSTATUS (WINAPI *pZwFreeVirtualMemory)(HANDLE,void**,SIZE_T*,ULONG);
+    CONTEXT *context = NULL;
+    SIZE_T size = sizeof(*context);
+    NTSTATUS status;
+    PETHREAD thread;
+
+    pZwAllocateVirtualMemory = get_proc_address("ZwAllocateVirtualMemory");
+    pZwFreeVirtualMemory = get_proc_address("ZwFreeVirtualMemory");
+    if (!pZwAllocateVirtualMemory || !pZwFreeVirtualMemory) return;
+
+    status = PsLookupThreadByThreadId(UlongToHandle(test_input->thread_id), &thread);
+    ok(!status, "PsLookupThreadByThreadId failed: %#lx\n", status);
+    if (status) return;
+
+    status = pZwAllocateVirtualMemory(NtCurrentProcess(), (void **)&context, 0, &size,
+                                      MEM_COMMIT, PAGE_READWRITE);
+    ok(!status, "ZwAllocateVirtualMemory failed: %#lx\n", status);
+    if (!status)
+    {
+        context->ContextFlags = CONTEXT_CONTROL;
+        status = PsGetContextThread(thread, context, UserMode);
+        ok(!status, "PsGetContextThread failed: %#lx\n", status);
+        ok(!kmemcmp(context, &test_input->thread_context, sizeof(*context)), "context differs\n");
+
+        status = PsGetContextThread(thread, context, KernelMode);
+        ok(status == STATUS_UNSUCCESSFUL, "got status %#lx\n", status);
+
+        pZwFreeVirtualMemory(NtCurrentProcess(), (void **)&context, &size, MEM_RELEASE);
+    }
+
+    ObDereferenceObject(thread);
+}
+
 static void test_stack_limits(void)
 {
     ULONG_PTR low = 0, high = 0;
@@ -2702,6 +2738,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_ob_reference();
     test_resource();
     test_lookup_thread();
+    test_context_thread(test_input);
     test_IoAttachDeviceToDeviceStack();
     test_object_name();
     test_dir_kernel_object();
