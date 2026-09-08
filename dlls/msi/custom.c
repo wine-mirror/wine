@@ -176,13 +176,12 @@ static WCHAR *get_deferred_action(const WCHAR *action, const WCHAR *actiondata, 
     LPWSTR deferred;
     DWORD len;
 
-    if (!actiondata)
-        return wcsdup(action);
+    if (!usersid || !prodcode) return NULL;
+    if (!actiondata) return wcsdup(action);
 
-    len = lstrlenW(action) + lstrlenW(actiondata) +
-          lstrlenW(usersid) + lstrlenW(prodcode) +
+    len = lstrlenW(action) + lstrlenW(actiondata) + lstrlenW(usersid) + lstrlenW(prodcode) +
           lstrlenW(L"[%s<=>%s<=>%s]%s") - 7;
-    deferred = malloc(len * sizeof(WCHAR));
+    if (!(deferred = malloc(len * sizeof(WCHAR)))) return NULL;
 
     swprintf(deferred, len, L"[%s<=>%s<=>%s]%s", actiondata, usersid, prodcode, action);
     return deferred;
