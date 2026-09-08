@@ -1598,16 +1598,15 @@ static void test_IMetaDataImport(void)
     ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
 
     hr = IMetaDataImport_FindTypeRef(md_import, TokenFromRid(1, mdtAssemblyRef), L"NonExistent.Type.Name", &typeref);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
     hr = IMetaDataImport_FindTypeRef(md_import, mdTokenNil, L"Wine.Test.ITest3", &typeref);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
     hr = IMetaDataImport_FindTypeRef(md_import, TokenFromRid(1, mdtTypeDef), L"Wine.Test.ITest3", &typeref);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
 
     hr = IMetaDataImport_FindTypeRef(md_import, mdtModule | 1, L"Wine.Test.ITest3", &typeref);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine test_token(md_import, typeref, mdtTypeRef, FALSE);
-    todo_wine_if(token != mdTokenNil)
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_token(md_import, typeref, mdtTypeRef, FALSE);
     ok(token == typeref, "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typeref));
 
     henum = NULL;
@@ -1646,8 +1645,8 @@ static void test_IMetaDataImport(void)
             test_token(md_import, scope, mdtAssemblyRef, FALSE);
 
         hr = IMetaDataImport_FindTypeRef(md_import, scope, name, &typeref2);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(typeref == typeref2, "got hr %#lx\n", hr);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(typeref == typeref2, "got hr %#lx\n", hr);
 
         hr = IMetaDataImport_EnumTypeRefs(md_import, &henum, &typeref, 1, NULL);
         ok(SUCCEEDED(hr), "got hr %#lx\n", hr);

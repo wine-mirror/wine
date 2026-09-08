@@ -1722,8 +1722,73 @@ static HRESULT WINAPI import_GetCustomAttributeProps(IMetaDataImport *iface, mdC
 static HRESULT WINAPI import_FindTypeRef(IMetaDataImport *iface, mdToken resolution_scope, const WCHAR *name,
                                          mdTypeRef *typeref)
 {
-    FIXME("(%p, %#x, %s, %p): stub!\n", iface, resolution_scope, debugstr_w(name), typeref);
-    return E_NOTIMPL;
+    CorTokenType scope_type = TypeFromToken(resolution_scope);
+    ULONG cur_name_len = 80;
+    HCORENUM henum = NULL;
+    mdTypeRef cur_typeref;
+    BOOL found = FALSE;
+    WCHAR *cur_name;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p)\n", iface, debugstr_mdToken(resolution_scope), debugstr_w(name), typeref);
+
+    if (resolution_scope != mdTokenNil)
+    {
+        switch (scope_type)
+        {
+        case mdtTypeRef:
+        case mdtModuleRef:
+        case mdtModule:
+        case mdtAssemblyRef:
+            break;
+        default:
+            return CLDB_E_RECORD_NOTFOUND;
+        }
+    }
+
+    if (FAILED((hr = IMetaDataImport_EnumTypeRefs(iface, &henum, &cur_typeref, 1, NULL)))) return hr;
+    if (!((cur_name = malloc(sizeof(WCHAR) * cur_name_len))))
+    {
+        IMetaDataImport_CloseEnum(iface, henum);
+        return E_OUTOFMEMORY;
+    }
+    while (hr == S_OK)
+    {
+        mdToken cur_scope;
+        ULONG reqd;
+
+        hr = IMetaDataImport_GetTypeRefProps(iface, cur_typeref, &cur_scope, cur_name, cur_name_len, &reqd);
+        if (hr == CLDB_S_TRUNCATION)
+        {
+            void *tmp;
+
+            if (!((tmp = realloc(cur_name, sizeof(WCHAR) * reqd))))
+            {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+            cur_name = tmp;
+            cur_name_len = reqd;
+            continue;
+        }
+        else if (FAILED(hr)) break;
+        if (!wcsncmp(name, cur_name, cur_name_len) && resolution_scope == cur_scope)
+        {
+            found = TRUE;
+            break;
+        }
+
+        hr = IMetaDataImport_EnumTypeRefs(iface, &henum, &cur_typeref, 1, NULL);
+    }
+
+    free(cur_name);
+    IMetaDataImport_CloseEnum(iface, henum);
+
+    if (FAILED(hr)) return hr;
+    if (!found) return CLDB_E_RECORD_NOTFOUND;
+
+    *typeref = cur_typeref;
+    return S_OK;
 }
 
 static HRESULT WINAPI import_GetMemberProps(IMetaDataImport *iface, mdToken member, mdTypeDef *type_def, WCHAR *name,
