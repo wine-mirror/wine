@@ -23,6 +23,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <setjmp.h>
+#include <stdlib.h>
 
 #include "initguid.h"
 #include "activation.h"
@@ -112,6 +114,7 @@ DEFINE_EXPECT(PreInitialize);
 DEFINE_EXPECT(PostInitialize);
 DEFINE_EXPECT(PreUninitialize);
 DEFINE_EXPECT(PostUninitialize);
+DEFINE_EXPECT(purecall_handler);
 
 #define WINRT_EXCEPTIONS                                     \
     WINRT_EXCEPTION(AccessDenied, E_ACCESSDENIED)            \
@@ -195,6 +198,7 @@ static void (WINAPI *p_EventSourceRemove)(IInspectable **, struct EventLock *, E
 static IInspectable *(WINAPI *p_EventSourceGetTargetArray)(IInspectable *, struct EventLock *);
 static IInspectable *(WINAPI *p_EventSourceGetTargetArrayEvent)(IInspectable *, ULONG, const GUID *, EventRegistrationToken *);
 static ULONG (WINAPI *p_EventSourceGetTargetArraySize)(IInspectable *);
+static IInspectable *(__cdecl *platform_object_ctor)(IInspectable *);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
 static const char *(__thiscall *p_type_info_name)(void *);
@@ -296,6 +300,7 @@ static BOOL init(void)
             "?EventSourceGetTargetArrayEvent@Details@Platform@@YAPAXPAXIPBXPA_J@Z");
     p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
             "?EventSourceGetTargetArraySize@Details@Platform@@YAIPAX@Z");
+    platform_object_ctor = (void *)GetProcAddress(hmod, "??0Object@Platform@@Q$AAA@XZ");
 
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
@@ -382,6 +387,7 @@ static BOOL init(void)
                 "?EventSourceGetTargetArrayEvent@Details@Platform@@YAPEAXPEAXIPEBXPEA_J@Z");
         p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
                 "?EventSourceGetTargetArraySize@Details@Platform@@YAIPEAX@Z");
+        platform_object_ctor = (void *)GetProcAddress(hmod, "??0Object@Platform@@QE$AAA@XZ");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
@@ -466,6 +472,7 @@ static BOOL init(void)
                 "?EventSourceGetTargetArrayEvent@Details@Platform@@YGPAXPAXIPBXPA_J@Z");
         p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
                 "?EventSourceGetTargetArraySize@Details@Platform@@YGIPAX@Z");
+        platform_object_ctor = (void *)GetProcAddress(hmod, "??0Object@Platform@@Q$AAA@XZ");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
@@ -2623,6 +2630,39 @@ static void test_EventSource_marshaling(void)
     }
 }
 
+static jmp_buf buf;
+
+static void __cdecl purecall_handler(void)
+{
+    CHECK_EXPECT(purecall_handler);
+    /* purecall will abort, so we avoid that by longjmping. */
+    longjmp(buf, 1);
+}
+
+static void test_platform_object_ctor(void)
+{
+    IInspectable obj, *obj2;
+
+    obj.lpVtbl = NULL;
+    obj2 = platform_object_ctor(&obj);
+    ok(obj2 == &obj, "got obj2 %p != %p\n", obj2, &obj);
+    todo_wine ok(!!obj.lpVtbl, "got lpVtbl %p\n", obj.lpVtbl);
+
+    if (obj.lpVtbl)
+    {
+        test_rtti_names(&obj, "class Platform::Object", ".?AVObject@Platform@@");
+
+        if (!setjmp(buf))
+        {
+            _set_purecall_handler(purecall_handler);
+            SET_EXPECT(purecall_handler);
+            IInspectable_AddRef(obj2);
+        }
+        CHECK_CALLED(purecall_handler, 1);
+         _set_purecall_handler(NULL);
+    }
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -2643,4 +2683,5 @@ START_TEST(vccorlib)
     test_Delegate();
     test_EventSource();
     test_EventSource_marshaling();
+    test_platform_object_ctor();
 }

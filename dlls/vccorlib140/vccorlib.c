@@ -911,6 +911,12 @@ HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
     return val;
 }
 
+IInspectable *__cdecl platform_object_ctor(IInspectable *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return this;
+}
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)

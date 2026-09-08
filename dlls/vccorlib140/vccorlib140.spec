@@ -383,8 +383,8 @@
 @ cdecl -arch=win64 ??0NullReferenceException@Platform@@QE$AAA@PE$AAVString@1@@Z(ptr ptr) NullReferenceException_hstring_ctor
 @ cdecl -arch=win32 ??0NullReferenceException@Platform@@Q$AAA@XZ(ptr) NullReferenceException_ctor
 @ cdecl -arch=win64 ??0NullReferenceException@Platform@@QE$AAA@XZ(ptr) NullReferenceException_ctor
-@ stub -arch=win32 ??0Object@Platform@@Q$AAA@XZ
-@ stub -arch=win64 ??0Object@Platform@@QE$AAA@XZ
+@ cdecl -arch=win32 ??0Object@Platform@@Q$AAA@XZ(ptr) platform_object_ctor
+@ cdecl -arch=win64 ??0Object@Platform@@QE$AAA@XZ(ptr) platform_object_ctor
 @ cdecl -arch=win32 ??0ObjectDisposedException@Platform@@Q$AAA@P$AAVString@1@@Z(ptr ptr) ObjectDisposedException_hstring_ctor
 @ cdecl -arch=win64 ??0ObjectDisposedException@Platform@@QE$AAA@PE$AAVString@1@@Z(ptr ptr) ObjectDisposedException_hstring_ctor
 @ cdecl -arch=win32 ??0ObjectDisposedException@Platform@@Q$AAA@XZ(ptr) ObjectDisposedException_ctor
