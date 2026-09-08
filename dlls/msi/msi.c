@@ -791,6 +791,12 @@ static UINT open_package( const WCHAR *product, const WCHAR *usersid,
 
     if ((localpath = msi_reg_get_val_str( props, L"LocalPackage" )))
     {
+        if (lstrlenW( localpath ) >= ARRAY_SIZE(sourcepath))
+        {
+            free( localpath );
+            RegCloseKey( props );
+            return ERROR_INSTALL_SOURCE_ABSENT;
+        }
         lstrcpyW( sourcepath, localpath );
         free( localpath );
     }
