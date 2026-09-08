@@ -2413,7 +2413,7 @@ LANGID WINAPI MsiLoadStringA( MSIHANDLE handle, UINT id, LPSTR lpBuffer,
     LANGID r;
     INT len;
 
-    bufW = malloc(nBufferMax * sizeof(WCHAR));
+    if (!(bufW = malloc(nBufferMax * sizeof(WCHAR)))) return 0;
     r = MsiLoadStringW(handle, id, bufW, nBufferMax, lang);
     if( r )
     {
