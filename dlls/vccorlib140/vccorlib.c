@@ -464,12 +464,61 @@ COM_VTABLE_ENTRY(platform_type_closable_GetTrustLevel)
 COM_VTABLE_ENTRY(platform_type_closable_Close)
 COM_VTABLE_RTTI_END;
 
+extern void __cdecl DECLSPEC_NORETURN _purecall(void);
+
+static HRESULT WINAPI platform_object_QueryInterface(IInspectable *iface, const GUID *iid, void **out)
+{
+    TRACE("(%p, %p, %p)\n", iface, debugstr_guid(iid), out);
+    _purecall();
+}
+
+static ULONG WINAPI platform_object_AddRef(IInspectable *iface)
+{
+    TRACE("(%p)\n", iface);
+    _purecall();
+}
+
+static ULONG WINAPI platform_object_Release(IInspectable *iface)
+{
+    TRACE("(%p)\n", iface);
+    _purecall();
+}
+
+static HRESULT WINAPI platform_object_GetIids(IInspectable *iface, ULONG *count, GUID **iids)
+{
+    TRACE("(%p, %p, %p)\n", iface, count, iids);
+    _purecall();
+}
+
+static HRESULT WINAPI platform_object_GetRuntimeClassName(IInspectable *iface, HSTRING *name)
+{
+    TRACE("(%p, %p)\n", iface, name);
+    _purecall();
+}
+
+static HRESULT WINAPI platform_object_GetTrustLevel(IInspectable *iface, TrustLevel *level)
+{
+    TRACE("(%p, %p)\n", iface, level);
+    _purecall();
+}
+
+DEFINE_RTTI_DATA(platform_object, 0, ".?AVObject@Platform@@");
+COM_VTABLE_RTTI_START(IInspectable, platform_object)
+COM_VTABLE_ENTRY(platform_object_QueryInterface)
+COM_VTABLE_ENTRY(platform_object_AddRef)
+COM_VTABLE_ENTRY(platform_object_Release)
+COM_VTABLE_ENTRY(platform_object_GetIids)
+COM_VTABLE_ENTRY(platform_object_GetRuntimeClassName)
+COM_VTABLE_ENTRY(platform_object_GetTrustLevel)
+COM_VTABLE_RTTI_END;
+
 static void init_platform_type(void *base)
 {
     INIT_RTTI(type_info, base);
     INIT_RTTI(platform_type, base);
     INIT_RTTI(platform_type_printable, base);
     INIT_RTTI(platform_type_closable, base);
+    INIT_RTTI(platform_object, base);
 }
 
 static const char *debugstr_abi_type_descriptor(const struct __abi_type_descriptor *desc)
@@ -913,7 +962,8 @@ HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
 
 IInspectable *__cdecl platform_object_ctor(IInspectable *this)
 {
-    FIXME("(%p): stub!\n", this);
+    TRACE("(%p)\n", this);
+    this->lpVtbl = &platform_object_vtable.vtable;
     return this;
 }
 

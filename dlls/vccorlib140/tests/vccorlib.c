@@ -2646,21 +2646,18 @@ static void test_platform_object_ctor(void)
     obj.lpVtbl = NULL;
     obj2 = platform_object_ctor(&obj);
     ok(obj2 == &obj, "got obj2 %p != %p\n", obj2, &obj);
-    todo_wine ok(!!obj.lpVtbl, "got lpVtbl %p\n", obj.lpVtbl);
+    ok(!!obj.lpVtbl, "got lpVtbl %p\n", obj.lpVtbl);
 
-    if (obj.lpVtbl)
+    test_rtti_names(&obj, "class Platform::Object", ".?AVObject@Platform@@");
+
+    if (!setjmp(buf))
     {
-        test_rtti_names(&obj, "class Platform::Object", ".?AVObject@Platform@@");
-
-        if (!setjmp(buf))
-        {
-            _set_purecall_handler(purecall_handler);
-            SET_EXPECT(purecall_handler);
-            IInspectable_AddRef(obj2);
-        }
-        CHECK_CALLED(purecall_handler, 1);
-         _set_purecall_handler(NULL);
+        _set_purecall_handler(purecall_handler);
+        SET_EXPECT(purecall_handler);
+        IInspectable_AddRef(obj2);
     }
+    CHECK_CALLED(purecall_handler, 1);
+    _set_purecall_handler(NULL);
 }
 
 START_TEST(vccorlib)
