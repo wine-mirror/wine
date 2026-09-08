@@ -132,7 +132,11 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    uirow = MSI_CreateRecord(1);
+    if (!(uirow = MSI_CreateRecord(1)))
+    {
+        RegCloseKey(hkey);
+        return ERROR_OUTOFMEMORY;
+    }
     attributes = MSI_RecordGetInteger(rec,5);
 
     while (rc == ERROR_SUCCESS)
