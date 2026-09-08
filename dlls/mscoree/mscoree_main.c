@@ -712,6 +712,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
         return E_INVALIDARG;
 
     This = malloc(sizeof(mscorecf));
+    if (!This)
+        return E_OUTOFMEMORY;
 
     This->IClassFactory_iface.lpVtbl = &mscorecf_vtbl;
     This->pfnCreateInstance = create_monodata;
