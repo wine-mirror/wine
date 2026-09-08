@@ -2867,7 +2867,7 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh, DW
     mesh->num_normals = *(uint32_t *)data;
     data += sizeof(uint32_t);
     if (data_size < sizeof(uint32_t) * 2 + mesh->num_normals * sizeof(D3DXVECTOR3) +
-            num_face_indices * sizeof(uint32_t))
+            mesh->num_poly_faces * sizeof(uint32_t) + num_face_indices * sizeof(uint32_t))
     {
         WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
