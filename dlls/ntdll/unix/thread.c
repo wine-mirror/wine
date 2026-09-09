@@ -1597,7 +1597,7 @@ NTSTATUS apple_spawn_main_thread( void )
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
 NTSTATUS send_debug_event( struct thread_data *data, EXCEPTION_RECORD *rec,
-                           CONTEXT *context, BOOL first_chance, BOOL exception )
+                           CONTEXT *context, BOOL first_chance )
 {
     unsigned int ret;
     DWORD i;
@@ -1641,7 +1641,7 @@ NTSTATUS send_debug_event( struct thread_data *data, EXCEPTION_RECORD *rec,
 
         contexts_to_server( server_contexts, context );
         server_contexts[0].flags |= SERVER_CTX_EXEC_SPACE;
-        server_contexts[0].exec_space.space.space = exception ? EXEC_SPACE_EXCEPTION : EXEC_SPACE_SYSCALL;
+        server_contexts[0].exec_space.space.space = EXEC_SPACE_EXCEPTION;
         server_select( &select_op, offsetof( union select_op, wait.handles[1] ), SELECT_INTERRUPTIBLE,
                        TIMEOUT_INFINITE, server_contexts, NULL );
 
@@ -1665,7 +1665,7 @@ NTSTATUS send_debug_event( struct thread_data *data, EXCEPTION_RECORD *rec,
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     struct thread_data *data = get_thread_data();
-    NTSTATUS status = send_debug_event( data, rec, context, first_chance, !(is_win64 || is_wow64()) );
+    NTSTATUS status = send_debug_event( data, rec, context, first_chance );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
         return NtContinue( context, FALSE );

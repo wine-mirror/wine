@@ -527,7 +527,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~7);
     NTSTATUS status;
 
-    status = send_debug_event( data, rec, context, TRUE, TRUE );
+    status = send_debug_event( data, rec, context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
     {
         restore_context( context, sigcontext );

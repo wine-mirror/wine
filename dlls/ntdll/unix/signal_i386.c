@@ -1495,7 +1495,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
     size_t stack_size;
     NTSTATUS status;
 
-    status = send_debug_event( data, rec, context, TRUE, TRUE );
+    status = send_debug_event( data, rec, context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
     {
         restore_context( data, context, sigcontext );

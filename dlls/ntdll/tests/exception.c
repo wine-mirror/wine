@@ -291,7 +291,6 @@ static void check_context_exception_request_( DWORD flags, BOOL hardware_excepti
     if (!(flags & CONTEXT_EXCEPTION_REPORTING)) return;
     expected_flags |= hardware_exception ? CONTEXT_EXCEPTION_ACTIVE : CONTEXT_SERVICE_ACTIVE;
     expected_broken |= !hardware_exception ? CONTEXT_EXCEPTION_ACTIVE : CONTEXT_SERVICE_ACTIVE;
-    todo_wine_if(type_broken)
     ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags ||
                          broken(type_broken && (flags & exception_reporting_flags) == expected_broken),
                          "got %#lx, expected %#lx.\n",
