@@ -112,11 +112,11 @@ DECLARE_CLASS(WineOpenGLContext);
 DECLARE_CLASS(WineStatusItem);
 DECLARE_CLASS(CAMetalLayer);
 DECLARE_PROTO(MTLDevice);
-#undef DECLARE_CLASS
+DECLARE_PROTO(WineMetalSwapChain);
+#undef DECLARE_INTERFACE
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_view* macdrv_view;
-typedef struct macdrv_opaque_metal_swapchain* macdrv_metal_swapchain;
 struct macdrv_event;
 struct macdrv_query;
 
@@ -536,10 +536,10 @@ extern void macdrv_release_metal_device(id_MTLDevice device);
 extern WineMetalView *macdrv_view_create_metal_view(macdrv_view v, id_MTLDevice device);
 extern CAMetalLayer *macdrv_view_get_metal_layer(WineMetalView *view);
 extern void macdrv_view_release_metal_view(WineMetalView *view);
-extern macdrv_metal_swapchain macdrv_create_view_swapchain(macdrv_view v);
-extern macdrv_metal_swapchain macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
-extern CAMetalLayer *macdrv_swapchain_get_layer(macdrv_metal_swapchain swapchain);
-extern void macdrv_destroy_swapchain(macdrv_metal_swapchain swapchain);
+extern id_WineMetalSwapChain macdrv_create_view_swapchain(macdrv_view v);
+extern id_WineMetalSwapChain macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
+extern CAMetalLayer *macdrv_swapchain_get_layer(id_WineMetalSwapChain swapchain);
+extern void macdrv_destroy_swapchain(id_WineMetalSwapChain swapchain);
 extern void macdrv_window_create_ca_layer_host_view(macdrv_window w, unsigned int context_id);
 extern void macdrv_window_release_ca_layer_host_view(macdrv_window w, unsigned int context_id);
 extern void macdrv_create_remote_layer(void* hwnd, unsigned int context_id);

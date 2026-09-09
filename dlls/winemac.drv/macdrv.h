@@ -196,7 +196,7 @@ struct macdrv_client_surface
 {
     struct client_surface   client;
     macdrv_view             cocoa_view;
-    macdrv_metal_swapchain  metal_swapchain;
+    id_WineMetalSwapChain   metal_swapchain;
 };
 
 extern struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client);
