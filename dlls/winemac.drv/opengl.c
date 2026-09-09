@@ -1941,7 +1941,7 @@ static BOOL query_renderer_integer(CGLRendererInfoObj renderer_info, GLint rende
 static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y,
                                     GLsizei width)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
@@ -1964,7 +1964,7 @@ static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint 
  */
 static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
@@ -1978,7 +1978,7 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 static void macdrv_surface_flush(struct opengl_drawable *base, UINT flags)
 {
     struct macdrv_client_surface *client = impl_from_client_surface(base->client);
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     TRACE("%s flags %#x\n", debugstr_opengl_drawable(base), flags);
 
@@ -2025,7 +2025,7 @@ static const GLubyte *macdrv_glGetString(GLenum name)
 static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                                 GLenum format, GLenum type, void *pixels)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     if (context->read_view || context->read_pbuffer)
         make_context_current(context, TRUE);
@@ -2044,7 +2044,7 @@ static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
  */
 static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum source)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
     struct gl_drawable *gl = impl_from_opengl_drawable(base);
     CGLPBufferObj pbuffer = gl->pbuffer;
     CGLError err;
@@ -2270,8 +2270,6 @@ static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_d
           context->draw_view, context->draw_pbuffer, context->read_view, context->read_pbuffer, context->base.format);
 
     make_context_current(context, FALSE);
-    NtCurrentTeb()->glReserved2 = context;
-
     return TRUE;
 }
 
@@ -2284,7 +2282,7 @@ static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_d
 static BOOL macdrv_wglQueryCurrentRendererIntegerWINE(GLenum attribute, GLuint *value)
 {
     BOOL ret = FALSE;
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
     CGLPixelFormatObj pixel_format;
     CGLError err;
     GLint virtual_screen;
@@ -2364,7 +2362,7 @@ static BOOL macdrv_wglQueryCurrentRendererIntegerWINE(GLenum attribute, GLuint *
 static const char *macdrv_wglQueryCurrentRendererStringWINE(GLenum attribute)
 {
     const char* ret = NULL;
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     TRACE("context %p/%p/%p attribute 0x%04x\n", context, (context ? context->context : NULL),
           (context ? context->base.host_context : NULL), attribute);
@@ -2488,7 +2486,7 @@ done:
 
 static BOOL macdrv_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
     struct gl_drawable *gl = impl_from_opengl_drawable(base);
     CGLPBufferObj pbuffer = gl->pbuffer;
 
@@ -2677,7 +2675,7 @@ static void *macdrv_get_proc_address(const char *name)
 
 static BOOL macdrv_surface_swap(struct opengl_drawable *base)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     TRACE("%s context %p/%p/%p\n", debugstr_opengl_drawable(base), context, (context ? context->context : NULL),
           (context ? context->base.host_context : NULL));

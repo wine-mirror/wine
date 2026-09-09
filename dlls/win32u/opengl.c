@@ -462,6 +462,7 @@ static BOOL make_internal_context_current( struct opengl_context *context, struc
 
     if (!driver_funcs->p_context_activate( context, drawable, drawable )) return FALSE;
     if (!context->initialized) opengl_context_init( context );
+    NtCurrentTeb()->glReserved2 = context;
     get_opengl_thread_data()->client_current = FALSE;
     return TRUE;
 }
@@ -618,7 +619,12 @@ static void make_client_context_current(void)
     struct opengl_context *context;
 
     if (!(context = NtCurrentTeb()->glContext) || thread_data->client_current) return;
-    driver_funcs->p_context_activate( context, get_target( context->draw ), get_target( context->read ) );
+    if (!driver_funcs->p_context_activate( context, get_target( context->draw ), get_target( context->read ) ))
+    {
+        ERR( "Failed to restore client context, expect trouble\n" );
+        return;
+    }
+    NtCurrentTeb()->glReserved2 = context;
     thread_data->client_current = TRUE;
 }
 
@@ -2447,7 +2453,7 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 
     if (!ret && (ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
     {
-        NtCurrentTeb()->glContext = context;
+        NtCurrentTeb()->glReserved2 = NtCurrentTeb()->glContext = context;
 
         if (old_draw && old_draw != new_draw && old_draw != new_read && old_draw->client)
             set_window_opengl_drawable( old_draw->client->hwnd, old_draw, FALSE );

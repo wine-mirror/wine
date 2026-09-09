@@ -1173,7 +1173,6 @@ static BOOL x11drv_context_activate( struct opengl_context *context, struct open
 
     if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, context->host_context );
     else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context->host_context );
-    if (ret) NtCurrentTeb()->glReserved2 = context->host_context;
     return ret;
 }
 
@@ -1452,7 +1451,7 @@ static void x11drv_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensio
 
 static BOOL x11drv_surface_swap( struct opengl_drawable *base )
 {
-    GLXContext ctx = NtCurrentTeb()->glReserved2;
+    struct opengl_context *ctx = NtCurrentTeb()->glReserved2;
     struct gl_drawable *gl = impl_from_opengl_drawable( base );
     INT64 ust, msc, sbc, target_sbc = 0;
     BOOL offscreen;
