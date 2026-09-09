@@ -59,14 +59,8 @@ struct macdrv_context
     struct opengl_context   base;
     BOOL                    core;
     macdrv_opengl_context   context;
-    HWND                    draw_hwnd;
-    macdrv_view             draw_view;
-    CGLPBufferObj           draw_pbuffer;
     GLenum                  draw_pbuffer_face;
     GLint                   draw_pbuffer_level;
-    HWND                    read_hwnd;
-    macdrv_view             read_view;
-    CGLPBufferObj           read_pbuffer;
     int                     swap_interval;
 };
 
@@ -1453,38 +1447,28 @@ static void macdrv_surface_destroy(struct opengl_drawable *base)
     TRACE("drawable %s\n", debugstr_opengl_drawable(base));
 }
 
-/**********************************************************************
- *              make_context_current
- */
-static void make_context_current(struct macdrv_context *context, BOOL read)
+static void macdrv_context_select_drawable(struct macdrv_context *context, struct opengl_drawable *drawable)
 {
-    macdrv_view view;
-    RECT view_rect;
-    CGLPBufferObj pbuffer;
+    GLint enabled;
 
-    if (read)
+    TRACE("context %p, drawable %s\n", context, debugstr_opengl_drawable(drawable));
+
+    if (drawable && drawable->client)
     {
-        if (context->read_hwnd) NtUserGetClientRect(context->read_hwnd, &view_rect, NtUserGetDpiForWindow(context->read_hwnd));
-        view = context->read_view;
-        pbuffer = context->read_pbuffer;
-    }
-    else
-    {
-        if (context->draw_hwnd) NtUserGetClientRect(context->draw_hwnd, &view_rect, NtUserGetDpiForWindow(context->draw_hwnd));
-        view = context->draw_view;
-        pbuffer = context->draw_pbuffer;
+        struct macdrv_client_surface *surface = impl_from_client_surface(drawable->client);
+        RECT rect = surface->client.virtual_rect;
+        macdrv_make_context_current(context->context, surface->cocoa_view, cgrect_from_rect(rect));
+        return;
     }
 
-    if (view || !pbuffer)
-        macdrv_make_context_current(context->context, view, cgrect_from_rect(view_rect));
-    else
-    {
-        GLint enabled;
+    if (CGLIsEnabled(context->base.host_context, kCGLCESurfaceBackingSize, &enabled) != kCGLNoError) enabled = 0;
+    if (enabled) CGLDisable(context->base.host_context, kCGLCESurfaceBackingSize);
+    macdrv_make_context_current(context->context, NULL, CGRectNull);
 
-        if (CGLIsEnabled(context->base.host_context, kCGLCESurfaceBackingSize, &enabled) == kCGLNoError && enabled)
-            CGLDisable(context->base.host_context, kCGLCESurfaceBackingSize);
-        CGLSetPBuffer(context->base.host_context, pbuffer, context->draw_pbuffer_face, context->draw_pbuffer_level, 0);
-        CGLSetCurrentContext(context->base.host_context);
+    if (drawable)
+    {
+        struct gl_drawable *gl = impl_from_opengl_drawable(drawable);
+        CGLSetPBuffer(context->base.host_context, gl->pbuffer, context->draw_pbuffer_face, context->draw_pbuffer_level, 0);
     }
 }
 
@@ -1496,7 +1480,7 @@ static BOOL set_swap_interval(struct macdrv_context *context, long interval)
 {
     CGLError err;
 
-    if (!allow_vsync || !context->draw_hwnd) interval = 0;
+    if (!allow_vsync || !context->base.draw->client) interval = 0;
 
     if (interval < 0) interval = -interval;
     if (context->swap_interval == interval) return TRUE;
@@ -1942,14 +1926,11 @@ static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint 
                                     GLsizei width)
 {
     struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
+    struct opengl_drawable *draw = context->base.draw, *read = context->base.read;
 
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, TRUE);
-
+    if (draw != read) macdrv_context_select_drawable(context, read);
     pglCopyColorTable(target, internalformat, x, y, width);
-
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, FALSE);
+    if (draw != read) macdrv_context_select_drawable(context, draw);
 }
 
 
@@ -1965,26 +1946,22 @@ static void macdrv_glCopyColorTable(GLenum target, GLenum internalformat, GLint 
 static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
 {
     struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
+    struct opengl_drawable *draw = context->base.draw, *read = context->base.read;
 
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, TRUE);
-
+    if (draw != read) macdrv_context_select_drawable(context, read);
     pglCopyPixels(x, y, width, height, type);
-
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, FALSE);
+    if (draw != read) macdrv_context_select_drawable(context, draw);
 }
 
 static void macdrv_surface_flush(struct opengl_drawable *base, UINT flags)
 {
-    struct macdrv_client_surface *client = impl_from_client_surface(base->client);
     struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
 
     TRACE("%s flags %#x\n", debugstr_opengl_drawable(base), flags);
 
     if (!context) return;
     if (flags & GL_FLUSH_INTERVAL) set_swap_interval(context, base->interval);
-    if (flags & GL_FLUSH_UPDATED) make_context_current(context, context->read_view == client->cocoa_view);
+    if (flags & GL_FLUSH_UPDATED) macdrv_context_select_drawable(context, base);
     if (flags & GL_FLUSH_PRESENT)
     {
         macdrv_flush_opengl_context(context->context);
@@ -2026,14 +2003,11 @@ static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                                 GLenum format, GLenum type, void *pixels)
 {
     struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
+    struct opengl_drawable *draw = context->base.draw, *read = context->base.read;
 
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, TRUE);
-
+    if (draw != read) macdrv_context_select_drawable(context, read);
     pglReadPixels(x, y, width, height, format, type, pixels);
-
-    if (context->read_view || context->read_pbuffer)
-        make_context_current(context, FALSE);
+    if (draw != read) macdrv_context_select_drawable(context, draw);
 }
 
 
@@ -2051,8 +2025,7 @@ static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum so
 
     TRACE("hdc %p drawable %s source 0x%x\n", hdc, debugstr_opengl_drawable(base), source);
 
-    if (!context->draw_view && context->draw_pbuffer == pbuffer && source != GL_NONE)
-        funcs->p_glFlush();
+    if (context->base.draw == base && source != GL_NONE) funcs->p_glFlush();
 
     err = CGLTexImagePBuffer(context->base.host_context, pbuffer, source);
     if (err != kCGLNoError)
@@ -2224,52 +2197,14 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     CGLReleasePBuffer(gl->pbuffer);
 }
 
-static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_drawable *draw_base, struct opengl_drawable *read_base)
+static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_drawable *draw, struct opengl_drawable *read)
 {
-    struct gl_drawable *draw = impl_from_opengl_drawable(draw_base), *read = impl_from_opengl_drawable(read_base);
     struct macdrv_context *context = macdrv_context_from_opengl_context(base);
 
-    TRACE("context %p, draw %s, read %s\n", context, debugstr_opengl_drawable(draw_base), debugstr_opengl_drawable(read_base));
+    TRACE("context %p, draw %s, read %s\n", context, debugstr_opengl_drawable(draw), debugstr_opengl_drawable(read));
 
-    if (!draw || !read)
-    {
-        CGLSetCurrentContext(context->base.host_context);
-        return TRUE;
-    }
-
-    context->read_hwnd = context->draw_hwnd = NULL;
-    context->read_view = context->draw_view = NULL;
-    context->read_pbuffer = context->draw_pbuffer = NULL;
-
-    if (draw->base.client)
-    {
-        struct macdrv_client_surface *client = impl_from_client_surface(draw->base.client);
-        context->draw_hwnd = draw->base.client->hwnd;
-        context->draw_view = client->cocoa_view;
-    }
-    else
-    {
-        context->draw_pbuffer = draw->pbuffer;
-    }
-
-    if (read != draw)
-    {
-        if (read->base.client)
-        {
-            struct macdrv_client_surface *client = impl_from_client_surface(read->base.client);
-            context->read_hwnd = read->base.client->hwnd;
-            context->read_view = client->cocoa_view;
-        }
-        else
-        {
-            context->read_pbuffer = read->pbuffer;
-        }
-    }
-
-    TRACE("making context current with draw_view %p draw_pbuffer %p read_view %p read_pbuffer %p format %u\n",
-          context->draw_view, context->draw_pbuffer, context->read_view, context->read_pbuffer, context->base.format);
-
-    make_context_current(context, FALSE);
+    macdrv_context_select_drawable(context, draw);
+    CGLSetCurrentContext(context->base.host_context);
     return TRUE;
 }
 
@@ -2487,16 +2422,14 @@ done:
 static BOOL macdrv_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
 {
     struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
-    struct gl_drawable *gl = impl_from_opengl_drawable(base);
-    CGLPBufferObj pbuffer = gl->pbuffer;
 
     TRACE("hdc %p drawable %s cube_face %#x mipmap_level %d\n", hdc, debugstr_opengl_drawable(base), cube_face, mipmap_level);
 
-    if (context && context->draw_pbuffer == pbuffer)
+    if (context && context->base.draw == base)
     {
         context->draw_pbuffer_face = cube_face;
         context->draw_pbuffer_level = mipmap_level;
-        make_context_current(context, FALSE);
+        macdrv_context_select_drawable(context, base);
     }
 
     return GL_TRUE;
@@ -2682,8 +2615,7 @@ static BOOL macdrv_surface_swap(struct opengl_drawable *base)
 
     if (context)
     {
-        struct macdrv_client_surface *client = impl_from_client_surface(base->client);
-        make_context_current(context, context->read_view == client->cocoa_view);
+        macdrv_context_select_drawable(context, base);
         macdrv_flush_opengl_context(context->context);
     }
     client_surface_present(base->client);
@@ -2692,7 +2624,11 @@ static BOOL macdrv_surface_swap(struct opengl_drawable *base)
 
 static BOOL macdrv_cleanup_thread(void)
 {
-    macdrv_make_context_current(NULL, NULL, CGRectNull);
+    struct macdrv_context *context;
+
+    if (!(context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2))) return TRUE;
+    macdrv_context_select_drawable(context, NULL);
+    CGLSetCurrentContext(NULL);
     return TRUE;
 }
 
