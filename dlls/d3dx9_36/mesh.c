@@ -2275,10 +2275,15 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
     {
         return D3DERR_INVALIDCALL;
     }
-    for (i = 0; declaration[i].Stream != 0xff; i++)
+    for (i = 0; i < MAX_FVF_DECL_SIZE - 1 && declaration[i].Stream != 0xff; i++)
         if (declaration[i].Stream != 0)
             return D3DERR_INVALIDCALL;
     num_elem = i + 1;
+    if (num_elem >= MAX_FVF_DECL_SIZE)
+    {
+        WARN("Declaration is too long.\n");
+        return D3DERR_INVALIDCALL;
+    }
 
     if (options & D3DXMESH_32BIT)
         index_format = D3DFMT_INDEX32;
