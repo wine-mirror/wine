@@ -1000,7 +1000,7 @@ UINT WINAPI MsiFormatRecordA(MSIHANDLE hinst, MSIHANDLE hrec, char *buf, DWORD *
 
     r = MSI_FormatRecordW(package, rec, NULL, &len);
     if (r != ERROR_SUCCESS)
-        return r;
+        goto done;
 
     value = malloc(++len * sizeof(WCHAR));
     if (!value)
