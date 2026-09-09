@@ -455,8 +455,19 @@ static struct opengl_context *get_null_context(void)
     return data->null_context;
 }
 
+static void context_exchange_drawables( struct opengl_context *context, struct opengl_drawable **draw, struct opengl_drawable **read )
+{
+    struct opengl_drawable *old_draw = context->draw, *old_read = context->read;
+    context->draw = *draw;
+    context->read = *read;
+    *draw = old_draw;
+    *read = old_read;
+}
+
 static BOOL make_internal_context_current( struct opengl_context *context, struct opengl_drawable *drawable )
 {
+    struct opengl_drawable *old_draw, *old_read;
+
     if (!context) context = get_null_context();
     if (!drawable) drawable = get_null_surface( context );
 
@@ -464,6 +475,14 @@ static BOOL make_internal_context_current( struct opengl_context *context, struc
     if (!context->initialized) opengl_context_init( context );
     NtCurrentTeb()->glReserved2 = context;
     get_opengl_thread_data()->client_current = FALSE;
+
+    /* keep a reference on the drawable while active, as a client context would */
+    if ((old_draw = drawable)) opengl_drawable_add_ref( old_draw );
+    if ((old_read = drawable)) opengl_drawable_add_ref( old_read );
+    context_exchange_drawables( context, &old_draw, &old_read );
+    if (old_draw) opengl_drawable_release( old_draw );
+    if (old_read) opengl_drawable_release( old_read );
+
     return TRUE;
 }
 
@@ -615,8 +634,9 @@ static struct opengl_drawable *get_target( struct opengl_drawable *drawable )
 
 static void make_client_context_current(void)
 {
+    struct opengl_context *context, *internal = NtCurrentTeb()->glReserved2;
     struct opengl_thread_data *thread_data = get_opengl_thread_data();
-    struct opengl_context *context;
+    struct opengl_drawable *old_draw = NULL, *old_read = NULL;
 
     if (!(context = NtCurrentTeb()->glContext) || thread_data->client_current) return;
     if (!driver_funcs->p_context_activate( context, get_target( context->draw ), get_target( context->read ) ))
@@ -626,6 +646,11 @@ static void make_client_context_current(void)
     }
     NtCurrentTeb()->glReserved2 = context;
     thread_data->client_current = TRUE;
+
+    /* clear the internal context drawables when activating client */
+    context_exchange_drawables( internal, &old_draw, &old_read );
+    if (old_draw) opengl_drawable_release( old_draw );
+    if (old_read) opengl_drawable_release( old_read );
 }
 
 static GLenum color_format_from_pfd( const struct wgl_pixel_format *desc, BOOL srgb )
@@ -2393,15 +2418,6 @@ static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
     memcpy( formats, pixel_formats, min( max_formats, formats_count ) * sizeof(*pixel_formats) );
     *num_formats = formats_count;
     *num_onscreen_formats = onscreen_count;
-}
-
-static void context_exchange_drawables( struct opengl_context *context, struct opengl_drawable **draw, struct opengl_drawable **read )
-{
-    struct opengl_drawable *old_draw = context->draw, *old_read = context->read;
-    context->draw = *draw;
-    context->read = *read;
-    *draw = old_draw;
-    *read = old_read;
 }
 
 /* return an updated drawable, recreating one if the window drawables have been invalidated (mostly wineandroid) */
