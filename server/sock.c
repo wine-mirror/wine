@@ -2986,7 +2986,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     {
         const struct afd_message_select_params *params = get_req_data();
 
-        if (get_req_data_size() < sizeof(params))
+        if (get_req_data_size() < sizeof(*params))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
             return;
