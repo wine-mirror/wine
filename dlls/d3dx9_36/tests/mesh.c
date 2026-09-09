@@ -619,7 +619,7 @@ static void compare_elements(const D3DVERTEXELEMENT9 *elements, const D3DVERTEXE
 
         status = !end1 ^ !end2;
         ok(!status, "Line %u, test %u: Mismatch in size, test declaration is %s than expected.\n",
-                line, test_id, end1 ? "shorter" : "longer");
+                line, test_id, end1 ? "longer" : "shorter");
         if (status)
         {
             print_elements(elements);
