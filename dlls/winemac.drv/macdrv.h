@@ -179,7 +179,7 @@ struct macdrv_win_data
 {
     HWND                hwnd;                   /* hwnd that this private data belongs to */
     macdrv_window       cocoa_window;
-    macdrv_view         client_view;
+    WineContentView    *client_view;
     struct window_rects rects;                  /* window rects in monitor DPI, relative to parent client area */
     int                 pixel_format;           /* pixel format for GL */
     HANDLE              drag_event;             /* event to signal that Cocoa-driven window dragging has ended */
@@ -195,7 +195,7 @@ struct macdrv_win_data
 struct macdrv_client_surface
 {
     struct client_surface   client;
-    macdrv_view             cocoa_view;
+    WineContentView        *cocoa_view;
     id_WineMetalSwapChain   metal_swapchain;
 };
 

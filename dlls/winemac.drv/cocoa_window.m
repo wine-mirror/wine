@@ -3492,7 +3492,7 @@ void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize ma
  * caller is responsible for calling macdrv_dispose_view() on the view
  * when it is done with it.
  */
-macdrv_view macdrv_create_view(CGRect rect)
+WineContentView *macdrv_create_view(CGRect rect)
 {
 @autoreleasepool
 {
@@ -3520,7 +3520,7 @@ macdrv_view macdrv_create_view(CGRect rect)
                  object:NSApp];
     });
 
-    return (macdrv_view)view;
+    return view;
 }
 }
 
@@ -3529,12 +3529,10 @@ macdrv_view macdrv_create_view(CGRect rect)
  *
  * Destroys a view previously returned by macdrv_create_view.
  */
-void macdrv_dispose_view(macdrv_view v)
+void macdrv_dispose_view(WineContentView *view)
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-
     OnMainThread(^{
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
         WineWindow* window = (WineWindow*)[view window];
@@ -3558,12 +3556,10 @@ void macdrv_dispose_view(macdrv_view v)
 /***********************************************************************
  *              macdrv_set_view_frame
  */
-void macdrv_set_view_frame(macdrv_view v, CGRect rect)
+void macdrv_set_view_frame(WineContentView *view, CGRect rect)
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-
     if (CGRectIsNull(rect)) rect = CGRectZero;
 
     OnMainThreadAsync(^{
@@ -3595,16 +3591,13 @@ void macdrv_set_view_frame(macdrv_view v, CGRect rect)
  * Otherwise, the view is ordered above n.  If s is NULL, use the
  * content view of w as the new superview.
  */
-void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n)
+void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, macdrv_window w, WineContentView *prev, WineContentView *next)
 {
 @autoreleasepool
 {
     OnMainThreadAsync(^{
-        WineContentView* view = (WineContentView*)v;
-        WineContentView* superview = (WineContentView*)s;
+        WineContentView* superview = parent;
         WineWindow* window = (WineWindow*)w;
-        WineContentView* prev = (WineContentView*)p;
-        WineContentView* next = (WineContentView*)n;
 
         if (!superview)
             superview = [window contentView];
@@ -3641,12 +3634,10 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
 /***********************************************************************
  *              macdrv_set_view_hidden
  */
-void macdrv_set_view_hidden(macdrv_view v, bool hidden)
+void macdrv_set_view_hidden(WineContentView *view, bool hidden)
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-
     OnMainThreadAsync(^{
         [view setHidden:hidden];
         [(WineWindow*)view.window updateForGLSubviews];
@@ -3659,12 +3650,10 @@ void macdrv_set_view_hidden(macdrv_view v, bool hidden)
  *
  * Add an OpenGL context to the list being tracked for each view.
  */
-void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context)
+void macdrv_add_view_opengl_context(WineContentView *view, WineOpenGLContext *context)
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-
     OnMainThread(^{
         [view addGLContext:context];
     });
@@ -3676,12 +3665,10 @@ void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context)
  *
  * Add an OpenGL context to the list being tracked for each view.
  */
-void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context)
+void macdrv_remove_view_opengl_context(WineContentView *view, WineOpenGLContext *context)
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-
     OnMainThreadAsync(^{
         [view removeGLContext:context];
     });
@@ -3704,9 +3691,8 @@ void macdrv_release_metal_device(id<MTLDevice> device)
 }
 }
 
-WineMetalView *macdrv_view_create_metal_view(macdrv_view v, id<MTLDevice> device)
+WineMetalView *macdrv_view_create_metal_view(WineContentView *view, id<MTLDevice> device)
 {
-    WineContentView* view = (WineContentView*)v;
     __block WineMetalView *metalView;
 
     OnMainThread(^{
@@ -3747,13 +3733,13 @@ void macdrv_view_release_metal_view(WineMetalView *view)
     WineMetalView *metal_view;
 }
 
-- (instancetype) initWithView:(macdrv_view)view;
+- (instancetype) initWithView:(WineContentView *)view;
 
 @end
 
 @implementation MetalViewSwapChain
 
-- (instancetype) initWithView:(macdrv_view)view
+- (instancetype) initWithView:(WineContentView *)view
 {
     self = [super init];
     if (!self) return nil;
@@ -3874,9 +3860,9 @@ void macdrv_view_release_metal_view(WineMetalView *view)
 
 @end
 
-id<WineMetalSwapChain> macdrv_create_view_swapchain(macdrv_view v)
+id<WineMetalSwapChain> macdrv_create_view_swapchain(WineContentView *view)
 {
-    return [[MetalViewSwapChain alloc] initWithView:v];
+    return [[MetalViewSwapChain alloc] initWithView:view];
 }
 
 id<WineMetalSwapChain> macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds)
@@ -3924,10 +3910,8 @@ void macdrv_window_release_ca_layer_host_view(macdrv_window w, unsigned int cont
 }
 }
 
-bool macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
+bool macdrv_get_view_backing_size(WineContentView *view, int backing_size[2])
 {
-    WineContentView* view = (WineContentView*)v;
-
     if (![view isKindOfClass:[WineContentView class]])
         return false;
 
@@ -3935,10 +3919,8 @@ bool macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
     return true;
 }
 
-void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2])
+void macdrv_set_view_backing_size(WineContentView *view, const int backing_size[2])
 {
-    WineContentView* view = (WineContentView*)v;
-
     if ([view isKindOfClass:[WineContentView class]])
         [view wine_setBackingSize:backing_size];
 }

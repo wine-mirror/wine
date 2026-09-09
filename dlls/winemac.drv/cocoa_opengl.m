@@ -76,12 +76,12 @@
     - (void) resetSurfaceIfBackingSizeChanged
     {
         int view_backing[2];
-        if (macdrv_get_view_backing_size((macdrv_view)self.view, view_backing) &&
+        if (macdrv_get_view_backing_size((WineContentView *)self.view, view_backing) &&
             (view_backing[0] != backing_size[0] || view_backing[1] != backing_size[1]))
         {
             view_backing[0] = backing_size[0];
             view_backing[1] = backing_size[1];
-            macdrv_set_view_backing_size((macdrv_view)self.view, view_backing);
+            macdrv_set_view_backing_size((WineContentView *)self.view, view_backing);
 
             NSView* save = self.view;
 #pragma clang diagnostic push
@@ -176,13 +176,13 @@
     {
         if ([self view])
         {
-            macdrv_remove_view_opengl_context((macdrv_view)[self view], self);
+            macdrv_remove_view_opengl_context((WineContentView *)[self view], self);
             if (removeViews)
                 [self clearDrawableLeavingSurfaceOnScreen];
         }
         if ([self latentView])
         {
-            macdrv_remove_view_opengl_context((macdrv_view)[self latentView], self);
+            macdrv_remove_view_opengl_context((WineContentView *)[self latentView], self);
             if (removeViews)
                 [self setLatentView:nil];
         }
@@ -226,15 +226,13 @@ void macdrv_dispose_opengl_context(WineOpenGLContext *context)
 /***********************************************************************
  *              macdrv_make_context_current
  */
-void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRect r)
+void macdrv_make_context_current(WineOpenGLContext *context, WineContentView *view, CGRect r)
 {
 @autoreleasepool
 {
-    NSView* view = (NSView*)v;
-
     if (context && view)
     {
-        if (view == [context view] || view == [context latentView])
+        if (view == (WineContentView *)[context view] || view == (WineContentView *)[context latentView])
         {
             [context wine_updateBackingSize:&r.size];
             macdrv_update_opengl_context(context);
@@ -242,7 +240,7 @@ void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRe
         else
         {
             [context removeFromViews:NO];
-            macdrv_add_view_opengl_context(v, context);
+            macdrv_add_view_opengl_context(view, context);
 
             if (context.needsUpdate)
             {
@@ -251,7 +249,7 @@ void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRe
                 if (context.view)
                     [context setView:[[context class] dummyView]];
                 [context wine_updateBackingSize:&r.size];
-                [context setView:view];
+                [context setView:(NSView *)view];
                 [context setLatentView:nil];
                 [context resetSurfaceIfBackingSizeChanged];
             }
@@ -260,7 +258,7 @@ void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRe
                 if ([context view])
                     [context clearDrawableLeavingSurfaceOnScreen];
                 [context wine_updateBackingSize:&r.size];
-                [context setLatentView:view];
+                [context setLatentView:(NSView *)view];
             }
         }
 

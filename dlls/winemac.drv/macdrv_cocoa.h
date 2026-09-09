@@ -106,6 +106,7 @@ enum {
 #define DECLARE_CLASS(x) typedef struct __ ## x x
 #define DECLARE_PROTO(x) typedef struct __ ## x *id_ ## x
 #endif
+DECLARE_CLASS(WineContentView);
 DECLARE_CLASS(WineEventQueue);
 DECLARE_CLASS(WineMetalView);
 DECLARE_CLASS(WineOpenGLContext);
@@ -116,7 +117,6 @@ DECLARE_PROTO(WineMetalSwapChain);
 #undef DECLARE_INTERFACE
 
 typedef struct macdrv_opaque_window* macdrv_window;
-typedef struct macdrv_opaque_view* macdrv_view;
 struct macdrv_event;
 struct macdrv_query;
 
@@ -524,19 +524,19 @@ extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, bool use_per_pixe
 extern void macdrv_set_window_mask(macdrv_window w, CGRect rect);
 extern void macdrv_give_cocoa_window_focus(macdrv_window w, bool activate);
 extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size);
-extern macdrv_view macdrv_create_view(CGRect rect);
-extern void macdrv_dispose_view(macdrv_view v);
-extern void macdrv_set_view_frame(macdrv_view v, CGRect rect);
-extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n);
-extern void macdrv_set_view_hidden(macdrv_view v, bool hidden);
-extern void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
-extern void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
+extern WineContentView *macdrv_create_view(CGRect rect);
+extern void macdrv_dispose_view(WineContentView *view);
+extern void macdrv_set_view_frame(WineContentView *view, CGRect rect);
+extern void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, macdrv_window w, WineContentView *prev, WineContentView *next);
+extern void macdrv_set_view_hidden(WineContentView *view, bool hidden);
+extern void macdrv_add_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
+extern void macdrv_remove_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
 extern id_MTLDevice macdrv_create_metal_device(void);
 extern void macdrv_release_metal_device(id_MTLDevice device);
-extern WineMetalView *macdrv_view_create_metal_view(macdrv_view v, id_MTLDevice device);
+extern WineMetalView *macdrv_view_create_metal_view(WineContentView *view, id_MTLDevice device);
 extern CAMetalLayer *macdrv_view_get_metal_layer(WineMetalView *view);
 extern void macdrv_view_release_metal_view(WineMetalView *view);
-extern id_WineMetalSwapChain macdrv_create_view_swapchain(macdrv_view v);
+extern id_WineMetalSwapChain macdrv_create_view_swapchain(WineContentView *view);
 extern id_WineMetalSwapChain macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
 extern CAMetalLayer *macdrv_swapchain_get_layer(id_WineMetalSwapChain swapchain);
 extern void macdrv_destroy_swapchain(id_WineMetalSwapChain swapchain);
@@ -544,8 +544,8 @@ extern void macdrv_window_create_ca_layer_host_view(macdrv_window w, unsigned in
 extern void macdrv_window_release_ca_layer_host_view(macdrv_window w, unsigned int context_id);
 extern void macdrv_create_remote_layer(void* hwnd, unsigned int context_id);
 extern void macdrv_release_remote_layer(void* hwnd, unsigned int context_id);
-extern bool macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]);
-extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2]);
+extern bool macdrv_get_view_backing_size(WineContentView *view, int backing_size[2]);
+extern void macdrv_set_view_backing_size(WineContentView *view, const int backing_size[2]);
 extern uint32_t macdrv_window_background_color(void);
 extern bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *data);
 extern bool macdrv_is_any_wine_window_visible(void);
@@ -574,7 +574,7 @@ extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_w
 /* opengl */
 extern WineOpenGLContext *macdrv_create_opengl_context(void* cglctx);
 extern void macdrv_dispose_opengl_context(WineOpenGLContext *context);
-extern void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRect r);
+extern void macdrv_make_context_current(WineOpenGLContext *context, WineContentView *view, CGRect r);
 extern void macdrv_update_opengl_context(WineOpenGLContext *context);
 extern void macdrv_flush_opengl_context(WineOpenGLContext *context);
 
