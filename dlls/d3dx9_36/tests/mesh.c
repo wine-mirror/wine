@@ -1201,7 +1201,7 @@ static void D3DXCreateMeshTest(void)
     IDirect3DDevice9 *device, *test_device;
     ID3DXMesh *d3dxmesh;
     int i, size;
-    D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE];
+    D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE], decl_long[MAX_FVF_DECL_SIZE + 5];
     DWORD options;
     struct mesh mesh;
     struct test_context *test_context;
@@ -1397,6 +1397,24 @@ static void D3DXCreateMeshTest(void)
     /* Test a declaration with multiple streams. */
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl3, device, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    /* Test a declaration that is too long. */
+    for (i = 0; i < ARRAY_SIZE(decl_long) - 1; ++i)
+    {
+        decl_long[i].Stream = 0;
+        decl_long[i].Offset = 0;
+        decl_long[i].Type = D3DDECLTYPE_FLOAT3;
+        decl_long[i].Method = D3DDECLMETHOD_DEFAULT;
+        decl_long[i].Usage = D3DDECLUSAGE_POSITION;
+        decl_long[i].UsageIndex = i;
+    }
+    decl_long[i].Stream = 0xff;
+    /* Crashes on native. */
+    if (0)
+    {
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl_long, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    }
 
     free_test_context(test_context);
 }
@@ -4665,6 +4683,8 @@ static void test_get_decl_length(void)
         {7, 8, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         D3DDECL_END(),
     };
+    D3DVERTEXELEMENT9 decl_long[MAX_FVF_DECL_SIZE + 5];
+    unsigned int i;
     UINT size;
 
     size = D3DXGetDeclLength(declaration1);
@@ -4672,6 +4692,19 @@ static void test_get_decl_length(void)
 
     size = D3DXGetDeclLength(declaration2);
     ok(size == 16, "Got size %u, expected 16.\n", size);
+
+    for (i = 0; i < ARRAY_SIZE(decl_long) - 1; ++i)
+    {
+        decl_long[i].Stream = 0;
+        decl_long[i].Offset = 0;
+        decl_long[i].Type = D3DDECLTYPE_FLOAT3;
+        decl_long[i].Method = D3DDECLMETHOD_DEFAULT;
+        decl_long[i].Usage = D3DDECLUSAGE_POSITION;
+        decl_long[i].UsageIndex = i;
+    }
+    decl_long[i].Stream = 0xff;
+    size = D3DXGetDeclLength(decl_long);
+    ok(size == 69, "Got size %u, expected 16.\n", size);
 }
 
 static void test_get_decl_vertex_size(void)
@@ -4727,6 +4760,7 @@ static void test_get_decl_vertex_size(void)
         12, 16, 20, 24,
         12, 12, 16, 16,
     };
+    D3DVERTEXELEMENT9 decl_long[MAX_FVF_DECL_SIZE + 5];
     unsigned int i;
     UINT size;
 
@@ -4744,6 +4778,22 @@ static void test_get_decl_vertex_size(void)
         size = D3DXGetDeclVertexSize(declaration2, i);
         ok(size == sizes2[i], "Got size %u for stream %u, expected %u.\n", size, i, sizes2[i]);
     }
+
+    for (i = 0; i < ARRAY_SIZE(decl_long) - 1; ++i)
+    {
+        decl_long[i].Stream = 0;
+        decl_long[i].Offset = 0;
+        decl_long[i].Type = D3DDECLTYPE_FLOAT3;
+        decl_long[i].Method = D3DDECLMETHOD_DEFAULT;
+        decl_long[i].Usage = D3DDECLUSAGE_POSITION;
+        decl_long[i].UsageIndex = i;
+    }
+    decl_long[i].Stream = 0xff;
+
+    size = D3DXGetDeclVertexSize(decl_long, 0);
+    ok(size == 12, "Unexpected size %u.\n", size);
+    size = D3DXGetDeclVertexSize(decl_long, 1);
+    ok(!size, "Unexpected size %u.\n", size);
 }
 
 static void D3DXGenerateAdjacencyTest(void)
@@ -4948,7 +4998,7 @@ static void test_update_semantics(void)
     void *vertex_buffer;
     void *index_buffer;
     DWORD *attributes_buffer;
-    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE], decl_long[MAX_FVF_DECL_SIZE + 5];
     D3DVERTEXELEMENT9 *decl_ptr;
     DWORD exp_vertex_size = sizeof(*vertices);
     DWORD vertex_size = 0;
@@ -5180,6 +5230,36 @@ static void test_update_semantics(void)
                    sizeof(declaration_not_4_byte_aligned_offset));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
+    /* Declaration too long */
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
+    ok(hr == D3D_OK, "Unexpected hr %#lx\n", hr);
+    hr = mesh->lpVtbl->GetDeclaration(mesh, decl_long);
+    ok(hr == D3D_OK, "Unexpected hr %#lx\n", hr);
+    for (i = 3; i < ARRAY_SIZE(decl_long) - 1; ++i)
+    {
+        decl_long[i].Stream = 0;
+        decl_long[i].Offset = 0;
+        decl_long[i].Type = D3DDECLTYPE_FLOAT3;
+        decl_long[i].Method = D3DDECLMETHOD_DEFAULT;
+        decl_long[i].Usage = D3DDECLUSAGE_POSITION;
+        decl_long[i].UsageIndex = i;
+    }
+    decl_long[i].Stream = 0xff;
+    /* Native just crashes in UpdateSemantics() */
+    if (0)
+    {
+    hr = mesh->lpVtbl->UpdateSemantics(mesh, decl_long);
+    ok(hr == D3D_OK, "Unexpected hr %#lx\n", hr);
+    vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
+            vertex_size, exp_vertex_size);
+    memset(declaration, 0, sizeof(declaration));
+    hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
+    equal = memcmp(declaration, decl_long, sizeof(decl_long));
+    ok(equal == 0, "Vertex declarations were not equal\n");
+    }
+
 cleanup:
     if (mesh)
         mesh->lpVtbl->Release(mesh);
@@ -5377,6 +5457,7 @@ static void test_create_skin_info(void)
         {
             /* test [GS]etFVF and [GS]etDeclaration */
             D3DVERTEXELEMENT9 declaration_in[MAX_FVF_DECL_SIZE];
+            D3DVERTEXELEMENT9 decl_long[MAX_FVF_DECL_SIZE + 5], decl_long2[MAX_FVF_DECL_SIZE + 5];
             DWORD got_fvf;
 
             fvf = D3DFVF_XYZ;
@@ -5385,6 +5466,26 @@ static void test_create_skin_info(void)
 
             hr = skininfo->lpVtbl->SetDeclaration(skininfo, declaration_with_nonzero_stream);
             ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
+
+            for (i = 0; i < ARRAY_SIZE(decl_long) - 1; ++i)
+            {
+                decl_long[i].Stream = 0;
+                decl_long[i].Offset = 0;
+                decl_long[i].Type = D3DDECLTYPE_FLOAT3;
+                decl_long[i].Method = D3DDECLMETHOD_DEFAULT;
+                decl_long[i].Usage = D3DDECLUSAGE_POSITION;
+                decl_long[i].UsageIndex = i;
+            }
+            decl_long[i].Stream = 0xff;
+            /* Native will happily overflow the buffer and corrupt memory */
+            if (0)
+            {
+            hr = skininfo->lpVtbl->SetDeclaration(skininfo, decl_long);
+            ok(hr == D3D_OK, "Unexpected hr %#lx\n", hr);
+            hr = skininfo->lpVtbl->GetDeclaration(skininfo, decl_long2);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+            compare_elements(decl_long2, decl_long, __LINE__, 0);
+            }
 
             hr = skininfo->lpVtbl->SetFVF(skininfo, 0);
             ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
