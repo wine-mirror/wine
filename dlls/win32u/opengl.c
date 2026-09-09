@@ -408,11 +408,9 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
 static struct opengl_context *internal_context_create(void)
 {
     static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0 };
-    struct opengl_context *context, *share = global_context ? global_context->driver_private : NULL;
     BOOL shared = TRUE, doublebuffer;
+    struct opengl_context *context;
     int format;
-
-    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
 
     for (format = 1; format <= formats_count; format++)
     {
@@ -422,17 +420,17 @@ static struct opengl_context *internal_context_create(void)
         if (desc->pfd.cColorBits < 24) continue;
 
         doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
-        if (!driver_funcs->p_context_create( format, share, attribs, &context->driver_private, &shared )) continue;
+        if (!(context = driver_funcs->p_context_create( format, global_context, attribs, &shared ))) continue;
         context->format = format;
         context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
         context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
 
-        TRACE( "Created internal %s context %p\n", global_context ? "global" : "thread", context );
+        TRACE( "Created internal %s context %p\n", global_context ? "thread" : "global", context );
         return context;
     }
 
-    ERR( "Failed to create internal %s context\n", global_context ? "global" : "thread" );
-    return context; /* return a valid pointer nonetheless */
+    ERR( "Failed to create internal %s context\n", global_context ? "thread" : "global" );
+    return calloc( 1, sizeof(*context) ); /* return a valid pointer nonetheless */
 }
 
 static struct opengl_drawable *get_null_surface( struct opengl_context *context )
@@ -1360,11 +1358,13 @@ static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLen
     return -1; /* use default implementation */
 }
 
-static BOOL egldrv_context_create( int format, void *share, const int *attribs, void **context, BOOL *shared )
+static struct opengl_context *egldrv_context_create( int format, struct opengl_context *share, const int *attribs, BOOL *shared )
 {
+    EGLContext host_share = share ? share->host_context : NULL;
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
     EGLint err, egl_attribs[16], *attribs_end = egl_attribs;
+    struct opengl_context *context;
 
     TRACE( "format %d, share %p, attribs %p\n", format, share, attribs );
 
@@ -1395,7 +1395,7 @@ static BOOL egldrv_context_create( int format, void *share, const int *attribs, 
             if (attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
             {
                 ERR( "OpenGL ES contexts are not supported\n" );
-                return FALSE;
+                return NULL;
             }
             name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
             break;
@@ -1419,6 +1419,8 @@ static BOOL egldrv_context_create( int format, void *share, const int *attribs, 
     }
     *attribs_end = EGL_NONE;
 
+    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+
     /* For now only OpenGL is supported. It's enough to set the API only for
      * context creation, since:
      * 1. the default API is EGL_OPENGL_ES_API
@@ -1427,24 +1429,29 @@ static BOOL egldrv_context_create( int format, void *share, const int *attribs, 
      *    > purposes except eglCreateContext.
      */
     funcs->p_eglBindAPI( EGL_OPENGL_API );
-    *context = funcs->p_eglCreateContext( egl->display, EGL_NO_CONFIG_KHR, share, attribs ? egl_attribs : NULL );
+    context->host_context = funcs->p_eglCreateContext( egl->display, EGL_NO_CONFIG_KHR, host_share,
+                                                       attribs ? egl_attribs : NULL );
 
-    if ((err = funcs->p_eglGetError()) != EGL_SUCCESS || !*context)
+    if ((err = funcs->p_eglGetError()) != EGL_SUCCESS || !context->host_context)
     {
         WARN( "Context creation failed (error %#x).\n", err );
-        return FALSE;
+        free( context );
+        return NULL;
     }
 
-    TRACE( "Created context %p\n", *context );
-    return TRUE;
+    TRACE( "Created context %p\n", context );
+    return context;
 }
 
-static BOOL egldrv_context_destroy( void *context )
+static BOOL egldrv_context_destroy( struct opengl_context *context )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
 
-    funcs->p_eglDestroyContext( egl->display, context );
+    TRACE( "context %p\n", context );
+    funcs->p_eglDestroyContext( egl->display, context->host_context );
+    free( context );
+
     return TRUE;
 }
 
@@ -1455,7 +1462,7 @@ static BOOL egldrv_context_activate( struct opengl_context *context, struct open
 
     TRACE( "context %p, draw %s, read %s\n", context, debugstr_opengl_drawable( draw ), debugstr_opengl_drawable( read ) );
 
-    return funcs->p_eglMakeCurrent( egl->display, draw ? draw->surface : EGL_NO_SURFACE, read ? read->surface : EGL_NO_SURFACE, context->driver_private );
+    return funcs->p_eglMakeCurrent( egl->display, draw ? draw->surface : EGL_NO_SURFACE, read ? read->surface : EGL_NO_SURFACE, context->host_context );
 }
 
 static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
@@ -1905,12 +1912,12 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLe
     return -1; /* use default implementation */
 }
 
-static BOOL nulldrv_context_create( int format, void *share, const int *attribs, void **private, BOOL *shared )
+static struct opengl_context *nulldrv_context_create( int format, struct opengl_context *share, const int *attribs, BOOL *shared )
 {
-    return FALSE;
+    return NULL;
 }
 
-static BOOL nulldrv_context_destroy( void *private )
+static BOOL nulldrv_context_destroy( struct opengl_context *private )
 {
     return FALSE;
 }
@@ -2844,8 +2851,8 @@ static int get_window_swap_interval( HWND hwnd )
 
 static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
 {
-    struct opengl_context *context, *share = global_context ? global_context->driver_private : NULL;
     BOOL shared = TRUE, doublebuffer;
+    struct opengl_context *context;
     int format;
 
     TRACE( "hdc %p, attribs %p\n", hdc, attribs );
@@ -2859,15 +2866,9 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
     }
     doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
 
-    if (!(context = calloc( 1, sizeof(*context) )))
-    {
-        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
-        return NULL;
-    }
-    if (!driver_funcs->p_context_create( format, share, attribs, &context->driver_private, &shared ))
+    if (!(context = driver_funcs->p_context_create( format, global_context, attribs, &shared )))
     {
         WARN( "Failed to create driver context for context %p\n", context );
-        free( context );
         return NULL;
     }
     context->format = format;
@@ -2875,23 +2876,14 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
     context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
     *broken_sharing = !shared;
 
-    TRACE( "created context %p, format %u for driver context %p\n", context, format, context->driver_private );
+    TRACE( "created context %p, format %u\n", context, format );
     return context;
 }
 
 static BOOL win32u_context_destroy( struct opengl_context *context )
 {
     TRACE( "context %p\n", context );
-
-    if (context->driver_private && !driver_funcs->p_context_destroy( context->driver_private ))
-    {
-        WARN( "Failed to destroy driver context %p\n", context->driver_private );
-        return FALSE;
-    }
-    context->driver_private = NULL;
-
-    free( context );
-    return TRUE;
+    return driver_funcs->p_context_destroy( context );
 }
 
 static BOOL flush_memory_pbuffer( void (*flush)(void) )

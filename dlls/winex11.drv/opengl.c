@@ -1147,10 +1147,13 @@ static BOOL x11drv_describe_pixel_format( int format, struct wgl_pixel_format *p
 /***********************************************************************
  *		glxdrv_wglDeleteContext
  */
-static BOOL x11drv_context_destroy( void *context )
+static BOOL x11drv_context_destroy( struct opengl_context *context )
 {
     TRACE("(%p)\n", context);
-    pglXDestroyContext( gdi_display, context );
+
+    pglXDestroyContext( gdi_display, context->host_context );
+    free( context );
+
     return TRUE;
 }
 
@@ -1168,9 +1171,9 @@ static BOOL x11drv_context_activate( struct opengl_context *context, struct open
 
     TRACE( "context %p, draw %s, read %s\n", context, debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ) );
 
-    if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, context->driver_private );
-    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context->driver_private );
-    if (ret) NtCurrentTeb()->glReserved2 = context->driver_private;
+    if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, context->host_context );
+    else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context->host_context );
+    if (ret) NtCurrentTeb()->glReserved2 = context->host_context;
     return ret;
 }
 
@@ -1195,9 +1198,11 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 /***********************************************************************
  *		X11DRV_wglCreateContextAttribsARB
  */
-static BOOL x11drv_context_create( int format, void *share, const int *attribList, void **context, BOOL *shared )
+static struct opengl_context *x11drv_context_create( int format, struct opengl_context *share, const int *attribList, BOOL *shared )
 {
+    GLXContext host_share = share ? share->host_context : NULL;
     int glx_attribs[16] = {0}, *pContextAttribList = glx_attribs;
+    struct opengl_context *context;
     int err = 0;
 
     TRACE("(%d %p %p)\n", format, share, attribList);
@@ -1244,18 +1249,21 @@ static BOOL x11drv_context_create( int format, void *share, const int *attribLis
         }
     }
 
+    if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+
     X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-    *context = create_glxcontext( format, share, attribList ? glx_attribs : NULL );
+    context->host_context = create_glxcontext( format, host_share, attribList ? glx_attribs : NULL );
     XSync(gdi_display, False);
-    if ((err = X11DRV_check_error()) || !*context)
+    if ((err = X11DRV_check_error()) || !context->host_context)
     {
         /* In the future we should convert the GLX error to a win32 one here if needed */
         WARN("Context creation failed (error %#x).\n", err);
-        return FALSE;
+        free( context );
+        return NULL;
     }
 
-    TRACE( "-> %p\n", *context );
-    return TRUE;
+    TRACE( "-> %p/%p\n", context, context->host_context );
+    return context;
 }
 
 static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,

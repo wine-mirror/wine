@@ -132,7 +132,7 @@ struct opengl_drawable;
 struct opengl_context
 {
     HGLRC                       client_context;     /* client side context pointer */
-    void                       *driver_private;     /* driver context / private data */
+    void                       *host_context;       /* host-specific context */
     int                         format;             /* pixel format of the context */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
@@ -286,8 +286,8 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     void (*p_init_extensions)( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] );
     BOOL (*p_surface_create)( struct client_surface *client, int format, struct opengl_drawable **drawable );
-    BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context, BOOL *shared );
-    BOOL (*p_context_destroy)(void*);
+    struct opengl_context *(*p_context_create)( int format, struct opengl_context *share, const int *attribs, BOOL *shared );
+    BOOL (*p_context_destroy)( struct opengl_context *context );
     BOOL (*p_context_activate)( struct opengl_context *context, struct opengl_drawable *draw, struct opengl_drawable *read );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                               GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable );
