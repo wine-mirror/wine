@@ -289,16 +289,16 @@ DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IDirectPlay8AddressIP_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(a,b)
-#define IDirectPlay8AddressIP_AddRef(p)                     (p)->lpVtbl->AddRef()
-#define IDirectPlay8AddressIP_Release(p)                    (p)->lpVtbl->Release()
+#define IDirectPlay8AddressIP_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlay8AddressIP_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectPlay8AddressIP_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectPlay8AddressIP methods ***/
-#define IDirectPlay8AddressIP_BuildFromSockAddr(p,a)        (p)->lpVtbl->BuildFromSockAddr(a)
-#define IDirectPlay8AddressIP_BuildAddress(p,a,b)           (p)->lpVtbl->BuildAddress(a,b)
-#define IDirectPlay8AddressIP_BuildLocalAddress(p,a,b)      (p)->lpVtbl->BuildLocalAddress(a,b)
-#define IDirectPlay8AddressIP_GetSockAddress(p,a,b)         (p)->lpVtbl->GetSockAddress(a,b)
-#define IDirectPlay8AddressIP_GetLocalAddress(p,a,b)        (p)->lpVtbl->GetLocalAddress(a,b)
-#define IDirectPlay8AddressIP_GetAddress(p,a,b,c)           (p)->lpVtbl->GetAddress(a,b,c)
+#define IDirectPlay8AddressIP_BuildFromSockAddr(p,a)        (p)->lpVtbl->BuildFromSockAddr(p,a)
+#define IDirectPlay8AddressIP_BuildAddress(p,a,b)           (p)->lpVtbl->BuildAddress(p,a,b)
+#define IDirectPlay8AddressIP_BuildLocalAddress(p,a,b)      (p)->lpVtbl->BuildLocalAddress(p,a,b)
+#define IDirectPlay8AddressIP_GetSockAddress(p,a,b)         (p)->lpVtbl->GetSockAddress(p,a,b)
+#define IDirectPlay8AddressIP_GetLocalAddress(p,a,b)        (p)->lpVtbl->GetLocalAddress(p,a,b)
+#define IDirectPlay8AddressIP_GetAddress(p,a,b,c)           (p)->lpVtbl->GetAddress(p,a,b,c)
 #else
 /*** IUnknown methods ***/
 #define IDirectPlay8AddressIP_QueryInterface(p,a,b)         (p)->QueryInterface(a,b)
