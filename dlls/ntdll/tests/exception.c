@@ -2695,11 +2695,11 @@ static void test_restore_context(void)
 }
 
 static int termination_handler_called;
-static void WINAPI termination_handler(ULONG flags, ULONG64 frame)
+static void WINAPI termination_handler(BOOLEAN abnormal, ULONG64 frame)
 {
     termination_handler_called++;
 
-    ok(flags == 1 || broken(flags == 0x401), "flags = %lx\n", flags);
+    ok(abnormal == TRUE, "abnormal = %x\n", abnormal);
     ok(frame == 0x1234, "frame = %p\n", (void*)frame);
 }
 
