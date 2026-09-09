@@ -3719,7 +3719,7 @@ macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_devi
     return (macdrv_metal_view)metalView;
 }
 
-macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v)
+CAMetalLayer *macdrv_view_get_metal_layer(macdrv_metal_view v)
 {
     WineMetalView* view = (WineMetalView*)v;
     __block CAMetalLayer* layer;
@@ -3728,7 +3728,7 @@ macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v)
         layer = (CAMetalLayer*)view.layer;
     });
 
-    return (macdrv_metal_layer)layer;
+    return layer;
 }
 
 void macdrv_view_release_metal_view(macdrv_metal_view v)
@@ -3889,9 +3889,9 @@ macdrv_metal_swapchain macdrv_create_offscreen_swapchain(void* hwnd, CGRect boun
     return (macdrv_metal_swapchain)[[CAContextSwapChain alloc] initWithHwnd:hwnd bounds:bounds];
 }
 
-macdrv_metal_layer macdrv_swapchain_get_layer(macdrv_metal_swapchain swapchain)
+CAMetalLayer *macdrv_swapchain_get_layer(macdrv_metal_swapchain swapchain)
 {
-    return (macdrv_metal_layer)[(id<WineMetalSwapChain>)swapchain layer];
+    return [(id<WineMetalSwapChain>)swapchain layer];
 }
 
 

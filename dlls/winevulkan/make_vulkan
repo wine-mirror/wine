@@ -2904,6 +2904,9 @@ class Generator(object):
             category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
 
+            if name == "CAMetalLayer":
+                Define(name, "#ifdef __OBJC__\n@class CAMetalLayer;\n#else\ntypedef struct __CAMetalLayer CAMetalLayer;\n#endif")
+                continue
             if alias := t.get("alias"):
                 Type(name, alias=alias)
                 continue

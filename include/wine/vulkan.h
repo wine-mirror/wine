@@ -52,7 +52,7 @@ struct ANativeWindow;
 #ifdef __OBJC__
 @class CAMetalLayer;
 #else
-typedef void CAMetalLayer;
+typedef struct __CAMetalLayer CAMetalLayer;
 #endif
 typedef struct __IOSurface* IOSurfaceRef;
 #ifdef __OBJC__
