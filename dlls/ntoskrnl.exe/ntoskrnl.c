@@ -3081,6 +3081,34 @@ PHYSICAL_ADDRESS WINAPI MmGetPhysicalAddress(void *virtual_address)
 }
 
 /***********************************************************************
+ *           MmGetPhysicalMemoryRanges   (NTOSKRNL.EXE.@)
+ */
+PHYSICAL_MEMORY_RANGE * WINAPI MmGetPhysicalMemoryRanges(void)
+{
+    SYSTEM_BASIC_INFORMATION info;
+    PHYSICAL_MEMORY_RANGE *ranges;
+    NTSTATUS status;
+
+    TRACE( "()\n" );
+
+    if ((status = NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )))
+    {
+        WARN( "failed to query system information, status %#lx\n", status );
+        return NULL;
+    }
+
+    if (!(ranges = ExAllocatePool( NonPagedPool, 2 * sizeof(*ranges) )))
+        return NULL;
+
+    /* FIXME: Windows returns actual hardware ranges, we report the correct size but in one range */
+    ranges[0].BaseAddress.QuadPart = (ULONGLONG)info.MmLowestPhysicalPage * info.PageSize;
+    ranges[0].NumberOfBytes.QuadPart = (ULONGLONG)info.MmNumberOfPhysicalPages * info.PageSize;
+    memset( &ranges[1], 0, sizeof(ranges[1]) );
+
+    return ranges;
+}
+
+/***********************************************************************
  *           MmMapIoSpace   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes, DWORD CacheType )
