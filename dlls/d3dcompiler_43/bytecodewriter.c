@@ -891,7 +891,7 @@ static HRESULT find_ps_builtin_semantics(struct bc_writer *writer, const struct 
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
-                if (usage_idx > texcoords)
+                if (usage_idx >= texcoords)
                 {
                     WARN("dcl_texcoord%u not supported in this shader version\n", usage_idx);
                     return E_INVALIDARG;
