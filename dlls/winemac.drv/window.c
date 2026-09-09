@@ -1103,7 +1103,7 @@ static void macdrv_client_surface_detach(struct client_surface *client)
 static void macdrv_client_surface_update(struct client_surface *client)
 {
     struct macdrv_client_surface *surface = impl_from_client_surface(client);
-    HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    HWND hwnd = client->hwnd, toplevel = client->toplevel;
     struct macdrv_win_data *data;
 
     TRACE("%s\n", debugstr_client_surface(client));
