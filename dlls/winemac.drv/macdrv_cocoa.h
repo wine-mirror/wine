@@ -101,19 +101,21 @@ enum {
 
 #ifdef __OBJC__
 #define DECLARE_CLASS(x) @class x
+#define DECLARE_PROTO(x) @protocol x; typedef id<x> id_ ## x
 #else
 #define DECLARE_CLASS(x) typedef struct __ ## x x
+#define DECLARE_PROTO(x) typedef struct __ ## x *id_ ## x
 #endif
 DECLARE_CLASS(WineEventQueue);
 DECLARE_CLASS(WineMetalView);
 DECLARE_CLASS(WineOpenGLContext);
 DECLARE_CLASS(WineStatusItem);
 DECLARE_CLASS(CAMetalLayer);
+DECLARE_PROTO(MTLDevice);
 #undef DECLARE_CLASS
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_view* macdrv_view;
-typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
 typedef struct macdrv_opaque_metal_swapchain* macdrv_metal_swapchain;
 struct macdrv_event;
 struct macdrv_query;
@@ -529,9 +531,9 @@ extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_windo
 extern void macdrv_set_view_hidden(macdrv_view v, bool hidden);
 extern void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
 extern void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
-extern macdrv_metal_device macdrv_create_metal_device(void);
-extern void macdrv_release_metal_device(macdrv_metal_device d);
-extern WineMetalView *macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d);
+extern id_MTLDevice macdrv_create_metal_device(void);
+extern void macdrv_release_metal_device(id_MTLDevice device);
+extern WineMetalView *macdrv_view_create_metal_view(macdrv_view v, id_MTLDevice device);
 extern CAMetalLayer *macdrv_view_get_metal_layer(WineMetalView *view);
 extern void macdrv_view_release_metal_view(WineMetalView *view);
 extern macdrv_metal_swapchain macdrv_create_view_swapchain(macdrv_view v);

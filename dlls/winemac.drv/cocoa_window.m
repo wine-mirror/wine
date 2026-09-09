@@ -3688,25 +3688,24 @@ void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context
 }
 }
 
-macdrv_metal_device macdrv_create_metal_device(void)
+id<MTLDevice> macdrv_create_metal_device(void)
 {
 @autoreleasepool
 {
-    return (macdrv_metal_device)MTLCreateSystemDefaultDevice();
+    return MTLCreateSystemDefaultDevice();
 }
 }
 
-void macdrv_release_metal_device(macdrv_metal_device d)
+void macdrv_release_metal_device(id<MTLDevice> device)
 {
 @autoreleasepool
 {
-    [(id<MTLDevice>)d release];
+    [device release];
 }
 }
 
-WineMetalView *macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d)
+WineMetalView *macdrv_view_create_metal_view(macdrv_view v, id<MTLDevice> device)
 {
-    id<MTLDevice> device = (id<MTLDevice>)d;
     WineContentView* view = (WineContentView*)v;
     __block WineMetalView *metalView;
 
@@ -3744,7 +3743,7 @@ void macdrv_view_release_metal_view(WineMetalView *view)
 
 @interface MetalViewSwapChain : NSObject <WineMetalSwapChain>
 {
-    macdrv_metal_device device;
+    id<MTLDevice> device;
     WineMetalView *metal_view;
 }
 
@@ -3791,7 +3790,7 @@ void macdrv_view_release_metal_view(WineMetalView *view)
 @interface CAContextSwapChain : NSObject <WineMetalSwapChain>
 {
     void* hwnd;
-    macdrv_metal_device device;
+    id<MTLDevice> device;
     CAMetalLayer* offscreen_layer;
     CAContext* remote_context;
     CAContextID context_id;
@@ -3861,7 +3860,7 @@ void macdrv_view_release_metal_view(WineMetalView *view)
     if (context_id) macdrv_release_remote_layer(hwnd, context_id);
     CAContext *context = remote_context;
     CAMetalLayer *layer = offscreen_layer;
-    macdrv_metal_device dev = device;
+    id<MTLDevice> dev = device;
 
     OnMainThreadAsync(^{
         [context setLayer:nil];
