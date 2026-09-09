@@ -194,14 +194,17 @@ static HRESULT resize_buffer( struct stream *stream, LONG size )
 static HRESULT WINAPI stream_put_Position( _Stream *iface, ADO_LONGPTR pos )
 {
     struct stream *stream = impl_from_Stream( iface );
-    HRESULT hr;
 
     TRACE( "%p, %Id\n", stream, pos );
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (pos < 0) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (pos > stream->size)
+    {
+        WARN("Resizing stream buffer currently not supported\n");
+        return MAKE_ADO_HRESULT( adErrObjectNotSet );
+    }
 
-    if ((hr = resize_buffer( stream, stream->pos )) != S_OK) return hr;
     stream->pos = pos;
     return S_OK;
 }

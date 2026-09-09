@@ -2701,6 +2701,11 @@ static void test_Stream(void)
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectOpen ), "got %08lx\n", hr );
 
+    mode = 0xdeadbeef;
+    hr = _Stream_get_Mode( stream, &mode );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( mode == adModeReadWrite, "got %u\n", mode );
+
     state = 0xdeadbeef;
     hr = _Stream_get_State( stream, &state );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -2774,6 +2779,9 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( size == 10, "got %Id\n", size );
 
+    hr = _Stream_put_Position( stream, 50 );
+    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08lx\n", hr );
+
     hr = _Stream_put_Position( stream, 2 );
     ok( hr == S_OK, "got %08lx\n", hr );
 
@@ -2813,6 +2821,11 @@ static void test_Stream(void)
 
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    mode = 0xdeadbeef;
+    hr = _Stream_get_Mode( stream, &mode );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( mode == adModeUnknown, "got %u\n", mode );
 
     hr = _Stream_ReadText( stream, adReadAll, &str );
     ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08lx\n", hr );
@@ -2855,6 +2868,9 @@ static void test_Stream(void)
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( pos == 4, "got %Id\n", pos );
+
+    hr = _Stream_put_Position( stream, 50 );
+    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08lx\n", hr );
 
     refs = _Stream_Release( stream );
     ok( !refs, "got %ld\n", refs );
