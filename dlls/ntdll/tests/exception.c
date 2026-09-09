@@ -4689,7 +4689,8 @@ static void test_wow64_context(void)
         }
         ctx_ptr = (WOW64_CONTEXT *)cpu_info.Context;
         ok(!*(void **)cpu_info.ContextEx, "got context_ex %p\n", *(void **)cpu_info.ContextEx);
-        ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL, "got context flags %#lx\n", ctx_ptr->ContextFlags);
+        ok(ctx_ptr->ContextFlags == (WOW64_CONTEXT_ALL | WOW64_CONTEXT_XSTATE)
+           || ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL, "got context flags %#lx\n", ctx_ptr->ContextFlags);
         ok(ctx_ptr->Eax == ctx.Eax, "got eax %08lx / %08lx\n", ctx_ptr->Eax, ctx.Eax);
         ok(ctx_ptr->Ebx == ctx.Ebx, "got ebx %08lx / %08lx\n", ctx_ptr->Ebx, ctx.Ebx);
         ok(ctx_ptr->Ecx == ctx.Ecx, "got ecx %08lx / %08lx\n", ctx_ptr->Ecx, ctx.Ecx);
@@ -4841,7 +4842,8 @@ static void test_wow64_context(void)
                 if (!ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED],
                                         cpu, cpu_size, &res )) res = 0;
                 ok( res == cpu_size, "wrong len %Ix\n", res );
-                ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
+                ok(ctx_ptr->ContextFlags == (WOW64_CONTEXT_ALL | WOW64_CONTEXT_XSTATE) ||
+                   ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
                    "cs32: got context flags %#lx\n", ctx_ptr->ContextFlags);
 
                 /* changing either context changes the actual cpu context */
@@ -4910,7 +4912,8 @@ static void test_wow64_context(void)
                 if (!ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED],
                                         cpu, cpu_size, &res )) res = 0;
                 ok( res == cpu_size, "wrong len %Ix\n", res );
-                ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
+                ok(ctx_ptr->ContextFlags == (WOW64_CONTEXT_ALL | WOW64_CONTEXT_XSTATE) ||
+                   ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
                    "cs64: got context flags %#lx\n", ctx_ptr->ContextFlags);
                 ok(ctx_ptr->Eip == ctx.Eip, "cs64: got eip %08lx / %08lx\n", ctx_ptr->Eip, ctx.Eip);
                 ok(ctx_ptr->Eax == ctx.Eax, "cs64: got eax %08lx / %08lx\n", ctx_ptr->Eax, ctx.Eax);
