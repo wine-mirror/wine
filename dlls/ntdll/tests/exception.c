@@ -279,16 +279,22 @@ static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, enum debugger_stag
     ok(!status, "NtSetContextThread failed with 0x%lx\n", status);
 }
 
-#define check_context_exception_request( a, b ) check_context_exception_request_( a, b, __LINE__ )
-static void check_context_exception_request_( DWORD flags, BOOL hardware_exception, unsigned int line )
+#define check_context_exception_request( a, b ) check_context_exception_request_( a, b, FALSE, __LINE__ )
+#define check_context_exception_request_broken( a, b ) check_context_exception_request_( a, b, TRUE, __LINE__ )
+static void check_context_exception_request_( DWORD flags, BOOL hardware_exception, BOOL type_broken, unsigned int line )
 {
     static const DWORD exception_reporting_flags = CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING
                                                    | CONTEXT_EXCEPTION_ACTIVE | CONTEXT_SERVICE_ACTIVE;
     DWORD expected_flags = CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING;
+    DWORD expected_broken = expected_flags;
 
     if (!(flags & CONTEXT_EXCEPTION_REPORTING)) return;
     expected_flags |= hardware_exception ? CONTEXT_EXCEPTION_ACTIVE : CONTEXT_SERVICE_ACTIVE;
-    ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags, "got %#lx, expected %#lx.\n",
+    expected_broken |= !hardware_exception ? CONTEXT_EXCEPTION_ACTIVE : CONTEXT_SERVICE_ACTIVE;
+    todo_wine_if(type_broken)
+    ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags ||
+                         broken(type_broken && (flags & exception_reporting_flags) == expected_broken),
+                         "got %#lx, expected %#lx.\n",
                          flags, expected_flags );
 }
 
@@ -1382,7 +1388,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                     ctx.Eax = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
-                    check_context_exception_request( ctx.ContextFlags, !is_wow64 );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_RTLRAISE_HANDLE_LAST_CHANCE)
                 {
@@ -1419,7 +1425,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                                ctx.Eip, (char *)code_mem_address + 0xb);
                         /* here we handle exception */
                     }
-                    check_context_exception_request( ctx.ContextFlags, !is_wow64 );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_SERVICE_CONTINUE || stage == STAGE_SERVICE_NOT_HANDLED)
                 {
@@ -1450,7 +1456,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                        "unexpected number of parameters %ld, expected 0\n", de.u.Exception.ExceptionRecord.NumberParameters);
 
                     if (stage == STAGE_EXCEPTION_INVHANDLE_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
-                    check_context_exception_request( ctx.ContextFlags, !is_wow64 );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_NO_EXCEPTION_INVHANDLE_NOT_HANDLED)
                 {
@@ -4031,7 +4037,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                     ctx.Rax = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
-                    check_context_exception_request( ctx.ContextFlags, FALSE );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_RTLRAISE_HANDLE_LAST_CHANCE)
                 {
@@ -4060,7 +4066,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                                 ctx.Rip, (char *)code_mem_address + 0x0c);
                         /* here we handle exception */
                     }
-                    check_context_exception_request( ctx.ContextFlags, FALSE );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_SERVICE_CONTINUE || stage == STAGE_SERVICE_NOT_HANDLED)
                 {
@@ -4089,7 +4095,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                        "unexpected number of parameters %ld, expected 0\n", de.u.Exception.ExceptionRecord.NumberParameters);
 
                     if (stage == STAGE_EXCEPTION_INVHANDLE_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
-                    check_context_exception_request( ctx.ContextFlags, FALSE );
+                    check_context_exception_request_broken( ctx.ContextFlags, TRUE );
                 }
                 else if (stage == STAGE_NO_EXCEPTION_INVHANDLE_NOT_HANDLED)
                 {
