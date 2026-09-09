@@ -3706,7 +3706,7 @@ void macdrv_release_metal_device(macdrv_metal_device d)
 }
 }
 
-macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d)
+WineMetalView *macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d)
 {
     id<MTLDevice> device = (id<MTLDevice>)d;
     WineContentView* view = (WineContentView*)v;
@@ -3716,12 +3716,11 @@ macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_devi
         metalView = [view newMetalViewWithDevice:device];
     });
 
-    return (macdrv_metal_view)metalView;
+    return metalView;
 }
 
-CAMetalLayer *macdrv_view_get_metal_layer(macdrv_metal_view v)
+CAMetalLayer *macdrv_view_get_metal_layer(WineMetalView *view)
 {
-    WineMetalView* view = (WineMetalView*)v;
     __block CAMetalLayer* layer;
 
     OnMainThread(^{
@@ -3731,9 +3730,8 @@ CAMetalLayer *macdrv_view_get_metal_layer(macdrv_metal_view v)
     return layer;
 }
 
-void macdrv_view_release_metal_view(macdrv_metal_view v)
+void macdrv_view_release_metal_view(WineMetalView *view)
 {
-    WineMetalView* view = (WineMetalView*)v;
     OnMainThread(^{
         [view removeFromSuperview];
         [view release];
@@ -3749,7 +3747,7 @@ void macdrv_view_release_metal_view(macdrv_metal_view v)
 @interface MetalViewSwapChain : NSObject <WineMetalSwapChain>
 {
     macdrv_metal_device device;
-    macdrv_metal_view metal_view;
+    WineMetalView *metal_view;
 }
 
 - (instancetype) initWithView:(macdrv_view)view;
