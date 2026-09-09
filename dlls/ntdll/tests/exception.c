@@ -12188,7 +12188,7 @@ static void test_copy_context(void)
             src_xs = (XSTATE *)((BYTE *)src_ex + src_ex->XState.Offset);
             memset(src_xs, 0xcc, src_ex->XState.Length);
             src_xs->Mask = enabled_features & ~(ULONG64)4;
-            src_xs->CompactionMask = ~(ULONG64)0;
+            src_xs->CompactionMask = ((ULONG64)1 << 63) | enabled_features;
             if (flags & CONTEXT_AMD64)
                 ranges_amd64[ARRAY_SIZE(ranges_amd64) - 2].start = 0x640 + src_ex->XState.Length - sizeof(XSTATE);
             else
@@ -12311,8 +12311,9 @@ static void test_copy_context(void)
         check_changes_in_range((BYTE *)&dst_xs->YmmContext, single_range, 0, sizeof(dst_xs->YmmContext));
 
         src_xs->Mask = 3;
+        src_xs->CompactionMask = ((ULONG64)1 << 63) | enabled_features;
         memset(&dst_xs->YmmContext, 0xdd, sizeof(dst_xs->YmmContext));
-        dst_xs->CompactionMask = 0xdddddddddddddddd;
+        dst_xs->CompactionMask = ((ULONG64)1 << 63) | enabled_features;
         dst_xs->Mask = 0xdddddddddddddddd;
         dst_ex->XState.Length = offsetof(XSTATE, YmmContext);
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
