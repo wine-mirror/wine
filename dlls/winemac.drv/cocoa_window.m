@@ -3137,7 +3137,7 @@ static inline BOOL stage_manager_enabled(void)
  * title bar, close box, etc.).
  */
 macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
-        CGRect frame, void* hwnd, macdrv_event_queue queue)
+        CGRect frame, void* hwnd, WineEventQueue *queue)
 {
     __block WineWindow* window;
 
@@ -3145,7 +3145,7 @@ macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf
         window = [[WineWindow createWindowWithFeatures:wf
                                            windowFrame:NSRectFromCGRect(cgrect_mac_from_win(frame))
                                                   hwnd:hwnd
-                                                 queue:(WineEventQueue*)queue] retain];
+                                                 queue:queue] retain];
     });
 
     return (macdrv_window)window;

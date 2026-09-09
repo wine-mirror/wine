@@ -228,9 +228,8 @@
  *
  * Creates a new status item in the status bar.
  */
-macdrv_status_item macdrv_create_status_item(macdrv_event_queue q)
+macdrv_status_item macdrv_create_status_item(WineEventQueue *queue)
 {
-    WineEventQueue* queue = (WineEventQueue*)q;
     __block WineStatusItem* statusItem;
 
     OnMainThread(^{

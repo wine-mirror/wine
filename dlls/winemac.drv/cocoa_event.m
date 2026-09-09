@@ -548,7 +548,7 @@ void OnMainThread(dispatch_block_t block)
  * Register this thread with the application on the main thread, and set
  * up an event queue on which it can deliver events to this thread.
  */
-macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
+WineEventQueue *macdrv_create_event_queue(macdrv_event_handler handler)
 {
 @autoreleasepool
 {
@@ -567,7 +567,7 @@ macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
         }
     }
 
-    return (macdrv_event_queue)queue;
+    return queue;
 }
 }
 
@@ -577,14 +577,13 @@ macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
  * Tell the application that this thread is exiting and destroy the
  * associated event queue.
  */
-void macdrv_destroy_event_queue(macdrv_event_queue queue)
+void macdrv_destroy_event_queue(WineEventQueue *queue)
 {
 @autoreleasepool
 {
-    WineEventQueue* q = (WineEventQueue*)queue;
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
 
-    [[WineApplicationController sharedController] unregisterEventQueue:q];
+    [[WineApplicationController sharedController] unregisterEventQueue:queue];
     [threadDict removeObjectForKey:WineEventQueueThreadDictionaryKey];
 }
 }
@@ -595,10 +594,9 @@ void macdrv_destroy_event_queue(macdrv_event_queue queue)
  * Get the file descriptor whose readability signals that there are
  * events on the event queue.
  */
-int macdrv_get_event_queue_fd(macdrv_event_queue queue)
+int macdrv_get_event_queue_fd(WineEventQueue *queue)
 {
-    WineEventQueue* q = (WineEventQueue*)queue;
-    return q->fds[0];
+    return queue->fds[0];
 }
 
 /***********************************************************************
@@ -611,14 +609,12 @@ int macdrv_get_event_queue_fd(macdrv_event_queue queue)
  * The caller is responsible for calling macdrv_release_event on any
  * event returned by this function.
  */
-int macdrv_copy_event_from_queue(macdrv_event_queue queue,
+int macdrv_copy_event_from_queue(WineEventQueue *queue,
         macdrv_event_mask mask, macdrv_event **event)
 {
 @autoreleasepool
 {
-    WineEventQueue* q = (WineEventQueue*)queue;
-
-    MacDrvEvent* macDrvEvent = [q getEventMatchingMask:mask];
+    MacDrvEvent* macDrvEvent = [queue getEventMatchingMask:mask];
     if (macDrvEvent)
         *event = macdrv_retain_event(macDrvEvent->event);
 
@@ -769,10 +765,9 @@ void macdrv_set_query_done(macdrv_query *query)
 /***********************************************************************
  *              macdrv_register_hot_key
  */
-int macdrv_register_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags,
+int macdrv_register_hot_key(WineEventQueue *queue, unsigned int vkey, unsigned int mod_flags,
                             unsigned int keycode, unsigned int modifiers)
 {
-    WineEventQueue* queue = (WineEventQueue*)q;
     __block int ret;
 
     OnMainThread(^{
@@ -786,10 +781,8 @@ int macdrv_register_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned in
 /***********************************************************************
  *              macdrv_unregister_hot_key
  */
-void macdrv_unregister_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags)
+void macdrv_unregister_hot_key(WineEventQueue *queue, unsigned int vkey, unsigned int mod_flags)
 {
-    WineEventQueue* queue = (WineEventQueue*)q;
-
     OnMainThreadAsync(^{
         [queue unregisterHotKey:vkey modFlags:mod_flags];
     });

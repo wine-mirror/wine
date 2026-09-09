@@ -99,8 +99,15 @@ enum {
     MACDRV_HOTKEY_FAILURE,
 };
 
+#ifdef __OBJC__
+#define DECLARE_CLASS(x) @class x
+#else
+#define DECLARE_CLASS(x) typedef struct __ ## x x
+#endif
+DECLARE_CLASS(WineEventQueue);
+#undef DECLARE_CLASS
+
 typedef struct macdrv_opaque_window* macdrv_window;
-typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
 typedef struct macdrv_opaque_view* macdrv_view;
 typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
@@ -110,7 +117,6 @@ typedef struct macdrv_opaque_metal_swapchain* macdrv_metal_swapchain;
 typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
 struct macdrv_query;
-
 
 /* main */
 extern bool macdrv_err_on;
@@ -450,11 +456,11 @@ static inline macdrv_event_mask event_mask_for_type(int type)
 
 typedef void (*macdrv_event_handler)(const macdrv_event *event);
 
-extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler);
-extern void macdrv_destroy_event_queue(macdrv_event_queue queue);
-extern int macdrv_get_event_queue_fd(macdrv_event_queue queue);
+extern WineEventQueue *macdrv_create_event_queue(macdrv_event_handler handler);
+extern void macdrv_destroy_event_queue(WineEventQueue *queue);
+extern int macdrv_get_event_queue_fd(WineEventQueue *queue);
 
-extern int macdrv_copy_event_from_queue(macdrv_event_queue queue,
+extern int macdrv_copy_event_from_queue(WineEventQueue *queue,
         macdrv_event_mask mask, macdrv_event **event);
 extern void macdrv_release_event(macdrv_event *event);
 
@@ -462,9 +468,9 @@ extern macdrv_query* macdrv_create_query(void);
 extern macdrv_query* macdrv_retain_query(macdrv_query *query);
 extern void macdrv_release_query(macdrv_query *query);
 extern void macdrv_set_query_done(macdrv_query *query);
-extern int macdrv_register_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags,
+extern int macdrv_register_hot_key(WineEventQueue *queue, unsigned int vkey, unsigned int mod_flags,
                                    unsigned int keycode, unsigned int modifiers);
-extern void macdrv_unregister_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags);
+extern void macdrv_unregister_hot_key(WineEventQueue *queue, unsigned int vkey, unsigned int mod_flags);
 
 
 /* window */
@@ -493,7 +499,7 @@ struct macdrv_window_state {
 struct window_surface;
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
-        CGRect frame, void* hwnd, macdrv_event_queue queue);
+        CGRect frame, void* hwnd, WineEventQueue *queue);
 extern void macdrv_destroy_cocoa_window(macdrv_window w);
 extern void* macdrv_get_window_hwnd(macdrv_window w);
 extern void macdrv_set_cocoa_window_features(macdrv_window w,
@@ -572,7 +578,7 @@ extern void macdrv_flush_opengl_context(macdrv_opengl_context c);
 
 
 /* systray / status item */
-extern macdrv_status_item macdrv_create_status_item(macdrv_event_queue q);
+extern macdrv_status_item macdrv_create_status_item(WineEventQueue *queue);
 extern void macdrv_destroy_status_item(macdrv_status_item s);
 extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage);
 extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip);
