@@ -102,7 +102,7 @@ struct macdrv_thread_data
 {
     WineEventQueue             *queue;
     const macdrv_event         *current_event;
-    macdrv_window               capture_window;
+    WineWindow                 *capture_window;
     CFDataRef                   keyboard_layout_uchr;
     CGEventSourceKeyboardType   keyboard_type;
     bool                        iso_keyboard;
@@ -178,7 +178,7 @@ extern void macdrv_ThreadDetach(void);
 struct macdrv_win_data
 {
     HWND                hwnd;                   /* hwnd that this private data belongs to */
-    macdrv_window       cocoa_window;
+    WineWindow         *cocoa_window;
     WineContentView    *client_view;
     struct window_rects rects;                  /* window rects in monitor DPI, relative to parent client area */
     int                 pixel_format;           /* pixel format for GL */
@@ -205,7 +205,7 @@ extern BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_s
 extern struct macdrv_win_data *get_win_data(HWND hwnd);
 extern void release_win_data(struct macdrv_win_data *data);
 extern void init_win_context(void);
-extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
+extern WineWindow *macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
 extern void activate_on_following_focus(void);
 

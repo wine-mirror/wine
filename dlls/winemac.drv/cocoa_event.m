@@ -313,7 +313,7 @@ static const OSType WineHotKeySignature = 'Wine';
     {
         [self discardEventsPassingTest:^BOOL (macdrv_event* event){
             return ((event_mask_for_type(event->type) & mask) &&
-                    (!window || event->window == (macdrv_window)window));
+                    (!window || event->window == window));
         }];
     }
 
@@ -325,7 +325,7 @@ static const OSType WineHotKeySignature = 'Wine';
         BOOL timedout;
 
         type = (flags & WineQueryNoPreemptWait) ? QUERY_EVENT_NO_PREEMPT_WAIT : QUERY_EVENT;
-        event = macdrv_create_event(type, (WineWindow*)query->window);
+        event = macdrv_create_event(type, query->window);
         event->query_event.query = macdrv_retain_query(query);
         query->done = FALSE;
 
@@ -633,7 +633,7 @@ macdrv_event* macdrv_create_event(int type, WineWindow* window)
     event->refs = 1;
     event->deliver = INT_MAX;
     event->type = type;
-    event->window = (macdrv_window)[window retain];
+    event->window = [window retain];
     return event;
 }
 
@@ -679,7 +679,7 @@ void macdrv_release_event(macdrv_event *event)
                 break;
         }
 
-        [(WineWindow*)event->window release];
+        [event->window release];
         free(event);
     }
 }
@@ -728,7 +728,7 @@ void macdrv_release_query(macdrv_query *query)
                     CFRelease(query->pasteboard_data.type);
                 break;
         }
-        [(WineWindow*)query->window release];
+        [query->window release];
         free(query);
     }
 }

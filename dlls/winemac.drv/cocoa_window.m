@@ -1190,7 +1190,7 @@ static inline BOOL stage_manager_enabled(void)
     {
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_RESIZE_START;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
 
         [self.queue query:query timeout:0.3];
         macdrv_release_query(query);
@@ -2701,7 +2701,7 @@ static inline BOOL stage_manager_enabled(void)
 
         query = macdrv_create_query();
         query->type = QUERY_MIN_MAX_INFO;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         [self.queue query:query timeout:0.5];
         macdrv_release_query(query);
 
@@ -2945,7 +2945,7 @@ static inline BOOL stage_manager_enabled(void)
 
             query = macdrv_create_query();
             query->type = QUERY_RESIZE_SIZE;
-            query->window = (macdrv_window)[self retain];
+            query->window = [self retain];
             query->resize_size.rect = cgrect_win_from_mac(NSRectToCGRect(rect));
             query->resize_size.from_left = resizingFromLeft;
             query->resize_size.from_top = resizingFromTop;
@@ -2995,7 +2995,7 @@ static inline BOOL stage_manager_enabled(void)
 
         query = macdrv_create_query();
         query->type = QUERY_MIN_MAX_INFO;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         [self.queue query:query timeout:0.5];
         macdrv_release_query(query);
 
@@ -3036,7 +3036,7 @@ static inline BOOL stage_manager_enabled(void)
     {
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_PASTEBOARD_DATA;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         query->pasteboard_data.type = (CFStringRef)[type copy];
 
         [self.queue query:query timeout:3];
@@ -3060,7 +3060,7 @@ static inline BOOL stage_manager_enabled(void)
         NSPasteboard* pb = [sender draggingPasteboard];
 
         query->type = QUERY_DRAG_DROP_ENTER;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         query->drag_drop.pasteboard = (CFTypeRef)[pb retain];
 
         [self.queue query:query timeout:0.1];
@@ -3076,7 +3076,7 @@ static inline BOOL stage_manager_enabled(void)
         // queries in order to maintain the proper order of operations.
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_DRAG_DROP_LEAVE;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
 
         [self.queue query:query timeout:0.1];
         macdrv_release_query(query);
@@ -3090,7 +3090,7 @@ static inline BOOL stage_manager_enabled(void)
 
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_DRAG_DROP_DRAG;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         query->drag_drop.x = floor(cgpt.x);
         query->drag_drop.y = floor(cgpt.y);
         query->drag_drop.ops = [sender draggingSourceOperationMask];
@@ -3110,7 +3110,7 @@ static inline BOOL stage_manager_enabled(void)
 
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_DRAG_DROP_DROP;
-        query->window = (macdrv_window)[self retain];
+        query->window = [self retain];
         query->drag_drop.x = floor(cgpt.x);
         query->drag_drop.y = floor(cgpt.y);
         query->drag_drop.ops = [sender draggingSourceOperationMask];
@@ -3136,7 +3136,7 @@ static inline BOOL stage_manager_enabled(void)
  * Create a Cocoa window with the given content frame and features (e.g.
  * title bar, close box, etc.).
  */
-macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
+WineWindow *macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
         CGRect frame, void* hwnd, WineEventQueue *queue)
 {
     __block WineWindow* window;
@@ -3148,7 +3148,7 @@ macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf
                                                  queue:queue] retain];
     });
 
-    return (macdrv_window)window;
+    return window;
 }
 
 /***********************************************************************
@@ -3156,12 +3156,10 @@ macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf
  *
  * Destroy a Cocoa window.
  */
-void macdrv_destroy_cocoa_window(macdrv_window w)
+void macdrv_destroy_cocoa_window(WineWindow *window)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         window.closing = TRUE;
         [window doOrderOut];
@@ -3177,9 +3175,8 @@ void macdrv_destroy_cocoa_window(macdrv_window w)
  *
  * Get the hwnd that was set for the window at creation.
  */
-void* macdrv_get_window_hwnd(macdrv_window w)
+void* macdrv_get_window_hwnd(WineWindow *window)
 {
-    WineWindow* window = (WineWindow*)w;
     return window.hwnd;
 }
 
@@ -3188,11 +3185,9 @@ void* macdrv_get_window_hwnd(macdrv_window w)
  *
  * Update a Cocoa window's features.
  */
-void macdrv_set_cocoa_window_features(macdrv_window w,
+void macdrv_set_cocoa_window_features(WineWindow *window,
         const struct macdrv_window_features* wf)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setWindowFeatures:wf];
     });
@@ -3203,11 +3198,9 @@ void macdrv_set_cocoa_window_features(macdrv_window w,
  *
  * Update a Cocoa window's state.
  */
-void macdrv_set_cocoa_window_state(macdrv_window w,
+void macdrv_set_cocoa_window_state(WineWindow *window,
         const struct macdrv_window_state* state)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setMacDrvState:state];
     });
@@ -3218,12 +3211,11 @@ void macdrv_set_cocoa_window_state(macdrv_window w,
  *
  * Set a Cocoa window's title.
  */
-void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
+void macdrv_set_cocoa_window_title(WineWindow *window, const unsigned short* title,
         size_t length)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
     NSString* titleString;
 
     if (title)
@@ -3246,13 +3238,9 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
  * it is ordered above that window.  Otherwise, it is ordered to the
  * front.
  */
-void macdrv_order_cocoa_window(macdrv_window w, macdrv_window p,
-        macdrv_window n, bool activate)
+void macdrv_order_cocoa_window(WineWindow *window, WineWindow *prev,
+        WineWindow *next, bool activate)
 {
-    WineWindow* window = (WineWindow*)w;
-    WineWindow* prev = (WineWindow*)p;
-    WineWindow* next = (WineWindow*)n;
-
     OnMainThreadAsync(^{
         [window orderBelow:prev
                    orAbove:next
@@ -3269,10 +3257,8 @@ void macdrv_order_cocoa_window(macdrv_window w, macdrv_window p,
  *
  * Hides a Cocoa window.
  */
-void macdrv_hide_cocoa_window(macdrv_window w)
+void macdrv_hide_cocoa_window(WineWindow *window)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window doOrderOut];
     });
@@ -3283,10 +3269,8 @@ void macdrv_hide_cocoa_window(macdrv_window w)
  *
  * Move a Cocoa window.
  */
-void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
+void macdrv_set_cocoa_window_frame(WineWindow *window, const CGRect* new_frame)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setFrameFromWine:NSRectFromCGRect(cgrect_mac_from_win(*new_frame))];
     });
@@ -3297,10 +3281,8 @@ void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
  *
  * Gets the frame of a Cocoa window.
  */
-void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame)
+void macdrv_get_cocoa_window_frame(WineWindow *window, CGRect* out_frame)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         NSRect frame;
 
@@ -3316,12 +3298,10 @@ void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame)
  * Sets the parent window for a Cocoa window.  If parent is NULL, clears
  * the parent window.
  */
-void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
+void macdrv_set_cocoa_parent_window(WineWindow *window, WineWindow *parent)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
-        [window setMacDrvParentWindow:(WineWindow*)parent];
+        [window setMacDrvParentWindow:parent];
     });
 }
 
@@ -3332,12 +3312,10 @@ void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
  * Push a window surface color pixel update in a specified rect (in non-client
  * area coordinates).
  */
-void macdrv_window_set_color_image(macdrv_window w, CGImageRef image, CGRect rect, CGRect dirty)
+void macdrv_window_set_color_image(WineWindow *window, CGImageRef image, CGRect rect, CGRect dirty)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     CGImageRetain(image);
 
     OnMainThreadAsync(^{
@@ -3356,12 +3334,10 @@ void macdrv_window_set_color_image(macdrv_window w, CGImageRef image, CGRect rec
 /***********************************************************************
  *              macdrv_window_set_shape_image
  */
-void macdrv_window_set_shape_image(macdrv_window w, CGImageRef image)
+void macdrv_window_set_shape_image(WineWindow *window, CGImageRef image)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     CGImageRetain(image);
 
     OnMainThreadAsync(^{
@@ -3382,12 +3358,10 @@ void macdrv_window_set_shape_image(macdrv_window w, CGImageRef image)
  * Sets the shape of a Cocoa window from an array of rectangles.  If
  * rects is NULL, resets the window's shape to its frame.
  */
-void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
+void macdrv_set_window_shape(WineWindow *window, const CGRect *rects, int count)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         if (!rects || !count)
         {
@@ -3412,12 +3386,10 @@ void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
 /***********************************************************************
  *              macdrv_set_window_alpha
  */
-void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha)
+void macdrv_set_window_alpha(WineWindow *window, CGFloat alpha)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setAlphaValue:alpha];
     });
@@ -3427,12 +3399,10 @@ void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha)
 /***********************************************************************
  *              macdrv_window_use_per_pixel_alpha
  */
-void macdrv_window_use_per_pixel_alpha(macdrv_window w, bool use_per_pixel_alpha)
+void macdrv_window_use_per_pixel_alpha(WineWindow *window, bool use_per_pixel_alpha)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         window.usePerPixelAlpha = use_per_pixel_alpha;
         [window checkTransparency];
@@ -3443,12 +3413,10 @@ void macdrv_window_use_per_pixel_alpha(macdrv_window w, bool use_per_pixel_alpha
 /***********************************************************************
  *              macdrv_set_window_mask
  */
-void macdrv_set_window_mask(macdrv_window w, CGRect rect)
+void macdrv_set_window_mask(WineWindow *window, CGRect rect)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setMask:rect];
     });
@@ -3462,10 +3430,8 @@ void macdrv_set_window_mask(macdrv_window w, CGRect rect)
  * orders it front and, if its frame was not within the desktop bounds,
  * Cocoa will typically move it on-screen.
  */
-void macdrv_give_cocoa_window_focus(macdrv_window w, bool activate)
+void macdrv_give_cocoa_window_focus(WineWindow *window, bool activate)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window makeFocused:activate];
     });
@@ -3476,10 +3442,8 @@ void macdrv_give_cocoa_window_focus(macdrv_window w, bool activate)
  *
  * Sets the window's minimum and maximum content sizes.
  */
-void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size)
+void macdrv_set_window_min_max_sizes(WineWindow *window, CGSize min_size, CGSize max_size)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         [window setWineMinSize:NSSizeFromCGSize(cgsize_mac_from_win(min_size)) maxSize:NSSizeFromCGSize(cgsize_mac_from_win(max_size))];
     });
@@ -3591,13 +3555,12 @@ void macdrv_set_view_frame(WineContentView *view, CGRect rect)
  * Otherwise, the view is ordered above n.  If s is NULL, use the
  * content view of w as the new superview.
  */
-void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, macdrv_window w, WineContentView *prev, WineContentView *next)
+void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, WineWindow *window, WineContentView *prev, WineContentView *next)
 {
 @autoreleasepool
 {
     OnMainThreadAsync(^{
         WineContentView* superview = parent;
-        WineWindow* window = (WineWindow*)w;
 
         if (!superview)
             superview = [window contentView];
@@ -3880,12 +3843,10 @@ void macdrv_destroy_swapchain(id<WineMetalSwapChain> swapchain)
     [swapchain release];
 }
 
-void macdrv_window_create_ca_layer_host_view(macdrv_window w, unsigned int context_id)
+void macdrv_window_create_ca_layer_host_view(WineWindow *window, unsigned int context_id)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         NSView* content_view = [window contentView];
 
@@ -3895,12 +3856,10 @@ void macdrv_window_create_ca_layer_host_view(macdrv_window w, unsigned int conte
 }
 }
 
-void macdrv_window_release_ca_layer_host_view(macdrv_window w, unsigned int context_id)
+void macdrv_window_release_ca_layer_host_view(WineWindow *window, unsigned int context_id)
 {
 @autoreleasepool
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         NSView* content_view = [window contentView];
 

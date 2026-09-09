@@ -111,12 +111,12 @@ DECLARE_CLASS(WineEventQueue);
 DECLARE_CLASS(WineMetalView);
 DECLARE_CLASS(WineOpenGLContext);
 DECLARE_CLASS(WineStatusItem);
+DECLARE_CLASS(WineWindow);
 DECLARE_CLASS(CAMetalLayer);
 DECLARE_PROTO(MTLDevice);
 DECLARE_PROTO(WineMetalSwapChain);
 #undef DECLARE_INTERFACE
 
-typedef struct macdrv_opaque_window* macdrv_window;
 struct macdrv_event;
 struct macdrv_query;
 
@@ -214,7 +214,7 @@ extern void macdrv_beep(void);
 extern void macdrv_set_application_icon(CFArrayRef images);
 extern void macdrv_quit_reply(int reply);
 extern bool macdrv_using_input_method(void);
-extern void macdrv_set_mouse_capture_window(macdrv_window window);
+extern void macdrv_set_mouse_capture_window(WineWindow *window);
 extern void macdrv_set_cocoa_retina_mode(bool new_mode);
 
 
@@ -327,7 +327,7 @@ typedef struct macdrv_event {
     int                 refs;
     int                 deliver;
     int                 type;
-    macdrv_window       window;
+    WineWindow         *window;
     union {
         struct {
             int reason;
@@ -430,7 +430,7 @@ enum {
 typedef struct macdrv_query {
     int                 refs;
     int                 type;
-    macdrv_window       window;
+    WineWindow         *window;
     bool                status;
     bool                done;
     union {
@@ -500,34 +500,34 @@ struct macdrv_window_state {
 
 struct window_surface;
 
-extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
+extern WineWindow *macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
         CGRect frame, void* hwnd, WineEventQueue *queue);
-extern void macdrv_destroy_cocoa_window(macdrv_window w);
-extern void* macdrv_get_window_hwnd(macdrv_window w);
-extern void macdrv_set_cocoa_window_features(macdrv_window w,
+extern void macdrv_destroy_cocoa_window(WineWindow *window);
+extern void* macdrv_get_window_hwnd(WineWindow *window);
+extern void macdrv_set_cocoa_window_features(WineWindow *window,
         const struct macdrv_window_features* wf);
-extern void macdrv_set_cocoa_window_state(macdrv_window w,
+extern void macdrv_set_cocoa_window_state(WineWindow *window,
         const struct macdrv_window_state* state);
-extern void macdrv_set_cocoa_window_title(macdrv_window w, const UniChar* title,
+extern void macdrv_set_cocoa_window_title(WineWindow *window, const UniChar* title,
         size_t length);
-extern void macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
-        macdrv_window next, bool activate);
-extern void macdrv_hide_cocoa_window(macdrv_window w);
-extern void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame);
-extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame);
-extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent);
-extern void macdrv_window_set_color_image(macdrv_window w, CGImageRef image, CGRect rect, CGRect dirty);
-extern void macdrv_window_set_shape_image(macdrv_window w, CGImageRef image);
-extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count);
-extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha);
-extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, bool use_per_pixel_alpha);
-extern void macdrv_set_window_mask(macdrv_window w, CGRect rect);
-extern void macdrv_give_cocoa_window_focus(macdrv_window w, bool activate);
-extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size);
+extern void macdrv_order_cocoa_window(WineWindow *window, WineWindow *prev,
+        WineWindow *next, bool activate);
+extern void macdrv_hide_cocoa_window(WineWindow *window);
+extern void macdrv_set_cocoa_window_frame(WineWindow *window, const CGRect* new_frame);
+extern void macdrv_get_cocoa_window_frame(WineWindow *window, CGRect* out_frame);
+extern void macdrv_set_cocoa_parent_window(WineWindow *window, WineWindow *parent);
+extern void macdrv_window_set_color_image(WineWindow *window, CGImageRef image, CGRect rect, CGRect dirty);
+extern void macdrv_window_set_shape_image(WineWindow *window, CGImageRef image);
+extern void macdrv_set_window_shape(WineWindow *window, const CGRect *rects, int count);
+extern void macdrv_set_window_alpha(WineWindow *window, CGFloat alpha);
+extern void macdrv_window_use_per_pixel_alpha(WineWindow *window, bool use_per_pixel_alpha);
+extern void macdrv_set_window_mask(WineWindow *window, CGRect rect);
+extern void macdrv_give_cocoa_window_focus(WineWindow *window, bool activate);
+extern void macdrv_set_window_min_max_sizes(WineWindow *window, CGSize min_size, CGSize max_size);
 extern WineContentView *macdrv_create_view(CGRect rect);
 extern void macdrv_dispose_view(WineContentView *view);
 extern void macdrv_set_view_frame(WineContentView *view, CGRect rect);
-extern void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, macdrv_window w, WineContentView *prev, WineContentView *next);
+extern void macdrv_set_view_superview(WineContentView *view, WineContentView *parent, WineWindow *window, WineContentView *prev, WineContentView *next);
 extern void macdrv_set_view_hidden(WineContentView *view, bool hidden);
 extern void macdrv_add_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
 extern void macdrv_remove_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
@@ -540,8 +540,8 @@ extern id_WineMetalSwapChain macdrv_create_view_swapchain(WineContentView *view)
 extern id_WineMetalSwapChain macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
 extern CAMetalLayer *macdrv_swapchain_get_layer(id_WineMetalSwapChain swapchain);
 extern void macdrv_destroy_swapchain(id_WineMetalSwapChain swapchain);
-extern void macdrv_window_create_ca_layer_host_view(macdrv_window w, unsigned int context_id);
-extern void macdrv_window_release_ca_layer_host_view(macdrv_window w, unsigned int context_id);
+extern void macdrv_window_create_ca_layer_host_view(WineWindow *window, unsigned int context_id);
+extern void macdrv_window_release_ca_layer_host_view(WineWindow *window, unsigned int context_id);
 extern void macdrv_create_remote_layer(void* hwnd, unsigned int context_id);
 extern void macdrv_release_remote_layer(void* hwnd, unsigned int context_id);
 extern bool macdrv_get_view_backing_size(WineContentView *view, int backing_size[2]);
@@ -565,10 +565,10 @@ extern int macdrv_layout_list_needs_update;
 /* clipboard */
 extern CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard);
 extern CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type);
-extern bool macdrv_is_pasteboard_owner(macdrv_window w);
+extern bool macdrv_is_pasteboard_owner(WineWindow *window);
 extern bool macdrv_has_pasteboard_changed(void);
-extern void macdrv_clear_pasteboard(macdrv_window w);
-extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w);
+extern void macdrv_clear_pasteboard(WineWindow *window);
+extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, WineWindow *window);
 
 
 /* opengl */

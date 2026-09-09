@@ -220,10 +220,10 @@ void release_win_data(struct macdrv_win_data *data)
  *
  * Return the Mac window associated with the full area of a window
  */
-macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen)
+WineWindow *macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
-    macdrv_window ret = NULL;
+    WineWindow *ret = NULL;
     if (data && (data->on_screen || !require_on_screen))
         ret = data->cocoa_window;
     release_win_data(data);
@@ -241,7 +241,7 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
 {
     DWORD style, ex_style;
     HWND owner;
-    macdrv_window owner_win;
+    WineWindow *owner_win;
     struct macdrv_window_features wf;
     struct macdrv_window_state state;
 
@@ -629,8 +629,8 @@ static void show_window(struct macdrv_win_data *data)
 {
     HWND prev = NULL;
     HWND next = NULL;
-    macdrv_window prev_window = NULL;
-    macdrv_window next_window = NULL;
+    WineWindow *prev_window = NULL;
+    WineWindow *next_window = NULL;
     BOOL activate = FALSE;
     GUITHREADINFO info;
 
@@ -1421,7 +1421,7 @@ void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
  */
 void macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
 {
-    macdrv_window win;
+    WineWindow *win;
 
     TRACE("%p, %s\n", hwnd, debugstr_w(text));
 

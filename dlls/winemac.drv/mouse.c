@@ -126,7 +126,7 @@ static const CFStringRef cocoa_cursor_names[] =
  *
  * Update the various window states on a mouse event.
  */
-static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, int x, int y,
+static void send_mouse_input(HWND hwnd, WineWindow *cocoa_window, UINT flags, int x, int y,
                              DWORD mouse_data, BOOL drag, unsigned long time)
 {
     INPUT input;
@@ -686,7 +686,7 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
  void macdrv_SetCapture(HWND hwnd, UINT flags, HWND previous)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    macdrv_window cocoa_window = macdrv_get_cocoa_window(hwnd, FALSE);
+    WineWindow *cocoa_window = macdrv_get_cocoa_window(hwnd, FALSE);
 
     TRACE("hwnd %p/%p flags 0x%08x previous %p\n", hwnd, cocoa_window, flags, previous);
 

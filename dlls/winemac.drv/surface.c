@@ -46,7 +46,7 @@ static inline int get_dib_image_size(const BITMAPINFO *info)
 struct macdrv_window_surface
 {
     struct window_surface   header;
-    macdrv_window           window;
+    WineWindow             *window;
     CGDataProviderRef       provider;
 };
 
@@ -165,7 +165,7 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
 /***********************************************************************
  *              create_surface
  */
-static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect)
+static struct window_surface *create_surface(HWND hwnd, WineWindow *window, const RECT *rect)
 {
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;

@@ -405,7 +405,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             }
 
             triedWindows = (NSMutableSet*)event->window_got_focus.tried_windows;
-            [triedWindows addObject:(WineWindow*)event->window];
+            [triedWindows addObject:event->window];
             for (window in windows)
             {
                 if (![triedWindows containsObject:window] && [window canBecomeKeyWindow])
@@ -2654,14 +2654,12 @@ bool macdrv_using_input_method(void)
 /***********************************************************************
  *              macdrv_set_mouse_capture_window
  */
-void macdrv_set_mouse_capture_window(macdrv_window window)
+void macdrv_set_mouse_capture_window(WineWindow *window)
 {
-    WineWindow* w = (WineWindow*)window;
-
-    [w.queue discardEventsMatchingMask:event_mask_for_type(RELEASE_CAPTURE) forWindow:w];
+    [window.queue discardEventsMatchingMask:event_mask_for_type(RELEASE_CAPTURE) forWindow:window];
 
     OnMainThread(^{
-        [[WineApplicationController sharedController] setMouseCaptureWindow:w];
+        [[WineApplicationController sharedController] setMouseCaptureWindow:window];
     });
 }
 

@@ -46,10 +46,9 @@ static NSString* const OwnershipSentinel = @"org.winehq.wine.winemac.pasteboard-
 /***********************************************************************
  *              macdrv_is_pasteboard_owner
  */
-bool macdrv_is_pasteboard_owner(macdrv_window w)
+bool macdrv_is_pasteboard_owner(WineWindow *window)
 {
     __block bool ret;
-    WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
         NSPasteboard* pb = [NSPasteboard generalPasteboard];
@@ -188,10 +187,8 @@ CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type)
  *
  * Takes ownership of the Mac pasteboard and clears it of all data types.
  */
-void macdrv_clear_pasteboard(macdrv_window w)
+void macdrv_clear_pasteboard(WineWindow *window)
 {
-    WineWindow* window = (WineWindow*)w;
-
     OnMainThread(^{
         @try
         {
@@ -218,10 +215,9 @@ void macdrv_clear_pasteboard(macdrv_window w)
  *
  * Returns 0 on error, non-zero on success.
  */
-int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w)
+int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, WineWindow *window)
 {
     __block int ret = 0;
-    WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
         @try
