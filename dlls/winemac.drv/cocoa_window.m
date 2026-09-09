@@ -463,7 +463,7 @@ static inline BOOL stage_manager_enabled(void)
         for (WineOpenGLContext* context in pendingGlContexts)
         {
             context.needsUpdate = TRUE;
-            macdrv_update_opengl_context((macdrv_opengl_context)context);
+            macdrv_update_opengl_context(context);
         }
         [glContexts addObjectsFromArray:pendingGlContexts];
         [pendingGlContexts removeAllObjects];
@@ -3659,12 +3659,11 @@ void macdrv_set_view_hidden(macdrv_view v, bool hidden)
  *
  * Add an OpenGL context to the list being tracked for each view.
  */
-void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
+void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context)
 {
 @autoreleasepool
 {
     WineContentView* view = (WineContentView*)v;
-    WineOpenGLContext *context = (WineOpenGLContext*)c;
 
     OnMainThread(^{
         [view addGLContext:context];
@@ -3677,12 +3676,11 @@ void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
  *
  * Add an OpenGL context to the list being tracked for each view.
  */
-void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
+void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context)
 {
 @autoreleasepool
 {
     WineContentView* view = (WineContentView*)v;
-    WineOpenGLContext *context = (WineOpenGLContext*)c;
 
     OnMainThreadAsync(^{
         [view removeGLContext:context];

@@ -106,13 +106,13 @@ enum {
 #endif
 DECLARE_CLASS(WineEventQueue);
 DECLARE_CLASS(WineMetalView);
+DECLARE_CLASS(WineOpenGLContext);
 DECLARE_CLASS(WineStatusItem);
 DECLARE_CLASS(CAMetalLayer);
 #undef DECLARE_CLASS
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_view* macdrv_view;
-typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
 typedef struct macdrv_opaque_metal_swapchain* macdrv_metal_swapchain;
 struct macdrv_event;
@@ -527,8 +527,8 @@ extern void macdrv_dispose_view(macdrv_view v);
 extern void macdrv_set_view_frame(macdrv_view v, CGRect rect);
 extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n);
 extern void macdrv_set_view_hidden(macdrv_view v, bool hidden);
-extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c);
-extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c);
+extern void macdrv_add_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
+extern void macdrv_remove_view_opengl_context(macdrv_view v, WineOpenGLContext *context);
 extern macdrv_metal_device macdrv_create_metal_device(void);
 extern void macdrv_release_metal_device(macdrv_metal_device d);
 extern WineMetalView *macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d);
@@ -570,11 +570,11 @@ extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_w
 
 
 /* opengl */
-extern macdrv_opengl_context macdrv_create_opengl_context(void* cglctx);
-extern void macdrv_dispose_opengl_context(macdrv_opengl_context c);
-extern void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v, CGRect r);
-extern void macdrv_update_opengl_context(macdrv_opengl_context c);
-extern void macdrv_flush_opengl_context(macdrv_opengl_context c);
+extern WineOpenGLContext *macdrv_create_opengl_context(void* cglctx);
+extern void macdrv_dispose_opengl_context(WineOpenGLContext *context);
+extern void macdrv_make_context_current(WineOpenGLContext *context, macdrv_view v, CGRect r);
+extern void macdrv_update_opengl_context(WineOpenGLContext *context);
+extern void macdrv_flush_opengl_context(WineOpenGLContext *context);
 
 
 /* systray / status item */

@@ -58,7 +58,7 @@ struct macdrv_context
 {
     struct opengl_context   base;
     BOOL                    core;
-    macdrv_opengl_context   context;
+    WineOpenGLContext      *context;
     GLenum                  draw_pbuffer_face;
     GLint                   draw_pbuffer_level;
     int                     swap_interval;
