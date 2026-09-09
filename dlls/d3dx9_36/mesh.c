@@ -660,8 +660,8 @@ static BOOL declaration_equals(const D3DVERTEXELEMENT9 *declaration1, const D3DV
     UINT size1 = 0, size2 = 0;
 
     /* Find the size of each declaration */
-    while (declaration1[size1].Stream != 0xff) size1++;
-    while (declaration2[size2].Stream != 0xff) size2++;
+    while (size1 < MAX_FVF_DECL_SIZE && declaration1[size1].Stream != 0xff) size1++;
+    while (size2 < MAX_FVF_DECL_SIZE && declaration2[size2].Stream != 0xff) size2++;
 
     /* If not same size then they are definitely not equal */
     if (size1 != size2)
