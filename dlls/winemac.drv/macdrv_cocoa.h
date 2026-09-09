@@ -105,6 +105,7 @@ enum {
 #define DECLARE_CLASS(x) typedef struct __ ## x x
 #endif
 DECLARE_CLASS(WineEventQueue);
+DECLARE_CLASS(WineStatusItem);
 #undef DECLARE_CLASS
 
 typedef struct macdrv_opaque_window* macdrv_window;
@@ -114,7 +115,6 @@ typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
 typedef struct macdrv_opaque_metal_view* macdrv_metal_view;
 typedef struct macdrv_opaque_metal_layer* macdrv_metal_layer;
 typedef struct macdrv_opaque_metal_swapchain* macdrv_metal_swapchain;
-typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
 struct macdrv_query;
 
@@ -381,7 +381,7 @@ typedef struct macdrv_event {
             struct macdrv_query *query;
         }                                           query_event;
         struct {
-            macdrv_status_item  item;
+            WineStatusItem     *item;
             int                 button;
             bool                down;
             int                 count;
@@ -389,7 +389,7 @@ typedef struct macdrv_event {
             int                 y;
         }                                           status_item_mouse_button;
         struct {
-            macdrv_status_item  item;
+            WineStatusItem     *item;
             int                 x;
             int                 y;
         }                                           status_item_mouse_move;
@@ -578,10 +578,10 @@ extern void macdrv_flush_opengl_context(macdrv_opengl_context c);
 
 
 /* systray / status item */
-extern macdrv_status_item macdrv_create_status_item(WineEventQueue *queue);
-extern void macdrv_destroy_status_item(macdrv_status_item s);
-extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage);
-extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip);
+extern WineStatusItem *macdrv_create_status_item(WineEventQueue *queue);
+extern void macdrv_destroy_status_item(WineStatusItem *item);
+extern void macdrv_set_status_item_image(WineStatusItem *item, CGImageRef cgimage);
+extern void macdrv_set_status_item_tooltip(WineStatusItem *item, CFStringRef cftip);
 
 /* ime */
 extern pthread_mutex_t ime_composition_rect_mutex;

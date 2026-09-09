@@ -49,7 +49,7 @@ struct tray_icon
     HICON               image;              /* the image to render */
     WCHAR               tiptext[128];       /* tooltip text */
     DWORD               state;              /* state flags */
-    macdrv_status_item  status_item;
+    WineStatusItem     *status_item;
     UINT                version;
 };
 

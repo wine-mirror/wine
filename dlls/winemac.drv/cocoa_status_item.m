@@ -100,8 +100,8 @@
             [item setView:nil];
 
             [queue discardEventsPassingTest:^BOOL (macdrv_event* event){
-                return ((event->type == STATUS_ITEM_MOUSE_BUTTON && event->status_item_mouse_button.item == (macdrv_status_item)self) ||
-                        (event->type == STATUS_ITEM_MOUSE_MOVE && event->status_item_mouse_move.item == (macdrv_status_item)self));
+                return ((event->type == STATUS_ITEM_MOUSE_BUTTON && event->status_item_mouse_button.item == self) ||
+                        (event->type == STATUS_ITEM_MOUSE_MOVE && event->status_item_mouse_move.item == self));
             }];
 
             self.item = nil;
@@ -117,7 +117,7 @@
         point = cgpoint_win_from_mac(point);
 
         event = macdrv_create_event(STATUS_ITEM_MOUSE_BUTTON, nil);
-        event->status_item_mouse_button.item = (macdrv_status_item)self;
+        event->status_item_mouse_button.item = self;
         event->status_item_mouse_button.button = [nsevent buttonNumber];
         event->status_item_mouse_button.down = (typeMask & (NSEventMaskLeftMouseDown |
                                                             NSEventMaskRightMouseDown |
@@ -178,7 +178,7 @@
         point = cgpoint_win_from_mac(point);
 
         event = macdrv_create_event(STATUS_ITEM_MOUSE_MOVE, nil);
-        event->status_item_mouse_move.item = (macdrv_status_item)self;
+        event->status_item_mouse_move.item = self;
         event->status_item_mouse_move.x = floor(point.x);
         event->status_item_mouse_move.y = floor(point.y);
         [queue postEvent:event];
@@ -228,7 +228,7 @@
  *
  * Creates a new status item in the status bar.
  */
-macdrv_status_item macdrv_create_status_item(WineEventQueue *queue)
+WineStatusItem *macdrv_create_status_item(WineEventQueue *queue)
 {
     __block WineStatusItem* statusItem;
 
@@ -236,7 +236,7 @@ macdrv_status_item macdrv_create_status_item(WineEventQueue *queue)
         statusItem = [[WineStatusItem alloc] initWithEventQueue:queue];
     });
 
-    return (macdrv_status_item)statusItem;
+    return statusItem;
 }
 
 /***********************************************************************
@@ -245,10 +245,8 @@ macdrv_status_item macdrv_create_status_item(WineEventQueue *queue)
  * Removes a status item previously returned by
  * macdrv_create_status_item() from the status bar and destroys it.
  */
-void macdrv_destroy_status_item(macdrv_status_item s)
+void macdrv_destroy_status_item(WineStatusItem *statusItem)
 {
-    WineStatusItem* statusItem = (WineStatusItem*)s;
-
     OnMainThreadAsync(^{
         [statusItem removeFromStatusBar];
         [statusItem release];
@@ -261,10 +259,8 @@ void macdrv_destroy_status_item(macdrv_status_item s)
  * Sets the image for a status item.  If cgimage is NULL, clears the
  * image of the status item (leaving it a blank spot on the menu bar).
  */
-void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage)
+void macdrv_set_status_item_image(WineStatusItem *statusItem, CGImageRef cgimage)
 {
-    WineStatusItem* statusItem = (WineStatusItem*)s;
-
     CGImageRetain(cgimage);
 
     OnMainThreadAsync(^{
@@ -298,9 +294,8 @@ void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage)
  * Sets the tooltip string for a status item.  If cftip is NULL, clears
  * the tooltip string for the status item.
  */
-void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip)
+void macdrv_set_status_item_tooltip(WineStatusItem *statusItem, CFStringRef cftip)
 {
-    WineStatusItem* statusItem = (WineStatusItem*)s;
     NSString* tip = (NSString*)cftip;
 
     if (![tip length]) tip = nil;
