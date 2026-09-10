@@ -293,7 +293,32 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
 
 static void execute_verb(ContextMenu *menu, HWND hwnd, const WCHAR *verb)
 {
-    for (unsigned int i = 0; i < menu->cidl; ++i)
+    unsigned int i;
+
+    /* When the default "open" verb is invoked on a folder inside a hosting shell browser
+     * (e.g. the common file dialog), navigate the browser into the folder instead of handing
+     * the "Folder" class open verb to ShellExecuteEx.
+     */
+    if (!wcsicmp(verb, L"open") && !wcsicmp(menu->filetype, L"Folder"))
+    {
+        IShellBrowser *browser = (IShellBrowser *)SendMessageA(hwnd, CWM_GETISHELLBROWSER, 0, 0);
+        if (browser)
+        {
+            for (i = 0; i < menu->cidl; ++i)
+            {
+                SFGAOF attributes = SFGAO_FOLDER;
+
+                if (SUCCEEDED(IShellFolder_GetAttributesOf(menu->parent, 1, (LPCITEMIDLIST *)&menu->apidl[i],
+                              &attributes)) && (attributes & SFGAO_FOLDER))
+                {
+                    IShellBrowser_BrowseObject(browser, menu->apidl[i], SBSP_DEFBROWSER | SBSP_RELATIVE);
+                    return;
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < menu->cidl; ++i)
     {
         LPITEMIDLIST abs_pidl = ILCombine(menu->pidl, menu->apidl[i]);
         SHELLEXECUTEINFOW info = {0};
