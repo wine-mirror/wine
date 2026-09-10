@@ -2098,44 +2098,6 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
 
 
 /***********************************************************************
- *           find_reserved_free_area_outside_preloader
- *
- * Find a free area inside a reserved area, skipping the preloader reserved range.
- * virtual_mutex must be held by caller.
- */
-static void *find_reserved_free_area_outside_preloader( void *start, void *end, size_t size,
-                                                        int top_down, size_t align_mask )
-{
-    void *ret;
-
-    if (preload_reserve_end >= end)
-    {
-        if (preload_reserve_start <= start) return NULL;  /* no space in that area */
-        if (preload_reserve_start < end) end = preload_reserve_start;
-    }
-    else if (preload_reserve_start <= start)
-    {
-        if (preload_reserve_end > start) start = preload_reserve_end;
-    }
-    else /* range is split in two by the preloader reservation, try both parts */
-    {
-        if (top_down)
-        {
-            ret = find_reserved_free_area( preload_reserve_end, end, size, top_down, align_mask );
-            if (ret) return ret;
-            end = preload_reserve_start;
-        }
-        else
-        {
-            ret = find_reserved_free_area( start, preload_reserve_start, size, top_down, align_mask );
-            if (ret) return ret;
-            start = preload_reserve_end;
-        }
-    }
-    return find_reserved_free_area( start, end, size, top_down, align_mask );
-}
-
-/***********************************************************************
  *           map_reserved_area
  *
  * Try to map some space inside a reserved area.
@@ -2158,7 +2120,7 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
             if (end <= limit_low) return NULL;
             if (start < limit_low) start = (void *)ROUND_SIZE( 0, limit_low, host_page_mask );
             if (end > limit_high) end = ROUND_ADDR( limit_high, host_page_mask );
-            ptr = find_reserved_free_area_outside_preloader( start, end, size, top_down, align_mask );
+            ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
             if (ptr) break;
         }
     }
@@ -2173,7 +2135,7 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
             if (end <= limit_low) continue;
             if (start < limit_low) start = (void *)ROUND_SIZE( 0, limit_low, host_page_mask );
             if (end > limit_high) end = ROUND_ADDR( limit_high, host_page_mask );
-            ptr = find_reserved_free_area_outside_preloader( start, end, size, top_down, align_mask );
+            ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
             if (ptr) break;
         }
     }
