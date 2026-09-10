@@ -4061,6 +4061,19 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     return teb;
 }
 
+static struct thread_data *init_thread_data( void *ptr )
+{
+    struct thread_data *data = ptr;
+    data->request_fd = -1;
+    data->reply_fd   = -1;
+    data->wait_fd[0] = -1;
+    data->wait_fd[1] = -1;
+    data->alert_fd   = -1;
+#ifdef VALGRIND_STACK_REGISTER
+    VALGRIND_STACK_REGISTER( (char *)data + signal_stack_mask + 1, (char *)data + kernel_stack_size );
+#endif
+    return data;
+}
 
 /***********************************************************************
  *           virtual_alloc_first_teb
@@ -4070,34 +4083,38 @@ TEB *virtual_alloc_first_teb(void)
     void *ptr;
     TEB *teb;
     unsigned int status;
-    SIZE_T data_size = page_size;
     SIZE_T block_size = 4 * page_size;
-    SIZE_T total = 32 * block_size;
     struct thread_data *thread_data;
+    struct file_view *view;
 
     /* reserve space for shared user data */
-    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&user_shared_data, 0, &data_size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+    status = map_view( &view, user_shared_data, page_size, 0, VPROT_READ | VPROT_COMMITTED, 0, 0, 0 );
     if (status)
     {
         ERR( "wine: failed to map the shared user data: %08x\n", status );
         exit(1);
     }
 
-    NtAllocateVirtualMemory( NtCurrentProcess(), &teb_block, is_win64 ? limit_2g - 1 : 0, &total,
-                             MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
+    status = map_view( &view, NULL, 32 * block_size, MEM_TOP_DOWN,
+                       VPROT_READ | VPROT_WRITE, 0, is_win64 ? limit_2g : 0, 0 );
+    assert( !status );
+    teb_block = view->base;
     teb_block_pos = 30;
     ptr = (char *)teb_block + 30 * block_size;
-    data_size = 2 * block_size;
-    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
-    peb = (PEB *)((char *)teb_block + 31 * block_size + (is_win64 ? 0 : page_size));
+    peb = (PEB *)((char *)ptr + block_size + (is_win64 ? 0 : page_size));
+    set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
     teb = init_teb( ptr, FALSE );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
 
-    thread_data = virtual_alloc_thread_data();
+    status = map_view( &view, NULL, signal_stack_mask + 1 + kernel_stack_size, MEM_TOP_DOWN,
+                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
+    assert( !status );
+    thread_data = init_thread_data( view->base );
     thread_data->teb = teb;
     list_add_head( &teb_list, &thread_data->entry );
     pthread_key_create( &thread_data_key, NULL );
     pthread_setspecific( thread_data_key, thread_data );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
     return teb;
 }
 
@@ -4166,15 +4183,7 @@ struct thread_data *virtual_alloc_thread_data(void)
     status = map_view( &view, NULL, size, 0, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
     if (!status)
     {
-        data = view->base;
-        data->request_fd = -1;
-        data->reply_fd   = -1;
-        data->wait_fd[0] = -1;
-        data->wait_fd[1] = -1;
-        data->alert_fd   = -1;
-#ifdef VALGRIND_STACK_REGISTER
-        VALGRIND_STACK_REGISTER( (char *)data + signal_stack_mask + 1, (char *)data + view->size );
-#endif
+        data = init_thread_data( view->base );
         VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
