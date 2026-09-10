@@ -410,8 +410,9 @@ static DWORD WINAPI context_thread_proc(void *arg)
 static void main_test(void)
 {
     struct main_test_input test_input;
-    HANDLE thread;
-    DWORD size;
+    TOKEN_STATISTICS stats;
+    HANDLE thread, token;
+    DWORD size, len;
     BOOL res;
 
     test_input.process_id = GetCurrentProcessId();
@@ -425,6 +426,14 @@ static void main_test(void)
     test_input.thread_context.ContextFlags = CONTEXT_CONTROL;
     res = GetThreadContext(thread, &test_input.thread_context);
     ok(res, "GetThreadContext failed: %lu\n", GetLastError());
+
+    token = NULL;
+    res = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(res, "OpenProcessToken failed: %lu\n", GetLastError());
+    res = GetTokenInformation(token, TokenStatistics, &stats, sizeof(stats), &len);
+    ok(res, "GetTokenInformation failed: %lu\n", GetLastError());
+    test_input.token_id = stats.TokenId;
+    CloseHandle(token);
 
     res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, &test_input, sizeof(test_input), NULL, 0, &size, NULL);
     ok(res, "DeviceIoControl failed: %lu\n", GetLastError());

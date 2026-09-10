@@ -77,6 +77,7 @@ struct main_test_input
     ULONG64 *modified_value;
     DWORD thread_id;
     CONTEXT thread_context;
+    LUID token_id;
 };
 
 struct return_status_params
