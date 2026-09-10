@@ -1627,16 +1627,8 @@ static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *
     copy_unicode_string( &src, dst, str, wcslen(src) * sizeof(WCHAR) );
 }
 
-static void copy_dos_path_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str,
-                                  UNICODE_STRING *nt_str, UINT len )
+static void copy_dos_path_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
 {
-    /* copy the original string into nt_str */
-    nt_str->Buffer = malloc( len + sizeof(WCHAR) );
-    memcpy( nt_str->Buffer, *src, len );
-    nt_str->Buffer[len / sizeof(WCHAR)] = 0;
-    nt_str->Length = len;
-    nt_str->MaximumLength = len + sizeof(WCHAR);
-
     if (len > 5 * sizeof(WCHAR) && (*src)[5] == ':') /* skip the \??\ prefix */
     {
         *src += 4;
@@ -2051,6 +2043,15 @@ void init_startup_info(void)
     is_prefix_bootstrap = !!find_env_var( env, env_pos, bootstrapW, ARRAY_SIZE(bootstrapW) );
     env[env_pos++] = 0;
 
+    nt_name.Buffer = (WCHAR *)(info + 1);
+    nt_name.Length = info->imagepath_len;
+    status = load_main_exe( &nt_name, machine, &module );
+    if (!NT_SUCCESS(status))
+    {
+        MESSAGE( "wine: failed to start %s: %x\n", debugstr_us(&nt_name), status );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+
     size = (sizeof(*params)
             + info->imagepath_len + sizeof(WCHAR)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
@@ -2089,7 +2090,7 @@ void init_startup_info(void)
     src = (WCHAR *)(info + 1);
     dst = (WCHAR *)(params + 1);
 
-    copy_dos_path_string( &src, &dst, &params->ImagePathName, &nt_name, info->imagepath_len );
+    copy_dos_path_string( &src, &dst, &params->ImagePathName, info->imagepath_len );
 
     /* curdir is special */
     copy_unicode_string( &src, &dst, &params->CurrentDirectory.DosPath, info->curdir_len );
@@ -2118,15 +2119,8 @@ void init_startup_info(void)
     free( env );
     free( info );
 
-    status = load_main_exe( &nt_name, machine, &module );
-    if (!NT_SUCCESS(status))
-    {
-        MESSAGE( "wine: failed to start %s: %x\n", debugstr_us(&params->ImagePathName), status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
     rebuild_argv();
     main_wargv = build_wargv( params->ImagePathName.Buffer );
-    free( nt_name.Buffer );
     init_peb( params, module, debugged );
 }
 
