@@ -1698,13 +1698,26 @@ static ULONG decode_int(int line, const BYTE *encoded, ULONG *len)
     return ((encoded[0] & ~0xe0) << 24) + (encoded[1] << 16) + (encoded[2] << 8) + encoded[3];
 }
 
+struct generic_param_props
+{
+    ULONG exp_seq;
+    const WCHAR *exp_name;
+};
+
 /* Tests for WinRT metadata shipped with Windows. */
 static void test_IMetaDataImport_winrt(void)
 {
     static const BYTE keyvaluepair_tmpl_params[] = { 2, ELEMENT_TYPE_STRING, ELEMENT_TYPE_OBJECT };
     static const WCHAR *foundation_path = L"c:\\windows\\system32\\winmetadata\\windows.foundation.winmd";
+    static const struct generic_param_props ikeyvaluepair_generic_params[] =
+    {
+        { 0, L"K" },
+        { 1, L"V" },
+    };
 
+    mdGenericParam params[2] = {0, 0};
     IMetaDataDispenser *dispenser;
+    IMetaDataImport2 *md_import2;
     IMetaDataImport *md_import;
     HCORENUM henum = NULL;
     mdInterfaceImpl impl;
@@ -1740,6 +1753,9 @@ static void test_IMetaDataImport_winrt(void)
         skip("OpenScope failed\n");
         return;
     }
+
+    hr = IMetaDataImport_QueryInterface(md_import, &IID_IMetaDataImport2, (void **)&md_import2);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
 
     /* Get the typeref for IKeyValuePair`2 and append it. */
     hr = IMetaDataImport_FindTypeRef(md_import, mdtModule | 1, L"Windows.Foundation.Collections.IKeyValuePair`2", &kvpair_ref);
@@ -1820,6 +1836,40 @@ static void test_IMetaDataImport_winrt(void)
     for (i = 0; i < ARRAY_SIZE(propertyset_ifaces); i++)
         ok(propertyset_ifaces[i].found, "Extends entry for %s not found\n", debugstr_w(propertyset_ifaces[i].name));
 
+    type_def = mdTokenNil;
+    hr = IMetaDataImport_FindTypeDefByName(md_import, L"Windows.Foundation.Collections.IKeyValuePair`2", mdTokenNil, &type_def);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    henum = NULL;
+    hr = IMetaDataImport2_EnumGenericParams(md_import2, &henum, type_def, params, ARRAY_SIZE(params), NULL);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMetaDataImport2_CountEnum(md_import2, henum, &len);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(len == ARRAY_SIZE(ikeyvaluepair_generic_params), "got len %lu\n", len);
+
+    for (i = 0; i < ARRAY_SIZE(ikeyvaluepair_generic_params); i++)
+    {
+        const struct generic_param_props *props = &ikeyvaluepair_generic_params[i];
+        ULONG seq = 0, flags = 0, reserved = 0xdeadbeef;
+        mdToken parent = mdTokenNil;
+        WCHAR nameW[80];
+
+        winetest_push_context("i=%lu,param=%s", i, debugstr_mdToken(params[i]));
+
+        nameW[0] = L'\0';
+        hr = IMetaDataImport2_GetGenericParamProps(md_import2, params[i], &seq, &flags, &parent, &reserved, nameW,
+                                                   ARRAY_SIZE(nameW), NULL);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(seq == props->exp_seq, "got seq %lu != %lu\n", seq, props->exp_seq);
+        todo_wine ok(!flags, "got flags %#lx\n", flags);
+        todo_wine ok(parent == type_def, "got parent %s != %s\n", debugstr_mdToken(parent), debugstr_mdToken(type_def));
+        todo_wine ok(reserved == 0xdeadbeef, "got reserved %#lx\n", reserved);
+        todo_wine ok(!wcscmp(nameW, props->exp_name), "got nameW %s != %s\n", debugstr_w(nameW), debugstr_w(props->exp_name));
+
+        winetest_pop_context();
+    }
+
+    IMetaDataImport2_Release(md_import2);
     IMetaDataImport_Release(md_import);
 }
 

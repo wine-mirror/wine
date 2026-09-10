@@ -1,5 +1,6 @@
 /*
  * Copyright 2025 Vibhav Pant
+ * Copyright 2026 Vibhav Pant for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,6 +42,9 @@ typedef mdToken mdAssembly;
 typedef mdToken mdAssemblyRef;
 typedef mdToken mdTypeSpec;
 typedef mdToken mdString;
+typedef mdToken mdGenericParam;
+typedef mdToken mdMethodSpec;
+typedef mdToken mdGenericParamConstraint;
 
 cpp_quote("#endif")
 
@@ -333,4 +337,36 @@ interface IMetaDataImport : IUnknown
                                      [out] ULONG *call_conv);
 
     HRESULT IsGlobal([in] mdToken token, [out] int *is_global);
+}
+
+[
+    local,
+    object,
+    uuid(fce5efa0-8bba-4f8e-a036-8f2022b08466)
+]
+interface IMetaDataImport2 : IMetaDataImport
+{
+    HRESULT EnumGenericParams([in, out] HCORENUM *henum, [in] mdToken token,
+                              [out, size_is(len), length_is(*count)] mdGenericParam *params,
+                              ULONG len, ULONG *count);
+
+    HRESULT GetGenericParamProps([in] mdGenericParam param, ULONG *idx, ULONG *flags, mdToken *parent, DWORD *reserved,
+                                 [out, string, size_is(len), length_is(*reqd)]WCHAR *name, ULONG len, ULONG *reqd);
+
+    HRESULT GetMethodSpecProps([in] mdMethodSpec method, [out] mdToken *parent,
+                               [out, size_is(, *sig_len)] const COR_SIGNATURE **sig_blob, ULONG *sig_len);
+
+    HRESULT EnumGenericParamConstraints([in, out] HCORENUM *henum, mdGenericParam param,
+                                        [out, size_is(len), length_is(*count)] mdGenericParamConstraint *constraints,
+                                        ULONG len, ULONG *count);
+
+    HRESULT GetGenericParamConstraintProps([in] mdGenericParamConstraint constraint, [out] mdGenericParam *param,
+                                           [out] mdToken *type);
+
+    HRESULT GetPEKind([out] DWORD *kind, [out] DWORD *machine);
+
+    HRESULT GetVersionString([out, string, size_is(len), length_is(*count)] WCHAR *version, DWORD len, DWORD *count);
+
+    HRESULT EnumMethodSpecs([in, out] HCORENUM *henum, mdToken token,
+                            [out, size_is(len), length_is(*reqd)] mdMethodSpec *specs, ULONG len, ULONG *reqd);
 }
