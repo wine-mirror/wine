@@ -1025,9 +1025,9 @@ static void dump_varargs_startup_info( const char *prefix, data_size_t size )
              prefix, info.debug_flags, info.console_flags, info.console,
              info.hstdin, info.hstdout, info.hstderr, info.x, info.y, info.xsize, info.ysize,
              info.xchars, info.ychars, info.attribute, info.flags, info.show, info.process_group_id );
+    pos = dump_inline_unicode_string( ",imagepath=", pos, info.imagepath_len, size );
     pos = dump_inline_unicode_string( ",curdir=", pos, info.curdir_len, size );
     pos = dump_inline_unicode_string( ",dllpath=", pos, info.dllpath_len, size );
-    pos = dump_inline_unicode_string( ",imagepath=", pos, info.imagepath_len, size );
     pos = dump_inline_unicode_string( ",cmdline=", pos, info.cmdline_len, size );
     pos = dump_inline_unicode_string( ",title=", pos, info.title_len, size );
     pos = dump_inline_unicode_string( ",desktop=", pos, info.desktop_len, size );

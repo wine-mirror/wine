@@ -1241,9 +1241,9 @@ DECL_HANDLER(new_process)
             goto done;
         }
 #define FIXUP_LEN(len) do { (len) = min( (len), info->info_size - pos ); pos += (len); } while(0)
+        FIXUP_LEN( info->data->imagepath_len );
         FIXUP_LEN( info->data->curdir_len );
         FIXUP_LEN( info->data->dllpath_len );
-        FIXUP_LEN( info->data->imagepath_len );
         FIXUP_LEN( info->data->cmdline_len );
         FIXUP_LEN( info->data->title_len );
         desktop_path.str = (WCHAR *)((char *)info->data + pos);

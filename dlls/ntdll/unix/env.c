@@ -2052,9 +2052,9 @@ void init_startup_info(void)
     env[env_pos++] = 0;
 
     size = (sizeof(*params)
+            + info->imagepath_len + sizeof(WCHAR)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
             + info->dllpath_len + sizeof(WCHAR)
-            + info->imagepath_len + sizeof(WCHAR)
             + info->cmdline_len + sizeof(WCHAR)
             + info->title_len + sizeof(WCHAR)
             + info->desktop_len + sizeof(WCHAR)
@@ -2089,13 +2089,14 @@ void init_startup_info(void)
     src = (WCHAR *)(info + 1);
     dst = (WCHAR *)(params + 1);
 
+    copy_dos_path_string( &src, &dst, &params->ImagePathName, &nt_name, info->imagepath_len );
+
     /* curdir is special */
     copy_unicode_string( &src, &dst, &params->CurrentDirectory.DosPath, info->curdir_len );
+    dst += MAX_PATH - params->CurrentDirectory.DosPath.MaximumLength / sizeof(WCHAR);
     params->CurrentDirectory.DosPath.MaximumLength = MAX_PATH * sizeof(WCHAR);
-    dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
 
     if (info->dllpath_len) copy_unicode_string( &src, &dst, &params->DllPath, info->dllpath_len );
-    copy_dos_path_string( &src, &dst, &params->ImagePathName, &nt_name, info->imagepath_len );
     copy_unicode_string( &src, &dst, &params->CommandLine, info->cmdline_len );
     copy_unicode_string( &src, &dst, &params->WindowTitle, info->title_len );
     copy_unicode_string( &src, &dst, &params->Desktop, info->desktop_len );
@@ -2189,9 +2190,9 @@ void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
     info->process_group_id = params->ProcessGroupId;
 
     ptr = info + 1;
+    info->imagepath_len = append_string( &ptr, params, nt_image );
     info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );
     info->dllpath_len = append_string( &ptr, params, &params->DllPath );
-    info->imagepath_len = append_string( &ptr, params, nt_image );
     info->cmdline_len = append_string( &ptr, params, &params->CommandLine );
     info->title_len = append_string( &ptr, params, &params->WindowTitle );
     info->desktop_len = append_string( &ptr, params, &params->Desktop );

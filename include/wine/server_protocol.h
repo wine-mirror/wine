@@ -230,9 +230,9 @@ struct startup_info_data
     unsigned int flags;
     unsigned int show;
     process_id_t process_group_id;
+    data_size_t  imagepath_len;
     data_size_t  curdir_len;
     data_size_t  dllpath_len;
-    data_size_t  imagepath_len;
     data_size_t  cmdline_len;
     data_size_t  title_len;
     data_size_t  desktop_len;
