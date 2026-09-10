@@ -908,7 +908,7 @@
 @ stub PsCreateSystemProcess
 @ stdcall PsCreateSystemThread(ptr long ptr long ptr ptr ptr)
 @ stub PsDereferenceImpersonationToken
-@ stub PsDereferencePrimaryToken
+@ stdcall PsDereferencePrimaryToken(ptr)
 @ stub PsDisableImpersonation
 @ stub PsEstablishWin32Callouts
 @ stdcall PsGetContextThread(ptr ptr long)
