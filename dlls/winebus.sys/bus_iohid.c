@@ -323,9 +323,41 @@ static BOOL get_ioregistry_number_value(io_service_t dev, CFStringRef property, 
     return ret;
 }
 
+static UINT get_usb_device_number_of_interfaces(io_service_t usb_host_iface)
+{
+    io_service_t parent, child = 0;
+    io_iterator_t iterator = 0;
+    UINT iface_count = 0;
+
+    if (IORegistryEntryGetParentEntry(usb_host_iface, kIOServicePlane, &parent))
+    {
+        ERR("Failed to get parent.\n");
+        return -1;
+    }
+
+    if (IORegistryEntryGetChildIterator(parent, kIOServicePlane, &iterator))
+    {
+        ERR("Failed to get child iterator.\n");
+        IOObjectRelease(parent);
+        return -1;
+    }
+
+    while ((child = IOIteratorNext(iterator)))
+    {
+        if (IOObjectConformsTo(child, kIOUSBHostInterfaceClassName)
+                || IOObjectConformsTo(child, kIOUSBInterfaceClassName))
+            iface_count++;
+        IOObjectRelease(child);
+    }
+
+    IOObjectRelease(parent);
+    IOObjectRelease(iterator);
+    return (iface_count != 0) ? iface_count : -1;
+}
+
 static void get_usb_device_info(io_service_t usb_hid_dev, struct device_desc *desc)
 {
-    UINT class = 0, subclass = 0, protocol = 0;
+    UINT class = 0, subclass = 0, protocol = 0, num_ifaces = 0, iface_num = -1;
     io_service_t usb_host_iface = 0;
     BOOL ret = FALSE;
 
@@ -339,8 +371,11 @@ static void get_usb_device_info(io_service_t usb_hid_dev, struct device_desc *de
     if (!(ret = get_ioregistry_number_value(usb_host_iface, CFSTR(kUSBHostMatchingPropertyInterfaceClass), &class))) goto exit;
     if (!(ret = get_ioregistry_number_value(usb_host_iface, CFSTR(kUSBHostMatchingPropertyInterfaceSubClass), &subclass))) goto exit;
     if (!(ret = get_ioregistry_number_value(usb_host_iface, CFSTR(kUSBHostMatchingPropertyInterfaceProtocol), &protocol))) goto exit;
+    if ((num_ifaces = get_usb_device_number_of_interfaces(usb_host_iface)) == 1) iface_num = -1;
+    else if (!(ret = get_ioregistry_number_value(usb_host_iface, CFSTR(kUSBHostMatchingPropertyInterfaceNumber), &iface_num))) goto exit;
 
     desc->bus_id = ((class & 0xff) << 16) | ((subclass & 0xff) << 8) | (protocol & 0xff);
+    desc->interface = iface_num;
 exit:
     if (usb_host_iface) IOObjectRelease(usb_host_iface);
     if (!ret) desc->bus_type = BUS_TYPE_UNKNOWN;
