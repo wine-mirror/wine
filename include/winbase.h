@@ -2373,7 +2373,7 @@ WINBASEAPI BOOL        WINAPI WritePrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,
 WINBASEAPI BOOL        WINAPI WriteProcessMemory(HANDLE,LPVOID,LPCVOID,SIZE_T,SIZE_T*);
 WINBASEAPI BOOL        WINAPI WriteProfileSectionA(LPCSTR,LPCSTR);
 WINBASEAPI BOOL        WINAPI WriteProfileSectionW(LPCWSTR,LPCWSTR);
-#define                       WritePrivateProfileSection WINELIB_NAME_AW(WritePrivateProfileSection)
+#define                       WriteProfileSection WINELIB_NAME_AW(WriteProfileSection)
 WINBASEAPI BOOL        WINAPI WriteProfileStringA(LPCSTR,LPCSTR,LPCSTR);
 WINBASEAPI BOOL        WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define                       WriteProfileString WINELIB_NAME_AW(WriteProfileString)
