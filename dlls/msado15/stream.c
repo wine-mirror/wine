@@ -451,7 +451,7 @@ static HRESULT WINAPI stream_ReadText( _Stream *iface, LONG len, BSTR *ret )
     if (len < adReadLine) return MAKE_ADO_HRESULT( adErrInvalidArgument );
 
     if (len == adReadAll) len = (stream->size - stream->pos) / sizeof(WCHAR);
-    else len = min( len, stream->size - stream->pos / sizeof(WCHAR) );
+    else len = min( len, (stream->size - stream->pos) / sizeof(WCHAR) );
 
     if (!(str = SysAllocStringLen( NULL, len ))) return E_OUTOFMEMORY;
     memcpy( str, stream->buf + stream->pos, len * sizeof(WCHAR) );
