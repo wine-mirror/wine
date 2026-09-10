@@ -1192,7 +1192,6 @@ static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char
 {
 #ifdef HAVE_LINUX_HIDRAW_H
     static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
-    static const WCHAR zeros[] = {'0','0','0','0',0};
     struct base_device *impl;
     char buffer[MAX_PATH];
 
@@ -1201,7 +1200,6 @@ static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char
         ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
 
     if (!desc.manufacturer[0]) memcpy(desc.manufacturer, hidraw, sizeof(hidraw));
-    if (!desc.serialnumber[0]) memcpy(desc.serialnumber, zeros, sizeof(zeros));
 
     if (!(impl = raw_device_create(&hidraw_device_vtbl, sizeof(struct hidraw_device))))
         return STATUS_NO_MEMORY;
@@ -1223,7 +1221,6 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
 {
 #ifdef HAS_PROPER_INPUT_HEADER
     static const WCHAR evdev[] = {'e','v','d','e','v',0};
-    static const WCHAR zeros[] = {'0','0','0','0',0};
     int axis_count = 0, button_count = 0;
     struct lnxev_info info = {0};
     struct lnxev_device *impl;
@@ -1242,7 +1239,6 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
     if (!desc.manufacturer[0]) memcpy(desc.manufacturer, evdev, sizeof(evdev));
     if (!desc.product[0]) ntdll_umbstowcs(info.name, strlen(info.name) + 1, desc.product, ARRAY_SIZE(desc.product));
     if (!desc.serialnumber[0]) ntdll_umbstowcs(info.uniq, strlen(info.uniq) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-    if (!desc.serialnumber[0]) memcpy(desc.serialnumber, zeros, sizeof(zeros));
 
     if (!(impl = hid_device_create(&lnxev_device_vtbl, sizeof(struct lnxev_device))))
         return STATUS_NO_MEMORY;
