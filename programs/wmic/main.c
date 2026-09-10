@@ -35,6 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmic);
 
+static BOOL option_value;
+
 #define MAX_STRING    4096
 static const struct
 {
@@ -229,6 +231,97 @@ done:
         WINE_FIXME( "Could not convert variant, vt %u.\n", vt );
 }
 
+static void output_table( IEnumWbemClassObject *result )
+{
+    ULONG count, width = 0;
+    IWbemClassObject *obj;
+    BSTR name;
+    VARIANT v;
+
+    /* get column width */
+    for (;;)
+    {
+        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+        if (!count) break;
+
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
+        while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
+        {
+            convert_to_bstr( &v );
+            width = max( lstrlenW( V_BSTR( &v ) ), width );
+            VariantClear( &v );
+            SysFreeString( name );
+        }
+        IWbemClassObject_Release( obj );
+    }
+    width += 2;
+
+    /* header */
+    IEnumWbemClassObject_Reset( result );
+    IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+    if (count)
+    {
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
+        while (IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL ) == S_OK)
+        {
+            output_text( name, width );
+            SysFreeString( name );
+        }
+        output_newline();
+        IWbemClassObject_Release( obj );
+    }
+
+    /* values */
+    IEnumWbemClassObject_Reset( result );
+    for (;;)
+    {
+        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+        if (!count) break;
+
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
+        while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
+        {
+            convert_to_bstr( &v );
+            output_text( V_BSTR( &v ), width );
+            VariantClear( &v );
+        }
+        output_newline();
+        IWbemClassObject_Release( obj );
+    }
+}
+
+static void output_values( IEnumWbemClassObject *result )
+{
+    ULONG count;
+    IWbemClassObject *obj;
+    BSTR name;
+    VARIANT v;
+
+    IEnumWbemClassObject_Reset( result );
+    for (;;)
+    {
+        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
+        if (!count) break;
+
+        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
+        while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
+        {
+            output_string( name );
+            SysFreeString( name );
+
+            output_string( L"=" );
+
+            convert_to_bstr( &v );
+            output_string( V_BSTR( &v ) );
+            VariantClear( &v );
+
+            output_newline();
+        }
+        output_newline();
+        IWbemClassObject_Release( obj );
+    }
+}
+
 static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
 {
     HRESULT hr;
@@ -236,12 +329,10 @@ static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
     IWbemServices *services = NULL;
     IEnumWbemClassObject *result = NULL;
     LONG flags = WBEM_FLAG_RETURN_IMMEDIATELY;
-    BSTR path = NULL, wql = NULL, query = NULL, name, str = NULL;
+    BSTR path = NULL, wql = NULL, query = NULL, str = NULL;
     WCHAR *proplist = NULL;
     int len, ret = -1;
     IWbemClassObject *obj;
-    ULONG count, width = 0;
-    VARIANT v;
     int i;
 
     WINE_TRACE( "%s", debugstr_w(class) );
@@ -286,55 +377,11 @@ static int query_prop( const WCHAR *class, int argc, WCHAR *argv[] )
     hr = IWbemServices_ExecQuery( services, wql, query, flags, NULL, &result );
     if (hr != S_OK) goto done;
 
-    for (;;) /* get column width */
-    {
-        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
-        if (!count) break;
+    if (option_value)
+        output_values( result );
+    else
+        output_table( result );
 
-        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
-        while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
-        {
-            convert_to_bstr( &v );
-            width = max( lstrlenW( V_BSTR( &v ) ), width );
-            VariantClear( &v );
-            SysFreeString( name );
-        }
-
-        IWbemClassObject_Release( obj );
-    }
-    width += 2;
-
-    /* Header */
-    IEnumWbemClassObject_Reset( result );
-    IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
-    if (count)
-    {
-        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
-        while (IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL ) == S_OK)
-        {
-            output_text( name, width );
-            SysFreeString( name );
-        }
-        output_newline();
-        IWbemClassObject_Release( obj );
-    }
-
-    /* Values */
-    IEnumWbemClassObject_Reset( result );
-    for (;;)
-    {
-        IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
-        if (!count) break;
-        IWbemClassObject_BeginEnumeration( obj, WBEM_FLAG_NONSYSTEM_ONLY );
-        while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
-        {
-            convert_to_bstr( &v );
-            output_text( V_BSTR( &v ), width );
-            VariantClear( &v );
-        }
-        output_newline();
-        IWbemClassObject_Release( obj );
-    }
     ret = 0;
 
 done:
@@ -352,7 +399,7 @@ done:
 static int process_args( int argc, WCHAR *argv[] )
 {
     const WCHAR *class;
-    int i;
+    int i, j;
 
     if (!wcscmp( argv[0], L"/?" ))
     {
@@ -360,49 +407,57 @@ static int process_args( int argc, WCHAR *argv[] )
         return 0;
     }
 
-    for (i = 0; i < argc && argv[i][0] == '/'; i++)
-        WINE_FIXME( "switch %s not supported\n", debugstr_w(argv[i]) );
+    for (i = 0; i < argc; i++)
+    {
+        if (argv[i][0] == '/' && wcsicmp( argv[i] + 1, L"value" ))
+        {
+            WINE_FIXME( "switch %s not supported\n", debugstr_w(argv[i]) );
+            goto not_supported;
+        }
+    }
 
-    if (i >= argc)
-        goto not_supported;
-
-    if (!wcsicmp( argv[i], L"quit" ) || !wcsicmp( argv[i], L"exit" ))
+    if (!wcsicmp( argv[0], L"quit" ) || !wcsicmp( argv[0], L"exit" ))
     {
         return 0;
     }
-
-    if (!wcsicmp( argv[i], L"class" ) || !wcsicmp( argv[i], L"context" ))
+    if (!wcsicmp( argv[0], L"class" ) || !wcsicmp( argv[0], L"context" ))
     {
-        WINE_FIXME( "command %s not supported\n", debugstr_w(argv[i]) );
+        WINE_FIXME( "command %s not supported\n", debugstr_w(argv[0]) );
         goto not_supported;
     }
 
-    if (!wcsicmp( argv[i], L"path" ))
+    if (!wcsicmp( argv[0], L"path" ))
     {
-        if (++i >= argc)
+        if (argc < 2)
         {
             output_error( STRING_INVALID_PATH );
             return 1;
         }
-        class = argv[i];
+        class = argv[1];
+        i = 2;
     }
     else
     {
-        class = find_class( argv[i] );
-        if (!class)
+        if (!(class = find_class( argv[0] )))
         {
             output_error( STRING_ALIAS_NOT_FOUND );
             return 1;
         }
+        i = 1;
     }
-
-    if (++i >= argc)
-        goto not_supported;
 
     if (!wcsicmp( argv[i], L"get" ))
     {
-        if (++i >= argc)
-            goto not_supported;
+        i++;
+        for (j = i; j < argc; j++)
+        {
+            if (!wcsicmp( argv[j], L"/value" ))
+            {
+                if (i >= argc) goto not_supported;
+                option_value = TRUE;
+                return query_prop( class, argc - i - 1, argv + i );
+            }
+        }
         return query_prop( class, argc - i, argv + i );
     }
 
