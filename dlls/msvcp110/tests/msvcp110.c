@@ -36,6 +36,7 @@ static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time_wchar)(WCHAR const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 static void (__cdecl *p_tr2_sys__Last_write_time_set_wchar)(WCHAR const*, __int64);
+static unsigned int (__cdecl *pGetNextAsyncId)(void);
 
 static const BYTE *p_byte_reverse_table;
 
@@ -79,6 +80,7 @@ static BOOL init(void)
                 "?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z");
     }
     SET(p_byte_reverse_table, "?_Byte_reverse_table@details@Concurrency@@3QBEB");
+    SET(pGetNextAsyncId, "?_GetNextAsyncId@details@Concurrency@@YAIXZ");
     return TRUE;
 }
 
@@ -228,11 +230,22 @@ static void test_data_exports(void)
     }
 }
 
+static void test_GetNextAsyncId(void)
+{
+    unsigned int id;
+
+    id = pGetNextAsyncId();
+    ok(id == 1, "Unexpected id %u.\n", id);
+    id = pGetNextAsyncId();
+    ok(id == 2, "Unexpected id %u.\n", id);
+}
+
 START_TEST(msvcp110)
 {
     if(!init()) return;
     test_tr2_sys__Last_write_time();
     test_vbtable_size_exports();
     test_data_exports();
+    test_GetNextAsyncId();
     FreeLibrary(msvcp);
 }

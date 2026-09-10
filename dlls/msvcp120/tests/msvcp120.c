@@ -442,6 +442,8 @@ typedef enum {
 static FILE* (__cdecl *p__Fiopen_wchar)(const wchar_t*, int, int);
 static FILE* (__cdecl *p__Fiopen)(const char*, int, int);
 
+static unsigned int (__cdecl *pGetNextAsyncId)(void);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -843,6 +845,8 @@ static BOOL init(void)
             "_Cnd_do_broadcast_at_thread_exit");
 
     SET(p_byte_reverse_table, "?_Byte_reverse_table@details@Concurrency@@3QBEB");
+
+    SET(pGetNextAsyncId, "?GetNextAsyncId@platform@details@Concurrency@@YAIXZ");
 
     hdll = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
@@ -3416,6 +3420,16 @@ static void test__Fiopen(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static void test_GetNextAsyncId(void)
+{
+    unsigned int id;
+
+    id = pGetNextAsyncId();
+    ok(id == 1, "Unexpected id %u.\n", id);
+    id = pGetNextAsyncId();
+    ok(id == 2, "Unexpected id %u.\n", id);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -3464,6 +3478,8 @@ START_TEST(msvcp120)
     test_data_exports();
 
     test__Fiopen();
+
+    test_GetNextAsyncId();
 
     free_expect_struct();
     TlsFree(expect_idx);

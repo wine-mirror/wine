@@ -360,6 +360,7 @@ typedef struct
 } exception_ptr;
 
 static void (__cdecl *p___ExceptionPtrSwap)(exception_ptr *a, exception_ptr *b);
+static unsigned int (__cdecl *pGetNextAsyncId)(void);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -496,6 +497,7 @@ static BOOL init(void)
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
     SET(p_Unlink, "_Unlink");
+    SET(pGetNextAsyncId, "?GetNextAsyncId@platform@details@Concurrency@@YAIXZ");
 
     hdll = GetModuleHandleA("kernel32.dll");
     pCreateSymbolicLinkW = (void*)GetProcAddress(hdll, "CreateSymbolicLinkW");
@@ -2482,6 +2484,16 @@ static void test_exception_pointer(void)
     ok(ptr2.ref == (void *)2, "ptr2.ref = %p\n", ptr2.ref);
 }
 
+static void test_GetNextAsyncId(void)
+{
+    unsigned int id;
+
+    id = pGetNextAsyncId();
+    ok(id == 1, "Unexpected id %u.\n", id);
+    id = pGetNextAsyncId();
+    ok(id == 2, "Unexpected id %u.\n", id);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -2514,5 +2526,6 @@ START_TEST(msvcp140)
     test_codecvt_char16();
     test_thread_library_reference();
     test_exception_pointer();
+    test_GetNextAsyncId();
     FreeLibrary(msvcp);
 }

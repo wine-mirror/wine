@@ -406,3 +406,11 @@ __int64 * __cdecl std_Fpz_func(void)
 {
     return &std_Fpz;
 }
+
+/* ?_GetNextAsyncId@details@Concurrency@@YAIXZ */
+/* ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ */
+unsigned int __cdecl GetNextAsyncId(void)
+{
+    static unsigned int id;
+    return InterlockedIncrement((LONG *)&id);
+}

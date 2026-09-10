@@ -1084,7 +1084,7 @@
 @ stub -arch=win32 ?CaptureCallstack@platform@details@Concurrency@@YAIPAPAXII@Z
 @ stub -arch=win64 ?CaptureCallstack@platform@details@Concurrency@@YA_KPEAPEAX_K1@Z
 @ cdecl ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ() msvcp140.?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ
-@ stub ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
+@ cdecl ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ() msvcp140.?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
 @ cdecl -arch=arm ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAAXXZ
 @ thiscall -arch=i386 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AAEXXZ
 @ cdecl -arch=win64 ?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ(ptr) msvcp140.?ReportUnhandledError@_ExceptionHolder@details@Concurrency@@AEAAXXZ

@@ -1230,7 +1230,7 @@
 @ cdecl -arch=win32 ?_GetCombinableSize@details@Concurrency@@YAIXZ() _GetCombinableSize
 @ cdecl -arch=win64 ?_GetCombinableSize@details@Concurrency@@YA_KXZ() _GetCombinableSize
 @ stub ?_GetCurrentThreadId@details@Concurrency@@YAKXZ
-@ stub ?_GetNextAsyncId@details@Concurrency@@YAIXZ
+@ cdecl ?_GetNextAsyncId@details@Concurrency@@YAIXZ() GetNextAsyncId
 @ stub -arch=win32 ?_Get_future_error_what@std@@YAPBDH@Z
 @ stub -arch=win64 ?_Get_future_error_what@std@@YAPEBDH@Z
 @ cdecl -arch=win32 ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr ptr) codecvt_char__Getcat

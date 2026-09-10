@@ -1071,7 +1071,7 @@
 @ stub -arch=arm ??_Ftime_base@std@@QAAXXZ
 @ stub -arch=i386 ??_Ftime_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Ftime_base@std@@QEAAXXZ
-@ stub ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
+@ cdecl ?GetNextAsyncId@platform@details@Concurrency@@YAIXZ() msvcp120.?GetNextAsyncId@platform@details@Concurrency@@YAIXZ
 @ stub -arch=win32 ?NFS_Allocate@details@Concurrency@@YAPAXIIPAX@Z
 @ stub -arch=win64 ?NFS_Allocate@details@Concurrency@@YAPEAX_K0PEAX@Z
 @ stub -arch=win32 ?NFS_Free@details@Concurrency@@YAXPAX@Z
