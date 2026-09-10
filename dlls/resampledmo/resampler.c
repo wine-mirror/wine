@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
-static const AVRational USER_TIME_BASE_Q = {1, 10000000};
-
 static void clear_dmo_media_type(DMO_MEDIA_TYPE *mt)
 {
     MoFreeMediaType(mt);
@@ -83,11 +81,9 @@ static void audio_frame_init_from_format(AVFrame *frame, const WAVEFORMATEXTENSI
     frame->sample_rate = format->Format.nSamplesPerSec;
 }
 
-static const char *debugstr_avtime(INT64 time, AVRational time_base)
+static const char *debugstr_time(INT64 time)
 {
-    time = av_rescale_q_rnd(time, time_base, USER_TIME_BASE_Q, AV_ROUND_PASS_MINMAX);
-    if (time == AV_NOPTS_VALUE)
-        return "(none)";
+    if (time == AV_NOPTS_VALUE) return "(none)";
     return wine_dbg_sprintf("%I64d", time);
 }
 
@@ -207,17 +203,17 @@ struct resampler
     AVFrame input_frame;
     AVFrame output_frame;
     AVFrame current_frame;
-    AVRational time_base;
+    INT64 time_den;
 };
 
 static INT64 resampler_time_to_user(struct resampler *impl, INT64 time)
 {
-    return av_rescale_q_rnd(time, impl->time_base, USER_TIME_BASE_Q, AV_ROUND_PASS_MINMAX);
+    return av_rescale_rnd(time, 10000000, impl->time_den, AV_ROUND_PASS_MINMAX);
 }
 
 static INT64 resampler_time_from_user(struct resampler *impl, INT64 time)
 {
-    return av_rescale_q_rnd(time, USER_TIME_BASE_Q, impl->time_base, AV_ROUND_PASS_MINMAX);
+    return av_rescale_rnd(time, impl->time_den, 10000000, AV_ROUND_PASS_MINMAX);
 }
 
 static HRESULT resampler_process_frame(struct resampler *impl, AVFrame *input_frame, DMO_OUTPUT_DATA_BUFFER *output)
@@ -281,9 +277,8 @@ static HRESULT resampler_process_frame(struct resampler *impl, AVFrame *input_fr
         IMFSample_Release(sample);
     }
 
-    TRACE("returning output size %#x, pts %s, duration %s status %#lx\n", ret,
-            debugstr_avtime(output->rtTimestamp, USER_TIME_BASE_Q),
-            debugstr_avtime(output->rtTimelength, USER_TIME_BASE_Q), output->dwStatus);
+    TRACE("returning output size %#x, pts %s, duration %s status %#lx\n", ret, debugstr_time(output->rtTimestamp),
+            debugstr_time(output->rtTimelength), output->dwStatus);
     return S_OK;
 }
 
@@ -321,8 +316,8 @@ static HRESULT resampler_process_input(struct resampler *impl, const DMO_OUTPUT_
     impl->current_frame.pts = resampler_time_from_user(impl, pts);
     impl->current_frame.duration = resampler_time_from_user(impl, duration);
     TRACE("input samples %u, time %s, duration %s\n", impl->current_frame.nb_samples,
-            debugstr_avtime(impl->current_frame.pts, impl->time_base),
-            debugstr_avtime(impl->current_frame.duration, impl->time_base));
+            debugstr_time(resampler_time_to_user(impl, impl->current_frame.pts)),
+            debugstr_time(resampler_time_to_user(impl, impl->current_frame.duration)));
     return S_OK;
 }
 
@@ -344,7 +339,7 @@ static HRESULT resampler_process_output(struct resampler *impl, DMO_OUTPUT_DATA_
 
 static void resampler_cleanup(struct resampler *impl)
 {
-    impl->time_base.num = impl->time_base.den = 1;
+    impl->time_den = 1;
     memset(&impl->input_format, 0, sizeof(impl->input_format));
     memset(&impl->output_format, 0, sizeof(impl->output_format));
     av_frame_unref(&impl->current_frame);
@@ -402,12 +397,12 @@ static HRESULT resampler_init(struct resampler *impl)
     av_opt_set_chlayout(impl->context, "in_chlayout", &impl->input_frame.ch_layout, 0);
     av_opt_set_int(impl->context, "in_sample_rate", impl->input_frame.sample_rate, 0);
     av_opt_set_sample_fmt(impl->context, "in_sample_fmt", impl->input_frame.format, 0);
-    impl->time_base.den *= impl->input_frame.sample_rate;
+    impl->time_den *= impl->input_frame.sample_rate;
 
     av_opt_set_chlayout(impl->context, "out_chlayout", &impl->output_frame.ch_layout, 0);
     av_opt_set_int(impl->context, "out_sample_rate", impl->output_frame.sample_rate, 0);
     av_opt_set_sample_fmt(impl->context, "out_sample_fmt", impl->output_frame.format, 0);
-    impl->time_base.den *= impl->output_frame.sample_rate;
+    impl->time_den *= impl->output_frame.sample_rate;
 
     if ((ret = swr_init(impl->context)) < 0)
         goto failed;
