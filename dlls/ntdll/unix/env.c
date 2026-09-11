@@ -69,6 +69,7 @@ WOW_PEB *wow_peb = NULL;
 USHORT *uctable = NULL, *lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
+ULONG session_id = 0;
 
 static const WCHAR bootstrapW[] = {'W','I','N','E','B','O','O','T','S','T','R','A','P','M','O','D','E'};
 
@@ -1838,6 +1839,7 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module, BOOL de
     peb->ImageSubSystem             = main_image_info.SubSystemType;
     peb->ImageSubSystemMajorVersion = main_image_info.MajorSubsystemVersion;
     peb->ImageSubSystemMinorVersion = main_image_info.MinorSubsystemVersion;
+    peb->SessionId                  = session_id;
 
 #ifdef _WIN64
     if (!is_machine_64bit( main_image_info.Machine ))

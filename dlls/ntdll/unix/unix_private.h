@@ -207,6 +207,7 @@ extern USHORT *uctable;
 extern USHORT *lctable;
 extern SIZE_T startup_info_size;
 extern BOOL is_prefix_bootstrap;
+extern ULONG session_id;
 extern int main_argc;
 extern char **main_argv;
 extern WCHAR **main_wargv;

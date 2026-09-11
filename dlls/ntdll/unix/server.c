@@ -1692,7 +1692,7 @@ size_t server_init_process(void)
             obj_handle_t handle;
             pid               = reply->pid;
             data->tid         = reply->tid;
-            peb->SessionId    = reply->session_id;
+            session_id        = reply->session_id;
             info_size         = reply->info_size;
             server_start_time = reply->server_start;
             supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);
