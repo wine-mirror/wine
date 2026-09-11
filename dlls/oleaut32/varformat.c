@@ -313,7 +313,7 @@ static const BYTE fmtMediumTime[0x11] =
 
 static const BYTE fmtLongTime[0x0d] =
 {
-  0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
+  0x0d,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
   0x0,0x0,0x0,0x0,0x0,
   FMT_DATE_TIME_SYS,FMT_GEN_END
 };
