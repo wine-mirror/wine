@@ -1321,8 +1321,7 @@ static BOOL create_context(struct macdrv_context *context, int format, CGLContex
         attribs[n++] = kCGLRendererGenericFloatID;
     }
 
-    if (pf->double_buffer)
-        attribs[n++] = kCGLPFADoubleBuffer;
+    attribs[n++] = kCGLPFADoubleBuffer;
 
     if (!context->core)
     {
