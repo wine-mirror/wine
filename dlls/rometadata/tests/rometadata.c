@@ -877,6 +877,63 @@ static void test_token_(int line, IMetaDataImport *iface, mdToken token, CorToke
     valid = IMetaDataImport_IsValidToken(iface, token);
     todo_wine ok_(__FILE__, line)(valid, "got invalid token %s\n", debugstr_mdToken(token));
 }
+
+#define test_assemblyref(iface, ref) test_assemblyref_(__LINE__, iface, ref)
+static void test_assemblyref_(int line, IMetaDataImport *iface, mdAssemblyRef ref)
+{
+    static const BYTE mscorlib_token[] = { 0xb7, 0x7a, 0x5c, 0x56, 0x19, 0x34, 0xe0, 0x89 };
+    ULONG token_len = 0, name_reqd = 0, hash_len = 0, flags = 0, name_len;
+    const BYTE *token = NULL, *hash_blob = NULL;
+    IMetaDataAssemblyImport *asm_import;
+    ASSEMBLYMETADATA metadata = {0};
+    WCHAR *nameW;
+    HRESULT hr;
+
+    hr = IMetaDataImport_QueryInterface(iface, &IID_IMetaDataAssemblyImport, (void **)&asm_import);
+    todo_wine ok_(__FILE__, line)(hr == S_OK, "QueryInterface returned %#lx\n", hr);
+    if (!asm_import)
+    {
+        skip_(__FILE__, line)("QueryInterface failed\n");
+        return;
+    }
+
+    nameW = calloc(sizeof(WCHAR), 80);
+    hr = IMetaDataAssemblyImport_GetAssemblyRefProps(asm_import, ref, &token, &token_len, nameW, 80,
+                                                     &name_reqd, &metadata, &hash_blob, &hash_len, &flags);
+    todo_wine ok_(__FILE__, line)(hr == S_OK, "GetAssemblyRefProps returned %#lx\n", hr);
+
+    todo_wine ok_(__FILE__, line)(!!token, "got token %p\n", token);
+    if (RidFromToken(ref) == 1)
+    {
+        todo_wine ok_(__FILE__, line)(!wcscmp(nameW, L"mscorlib"), "got nameW %s\n", debugstr_w(nameW));
+        todo_wine ok_(__FILE__, line)(token_len == sizeof(mscorlib_token), "got token_len %lu\n",
+                                      token_len);
+        if (token_len == sizeof(mscorlib_token))
+            todo_wine ok_(__FILE__, line)(!memcmp(token, mscorlib_token, sizeof(mscorlib_token)),
+                                          "got unexpected token for msccorlib\n");
+    }
+    else
+        todo_wine ok_(__FILE__, line)(!token_len, "got token_len %lu != 0\n", token_len);
+
+        todo_wine ok_(__FILE__, line)(nameW[0], "got nameW %s\n", debugstr_w(nameW));
+    name_len = wcslen(nameW);
+    todo_wine ok_(__FILE__, line)(name_reqd && name_reqd == name_len + 1, "got name_reqd %lu\n", name_reqd);
+
+    todo_wine ok_(__FILE__, line)(metadata.usMajorVersion == 255, "got usMajorVersion %hu\n", metadata.usMajorVersion);
+    todo_wine ok_(__FILE__, line)(metadata.usMinorVersion == 255, "got usMinorVersion %hu\n", metadata.usMinorVersion);
+    todo_wine ok_(__FILE__, line)(metadata.usBuildNumber == 255, "got usBuildNumber %hu\n", metadata.usBuildNumber);
+    todo_wine ok_(__FILE__, line)(metadata.usRevisionNumber == 255, "got usRevisionNumber %hu\n", metadata.usRevisionNumber);
+    todo_wine ok_(__FILE__, line)(!metadata.szLocale , "got szLocale %s\n", debugstr_w(metadata.szLocale));
+    todo_wine ok_(__FILE__, line)(!metadata.cbLocale, "got cbLocale %lu\n", metadata.cbLocale);
+    todo_wine ok_(__FILE__, line)(!metadata.rProcessor, "got rProcessor %p\n", metadata.rProcessor);
+    todo_wine ok_(__FILE__, line)(!metadata.ulProcessor, "got ulProcessor %lu\n", metadata.ulProcessor);
+    todo_wine ok_(__FILE__, line)(!metadata.rOS, "got rOS %p\n", metadata.rOS);
+    todo_wine ok_(__FILE__, line)(!metadata.ulOS, "got ulOS %lu\n", metadata.ulOS);
+
+    free(nameW);
+    IMetaDataAssemblyImport_Release(asm_import);
+}
+
 struct method_props
 {
     const WCHAR *exp_name;
@@ -1642,7 +1699,10 @@ static void test_IMetaDataImport(void)
         if (scope_type == mdtModule)
             ok(RidFromToken(scope) == 1, "got scope %s\n", debugstr_mdToken(scope));
         else
+        {
             test_token(md_import, scope, mdtAssemblyRef, FALSE);
+            test_assemblyref(md_import, scope);
+        }
 
         hr = IMetaDataImport_FindTypeRef(md_import, scope, name, &typeref2);
         ok(hr == S_OK, "got hr %#lx\n", hr);
