@@ -2334,7 +2334,7 @@ HRESULT __RPC_STUB IPropertyBag_Read_Stub(
 
   if(varType & (VT_BYREF | VT_ARRAY | VT_VECTOR))
   {
-    FIXME("Variant type %x is byref, array or vector. Not implemented.\n", V_VT(pVar));
+    FIXME("Variant type %lx is byref, array or vector. Not implemented.\n", varType);
     return E_NOTIMPL;
   }
 
