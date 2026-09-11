@@ -2782,7 +2782,13 @@ static void STDMETHODCALLTYPE d3d11_device_context_UpdateSubresource1(ID3D11Devi
 static void STDMETHODCALLTYPE d3d11_device_context_DiscardResource(ID3D11DeviceContext4 *iface,
         ID3D11Resource *resource)
 {
-    FIXME("iface %p, resource %p stub!\n", iface, resource);
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext4(iface);
+    struct wined3d_resource *wined3d_resource;
+
+    TRACE("iface %p, resource %p.\n", iface, resource);
+
+    wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
+    wined3d_device_context_discard_resource(context->wined3d_context, wined3d_resource);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DiscardView(ID3D11DeviceContext4 *iface, ID3D11View *view)

@@ -2512,6 +2512,8 @@ HRESULT __cdecl wined3d_device_context_copy_sub_resource_region(struct wined3d_d
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, unsigned int flags);
 void __cdecl wined3d_device_context_copy_uav_counter(struct wined3d_device_context *context,
         struct wined3d_buffer *dst_buffer, unsigned int offset, struct wined3d_unordered_access_view *uav);
+void __cdecl wined3d_device_context_discard_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *resource);
 void __cdecl wined3d_device_context_dispatch(struct wined3d_device_context *context,
         unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z);
 void __cdecl wined3d_device_context_dispatch_indirect(struct wined3d_device_context *context,
