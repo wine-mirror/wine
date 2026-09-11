@@ -912,6 +912,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     else
     {
         GLint front;
+        GLuint vao;
 
         pthread_once( &once, init_framebuffer_program );
         funcs->p_glUseProgram( framebuffer_program );
@@ -931,7 +932,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         pthread_mutex_unlock( &gamma_lock );
 
         funcs->p_glViewport( 0, 0, dst.cx, dst.cy );
+
+        /* macOS OpenGL requires a VAO for glDrawArrays */
+        funcs->p_glGenVertexArrays( 1, &vao );
+        funcs->p_glBindVertexArray( vao );
         funcs->p_glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+        funcs->p_glDeleteVertexArrays( 1, &vao );
     }
 
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
