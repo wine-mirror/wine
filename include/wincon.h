@@ -220,7 +220,7 @@ WINBASEAPI BOOL WINAPI   ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,COORD,LP
 WINBASEAPI BOOL WINAPI   ReadConsoleOutputCharacterW(HANDLE,LPWSTR,DWORD,COORD,LPDWORD);
 #define                  ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
 WINBASEAPI BOOL WINAPI   ScrollConsoleScreenBufferA( HANDLE,const SMALL_RECT *,const SMALL_RECT *,COORD,const CHAR_INFO *);
-WINBASEAPI BOOL WINAPI   ScrollConsoleScreenBufferW( HANDLE,const SMALL_RECT *,const SMALL_RECT *com,COORD,const CHAR_INFO *);
+WINBASEAPI BOOL WINAPI   ScrollConsoleScreenBufferW( HANDLE,const SMALL_RECT *,const SMALL_RECT *,COORD,const CHAR_INFO *);
 #define                  ScrollConsoleScreenBuffer WINELIB_NAME_AW(ScrollConsoleScreenBuffer)
 WINBASEAPI BOOL WINAPI   SetConsoleActiveScreenBuffer( HANDLE);
 WINBASEAPI BOOL WINAPI   SetConsoleCP(UINT);
