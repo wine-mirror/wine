@@ -1961,7 +1961,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   if ((strHeader->flags & (FMT_FLAG_LT|FMT_FLAG_GT)) == FMT_FLAG_GT)
     bUpper = TRUE;
   blanks_first = strHeader->copy_chars - lstrlenW(pSrc);
-  pToken = (const BYTE*)strHeader + sizeof(FMT_DATE_HEADER);
+  pToken = (const BYTE*)strHeader + sizeof(FMT_STRING_HEADER);
 
   while (*pToken != FMT_GEN_END)
   {
