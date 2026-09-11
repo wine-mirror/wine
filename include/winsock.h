@@ -209,7 +209,7 @@ extern "C" {
 #define WS_AF_NS                   6
 #define WS_AF_IPX                  WS_AF_NS
 #define WS_AF_ISO                  7
-#define WS_AF_OSI                  AF_ISO
+#define WS_AF_OSI                  WS_AF_ISO
 #define WS_AF_ECMA                 8
 #define WS_AF_DATAKIT              9
 #define WS_AF_CCITT                10
