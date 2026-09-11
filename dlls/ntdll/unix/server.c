@@ -1604,16 +1604,14 @@ void process_exit_wrapper( int status )
  *
  * Start the server and create the initial socket pair.
  */
-size_t server_init_process(void)
+void server_init_process( struct thread_data *data )
 {
     const char *arch = getenv( "WINEARCH" );
     const char *env_socket = getenv( "WINESERVERSOCKET" );
-    struct thread_data *data = get_thread_data();
     obj_handle_t version;
     unsigned int i;
     int ret, reply_pipe;
     struct sigaction sig_act;
-    size_t info_size;
 
     server_pid = -1;
     if (env_socket)
@@ -1693,7 +1691,7 @@ size_t server_init_process(void)
             pid               = reply->pid;
             data->tid         = reply->tid;
             session_id        = reply->session_id;
-            info_size         = reply->info_size;
+            startup_info_size = reply->info_size;
             server_start_time = reply->server_start;
             supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);
             if (reply->inproc_device)
@@ -1734,7 +1732,7 @@ size_t server_init_process(void)
     set_thread_id( data );
 
     for (i = 0; i < supported_machines_count; i++)
-        if (supported_machines[i] == current_machine) return info_size;
+        if (supported_machines[i] == current_machine) return;
 
     fatal_error( "wineserver doesn't support the %04x architecture\n", current_machine );
 }
