@@ -1715,11 +1715,6 @@ void server_init_process( struct thread_data *data )
     {
         if (arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
-#ifndef _WIN64
-        data->teb->GdiBatchCount = PtrToUlong( (char *)data->teb - teb_offset );
-        data->teb->WowTebOffset  = -teb_offset;
-        wow_peb = (PEB64 *)((char *)peb - page_size);
-#endif
     }
     else
     {
@@ -1728,8 +1723,6 @@ void server_init_process( struct thread_data *data )
         if (arch && (!strcmp( arch, "win64" ) || !strcmp( arch, "wow64" )))
             fatal_error( "WINEARCH set to %s but '%s' is a 32-bit installation.\n", arch, config_dir );
     }
-
-    set_thread_id( data );
 
     for (i = 0; i < supported_machines_count; i++)
         if (supported_machines[i] == current_machine) return;
@@ -1975,7 +1968,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (fd != -1) close( fd );
 
     if (ret != STATUS_INVALID_HANDLE || !handle) return ret;
-    if (!peb->BeingDebugged) return ret;
+    if (!peb || !peb->BeingDebugged) return ret;
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
         struct thread_data *data = get_thread_data();

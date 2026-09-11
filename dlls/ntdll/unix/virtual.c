@@ -3960,7 +3960,7 @@ NTSTATUS virtual_relocate_module( void *module )
 
 
 /* set some initial values in a new TEB */
-static TEB *init_teb( void *ptr, BOOL is_wow )
+static TEB *init_teb( void *ptr, DWORD tid )
 {
     TEB *teb;
     TEB64 *teb64 = ptr;
@@ -3972,31 +3972,40 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     teb32->Tib.Self = PtrToUlong( teb32 );
     teb32->Tib.ExceptionList = ~0u;
     teb32->Tib.FiberData = 0x1e00;
+    teb32->ClientId.UniqueProcess = pid;
+    teb32->ClientId.UniqueThread  = tid;
     teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
     teb32->ActivationContextStack.FrameListCache.Flink =
         teb32->ActivationContextStack.FrameListCache.Blink =
             PtrToUlong( &teb32->ActivationContextStack.FrameListCache );
     teb32->StaticUnicodeString.Buffer = PtrToUlong( teb32->StaticUnicodeBuffer );
     teb32->StaticUnicodeString.MaximumLength = sizeof( teb32->StaticUnicodeBuffer );
+    teb32->RealClientId  = teb32->ClientId;
     teb32->GdiBatchCount = PtrToUlong( teb64 );
     teb32->WowTebOffset  = -teb_offset;
-    if (is_wow) teb64->WowTebOffset = teb_offset;
+    if (is_wow64())
+    {
+        teb64->Tib.ExceptionList = PtrToUlong( teb32 );
+        teb64->WowTebOffset = teb_offset;
+    }
 #else
     teb = (TEB *)teb32;
     teb32->Tib.ExceptionList = ~0u;
-    teb32->Tib.FiberData = 0x1e00;
     teb64->Peb = PtrToUlong( (char *)peb - page_size );
     teb64->Tib.Self = PtrToUlong( teb64 );
     teb64->Tib.ExceptionList = PtrToUlong( teb32 );
     teb64->Tib.FiberData = 0x1e00;
+    teb64->ClientId.UniqueProcess = pid;
+    teb64->ClientId.UniqueThread  = tid;
     teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );
     teb64->ActivationContextStack.FrameListCache.Flink =
         teb64->ActivationContextStack.FrameListCache.Blink =
             PtrToUlong( &teb64->ActivationContextStack.FrameListCache );
     teb64->StaticUnicodeString.Buffer = PtrToUlong( teb64->StaticUnicodeBuffer );
     teb64->StaticUnicodeString.MaximumLength = sizeof( teb64->StaticUnicodeBuffer );
+    teb64->RealClientId = teb64->ClientId;
     teb64->WowTebOffset = teb_offset;
-    if (is_wow)
+    if (is_wow64())
     {
         teb32->GdiBatchCount = PtrToUlong( teb64 );
         teb32->WowTebOffset  = -teb_offset;
@@ -4006,10 +4015,12 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     teb->Tib.Self = &teb->Tib;
     teb->Tib.StackBase = (void *)~0ul;
     teb->Tib.FiberData = (void *)0x1e00;
+    teb->ClientId = make_client_id( pid, tid );
     teb->ActivationContextStackPointer = &teb->ActivationContextStack;
     InitializeListHead( &teb->ActivationContextStack.FrameListCache );
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    teb->RealClientId = teb->ClientId;
     return teb;
 }
 
@@ -4071,8 +4082,13 @@ void virtual_alloc_first_teb(void)
     teb_block_pos = 30;
     ptr = (char *)teb_block + 30 * block_size;
     peb = (PEB *)((char *)ptr + block_size + (is_win64 ? 0 : page_size));
+#ifdef _WIN64
+    if (!is_machine_64bit( main_image_info.Machine )) wow_peb = (PEB32 *)((char *)peb + page_size);
+#else
+    if (is_machine_64bit( native_machine )) wow_peb = (PEB64 *)((char *)peb - page_size);
+#endif
     set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
-    data->teb = init_teb( ptr, FALSE );
+    data->teb = init_teb( ptr, data->tid );
     list_add_head( &teb_list, &data->entry );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 }
@@ -4114,7 +4130,7 @@ NTSTATUS virtual_alloc_teb( struct thread_data *data )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    data->teb = init_teb( ptr, is_wow64() );
+    data->teb = init_teb( ptr, data->tid );
     list_add_head( &teb_list, &data->entry );
 
     if ((status = signal_alloc_thread( data->teb )))

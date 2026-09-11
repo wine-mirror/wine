@@ -1171,24 +1171,6 @@ void *get_cpu_area( struct thread_data *data, USHORT machine )
 
 
 /***********************************************************************
- *           set_thread_id
- */
-void set_thread_id( struct thread_data *data )
-{
-    TEB *teb = data->teb;
-    WOW_TEB *wow_teb = get_wow_teb( teb );
-
-    teb->RealClientId = teb->ClientId = make_client_id( pid, data->tid );
-    if (wow_teb)
-    {
-        wow_teb->ClientId.UniqueProcess = pid;
-        wow_teb->ClientId.UniqueThread  = data->tid;
-        wow_teb->RealClientId = wow_teb->ClientId;
-    }
-}
-
-
-/***********************************************************************
  *           init_thread_stack
  */
 NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size )
@@ -1457,7 +1439,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     if ((status = virtual_alloc_teb( data ))) goto done;
     teb = data->teb;
-    set_thread_id( data );
 
     if ((status = init_thread_stack( teb, get_zero_bits_limit( zero_bits ), stack_reserve, stack_commit )))
         goto done;
