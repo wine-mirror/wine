@@ -2788,12 +2788,22 @@ static void STDMETHODCALLTYPE d3d11_device_context_DiscardResource(ID3D11DeviceC
     TRACE("iface %p, resource %p.\n", iface, resource);
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
-    wined3d_device_context_discard_resource(context->wined3d_context, wined3d_resource);
+    wined3d_device_context_discard_resource(context->wined3d_context, wined3d_resource, NULL);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DiscardView(ID3D11DeviceContext4 *iface, ID3D11View *view)
 {
-    FIXME("iface %p, view %p stub!\n", iface, view);
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext4(iface);
+    struct wined3d_resource *wined3d_resource;
+    struct wined3d_view_desc desc;
+    ID3D11Resource *resource;
+
+    TRACE("iface %p, view %p.\n", iface, view);
+
+    ID3D11View_GetResource(view, &resource);
+    wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
+    wined3d_view_desc_from_d3d11_view(view, &desc);
+    wined3d_device_context_discard_resource(context->wined3d_context, wined3d_resource, &desc);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetConstantBuffers1(ID3D11DeviceContext4 *iface,

@@ -2805,3 +2805,32 @@ struct d3d_video_decoder_output_view *unsafe_impl_from_ID3D11VideoDecoderOutputV
 
     return impl_from_ID3D11VideoDecoderOutputView(iface);
 }
+
+void wined3d_view_desc_from_d3d11_view(ID3D11View *iface, struct wined3d_view_desc *desc)
+{
+    if (iface->lpVtbl == (ID3D11ViewVtbl *)&d3d11_depthstencil_view_vtbl)
+    {
+        struct d3d_depthstencil_view *view = impl_from_ID3D11DepthStencilView((ID3D11DepthStencilView *)iface);
+
+        wined3d_depth_stencil_view_desc_from_d3d11(desc, &view->desc);
+    }
+    else if (iface->lpVtbl == (ID3D11ViewVtbl *)&d3d11_rendertarget_view_vtbl)
+    {
+        struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView((ID3D11RenderTargetView *)iface);
+
+        wined3d_rendertarget_view_desc_from_d3d11(desc, &view->desc);
+    }
+    else if (iface->lpVtbl == (ID3D11ViewVtbl *)&d3d11_shader_resource_view_vtbl)
+    {
+        struct d3d_shader_resource_view *view = impl_from_ID3D11ShaderResourceView((ID3D11ShaderResourceView *)iface);
+
+        wined3d_shader_resource_view_desc_from_d3d11(desc, &view->desc);
+    }
+    else if (iface->lpVtbl == (ID3D11ViewVtbl *)&d3d11_video_decoder_output_view_vtbl)
+    {
+        struct d3d_video_decoder_output_view *view = impl_from_ID3D11VideoDecoderOutputView((ID3D11VideoDecoderOutputView *)iface);
+        struct d3d_texture2d *texture = unsafe_impl_from_ID3D11Texture2D((ID3D11Texture2D *)view->resource);
+
+        wined3d_vdov_desc_from_d3d11(desc, &view->desc, texture->desc.Format);
+    }
+}

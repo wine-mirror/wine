@@ -111,7 +111,7 @@
 @ cdecl wined3d_device_context_copy_resource(ptr ptr ptr)
 @ cdecl wined3d_device_context_copy_sub_resource_region(ptr ptr long long long long ptr long ptr long)
 @ cdecl wined3d_device_context_copy_uav_counter(ptr ptr long ptr)
-@ cdecl wined3d_device_context_discard_resource(ptr ptr)
+@ cdecl wined3d_device_context_discard_resource(ptr ptr ptr)
 @ cdecl wined3d_device_context_dispatch(ptr long long long)
 @ cdecl wined3d_device_context_dispatch_indirect(ptr ptr long)
 @ cdecl wined3d_device_context_draw(ptr long long long long)

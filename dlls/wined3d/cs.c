@@ -195,6 +195,7 @@ struct wined3d_cs_discard_resource
 {
     enum wined3d_cs_op opcode;
     struct wined3d_resource *resource;
+    struct wined3d_view_desc desc;
 };
 
 struct wined3d_cs_dispatch
@@ -952,20 +953,38 @@ static void wined3d_cs_exec_discard_resource(struct wined3d_cs *cs, const void *
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        unsigned int byte_size;
 
-        wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_DISCARDED);
+        if (op->desc.format_id == WINED3DFMT_UNKNOWN)
+            byte_size = op->desc.u.buffer.count * buffer->structure_byte_stride;
+        else
+            byte_size = op->desc.u.buffer.count
+                    * wined3d_get_format(cs->c.device->adapter, op->desc.format_id, 0)->byte_count;
+
+        if (!op->desc.u.buffer.start_idx && byte_size == buffer->resource.size)
+            wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_DISCARDED);
     }
     else
     {
         struct wined3d_texture *texture = texture_from_resource(resource);
 
-        for (unsigned int i = 0; i < texture->level_count * texture->layer_count; ++i)
-            wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_DISCARDED);
+        for (unsigned int i = 0; i < op->desc.u.texture.layer_count; ++i)
+        {
+            unsigned int layer = op->desc.u.texture.layer_idx + i;
+
+            for (unsigned int j = 0; j < op->desc.u.texture.level_count; ++j)
+            {
+                unsigned int level = op->desc.u.texture.level_idx + j;
+
+                wined3d_texture_validate_location(texture,
+                        layer * op->desc.u.texture.level_count + level, WINED3D_LOCATION_DISCARDED);
+            }
+        }
     }
 }
 
 void CDECL wined3d_device_context_discard_resource(struct wined3d_device_context *context,
-        struct wined3d_resource *resource)
+        struct wined3d_resource *resource, const struct wined3d_view_desc *desc)
 {
     struct wined3d_cs_discard_resource *op;
 
@@ -973,6 +992,28 @@ void CDECL wined3d_device_context_discard_resource(struct wined3d_device_context
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DISCARD_RESOURCE;
     op->resource = resource;
+    if (desc)
+    {
+        op->desc = *desc;
+    }
+    else
+    {
+        op->desc.format_id = WINED3DFMT_UNKNOWN;
+        op->desc.flags = 0;
+        if (resource->type == WINED3D_RTYPE_BUFFER)
+        {
+            op->desc.u.buffer.start_idx = 0;
+            op->desc.u.buffer.count = resource->size / buffer_from_resource(resource)->structure_byte_stride;
+        }
+        else
+        {
+            op->desc.u.texture.level_idx = 0;
+            op->desc.u.texture.level_count = texture_from_resource(resource)->level_count;
+            op->desc.u.texture.layer_idx = 0;
+            op->desc.u.texture.layer_count = texture_from_resource(resource)->layer_count;
+        }
+    }
+
     wined3d_device_context_reference_resource(context, resource);
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
     wined3d_device_context_unlock(context);

@@ -286,6 +286,8 @@ HRESULT d3d_video_decoder_output_view_create(struct d3d_device *device, ID3D11Re
 struct d3d_video_decoder_output_view *unsafe_impl_from_ID3D11VideoDecoderOutputView(
         ID3D11VideoDecoderOutputView *iface);
 
+void wined3d_view_desc_from_d3d11_view(ID3D11View *iface, struct wined3d_view_desc *desc);
+
 /* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout
 {
