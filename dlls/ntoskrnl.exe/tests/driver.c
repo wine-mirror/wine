@@ -341,6 +341,50 @@ static void test_mdl_map(void)
     ExFreePool(pool);
 }
 
+static void test_physical_memory_ranges(void)
+{
+    NTSTATUS (WINAPI *pZwQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
+    ULONGLONG total = 0, expect, prev_end = 0;
+    SYSTEM_BASIC_INFORMATION info;
+    PHYSICAL_MEMORY_RANGE *ranges;
+    unsigned int i;
+    NTSTATUS status;
+
+    pZwQuerySystemInformation = get_proc_address("ZwQuerySystemInformation");
+    ok(!!pZwQuerySystemInformation, "ZwQuerySystemInformation not found\n");
+
+    ranges = MmGetPhysicalMemoryRanges();
+    ok(ranges != NULL, "MmGetPhysicalMemoryRanges failed\n");
+    if (!ranges) return;
+
+    for (i = 0; ranges[i].BaseAddress.QuadPart || ranges[i].NumberOfBytes.QuadPart; ++i)
+    {
+        ok(ranges[i].NumberOfBytes.QuadPart > 0, "range %u: got size %#I64x\n",
+           i, ranges[i].NumberOfBytes.QuadPart);
+        ok(!(ranges[i].BaseAddress.QuadPart & (PAGE_SIZE - 1)), "range %u: got unaligned base %#I64x\n",
+           i, ranges[i].BaseAddress.QuadPart);
+        ok(!(ranges[i].NumberOfBytes.QuadPart & (PAGE_SIZE - 1)), "range %u: got unaligned size %#I64x\n",
+           i, ranges[i].NumberOfBytes.QuadPart);
+        ok(ranges[i].BaseAddress.QuadPart >= prev_end, "range %u: got base %#I64x, previous range ends at %#I64x\n",
+           i, ranges[i].BaseAddress.QuadPart, prev_end);
+        prev_end = ranges[i].BaseAddress.QuadPart + ranges[i].NumberOfBytes.QuadPart;
+        total += ranges[i].NumberOfBytes.QuadPart;
+    }
+    ok(i > 0, "got no ranges\n");
+
+    if (pZwQuerySystemInformation)
+    {
+        status = pZwQuerySystemInformation(SystemBasicInformation, &info, sizeof(info), NULL);
+        ok(!status, "got status %#lx\n", status);
+        expect = (ULONGLONG)info.MmNumberOfPhysicalPages * info.PageSize;
+        ok(total == expect, "got total %#I64x, expected %#I64x\n", total, expect);
+        ok(ranges[0].BaseAddress.QuadPart == (ULONGLONG)info.MmLowestPhysicalPage * info.PageSize,
+           "got base %#I64x\n", ranges[0].BaseAddress.QuadPart);
+    }
+
+    ExFreePool(ranges);
+}
+
 static void test_init_funcs(void)
 {
     KTIMER timer, timer2;
@@ -2800,6 +2844,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_current_thread(FALSE);
     test_critical_region(TRUE);
     test_mdl_map();
+    test_physical_memory_ranges();
     test_init_funcs();
     test_load_driver();
     test_sync();
