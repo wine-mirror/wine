@@ -3640,6 +3640,7 @@ void virtual_init(void)
     int i;
     pthread_mutexattr_t attr;
 
+    pthread_key_create( &thread_data_key, NULL );
     pthread_mutexattr_init( &attr );
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
     pthread_mutex_init( &virtual_mutex, &attr );
@@ -4074,7 +4075,6 @@ TEB *virtual_alloc_first_teb(void)
     thread_data = init_thread_data( view->base );
     thread_data->teb = teb;
     list_add_head( &teb_list, &thread_data->entry );
-    pthread_key_create( &thread_data_key, NULL );
     pthread_setspecific( thread_data_key, thread_data );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return teb;

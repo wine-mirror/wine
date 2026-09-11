@@ -1862,12 +1862,12 @@ static void start_main_thread(void)
 {
     TEB *teb = virtual_alloc_first_teb();
 
-    dbg_init();
     startup_info_size = server_init_process();
     virtual_map_user_shared_data();
     init_cpu_info();
     init_files();
     init_startup_info();
+    dbg_init();
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     set_load_order_app_name( main_wargv[0] );
     init_thread_stack( teb, 0, 0, 0 );
