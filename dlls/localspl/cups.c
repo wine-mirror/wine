@@ -429,7 +429,7 @@ static BOOL cups_start_doc(doc_t *doc, const WCHAR *printer_name, const WCHAR *d
 
         len = wcslen(document_title);
         doc->cups.doc_title = malloc(len * 3 + 1);
-        ntdll_wcstoumbs(document_title, len + 1, doc->cups.doc_title, len + 3 + 1, FALSE);
+        ntdll_wcstoumbs(document_title, len + 1, doc->cups.doc_title, len * 3 + 1, FALSE);
 
         return TRUE;
     }
