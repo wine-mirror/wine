@@ -2383,7 +2383,7 @@ HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT
       if (SUCCEEDED(hRet))
       {
         DWORD dwLen = lstrlenW(*pbstrOut);
-        BOOL bBracket = (*pbstrOut)[dwLen] == ')';
+        BOOL bBracket = (*pbstrOut)[dwLen - 1] == ')';
 
         dwLen -= bBracket;
         memcpy(buff, *pbstrOut, dwLen * sizeof(WCHAR));

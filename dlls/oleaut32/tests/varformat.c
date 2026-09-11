@@ -696,6 +696,29 @@ static void test_VarFormatDateTime(void)
     ok(!str, "Unexpected out string %p.\n", str);
 }
 
+static void test_VarFormatPercent(void)
+{
+    HRESULT hr;
+    VARIANT in;
+    BSTR str;
+
+    V_VT(&in) = VT_R8;
+    V_R8(&in) = 0.745;
+
+    hr = VarFormatPercent(&in, 2, -1, -1, -1, 0, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"74.50%"), "got %s\n", debugstr_w(str));
+    SysFreeString(str);
+
+    V_R8(&in) = -0.745;
+
+    hr = VarFormatPercent(&in, 2, -1, -1, -1, 0, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"(74.50%)"), "got %s\n", debugstr_w(str));
+
+    SysFreeString(str);
+}
+
 START_TEST(varformat)
 {
     test_VarFormatNumber();
@@ -705,4 +728,5 @@ START_TEST(varformat)
     test_GetAltMonthNames();
     test_VarFormatCurrency();
     test_VarFormatDateTime();
+    test_VarFormatPercent();
 }
