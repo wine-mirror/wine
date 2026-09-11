@@ -845,12 +845,14 @@ static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriterEx *iface, DWO
     EnterCriticalSection(&writer->cs);
 
     if (writer->state != SINK_WRITER_STATE_WRITING)
+    {
         hr = MF_E_INVALIDREQUEST;
+    }
     else if (index == MF_SINK_WRITER_ALL_STREAMS)
     {
         for (i = 0; i < writer->streams.count; ++i)
         {
-            if (FAILED(hr = sink_writer_notify_end_of_segment(writer, index)))
+            if (FAILED(hr = sink_writer_notify_end_of_segment(writer, i)))
             {
                 WARN("Failed to place a marker for stream %u.\n", i);
                 break;
@@ -858,7 +860,9 @@ static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriterEx *iface, DWO
         }
     }
     else
+    {
         hr = sink_writer_notify_end_of_segment(writer, index);
+    }
 
     LeaveCriticalSection(&writer->cs);
 
