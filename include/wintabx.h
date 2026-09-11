@@ -77,7 +77,7 @@ extern "C" {
 #define HANDLE_WT_PROXIMITY(hwnd, wParam, lParam, fn) \
     ((fn)((hwnd), (HCTX)(wParam), (BOOL)LOWORD(lParam),  (BOOL)HIWORD(lParam)), 0L)
 #define FORWARD__WT_PROXIMITY(hwnd, bs, hCtx, cp, hp, fn) \
-    (void)(fn)((hwnd), _WT_PROXIMITY(bs), (WPARAM)(HCTX)(hCtx), MAKELPARAM((cp), (hp))
+    (void)(fn)((hwnd), _WT_PROXIMITY(bs), (WPARAM)(HCTX)(hCtx), MAKELPARAM((cp), (hp)))
 #define FORWARD_WT_PROXIMITY(hwnd, hCtx, sf, fn) \
     FORWARD__WT_PROXIMITY(hwnd, WT_DEFBASE, hCtx, cp, hp, fn)
 
@@ -85,7 +85,7 @@ extern "C" {
 #define HANDLE_WT_INFOCHANGE(hwnd, wParam, lParam, fn) \
     ((fn)((hwnd), (HMGR)(wParam), (UINT)LOWORD(lParam),  (UINT)HIWORD(lParam)), 0L)
 #define FORWARD__WT_INFOCHANGE(hwnd, bs, hMgr, cp, hp, fn) \
-    (void)(fn)((hwnd), _WT_INFOCHANGE(bs), (WPARAM)(HMGR)(hMgr), MAKELPARAM((c), (i))
+    (void)(fn)((hwnd), _WT_INFOCHANGE(bs), (WPARAM)(HMGR)(hMgr), MAKELPARAM((c), (i)))
 #define FORWARD_WT_INFOCHANGE(hwnd, hMgr, sf, fn) \
     FORWARD__WT_INFOCHANGE(hwnd, WT_DEFBASE, hMgr, cp, hp, fn)
 
