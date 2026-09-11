@@ -1832,6 +1832,7 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module, BOOL de
 {
     peb->ImageBaseAddress           = module;
     peb->ProcessParameters          = params;
+    peb->NumberOfProcessors         = cpu_count;
     peb->OSMajorVersion             = 10;
     peb->OSMinorVersion             = 0;
     peb->OSBuildNumber              = 19045;

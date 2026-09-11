@@ -51,6 +51,7 @@ static const WORD current_machine = IMAGE_FILE_MACHINE_ARMNT;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
 extern WORD native_machine;
+extern ULONG cpu_count;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -97,6 +98,13 @@ static inline BOOL is_arm64ec(void)
     return (current_machine == IMAGE_FILE_MACHINE_ARM64 &&
             main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64);
 }
+
+static inline ULONG_PTR get_system_affinity_mask(void)
+{
+    if (cpu_count >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
+    return ((ULONG_PTR)1 << cpu_count) - 1;
+}
+
 
 /* per-thread data for the Unix side, stored at the bottom of the signal stack */
 

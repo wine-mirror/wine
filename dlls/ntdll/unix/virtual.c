@@ -3707,17 +3707,6 @@ void virtual_init(void)
 
 
 /***********************************************************************
- *           get_system_affinity_mask
- */
-ULONG_PTR get_system_affinity_mask(void)
-{
-    ULONG num_cpus = peb->NumberOfProcessors;
-    if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
-    return ((ULONG_PTR)1 << num_cpus) - 1;
-}
-
-
-/***********************************************************************
  *           get_host_page_size
  */
 UINT_PTR get_host_page_size(void)
@@ -3765,7 +3754,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
     info->AllocationGranularity   = granularity_mask + 1;
     info->LowestUserAddress       = (void *)0x10000;
     info->ActiveProcessorsAffinityMask = get_system_affinity_mask();
-    info->NumberOfProcessors      = peb->NumberOfProcessors;
+    info->NumberOfProcessors      = cpu_count;
     if (wow64) info->HighestUserAddress = (char *)get_wow_user_space_limit() - 1;
     else info->HighestUserAddress = (char *)user_space_limit - 1;
 }
@@ -4502,7 +4491,7 @@ void virtual_init_user_shared_data(void)
     data->SystemCall            = 1;
     data->NumberOfPhysicalPages = info.MmNumberOfPhysicalPages;
     data->NXSupportPolicy       = NX_SUPPORT_POLICY_OPTIN;
-    data->ActiveProcessorCount  = peb->NumberOfProcessors;
+    data->ActiveProcessorCount  = cpu_count;
     data->ActiveGroupCount      = 1;
 
     switch (native_machine)

@@ -304,6 +304,8 @@ enum smbios_type
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
 
+ULONG cpu_count = 1;
+
 static char cpu_name[49];
 static char cpu_vendor[13];
 static USHORT cpu_level, cpu_revision;
@@ -1357,7 +1359,7 @@ static NTSTATUS create_logical_proc_info(void)
     size_t size;
     unsigned int p, i, j, k;
 
-    lcpu_no = peb->NumberOfProcessors;
+    lcpu_no = cpu_count;
 
     size = sizeof(pkgs_no);
     if (sysctlbyname("hw.packages", &pkgs_no, &size, NULL, 0))
@@ -1741,26 +1743,18 @@ void init_cpu_info(void)
 
 #ifdef _SC_NPROCESSORS_ONLN
     num = sysconf(_SC_NPROCESSORS_ONLN);
-    if (num < 1)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
+    if (num >= 1) cpu_count = num;
+    else WARN("Failed to detect the number of processors.\n");
 #elif defined(CTL_HW) && defined(HW_NCPU)
     int mib[2];
     size_t len = sizeof(num);
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
+    if (!sysctl(mib, 2, &num, &len, NULL, 0)) cpu_count = num;
+    else WARN("Failed to detect the number of processors.\n");
 #else
-    num = 1;
     FIXME("Detecting the number of processors is not supported.\n");
 #endif
-    peb->NumberOfProcessors = num;
     init_cpu_model();
     get_random( &process_cookie, sizeof(process_cookie) );
 }
@@ -1771,7 +1765,7 @@ static SYSTEM_CPU_INFORMATION get_cpuinfo(void)
     {
         .ProcessorLevel        = cpu_level,
         .ProcessorRevision     = cpu_revision,
-        .MaximumProcessors     = peb->NumberOfProcessors,
+        .MaximumProcessors     = cpu_count,
         .ProcessorFeatureBits  = get_cpu_features(),
 #ifdef __arm__
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM,
@@ -1795,12 +1789,10 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     const SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info;
     const DWORD cpu_info_size = logical_proc_info_ex_size;
     BYTE core_index, cache_index, max_cache_level;
-    unsigned int i, j, count;
+    unsigned int i, j;
     ULONG64 cpu_mask;
 
     if (!logical_proc_info_ex) return STATUS_NOT_IMPLEMENTED;
-
-    count = peb->NumberOfProcessors;
 
     max_cache_level = 0;
     proc_info = logical_proc_info_ex;
@@ -1814,12 +1806,12 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
         proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
     }
 
-    memset(info, 0, count * sizeof(*info));
+    memset(info, 0, cpu_count * sizeof(*info));
 
     core_index = 0;
     cache_index = 0;
     proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)logical_proc_info_ex;
-    for (i = 0; i < count; ++i)
+    for (i = 0; i < cpu_count; ++i)
     {
         info[i].Size = sizeof(*info);
         info[i].Type = CpuSetInformation;
@@ -1837,7 +1829,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
                 continue;
             }
             cpu_mask = proc_info->Processor.GroupMask[0].Mask;
-            for (j = 0; j < count; ++j)
+            for (j = 0; j < cpu_count; ++j)
                 if (((ULONG64)1 << j) & cpu_mask)
                 {
                     info[j].CpuSet.CoreIndex = core_index;
@@ -1850,7 +1842,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
             if (proc_info->Cache.Level == max_cache_level)
             {
                 cpu_mask = proc_info->Cache.GroupMask.Mask;
-                for (j = 0; j < count; ++j)
+                for (j = 0; j < cpu_count; ++j)
                     if (((ULONG64)1 << j) & cpu_mask)
                         info[j].CpuSet.LastLevelCacheIndex = cache_index;
             }
@@ -1859,7 +1851,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
         else if (proc_info->Relationship == RelationNumaNode)
         {
             cpu_mask = proc_info->NumaNode.GroupMask.Mask;
-            for (j = 0; j < count; ++j)
+            for (j = 0; j < cpu_count; ++j)
                 if (((ULONG64)1 << j) & cpu_mask)
                     info[j].CpuSet.NumaNodeIndex = proc_info->NumaNode.NodeNumber;
         }
@@ -2736,14 +2728,14 @@ static void get_cpu_idle_cycle_times( ULONG64 *times )
     unsigned long long idle;
     FILE *f;
 
-    memset( times, 0, peb->NumberOfProcessors * sizeof(*times) );
+    memset( times, 0, cpu_count * sizeof(*times) );
     if (!(f = fopen( "/proc/stat", "r" ))) return;
 
     /* skip combined cpu statistics line. */
     fgets( line, sizeof(line), f );
 
     index = 0;
-    while (fgets( line, sizeof(line), f ) && index < peb->NumberOfProcessors)
+    while (fgets( line, sizeof(line), f ) && index < cpu_count)
     {
         count = sscanf(line, "%s %*u %*u %*u %llu", name, &idle);
 
@@ -2763,7 +2755,7 @@ static void get_cpu_idle_cycle_times( ULONG64 *times )
     static int once;
 
     if (!once++) FIXME( "SystemProcessorIdleCycleTimeInformation stub.\n" );
-    memset( times, 0, peb->NumberOfProcessors * sizeof(*times) );
+    memset( times, 0, cpu_count * sizeof(*times) );
 }
 
 #endif
@@ -3547,7 +3539,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             static int i = 1;
             unsigned int n;
-            cpus = min(peb->NumberOfProcessors, out_cpus);
+            cpus = min(cpu_count, out_cpus);
             FIXME("stub info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
             /* many programs expect these values to change so fake change */
             for (n = 0; n < cpus; n++)
@@ -3673,7 +3665,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemInterruptInformation: /* 23 */
     {
-        len = peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
+        len = cpu_count * sizeof(SYSTEM_INTERRUPT_INFORMATION);
         if (size >= len)
         {
             if (!info) ret = STATUS_ACCESS_VIOLATION;
@@ -4149,7 +4141,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     switch (class)
     {
     case SystemProcessorIdleCycleTimeInformation:
-        len = peb->NumberOfProcessors * sizeof(ULONG64);
+        len = cpu_count * sizeof(ULONG64);
         if (!query || query_len < sizeof(USHORT) || *(USHORT *)query) return STATUS_INVALID_PARAMETER;
         if (size < len)
         {
@@ -4195,7 +4187,6 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
 
     case SystemCpuSetInformation:
     {
-        unsigned int cpu_count = peb->NumberOfProcessors;
         PROCESS_BASIC_INFORMATION pbi;
         HANDLE process;
 
@@ -4695,7 +4686,7 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
         int i, out_cpus;
 
         if ((output == NULL) || (out_size == 0)) return STATUS_INVALID_PARAMETER;
-        out_cpus = peb->NumberOfProcessors;
+        out_cpus = cpu_count;
         if ((out_size / sizeof(PROCESSOR_POWER_INFORMATION)) < out_cpus) return STATUS_BUFFER_TOO_SMALL;
 #if defined(linux)
         {
