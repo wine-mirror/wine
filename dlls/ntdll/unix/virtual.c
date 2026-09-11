@@ -4028,14 +4028,11 @@ static struct thread_data *init_thread_data( void *ptr )
 }
 
 /***********************************************************************
- *           virtual_alloc_first_teb
+ *           virtual_alloc_first_thread_data
  */
-TEB *virtual_alloc_first_teb(void)
+struct thread_data *virtual_alloc_first_thread_data(void)
 {
-    void *ptr;
-    TEB *teb;
     unsigned int status;
-    SIZE_T block_size = 4 * page_size;
     struct thread_data *thread_data;
     struct file_view *view;
 
@@ -4047,6 +4044,26 @@ TEB *virtual_alloc_first_teb(void)
         exit(1);
     }
 
+    status = map_view( &view, NULL, signal_stack_mask + 1 + kernel_stack_size, MEM_TOP_DOWN,
+                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
+    assert( !status );
+    thread_data = init_thread_data( view->base );
+    pthread_setspecific( thread_data_key, thread_data );
+    return thread_data;
+}
+
+
+/***********************************************************************
+ *           virtual_alloc_first_teb
+ */
+void virtual_alloc_first_teb(void)
+{
+    void *ptr;
+    unsigned int status;
+    SIZE_T block_size = 4 * page_size;
+    struct file_view *view;
+    struct thread_data *data = get_thread_data();
+
     status = map_view( &view, NULL, 32 * block_size, MEM_TOP_DOWN,
                        VPROT_READ | VPROT_WRITE, 0, is_win64 ? limit_2g : 0, 0 );
     assert( !status );
@@ -4055,18 +4072,9 @@ TEB *virtual_alloc_first_teb(void)
     ptr = (char *)teb_block + 30 * block_size;
     peb = (PEB *)((char *)ptr + block_size + (is_win64 ? 0 : page_size));
     set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
-    teb = init_teb( ptr, FALSE );
+    data->teb = init_teb( ptr, FALSE );
+    list_add_head( &teb_list, &data->entry );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
-
-    status = map_view( &view, NULL, signal_stack_mask + 1 + kernel_stack_size, MEM_TOP_DOWN,
-                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
-    assert( !status );
-    thread_data = init_thread_data( view->base );
-    thread_data->teb = teb;
-    list_add_head( &teb_list, &thread_data->entry );
-    pthread_setspecific( thread_data_key, thread_data );
-    VIRTUAL_DEBUG_DUMP_VIEW( view );
-    return teb;
 }
 
 

@@ -1860,8 +1860,9 @@ static ULONG_PTR get_image_address(void)
  */
 static void start_main_thread(void)
 {
-    TEB *teb = virtual_alloc_first_teb();
+    struct thread_data *data = virtual_alloc_first_thread_data();
 
+    virtual_alloc_first_teb();
     startup_info_size = server_init_process();
     virtual_map_user_shared_data();
     init_cpu_info();
@@ -1870,7 +1871,7 @@ static void start_main_thread(void)
     dbg_init();
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     set_load_order_app_name( main_wargv[0] );
-    init_thread_stack( teb, 0, 0, 0 );
+    init_thread_stack( data->teb, 0, 0, 0 );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     load_wow64_ntdll( main_image_info.Machine );

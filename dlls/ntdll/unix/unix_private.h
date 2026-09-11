@@ -316,7 +316,8 @@ extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
                                              struct pe_image_info *info, void *so_handle );
 extern NTSTATUS virtual_relocate_module( void *module );
-extern TEB *virtual_alloc_first_teb(void);
+extern struct thread_data *virtual_alloc_first_thread_data(void);
+extern void virtual_alloc_first_teb(void);
 extern NTSTATUS virtual_alloc_teb( struct thread_data *data );
 struct thread_data *virtual_alloc_thread_data(void);
 extern void virtual_free_thread_data( struct thread_data *data );
