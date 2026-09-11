@@ -290,7 +290,7 @@ static ULONG WINAPI source_reader_async_command_AddRef(IUnknown *iface)
 static ULONG WINAPI source_reader_async_command_Release(IUnknown *iface)
 {
     struct source_reader_async_command *command = impl_from_async_command_IUnknown(iface);
-    ULONG refcount = InterlockedIncrement(&command->refcount);
+    ULONG refcount = InterlockedDecrement(&command->refcount);
 
     if (!refcount)
     {
