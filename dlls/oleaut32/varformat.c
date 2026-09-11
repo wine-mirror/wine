@@ -822,7 +822,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
        */
       header->type = FMT_TYPE_DATE;
       NEED_SPACE(sizeof(BYTE));
-      pFormat += ARRAY_SIZE(szAMSlashPM);
+      pFormat++;
       *pOut++ = FMT_DATE_GENERAL;
       TRACE("gen date\n");
     }
