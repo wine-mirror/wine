@@ -395,7 +395,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
         if (decoder->output_type)
         {
             IMFMediaType_Release(decoder->output_type);
-            decoder->input_type = NULL;
+            decoder->output_type = NULL;
         }
         if (decoder->wg_transform)
         {
