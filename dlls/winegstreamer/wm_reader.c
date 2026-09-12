@@ -1054,7 +1054,7 @@ static HRESULT WINAPI header_info_GetAttributeByName(IWMHeaderInfo3 *iface, WORD
     {
         if (*stream_number)
         {
-            WARN("Requesting duration for stream %u, returning ASF_E_NOTFOUND.\n", *stream_number);
+            WARN("Requesting seekable attribute for stream %u, returning ASF_E_NOTFOUND.\n", *stream_number);
             return ASF_E_NOTFOUND;
         }
 
@@ -1204,7 +1204,7 @@ static HRESULT WINAPI header_info_AddCodecInfo(IWMHeaderInfo3 *iface, const WCHA
         const WCHAR *desc, WMT_CODEC_INFO_TYPE type, WORD size, BYTE *info)
 {
     FIXME("iface %p, name %s, desc %s, type %#x, size %u, info %p, stub!\n",
-            info, debugstr_w(name), debugstr_w(desc), type, size, info);
+            iface, debugstr_w(name), debugstr_w(desc), type, size, info);
     return E_NOTIMPL;
 }
 
