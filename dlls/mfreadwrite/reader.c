@@ -317,6 +317,7 @@ static HRESULT source_reader_create_async_op(enum source_reader_async_op op, str
         return E_OUTOFMEMORY;
 
     command->IUnknown_iface.lpVtbl = &source_reader_async_command_vtbl;
+    command->refcount = 1;
     command->op = op;
 
     *ret = command;
