@@ -367,6 +367,16 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         0,    /* TokenSecurityAttributes */
         0,    /* TokenIsRestricted */
         0,    /* TokenProcessTrustLevel */
+        0,    /* TokenPrivateNameSpace  */
+        0,    /* TokenSingletonAttributes */
+        0,    /* TokenBnoIsolation */
+        0,    /* TokenChildProcessFlags */
+        0,    /* TokenIsLessPrivilegedAppContainer */
+        0,    /* TokenIsSandboxed */
+        0,    /* TokenIsAppSilo  */
+        0,    /* TokenLoggingInformation */
+        0,    /* TokenLearningMode */
+
     };
 
     ULONG len = 0;
