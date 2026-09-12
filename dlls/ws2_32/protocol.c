@@ -67,6 +67,20 @@ static int do_getaddrinfo( const char *node, const char *service,
     }
 }
 
+static char *get_canonname( const char *name )
+{
+    DNS_STATUS status;
+    DNS_RECORDA *rec;
+    char *ret;
+
+    status = DnsQuery_A( name, DNS_TYPE_CNAME, DNS_QUERY_NO_NETBT | DNS_QUERY_NO_MULTICAST, NULL, &rec, NULL );
+    if (status != ERROR_SUCCESS) return NULL;
+
+    ret = strdup( rec->Data.CNAME.pNameHost );
+    DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+    return ret;
+}
+
 static int dns_only_query( const char *node, const struct addrinfo *hints, struct addrinfo **result )
 {
     DNS_STATUS status;
@@ -74,17 +88,25 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
     struct addrinfo *info, *next;
     struct sockaddr_in *addr;
     struct sockaddr_in6 *addr6;
-    ULONG count = 0;
+    ULONG size, extra_size = 0, count = 0;
+    char *canonname = (char *)node;
 
     if (hints->ai_family != AF_INET && hints->ai_family != AF_INET6 && hints->ai_family != AF_UNSPEC)
     {
         FIXME( "unsupported family %u\n", hints->ai_family );
         return EAI_FAMILY;
     }
+
+    if (hints->ai_flags & AI_CANONNAME) canonname = get_canonname( node );
+
     if (hints->ai_family == AF_INET || hints->ai_family == AF_UNSPEC)
     {
         status = DnsQuery_A( node, DNS_TYPE_A, DNS_QUERY_NO_NETBT | DNS_QUERY_NO_MULTICAST, NULL, &rec, NULL );
-        if (status != ERROR_SUCCESS && status != DNS_ERROR_RCODE_NAME_ERROR) return EAI_FAIL;
+        if (status != ERROR_SUCCESS && status != DNS_ERROR_RCODE_NAME_ERROR)
+        {
+            if (canonname != node) free( canonname );
+            return EAI_FAIL;
+        }
     }
     if (hints->ai_family == AF_INET6 || hints->ai_family == AF_UNSPEC)
     {
@@ -92,6 +114,7 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
         if (status != ERROR_SUCCESS && status != DNS_ERROR_RCODE_NAME_ERROR)
         {
             DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+            if (canonname != node) free( canonname );
             return EAI_FAIL;
         }
     }
@@ -102,22 +125,34 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
     {
         DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
         DnsRecordListFree( (DNS_RECORD *)rec6, DnsFreeRecordList );
+        if (canonname != node) free( canonname );
         return WSAHOST_NOT_FOUND;
     }
-    if (!(info = calloc( count, sizeof(*info) + sizeof(SOCKADDR_STORAGE) )))
+
+    size = count * (sizeof(*info) + sizeof(SOCKADDR_STORAGE));
+    if (canonname) extra_size = strlen(canonname) + 1;
+    if (!(info = calloc( 1, size + extra_size )))
     {
         DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
         DnsRecordListFree( (DNS_RECORD *)rec6, DnsFreeRecordList );
+        if (canonname != node) free( canonname );
         return WSA_NOT_ENOUGH_MEMORY;
     }
-    *result = info;
+    if (canonname)
+    {
+        strcpy( (char *)info + size, canonname );
+        if (canonname != node) free( canonname );
+        canonname = (char *)info + size;
+    }
 
+    *result = info;
     for (ptr = rec; ptr; ptr = ptr->pNext)
     {
         if (ptr->wType != DNS_TYPE_A) continue;
         info->ai_family   = AF_INET;
         info->ai_socktype = hints->ai_socktype;
         info->ai_protocol = hints->ai_protocol;
+        if (hints->ai_flags & AI_CANONNAME) info->ai_canonname = canonname;
         info->ai_addrlen  = sizeof(struct sockaddr_in);
         info->ai_addr     = (struct sockaddr *)(info + 1);
         addr = (struct sockaddr_in *)info->ai_addr;
@@ -133,6 +168,7 @@ static int dns_only_query( const char *node, const struct addrinfo *hints, struc
         info->ai_family   = AF_INET6;
         info->ai_socktype = hints->ai_socktype;
         info->ai_protocol = hints->ai_protocol;
+        if (hints->ai_flags & AI_CANONNAME) info->ai_canonname = canonname;
         info->ai_addrlen  = sizeof(struct sockaddr_in6);
         info->ai_addr     = (struct sockaddr *)(info + 1);
         addr6 = (struct sockaddr_in6 *)info->ai_addr;
@@ -174,7 +210,9 @@ int WINAPI getaddrinfo( const char *node, const char *service,
             if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
             node = fqdn;
         }
-        else if (!service && hints && (hints->ai_flags == AI_DNS_ONLY || hints->ai_flags == (AI_ALL | AI_DNS_ONLY)))
+        else if (!service && hints &&
+                 (hints->ai_flags == AI_DNS_ONLY || hints->ai_flags == (AI_ALL | AI_DNS_ONLY) ||
+                  hints->ai_flags == (AI_CANONNAME | AI_DNS_ONLY)))
         {
             ret = dns_only_query( node, hints, info );
             goto done;
