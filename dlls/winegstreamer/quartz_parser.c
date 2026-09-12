@@ -1098,7 +1098,7 @@ static bool amt_to_wg_format_video_indeo(const AM_MEDIA_TYPE *mt, struct wg_form
         return false;
     }
 
-    format->major_type = WG_MAJOR_TYPE_VIDEO_CINEPAK;
+    format->major_type = WG_MAJOR_TYPE_VIDEO_INDEO;
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_IV50))
         format->u.video.version = 5;
     format->u.video.width = video_format->bmiHeader.biWidth;
