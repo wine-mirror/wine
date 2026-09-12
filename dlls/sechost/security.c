@@ -670,6 +670,12 @@ static BOOL parse_sid( const WCHAR *string, const WCHAR **end, SID *pisid, DWORD
     while (*string == ' ')
         string++;
 
+    if (!string[0] || !string[1])
+    {
+        SetLastError( ERROR_INVALID_SID );
+        return FALSE;
+    }
+
     *size = get_sid_size( string, end );
     if (!pisid) /* Simply compute the size */
         return TRUE;

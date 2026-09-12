@@ -397,6 +397,36 @@ static void test_LsaLookupSids(void)
     LsaFreeMemory(list);
     CloseHandle(token);
 
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA(NULL, NULL);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected GetLastError %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA(NULL, &sid);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected GetLastError %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA("", NULL);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected GetLastError %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA("", &sid);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_SID, "Unexpected GetLastError %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA("S", &sid);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_SID, "Unexpected GetLastError %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ConvertStringSidToSidA("S-", &sid);
+    ok(!ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_SID, "Unexpected GetLastError %lu\n", GetLastError());
+
     ret = ConvertStringSidToSidA("S-1-1-0", &sid);
     ok(ret, "ConvertStringSidToSidA() failed, error %lu\n", GetLastError());
 
