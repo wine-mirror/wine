@@ -3205,9 +3205,12 @@ static void get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
 {
     const WCHAR *name = attr->ObjectName->Buffer;
     unsigned int i, prefix_len = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
-    TEB64 *teb64 = get_teb64( NtCurrentTeb() );
+    struct thread_data *data = get_thread_data();
+    BOOL disabled;
 
-    if (!teb64) return;
+    if (!is_old_wow64()) return;
+
+    disabled = data->teb ? get_teb64( data->teb )->TlsSlots[WOW64_TLS_FILESYSREDIR] : data->filesys_redir;
 
     if (!attr->RootDirectory)
     {
@@ -3226,7 +3229,7 @@ static void get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
         if (!is_same_file( &windir, &st ))
         {
             if (!is_same_file( &sysdir, &st )) return;
-            if (teb64->TlsSlots[WOW64_TLS_FILESYSREDIR]) return;
+            if (disabled) return;
             if (name[0] == '\\') return;
 
             /* only check for paths that should NOT be redirected */
@@ -3249,8 +3252,7 @@ static void get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir )
     /* sysnative is redirected even when redirection is disabled */
 
     if (replace_path( attr, redir, prefix_len, sysnativeW, system32W )) return;
-
-    if (teb64->TlsSlots[WOW64_TLS_FILESYSREDIR]) return;
+    if (disabled) return;
 
     for (i = 0; i < ARRAY_SIZE( no_redirect ); i++)
         if (starts_with_path( name + prefix_len, len - prefix_len, no_redirect[i] )) return;
@@ -3272,7 +3274,7 @@ void init_files(void)
     HANDLE key;
 
 #ifndef _WIN64
-    if (is_machine_64bit( native_machine )) init_redirects();
+    if (is_old_wow64()) init_redirects();
 #endif
     /* a couple of directories that we don't want to return in directory searches */
     ignore_file( config_dir );

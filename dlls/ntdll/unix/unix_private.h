@@ -90,7 +90,7 @@ static inline BOOL is_wow64(void)
 /* check for old-style Wow64 (using a 32-bit ntdll.so) */
 static inline BOOL is_old_wow64(void)
 {
-    return !is_win64 && wow_peb;
+    return !is_win64 && is_machine_64bit( native_machine );
 }
 
 static inline BOOL is_arm64ec(void)
@@ -118,6 +118,7 @@ struct thread_data
     DWORD        tid;               /* thread id */
     BOOL         allow_writes;      /* ThreadAllowWrites flags */
     BOOL         suspend;           /* suspend on startup */
+    BOOL         filesys_redir;     /* WOW64_TLS_FILESYSREDIR before the TEB is created */
     pthread_t    pthread_id;        /* pthread thread id */
     void        *jmp_buf;           /* setjmp buffer for exception handling */
     void        *start;             /* thread entry point */

@@ -1888,6 +1888,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     WCHAR *curdir = get_initial_directory();
     UNICODE_STRING nt_name;
     NTSTATUS status;
+    struct thread_data *data = get_thread_data();
+
+    data->filesys_redir = TRUE;
 
     /* store the initial PATH value */
     path = get_env_var( env, env_pos, pathW, 4 );
@@ -1942,6 +1945,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     else
     {
         rebuild_argv();
+        data->filesys_redir = FALSE;
     }
 
     main_wargv = build_wargv( get_dos_path( nt_name.Buffer ));

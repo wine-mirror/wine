@@ -3960,7 +3960,7 @@ NTSTATUS virtual_relocate_module( void *module )
 
 
 /* set some initial values in a new TEB */
-static TEB *init_teb( void *ptr, DWORD tid )
+static void init_teb( struct thread_data *data, void *ptr )
 {
     TEB *teb;
     TEB64 *teb64 = ptr;
@@ -3973,7 +3973,7 @@ static TEB *init_teb( void *ptr, DWORD tid )
     teb32->Tib.ExceptionList = ~0u;
     teb32->Tib.FiberData = 0x1e00;
     teb32->ClientId.UniqueProcess = pid;
-    teb32->ClientId.UniqueThread  = tid;
+    teb32->ClientId.UniqueThread  = data->tid;
     teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
     teb32->ActivationContextStack.FrameListCache.Flink =
         teb32->ActivationContextStack.FrameListCache.Blink =
@@ -3996,13 +3996,14 @@ static TEB *init_teb( void *ptr, DWORD tid )
     teb64->Tib.ExceptionList = PtrToUlong( teb32 );
     teb64->Tib.FiberData = 0x1e00;
     teb64->ClientId.UniqueProcess = pid;
-    teb64->ClientId.UniqueThread  = tid;
+    teb64->ClientId.UniqueThread  = data->tid;
     teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );
     teb64->ActivationContextStack.FrameListCache.Flink =
         teb64->ActivationContextStack.FrameListCache.Blink =
             PtrToUlong( &teb64->ActivationContextStack.FrameListCache );
     teb64->StaticUnicodeString.Buffer = PtrToUlong( teb64->StaticUnicodeBuffer );
     teb64->StaticUnicodeString.MaximumLength = sizeof( teb64->StaticUnicodeBuffer );
+    teb64->TlsSlots[WOW64_TLS_FILESYSREDIR] = data->filesys_redir;
     teb64->RealClientId = teb64->ClientId;
     teb64->WowTebOffset = teb_offset;
     if (is_wow64())
@@ -4015,13 +4016,14 @@ static TEB *init_teb( void *ptr, DWORD tid )
     teb->Tib.Self = &teb->Tib;
     teb->Tib.StackBase = (void *)~0ul;
     teb->Tib.FiberData = (void *)0x1e00;
-    teb->ClientId = make_client_id( pid, tid );
+    teb->ClientId = make_client_id( pid, data->tid );
     teb->ActivationContextStackPointer = &teb->ActivationContextStack;
     InitializeListHead( &teb->ActivationContextStack.FrameListCache );
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->RealClientId = teb->ClientId;
-    return teb;
+    data->teb = teb;
+    list_add_head( &teb_list, &data->entry );
 }
 
 static struct thread_data *init_thread_data( void *ptr )
@@ -4088,8 +4090,7 @@ void virtual_alloc_first_teb(void)
     if (is_machine_64bit( native_machine )) wow_peb = (PEB64 *)((char *)peb - page_size);
 #endif
     set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
-    data->teb = init_teb( ptr, data->tid );
-    list_add_head( &teb_list, &data->entry );
+    init_teb( data, ptr );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 }
 
@@ -4130,8 +4131,7 @@ NTSTATUS virtual_alloc_teb( struct thread_data *data )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    data->teb = init_teb( ptr, data->tid );
-    list_add_head( &teb_list, &data->entry );
+    init_teb( data, ptr );
 
     if ((status = signal_alloc_thread( data->teb )))
     {
