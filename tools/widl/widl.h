@@ -89,6 +89,7 @@ extern void output_typelib_regscript( const typelib_t *typelib );
 extern void write_local_stubs(const statement_list_t *stmts);
 extern void write_dlldata(const statement_list_t *stmts);
 extern void write_metadata(const statement_list_t *stmts);
+extern void finalize_metadata(void);
 
 extern void start_cplusplus_guard(FILE *fp);
 extern void end_cplusplus_guard(FILE *fp);

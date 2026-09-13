@@ -848,6 +848,7 @@ int main(int argc,char *argv[])
   ret = parser_parse();
   close_all_inputs();
   if (ret) exit(1);
+  if (do_metadata) finalize_metadata();
 
   /* Everything has been done successfully, don't delete any files.  */
   set_everything(FALSE);
