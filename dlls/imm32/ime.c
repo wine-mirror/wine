@@ -610,7 +610,7 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
     if (status == STATUS_NOT_IMPLEMENTED)
     {
-        TRANSMSG msg = {.message = vsc & KF_UP ? WM_KEYUP : WM_KEYDOWN, .wParam = vkey, .lParam = vsc};
+        TRANSMSG msg = {.message = vsc & KF_UP ? WM_KEYUP : WM_KEYDOWN, .wParam = vkey, .lParam = MAKELPARAM( 1, vsc ) };
         msgs->TransMsg[count++] = msg;
     }
     else if (status) WARN( "WINE_IME_TO_ASCII_EX returned unexpected status %#lx\n", status );
@@ -648,7 +648,7 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
         if (!key_consumed)
         {
-            TRANSMSG msg = {.message = WM_IME_KEYDOWN, .wParam = vkey, .lParam = vsc};
+            TRANSMSG msg = {.message = WM_IME_KEYDOWN, .wParam = vkey, .lParam = MAKELPARAM( 1, vsc ) };
             msgs->TransMsg[count++] = msg;
         }
     }
