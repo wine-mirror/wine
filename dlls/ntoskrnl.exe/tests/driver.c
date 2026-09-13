@@ -522,12 +522,13 @@ static NTSTATUS wait_single_handle(HANDLE handle, ULONGLONG timeout)
 
 static void test_current_thread(BOOL is_system)
 {
+    UNICODE_STRING image, *image_name, *expect_name;
     PROCESS_BASIC_INFORMATION info;
     DISPATCHER_HEADER *header;
     HANDLE process_handle, id;
     KERNEL_USER_TIMES times;
     LONGLONG create_time;
-    ULONG session_id;
+    ULONG session_id, len;
     PEPROCESS current;
     PETHREAD thread;
     NTSTATUS ret;
@@ -596,6 +597,35 @@ static void test_current_thread(BOOL is_system)
 
     peb = PsGetProcessPeb(current);
     ok(peb == info.PebBaseAddress, "got peb %p, expected %p\n", peb, info.PebBaseAddress);
+
+    if (!is_system)
+    {
+        ret = ZwQueryInformationProcess(process_handle, ProcessImageFileName, &image, sizeof(image), &len);
+        ok(ret == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", ret);
+        expect_name = ExAllocatePool(PagedPool, len);
+
+        ret = ZwQueryInformationProcess(process_handle, ProcessImageFileName, expect_name, len, NULL);
+        ok(!ret, "ZwQueryInformationProcess failed: %#lx\n", ret);
+        if (!ret)
+        {
+            ret = SeLocateProcessImageName(current, &image_name);
+            ok(!ret, "SeLocateProcessImageName failed: %#lx\n", ret);
+            if (!ret)
+            {
+                ok(RtlEqualUnicodeString(image_name, expect_name, FALSE), "got %.*ls, expected %.*ls\n",
+                   (int)(image_name->Length / sizeof(WCHAR)), image_name->Buffer,
+                   (int)(expect_name->Length / sizeof(WCHAR)), expect_name->Buffer);
+
+                ok(image_name->MaximumLength == image_name->Length + sizeof(WCHAR), "got length %u, maximum %u\n",
+                   image_name->Length, image_name->MaximumLength);
+                ok(!image_name->Buffer[image_name->Length / sizeof(WCHAR)], "got %#x\n",
+                   image_name->Buffer[image_name->Length / sizeof(WCHAR)]);
+
+                ExFreePool(image_name);
+            }
+        }
+        ExFreePool(expect_name);
+    }
 
     ret = ZwClose(process_handle);
     ok(!ret, "ZwClose failed: %#lx\n", ret);
