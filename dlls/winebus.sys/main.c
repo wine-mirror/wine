@@ -663,13 +663,43 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
 static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD report_len)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    ULONG size = offsetof(struct hid_report, buffer[report_len]);
     struct hid_report *report, *last_report;
+    ULONG size;
     IRP *irp;
 
     TRACE("device %p report_buf %p (%#x), report_len %#lx\n", device, report_buf, *report_buf, report_len);
 
-    if (!(report = RtlAllocateHeap(GetProcessHeap(), 0, size))) return;
+    RtlEnterCriticalSection(&ext->cs);
+
+    if (ext->state != DEVICE_STATE_STARTED)
+    {
+        RtlLeaveCriticalSection(&ext->cs);
+        return;
+    }
+
+    if (!ext->collection_desc.ReportIDs[0].ReportID) last_report = ext->last_reports[0];
+    else last_report = ext->last_reports[report_buf[0]];
+    if (!last_report)
+    {
+        WARN("Ignoring report with unexpected id %#x\n", *report_buf);
+        RtlLeaveCriticalSection(&ext->cs);
+        return;
+    }
+
+    /* Devices may send more data than their report declares, but the cached report
+     * and hidclass.sys buffers are only sized to hold the declared size. */
+    if (report_len > last_report->length)
+    {
+        WARN("overlong report %#x length %lu truncated to declared length %lu\n", *report_buf, report_len, last_report->length);
+        report_len = last_report->length;
+    }
+
+    size = offsetof(struct hid_report, buffer[report_len]);
+    if (!(report = RtlAllocateHeap(GetProcessHeap(), 0, size)))
+    {
+        RtlLeaveCriticalSection(&ext->cs);
+        return;
+    }
     memcpy(report->buffer, report_buf, report_len);
     report->length = report_len;
 
@@ -724,23 +754,6 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
             report->buffer[8] = trigger[0]; /* TriggerLeft */
             report->buffer[9] = trigger[1]; /* TirggerRight */
         }
-    }
-
-    RtlEnterCriticalSection(&ext->cs);
-
-    if (ext->state != DEVICE_STATE_STARTED)
-    {
-        RtlLeaveCriticalSection(&ext->cs);
-        return;
-    }
-
-    if (!ext->collection_desc.ReportIDs[0].ReportID) last_report = ext->last_reports[0];
-    else last_report = ext->last_reports[report_buf[0]];
-    if (!last_report)
-    {
-        WARN("Ignoring report with unexpected id %#x\n", *report_buf);
-        RtlLeaveCriticalSection(&ext->cs);
-        return;
     }
 
     list_add_tail(&ext->reports, &report->entry);
