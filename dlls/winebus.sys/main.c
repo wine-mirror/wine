@@ -171,7 +171,7 @@ static DWORD get_device_index(struct device_desc *desc, struct list **before)
     /* The device list is sorted, so just increment the index until it doesn't match an index already in the list */
     LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
-        if (ext->desc.vid == desc->vid && ext->desc.pid == desc->pid && ext->desc.input == desc->input)
+        if (ext->desc.vid == desc->vid && ext->desc.pid == desc->pid && ext->desc.interface == desc->interface)
         {
             if (ext->index != index)
             {
@@ -209,23 +209,23 @@ static const WCHAR *bus_type_str[] =
 
 static WCHAR *get_device_id(DEVICE_OBJECT *device)
 {
-    static const WCHAR input_format[] = L"&MI_%02u";
+    static const WCHAR interface_format[] = L"&MI_%02u";
     static const WCHAR winebus_format[] = L"%s\\VID_%04X&PID_%04X";
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD pos = 0, len = 0, input_len = 0, winebus_len = 18;
+    DWORD pos = 0, len = 0, interface_len = 0, winebus_len = 18;
     const WCHAR *bus_str;
     WCHAR *dst;
 
     assert(ext->desc.bus_type < BUS_TYPE_COUNT);
     bus_str = bus_type_str[ext->desc.bus_type];
-    if (ext->desc.input != -1) input_len = 14;
+    if (ext->desc.interface != -1) interface_len = 14;
 
-    len += winebus_len + input_len + wcslen(bus_str) + 1;
+    len += winebus_len + interface_len + wcslen(bus_str) + 1;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
         pos += swprintf(dst + pos, len - pos, winebus_format, bus_str, ext->desc.vid, ext->desc.pid);
-        if (input_len) pos += swprintf(dst + pos, len - pos, input_format, ext->desc.input);
+        if (interface_len) pos += swprintf(dst + pos, len - pos, interface_format, ext->desc.interface);
     }
 
     return dst;
@@ -233,20 +233,20 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
 
 static WCHAR *get_hardware_ids(DEVICE_OBJECT *device)
 {
-    static const WCHAR input_format[] = L"&MI_%02u";
+    static const WCHAR interface_format[] = L"&MI_%02u";
     static const WCHAR winebus_format[] = L"WINEBUS\\VID_%04X&PID_%04X";
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD pos = 0, len = 0, input_len = 0, winebus_len = 25;
+    DWORD pos = 0, len = 0, interface_len = 0, winebus_len = 25;
     WCHAR *dst;
 
-    if (ext->desc.input != -1) input_len = 14;
+    if (ext->desc.interface != -1) interface_len = 14;
 
-    len += winebus_len + input_len + 1;
+    len += winebus_len + interface_len + 1;
 
     if ((dst = ExAllocatePool(PagedPool, (len + 1) * sizeof(WCHAR))))
     {
         pos += swprintf(dst + pos, len - pos, winebus_format, ext->desc.vid, ext->desc.pid);
-        if (input_len) pos += swprintf(dst + pos, len - pos, input_format, ext->desc.input);
+        if (interface_len) pos += swprintf(dst + pos, len - pos, interface_format, ext->desc.interface);
         pos += 1;
         dst[pos] = 0;
     }
@@ -351,7 +351,7 @@ static void make_unique_serial(struct device_extension *device)
     if (&ext->entry == &device_list && *device->desc.serialnumber) return;
 
     swprintf(device->desc.serialnumber, ARRAY_SIZE(device->desc.serialnumber), L"%04x%08x%04x%04x",
-             device->index, device->desc.input, device->desc.pid, device->desc.vid);
+             device->index, device->desc.interface, device->desc.pid, device->desc.vid);
 }
 
 static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 unix_device)

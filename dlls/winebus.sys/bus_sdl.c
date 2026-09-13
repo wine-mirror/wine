@@ -929,7 +929,7 @@ static void sdl_add_device(unsigned int index)
 {
     struct device_desc desc =
     {
-        .input = -1,
+        .interface = -1,
         .bus_id = -1,
         .manufacturer = {'S','D','L',0},
         .serialnumber = {'0','0','0','0',0},

@@ -1139,7 +1139,7 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
             if (!strncmp(ptr, "HID_PHYS=", 9) || !strncmp(ptr, "PHYS=\"", 6))
             {
                 if (!(tmp = strstr(ptr, "/input")) || tmp >= next) continue;
-                if (desc->input == -1) sscanf(tmp, "/input%d\n", &desc->input);
+                if (desc->interface == -1) sscanf(tmp, "/input%d\n", &desc->interface);
             }
             if (!strncmp(ptr, "HID_ID=", 7))
             {
@@ -1359,7 +1359,7 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
 
 static void udev_add_device(struct udev_device *dev, int fd)
 {
-    struct device_desc desc = { .input = -1, .bus_id = -1 };
+    struct device_desc desc = { .interface = -1, .bus_id = -1 };
     const char *subsystem, *devnode;
     int bus = 0;
 
