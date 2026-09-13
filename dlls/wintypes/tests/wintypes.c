@@ -1202,14 +1202,43 @@ static void test_IPropertyValueStatics(void)
     RoUninitialize();
 }
 
+#define test_metadata_file_paths(paths, count, exp_path, exp_path_wow64) \
+    test_metadata_file_paths_(__LINE__, paths, count, exp_path, exp_path_wow64)
+static void test_metadata_file_paths_(int line, HSTRING *paths, UINT32 count, const WCHAR *exp_path,
+                                      const WCHAR *exp_path_wow64)
+{
+    UINT32 i;
+
+    ok_(__FILE__, line)(count == 1, "got count %I32u\n", count);
+    if (count)
+    {
+        const WCHAR *str = WindowsGetStringRawBuffer(paths[0], NULL);
+
+        ok((!is_wow64 && !wcsicmp(str, exp_path)) || (is_wow64 && !wcsicmp(str, exp_path_wow64)) ||
+               broken(is_wow64 && !wcsicmp(str, exp_path_wow64)) /* win8, win10 1507 */,
+           "got %s\n", wine_dbgstr_w(str));
+    }
+
+    for (i = 0; i < count; i++)
+        WindowsDeleteString(paths[i]);
+    CoTaskMemFree(paths);
+}
+
 static void test_RoResolveNamespace(void)
 {
     static const WCHAR foundation[] = L"c:\\windows\\system32\\winmetadata\\windows.foundation.winmd";
     static const WCHAR foundation_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.foundation.winmd";
     static const WCHAR networking[] = L"c:\\windows\\system32\\winmetadata\\windows.networking.winmd";
     static const WCHAR networking_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.networking.winmd";
-    HSTRING name, *paths;
-    DWORD count, i;
+    static const WCHAR ui[] = L"c:\\windows\\system32\\winmetadata\\windows.ui.winmd";
+    static const WCHAR ui_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.ui.winmd";
+    static const WCHAR ui_xaml[] = L"c:\\windows\\system32\\winmetadata\\windows.ui.xaml.winmd";
+    static const WCHAR ui_xaml_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.ui.xaml.winmd";
+
+    static void *dummy = (void *)0xdeadbeef;
+    HSTRING name, *paths = dummy, *namespaces = dummy;
+    DWORD count = 0xdeadbeef, count2 = 0xdeadbeef, i;
+    HSTRING_HEADER hdr;
     HRESULT hr;
     static const struct
     {
@@ -1224,10 +1253,63 @@ static void test_RoResolveNamespace(void)
           networking, networking_wow64 },
         { L"Windows.Foundation", ARRAY_SIZE(L"Windows.Foundation") - 1,
           foundation, foundation_wow64 },
+        { L"Windows.Foundation.Collections", ARRAY_SIZE(L"Windows.Foundation.Collections") - 1,
+            foundation, foundation_wow64 },
+        { L"Windows.Foundation.NonExistent", ARRAY_SIZE(L"Windows.Foundation.NonExistent") - 1,
+            foundation, foundation_wow64 },
+        { L"Windows.UI", ARRAY_SIZE(L"Windows.UI") - 1, ui, ui_wow64 },
+        { L"Windows.UI.Xaml", ARRAY_SIZE(L"Windows.UI.Xaml") - 1, ui_xaml, ui_xaml_wow64 },
     };
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = RoResolveNamespace(NULL, NULL, 0, NULL, &count, &paths, &count2, &namespaces);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!count, "got count %lu\n", count);
+    todo_wine ok(!count2, "got count2 %lu\n", count2);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+
+    paths = dummy;
+    count = 0xdeadbeef;
+    WindowsCreateStringReference(L"Windows.Foundation", wcslen(L"Windows.Foundation") + 1, &hdr, &name);
+    hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!count, "got count %lu\n", count);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+
+    WindowsCreateStringReference(L"Windows..Foundation", wcslen(L"Windows..Foundation"), &hdr, &name);
+    paths = dummy;
+    count = 0xdeadbeef;
+    hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, NULL, NULL);
+    ok(hr == RO_E_METADATA_NAME_NOT_FOUND, "got hr %#lx\n", hr);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+    todo_wine ok(!count, "got count %lu\n", count);
+
+    paths = dummy;
+    hr = RoResolveNamespace(name, NULL, 0, NULL, NULL, &paths, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+
+    count = 0xdeadbeef;
+    namespaces = dummy;
+    hr = RoResolveNamespace(name, NULL, 0, NULL, &count, NULL, NULL, &namespaces);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!count, "got count %lu\n", count);
+    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+
+    paths = namespaces = dummy;
+    hr = RoResolveNamespace(name, NULL, 0, NULL, NULL, &paths, NULL, &namespaces);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+
+    count = count2 = 0xdeadbeef;
+    hr = RoResolveNamespace(name, NULL, 0, NULL, &count, NULL, &count2, NULL);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    todo_wine ok(!paths, "got paths %p\n", paths);
+    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
@@ -1236,21 +1318,11 @@ static void test_RoResolveNamespace(void)
         ok(hr == S_OK, "got %#lx\n", hr);
 
         count = 0;
+        paths = NULL;
         hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, 0, NULL);
-        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-        if (hr == S_OK)
-        {
-            const WCHAR *str = WindowsGetStringRawBuffer(paths[0], NULL);
-
-            ok(count == 1, "got %lu\n", count);
-            ok((!is_wow64 && !wcsicmp( str, tests[i].path )) ||
-               (is_wow64 && !wcsicmp( str, tests[i].path_wow64 )) ||
-               broken(is_wow64 && !wcsicmp( str, tests[i].path )) /* win8, win10 1507 */,
-               "got %s\n", wine_dbgstr_w(str) );
-
-            WindowsDeleteString(paths[0]);
-            CoTaskMemFree(paths);
-        }
+        todo_wine_if(hr == RO_E_METADATA_NAME_NOT_FOUND) ok(hr == S_OK, "got %#lx\n", hr);
+        todo_wine_if(hr == RO_E_METADATA_NAME_NOT_FOUND)
+            test_metadata_file_paths(paths, count, tests[i].path, tests[i].path_wow64);
 
         WindowsDeleteString(name);
         winetest_pop_context();
