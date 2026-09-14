@@ -467,9 +467,10 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
-    wayland_window_surface_set_clip,
-    wayland_window_surface_flush,
-    wayland_window_surface_destroy
+    .size = sizeof(struct wayland_window_surface),
+    .set_clip = wayland_window_surface_set_clip,
+    .flush = wayland_window_surface_flush,
+    .destroy = wayland_window_surface_destroy
 };
 
 /***********************************************************************
@@ -480,7 +481,6 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
 {
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    struct wayland_window_surface *wws;
     int width = rect->right - rect->left;
     int height = rect->bottom - rect->top;
     struct window_surface *window_surface;
@@ -496,7 +496,7 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     info->bmiHeader.biSizeImage   = width * height * 4;
     info->bmiHeader.biCompression = BI_RGB;
 
-    if ((window_surface = window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0)))
+    if ((window_surface = window_surface_create(&wayland_window_surface_funcs, hwnd, rect, info, 0)))
     {
         struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
         wws->wayland_buffer_queue =

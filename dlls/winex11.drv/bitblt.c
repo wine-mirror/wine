@@ -1872,9 +1872,10 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
-    x11drv_surface_set_clip,
-    x11drv_surface_flush,
-    x11drv_surface_destroy
+    .size = sizeof(struct x11drv_window_surface),
+    .set_clip = x11drv_surface_set_clip,
+    .flush = x11drv_surface_flush,
+    .destroy = x11drv_surface_destroy
 };
 
 /***********************************************************************
@@ -1932,7 +1933,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
         if (desc.hDeviceDc) NtUserReleaseDC( hwnd, desc.hDeviceDc );
     }
 
-    if (!(window_surface = window_surface_create( sizeof(*surface), &x11drv_surface_funcs, hwnd, rect, info, bitmap )))
+    if (!(window_surface = window_surface_create( &x11drv_surface_funcs, hwnd, rect, info, bitmap )))
     {
         if (bitmap) NtGdiDeleteObjectApp( bitmap );
         x11drv_image_destroy( image );

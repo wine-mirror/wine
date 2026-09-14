@@ -661,9 +661,10 @@ static void android_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs android_surface_funcs =
 {
-    android_surface_set_clip,
-    android_surface_flush,
-    android_surface_destroy
+    .size = sizeof(struct android_window_surface),
+    .set_clip = android_surface_set_clip,
+    .flush = android_surface_flush,
+    .destroy = android_surface_destroy
 };
 
 
@@ -687,7 +688,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect )
     info->bmiHeader.biSizeImage   = get_dib_image_size(info);
     info->bmiHeader.biCompression = BI_RGB;
 
-    if ((window_surface = window_surface_create( sizeof(*surface), &android_surface_funcs, hwnd, rect, info, 0 )))
+    if ((window_surface = window_surface_create( &android_surface_funcs, hwnd, rect, info, 0 )))
     {
         surface = get_android_surface( window_surface );
         surface->window = get_ioctl_window( hwnd );

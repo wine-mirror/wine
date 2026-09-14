@@ -76,9 +76,10 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs dummy_surface_funcs =
 {
-    dummy_surface_set_clip,
-    dummy_surface_flush,
-    dummy_surface_destroy
+    .size = 0, /* never allocated */
+    .set_clip = dummy_surface_set_clip,
+    .flush = dummy_surface_flush,
+    .destroy = dummy_surface_destroy
 };
 
 struct window_surface dummy_surface =
@@ -110,15 +111,16 @@ static void offscreen_window_surface_destroy( struct window_surface *surface )
 
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
-    offscreen_window_surface_set_clip,
-    offscreen_window_surface_flush,
-    offscreen_window_surface_destroy
+    .size = sizeof(struct window_surface),
+    .set_clip = offscreen_window_surface_set_clip,
+    .flush = offscreen_window_surface_flush,
+    .destroy = offscreen_window_surface_destroy
 };
 
 static void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **window_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    struct window_surface *surface, *previous;
+    struct window_surface *previous;
     BITMAPINFO *info = (BITMAPINFO *)buffer;
 
     TRACE( "hwnd %p, surface_rect %s, window_surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), window_surface );
@@ -135,7 +137,7 @@ static void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
     info->bmiHeader.biCompression = BI_RGB;
 
-    *window_surface = window_surface_create( sizeof(*surface), &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
+    *window_surface = window_surface_create( &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
 
     if (previous) window_surface_release( previous );
 }
@@ -218,9 +220,10 @@ static void scaled_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs scaled_surface_funcs =
 {
-    scaled_surface_set_clip,
-    scaled_surface_flush,
-    scaled_surface_destroy
+    .size = sizeof(struct scaled_surface),
+    .set_clip = scaled_surface_set_clip,
+    .flush = scaled_surface_flush,
+    .destroy = scaled_surface_destroy
 };
 
 static void scaled_surface_set_target( struct scaled_surface *surface, struct window_surface *target, struct ratio dpi_to )
@@ -247,7 +250,7 @@ static struct window_surface *scaled_surface_create( HWND hwnd, const RECT *surf
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
     info->bmiHeader.biCompression = BI_RGB;
 
-    if ((window_surface = window_surface_create( sizeof(*surface), &scaled_surface_funcs, hwnd, surface_rect, info, 0 )))
+    if ((window_surface = window_surface_create( &scaled_surface_funcs, hwnd, surface_rect, info, 0 )))
     {
         surface = get_scaled_surface( window_surface );
         surface->dpi_from = dpi_from;
@@ -549,12 +552,12 @@ static void *window_surface_get_color( struct window_surface *surface, BITMAPINF
     return gdi_bits.ptr;
 }
 
-struct window_surface *window_surface_create( UINT size, const struct window_surface_funcs *funcs, HWND hwnd,
+struct window_surface *window_surface_create( const struct window_surface_funcs *funcs, HWND hwnd,
                                               const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
 {
     struct window_surface *surface;
 
-    if (!(surface = calloc( 1, size ))) return NULL;
+    if (!(surface = calloc( 1, funcs->size ))) return NULL;
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
