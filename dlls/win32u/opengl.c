@@ -60,8 +60,6 @@ struct pbuffer
     struct opengl_drawable *drawable;
 
     HDC hdc;
-    GLsizei width;
-    GLsizei height;
     GLenum texture_format;
     GLenum texture_target;
     GLint mipmap_level;
@@ -2236,8 +2234,6 @@ static struct pbuffer *pbuffer_create( int format, SIZE size, const int *attribs
                                         pbuffer->texture_target, max_level, &pbuffer->drawable ))
     {
         set_dc_opengl_drawable( pbuffer->hdc, pbuffer->drawable );
-        pbuffer->width = pbuffer->drawable->virtual_size.cx;
-        pbuffer->height = pbuffer->drawable->virtual_size.cy;
         return pbuffer;
     }
 
@@ -2628,10 +2624,10 @@ static BOOL win32u_wglQueryPbufferARB( HPBUFFERARB client_pbuffer, int attrib, i
     switch (attrib)
     {
     case WGL_PBUFFER_WIDTH_ARB:
-        *value = pbuffer->width;
+        *value = pbuffer->drawable->virtual_size.cx;
         break;
     case WGL_PBUFFER_HEIGHT_ARB:
-        *value = pbuffer->height;
+        *value = pbuffer->drawable->virtual_size.cy;
         break;
     case WGL_PBUFFER_LOST_ARB:
         *value = GL_FALSE;
@@ -2720,6 +2716,7 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
     const struct opengl_funcs *funcs = &display_funcs;
     struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
     int prev_texture = 0, format = win32u_wglGetPixelFormat( pbuffer->hdc );
+    SIZE size = pbuffer->drawable->virtual_size;
     struct wgl_pixel_format desc;
     GLenum source;
     UINT ret;
@@ -2787,8 +2784,7 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
     funcs->p_glBindTexture( pbuffer->texture_target, prev_texture );
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
     funcs->p_glReadBuffer( source );
-    funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
-                                        pbuffer->width, pbuffer->height, 0 );
+    funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0, size.cx, size.cy, 0 );
 
     make_client_context_current();
     return GL_TRUE;
