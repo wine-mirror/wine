@@ -391,6 +391,17 @@ static int spawn(struct strarray args, int ignore_errors)
     return status;
 }
 
+static const char *get_target_name( enum target_cpu cpu )
+{
+    if (cpu != target.cpu)
+    {
+        const char *suffix = strchr( target_alias, '-' );
+        if (!suffix) suffix = "";
+        return strmake( "%s%s", get_cpu_name( cpu ), suffix );
+    }
+    return target_alias;
+}
+
 
 struct tool_names
 {
@@ -417,8 +428,9 @@ static void add_clang_options( const char *target_name, struct strarray *ret )
     if (no_default_config) strarray_add( ret, "--no-default-config" );
 }
 
-static struct strarray build_tool_name( const char *target_name, struct tool_names tool )
+static struct strarray build_tool_name( enum target_cpu cpu, struct tool_names tool )
 {
+    const char *target_name = get_target_name( cpu );
     const char *path, *str;
     struct strarray ret;
 
@@ -457,11 +469,11 @@ static struct strarray get_translator(void)
     switch(processor)
     {
     case proc_cpp:
-        return build_tool_name( target_alias, tool_cpp );
+        return build_tool_name( target.cpu, tool_cpp );
     case proc_cc:
-        return build_tool_name( target_alias, tool_cc );
+        return build_tool_name( target.cpu, tool_cc );
     case proc_cxx:
-        return build_tool_name( target_alias, tool_cxx );
+        return build_tool_name( target.cpu, tool_cxx );
     }
     assert(0);
     return empty_strarray;
@@ -891,8 +903,8 @@ static void compile( struct strarray files, const char *output_name, int compile
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = build_tool_name( target_alias, tool_cc );
-            gpp = build_tool_name( target_alias, tool_cxx );
+            gcc = build_tool_name( target.cpu, tool_cc );
+            gpp = build_tool_name( target.cpu, tool_cxx );
             STRARRAY_FOR_EACH( cc, &comp_args )
             {
                 STRARRAY_FOR_EACH( str, &gcc )
@@ -1060,21 +1072,21 @@ static void add_library( struct strarray lib_dirs, struct strarray *files, const
 
 /* run winebuild to generate the .spec.o file */
 static void build_spec_obj( const char *spec_file, const char *output_file,
-                            const char *target_name, struct strarray files,
+                            enum target_cpu cpu, struct strarray files,
                             struct strarray resources, struct strarray *spec_objs )
 {
-    struct strarray spec_args = get_winebuild_args( target_name );
+    struct strarray spec_args = get_winebuild_args( get_target_name( cpu ));
     struct strarray tool;
     const char *spec_o_name, *output_name;
 
     /* get the filename from the path */
     output_name = get_basename( output_file );
 
-    tool = build_tool_name( target_name, tool_cc );
+    tool = build_tool_name( cpu, tool_cc );
     strarray_add( &spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
     if (!is_pe)
     {
-        tool = build_tool_name( target_name, tool_ld );
+        tool = build_tool_name( cpu, tool_ld );
         strarray_add( &spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
     }
 
@@ -1328,14 +1340,12 @@ static void build(struct strarray input_files, const char *output)
 
     STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add( &resources, file );
 
-    build_spec_obj( spec_file, output_file, target_alias, files, resources, &spec_objs );
     if (is_arm64x)
     {
-        const char *suffix = strchr( target_alias, '-' );
-        if (!suffix) suffix = "";
-        build_spec_obj( spec_file, output_file, strmake( "aarch64%s", suffix ),
-                        files, empty_strarray, &spec_objs );
+        build_spec_obj( spec_file, output_file, CPU_ARM64EC, files, resources, &spec_objs );
+        build_spec_obj( spec_file, output_file, CPU_ARM64, files, empty_strarray, &spec_objs );
     }
+    else build_spec_obj( spec_file, output_file, target.cpu, files, resources, &spec_objs );
 
     if (fake_module) return;  /* nothing else to do */
 
@@ -1408,7 +1418,7 @@ static void build(struct strarray input_files, const char *output)
         struct strarray tool, objcopy;
 
         if (strendswith(file, ".pdb")) continue;
-        objcopy = build_tool_name(target_alias, tool_objcopy);
+        objcopy = build_tool_name(target.cpu, tool_objcopy);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
@@ -1439,9 +1449,9 @@ static void build(struct strarray input_files, const char *output)
             error("--out-implib requires a .spec or .def file\n");
 
         implib_args = get_winebuild_args( target_alias );
-        tool = build_tool_name( target_alias, tool_cc );
+        tool = build_tool_name( target.cpu, tool_cc );
         strarray_add( &implib_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
-        tool = build_tool_name( target_alias, tool_ld );
+        tool = build_tool_name( target.cpu, tool_ld );
         strarray_add( &implib_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
 
         strarray_add(&implib_args, "--implib");
