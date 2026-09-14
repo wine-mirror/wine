@@ -2455,7 +2455,7 @@ static struct opengl_drawable *get_updated_drawable( HDC hdc, int format, struct
 static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc, HDC read_hdc )
 {
     struct opengl_drawable *new_draw, *new_read, *old_draw = NULL, *old_read = NULL;
-    struct opengl_context *previous = NtCurrentTeb()->glContext;
+    struct opengl_context *previous = NtCurrentTeb()->glReserved2;
     BOOL ret = FALSE;
 
     if (!(new_draw = get_updated_drawable( draw_hdc, context->format, context->draw ))) return FALSE;
