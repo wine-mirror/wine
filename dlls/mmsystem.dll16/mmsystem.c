@@ -137,7 +137,7 @@ static void CALLBACK timeCB3216(UINT id, UINT uMsg, DWORD_PTR user, DWORD_PTR dw
     args[5] = HIWORD(te->user);
     args[4] = LOWORD(te->user);
     args[3] = HIWORD(dw1);
-    args[2] = LOWORD(dw2);
+    args[2] = LOWORD(dw1);
     args[1] = HIWORD(dw2);
     args[0] = LOWORD(dw2);
     WOWCallback16Ex((DWORD)te->func16, WCB16_PASCAL, sizeof(args), args, &ret);
