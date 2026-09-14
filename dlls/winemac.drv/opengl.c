@@ -1436,7 +1436,7 @@ static BOOL macdrv_surface_create(struct client_surface *client, int format, str
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(gl = opengl_drawable_create(&macdrv_surface_funcs, format, client))) return FALSE;
+    if (!(gl = opengl_drawable_create(&macdrv_surface_funcs, format, client, NULL))) return FALSE;
     *drawable = &gl->base;
     return TRUE;
 }
@@ -2159,6 +2159,7 @@ static struct opengl_context *macdrv_context_create(int format, struct opengl_co
 static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                   GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable)
 {
+    SIZE size = {*width, *height};
     struct gl_drawable *gl;
     CGLError err;
 
@@ -2172,9 +2173,9 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
         texture_format = GL_RGB;
     }
 
-    if (!(gl = opengl_drawable_create(&macdrv_pbuffer_funcs, format, NULL))) return FALSE;
+    if (!(gl = opengl_drawable_create(&macdrv_pbuffer_funcs, format, NULL, &size))) return FALSE;
 
-    err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, &gl->pbuffer);
+    err = CGLCreatePBuffer(size.cx, size.cy, texture_target, texture_format, max_level, &gl->pbuffer);
     if (err != kCGLNoError)
     {
         WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));

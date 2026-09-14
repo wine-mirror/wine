@@ -87,7 +87,7 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
     }
     *attrib++ = EGL_NONE;
 
-    if (!(gl = opengl_drawable_create(&wayland_drawable_funcs, format, client))) return FALSE;
+    if (!(gl = opengl_drawable_create(&wayland_drawable_funcs, format, client, NULL))) return FALSE;
     size = client->raw ? gl->base.monitor_size : gl->base.virtual_size;
 
     opengl_drawable_map_buffer(&gl->base, GL_FRONT_LEFT, GL_BACK_LEFT);
@@ -175,15 +175,16 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum tex
                                    GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **surface)
 {
     EGLConfig config = egl_config_for_format(format);
+    SIZE size = {*width, *height};
     struct wayland_pbuffer *gl;
 
     TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, surface);
 
-    if (!(gl = opengl_drawable_create(&wayland_pbuffer_funcs, format, NULL))) return FALSE;
+    if (!(gl = opengl_drawable_create(&wayland_pbuffer_funcs, format, NULL, &size))) return FALSE;
     /* Wayland EGL doesn't support pixmap or pbuffer, create a dummy window surface to act as the target render surface. */
     if (!(gl->surface = wl_compositor_create_surface(process_wayland.wl_compositor))) goto err;
-    if (!(gl->window = wl_egl_window_create(gl->surface, *width, *height))) goto err;
+    if (!(gl->window = wl_egl_window_create(gl->surface, size.cx, size.cy))) goto err;
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->window, NULL))) goto err;
 
     TRACE("Created pbuffer %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);

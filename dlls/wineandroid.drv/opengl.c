@@ -106,7 +106,7 @@ static BOOL android_surface_create( struct client_surface *client, int format, s
         static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
         EGLConfig config = egl_config_for_format( format );
 
-        if (!(gl = opengl_drawable_create( &android_drawable_funcs, format, client ))) return FALSE;
+        if (!(gl = opengl_drawable_create( &android_drawable_funcs, format, client, NULL ))) return FALSE;
         gl->window = get_client_window( client->hwnd );
 
         if (!has_client_surface( client->hwnd )) gl->base.surface = funcs->p_eglCreatePbufferSurface( egl->display, config, attribs );

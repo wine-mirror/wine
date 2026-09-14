@@ -314,7 +314,8 @@ static void opengl_context_init( struct opengl_context *context )
     context->initialized = TRUE;
 }
 
-void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client )
+void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int format,
+                              struct client_surface *client, const SIZE *size )
 {
     struct opengl_drawable *drawable;
 
@@ -328,7 +329,8 @@ void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int for
     drawable->stereo = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_STEREO);
     drawable->srgb = !!(pixel_formats[format - 1].framebuffer_srgb_capable);
 
-    if ((drawable->client = client))
+    if (!(drawable->client = client)) drawable->virtual_size = drawable->monitor_size = *size;
+    else
     {
         client_surface_get_size( client, &drawable->virtual_size, &drawable->monitor_size );
         client_surface_add_ref( client );
@@ -1052,7 +1054,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
     struct wgl_pixel_format draw_desc = pixel_formats[format - 1], read_desc = draw_desc;
     struct framebuffer_surface *surface;
 
-    if (!(surface = opengl_drawable_create( &framebuffer_surface_funcs, format, client ))) return NULL;
+    if (!(surface = opengl_drawable_create( &framebuffer_surface_funcs, format, client, NULL ))) return NULL;
     if ((surface->target = target)) opengl_drawable_add_ref( surface->target );
 
     opengl_drawable_map_buffer( &surface->base, GL_FRONT_LEFT, GL_COLOR_ATTACHMENT0 );
@@ -1321,15 +1323,17 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
     EGLint attribs[13], *attrib = attribs;
+    SIZE size = {*width, *height};
     struct opengl_drawable *gl;
+    EGLSurface pbuffer;
 
     TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
            hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable );
 
     *attrib++ = EGL_WIDTH;
-    *attrib++ = *width;
+    *attrib++ = size.cx;
     *attrib++ = EGL_HEIGHT;
-    *attrib++ = *height;
+    *attrib++ = size.cy;
     if (largest)
     {
         *attrib++ = EGL_LARGEST_PBUFFER;
@@ -1372,15 +1376,18 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     *attrib++ = EGL_NONE;
 
-    if (!(gl = opengl_drawable_create( &egldrv_pbuffer_funcs, format, NULL ))) return FALSE;
-    if (!(gl->surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, gl->format ), attribs )))
+    if (!(pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, format ), attribs )))
+    funcs->p_eglQuerySurface( egl->display, pbuffer, EGL_WIDTH, &size.cx );
+    funcs->p_eglQuerySurface( egl->display, pbuffer, EGL_HEIGHT, &size.cy );
+
+    if (!(gl = opengl_drawable_create( &egldrv_pbuffer_funcs, format, NULL, &size )))
     {
-        opengl_drawable_release( gl );
+        funcs->p_eglDestroySurface( egl->display, pbuffer );
         return FALSE;
     }
-
-    funcs->p_eglQuerySurface( egl->display, gl->surface, EGL_WIDTH, width );
-    funcs->p_eglQuerySurface( egl->display, gl->surface, EGL_HEIGHT, height );
+    gl->surface = pbuffer;
+    *width = size.cx;
+    *height = size.cy;
 
     *drawable = gl;
     return TRUE;
