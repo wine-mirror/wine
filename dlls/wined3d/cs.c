@@ -956,7 +956,7 @@ static void wined3d_cs_exec_discard_resource(struct wined3d_cs *cs, const void *
         unsigned int byte_size;
 
         if (op->desc.format_id == WINED3DFMT_UNKNOWN)
-            byte_size = op->desc.u.buffer.count * buffer->structure_byte_stride;
+            byte_size = op->desc.u.buffer.count * max(buffer->structure_byte_stride, 1);
         else
             byte_size = op->desc.u.buffer.count
                     * wined3d_get_format(cs->c.device->adapter, op->desc.format_id, 0)->byte_count;
@@ -1002,8 +1002,10 @@ void CDECL wined3d_device_context_discard_resource(struct wined3d_device_context
         op->desc.flags = 0;
         if (resource->type == WINED3D_RTYPE_BUFFER)
         {
+            unsigned int stride = buffer_from_resource(resource)->structure_byte_stride;
+
             op->desc.u.buffer.start_idx = 0;
-            op->desc.u.buffer.count = resource->size / buffer_from_resource(resource)->structure_byte_stride;
+            op->desc.u.buffer.count = stride ? resource->size / stride : resource->size;
         }
         else
         {
