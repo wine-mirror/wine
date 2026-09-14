@@ -2456,7 +2456,8 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 {
     struct opengl_drawable *new_draw, *new_read, *old_draw = NULL, *old_read = NULL;
     struct opengl_context *previous = NtCurrentTeb()->glReserved2;
-    BOOL ret = FALSE;
+    struct client_surface *client;
+    BOOL ret;
 
     if (!(new_draw = get_updated_drawable( draw_hdc, context->format, context->draw ))) return FALSE;
     if (!draw_hdc && context->draw == context->read) opengl_drawable_add_ref( (new_read = new_draw) );
@@ -2471,10 +2472,10 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         return FALSE;
     }
 
-    if (previous == context && new_draw == context->draw && new_read == context->read) ret = TRUE;
-    else if (previous) context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
+    if ((ret = previous == context && new_draw == context->draw && new_read == context->read)) goto done;
 
-    if (!ret && (ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
+    if (previous) context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
+    if ((ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
     {
         NtCurrentTeb()->glReserved2 = NtCurrentTeb()->glContext = context;
 
@@ -2485,12 +2486,7 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 
         opengl_drawable_flush( new_read, new_read->interval, 0 );
         opengl_drawable_flush( new_draw, new_draw->interval, 0 );
-    }
 
-    if (ret)
-    {
-        /* update the current window drawable to the last used draw surface */
-        if (new_draw->client) set_window_opengl_drawable( new_draw->client->hwnd, new_draw, TRUE );
         context_exchange_drawables( context, &new_draw, &new_read );
     }
     else if (previous)
@@ -2501,8 +2497,15 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 
     if (old_draw) opengl_drawable_release( old_draw );
     if (old_read) opengl_drawable_release( old_read );
+
+done:
     if (new_draw) opengl_drawable_release( new_draw );
     if (new_read) opengl_drawable_release( new_read );
+    if (ret && (client = context->draw->client))
+    {
+        /* update the current window drawable to the last used draw surface */
+        set_window_opengl_drawable( client->hwnd, context->draw, TRUE );
+    }
     if (ret) get_opengl_thread_data()->client_current = TRUE;
     return ret;
 }
