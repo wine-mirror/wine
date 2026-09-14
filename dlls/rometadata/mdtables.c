@@ -66,6 +66,7 @@ static HRESULT WINAPI tables_QueryInterface(IMetaDataTables *iface, REFIID iid, 
         return S_OK;
     }
 
+    *out = NULL;
     FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
     return E_NOINTERFACE;
 }
