@@ -977,7 +977,7 @@ static void wined3d_cs_exec_discard_resource(struct wined3d_cs *cs, const void *
                 unsigned int level = op->desc.u.texture.level_idx + j;
 
                 wined3d_texture_validate_location(texture,
-                        layer * op->desc.u.texture.level_count + level, WINED3D_LOCATION_DISCARDED);
+                        layer * texture->level_count + level, WINED3D_LOCATION_DISCARDED);
             }
         }
     }
