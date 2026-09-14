@@ -7469,6 +7469,93 @@ static void test_WsGetFaultErrorDetail(void)
     WsFreeError( error );
 }
 
+static void test_struct_array_duplicate_name(void)
+{
+    const WS_XML_NODE *node;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_XML_STRING ns = { 0, NULL };
+    WS_XML_STRING localname = { 11, (BYTE *)"SymbolPaths" };
+    WS_XML_STRING localname2 = { 15, (BYTE *)"SymbolCachePath" };
+    WS_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_STRUCT_DESCRIPTION s;
+    WS_ITEM_RANGE range;
+    HRESULT hr;
+
+    struct test
+    {
+        WS_STRING *symbol_paths;
+        ULONG symbol_paths_count;
+        WS_STRING cache_path;
+    } *test;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    prepare_struct_type_test( reader, "<SymbolPaths>"
+                                         "<SymbolPaths>test</SymbolPaths>"
+                                         "<SymbolCachePath>test2</SymbolCachePath>"
+                                      "</SymbolPaths>" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    range.minItemCount = 0;
+    range.maxItemCount = 0x8000000;
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping       = WS_REPEATING_ELEMENT_FIELD_MAPPING;
+    f.offset        = FIELD_OFFSET(struct test, symbol_paths);
+    f.countOffset   = FIELD_OFFSET(struct test, symbol_paths_count);
+    f.itemLocalName = &localname;
+    f.itemNs        = &ns;
+    f.itemRange     = &range;
+    f.type          = WS_STRING_TYPE;
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.localName = &localname2;
+    f2.ns        = &ns;
+    f2.offset    = FIELD_OFFSET(struct test, cache_path);
+    f2.type      = WS_STRING_TYPE;
+    fields[1] = &f2;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 2;
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    if (hr == S_OK)
+    {
+        hr = WsGetReaderNode( reader, &node, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( test->symbol_paths_count == 1, "got %lu\n", test->symbol_paths_count );
+        ok( test->symbol_paths[0].length == 4, "got %lu\n", test->symbol_paths[0].length );
+        ok( !memcmp(test->symbol_paths[0].chars, L"test", 8), "got %s\n",
+            wine_dbgstr_wn(test->symbol_paths[0].chars, test->symbol_paths[0].length) );
+        ok( test->cache_path.length == 5, "got %lu\n", test->cache_path.length );
+        ok( !memcmp(test->cache_path.chars, L"test2", 8), "got %s\n",
+            wine_dbgstr_wn(test->cache_path.chars, test->cache_path.length) );
+    }
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -7523,4 +7610,5 @@ START_TEST(reader)
     test_WsAddErrorString();
     test_WsSetFaultErrorProperty();
     test_WsGetFaultErrorDetail();
+    test_struct_array_duplicate_name();
 }

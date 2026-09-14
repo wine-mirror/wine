@@ -6071,12 +6071,13 @@ static HRESULT read_type_next_element_node( struct reader *reader, const WS_XML_
         if ((hr = read_to_startelement( reader, &found )) != S_OK) return hr;
         if (!found) return WS_E_INVALID_FORMAT;
     }
-    if (match_element( reader->current, localname, ns )) return S_OK;
 
     save_reader_position( reader, &pos );
     if ((hr = read_type_next_node( reader )) != S_OK) return hr;
     if (match_element( reader->current, localname, ns )) return S_OK;
     restore_reader_position( reader, &pos );
+
+    if (match_element( reader->current, localname, ns )) return S_OK;
 
     return WS_E_INVALID_FORMAT;
 }
