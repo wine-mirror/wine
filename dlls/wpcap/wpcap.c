@@ -825,8 +825,6 @@ int CDECL pcap_list_tstamp_types( struct pcap *pcap, int **types )
 
     TRACE( "%p, %p\n", pcap, types );
 
-    TRACE( "%p, %p\n", pcap, types );
-
     if (!pcap || !types) return PCAP_ERROR;
 
     if (!(params.types = malloc( count * sizeof(*params.types) ))) return PCAP_ERROR;
