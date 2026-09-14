@@ -262,6 +262,13 @@ static inline BOOL is_vprot_exec_write( BYTE vprot )
     return (vprot & VPROT_EXEC) && (vprot & (VPROT_WRITE | VPROT_WRITECOPY));
 }
 
+/* address-space layout randomization */
+static inline BOOL use_aslr(void)
+{
+    return (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
+           (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE);
+}
+
 /* mmap() anonymous memory at a fixed address */
 void *anon_mmap_fixed( void *start, size_t size, int prot, int flags )
 {
@@ -4082,9 +4089,7 @@ static void set_large_address_space(void)
         {
             address_space_start = (void *)0x10000;
 #ifndef __APPLE__  /* don't free the zerofill section on macOS */
-            if ((main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
-                (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
-                free_reserved_memory( 0, (char *)0x7ffe0000 );
+            if (use_aslr()) free_reserved_memory( 0, (char *)0x7ffe0000 );
 #endif
         }
         else if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
@@ -4139,6 +4144,7 @@ void virtual_alloc_first_teb(void)
     unsigned int status;
     struct file_view *view;
     struct thread_data *data = get_thread_data();
+    ULONG_PTR limit_low = 0, limit_high = 0;
 
     set_large_address_space();
 
@@ -4146,10 +4152,11 @@ void virtual_alloc_first_teb(void)
     if (is_wow64()) teb_block_size += ROUND_SIZE( 0, sizeof(WOW_TEB), page_mask );
     teb_block_size += page_size;  /* for debug info */
 
-    ERR("teb block size: %zx\n", teb_block_size);
+    if (user_space_wow_limit) limit_high = user_space_wow_limit & ~granularity_mask;
+    else if (use_aslr()) limit_low = limit_4g;
 
-    status = map_view( &view, NULL, 16 * teb_block_size, MEM_TOP_DOWN,
-                       VPROT_READ | VPROT_WRITE, 0, is_win64 ? limit_2g : 0, 0 );
+    status = map_view( &view, NULL, 16 * teb_block_size, 0,
+                       VPROT_READ | VPROT_WRITE, limit_low, limit_high, 0 );
     assert( !status );
     teb_block = view->base;
     teb_block_pos = 14;
@@ -4178,7 +4185,7 @@ void virtual_alloc_first_teb(void)
 NTSTATUS virtual_alloc_teb( struct thread_data *data )
 {
     sigset_t sigset;
-    void *ptr = NULL;
+    void *ptr;
     SIZE_T size;
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -4193,14 +4200,19 @@ NTSTATUS virtual_alloc_teb( struct thread_data *data )
     {
         if (!teb_block_pos)
         {
-            size = 32 * teb_block_size;
-            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, user_space_wow_limit,
-                                                   &size, MEM_RESERVE, PAGE_READWRITE )))
+            struct file_view *view;
+            ULONG_PTR limit_low = 0, limit_high = 0;
+
+            if (user_space_wow_limit) limit_high = user_space_wow_limit & ~granularity_mask;
+            else if (use_aslr()) limit_low = limit_4g;
+
+            if ((status = map_view( &view, NULL, 32 * teb_block_size, 0,
+                                    VPROT_READ | VPROT_WRITE, limit_low, limit_high, 0 )))
             {
                 server_leave_uninterrupted_section( &virtual_mutex, &sigset );
                 return status;
             }
-            teb_block = ptr;
+            teb_block = view->base;
             teb_block_pos = 32;
         }
         ptr = ((char *)teb_block + --teb_block_pos * teb_block_size);
