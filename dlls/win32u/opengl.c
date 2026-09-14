@@ -314,11 +314,11 @@ static void opengl_context_init( struct opengl_context *context )
     context->initialized = TRUE;
 }
 
-void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client )
+void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client )
 {
     struct opengl_drawable *drawable;
 
-    if (!(drawable = calloc( 1, size ))) return NULL;
+    if (!(drawable = calloc( 1, funcs->size ))) return NULL;
     drawable->funcs = funcs;
     drawable->ref = 1;
 
@@ -1041,6 +1041,7 @@ static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
 
 static const struct opengl_drawable_funcs framebuffer_surface_funcs =
 {
+    .size = sizeof(struct framebuffer_surface),
     .destroy = framebuffer_surface_destroy,
     .flush = framebuffer_surface_flush,
     .swap = framebuffer_surface_swap,
@@ -1051,7 +1052,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
     struct wgl_pixel_format draw_desc = pixel_formats[format - 1], read_desc = draw_desc;
     struct framebuffer_surface *surface;
 
-    if (!(surface = opengl_drawable_create( sizeof(*surface), &framebuffer_surface_funcs, format, client ))) return NULL;
+    if (!(surface = opengl_drawable_create( &framebuffer_surface_funcs, format, client ))) return NULL;
     if ((surface->target = target)) opengl_drawable_add_ref( surface->target );
 
     opengl_drawable_map_buffer( &surface->base, GL_FRONT_LEFT, GL_COLOR_ATTACHMENT0 );
@@ -1371,7 +1372,7 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     *attrib++ = EGL_NONE;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &egldrv_pbuffer_funcs, format, NULL ))) return FALSE;
+    if (!(gl = opengl_drawable_create( &egldrv_pbuffer_funcs, format, NULL ))) return FALSE;
     if (!(gl->surface = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, gl->format ), attribs )))
     {
         opengl_drawable_release( gl );
@@ -1509,6 +1510,7 @@ static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
 
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
 {
+    .size = sizeof(struct opengl_drawable),
     .destroy = egldrv_pbuffer_destroy,
 };
 

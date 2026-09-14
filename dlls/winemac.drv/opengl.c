@@ -1436,7 +1436,7 @@ static BOOL macdrv_surface_create(struct client_surface *client, int format, str
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, client))) return FALSE;
+    if (!(gl = opengl_drawable_create(&macdrv_surface_funcs, format, client))) return FALSE;
     *drawable = &gl->base;
     return TRUE;
 }
@@ -2172,7 +2172,7 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
         texture_format = GL_RGB;
     }
 
-    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_pbuffer_funcs, format, NULL))) return FALSE;
+    if (!(gl = opengl_drawable_create(&macdrv_pbuffer_funcs, format, NULL))) return FALSE;
 
     err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, &gl->pbuffer);
     if (err != kCGLNoError)
@@ -2651,6 +2651,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
 
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
 {
+    .size = sizeof(struct gl_drawable),
     .destroy = macdrv_surface_destroy,
     .flush = macdrv_surface_flush,
     .swap = macdrv_surface_swap,
@@ -2658,5 +2659,6 @@ static const struct opengl_drawable_funcs macdrv_surface_funcs =
 
 static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
 {
+    .size = sizeof(struct gl_drawable),
     .destroy = macdrv_pbuffer_destroy,
 };

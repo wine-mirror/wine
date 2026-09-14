@@ -520,7 +520,7 @@ static BOOL x11drv_egl_surface_create( struct client_surface *client, int format
     struct x11drv_client_surface *surface = impl_from_client_surface( client );
     struct gl_drawable *gl;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, client ))) return FALSE;
+    if (!(gl = opengl_drawable_create( &x11drv_egl_surface_funcs, format, client ))) return FALSE;
 
     opengl_drawable_map_buffer( &gl->base, GL_FRONT_LEFT, GL_BACK_LEFT );
     opengl_drawable_map_buffer( &gl->base, GL_FRONT, GL_BACK );
@@ -943,7 +943,7 @@ static BOOL x11drv_surface_create( struct client_surface *client, int format, st
     struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
     struct gl_drawable *gl;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, client ))) return FALSE;
+    if (!(gl = opengl_drawable_create( &x11drv_surface_funcs, format, client ))) return FALSE;
     if (!(gl->drawable = pglXCreateWindow( gdi_display, fmt->fbconfig, surface->window, NULL )))
     {
         opengl_drawable_release( &gl->base );
@@ -1287,7 +1287,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     glx_attribs[count++] = 0;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
+    if (!(gl = opengl_drawable_create( &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
 
     gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
@@ -1336,7 +1336,7 @@ static BOOL x11drv_null_surface_create( int format, struct opengl_drawable **dra
     glx_attribs[count++] = 1;
     glx_attribs[count++] = 0;
 
-    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
+    if (!(gl = opengl_drawable_create( &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
     if (!(gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs )))
     {
         opengl_drawable_release( &gl->base );
@@ -1533,6 +1533,7 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
 
 static const struct opengl_drawable_funcs x11drv_surface_funcs =
 {
+    .size = sizeof(struct gl_drawable),
     .destroy = x11drv_surface_destroy,
     .flush = x11drv_surface_flush,
     .swap = x11drv_surface_swap,
@@ -1540,11 +1541,13 @@ static const struct opengl_drawable_funcs x11drv_surface_funcs =
 
 static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
 {
+    .size = sizeof(struct gl_drawable),
     .destroy = x11drv_pbuffer_destroy,
 };
 
 static const struct opengl_drawable_funcs x11drv_egl_surface_funcs =
 {
+    .size = sizeof(struct gl_drawable),
     .destroy = x11drv_egl_surface_destroy,
     .flush = x11drv_egl_surface_flush,
     .swap = x11drv_egl_surface_swap,

@@ -225,6 +225,7 @@ struct egl_platform
 
 struct opengl_drawable_funcs
 {
+    const UINT size; /* size of the implementation struct */
     void (*destroy)( struct opengl_drawable *iface );
     /* flush and update the drawable front buffer, called from render thread */
     void (*flush)( struct opengl_drawable *iface, UINT flags );
@@ -271,7 +272,7 @@ static inline void opengl_drawable_map_buffer( struct opengl_drawable *drawable,
     drawable->buffer_map[buffer - GL_FRONT_LEFT] = set;
 }
 
-W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client );
+W32KAPI void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client );
 W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
 W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
 
