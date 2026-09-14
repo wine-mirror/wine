@@ -2478,16 +2478,17 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     if ((ret = driver_funcs->p_context_activate( context, get_target( new_draw ), get_target( new_read ) )))
     {
         NtCurrentTeb()->glReserved2 = NtCurrentTeb()->glContext = context;
+        /* set the new context drawables before doing anything else, something might expect to find them there */
+        context_exchange_drawables( context, &new_draw, &new_read );
+        get_opengl_thread_data()->client_current = TRUE;
 
-        if (old_draw && old_draw != new_draw && old_draw != new_read && old_draw->client)
+        if (old_draw && old_draw != context->draw && old_draw != context->read && old_draw->client)
             set_window_opengl_drawable( old_draw->client->hwnd, old_draw, FALSE );
-        if (old_read && old_read != new_draw && old_read != new_read && old_read->client)
+        if (old_read && old_read != context->draw && old_read != context->read && old_read->client)
             set_window_opengl_drawable( old_read->client->hwnd, old_read, FALSE );
 
-        opengl_drawable_flush( new_read, new_read->interval, 0 );
-        opengl_drawable_flush( new_draw, new_draw->interval, 0 );
-
-        context_exchange_drawables( context, &new_draw, &new_read );
+        opengl_drawable_flush( context->read, context->read->interval, 0 );
+        opengl_drawable_flush( context->draw, context->draw->interval, 0 );
     }
     else if (previous)
     {
@@ -2506,7 +2507,6 @@ done:
         /* update the current window drawable to the last used draw surface */
         set_window_opengl_drawable( client->hwnd, context->draw, TRUE );
     }
-    if (ret) get_opengl_thread_data()->client_current = TRUE;
     return ret;
 }
 
