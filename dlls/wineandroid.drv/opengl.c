@@ -183,6 +183,7 @@ static void android_client_surface_present( struct client_surface *client, HDC h
 
 static const struct client_surface_funcs android_client_surface_funcs =
 {
+    .size = sizeof(struct client_surface),
     .destroy = android_client_surface_destroy,
     .detach = android_client_surface_detach,
     .update = android_client_surface_update,
@@ -191,7 +192,7 @@ static const struct client_surface_funcs android_client_surface_funcs =
 
 struct client_surface *ANDROID_CreateClientSurface( HWND hwnd, int pixel_format, BOOL raw )
 {
-    return client_surface_create( sizeof(struct client_surface), &android_client_surface_funcs, hwnd, pixel_format, raw );
+    return client_surface_create( &android_client_surface_funcs, hwnd, pixel_format, raw );
 }
 
 static const struct opengl_drawable_funcs android_drawable_funcs =

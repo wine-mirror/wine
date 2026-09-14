@@ -410,6 +410,7 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
 
 static const struct client_surface_funcs x11drv_client_surface_funcs =
 {
+    .size = sizeof(struct x11drv_client_surface),
     .destroy = x11drv_client_surface_destroy,
     .detach = x11drv_client_surface_detach,
     .update = x11drv_client_surface_update,
@@ -440,7 +441,7 @@ struct client_surface *X11DRV_CreateClientSurface( HWND hwnd, int format, BOOL r
     else colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual.visual, visual_class_alloc( visual.class ) );
     if (!colormap) return NULL;
 
-    if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd, format, raw ))) goto failed;
+    if (!(surface = client_surface_create( &x11drv_client_surface_funcs, hwnd, format, raw ))) goto failed;
     surface->colormap = colormap;
     rect = raw ? surface->client.monitor_rect : surface->client.virtual_rect;
     if (!(surface->window = create_client_window( hwnd, rect, &visual, colormap ))) goto failed;

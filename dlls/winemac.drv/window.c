@@ -1133,6 +1133,7 @@ static void macdrv_client_surface_present(struct client_surface *client, HDC hdc
 
 static const struct client_surface_funcs macdrv_client_surface_funcs =
 {
+    .size = sizeof(struct macdrv_client_surface),
     .destroy = macdrv_client_surface_destroy,
     .detach = macdrv_client_surface_detach,
     .update = macdrv_client_surface_update,
@@ -1149,7 +1150,7 @@ struct client_surface *macdrv_CreateClientSurface(HWND hwnd, int pixel_format, B
 {
     struct macdrv_client_surface *surface;
 
-    surface = client_surface_create(sizeof(*surface), &macdrv_client_surface_funcs, hwnd, pixel_format, raw);
+    surface = client_surface_create(&macdrv_client_surface_funcs, hwnd, pixel_format, raw);
     surface->cocoa_view = macdrv_create_view(cgrect_from_rect(surface->client.monitor_rect));
     macdrv_set_view_hidden(surface->cocoa_view, TRUE);
 
