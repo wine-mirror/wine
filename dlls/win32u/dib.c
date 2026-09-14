@@ -1348,7 +1348,9 @@ INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UIN
 
     if (err) goto done;
 
-    if (!is_bitmapobj_dib( bmp ) && (src_info->bmiHeader.biBitCount != 1 && src_info->bmiHeader.biBitCount != 32))
+    if (!is_bitmapobj_dib( bmp ) && NtGdiGetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASDISPLAY &&
+        src_info->bmiHeader.biBitCount != 1 && src_info->bmiHeader.biBitCount != 32 &&
+        !(src_info->bmiHeader.biBitCount == 8 && NtGdiGetDeviceCaps( hdc, BITSPIXEL ) == 8))
         goto done;
 
     /* fill out the src colour table, if it needs one */

@@ -2872,7 +2872,6 @@ static void test_display_dc(void)
                 count = GetDIBits(hdc2, hbitmap, 0, 0, NULL, bmi, DIB_RGB_COLORS);
                 if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8))
                 {
-                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
                     ok(count == 1, "GetDIBits failed.\n");
                     ok(*(unsigned int *)bmi->bmiColors == 0, "Got unexpected bmiColors %#x\n",
                        *(unsigned int *)bmi->bmiColors);
@@ -2912,7 +2911,6 @@ static void test_display_dc(void)
                 bmi->bmiHeader.biBitCount = ddb_bpps[j];
                 count = GetDIBits(hdc2, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
                 if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8) || ddb_bpps[j] == 32)
-                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
                     ok(count == 1, "GetDIBits failed.\n");
                 else
                     ok(count == 0, "GetDIBits succeeded.\n");
@@ -2928,7 +2926,6 @@ static void test_display_dc(void)
                 bmi->bmiHeader.biBitCount = ddb_bpps[j];
                 count = GetDIBits(mem_dc, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
                 if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8) || ddb_bpps[j] == 32)
-                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
                     ok(count == 1, "GetDIBits failed.\n");
                 else
                     ok(count == 0, "GetDIBits succeeded.\n");
