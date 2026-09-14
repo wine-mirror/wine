@@ -228,7 +228,7 @@ typedef struct _OUTLINETEXTMETRIC16
     UINT16          otmsStrikeoutSize;
     INT16           otmsStrikeoutPosition;
     INT16           otmsUnderscoreSize;
-    INT           otmsUnderscorePosition;
+    INT16           otmsUnderscorePosition;
     LPSTR           otmpFamilyName;
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
