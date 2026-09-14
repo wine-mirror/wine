@@ -1108,7 +1108,6 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
 
             if(*ptr && wcscmp(ptr, L"px"))
             {
-                nsAString_Finish(&str_value);
                 FIXME("only px values are currently supported\n");
                 hres = E_FAIL;
             }
