@@ -2037,11 +2037,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
         if (PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
             WaitForSingleObject(params->handle, INFINITE);
         else
-        {
             ERR("PostMessage failed with error %lu\n", GetLastError());
-            IRpcChannelBuffer_Release(params->chan);
-            IRpcStubBuffer_Release(params->stub);
-        }
         CloseHandle(params->handle);
     }
     else
