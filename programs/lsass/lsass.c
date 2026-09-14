@@ -445,6 +445,18 @@ void load_auth_packages( void )
     RegCloseKey( root );
 }
 
+wchar_t* CDECL midl_wcsdup( const wchar_t* str )
+{
+    wchar_t* ret = NULL;
+    if (str)
+    {
+        size_t size = (wcslen(str) + 1) * sizeof(wchar_t);
+        ret = MIDL_user_allocate( size );
+        if (ret) memcpy( ret, str, size );
+    }
+    return ret;
+}
+
 NTSTATUS __cdecl get_packages( handle_t binding, ULONG *count, package_info **out )
 {
     ULONG i;
@@ -456,9 +468,14 @@ NTSTATUS __cdecl get_packages( handle_t binding, ULONG *count, package_info **ou
     *count = packages_count;
     for (i = 0; i < packages_count; i++)
     {
-        (*out)[i].module_name = packages[i].module[0] ? packages[i].module : NULL;
+        (*out)[i].module_name = packages[i].module[0] ? midl_wcsdup( packages[i].module ) : NULL;
         (*out)[i].table_no = packages[i].table_no;
-        (*out)[i].info = packages[i].info;
+        (*out)[i].info.fCapabilities = packages[i].info.fCapabilities;
+        (*out)[i].info.wVersion = packages[i].info.wVersion;
+        (*out)[i].info.wRPCID = packages[i].info.wRPCID;
+        (*out)[i].info.cbMaxToken = packages[i].info.cbMaxToken;
+        (*out)[i].info.Name = midl_wcsdup( packages[i].info.Name );
+        (*out)[i].info.Comment = midl_wcsdup( packages[i].info.Comment );
     }
     return SEC_E_OK;
 }
