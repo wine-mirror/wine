@@ -135,6 +135,7 @@ typedef struct {
  *   no length identifiers
  */
 
+#define SCNd8  "hhd"
 #define SCNd16 "hd"
 #define SCNd32 "d"
 #define SCNd64 PRId64
@@ -149,6 +150,7 @@ typedef struct {
 
 #define SCNdMAX PRId64
 
+#define SCNi8  "hhi"
 #define SCNi16 "hi"
 #define SCNi32 "i"
 #define SCNi64 PRIi64
@@ -163,6 +165,7 @@ typedef struct {
 
 #define SCNiMAX PRIi64
 
+#define SCNo8  "hho"
 #define SCNo16 "ho"
 #define SCNo32 "o"
 #define SCNo64 PRIo64
@@ -177,6 +180,7 @@ typedef struct {
 
 #define SCNoMAX PRIo64
 
+#define SCNx8  "hhx"
 #define SCNx16 "hx"
 #define SCNx32 "x"
 #define SCNx64 PRIx64
@@ -193,6 +197,7 @@ typedef struct {
 
 /* fscanf macros for unsigned int types */
 
+#define SCNu8  "hhu"
 #define SCNu16 "hu"
 #define SCNu32 "u"
 #define SCNu64 PRIu64
