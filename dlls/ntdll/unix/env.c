@@ -1831,7 +1831,6 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
 static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module, BOOL debugged )
 {
     virtual_alloc_first_teb();
-    virtual_set_large_address_space();
 
     peb->ImageBaseAddress           = module;
     peb->ProcessParameters          = params;

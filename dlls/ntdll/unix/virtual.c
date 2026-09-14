@@ -1703,6 +1703,37 @@ static void remove_reserved_area( void *addr, size_t size )
 
 
 /***********************************************************************
+ *           free_reserved_memory
+ *
+ * Free reserved areas within a given range.
+ */
+static void free_reserved_memory( char *base, char *limit )
+{
+    struct reserved_area *area;
+
+    for (;;)
+    {
+        int removed = 0;
+
+        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+        {
+            char *area_base = area->base;
+            char *area_end = area_base + area->size;
+
+            if (area_end <= base) continue;
+            if (area_base >= limit) return;
+            if (area_base < base) area_base = base;
+            if (area_end > limit) area_end = limit;
+            remove_reserved_area( area_base, area_end - area_base );
+            removed = 1;
+            break;
+        }
+        if (!removed) return;
+    }
+}
+
+
+/***********************************************************************
  *           unmap_area
  *
  * Unmap an area, or simply replace it by an empty mapping if it is
@@ -4040,6 +4071,37 @@ static struct thread_data *init_thread_data( void *ptr )
     return data;
 }
 
+/* enable use of a large address space when allowed by the application */
+static void set_large_address_space(void)
+{
+    if (is_win64)
+    {
+        if (!is_wow64())
+        {
+            address_space_start = (void *)0x10000;
+#ifndef __APPLE__  /* don't free the zerofill section on macOS */
+            if ((main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
+                (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+                free_reserved_memory( 0, (char *)0x7ffe0000 );
+#endif
+        }
+        else if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
+        {
+            user_space_wow_limit = limit_4g - 1;
+            /* reserve space for top-down allocations; some apps break if the entire high 2G is available */
+            reserve_area( (void *)0xfff00000, (void *)0xffff0000 );
+        }
+        else user_space_wow_limit = limit_2g - 1;
+    }
+    else
+    {
+        if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
+        free_reserved_memory( (char *)0x80000000, address_space_limit );
+    }
+    user_space_limit = working_set_limit = address_space_limit;
+}
+
+
 /***********************************************************************
  *           virtual_alloc_first_thread_data
  */
@@ -4077,6 +4139,8 @@ void virtual_alloc_first_teb(void)
     struct file_view *view;
     struct thread_data *data = get_thread_data();
 
+    set_large_address_space();
+
     status = map_view( &view, NULL, 32 * block_size, MEM_TOP_DOWN,
                        VPROT_READ | VPROT_WRITE, 0, is_win64 ? limit_2g : 0, 0 );
     assert( !status );
@@ -4085,9 +4149,9 @@ void virtual_alloc_first_teb(void)
     ptr = (char *)teb_block + 30 * block_size;
     peb = (PEB *)((char *)ptr + block_size + (is_win64 ? 0 : page_size));
 #ifdef _WIN64
-    if (!is_machine_64bit( main_image_info.Machine )) wow_peb = (PEB32 *)((char *)peb + page_size);
+    if (is_wow64()) wow_peb = (PEB32 *)((char *)peb + page_size);
 #else
-    if (is_machine_64bit( native_machine )) wow_peb = (PEB64 *)((char *)peb - page_size);
+    if (is_wow64()) wow_peb = (PEB64 *)((char *)peb - page_size);
 #endif
     set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
     init_teb( data, ptr );
@@ -5036,32 +5100,6 @@ void virtual_enable_write_exceptions( BOOL enable )
 }
 
 
-/* free reserved areas within a given range */
-static void free_reserved_memory( char *base, char *limit )
-{
-    struct reserved_area *area;
-
-    for (;;)
-    {
-        int removed = 0;
-
-        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
-        {
-            char *area_base = area->base;
-            char *area_end = area_base + area->size;
-
-            if (area_end <= base) continue;
-            if (area_base >= limit) return;
-            if (area_base < base) area_base = base;
-            if (area_end > limit) area_end = limit;
-            remove_reserved_area( area_base, area_end - area_base );
-            removed = 1;
-            break;
-        }
-        if (!removed) return;
-    }
-}
-
 #ifndef _WIN64
 
 /***********************************************************************
@@ -5078,41 +5116,6 @@ static void virtual_release_address_space(void)
 }
 
 #endif  /* _WIN64 */
-
-
-/***********************************************************************
- *           virtual_set_large_address_space
- *
- * Enable use of a large address space when allowed by the application.
- */
-void virtual_set_large_address_space(void)
-{
-    if (is_win64)
-    {
-        if (!is_wow64())
-        {
-            address_space_start = (void *)0x10000;
-#ifndef __APPLE__  /* don't free the zerofill section on macOS */
-            if ((main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) &&
-                (main_image_info.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
-                free_reserved_memory( 0, (char *)0x7ffe0000 );
-#endif
-        }
-        else if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
-        {
-            user_space_wow_limit = limit_4g - 1;
-            /* reserve space for top-down allocations; some apps break if the entire high 2G is available */
-            reserve_area( (void *)0xfff00000, (void *)0xffff0000 );
-        }
-        else user_space_wow_limit = limit_2g - 1;
-    }
-    else
-    {
-        if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
-        free_reserved_memory( (char *)0x80000000, address_space_limit );
-    }
-    user_space_limit = working_set_limit = address_space_limit;
-}
 
 
 /***********************************************************************

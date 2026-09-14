@@ -84,7 +84,8 @@ static inline WOW_TEB *get_wow_teb( TEB *teb )
 
 static inline BOOL is_wow64(void)
 {
-    return !!wow_peb;
+    if (is_win64) return !is_machine_64bit( main_image_info.Machine ); /* 64-bit ntdll, 32-bit image */
+    else return is_machine_64bit( native_machine );  /* 32-bit ntdll, 64-bit wineserver */
 }
 
 /* check for old-style Wow64 (using a 32-bit ntdll.so) */
@@ -339,7 +340,6 @@ extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer,
 extern NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size );
 extern void virtual_set_force_exec( BOOL enable );
 extern void virtual_enable_write_exceptions( BOOL enable );
-extern void virtual_set_large_address_space(void);
 extern void virtual_fill_image_information( const struct pe_image_info *pe_info,
                                             SECTION_IMAGE_INFORMATION *info );
 extern void *get_builtin_so_handle( void *module );
