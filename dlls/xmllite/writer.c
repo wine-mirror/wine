@@ -2041,15 +2041,15 @@ static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *c
         write_xmldecl(writer, XmlStandalone_Omit, &hr);
         break;
     case XmlWriterState_ElemStarted:
-        writer_close_starttag(writer);
+        hr = writer_close_starttag(writer);
     default:
         ;
     }
 
-    while (length)
+    while (SUCCEEDED(hr) && length)
     {
-        if (FAILED(hr = writer_get_next_write_count(characters, length, &count))) return hr;
-        if (FAILED(hr = write_output_buffer(writer->output, characters, count))) return hr;
+        if (FAILED(hr = writer_get_next_write_count(characters, length, &count))) break;
+        if (FAILED(hr = write_output_buffer(writer->output, characters, count))) break;
 
         characters += count;
         length -= count;
