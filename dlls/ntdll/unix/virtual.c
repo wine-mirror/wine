@@ -2796,7 +2796,7 @@ static void *get_host_addr_space_limit(void)
  */
 BOOL is_emulated_code( ULONG_PTR ptr )
 {
-    const UINT64 *map = (const UINT64 *)peb->EcCodeBitMap;
+    const UINT64 *map = arm64ec_view->base;
     ULONG_PTR page = ptr / page_size;
     if (!is_arm64ec() || ptr >= (ULONG_PTR)user_space_limit) return FALSE;
     return !((map[page / 64] >> (page & 63)) & 1);
@@ -2818,7 +2818,7 @@ static void alloc_arm64ec_map(void)
         ERR( "failed to allocate ARM64EC map: %08x\n", status );
         exit(1);
     }
-    peb->EcCodeBitMap = arm64ec_view->base;
+    if (peb) peb->EcCodeBitMap = arm64ec_view->base;
 }
 
 
@@ -4154,6 +4154,8 @@ void virtual_alloc_first_teb(void)
     if (is_wow64()) wow_peb = (PEB64 *)((char *)peb - page_size);
 #endif
     set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
+
+    if (arm64ec_view) peb->EcCodeBitMap = arm64ec_view->base;
     init_teb( data, ptr );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 }
