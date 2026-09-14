@@ -2804,6 +2804,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_DiscardView(ID3D11DeviceConte
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
     wined3d_view_desc_from_d3d11_view(view, &desc);
     wined3d_device_context_discard_resource(context->wined3d_context, wined3d_resource, &desc);
+    ID3D11Resource_Release(resource);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetConstantBuffers1(ID3D11DeviceContext4 *iface,
