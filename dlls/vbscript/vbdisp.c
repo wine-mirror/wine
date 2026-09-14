@@ -448,7 +448,7 @@ static void clean_props(vbdisp_t *This)
 
     for(i=0; i < This->desc->array_cnt; i++) {
         if(This->arrays[i]) {
-            SafeArrayDestroy(This->arrays[i]);
+            release_safearray(This->arrays[i]);
             This->arrays[i] = NULL;
         }
     }

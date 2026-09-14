@@ -3073,11 +3073,19 @@ OP_LIST
 #undef X
 };
 
+/* Fixed-size script arrays are marked FADF_STATIC to match native, which makes
+ * SafeArrayDestroy leave the data block alone; clear it so the data gets freed. */
+void release_safearray(SAFEARRAY *sa)
+{
+    sa->fFeatures &= ~FADF_STATIC;
+    SafeArrayDestroy(sa);
+}
+
 void release_dynamic_var(dynamic_var_t *var)
 {
     VariantClear(&var->v);
     if(var->array)
-        SafeArrayDestroy(var->array);
+        release_safearray(var->array);
 }
 
 static void release_exec(exec_ctx_t *ctx)
@@ -3106,7 +3114,7 @@ static void release_exec(exec_ctx_t *ctx)
     if(ctx->arrays) {
         for(i=0; i < ctx->func->array_cnt; i++) {
             if(ctx->arrays[i])
-                SafeArrayDestroy(ctx->arrays[i]);
+                release_safearray(ctx->arrays[i]);
         }
         free(ctx->arrays);
     }
