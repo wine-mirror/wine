@@ -1082,7 +1082,7 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
     /* get the filename from the path */
     output_name = get_basename( output_file );
 
-    tool = build_tool_name( cpu, tool_cc );
+    tool = build_tool_name( cpu == CPU_ARM64EC ? CPU_x86_64 : cpu, tool_cc );
     strarray_add( &spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
     if (!is_pe)
     {

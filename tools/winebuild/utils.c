@@ -272,19 +272,29 @@ struct strarray get_as_command(void)
     {
         strarray_addall( &args, as_command );
     }
-    else if ((file = find_binary( target_alias, "as" )) || (file = find_binary( target_alias, "gas ")))
+    else
     {
-        strarray_add( &args, file );
-    }
-    else if ((file = find_binary( NULL, "clang" )))
-    {
-        strarray_add( &args, file );
-        if (target_alias)
+        const char *as_target = target_alias;
+        if (target.cpu == CPU_ARM64EC)
         {
-            strarray_add( &args, "-target" );
-            strarray_add( &args, target_alias );
+            const char *suffix = strchr( target_alias, '-' );
+            if (!suffix) suffix = "";
+            as_target = strmake( "x86_64%s", suffix );
         }
-        using_cc = 1;
+        if ((file = find_binary( as_target, "as" )) || (file = find_binary( as_target, "gas ")))
+        {
+            strarray_add( &args, file );
+        }
+        else if ((file = find_binary( NULL, "clang" )))
+        {
+            strarray_add( &args, file );
+            if (as_target)
+            {
+                strarray_add( &args, "-target" );
+                strarray_add( &args, as_target );
+            }
+            using_cc = 1;
+        }
     }
 
     if (using_cc)
@@ -760,17 +770,10 @@ const char *asm_name( const char *sym )
     }
 }
 
-/* return the assembly name for an ARM64/ARM64EC function */
-const char *arm64_name( const char *sym )
-{
-    if (target.cpu == CPU_ARM64EC) return strmake( "\"#%s\"", sym );
-    return asm_name( sym );
-}
-
 /* return an assembly function declaration for a C function name */
 void output_function_header( const char *func, int global )
 {
-    const char *name = arm64_name( func );
+    const char *name = asm_name( func );
 
     output( "\t.text\n" );
 
@@ -782,7 +785,6 @@ void output_function_header( const char *func, int global )
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
     case PLATFORM_WINDOWS_GNU:
-        if (target.cpu == CPU_ARM64EC) output( ".section .text,\"xr\",discard,%s\n\t", name );
         output( "\t.def %s\n\t.scl 2\n\t.type 32\n\t.endef\n", name );
         if (global) output( "\t.globl %s\n", name );
         break;
