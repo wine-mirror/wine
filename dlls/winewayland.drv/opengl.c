@@ -171,15 +171,14 @@ static const struct opengl_drawable_funcs wayland_pbuffer_funcs =
     .destroy = wayland_pbuffer_destroy,
 };
 
-static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                   GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **surface)
+static BOOL wayland_pbuffer_create(HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                   GLint max_level, struct opengl_drawable **drawable)
 {
     EGLConfig config = egl_config_for_format(format);
-    SIZE size = {*width, *height};
     struct wayland_pbuffer *gl;
 
-    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
-          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, surface);
+    TRACE("hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
+          hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable);
 
     if (!(gl = opengl_drawable_create(&wayland_pbuffer_funcs, format, NULL, &size))) return FALSE;
     /* Wayland EGL doesn't support pixmap or pbuffer, create a dummy window surface to act as the target render surface. */
@@ -188,7 +187,7 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum tex
     if (!(gl->base.surface = funcs->p_eglCreateWindowSurface(egl->display, config, gl->window, NULL))) goto err;
 
     TRACE("Created pbuffer %s with egl_surface %p\n", debugstr_opengl_drawable(&gl->base), gl->base.surface);
-    *surface = &gl->base;
+    *drawable = &gl->base;
     return TRUE;
 
 err:

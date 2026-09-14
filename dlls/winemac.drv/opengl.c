@@ -2156,15 +2156,14 @@ static struct opengl_context *macdrv_context_create(int format, struct opengl_co
     return &context->base;
 }
 
-static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                  GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable)
+static BOOL macdrv_pbuffer_create(HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                  GLint max_level, struct opengl_drawable **drawable)
 {
-    SIZE size = {*width, *height};
     struct gl_drawable *gl;
     CGLError err;
 
-    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
-          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable);
+    TRACE("hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
+          hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable);
 
     if (!texture_target || !texture_format)
     {

@@ -757,7 +757,8 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
 HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hdc, int format, int width, int height, const int *attribs, HPBUFFERARB client_pbuffer )
 {
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs->p_pbuffer_create( hdc, format, width, height, attribs, client_pbuffer )) return 0;
+    SIZE size = { .cx = width, .cy = height };
+    if (!funcs->p_pbuffer_create( hdc, format, size, attribs, client_pbuffer )) return 0;
     return client_pbuffer;
 }
 

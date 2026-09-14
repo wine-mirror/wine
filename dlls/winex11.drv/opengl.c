@@ -1265,18 +1265,17 @@ static struct opengl_context *x11drv_context_create( int format, struct opengl_c
     return context;
 }
 
-static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
-                                   GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable )
+static BOOL x11drv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                   GLint max_level, struct opengl_drawable **drawable )
 {
     const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
-    SIZE size = { *width, *height };
     int glx_attribs[7], count = 0;
     struct gl_drawable *gl;
     GLXPbuffer pbuffer;
     RECT rect;
 
-    TRACE( "hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, drawable %p\n",
-           hdc, format, largest, texture_format, texture_target, max_level, *width, *height, drawable );
+    TRACE( "hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
+           hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable );
 
     glx_attribs[count++] = GLX_PBUFFER_WIDTH;
     glx_attribs[count++] = size.cx;
@@ -1301,8 +1300,6 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     gl->drawable = pbuffer;
     SetRect( &rect, 0, 0, gl->base.virtual_size.cx, gl->base.virtual_size.cy );
     set_dc_drawable( hdc, gl->drawable, &rect, IncludeInferiors );
-    *width = size.cx;
-    *height = size.cy;
 
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
     *drawable = &gl->base;
