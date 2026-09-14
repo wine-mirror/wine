@@ -1318,6 +1318,7 @@ static void test_signed_msg_attributes(void)
     ret = CryptImportKey(signer.hCryptProv, privKey, sizeof(privKey), 0, 0, &key);
     ok(ret, "CryptImportKey error %#lx\n", GetLastError());
 
+    /* Create signed message */
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &info, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode error %#lx\n", GetLastError());
 
@@ -1339,6 +1340,7 @@ static void test_signed_msg_attributes(void)
 
     CryptMsgClose(msg);
 
+    /* Modify the created signed message */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToDecode error %#lx\n", GetLastError());
 
@@ -1391,6 +1393,7 @@ static void test_signed_msg_attributes(void)
 
     CryptMsgClose(msg);
 
+    /* Check the modified signed message */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToDecode error %#lx\n", GetLastError());
 
