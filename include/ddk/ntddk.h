@@ -298,6 +298,7 @@ BOOLEAN   WINAPI MmIsAddressValid(void *);
 NTSTATUS  WINAPI PsGetContextThread(PETHREAD,CONTEXT*,KPROCESSOR_MODE);
 LONGLONG  WINAPI PsGetProcessCreateTimeQuadPart(PEPROCESS);
 HANDLE    WINAPI PsGetProcessId(PEPROCESS);
+const char * WINAPI PsGetProcessImageFileName(PEPROCESS);
 PEB *     WINAPI PsGetProcessPeb(PEPROCESS);
 void *    WINAPI PsGetProcessSectionBaseAddress(PEPROCESS);
 ULONG     WINAPI PsGetProcessSessionId(PEPROCESS);
