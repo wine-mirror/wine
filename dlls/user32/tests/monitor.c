@@ -2652,11 +2652,11 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
 
 static void test_display_dc(void)
 {
-    static const INT bpps[] = {1, 4, 8, 16, 24, 32};
+    static const INT bpps[] = {1, 4, 8, 16, 24, 32}, ddb_bpps[] = {1, 2, 4, 8, 15, 16, 24, 32};
     unsigned char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)], bits_buffer[1024];
     HBITMAP hbitmap, hbitmap2, old_hbitmap;
     BITMAPINFO *bmi = (BITMAPINFO *)buffer;
-    INT count, old_count, i, bpp, value;
+    INT count, old_count, i, j, bpp, value;
     DWORD device_idx, mode_idx;
     DEVMODEA dm, dm2, dm3;
     HDC hdc, hdc2, mem_dc;
@@ -2857,6 +2857,87 @@ static void test_display_dc(void)
             DeleteObject(hbitmap);
 
             DeleteDC(mem_dc);
+
+            /* Test GetDIBits() with the display DC and DDBs of various bit depths */
+            for (j = 0; j < ARRAY_SIZE(ddb_bpps); j++)
+            {
+                winetest_push_context("DDB bpp %d", ddb_bpps[j]);
+                hbitmap = CreateBitmap(1, 1, 1, ddb_bpps[j], NULL);
+
+                /* Simulate SDL3 behavior by calling GetDIBits() twice */
+                memset(buffer, 0, sizeof(buffer));
+                bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                count = GetDIBits(hdc2, hbitmap, 0, 0, NULL, bmi, DIB_RGB_COLORS);
+                ok(count == 1, "GetDIBits failed.\n");
+                count = GetDIBits(hdc2, hbitmap, 0, 0, NULL, bmi, DIB_RGB_COLORS);
+                if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8))
+                {
+                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
+                    ok(count == 1, "GetDIBits failed.\n");
+                    ok(*(unsigned int *)bmi->bmiColors == 0, "Got unexpected bmiColors %#x\n",
+                       *(unsigned int *)bmi->bmiColors);
+                }
+                else if (ddb_bpps[j] == 32)
+                {
+                    ok(count == 1, "GetDIBits failed.\n");
+                    ok(*(unsigned int *)bmi->bmiColors == 0xff0000, "Got unexpected bmiColors %#x\n",
+                       *(unsigned int *)bmi->bmiColors);
+                }
+                else
+                {
+                    ok(count == 0, "GetDIBits succeeded.\n");
+                    ok(*(unsigned int *)bmi->bmiColors == 0, "Got unexpected bmiColors %#x\n",
+                       *(unsigned int *)bmi->bmiColors);
+
+                    /* lines > 0. Still fails */
+                    count = GetDIBits(hdc2, hbitmap, 0, 1, NULL, bmi, DIB_RGB_COLORS);
+                    ok(count == 0, "GetDIBits succeeded.\n");
+
+                    /* buf != NULL. Still fails */
+                    count = GetDIBits(hdc2, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
+                    ok(count == 0, "GetDIBits succeeded.\n");
+
+                    /* Reset biBitCount to 0. Now it succeeds */
+                    bmi->bmiHeader.biBitCount = 0;
+                    count = GetDIBits(hdc2, hbitmap, 0, 0, NULL, bmi, DIB_RGB_COLORS);
+                    ok(count == 1, "GetDIBits failed.\n");
+                }
+
+                /* Test that GetDIBits() is rejecting some DDB bit depths */
+                memset(buffer, 0, sizeof(buffer));
+                bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bmi->bmiHeader.biWidth = 1;
+                bmi->bmiHeader.biHeight = 1;
+                bmi->bmiHeader.biPlanes = 1;
+                bmi->bmiHeader.biBitCount = ddb_bpps[j];
+                count = GetDIBits(hdc2, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
+                if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8) || ddb_bpps[j] == 32)
+                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
+                    ok(count == 1, "GetDIBits failed.\n");
+                else
+                    ok(count == 0, "GetDIBits succeeded.\n");
+
+                /* Same result when using a display compatible memory DC */
+                mem_dc = CreateCompatibleDC(hdc2);
+                SelectObject(mem_dc, hbitmap);
+                memset(buffer, 0, sizeof(buffer));
+                bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                bmi->bmiHeader.biWidth = 1;
+                bmi->bmiHeader.biHeight = 1;
+                bmi->bmiHeader.biPlanes = 1;
+                bmi->bmiHeader.biBitCount = ddb_bpps[j];
+                count = GetDIBits(mem_dc, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
+                if (ddb_bpps[j] == 1 || (bpps[i] == 8 && ddb_bpps[j] == 8) || ddb_bpps[j] == 32)
+                    todo_wine_if(bpps[i] == 8 && ddb_bpps[j] == 8)
+                    ok(count == 1, "GetDIBits failed.\n");
+                else
+                    ok(count == 0, "GetDIBits succeeded.\n");
+                DeleteDC(mem_dc);
+
+                DeleteObject(hbitmap);
+                winetest_pop_context();
+            }
+
             ReleaseDC(0, hdc2);
         }
         winetest_pop_context();
