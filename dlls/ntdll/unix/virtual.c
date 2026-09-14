@@ -208,6 +208,7 @@ struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 static void *teb_block;
 static void **next_free_teb;
 static int teb_block_pos;
+static size_t teb_block_size;
 static struct list teb_list = LIST_INIT( teb_list );
 
 #define ROUND_ADDR(addr,mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -4019,12 +4020,11 @@ static void init_teb( struct thread_data *data, void *ptr )
         teb->WowTebOffset = teb_offset;
     }
 #else
-    teb = (TEB *)((char *)ptr + teb_offset);
-    teb->Tib.ExceptionList = (void *)~0u;
     if (wow_peb)
     {
         TEB64 *teb64 = ptr;
 
+        teb = (TEB *)((char *)ptr + teb_offset);
         teb64->Peb = PtrToUlong( wow_peb );
         teb64->Tib.Self = PtrToUlong( teb64 );
         teb64->Tib.ExceptionList = PtrToUlong( teb );
@@ -4043,6 +4043,7 @@ static void init_teb( struct thread_data *data, void *ptr )
         teb->GdiBatchCount = PtrToUlong( teb64 );
         teb->WowTebOffset  = -teb_offset;
     }
+    teb->Tib.ExceptionList = (void *)~0u;
 #endif
     teb->Peb = peb;
     teb->Tib.Self = &teb->Tib;
@@ -4136,25 +4137,34 @@ void virtual_alloc_first_teb(void)
 {
     void *ptr;
     unsigned int status;
-    SIZE_T block_size = 4 * page_size;
     struct file_view *view;
     struct thread_data *data = get_thread_data();
 
     set_large_address_space();
 
-    status = map_view( &view, NULL, 32 * block_size, MEM_TOP_DOWN,
+    teb_block_size = ROUND_SIZE( 0, sizeof(TEB), page_mask );
+    if (is_wow64()) teb_block_size += ROUND_SIZE( 0, sizeof(WOW_TEB), page_mask );
+    teb_block_size += page_size;  /* for debug info */
+
+    ERR("teb block size: %zx\n", teb_block_size);
+
+    status = map_view( &view, NULL, 16 * teb_block_size, MEM_TOP_DOWN,
                        VPROT_READ | VPROT_WRITE, 0, is_win64 ? limit_2g : 0, 0 );
     assert( !status );
     teb_block = view->base;
-    teb_block_pos = 30;
-    ptr = (char *)teb_block + 30 * block_size;
-    peb = (PEB *)((char *)ptr + block_size + (is_win64 ? 0 : page_size));
+    teb_block_pos = 14;
+    ptr = (char *)teb_block + 14 * teb_block_size;
+    peb = (PEB *)((char *)ptr + teb_block_size);
+    if (is_wow64())
+    {
 #ifdef _WIN64
-    if (is_wow64()) wow_peb = (PEB32 *)((char *)peb + page_size);
+        wow_peb = (PEB32 *)((char *)peb + page_size);
 #else
-    if (is_wow64()) wow_peb = (PEB64 *)((char *)peb - page_size);
+        wow_peb = (PEB64 *)peb;
+        peb = (PEB *)((char *)peb + page_size);
 #endif
-    set_protection( view, ptr, 2 * block_size, PAGE_READWRITE );
+    }
+    set_protection( view, ptr, 2 * teb_block_size, PAGE_READWRITE );
 
     if (arm64ec_view) peb->EcCodeBitMap = arm64ec_view->base;
     init_teb( data, ptr );
@@ -4169,24 +4179,23 @@ NTSTATUS virtual_alloc_teb( struct thread_data *data )
 {
     sigset_t sigset;
     void *ptr = NULL;
+    SIZE_T size;
     NTSTATUS status = STATUS_SUCCESS;
-    SIZE_T block_size = 4 * page_size;
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     if (next_free_teb)
     {
         ptr = next_free_teb;
         next_free_teb = *(void **)ptr;
-        memset( ptr, 0, block_size );
+        memset( ptr, 0, teb_block_size );
     }
     else
     {
         if (!teb_block_pos)
         {
-            SIZE_T total = 32 * block_size;
-
+            size = 32 * teb_block_size;
             if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, user_space_wow_limit,
-                                                   &total, MEM_RESERVE, PAGE_READWRITE )))
+                                                   &size, MEM_RESERVE, PAGE_READWRITE )))
             {
                 server_leave_uninterrupted_section( &virtual_mutex, &sigset );
                 return status;
@@ -4194,8 +4203,9 @@ NTSTATUS virtual_alloc_teb( struct thread_data *data )
             teb_block = ptr;
             teb_block_pos = 32;
         }
-        ptr = ((char *)teb_block + --teb_block_pos * block_size);
-        NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
+        ptr = ((char *)teb_block + --teb_block_pos * teb_block_size);
+        size = teb_block_size;
+        NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
     init_teb( data, ptr );
@@ -4268,7 +4278,7 @@ void virtual_free_thread_data( struct thread_data *data )
     signal_free_thread( teb );
     list_remove( &data->entry );
     ptr = teb;
-    if (!is_win64) ptr = (char *)ptr - teb_offset;
+    if (is_old_wow64()) ptr = (char *)ptr - teb_offset;
     *(void **)ptr = next_free_teb;
     next_free_teb = ptr;
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
