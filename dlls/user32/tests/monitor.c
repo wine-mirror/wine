@@ -2783,7 +2783,6 @@ static void test_display_dc(void)
 
             hbitmap = CreateCompatibleBitmap(hdc2, 1, 1);
             count = GetObjectA(hbitmap, sizeof(dib), &dib);
-            todo_wine_if(bpps[i] == 8)
             ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
             if (count == sizeof(dib))
             {
@@ -2799,7 +2798,6 @@ static void test_display_dc(void)
                 ok(dib.dsBmih.biClrUsed == 256, "Got unexpected biClrUsed %ld.\n", dib.dsBmih.biClrUsed);
                 ok(dib.dsBmih.biClrImportant == 256, "Got unexpected biClrImportant %ld.\n", dib.dsBmih.biClrImportant);
             }
-            todo_wine_if(bpps[i] == 16)
             ok(dib.dsBm.bmBitsPixel == (bpps[i] == 16 ? 32 : bpps[i]), "Expected %d, got %d.\n",
                bpps[i] == 16 ? 32 : bpps[i], dib.dsBm.bmBitsPixel);
 
@@ -2810,7 +2808,6 @@ static void test_display_dc(void)
             bmi->bmiHeader.biPlanes = 1;
             bmi->bmiHeader.biBitCount = bpps[i];
             count = GetDIBits(hdc2, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
-            todo_wine_if(bpps[i] == 8 || bpps[i] == 16)
             ok(count == 1, "GetDIBits failed.\n");
             DeleteObject(hbitmap);
 
@@ -2825,9 +2822,7 @@ static void test_display_dc(void)
 
             hbitmap = CreateCompatibleBitmap(mem_dc, 1, 1);
             count = GetObjectA(hbitmap, sizeof(dib), &dib);
-            todo_wine_if(bpps[i] == 8)
             ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
-            todo_wine_if(bpps[i] == 8)
             ok(dib.dsBm.bmBitsPixel == (bpps[i] == 8 ? 8 : 1), "Expected %d, got %d.\n",
                bpps[i] == 8 ? 8 : 1, dib.dsBm.bmBitsPixel);
             DeleteObject(hbitmap);
@@ -2855,9 +2850,7 @@ static void test_display_dc(void)
             hbitmap = SelectObject(mem_dc, old_hbitmap);
             hbitmap2 = CreateCompatibleBitmap(mem_dc, 1, 1);
             count = GetObjectA(hbitmap2, sizeof(dib), &dib);
-            todo_wine_if(bpps[i] == 8)
             ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
-            todo_wine_if(bpps[i] == 8)
             ok(dib.dsBm.bmBitsPixel == (bpps[i] == 8 ? 8 : 1), "Expected %d, got %d.\n",
                bpps[i] == 8 ? 8 : 1, dib.dsBm.bmBitsPixel);
             DeleteObject(hbitmap2);

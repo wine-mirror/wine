@@ -58,15 +58,51 @@ HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *bi = (BITMAPINFO *)buffer;
     DIBSECTION dib;
+    int bpp;
 
     TRACE( "(%p,%d,%d)\n", hdc, width, height );
 
     if (!width || !height) return 0;
 
+    bpp = NtGdiGetDeviceCaps( hdc, BITSPIXEL );
+    /* 8-bit and 16-bit display modes are emulated */
+    if (NtGdiGetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASDISPLAY && (bpp == 8 || bpp == 16))
+    {
+        BOOL is_display_dc = FALSE, is_default_bitmap = FALSE;
+        DC *dc;
+
+        if ((dc = get_dc_ptr( hdc )))
+        {
+            is_display_dc = dc->is_display;
+            is_default_bitmap = dc->hBitmap == GetStockObject( DEFAULT_BITMAP );
+            release_dc_ptr( dc );
+        }
+
+        /* An 8-bit display DC or a display compatible memory DC with DEFAULT_BITMAP selected
+         * -> Create an 8-bit DIB */
+        if (bpp == 8 && (is_display_dc || is_default_bitmap))
+        {
+            memset( buffer, 0, sizeof(buffer) );
+            bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bi->bmiHeader.biWidth = width;
+            bi->bmiHeader.biHeight = height;
+            bi->bmiHeader.biPlanes = 1;
+            bi->bmiHeader.biBitCount = 8;
+            bi->bmiHeader.biCompression = BI_RGB;
+            bi->bmiHeader.biClrUsed = 256;
+            bi->bmiHeader.biClrImportant = 256;
+            NtGdiDoPalette( hdc, 0, 256, bi->bmiColors, NtGdiGetDIBColorTable, FALSE );
+            return NtGdiCreateDIBSection( hdc, NULL, 0, bi, DIB_RGB_COLORS, 0, 0, 0, NULL );
+        }
+        /* A 16-bit display DC -> Create a 32-bit DDB */
+        else if (bpp == 16 && is_display_dc)
+        {
+            return NtGdiCreateBitmap( width, height, NtGdiGetDeviceCaps( hdc, PLANES ), 32, NULL );
+        }
+    }
+
     if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC)
-        return NtGdiCreateBitmap( width, height,
-                                  NtGdiGetDeviceCaps( hdc, PLANES ),
-                                  NtGdiGetDeviceCaps( hdc, BITSPIXEL ), NULL );
+        return NtGdiCreateBitmap( width, height, NtGdiGetDeviceCaps( hdc, PLANES ), bpp, NULL );
 
     switch (NtGdiExtGetObjectW( NtGdiGetDCObject( hdc, NTGDI_OBJ_SURF ),
                                 sizeof(dib), &dib ))
