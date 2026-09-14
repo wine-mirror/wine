@@ -2653,7 +2653,7 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
 static void test_display_dc(void)
 {
     static const INT bpps[] = {1, 4, 8, 16, 24, 32};
-    unsigned char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+    unsigned char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)], bits_buffer[1024];
     HBITMAP hbitmap, hbitmap2, old_hbitmap;
     BITMAPINFO *bmi = (BITMAPINFO *)buffer;
     INT count, old_count, i, bpp, value;
@@ -2676,17 +2676,6 @@ static void test_display_dc(void)
     ok(ret, "EnumDisplaySettingsA failed.\n");
 
     check_display_dc(hdc, &dm, FALSE);
-
-    /* Test that CreateCompatibleBitmap() for display DCs creates DDBs */
-    hbitmap = CreateCompatibleBitmap(hdc, dm.dmPelsWidth, dm.dmPelsHeight);
-    ok(!!hbitmap, "CreateCompatibleBitmap failed, error %ld.\n", GetLastError());
-    count = GetObjectW(hbitmap, sizeof(dib), &dib);
-    ok(count == sizeof(BITMAP), "GetObject failed, count %d.\n", count);
-    count = GetObjectW(hbitmap, sizeof(bitmap), &bitmap);
-    ok(count == sizeof(BITMAP), "GetObject failed, count %d.\n", count);
-    ok(bitmap.bmBitsPixel == dm.dmBitsPerPel, "Expected %ld, got %d.\n", dm.dmBitsPerPel,
-       bitmap.bmBitsPixel);
-    DeleteObject(hbitmap);
 
     /* Test selecting a DDB of a different depth into a display compatible DC */
     for (i = 0; i < ARRAY_SIZE(bpps); ++i)
@@ -2749,6 +2738,7 @@ static void test_display_dc(void)
         if (bpps[i] == dm.dmBitsPerPel)
         {
             res = DISP_CHANGE_SUCCESSFUL;
+            dm2 = dm;
         }
         else
         {
@@ -2785,6 +2775,96 @@ static void test_display_dc(void)
                 ok(value > 16 && value <= 256, "Got %d.\n", value);
             else
                 ok(value == 1 << bpps[i], "Expected %d, got %d.\n", 1 << bpps[i], value);
+
+            /* Test that the compatible bitmap created from CreateCompatibleBitmap() with a display
+             * DC doesn't always have the same bit depth */
+            hdc2 = GetDC(0);
+            check_display_dc(hdc2, &dm2, FALSE);
+
+            hbitmap = CreateCompatibleBitmap(hdc2, 1, 1);
+            count = GetObjectA(hbitmap, sizeof(dib), &dib);
+            todo_wine_if(bpps[i] == 8)
+            ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
+            if (count == sizeof(dib))
+            {
+                ok(dib.dsBmih.biSize == sizeof(BITMAPINFOHEADER), "Got unexpected biSize %#lx.\n", dib.dsBmih.biSize);
+                ok(dib.dsBmih.biWidth == 1, "Got unexpected biWidth %ld.\n", dib.dsBmih.biWidth);
+                ok(dib.dsBmih.biHeight == 1, "Got unexpected biHeight %ld.\n", dib.dsBmih.biHeight);
+                ok(dib.dsBmih.biPlanes == 1, "Got unexpected biPlanes %d.\n", dib.dsBmih.biPlanes);
+                ok(dib.dsBmih.biBitCount == 8, "Got unexpected biBitCount %d.\n", dib.dsBmih.biBitCount);
+                ok(dib.dsBmih.biCompression == BI_RGB, "Got unexpected biCompression %ld.\n", dib.dsBmih.biCompression);
+                ok(dib.dsBmih.biSizeImage == 4, "Got unexpected biSizeImage %#lx.\n", dib.dsBmih.biSizeImage);
+                ok(dib.dsBmih.biXPelsPerMeter == 0, "Got unexpected biXPelsPerMeter %ld.\n", dib.dsBmih.biXPelsPerMeter);
+                ok(dib.dsBmih.biYPelsPerMeter == 0, "Got unexpected biYPelsPerMeter %ld.\n", dib.dsBmih.biYPelsPerMeter);
+                ok(dib.dsBmih.biClrUsed == 256, "Got unexpected biClrUsed %ld.\n", dib.dsBmih.biClrUsed);
+                ok(dib.dsBmih.biClrImportant == 256, "Got unexpected biClrImportant %ld.\n", dib.dsBmih.biClrImportant);
+            }
+            todo_wine_if(bpps[i] == 16)
+            ok(dib.dsBm.bmBitsPixel == (bpps[i] == 16 ? 32 : bpps[i]), "Expected %d, got %d.\n",
+               bpps[i] == 16 ? 32 : bpps[i], dib.dsBm.bmBitsPixel);
+
+            memset(buffer, 0, sizeof(buffer));
+            bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bmi->bmiHeader.biWidth = 1;
+            bmi->bmiHeader.biHeight = 1;
+            bmi->bmiHeader.biPlanes = 1;
+            bmi->bmiHeader.biBitCount = bpps[i];
+            count = GetDIBits(hdc2, hbitmap, 0, 1, bits_buffer, bmi, DIB_RGB_COLORS);
+            todo_wine_if(bpps[i] == 8 || bpps[i] == 16)
+            ok(count == 1, "GetDIBits failed.\n");
+            DeleteObject(hbitmap);
+
+            /* Test CreateCompatibleBitmap() with a display compatible DC */
+            mem_dc = CreateCompatibleDC(hdc2);
+
+            hbitmap = GetCurrentObject(mem_dc, OBJ_BITMAP);
+            ok(!!hbitmap, "GetCurrentObject failed, error %#lx.\n", GetLastError());
+            count = GetObjectA(hbitmap, sizeof(dib), &dib);
+            ok(count == sizeof(bitmap), "GetObjectA failed, count %d.\n", count);
+            ok(dib.dsBm.bmBitsPixel == 1, "Expected %d, got %d.\n", 1, dib.dsBm.bmBitsPixel);
+
+            hbitmap = CreateCompatibleBitmap(mem_dc, 1, 1);
+            count = GetObjectA(hbitmap, sizeof(dib), &dib);
+            todo_wine_if(bpps[i] == 8)
+            ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
+            todo_wine_if(bpps[i] == 8)
+            ok(dib.dsBm.bmBitsPixel == (bpps[i] == 8 ? 8 : 1), "Expected %d, got %d.\n",
+               bpps[i] == 8 ? 8 : 1, dib.dsBm.bmBitsPixel);
+            DeleteObject(hbitmap);
+
+            /* Test CreateCompatibleBitmap() with a display compatible DC that has a DIB selected */
+            memset(buffer, 0, sizeof(buffer));
+            bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+            bmi->bmiHeader.biWidth = 1;
+            bmi->bmiHeader.biHeight = 1;
+            bmi->bmiHeader.biBitCount = bpps[i];
+            bmi->bmiHeader.biPlanes = 1;
+            bmi->bmiHeader.biCompression = BI_RGB;
+            hbitmap = CreateDIBSection(hdc2, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+            ok(!!hbitmap, "CreateDIBSection failed, error %ld.\n", GetLastError());
+            old_hbitmap = SelectObject(mem_dc, hbitmap);
+            ok(!!old_hbitmap, "Failed to select bitmap.\n");
+
+            hbitmap2 = CreateCompatibleBitmap(mem_dc, 1, 1);
+            count = GetObjectA(hbitmap2, sizeof(dib), &dib);
+            ok(count == sizeof(dib), "GetObjectA failed, count %d.\n", count);
+            ok(dib.dsBmih.biBitCount == bpps[i], "Expected %d, got %d.\n", bpps[i], dib.dsBmih.biBitCount);
+            DeleteObject(hbitmap2);
+
+            /* Test CreateCompatibleBitmap() with a display compatible DC after restoring the default bitmap */
+            hbitmap = SelectObject(mem_dc, old_hbitmap);
+            hbitmap2 = CreateCompatibleBitmap(mem_dc, 1, 1);
+            count = GetObjectA(hbitmap2, sizeof(dib), &dib);
+            todo_wine_if(bpps[i] == 8)
+            ok(count == (bpps[i] == 8 ? sizeof(dib) : sizeof(bitmap)), "GetObjectA failed, count %d.\n", count);
+            todo_wine_if(bpps[i] == 8)
+            ok(dib.dsBm.bmBitsPixel == (bpps[i] == 8 ? 8 : 1), "Expected %d, got %d.\n",
+               bpps[i] == 8 ? 8 : 1, dib.dsBm.bmBitsPixel);
+            DeleteObject(hbitmap2);
+            DeleteObject(hbitmap);
+
+            DeleteDC(mem_dc);
+            ReleaseDC(0, hdc2);
         }
         winetest_pop_context();
     }
