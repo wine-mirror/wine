@@ -3993,54 +3993,55 @@ NTSTATUS virtual_relocate_module( void *module )
 /* set some initial values in a new TEB */
 static void init_teb( struct thread_data *data, void *ptr )
 {
-    TEB *teb;
-    TEB64 *teb64 = ptr;
-    TEB32 *teb32 = (TEB32 *)((char *)ptr + teb_offset);
+    TEB *teb = ptr;
 
 #ifdef _WIN64
-    teb = (TEB *)teb64;
-    teb32->Peb = PtrToUlong( (char *)peb + page_size );
-    teb32->Tib.Self = PtrToUlong( teb32 );
-    teb32->Tib.ExceptionList = ~0u;
-    teb32->Tib.FiberData = 0x1e00;
-    teb32->ClientId.UniqueProcess = pid;
-    teb32->ClientId.UniqueThread  = data->tid;
-    teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
-    teb32->ActivationContextStack.FrameListCache.Flink =
-        teb32->ActivationContextStack.FrameListCache.Blink =
-            PtrToUlong( &teb32->ActivationContextStack.FrameListCache );
-    teb32->StaticUnicodeString.Buffer = PtrToUlong( teb32->StaticUnicodeBuffer );
-    teb32->StaticUnicodeString.MaximumLength = sizeof( teb32->StaticUnicodeBuffer );
-    teb32->RealClientId  = teb32->ClientId;
-    teb32->GdiBatchCount = PtrToUlong( teb64 );
-    teb32->WowTebOffset  = -teb_offset;
-    if (is_wow64())
+    if (wow_peb)
     {
-        teb64->Tib.ExceptionList = PtrToUlong( teb32 );
-        teb64->WowTebOffset = teb_offset;
+        TEB32 *teb32 = (TEB32 *)((char *)ptr + teb_offset);
+
+        teb32->Peb = PtrToUlong( wow_peb );
+        teb32->Tib.Self = PtrToUlong( teb32 );
+        teb32->Tib.ExceptionList = ~0u;
+        teb32->Tib.FiberData = 0x1e00;
+        teb32->ClientId.UniqueProcess = pid;
+        teb32->ClientId.UniqueThread  = data->tid;
+        teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
+        teb32->ActivationContextStack.FrameListCache.Flink =
+            teb32->ActivationContextStack.FrameListCache.Blink =
+                PtrToUlong( &teb32->ActivationContextStack.FrameListCache );
+        teb32->StaticUnicodeString.Buffer = PtrToUlong( teb32->StaticUnicodeBuffer );
+        teb32->StaticUnicodeString.MaximumLength = sizeof( teb32->StaticUnicodeBuffer );
+        teb32->RealClientId  = teb32->ClientId;
+        teb32->GdiBatchCount = PtrToUlong( teb );
+        teb32->WowTebOffset  = -teb_offset;
+        teb->Tib.ExceptionList = (void *)teb32;
+        teb->WowTebOffset = teb_offset;
     }
 #else
-    teb = (TEB *)teb32;
-    teb32->Tib.ExceptionList = ~0u;
-    teb64->Peb = PtrToUlong( (char *)peb - page_size );
-    teb64->Tib.Self = PtrToUlong( teb64 );
-    teb64->Tib.ExceptionList = PtrToUlong( teb32 );
-    teb64->Tib.FiberData = 0x1e00;
-    teb64->ClientId.UniqueProcess = pid;
-    teb64->ClientId.UniqueThread  = data->tid;
-    teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );
-    teb64->ActivationContextStack.FrameListCache.Flink =
-        teb64->ActivationContextStack.FrameListCache.Blink =
-            PtrToUlong( &teb64->ActivationContextStack.FrameListCache );
-    teb64->StaticUnicodeString.Buffer = PtrToUlong( teb64->StaticUnicodeBuffer );
-    teb64->StaticUnicodeString.MaximumLength = sizeof( teb64->StaticUnicodeBuffer );
-    teb64->TlsSlots[WOW64_TLS_FILESYSREDIR] = data->filesys_redir;
-    teb64->RealClientId = teb64->ClientId;
-    teb64->WowTebOffset = teb_offset;
-    if (is_wow64())
+    teb = (TEB *)((char *)ptr + teb_offset);
+    teb->Tib.ExceptionList = (void *)~0u;
+    if (wow_peb)
     {
-        teb32->GdiBatchCount = PtrToUlong( teb64 );
-        teb32->WowTebOffset  = -teb_offset;
+        TEB64 *teb64 = ptr;
+
+        teb64->Peb = PtrToUlong( wow_peb );
+        teb64->Tib.Self = PtrToUlong( teb64 );
+        teb64->Tib.ExceptionList = PtrToUlong( teb );
+        teb64->Tib.FiberData = 0x1e00;
+        teb64->ClientId.UniqueProcess = pid;
+        teb64->ClientId.UniqueThread  = data->tid;
+        teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );
+        teb64->ActivationContextStack.FrameListCache.Flink =
+            teb64->ActivationContextStack.FrameListCache.Blink =
+                PtrToUlong( &teb64->ActivationContextStack.FrameListCache );
+        teb64->StaticUnicodeString.Buffer = PtrToUlong( teb64->StaticUnicodeBuffer );
+        teb64->StaticUnicodeString.MaximumLength = sizeof( teb64->StaticUnicodeBuffer );
+        teb64->TlsSlots[WOW64_TLS_FILESYSREDIR] = data->filesys_redir;
+        teb64->RealClientId = teb64->ClientId;
+        teb64->WowTebOffset = teb_offset;
+        teb->GdiBatchCount = PtrToUlong( teb64 );
+        teb->WowTebOffset  = -teb_offset;
     }
 #endif
     teb->Peb = peb;
