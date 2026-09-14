@@ -524,13 +524,16 @@ static void test_current_thread(BOOL is_system)
 {
     UNICODE_STRING image, *image_name, *expect_name;
     PROCESS_BASIC_INFORMATION info;
+    char expect_file_name[15];
     DISPATCHER_HEADER *header;
     HANDLE process_handle, id;
     KERNEL_USER_TIMES times;
+    const char *file_name;
     LONGLONG create_time;
     ULONG session_id, len;
     PEPROCESS current;
     PETHREAD thread;
+    WCHAR *p, *end;
     NTSTATUS ret;
     PEB *peb;
 
@@ -623,6 +626,20 @@ static void test_current_thread(BOOL is_system)
 
                 ExFreePool(image_name);
             }
+
+            end = expect_name->Buffer + expect_name->Length / sizeof(WCHAR);
+            p = end;
+            while (p > expect_name->Buffer && p[-1] != '\\')
+                p--;
+
+            memset(expect_file_name, 0, sizeof(expect_file_name));
+            RtlUnicodeToMultiByteN(expect_file_name, sizeof(expect_file_name) - 1, NULL, p, (end - p) * sizeof(WCHAR));
+
+            file_name = PsGetProcessImageFileName(current);
+            ok(!!file_name, "got NULL image file name\n");
+            if (file_name)
+                ok(!strncmp(file_name, expect_file_name, sizeof(expect_file_name)), "got %.*s, expected %s\n",
+                   (int)sizeof(expect_file_name), file_name, expect_file_name);
         }
         ExFreePool(expect_name);
     }
