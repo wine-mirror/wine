@@ -182,23 +182,6 @@ static BOOL has_extension( const char *list, const char *ext )
     return FALSE;
 }
 
-static void dump_extensions( const char *list )
-{
-    const char *start, *end, *ptr;
-
-    for (start = end = ptr = list; ptr; ptr = strchr( ptr + 1, ' ' ))
-    {
-        if (ptr - start <= 128) end = ptr;
-        else
-        {
-            TRACE( "%.*s\n", (int)(end - start), start );
-            start = end + 1;
-        }
-    }
-
-    TRACE( "%s\n", start );
-}
-
 static enum opengl_extension parse_extension( const char *ext, size_t len )
 {
     const struct extension_entry entry = { .name = ext, .len = len }, *found;
@@ -1531,6 +1514,23 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_destroy = egldrv_context_destroy,
     .p_context_activate = egldrv_context_activate,
 };
+
+static void dump_extensions( const char *list )
+{
+    const char *start, *end, *ptr;
+
+    for (start = end = ptr = list; ptr; ptr = strchr( ptr + 1, ' ' ))
+    {
+        if (ptr - start <= 128) end = ptr;
+        else
+        {
+            TRACE( "%.*s\n", (int)(end - start), start );
+            start = end + 1;
+        }
+    }
+
+    TRACE( "%s\n", start );
+}
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
 {
