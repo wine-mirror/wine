@@ -312,9 +312,7 @@ extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 
 extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
                                             SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
                                             ULONG_PTR limit_high, WORD machine, BOOL prefer_native, off_t offset );
-extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
-                                    SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
-                                    ULONG_PTR limit_high, USHORT machine );
+extern NTSTATUS virtual_map_main_module( HANDLE mapping, USHORT machine );
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
                                              struct pe_image_info *info, void *so_handle );
 extern NTSTATUS virtual_relocate_module( void *module );

@@ -1437,7 +1437,7 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine )
     status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
     {
-        status = virtual_map_module( mapping, &main_module, &size, &main_image_info, 0, 0, load_machine );
+        status = virtual_map_main_module( mapping, load_machine );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH && main_image_info.ComPlusNativeReady)
         {
             main_image_info.Machine = is_machine_64bit( native_machine ) ? IMAGE_FILE_MACHINE_AMD64 : native_machine;

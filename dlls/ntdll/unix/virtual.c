@@ -3833,31 +3833,32 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
 
 
 /***********************************************************************
- *           virtual_map_module
+ *           virtual_map_main_module
  */
-NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTION_IMAGE_INFORMATION *info,
-                             ULONG_PTR limit_low, ULONG_PTR limit_high, USHORT machine )
+NTSTATUS virtual_map_main_module( HANDLE mapping, USHORT machine )
 {
     unsigned int status;
     mem_size_t full_size;
     unsigned int sec_flags;
     struct pe_mapping_info *pe_mapping;
+    SIZE_T size = 0;
+    ULONG_PTR limit_high = 0;
 
     if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &pe_mapping )))
         return status;
 
     if (!pe_mapping) return STATUS_INVALID_PARAMETER;
 
-    *module = NULL;
-    *size = 0;
+    if (!is_machine_64bit( pe_mapping->image.machine )) limit_high = (limit_2g - 1) & ~granularity_mask;
+    main_module = NULL;
 
     /* check if we can replace that mapping with the builtin */
-    status = load_builtin( pe_mapping, machine, info, module, size, limit_low, limit_high, 0 );
+    status = load_builtin( pe_mapping, machine, &main_image_info, &main_module, &size, 0, limit_high, 0 );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
     {
-        status = virtual_map_image( mapping, module, size, limit_low, limit_high, 0,
+        status = virtual_map_image( mapping, &main_module, &size, 0, limit_high, 0,
                                     pe_mapping, machine, FALSE, 0 );
-        virtual_fill_image_information( &pe_mapping->image, info );
+        virtual_fill_image_information( &pe_mapping->image, &main_image_info );
     }
     free_pe_mapping_info( pe_mapping );
     return status;
