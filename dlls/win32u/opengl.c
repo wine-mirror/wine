@@ -2340,7 +2340,19 @@ static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write
             make_thread_context_current( context->root_context, drawable );
             opengl_drawable_flush( drawable, 0, GL_FLUSH_ACTIVATE );
 
-            if (write)
+            if (write && drawable->draw_fbo)
+            {
+                GLint prev, front;
+
+                funcs->p_glGetIntegerv( GL_TEXTURE_BINDING_2D, &prev );
+                funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->draw_fbo );
+                funcs->p_glGetFramebufferAttachmentParameteriv( GL_DRAW_FRAMEBUFFER, drawable_buffer_from_buffer( drawable, GL_FRONT_LEFT ),
+                                                                GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &front );
+                funcs->p_glBindTexture( GL_TEXTURE_2D, front );
+                funcs->p_glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
+                funcs->p_glBindTexture( GL_TEXTURE_2D, prev );
+            }
+            else if (write)
             {
                 funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
                 funcs->p_glDrawBuffer( drawable_buffer_from_buffer( drawable, GL_FRONT_LEFT ) );
