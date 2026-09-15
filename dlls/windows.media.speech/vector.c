@@ -554,6 +554,7 @@ static HRESULT WINAPI vector_hstring_InsertAt( IVector_HSTRING *iface, UINT32 in
         if (!(impl->elements = realloc(impl->elements, impl->capacity * sizeof(*impl->elements))))
         {
             impl->elements = tmp2;
+            WindowsDeleteString(tmp);
             return E_OUTOFMEMORY;
         }
     }
