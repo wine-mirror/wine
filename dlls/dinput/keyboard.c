@@ -205,7 +205,7 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
-    if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
+    impl->base.use_raw_input = TRUE;
     subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
 
     if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
