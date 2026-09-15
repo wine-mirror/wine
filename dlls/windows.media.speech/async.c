@@ -582,9 +582,8 @@ static HRESULT WINAPI async_action_GetIids( IAsyncAction *iface, ULONG *iid_coun
 
 static HRESULT WINAPI async_action_GetRuntimeClassName( IAsyncAction *iface, HSTRING *class_name )
 {
-    return WindowsCreateString( L"Windows.Foundation.IAsyncOperation`1<Boolean>",
-                                ARRAY_SIZE(L"Windows.Foundation.IAsyncOperation`1<Boolean>"),
-                                class_name );
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI async_action_GetTrustLevel( IAsyncAction *iface, TrustLevel *trust_level )

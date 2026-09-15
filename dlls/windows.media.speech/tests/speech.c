@@ -1960,6 +1960,14 @@ static void test_Recognition(void)
 
     IAsyncInfo_Release(info);
 
+    hstr = NULL;
+    hr = IAsyncAction_GetRuntimeClassName(action, &hstr);
+    todo_wine ok(hr == S_OK, "IAsyncAction_GetRuntimeClassName failed, hr %#lx.\n", hr);
+    todo_wine ok(hstr && !wcscmp(WindowsGetStringRawBuffer(hstr, NULL),
+        L"Windows.Media.SpeechRecognition.SpeechContinuousRecognitionSessionAsyncAction"),
+        "Got incorrect runtimeclass name %s\n.", debugstr_hstring(hstr));
+    WindowsDeleteString(hstr);
+
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
     ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
