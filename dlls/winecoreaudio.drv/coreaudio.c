@@ -754,6 +754,16 @@ static DWORD get_channel_mask(unsigned int channels)
     return 0;
 }
 
+static DWORD get_format_channel_mask(const WAVEFORMATEX *fmt)
+{
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE && fmtex->dwChannelMask != 0)
+        return fmtex->dwChannelMask;
+
+    return get_channel_mask(fmt->nChannels);
+}
+
 static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance unit,
                                   const WAVEFORMATEX *fmt, AudioStreamBasicDescription *dev_desc,
                                   AudioConverterRef *converter)
@@ -828,7 +838,7 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
 
         /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
         layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
-        layout.mChannelBitmap    = (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? ((WAVEFORMATEXTENSIBLE *)fmt)->dwChannelMask : 0x3;
+        layout.mChannelBitmap    = get_format_channel_mask(fmt);
         layout.mNumberChannelDescriptions = 0;
 
         sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
