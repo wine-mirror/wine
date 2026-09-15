@@ -2445,6 +2445,7 @@ enable_dmstyle=${enable_dmstyle:-i386}
 enable_dplay=${enable_dplay:-i386}
 enable_dplayx=${enable_dplayx:-i386}
 enable_dpwsockx=${enable_dpwsockx:-i386}
+enable_iprop=${enable_iprop:-i386}
 enable_msvcp70=${enable_msvcp70:-i386}
 enable_msvcp71=${enable_msvcp71:-i386}
 enable_msvcr70=${enable_msvcr70:-i386}
@@ -2452,6 +2453,9 @@ enable_msvcr71=${enable_msvcr71:-i386}
 enable_msvcrt20=${enable_msvcrt20:-i386}
 enable_msvcrt40=${enable_msvcrt40:-i386}
 enable_msvcrtd=${enable_msvcrtd:-i386}
+enable_olecli32=${enable_olecli32:-i386}
+enable_olepro32=${enable_olepro32:-i386}
+enable_olethk32=${enable_olethk32:-i386}
 
 dnl Disable Win16-related modules
 enable_win16=${enable_win16:-i386}
