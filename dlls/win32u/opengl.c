@@ -2265,8 +2265,14 @@ static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write
         if (!get_image_from_bitmap( bmp, info, &bits, &src ))
         {
             int width = info->bmiHeader.biWidth, height = info->bmiHeader.biSizeImage / 4 / width;
+            struct opengl_drawable *drawable = dc->opengl_drawable;
+
+            make_internal_context_current( NULL, drawable );
+
             if (write) funcs->p_glDrawPixels( width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
             else funcs->p_glReadPixels( 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
+
+            make_client_context_current();
         }
         GDI_ReleaseObj( dc->hBitmap );
     }
@@ -2275,7 +2281,7 @@ static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write
     return ret;
 }
 
-static BOOL create_memory_pbuffer( HDC hdc )
+static BOOL create_memory_pbuffer( struct opengl_context *context, HDC hdc, void (*flush)(void) )
 {
     dib_info dib = {.rect = {0, 0, 1, 1}};
     BOOL ret = TRUE;
@@ -2305,6 +2311,7 @@ static BOOL create_memory_pbuffer( HDC hdc )
         {
             TRACE( "Created pbuffer %p for memory DC %p\n", pbuffer, hdc );
             set_dc_opengl_drawable( hdc, pbuffer->drawable );
+            flush_memory_dc( context, hdc, TRUE, flush );
             pbuffer_destroy( pbuffer );
         }
     }
@@ -2513,7 +2520,6 @@ done:
 static BOOL win32u_make_current( HDC draw_hdc, HDC read_hdc, struct opengl_context *context )
 {
     struct opengl_context *prev_context = NtCurrentTeb()->glContext;
-    BOOL created;
     int format;
 
     TRACE( "draw_hdc %p, read_hdc %p, context %p\n", draw_hdc, read_hdc, context );
@@ -2544,10 +2550,9 @@ static BOOL win32u_make_current( HDC draw_hdc, HDC read_hdc, struct opengl_conte
         return FALSE;
     }
 
-    created = create_memory_pbuffer( draw_hdc );
+    create_memory_pbuffer( context, draw_hdc, NULL );
     if (!context_sync_drawables( context, draw_hdc, read_hdc )) return FALSE;
     NtCurrentTeb()->glContext = context;
-    if (created) flush_memory_dc( context, draw_hdc, TRUE, NULL );
 
     if (!context->initialized) opengl_context_init( context );
     return TRUE;
@@ -2920,13 +2925,11 @@ static BOOL flush_memory_pbuffer( void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
     struct opengl_context *context = NtCurrentTeb()->glContext;
-    BOOL created;
 
     TRACE( "context %p, draw_hdc %p, read_hdc %p, flush %p\n", context, draw_hdc, read_hdc, flush );
 
-    created = create_memory_pbuffer( draw_hdc );
+    create_memory_pbuffer( context, draw_hdc, flush );
     if (context) context_sync_drawables( context, draw_hdc, read_hdc );
-    if (created) flush_memory_dc( context, draw_hdc, TRUE, NULL );
     return flush_memory_dc( context, draw_hdc, FALSE, flush );
 }
 

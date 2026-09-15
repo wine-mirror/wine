@@ -635,7 +635,7 @@ static void flush_context( TEB *teb, void (*flush)(void) )
         /* default implementation: call the functions directly */
         if (flush) flush();
     }
-    if (flags & GL_FLUSH_PRESENT) pop_default_fbo_buffers( teb );
+    if (flags & GL_FLUSH_PRESENT || !ctx->draw->client) pop_default_fbo_buffers( teb );
 
     if (flags & GL_FLUSH_FORCE_SWAP)
     {
