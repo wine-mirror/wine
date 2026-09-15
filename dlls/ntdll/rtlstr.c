@@ -822,7 +822,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *oem,
                                                    BOOLEAN doalloc )
 {
     NTSTATUS ret = STATUS_SUCCESS;
-    DWORD len = RtlUnicodeStringToAnsiSize( uni );
+    DWORD len = RtlUnicodeStringToOemSize( uni );
 
     oem->Length = len - 1;
     if (doalloc)
