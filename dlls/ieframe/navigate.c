@@ -912,7 +912,7 @@ static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mo
 
     if(bsc->post_data) {
         post_data = SafeArrayCreateVector(VT_UI1, 0, bsc->post_data_len);
-        memcpy(post_data->pvData, post_data, bsc->post_data_len);
+        memcpy(post_data->pvData, bsc->post_data, bsc->post_data_len);
     }
 
     on_before_navigate2(This, bsc->url, post_data, bsc->headers, &cancel);
