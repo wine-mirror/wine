@@ -1115,8 +1115,8 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
     if (!(session = calloc(1, sizeof(*session))))
     {
-        hr = E_OUTOFMEMORY;
-        goto error;
+        free(impl);
+        return E_OUTOFMEMORY;
     }
 
     if (language)
