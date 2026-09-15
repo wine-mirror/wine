@@ -118,7 +118,7 @@ static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, co
 
     if (got_video_info_ptr->bmiHeader.biBitCount == 8)
     {
-        for (i = 0; i < ARRAY_SIZE(got_video_info_ptr->bmiColors); i++)
+        for (i = 0; i < got_video_info_ptr->bmiHeader.biClrUsed; i++)
         {
             winetest_push_context("quad %d", i);
             ok_(__FILE__, line)(got_video_info_ptr->bmiColors[i].rgbBlue == expected_video_info_ptr->bmiColors[i].rgbBlue,
@@ -1360,20 +1360,98 @@ skip_test:
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
 }
 
-static void test_media_types(void)
+static void test_source_media_types(const char *test_context, IPin *source, const AM_MEDIA_TYPE *req_mt, AM_MEDIA_TYPE *rgb32)
 {
-    AM_MEDIA_TYPE *media_types[ARRAY_SIZE(subtypes)], req_mt, mt;
-    struct testfilter *peer = NULL;
+    AM_MEDIA_TYPE *media_types[ARRAY_SIZE(subtypes)], mt;
     IEnumMediaTypes *enum_types;
-    ULONG refcount, num_types;
-    IPin *sink, *source;
     VIDEOINFO video_info;
-    IFilterGraph *graph;
-    IBaseFilter *filter;
     DWORD image_size;
+    ULONG num_types;
     int i, r, g, b;
     RGBQUAD *ptr;
     HRESULT hr;
+
+    winetest_push_context("%s", test_context);
+
+    hr = IPin_EnumMediaTypes(source, &enum_types);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(num_types == 6, "Got num_types %lu.\n", num_types);
+
+    mt = *req_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    mt.bFixedSizeSamples = TRUE;
+    video_info = *((VIDEOINFO *)req_mt->pbFormat);
+    video_info.bmiHeader.biClrUsed = 0;
+    video_info.bmiHeader.biClrImportant = 0;
+
+    for (i = 0; i < num_types; i++)
+    {
+        winetest_push_context("subtype %d", i);
+
+        image_size = 240 * 240 * (subtypes[i].bitcount / 8);
+        mt.subtype = *subtypes[i].guid;
+        mt.lSampleSize = image_size;
+        mt.cbFormat = max(subtypes[i].format, req_mt->cbFormat);
+        video_info.bmiHeader.biSizeImage = image_size;
+        video_info.bmiHeader.biBitCount = subtypes[i].bitcount;
+        video_info.bmiHeader.biCompression = subtypes[i].compression;
+        memcpy(video_info.dwBitMasks, subtypes[i].bitmasks, sizeof(video_info.dwBitMasks));
+        if (i == 5)
+        {
+            video_info.bmiHeader.biClrUsed = 226;
+            video_info.bmiHeader.biClrImportant = 226;
+            memcpy(video_info.bmiColors, color_prefix, sizeof(color_prefix));
+            ptr = video_info.bmiColors + ARRAY_SIZE(color_prefix);
+            for (b = 0; b < ARRAY_SIZE(color_pattern); b++)
+                for (g = 0; g < ARRAY_SIZE(color_pattern); g++)
+                    for (r = 0; r < ARRAY_SIZE(color_pattern); r++)
+                        *ptr++ = (RGBQUAD){ color_pattern[b], color_pattern[g], color_pattern[r] };
+        }
+
+        compare_media_types(media_types[i], &mt);
+
+        hr = IPin_QueryAccept(source, media_types[i]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        /* Copy the RGB32 media type that was accepted for another QueryAccept test after disconnect */
+        if (rgb32 && i == 1)
+            CopyMediaType(rgb32, media_types[i]);
+
+        /* Test negative height */
+        ((VIDEOINFO *)media_types[i]->pbFormat)->bmiHeader.biHeight = -240;
+        hr = IPin_QueryAccept(source, media_types[i]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        DeleteMediaType(media_types[i]);
+
+        winetest_pop_context();
+    }
+
+    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(num_types == 0, "Got num_types %lu.\n", num_types);
+
+    IEnumMediaTypes_Release(enum_types);
+
+    winetest_pop_context();
+}
+
+static void test_media_types(void)
+{
+    AM_MEDIA_TYPE req_mt, rgb32 = { 0 };
+    struct testfilter *peer = NULL;
+    VIDEOINFO video_info;
+    IFilterGraph *graph;
+    IBaseFilter *filter;
+    IPin *sink, *source;
+    ULONG refcount;
+    HRESULT hr;
+    int i;
 
     hr = create_color_conv(&filter);
     todo_wine
@@ -1441,8 +1519,13 @@ static void test_media_types(void)
         winetest_pop_context();
     }
 
-    req_mt.subtype = MEDIASUBTYPE_RGB32;
-    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    /* Test RGB565 media type with bit fields */
+    req_mt.subtype = MEDIASUBTYPE_RGB565;
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]);
+    video_info.bmiHeader.biCompression = BI_BITFIELDS;
+    video_info.dwBitMasks[0] = 0xf800;
+    video_info.dwBitMasks[1] = 0x7e0;
+    video_info.dwBitMasks[2] = 0x1f;
     video_info.bmiHeader.biHeight = 240;
     /* Any value of biPlanes is accepted, and then echoed back in the enum */
     video_info.bmiHeader.biPlanes = 123;
@@ -1458,78 +1541,78 @@ static void test_media_types(void)
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
     todo_wine
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
 
-    hr = IPin_EnumMediaTypes(source, &enum_types);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    /* Test RGB565 media type with biCompression set to RGB */
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    video_info.bmiHeader.biCompression = BI_RGB;
 
-    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
     todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    test_source_media_types("RGB565", source, &req_mt, NULL);
+
+    hr = IPin_Disconnect(sink);
     todo_wine
-    ok(num_types == 6, "Got num_types %lu.\n", num_types);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    mt = req_mt;
-    mt.bFixedSizeSamples = TRUE;
+    /* Test RGB8 with a bmiColor */
+    req_mt.subtype = MEDIASUBTYPE_RGB8;
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[1]);
+    video_info.bmiHeader.biClrUsed = 1;
+    video_info.bmiHeader.biClrImportant = 1;
 
-    for (i = 0; i < num_types; i++)
-    {
-        winetest_push_context("subtype %d", i);
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        image_size = 240 * 240 * (subtypes[i].bitcount / 8);
-        mt.subtype = *subtypes[i].guid;
-        mt.lSampleSize = image_size;
-        mt.cbFormat = subtypes[i].format;
-        video_info.bmiHeader.biSizeImage = image_size;
-        video_info.bmiHeader.biBitCount = subtypes[i].bitcount;
-        video_info.bmiHeader.biCompression = subtypes[i].compression;
-        memcpy(video_info.dwBitMasks, subtypes[i].bitmasks, sizeof(video_info.dwBitMasks));
-        if (i == 5)
-        {
-            video_info.bmiHeader.biClrUsed = 226;
-            video_info.bmiHeader.biClrImportant = 226;
-            memcpy(video_info.bmiColors, color_prefix, sizeof(color_prefix));
-            ptr = video_info.bmiColors + ARRAY_SIZE(color_prefix);
-            for (b = 0; b < ARRAY_SIZE(color_pattern); b++)
-                for (g = 0; g < ARRAY_SIZE(color_pattern); g++)
-                    for (r = 0; r < ARRAY_SIZE(color_pattern); r++)
-                        *ptr++ = (RGBQUAD){ color_pattern[b], color_pattern[g], color_pattern[r] };
-        }
+    test_source_media_types("RGB8 (1 color)", source, &req_mt, NULL);
 
-        compare_media_types(media_types[i], &mt);
+    hr = IPin_Disconnect(sink);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        hr = IPin_QueryAccept(source, media_types[i]);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    /* Test RGB8 with a biClrUsed larger than cbFormat will fit */
+    video_info.bmiHeader.biClrUsed = 2;
 
-        /* Copy the RGB32 media type that was accepted for another QueryAccept test after disconnect */
-        if (i == 1)
-            CopyMediaType(&req_mt, media_types[i]);
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+    todo_wine
+    ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
 
-        /* Test negative height */
-        ((VIDEOINFO *)media_types[i]->pbFormat)->bmiHeader.biHeight = -240;
-        hr = IPin_QueryAccept(source, media_types[i]);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    /* Test RGB8 without bmiColors */
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    video_info.bmiHeader.biClrUsed = 0;
+    video_info.bmiHeader.biClrImportant = 0;
 
-        DeleteMediaType(media_types[i]);
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        winetest_pop_context();
-    }
+    test_source_media_types("RGB8 (0 color)", source, &req_mt, NULL);
 
-    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(num_types == 0, "Got num_types %lu.\n", num_types);
+    hr = IPin_Disconnect(sink);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    IEnumMediaTypes_Release(enum_types);
+    /* Test RGB32 */
+    req_mt.subtype = MEDIASUBTYPE_RGB32;
+
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    test_source_media_types("RGB32", source, &req_mt, &rgb32);
 
     hr = IPin_Disconnect(sink);
     todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* The previously accepted media type is no longer accepted after disconnect */
-    hr = IPin_QueryAccept(source, &req_mt);
+    hr = IPin_QueryAccept(source, &rgb32);
     todo_wine
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    FreeMediaType(&req_mt);
+    FreeMediaType(&rgb32);
 
     IPin_Release(sink);
     IPin_Release(source);
