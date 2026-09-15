@@ -1762,8 +1762,8 @@ static HRESULT static_installed_voices_init(void)
     if (all_voices.provider.num_voices)
         return S_OK;
 
-    if (GetUserDefaultLocaleName(locale, ARRAY_SIZE(locale)) > ARRAY_SIZE(locale))
-        return E_OUTOFMEMORY;
+    if (!GetUserDefaultLocaleName(locale, ARRAY_SIZE(locale)))
+        return HRESULT_FROM_WIN32(GetLastError());
 
     if (!(all_voices.provider.voices = calloc(1, sizeof(all_voices.provider.voices[0]))))
         return E_OUTOFMEMORY;
