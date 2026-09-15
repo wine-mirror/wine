@@ -680,6 +680,12 @@ static BOOL CALLBACK enum_activate_layout( HIMC himc, LPARAM lparam )
     return TRUE;
 }
 
+static BOOL CALLBACK enum_deactivate_layout( HIMC himc, LPARAM lparam )
+{
+    ImmNotifyIME( himc, NI_COMPOSITIONSTR, CPS_CANCEL, 0 );
+    return TRUE;
+}
+
 BOOL WINAPI ImmActivateLayout( HKL hkl )
 {
     TRACE( "hkl %p\n", hkl );
@@ -3270,6 +3276,7 @@ static LRESULT ime_internal_msg( WPARAM wparam, LPARAM lparam)
         SendMessageW( hwnd, WM_IME_SELECT, TRUE, lparam );
         break;
    case IME_INTERNAL_HKL_DEACTIVATE:
+        ImmEnumInputContext( 0, enum_deactivate_layout, 0 );
         if (!(hwnd = get_ime_ui_window())) break;
         SendMessageW( hwnd, WM_IME_SELECT, FALSE, lparam );
         break;
