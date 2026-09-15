@@ -182,11 +182,7 @@ static const UINT_PTR host_page_mask = 0xfff;
 #endif
 
 /* Note: these are Windows limits, you cannot change them. */
-#if defined(__i386__) || defined(__x86_64__)
-static void *address_space_start = (void *)0x110000; /* keep DOS area clear */
-#else
 static void *address_space_start = (void *)0x10000;
-#endif
 #ifdef _WIN64
 static void *address_space_limit = (void *)0x7fffffff0000;  /* top of the total available address space */
 static void *user_space_limit    = (void *)0x7fffffff0000;  /* top of the user address space */
@@ -3713,9 +3709,6 @@ void virtual_init(void)
         {
             preload_reserve_start = ROUND_ADDR( start, host_page_mask );
             preload_reserve_end = (void *)ROUND_SIZE( 0, end, host_page_mask );
-            /* some apps start inside the DOS area */
-            if (preload_reserve_start)
-                address_space_start = min( address_space_start, preload_reserve_start );
         }
         unsetenv( "WINEPRELOADRESERVE" );
     }
@@ -3737,11 +3730,6 @@ void virtual_init(void)
     free_ranges[0].base = (void *)0;
     free_ranges[0].end = (void *)~0;
     free_ranges_end = free_ranges + 1;
-
-    /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
-    size = (char *)address_space_start - (char *)0x10000;
-    if (size && mmap_is_in_reserved_area( (void*)0x10000, size ) == 1)
-        anon_mmap_fixed( (void *)0x10000, size, PROT_READ | PROT_WRITE, 0 );
 }
 
 
@@ -4083,11 +4071,21 @@ static struct thread_data *init_thread_data( void *ptr )
 /* enable use of a large address space when allowed by the application */
 static void set_large_address_space(void)
 {
+    if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
+    {
+        /* reserve the DOS area, and make it accessible (except the low 64K)
+         * to hide bugs in broken apps like Excel 2003 */
+        char *end, *start = address_space_start;  /* low 64K */
+        address_space_start = (void *)0x110000;
+        end = min( address_space_start, main_module );
+        if (end > start && mmap_is_in_reserved_area( start, end - start ) == 1)
+            anon_mmap_fixed( start, end - start, PROT_READ | PROT_WRITE, 0 );
+    }
+
     if (is_win64)
     {
         if (!is_wow64())
         {
-            address_space_start = (void *)0x10000;
 #ifndef __APPLE__  /* don't free the zerofill section on macOS */
             if (use_aslr()) free_reserved_memory( 0, (char *)0x7ffe0000 );
 #endif
