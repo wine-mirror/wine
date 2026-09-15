@@ -2333,25 +2333,31 @@ DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
         if (len)
         {
             WCHAR *wideLocalName = malloc(len * sizeof(WCHAR));
+            DWORD wideRemoteSize = MAX_PATH;
+            WCHAR *wideRemote = malloc(wideRemoteSize * sizeof(WCHAR));
 
-            if (wideLocalName)
+            if (wideLocalName && wideRemote)
             {
-                WCHAR wideRemoteStatic[MAX_PATH];
-                DWORD wideRemoteSize = ARRAY_SIZE(wideRemoteStatic);
-
                 MultiByteToWideChar(CP_ACP, 0, lpLocalName, -1, wideLocalName, len);
 
-                /* try once without memory allocation */
-                ret = WNetGetConnectionW(wideLocalName, wideRemoteStatic,
-                 &wideRemoteSize);
+                ret = WNetGetConnectionW(wideLocalName, wideRemote, &wideRemoteSize);
+                while (ret == WN_MORE_DATA)
+                {
+                    free(wideRemote);
+                    wideRemote = malloc(wideRemoteSize * sizeof(WCHAR));
+                    if (wideRemote)
+                        ret = WNetGetConnectionW(wideLocalName, wideRemote, &wideRemoteSize);
+                    else
+                        ret = WN_OUT_OF_MEMORY;
+                }
                 if (ret == WN_SUCCESS)
                 {
-                    int len = WideCharToMultiByte(CP_ACP, 0, wideRemoteStatic,
+                    int len = WideCharToMultiByte(CP_ACP, 0, wideRemote,
                      -1, NULL, 0, NULL, NULL);
 
                     if (len <= *lpBufferSize)
                     {
-                        WideCharToMultiByte(CP_ACP, 0, wideRemoteStatic, -1,
+                        WideCharToMultiByte(CP_ACP, 0, wideRemote, -1,
                          lpRemoteName, *lpBufferSize, NULL, NULL);
                         ret = WN_SUCCESS;
                     }
@@ -2361,37 +2367,12 @@ DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
                         ret = WN_MORE_DATA;
                     }
                 }
-                else if (ret == WN_MORE_DATA)
-                {
-                    WCHAR *wideRemote = malloc(wideRemoteSize * sizeof(WCHAR));
-
-                    if (wideRemote)
-                    {
-                        ret = WNetGetConnectionW(wideLocalName, wideRemote,
-                         &wideRemoteSize);
-                        if (ret == WN_SUCCESS)
-                        {
-                            if (len <= *lpBufferSize)
-                            {
-                                WideCharToMultiByte(CP_ACP, 0, wideRemoteStatic,
-                                 -1, lpRemoteName, *lpBufferSize, NULL, NULL);
-                                ret = WN_SUCCESS;
-                            }
-                            else
-                            {
-                                *lpBufferSize = len;
-                                ret = WN_MORE_DATA;
-                            }
-                        }
-                        free(wideRemote);
-                    }
-                    else
-                        ret = WN_OUT_OF_MEMORY;
-                }
-                free(wideLocalName);
             }
             else
                 ret = WN_OUT_OF_MEMORY;
+
+            free(wideLocalName);
+            free(wideRemote);
         }
         else
             ret = WN_BAD_LOCALNAME;
