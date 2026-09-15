@@ -651,7 +651,8 @@ static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
  * GetMixFormat! Some applications behave badly if given an odd number of
  * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
  * would report for a given channel layout. */
-static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
+static void ca_get_layout_channel_mask(const AudioChannelLayout *ca_layout, WORD *n_channels,
+                                       DWORD *channel_mask)
 {
     UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
 
@@ -659,8 +660,8 @@ static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORM
 
     if (ca_layout->mNumberChannelDescriptions == 1)
     {
-        fmt->Format.nChannels = 1;
-        fmt->dwChannelMask = ca_mask;
+        *n_channels = 1;
+        *channel_mask = ca_mask;
         return;
     }
 
@@ -670,62 +671,62 @@ static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORM
     if (ca_layout->mNumberChannelDescriptions <= 2 &&
             (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
     {
-        fmt->Format.nChannels = 2;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+        *n_channels = 2;
+        *channel_mask = KSAUDIO_SPEAKER_STEREO;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 4 &&
             (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
     {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
+        *n_channels = 4;
+        *channel_mask = KSAUDIO_SPEAKER_QUAD;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 4 &&
             (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
     {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
+        *n_channels = 4;
+        *channel_mask = KSAUDIO_SPEAKER_SURROUND;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 6 &&
             (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
     {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+        *n_channels = 6;
+        *channel_mask = KSAUDIO_SPEAKER_5POINT1;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 6 &&
             (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
     {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
+        *n_channels = 6;
+        *channel_mask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 8 &&
             (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
     {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
+        *n_channels = 8;
+        *channel_mask = KSAUDIO_SPEAKER_7POINT1;
         return;
     }
 
     if (ca_layout->mNumberChannelDescriptions <= 8 &&
             (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
     {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
+        *n_channels = 8;
+        *channel_mask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
         return;
     }
 
     /* oddball format, report truthfully */
-    fmt->Format.nChannels = ca_layout->mNumberChannelDescriptions;
-    fmt->dwChannelMask = ca_mask;
+    *n_channels = ca_layout->mNumberChannelDescriptions;
+    *channel_mask = ca_mask;
 }
 
 static DWORD get_channel_mask(unsigned int channels)
@@ -1120,7 +1121,7 @@ static NTSTATUS unix_get_mix_format(void *args)
                   (unsigned int)layout->mNumberChannelDescriptions);
 
             if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
-                convert_channel_layout(layout, params->fmt);
+                ca_get_layout_channel_mask(layout, &params->fmt->Format.nChannels, &params->fmt->dwChannelMask);
             }else{
                 WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n",
                      (unsigned int)layout->mChannelLayoutTag);
