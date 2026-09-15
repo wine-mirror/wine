@@ -1525,7 +1525,7 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF hinf, PCWSTR section, DWOR
                 continue;
             if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
             if (!(ret = del_service( scm, hinf, service_name, section_flags | flags ))) goto done;
-        } while (SetupFindNextMatchLineW( &context, L"AddService", &context ));
+        } while (SetupFindNextMatchLineW( &context, L"DelService", &context ));
     }
     if (ret) SetLastError( ERROR_SUCCESS );
  done:
