@@ -765,6 +765,78 @@ static DWORD get_format_channel_mask(const WAVEFORMATEX *fmt)
     return get_channel_mask(fmt->nChannels);
 }
 
+static HRESULT get_device_channel_mask(AudioDeviceID dev_id, EDataFlow flow, WORD *n_channels,
+                                       DWORD *channel_mask)
+{
+    AudioObjectPropertyAddress addr;
+    UInt32 size;
+    OSStatus sc;
+    int i;
+
+    addr.mScope = get_scope(flow);
+    addr.mElement = 0;
+    addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
+    sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
+    if(sc == noErr){
+        AudioChannelLayout *layout = malloc(size);
+        if(!layout)
+            return E_OUTOFMEMORY;
+
+        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, layout);
+        if(sc == noErr){
+            TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
+                  (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
+                  (unsigned int)layout->mNumberChannelDescriptions);
+
+            if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
+                ca_get_layout_channel_mask(layout, n_channels, channel_mask);
+            }else{
+                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n",
+                     (unsigned int)layout->mChannelLayoutTag);
+                *n_channels = 0;
+            }
+        }else{
+            TRACE("Unable to get _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+            *n_channels = 0;
+        }
+
+        free(layout);
+    }else{
+        TRACE("Unable to get size for _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+        *n_channels = 0;
+    }
+
+    if(*n_channels == 0){
+        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
+        sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
+        if(sc == noErr){
+            AudioBufferList *buffers = malloc(size);
+            if(!buffers)
+                return E_OUTOFMEMORY;
+
+            sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, buffers);
+            if(sc == noErr){
+                for(i = 0; i < buffers->mNumberBuffers; ++i)
+                    *n_channels += buffers->mBuffers[i].mNumberChannels;
+
+                *channel_mask = get_channel_mask(*n_channels);
+            }
+            else
+                WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
+
+            free(buffers);
+        } else
+            WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
+    }
+
+    if(*n_channels == 0){
+        *n_channels = 2;
+        *channel_mask = KSAUDIO_SPEAKER_STEREO;
+    }
+
+    return S_OK;
+}
+
 static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance unit,
                                   const WAVEFORMATEX *fmt, AudioStreamBasicDescription *dev_desc,
                                   AudioConverterRef *converter)
@@ -1097,80 +1169,14 @@ static NTSTATUS unix_release_stream( void *args )
 static NTSTATUS unix_get_mix_format(void *args)
 {
     struct get_mix_format_params *params = args;
-    AudioObjectPropertyAddress addr;
-    AudioChannelLayout *layout;
-    AudioBufferList *buffers;
-    UInt32 size;
-    OSStatus sc;
-    int i;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
     params->fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
-    addr.mScope = get_scope(params->flow);
-    addr.mElement = 0;
-    addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
-
-    sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
-    if(sc == noErr){
-        layout = malloc(size);
-        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, layout);
-        if(sc == noErr){
-            TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
-                  (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
-                  (unsigned int)layout->mNumberChannelDescriptions);
-
-            if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
-                ca_get_layout_channel_mask(layout, &params->fmt->Format.nChannels, &params->fmt->dwChannelMask);
-            }else{
-                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n",
-                     (unsigned int)layout->mChannelLayoutTag);
-                params->fmt->Format.nChannels = 0;
-            }
-        }else{
-            TRACE("Unable to get _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
-            params->fmt->Format.nChannels = 0;
-        }
-
-        free(layout);
-    }else{
-        TRACE("Unable to get size for _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
-        params->fmt->Format.nChannels = 0;
-    }
-
-    if(params->fmt->Format.nChannels == 0){
-        addr.mScope = get_scope(params->flow);
-        addr.mElement = 0;
-        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
-
-        sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
-        if(sc != noErr){
-            WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
-            params->result = osstatus_to_hresult(sc);
-            return STATUS_SUCCESS;
-        }
-
-        buffers = malloc(size);
-        if(!buffers){
-            params->result = E_OUTOFMEMORY;
-            return STATUS_SUCCESS;
-        }
-
-        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, buffers);
-        if(sc != noErr){
-            free(buffers);
-            WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
-            params->result = osstatus_to_hresult(sc);
-            return STATUS_SUCCESS;
-        }
-
-        for(i = 0; i < buffers->mNumberBuffers; ++i)
-            params->fmt->Format.nChannels += buffers->mBuffers[i].mNumberChannels;
-
-        free(buffers);
-
-        params->fmt->dwChannelMask = get_channel_mask(params->fmt->Format.nChannels);
-    }
+    if(FAILED(params->result = get_device_channel_mask(dev_id, params->flow,
+                                                       &params->fmt->Format.nChannels,
+                                                       &params->fmt->dwChannelMask)))
+        return STATUS_SUCCESS;
 
     if(FAILED(params->result = get_device_sample_rate(dev_id, params->flow, &params->fmt->Format.nSamplesPerSec)))
         return STATUS_SUCCESS;
