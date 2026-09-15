@@ -862,6 +862,8 @@ static HRESULT WINAPI basic_video_get_VideoWidth(IBasicVideo *iface, LONG *width
 
     if (!width)
         return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
 
     *width = get_bitmap_header(window)->biWidth;
 
@@ -876,6 +878,8 @@ static HRESULT WINAPI basic_video_get_VideoHeight(IBasicVideo *iface, LONG *heig
 
     if (!height)
         return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
 
     *height = abs(get_bitmap_header(window)->biHeight);
 
