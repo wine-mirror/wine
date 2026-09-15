@@ -2435,6 +2435,16 @@ enable_netsh=${enable_netsh:-yes}
 enable_regsvr32=${enable_regsvr32:-yes}
 enable_rundll32=${enable_rundll32:-yes}
 
+dnl Disable 32-bit only modules for other archs
+enable_crtdll=${enable_crtdll:-i386}
+enable_msvcp70=${enable_msvcp70:-i386}
+enable_msvcp71=${enable_msvcp71:-i386}
+enable_msvcr70=${enable_msvcr70:-i386}
+enable_msvcr71=${enable_msvcr71:-i386}
+enable_msvcrt20=${enable_msvcrt20:-i386}
+enable_msvcrt40=${enable_msvcrt40:-i386}
+enable_msvcrtd=${enable_msvcrtd:-i386}
+
 dnl Disable Win16-related modules
 enable_win16=${enable_win16:-i386}
 enable_w32skrnl=${enable_w32skrnl:-$enable_win16}
