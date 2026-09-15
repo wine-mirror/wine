@@ -581,6 +581,179 @@ static HRESULT ca_get_audiodesc(AudioStreamBasicDescription *desc,
     return S_OK;
 }
 
+static AudioDeviceID dev_id_from_device(const char *device)
+{
+    AudioDeviceID id;
+    CFStringRef uid;
+    UInt32 size;
+    OSStatus sc;
+    const AudioObjectPropertyAddress addr =
+    {
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain,
+        .mSelector = kAudioHardwarePropertyTranslateUIDToDevice,
+    };
+
+    uid = CFStringCreateWithCStringNoCopy(NULL, device, kCFStringEncodingUTF8, kCFAllocatorNull);
+
+    size = sizeof(id);
+    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, sizeof(uid), &uid, &size, &id);
+    CFRelease(uid);
+    if(sc != noErr){
+        WARN("Failed to get device ID for UID %s: %x\n", device, (int)sc);
+        return kAudioObjectUnknown;
+    }
+
+    if (id == kAudioObjectUnknown)
+        WARN("Failed to get device ID for UID %s\n", device);
+
+    return id;
+}
+
+static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
+{
+    int i;
+    UINT mask = 0;
+
+    for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
+        switch (layout->mChannelDescriptions[i].mChannelLabel) {
+            default: FIXME("Unhandled channel 0x%x\n",
+                           (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
+            case kAudioChannelLabel_Unknown: break;
+            case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
+            case kAudioChannelLabel_Mono:
+            case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
+            case kAudioChannelLabel_Right: mask |= SPEAKER_FRONT_RIGHT; break;
+            case kAudioChannelLabel_LeftSurround: mask |= SPEAKER_BACK_LEFT; break;
+            case kAudioChannelLabel_CenterSurround: mask |= SPEAKER_BACK_CENTER; break;
+            case kAudioChannelLabel_RightSurround: mask |= SPEAKER_BACK_RIGHT; break;
+            case kAudioChannelLabel_LFEScreen: mask |= SPEAKER_LOW_FREQUENCY; break;
+            case kAudioChannelLabel_LeftSurroundDirect: mask |= SPEAKER_SIDE_LEFT; break;
+            case kAudioChannelLabel_RightSurroundDirect: mask |= SPEAKER_SIDE_RIGHT; break;
+            case kAudioChannelLabel_TopCenterSurround: mask |= SPEAKER_TOP_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightLeft: mask |= SPEAKER_TOP_FRONT_LEFT; break;
+            case kAudioChannelLabel_VerticalHeightCenter: mask |= SPEAKER_TOP_FRONT_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightRight: mask |= SPEAKER_TOP_FRONT_RIGHT; break;
+            case kAudioChannelLabel_TopBackLeft: mask |= SPEAKER_TOP_BACK_LEFT; break;
+            case kAudioChannelLabel_TopBackCenter: mask |= SPEAKER_TOP_BACK_CENTER; break;
+            case kAudioChannelLabel_TopBackRight: mask |= SPEAKER_TOP_BACK_RIGHT; break;
+            case kAudioChannelLabel_LeftCenter: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
+            case kAudioChannelLabel_RightCenter: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
+        }
+    }
+
+    return mask;
+}
+
+/* For most hardware on Windows, users must choose a configuration with an even
+ * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+ * channels, but those channels are still reported to applications from
+ * GetMixFormat! Some applications behave badly if given an odd number of
+ * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
+ * would report for a given channel layout. */
+static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
+{
+    UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
+
+    TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
+
+    if (ca_layout->mNumberChannelDescriptions == 1)
+    {
+        fmt->Format.nChannels = 1;
+        fmt->dwChannelMask = ca_mask;
+        return;
+    }
+
+    /* compare against known configurations and find smallest configuration
+     * which is a superset of the given speakers */
+
+    if (ca_layout->mNumberChannelDescriptions <= 2 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
+    {
+        fmt->Format.nChannels = 2;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
+        return;
+    }
+
+    /* oddball format, report truthfully */
+    fmt->Format.nChannels = ca_layout->mNumberChannelDescriptions;
+    fmt->dwChannelMask = ca_mask;
+}
+
+static DWORD get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
+}
+
 static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance unit,
                                   const WAVEFORMATEX *fmt, AudioStreamBasicDescription *dev_desc,
                                   AudioConverterRef *converter)
@@ -665,35 +838,6 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
     }
 
     return S_OK;
-}
-
-static AudioDeviceID dev_id_from_device(const char *device)
-{
-    AudioDeviceID id;
-    CFStringRef uid;
-    UInt32 size;
-    OSStatus sc;
-    const AudioObjectPropertyAddress addr =
-    {
-        .mScope = kAudioObjectPropertyScopeGlobal,
-        .mElement = kAudioObjectPropertyElementMain,
-        .mSelector = kAudioHardwarePropertyTranslateUIDToDevice,
-    };
-
-    uid = CFStringCreateWithCStringNoCopy(NULL, device, kCFStringEncodingUTF8, kCFAllocatorNull);
-
-    size = sizeof(id);
-    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, sizeof(uid), &uid, &size, &id);
-    CFRelease(uid);
-    if(sc != noErr){
-        WARN("Failed to get device ID for UID %s: %x\n", device, (int)sc);
-        return kAudioObjectUnknown;
-    }
-
-    if (id == kAudioObjectUnknown)
-        WARN("Failed to get device ID for UID %s\n", device);
-
-    return id;
 }
 
 static HRESULT get_device_period_frame_range(AudioDeviceID dev_id, EDataFlow flow,
@@ -937,150 +1081,6 @@ static NTSTATUS unix_release_stream( void *args )
     free(stream);
     params->result = S_OK;
     return STATUS_SUCCESS;
-}
-
-static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
-{
-    int i;
-    UINT mask = 0;
-
-    for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
-        switch (layout->mChannelDescriptions[i].mChannelLabel) {
-            default: FIXME("Unhandled channel 0x%x\n",
-                           (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
-            case kAudioChannelLabel_Unknown: break;
-            case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
-            case kAudioChannelLabel_Mono:
-            case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
-            case kAudioChannelLabel_Right: mask |= SPEAKER_FRONT_RIGHT; break;
-            case kAudioChannelLabel_LeftSurround: mask |= SPEAKER_BACK_LEFT; break;
-            case kAudioChannelLabel_CenterSurround: mask |= SPEAKER_BACK_CENTER; break;
-            case kAudioChannelLabel_RightSurround: mask |= SPEAKER_BACK_RIGHT; break;
-            case kAudioChannelLabel_LFEScreen: mask |= SPEAKER_LOW_FREQUENCY; break;
-            case kAudioChannelLabel_LeftSurroundDirect: mask |= SPEAKER_SIDE_LEFT; break;
-            case kAudioChannelLabel_RightSurroundDirect: mask |= SPEAKER_SIDE_RIGHT; break;
-            case kAudioChannelLabel_TopCenterSurround: mask |= SPEAKER_TOP_CENTER; break;
-            case kAudioChannelLabel_VerticalHeightLeft: mask |= SPEAKER_TOP_FRONT_LEFT; break;
-            case kAudioChannelLabel_VerticalHeightCenter: mask |= SPEAKER_TOP_FRONT_CENTER; break;
-            case kAudioChannelLabel_VerticalHeightRight: mask |= SPEAKER_TOP_FRONT_RIGHT; break;
-            case kAudioChannelLabel_TopBackLeft: mask |= SPEAKER_TOP_BACK_LEFT; break;
-            case kAudioChannelLabel_TopBackCenter: mask |= SPEAKER_TOP_BACK_CENTER; break;
-            case kAudioChannelLabel_TopBackRight: mask |= SPEAKER_TOP_BACK_RIGHT; break;
-            case kAudioChannelLabel_LeftCenter: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
-            case kAudioChannelLabel_RightCenter: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
-        }
-    }
-
-    return mask;
-}
-
-/* For most hardware on Windows, users must choose a configuration with an even
- * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
- * channels, but those channels are still reported to applications from
- * GetMixFormat! Some applications behave badly if given an odd number of
- * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
- * would report for a given channel layout. */
-static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
-{
-    UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
-
-    TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
-
-    if (ca_layout->mNumberChannelDescriptions == 1)
-    {
-        fmt->Format.nChannels = 1;
-        fmt->dwChannelMask = ca_mask;
-        return;
-    }
-
-    /* compare against known configurations and find smallest configuration
-     * which is a superset of the given speakers */
-
-    if (ca_layout->mNumberChannelDescriptions <= 2 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
-    {
-        fmt->Format.nChannels = 2;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 4 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
-    {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 4 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 6 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
-    {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 6 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 8 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
-    {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 8 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
-        return;
-    }
-
-    /* oddball format, report truthfully */
-    fmt->Format.nChannels = ca_layout->mNumberChannelDescriptions;
-    fmt->dwChannelMask = ca_mask;
-}
-
-static DWORD get_channel_mask(unsigned int channels)
-{
-    switch(channels){
-    case 0:
-        return 0;
-    case 1:
-        return KSAUDIO_SPEAKER_MONO;
-    case 2:
-        return KSAUDIO_SPEAKER_STEREO;
-    case 3:
-        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
-    case 4:
-        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
-    case 5:
-        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
-    case 6:
-        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
-    case 7:
-        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
-    case 8:
-        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
-    }
-    FIXME("Unknown speaker configuration: %u\n", channels);
-    return 0;
 }
 
 static NTSTATUS unix_get_mix_format(void *args)
