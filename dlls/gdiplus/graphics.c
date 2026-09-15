@@ -7765,7 +7765,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
                                             GDIPCONST GpFont *font, GDIPCONST PointF *positions,
                                             INT flags, GDIPCONST GpMatrix *matrix, RectF *boundingBox)
 {
-    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance);
+    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsVertical|DriverStringOptionsRealizedAdvance);
     HFONT hfont;
     HDC hdc;
     REAL min_x, min_y, max_x, max_y, x, y;
@@ -7775,6 +7775,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
     WORD *dynamic_glyph_indices=NULL;
     REAL rel_width, rel_height, ascent, descent;
     GpPointF pt[3];
+    BOOL vertical = !!(flags & DriverStringOptionsVertical);
 
     TRACE("(%p %p %d %p %p %d %s %p)\n", graphics, text, length, font, positions, flags, debugstr_matrix(matrix), boundingBox);
 
@@ -7793,19 +7794,31 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
 
-    get_font_hfont(graphics, font, FALSE, NULL, &hfont, NULL, matrix);
+    get_font_hfont(graphics, font, vertical, NULL, &hfont, NULL, matrix);
 
     hdc = CreateCompatibleDC(0);
     SelectObject(hdc, hfont);
 
     GetTextMetricsW(hdc, &textmetric);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
+    if (vertical)
+    {
+        pt[0].X = 0.0;
+        pt[0].Y = 0.0;
+        pt[1].X = 0.0;
+        pt[1].Y = 1.0;
+        pt[2].X = 1.0;
+        pt[2].Y = 0.0;
+    }
+    else
+    {
+        pt[0].X = 0.0;
+        pt[0].Y = 0.0;
+        pt[1].X = 1.0;
+        pt[1].Y = 0.0;
+        pt[2].X = 0.0;
+        pt[2].Y = 1.0;
+    }
     if (matrix)
     {
         GpMatrix xform = *matrix;
@@ -7850,13 +7863,26 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         GetCharABCWidthsW(hdc, glyph_indices[i], glyph_indices[i], &abc);
         char_width = abc.abcA + abc.abcB + abc.abcC;
 
-        if (min_y > y - ascent) min_y = y - ascent;
-        if (max_y < y + descent) max_y = y + descent;
-        if (min_x > x) min_x = x;
+        if (vertical)
+        {
+            if (max_x < x + ascent) max_x = x + ascent;
+            if (min_x > x - descent) min_x = x - descent;
+            if (min_y > y) min_y = y;
 
-        x += char_width / rel_width;
+            y += char_width / rel_width;
 
-        if (max_x < x) max_x = x;
+            if (max_y < y) max_y = y;
+        }
+        else
+        {
+            if (min_y > y - ascent) min_y = y - ascent;
+            if (max_y < y + descent) max_y = y + descent;
+            if (min_x > x) min_x = x;
+
+            x += char_width / rel_width;
+
+            if (max_x < x) max_x = x;
+        }
     }
 
     free(dynamic_glyph_indices);

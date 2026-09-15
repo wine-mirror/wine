@@ -3632,11 +3632,9 @@ static void test_string_functions(void)
         identity, &rc);
     expect(Ok, status);
 
-todo_wine {
     ok(rc.X < 0.0, "unexpected X %0.2f\n", rc.X);
     expectf(0.0, rc.Y);
     expectf(char_height, rc.Width);
-}
     ok(rc.Height < char_width, "got Height %0.2f, expecting less than %0.2f\n", rc.Height, char_width);
 
     rc.X = 0;
@@ -3662,11 +3660,9 @@ todo_wine {
         identity, &rc);
     expect(Ok, status);
 
-todo_wine {
     ok(rc.X < 0.0, "unexpected X %0.2f\n", rc.X);
     expectf(rc.Y, 0.0);
     expectf(rc.Width, char_height);
-}
     ok(rc.Height > 0, "unexpected Height %0.2f\n", rc.Height);
 
     rc.X = -1;
