@@ -1,6 +1,6 @@
 MODULE    = wintypes.dll
 IMPORTLIB = wintypes
-IMPORTS   = combase
+IMPORTS   = combase kernelbase
 
 SOURCES = \
 	buffer.c \

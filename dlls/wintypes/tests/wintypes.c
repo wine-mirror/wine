@@ -1265,51 +1265,51 @@ static void test_RoResolveNamespace(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = RoResolveNamespace(NULL, NULL, 0, NULL, &count, &paths, &count2, &namespaces);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!count, "got count %lu\n", count);
-    todo_wine ok(!count2, "got count2 %lu\n", count2);
-    todo_wine ok(!paths, "got paths %p\n", paths);
-    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(!count, "got count %lu\n", count);
+    ok(!count2, "got count2 %lu\n", count2);
+    ok(!paths, "got paths %p\n", paths);
+    ok(!namespaces, "got namespaces %p\n", namespaces);
 
     paths = dummy;
     count = 0xdeadbeef;
     WindowsCreateStringReference(L"Windows.Foundation", wcslen(L"Windows.Foundation") + 1, &hdr, &name);
     hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!count, "got count %lu\n", count);
-    todo_wine ok(!paths, "got paths %p\n", paths);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(!count, "got count %lu\n", count);
+    ok(!paths, "got paths %p\n", paths);
 
     WindowsCreateStringReference(L"Windows..Foundation", wcslen(L"Windows..Foundation"), &hdr, &name);
     paths = dummy;
     count = 0xdeadbeef;
     hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, NULL, NULL);
     ok(hr == RO_E_METADATA_NAME_NOT_FOUND, "got hr %#lx\n", hr);
-    todo_wine ok(!paths, "got paths %p\n", paths);
-    todo_wine ok(!count, "got count %lu\n", count);
+    ok(!paths, "got paths %p\n", paths);
+    ok(!count, "got count %lu\n", count);
 
     paths = dummy;
     hr = RoResolveNamespace(name, NULL, 0, NULL, NULL, &paths, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!paths, "got paths %p\n", paths);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(!paths, "got paths %p\n", paths);
 
     count = 0xdeadbeef;
     namespaces = dummy;
     hr = RoResolveNamespace(name, NULL, 0, NULL, &count, NULL, NULL, &namespaces);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!count, "got count %lu\n", count);
-    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(!count, "got count %lu\n", count);
+    ok(!namespaces, "got namespaces %p\n", namespaces);
 
     paths = namespaces = dummy;
     hr = RoResolveNamespace(name, NULL, 0, NULL, NULL, &paths, NULL, &namespaces);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!paths, "got paths %p\n", paths);
-    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(!paths, "got paths %p\n", paths);
+    ok(!namespaces, "got namespaces %p\n", namespaces);
 
     count = count2 = 0xdeadbeef;
     hr = RoResolveNamespace(name, NULL, 0, NULL, &count, NULL, &count2, NULL);
     ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
-    todo_wine ok(!paths, "got paths %p\n", paths);
-    todo_wine ok(!namespaces, "got namespaces %p\n", namespaces);
+    ok(!paths, "got paths %p\n", paths);
+    ok(!namespaces, "got namespaces %p\n", namespaces);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {

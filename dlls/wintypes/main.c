@@ -18,6 +18,7 @@
 
 #include "initguid.h"
 #include "private.h"
+#include "pathcch.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
 
@@ -1817,14 +1818,129 @@ HRESULT WINAPI RoResolveNamespace(HSTRING name, HSTRING windowsMetaDataDir,
                                   DWORD *metaDataFilePathsCount, HSTRING **metaDataFilePaths,
                                   DWORD *subNamespacesCount, HSTRING **subNamespaces)
 {
-    FIXME("name %s, windowsMetaDataDir %s, metaDataFilePaths %p, subNamespaces %p stub!\n",
+    WCHAR system_path[MAX_PATH], metadata_path[MAX_PATH];
+    UINT32 nameW_len, i, paths_count = 0;
+    WIN32_FIND_DATAW find_data;
+    BOOL has_null, is_wow64;
+    HSTRING *paths = NULL;
+    const WCHAR *nameW;
+    HRESULT hr = S_OK;
+    HANDLE hsearch;
+
+    FIXME("name %s, windowsMetaDataDir %s, metaDataFilePaths %p, subNamespaces %p semi-stub!\n",
             debugstr_hstring(name), debugstr_hstring(windowsMetaDataDir),
             metaDataFilePaths, subNamespaces);
 
+    if (metaDataFilePathsCount)
+        *metaDataFilePathsCount = 0;
+    if (metaDataFilePaths)
+        *metaDataFilePaths = NULL;
+    if (subNamespacesCount)
+        *subNamespacesCount = 0;
+    if (subNamespaces)
+        *subNamespaces = NULL;
+
+    if (WindowsIsStringEmpty(name))
+        return E_INVALIDARG;
+    WindowsStringHasEmbeddedNull(name, &has_null);
+    if (has_null)
+        return E_INVALIDARG;
     if (!metaDataFilePaths && !subNamespaces)
         return E_INVALIDARG;
+    if (!!metaDataFilePathsCount != !!metaDataFilePaths)
+        return E_INVALIDARG;
+    if (!!subNamespacesCount != !!subNamespaces)
+        return E_INVALIDARG;
 
-    return RO_E_METADATA_NAME_NOT_FOUND;
+
+    if (!IsWow64Process(GetCurrentProcess(), &is_wow64))
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (is_wow64)
+    {
+        WCHAR windows_path[MAX_PATH];
+
+        GetWindowsDirectoryW(windows_path, MAX_PATH);
+        hr = PathCchCombine(system_path, ARRAY_SIZE(system_path), windows_path, L"Sysnative");
+        if (FAILED(hr))
+            return hr;
+    }
+    else
+        GetSystemDirectoryW(system_path, ARRAY_SIZE(system_path));
+    hr = PathCchCombine(metadata_path, ARRAY_SIZE(metadata_path), system_path, L"WinMetaData\\*.winmd");
+    if (FAILED(hr))
+        return hr;
+
+    hsearch = FindFirstFileW(metadata_path, &find_data);
+    if (hsearch == INVALID_HANDLE_VALUE)
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    nameW = WindowsGetStringRawBuffer(name, &nameW_len);
+    hr = PathCchCombine(metadata_path, ARRAY_SIZE(metadata_path), system_path, L"WinMetaData");
+    while (hr == S_OK)
+    {
+        const WCHAR *file_name = find_data.cFileName;
+        ULONG file_name_len = wcslen(file_name), file_ns_len = file_name_len - 6;
+
+        /* According to Microsoft's WinRT metadata documentation, "All of the WinRT types in a given WinMD file must be
+         * under a namespace that matches the name of the WinMD file". We add a WinMD file to the list if:
+         * - The file's namespace starts with the requested namespace (file=windows.foundation.winmd,
+         *   name=windows.foundation.collections), or
+         * - The requested namespace starts with the file's namespace (file=windows.ui.xaml.winmd, name=windows.ui).
+         * If an exact match is found, then only that file is returned.
+         * Native does not check if there are any types with the namespace in the returned files, only that the
+         * either namespace is nested under the other one.
+         */
+        if (!(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && file_name_len > 6 &&
+            !wcsnicmp(file_name, nameW, min(file_ns_len, nameW_len)))
+        {
+            WCHAR full_path[MAX_PATH];
+            void *tmp;
+
+            /* Exact match, so only this file path needs to be returned. */
+            if (file_ns_len == nameW_len)
+            {
+                for (i = 0; i < paths_count; i++)
+                    WindowsDeleteString(paths[i]);
+                paths_count = 0;
+            }
+            tmp = CoTaskMemRealloc(paths, sizeof(*paths) * paths_count + 1);
+            if (!tmp)
+            {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+            paths = tmp;
+            hr = PathCchCombine(full_path, ARRAY_SIZE(full_path), metadata_path, file_name);
+            if (FAILED(hr) || FAILED(hr = WindowsCreateString(full_path, wcslen(full_path), &paths[paths_count])))
+                break;
+            paths_count++;
+            if (file_ns_len == nameW_len)
+                break;
+        }
+        if (!FindNextFileW(hsearch, &find_data))
+        {
+            DWORD err = GetLastError();
+            if (err == ERROR_NO_MORE_FILES)
+                break;
+            hr = HRESULT_FROM_WIN32(err);
+        }
+    }
+    FindClose(hsearch);
+    if (FAILED(hr))
+    {
+        for (i = 0; i < paths_count; i++)
+            WindowsDeleteString(paths[i]);
+        CoTaskMemFree(paths);
+    }
+    else if (paths_count)
+    {
+        *metaDataFilePathsCount = paths_count;
+        *metaDataFilePaths = paths;
+    }
+    else
+        hr = RO_E_METADATA_NAME_NOT_FOUND;
+
+    return hr;
 }
 
 struct parse_type_context
