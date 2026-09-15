@@ -482,7 +482,7 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
 
     GdipMultiplyMatrix(&matrix, &graphics->gdi_transform, MatrixOrderAppend);
     transform_properties(graphics, &matrix, FALSE, NULL, &rel_height, &angle);
-    get_log_fontW(font, graphics, lf);
+    get_log_fontW(font, FALSE, graphics, lf);
 
     lf->lfHeight = -gdip_round(height * rel_height);
     lf->lfEscapement = lf->lfOrientation = gdip_round((angle / M_PI) * 1800.0);
@@ -1710,12 +1710,43 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     family->descent = fm.descent;
     family->line_spacing = fm.line_spacing;
     family->dpi = fm.dpi;
+    family->VerticalFamilyName[0] = 0;
     family->installed = param->is_system;
     family->ref = 1;
 
     lstrcpyW(family->FamilyName, lfw->lfFaceName);
 
     fonts->FontFamilies[fonts->count++] = family;
+
+    return 1;
+}
+
+static INT CALLBACK add_vert_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
+        DWORD type, LPARAM lParam)
+{
+    struct add_font_param *param = (struct add_font_param *)lParam;
+    GpFontCollection *fonts = param->collection;
+    GpFontFamily *family;
+    int i;
+
+    param->stat = Ok;
+
+    if (type == RASTER_FONTTYPE)
+        return 1;
+
+    /* select rotated fonts */
+    if (lfw->lfFaceName[0] != '@')
+        return 1;
+
+    for (i=0; i < fonts->count; i++)
+    {
+        family = fonts->FontFamilies[i];
+        if (wcsicmp(lfw->lfFaceName+1, family->FamilyName) == 0)
+        {
+            lstrcpyW(family->VerticalFamilyName, lfw->lfFaceName);
+            break;
+        }
+    }
 
     return 1;
 }
@@ -1742,7 +1773,8 @@ GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
 
         param.collection = &installedFontCollection;
         param.is_system = TRUE;
-        if (!EnumFontFamiliesExW(param.hdc, &lfw, add_font_proc, (LPARAM)&param, 0))
+        if (!EnumFontFamiliesExW(param.hdc, &lfw, add_font_proc, (LPARAM)&param, 0) ||
+            !EnumFontFamiliesExW(param.hdc, &lfw, add_vert_font_proc, (LPARAM)&param, 0))
         {
             free_installed_fonts();
             DeleteDC(param.hdc);

@@ -1050,7 +1050,7 @@ static GpStatus format_string_callback(struct gdip_format_string_info* info)
                 SelectObject(info->hdc, oldhfont);
                 DeleteObject(hfont);
             }
-            get_font_hfont(info->graphics, section->font, NULL, &hfont, NULL, NULL);
+            get_font_hfont(info->graphics, section->font, FALSE, NULL, &hfont, NULL, NULL);
             oldhfont = SelectObject(info->hdc, hfont);
             section_start = section->start;
         }
@@ -1182,7 +1182,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
         return status;
     }
 
-    get_log_fontW(font, graphics, &lfw);
+    get_log_fontW(font, FALSE, graphics, &lfw);
 
     hfont = CreateFontIndirectW(&lfw);
     if (!hfont)

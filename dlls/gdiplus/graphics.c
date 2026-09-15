@@ -2386,7 +2386,7 @@ end:
     return stat;
 }
 
-void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
+void get_log_fontW(const GpFont *font, BOOL vertical, GpGraphics *graphics, LOGFONTW *lf)
 {
     REAL height;
 
@@ -2415,10 +2415,13 @@ void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
     lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lf->lfQuality = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = 0;
-    lstrcpyW(lf->lfFaceName, font->family->FamilyName);
+    if (vertical && font->family->VerticalFamilyName[0])
+        lstrcpyW(lf->lfFaceName, font->family->VerticalFamilyName);
+    else
+        lstrcpyW(lf->lfFaceName, font->family->FamilyName);
 }
 
-void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
+void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, BOOL vertical,
                            GDIPCONST GpStringFormat *format, HFONT *hfont,
                            LOGFONTW *lfw_return, GDIPCONST GpMatrix *matrix)
 {
@@ -2427,6 +2430,8 @@ void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
     LOGFONTW lfw;
     HFONT unscaled_font;
     TEXTMETRICW textmet;
+    GDIPCONST GpMatrix vert_matrix = {{0,1,-1,0,0,0}}, identity = {{1,0,0,1,0,0}};
+    GpMatrix text_matrix;
 
     if (font->unit == UnitPixel || font->unit == UnitWorld)
         font_height = font->emSize;
@@ -2440,7 +2445,18 @@ void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         font_height = font->emSize * unit_scale;
     }
 
-    transform_properties(graphics, matrix, TRUE, &rel_width, &rel_height, &angle);
+    if (!matrix)
+        matrix = &identity;
+
+    if (vertical)
+    {
+        text_matrix = vert_matrix;
+        GdipMultiplyMatrix(&text_matrix, matrix, MatrixOrderPrepend);
+    }
+    else
+        text_matrix = *matrix;
+
+    transform_properties(graphics, &text_matrix, TRUE, &rel_width, &rel_height, &angle);
     /* If the font unit is not pixels scaling should not be applied */
     if (font->unit != UnitPixel && font->unit != UnitWorld)
     {
@@ -2448,7 +2464,7 @@ void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         rel_height /= graphics->scale;
     }
 
-    get_log_fontW(font, graphics, &lfw);
+    get_log_fontW(font, vertical, graphics, &lfw);
     lfw.lfHeight = -gdip_round(font_height * rel_height);
     unscaled_font = CreateFontIndirectW(&lfw);
 
@@ -5609,7 +5625,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
 
     GetGlobalFontLinkObject(&iMLFL);
 
-    get_font_hfont(info->graphics, base_font, NULL, &hfont, NULL, NULL);
+    get_font_hfont(info->graphics, base_font, FALSE, NULL, &hfont, NULL, NULL);
 
     progress = 0;
     while (progress < length)
@@ -5676,7 +5692,7 @@ static void font_link_get_text_extent_point(struct gdip_format_string_info *info
 
         to_measure_length = min(length - (i - index), section->end - i);
 
-        get_font_hfont(info->graphics, section->font, NULL, &hfont, NULL, NULL);
+        get_font_hfont(info->graphics, section->font, FALSE, NULL, &hfont, NULL, NULL);
         oldhfont = SelectObject(info->hdc, hfont);
         GetTextExtentExPointW(info->hdc, &info->string[i], to_measure_length, max_ext, &fitaux, NULL, &sizeaux);
         SelectObject(info->hdc, oldhfont);
@@ -6080,7 +6096,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
     if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
-    get_font_hfont(graphics, font, stringFormat, &gdifont, NULL, NULL);
+    get_font_hfont(graphics, font, FALSE, stringFormat, &gdifont, NULL, NULL);
     oldfont = SelectObject(hdc, gdifont);
 
     for (i=0; i<stringFormat->range_count; i++)
@@ -6207,7 +6223,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
     if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
-    get_font_hfont(graphics, font, format, &gdifont, NULL, NULL);
+    get_font_hfont(graphics, font, FALSE, format, &gdifont, NULL, NULL);
     oldfont = SelectObject(hdc, gdifont);
 
     set_rect(bounds, rect->X, rect->Y, 0.0f, 0.0f);
@@ -6427,7 +6443,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         SelectClipRgn(hdc, rgn);
     }
 
-    get_font_hfont(graphics, font, format, &gdifont, NULL, NULL);
+    get_font_hfont(graphics, font, FALSE, format, &gdifont, NULL, NULL);
     SelectObject(hdc, gdifont);
 
     args.brush = brush;
@@ -7777,7 +7793,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
 
-    get_font_hfont(graphics, font, NULL, &hfont, NULL, matrix);
+    get_font_hfont(graphics, font, FALSE, NULL, &hfont, NULL, matrix);
 
     hdc = CreateCompatibleDC(0);
     SelectObject(hdc, hfont);
@@ -7869,6 +7885,7 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     GpStatus status;
     HDC hdc;
     HRGN hrgn;
+    BOOL vertical = !!(flags & DriverStringOptionsVertical);
 
     if (!(flags & DriverStringOptionsCmapLookup))
         eto_flags |= ETO_GLYPH_INDEX;
@@ -7908,7 +7925,7 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     pt = positions[0];
     gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &pt, 1);
 
-    get_font_hfont(graphics, font, format, &hfont, &lfw, matrix);
+    get_font_hfont(graphics, font, vertical, format, &hfont, &lfw, matrix);
 
     if (!(flags & DriverStringOptionsRealizedAdvance) && length > 1)
     {
@@ -7959,7 +7976,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
                                         GDIPCONST GpBrush *brush, GDIPCONST PointF *positions,
                                         INT flags, GDIPCONST GpMatrix *matrix)
 {
-    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance);
+    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup|DriverStringOptionsVertical|DriverStringOptionsRealizedAdvance);
     GpStatus stat;
     PointF *real_positions, real_position;
     POINT *pti;
@@ -7976,6 +7993,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     int pixel_data_stride;
     GpRect pixel_area;
     UINT ggo_flags = GGO_GRAY8_BITMAP;
+    BOOL vertical = !!(flags & DriverStringOptionsVertical);
 
     if (length <= 0)
         return Ok;
@@ -8014,7 +8032,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         free(real_positions);
     }
 
-    get_font_hfont(graphics, font, format, &hfont, NULL, matrix);
+    get_font_hfont(graphics, font, vertical, format, &hfont, NULL, matrix);
 
     hdc = CreateCompatibleDC(0);
     SelectObject(hdc, hfont);

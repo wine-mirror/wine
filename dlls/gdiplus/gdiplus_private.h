@@ -145,7 +145,7 @@ extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y);
 
-extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
+extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, BOOL vertical,
                            GDIPCONST GpStringFormat *format, HFONT *hfont,
                            LOGFONTW *lfw_return, GDIPCONST GpMatrix *matrix);
 
@@ -608,6 +608,7 @@ struct GpFontCollection{
 
 struct GpFontFamily{
     WCHAR FamilyName[LF_FACESIZE];
+    WCHAR VerticalFamilyName[LF_FACESIZE];
     UINT16 em_height, ascent, descent, line_spacing; /* in font units */
     int dpi;
     BOOL installed;
@@ -703,7 +704,7 @@ GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data);
 
-void get_log_fontW(const GpFont *, GpGraphics *, LOGFONTW *);
+void get_log_fontW(const GpFont *, BOOL, GpGraphics *, LOGFONTW *);
 
 static inline BOOL image_lock(GpImage *image)
 {
