@@ -1489,7 +1489,6 @@ static void test_media_types(void)
     video_info.rcTarget.bottom = 220;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
 
     /* Test RGB565 media type with biCompression set to RGB */
@@ -1497,7 +1496,6 @@ static void test_media_types(void)
     video_info.bmiHeader.biCompression = BI_RGB;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_source_media_types("RGB565", source, &req_mt, NULL);
@@ -1523,7 +1521,6 @@ static void test_media_types(void)
     video_info.bmiHeader.biClrUsed = 2;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == VFW_E_INVALIDMEDIATYPE, "Got hr %#lx.\n", hr);
 
     /* Test RGB8 without bmiColors */
@@ -1532,7 +1529,6 @@ static void test_media_types(void)
     video_info.bmiHeader.biClrImportant = 0;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_source_media_types("RGB8 (0 color)", source, &req_mt, NULL);

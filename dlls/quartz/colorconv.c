@@ -116,10 +116,23 @@ static HRESULT color_sink_query_accept(struct strmbase_pin *iface, const AM_MEDI
         return S_FALSE;
 }
 
+static HRESULT color_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    BITMAPINFOHEADER *header;
+
+    header = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    if (header->biCompression == BI_RGB
+            && mt->cbFormat >= sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD) * header->biClrUsed)
+        return S_OK;
+    else
+        return VFW_E_INVALIDMEDIATYPE;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = color_sink_query_interface,
     .base.pin_query_accept = color_sink_query_accept,
+    .sink_connect = color_sink_connect,
 };
 
 static HRESULT WINAPI color_source_DecideBufferSize(
