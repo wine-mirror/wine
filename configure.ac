@@ -2437,6 +2437,11 @@ enable_rundll32=${enable_rundll32:-yes}
 
 dnl Disable 32-bit only modules for other archs
 enable_crtdll=${enable_crtdll:-i386}
+enable_dmband=${enable_dmband:-i386}
+enable_dmcompos=${enable_dmcompos:-i386}
+enable_dmime=${enable_dmime:-i386}
+enable_dmscript=${enable_dmscript:-i386}
+enable_dmstyle=${enable_dmstyle:-i386}
 enable_msvcp70=${enable_msvcp70:-i386}
 enable_msvcp71=${enable_msvcp71:-i386}
 enable_msvcr70=${enable_msvcr70:-i386}
