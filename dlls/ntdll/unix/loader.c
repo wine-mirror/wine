@@ -124,6 +124,7 @@ const char *wineloader = NULL;
 const char **dll_paths = NULL;
 const char **system_dll_paths = NULL;
 const char *user_name = NULL;
+void *main_module = NULL;
 SECTION_IMAGE_INFORMATION main_image_info = { NULL };
 
 /* die on a fatal error; use only during initialization */
@@ -954,8 +955,7 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
 /***********************************************************************
  *           open_main_image_so_file
  */
-static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
-                                         SECTION_IMAGE_INFORMATION *image_info )
+static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name )
 {
     struct pe_image_info pe_info;
     NTSTATUS status;
@@ -971,8 +971,8 @@ static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_na
             nt_name->Length -= 3 * sizeof(WCHAR);
         }
     }
-    status = dlopen_dll( name, nt_name, module, &pe_info, FALSE );
-    if (!status) virtual_fill_image_information( &pe_info, image_info );
+    status = dlopen_dll( name, nt_name, &main_module, &pe_info, FALSE );
+    if (!status) virtual_fill_image_information( &pe_info, &main_image_info );
     return status;
 }
 
@@ -987,8 +987,7 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
     return STATUS_DLL_NOT_FOUND;
 }
 
-static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
-                                         SECTION_IMAGE_INFORMATION *image_info )
+static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name )
 {
     return STATUS_INVALID_IMAGE_FORMAT;
 }
@@ -1416,17 +1415,19 @@ BOOL is_system_dir_path( const UNICODE_STRING *path, WORD *machine )
 
 
 /***********************************************************************
- *           open_main_image
+ *           load_main_exe
  */
-static NTSTATUS open_main_image( UNICODE_STRING *nt_name, void **module, SECTION_IMAGE_INFORMATION *info,
-                                 enum loadorder loadorder, USHORT machine )
+NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine )
 {
-    OBJECT_ATTRIBUTES attr;
-    SIZE_T size = 0;
-    char *unix_name;
     NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    char *unix_name;
     HANDLE mapping;
     UNICODE_STRING true_nt_name;
+    SIZE_T size = 0;
+    USHORT search_machine;
+    BOOL is_system_dir = is_system_dir_path( nt_name, &search_machine );
+    enum loadorder loadorder = get_load_order( nt_name, is_system_dir, NULL );
 
     if (loadorder == LO_DISABLED) NtTerminateProcess( GetCurrentProcess(), STATUS_DLL_NOT_FOUND );
 
@@ -1436,36 +1437,20 @@ static NTSTATUS open_main_image( UNICODE_STRING *nt_name, void **module, SECTION
     status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
     {
-        status = virtual_map_module( mapping, module, &size, info, 0, 0, machine );
-        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH && info->ComPlusNativeReady)
+        status = virtual_map_module( mapping, &main_module, &size, &main_image_info, 0, 0, load_machine );
+        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH && main_image_info.ComPlusNativeReady)
         {
-            info->Machine = is_machine_64bit( native_machine ) ? IMAGE_FILE_MACHINE_AMD64 : native_machine;
+            main_image_info.Machine = is_machine_64bit( native_machine ) ? IMAGE_FILE_MACHINE_AMD64 : native_machine;
             status = STATUS_SUCCESS;
         }
         NtClose( mapping );
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ && loadorder != LO_NATIVE)
     {
-        status = open_main_image_so_file( unix_name, attr.ObjectName, module, info );
+        status = open_main_image_so_file( unix_name, attr.ObjectName );
     }
     free( unix_name );
     free( true_nt_name.Buffer );
-    return status;
-}
-
-
-/***********************************************************************
- *           load_main_exe
- */
-NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **module )
-{
-    unsigned int status;
-    SIZE_T size;
-    USHORT search_machine;
-    BOOL is_system_dir = is_system_dir_path( nt_name, &search_machine );
-    enum loadorder loadorder = get_load_order( nt_name, is_system_dir, NULL );
-
-    status = open_main_image( nt_name, module, &main_image_info, loadorder, load_machine );
 
     switch (status)
     {
@@ -1474,7 +1459,7 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **mod
     case STATUS_NOT_SUPPORTED:
         /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
         if (loadorder != LO_NATIVE && is_prefix_bootstrap && is_system_dir)
-            status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0,
+            status = find_builtin_dll( nt_name, NULL, &main_module, &size, &main_image_info, 0, 0,
                                        search_machine, load_machine, FALSE, 0 );
         break;
     }
@@ -1487,7 +1472,7 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **mod
  *
  * Load start.exe as main image.
  */
-NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module )
+NTSTATUS load_start_exe( UNICODE_STRING *nt_name )
 {
     static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
     unsigned int status;
@@ -1497,7 +1482,8 @@ NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module )
     wcscpy( image, get_machine_wow64_dir( current_machine ));
     wcscat( image, startW );
     init_unicode_string( nt_name, image );
-    status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0, current_machine, 0, FALSE, 0 );
+    status = find_builtin_dll( nt_name, NULL, &main_module, &size,
+                               &main_image_info, 0, 0, current_machine, 0, FALSE, 0 );
     if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );
