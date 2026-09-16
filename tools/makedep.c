@@ -4164,11 +4164,6 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     output( "\t%secho \"%s_test.exe TESTRES \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ),
             basemodule, obj_dir_path( make, stripped ), wrc );
 
-    if (make->disabled[arch] || (parent && parent->disabled[arch]))
-    {
-        make->ok_files[arch] = empty_strarray;
-        return;
-    }
     output_filenames_obj_dir( make, make->ok_files[arch] );
     output( ": %s", obj_dir_path( make, testmodule ));
     if (parent)
@@ -4919,9 +4914,13 @@ static void load_sources( struct makefile *make )
 
     if (make->obj_dir)
     {
-        make->disabled[0] = strarray_exists( disabled_dirs[0], make->obj_dir );
+        const char *parent_dir = make->testdll ? replace_extension( make->obj_dir, "/tests", "" ) : NULL;
+        make->disabled[0] = strarray_exists( disabled_dirs[0], make->obj_dir ) ||
+                            (parent_dir && strarray_exists( disabled_dirs[0], parent_dir ));
         for (arch = 1; arch < archs.count; arch++)
-            make->disabled[arch] = make->disabled[0] || strarray_exists( disabled_dirs[arch], make->obj_dir );
+            make->disabled[arch] = make->disabled[0] ||
+                                   strarray_exists( disabled_dirs[arch], make->obj_dir ) ||
+                                   (parent_dir && strarray_exists( disabled_dirs[arch], parent_dir ));
     }
     make->external   = make->obj_dir && strarray_exists( external_dirs, make->obj_dir );
     make->is_win16   = strarray_exists( make->extradllflags, "-m16" );
