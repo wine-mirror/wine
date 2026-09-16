@@ -1419,7 +1419,7 @@ BOOL is_system_dir_path( const UNICODE_STRING *path, WORD *machine )
  */
 NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine )
 {
-    NTSTATUS status;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
     OBJECT_ATTRIBUTES attr;
     char *unix_name;
     HANDLE mapping;
@@ -1429,12 +1429,12 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine )
     BOOL is_system_dir = is_system_dir_path( nt_name, &search_machine );
     enum loadorder loadorder = get_load_order( nt_name, is_system_dir, NULL );
 
-    if (loadorder == LO_DISABLED) NtTerminateProcess( GetCurrentProcess(), STATUS_DLL_NOT_FOUND );
+    if (loadorder == LO_DISABLED) NtTerminateProcess( GetCurrentProcess(), status );
 
     InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if (get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN, FALSE )) return STATUS_DLL_NOT_FOUND;
+    if (!get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN, FALSE ))
+        status = open_dll_file( unix_name, &attr, &mapping );
 
-    status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
     {
         status = virtual_map_main_module( mapping, load_machine );
