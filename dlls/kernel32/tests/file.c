@@ -1867,7 +1867,6 @@ static void test_GetTempFileNameA(void)
     expected[0] = '\0';
     strcat(expected, windowsdir);
     strcat(expected, "abcA.tmp");
-    todo_wine
     ok(lstrcmpA(out, expected) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n",
        out, expected);
 }
