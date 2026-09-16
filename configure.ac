@@ -2438,6 +2438,7 @@ enable_rundll32=${enable_rundll32:-yes}
 dnl Disable 32-bit only modules for other archs
 enable_crtdll=${enable_crtdll:-i386}
 enable_ctl3d32=${enable_ctl3d32:-i386}
+enable_d3d8=${enable_d3d8:-i386}
 enable_d3dim=${enable_d3dim:-i386}
 enable_d3dim700=${enable_d3dim700:-i386}
 enable_dmband=${enable_dmband:-i386}
