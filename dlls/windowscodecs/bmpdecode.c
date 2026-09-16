@@ -26,6 +26,7 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "objbase.h"
+#include "intsafe.h"
 
 #include "wincodecs_private.h"
 
@@ -360,7 +361,7 @@ static HRESULT WINAPI BmpFrameDecode_GetThumbnail(IWICBitmapFrameDecode *iface,
 
 static HRESULT BmpFrameDecode_ReadUncompressed(BmpDecoder* This)
 {
-    UINT bytesperrow;
+    UINT bitsperrow, bytesperrow;
     UINT width, height;
     UINT datasize;
     int bottomup;
@@ -383,8 +384,11 @@ static HRESULT BmpFrameDecode_ReadUncompressed(BmpDecoder* This)
     }
 
     /* row sizes in BMP files must be divisible by 4 bytes */
-    bytesperrow = (((width * This->bitsperpixel)+31)/32)*4;
-    datasize = bytesperrow * height;
+    if (UIntMult(width, This->bitsperpixel, &bitsperrow))
+        return E_FAIL;
+    bytesperrow = ((bitsperrow+31)/32)*4;
+    if (!bytesperrow || UIntMult(bytesperrow, height, &datasize))
+        return E_FAIL;
 
     This->imagedata = malloc(datasize);
     if (!This->imagedata) return E_OUTOFMEMORY;
@@ -506,8 +510,9 @@ static HRESULT BmpFrameDecode_ReadRLE8(BmpDecoder* This)
 
     width = This->bih.bV5Width;
     height = abs(This->bih.bV5Height);
-    bytesperrow = width * 4;
-    datasize = bytesperrow * height;
+    if (UIntMult(width, 4, &bytesperrow) ||
+        UIntMult(bytesperrow, height, &datasize))
+        return E_FAIL;
     if (This->bih.bV5ClrUsed && This->bih.bV5ClrUsed < 256)
         palettesize = 4 * This->bih.bV5ClrUsed;
     else
@@ -630,8 +635,9 @@ static HRESULT BmpFrameDecode_ReadRLE4(BmpDecoder* This)
 
     width = This->bih.bV5Width;
     height = abs(This->bih.bV5Height);
-    bytesperrow = width * 4;
-    datasize = bytesperrow * height;
+    if (UIntMult(width, 4, &bytesperrow) ||
+        UIntMult(bytesperrow, height, &datasize))
+        return E_FAIL;
     if (This->bih.bV5ClrUsed && This->bih.bV5ClrUsed < 16)
         palettesize = 4 * This->bih.bV5ClrUsed;
     else
