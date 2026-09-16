@@ -87,6 +87,11 @@ _ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
 #  define _wcstok wcstok
 #endif /* _UCRT */
 
+static inline size_t __cdecl wcsnlen_s(wchar_t const* src, size_t count)
+{
+    return src ? wcsnlen(src, count) : 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
