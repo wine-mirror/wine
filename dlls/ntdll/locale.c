@@ -408,6 +408,7 @@ ULONG get_resource_lcids( LANGID *langs, ULONG size, LCID lcid )
         if (SUBLANGID(lcid) != SUBLANG_SYS_DEFAULT)
             append_ui_languages_with_neutral( merged, &len, user_ui_languages_default );
         append_ui_languages_with_neutral( merged, &len, system_ui_languages );
+        append_ui_lang_lcid( merged, &len, MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ));
         RtlReleaseSRWLockShared( &locale_srwlock );
     }
 
