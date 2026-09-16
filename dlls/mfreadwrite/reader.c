@@ -1373,6 +1373,7 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
 {
     struct stream_response *response = NULL;
     BOOL request_sample = FALSE;
+    HRESULT hr = S_OK;
     struct list *ptr;
 
     if (!(response = media_stream_pop_response(reader, stream)) && stream->state == STREAM_STATE_EOS
@@ -1381,8 +1382,8 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
         struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
 
         /* Try to drain a sample at EOS if transforms are present. Draining one at a time prevents
-         * exhaustion of the allocator in some cases. */
-        source_reader_drain_transform_samples(reader, stream, entry);
+         * exhaustion of the allocator in some cases. This call never returns NEED_INPUT. */
+        hr = source_reader_drain_transform_samples(reader, stream, entry);
     }
 
     if (response || (response = media_stream_pop_response(reader, stream)))
@@ -1399,18 +1400,20 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
     }
     else
     {
-        *status = S_OK;
+        *status = hr;
         *stream_index = stream->index;
         *timestamp = 0;
         *sample = NULL;
 
-        if (stream->state == STREAM_STATE_EOS)
+        /* If an error other than NEED_INPUT occurs during draining, we should probably return it and not
+         * flag EOS. This is difficult to test in native because it's highly dependent on decoder behaviour. */
+        if (SUCCEEDED(hr) && stream->state == STREAM_STATE_EOS)
         {
             *stream_flags = MF_SOURCE_READERF_ENDOFSTREAM;
         }
         else
         {
-            request_sample = !(flags & MF_SOURCE_READER_CONTROLF_DRAIN);
+            request_sample = stream->state != STREAM_STATE_EOS && !(flags & MF_SOURCE_READER_CONTROLF_DRAIN);
             *stream_flags = 0;
         }
     }
