@@ -73,6 +73,13 @@ enum media_stream_flags
     STREAM_FLAG_STOPPED = 0x8,          /* Received MEStreamStopped */
 };
 
+enum transform_entry_state
+{
+    MFT_STATE_READY = 0,
+    MFT_STATE_DRAINING,
+    MFT_STATE_DRAINED,
+};
+
 struct transform_entry
 {
     struct list entry;
@@ -82,6 +89,7 @@ struct transform_entry
     GUID category;
     BOOL hidden;
     BOOL attributes_initialized;
+    enum transform_entry_state state;
 };
 
 struct media_stream
@@ -770,7 +778,7 @@ HRESULT update_media_type(IMFMediaType *dst_type, IMFMediaType *src_type, BOOL a
 }
 
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
-        struct transform_entry *entry);
+        struct transform_entry *entry, BOOL drain);
 static HRESULT source_reader_push_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry, IMFSample *sample)
 {
@@ -778,12 +786,12 @@ static HRESULT source_reader_push_transform_samples(struct source_reader *reader
 
     do
     {
-        if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry))
+        if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry, FALSE))
                 && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
             return hr;
         if (SUCCEEDED(hr = IMFTransform_ProcessInput(entry->transform, 0, sample, 0)))
         {
-            hr = source_reader_pull_transform_samples(reader, stream, entry);
+            hr = source_reader_pull_transform_samples(reader, stream, entry, FALSE);
             return hr == MF_E_TRANSFORM_NEED_MORE_INPUT ? S_OK : hr;
         }
     }
@@ -879,14 +887,17 @@ static void transform_entry_initialize_attributes(struct source_reader *reader, 
 }
 
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
-        struct transform_entry *entry)
+        struct transform_entry *entry, BOOL drain)
 {
+    enum transform_entry_state upstream_state = drain ? MFT_STATE_DRAINED : MFT_STATE_READY;
     MFT_OUTPUT_STREAM_INFO stream_info = {0};
     struct transform_entry *next = NULL;
     struct list *ptr;
     DWORD status;
     HRESULT hr;
 
+    if ((ptr = list_prev(&stream->transforms, &entry->entry)))
+        upstream_state = LIST_ENTRY(ptr, struct transform_entry, entry)->state;
     if ((ptr = list_next(&stream->transforms, &entry->entry)))
         next = LIST_ENTRY(ptr, struct transform_entry, entry);
 
@@ -909,6 +920,13 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
                 && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
             break;
 
+        if (upstream_state == MFT_STATE_DRAINED && entry->state == MFT_STATE_READY)
+        {
+            if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_DRAIN, 0)))
+                WARN("Failed to drain transform %p, hr %#lx\n", entry->transform, hr);
+            entry->state = MFT_STATE_DRAINING;
+        }
+
         if (SUCCEEDED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
         {
             /* propagate upstream type to the transform input type */
@@ -930,6 +948,10 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
                 hr = source_reader_queue_sample(reader, stream, entry->pending_flags, out_buffer.pSample);
 
             entry->pending_flags = 0;
+        }
+        else if (entry->state == MFT_STATE_DRAINING && hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            entry->state = MFT_STATE_DRAINED;
         }
 
         if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &media_type)))
@@ -964,11 +986,9 @@ static HRESULT source_reader_drain_transform_samples(struct source_reader *reade
     if ((ptr = list_next(&stream->transforms, &entry->entry)))
         next = LIST_ENTRY(ptr, struct transform_entry, entry);
 
-    if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_DRAIN, 0)))
-        WARN("Failed to drain transform %p, hr %#lx\n", entry->transform, hr);
     /* MF_E_SAMPLEALLOCATOR_EMPTY can occur here if many samples are drained
      * from a transform, but it's not an issue if a later call succeeds. */
-    if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry))
+    if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry, TRUE))
             && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
         WARN("Failed to pull pending samples, hr %#lx.\n", hr);
 
@@ -987,6 +1007,7 @@ static HRESULT source_reader_flush_transform_samples(struct source_reader *reade
 
     if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_FLUSH, 0)))
         WARN("Failed to flush transform %p, hr %#lx\n", entry->transform, hr);
+    entry->state = MFT_STATE_READY;
 
     return next ? source_reader_flush_transform_samples(reader, stream, next) : S_OK;
 }
