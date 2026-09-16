@@ -1271,8 +1271,13 @@ NTSTATUS load_builtin( struct pe_mapping_info *pe_mapping, USHORT machine,
         loadorder = LO_BUILTIN;  /* builtin with no fallback since mapping a fake dll is not useful */
     }
 
-    if (is_arm64ec() && pe_mapping->image.is_hybrid && search_machine == IMAGE_FILE_MACHINE_AMD64)
-        search_machine = current_machine;
+    if (current_machine == IMAGE_FILE_MACHINE_ARM64 && search_machine == IMAGE_FILE_MACHINE_AMD64)
+    {
+        /* force loading the x64 version of the builtin */
+        if (!pe_mapping->image.is_hybrid && !machine) machine = IMAGE_FILE_MACHINE_AMD64;
+        /* but make sure we load from the aarch64 builtin directory */
+        search_machine = IMAGE_FILE_MACHINE_ARM64;
+    }
 
     switch (loadorder)
     {
