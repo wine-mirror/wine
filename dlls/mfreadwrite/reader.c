@@ -1106,14 +1106,26 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                     stream->state = STREAM_STATE_EOS;
                     stream->flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
 
+                    /* The request which triggered MEEndOfStream is now dangling. If transforms are present,
+                     * complete the dangling request by draining a sample. Subsequent samples will be drained
+                     * in the sample read handler. If draining errors out here (the error is never NEED_INPUT),
+                     * we rely on the app continuing after the error response if it makes sense to do so. For
+                     * example, after a sample allocation failure, requests will succeed once the app has
+                     * released enough samples. Failure should be very rare. */
                     if ((ptr = list_head(&stream->transforms)))
                     {
                         struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
                         if (FAILED(hr = source_reader_drain_transform_samples(reader, stream, entry)))
+                        {
                             WARN("Failed to drain pending samples, hr %#lx.\n", hr);
+                            if (stream->requests)
+                                source_reader_queue_response(reader, stream, hr, 0, 0, NULL);
+                        }
+                        /* Wake the synchronous reader loop to break on EOS in case nothing was drained. */
+                        if (!reader->async_callback)
+                            WakeAllConditionVariable(&reader->sample_event);
                     }
-
-                    while (stream->requests)
+                    else while (stream->requests)
                         source_reader_queue_response(reader, stream, S_OK, MF_SOURCE_READERF_ENDOFSTREAM, 0, NULL);
 
                     break;
