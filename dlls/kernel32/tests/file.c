@@ -1861,6 +1861,15 @@ static void test_GetTempFileNameA(void)
     strcat(expected, "abc2.tmp");
     ok(lstrcmpA(out, expected) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n",
        out, expected);
+
+    result = GetTempFileNameA(windowsdir, "abc", 0xA, out);
+    ok(result != 0, "GetTempFileNameA: error %ld\n", GetLastError());
+    expected[0] = '\0';
+    strcat(expected, windowsdir);
+    strcat(expected, "abcA.tmp");
+    todo_wine
+    ok(lstrcmpA(out, expected) == 0, "GetTempFileNameA: Unexpected output \"%s\" vs \"%s\"\n",
+       out, expected);
 }
 
 static void test_DeleteFileA( void )
