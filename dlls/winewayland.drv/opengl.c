@@ -78,7 +78,7 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
 
     TRACE("client=%s format=%d\n", debugstr_client_surface(client), format);
 
-    if (!egl->has_EGL_EXT_present_opaque)
+    if (!egl->extensions[EGL_EXT_present_opaque])
         WARN("Missing EGL_EXT_present_opaque extension\n");
     else
     {

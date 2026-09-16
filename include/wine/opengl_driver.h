@@ -62,6 +62,7 @@ struct wgl_pixel_format
 enum opengl_extension
 {
 #define USE_GL_EXT(x) x,
+    ALL_EGL_EXTS
     ALL_GL_EXTS
     ALL_WGL_EXTS
 #undef USE_GL_EXT
@@ -205,8 +206,7 @@ struct egl_platform
     EGLDisplay           display;
     UINT                 config_count;
     EGLConfig           *configs;
-    BOOL                 has_EGL_EXT_present_opaque;
-    BOOL                 has_EGL_EXT_pixel_format_float;
+    BOOLEAN              extensions[GL_EXTENSION_COUNT]; /* supported EGL extensions */
 
     /* WGL_WINE_query_renderer info */
     UINT                 device_id;

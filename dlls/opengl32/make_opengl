@@ -1024,6 +1024,7 @@ chdir(dirname($0));
 #
 my %all_extensions =
     (
+     "EGL_MESA_device_software" => 1,
      # exposed by native drivers, but not included in registry xml:
      "GL_APPLE_packed_pixels" => 1, # no specification
      "GL_APPLE_pixel_buffer" => 1, # no specification
@@ -1101,6 +1102,7 @@ my %unexposed_extgroups =
    );
 my %unexposed_extensions =
    (
+    "EGL_MESA_device_software" => 1,
     "GL_AMD_pinned_memory" => 1,
     "GL_APPLE_pixel_buffer" => 1,
     "GL_EXT_memory_object_fd" => 1,

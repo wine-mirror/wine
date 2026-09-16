@@ -10930,6 +10930,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(EGL_KHR_swap_buffers_with_damage) \
     USE_GL_EXT(EGL_KHR_vg_parent_image) \
     USE_GL_EXT(EGL_KHR_wait_sync) \
+    USE_GL_EXT(EGL_MESA_device_software) \
     USE_GL_EXT(EGL_MESA_drm_image) \
     USE_GL_EXT(EGL_MESA_image_dma_buf_export) \
     USE_GL_EXT(EGL_MESA_platform_gbm) \

@@ -480,7 +480,7 @@ static BOOL initialize_vk_device( TEB *teb, const struct opengl_context *ctx )
 static void init_client_context( TEB *teb, struct opengl_client_context *client, const struct opengl_context *ctx )
 {
 #define USE_GL_EXT(x) #x,
-    static const char *extension_names[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+    static const char *extension_names[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
     const char *vendor, *device, *version, *rest = "";
     const struct opengl_funcs *funcs = teb->glTable;

@@ -65,7 +65,7 @@ struct extension_entry
 };
 
 #define USE_GL_EXT(x) [x] = { .name = #x, .len = sizeof(#x) - 1 },
-static const struct extension_entry all_extensions[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+static const struct extension_entry all_extensions[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
 #define USE_GL_EXT(x) + sizeof(#x)
 static const UINT MAX_EXTENSION_STR = 1 ALL_GL_EXTS ALL_WGL_EXTS;

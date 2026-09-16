@@ -158,7 +158,7 @@ struct extension_entry
 };
 
 #define USE_GL_EXT(x) [x] = { .name = #x, .len = sizeof(#x) - 1 },
-static const struct extension_entry all_extensions[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+static const struct extension_entry all_extensions[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
 
 static int extension_entry_cmp( const void *a, const void *b )
@@ -166,20 +166,6 @@ static int extension_entry_cmp( const void *a, const void *b )
     const struct extension_entry *entry_a = a, *entry_b = b;
     size_t len = max( entry_a->len, entry_b->len );
     return strncmp( entry_a->name, entry_b->name, len );
-}
-
-static BOOL has_extension( const char *list, const char *ext )
-{
-    size_t len = strlen( ext );
-    const char *cur = list;
-
-    while (cur && (cur = strstr( cur, ext )))
-    {
-        if ((!cur[len] || cur[len] == ' ') && (cur == list || cur[-1] == ' ')) return TRUE;
-        cur = strchr( cur, ' ' );
-    }
-
-    return FALSE;
 }
 
 static enum opengl_extension parse_extension( const char *ext, size_t len )
@@ -1082,6 +1068,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
 #ifdef SONAME_LIBEGL
 
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
+static BOOLEAN libegl_extensions[GL_EXTENSION_COUNT];
 
 static EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
 {
@@ -1221,7 +1208,7 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
     }
     else fmt->transparent = -1;
 
-    if (!egl->has_EGL_EXT_pixel_format_float) fmt->pixel_type = WGL_TYPE_RGBA_ARB;
+    if (!egl->extensions[EGL_EXT_pixel_format_float]) fmt->pixel_type = WGL_TYPE_RGBA_ARB;
     else if (funcs->p_eglGetConfigAttrib( egl->display, config, EGL_COLOR_COMPONENT_TYPE_EXT, &value ))
     {
         switch (value)
@@ -1523,27 +1510,18 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_activate = egldrv_context_activate,
 };
 
-static void dump_extensions( const char *list )
+static void dump_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
-    const char *start, *end, *ptr;
-
-    for (start = end = ptr = list; ptr; ptr = strchr( ptr + 1, ' ' ))
-    {
-        if (ptr - start <= 128) end = ptr;
-        else
-        {
-            TRACE( "%.*s\n", (int)(end - start), start );
-            start = end + 1;
-        }
-    }
-
-    TRACE( "%s\n", start );
+#define USE_GL_EXT(x) [x] = #x,
+    static const char *names[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
+#undef USE_GL_EXT
+    for (UINT i = 0; i < GL_EXTENSION_COUNT; i++) if (extensions[i]) TRACE( "- %s\n", names[i] );
 }
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
 {
     struct opengl_funcs *funcs = &display_funcs;
-    const char *extensions;
+    const char *str;
 
     if (!(funcs->egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW | RTLD_GLOBAL )))
     {
@@ -1561,16 +1539,17 @@ static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
     LOAD_FUNCPTR( eglQueryString );
 #undef LOAD_FUNCPTR
 
-    if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS )))
+    if (!(str = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS )))
     {
         ERR( "Failed to find client extensions\n" );
         goto failed;
     }
+    parse_extensions( str, libegl_extensions, TRUE );
     TRACE( "EGL client extensions:\n" );
-    dump_extensions( extensions );
+    dump_extensions( libegl_extensions );
 
 #define CHECK_EXTENSION( ext )                                  \
-    if (!has_extension( extensions, #ext ))                     \
+    if (!libegl_extensions[ext])                                \
     {                                                           \
         ERR( "Failed to find required extension %s\n", #ext );  \
         goto failed;                                            \
@@ -1599,8 +1578,8 @@ failed:
 
 static BOOL init_egl_platform( struct egl_platform *egl, const struct opengl_funcs *funcs )
 {
-    const char *extensions;
     EGLint major, minor;
+    const char *str;
 
     if (!egl->display) egl->display = funcs->p_eglGetPlatformDisplay( egl->type, egl->native_display, NULL );
     if (!egl->display)
@@ -1612,23 +1591,22 @@ static BOOL init_egl_platform( struct egl_platform *egl, const struct opengl_fun
     if (!funcs->p_eglInitialize( egl->display, &major, &minor )) return FALSE;
     TRACE( "Initialized EGL display %p, version %d.%d\n", egl->display, major, minor );
 
-    if (!(extensions = funcs->p_eglQueryString( egl->display, EGL_EXTENSIONS ))) return FALSE;
+    if (!(str = funcs->p_eglQueryString( egl->display, EGL_EXTENSIONS ))) return FALSE;
+    parse_extensions( str, egl->extensions, TRUE );
     TRACE( "EGL display extensions:\n" );
-    dump_extensions( extensions );
+    dump_extensions( egl->extensions );
 
-#define CHECK_EXTENSION( ext )                                                                     \
-    if (!has_extension( extensions, #ext ))                                                        \
-    {                                                                                              \
-        WARN( "Failed to find required extension %s\n", #ext );                                    \
-        return FALSE;                                                                              \
+#define CHECK_EXTENSION( ext )                                    \
+    if (!egl->extensions[ext])                                    \
+    {                                                             \
+        WARN( "Failed to find required extension %s\n", #ext );   \
+        return FALSE;                                             \
     }
     CHECK_EXTENSION( EGL_KHR_create_context );
     CHECK_EXTENSION( EGL_KHR_create_context_no_error );
     CHECK_EXTENSION( EGL_KHR_no_config_context );
 #undef CHECK_EXTENSION
 
-    egl->has_EGL_EXT_present_opaque = has_extension( extensions, "EGL_EXT_present_opaque" );
-    egl->has_EGL_EXT_pixel_format_float = has_extension( extensions, "EGL_EXT_pixel_format_float" );
     return TRUE;
 }
 
@@ -1636,11 +1614,10 @@ static void init_egl_devices( struct opengl_funcs *funcs )
 {
     EGLDeviceEXT *devices = NULL;
     struct egl_platform *egl;
-    const char *extensions;
+    const char *str;
     EGLint count;
 
-    if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS ))) return;
-    if (!has_extension( extensions, "EGL_EXT_device_base" ) || !has_extension( extensions, "EGL_EXT_platform_device" )) return;
+    if (!libegl_extensions[EGL_EXT_device_base] || !libegl_extensions[EGL_EXT_platform_device] ) return;
 
 #define LOAD_FUNCPTR( func )                                                                    \
     if (!funcs->p_##func && !(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func ))) return
@@ -1668,11 +1645,17 @@ static void init_egl_devices( struct opengl_funcs *funcs )
 
     for (int i = 0; i < count; i++)
     {
+        BOOLEAN extensions[GL_EXTENSION_COUNT] = {0};
+
         if (devices[i] == display_egl.device) continue;
 
-        extensions = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS );
+        if (!(str = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS ))) continue;
+        parse_extensions( str, extensions, TRUE );
+        TRACE( "EGL device %#x extensions:\n", i );
+        dump_extensions( extensions );
+
         /* Assume that all devices without EGL_MESA_device_software are accelerated. */
-        if (has_extension( extensions, "EGL_MESA_device_software" )) continue;
+        if (extensions[EGL_MESA_device_software]) continue;
 
         if (!(egl = calloc( 1, sizeof(*egl) ))) break;
 
@@ -1681,6 +1664,7 @@ static void init_egl_devices( struct opengl_funcs *funcs )
         egl->native_display = devices[i];
         egl->device = devices[i];
         egl->index = list_count( &devices_egl );
+        memcpy( egl->extensions, extensions, sizeof(extensions) );
 
         if (!init_egl_platform( egl, funcs )) free( egl );
         else list_add_tail( &devices_egl, &egl->entry );
@@ -1748,21 +1732,19 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 {
     static const UINT versions[] = {46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, 21, 20, 15, 14, 13, 12, 11, 10, 0};
     EGLContext core_context = EGL_NO_CONTEXT, compat_context = EGL_NO_CONTEXT, context = EGL_NO_CONTEXT;
-    BOOL has_device_persistent_id;
     int i, count, values[3] = {0};
-    const char *extensions, *str;
     EGLConfig config;
+    const char *str;
 
     TRACE( "Initializing device %u (%p)\n", egl->index, egl->device);
 
-    extensions = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_EXTENSIONS );
     /* Assume that all devices without EGL_MESA_device_software are accelerated. */
-    egl->accelerated = !has_extension( extensions, "EGL_MESA_device_software" );
+    egl->accelerated = !egl->extensions[EGL_MESA_device_software];
     TRACE( "  - accelerated: %u\n", egl->accelerated );
 
     /* EGL does not provide a convenient way to get device / vendor ID, so we have to do it
      * manually through DRM. Otherwise fallback to value as for SoC devices in GLX */
-    if (!has_extension( extensions, "EGL_EXT_device_drm" )) egl->vendor_id = egl->device_id = 0xffffffff;
+    if (!egl->extensions[EGL_EXT_device_drm]) egl->vendor_id = egl->device_id = 0xffffffff;
     else if ((str = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_DRM_DEVICE_FILE_EXT )) && (str = strrchr( str, '/' )))
     {
         egl->vendor_id = read_drm_device_prop( str, "vendor" );
@@ -1771,7 +1753,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     TRACE( "  - device_id: %#x\n", egl->device_id );
     TRACE( "  - vendor_id: %#x\n", egl->vendor_id );
 
-    if ((has_device_persistent_id = has_extension( extensions, "EGL_EXT_device_persistent_id" )))
+    if (egl->extensions[EGL_EXT_device_persistent_id])
     {
         funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DEVICE_UUID_EXT, sizeof(egl->device_uuid), &egl->device_uuid, &count );
         funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DRIVER_UUID_EXT, sizeof(egl->driver_uuid), &egl->driver_uuid, &count );
@@ -1822,6 +1804,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 
     if (context)
     {
+        BOOLEAN extensions[GL_EXTENSION_COUNT] = {0};
         char *renderer, *vendor;
 
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
@@ -1842,15 +1825,15 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
             memcpy( egl->version, values, sizeof(egl->version) );
         TRACE( "  - version: %u.%u.%u\n", egl->version[0], egl->version[1], egl->version[2] );
 
-        extensions = (const char *)funcs->p_glGetString( GL_EXTENSIONS );
-        if (has_extension( extensions, "GL_NVX_gpu_memory_info" ))
+        parse_extensions( (const char *)funcs->p_glGetString( GL_EXTENSIONS ), extensions, TRUE );
+        if (extensions[GL_NVX_gpu_memory_info])
         {
             funcs->p_glGetIntegerv( GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, values );
             egl->video_memory = values[0] / 1024;
         }
         TRACE( "  - video_memory: %u MiB\n", egl->video_memory );
 
-        if (!has_device_persistent_id && (has_extension( extensions, "GL_EXT_memory_object" ) || has_extension( extensions, "GL_EXT_semaphore" )))
+        if (!egl->extensions[EGL_EXT_device_persistent_id] && (extensions[GL_EXT_memory_object] || extensions[GL_EXT_semaphore]))
         {
             funcs->p_glGetUnsignedBytevEXT( GL_DRIVER_UUID_EXT, (GLubyte *)&egl->driver_uuid );
             funcs->p_glGetUnsignedBytei_vEXT( GL_DEVICE_UUID_EXT, 0, (GLubyte *)&egl->device_uuid );
@@ -3317,7 +3300,7 @@ static void display_funcs_init(void)
     global_context->extensions[WGL_ARB_multisample] = 1;
     global_context->extensions[WGL_ARB_pixel_format] = 1;
 
-    if (display_egl.has_EGL_EXT_pixel_format_float || global_context->extensions[GL_ARB_color_buffer_float])
+    if (display_egl.extensions[EGL_EXT_pixel_format_float] || global_context->extensions[GL_ARB_color_buffer_float])
     {
         global_context->extensions[WGL_ARB_pixel_format_float] = 1;
         global_context->extensions[WGL_ATI_pixel_format_float] = 1;
