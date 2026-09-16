@@ -1363,7 +1363,17 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
     BOOL request_sample = FALSE;
     struct list *ptr;
 
-    if ((response = media_stream_pop_response(reader, stream)))
+    if (!(response = media_stream_pop_response(reader, stream)) && stream->state == STREAM_STATE_EOS
+            && (ptr = list_head(&stream->transforms)))
+    {
+        struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
+
+        /* Try to drain a sample at EOS if transforms are present. Draining one at a time prevents
+         * exhaustion of the allocator in some cases. */
+        source_reader_drain_transform_samples(reader, stream, entry);
+    }
+
+    if (response || (response = media_stream_pop_response(reader, stream)))
     {
         *status = response->status;
         *stream_index = stream->index;
@@ -1371,16 +1381,7 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
         *timestamp = response->timestamp;
         *sample = response->sample;
         if (*sample)
-        {
             IMFSample_AddRef(*sample);
-            if (stream->state == STREAM_STATE_EOS && (ptr = list_head(&stream->transforms)))
-            {
-                struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
-                /* Try to drain another sample in case the decoder emits many while draining.
-                 * Draining one at a time prevents exhaustion of the allocator in some cases. */
-                source_reader_drain_transform_samples(reader, stream, entry);
-            }
-        }
 
         source_reader_release_response(response);
     }
