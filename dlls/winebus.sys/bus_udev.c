@@ -1157,7 +1157,7 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
 
 static void get_device_usb_info(struct udev_device *dev, struct device_desc *desc)
 {
-    UINT class = 0, subclass = 0, protocol = 0;
+    UINT class = 0, subclass = 0, protocol = 0, num_ifaces = 0, iface_num = -1;
     struct udev_device *usb_dev, *iface;
     const char *tmp;
 
@@ -1177,11 +1177,15 @@ static void get_device_usb_info(struct udev_device *dev, struct device_desc *des
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
     if ((tmp = udev_device_get_sysattr_value(usb_dev, "serial")))
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+    if (!(tmp = udev_device_get_sysattr_value(usb_dev, "bNumInterfaces")) || !sscanf(tmp, "%u", &num_ifaces))
+        ERR("Failed to get number of USB interfaces.\n");
 
+    if (num_ifaces != 1 && (tmp = udev_device_get_sysattr_value(iface, "bInterfaceNumber"))) sscanf(tmp, "%x", &iface_num);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceClass"))) sscanf(tmp, "%x", &class);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceSubClass"))) sscanf(tmp, "%x", &subclass);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceProtocol"))) sscanf(tmp, "%x", &protocol);
     desc->bus_id = ((class & 0xff) << 16) | ((subclass & 0xff) << 8) | (protocol & 0xff);
+    desc->interface = iface_num;
 }
 
 static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char *devnode, struct device_desc desc)
