@@ -2172,10 +2172,10 @@ static BOOL push_std_redirections(CMD_REDIRECTION *redir, HANDLE saved[3])
                             &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (h == INVALID_HANDLE_VALUE)
             {
-                WARN("Failed to open (%ls)\n", expanded_filename);
+                WARN("Failed to open (%s)\n", wine_dbgstr_w(expanded_filename));
                 return FALSE;
             }
-            TRACE("Open (%ls) => %p\n", expanded_filename, h);
+            TRACE("Open (%s) => %p\n", wine_dbgstr_w(expanded_filename), h);
             break;
         case REDIR_WRITE_TO:
         case REDIR_WRITE_APPEND:
@@ -2187,10 +2187,10 @@ static BOOL push_std_redirections(CMD_REDIRECTION *redir, HANDLE saved[3])
                                 &sa, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
                 if (h == INVALID_HANDLE_VALUE)
                 {
-                    WARN("Failed to open (%ls)\n", expanded_filename);
+                    WARN("Failed to open (%s)\n", wine_dbgstr_w(expanded_filename));
                     return FALSE;
                 }
-                TRACE("Open %u (%ls) => %p\n", redir->fd, expanded_filename, h);
+                TRACE("Open %u (%s) => %p\n", redir->fd, wine_dbgstr_w(expanded_filename), h);
                 if (SetFilePointer(h, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
                     WCMD_print_error();
             }
@@ -3666,7 +3666,7 @@ enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
     if (!(curPos = fetch_next_line(TRUE, extraSpace)))
         return RPL_EOF;
 
-    TRACE("About to parse line (%ls)\n", extraSpace);
+    TRACE("About to parse line (%s)\n", wine_dbgstr_w(extraSpace));
 
     node_builder_init(&builder);
 
@@ -4352,7 +4352,7 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
 
         wcscpy(&buffer[len], element);
 
-        TRACE("Doing set element %ls\n", buffer);
+        TRACE("Doing set element %s\n", wine_dbgstr_w(buffer));
 
         if (wcspbrk(element, L"?*"))
         {
@@ -4366,12 +4366,12 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
 
             if (hff == INVALID_HANDLE_VALUE)
             {
-                TRACE("Couldn't FindFirstFile on %ls\n", buffer);
+                TRACE("Couldn't FindFirstFile on %s\n", wine_dbgstr_w(buffer));
                 continue;
             }
             do
             {
-                TRACE("Considering %ls\n", fd.cFileName);
+                TRACE("Considering %s\n", wine_dbgstr_w(fd.cFileName));
                 if (!lstrcmpW(fd.cFileName, L"..") || !lstrcmpW(fd.cFileName, L".")) continue;
                 if (!(for_ctrl->flags & CMD_FOR_FLAG_TREE_INCLUDE_FILES) &&
                     !(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -4415,7 +4415,7 @@ static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD
 
     while (!WCMD_is_break(return_code) && dirs_to_walk)
     {
-        TRACE("About to walk %p %ls for %s\n", dirs_to_walk, dirs_to_walk->dirName, debugstr_for_control(for_ctrl));
+        TRACE("About to walk %p %s for %s\n", dirs_to_walk, wine_dbgstr_w(dirs_to_walk->dirName), debugstr_for_control(for_ctrl));
         if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
             WCMD_add_dirstowalk(dirs_to_walk);
 
