@@ -341,7 +341,7 @@ static BOOL CDataEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         else
         {
             CRYPT_CONTENT_INFO info;
-            char rsa_data[] = "1.2.840.113549.1.7.1";
+            char rsa_data[] = szOID_RSA_data;
 
             info.pszObjId = rsa_data;
             info.Content.cbData = msg->bare_content_len;

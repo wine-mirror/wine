@@ -26,6 +26,7 @@
 #include "winbase.h"
 #define CRYPT_OID_INFO_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
+#include "wintrust.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "winuser.h"
@@ -1387,9 +1388,9 @@ static const struct OIDInfoConstructor {
  { 6, szOID_NETSCAPE_CA_POLICY_URL, 0, (LPCWSTR)IDS_NETSCAPE_CA_POLICY_URL, NULL },
  { 6, szOID_NETSCAPE_SSL_SERVER_NAME, 0, (LPCWSTR)IDS_NETSCAPE_SSL_SERVER_NAME, NULL },
  { 6, szOID_NETSCAPE_COMMENT, 0, (LPCWSTR)IDS_NETSCAPE_COMMENT, NULL },
- { 6, "1.3.6.1.4.1.311.2.1.10", 0, L"SpcSpAgencyInfo", NULL },
- { 6, "1.3.6.1.4.1.311.2.1.27", 0, L"SpcFinancialCriteria", NULL },
- { 6, "1.3.6.1.4.1.311.2.1.26", 0, L"SpcMinimalCriteria", NULL },
+ { 6, SPC_SP_AGENCY_INFO_OBJID, 0, L"SpcSpAgencyInfo", NULL },
+ { 6, SPC_FINANCIAL_CRITERIA_OBJID, 0, L"SpcFinancialCriteria", NULL },
+ { 6, SPC_MINIMAL_CRITERIA_OBJID, 0, L"SpcMinimalCriteria", NULL },
  { 6, szOID_COUNTRY_NAME, 0, (LPCWSTR)IDS_COUNTRY, NULL },
  { 6, szOID_ORGANIZATION_NAME, 0, (LPCWSTR)IDS_ORGANIZATION, NULL },
  { 6, szOID_ORGANIZATIONAL_UNIT_NAME, 0, (LPCWSTR)IDS_ORGANIZATIONAL_UNIT, NULL },
