@@ -2329,6 +2329,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_TESLA_T4            = 0x1eb8,
     CARD_NVIDIA_AMPERE_A10          = 0x2236,
     CARD_NVIDIA_AMPERE_A10G         = 0x2237,
+    CARD_NVIDIA_L4                  = 0x27b8,
     CARD_NVIDIA_GEFORCE_RTX4060     = 0x2882,
     CARD_NVIDIA_GEFORCE_RTX4060M    = 0x28a0,
     CARD_NVIDIA_GEFORCE_RTX4060TI8G = 0x2803,
