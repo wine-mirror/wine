@@ -22,4 +22,20 @@
 #include <corecrt.h>
 #include <vcruntime_new.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef int (__cdecl *_PNH)(size_t);
+
+_PNH __cdecl _query_new_handler(void);
+_PNH __cdecl _set_new_handler(_PNH);
+
+_ACRTIMP int __cdecl _query_new_mode(void);
+_ACRTIMP int __cdecl _set_new_mode(int);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _INC_NEW */
