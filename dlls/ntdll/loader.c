@@ -4513,7 +4513,6 @@ void loader_init( CONTEXT *context, void **entry )
         pBaseThreadInitThunk = RtlFindExportedRoutineByName( kernel32->ldr.DllBase, "BaseThreadInitThunk" );
         LdrGetProcedureAddress( kernel32->ldr.DllBase, &ctrl_routine, 0, (void **)&pCtrlRoutine );
 
-        actctx_init();
         locale_init();
         if (needs_elevation())
             elevate_token();

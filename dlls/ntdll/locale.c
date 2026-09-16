@@ -341,6 +341,8 @@ void locale_init(void)
     system_ui_languages_default = dup_ui_languages( langs, len );
     if (user_key) NtClose( user_key );
 
+    actctx_init();
+
     if (!RtlQueryActivationContextApplicationSettings( 0, NULL, L"http://schemas.microsoft.com/SMI/2019/WindowsSettings",
                                                        L"activeCodePage", locale, ARRAY_SIZE(locale), NULL ))
     {
