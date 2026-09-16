@@ -270,7 +270,7 @@ static HRESULT WINAPI Exception_Printable_ToString(IStringable *iface, HSTRING *
 }
 
 DEFINE_RTTI_DATA(Exception_Printable, offsetof(struct Exception, IPrintable_iface),
-        "?.AVException@Platform@@",
+        ".?AVException@Platform@@",
         Exception_Object_rtti_base_descriptor,
         Exception_IPrintable_rtti_base_descriptor,
         Exception_IEquatable_rtti_base_descriptor,
@@ -400,7 +400,7 @@ COM_VTABLE_ENTRY(Exception_GetTrustLevel)
 COM_VTABLE_RTTI_END;
 
 DEFINE_RTTI_DATA(COMException_Printable, offsetof(struct Exception, IPrintable_iface),
-        "?.AVException@Platform@@",
+        ".?AVException@Platform@@",
         Exception_rtti_base_descriptor,
         Exception_Object_rtti_base_descriptor,
         Exception_IPrintable_rtti_base_descriptor,
@@ -489,7 +489,7 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
     COM_VTABLE_RTTI_END;                                                                        \
                                                                                                 \
     DEFINE_RTTI_DATA(name##Exception_Printable, offsetof(struct Exception, IPrintable_iface),   \
-                     "?.AV" #name "Exception@Platform@@",                                       \
+                     ".?AV" #name "Exception@Platform@@",                                       \
                      COMException_rtti_base_descriptor,                                         \
                      Exception_rtti_base_descriptor,                                            \
                      Exception_Object_rtti_base_descriptor,                                     \
