@@ -1177,6 +1177,8 @@ static void get_device_usb_info(struct udev_device *dev, struct device_desc *des
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
     if ((tmp = udev_device_get_sysattr_value(usb_dev, "serial")))
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+    else
+        desc->serialnumber[0] = 0; /* Don't report a serial number if the USB device doesn't report one. */
     if (!(tmp = udev_device_get_sysattr_value(usb_dev, "bNumInterfaces")) || !sscanf(tmp, "%u", &num_ifaces))
         ERR("Failed to get number of USB interfaces.\n");
 
