@@ -11432,11 +11432,26 @@ static LRESULT WINAPI WmPrintProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp
     {
     case WM_PRINT:
     {
-        static RECT rect = {0, 0, 1, 1};
+        RECT rect, expected_rect;
+        int has_clip_rgn, ret;
+        HDC hdc = (HDC)wp;
+        HRGN clip_rgn;
         HBRUSH brush;
 
+        clip_rgn = CreateRectRgn(0, 0, 1, 1);
+        has_clip_rgn = GetClipRgn(hdc, clip_rgn);
+        todo_wine
+        ok(has_clip_rgn == 1, "Expected a clip region.\n");
+        ret = GetRgnBox(clip_rgn, &rect);
+        ok(ret == SIMPLEREGION, "Got unexpected ret %d.\n", ret);
+        SetRect(&expected_rect, 50, 50, 100, 100);
+        todo_wine
+        ok(EqualRect(&rect, &expected_rect), "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect));
+        DeleteObject(clip_rgn);
+
         brush = CreateSolidBrush(RGB(0xff, 0, 0));
-        FillRect((HDC)wp, &rect, brush);
+        SetRect(&rect, 0, 0, 1, 1);
+        FillRect(hdc, &rect, brush);
         DeleteObject(brush);
         return 0;
     }
