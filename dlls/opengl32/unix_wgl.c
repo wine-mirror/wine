@@ -528,7 +528,7 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
         }
     }
 
-    for (i = 0; i < WGL_FIRST_EXTENSION; i++) if (client->extensions[i]) client->extension_array[count++] = i;
+    for (i = MIN_GL_EXTENSION; i <= MAX_GL_EXTENSION; i++) if (client->extensions[i]) client->extension_array[count++] = i;
     if (client->extensions[WGL_EXT_extensions_string]) client->extension_array[count++] = WGL_EXT_extensions_string;
     if (client->extensions[WGL_EXT_swap_control])      client->extension_array[count++] = WGL_EXT_swap_control;
     client->extension_count = count;

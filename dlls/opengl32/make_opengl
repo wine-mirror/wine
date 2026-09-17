@@ -1022,7 +1022,7 @@ chdir(dirname($0));
 #  - reference to an array of XML nodes giving the list of arguments (an empty array
 #    for a 'void' function).
 #
-my %gl_extensions =
+my %all_extensions =
     (
      # exposed by native drivers, but not included in registry xml:
      "GL_APPLE_packed_pixels" => 1, # no specification
@@ -1034,9 +1034,7 @@ my %gl_extensions =
     );
 my %norm_functions;
 my %ext_functions;
-my %wgl_extensions;
 my %wgl_functions;
-my %egl_extensions;
 my %egl_functions;
 my %all_functions;
 my %all_enums;
@@ -1268,16 +1266,12 @@ sub add_extension($)
 {
     my $name = shift;
 
-    $gl_extensions{$name} = 1 if $name =~ /^GL/;
-    $wgl_extensions{$name} = 1 if $name =~ /^WGL/;
-    $egl_extensions{$name} = 1 if $name =~ /^EGL/;
+    $all_extensions{$name} = 1;
 
     foreach my $alias (@{$extension_aliases{$name}})
     {
         next if $alias =~ /_VERSION_/;
-        $gl_extensions{$alias} = 1 if $alias =~ /^GL/;
-        $wgl_extensions{$alias} = 1 if $alias =~ /^WGL/;
-        $egl_extensions{$alias} = 1 if $alias =~ /^EGL/;
+        $all_extensions{$alias} = 1;
     }
 }
 
@@ -1444,9 +1438,7 @@ sub parse_registry($)
         {
             next unless $alias =~ /^(GL|WGL|EGL)_/;
             next unless is_supported_extension( $alias );
-            next if defined $gl_extensions{$alias};
-            next if defined $wgl_extensions{$alias};
-            next if defined $egl_extensions{$alias};
+            next if defined $all_extensions{$alias};
 
             add_extension( $alias );
 
@@ -1661,13 +1653,19 @@ foreach (sort keys %ext_functions)
 }
 print HEADER "\n";
 
+my ($min_wgl_ext, $max_wgl_ext);
 print HEADER "#define ALL_WGL_EXTS";
-foreach (sort keys %wgl_extensions)
+foreach (sort keys %all_extensions)
 {
+    next unless $_ =~ /^WGL/;
     printf HEADER " \\\n    USE_GL_EXT(\%s)", $_;
+    $min_wgl_ext = $_ if not defined $min_wgl_ext;
+    $max_wgl_ext = $_;
 }
-print HEADER "\n\n";
-print HEADER "#define WGL_FIRST_EXTENSION " . (sort keys %wgl_extensions)[0] . "\n\n";
+print HEADER "\n";
+print HEADER "#define MIN_WGL_EXTENSION $min_wgl_ext\n";
+print HEADER "#define MAX_WGL_EXTENSION $max_wgl_ext\n";
+print HEADER "\n";
 print HEADER "#define ALL_WGL_FUNCS";
 foreach (sort keys %wgl_functions)
 {
@@ -1681,12 +1679,20 @@ foreach (sort keys %ext_functions)
     printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
 }
 print HEADER "\n\n";
+
+my ($min_egl_ext, $max_egl_ext);
 print HEADER "#define ALL_EGL_EXTS";
-foreach (sort keys %egl_extensions)
+foreach (sort keys %all_extensions)
 {
+    next unless $_ =~ /^EGL/;
     printf HEADER " \\\n    USE_GL_EXT(\%s)", $_;
+    $min_egl_ext = $_ if not defined $min_egl_ext;
+    $max_egl_ext = $_;
 }
-print HEADER "\n\n";
+print HEADER "\n";
+print HEADER "#define MIN_EGL_EXTENSION $min_egl_ext\n";
+print HEADER "#define MAX_EGL_EXTENSION $max_egl_ext\n";
+print HEADER "\n";
 print HEADER "#define ALL_EGL_FUNCS";
 foreach (sort keys %egl_functions)
 {
@@ -1701,20 +1707,29 @@ foreach (sort keys %ext_functions)
     printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
 }
 print HEADER "\n\n";
+
+my ($min_gl_ext, $max_gl_ext);
 print HEADER "#define ALL_GL_EXTS";
-foreach (sort keys %gl_extensions)
+foreach (sort keys %all_extensions)
 {
+    next unless $_ =~ /^GL/;
     next unless is_supported_extension($_);
     printf HEADER " \\\n    USE_GL_EXT(\%s)", $_;
 }
 print HEADER "\n\n";
 print HEADER "#define ALL_GL_CLIENT_EXTS";
-foreach (sort keys %gl_extensions)
+foreach (sort keys %all_extensions)
 {
+    next unless $_ =~ /^GL/;
     next unless is_exposed_extension($_);
     printf HEADER " \\\n    USE_GL_EXT(\%s)", $_;
+    $min_gl_ext = $_ if not defined $min_gl_ext;
+    $max_gl_ext = $_;
 }
-print HEADER "\n\n";
+print HEADER "\n";
+print HEADER "#define MIN_GL_EXTENSION $min_gl_ext\n";
+print HEADER "#define MAX_GL_EXTENSION $max_gl_ext\n";
+print HEADER "\n";
 print HEADER "#define ALL_GL_FUNCS";
 foreach (sort keys %norm_functions)
 {

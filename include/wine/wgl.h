@@ -10757,8 +10757,8 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(WGL_NV_vertex_array_range) \
     USE_GL_EXT(WGL_WINE_pixel_format_passthrough) \
     USE_GL_EXT(WGL_WINE_query_renderer)
-
-#define WGL_FIRST_EXTENSION WGL_3DFX_multisample
+#define MIN_WGL_EXTENSION WGL_3DFX_multisample
+#define MAX_WGL_EXTENSION WGL_WINE_query_renderer
 
 #define ALL_WGL_FUNCS \
     USE_GL_FUNC(wglChoosePixelFormat) \
@@ -10980,6 +10980,8 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(EGL_TIZEN_image_native_surface) \
     USE_GL_EXT(EGL_WL_bind_wayland_display) \
     USE_GL_EXT(EGL_WL_create_wayland_buffer_from_image)
+#define MIN_EGL_EXTENSION EGL_ANDROID_GLES_layers
+#define MAX_EGL_EXTENSION EGL_WL_create_wayland_buffer_from_image
 
 #define ALL_EGL_FUNCS \
     USE_GL_FUNC(eglBindAPI) \
@@ -12842,6 +12844,8 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_SUN_vertex) \
     USE_GL_EXT(GL_WIN_phong_shading) \
     USE_GL_EXT(GL_WIN_specular_fog)
+#define MIN_GL_EXTENSION GL_3DFX_multisample
+#define MAX_GL_EXTENSION GL_WIN_specular_fog
 
 #define ALL_GL_FUNCS \
     USE_GL_FUNC(glAccum) \

@@ -284,14 +284,14 @@ static void opengl_context_init( struct opengl_context *context )
         client->extensions[GL_EXT_memory_object_win32] = context->extensions[GL_EXT_memory_object_fd];
         client->extensions[GL_EXT_semaphore_win32] = context->extensions[GL_EXT_semaphore_fd];
 
-        for (int i = 0; i < WGL_FIRST_EXTENSION; i++)
+        for (UINT i = MIN_GL_EXTENSION; i <= MAX_GL_EXTENSION; i++)
         {
             if (!context->extensions[i]) continue;
             if (!enabled_extensions[i]) TRACE( "-- %s (disabled)\n", all_extensions[i].name );
             else if (!exposed_extensions[i]) TRACE( "-- %s (hidden)\n", all_extensions[i].name );
             client->extensions[i] = enabled_extensions[i] && exposed_extensions[i];
         }
-        for (int i = WGL_FIRST_EXTENSION; i < GL_EXTENSION_COUNT; i++)
+        for (UINT i = MIN_WGL_EXTENSION; i <= MAX_WGL_EXTENSION; i++)
         {
             if (!global_context->extensions[i]) continue;
             if (!enabled_extensions[i]) TRACE( "-- %s (disabled)\n", all_extensions[i].name );
