@@ -2352,7 +2352,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
  *
  * Build the module data for the initially-loaded ntdll.
  */
-static void build_ntdll_module(void)
+static void *build_ntdll_module(void)
 {
     UNICODE_STRING nt_name = RTL_CONSTANT_STRING( L"\\??\\C:\\windows\\system32\\ntdll.dll" );
     MEMORY_BASIC_INFORMATION meminfo;
@@ -2366,8 +2366,8 @@ static void build_ntdll_module(void)
     assert( wm );
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
     node_ntdll = wm->ldr.DdagNode;
-    if (TRACE_ON(relay)) RELAY_SetupDLL( module );
     TRACE_(loaddll)( "Loaded %s at %p: builtin\n", debugstr_w(wm->ldr.FullDllName.Buffer), module);
+    return module;
 }
 
 
@@ -4341,13 +4341,14 @@ static void init_wow64( CONTEXT *context )
 {
     if (!imports_fixup_done)
     {
-        HMODULE wow64;
+        HMODULE wow64, ntdll_module;
         WINE_MODREF *wm;
         NTSTATUS status;
         static const WCHAR wow64_path[] = L"C:\\windows\\system32\\wow64.dll";
 
         build_wow64_main_module();
-        build_ntdll_module();
+        ntdll_module = build_ntdll_module();
+        if (TRACE_ON(relay)) RELAY_SetupDLL( ntdll_module );
 
         if ((status = load_dll( NULL, wow64_path, 0, &wm, FALSE )))
         {
@@ -4464,6 +4465,7 @@ void loader_init( CONTEXT *context, void **entry )
         ANSI_STRING ctrl_routine = RTL_CONSTANT_STRING( "CtrlRoutine" );
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
+        void *ntdll_module;
         unsigned int i;
 
         peb->LdrData            = &ldr;
@@ -4498,11 +4500,12 @@ void loader_init( CONTEXT *context, void **entry )
         if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
 
         wm = build_main_module();
-        build_ntdll_module();
+        ntdll_module = build_ntdll_module();
 #ifdef __arm64ec__
         load_arm64ec_module();
         update_load_config( wm->ldr.DllBase );
 #endif
+        if (TRACE_ON(relay)) RELAY_SetupDLL( ntdll_module );
 
         if ((status = load_dll( NULL, L"kernel32.dll", 0, &kernel32, FALSE )) != STATUS_SUCCESS)
         {
