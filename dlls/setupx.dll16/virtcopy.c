@@ -595,7 +595,7 @@ static RETERR16 VCP_UI_NodeCompare(LPVIRTNODE vn1, LPVIRTNODE vn2)
     file2 = vsmGetStringRawName16(vn2->vfsSrc.vhstrFileName);
 
     ret = strcmp(file1, file2);
-    /* Looks too complicated, but in optimized strcpy we might get
+    /* Looks too complicated, but in optimized strcmp we might get
      * a 32bit wide difference and would truncate it to 16 bit, so
      * erroneously returning equality. */
     if (ret < 0) return -1;
