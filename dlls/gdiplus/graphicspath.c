@@ -403,7 +403,7 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x, REAL y, REAL width,
 }
 
 /*******************************************************************************
- * GdipAddPathArcI   [GDUPLUS.2]
+ * GdipAddPathArcI   [GDIPLUS.2]
  *
  * See GdipAddPathArc
  */
