@@ -1520,6 +1520,9 @@ static void dump_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
 {
+#define USE_GL_FUNC(func) { .name = #func, .ptr = (void *)&display_funcs.p_ ## func },
+    static const struct { const char *name; void **ptr; } procs[] = { ALL_EGL_FUNCS ALL_EGL_EXT_FUNCS };
+#undef USE_GL_FUNC
     struct opengl_funcs *funcs = &display_funcs;
     const char *str;
 
@@ -1558,14 +1561,11 @@ static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
     CHECK_EXTENSION( EGL_EXT_platform_base );
 #undef CHECK_EXTENSION
 
-#define USE_GL_FUNC( func )                                                                     \
-    if (!funcs->p_##func && !(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func )))   \
-    {                                                                                           \
-        ERR( "Failed to load symbol %s\n", #func );                                             \
-        goto failed;                                                                            \
+    for (int i = 0; i < ARRAY_SIZE(procs); i++)
+    {
+        if (!*procs[i].ptr) *procs[i].ptr = funcs->p_eglGetProcAddress( procs[i].name );
+        if (!*procs[i].ptr) WARN( "%s not found.\n", procs[i].name );
     }
-    ALL_EGL_FUNCS
-#undef USE_GL_FUNC
 
     *driver_funcs = &egldrv_funcs;
     return TRUE;
