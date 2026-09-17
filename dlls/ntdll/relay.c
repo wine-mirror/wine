@@ -804,8 +804,8 @@ __ASM_GLOBAL_FUNC( relay_call,
 #endif
 
 
-static struct relay_descr *get_relay_descr( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                            DWORD exp_size )
+static struct relay_descr *get_descr_from_exports( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                                   DWORD exp_size )
 {
     struct relay_descr *descr;
     struct relay_descr_rva *rva;
@@ -821,6 +821,27 @@ static struct relay_descr *get_relay_descr( HMODULE module, const IMAGE_EXPORT_D
     if (rva->descr) descr = (struct relay_descr *)((char *)module + rva->descr);
     else descr = (struct relay_descr *)((const char *)exports + exp_size);
     if (descr->magic != RELAY_DESCR_MAGIC) return NULL;
+    return descr;
+}
+
+static struct relay_descr *get_descr_from_load_config( HMODULE module )
+{
+    struct relay_descr *descr;
+    ULONG *cfg, size;
+
+    if (!(cfg = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size )))
+        return NULL;
+    if (cfg[-2] != RELAY_DESCR_MAGIC || !cfg[-1]) return NULL;
+    descr = (void *)((char *)module + cfg[-1]);
+    if (descr->magic != RELAY_DESCR_MAGIC) return NULL;
+    return descr;
+}
+
+static struct relay_descr *get_relay_descr( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                            DWORD exp_size )
+{
+    struct relay_descr *descr = get_descr_from_load_config( module );
+    if (!descr) descr = get_descr_from_exports( module, exports, exp_size );
     return descr;
 }
 

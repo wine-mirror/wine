@@ -617,14 +617,19 @@ void output_exports( DLLSPEC *spec )
  *
  * Output the load configuration structure.
  */
-static void output_load_config(void)
+static void output_load_config( DLLSPEC *spec )
 {
     if (!is_pe()) return;
 
     output( "\n/* load_config */\n\n" );
     output( "\t%s\n", get_asm_rodata_section() );
-    output( "\t.globl %s\n", asm_name( "_load_config_used" ));
     output( "\t.balign %u\n", get_ptr_size() );
+    if (has_relays( &spec->exports ))
+    {
+        output( "\t.long 0xdeb90002\n" );             /* magic */
+        output_rva( ".L__wine_spec_relay_descr" );
+    }
+    output( "\t.globl %s\n", asm_name( "_load_config_used" ));
     output( "%s:\n", asm_name( "_load_config_used" ));
     output( "\t.long %u\n", get_ptr_size() == 8 ? 0x140 : 0xc0 ); /* Size */
     output( "\t.long 0\n" );                          /* TimeDateStamp */
@@ -864,7 +869,7 @@ void output_spec32_file( DLLSPEC *spec )
     output_exports( spec );
     output_imports( spec );
     if (needs_get_pc_thunk) output_get_pc_thunk();
-    output_load_config();
+    output_load_config( spec );
     output_crt_sections();
     output_resources( spec );
     output_gnu_stack_note();
