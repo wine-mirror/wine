@@ -550,17 +550,18 @@ void output_exports( DLLSPEC *spec )
 
     /* output relays */
 
+    if (!is_pe())
+    {
+        output( "\t.balign %u\n", get_ptr_size() );
+        output( ".L__wine_spec_exports_end:\n" );
+        if (!needs_relay) output( "\t%s 0\n", get_asm_ptr_keyword() );
+    }
     if (needs_relay)
     {
         if (is_pe())
         {
             output( "\t.data\n" );
             output( "\t.balign %u\n", get_ptr_size() );
-        }
-        else
-        {
-            output( "\t.balign %u\n", get_ptr_size() );
-            output( ".L__wine_spec_exports_end:\n" );
         }
 
         output( ".L__wine_spec_relay_descr:\n" );
@@ -572,12 +573,6 @@ void output_exports( DLLSPEC *spec )
         output( "\t%s .L__wine_spec_relay_args_string\n", get_asm_ptr_keyword() );
 
         output_relay_debug( exports );
-    }
-    else if (!is_pe())
-    {
-            output( "\t.balign %u\n", get_ptr_size() );
-            output( ".L__wine_spec_exports_end:\n" );
-            output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
     /* output import thunks */
