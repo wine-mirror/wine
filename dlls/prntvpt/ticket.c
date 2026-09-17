@@ -677,9 +677,9 @@ static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
         ticket->page.orientation = dm->dmOrientation;
     if (dm->dmFields & DM_PAPERSIZE)
         ticket->page.media.paper = dm->dmPaperSize;
-    if (dm->dmFields & DM_PAPERLENGTH)
-        ticket->page.media.size.width = dm->dmPaperWidth * 100;
     if (dm->dmFields & DM_PAPERWIDTH)
+        ticket->page.media.size.width = dm->dmPaperWidth * 100;
+    if (dm->dmFields & DM_PAPERLENGTH)
         ticket->page.media.size.height = dm->dmPaperLength * 100;
     if (dm->dmFields & DM_SCALE)
         ticket->page.scaling = dm->dmScale;
