@@ -175,7 +175,7 @@ static inline uint32_t make_pow2(uint32_t num)
 {
     DWORD index;
 
-    return BitScanReverse(&index, num - 1) ? 1u << (index + 1) : 1;
+    return num && BitScanReverse(&index, num - 1) ? 1u << (index + 1) : 1;
 }
 
 struct d3dx_parameter;
