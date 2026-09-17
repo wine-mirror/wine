@@ -174,7 +174,8 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(ptr long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=!i386,!arm64ec __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=arm64ec -norelay __C_specific_handler(ptr long ptr ptr)
 @ cdecl __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
@@ -1389,11 +1390,14 @@
 @ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)
-@ cdecl memcpy(ptr ptr long)
+@ cdecl -arch=!arm64ec memcpy(ptr ptr long)
+@ cdecl -arch=arm64ec -norelay memcpy(ptr ptr long)
 @ cdecl memcpy_s(ptr long ptr long)
-@ cdecl memmove(ptr ptr long)
+@ cdecl -arch=!arm64ec memmove(ptr ptr long)
+@ cdecl -arch=arm64ec -norelay memmove(ptr ptr long)
 @ cdecl memmove_s(ptr long ptr long)
-@ cdecl memset(ptr long long)
+@ cdecl -arch=!arm64ec memset(ptr long long)
+@ cdecl -arch=arm64ec -norelay memset(ptr long long)
 @ cdecl -arch=win32 mktime(ptr) _mktime32
 @ cdecl -arch=win64 mktime(ptr) _mktime64
 @ cdecl modf(double ptr)

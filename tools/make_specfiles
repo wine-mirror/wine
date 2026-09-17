@@ -229,13 +229,18 @@ sub read_spec_file($)
             my $new_arch = $1 if $descr{flags} =~ /-arch=(\S+)/;
             next if !defined $arch or !defined $new_arch;
 
-            if (($arch eq "win32" and $new_arch eq "win64") or ($arch eq "win64" and $new_arch eq "win32"))
+            my $neg_arch = ($new_arch eq "win32") ? "win64"
+                         : ($new_arch eq "win64") ? "win32"
+                         : ($new_arch =~ /^!(.*)$/) ? $1
+                         : "!".$new_arch;
+            if ($arch eq $neg_arch)
             {
                 $funcs{$func}{flags} =~ s/-arch=\S+\s+//;
                 next;
             }
 
             $funcs{$func}{flags} =~ s/-arch=$arch/-arch=$arch,$new_arch/;
+            $funcs{$func}{flags} =~ s/,$neg_arch,$new_arch//;
             next;
         }
         next if $func eq "@";

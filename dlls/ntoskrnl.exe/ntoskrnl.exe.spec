@@ -1556,7 +1556,8 @@
 @ stdcall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwYieldExecution() NtYieldExecution
-@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=!i386,!arm64ec __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=arm64ec -norelay __C_specific_handler(ptr long ptr ptr)
 @ cdecl -arch=!i386 -norelay __chkstk()
 @ cdecl -private -arch=i386 _CIcos()
 @ cdecl -private -arch=i386 _CIsin()
@@ -1649,11 +1650,14 @@
 @ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)
-@ cdecl memcpy(ptr ptr long)
+@ cdecl -arch=!arm64ec memcpy(ptr ptr long)
+@ cdecl -arch=arm64ec -norelay memcpy(ptr ptr long)
 @ cdecl memcpy_s(ptr long ptr long)
-@ cdecl memmove(ptr ptr long)
+@ cdecl -arch=!arm64ec memmove(ptr ptr long)
+@ cdecl -arch=arm64ec -norelay memmove(ptr ptr long)
 @ cdecl memmove_s(ptr long ptr long)
-@ cdecl memset(ptr long long)
+@ cdecl -arch=!arm64ec memset(ptr long long)
+@ cdecl -arch=arm64ec -norelay memset(ptr long long)
 @ cdecl qsort(ptr long long ptr)
 @ cdecl qsort_s(ptr long long ptr ptr)
 @ cdecl rand()
