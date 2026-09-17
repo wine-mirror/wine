@@ -781,7 +781,7 @@ int WINAPIV _snwscanf_s(wchar_t *input, size_t length,
 }
 
 /*********************************************************************
- *		_snscanf_s_l (MSVCRT.@)
+ *		_snwscanf_s_l (MSVCRT.@)
  */
 int WINAPIV _snwscanf_s_l(wchar_t *input, size_t length,
         const wchar_t *format, _locale_t locale, ...)
