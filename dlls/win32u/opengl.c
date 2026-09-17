@@ -227,12 +227,24 @@ static void init_enabled_extensions(void)
     free( disabled );
 }
 
-static void parse_current_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
+static const char *parse_version( const char *version, int *major, int *minor )
+{
+    const char *ptr = version;
+
+    *major = atoi( ptr );
+    if (*major <= 0) *major = 1;
+    while (isdigit( *ptr )) ++ptr;
+    if (*ptr++ != '.') ERR( "Invalid OpenGL version string %s.\n", debugstr_a(version) );
+    *minor = atoi( ptr );
+    if (*minor < 0) *minor = 0;
+    while (isdigit( *ptr )) ++ptr;
+
+    return ptr;
+}
+
+static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    int major = 0;
-
-    funcs->p_glGetIntegerv( GL_MAJOR_VERSION, &major );
 
     if (major >= 3)
     {
@@ -256,9 +268,16 @@ static void opengl_context_init( struct opengl_context *context )
 #define USE_GL_EXT(x) [x] = TRUE,
     static const BOOLEAN exposed_extensions[GL_EXTENSION_COUNT] = { ALL_GL_CLIENT_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
+    const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_client_context *client;
+    int major, minor = 0;
+    const char *str;
 
-    parse_current_extensions( context->extensions );
+    if (!(str = (const char *)funcs->p_glGetString( GL_VERSION ))) str = "1.0";
+    parse_version( str, &major, &minor );
+    TRACE( "context %p version %s (%d.%d)\n", context, str, major, minor );
+
+    parse_current_extensions( major, context->extensions );
 
     if ((client = opengl_client_context_from_client( context->client_context )))
     {
