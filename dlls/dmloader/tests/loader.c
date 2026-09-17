@@ -192,7 +192,7 @@ static void test_clear_cache(void)
     segment = NULL;
     hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicSegment, (void **)&segment);
     if (FAILED(hr))
-        win_skip("GetObject failed with %#lx, skipping segment tests\n", hr);
+        skip("GetObject failed with %#lx, skipping segment tests\n", hr);
 
     hr = IDirectMusicLoader_ClearCache(loader, &GUID_DirectMusicAllTypes);
     ok(hr == S_OK, "ClearCache failed with %#lx\n", hr);
