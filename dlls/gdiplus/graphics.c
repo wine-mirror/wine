@@ -6177,6 +6177,7 @@ struct measure_string_args {
     INT *codepointsfitted;
     INT *linesfilled;
     REAL rel_width, rel_height;
+    BOOL vertical;
 };
 
 static GpStatus measure_string_callback(struct gdip_format_string_info *info)
@@ -6185,8 +6186,16 @@ static GpStatus measure_string_callback(struct gdip_format_string_info *info)
     RectF *bounds = args->bounds;
     REAL new_width, new_height;
 
-    new_width = info->bounds->Width / args->rel_width;
-    new_height = (info->bounds->Height + info->bounds->Y) / args->rel_height - bounds->Y;
+    if (args->vertical)
+    {
+        new_width = (info->bounds->Width + info->bounds->X) / args->rel_width - bounds->X;
+        new_height = info->bounds->Height / args->rel_height;
+    }
+    else
+    {
+        new_width = info->bounds->Width / args->rel_width;
+        new_height = (info->bounds->Height + info->bounds->Y) / args->rel_height - bounds->Y;
+    }
 
     if (new_width > bounds->Width)
         bounds->Width = new_width;
@@ -6219,6 +6228,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     RectF scaled_rect;
     REAL margin_x;
     INT lines, glyphs;
+    BOOL vertical = format != NULL ? !!(format->attr & StringFormatFlagsDirectionVertical) : FALSE;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -6247,23 +6257,37 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     transform_properties(graphics, NULL, TRUE, &args.rel_width, &args.rel_height, NULL);
     margin_x = (format && format->generic_typographic) ? 0.0 : font->emSize / 6.0;
-    margin_x *= units_scale(font->unit, graphics->unit, graphics->xres, graphics->printer_display);
+    margin_x *= units_scale(font->unit, graphics->unit, vertical ? graphics->yres : graphics->xres, graphics->printer_display);
 
-    scaled_rect.X = (rect->X + margin_x) * args.rel_width;
-    scaled_rect.Y = rect->Y * args.rel_height;
     scaled_rect.Width = rect->Width * args.rel_width;
     scaled_rect.Height = rect->Height * args.rel_height;
-    if (scaled_rect.Width >= 0.5)
+    if (vertical)
     {
-        scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
-        if (scaled_rect.Width < 0.5) /* doesn't fit */
-            goto end;
+        scaled_rect.X = rect->X * args.rel_width;
+        scaled_rect.Y = (rect->Y + margin_x) * args.rel_height;
+        if (scaled_rect.Height >= 0.5)
+        {
+            scaled_rect.Height -= margin_x * 2.0 * args.rel_height;
+            if (scaled_rect.Height < 0.5) /* doesn't fit */
+                goto end;
+        }
+    }
+    else
+    {
+        scaled_rect.X = (rect->X + margin_x) * args.rel_width;
+        scaled_rect.Y = rect->Y * args.rel_height;
+        if (scaled_rect.Width >= 0.5)
+        {
+            scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
+            if (scaled_rect.Width < 0.5) /* doesn't fit */
+                goto end;
+        }
     }
 
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
     if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
-    get_font_hfont(graphics, font, FALSE, format, &gdifont, NULL, NULL);
+    get_font_hfont(graphics, font, vertical, format, &gdifont, NULL, NULL);
     oldfont = SelectObject(hdc, gdifont);
 
     set_rect(bounds, rect->X, rect->Y, 0.0f, 0.0f);
@@ -6271,6 +6295,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.bounds = bounds;
     args.codepointsfitted = &glyphs;
     args.linesfilled = &lines;
+    args.vertical = vertical;
     lines = glyphs = 0;
 
     gdi_transform_acquire(graphics);
@@ -6284,32 +6309,66 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if (codepointsfitted) *codepointsfitted = glyphs;
 
     if (lines)
-        bounds->Width += margin_x * 2.0;
+    {
+        if (vertical)
+            bounds->Height += margin_x * 2.0;
+        else
+            bounds->Width += margin_x * 2.0;
+    }
 
     if (lines && format)
     {
-        switch (format->align)
+        if (vertical)
         {
-        case StringAlignmentCenter:
-            bounds->X = rect->X + (rect->Width - bounds->Width) / 2.0f;
-            break;
-        case StringAlignmentFar:
-            bounds->X = rect->X + rect->Width - bounds->Width;
-            break;
-        default:
-            break;
-        }
+            switch (format->align)
+            {
+            case StringAlignmentCenter:
+                bounds->Y = rect->Y + (rect->Height - bounds->Height) / 2.0f;
+                break;
+            case StringAlignmentFar:
+                bounds->Y = rect->Y + rect->Height - bounds->Height;
+                break;
+            default:
+                break;
+            }
 
-        switch (format->line_align)
+            switch (format->line_align)
+            {
+            case StringAlignmentCenter:
+                bounds->X = rect->X + (rect->Width - bounds->Width) / 2.0f;
+                break;
+            case StringAlignmentFar:
+                bounds->X = rect->X + rect->Width - bounds->Width;
+                break;
+            default:
+                break;
+            }
+        }
+        else
         {
-        case StringAlignmentCenter:
-            bounds->Y = rect->Y + (rect->Height - bounds->Height) / 2.0f;
-            break;
-        case StringAlignmentFar:
-            bounds->Y = rect->Y + rect->Height - bounds->Height;
-            break;
-        default:
-            break;
+            switch (format->align)
+            {
+            case StringAlignmentCenter:
+                bounds->X = rect->X + (rect->Width - bounds->Width) / 2.0f;
+                break;
+            case StringAlignmentFar:
+                bounds->X = rect->X + rect->Width - bounds->Width;
+                break;
+            default:
+                break;
+            }
+
+            switch (format->line_align)
+            {
+            case StringAlignmentCenter:
+                bounds->Y = rect->Y + (rect->Height - bounds->Height) / 2.0f;
+                break;
+            case StringAlignmentFar:
+                bounds->Y = rect->Y + rect->Height - bounds->Height;
+                break;
+            default:
+                break;
+            }
         }
     }
 
