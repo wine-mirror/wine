@@ -1382,11 +1382,8 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface)
         wayland_surface_attach_shm(surface, dummy_shm_buffer, damage);
         wl_surface_commit(surface->wl_surface);
     }
-    else
-    {
-        wayland_shm_buffer_unref(dummy_shm_buffer);
-    }
 
+    wayland_shm_buffer_unref(dummy_shm_buffer);
     if (damage) NtGdiDeleteObjectApp(damage);
 }
 
