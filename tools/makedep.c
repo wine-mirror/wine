@@ -4276,15 +4276,15 @@ static void output_subdirs( struct makefile *make )
         {
             if (submakes[i]->disabled[arch]) continue;
             strarray_addall_path( &all_targets, submakes[i]->obj_dir, submakes[i]->all_targets[arch] );
+            if (!submakes[i]->testdll) continue;
             strarray_addall_path( &testclean_files, submakes[i]->obj_dir, submakes[i]->ok_files[arch] );
+            strarray_addall_path( &buildtest_deps, submakes[i]->obj_dir, submakes[i]->all_targets[arch] );
         }
         if (submakes[i]->disabled[0]) continue;
 
         strarray_addall_path( &all_targets, submakes[i]->obj_dir, submakes[i]->font_files );
         if (!strcmp( submakes[i]->obj_dir, "tools" ) || !strncmp( submakes[i]->obj_dir, "tools/", 6 ))
-            strarray_add( &tooldeps_deps, obj_dir_path( submakes[i], "all" ));
-        if (submakes[i]->testdll)
-            strarray_add( &buildtest_deps, obj_dir_path( submakes[i], "all" ));
+            strarray_addall_path( &tooldeps_deps, submakes[i]->obj_dir, submakes[i]->all_targets[0] );
     }
     strarray_addall( &dependencies, makefile_deps );
     output( "all:" );
@@ -4346,9 +4346,10 @@ static void output_subdirs( struct makefile *make )
 
     if (tooldeps_deps.count)
     {
-        output( "__tooldeps__:" );
+        output( "tools __tooldeps__:" );
         output_filenames( tooldeps_deps );
         output( "\n" );
+        strarray_add_uniq( &make->phony_targets, "tools" );
         strarray_add_uniq( &make->phony_targets, "__tooldeps__" );
     }
 
