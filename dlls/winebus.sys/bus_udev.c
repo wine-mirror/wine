@@ -1160,27 +1160,28 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
             }
         }
     }
-
-    if (!strcmp(subsystem, "usb") && *bus != BUS_BLUETOOTH)
-    {
-        if ((tmp = udev_device_get_sysattr_value(parent, "manufacturer")))
-            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
-
-        if ((tmp = udev_device_get_sysattr_value(parent, "product")))
-            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
-
-        if ((tmp = udev_device_get_sysattr_value(parent, "serial")))
-            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
-    }
 }
 
-static void get_usb_interface_info(struct udev_device *dev, struct device_desc *desc)
+static void get_device_usb_info(struct udev_device *dev, struct device_desc *desc)
 {
     UINT class = 0, subclass = 0, protocol = 0;
-    struct udev_device *iface;
+    struct udev_device *usb_dev, *iface;
     const char *tmp;
 
-    if (!(iface = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_interface"))) return;
+    if (!(usb_dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device"))
+            || !(iface = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_interface")))
+    {
+        ERR("Failed to get USB udev %s.", !usb_dev ? "device" : "interface");
+        return;
+    }
+
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "manufacturer")))
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "product")))
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "serial")))
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceClass"))) sscanf(tmp, "%x", &class);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceSubClass"))) sscanf(tmp, "%x", &subclass);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceProtocol"))) sscanf(tmp, "%x", &protocol);
@@ -1383,7 +1384,7 @@ static void udev_add_device(struct udev_device *dev, int fd)
     if (bus == BUS_BLUETOOTH) desc.bus_type = BUS_TYPE_BLUETOOTH;
     else if (bus == BUS_USB) desc.bus_type = BUS_TYPE_USB;
 
-    if (desc.bus_type == BUS_TYPE_USB) get_usb_interface_info(dev, &desc);
+    if (desc.bus_type == BUS_TYPE_USB) get_device_usb_info(dev, &desc);
 
     if (!(subsystem = udev_device_get_subsystem(dev)))
     {
