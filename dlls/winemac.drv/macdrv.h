@@ -29,6 +29,10 @@
 
 #include "macdrv_cocoa.h"
 
+#ifdef __OBJC__
+# define BOOL WINBOOL
+#endif
+
 /* All Windows headers needed by Unix C/ObjC files must be included here. */
 #define OEMRESOURCE
 #include "ntstatus.h"
@@ -50,6 +54,18 @@
 #include "wine/opengl_driver.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
+
+#ifdef __OBJC__
+# undef BOOL
+# undef interface /* objbase defines 'interface' to 'struct' */
+
+/* This file is included by C and ObjC, and BOOL could mean either Win32 BOOL or ObjC BOOL.
+ * Use the C 'bool' type instead, or use 'WINBOOL' if you need a Win32 BOOL.
+ */
+# define BOOL DoNotUseBOOLInThisFile
+#else
+  typedef BOOL WINBOOL;
+#endif
 
 
 extern bool allow_vsync;
@@ -361,4 +377,5 @@ static inline UINT asciiz_to_unicode(WCHAR *dst, const char *src)
     return (p - dst) * sizeof(WCHAR);
 }
 
+#undef BOOL
 #endif  /* __WINE_MACDRV_H */
