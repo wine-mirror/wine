@@ -4681,7 +4681,6 @@ static void test_measure_string(void)
 
     status = GdipCreateStringFormat(StringFormatFlagsNoWrap, LANG_NEUTRAL, &format);
     expect(Ok, status);
-    expect(Ok, status);
 
     status = GdipCreateRegion(&region);
     expect(Ok, status);
