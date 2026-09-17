@@ -115,7 +115,7 @@ static void test_Locate(void)
 
     bi.biCompression = mmioFOURCC('c','v','i','d'); /* Cinepak */
     h = ICOpen(ICTYPE_VIDEO, mmioFOURCC('c','v','i','d'), ICMODE_DECOMPRESS);
-    if (h == 0) win_skip("Cinepak/ICCVID codec not found\n");
+    if (h == 0) skip("Cinepak/ICCVID codec not found\n");
     else {
         bo.biBitCount = bi.biBitCount = 32;
         err = ICDecompressQuery(h, &bi, &bo);
