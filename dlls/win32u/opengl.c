@@ -193,44 +193,35 @@ static enum opengl_extension parse_extension( const char *ext, size_t len )
     return GL_EXTENSION_COUNT;
 }
 
-static size_t parse_extensions( const char *name, enum opengl_extension extensions[GL_EXTENSION_COUNT] )
+static void parse_extensions( const char *name, BOOLEAN extensions[GL_EXTENSION_COUNT], BOOLEAN set )
 {
-    size_t count = 0;
+    enum opengl_extension parsed[GL_EXTENSION_COUNT];
+    UINT count = 0;
 
     while (*name)
     {
         const char *end = name + 1;
         while (*end && *end != ' ') end++;
-        extensions[count] = parse_extension( name, end - name );
-        if (extensions[count] != GL_EXTENSION_COUNT) count++;
+        parsed[count] = parse_extension( name, end - name );
+        if (parsed[count] != GL_EXTENSION_COUNT) count++;
         while (*end == ' ') end++;
         name = end;
     }
 
-    return count;
+    for (UINT i = 0; i < count; i++) extensions[parsed[i]] = set;
 }
 
 static void init_enabled_extensions(void)
 {
-    enum opengl_extension parsed_extensions[GL_EXTENSION_COUNT];
     char *enabled, *disabled;
-    size_t count, i;
 
     if ((enabled = query_opengl_option( "EnabledExtensions" )))
-    {
-        count = parse_extensions( enabled, parsed_extensions );
-        for (i = 0; i < count; i++) enabled_extensions[parsed_extensions[i]] = TRUE;
-    }
+        parse_extensions( enabled, enabled_extensions, TRUE );
     else
-    {
         memset( enabled_extensions, TRUE, sizeof(enabled_extensions) );
-    }
 
     if ((disabled = query_opengl_option( "DisabledExtensions" )))
-    {
-        count = parse_extensions( disabled, parsed_extensions );
-        for (i = 0; i < count; i++) enabled_extensions[parsed_extensions[i]] = FALSE;
-    }
+        parse_extensions( disabled, enabled_extensions, FALSE );
 
     free( enabled );
     free( disabled );
@@ -256,9 +247,7 @@ static void parse_current_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
     }
     else
     {
-        enum opengl_extension extensions[GL_EXTENSION_COUNT];
-        size_t extension_count = parse_extensions( (const char *)funcs->p_glGetString( GL_EXTENSIONS ), extensions );
-        for (size_t i = 0; i < extension_count; i++) extensions[i] = TRUE;
+        parse_extensions( (const char *)funcs->p_glGetString( GL_EXTENSIONS ), extensions, TRUE );
     }
 }
 
