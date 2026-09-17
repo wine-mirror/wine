@@ -635,7 +635,7 @@ static void flush_context( TEB *teb, void (*flush)(void) )
         /* default implementation: call the functions directly */
         if (flush) flush();
     }
-    if (flags & GL_FLUSH_PRESENT || !ctx->draw->client) pop_default_fbo_buffers( teb );
+    if (flags & GL_FLUSH_PRESENT || (ctx && !ctx->draw->client)) pop_default_fbo_buffers( teb );
 
     if (flags & GL_FLUSH_FORCE_SWAP)
     {
@@ -690,6 +690,8 @@ BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc )
 {
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
     BOOL ret;
+
+    if (!funcs->p_wglSwapBuffers) return FALSE;
 
     resolve_default_fbo( teb, FALSE );
 
