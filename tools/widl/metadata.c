@@ -2885,7 +2885,7 @@ static UINT make_static_value( const expr_t *attr, BYTE *buf )
 
 static void add_static_attr_step1( const type_t *type )
 {
-    UINT assemblyref, scope, typeref, typeref_type, class, sig_size;
+    UINT assemblyref, scope, typeref, typeref_type, class, sig_size, memberref;
     BYTE sig[32];
     attr_t *attr;
 
@@ -2900,7 +2900,10 @@ static void add_static_attr_step1( const type_t *type )
 
     class = memberref_parent( TABLE_TYPEREF, typeref );
     sig_size = make_member_sig3( typedef_or_ref(TABLE_TYPEREF, typeref_type), sig );
-    attr->md_member = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+    memberref = add_memberref_row( class, add_string(".ctor"), add_blob(sig, sig_size) );
+
+    LIST_FOR_EACH_ENTRY( attr, type->attrs, attr_t, entry )
+        if (attr->type == ATTR_STATIC) attr->md_member = memberref;
 }
 
 static void add_static_attr_step2( const type_t *type )
