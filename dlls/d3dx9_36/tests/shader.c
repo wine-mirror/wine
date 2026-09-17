@@ -6749,6 +6749,8 @@ static void test_shader_semantics(void)
     unsigned int i, j;
     HRESULT hr;
 
+    hr = D3DXGetShaderInputSemantics(NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
     hr = D3DXGetShaderInputSemantics(invalid_1, NULL, NULL);
     ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
     hr = D3DXGetShaderInputSemantics(invalid_2, NULL, NULL);

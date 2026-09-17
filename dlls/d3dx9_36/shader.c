@@ -2821,18 +2821,22 @@ static HRESULT get_shader_semantics(const DWORD *byte_code, D3DXSEMANTIC *semant
         D3DDECLUSAGE_FOG,
         D3DDECLUSAGE_PSIZE
     };
-    uint32_t reg_type, usage, index, version_token = *byte_code;
-    BOOL is_ps = version_token >> 16 == 0xffff;
+    uint32_t reg_type, usage, index, version_token;
     unsigned int major, minor, i = 0, j;
+    BOOL is_ps, has_dcl, depth = 0;
     BYTE colors = 0, rastout = 0;
-    BOOL has_dcl, depth = 0;
     WORD texcoords = 0;
 
+    if (!byte_code)
+        return D3DERR_INVALIDCALL;
+
+    version_token = *byte_code;
     if ((version_token & 0xffff0000) != 0xfffe0000 && (version_token & 0xffff0000) != 0xffff0000)
         return D3DXERR_INVALIDDATA;
 
     major = version_token >> 8 & 0xff;
     minor = version_token & 0xff;
+    is_ps = version_token >> 16 == 0xffff;
 
     TRACE("%s shader, version %u.%u.\n", is_ps ? "Pixel" : "Vertex", major, minor);
     ++byte_code;
