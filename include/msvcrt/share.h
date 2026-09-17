@@ -41,4 +41,4 @@
 #define _SH_DENYNO SH_DENYNO
 #define _SH_SECURE SH_SECURE
 
-#endif	/* __WINE_SHARE_H_ */
+#endif	/* __WINE_SHARE_H */
