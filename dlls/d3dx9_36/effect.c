@@ -4240,7 +4240,8 @@ static HRESULT WINAPI d3dx_effect_BeginParameterBlock(ID3DXEffect *iface)
         return D3DERR_INVALIDCALL;
     }
 
-    effect->current_parameter_block = calloc(1, sizeof(*effect->current_parameter_block));
+    if (!(effect->current_parameter_block = calloc(1, sizeof(*effect->current_parameter_block))))
+        return E_OUTOFMEMORY;
     memcpy(effect->current_parameter_block->magic_string, parameter_block_magic_string,
             sizeof(parameter_block_magic_string));
     effect->current_parameter_block->effect = effect;
