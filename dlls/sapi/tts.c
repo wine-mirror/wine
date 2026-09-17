@@ -1158,7 +1158,11 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         goto fail;
     }
 
-    speak_task = malloc(sizeof(*speak_task));
+    if (!(speak_task = malloc(sizeof(*speak_task))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
 
     speak_task->task.proc = speak_proc;
     speak_task->result    = NULL;
