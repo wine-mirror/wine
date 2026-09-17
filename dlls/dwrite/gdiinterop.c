@@ -364,7 +364,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         return E_INVALIDARG;
 
     if (FAILED(hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace3, (void **)&fontface))) {
-        WARN("Failed to get IDWriteFontFace2 interface, hr %#lx.\n", hr);
+        WARN("Failed to get IDWriteFontFace3 interface, hr %#lx.\n", hr);
         return hr;
     }
 
