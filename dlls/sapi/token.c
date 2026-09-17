@@ -728,6 +728,8 @@ static HRESULT WINAPI token_category_GetDefaultTokenId( ISpObjectTokenCategory *
     }
 
     *id = CoTaskMemAlloc( regvalue_size );
+    if (!*id)
+        return E_OUTOFMEMORY;
     wcscpy( *id, regvalue );
 
     return S_OK;
