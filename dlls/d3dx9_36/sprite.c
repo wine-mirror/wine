@@ -413,8 +413,9 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
     if(!This->ready) return D3DERR_INVALIDCALL;
     if(!This->sprite_count) return D3D_OK;
 
-/* TODO: use of a vertex buffer here */
-    vertices = malloc(sizeof(*vertices) * 6 * This->sprite_count);
+    /* TODO: use a vertex buffer */
+    if (!(vertices = malloc(sizeof(*vertices) * 6 * This->sprite_count)))
+        return E_OUTOFMEMORY;
 
     for(start=0;start<This->sprite_count;start+=count,count=0) {
         i=start;
