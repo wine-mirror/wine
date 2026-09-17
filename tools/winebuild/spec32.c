@@ -98,8 +98,6 @@ static int has_relays( struct exports *exports )
 {
     int i;
 
-    if (target.cpu == CPU_ARM64EC) return 0;
-
     for (i = exports->base; i <= exports->limit; i++)
     {
         ORDDEF *odp = exports->ordinals[i];
@@ -378,6 +376,7 @@ static void output_relay_debug( struct exports *exports )
         }
 
         case CPU_x86_64:
+        case CPU_ARM64EC:
             output( "\t.balign 4\n" );
             output( "\t.long 0x90909090,0x90909090\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
@@ -450,6 +449,7 @@ void output_exports( DLLSPEC *spec )
                     odp->name ? "" : ",NONAME",
                     odp->type == TYPE_EXTERN ? ",DATA" : "" );
         }
+        if (needs_relay) output_relay_debug( exports );
         return;
     }
 

@@ -55,6 +55,73 @@ ALL_SYSCALLS
 __ASM_GLOBAL_FUNC( __chkstk, "ret" );
 
 
+__ASM_GLOBAL_FUNC( relay_call,
+                   "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "leaq -0x48(%rbp),%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %rcx,-32(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rcx,-32\n\t")
+                   "movq %rdx,-24(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdx,-24\n\t")
+                   "movq %rsi,-16(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rsi,-16\n\t")
+                   "movq %rdi,-8(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdi,-8\n\t")
+                   /* trace the parameters */
+                   "leaq 24(%rbp),%r8\n\t"   /* stack */
+                   "leaq -40(%rbp),%r9\n\t"
+                   "call " __ASM_NAME("relay_trace_entry") "\n\t"
+                   /* copy the arguments */
+                   "movl -40(%rbp),%edx\n\t"  /* number of args */
+                   "movq $4,%rcx\n\t"
+                   "cmp %rcx,%rdx\n\t"
+                   "cmovgq %rdx,%rcx\n\t"
+                   "leaq -16(,%rcx,8),%rdx\n\t"
+                   "andq $~15,%rdx\n\t"
+                   "subq %rdx,%rsp\n\t"
+                   "leaq 24(%rbp),%rsi\n\t"  /* original stack */
+                   "movq %rsp,%rdi\n\t"
+                   "rep; movsq\n\t"
+                   /* call the entry point */
+                   "movq 0(%rsp),%rcx\n\t"
+                   "movq 8(%rsp),%rdx\n\t"
+                   "movq 16(%rsp),%r8\n\t"
+                   "movq 24(%rsp),%r9\n\t"
+                   "movq 0(%rsp),%xmm0\n\t"
+                   "movq 8(%rsp),%xmm1\n\t"
+                   "movq 16(%rsp),%xmm2\n\t"
+                   "movq 24(%rsp),%xmm3\n\t"
+                   "callq *%rax\n\t"
+                   /* trace the return value */
+                   "movq -32(%rbp),%rcx\n\t"
+                   "movq -24(%rbp),%rdx\n\t"
+                   "movq 16(%rbp),%r8\n\t"   /* retaddr */
+                   "movq %rax,%rsi\n\t"
+                   "movaps %xmm0,32(%rsp)\n\t"
+                   "movq %rax,%r9\n\t"
+                   "call " __ASM_NAME("relay_trace_exit") "\n\t"
+                   /* restore return value and return */
+                   "movq %rsi,%rax\n\t"
+                   "movaps 32(%rsp),%xmm0\n\t"
+                   "movq -16(%rbp),%rsi\n\t"
+                   __ASM_CFI(".cfi_same_value %rsi\n\t")
+                   "movq -8(%rbp),%rdi\n\t"
+                   __ASM_CFI(".cfi_same_value %rdi\n\t")
+                   "leaq 0(%rbp),%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret")
+
+
 #ifdef __arm64ec_x64__
 
 /**************************************************************************
