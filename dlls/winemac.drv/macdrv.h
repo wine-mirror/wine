@@ -136,6 +136,12 @@ static inline struct macdrv_thread_data *macdrv_thread_data(void)
 }
 
 
+/* Don't expose GDI driver function prototypes to ObjC code, they aren't defined or
+ * used there.
+ *
+ * If that's desired in the future, the signatures need to use WINBOOL or the C bool type.
+ */
+#ifndef __OBJC__
 extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags);
 extern void macdrv_Beep(void);
 extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid);
@@ -186,6 +192,7 @@ extern BOOL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_p
                                         UINT flags);
 extern BOOL macdrv_ProcessEvents(DWORD mask);
 extern void macdrv_ThreadDetach(void);
+#endif
 
 
 /* macdrv private window data */
