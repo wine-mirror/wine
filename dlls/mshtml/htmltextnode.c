@@ -284,7 +284,7 @@ static HRESULT WINAPI HTMLDOMTextNode_splitText(IHTMLDOMTextNode *iface, LONG of
 
     nsres = nsIDOMText_SplitText(This->nstext, offset, &text);
     if(NS_FAILED(nsres)) {
-        ERR("SplitText failed: %lx08x\n", nsres);
+        ERR("SplitText failed: %08lx\n", nsres);
         return E_FAIL;
     }
 
