@@ -971,7 +971,7 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
         if (out_buffer.pEvents)
             IMFCollection_Release(out_buffer.pEvents);
     }
-    while (SUCCEEDED(hr) && next); /* queue only one output sample to avoid transform allocators becoming empty on drain */
+    while (SUCCEEDED(hr) && next); /* output only one sample from the last transform to avoid exhausting its allocator on drain */
 
     return hr;
 }
