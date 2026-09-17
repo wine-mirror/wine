@@ -1218,6 +1218,7 @@ static void asmparser_coissue_supported(struct asm_parser *parser)
     {
         asmparser_message(parser, "Line %u: Coissue flag on the first shader instruction\n", parser->line_no);
         set_parse_status(&parser->status, PARSE_ERR);
+        return;
     }
     /* Set the coissue flag of the last instruction added to the shader. */
     parser->shader->instr[parser->shader->num_instrs - 1]->coissue = TRUE;
