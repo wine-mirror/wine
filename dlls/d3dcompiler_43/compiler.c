@@ -94,6 +94,8 @@ static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D
     else
     {
         len = GetCurrentDirectoryA(MAX_PATH, current_dir);
+        if (!len || len >= MAX_PATH)
+            return E_FAIL;
         current_dir[len] = '\\';
         len++;
         initial_dir = current_dir;
