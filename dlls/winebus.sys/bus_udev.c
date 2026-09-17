@@ -1107,14 +1107,13 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
 };
 #endif /* HAS_PROPER_INPUT_HEADER */
 
-static void get_device_subsystem_info(struct udev_device *dev, const char *subsystem, const char *devtype,
-                                      struct device_desc *desc, int *bus)
+static void get_device_subsystem_info(struct udev_device *dev, const char *subsystem, struct device_desc *desc, int *bus)
 {
     struct udev_device *parent = NULL;
     const char *ptr, *next, *tmp;
     char buffer[MAX_PATH];
 
-    if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, devtype))) return;
+    if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, NULL))) return;
 
     if ((next = udev_device_get_sysattr_value(parent, "uevent")))
     {
@@ -1152,12 +1151,6 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
                 if (!strncmp(ptr, "PRODUCT=", 8))
                     sscanf(ptr, "PRODUCT=%x/%x/%x/%x\n", bus, &desc->vid, &desc->pid, &desc->version);
             }
-
-            if (!strcmp(subsystem, "usb") && *bus != BUS_BLUETOOTH)
-            {
-                if (!strncmp(ptr, "PRODUCT=", 8))
-                    sscanf(ptr, "PRODUCT=%x/%x/%x\n", &desc->vid, &desc->pid, &desc->version);
-            }
         }
     }
 }
@@ -1175,6 +1168,9 @@ static void get_device_usb_info(struct udev_device *dev, struct device_desc *des
         return;
     }
 
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "idVendor"))) sscanf(tmp, "%x", &desc->vid);
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "idProduct"))) sscanf(tmp, "%x", &desc->pid);
+    if ((tmp = udev_device_get_sysattr_value(usb_dev, "bcdDevice"))) sscanf(tmp, "%x", &desc->version);
     if ((tmp = udev_device_get_sysattr_value(usb_dev, "manufacturer")))
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
     if ((tmp = udev_device_get_sysattr_value(usb_dev, "product")))
@@ -1378,9 +1374,8 @@ static void udev_add_device(struct udev_device *dev, int fd)
 
     TRACE("udev %s syspath %s\n", debugstr_a(devnode), udev_device_get_syspath(dev));
 
-    get_device_subsystem_info(dev, "hid", NULL, &desc, &bus);
-    get_device_subsystem_info(dev, "input", NULL, &desc, &bus);
-    get_device_subsystem_info(dev, "usb", "usb_device", &desc, &bus);
+    get_device_subsystem_info(dev, "hid", &desc, &bus);
+    get_device_subsystem_info(dev, "input", &desc, &bus);
     if (bus == BUS_BLUETOOTH) desc.bus_type = BUS_TYPE_BLUETOOTH;
     else if (bus == BUS_USB) desc.bus_type = BUS_TYPE_USB;
 
