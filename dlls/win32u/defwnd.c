@@ -2874,8 +2874,8 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                             continue;
 
                         dpi = NtUserGetDpiForWindow( *child );
-                        NtUserGetClientRect( *child, &rect, dpi );
-                        NtUserMapWindowPoints( *child, hwnd, (POINT *)&rect, 2, dpi );
+                        NtUserGetWindowRect( *child, &rect, dpi );
+                        NtUserMapWindowPoints( NULL, hwnd, (POINT *)&rect, 2, dpi );
 
                         old_clip = NtGdiGetRandomRgn( hdc, clip_rgn, NTGDI_RGN_MIRROR_RTL | 1 );
                         NtGdiIntersectClipRect( hdc, rect.left, rect.top, rect.right, rect.bottom );

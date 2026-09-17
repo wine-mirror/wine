@@ -11444,7 +11444,6 @@ static LRESULT WINAPI WmPrintProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp
         ret = GetRgnBox(clip_rgn, &rect);
         ok(ret == SIMPLEREGION, "Got unexpected ret %d.\n", ret);
         SetRect(&expected_rect, 50, 50, 100, 100);
-        todo_wine_if(GetWindowLongA(hwnd, GWL_STYLE) & WS_BORDER)
         ok(EqualRect(&rect, &expected_rect), "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect));
         DeleteObject(clip_rgn);
 
@@ -21443,7 +21442,6 @@ static void test_defwinproc_wm_print(void)
     lr = DefWindowProcA(hwnd, WM_PRINT, (WPARAM)hdc, PRF_CHILDREN | PRF_CLIENT);
     ok(lr == 1, "Got unexpected lr %Id.\n", lr);
     color = GetPixel(hdc, 50, 50);
-    todo_wine
     ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
     ok_sequence(wm_print_prf_children, "DefWindowProc WM_PRINT with PRF_CHILDREN | PRF_CLIENT for a WS_CAPTION child window", FALSE);
     flush_sequence();
