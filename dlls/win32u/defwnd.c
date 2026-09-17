@@ -2856,13 +2856,18 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
             if (lparam & PRF_CHILDREN)
             {
+                HDC hdc = (HDC)wparam;
                 HWND *list, *child;
+                HRGN clip_rgn;
+                int old_clip;
                 POINT org;
                 RECT rect;
                 UINT dpi;
 
                 if ((list = list_window_children( hwnd )))
                 {
+                    clip_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+
                     for (child = list; *child; child++)
                     {
                         if (!(get_window_long( *child, GWL_STYLE ) & WS_VISIBLE))
@@ -2871,10 +2876,19 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                         dpi = NtUserGetDpiForWindow( *child );
                         NtUserGetClientRect( *child, &rect, dpi );
                         NtUserMapWindowPoints( *child, hwnd, (POINT *)&rect, 2, dpi );
-                        offset_viewport_org( (HDC)wparam, rect.left, rect.top, &org );
+
+                        old_clip = NtGdiGetRandomRgn( hdc, clip_rgn, NTGDI_RGN_MIRROR_RTL | 1 );
+                        NtGdiIntersectClipRect( hdc, rect.left, rect.top, rect.right, rect.bottom );
+                        offset_viewport_org( hdc, rect.left, rect.top, &org );
                         send_message( *child, WM_PRINT, wparam, PRF_NONCLIENT | PRF_CLIENT | PRF_ERASEBKGND | PRF_CHILDREN );
-                        set_viewport_org( (HDC)wparam, org.x, org.y, NULL );
+                        set_viewport_org( hdc, org.x, org.y, NULL );
+                        if (old_clip == 0)
+                            NtGdiExtSelectClipRgn( hdc, NULL, RGN_COPY );
+                        else if (old_clip == 1)
+                            NtGdiExtSelectClipRgn( hdc, clip_rgn, RGN_COPY );
                     }
+
+                    NtGdiDeleteObjectApp( clip_rgn );
                     free( list );
                 }
             }

@@ -11440,12 +11440,10 @@ static LRESULT WINAPI WmPrintProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp
 
         clip_rgn = CreateRectRgn(0, 0, 1, 1);
         has_clip_rgn = GetClipRgn(hdc, clip_rgn);
-        todo_wine
         ok(has_clip_rgn == 1, "Expected a clip region.\n");
         ret = GetRgnBox(clip_rgn, &rect);
         ok(ret == SIMPLEREGION, "Got unexpected ret %d.\n", ret);
         SetRect(&expected_rect, 50, 50, 100, 100);
-        todo_wine
         ok(EqualRect(&rect, &expected_rect), "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect));
         DeleteObject(clip_rgn);
 
