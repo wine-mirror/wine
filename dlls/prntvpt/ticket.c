@@ -1796,6 +1796,9 @@ HRESULT WINAPI PTGetPrintCapabilities(HPTPROVIDER provider, IStream *stream, ISt
     if (!is_valid_provider(provider) || !stream || !caps)
         return E_INVALIDARG;
 
+    hr = initialize_ticket(prov, &ticket);
+    if (hr != S_OK) return hr;
+
     hr = parse_ticket(stream, kPTJobScope, &ticket);
     if (hr != S_OK) return hr;
 
