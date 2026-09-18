@@ -201,8 +201,7 @@ static HRESULT WINAPI EnumConnections_Next(IEnumConnections *iface, ULONG cConne
             break;
 
         pgcd[cnt].pUnk = (IUnknown*)This->cp->sinks[This->iter];
-        pgcd[cnt].dwCookie = cnt+1;
-        This->iter++;
+        pgcd[cnt].dwCookie = ++This->iter;
         cnt++;
     }
 
