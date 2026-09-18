@@ -616,7 +616,7 @@ static HRESULT WINAPI ClDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, R
         return S_OK;
     case DISPID_AMBIENT_SILENT:
         V_VT(pVarResult) = VT_BOOL;
-        V_BOOL(pVarResult) = This->offline;
+        V_BOOL(pVarResult) = This->silent;
         return S_OK;
     }
 
