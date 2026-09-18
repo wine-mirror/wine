@@ -995,8 +995,9 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
 
     if(post_array) {
         LONG elem_max;
-        SafeArrayAccessData(post_array, (void**)&post_data);
-        SafeArrayGetUBound(post_array, 1, &elem_max);
+        if(FAILED(hres = SafeArrayAccessData(post_array, (void**)&post_data)) ||
+           FAILED(hres = SafeArrayGetUBound(post_array, 1, &elem_max)))
+            return hres;
         post_data_len = (elem_max+1) * SafeArrayGetElemsize(post_array);
     }
 
