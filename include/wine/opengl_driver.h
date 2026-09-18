@@ -69,6 +69,23 @@ enum opengl_extension
     GL_EXTENSION_COUNT,
 };
 
+struct opengl_context_attrs
+{
+    int format;
+    int major;
+    int minor;
+    GLuint flags;
+    GLuint profile;
+    BOOL no_error;
+};
+
+static inline const char *debugstr_opengl_context_attrs( const struct opengl_context_attrs *attrs )
+{
+    if (!attrs) return "(null)";
+    return wine_dbg_sprintf( "{format %d major %d minor %d flags %#x profile %#x no_error %u}", attrs->format,
+                             attrs->major, attrs->minor, attrs->flags, attrs->profile, attrs->no_error );
+}
+
 struct opengl_client_context
 {
     struct HGLRC__              obj;            /* client object header */
@@ -287,7 +304,7 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     void (*p_init_extensions)( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] );
     BOOL (*p_surface_create)( struct client_surface *client, int format, struct opengl_drawable **drawable );
-    struct opengl_context *(*p_context_create)( int format, struct opengl_context *share, const int *attribs, BOOL *shared );
+    struct opengl_context *(*p_context_create)( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared );
     BOOL (*p_context_destroy)( struct opengl_context *context );
     BOOL (*p_context_activate)( struct opengl_context *context, struct opengl_drawable *draw, struct opengl_drawable *read );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,

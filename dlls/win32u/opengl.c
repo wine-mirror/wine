@@ -384,21 +384,20 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
 
 static struct opengl_context *internal_context_create(void)
 {
-    static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0 };
+    struct opengl_context_attrs attrs = { .major = -1, .minor = -1, .profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB };
     BOOL shared = TRUE, doublebuffer;
     struct opengl_context *context;
-    int format;
 
-    for (format = 1; format <= formats_count; format++)
+    for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
-        struct wgl_pixel_format *desc = pixel_formats + format - 1;
+        struct wgl_pixel_format *desc = pixel_formats + attrs.format - 1;
         if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
 
-        doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
-        if (!(context = driver_funcs->p_context_create( format, global_context, attribs, &shared ))) continue;
-        context->format = format;
+        doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+        if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared ))) continue;
+        context->format = attrs.format;
         context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
         context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
 
@@ -1376,66 +1375,48 @@ static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLen
     return -1; /* use default implementation */
 }
 
-static struct opengl_context *egldrv_context_create( int format, struct opengl_context *share, const int *attribs, BOOL *shared )
+static struct opengl_context *egldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared )
 {
     EGLContext host_share = share ? share->host_context : NULL;
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
-    EGLint err, egl_attribs[16], *attribs_end = egl_attribs;
+    EGLint err, attribs[16], *attr = attribs;
     struct opengl_context *context;
 
-    TRACE( "format %d, share %p, attribs %p\n", format, share, attribs );
+    TRACE( "attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared );
 
-    for (; attribs && attribs[0] != 0; attribs += 2)
+    if (attrs->profile & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
     {
-        EGLint name;
-
-        TRACE( "%#x %#x\n", attribs[0], attribs[1] );
-
-        /* Find the EGL attribute names corresponding to the WGL names.
-         * For all of the attributes below, the values match between the two
-         * systems, so we can use them directly. */
-        switch (attribs[0])
-        {
-        case WGL_CONTEXT_MAJOR_VERSION_ARB:
-            name = EGL_CONTEXT_MAJOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_MINOR_VERSION_ARB:
-            name = EGL_CONTEXT_MINOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_FLAGS_ARB:
-            name = EGL_CONTEXT_FLAGS_KHR;
-            break;
-        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
-            name = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
-            break;
-        case WGL_CONTEXT_PROFILE_MASK_ARB:
-            if (attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-            {
-                ERR( "OpenGL ES contexts are not supported\n" );
-                return NULL;
-            }
-            name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
-            break;
-        default:
-            name = EGL_NONE;
-            FIXME( "Unhandled attributes: %#x %#x\n", attribs[0], attribs[1] );
-        }
-
-        if (name != EGL_NONE)
-        {
-            EGLint *dst = egl_attribs;
-            /* Check if we have already set the same attribute and replace it. */
-            for (; dst != attribs_end && *dst != name; dst += 2) continue;
-            /* Our context attribute array should have enough space for all the
-             * attributes we support (we merge repetitions), plus EGL_NONE. */
-            assert( dst - egl_attribs <= ARRAY_SIZE(egl_attribs) - 3 );
-            dst[0] = name;
-            dst[1] = attribs[1];
-            if (dst == attribs_end) attribs_end += 2;
-        }
+        ERR( "OpenGL ES contexts are not supported\n" );
+        return NULL;
     }
-    *attribs_end = EGL_NONE;
+
+    if (attrs->major != -1)
+    {
+        *attr++ = EGL_CONTEXT_MAJOR_VERSION_KHR;
+        *attr++ = attrs->major;
+    }
+    if (attrs->minor != -1)
+    {
+        *attr++ = EGL_CONTEXT_MINOR_VERSION_KHR;
+        *attr++ = attrs->minor;
+    }
+    if (attrs->flags)
+    {
+        *attr++ = EGL_CONTEXT_FLAGS_KHR;
+        *attr++ = attrs->flags;
+    }
+    if (attrs->profile)
+    {
+        *attr++ = EGL_CONTEXT_OPENGL_PROFILE_MASK;
+        *attr++ = attrs->profile;
+    }
+    if (attrs->no_error)
+    {
+        *attr++ = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
+        *attr++ = EGL_TRUE;
+    }
+    *attr++ = EGL_NONE;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
 
@@ -1447,8 +1428,7 @@ static struct opengl_context *egldrv_context_create( int format, struct opengl_c
      *    > purposes except eglCreateContext.
      */
     funcs->p_eglBindAPI( EGL_OPENGL_API );
-    context->host_context = funcs->p_eglCreateContext( egl->display, EGL_NO_CONFIG_KHR, host_share,
-                                                       attribs ? egl_attribs : NULL );
+    context->host_context = funcs->p_eglCreateContext( egl->display, EGL_NO_CONFIG_KHR, host_share, attribs );
 
     if ((err = funcs->p_eglGetError()) != EGL_SUCCESS || !context->host_context)
     {
@@ -1944,7 +1924,7 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLe
     return -1; /* use default implementation */
 }
 
-static struct opengl_context *nulldrv_context_create( int format, struct opengl_context *share, const int *attribs, BOOL *shared )
+static struct opengl_context *nulldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared )
 {
     return NULL;
 }
@@ -2868,32 +2848,48 @@ static int get_window_swap_interval( HWND hwnd )
 
 static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
 {
+    struct opengl_context_attrs attrs = { .major = -1, .minor = -1 };
     BOOL shared = TRUE, doublebuffer;
     struct opengl_context *context;
-    int format;
 
     TRACE( "hdc %p, attribs %p\n", hdc, attribs );
 
-    if ((format = get_dc_pixel_format( hdc )) <= 0 &&
-        (format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
+    if ((attrs.format = get_dc_pixel_format( hdc )) <= 0 &&
+        (attrs.format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
     {
-        if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        if (!attrs.format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+    doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
 
-    if (!(context = driver_funcs->p_context_create( format, global_context, attribs, &shared )))
+    for (const int *attrib = attribs; attrib && *attrib; attrib += 2)
+    {
+        TRACE( "- %#x %#x\n", attribs[0], attribs[1] );
+        switch (attrib[0])
+        {
+        case WGL_CONTEXT_MAJOR_VERSION_ARB:     attrs.major    = attrib[1]; break;
+        case WGL_CONTEXT_MINOR_VERSION_ARB:     attrs.minor    = attrib[1]; break;
+        case WGL_CONTEXT_FLAGS_ARB:             attrs.flags    = attrib[1]; break;
+        case WGL_CONTEXT_PROFILE_MASK_ARB:      attrs.profile  = attrib[1]; break;
+        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:   attrs.no_error = attrib[1]; break;
+        default:
+            FIXME( "Unhandled attributes: %#x %#x\n", attribs[0], attribs[1] );
+            break;
+        }
+    }
+
+    if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared )))
     {
         WARN( "Failed to create driver context for context %p\n", context );
         return NULL;
     }
-    context->format = format;
+    context->format = attrs.format;
     context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
     context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
     *broken_sharing = !shared;
 
-    TRACE( "created context %p, format %u\n", context, format );
+    TRACE( "created context %p, format %u\n", context, attrs.format );
     return context;
 }
 

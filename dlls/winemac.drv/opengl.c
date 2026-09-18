@@ -228,116 +228,6 @@ static int nb_formats, nb_displayable_formats;
 static CGLOpenGLProfile core_profile;
 
 
-static const char* debugstr_attrib(int attrib, int value)
-{
-    static const struct {
-        int attrib;
-        const char *name;
-    } attrib_names[] = {
-#define ATTRIB(a) { a, #a }
-        ATTRIB(WGL_ACCELERATION_ARB),
-        ATTRIB(WGL_ACCUM_ALPHA_BITS_ARB),
-        ATTRIB(WGL_ACCUM_BITS_ARB),
-        ATTRIB(WGL_ACCUM_BLUE_BITS_ARB),
-        ATTRIB(WGL_ACCUM_GREEN_BITS_ARB),
-        ATTRIB(WGL_ACCUM_RED_BITS_ARB),
-        ATTRIB(WGL_ALPHA_BITS_ARB),
-        ATTRIB(WGL_ALPHA_SHIFT_ARB),
-        ATTRIB(WGL_AUX_BUFFERS_ARB),
-        ATTRIB(WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV),
-        ATTRIB(WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV),
-        ATTRIB(WGL_BIND_TO_TEXTURE_RGB_ARB),
-        ATTRIB(WGL_BIND_TO_TEXTURE_RGBA_ARB),
-        ATTRIB(WGL_BLUE_BITS_ARB),
-        ATTRIB(WGL_BLUE_SHIFT_ARB),
-        ATTRIB(WGL_COLOR_BITS_ARB),
-        ATTRIB(WGL_DEPTH_BITS_ARB),
-        ATTRIB(WGL_DOUBLE_BUFFER_ARB),
-        ATTRIB(WGL_DRAW_TO_BITMAP_ARB),
-        ATTRIB(WGL_DRAW_TO_PBUFFER_ARB),
-        ATTRIB(WGL_DRAW_TO_WINDOW_ARB),
-        ATTRIB(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB),
-        ATTRIB(WGL_GREEN_BITS_ARB),
-        ATTRIB(WGL_GREEN_SHIFT_ARB),
-        ATTRIB(WGL_NEED_PALETTE_ARB),
-        ATTRIB(WGL_NEED_SYSTEM_PALETTE_ARB),
-        ATTRIB(WGL_NUMBER_OVERLAYS_ARB),
-        ATTRIB(WGL_NUMBER_PIXEL_FORMATS_ARB),
-        ATTRIB(WGL_NUMBER_UNDERLAYS_ARB),
-        ATTRIB(WGL_PIXEL_TYPE_ARB),
-        ATTRIB(WGL_RED_BITS_ARB),
-        ATTRIB(WGL_RED_SHIFT_ARB),
-        ATTRIB(WGL_SAMPLE_BUFFERS_ARB),
-        ATTRIB(WGL_SAMPLES_ARB),
-        ATTRIB(WGL_SHARE_ACCUM_ARB),
-        ATTRIB(WGL_SHARE_DEPTH_ARB),
-        ATTRIB(WGL_SHARE_STENCIL_ARB),
-        ATTRIB(WGL_STENCIL_BITS_ARB),
-        ATTRIB(WGL_STEREO_ARB),
-        ATTRIB(WGL_SUPPORT_GDI_ARB),
-        ATTRIB(WGL_SUPPORT_OPENGL_ARB),
-        ATTRIB(WGL_SWAP_LAYER_BUFFERS_ARB),
-        ATTRIB(WGL_SWAP_METHOD_ARB),
-        ATTRIB(WGL_TRANSPARENT_ALPHA_VALUE_ARB),
-        ATTRIB(WGL_TRANSPARENT_ARB),
-        ATTRIB(WGL_TRANSPARENT_BLUE_VALUE_ARB),
-        ATTRIB(WGL_TRANSPARENT_GREEN_VALUE_ARB),
-        ATTRIB(WGL_TRANSPARENT_INDEX_VALUE_ARB),
-        ATTRIB(WGL_TRANSPARENT_RED_VALUE_ARB),
-#undef ATTRIB
-    };
-    int i;
-    const char *attrib_name = NULL;
-    const char *value_name = NULL;
-
-    for (i = 0; i < ARRAY_SIZE(attrib_names); i++)
-    {
-        if (attrib_names[i].attrib == attrib)
-        {
-            attrib_name = attrib_names[i].name;
-            break;
-        }
-    }
-
-    if (!attrib_name)
-        attrib_name = wine_dbg_sprintf("Attrib 0x%04x", attrib);
-
-    switch (attrib)
-    {
-        case WGL_ACCELERATION_ARB:
-            switch (value)
-            {
-                case WGL_FULL_ACCELERATION_ARB:     value_name = "WGL_FULL_ACCELERATION_ARB"; break;
-                case WGL_GENERIC_ACCELERATION_ARB:  value_name = "WGL_GENERIC_ACCELERATION_ARB"; break;
-                case WGL_NO_ACCELERATION_ARB:       value_name = "WGL_NO_ACCELERATION_ARB"; break;
-            }
-            break;
-        case WGL_PIXEL_TYPE_ARB:
-            switch (value)
-            {
-                case WGL_TYPE_COLORINDEX_ARB:           value_name = "WGL_TYPE_COLORINDEX_ARB"; break;
-                case WGL_TYPE_RGBA_ARB:                 value_name = "WGL_TYPE_RGBA_ARB"; break;
-                case WGL_TYPE_RGBA_FLOAT_ARB:           value_name = "WGL_TYPE_RGBA_FLOAT_ARB"; break;
-                case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT:  value_name = "WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT"; break;
-            }
-            break;
-        case WGL_SWAP_METHOD_ARB:
-            switch (value)
-            {
-                case WGL_SWAP_COPY_ARB:         value_name = "WGL_SWAP_COPY_ARB"; break;
-                case WGL_SWAP_EXCHANGE_ARB:     value_name = "WGL_SWAP_EXCHANGE_ARB"; break;
-                case WGL_SWAP_UNDEFINED_ARB:    value_name = "WGL_SWAP_UNDEFINED_ARB"; break;
-            }
-            break;
-    }
-
-    if (!value_name)
-        value_name = wine_dbg_sprintf("%d / 0x%04x", value, value);
-
-    return wine_dbg_sprintf("%40s: %s", attrib_name, value_name);
-}
-
-
 /**********************************************************************
  *              active_displays_mask
  */
@@ -2042,61 +1932,29 @@ static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum so
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
  */
-static struct opengl_context *macdrv_context_create(int format, struct opengl_context *share, const int *attrib_list, BOOL *shared)
+static struct opengl_context *macdrv_context_create(const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared)
 {
     CGLContextObj host_share = share ? share->host_context : NULL;
     struct macdrv_context *context;
-    const int *iptr;
-    int major = 1, minor = 0, profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB, flags = 0;
-    BOOL core = FALSE;
 
-    TRACE("format %d, share %p, attrib_list %p\n", format, share, attrib_list);
+    BOOL core = !!(attrs->profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    int major = 1, minor = 0;
 
-    for (iptr = attrib_list; iptr && *iptr; iptr += 2)
+    TRACE("attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared);
+
+    if (attrs->major != -1) major = attrs->major;
+    if (attrs->minor != -1) minor = attrs->minor;
+
+    if (attrs->flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+        WARN("WGL_CONTEXT_FLAGS_ARB attributes %#x ignored\n",
+             attrs->flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
+
+    if (attrs->profile && attrs->profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB &&
+        attrs->profile != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
     {
-        int attr = iptr[0];
-        int value = iptr[1];
-
-        TRACE("%s\n", debugstr_attrib(attr, value));
-
-        switch (attr)
-        {
-            case WGL_CONTEXT_MAJOR_VERSION_ARB:
-                major = value;
-                break;
-
-            case WGL_CONTEXT_MINOR_VERSION_ARB:
-                minor = value;
-                break;
-
-            case WGL_CONTEXT_LAYER_PLANE_ARB:
-                WARN("WGL_CONTEXT_LAYER_PLANE_ARB attribute ignored\n");
-                break;
-
-            case WGL_CONTEXT_FLAGS_ARB:
-                flags = value;
-                if (flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
-                    WARN("WGL_CONTEXT_FLAGS_ARB attributes %#x ignored\n",
-                         flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
-                break;
-
-            case WGL_CONTEXT_PROFILE_MASK_ARB:
-                if (value != WGL_CONTEXT_CORE_PROFILE_BIT_ARB &&
-                    value != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
-                {
-                    WARN("WGL_CONTEXT_PROFILE_MASK_ARB bits %#x invalid\n", value);
-                    RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
-                    return NULL;
-                }
-                core = value == WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
-                profile = value;
-                break;
-
-            default:
-                WARN("Unknown attribute %s.\n", debugstr_attrib(attr, value));
-                RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
-                return NULL;
-        }
+        WARN("WGL_CONTEXT_PROFILE_MASK_ARB bits %#x invalid\n", attrs->profile);
+        RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
+        return NULL;
     }
 
     if (major > gl_info.max_major || (major == gl_info.max_major && minor > gl_info.max_minor))
@@ -2109,13 +1967,13 @@ static struct opengl_context *macdrv_context_create(int format, struct opengl_co
     if ((major == 3 && (minor == 2 || minor == 3)) ||
         (major == 4 && (minor == 0 || minor == 1)))
     {
-        if (!(flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
+        if (!(attrs->flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
         {
             WARN("OS X only supports forward-compatible 3.2+ contexts\n");
             RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
             return NULL;
         }
-        if (profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
+        if (attrs->profile && attrs->profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
         {
             WARN("Compatibility profiles for GL version >= 3.2 not supported\n");
             RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
@@ -2130,7 +1988,7 @@ static struct opengl_context *macdrv_context_create(int format, struct opengl_co
         RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
     }
-    if (!core && flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+    if (!core && (attrs->flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
     {
         WARN("Forward compatible context requested for GL version < 3\n");
         RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
@@ -2147,7 +2005,7 @@ static struct opengl_context *macdrv_context_create(int format, struct opengl_co
     if (!(context = calloc(1, sizeof(*context)))) return NULL;
     context->core = core;
 
-    if (!create_context(context, format, host_share, shared))
+    if (!create_context(context, attrs->format, host_share, shared))
     {
         free(context);
         return NULL;
