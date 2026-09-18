@@ -438,15 +438,13 @@ static IStream *get_travellog_stream(DocHost *This)
         return NULL;
 
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    if(SUCCEEDED(hres))
+    if(SUCCEEDED(hres)) {
         hres = IPersistHistory_SaveHistory(persist_history, stream);
-    IPersistHistory_Release(persist_history);
-    if(FAILED(hres)) {
-        IStream_Release(stream);
-        return NULL;
+        if(FAILED(hres))
+            IStream_Release(stream);
     }
-
-    return stream;
+    IPersistHistory_Release(persist_history);
+    return SUCCEEDED(hres) ? stream : NULL;
 }
 
 static void dump_travellog(DocHost *This)
