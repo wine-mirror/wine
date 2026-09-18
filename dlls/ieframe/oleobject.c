@@ -266,6 +266,7 @@ static HRESULT on_offlineconnected_change(WebBrowser *This)
     else if(V_VT(&offline) != VT_EMPTY)
         WARN("wrong V_VT(silent) %d\n", V_VT(&offline));
 
+    VariantClear(&offline);
     return S_OK;
 }
 
@@ -280,6 +281,7 @@ static HRESULT on_silent_change(WebBrowser *This)
     else if(V_VT(&silent) != VT_EMPTY)
         WARN("wrong V_VT(silent) %d\n", V_VT(&silent));
 
+    VariantClear(&silent);
     return S_OK;
 }
 
