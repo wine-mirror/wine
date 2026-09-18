@@ -982,7 +982,7 @@ static BOOL mib2IpNetQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                 {
                     *pErrorStatus = mapStructEntryToValue(mib2IpNetMap,
                         DEFINE_SIZEOF(mib2IpNetMap),
-                        &ipNetTable[tableIndex - 1], item, pVarBind);
+                        &ipNetTable->table[tableIndex - 1], item, pVarBind);
                     if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
                         ret = setOidWithItemAndInteger(&pVarBind->name, &myOid,
                             item, tableIndex);
