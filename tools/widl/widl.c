@@ -778,7 +778,7 @@ int main(int argc,char *argv[])
       write_dlldata_list(filenames, 0 /* FIXME */ );
       return 0;
     }
-    else if (files.count > 1) {
+    else if (files.count > 1 && !(do_metadata && !do_everything)) {
       fprintf(stderr, "%s", usage);
       return 1;
     }
@@ -840,13 +840,28 @@ int main(int argc,char *argv[])
 
   atexit(rm_tempfile);
   if (preprocess_only) exit( wpp_parse( input_name, stdout ) );
-  parser_in = open_input_file( input_name );
+  if (files.count == 1)
+  {
+    parser_in = open_input_file( input_name );
+    header_token = make_token(header_name);
 
-  header_token = make_token(header_name);
-
-  init_types();
-  ret = parser_parse();
-  close_all_inputs();
+    init_types();
+    ret = parser_parse();
+    close_all_inputs();
+  }
+  else
+  {
+    init_types();
+    STRARRAY_FOR_EACH( file, &files )
+    {
+      input_name = xstrdup( file );
+      idl_name = get_basename( input_name );
+      parser_in = open_input_file( input_name );
+      ret = parser_parse();
+      close_all_inputs();
+      if (ret) break;
+    }
+  }
   if (ret) exit(1);
   if (do_metadata) finalize_metadata();
 
