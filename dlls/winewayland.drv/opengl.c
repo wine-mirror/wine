@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 static const struct opengl_drawable_funcs wayland_drawable_funcs;
+static BOOL (*p_egl_describe_pixel_format)( int format, struct wgl_pixel_format *pf );
 
 struct wayland_gl_drawable
 {
@@ -71,12 +72,15 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
 {
     struct wayland_client_surface *surface = impl_from_client_surface(client);
     EGLConfig config = egl_config_for_format(format);
-    EGLint attribs[4], *attrib = attribs;
+    EGLint attribs[5], *attrib = attribs;
     struct wayland_gl_drawable *gl;
+    struct wgl_pixel_format desc;
     HWND hwnd = client->hwnd;
     SIZE size;
 
     TRACE("client=%s format=%d\n", debugstr_client_surface(client), format);
+
+    p_egl_describe_pixel_format( format, &desc );
 
     if (!egl->extensions[EGL_EXT_present_opaque])
         WARN("Missing EGL_EXT_present_opaque extension\n");
@@ -84,6 +88,11 @@ static BOOL wayland_opengl_surface_create(struct client_surface *client, int for
     {
         *attrib++ = EGL_PRESENT_OPAQUE_EXT;
         *attrib++ = EGL_TRUE;
+    }
+    if (desc.framebuffer_srgb_capable)
+    {
+        *attrib++ = EGL_GL_COLORSPACE;
+        *attrib++ = EGL_GL_COLORSPACE_SRGB;
     }
     *attrib++ = EGL_NONE;
 
@@ -232,6 +241,7 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     wayland_driver_funcs.p_context_create = (*driver_funcs)->p_context_create;
     wayland_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
     wayland_driver_funcs.p_context_activate = (*driver_funcs)->p_context_activate;
+    p_egl_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
 
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
