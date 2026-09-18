@@ -6500,12 +6500,12 @@ unsigned char *WINAPI NdrRangeUnmarshall(
     {
     case FC_CHAR:
     case FC_SMALL:
-        RANGE_UNMARSHALL(UCHAR, UCHAR, "%d");
+        RANGE_UNMARSHALL(CHAR, CHAR, "%d");
         TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case FC_BYTE:
     case FC_USMALL:
-        RANGE_UNMARSHALL(CHAR, CHAR, "%u");
+        RANGE_UNMARSHALL(UCHAR, UCHAR, "%u");
         TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case FC_WCHAR: /* FIXME: valid? */
