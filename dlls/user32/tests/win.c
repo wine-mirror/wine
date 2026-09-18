@@ -14612,7 +14612,6 @@ static void test_toolwindow_width_clamping_size(void)
     SetWindowPos(tool, NULL, 0, 0, REQUESTED_WINDOW_WIDTH, 300, uflags);
     GetWindowRect(tool, &rect);
     tool_unclamped_w = rect.right - rect.left;
-    todo_wine
     ok( tool_unclamped_w == REQUESTED_WINDOW_WIDTH, "Tool Window is clamping %d -> %d\n",
         REQUESTED_WINDOW_WIDTH, tool_unclamped_w);
 
@@ -14622,7 +14621,6 @@ static void test_toolwindow_width_clamping_size(void)
     tool_clamped_w = rect.right - rect.left;
     ok( tool_clamped_w > 1, "Tool Window is not clamping %d == 1\n", tool_clamped_w);
 
-    todo_wine
     ok( tool_clamped_w < REQUESTED_WINDOW_WIDTH,
         "Tool Window clamping should be less than normal window clamping %d should be < %d\n",
         tool_clamped_w, clamped_width);

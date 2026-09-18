@@ -4581,7 +4581,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
 
     minmax.ptMaxSize.x = rc.right - rc.left;
     minmax.ptMaxSize.y = rc.bottom - rc.top;
-    if (style & (WS_DLGFRAME | WS_BORDER))
+    if (style & (WS_DLGFRAME | WS_BORDER) && !(exstyle &  WS_EX_TOOLWINDOW))
     {
         minmax.ptMinTrackSize.x = get_system_metrics( SM_CXMINTRACK );
         minmax.ptMinTrackSize.y = get_system_metrics( SM_CYMINTRACK );
