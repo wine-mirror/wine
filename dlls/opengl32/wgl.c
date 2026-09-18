@@ -1389,6 +1389,64 @@ HGLRC WINAPI wglGetCurrentContext(void)
     return NtCurrentTeb()->glCurrentRC;
 }
 
+static const char *debugstr_pixel_format_attrib( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB: return "WGL_DRAW_TO_WINDOW_ARB";
+    case WGL_DRAW_TO_BITMAP_ARB: return "WGL_DRAW_TO_BITMAP_ARB";
+    case WGL_ACCELERATION_ARB: return "WGL_ACCELERATION_ARB";
+    case WGL_NEED_PALETTE_ARB: return "WGL_NEED_PALETTE_ARB";
+    case WGL_NEED_SYSTEM_PALETTE_ARB: return "WGL_NEED_SYSTEM_PALETTE_ARB";
+    case WGL_SWAP_LAYER_BUFFERS_ARB: return "WGL_SWAP_LAYER_BUFFERS_ARB";
+    case WGL_SHARE_DEPTH_ARB: return "WGL_SHARE_DEPTH_ARB";
+    case WGL_SHARE_STENCIL_ARB: return "WGL_SHARE_STENCIL_ARB";
+    case WGL_SHARE_ACCUM_ARB: return "WGL_SHARE_ACCUM_ARB";
+    case WGL_SUPPORT_GDI_ARB: return "WGL_SUPPORT_GDI_ARB";
+    case WGL_SUPPORT_OPENGL_ARB: return "WGL_SUPPORT_OPENGL_ARB";
+    case WGL_DOUBLE_BUFFER_ARB: return "WGL_DOUBLE_BUFFER_ARB";
+    case WGL_STEREO_ARB: return "WGL_STEREO_ARB";
+    case WGL_PIXEL_TYPE_ARB: return "WGL_PIXEL_TYPE_ARB";
+    case WGL_DRAW_TO_PBUFFER_ARB: return "WGL_DRAW_TO_PBUFFER_ARB";
+    case WGL_BIND_TO_TEXTURE_RGB_ARB: return "WGL_BIND_TO_TEXTURE_RGB_ARB";
+    case WGL_BIND_TO_TEXTURE_RGBA_ARB: return "WGL_BIND_TO_TEXTURE_RGBA_ARB";
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV: return "WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV";
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV: return "WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV";
+    case WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB: return "WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB";
+    case WGL_FLOAT_COMPONENTS_NV: return "WGL_FLOAT_COMPONENTS_NV";
+    case WGL_NUMBER_OVERLAYS_ARB: return "WGL_NUMBER_OVERLAYS_ARB";
+    case WGL_NUMBER_UNDERLAYS_ARB: return "WGL_NUMBER_UNDERLAYS_ARB";
+    case WGL_COLOR_BITS_ARB: return "WGL_COLOR_BITS_ARB";
+    case WGL_RED_BITS_ARB: return "WGL_RED_BITS_ARB";
+    case WGL_GREEN_BITS_ARB: return "WGL_GREEN_BITS_ARB";
+    case WGL_BLUE_BITS_ARB: return "WGL_BLUE_BITS_ARB";
+    case WGL_ALPHA_BITS_ARB: return "WGL_ALPHA_BITS_ARB";
+    case WGL_ACCUM_BITS_ARB: return "WGL_ACCUM_BITS_ARB";
+    case WGL_ACCUM_RED_BITS_ARB: return "WGL_ACCUM_RED_BITS_ARB";
+    case WGL_ACCUM_GREEN_BITS_ARB: return "WGL_ACCUM_GREEN_BITS_ARB";
+    case WGL_ACCUM_BLUE_BITS_ARB: return "WGL_ACCUM_BLUE_BITS_ARB";
+    case WGL_ACCUM_ALPHA_BITS_ARB: return "WGL_ACCUM_ALPHA_BITS_ARB";
+    case WGL_DEPTH_BITS_ARB: return "WGL_DEPTH_BITS_ARB";
+    case WGL_STENCIL_BITS_ARB: return "WGL_STENCIL_BITS_ARB";
+    case WGL_AUX_BUFFERS_ARB: return "WGL_AUX_BUFFERS_ARB";
+    case WGL_SAMPLE_BUFFERS_ARB: return "WGL_SAMPLE_BUFFERS_ARB";
+    case WGL_SAMPLES_ARB: return "WGL_SAMPLES_ARB";
+    case WGL_NUMBER_PIXEL_FORMATS_ARB: return "WGL_NUMBER_PIXEL_FORMATS_ARB";
+    case WGL_RED_SHIFT_ARB: return "WGL_RED_SHIFT_ARB";
+    case WGL_GREEN_SHIFT_ARB: return "WGL_GREEN_SHIFT_ARB";
+    case WGL_BLUE_SHIFT_ARB: return "WGL_BLUE_SHIFT_ARB";
+    case WGL_ALPHA_SHIFT_ARB: return "WGL_ALPHA_SHIFT_ARB";
+    case WGL_TRANSPARENT_ARB: return "WGL_TRANSPARENT_ARB";
+    case WGL_TRANSPARENT_RED_VALUE_ARB: return "WGL_TRANSPARENT_RED_VALUE_ARB";
+    case WGL_TRANSPARENT_GREEN_VALUE_ARB: return "WGL_TRANSPARENT_GREEN_VALUE_ARB";
+    case WGL_TRANSPARENT_BLUE_VALUE_ARB: return "WGL_TRANSPARENT_BLUE_VALUE_ARB";
+    case WGL_TRANSPARENT_ALPHA_VALUE_ARB: return "WGL_TRANSPARENT_ALPHA_VALUE_ARB";
+    case WGL_TRANSPARENT_INDEX_VALUE_ARB: return "WGL_TRANSPARENT_INDEX_VALUE_ARB";
+    case WGL_SWAP_METHOD_ARB: return "WGL_SWAP_METHOD_ARB";
+    }
+    return wine_dbg_sprintf( "%#06X\n", attrib );
+}
+
 /***********************************************************************
  *		wglChoosePixelFormat (OPENGL32.@)
  */
@@ -1876,16 +1934,31 @@ static void filter_format_array( const struct wgl_pixel_format **array,
 
     assert(match != ATTRIB_MATCH_INVALID);
 
+    TRACE( "num_formats %d attrib %s value %#x match %d\n", num_formats, debugstr_pixel_format_attrib( attrib ), value, match );
+
     if (match == ATTRIB_MATCH_IGNORE && attrib != WGL_SWAP_METHOD_ARB) return;
 
     for (i = 0; i < num_formats; ++i)
     {
         if (!array[i]) continue;
-        if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ) ||
-            (match == ATTRIB_MATCH_EXACT && fmt_value != value) ||
-            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value) ||
-            (attrib == WGL_SWAP_METHOD_ARB && ((fmt_value == WGL_SWAP_COPY_ARB) ^ (value == WGL_SWAP_COPY_ARB))))
+        if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ))
         {
+            TRACE( "Discarding format %d, no %s\n", i, debugstr_pixel_format_attrib( attrib ) );
+            array[i] = NULL;
+        }
+        else if (match == ATTRIB_MATCH_EXACT && fmt_value != value)
+        {
+            TRACE( "Discarding format %d, %s %#x != %#x\n", i, debugstr_pixel_format_attrib( attrib ), fmt_value, value );
+            array[i] = NULL;
+        }
+        else if (match == ATTRIB_MATCH_MINIMUM && fmt_value < value)
+        {
+            TRACE( "Discarding format %d, %s %#x < %#x\n", i, debugstr_pixel_format_attrib( attrib ), fmt_value, value );
+            array[i] = NULL;
+        }
+        else if (attrib == WGL_SWAP_METHOD_ARB && ((fmt_value == WGL_SWAP_COPY_ARB) ^ (value == WGL_SWAP_COPY_ARB)))
+        {
+            TRACE( "Discarding format %d, %s %#x != %#x\n", i, debugstr_pixel_format_attrib( attrib ), fmt_value, value );
             array[i] = NULL;
         }
     }
