@@ -4284,7 +4284,7 @@ static void run_tests(void)
     CHECK_CALLED(global_setobj_i);
 
     hres = parse_script_wr(L"dim x\nx = testObj.rem");
-    ok(hres == S_OK, "use of 'rem' as dot identifier failed: %lx08\n", hres);
+    ok(hres == S_OK, "use of 'rem' as dot identifier failed: %08lx\n", hres);
 
     SET_EXPECT(testobj_propget_d);
     SET_EXPECT(testobj_propget_i);
