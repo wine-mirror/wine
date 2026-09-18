@@ -1285,7 +1285,8 @@ static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void
     if (outer && !IsEqualIID(riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
 
-    ret = calloc(1, sizeof(WebBrowser));
+    if (!(ret = calloc(1, sizeof(WebBrowser))))
+        return E_OUTOFMEMORY;
 
     ret->IUnknown_inner.lpVtbl = &internal_unk_vtbl;
     ret->IWebBrowser2_iface.lpVtbl = &WebBrowser2Vtbl;
