@@ -196,7 +196,7 @@ struct macdrv_client_surface
 {
     struct client_surface   client;
     WineContentView        *cocoa_view;
-    id_WineMetalSwapChain   metal_swapchain;
+    WineMetalSwapChain_id   metal_swapchain;
 };
 
 extern struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client);

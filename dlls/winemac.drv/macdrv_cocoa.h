@@ -101,10 +101,10 @@ enum {
 
 #ifdef __OBJC__
 #define DECLARE_CLASS(x) @class x
-#define DECLARE_PROTO(x) @protocol x; typedef id<x> id_ ## x
+#define DECLARE_PROTO(x) @protocol x; typedef id<x> x ## _id
 #else
 #define DECLARE_CLASS(x) typedef struct __ ## x x
-#define DECLARE_PROTO(x) typedef struct __ ## x *id_ ## x
+#define DECLARE_PROTO(x) typedef struct __ ## x *x ## _id
 #endif
 DECLARE_CLASS(WineContentView);
 DECLARE_CLASS(WineEventQueue);
@@ -531,15 +531,15 @@ extern void macdrv_set_view_superview(WineContentView *view, WineContentView *pa
 extern void macdrv_set_view_hidden(WineContentView *view, bool hidden);
 extern void macdrv_add_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
 extern void macdrv_remove_view_opengl_context(WineContentView *view, WineOpenGLContext *context);
-extern id_MTLDevice macdrv_create_metal_device(void);
-extern void macdrv_release_metal_device(id_MTLDevice device);
-extern WineMetalView *macdrv_view_create_metal_view(WineContentView *view, id_MTLDevice device);
+extern MTLDevice_id macdrv_create_metal_device(void);
+extern void macdrv_release_metal_device(MTLDevice_id device);
+extern WineMetalView *macdrv_view_create_metal_view(WineContentView *view, MTLDevice_id device);
 extern CAMetalLayer *macdrv_view_get_metal_layer(WineMetalView *view);
 extern void macdrv_view_release_metal_view(WineMetalView *view);
-extern id_WineMetalSwapChain macdrv_create_view_swapchain(WineContentView *view);
-extern id_WineMetalSwapChain macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
-extern CAMetalLayer *macdrv_swapchain_get_layer(id_WineMetalSwapChain swapchain);
-extern void macdrv_destroy_swapchain(id_WineMetalSwapChain swapchain);
+extern WineMetalSwapChain_id macdrv_create_view_swapchain(WineContentView *view);
+extern WineMetalSwapChain_id macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds);
+extern CAMetalLayer *macdrv_swapchain_get_layer(WineMetalSwapChain_id swapchain);
+extern void macdrv_destroy_swapchain(WineMetalSwapChain_id swapchain);
 extern void macdrv_window_create_ca_layer_host_view(WineWindow *window, unsigned int context_id);
 extern void macdrv_window_release_ca_layer_host_view(WineWindow *window, unsigned int context_id);
 extern void macdrv_create_remote_layer(void* hwnd, unsigned int context_id);

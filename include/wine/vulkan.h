@@ -59,31 +59,31 @@ typedef struct __IOSurface* IOSurfaceRef;
 @protocol MTLBuffer;
 typedef __unsafe_unretained id<MTLBuffer> MTLBuffer_id;
 #else
-typedef void* MTLBuffer_id;
+typedef struct __MTLBuffer *MTLBuffer_id;
 #endif
 #ifdef __OBJC__
 @protocol MTLCommandQueue;
 typedef __unsafe_unretained id<MTLCommandQueue> MTLCommandQueue_id;
 #else
-typedef void* MTLCommandQueue_id;
+typedef struct __MTLCommandQueue *MTLCommandQueue_id;
 #endif
 #ifdef __OBJC__
 @protocol MTLDevice;
 typedef __unsafe_unretained id<MTLDevice> MTLDevice_id;
 #else
-typedef void* MTLDevice_id;
+typedef struct __MTLDevice *MTLDevice_id;
 #endif
 #ifdef __OBJC__
 @protocol MTLSharedEvent;
 typedef __unsafe_unretained id<MTLSharedEvent> MTLSharedEvent_id;
 #else
-typedef void* MTLSharedEvent_id;
+typedef struct __MTLSharedEvent *MTLSharedEvent_id;
 #endif
 #ifdef __OBJC__
 @protocol MTLTexture;
 typedef __unsafe_unretained id<MTLTexture> MTLTexture_id;
 #else
-typedef void* MTLTexture_id;
+typedef struct __MTLTexture *MTLTexture_id;
 #endif
 struct OHBufferHandle;
 typedef struct NativeWindow OHNativeWindow;
