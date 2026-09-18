@@ -1170,7 +1170,7 @@ NTSTATUS WINAPI wow64_NtTerminateThread( UINT *args )
 
 
 /**********************************************************************
- *           wow64_NtTerminateThread
+ *           wow64_NtWorkerFactoryWorkerReady
  */
 NTSTATUS WINAPI wow64_NtWorkerFactoryWorkerReady( UINT *args )
 {
