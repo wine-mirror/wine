@@ -370,7 +370,7 @@ static DWORD CALLBACK ME_AppendToHGLOBAL(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG
     BYTE *pDest;
 
     nMaxSize = GlobalSize(pData->hData);
-    if (pData->nLength+cb+1 >= cb) {
+    if (pData->nLength+cb+1 >= nMaxSize) {
         /* round up to 2^17 */
         int nNewSize = (((nMaxSize+cb+1)|0x1FFFF)+1) & 0xFFFE0000;
         pData->hData = GlobalReAlloc(pData->hData, nNewSize, GMEM_MOVEABLE);
