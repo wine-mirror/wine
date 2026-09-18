@@ -518,7 +518,18 @@ static BOOL x11drv_egl_describe_pixel_format( int format, struct wgl_pixel_forma
 static BOOL x11drv_egl_surface_create( struct client_surface *client, int format, struct opengl_drawable **drawable )
 {
     struct x11drv_client_surface *surface = impl_from_client_surface( client );
+    EGLint attribs[3], *attrib = attribs;
+    struct wgl_pixel_format desc;
     struct gl_drawable *gl;
+
+    p_egl_describe_pixel_format( format, &desc );
+
+    if (desc.framebuffer_srgb_capable)
+    {
+        *attrib++ = EGL_GL_COLORSPACE;
+        *attrib++ = EGL_GL_COLORSPACE_SRGB;
+    }
+    *attrib++ = EGL_NONE;
 
     if (!(gl = opengl_drawable_create( &x11drv_egl_surface_funcs, format, client, NULL ))) return FALSE;
 
