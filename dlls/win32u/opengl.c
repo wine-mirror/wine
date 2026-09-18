@@ -1184,12 +1184,13 @@ static void *egldrv_get_proc_address( const char *name )
 static const struct pixel_format_flags
 {
     UINT flags;
+    BOOL srgb;
 } pixel_format_flags[] =
 {
-    { .flags = PFD_SUPPORT_GDI },
-    { .flags = PFD_DOUBLEBUFFER },
-    { .flags = PFD_DOUBLEBUFFER },
-    { .flags = 0 /* offscreen */ },
+    { .flags = PFD_SUPPORT_GDI, .srgb = FALSE },
+    { .flags = PFD_DOUBLEBUFFER, .srgb = FALSE },
+    { .flags = PFD_DOUBLEBUFFER, .srgb = TRUE },
+    { .flags = 0, /* offscreen */ .srgb = FALSE },
 };
 
 static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
@@ -1362,8 +1363,7 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
     fmt->bind_to_texture_rectangle_rgb = GL_TRUE;
     fmt->bind_to_texture_rectangle_rgba = GL_TRUE;
 
-    /* TODO: Support SRGB surfaces and enable the attribute */
-    fmt->framebuffer_srgb_capable = GL_FALSE;
+    fmt->framebuffer_srgb_capable = alias->srgb;
 
     fmt->float_components = GL_FALSE;
 
