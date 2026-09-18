@@ -709,6 +709,10 @@ static void test_DoDragDrop(void)
     RECT rect;
     int seq;
 
+    hr = DoDragDrop(NULL, NULL, 0, NULL);
+    todo_wine
+    ok(hr == CO_E_NOTINITIALIZED, "got 0x%08lx\n", hr);
+
     hwnd = CreateWindowExA(WS_EX_TOPMOST, "WineOleTestClass", "Test", 0,
         CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL,
         NULL, NULL, NULL);
