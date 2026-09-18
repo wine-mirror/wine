@@ -1919,18 +1919,18 @@ static BOOL select_charmap(FT_Face ft_face, FT_Encoding encoding)
                     break;
             }
         }
-
-        if (cmap3) /* prefer Microsoft cmap table */
-            ft_err = pFT_Set_Charmap(ft_face, cmap3);
-        else if (cmap1)
-            ft_err = pFT_Set_Charmap(ft_face, cmap1);
-        else if (cmap2)
-            ft_err = pFT_Set_Charmap(ft_face, cmap2);
-        else if (cmap0)
-            ft_err = pFT_Set_Charmap(ft_face, cmap0);
-        else if (cmap_def)
-            ft_err = pFT_Set_Charmap(ft_face, cmap_def);
     }
+
+    if (cmap3) /* prefer Microsoft cmap table */
+        ft_err = pFT_Set_Charmap(ft_face, cmap3);
+    else if (cmap1)
+        ft_err = pFT_Set_Charmap(ft_face, cmap1);
+    else if (cmap2)
+        ft_err = pFT_Set_Charmap(ft_face, cmap2);
+    else if (cmap0)
+        ft_err = pFT_Set_Charmap(ft_face, cmap0);
+    else if (cmap_def)
+        ft_err = pFT_Set_Charmap(ft_face, cmap_def);
 
     return ft_err == FT_Err_Ok;
 }
