@@ -41,8 +41,6 @@
 #define NO_DATA_TRANSFERRED(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x3)
 
 
-#define INQUIRY_VENDOR          8
-
 #define MUSTEK_SCSI_AREA_AND_WINDOWS 0x04
 #define MUSTEK_SCSI_READ_SCANNED_DATA 0x08
 #define MUSTEK_SCSI_GET_IMAGE_STATUS 0x0f
