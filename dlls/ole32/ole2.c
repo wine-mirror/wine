@@ -746,6 +746,9 @@ HRESULT WINAPI DoDragDrop (
 
   TRACE("%p, %p, %#lx, %p.\n", pDataObject, pDropSource, dwOKEffect, pdwEffect);
 
+  if (!COM_CurrentInfo()->ole_inits)
+      return CO_E_NOTINITIALIZED;
+
   if (!pDataObject || !pDropSource || !pdwEffect)
       return E_INVALIDARG;
 
