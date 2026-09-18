@@ -14564,6 +14564,74 @@ static void test_GW_ENABLEDPOPUP(void)
     DestroyWindow(parent2);
 }
 
+/* Request a width that is too small for a regular window but
+ * wide enough to not cause a toolwindow to clamp */
+#define REQUESTED_WINDOW_WIDTH 60
+
+static HWND make_window(const wchar_t *title, DWORD exstyle, int width)
+{
+    HWND hwnd;
+    DWORD style = WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU;
+    WNDCLASSEXW wc = {0};
+    wc.cbSize        = sizeof(wc);
+    wc.lpfnWndProc   = def_window_procW;
+    wc.hInstance     = GetModuleHandleW(NULL);
+    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+    wc.lpszClassName = title;
+    ok( RegisterClassExW(&wc) != 0, "RegisterClassExW failed: %lu\n", GetLastError() );
+
+    hwnd = CreateWindowExW(exstyle, title, NULL, style, 0, 0, width,
+                           300, GetDesktopWindow(), 0, 0, NULL);
+    ok( hwnd != 0, "CreateWindowExW error %ld\n", GetLastError() );
+
+    return hwnd;
+}
+
+static void test_toolwindow_width_clamping_size(void)
+{
+    /* WS_EX_TOOLWINDOW panels should have a smaller minimum width than normal panels */
+    RECT rect;
+    int clamped_width, normal_clamped_w, tool_unclamped_w, tool_clamped_w;
+    UINT uflags = SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE;
+    DWORD exstyle = WS_EX_WINDOWEDGE | WS_EX_CONTROLPARENT;
+
+    static const WCHAR normalW[] = {'W','i','n','d','o','w',0};
+    static const WCHAR toolW[] = {'T','o','o','l',' ','W','i','n','d','o','w',0};
+    HWND normal = make_window(normalW, exstyle, REQUESTED_WINDOW_WIDTH);
+    HWND tool = make_window(toolW, exstyle | WS_EX_TOOLWINDOW, REQUESTED_WINDOW_WIDTH);
+
+    /* Expected minimum width for normal windows */
+    clamped_width = GetSystemMetrics( SM_CXMINTRACK );
+    /* Ensure WS_EX_TOOLWINDOW clamping is smaller than without that flag */
+    SetWindowPos(normal, NULL, 0, 0, REQUESTED_WINDOW_WIDTH, 300, uflags);
+    GetWindowRect(normal, &rect);
+    normal_clamped_w = rect.right - rect.left;
+    ok( normal_clamped_w == clamped_width, "Window width not clamping %d != %d\n",
+        normal_clamped_w, clamped_width);
+
+    SetWindowPos(tool, NULL, 0, 0, REQUESTED_WINDOW_WIDTH, 300, uflags);
+    GetWindowRect(tool, &rect);
+    tool_unclamped_w = rect.right - rect.left;
+    todo_wine
+    ok( tool_unclamped_w == REQUESTED_WINDOW_WIDTH, "Tool Window is clamping %d -> %d\n",
+        REQUESTED_WINDOW_WIDTH, tool_unclamped_w);
+
+    /* Set tool window to smaller than the lower min  */
+    SetWindowPos(tool, NULL, 0, 0, 1, 300, uflags);
+    GetWindowRect(tool, &rect);
+    tool_clamped_w = rect.right - rect.left;
+    ok( tool_clamped_w > 1, "Tool Window is not clamping %d == 1\n", tool_clamped_w);
+
+    todo_wine
+    ok( tool_clamped_w < REQUESTED_WINDOW_WIDTH,
+        "Tool Window clamping should be less than normal window clamping %d should be < %d\n",
+        tool_clamped_w, clamped_width);
+
+    /* clean up */
+    DestroyWindow( tool );
+    DestroyWindow( normal );
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -14769,6 +14837,7 @@ START_TEST(win)
     test_cascade_windows();
     test_tile_windows();
     test_GW_ENABLEDPOPUP();
+    test_toolwindow_width_clamping_size();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
