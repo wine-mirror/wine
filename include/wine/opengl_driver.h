@@ -313,6 +313,7 @@ struct opengl_driver_funcs
     UINT (*p_pbuffer_bind)( HDC hdc, struct opengl_drawable *drawable, GLenum buffer );
     BOOL (*p_null_surface_create)( int format, struct opengl_drawable **drawable );
     BOOL (*p_cleanup_thread)(void);
+    BOOL broken_sharing;
 };
 
 #endif /* WINE_UNIX_LIB */

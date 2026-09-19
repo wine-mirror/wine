@@ -42,6 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 struct opengl_thread_data
 {
     struct opengl_context  *core_context;    /* dummy core context when no client context is active */
+    struct opengl_context  *compat_context;  /* dummy COMPATIBILITY context when no client context is active */
     struct opengl_context  *noerror_context; /* dummy NO_ERROR context when no client context is active */
 
     struct opengl_drawable *null_surface;  /* dummy surface when no client context is active */
@@ -81,7 +82,7 @@ static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
 static pthread_mutex_t root_context_lock = PTHREAD_MUTEX_INITIALIZER;
-static struct opengl_context *root_core, *root_noerror;
+static struct opengl_context *root_core, *root_noerror, *root_compat;
 
 static BOOLEAN enabled_extensions[GL_EXTENSION_COUNT];
 static struct wgl_pixel_format *pixel_formats;
@@ -280,9 +281,10 @@ static struct opengl_context *internal_context_create( struct opengl_context_att
 
 static struct opengl_context *get_root_context( struct opengl_context_attrs attrs )
 {
-    struct opengl_context **root = &root_core;
+    struct opengl_context **root;
 
-    if (attrs.no_error) root = &root_noerror;
+    if (attrs.profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB && driver_funcs->broken_sharing) root = &root_compat;
+    else if (attrs.no_error) root = &root_noerror;
     else root = &root_core;
 
     if (!*root)
@@ -468,7 +470,8 @@ static struct opengl_context *get_thread_context( struct opengl_context_attrs at
     struct opengl_thread_data *data = get_opengl_thread_data();
     struct opengl_context **context;
 
-    if (attrs.no_error) context = &data->noerror_context;
+    if (attrs.profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB && driver_funcs->broken_sharing) context = &data->compat_context;
+    else if (attrs.no_error) context = &data->noerror_context;
     else context = &data->core_context;
 
     if (!*context) *context = internal_context_create( attrs, get_root_context( attrs ) );
@@ -3554,6 +3557,7 @@ void cleanup_opengl_thread(void)
 
     if (!(data = info->opengl_data)) return;
     if (data->core_context) win32u_context_destroy( data->core_context );
+    if (data->compat_context) win32u_context_destroy( data->compat_context );
     if (data->noerror_context) win32u_context_destroy( data->noerror_context );
     if (data->null_surface) opengl_drawable_release( data->null_surface );
     free( data );

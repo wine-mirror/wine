@@ -2419,6 +2419,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_pbuffer_updated = macdrv_pbuffer_updated,
     .p_pbuffer_bind = macdrv_pbuffer_bind,
     .p_cleanup_thread = macdrv_cleanup_thread,
+    .broken_sharing = TRUE,
 };
 
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
