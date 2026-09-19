@@ -252,8 +252,8 @@ static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION
 static struct opengl_context *internal_context_create(void)
 {
     struct opengl_context_attrs attrs = { .major = -1, .minor = -1, .profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB };
-    BOOL shared = TRUE, doublebuffer;
     struct opengl_context *context;
+    BOOL shared = TRUE;
 
     for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
@@ -262,11 +262,8 @@ static struct opengl_context *internal_context_create(void)
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
 
-        doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
         if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared ))) continue;
         context->attrs = attrs;
-        context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
-        context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
 
         TRACE( "Created internal %s context %p\n", global_context ? "thread" : "global", context );
         return context;
@@ -283,6 +280,7 @@ static void opengl_context_init( struct opengl_context *context )
 #undef USE_GL_EXT
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_client_context *client;
+    BOOL doublebuffer;
     const char *str;
     size_t len;
 
@@ -325,6 +323,10 @@ static void opengl_context_init( struct opengl_context *context )
             client->extensions[i] = enabled_extensions[i] && exposed_extensions[i];
         }
     }
+
+    doublebuffer = !!(pixel_formats[context->attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+    context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
+    context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
 
     context->initialized = TRUE;
 }
@@ -2856,8 +2858,8 @@ static int get_window_swap_interval( HWND hwnd )
 static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
 {
     struct opengl_context_attrs attrs = { .major = -1, .minor = -1 };
-    BOOL shared = TRUE, doublebuffer;
     struct opengl_context *context;
+    BOOL shared = TRUE;
 
     TRACE( "hdc %p, attribs %p\n", hdc, attribs );
 
@@ -2868,7 +2870,6 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
 
     for (const int *attrib = attribs; attrib && *attrib; attrib += 2)
     {
@@ -2923,8 +2924,6 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         return NULL;
     }
     context->attrs = attrs;
-    context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
-    context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
     *broken_sharing = !shared;
 
     TRACE( "created context %p with attrs %s\n", context, debugstr_opengl_context_attrs( &attrs ) );
