@@ -1377,7 +1377,7 @@ static BOOL set_swap_interval(struct macdrv_context *context, long interval)
     /* In theory, for single-buffered contexts, there's no such thing as a swap
        so the swap interval shouldn't matter.  But OS X will synchronize flushes
        of single-buffered contexts if the interval is set to non-zero. */
-    if (interval && !pixel_formats[context->base.format - 1].double_buffer)
+    if (interval && !pixel_formats[context->base.attrs.format - 1].double_buffer)
         interval = 0;
 
     err = CGLSetParameter(context->base.host_context, kCGLCPSwapInterval, (GLint*)&interval);

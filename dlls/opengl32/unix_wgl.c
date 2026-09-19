@@ -107,6 +107,7 @@ static void opengl_client_context_init( HGLRC client_context, struct opengl_cont
     struct opengl_client_context *client = opengl_client_context_from_client( client_context );
     client->unix_handle = (UINT_PTR)context;
     client->unix_funcs = (UINT_PTR)funcs;
+    client->attrs = context->attrs;
 }
 
 /* the current context is assumed valid and doesn't need locking */
@@ -163,24 +164,6 @@ static void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer
 static struct opengl_context *context_from_client_context( HGLRC client_context )
 {
     return opengl_context_from_handle( client_context );
-}
-
-static const char *parse_gl_version( const char *gl_version, int *major, int *minor )
-{
-    const char *ptr = gl_version;
-
-    *major = atoi( ptr );
-    if (*major <= 0)
-        ERR( "Invalid OpenGL major version %d.\n", *major );
-
-    while (isdigit( *ptr )) ++ptr;
-    if (*ptr++ != '.')
-        ERR( "Invalid OpenGL version string %s.\n", debugstr_a(gl_version) );
-
-    *minor = atoi( ptr );
-
-    while (isdigit( *ptr )) ++ptr;
-    return ptr;
 }
 
 static void set_gl_error( TEB *teb, GLenum error )
@@ -482,15 +465,10 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
 #define USE_GL_EXT(x) #x,
     static const char *extension_names[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
-    const char *vendor, *device, *version, *rest = "";
+    const char *vendor, *device;
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw = ctx->draw;
-    size_t count = 0, i, len;
-
-    if (!(version = (const char *)funcs->p_glGetString( GL_VERSION ))) version = "1.0";
-    rest = parse_gl_version( version, &client->major_version, &client->minor_version );
-    if (!client->major_version) client->major_version = 1;
-    TRACE( "context %p version %d.%d\n", client, client->major_version, client->minor_version );
+    size_t count = 0, i;
 
     if (!funcs->p_wglQueryCurrentRendererStringWINE) vendor = NULL;
     else vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
@@ -502,24 +480,15 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
     if (!device) device = (const char *)funcs->p_glGetString( GL_RENDERER );
     lstrcpynA( client->device_name, device, ARRAY_SIZE(client->device_name) );
 
-    if ((len = strlen( version )) >= ARRAY_SIZE(client->version_str)) FIXME( "version_str buffer too small, need %zu\n", len );
-    lstrcpynA( client->version_str, version, ARRAY_SIZE(client->version_str) );
-
-    if (client->major_version >= 3)
-    {
-        if (client->major_version > 3 || client->minor_version > 1)
-            funcs->p_glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &client->profile_mask );
-        funcs->p_glGetIntegerv( GL_CONTEXT_FLAGS, &client->context_flags );
-    }
-
     if (is_win64 && is_wow64() && !initialize_vk_device( teb, ctx ) && !ctx->extensions[GL_AMD_pinned_memory])
     {
-        if (client->major_version > 4 || (client->major_version == 4 && client->minor_version > 3))
+        if (client->attrs.major > 4 || (client->attrs.major == 4 && client->attrs.minor > 3))
         {
-            FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", client->major_version, client->minor_version );
-            client->major_version = 4;
-            client->minor_version = 3;
-            snprintf( client->version_str, ARRAY_SIZE(client->version_str), "4.3%s", rest );
+            const char *rest = strchr( client->version_str, ' ');
+            FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", client->attrs.major, client->attrs.minor );
+            client->attrs.major = 4;
+            client->attrs.minor = 3;
+            snprintf( client->version_str, ARRAY_SIZE(client->version_str), "4.3%s", rest ? rest : "" );
         }
         if (client->extensions[GL_ARB_buffer_storage])
         {
@@ -527,6 +496,8 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
             client->extensions[GL_ARB_buffer_storage] = FALSE;
         }
     }
+
+    TRACE( "context %p attributes %s version %s\n", client, debugstr_opengl_context_attrs( &client->attrs ), client->version_str );
 
     for (i = MIN_GL_EXTENSION; i <= MAX_GL_EXTENSION; i++) if (client->extensions[i]) client->extension_array[count++] = i;
     if (client->extensions[WGL_EXT_extensions_string]) client->extension_array[count++] = WGL_EXT_extensions_string;
@@ -537,6 +508,8 @@ static void init_client_context( TEB *teb, struct opengl_client_context *client,
 
     funcs->p_glViewport( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
     funcs->p_glScissor( 0, 0, draw->virtual_size.cx, draw->virtual_size.cy );
+
+    client->initialized = TRUE;
 }
 
 BOOL wrap_wglDeleteContext( TEB *teb, HGLRC client_context )
@@ -716,7 +689,6 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
     if (!(context = funcs->p_context_create( hdc, attribs, &client->broken_sharing ))) return 0;
     opengl_client_context_init( client_context, context, funcs );
     context->client_context = client_context;
-    client->format = context->format;
 
     return client_context;
 }
@@ -741,7 +713,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         teb->glReserved1[0] = draw_hdc;
         teb->glReserved1[1] = read_hdc;
         teb->glTable = (void *)funcs;
-        if (!client->major_version) init_client_context( teb, client, ctx );
+        if (!client->initialized) init_client_context( teb, client, ctx );
         pop_default_fbo_buffers( teb );
     }
     else

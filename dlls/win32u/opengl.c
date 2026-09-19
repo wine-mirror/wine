@@ -256,17 +256,30 @@ static void opengl_context_init( struct opengl_context *context )
 #undef USE_GL_EXT
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_client_context *client;
-    int major, minor = 0;
     const char *str;
+    size_t len;
 
     if (!(str = (const char *)funcs->p_glGetString( GL_VERSION ))) str = "1.0";
-    parse_version( str, &major, &minor );
-    TRACE( "context %p version %s (%d.%d)\n", context, str, major, minor );
+    parse_version( str, &context->attrs.major, &context->attrs.minor );
 
-    parse_current_extensions( major, context->extensions );
+    if (context->attrs.major >= 3)
+    {
+        if (context->attrs.major > 3 || context->attrs.minor > 1)
+            funcs->p_glGetIntegerv( GL_CONTEXT_PROFILE_MASK, (GLint *)&context->attrs.profile );
+        funcs->p_glGetIntegerv( GL_CONTEXT_FLAGS, (GLint *)&context->attrs.flags );
+    }
+
+    TRACE( "context %p attrs %s version %s\n", context, debugstr_opengl_context_attrs( &context->attrs ), str );
+
+    parse_current_extensions( context->attrs.major, context->extensions );
 
     if ((client = opengl_client_context_from_client( context->client_context )))
     {
+        client->attrs = context->attrs;
+
+        if ((len = strlen( str )) >= ARRAY_SIZE(client->version_str)) FIXME( "version_str buffer too small, need %zu\n", len );
+        lstrcpynA( client->version_str, str, ARRAY_SIZE(client->version_str) );
+
         client->extensions[GL_EXT_memory_object_win32] = context->extensions[GL_EXT_memory_object_fd];
         client->extensions[GL_EXT_semaphore_win32] = context->extensions[GL_EXT_semaphore_fd];
 
@@ -397,7 +410,7 @@ static struct opengl_context *internal_context_create(void)
 
         doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
         if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared ))) continue;
-        context->format = attrs.format;
+        context->attrs = attrs;
         context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
         context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
 
@@ -414,11 +427,11 @@ static struct opengl_drawable *get_null_surface( struct opengl_context *context 
     struct opengl_thread_data *data = get_opengl_thread_data();
 
     if (!driver_funcs->p_null_surface_create) return NULL;
-    if (!data->null_surface || data->null_surface->format != context->format)
+    if (!data->null_surface || data->null_surface->format != context->attrs.format)
     {
         if (data->null_surface) opengl_drawable_release( data->null_surface );
-        driver_funcs->p_null_surface_create( context->format, &data->null_surface );
-        TRACE( "created null surface %p with format %d\n", data->null_surface, context->format );
+        driver_funcs->p_null_surface_create( context->attrs.format, &data->null_surface );
+        TRACE( "created null surface %p with format %d\n", data->null_surface, context->attrs.format );
     }
 
     return data->null_surface;
@@ -2437,10 +2450,10 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     struct client_surface *client;
     BOOL ret;
 
-    if (!(new_draw = get_updated_drawable( draw_hdc, context->format, context->draw ))) return FALSE;
+    if (!(new_draw = get_updated_drawable( draw_hdc, context->attrs.format, context->draw ))) return FALSE;
     if (!draw_hdc && context->draw == context->read) opengl_drawable_add_ref( (new_read = new_draw) );
     else if (draw_hdc && draw_hdc == read_hdc) opengl_drawable_add_ref( (new_read = new_draw) );
-    else new_read = get_updated_drawable( read_hdc, context->format, context->read );
+    else new_read = get_updated_drawable( read_hdc, context->attrs.format, context->read );
 
     TRACE( "context %p, new_draw %s, new_read %s\n", context, debugstr_opengl_drawable( new_draw ), debugstr_opengl_drawable( new_read ) );
 
@@ -2884,12 +2897,12 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         WARN( "Failed to create driver context for context %p\n", context );
         return NULL;
     }
-    context->format = attrs.format;
+    context->attrs = attrs;
     context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
     context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
     *broken_sharing = !shared;
 
-    TRACE( "created context %p, format %u\n", context, attrs.format );
+    TRACE( "created context %p with attrs %s\n", context, debugstr_opengl_context_attrs( &attrs ) );
     return context;
 }
 

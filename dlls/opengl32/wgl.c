@@ -807,11 +807,11 @@ static void alloc_client_objects( struct context *ctx, enum object_type type, UI
 
 static BOOL is_core_context( struct opengl_client_context *ctx )
 {
-    if (ctx->major_version < 3) return FALSE;
-    if (ctx->major_version > 3) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-    if (ctx->minor_version > 1) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-    if (ctx->minor_version == 1) return !ctx->extensions[GL_ARB_compatibility];
-    return !!(ctx->context_flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT);
+    if (ctx->attrs.major < 3) return FALSE;
+    if (ctx->attrs.major > 3) return !!(ctx->attrs.profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->attrs.minor > 1) return !!(ctx->attrs.profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->attrs.minor == 1) return !ctx->extensions[GL_ARB_compatibility];
+    return !!(ctx->attrs.flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT);
 }
 
 BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension )
@@ -1294,7 +1294,7 @@ BOOL WINAPI wglCopyContext( HGLRC src_handle, HGLRC dst_handle, UINT mask )
     if (src != dst && dst->used == -1) FIXME( "Unsupported attributes on context %p\n", dst );
 
     if (!(hwnd = CreateWindowExW( 0, L"static", L"static", WS_POPUP, 0, 0, 0, 0, NULL, NULL, NULL, NULL )) ||
-        !(hdc = GetWindowDC( hwnd )) || !SetPixelFormat( hdc, dst->base.format, NULL ))
+        !(hdc = GetWindowDC( hwnd )) || !SetPixelFormat( hdc, dst->base.attrs.format, NULL ))
     {
         WARN( "Failed to create dummy window to update context attributes\n" );
         if (hdc) ReleaseDC( hwnd, hdc );
@@ -2283,14 +2283,11 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
         LeaveCriticalSection( &wgl_cs );
     }
 
-    if (func->major && (ctx->base.major_version > func->major
-                        || (ctx->base.major_version == func->major && ctx->base.minor_version >= func->minor)))
-        return func->func;
+    if (func->major && ctx->base.attrs.major > func->major) return func->func;
+    if (func->major && ctx->base.attrs.major == func->major && ctx->base.attrs.minor >= func->minor) return func->func;
 
     for (ext = func->extensions; *ext != GL_EXTENSION_COUNT; ext++)
-    {
         if (ctx->base.extensions[*ext]) return func->func;
-    }
 
     WARN( "Extensions required for %s not supported\n", name );
     return NULL;
@@ -3019,16 +3016,16 @@ BOOL get_integer( GLenum name, GLuint index, GLint value, GLint *data )
     switch (name)
     {
     case GL_CONTEXT_FLAGS:
-        *data = ctx->base.context_flags;
+        *data = ctx->base.attrs.flags;
         return TRUE;
     case GL_CONTEXT_PROFILE_MASK:
-        *data = ctx->base.profile_mask;
+        *data = ctx->base.attrs.profile;
         return TRUE;
     case GL_MAJOR_VERSION:
-        *data = ctx->base.major_version;
+        *data = ctx->base.attrs.major;
         return TRUE;
     case GL_MINOR_VERSION:
-        *data = ctx->base.minor_version;
+        *data = ctx->base.attrs.minor;
         return TRUE;
     case GL_NUM_EXTENSIONS:
         *data = ctx->base.extension_count;
