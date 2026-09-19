@@ -1087,11 +1087,6 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
         SetLastError( ERROR_INVALID_OPERATION );
         return NULL;
     }
-    if (share_context && !share_context->base.root_context)
-    {
-        ERR( "Shared context %p has broken display list sharing\n", share );
-        share = NULL;
-    }
     if (share) args.hShareContext = &share_context->base.obj;
 
     if (!(ptr = alloc_client_context( share ? share_context : NULL ))) return NULL;
@@ -1188,10 +1183,9 @@ BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
     if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
     if (ReadNoFence( &dst_context->lists->modified )) return FALSE;
 
-    if (!src_context->base.root_context || !dst_context->base.root_context ||
-        src_context->base.root_context != dst_context->base.root_context)
+    if (src_context->base.root_context != dst_context->base.root_context)
     {
-        ERR( "Either source or destination context has broken sharing\n" );
+        ERR( "Cannot share contexts with different roots\n" );
         RtlSetLastWin32Error( ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB );
         return FALSE;
     }

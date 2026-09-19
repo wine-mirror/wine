@@ -201,7 +201,7 @@ struct opengl_funcs
     void (*p_set_root_context)( struct opengl_context *root );
     void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
     BOOL (*p_query_renderer)( UINT attribute, void *value );
-    struct opengl_context *(*p_context_create)( HDC hdc, struct opengl_context *share, const int *attribs );
+    struct opengl_context *(*p_context_create)( HDC hdc, struct opengl_context *shared, const int *attribs );
     BOOL (*p_context_flush)( struct opengl_context *context, void (*flush)(void), UINT flags );
     BOOL (*p_context_destroy)( struct opengl_context *context );
     BOOL (*p_make_current)( HDC draw_hdc, HDC read_hdc, struct opengl_context *context );
@@ -304,7 +304,7 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     void (*p_init_extensions)( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] );
     BOOL (*p_surface_create)( struct client_surface *client, int format, struct opengl_drawable **drawable );
-    struct opengl_context *(*p_context_create)( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared );
+    struct opengl_context *(*p_context_create)( const struct opengl_context_attrs *attrs, struct opengl_context *share );
     BOOL (*p_context_destroy)( struct opengl_context *context );
     BOOL (*p_context_activate)( struct opengl_context *context, struct opengl_drawable *draw, struct opengl_drawable *read );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,

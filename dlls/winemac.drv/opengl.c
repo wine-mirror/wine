@@ -1784,7 +1784,7 @@ static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum so
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
  */
-static struct opengl_context *macdrv_context_create(const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared)
+static struct opengl_context *macdrv_context_create(const struct opengl_context_attrs *attrs, struct opengl_context *share)
 {
     CGLContextObj host_share = share ? share->host_context : NULL;
     CGLPixelFormatAttribute attribs[64], *attrib = attribs;
@@ -1794,20 +1794,13 @@ static struct opengl_context *macdrv_context_create(const struct opengl_context_
     GLint virtualScreens;
     CGLError err;
 
-    TRACE("attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared);
+    TRACE("attrs %s, share %p\n", debugstr_opengl_context_attrs( attrs ), share);
 
     if (attrs->major > gl_info.max_major || (attrs->major == gl_info.max_major && attrs->minor > gl_info.max_minor))
     {
         WARN("Profile version %u.%u not supported\n", attrs->major, attrs->minor);
         RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
-    }
-
-    if (share && share->attrs.profile != attrs->profile)
-    {
-        WARN("Cannot share core context with compatibility context\n");
-        host_share = NULL;
-        *shared = FALSE;
     }
 
     if (!(pf = get_pixel_format(attrs->format, TRUE /* non-displayable */)))

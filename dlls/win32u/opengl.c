@@ -258,7 +258,6 @@ static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION
 static struct opengl_context *internal_context_create( struct opengl_context_attrs attrs, struct opengl_context *root )
 {
     struct opengl_context *context;
-    BOOL shared = TRUE;
 
     for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
@@ -267,7 +266,7 @@ static struct opengl_context *internal_context_create( struct opengl_context_att
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
 
-        if (!(context = driver_funcs->p_context_create( &attrs, root, &shared ))) continue;
+        if (!(context = driver_funcs->p_context_create( &attrs, root ))) continue;
         context->root_context = root ? root : context;
         context->attrs = attrs;
 
@@ -1464,7 +1463,7 @@ static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLen
     return -1; /* use default implementation */
 }
 
-static struct opengl_context *egldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared )
+static struct opengl_context *egldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share )
 {
     EGLContext host_share = share ? share->host_context : NULL;
     const struct opengl_funcs *funcs = &display_funcs;
@@ -1472,7 +1471,7 @@ static struct opengl_context *egldrv_context_create( const struct opengl_context
     EGLint err, attribs[16], *attr = attribs;
     struct opengl_context *context;
 
-    TRACE( "attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared );
+    TRACE( "attrs %s, share %p\n", debugstr_opengl_context_attrs( attrs ), share );
 
     if (attrs->major != -1)
     {
@@ -2007,7 +2006,7 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLe
     return -1; /* use default implementation */
 }
 
-static struct opengl_context *nulldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared )
+static struct opengl_context *nulldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share )
 {
     return NULL;
 }
@@ -2934,7 +2933,6 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
 {
     struct opengl_context_attrs attrs = { .major = -1, .minor = -1 };
     struct opengl_context *context, *root;
-    BOOL shared = TRUE;
 
     TRACE( "hdc %p, attribs %p\n", hdc, attribs );
 
@@ -3000,12 +2998,12 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
         RtlSetLastWin32Error( ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB );
         return FALSE;
     }
-    if (!(context = driver_funcs->p_context_create( &attrs, root, &shared )))
+    if (!(context = driver_funcs->p_context_create( &attrs, root )))
     {
         WARN( "Failed to create driver context for context %p\n", context );
         return NULL;
     }
-    context->root_context = shared ? root : NULL;
+    context->root_context = root;
     context->attrs = attrs;
 
     TRACE( "created context %p with attrs %s\n", context, debugstr_opengl_context_attrs( &attrs ) );

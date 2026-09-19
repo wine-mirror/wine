@@ -1197,14 +1197,14 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 /***********************************************************************
  *		X11DRV_wglCreateContextAttribsARB
  */
-static struct opengl_context *x11drv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared )
+static struct opengl_context *x11drv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share )
 {
     GLXContext host_share = share ? share->host_context : NULL;
     int attribs[16], *attr = attribs;
     struct opengl_context *context;
     int err = 0;
 
-    TRACE( "attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared );
+    TRACE( "attrs %s, share %p\n", debugstr_opengl_context_attrs( attrs ), share );
 
     if (attrs->major != -1)
     {
