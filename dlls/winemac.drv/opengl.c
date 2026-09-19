@@ -57,7 +57,6 @@ static struct gl_info gl_info;
 struct macdrv_context
 {
     struct opengl_context   base;
-    BOOL                    core;
     WineOpenGLContext      *context;
     GLenum                  draw_pbuffer_face;
     GLint                   draw_pbuffer_level;
@@ -1180,7 +1179,7 @@ static BOOL init_gl_info(void)
 /**********************************************************************
  *              create_context
  */
-static BOOL create_context(struct macdrv_context *context, int format, CGLContextObj share, BOOL *shared)
+static BOOL create_context(struct macdrv_context *context, const struct opengl_context_attrs *attrs, CGLContextObj share)
 {
     const pixel_format *pf;
     CGLPixelFormatAttribute attribs[64];
@@ -1189,10 +1188,10 @@ static BOOL create_context(struct macdrv_context *context, int format, CGLContex
     GLint virtualScreens;
     CGLError err;
 
-    pf = get_pixel_format(format, TRUE /* non-displayable */);
+    pf = get_pixel_format(attrs->format, TRUE /* non-displayable */);
     if (!pf)
     {
-        ERR("Invalid pixel format %d, expect problems!\n", format);
+        ERR("Invalid pixel format %d, expect problems!\n", attrs->format);
         RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
         return FALSE;
     }
@@ -1213,7 +1212,7 @@ static BOOL create_context(struct macdrv_context *context, int format, CGLContex
 
     attribs[n++] = kCGLPFADoubleBuffer;
 
-    if (!context->core)
+    if (attrs->profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
     {
         attribs[n++] = kCGLPFAAuxBuffers;
         attribs[n++] = pf->aux_buffers;
@@ -1235,13 +1234,13 @@ static BOOL create_context(struct macdrv_context *context, int format, CGLContex
     if (pf->stereo)
         attribs[n++] = kCGLPFAStereo;
 
-    if (pf->accum_mode && !context->core)
+    if (pf->accum_mode && attrs->profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
     {
         attribs[n++] = kCGLPFAAccumSize;
         attribs[n++] = color_modes[pf->accum_mode - 1].color_bits;
     }
 
-    if (pf->pbuffer && !context->core)
+    if (pf->pbuffer && attrs->profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
         attribs[n++] = kCGLPFAPBuffer;
 
     if (pf->sample_buffers && pf->samples)
@@ -1255,7 +1254,7 @@ static BOOL create_context(struct macdrv_context *context, int format, CGLContex
     if (pf->backing_store)
         attribs[n++] = kCGLPFABackingStore;
 
-    if (context->core)
+    if (attrs->profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
     {
         attribs[n++] = kCGLPFAOpenGLProfile;
         attribs[n++] = (CGLPixelFormatAttribute)core_profile;
@@ -1947,7 +1946,7 @@ static struct opengl_context *macdrv_context_create(const struct opengl_context_
         return NULL;
     }
 
-    if (share && macdrv_context_from_opengl_context(share)->core != core)
+    if (share && share->attrs.profile != attrs->profile)
     {
         WARN("Cannot share core context with compatibility context\n");
         host_share = NULL;
@@ -1955,9 +1954,7 @@ static struct opengl_context *macdrv_context_create(const struct opengl_context_
     }
 
     if (!(context = calloc(1, sizeof(*context)))) return NULL;
-    context->core = core;
-
-    if (!create_context(context, attrs->format, host_share, shared))
+    if (!create_context(context, attrs, host_share))
     {
         free(context);
         return NULL;
