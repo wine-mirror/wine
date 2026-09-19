@@ -1398,12 +1398,6 @@ static struct opengl_context *egldrv_context_create( const struct opengl_context
 
     TRACE( "attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared );
 
-    if (attrs->profile & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-    {
-        ERR( "OpenGL ES contexts are not supported\n" );
-        return NULL;
-    }
-
     if (attrs->major != -1)
     {
         *attr++ = EGL_CONTEXT_MAJOR_VERSION_KHR;
@@ -2890,6 +2884,37 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
             FIXME( "Unhandled attributes: %#x %#x\n", attribs[0], attribs[1] );
             break;
         }
+    }
+
+    if (attrs.profile & ~(WGL_CONTEXT_CORE_PROFILE_BIT_ARB | WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB))
+    {
+        WARN( "Invalid WGL_CONTEXT_PROFILE_MASK_ARB %#x\n", attrs.profile );
+        RtlSetLastWin32Error( ERROR_INVALID_PROFILE_ARB );
+        return FALSE;
+    }
+    if (attrs.flags & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+    {
+        FIXME( "OpenGL ES contexts are not supported\n" );
+        RtlSetLastWin32Error( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+    if (attrs.flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+    {
+        FIXME( "Unknown WGL_CONTEXT_FLAGS_ARB %#x\n", attrs.flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB );
+        attrs.flags &= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+    }
+
+    if ((attrs.major >= 0 && attrs.major < 3) || (attrs.major == 3 && attrs.minor == 0 && !attrs.flags))
+    {
+        WARN( "Ignoring legacy OpenGL version %d.%d\n", attrs.major, attrs.minor == -1 ? 0 : attrs.minor );
+        attrs.profile = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+        attrs.major = attrs.minor = -1;
+        attrs.flags = 0;
+    }
+    else if ((attrs.major > 3 || attrs.minor >= 2) && !attrs.profile)
+    {
+        WARN( "Using default core profile for context version %d.%d\n", attrs.major, attrs.minor );
+        attrs.profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     }
 
     if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared )))

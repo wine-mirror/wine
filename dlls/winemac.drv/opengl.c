@@ -48,7 +48,7 @@ struct gl_info {
 
     GLint max_viewport_dims[2];
 
-    unsigned int max_major, max_minor;
+    int max_major, max_minor;
 };
 
 static struct gl_info gl_info;
@@ -1149,7 +1149,7 @@ static BOOL init_gl_info(void)
     pglGetIntegerv(GL_MAX_VIEWPORT_DIMS, gl_info.max_viewport_dims);
 
     str = (const char*)pglGetString(GL_VERSION);
-    sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
+    sscanf(str, "%d.%d", &gl_info.max_major, &gl_info.max_minor);
     TRACE("GL version   : %s\n", str);
     TRACE("GL renderer  : %s\n", pglGetString(GL_RENDERER));
 
@@ -1160,7 +1160,7 @@ static BOOL init_gl_info(void)
     if (!(context = init_context(kCGLOGLPVersion_GL3_Core))) return TRUE;
     str = (const char*)pglGetString(GL_VERSION);
     TRACE("GL3_Core context version: %s\n", str);
-    sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
+    sscanf(str, "%d.%d", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
     core_profile = kCGLOGLPVersion_GL3_Core;
@@ -1168,7 +1168,7 @@ static BOOL init_gl_info(void)
     if (!(context = init_context(kCGLOGLPVersion_GL4_Core))) return TRUE;
     str = (const char*)pglGetString(GL_VERSION);
     TRACE("GL4_Core context version: %s\n", str);
-    sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
+    sscanf(str, "%d.%d", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
     core_profile = kCGLOGLPVersion_GL4_Core;
@@ -1934,63 +1934,15 @@ static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum so
  */
 static struct opengl_context *macdrv_context_create(const struct opengl_context_attrs *attrs, struct opengl_context *share, BOOL *shared)
 {
+    BOOL core = !!(attrs->profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
     CGLContextObj host_share = share ? share->host_context : NULL;
     struct macdrv_context *context;
 
-    BOOL core = !!(attrs->profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-    int major = 1, minor = 0;
-
     TRACE("attrs %s, share %p, shared %p\n", debugstr_opengl_context_attrs( attrs ), share, shared);
 
-    if (attrs->major != -1) major = attrs->major;
-    if (attrs->minor != -1) minor = attrs->minor;
-
-    if (attrs->flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
-        WARN("WGL_CONTEXT_FLAGS_ARB attributes %#x ignored\n",
-             attrs->flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
-
-    if (attrs->profile && attrs->profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB &&
-        attrs->profile != WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
+    if (attrs->major > gl_info.max_major || (attrs->major == gl_info.max_major && attrs->minor > gl_info.max_minor))
     {
-        WARN("WGL_CONTEXT_PROFILE_MASK_ARB bits %#x invalid\n", attrs->profile);
-        RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
-        return NULL;
-    }
-
-    if (major > gl_info.max_major || (major == gl_info.max_major && minor > gl_info.max_minor))
-    {
-        WARN("Profile version %u.%u not supported\n", major, minor);
-        RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
-        return NULL;
-    }
-
-    if ((major == 3 && (minor == 2 || minor == 3)) ||
-        (major == 4 && (minor == 0 || minor == 1)))
-    {
-        if (!(attrs->flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
-        {
-            WARN("OS X only supports forward-compatible 3.2+ contexts\n");
-            RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
-            return NULL;
-        }
-        if (attrs->profile && attrs->profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
-        {
-            WARN("Compatibility profiles for GL version >= 3.2 not supported\n");
-            RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
-            return NULL;
-        }
-        core = TRUE;
-    }
-    else if (major < 1 || (major == 1 && (minor < 0 || minor > 5)) ||
-             (major == 2 && (minor < 0 || minor > 1)))
-    {
-        WARN("Invalid GL version requested\n");
-        RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
-        return NULL;
-    }
-    if (!core && (attrs->flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
-    {
-        WARN("Forward compatible context requested for GL version < 3\n");
+        WARN("Profile version %u.%u not supported\n", attrs->major, attrs->minor);
         RtlSetLastWin32Error(ERROR_INVALID_VERSION_ARB);
         return NULL;
     }
