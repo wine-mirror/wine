@@ -195,23 +195,11 @@ err:
     return FALSE;
 }
 
-static BOOL wayland_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
-{
-    return GL_TRUE;
-}
-
-static UINT wayland_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum buffer)
-{
-    return -1; /* use default implementation */
-}
-
 static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
     .p_surface_create = wayland_opengl_surface_create,
     .p_pbuffer_create = wayland_pbuffer_create,
-    .p_pbuffer_updated = wayland_pbuffer_updated,
-    .p_pbuffer_bind = wayland_pbuffer_bind,
 };
 
 static const struct opengl_drawable_funcs wayland_drawable_funcs =

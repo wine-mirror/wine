@@ -1460,16 +1460,6 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest,
     return TRUE;
 }
 
-static BOOL egldrv_pbuffer_updated( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level )
-{
-    return GL_TRUE;
-}
-
-static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLenum buffer )
-{
-    return -1; /* use default implementation */
-}
-
 static struct opengl_context *egldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share )
 {
     EGLContext host_share = share ? share->host_context : NULL;
@@ -1572,8 +1562,6 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_init_extensions = egldrv_init_extensions,
     .p_surface_create = egldrv_surface_create,
     .p_pbuffer_create = egldrv_pbuffer_create,
-    .p_pbuffer_updated = egldrv_pbuffer_updated,
-    .p_pbuffer_bind = egldrv_pbuffer_bind,
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
     .p_context_activate = egldrv_context_activate,
@@ -2003,16 +1991,6 @@ static BOOL nulldrv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest
     return FALSE;
 }
 
-static BOOL nulldrv_pbuffer_updated( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level )
-{
-    return GL_TRUE;
-}
-
-static UINT nulldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLenum buffer )
-{
-    return -1; /* use default implementation */
-}
-
 static struct opengl_context *nulldrv_context_create( const struct opengl_context_attrs *attrs, struct opengl_context *share )
 {
     return NULL;
@@ -2036,8 +2014,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_init_extensions = nulldrv_init_extensions,
     .p_surface_create = nulldrv_surface_create,
     .p_pbuffer_create = nulldrv_pbuffer_create,
-    .p_pbuffer_updated = nulldrv_pbuffer_updated,
-    .p_pbuffer_bind = nulldrv_pbuffer_bind,
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
     .p_context_activate = nulldrv_context_activate,
@@ -2819,7 +2795,6 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
     SIZE size = pbuffer->drawable->virtual_size;
     struct wgl_pixel_format desc;
     GLenum source;
-    UINT ret;
 
     TRACE( "pbuffer %p, buffer %d\n", pbuffer, buffer );
 
@@ -2863,9 +2838,6 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
         return GL_FALSE;
     }
 
-    if ((ret = driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->drawable, source )) != -1)
-        return ret;
-
     funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
 
     make_thread_context_current( current->root_context, pbuffer->drawable );
@@ -2894,7 +2866,7 @@ static BOOL win32u_wglReleaseTexImageARB( HPBUFFERARB client_pbuffer, int buffer
         return GL_FALSE;
     }
 
-    return !!driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->drawable, GL_NONE );
+    return TRUE;
 }
 
 static BOOL win32u_wglSetPbufferAttribARB( HPBUFFERARB client_pbuffer, const int *attribs )
@@ -2954,8 +2926,7 @@ static BOOL win32u_wglSetPbufferAttribARB( HPBUFFERARB client_pbuffer, const int
         }
     }
 
-    return driver_funcs->p_pbuffer_updated( pbuffer->hdc, pbuffer->drawable, pbuffer->cube_face,
-                                            max( pbuffer->mipmap_level, 0 ) );
+    return TRUE;
 }
 
 static int get_window_swap_interval( HWND hwnd )

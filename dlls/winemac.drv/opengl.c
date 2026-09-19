@@ -45,8 +45,6 @@ struct macdrv_context
 {
     struct opengl_context   base;
     WineOpenGLContext      *context;
-    GLenum                  draw_pbuffer_face;
-    GLint                   draw_pbuffer_level;
     int                     swap_interval;
 };
 
@@ -55,22 +53,10 @@ static struct macdrv_context *macdrv_context_from_opengl_context(struct opengl_c
     return CONTAINING_RECORD(base, struct macdrv_context, base);
 }
 
-struct gl_drawable
-{
-    struct opengl_drawable  base;
-    CGLPBufferObj           pbuffer;
-};
-
-static struct gl_drawable *impl_from_opengl_drawable(struct opengl_drawable *base)
-{
-    return CONTAINING_RECORD(base, struct gl_drawable, base);
-}
-
 static void *opengl_handle;
 static const struct opengl_funcs *funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
 static const struct opengl_drawable_funcs macdrv_surface_funcs;
-static const struct opengl_drawable_funcs macdrv_pbuffer_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
@@ -186,7 +172,6 @@ typedef struct {
 
 typedef struct {
     unsigned int window:1;
-    unsigned int pbuffer:1;
     unsigned int accelerated:1;
     unsigned int color_mode:5; /* index into color_modes table */
     unsigned int aux_buffers:3;
@@ -378,9 +363,8 @@ static inline pixel_format pixel_format_for_code(UInt64 code)
 
 static const char *debugstr_pf(const pixel_format *pf)
 {
-    return wine_dbg_sprintf("w/p/a %u/%u/%u col %u%s/%u dp/stn/ac/ax/b/db/str %u/%u/%u/%u/%u/%u/%u samp %u/%u %017llx",
+    return wine_dbg_sprintf("w/a %u/%u col %u%s/%u dp/stn/ac/ax/b/db/str %u/%u/%u/%u/%u/%u/%u samp %u/%u %017llx",
                             pf->window,
-                            pf->pbuffer,
                             pf->accelerated,
                             color_modes[pf->color_mode].color_bits,
                             (color_modes[pf->color_mode].is_float ? "f" : ""),
@@ -624,9 +608,6 @@ static void enum_renderer_pixel_formats(renderer_properties renderer, CFMutableA
                                 else
                                     request.accum_mode = 0;
 
-                                /* Targets to request are:
-                                        accelerated: window OR window + pbuffer
-                                        software: window + pbuffer */
                                 n_stack[++n_stack_idx] = n;
                                 for (target_pass = 0; target_pass <= accelerated; target_pass++)
                                 {
@@ -637,17 +618,9 @@ static void enum_renderer_pixel_formats(renderer_properties renderer, CFMutableA
                                     attribs[n++] = kCGLPFAWindow;
                                     request.window = 1;
 
-                                    if (!accelerated || target_pass > 0)
-                                    {
-                                        attribs[n++] = kCGLPFAPBuffer;
-                                        request.pbuffer = 1;
-                                    }
-                                    else
-                                        request.pbuffer = 0;
-
                                     /* FIXME: Could trim search space a bit here depending on GPU.
                                               For Nvidia GeForce 8800 GT, limited to 4 samples for color_bits >= 128.
-                                              For ATI Radeon HD 4850, can't multi-sample for color_bits >= 64 or pbuffer. */
+                                              For ATI Radeon HD 4850, can't multi-sample for color_bits >= 64. */
                                     n_stack[++n_stack_idx] = n;
                                     max_samples = renderer.max_sample_buffers ? max(1, renderer.max_samples) : 1;
                                     for (samples = 1; samples <= max_samples; samples *= 2)
@@ -714,8 +687,6 @@ static void enum_renderer_pixel_formats(renderer_properties renderer, CFMutableA
                                                 if (pf.double_buffer &&
                                                     CGLDescribePixelFormat(pix, 0, kCGLPFABackingStore, &value) == kCGLNoError)
                                                     pf.backing_store = value;
-                                                if (CGLDescribePixelFormat(pix, 0, kCGLPFAPBuffer, &value) == kCGLNoError)
-                                                    pf.pbuffer = value;
                                                 if (CGLDescribePixelFormat(pix, 0, kCGLPFASampleBuffers, &value) == kCGLNoError)
                                                     pf.sample_buffers = value;
                                                 if (pf.sample_buffers &&
@@ -868,12 +839,6 @@ static CFComparisonResult pixel_format_comparator(const void *val1, const void *
     if (color_modes[pf1.color_mode].color_ordering < color_modes[pf2.color_mode].color_ordering)
         return kCFCompareLessThan;
     if (color_modes[pf1.color_mode].color_ordering > color_modes[pf2.color_mode].color_ordering)
-        return kCFCompareGreaterThan;
-
-    /* Non-pbuffer-capable before pbuffer-capable. */
-    if (!pf1.pbuffer && pf2.pbuffer)
-        return kCFCompareLessThan;
-    if (pf1.pbuffer && !pf2.pbuffer)
         return kCFCompareGreaterThan;
 
     /* Fewer samples before more samples. */
@@ -1166,7 +1131,6 @@ static BOOL macdrv_surface_create(struct client_surface *client, int format, str
 {
     struct macdrv_win_data *data;
     HWND hwnd = client->hwnd;
-    struct gl_drawable *gl;
 
     TRACE("client %s, format %d, drawable %p\n", debugstr_client_surface(client), format, drawable);
 
@@ -1178,9 +1142,7 @@ static BOOL macdrv_surface_create(struct client_surface *client, int format, str
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(gl = opengl_drawable_create(&macdrv_surface_funcs, format, client, NULL))) return FALSE;
-    *drawable = &gl->base;
-    return TRUE;
+    return !!(*drawable = opengl_drawable_create(&macdrv_surface_funcs, format, client, NULL));
 }
 
 static void macdrv_surface_destroy(struct opengl_drawable *base)
@@ -1205,12 +1167,6 @@ static void macdrv_context_select_drawable(struct macdrv_context *context, struc
     if (CGLIsEnabled(context->base.host_context, kCGLCESurfaceBackingSize, &enabled) != kCGLNoError) enabled = 0;
     if (enabled) CGLDisable(context->base.host_context, kCGLCESurfaceBackingSize);
     macdrv_make_context_current(context->context, NULL, CGRectNull);
-
-    if (drawable)
-    {
-        struct gl_drawable *gl = impl_from_opengl_drawable(drawable);
-        CGLSetPBuffer(context->base.host_context, gl->pbuffer, context->draw_pbuffer_face, context->draw_pbuffer_level, 0);
-    }
 }
 
 
@@ -1753,33 +1709,6 @@ static void macdrv_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
 
 /***********************************************************************
- *              macdrv_wglBindTexImageARB
- *
- * WGL_ARB_render_texture: wglBindTexImageARB
- */
-static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum source)
-{
-    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
-    struct gl_drawable *gl = impl_from_opengl_drawable(base);
-    CGLPBufferObj pbuffer = gl->pbuffer;
-    CGLError err;
-
-    TRACE("hdc %p drawable %s source 0x%x\n", hdc, debugstr_opengl_drawable(base), source);
-
-    if (context->base.draw == base && source != GL_NONE) funcs->p_glFlush();
-
-    err = CGLTexImagePBuffer(context->base.host_context, pbuffer, source);
-    if (err != kCGLNoError)
-    {
-        WARN("CGLTexImagePBuffer failed with err %d %s\n", err, CGLErrorString(err));
-        RtlSetLastWin32Error(ERROR_INVALID_OPERATION);
-        return GL_FALSE;
-    }
-
-    return GL_TRUE;
-}
-
-/***********************************************************************
  *              macdrv_wglCreateContextAttribsARB
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
@@ -1853,9 +1782,6 @@ static struct opengl_context *macdrv_context_create(const struct opengl_context_
         *attrib++ = color_modes[pf->accum_mode - 1].color_bits;
     }
 
-    if (pf->pbuffer && attrs->profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
-        *attrib++ = kCGLPFAPBuffer;
-
     if (pf->sample_buffers && pf->samples)
     {
         *attrib++ = kCGLPFASampleBuffers;
@@ -1924,41 +1850,7 @@ static struct opengl_context *macdrv_context_create(const struct opengl_context_
 static BOOL macdrv_pbuffer_create(HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
                                   GLint max_level, struct opengl_drawable **drawable)
 {
-    struct gl_drawable *gl;
-    CGLError err;
-
-    TRACE("hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
-          hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable);
-
-    if (!texture_target || !texture_format)
-    {
-        /* no actual way to turn off ability to texture; use most permissive target */
-        texture_target = GL_TEXTURE_RECTANGLE;
-        texture_format = GL_RGB;
-    }
-
-    if (!(gl = opengl_drawable_create(&macdrv_pbuffer_funcs, format, NULL, &size))) return FALSE;
-
-    err = CGLCreatePBuffer(size.cx, size.cy, texture_target, texture_format, max_level, &gl->pbuffer);
-    if (err != kCGLNoError)
-    {
-        WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));
-        opengl_drawable_release(&gl->base);
-        return FALSE;
-    }
-
-    *drawable = &gl->base;
-    TRACE(" -> %p\n", gl);
-    return TRUE;
-}
-
-static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
-{
-    struct gl_drawable *gl = impl_from_opengl_drawable(base);
-
-    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
-
-    CGLReleasePBuffer(gl->pbuffer);
+    return FALSE;
 }
 
 static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_drawable *draw, struct opengl_drawable *read)
@@ -2185,22 +2077,6 @@ done:
     return ret;
 }
 
-static BOOL macdrv_pbuffer_updated(HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level)
-{
-    struct macdrv_context *context = macdrv_context_from_opengl_context(NtCurrentTeb()->glReserved2);
-
-    TRACE("hdc %p drawable %s cube_face %#x mipmap_level %d\n", hdc, debugstr_opengl_drawable(base), cube_face, mipmap_level);
-
-    if (context && context->base.draw == base)
-    {
-        context->draw_pbuffer_face = cube_face;
-        context->draw_pbuffer_level = mipmap_level;
-        macdrv_context_select_drawable(context, base);
-    }
-
-    return GL_TRUE;
-}
-
 static void macdrv_init_extensions(struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT])
 {
     extensions[WGL_WINE_query_renderer] = 1;
@@ -2269,7 +2145,7 @@ static BOOL macdrv_describe_pixel_format(int format, struct wgl_pixel_format *de
     descr->pfd.nSize        = sizeof(*descr);
     descr->pfd.nVersion     = 1;
 
-    descr->pfd.dwFlags      = PFD_SUPPORT_OPENGL;
+    descr->pfd.dwFlags      = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP;
     if (pf->window)         descr->pfd.dwFlags |= PFD_DRAW_TO_WINDOW;
     if (!pf->accelerated)   descr->pfd.dwFlags |= PFD_GENERIC_FORMAT;
     else                    descr->pfd.dwFlags |= PFD_SUPPORT_COMPOSITION;
@@ -2334,12 +2210,12 @@ static BOOL macdrv_describe_pixel_format(int format, struct wgl_pixel_format *de
     else
         descr->framebuffer_srgb_capable = GL_FALSE;
 
-    descr->draw_to_pbuffer = pf->pbuffer ? GL_TRUE : GL_FALSE;
-    descr->bind_to_texture_rgb = pf->pbuffer ? GL_TRUE : GL_FALSE;
-    descr->bind_to_texture_rectangle_rgb = pf->pbuffer ? GL_TRUE : GL_FALSE;
+    descr->draw_to_pbuffer = GL_TRUE;
+    descr->bind_to_texture_rgb = GL_TRUE;
+    descr->bind_to_texture_rectangle_rgb = GL_TRUE;
 
-    descr->bind_to_texture_rgba = (pf->pbuffer && color_modes[pf->color_mode].alpha_bits) ? GL_TRUE : GL_FALSE;
-    descr->bind_to_texture_rectangle_rgba = (pf->pbuffer && color_modes[pf->color_mode].alpha_bits) ? GL_TRUE : GL_FALSE;
+    descr->bind_to_texture_rgba = color_modes[pf->color_mode].alpha_bits ? GL_TRUE : GL_FALSE;
+    descr->bind_to_texture_rectangle_rgba = color_modes[pf->color_mode].alpha_bits ? GL_TRUE : GL_FALSE;
 
     descr->max_pbuffer_width = gl_info.max_viewport_dims[0];
     descr->max_pbuffer_height = gl_info.max_viewport_dims[1];
@@ -2409,22 +2285,14 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_context_destroy = macdrv_context_destroy,
     .p_context_activate = macdrv_context_activate,
     .p_pbuffer_create = macdrv_pbuffer_create,
-    .p_pbuffer_updated = macdrv_pbuffer_updated,
-    .p_pbuffer_bind = macdrv_pbuffer_bind,
     .p_cleanup_thread = macdrv_cleanup_thread,
     .broken_sharing = TRUE,
 };
 
 static const struct opengl_drawable_funcs macdrv_surface_funcs =
 {
-    .size = sizeof(struct gl_drawable),
+    .size = sizeof(struct opengl_drawable),
     .destroy = macdrv_surface_destroy,
     .flush = macdrv_surface_flush,
     .swap = macdrv_surface_swap,
-};
-
-static const struct opengl_drawable_funcs macdrv_pbuffer_funcs =
-{
-    .size = sizeof(struct gl_drawable),
-    .destroy = macdrv_pbuffer_destroy,
 };
