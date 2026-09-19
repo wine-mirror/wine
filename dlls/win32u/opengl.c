@@ -265,6 +265,7 @@ static struct opengl_context *internal_context_create( struct opengl_context_att
         if (desc->pfd.cColorBits < 24) continue;
 
         if (!(context = driver_funcs->p_context_create( &attrs, root, &shared ))) continue;
+        context->root_context = root ? root : context;
         context->attrs = attrs;
 
         TRACE( "Created internal %s context %p with attrs %s\n", root ? "thread" : "root", context, debugstr_opengl_context_attrs( &attrs ) );
@@ -2875,7 +2876,7 @@ static int get_window_swap_interval( HWND hwnd )
     return interval;
 }
 
-static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
+static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_context *share, const int *attribs )
 {
     struct opengl_context_attrs attrs = { .major = -1, .minor = -1 };
     struct opengl_context *context, *root;
@@ -2938,8 +2939,10 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         attrs.profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     }
 
-    if (!(root = get_root_context( attrs )))
+    if (!(root = get_root_context( attrs )) || (share && share->root_context != root))
     {
+        ERR( "Failed to share attrs %s with context %p attrs %s\n", debugstr_opengl_context_attrs( &attrs ),
+             share, share ? debugstr_opengl_context_attrs( &share->attrs ) : "(none)" );
         RtlSetLastWin32Error( ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB );
         return FALSE;
     }
@@ -2948,8 +2951,8 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         WARN( "Failed to create driver context for context %p\n", context );
         return NULL;
     }
+    context->root_context = shared ? root : NULL;
     context->attrs = attrs;
-    *broken_sharing = !shared;
 
     TRACE( "created context %p with attrs %s\n", context, debugstr_opengl_context_attrs( &attrs ) );
     return context;

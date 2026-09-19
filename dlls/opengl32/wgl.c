@@ -516,9 +516,9 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
     return lists;
 }
 
-static void display_lists_release( struct display_lists *lists, BOOL destroy )
+static void display_lists_release( struct display_lists *lists, UINT64 root_context )
 {
-    BOOL current;
+    BOOL current, destroy = !!root_context;
 
     if (InterlockedDecrement( &lists->refcount )) return;
 
@@ -674,7 +674,7 @@ static struct handle_entry *alloc_client_context( struct context *share )
     if (!(context->lists = share ? display_lists_acquire( share->lists ) : display_lists_create())) goto failed;
     if ((ptr = alloc_handle( &contexts, context ))) return ptr;
 
-    display_lists_release( context->lists, share ? !share->base.broken_sharing : TRUE );
+    display_lists_release( context->lists, share ? share->base.root_context : 0 );
 failed:
     free( context );
     return NULL;
@@ -688,7 +688,7 @@ static void free_client_context( struct handle_entry *ptr )
     RB_FOR_EACH_ENTRY_DESTRUCTOR( str, next, &context->wow64_strings, struct string_entry, entry )
         free( str );
 
-    display_lists_release( context->lists, !context->base.broken_sharing );
+    display_lists_release( context->lists, context->base.root_context );
     free( context->extensions );
 
     free_handle( &contexts, ptr );
@@ -1086,7 +1086,7 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
         SetLastError( ERROR_INVALID_OPERATION );
         return NULL;
     }
-    if (share_context && share_context->base.broken_sharing)
+    if (share_context && !share_context->base.root_context)
     {
         ERR( "Shared context %p has broken display list sharing\n", share );
         share = NULL;
@@ -1187,15 +1187,17 @@ BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
     if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
     if (ReadNoFence( &dst_context->lists->modified )) return FALSE;
 
-    if (src_context->base.broken_sharing || dst_context->base.broken_sharing)
+    if (!src_context->base.root_context || !dst_context->base.root_context ||
+        src_context->base.root_context != dst_context->base.root_context)
     {
         ERR( "Either source or destination context has broken sharing\n" );
+        RtlSetLastWin32Error( ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB );
         return FALSE;
     }
 
     lists = display_lists_acquire( src_context->lists );
     lists = InterlockedExchangePointer( (void *)&dst_context->lists, lists );
-    display_lists_release( lists, TRUE );
+    display_lists_release( lists, dst_context->base.root_context );
 
     return TRUE;
 }

@@ -91,13 +91,13 @@ struct opengl_client_context
     struct HGLRC__              obj;            /* client object header */
     UINT64                      unix_handle;
     UINT64                      unix_funcs;
+    UINT64                      root_context;                           /* handle to the root shared context */
     struct opengl_context_attrs attrs;                                  /* context creation / actual attributes */
     DWORD                       current_tid;                            /* thread that the context is current in */
     GLenum                      last_error;
     char                        version_str[64];
     char                        vendor_name[64];
     char                        device_name[64];
-    BOOL                        broken_sharing;                         /* context couldn't be shared (for macOS) */
     UINT64                      debug_callback;                         /* callback pointer for glDebugMessageCallback */
     UINT64                      debug_user;                             /* user pointer for glDebugMessageCallback */
     BOOLEAN                     initialized;                            /* context has been initialized */
@@ -148,6 +148,7 @@ struct opengl_context
 {
     HGLRC                       client_context;     /* client side context pointer */
     void                       *host_context;       /* host-specific context */
+    struct opengl_context      *root_context;       /* root context this is shared with */
     struct opengl_context_attrs attrs;              /* context creation / actual attributes */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
@@ -199,7 +200,7 @@ struct opengl_funcs
 
     void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
     BOOL (*p_query_renderer)( UINT attribute, void *value );
-    struct opengl_context *(*p_context_create)( HDC hdc, const int *attribs, BOOL *broken_sharing );
+    struct opengl_context *(*p_context_create)( HDC hdc, struct opengl_context *share, const int *attribs );
     BOOL (*p_context_flush)( struct opengl_context *context, void (*flush)(void), UINT flags );
     BOOL (*p_context_destroy)( struct opengl_context *context );
     BOOL (*p_make_current)( HDC draw_hdc, HDC read_hdc, struct opengl_context *context );
