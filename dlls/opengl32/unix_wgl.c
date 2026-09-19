@@ -688,18 +688,25 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
     return client_context;
 }
 
+NTSTATUS set_root_context( void *args )
+{
+    const struct opengl_funcs *funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
+    struct set_root_context_params *params = args;
+    struct opengl_context *root = (struct opengl_context *)(UINT_PTR)params->root_context;
+    TEB *teb = params->teb;
+
+    funcs->p_set_root_context( root );
+    teb->glTable = root || teb->glContext ? (void *)funcs : (void *)&null_opengl_funcs;
+
+    return STATUS_SUCCESS;
+}
+
 BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC client_context )
 {
     struct opengl_client_context *client;
     struct opengl_context *ctx;
 
-    if (HandleToULong( client_context ) == (UINT)-1)
-    {
-        const struct opengl_funcs *funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
-        if (!funcs->p_make_current( NULL, NULL, NULL )) return FALSE;
-        teb->glTable = (void *)funcs;
-    }
-    else if (client_context)
+    if (client_context)
     {
         const struct opengl_funcs *funcs = get_context_funcs( client_context );
         if (!(client = opengl_client_context_from_client( client_context ))) return FALSE;
@@ -1832,6 +1839,21 @@ NTSTATUS wow64_process_detach( void *args )
     if ((status = process_detach( NULL ))) return status;
 
     return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_set_root_context( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        UINT64 root_context;
+    } *params32 = args;
+    struct set_root_context_params params =
+    {
+        .teb = get_teb64(params32->teb),
+        .root_context = params32->root_context,
+    };
+    return set_root_context( &params );
 }
 
 NTSTATUS wow64_get_pixel_formats( void *args )

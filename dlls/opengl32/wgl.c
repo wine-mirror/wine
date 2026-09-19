@@ -518,15 +518,15 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
 
 static void display_lists_release( struct display_lists *lists, UINT64 root_context )
 {
-    BOOL current, destroy = !!root_context;
+    BOOL destroy = !!root_context;
 
     if (InterlockedDecrement( &lists->refcount )) return;
 
-    /* make sure there's a (dummy) context before destroying display list objects */
-    if ((current = destroy && !NtCurrentTeb()->glCurrentRC))
+    if (destroy)
     {
-        struct wglMakeContextCurrentARB_params args = { .teb = NtCurrentTeb(), .hglrc = (HGLRC)-1 };
-        UNIX_CALL( wglMakeContextCurrentARB, &args );
+        /* select the correct root context before destroying display list objects */
+        struct set_root_context_params params = { .teb = NtCurrentTeb(), .root_context = root_context };
+        UNIX_CALL( set_root_context, &params );
     }
 
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
@@ -542,10 +542,11 @@ static void display_lists_release( struct display_lists *lists, UINT64 root_cont
         free( entry->user_data );
     }
 
-    if (current)
+    if (destroy)
     {
-        struct wglMakeContextCurrentARB_params args = { .teb = NtCurrentTeb() };
-        UNIX_CALL( wglMakeContextCurrentARB, &args );
+        /* restore the client context and drawables, or default root context */
+        struct set_root_context_params params = { .teb = NtCurrentTeb() };
+        UNIX_CALL( set_root_context, &params );
     }
 
     free( lists );

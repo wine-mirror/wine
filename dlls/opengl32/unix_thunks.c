@@ -27930,6 +27930,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     process_attach,
     thread_attach,
     process_detach,
+    set_root_context,
     get_pixel_formats,
     wgl_wglDeleteContext,
     wgl_wglGetPixelFormat,
@@ -31029,6 +31030,8 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 extern NTSTATUS wow64_thread_attach( void *args );
 extern NTSTATUS wow64_process_detach( void *args );
+extern NTSTATUS wow64_set_root_context( void *args );
+
 extern NTSTATUS wow64_get_pixel_formats( void *args );
 
 static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
@@ -81577,6 +81580,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     process_attach,
     wow64_thread_attach,
     wow64_process_detach,
+    wow64_set_root_context,
     wow64_get_pixel_formats,
     wow64_wgl_wglDeleteContext,
     wow64_wgl_wglGetPixelFormat,

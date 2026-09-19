@@ -198,6 +198,7 @@ struct opengl_funcs
     PFN_wglAllocateMemoryNV p_wglAllocateMemoryNV;
     PFN_wglFreeMemoryNV p_wglFreeMemoryNV;
 
+    void (*p_set_root_context)( struct opengl_context *root );
     void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
     BOOL (*p_query_renderer)( UINT attribute, void *value );
     struct opengl_context *(*p_context_create)( HDC hdc, struct opengl_context *share, const int *attribs );

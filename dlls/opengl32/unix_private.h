@@ -88,6 +88,7 @@ extern NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str );
 extern NTSTATUS process_attach( void *args );
 extern NTSTATUS thread_attach( void *args );
 extern NTSTATUS process_detach( void *args );
+extern NTSTATUS set_root_context( void *args );
 extern NTSTATUS get_pixel_formats( void *args );
 extern void set_current_fbo( TEB *teb, GLenum target, GLuint framebuffer );
 extern GLuint get_default_fbo( TEB *teb, GLenum target );
