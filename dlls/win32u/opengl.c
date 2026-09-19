@@ -249,6 +249,33 @@ static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION
     }
 }
 
+static struct opengl_context *internal_context_create(void)
+{
+    struct opengl_context_attrs attrs = { .major = -1, .minor = -1, .profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB };
+    BOOL shared = TRUE, doublebuffer;
+    struct opengl_context *context;
+
+    for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
+    {
+        struct wgl_pixel_format *desc = pixel_formats + attrs.format - 1;
+        if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
+        if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
+        if (desc->pfd.cColorBits < 24) continue;
+
+        doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+        if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared ))) continue;
+        context->attrs = attrs;
+        context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
+        context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
+
+        TRACE( "Created internal %s context %p\n", global_context ? "thread" : "global", context );
+        return context;
+    }
+
+    ERR( "Failed to create internal %s context\n", global_context ? "thread" : "global" );
+    return calloc( 1, sizeof(*context) ); /* return a valid pointer nonetheless */
+}
+
 static void opengl_context_init( struct opengl_context *context )
 {
 #define USE_GL_EXT(x) [x] = TRUE,
@@ -393,33 +420,6 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     if (!is_client_surface_window( drawable->client, 0 )) return FALSE;
     client_surface_update( drawable->client );
     return drawable->funcs->swap( drawable );
-}
-
-static struct opengl_context *internal_context_create(void)
-{
-    struct opengl_context_attrs attrs = { .major = -1, .minor = -1, .profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB };
-    BOOL shared = TRUE, doublebuffer;
-    struct opengl_context *context;
-
-    for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
-    {
-        struct wgl_pixel_format *desc = pixel_formats + attrs.format - 1;
-        if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
-        if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
-        if (desc->pfd.cColorBits < 24) continue;
-
-        doublebuffer = !!(pixel_formats[attrs.format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
-        if (!(context = driver_funcs->p_context_create( &attrs, global_context, &shared ))) continue;
-        context->attrs = attrs;
-        context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
-        context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
-
-        TRACE( "Created internal %s context %p\n", global_context ? "thread" : "global", context );
-        return context;
-    }
-
-    ERR( "Failed to create internal %s context\n", global_context ? "thread" : "global" );
-    return calloc( 1, sizeof(*context) ); /* return a valid pointer nonetheless */
 }
 
 static struct opengl_drawable *get_null_surface( struct opengl_context *context )
