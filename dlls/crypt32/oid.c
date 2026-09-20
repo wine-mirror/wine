@@ -1570,7 +1570,7 @@ static struct OIDInfo *read_oid_info(HKEY root, char *key_name, DWORD *flags)
         if (cngextra_len)
         {
             info->info.pwszCNGExtraAlgid = (WCHAR *)p;
-            RegQueryValueExW(key, L"CNGExtraAlgid", NULL, NULL, (BYTE *)info->info.pwszCNGExtraAlgid, &cngalgid_len);
+            RegQueryValueExW(key, L"CNGExtraAlgid", NULL, NULL, (BYTE *)info->info.pwszCNGExtraAlgid, &cngextra_len);
         }
     }
 
