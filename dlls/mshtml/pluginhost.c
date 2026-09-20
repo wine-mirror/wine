@@ -2398,7 +2398,7 @@ static ULONG WINAPI InstallCallback_AddRef(IBindStatusCallback *iface)
 static ULONG WINAPI InstallCallback_Release(IBindStatusCallback *iface)
 {
     InstallCallback *This = impl_from_IBindStatusCallback(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
