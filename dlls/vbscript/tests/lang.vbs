@@ -3872,6 +3872,13 @@ sub test_assign_me
 end sub
 call test_assign_me()
 
+Sub LocalNamedLikeSub
+    Dim LocalNamedLikeSub
+    LocalNamedLikeSub = 5
+    Call ok(LocalNamedLikeSub = 5, "LocalNamedLikeSub = " & LocalNamedLikeSub)
+End Sub
+Call LocalNamedLikeSub
+
 Sub ParamNamedLikeOtherSub(test_dotIdentifiers)
     Call ok(test_dotIdentifiers = 3, "test_dotIdentifiers = " & test_dotIdentifiers)
 End Sub

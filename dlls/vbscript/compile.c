@@ -496,6 +496,20 @@ static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
     return FALSE;
 }
 
+/* A function or property owns its name as the return value, a sub doesn't. */
+static BOOL is_func_retval_name(compile_ctx_t *ctx, const WCHAR *name)
+{
+    switch(ctx->func->type) {
+    case FUNC_FUNCTION:
+    case FUNC_PROPGET:
+    case FUNC_PROPLET:
+    case FUNC_PROPSET:
+        return !vbs_wcsicmp(ctx->func->name, name);
+    default:
+        return FALSE;
+    }
+}
+
 static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
 {
     dim_decl_t *dim_decl;
@@ -1443,10 +1457,17 @@ static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat
 
 static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 {
-    dim_decl_t *dim_decl = stat->dim_decls;
+    dim_decl_t *dim_decl = stat->dim_decls, *prev_decl;
 
     while(1) {
-        if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
+        /* Declarations of this statement are not linked to ctx->dim_decls yet. */
+        for(prev_decl = stat->dim_decls; prev_decl != dim_decl; prev_decl = prev_decl->next) {
+            if(!vbs_wcsicmp(prev_decl->name, dim_decl->name))
+                break;
+        }
+
+        if(prev_decl != dim_decl || lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
+           || is_func_retval_name(ctx, dim_decl->name)
            || (ctx->func->type == FUNC_GLOBAL && lookup_func_decls(ctx, dim_decl->name))) {
             ctx->loc = dim_decl->loc;
             WARN("dim %s name redefined\n", debugstr_w(dim_decl->name));
@@ -1520,7 +1541,8 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
         decl = next_decl;
 
         if(!lookup_const_decls(ctx, decl->name, FALSE)) {
-            if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+            if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)
+               || is_func_retval_name(ctx, decl->name)) {
                 ctx->loc = decl->loc;
                 WARN("%s redefined\n", debugstr_w(decl->name));
                 return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
@@ -1701,7 +1723,8 @@ static HRESULT collect_const_decls(compile_ctx_t *ctx, statement_t *stat)
                     return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                 }
 
-                if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+                if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)
+                   || is_func_retval_name(ctx, decl->name)) {
                     ctx->loc = decl->loc;
                     WARN("%s redefined\n", debugstr_w(decl->name));
                     return MAKE_VBSERROR(VBSE_NAME_REDEFINED);

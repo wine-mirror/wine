@@ -3578,6 +3578,33 @@ static void test_parse_errors(void)
             L"Class C\n  Public Property Let P(a, P)\n  End Property\nEnd Class\n",
             1, 27,
             L"  Public Property Let P(a, P)", S_OK, 1041
+        },
+        {
+            /* Variable declared twice in one Dim statement - error 1041 */
+            L"Sub S\n  Dim a, b, A\nEnd Sub\n",
+            1, 12,
+            L"  Dim a, b, A", S_OK, 1041
+        },
+        {
+            L"Dim a(1), a\n",
+            0, 10,
+            L"Dim a(1), a", S_OK, 1041
+        },
+        {
+            /* Local variable named like its function - error 1041 */
+            L"Function F\n  Dim F\nEnd Function\n",
+            1, 6,
+            L"  Dim F", S_OK, 1041
+        },
+        {
+            L"Function F\n  Const F = 1\nEnd Function\n",
+            1, 8,
+            L"  Const F = 1", S_OK, 1041
+        },
+        {
+            L"Class C\n  Property Let P(v)\n    Dim P\n  End Property\nEnd Class\n",
+            2, 8,
+            L"    Dim P", S_OK, 1041
         }
     };
     HRESULT hres;
