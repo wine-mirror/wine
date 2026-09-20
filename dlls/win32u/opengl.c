@@ -428,15 +428,18 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
 {
-    if (!is_client_surface_window( drawable->client, 0 )) return;
+    if (!drawable->funcs->flush) return;
 
-    if (client_surface_get_size( drawable->client, &drawable->virtual_size, &drawable->monitor_size ))
-        flags |= GL_FLUSH_UPDATED;
-
-    if (interval != drawable->interval)
+    if (is_client_surface_window( drawable->client, 0 ))
     {
-        drawable->interval = interval;
-        flags |= GL_FLUSH_INTERVAL;
+        if (client_surface_get_size( drawable->client, &drawable->virtual_size, &drawable->monitor_size ))
+            flags |= GL_FLUSH_UPDATED;
+
+        if (interval != drawable->interval)
+        {
+            drawable->interval = interval;
+            flags |= GL_FLUSH_INTERVAL;
+        }
     }
 
     if (flags) drawable->funcs->flush( drawable, flags );
@@ -2321,6 +2324,7 @@ static BOOL flush_memory_dc( struct opengl_context *context, HDC hdc, BOOL write
             struct opengl_drawable *drawable = dc->opengl_drawable;
 
             make_thread_context_current( context->root_context, drawable );
+            opengl_drawable_flush( drawable, 0, GL_FLUSH_ACTIVATE );
 
             if (write) funcs->p_glDrawPixels( width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
             else funcs->p_glReadPixels( 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bits.ptr );
@@ -2829,6 +2833,7 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
     funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
 
     make_thread_context_current( current->root_context, pbuffer->drawable );
+    opengl_drawable_flush( pbuffer->drawable, 0, GL_FLUSH_ACTIVATE );
 
     /* Make sure that the prev_texture is set as the current texture state isn't shared
      * between contexts. After that copy the pbuffer texture data. */
