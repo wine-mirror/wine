@@ -1376,11 +1376,32 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
 
 static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, dim_decl_t *dim_decl, unsigned storage_flags)
 {
-    dim_decl_t *iter;
+    dim_decl_t *iter, *redefined = NULL;
 
     if(storage_flags & STORAGE_IS_DEFAULT) {
         FIXME("variant prop can't be default value\n");
         ctx->hres = E_FAIL;
+        return NULL;
+    }
+
+    /* The class body is parsed from its end, class_decl->props are the later declarations. */
+    for(iter = dim_decl->next; iter && !redefined; iter = iter->next) {
+        dim_decl_t *prev;
+        for(prev = dim_decl; prev != iter && !redefined; prev = prev->next) {
+            if(!wcsicmp(prev->name, iter->name))
+                redefined = iter;
+        }
+    }
+    for(iter = dim_decl; iter && !redefined; iter = iter->next) {
+        for(redefined = class_decl->props; redefined; redefined = redefined->next) {
+            if(!wcsicmp(redefined->name, iter->name))
+                break;
+        }
+    }
+    if(redefined) {
+        WARN("%s redefined\n", debugstr_w(redefined->name));
+        ctx->error_loc = redefined->loc;
+        ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         return NULL;
     }
 

@@ -3605,6 +3605,27 @@ static void test_parse_errors(void)
             L"Class C\n  Property Let P(v)\n    Dim P\n  End Property\nEnd Class\n",
             2, 8,
             L"    Dim P", S_OK, 1041
+        },
+        {
+            /* Class variable declared twice - error 1041 */
+            L"Class C\n  Public a\n  Public A\nEnd Class\n",
+            2, 9,
+            L"  Public A", S_OK, 1041
+        },
+        {
+            L"Class C\n  Public a\n  Dim a\nEnd Class\n",
+            2, 6,
+            L"  Dim a", S_OK, 1041
+        },
+        {
+            L"Class C\n  Dim a, a\nEnd Class\n",
+            1, 9,
+            L"  Dim a, a", S_OK, 1041
+        },
+        {
+            L"Class C\n  Public a(2)\n  Private a\nEnd Class\n",
+            2, 10,
+            L"  Private a", S_OK, 1041
         }
     };
     HRESULT hres;
