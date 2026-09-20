@@ -938,7 +938,7 @@ static HRESULT query_edit_status(HTMLDocumentNode *doc, OLECMD *cmd)
         cmd->cmdf = query_ns_edit_status(doc, NSCMD_OL);
         break;
     case IDM_UNORDERLIST:
-        TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
+        TRACE("CGID_MSHTML: IDM_UNORDERLIST\n");
         cmd->cmdf = query_ns_edit_status(doc, NSCMD_UL);
         break;
     case IDM_INDENT:
