@@ -65,7 +65,7 @@ static statement_t *new_with_statement(parser_ctx_t*,unsigned,expression_t*,stat
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,unsigned,BOOL,dim_list_t*);
 static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
-static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,expression_t*);
+static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,unsigned,expression_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,unsigned,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,unsigned,unsigned,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,unsigned,BOOL);
@@ -350,7 +350,7 @@ MemberDecl
     | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, @1, TRUE, NULL); CHECK_ERROR; }
 
 ReDimDecl
-    : Identifier '(' ArgumentList ')'       { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier '(' ArgumentList ')'       { $$ = new_redim_decl(ctx, $1, @1, $3); CHECK_ERROR; }
 
 ReDimDeclList
     : ReDimDecl                             { $$ = $1; }
@@ -1078,7 +1078,7 @@ static statement_t *new_dim_statement(parser_ctx_t *ctx, unsigned loc, dim_decl_
     return &stat->stat;
 }
 
-static redim_decl_t *new_redim_decl(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *dims)
+static redim_decl_t *new_redim_decl(parser_ctx_t *ctx, const WCHAR *identifier, unsigned loc, expression_t *dims)
 {
     redim_decl_t *decl;
 
@@ -1087,8 +1087,10 @@ static redim_decl_t *new_redim_decl(parser_ctx_t *ctx, const WCHAR *identifier, 
         return NULL;
 
     decl->identifier = identifier;
+    decl->loc = loc;
     decl->dims = dims;
     decl->next = NULL;
+    decl->next_declared = NULL;
     return decl;
 }
 

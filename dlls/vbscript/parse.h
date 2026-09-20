@@ -175,8 +175,10 @@ typedef struct _dim_statement_t {
 
 typedef struct _redim_decl_t {
     const WCHAR *identifier;
+    unsigned loc;
     expression_t *dims;
     struct _redim_decl_t *next;
+    struct _redim_decl_t *next_declared;
 } redim_decl_t;
 
 typedef struct {

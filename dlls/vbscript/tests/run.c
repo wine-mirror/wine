@@ -3626,6 +3626,62 @@ static void test_parse_errors(void)
             L"Class C\n  Public a(2)\n  Private a\nEnd Class\n",
             2, 10,
             L"  Private a", S_OK, 1041
+        },
+        {
+            /* Declaration of a name that a ReDim declared - error 1041 */
+            L"Sub S\n  ReDim a(2)\n  Dim a\nEnd Sub\n",
+            2, 6,
+            L"  Dim a", S_OK, 1041
+        },
+        {
+            L"Sub S\n  ReDim Preserve a(2), b(3)\n  Dim B\nEnd Sub\n",
+            2, 6,
+            L"  Dim B", S_OK, 1041
+        },
+        {
+            L"Sub S\n  ReDim a(1)\n  ReDim a(2)\n  Const a = 1\nEnd Sub\n",
+            3, 8,
+            L"  Const a = 1", S_OK, 1041
+        },
+        {
+            L"Dim g\nSub S\n  ReDim g(2)\n  Dim g\nEnd Sub\n",
+            3, 6,
+            L"  Dim g", S_OK, 1041
+        },
+        {
+            L"Class C\n  Public a\n  Sub S\n    ReDim a(2)\n    Dim a\n  End Sub\nEnd Class\n",
+            4, 8,
+            L"    Dim a", S_OK, 1041
+        },
+        {
+            L"ReDim a(2)\nDim a\n",
+            1, 4,
+            L"Dim a", S_OK, 1041
+        },
+        {
+            L"ReDim a(2)\nConst a = 1\n",
+            1, 6,
+            L"Const a = 1", S_OK, 1041
+        },
+        {
+            L"ReDim a(2)\nSub a\nEnd Sub\n",
+            1, 4,
+            L"Sub a", S_OK, 1041
+        },
+        {
+            L"Sub a\nEnd Sub\nReDim a(2)\n",
+            2, 6,
+            L"ReDim a(2)", S_OK, 1041
+        },
+        {
+            L"ReDim a(2)\nClass a\nEnd Class\n",
+            1, 6,
+            L"Class a", S_OK, 1041
+        },
+        {
+            L"Class a\nEnd Class\nReDim a(2)\n",
+            2, 6,
+            L"ReDim a(2)", S_OK, 1041
         }
     };
     HRESULT hres;
@@ -3676,6 +3732,13 @@ static void test_redefine_scope(void)
         L"Sub Other\nDim s\nEnd Sub\nClass S\nEnd Class\n",
         /* a class method may be named like a local of another method */
         L"Class C\nSub A\nDim b\nConst c = 1\nEnd Sub\nSub b\nEnd Sub\nSub c\nEnd Sub\nEnd Class\n",
+        L"Class C\nSub A\nReDim b(1)\nEnd Sub\nSub b\nEnd Sub\nEnd Class\n",
+        /* a ReDim of a declared name does not declare it again */
+        L"Sub S\nDim a()\nReDim a(2)\nReDim a(3), a(4)\nEnd Sub\n",
+        L"Sub S(a)\nReDim a(2)\nEnd Sub\n",
+        L"Sub S\nConst a = 1\nReDim a(2)\nEnd Sub\n",
+        L"Function F\nReDim F(2)\nEnd Function\nSub S\nDim F\nEnd Sub\n",
+        L"Sub S\nReDim S(2)\nEnd Sub\n",
     };
     /* A class member lives in a separate namespace, so its name may collide
      * with a global Dim or Const. Each script also calls the member to prove

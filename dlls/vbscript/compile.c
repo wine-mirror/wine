@@ -57,6 +57,7 @@ typedef struct {
 
     dim_decl_t *dim_decls;
     dim_decl_t *dim_decls_tail;
+    redim_decl_t *redim_decls;
 
     const_decl_t *const_decls;
     const_decl_t *global_consts;
@@ -516,6 +517,19 @@ static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
 
     for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
         if(!vbs_wcsicmp(dim_decl->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* A ReDim of a name that the scope doesn't declare declares it. */
+static BOOL lookup_redim_decls(compile_ctx_t *ctx, const WCHAR *name)
+{
+    redim_decl_t *redim_decl;
+
+    for(redim_decl = ctx->redim_decls; redim_decl; redim_decl = redim_decl->next_declared) {
+        if(!vbs_wcsicmp(redim_decl->identifier, name))
             return TRUE;
     }
 
@@ -1467,7 +1481,7 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
         }
 
         if(prev_decl != dim_decl || lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
-           || is_func_retval_name(ctx, dim_decl->name)
+           || is_func_retval_name(ctx, dim_decl->name) || lookup_redim_decls(ctx, dim_decl->name)
            || (ctx->func->type == FUNC_GLOBAL && lookup_func_decls(ctx, dim_decl->name))) {
             ctx->loc = dim_decl->loc;
             WARN("dim %s name redefined\n", debugstr_w(dim_decl->name));
@@ -1507,6 +1521,47 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     return S_OK;
 }
 
+static HRESULT declare_redim_name(compile_ctx_t *ctx, redim_decl_t *decl)
+{
+    const_decl_t *const_decl;
+    unsigned loc = decl->loc;
+    BOOL redefined = FALSE;
+
+    if(lookup_dim_decls(ctx, decl->identifier) || lookup_args_name(ctx, decl->identifier)
+       || is_func_retval_name(ctx, decl->identifier) || lookup_redim_decls(ctx, decl->identifier))
+        return S_OK;
+
+    /* Constants are collected before the statements are compiled. */
+    if((const_decl = find_const_decl(ctx, decl->identifier))) {
+        if(const_decl->loc < decl->loc)
+            return S_OK;
+        loc = const_decl->loc;
+        redefined = TRUE;
+    }else if(ctx->func->type == FUNC_GLOBAL) {
+        class_decl_t *class_decl;
+
+        redefined = lookup_func_decls(ctx, decl->identifier);
+
+        for(class_decl = ctx->parser.class_decls; class_decl && !redefined; class_decl = class_decl->next) {
+            if(!vbs_wcsicmp(class_decl->name, decl->identifier)) {
+                if(class_decl->loc > loc)
+                    loc = class_decl->loc;
+                redefined = TRUE;
+            }
+        }
+    }
+
+    if(redefined) {
+        ctx->loc = loc;
+        WARN("redim %s name redefined\n", debugstr_w(decl->identifier));
+        return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+    }
+
+    decl->next_declared = ctx->redim_decls;
+    ctx->redim_decls = decl;
+    return S_OK;
+}
+
 static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *stat)
 {
     redim_decl_t *decl = stat->redim_decls;
@@ -1514,6 +1569,10 @@ static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *st
     HRESULT hres;
 
     while(1) {
+        hres = declare_redim_name(ctx, decl);
+        if(FAILED(hres))
+            return hres;
+
         hres = compile_args(ctx, decl->dims, &arg_cnt);
         if(FAILED(hres))
             return hres;
@@ -1982,6 +2041,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     ctx->func = func;
     ctx->dim_decls = ctx->dim_decls_tail = NULL;
+    ctx->redim_decls = NULL;
     ctx->const_decls = NULL;
 
     hres = collect_const_decls(ctx, stat);
@@ -2061,7 +2121,8 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     function_t *func;
     HRESULT hres;
 
-    if(lookup_dim_decls(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
+    if(lookup_dim_decls(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)
+       || lookup_redim_decls(ctx, decl->name)) {
         ctx->loc = decl->name_loc;
         WARN("%s: redefinition\n", debugstr_w(decl->name));
         return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
@@ -2271,6 +2332,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
            and the one of the previous method before compiling a method.
            Same-class collisions are caught below. */
         ctx->dim_decls = ctx->dim_decls_tail = NULL;
+        ctx->redim_decls = NULL;
         ctx->const_decls = NULL;
 
         hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + (func_prop_decl ? 0 : i));
@@ -2526,6 +2588,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     named_item_t *item = NULL;
     class_decl_t *class_decl;
     dim_decl_t *global_dims;
+    redim_decl_t *global_redims;
     function_t *new_func;
     compile_ctx_t ctx;
     vbscode_t *code;
@@ -2575,9 +2638,11 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
        scope before each top-level redefinition check: a function or class name
        collides only with a global Dim/Const, not another function's local one. */
     global_dims = ctx.dim_decls;
+    global_redims = ctx.redim_decls;
 
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
         ctx.dim_decls = global_dims;
+        ctx.redim_decls = global_redims;
         ctx.const_decls = ctx.global_consts;
         hres = create_function(&ctx, func_decl, &new_func);
         if(FAILED(hres)) {
