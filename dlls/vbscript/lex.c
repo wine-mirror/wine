@@ -386,6 +386,14 @@ static int hex_to_int(WCHAR c)
     return -1;
 }
 
+/* The error is reported at the '&' that starts the literal. */
+static int literal_overflow_error(parser_ctx_t *ctx)
+{
+    while(*ctx->ptr != '&')
+        ctx->ptr--;
+    return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
+}
+
 static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 {
     const WCHAR *begin;
@@ -402,7 +410,7 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 
     if(begin + 9 /* max 8 significant digits + 1 */ < ctx->ptr) {
         WARN("overflow in hex literal\n");
-        return 0;
+        return literal_overflow_error(ctx);
     }
 
     if(*ctx->ptr == '&') {
@@ -430,7 +438,7 @@ static int parse_oct_literal(parser_ctx_t *ctx, LONG *ret)
         l = l*8 + d;
         if(l > UINT_MAX) {
             WARN("overflow in oct literal\n");
-            return 0;
+            return literal_overflow_error(ctx);
         }
     }
 

@@ -2996,7 +2996,19 @@ static void test_parse_errors(void)
             /* Hex literal overflow */
             L"x = &H100000001\n",
             0, 4,
-            L"x = &H100000001", S_OK
+            L"x = &H100000001", S_OK, 1002
+        },
+        {
+            /* Octal literal overflow */
+            L"x = &O40000000000\n",
+            0, 4,
+            L"x = &O40000000000", S_OK, 1002
+        },
+        {
+            /* Overflowing literal at the start of a statement */
+            L"x = 1\n&H100000000\n",
+            1, 0,
+            L"&H100000000", S_OK, -1024
         },
         {
             /* Unterminated string constant - error 1033 */

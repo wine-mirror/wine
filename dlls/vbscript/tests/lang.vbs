@@ -119,6 +119,17 @@ sub testOctalLiteralErrors()
 end sub
 call testOctalLiteralErrors()
 
+Call ok(&HFFFFFFFF = -1, "&HFFFFFFFF <> -1")
+Call ok(&O37777777777 = -1, "&O37777777777 <> -1")
+
+sub testLiteralOverflowErrors()
+    on error resume next
+    Err.Clear : call Eval("&H100000000") : call ok(Err.number = 1002, "&H100000000 should be syntax error, got err=" & Err.number)
+    Err.Clear : call Eval("&O40000000000") : call ok(Err.number = 1002, "&O40000000000 should be syntax error, got err=" & Err.number)
+    Err.Clear : call Eval("&40000000000") : call ok(Err.number = 1002, "&40000000000 should be syntax error, got err=" & Err.number)
+end sub
+call testLiteralOverflowErrors()
+
 ' Test concat when no space and var begins with h
 hi = "y"
 x = "x" &hi
