@@ -836,7 +836,7 @@ void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
   DUMP(PFM_SHADING,        "Shading Style:",     "%u", wShadingStyle);
   DUMP(PFM_NUMBERINGSTART, "Numbering Start:",   "%u", wNumberingStart);
   DUMP(PFM_NUMBERINGSTYLE, "Numbering Style:",   "0x%x", wNumberingStyle);
-  DUMP(PFM_NUMBERINGTAB,   "Numbering Tab:",     "%u", wNumberingStyle);
+  DUMP(PFM_NUMBERINGTAB,   "Numbering Tab:",     "%u", wNumberingTab);
   DUMP(PFM_BORDER,         "Border Space:",      "%u", wBorderSpace);
   DUMP(PFM_BORDER,         "Border Width:",      "%u", wBorderWidth);
   DUMP(PFM_BORDER,         "Borders:",           "%u", wBorders);
