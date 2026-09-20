@@ -545,6 +545,7 @@ static HRESULT WINAPI path_config_IPersistStream_Load(IPersistStream *iface, ISt
             hr = parse_port_configs_list(This, stream, &chunk);
             if (FAILED(hr))
                 return hr;
+            break;
         case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_DSBUFFER_LIST):
             FIXME("buffer attributes are not supported\n");
             break;
