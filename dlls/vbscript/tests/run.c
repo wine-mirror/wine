@@ -3653,6 +3653,8 @@ static void test_redefine_scope(void)
         /* a Class name does not collide with a local Dim of another Sub */
         L"Class S\nEnd Class\nSub Other\nDim s\nEnd Sub\n",
         L"Sub Other\nDim s\nEnd Sub\nClass S\nEnd Class\n",
+        /* a class method may be named like a local of another method */
+        L"Class C\nSub A\nDim b\nConst c = 1\nEnd Sub\nSub b\nEnd Sub\nSub c\nEnd Sub\nEnd Class\n",
     };
     /* A class member lives in a separate namespace, so its name may collide
      * with a global Dim or Const. Each script also calls the member to prove

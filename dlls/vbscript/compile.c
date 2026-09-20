@@ -2233,10 +2233,6 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         return E_OUTOFMEMORY;
     memset(class_desc->funcs, 0, class_desc->func_cnt*sizeof(*class_desc->funcs));
 
-    /* Class members have their own namespace: drop the global Dim/Const scope
-       before compiling the methods. Same-class collisions are caught below. */
-    ctx->dim_decls = ctx->dim_decls_tail = NULL;
-    ctx->const_decls = NULL;
     ctx->class_props = class_decl->props;
 
     for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
@@ -2270,6 +2266,12 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
             class_desc->class_terminate_id = i;
         }
+
+        /* Class members have their own namespace: drop the global Dim/Const scope
+           and the one of the previous method before compiling a method.
+           Same-class collisions are caught below. */
+        ctx->dim_decls = ctx->dim_decls_tail = NULL;
+        ctx->const_decls = NULL;
 
         hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + (func_prop_decl ? 0 : i));
         if(FAILED(hres))
