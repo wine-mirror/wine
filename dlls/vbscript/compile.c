@@ -1496,21 +1496,6 @@ static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *st
     return S_OK;
 }
 
-static HRESULT compile_erase_statement(compile_ctx_t *ctx, erase_statement_t *stat)
-{
-    HRESULT hres;
-
-    hres = push_instr_bstr(ctx, OP_erase, stat->identifier);
-    if(FAILED(hres))
-        return hres;
-
-    if(!emit_catch(ctx, 0))
-        return E_OUTOFMEMORY;
-
-
-    return S_OK;
-}
-
 static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *stat)
 {
     const_decl_t *decl, *next_decl = stat->decls;
@@ -1845,9 +1830,6 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
             break;
         case STAT_ONERROR:
             hres = compile_onerror_statement(ctx, (onerror_statement_t*)stat);
-            break;
-        case STAT_ERASE:
-            hres = compile_erase_statement(ctx, (erase_statement_t*)stat);
             break;
         case STAT_REDIM:
             hres = compile_redim_statement(ctx, (redim_statement_t*)stat);

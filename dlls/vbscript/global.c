@@ -39,6 +39,7 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 
 #define BP_GET      1
 #define BP_GETPUT   2
+#define BP_BYREF    4
 
 typedef struct {
     UINT16 len;
@@ -255,7 +256,7 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
     }
 
     for(i=0; i < argn; i++) {
-        if(V_VT(dp->rgvarg+dp->cArgs-i-1) == (VT_BYREF|VT_VARIANT))
+        if(V_VT(dp->rgvarg+dp->cArgs-i-1) == (VT_BYREF|VT_VARIANT) && !(prop->flags & BP_BYREF))
             args[i] = *V_VARIANTREF(dp->rgvarg+dp->cArgs-i-1);
         else
             args[i] = dp->rgvarg[dp->cArgs-i-1];
@@ -3378,8 +3379,52 @@ static HRESULT Global_Array(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_Erase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SAFEARRAY *array;
+    HRESULT hres = S_OK;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    /* Erase has no return value and the array has to be passed by reference:
+     * both x = Erase(arr) and Erase(arr) are a type mismatch. */
+    if(res || V_VT(arg) != (VT_VARIANT|VT_BYREF)) {
+        WARN("Erase on a value %s\n", debugstr_variant(arg));
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+    arg = V_VARIANTREF(arg);
+
+    if(!(V_VT(arg) & VT_ARRAY)) {
+        WARN("Erase on non-array type %d\n", V_VT(arg));
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    array = V_ISBYREF(arg) ? *V_ARRAYREF(arg) : V_ARRAY(arg);
+    if(!array)
+        return S_OK;
+
+    if(array->fFeatures & FADF_FIXEDSIZE) {
+        /* Fixed-size array: reinitialize all elements to default values. */
+        unsigned i, element_cnt = 1;
+        VARIANT *data;
+
+        for(i = 0; i < array->cDims; i++)
+            element_cnt *= array->rgsabound[i].cElements;
+
+        hres = SafeArrayAccessData(array, (void**)&data);
+        if(SUCCEEDED(hres)) {
+            for(i = 0; i < element_cnt; i++)
+                VariantClear(&data[i]);
+            SafeArrayUnaccessData(array);
+        }
+    }else {
+        /* Dynamic array: deallocate it. */
+        SafeArrayDestroy(array);
+        if(V_ISBYREF(arg))
+            *V_ARRAYREF(arg) = NULL;
+        else
+            V_ARRAY(arg) = NULL;
+    }
+
+    return hres;
 }
 
 static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -4822,7 +4867,7 @@ static const builtin_prop_t global_props[] = {
     {L"DateSerial",                Global_DateSerial, 0, 3},
     {L"DateValue",                 Global_DateValue, 0, 1},
     {L"Day",                       Global_Day, 0, 1},
-    {L"Erase",                     Global_Erase, 0, 1},
+    {L"Erase",                     Global_Erase, BP_BYREF, 1},
     {L"Err",                       Global_Err, BP_GETPUT},
     {L"Escape",                    Global_Escape, 0, 1},
     {L"Eval",                      Global_Eval, 0, 1},

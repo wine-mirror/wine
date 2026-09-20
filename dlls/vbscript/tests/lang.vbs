@@ -3387,6 +3387,57 @@ eraseByValArr(0) = "world"
 call TestEraseByVal(eraseByValArr)
 ok eraseByValArr(0) = "world", "eraseByValArr(0) after ByVal Erase = " & eraseByValArr(0)
 
+dim eraseCall(2)
+eraseCall(0) = "x"
+Call Erase(eraseCall)
+ok eraseCall(0) = empty, "eraseCall(0) after Call Erase = " & eraseCall(0)
+
+dim eraseNested(1)
+eraseNested(0) = Array(1, 2)
+eraseNested(1) = "kept"
+Erase eraseNested(0)
+ok getVT(eraseNested(0)) = "VT_ARRAY|VT_VARIANT*", "getVT(eraseNested(0)) after Erase = " & getVT(eraseNested(0))
+ok eraseNested(1) = "kept", "eraseNested(1) after Erase eraseNested(0) = " & eraseNested(1)
+on error resume next
+err.clear
+y = eraseNested(0)(0)
+e = err.number
+on error goto 0
+ok e = 9, "access after Erase of nested array: err.number = " & e
+
+dim eraseParen(2)
+eraseParen(0) = "x"
+on error resume next
+err.clear
+Erase(eraseParen)
+e = err.number
+on error goto 0
+ok e = 13, "Erase(eraseParen): err.number = " & e
+ok eraseParen(0) = "x", "eraseParen(0) after Erase(eraseParen) = " & eraseParen(0)
+
+on error resume next
+err.clear
+y = Erase(eraseParen)
+e = err.number
+on error goto 0
+ok e = 13, "y = Erase(eraseParen): err.number = " & e
+ok eraseParen(0) = "x", "eraseParen(0) after y = Erase(eraseParen) = " & eraseParen(0)
+
+on error resume next
+err.clear
+Erase eraseCall, eraseParen
+e = err.number
+on error goto 0
+ok e = 450, "Erase with two arguments: err.number = " & e
+ok eraseParen(0) = "x", "eraseParen(0) after Erase with two arguments = " & eraseParen(0)
+
+on error resume next
+err.clear
+Erase 5
+e = err.number
+on error goto 0
+ok e = 13, "Erase 5: err.number = " & e
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()
@@ -3651,6 +3702,10 @@ sub test_identifiers
     Dim property
     property = "xx"
     Call ok(property = "xx", "property = " & property & " expected ""xx""")
+
+    Dim erase
+    erase = "xx"
+    Call ok(erase = "xx", "erase = " & erase & " expected ""xx""")
 end sub
 call test_identifiers()
 
@@ -3724,6 +3779,13 @@ Class class_test_identifiers_as_function_name
     End Function
 
     Sub Step ( default )
+    End Sub
+
+    Function Erase ( par )
+        Erase = par
+    End Function
+
+    Sub Explicit2 ( erase )
     End Sub
 End Class
 

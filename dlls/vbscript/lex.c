@@ -66,7 +66,6 @@ static const struct {
     {L"endif",     tRESERVED},
     {L"enum",      tRESERVED},
     {L"eqv",       tEQV},
-    {L"erase",     tERASE},
     {L"error",     tERROR},
     {L"event",     tRESERVED},
     {L"exit",      tEXIT},
