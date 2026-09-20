@@ -615,6 +615,11 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME
                 || ctx->last_token == tEMPTYBRACKETS)
             return '(';
+        /* default and property are never followed by a bracket as keywords, so they
+         * are identifiers here. The parser needs this token as lookahead to tell,
+         * so it has not updated last_token yet. */
+        if(ctx->last_token == tDEFAULT || ctx->last_token == tPROPERTY)
+            return '(';
         return tEXPRLBRACKET;
     case '[':
         return parse_bracket_identifier(ctx, lval);

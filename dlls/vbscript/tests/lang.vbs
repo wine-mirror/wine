@@ -3679,6 +3679,36 @@ sub test_redim_identifiers
 end sub
 call test_redim_identifiers()
 
+sub test_identifiers_as_array
+    Dim default(2), error(2), explicit(2), property(2), step(2)
+
+    default(1) = "xx"
+    Call ok(default(1) = "xx", "default(1) = " & default(1))
+    default (2) = "yy"
+    Call ok(default(2) = "yy", "default(2) = " & default(2))
+
+    error(1) = "xx"
+    Call ok(error(1) = "xx", "error(1) = " & error(1))
+    error (2) = "yy"
+    Call ok(error(2) = "yy", "error(2) = " & error(2))
+
+    explicit(1) = "xx"
+    Call ok(explicit(1) = "xx", "explicit(1) = " & explicit(1))
+    explicit (2) = "yy"
+    Call ok(explicit(2) = "yy", "explicit(2) = " & explicit(2))
+
+    property(1) = "xx"
+    Call ok(property(1) = "xx", "property(1) = " & property(1))
+    property (2) = "yy"
+    Call ok(property(2) = "yy", "property(2) = " & property(2))
+
+    step(1) = "xx"
+    Call ok(step(1) = "xx", "step(1) = " & step(1))
+    step (2) = "yy"
+    Call ok(step(2) = "yy", "step(2) = " & step(2))
+end sub
+call test_identifiers_as_array()
+
 Class class_test_identifiers_as_function_name
     Sub Property ( par )
     End Sub
