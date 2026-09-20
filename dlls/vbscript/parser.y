@@ -1341,12 +1341,19 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
             return NULL;
         }
         if(!wcsicmp(iter->name, decl->name)) {
-            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION
-                    || iter->type == FUNC_SUB || iter->type == FUNC_FUNCTION) {
+            if(iter->type == FUNC_SUB || iter->type == FUNC_FUNCTION) {
                 WARN("%s::%s redefined\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
                 ctx->error_loc = iter->name_loc;
                 ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                 return NULL;
+            }
+
+            /* The class body is parsed from its end: iter is a property that follows
+               the method decl. It replaces the method, but the member stays the default one. */
+            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
+                if(decl->is_default)
+                    iter->is_default = TRUE;
+                return class_decl;
             }
 
             while(1) {

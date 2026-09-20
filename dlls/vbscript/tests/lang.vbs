@@ -4174,6 +4174,55 @@ funcCalled = ""
 'obj()
 'call ok(funcCalled = "init","funcCalled=" & funcCalled)
 
+class PropReplacesMethodTest
+    public sub a(x)
+        call ok(false, "sub a called")
+    end sub
+    public property get a
+        a = "get a"
+    end property
+
+    public function f
+        call ok(false, "function f called")
+    end function
+    private property get f
+        f = "get f"
+    end property
+
+    public sub l
+        call ok(false, "sub l called")
+    end sub
+    public property let l(v)
+        funcCalled = "let l" & v
+    end property
+
+    public default sub d
+        call ok(false, "sub d called")
+    end sub
+    public property get d
+        d = "get d"
+    end property
+end class
+
+set obj = new PropReplacesMethodTest
+call ok(obj.a = "get a", "obj.a = " & obj.a)
+call ok(obj.d = "get d", "obj.d = " & obj.d)
+call ok(obj() = "get d", "obj() = " & obj())
+funcCalled = ""
+obj.l = 1
+call ok(funcCalled = "let l1", "funcCalled=" & funcCalled)
+on error resume next
+err.clear
+obj.a 1
+call ok(err.number = 450, "obj.a 1 err.number = " & err.number)
+err.clear
+obj.f
+call ok(err.number = 438, "obj.f err.number = " & err.number)
+err.clear
+obj.l
+call ok(err.number = 438, "obj.l err.number = " & err.number)
+on error goto 0
+
 with nothing
 end with
 

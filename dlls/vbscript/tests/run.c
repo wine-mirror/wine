@@ -3739,6 +3739,10 @@ static void test_redefine_scope(void)
         L"Sub S\nConst a = 1\nReDim a(2)\nEnd Sub\n",
         L"Function F\nReDim F(2)\nEnd Function\nSub S\nDim F\nEnd Sub\n",
         L"Sub S\nReDim S(2)\nEnd Sub\n",
+        /* a class property may follow a method of the same name */
+        L"Class C\nSub a\nEnd Sub\nProperty Get a\nEnd Property\nProperty Let a(v)\nEnd Property\nEnd Class\n",
+        L"Class C\nFunction a(x, y)\nEnd Function\nProperty Get a\nEnd Property\nEnd Class\n",
+        L"Class C\nSub a\nEnd Sub\nProperty Set a(v)\nEnd Property\nEnd Class\n",
     };
     /* A class member lives in a separate namespace, so its name may collide
      * with a global Dim or Const. Each script also calls the member to prove
