@@ -990,8 +990,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetFolderSettings(IExplorerBrowser *ifa
     {
         hr = IFolderView2_SetCurrentViewMode(view, browser->fs.ViewMode);
         if (SUCCEEDED(hr))
-            if (SUCCEEDED(hr))
-                hr = IFolderView2_SetCurrentFolderFlags(view, ~FWF_NONE, browser->fs.fFlags);
+            hr = IFolderView2_SetCurrentFolderFlags(view, ~FWF_NONE, browser->fs.fFlags);
         IFolderView2_Release(view);
     }
     return hr;
