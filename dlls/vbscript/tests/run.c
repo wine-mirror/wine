@@ -3545,6 +3545,12 @@ static void test_parse_errors(void)
             L"Dim x\nFor Each x.y In Array(1)\nNext\n",
             1, 13,
             NULL, S_OK, 1040
+        },
+        {
+            /* Assignment to an expression in parentheses - error 1024 */
+            L"Dim x\n  (x) = 1\n",
+            1, 2,
+            L"  (x) = 1", S_OK, 1024
         }
     };
     HRESULT hres;

@@ -3861,6 +3861,14 @@ sub test_assign_me
     Err.Clear
     Me = 1
     Call ok(Err.Number = 501, "Me = 1 outside of a class: Err.Number = " & Err.Number)
+
+    Err.Clear
+    Set (1) = Nothing
+    Call ok(Err.Number = 501, "Set (1) = Nothing: Err.Number = " & Err.Number)
+    On Error GoTo 0
+
+    Set ((obj)) = Nothing
+    Call ok(obj Is Nothing, "Set ((obj)) = Nothing did not change obj")
 end sub
 call test_assign_me()
 

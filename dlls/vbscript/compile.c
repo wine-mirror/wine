@@ -1344,8 +1344,9 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
         }
         member_expr = (member_expression_t*)call_expr->call_expr;
         break;
-    case EXPR_ME:
-        /* Assigning to Me is not a compile error, it fails when executed. */
+    default:
+        /* Assigning to an expression that is not assignable, like Me, is not
+         * a compile error. It fails when executed. */
         hres = compile_expression(ctx, value_expr);
         if(FAILED(hres))
             return hres;
@@ -1362,9 +1363,6 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
             return E_OUTOFMEMORY;
 
         return S_OK;
-    default:
-        assert(0);
-        return E_FAIL;
     }
 
     if(member_expr->obj_expr) {

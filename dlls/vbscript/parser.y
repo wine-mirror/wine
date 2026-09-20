@@ -251,7 +251,8 @@ SimpleStatement
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
-                                            { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
+                                            { if($1->type == EXPR_BRACKETS) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
+                                              $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
     | tREDIM Preserve_opt ReDimDeclList     { $$ = new_redim_statement(ctx, @$, $2, $3); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
@@ -282,7 +283,8 @@ SimpleStatement
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @2); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0, @2); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0, @2); CHECK_ERROR; }
-    | tSET CallExpression '=' Expression    { if($2->type == EXPR_ME) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_INVALID_USE_OF_ME); YYABORT; }
+    | tSET CallExpression '=' Expression    { while($2->type == EXPR_BRACKETS) $2 = ((unary_expression_t*)$2)->subexpr;
+                                              if($2->type == EXPR_ME) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_INVALID_USE_OF_ME); YYABORT; }
                                              $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0, @$); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, @$, TRUE); CHECK_ERROR; }
