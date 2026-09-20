@@ -350,7 +350,7 @@ MemberDecl
     | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, @1, TRUE, NULL); CHECK_ERROR; }
 
 ReDimDecl
-    : tIdentifier '(' ArgumentList ')'      { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier '(' ArgumentList ')'       { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
 
 ReDimDeclList
     : ReDimDecl                             { $$ = $1; }

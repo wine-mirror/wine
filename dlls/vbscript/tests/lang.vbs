@@ -3654,6 +3654,31 @@ sub test_identifiers
 end sub
 call test_identifiers()
 
+sub test_redim_identifiers
+    Dim default, error, explicit, property, step
+
+    ReDim default(3)
+    ReDim Preserve default(4)
+    Call ok(UBound(default) = 4, "UBound(default) = " & UBound(default))
+
+    ReDim error(3)
+    ReDim Preserve error(4)
+    Call ok(UBound(error) = 4, "UBound(error) = " & UBound(error))
+
+    ReDim explicit(3)
+    ReDim Preserve explicit(4)
+    Call ok(UBound(explicit) = 4, "UBound(explicit) = " & UBound(explicit))
+
+    ReDim property(3)
+    ReDim Preserve property(4)
+    Call ok(UBound(property) = 4, "UBound(property) = " & UBound(property))
+
+    ReDim step(3)
+    ReDim Preserve step(4)
+    Call ok(UBound(step) = 4, "UBound(step) = " & UBound(step))
+end sub
+call test_redim_identifiers()
+
 Class class_test_identifiers_as_function_name
     Sub Property ( par )
     End Sub
