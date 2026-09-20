@@ -618,7 +618,13 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
             ctx->ptr++;
             return '.';
         }
+        /* Unlike a member dot, a with-statement dot can only be separated from
+         * the member name by a line continuation. */
         ctx->ptr++;
+        skip_spaces(ctx);
+        c = *ctx->ptr;
+        if(ctx->ptr[-1] != '.' && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '['))
+            return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
         return tDOT;
     case '-':
         if(ctx->is_html && ctx->ptr[1] == '-' && ctx->ptr[2] == '>')

@@ -3722,6 +3722,12 @@ static void test_parse_errors(void)
             L"Dim o\no.M(),0\n",
             1, 5,
             L"o.M(),0", S_OK, 1025
+        },
+        {
+            /* Whitespace between a with-statement dot and the member name */
+            L"With x\n. y = 1\nEnd With\n",
+            1, 2,
+            L". y = 1", S_OK, 1002
         }
     };
     HRESULT hres;

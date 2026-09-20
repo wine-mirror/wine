@@ -1980,6 +1980,9 @@ CheckNpS "NpS.5E1",                  5
 CheckNpS "npObj.Check.5",            0.5
 CheckNpS "npObj.Check.0",            0
 CheckNpS "With npObj : .Check.5 : End With", 0.5
+CheckNpS "With npObj : ._" & vbLf & "Check 7 : End With", 7
+CheckNpS "With npObj : . _" & vbLf & "  Check 8 : End With", 8
+CheckNpS "npObj. Check 9",            9
 CheckNpT "NpT.5,.25",                0.5,    0.25
 NpS.5
 Call ok(getVT(npArg) = "VT_R8*", "NpS.5: getVT(npArg) = " & getVT(npArg))
@@ -2005,6 +2008,11 @@ CheckParseErr "npObj.Check .",              1010
 CheckParseErr "npArg = npObj.",             1010
 CheckParseErr "npArg = .",                  1010
 CheckParseErr "With npObj : . : End With",  1010
+CheckParseErr "With npObj : . Check 1 : End With", 1002
+CheckParseErr "With npObj : ." & vbTab & "Check 1 : End With", 1002
+CheckParseErr "With npObj : . [Check] 1 : End With", 1002
+CheckParseErr "With npObj : . End = 1 : End With", 1002
+CheckParseErr "With npObj : . 5 : End With", 1010
 CheckParseErr "Sub 5 : End Sub",            1010
 CheckParseErr "Function 5 : End Function",  1010
 CheckParseErr "Class 5 : End Class",        1010
