@@ -505,9 +505,8 @@ HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *per
         msg->dwVirtualTrackID = track_id;
         msg->dwType = DMUS_PMSGT_PATCH;
         msg->dwGroupID = 1;
-        msg->byInstrument = entry->instrument.dwPatch;
 
-        msg->byInstrument = patch & 0x7F;
+        msg->byInstrument = patch & 0x7f;
         patch >>= 8;
         msg->byLSB = patch & 0x7f;
         patch >>= 8;
