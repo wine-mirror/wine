@@ -2020,6 +2020,15 @@ static HRESULT interp_retval(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_throw(exec_ctx_t *ctx)
+{
+    const HRESULT hres = ctx->instr->arg1.uint;
+
+    TRACE("%08lx\n", hres);
+
+    return hres;
+}
+
 static HRESULT interp_stop(exec_ctx_t *ctx)
 {
     WARN("\n");

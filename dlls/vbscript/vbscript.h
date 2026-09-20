@@ -365,6 +365,7 @@ typedef enum {
     X(stop,           1, 0,           0)          \
     X(string,         1, ARG_STR,     0)          \
     X(sub,            1, 0,           0)          \
+    X(throw,          1, ARG_UINT,    0)          \
     X(val,            1, 0,           0)          \
     X(vcall,          1, ARG_UINT,    0)          \
     X(vcallv,         1, ARG_UINT,    0)          \

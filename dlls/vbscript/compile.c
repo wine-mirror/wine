@@ -1344,6 +1344,24 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
         }
         member_expr = (member_expression_t*)call_expr->call_expr;
         break;
+    case EXPR_ME:
+        /* Assigning to Me is not a compile error, it fails when executed. */
+        hres = compile_expression(ctx, value_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_uint(ctx, OP_pop, 1);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_uint(ctx, OP_throw, MAKE_VBSERROR(VBSE_ILLEGAL_ASSIGNMENT));
+        if(FAILED(hres))
+            return hres;
+
+        if(!emit_catch(ctx, 0))
+            return E_OUTOFMEMORY;
+
+        return S_OK;
     default:
         assert(0);
         return E_FAIL;

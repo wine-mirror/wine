@@ -3832,6 +3832,38 @@ Dim objShadow : Set objShadow = New TestLocalDimShadowsGlobalFunc
 objShadow.TestShadow
 objShadow.TestPrivate
 
+Class class_test_assign_me
+    Public evaluated
+
+    Function Value()
+        evaluated = True
+        Value = 1
+    End Function
+
+    Sub Test()
+        On Error Resume Next
+        Err.Clear
+        Me = Value()
+        Call ok(Err.Number = 501, "Me = Value(): Err.Number = " & Err.Number)
+        Call ok(evaluated, "Me = Value(): right side was not evaluated")
+        Err.Clear
+        Me = Nothing
+        Call ok(Err.Number = 501, "Me = Nothing: Err.Number = " & Err.Number)
+    End Sub
+End Class
+
+sub test_assign_me
+    Dim obj
+    Set obj = New class_test_assign_me
+    obj.Test
+
+    On Error Resume Next
+    Err.Clear
+    Me = 1
+    Call ok(Err.Number = 501, "Me = 1 outside of a class: Err.Number = " & Err.Number)
+end sub
+call test_assign_me()
+
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
     Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
