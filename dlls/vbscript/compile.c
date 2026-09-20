@@ -2061,11 +2061,22 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
 
     func->arg_cnt = 0;
     if(decl->args) {
-        arg_decl_t *arg;
+        arg_decl_t *arg, *prev_arg;
         unsigned i;
 
-        for(arg = decl->args; arg; arg = arg->next)
+        for(arg = decl->args; arg; arg = arg->next) {
+            BOOL redefined = !vbs_wcsicmp(arg->name, decl->name);
+
+            for(prev_arg = decl->args; !redefined && prev_arg != arg; prev_arg = prev_arg->next)
+                redefined = !vbs_wcsicmp(arg->name, prev_arg->name);
+
+            if(redefined) {
+                ctx->loc = arg->loc;
+                WARN("%s: argument %s redefinition\n", debugstr_w(decl->name), debugstr_w(arg->name));
+                return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+            }
             func->arg_cnt++;
+        }
 
         func->args = compiler_alloc(ctx->code, func->arg_cnt * sizeof(arg_desc_t));
         if(!func->args)

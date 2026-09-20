@@ -68,7 +68,7 @@ static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
 static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,unsigned,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,unsigned,unsigned,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
-static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
+static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,unsigned,BOOL);
 static const_decl_t *new_const_decl(parser_ctx_t*,unsigned,const WCHAR*,expression_t*);
 static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_t*,case_clausule_t*);
 
@@ -675,9 +675,9 @@ ArgumentDeclList
     | ArgumentDecl ',' ArgumentDeclList         { $1->next = $3; $$ = $1; }
 
 ArgumentDecl
-    : Identifier EmptyBrackets_opt              { $$ = new_argument_decl(ctx, $1, TRUE); }
-    | tBYREF Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, TRUE); }
-    | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, FALSE); }
+    : Identifier EmptyBrackets_opt              { $$ = new_argument_decl(ctx, $1, @1, TRUE); }
+    | tBYREF Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, @2, TRUE); }
+    | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, @2, FALSE); }
 
 /* these keywords may also be an identifier, depending on context */
 MemberIdentifier
@@ -1233,7 +1233,7 @@ static statement_t *new_onerror_statement(parser_ctx_t *ctx, unsigned loc, BOOL 
     return &stat->stat;
 }
 
-static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL by_ref)
+static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, unsigned loc, BOOL by_ref)
 {
     arg_decl_t *arg_decl;
 
@@ -1242,6 +1242,7 @@ static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL 
         return NULL;
 
     arg_decl->name = name;
+    arg_decl->loc = loc;
     arg_decl->by_ref = by_ref;
     arg_decl->next = NULL;
     return arg_decl;

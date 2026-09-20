@@ -3872,6 +3872,18 @@ sub test_assign_me
 end sub
 call test_assign_me()
 
+Sub ParamNamedLikeOtherSub(test_dotIdentifiers)
+    Call ok(test_dotIdentifiers = 3, "test_dotIdentifiers = " & test_dotIdentifiers)
+End Sub
+Call ParamNamedLikeOtherSub(3)
+
+Class ParamNamedLikeClass
+    Public Function Test(ParamNamedLikeClass)
+        Test = ParamNamedLikeClass
+    End Function
+End Class
+Call ok((New ParamNamedLikeClass).Test(4) = 4, "parameter named like its class failed")
+
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
     Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")

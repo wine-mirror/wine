@@ -187,6 +187,7 @@ typedef struct {
 
 typedef struct _arg_decl_t {
     const WCHAR *name;
+    unsigned loc;
     BOOL by_ref;
     struct _arg_decl_t *next;
 } arg_decl_t;

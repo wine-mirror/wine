@@ -3551,6 +3551,33 @@ static void test_parse_errors(void)
             L"Dim x\n  (x) = 1\n",
             1, 2,
             L"  (x) = 1", S_OK, 1024
+        },
+        {
+            /* Duplicate parameter name - error 1041 */
+            L"Sub S(a, A)\nEnd Sub\n",
+            0, 9,
+            L"Sub S(a, A)", S_OK, 1041
+        },
+        {
+            L"Sub S(ByVal a, ByRef a)\nEnd Sub\n",
+            0, 21,
+            L"Sub S(ByVal a, ByRef a)", S_OK, 1041
+        },
+        {
+            /* Parameter named like its procedure - error 1041 */
+            L"Function F(F)\nEnd Function\n",
+            0, 11,
+            L"Function F(F)", S_OK, 1041
+        },
+        {
+            L"Sub S(a, b, s)\nEnd Sub\n",
+            0, 12,
+            L"Sub S(a, b, s)", S_OK, 1041
+        },
+        {
+            L"Class C\n  Public Property Let P(a, P)\n  End Property\nEnd Class\n",
+            1, 27,
+            L"  Public Property Let P(a, P)", S_OK, 1041
         }
     };
     HRESULT hres;
