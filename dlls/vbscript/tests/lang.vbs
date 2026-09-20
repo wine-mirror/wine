@@ -2015,6 +2015,26 @@ CheckParseErr "ReDim 5",                    1010
 CheckParseErr "Dim 5",                      1010
 CheckParseErr "Dim 1.5",                    1010
 
+Class ReservedMembersCls
+    Public [type]
+    Public [event]
+End Class
+Dim reservedObj, reservedWord
+Set reservedObj = New ReservedMembersCls
+reservedObj.type = 1
+reservedObj.event = 2
+Call ok(reservedObj.type = 1, "reservedObj.type = " & reservedObj.type)
+Call ok(reservedObj.event = 2, "reservedObj.event = " & reservedObj.event)
+
+For Each reservedWord In Array("as", "boolean", "byte", "currency", "double", "endif", "enum", "event", _
+        "implements", "integer", "like", "long", "lset", "optional", "paramarray", "raiseevent", "rset", _
+        "shared", "single", "static", "type", "typeof", "variant")
+    CheckParseErr "Dim " & reservedWord, 1010
+    CheckParseErr "Sub " & reservedWord & "() : End Sub", 1010
+    CheckParseErr "npArg = " & reservedWord, 1002
+    CheckParseErr reservedWord & " = 1", 1024
+Next
+
 Function ParenId(a)
     ParenId = a
 End Function

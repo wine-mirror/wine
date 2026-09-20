@@ -127,7 +127,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 
 %token tEXPRESSION tNL tEMPTYBRACKETS tEXPRLBRACKET
 %token tLTEQ tGTEQ tNEQ
-%token tSTOP tME tREM tDOT
+%token tSTOP tME tREM tDOT tRESERVED
 %token <string> tTRUE tFALSE
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
@@ -323,6 +323,7 @@ SimpleStatement
                                             { $$ = new_with_statement(ctx, @$, $2, $4); }
     | tWITH Expression StSep StatementsNl_opt tEND error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WITH); YYABORT; }
+    | tRESERVED                             { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
     | tPROPERTY tGET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
     | tPROPERTY tLET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
     | tPROPERTY tSET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
