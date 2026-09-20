@@ -79,9 +79,6 @@ static class_decl_t *add_dim_prop(parser_ctx_t*,class_decl_t*,dim_decl_t*,unsign
 
 static statement_t *link_statements(statement_t*,statement_t*);
 
-#define STORAGE_IS_PRIVATE    1
-#define STORAGE_IS_DEFAULT    2
-
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
 #define PARSER_LTYPE unsigned
@@ -131,7 +128,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tTRUE tFALSE
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
-%token <string> tCALL tSUB tFUNCTION tGET tLET tCONST
+%token <string> tCALL tGET tLET tCONST
 %token <string> tDIM tREDIM tPRESERVE
 %token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
@@ -143,6 +140,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
 %token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
+%token <uint> tSUB tFUNCTION tPROPDECL
 %token <integer> tInt
 %token <dbl> tDouble
 %token <date> tDate
@@ -163,13 +161,13 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
-%type <uint> Storage Storage_opt IntegerValue SubFirstArgOp
+%type <uint> Storage IntegerValue SubFirstArgOp
 %type <expression> SubFirstArgRest
-%type <dim_decl> DimDeclList DimDecl MemberDeclList MemberDecl
+%type <dim_decl> DimDeclList DimDecl
 %type <dim_list> DimList
 %type <redim_decl> ReDimDeclList ReDimDecl
 %type <const_decl> ConstDecl ConstDeclList
-%type <string> Identifier MemberIdentifier
+%type <string> Identifier
 %type <case_clausule> CaseClausules
 
 %%
@@ -329,9 +327,9 @@ SimpleStatement
     | tWITH Expression StSep StatementsNl_opt tEND error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WITH); YYABORT; }
     | tRESERVED                             { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
-    | tPROPERTY tGET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
-    | tPROPERTY tLET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
-    | tPROPERTY tSET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
+    | tPROPDECL tGET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
+    | tPROPDECL tLET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
+    | tPROPDECL tSET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -344,15 +342,6 @@ MemberExpression
 Preserve_opt
     : /* empty */                           { $$ = FALSE; }
     | tPRESERVE                             { $$ = TRUE; }
-
-MemberDeclList
-    : MemberDecl                            { $$ = $1; }
-    | MemberDecl ',' MemberDeclList         { $1->next = $3; $$ = $1; }
-
-MemberDecl
-    : MemberIdentifier                      { $$ = new_dim_decl(ctx, $1, @1, FALSE, NULL); CHECK_ERROR; }
-    | MemberIdentifier '(' DimList ')'      { $$ = new_dim_decl(ctx, $1, @1, TRUE, $3); CHECK_ERROR; }
-    | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, @1, TRUE, NULL); CHECK_ERROR; }
 
 ReDimDecl
     : Identifier '(' ArgumentList ')'       { $$ = new_redim_decl(ctx, $1, @1, $3); CHECK_ERROR; }
@@ -605,66 +594,62 @@ ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
     | FunctionDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | FunctionDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
-    | Storage MemberDeclList                      { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, $1); CHECK_ERROR; }
-    | Storage MemberDeclList StSep ClassBody      { $$ = add_dim_prop(ctx, $4, $2, $1); CHECK_ERROR; }
+    | Storage DimDeclList                         { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, $1); CHECK_ERROR; }
+    | Storage DimDeclList StSep ClassBody         { $$ = add_dim_prop(ctx, $4, $2, $1); CHECK_ERROR; }
     | tDIM DimDeclList                            { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, 0); CHECK_ERROR; }
     | tDIM DimDeclList StSep ClassBody            { $$ = add_dim_prop(ctx, $4, $2, 0); CHECK_ERROR; }
     | PropertyDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | PropertyDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
+    | tDEFAULT error                              { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_MUST_BE_PUBLIC); YYABORT; }
 
 PropertyDecl
-    : Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
-                                    { $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPGET, $1, $5, $7); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND error
+    : tPROPDECL tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
+                                    { $$ = new_function_decl(ctx, @1, @3, $3, FUNC_PROPGET, $1, $4, $6); CHECK_ERROR; }
+    | tPROPDECL tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
+                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
+                                      $$ = new_function_decl(ctx, @1, @3, $3, FUNC_PROPLET, $1, $5, $8); CHECK_ERROR; }
+    | tPROPDECL tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
+                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
+                                      $$ = new_function_decl(ctx, @1, @3, $3, FUNC_PROPSET, $1, $5, $8); CHECK_ERROR; }
+    | tPROPDECL tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
+    | tPROPDECL tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
+    | tPROPDECL tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tLET Identifier error
+    | tPROPDECL tLET Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
-    | Storage_opt tPROPERTY tSET Identifier error
+    | tPROPDECL tSET Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
-    | Storage_opt tPROPERTY error   { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LET_SET_GET); YYABORT; }
+    | tPROPDECL error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LET_SET_GET); YYABORT; }
+    | tPROPERTY error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LET_SET_GET); YYABORT; }
 
 FunctionDecl
-    : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, NULL, $5); CHECK_ERROR; }
-    | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tSUB Identifier StSep BodyStatements tEND error
+    : tSUB Identifier StSep BodyStatements tEND tSUB
+                                    { $$ = new_function_decl(ctx, @1, @2, $2, FUNC_SUB, $1, NULL, $4); CHECK_ERROR; }
+    | tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND tSUB
+                                    { $$ = new_function_decl(ctx, @1, @2, $2, FUNC_SUB, $1, $3, $5); CHECK_ERROR; }
+    | tSUB Identifier StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
-    | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
+    | tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
-    | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, NULL, $5); CHECK_ERROR; }
-    | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND error
+    | tFUNCTION Identifier StSep BodyStatements tEND tFUNCTION
+                                    { $$ = new_function_decl(ctx, @1, @2, $2, FUNC_FUNCTION, $1, NULL, $4); CHECK_ERROR; }
+    | tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND tFUNCTION
+                                    { $$ = new_function_decl(ctx, @1, @2, $2, FUNC_FUNCTION, $1, $3, $5); CHECK_ERROR; }
+    | tFUNCTION Identifier StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
-    | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
+    | tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
-    | Storage_opt tSUB Identifier error
+    | tSUB Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
-    | Storage_opt tFUNCTION Identifier error
+    | tFUNCTION Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
-    | Storage_opt tSUB error        { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
-    | Storage_opt tFUNCTION error   { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
-
-Storage_opt
-    : /* empty*/                    { $$ = 0; }
-    | Storage                       { $$ = $1; }
+    | tSUB error                    { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    | tFUNCTION error               { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 Storage
-    : tPUBLIC tDEFAULT              { $$ = STORAGE_IS_DEFAULT; }
-    | tDEFAULT tPRIVATE             { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_MUST_BE_PUBLIC); CHECK_ERROR; }
-    | tPUBLIC                       { $$ = 0; }
+    : tPUBLIC                       { $$ = 0; }
     | tPRIVATE                      { $$ = STORAGE_IS_PRIVATE; }
 
 ArgumentsDecl_opt
@@ -685,12 +670,6 @@ ArgumentDecl
     | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, @2, FALSE); }
 
 /* these keywords may also be an identifier, depending on context */
-MemberIdentifier
-    : tIdentifier    { $$ = $1; }
-    | tERROR         { ctx->last_token = tIdentifier; $$ = $1; }
-    | tEXPLICIT      { ctx->last_token = tIdentifier; $$ = $1; }
-    | tSTEP          { ctx->last_token = tIdentifier; $$ = $1; }
-
 Identifier
     : tIdentifier    { $$ = $1; }
     | tDEFAULT       { ctx->last_token = tIdentifier; $$ = $1; }

@@ -544,6 +544,87 @@ static int parse_bracket_identifier(parser_ctx_t *ctx, const WCHAR **ret)
     return tIdentifier;
 }
 
+/* Check if the next word, possibly after a line continuation, is the given
+ * keyword. If it is, move the position past it and store its location. */
+static BOOL skip_keyword(parser_ctx_t *ctx, const WCHAR **pos, const WCHAR *word, unsigned *loc)
+{
+    const WCHAR *ptr = *pos, *end;
+    WCHAR c;
+
+    while(1) {
+        while(ptr < ctx->end && is_space(*ptr))
+            ptr++;
+        if(ptr == ctx->end || *ptr != '_')
+            break;
+        end = ptr + 1;
+        while(end < ctx->end && is_space(*end))
+            end++;
+        if(end == ctx->end || (*end != '\n' && *end != '\r'))
+            return FALSE;
+        if(*end == '\r')
+            end++;
+        if(end < ctx->end && *end == '\n')
+            end++;
+        ptr = end;
+    }
+
+    for(end = ptr; *word; end++, word++) {
+        if(end == ctx->end)
+            return FALSE;
+        c = *end;
+        if(c >= 'A' && c <= 'Z') c += 'a' - 'A';
+        if(c != *word)
+            return FALSE;
+    }
+    if(end < ctx->end && is_identifier_char(*end))
+        return FALSE;
+
+    if(loc)
+        *loc = ptr - ctx->code;
+    *pos = end;
+    return TRUE;
+}
+
+/* The keyword of a Sub, Function or Property declaration is returned together
+ * with the storage specifiers preceding it, which are the token value. Default
+ * and Property are keywords only as a part of such a declaration: "Public
+ * Default" and "Private Property" declare member variables. */
+static int parse_decl_keywords(parser_ctx_t *ctx, int token, unsigned *storage, unsigned *loc)
+{
+    const WCHAR *ptr = ctx->ptr, *kind;
+    unsigned flags = 0, decl_loc = *loc;
+    int ret = token;
+
+    if(token == tPUBLIC || token == tPRIVATE) {
+        if(token == tPRIVATE)
+            flags = STORAGE_IS_PRIVATE;
+        else if(skip_keyword(ctx, &ptr, L"default", NULL))
+            flags = STORAGE_IS_DEFAULT;
+
+        if(skip_keyword(ctx, &ptr, L"sub", &decl_loc))
+            ret = tSUB;
+        else if(skip_keyword(ctx, &ptr, L"function", &decl_loc))
+            ret = tFUNCTION;
+        else if(skip_keyword(ctx, &ptr, L"property", &decl_loc))
+            ret = tPROPERTY;
+        else
+            return token;
+    }
+
+    if(ret == tPROPERTY) {
+        kind = ptr;
+        if(!(flags & STORAGE_IS_DEFAULT) && !skip_keyword(ctx, &kind, L"get", NULL)
+                && !skip_keyword(ctx, &kind, L"let", NULL) && !skip_keyword(ctx, &kind, L"set", NULL))
+            return token;
+        ret = tPROPDECL;
+    }
+
+    ctx->ptr = ptr;
+    *loc = decl_loc;
+    *storage = flags;
+    return ret;
+}
+
 static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
 {
     WCHAR c;
@@ -562,10 +643,20 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         int ret = 0;
         if(ctx->last_token != '.' && ctx->last_token != tDOT)
             ret = check_keywords(ctx, lval);
-        if(!ret)
+        switch(ret) {
+        case 0:
             return parse_identifier(ctx, lval);
-        if(ret != tREM)
+        case tPUBLIC:
+        case tPRIVATE:
+        case tPROPERTY:
+        case tSUB:
+        case tFUNCTION:
+            return parse_decl_keywords(ctx, ret, lval, loc);
+        case tREM:
+            break;
+        default:
             return ret;
+        }
         c = '\'';
     }
 

@@ -3191,6 +3191,41 @@ static void test_parse_errors(void)
             NULL, S_OK, 1057
         },
         {
+            L"Class C\nDefault Sub f\nEnd Sub\nEnd Class\n",
+            1, 0,
+            NULL, S_OK, 1057
+        },
+        {
+            L"Class C\nDefault x\nEnd Class\n",
+            1, 0,
+            NULL, S_OK, 1057
+        },
+        {
+            L"Class C\nPublic Default Property x\nEnd Class\n",
+            1, 24,
+            NULL, S_OK, 1049
+        },
+        {
+            L"Class C\nPublic Default Property\nEnd Class\n",
+            1, 23,
+            NULL, S_OK, 1049
+        },
+        {
+            L"Public Property Get x\nEnd Property\n",
+            0, 16,
+            NULL, S_OK, 1048
+        },
+        {
+            L"Class C\n"
+            "Public Default Function f\n"
+            "End Function\n"
+            "Public Default Property Get p\n"
+            "End Property\n"
+            "End Class\n",
+            3, 15,
+            NULL, S_OK, 1052
+        },
+        {
             /* Unterminated date literal */
             L"x = #1/1/2000\n",
             0, 4,

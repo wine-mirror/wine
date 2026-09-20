@@ -297,6 +297,9 @@ typedef struct {
     expression_t *expr;
 } retval_statement_t;
 
+#define STORAGE_IS_PRIVATE    1
+#define STORAGE_IS_DEFAULT    2
+
 typedef struct {
     const WCHAR *code;
     const WCHAR *ptr;
