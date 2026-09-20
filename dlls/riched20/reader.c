@@ -1973,8 +1973,8 @@ static RTFKey	rtfKey[] =
 	{ rtfObjAttr,	rtfObjICEmb,		"objicemb",	0 },
 
 	{ rtfObjAttr,	rtfObjLinkSelf,		"linkself",	0 },
-	{ rtfObjAttr,	rtfObjLock,		"objupdate",	0 },
-	{ rtfObjAttr,	rtfObjUpdate,		"objlock",	0 },
+	{ rtfObjAttr,	rtfObjLock,		"objlock",	0 },
+	{ rtfObjAttr,	rtfObjUpdate,		"objupdate",	0 },
 
 	{ rtfObjAttr,	rtfObjHt,		"objh",		0 },
 	{ rtfObjAttr,	rtfObjWid,		"objw",		0 },
