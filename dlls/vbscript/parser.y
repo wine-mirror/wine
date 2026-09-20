@@ -46,7 +46,7 @@ static expression_t *new_new_expression(parser_ctx_t*,const WCHAR*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 static call_expression_t *new_call_expression(parser_ctx_t*,expression_t*,expression_t*);
-static call_expression_t *make_call_expression(parser_ctx_t*,expression_t*,expression_t*);
+static call_expression_t *make_call_expression(parser_ctx_t*,expression_t*,expression_t*,unsigned);
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t,unsigned);
 static statement_t *new_call_statement(parser_ctx_t*,unsigned,expression_t*);
@@ -239,12 +239,13 @@ Statement
 SimpleStatement
     : CallExpression ArgumentList_opt       { call_expression_t *call_expr;
                                               if(starts_with_literal($1)) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
-                                              call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
+                                              call_expr = make_call_expression(ctx, $1, $2, @2); CHECK_ERROR;
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | CallExpression Arguments SubFirstArgOp Expression SubFirstArgRest
                                             { expression_t *first_arg, *combined;
                                               call_expression_t *call_expr;
                                               if(starts_with_literal($1)) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
+                                              if(!$2) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
                                               first_arg = new_unary_expression(ctx, EXPR_BRACKETS, $2);
                                               CHECK_ERROR;
                                               combined = new_binary_expression(ctx, $3, first_arg, $4);
@@ -951,7 +952,8 @@ static call_expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *e
     return call_expr;
 }
 
-static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *callee_expr, expression_t *arguments)
+static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *callee_expr, expression_t *arguments,
+        unsigned arguments_loc)
 {
     call_expression_t *call_expr;
 
@@ -964,7 +966,12 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
     }
     call_expr = (call_expression_t*)callee_expr;
     if(!call_expr->args) {
-        call_expr->args = arguments;
+        /* Nothing can follow a call with empty parentheses. */
+        if(arguments) {
+            ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT);
+            ctx->error_loc = arguments_loc;
+            return NULL;
+        }
         return call_expr;
     }
 
@@ -981,8 +988,8 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
         return call_expr;
 
     if(arguments->type != EXPR_NOARG) {
-        FIXME("Invalid syntax: missing comma\n");
-        ctx->hres = E_FAIL;
+        ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT);
+        ctx->error_loc = arguments_loc;
         return NULL;
     }
 

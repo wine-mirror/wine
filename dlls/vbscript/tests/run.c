@@ -3694,6 +3694,34 @@ static void test_parse_errors(void)
             L"Dim x\n  \"s\".p = 1\n",
             1, 2,
             L"  \"s\".p = 1", S_OK, 1024
+        },
+        {
+            /* Arguments after a call with empty parentheses - error 1025 */
+            L"Sub f\nEnd Sub\nf(),0\n",
+            2, 3,
+            L"f(),0", S_OK, 1025
+        },
+        {
+            L"Sub f\nEnd Sub\nf() 0\n",
+            2, 4,
+            L"f() 0", S_OK, 1025
+        },
+        {
+            /* An operator after a call with empty parentheses - error 1025 */
+            L"Sub f\nEnd Sub\nf() + 1\n",
+            2, 4,
+            L"f() + 1", S_OK, 1025
+        },
+        {
+            /* Missing comma after a parenthesized first argument - error 1025 */
+            L"Sub f(a, b)\nEnd Sub\nf(1) 0\n",
+            2, 5,
+            L"f(1) 0", S_OK, 1025
+        },
+        {
+            L"Dim o\no.M(),0\n",
+            1, 5,
+            L"o.M(),0", S_OK, 1025
         }
     };
     HRESULT hres;
