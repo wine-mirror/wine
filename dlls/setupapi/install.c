@@ -269,7 +269,7 @@ static bool append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
         return false;
     }
 
-    if (!(buffer = malloc( (size + str_size) * sizeof(WCHAR) ))) return false;
+    if (!(buffer = malloc( size + str_size * sizeof(WCHAR) ))) return false;
     if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)buffer, &size ))
     {
         free( buffer );
@@ -317,7 +317,7 @@ static void delete_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
     if (RegQueryValueExW( hkey, value, NULL, &type, NULL, &size )) return;
     if (type != REG_MULTI_SZ) return;
     /* allocate double the size, one for value before and one for after */
-    if (!(buffer = malloc( size * 2 * sizeof(WCHAR) ))) return;
+    if (!(buffer = malloc( size * 2 ))) return;
     if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)buffer, &size )) goto done;
     src = buffer;
     dst = buffer + size;
