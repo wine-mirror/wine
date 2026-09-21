@@ -6039,6 +6039,7 @@ static GpStatus measure_ranges_callback(struct gdip_format_string_info *info)
     GpStatus stat = Ok;
     struct measure_ranges_args *args = info->user_data;
     CharacterRange *ranges = info->format->character_ranges;
+    BOOL vertical = !!(info->format->attr & StringFormatFlagsDirectionVertical);
 
     for (i=0; i < info->format->range_count; i++)
     {
@@ -6049,14 +6050,28 @@ static GpStatus measure_ranges_callback(struct gdip_format_string_info *info)
             GpRectF range_rect;
             SIZE range_size;
 
-            range_rect.Y = info->bounds->Y / args->rel_height;
-            range_rect.Height = info->bounds->Height / args->rel_height;
+            if (vertical)
+            {
+                range_rect.X = info->bounds->X / args->rel_width;
+                range_rect.Width = info->bounds->Width / args->rel_width;
 
-            font_link_get_text_extent_point(info, FALSE, info->index, range_start - info->index, INT_MAX, NULL, &range_size);
-            range_rect.X = (info->bounds->X + range_size.cx) / args->rel_width;
+                font_link_get_text_extent_point(info, vertical, info->index, range_start - info->index, INT_MAX, NULL, &range_size);
+                range_rect.Y = (info->bounds->Y + range_size.cx) / args->rel_height;
 
-            font_link_get_text_extent_point(info, FALSE, info->index, range_end - info->index, INT_MAX, NULL, &range_size);
-            range_rect.Width = (info->bounds->X + range_size.cx) / args->rel_width - range_rect.X;
+                font_link_get_text_extent_point(info, vertical, info->index, range_end - info->index, INT_MAX, NULL, &range_size);
+                range_rect.Height = (info->bounds->Y + range_size.cx) / args->rel_height - range_rect.Y;
+            }
+            else
+            {
+                range_rect.Y = info->bounds->Y / args->rel_height;
+                range_rect.Height = info->bounds->Height / args->rel_height;
+
+                font_link_get_text_extent_point(info, vertical, info->index, range_start - info->index, INT_MAX, NULL, &range_size);
+                range_rect.X = (info->bounds->X + range_size.cx) / args->rel_width;
+
+                font_link_get_text_extent_point(info, vertical, info->index, range_end - info->index, INT_MAX, NULL, &range_size);
+                range_rect.Width = (info->bounds->X + range_size.cx) / args->rel_width - range_rect.X;
+            }
 
             stat = GdipCombineRegionRect(args->regions[i], &range_rect, CombineModeUnion);
             if (stat != Ok)
@@ -6078,7 +6093,8 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     struct measure_ranges_args args;
     HDC hdc, temp_hdc=NULL;
     RectF scaled_rect;
-    REAL margin_x, offsety = 0.0f;
+    REAL margin_x, offsetx = 0.0f, offsety = 0.0f;
+    BOOL vertical = stringFormat != NULL ? !!(stringFormat->attr & StringFormatFlagsDirectionVertical) : FALSE;
 
     TRACE("(%p %s %d %p %s %p %d %p)\n", graphics, debugstr_wn(string, length),
             length, font, debugstr_rectf(layoutRect), stringFormat, regionCount, regions);
@@ -6107,36 +6123,66 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (stringFormat->line_align != StringAlignmentNear)
     {
         RectF bounds, in_rect = *layoutRect;
-        in_rect.Height = 0.0f; /* avoid height clipping */
-        GdipMeasureString(graphics, string, length, font, &in_rect, stringFormat, &bounds, NULL, NULL);
+        if (vertical)
+        {
+            in_rect.Width = 0.0f; /* avoid clipping */
+            GdipMeasureString(graphics, string, length, font, &in_rect, stringFormat, &bounds, NULL, NULL);
 
-        TRACE("bounds %s\n", debugstr_rectf(&bounds));
+            TRACE("bounds %s\n", debugstr_rectf(&bounds));
 
-        if (stringFormat->line_align == StringAlignmentCenter)
-            offsety = (layoutRect->Height - bounds.Height) / 2.0f;
-        else if (stringFormat->line_align == StringAlignmentFar)
-            offsety = layoutRect->Height - bounds.Height;
+            if (stringFormat->line_align == StringAlignmentCenter)
+                offsetx = (layoutRect->Width - bounds.Width) / 2.0f;
+            else if (stringFormat->line_align == StringAlignmentFar)
+                offsetx = layoutRect->Width - bounds.Width;
+        }
+        else
+        {
+            in_rect.Height = 0.0f; /* avoid height clipping */
+            GdipMeasureString(graphics, string, length, font, &in_rect, stringFormat, &bounds, NULL, NULL);
+
+            TRACE("bounds %s\n", debugstr_rectf(&bounds));
+
+            if (stringFormat->line_align == StringAlignmentCenter)
+                offsety = (layoutRect->Height - bounds.Height) / 2.0f;
+            else if (stringFormat->line_align == StringAlignmentFar)
+                offsety = layoutRect->Height - bounds.Height;
+        }
     }
     TRACE("line align %d, offsety %f\n", stringFormat->line_align, offsety);
 
     margin_x = stringFormat->generic_typographic ? 0.0 : font->emSize / 6.0;
-    margin_x *= units_scale(font->unit, graphics->unit, graphics->xres, graphics->printer_display);
+    margin_x *= units_scale(font->unit, graphics->unit, vertical ? graphics->yres : graphics->xres, graphics->printer_display);
     transform_properties(graphics, NULL, TRUE, &args.rel_width, &args.rel_height, NULL);
-    scaled_rect.X = (layoutRect->X + margin_x) * args.rel_width;
-    scaled_rect.Y = (layoutRect->Y + offsety) * args.rel_height;
     scaled_rect.Width = layoutRect->Width * args.rel_width;
     scaled_rect.Height = layoutRect->Height * args.rel_height;
-    if (scaled_rect.Width >= 0.5f)
+
+    if (vertical)
     {
-        scaled_rect.Width -= margin_x * 2.0f * args.rel_width;
-        if (scaled_rect.Width < 0.5f) /* doesn't fit */
-            scaled_rect.Width = 0.5f;
+        scaled_rect.X = (layoutRect->X + offsetx) * args.rel_width;
+        scaled_rect.Y = (layoutRect->Y + margin_x) * args.rel_height;
+        if (scaled_rect.Height >= 0.5f)
+        {
+            scaled_rect.Height -= margin_x * 2.0f * args.rel_height;
+            if (scaled_rect.Height < 0.5f) /* doesn't fit */
+                scaled_rect.Height = 0.5f;
+        }
+    }
+    else
+    {
+        scaled_rect.X = (layoutRect->X + margin_x) * args.rel_width;
+        scaled_rect.Y = (layoutRect->Y + offsety) * args.rel_height;
+        if (scaled_rect.Width >= 0.5f)
+        {
+            scaled_rect.Width -= margin_x * 2.0f * args.rel_width;
+            if (scaled_rect.Width < 0.5f) /* doesn't fit */
+                scaled_rect.Width = 0.5f;
+        }
     }
 
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
     if (scaled_rect.Height >= 1 << 23) scaled_rect.Height = 1 << 23;
 
-    get_font_hfont(graphics, font, FALSE, stringFormat, &gdifont, NULL, NULL);
+    get_font_hfont(graphics, font, vertical, stringFormat, &gdifont, NULL, NULL);
     oldfont = SelectObject(hdc, gdifont);
 
     for (i=0; i<stringFormat->range_count; i++)
