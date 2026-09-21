@@ -170,7 +170,7 @@ DNS_STATUS WINAPI DnsQuery_A( const char *name, WORD type, DWORD options, void *
 DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, void *servers, DNS_RECORDA **result,
                                  void **reserved )
 {
-    DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+    DNS_STATUS ret;
     unsigned char answer[4096];
     DWORD len = sizeof(answer);
     struct query_params query_params = { name, type, options, answer, &len };
@@ -179,8 +179,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
     TRACE( "(%s, %s, %#lx, %p, %p, %p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
 
-    if (!name || !result)
-        return ERROR_INVALID_PARAMETER;
+    if (!name || !result) return ERROR_INVALID_PARAMETER;
 
     if (type == DNS_TYPE_A)
     {
@@ -219,10 +218,10 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
         }
     }
 
+    if ((ret = DnsValidateName_UTF8( name, DnsNameDomain )) && ret != DNS_ERROR_NON_RFC_NAME) return ret;
     if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
 
-    ret = RESOLV_CALL( query, &query_params );
-    if (!ret)
+    if (!(ret = RESOLV_CALL( query, &query_params )))
     {
         DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
 
@@ -245,8 +244,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
         }
     }
 
-    if (ret == DNS_ERROR_RCODE_NAME_ERROR && type == DNS_TYPE_A &&
-        !(options & DNS_QUERY_NO_NETBT))
+    if (ret == DNS_ERROR_RCODE_NAME_ERROR && type == DNS_TYPE_A && !(options & DNS_QUERY_NO_NETBT))
     {
         TRACE( "dns lookup failed, trying netbios query\n" );
         ret = do_query_netbios( name, result );

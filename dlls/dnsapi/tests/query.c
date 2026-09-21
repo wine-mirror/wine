@@ -68,9 +68,9 @@ static void test_DnsQuery(void)
 
     /* IP in name. */
     status = DnsQuery_W(L" 192.168.111.11", DNS_TYPE_A, 0, NULL, &rec, NULL);
-    ok(status != ERROR_SUCCESS, "got %lu.\n", status);
+    ok(status == DNS_ERROR_INVALID_NAME_CHAR, "got %lu.\n", status);
     status = DnsQuery_W(L"192.168.111.11 ", DNS_TYPE_A, 0, NULL, &rec, NULL);
-    ok(status != ERROR_SUCCESS, "got %lu.\n", status);
+    ok(status == DNS_ERROR_INVALID_NAME_CHAR, "got %lu.\n", status);
 
     status = DnsQuery_W(L"192.168.111.11", DNS_TYPE_A, 0, NULL, &rec, NULL);
     ok(!status, "got %lu.\n", status);
