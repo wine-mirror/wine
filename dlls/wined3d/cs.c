@@ -3382,7 +3382,7 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     packet = (struct wined3d_cs_packet *)&queue->data[queue->head & WINED3D_CS_QUEUE_MASK];
     TRACE("Queuing %s.\n", debug_cs_packet(packet));
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
-    InterlockedExchange((LONG *)&queue->head, queue->head + packet_size);
+    WriteRelease((LONG *)&queue->head, queue->head + packet_size);
 
     if (InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
     {
@@ -3584,7 +3584,7 @@ static inline bool wined3d_cs_execute_next(struct wined3d_cs *cs, struct wined3d
         TRACE("%s executed.\n", debug_cs_packet(packet));
     }
 
-    InterlockedExchange((LONG *)&queue->tail, tail);
+    WriteRelease((LONG *)&queue->tail, tail);
     return true;
 }
 
