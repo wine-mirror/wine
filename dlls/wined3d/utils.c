@@ -34,40 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define WINED3D_FORMAT_FOURCC_BASE (WINED3DFMT_BC7_UNORM_SRGB + 1)
 
-static const struct
-{
-    enum wined3d_format_id id;
-    unsigned int idx;
-}
-format_index_remap[] =
-{
-    {WINED3DFMT_UYVY,         WINED3D_FORMAT_FOURCC_BASE},
-    {WINED3DFMT_YUY2,         WINED3D_FORMAT_FOURCC_BASE + 1},
-    {WINED3DFMT_YV12,         WINED3D_FORMAT_FOURCC_BASE + 2},
-    {WINED3DFMT_DXT1,         WINED3D_FORMAT_FOURCC_BASE + 3},
-    {WINED3DFMT_DXT2,         WINED3D_FORMAT_FOURCC_BASE + 4},
-    {WINED3DFMT_DXT3,         WINED3D_FORMAT_FOURCC_BASE + 5},
-    {WINED3DFMT_DXT4,         WINED3D_FORMAT_FOURCC_BASE + 6},
-    {WINED3DFMT_DXT5,         WINED3D_FORMAT_FOURCC_BASE + 7},
-    {WINED3DFMT_MULTI2_ARGB8, WINED3D_FORMAT_FOURCC_BASE + 8},
-    {WINED3DFMT_G8R8_G8B8,    WINED3D_FORMAT_FOURCC_BASE + 9},
-    {WINED3DFMT_R8G8_B8G8,    WINED3D_FORMAT_FOURCC_BASE + 10},
-    {WINED3DFMT_ATI1N,        WINED3D_FORMAT_FOURCC_BASE + 11},
-    {WINED3DFMT_ATI2N,        WINED3D_FORMAT_FOURCC_BASE + 12},
-    {WINED3DFMT_INST,         WINED3D_FORMAT_FOURCC_BASE + 13},
-    {WINED3DFMT_NVDB,         WINED3D_FORMAT_FOURCC_BASE + 14},
-    {WINED3DFMT_NVHU,         WINED3D_FORMAT_FOURCC_BASE + 15},
-    {WINED3DFMT_NVHS,         WINED3D_FORMAT_FOURCC_BASE + 16},
-    {WINED3DFMT_INTZ,         WINED3D_FORMAT_FOURCC_BASE + 17},
-    {WINED3DFMT_RESZ,         WINED3D_FORMAT_FOURCC_BASE + 18},
-    {WINED3DFMT_NULL,         WINED3D_FORMAT_FOURCC_BASE + 19},
-    {WINED3DFMT_R16,          WINED3D_FORMAT_FOURCC_BASE + 20},
-    {WINED3DFMT_AL16,         WINED3D_FORMAT_FOURCC_BASE + 21},
-    {WINED3DFMT_NV12,         WINED3D_FORMAT_FOURCC_BASE + 22},
-    {WINED3DFMT_ATOC,         WINED3D_FORMAT_FOURCC_BASE + 23},
-};
-
-#define WINED3D_FORMAT_COUNT (WINED3D_FORMAT_FOURCC_BASE + ARRAY_SIZE(format_index_remap))
+#define WINED3D_FORMAT_COUNT (WINED3D_FORMAT_FOURCC_BASE + 24)
 
 struct wined3d_format_channels
 {
@@ -1805,18 +1772,37 @@ static const struct wined3d_format_srgb_info format_srgb_info[] =
 
 static inline int get_format_idx(enum wined3d_format_id format_id)
 {
-    unsigned int i;
-
     if ((unsigned int)format_id < WINED3D_FORMAT_FOURCC_BASE)
         return format_id;
 
-    for (i = 0; i < ARRAY_SIZE(format_index_remap); ++i)
+    switch (format_id)
     {
-        if (format_index_remap[i].id == format_id)
-            return format_index_remap[i].idx;
+        case WINED3DFMT_UYVY:         return WINED3D_FORMAT_FOURCC_BASE;
+        case WINED3DFMT_YUY2:         return WINED3D_FORMAT_FOURCC_BASE + 1;
+        case WINED3DFMT_YV12:         return WINED3D_FORMAT_FOURCC_BASE + 2;
+        case WINED3DFMT_DXT1:         return WINED3D_FORMAT_FOURCC_BASE + 3;
+        case WINED3DFMT_DXT2:         return WINED3D_FORMAT_FOURCC_BASE + 4;
+        case WINED3DFMT_DXT3:         return WINED3D_FORMAT_FOURCC_BASE + 5;
+        case WINED3DFMT_DXT4:         return WINED3D_FORMAT_FOURCC_BASE + 6;
+        case WINED3DFMT_DXT5:         return WINED3D_FORMAT_FOURCC_BASE + 7;
+        case WINED3DFMT_MULTI2_ARGB8: return WINED3D_FORMAT_FOURCC_BASE + 8;
+        case WINED3DFMT_G8R8_G8B8:    return WINED3D_FORMAT_FOURCC_BASE + 9;
+        case WINED3DFMT_R8G8_B8G8:    return WINED3D_FORMAT_FOURCC_BASE + 10;
+        case WINED3DFMT_ATI1N:        return WINED3D_FORMAT_FOURCC_BASE + 11;
+        case WINED3DFMT_ATI2N:        return WINED3D_FORMAT_FOURCC_BASE + 12;
+        case WINED3DFMT_INST:         return WINED3D_FORMAT_FOURCC_BASE + 13;
+        case WINED3DFMT_NVDB:         return WINED3D_FORMAT_FOURCC_BASE + 14;
+        case WINED3DFMT_NVHU:         return WINED3D_FORMAT_FOURCC_BASE + 15;
+        case WINED3DFMT_NVHS:         return WINED3D_FORMAT_FOURCC_BASE + 16;
+        case WINED3DFMT_INTZ:         return WINED3D_FORMAT_FOURCC_BASE + 17;
+        case WINED3DFMT_RESZ:         return WINED3D_FORMAT_FOURCC_BASE + 18;
+        case WINED3DFMT_NULL:         return WINED3D_FORMAT_FOURCC_BASE + 19;
+        case WINED3DFMT_R16:          return WINED3D_FORMAT_FOURCC_BASE + 20;
+        case WINED3DFMT_AL16:         return WINED3D_FORMAT_FOURCC_BASE + 21;
+        case WINED3DFMT_NV12:         return WINED3D_FORMAT_FOURCC_BASE + 22;
+        case WINED3DFMT_ATOC:         return WINED3D_FORMAT_FOURCC_BASE + 23;
+        default:                      return -1;
     }
-
-    return -1;
 }
 
 static struct wined3d_format_gl *wined3d_format_gl_mutable(struct wined3d_format *format)
