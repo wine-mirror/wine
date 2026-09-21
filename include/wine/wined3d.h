@@ -3058,7 +3058,7 @@ static inline int wined3d_bit_scan(unsigned int *x)
     for (bit_offset = 0; bit_offset < 32; bit_offset++)
         if (*x & (1u << bit_offset)) break;
 #endif
-    *x ^= 1u << bit_offset;
+    *x &= *x - 1;
     return bit_offset;
 }
 
