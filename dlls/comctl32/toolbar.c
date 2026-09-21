@@ -1446,10 +1446,10 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 	    /* 	If the current button is a separator and not hidden,  */
 	    /*	go to the next until it reaches a non separator.      */
 	    /*	Wrap the last separator if it is before a button.     */
-	    while( ( ((btnPtr[i].fsStyle & BTNS_SEP) &&
+	    while( i < infoPtr->nNumButtons &&
+	           ( ((btnPtr[i].fsStyle & BTNS_SEP) &&
 		      !(btnPtr[i].fsStyle & BTNS_DROPDOWN)) ||
-		     (btnPtr[i].fsState & TBSTATE_HIDDEN) ) &&
-			i < infoPtr->nNumButtons )
+		     (btnPtr[i].fsState & TBSTATE_HIDDEN) ) )
 	    {
 		i++;
 		bFound = TRUE;
