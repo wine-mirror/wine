@@ -3716,3 +3716,13 @@ NTSTATUS WINAPI NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( ULONG fla
 
     return STATUS_NOT_SUPPORTED;
 }
+
+/***********************************************************************
+ *           NtOpenPrivateNamespace (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenPrivateNamespace( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, const OBJECT_BOUNDARY_DESCRIPTOR *descriptor )
+{
+    FIXME( "%p, %#x, %p, %p stub.\n", handle, access, attr, descriptor );
+
+    return STATUS_NOT_IMPLEMENTED;
+}
