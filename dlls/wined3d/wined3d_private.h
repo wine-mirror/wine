@@ -3665,8 +3665,9 @@ C_ASSERT(!(WINED3D_CS_QUEUE_SIZE & (WINED3D_CS_QUEUE_SIZE - 1)));
 
 struct wined3d_cs_queue
 {
-    ULONG head, tail;
-    BYTE data[WINED3D_CS_QUEUE_SIZE];
+    DECLSPEC_ALIGN(64) ULONG head;
+    DECLSPEC_ALIGN(64) ULONG tail;
+    DECLSPEC_ALIGN(64) BYTE data[WINED3D_CS_QUEUE_SIZE];
 };
 
 struct wined3d_device_context_ops
