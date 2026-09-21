@@ -80,6 +80,8 @@ static ULONG WINAPI sequence_track_Release(IDirectMusicTrack8 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
+        free(This->curve_items);
+        free(This->items);
         free(This);
     }
 
