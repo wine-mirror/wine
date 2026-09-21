@@ -11162,9 +11162,9 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
 
     if ((ret = wined3d_uint32_compare(k->vs_id, prog->vs.id)))
         return ret;
-    if ((ret = wined3d_uint32_compare(k->gs_id, prog->gs.id)))
-        return ret;
     if ((ret = wined3d_uint32_compare(k->ps_id, prog->ps.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->gs_id, prog->gs.id)))
         return ret;
     if ((ret = wined3d_uint32_compare(k->hs_id, prog->hs.id)))
         return ret;
