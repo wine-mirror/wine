@@ -1232,7 +1232,7 @@ static WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, const LPCITEMIDLIS
     int i;
     
     iPathLen = lstrlenW(wszBasePath);
-    wszPathsList = malloc(MAX_PATH * sizeof(WCHAR) * cidl + 1);
+    wszPathsList = malloc((MAX_PATH * cidl + 1) * sizeof(WCHAR));
     wszListPos = wszPathsList;
     
     for (i = 0; i < cidl; i++) {
