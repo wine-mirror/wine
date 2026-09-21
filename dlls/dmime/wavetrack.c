@@ -542,7 +542,7 @@ static HRESULT WINAPI wave_IPersistStream_Load(IPersistStream *iface, IStream *s
     if (!stream)
         return E_POINTER;
 
-    if ((hr = stream_get_chunk(stream, &wavt) != S_OK))
+    if ((hr = stream_get_chunk(stream, &wavt)) != S_OK)
         return hr;
     if (wavt.id != FOURCC_LIST || wavt.type != DMUS_FOURCC_WAVETRACK_LIST)
         return DMUS_E_UNSUPPORTED_STREAM;
