@@ -69,35 +69,6 @@ static minidriver *find_minidriver(DRIVER_OBJECT *driver)
     return NULL;
 }
 
-static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR *id)
-{
-    IO_STACK_LOCATION *irpsp;
-    IO_STATUS_BLOCK irp_status;
-    KEVENT event;
-    IRP *irp;
-
-    KeInitializeEvent(&event, NotificationEvent, FALSE);
-    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, device, NULL, 0, NULL, &event, &irp_status);
-    if (irp == NULL)
-        return STATUS_NO_MEMORY;
-
-    irpsp = IoGetNextIrpStackLocation(irp);
-    irpsp->MinorFunction = IRP_MN_QUERY_ID;
-    irpsp->Parameters.QueryId.IdType = type;
-
-    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
-    if (IoCallDriver(device, irp) == STATUS_PENDING)
-        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
-
-    if (!irp_status.Status)
-    {
-        wcscpy(id, (WCHAR *)irp_status.Information);
-        ExFreePool((WCHAR *)irp_status.Information);
-    }
-
-    return irp_status.Status;
-}
-
 /* user32 reserves 1 & 2 for winemouse and winekeyboard,
  * keep this in sync with user_private.h */
 #define WINE_MOUSE_HANDLE 1
@@ -168,9 +139,6 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     fdo->base.hid.NextDeviceObject = bus_pdo;
     swprintf( fdo->base.device_id, ARRAY_SIZE(fdo->base.device_id), L"HID\\%s", wcsrchr( device_id, '\\' ) + 1 );
     wcscpy( fdo->base.instance_id, instance_id );
-
-    if (get_device_id( bus_pdo, BusQueryContainerID, fdo->base.container_id ))
-        fdo->base.container_id[0] = 0;
 
     is_xinput_class = !wcsncmp(device_id, L"WINEXINPUT\\", 7) && wcsstr(device_id, L"&XI_") != NULL;
     if (is_xinput_class) fdo->base.class_guid = &GUID_DEVINTERFACE_WINEXINPUT;
@@ -286,7 +254,6 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
             wcscpy( pdo->base.device_id, fdo->base.device_id );
         }
         swprintf( pdo->base.instance_id, ARRAY_SIZE(pdo->base.instance_id), L"%04u", i );
-        wcscpy( pdo->base.container_id, fdo->base.container_id );
         pdo->base.class_guid = fdo->base.class_guid;
 
         pdo->information.VendorID = fdo->attrs.VendorID;
@@ -469,18 +436,6 @@ static WCHAR *query_instance_id(DEVICE_OBJECT *device)
     return dst;
 }
 
-static WCHAR *query_container_id(DEVICE_OBJECT *device)
-{
-    struct device *ext = device->DeviceExtension;
-    DWORD size = (wcslen(ext->container_id) + 1) * sizeof(WCHAR);
-    WCHAR *dst;
-
-    if ((dst = ExAllocatePool(PagedPool, size)))
-        memcpy(dst, ext->container_id, size);
-
-    return dst;
-}
-
 static NTSTATUS pdo_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -520,12 +475,8 @@ static NTSTATUS pdo_pnp( DEVICE_OBJECT *device, IRP *irp )
                 else status = STATUS_SUCCESS;
                 break;
             case BusQueryContainerID:
-                if (pdo->base.container_id[0])
-                {
-                    irp->IoStatus.Information = (ULONG_PTR)query_container_id(device);
-                    if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
-                    else status = STATUS_SUCCESS;
-                }
+                irp->IoStatus.Information = 0;
+                status = STATUS_NOT_SUPPORTED;
                 break;
             default:
                 WARN("IRP_MN_QUERY_ID type %u, not implemented!\n", type);
