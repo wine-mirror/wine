@@ -1121,7 +1121,8 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define EDS_ROTATEDMODE   0x00000004
 
 /* Used for PrintWindow */
-#define PW_CLIENTONLY   0x00000001
+#define PW_CLIENTONLY        0x00000001
+#define PW_RENDERFULLCONTENT 0x00000002
 
 /****** Window classes ******/
 
