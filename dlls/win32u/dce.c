@@ -2237,8 +2237,33 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
  */
 BOOL WINAPI NtUserPrintWindow( HWND hwnd, HDC hdc, UINT flags )
 {
-    UINT prf_flags = PRF_CHILDREN | PRF_ERASEBKGND | PRF_OWNED | PRF_CLIENT;
-    if (!(flags & PW_CLIENTONLY)) prf_flags |= PRF_NONCLIENT;
-    send_message( hwnd, WM_PRINT, (WPARAM)hdc, prf_flags );
+    RECT rect = {0};
+    HDC hwnd_dc;
+
+    TRACE( "hwnd %p, hdc %p, flags %#x\n", hwnd, hdc, flags );
+
+    if (flags & PW_RENDERFULLCONTENT)
+        WARN( "PW_RENDERFULLCONTENT is unsupported.\n" );
+
+    if (!is_window( hwnd ) || flags & ~(PW_CLIENTONLY | PW_RENDERFULLCONTENT))
+        return FALSE;
+
+    if (flags & PW_CLIENTONLY)
+        NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
+    else
+        NtUserGetWindowRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
+
+    if (is_window_visible( hwnd ))
+    {
+        NtUserRedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW );
+        hwnd_dc = flags & PW_CLIENTONLY ? NtUserGetDC( hwnd ) : NtUserGetWindowDC( hwnd );
+        NtGdiBitBlt( hdc, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hwnd_dc, 0, 0, SRCCOPY, 0, 0 );
+        NtUserReleaseDC( hwnd, hwnd_dc );
+    }
+    else
+    {
+        NtGdiPatBlt( hdc, 0, 0, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+    }
+
     return TRUE;
 }

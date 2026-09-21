@@ -11485,7 +11485,6 @@ static LRESULT WINAPI PrintWindowSubProcA(HWND hwnd, UINT message, WPARAM wp, LP
     }
     case WM_PRINT:
     case WM_PRINTCLIENT:
-        todo_wine
         ok(0, "Got unexpected message %#x.\n", message);
         break;
     }
@@ -21615,14 +21614,12 @@ static void test_PrintWindow(char **argv)
 
     /* Parameter checks */
     ret = PrintWindow(0, mem_dc, 0);
-    todo_wine
     ok(!ret, "PrintWindow succeeded.\n");
 
     ret = PrintWindow(hwnd, 0, 0);
     ok(ret, "PrintWindow failed.\n");
 
     ret = PrintWindow(hwnd, 0, 0x4);
-    todo_wine
     ok(!ret, "PrintWindow succeeded.\n");
 
     /* PrintWindow() for an invisible window */
@@ -21636,10 +21633,8 @@ static void test_PrintWindow(char **argv)
         ok(ret, "PrintWindow failed.\n");
         ok_sequence(print_window_invisible, "PrintWindow for an invisible window", TRUE);
         color = GetPixel(mem_dc, 0, 0);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
 
         winetest_pop_context();
@@ -21658,17 +21653,16 @@ static void test_PrintWindow(char **argv)
         ret = PrintWindow(hwnd, mem_dc, flags[i]);
         ok(ret, "PrintWindow failed.\n");
         if (flags[i] & PW_RENDERFULLCONTENT)
-            ok_sequence(print_window_visible_optional, "PrintWindow for a visible window", TRUE);
+            ok_sequence(print_window_visible_optional, "PrintWindow for a visible window", FALSE);
         else
-            ok_sequence(print_window_visible, "PrintWindow for a visible window", TRUE);
+            ok_sequence(print_window_visible, "PrintWindow for a visible window", FALSE);
         color = GetPixel(mem_dc, 0, 0);
         if (flags[i] & PW_CLIENTONLY)
-            todo_wine
             ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
         else
+            todo_wine /* Wine decorated mode. Non-client area is painted by the WM. */
             ok(color != RGB(0, 255, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
 
         /* Test another DC type */
@@ -21678,12 +21672,12 @@ static void test_PrintWindow(char **argv)
         {
             todo_wine
             ok(!ret, "PrintWindow succeeded.\n");
-            ok_sequence(print_window_visible_optional, "PrintWindow for a visible window and metafile DC", TRUE);
+            ok_sequence(print_window_visible_optional, "PrintWindow for a visible window and metafile DC", FALSE);
         }
         else
         {
             ok(ret, "PrintWindow failed.\n");
-            ok_sequence(print_window_visible, "PrintWindow for a visible window and metafile DC", TRUE);
+            ok_sequence(print_window_visible, "PrintWindow for a visible window and metafile DC", FALSE);
         }
 
         winetest_pop_context();
@@ -21706,17 +21700,16 @@ static void test_PrintWindow(char **argv)
         else
             ok(ret, "PrintWindow failed.\n");
         if (flags[i] & PW_RENDERFULLCONTENT)
-            ok_sequence(print_window_invisible_optional, "PrintWindow for a minimized window", TRUE);
+            ok_sequence(print_window_invisible_optional, "PrintWindow for a minimized window", FALSE);
         else
-            ok_sequence(print_window_invisible, "PrintWindow for a minimized window", TRUE);
+            ok_sequence(print_window_invisible, "PrintWindow for a minimized window", FALSE);
         color = GetPixel(mem_dc, 0, 0);
         if (flags[i] & PW_CLIENTONLY)
-            todo_wine
             ok(color == RGB(0, 255, 0), "Got unexpected color %#lx.\n", color);
         else
+            todo_wine /* Wine decorated mode. Non-client area is painted by the WM. */
             ok(color != RGB(0, 255, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(0, 255, 0), "Got unexpected color %#lx.\n", color);
 
         winetest_pop_context();
@@ -21737,10 +21730,8 @@ static void test_PrintWindow(char **argv)
         ok(ret, "PrintWindow failed.\n");
         ok_sequence(print_window_invisible, "PrintWindow for an invisible window", TRUE);
         color = GetPixel(mem_dc, 0, 0);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
 
         winetest_pop_context();
@@ -21781,10 +21772,8 @@ static void test_PrintWindow(char **argv)
         ok(ret, "PrintWindow failed.\n");
         ok_sequence(print_window_invisible, "PrintWindow for a child window with invisible parent", TRUE);
         color = GetPixel(mem_dc, 0, 0);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(0, 0, 0), "Got unexpected color %#lx.\n", color);
 
         winetest_pop_context();
@@ -21827,13 +21816,10 @@ static void test_PrintWindow(char **argv)
         ok(ret, "PrintWindow failed.\n");
         color = GetPixel(mem_dc, 0, 0);
         if (flags[i] & PW_CLIENTONLY)
-            todo_wine
             ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
         else
-            todo_wine
             ok(color != RGB(0, 255, 0), "Got unexpected color %#lx.\n", color);
         color = GetPixel(mem_dc, width / 2, height / 2);
-        todo_wine
         ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
 
         winetest_pop_context();
