@@ -282,17 +282,16 @@ static HRESULT WINAPI fw_app_put_ProcessImageFileName(
     res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, NULL, &sz);
     if (res == WN_MORE_DATA)
     {
-        if (!(path = malloc(sz)))
+        if (!(info = malloc(sz)))
             return E_OUTOFMEMORY;
 
-        info = (UNIVERSAL_NAME_INFOW *)&path;
-        res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, &info, &sz);
+        res = WNetGetUniversalNameW(image, UNIVERSAL_NAME_INFO_LEVEL, info, &sz);
         if (res == NO_ERROR)
         {
             SysFreeString(This->filename);
             This->filename = SysAllocString(info->lpUniversalName);
         }
-        free(path);
+        free(info);
         return HRESULT_FROM_WIN32(res);
     }
 
