@@ -1081,7 +1081,8 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
 struct wined3d_rendertarget_view_gl
 {
     struct wined3d_rendertarget_view v;
-    struct wined3d_gl_view gl_view;
+    unsigned int view_count;
+    struct wined3d_gl_view gl_view[1];
 };
 
 static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
@@ -1093,7 +1094,7 @@ static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
 static inline struct wined3d_gl_view wined3d_rendertarget_view_gl_get(
         const struct wined3d_rendertarget_view_gl *view)
 {
-    return view->gl_view;
+    return view->gl_view[0];
 }
 
 HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *view_gl,

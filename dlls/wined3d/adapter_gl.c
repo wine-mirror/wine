@@ -4565,13 +4565,23 @@ static HRESULT adapter_gl_create_rendertarget_view(const struct wined3d_view_des
         struct wined3d_rendertarget_view **view)
 {
     struct wined3d_rendertarget_view_gl *view_gl;
+    unsigned int view_count = 1;
     HRESULT hr;
 
     TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
             wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
 
-    if (!(view_gl = calloc(1, sizeof(*view_gl))))
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        if (texture->swapchain)
+            view_count = texture->swapchain->state.desc.backbuffer_count;
+    }
+
+    if (!(view_gl = calloc(1, offsetof(struct wined3d_rendertarget_view_gl, gl_view[view_count]))))
         return E_OUTOFMEMORY;
+
+    view_gl->view_count = view_count;
 
     if (FAILED(hr = wined3d_rendertarget_view_gl_init(view_gl, desc, resource, parent, parent_ops)))
     {
@@ -4653,11 +4663,15 @@ static void adapter_gl_destroy_rendertarget_view(struct wined3d_rendertarget_vie
 {
     struct wined3d_rendertarget_view_gl *view_gl = wined3d_rendertarget_view_gl(view);
     struct wined3d_resource *resource = view_gl->v.resource;
+    unsigned int i;
 
     TRACE("view_gl %p.\n", view_gl);
 
     wined3d_rendertarget_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(resource->device, &view_gl->gl_view, NULL, NULL, view_gl);
+    for (i = view_gl->view_count - 1; i; --i)
+        wined3d_view_gl_destroy(resource->device, &view_gl->gl_view[i], NULL, NULL, NULL);
+
+    wined3d_view_gl_destroy(resource->device, &view_gl->gl_view[0], NULL, NULL, view_gl);
 }
 
 static HRESULT adapter_gl_create_shader_resource_view(const struct wined3d_view_desc *desc,

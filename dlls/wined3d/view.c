@@ -594,6 +594,9 @@ static void wined3d_render_target_view_gl_cs_init(void *object)
     struct wined3d_rendertarget_view_gl *view_gl = object;
     struct wined3d_resource *resource = view_gl->v.resource;
     const struct wined3d_view_desc *desc = &view_gl->v.desc;
+    struct wined3d_texture **back_buffers;
+    struct wined3d_swapchain *swapchain;
+    unsigned int i;
 
     TRACE("view_gl %p.\n", view_gl);
 
@@ -624,13 +627,15 @@ static void wined3d_render_target_view_gl_cs_init(void *object)
                         debug_d3dformat(resource->format->id), debug_d3dformat(view_gl->v.format->id));
                 return;
             }
-            if (texture_gl->t.swapchain && texture_gl->t.swapchain->state.desc.backbuffer_count > 1)
-            {
-                FIXME("Swapchain views not supported.\n");
-                return;
-            }
 
-            create_texture_view(&view_gl->gl_view, texture_gl->target, desc, texture_gl, view_gl->v.format);
+            create_texture_view(&view_gl->gl_view[0], texture_gl->target, desc, texture_gl, view_gl->v.format);
+            for (i = 1; i < view_gl->view_count; ++i)
+            {
+                swapchain = texture_gl->t.swapchain;
+                back_buffers = swapchain->back_buffers;
+                create_texture_view(&view_gl->gl_view[i], texture_gl->target, desc,
+                        wined3d_texture_gl(back_buffers[i]), view_gl->v.format);
+            }
         }
     }
 }
