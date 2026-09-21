@@ -1393,13 +1393,23 @@ static HRESULT adapter_vk_create_rendertarget_view(const struct wined3d_view_des
         struct wined3d_rendertarget_view **view)
 {
     struct wined3d_rendertarget_view_vk *view_vk;
+    unsigned int view_count = 1;
     HRESULT hr;
 
     TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
             wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
 
-    if (!(view_vk = calloc(1, sizeof(*view_vk))))
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
+        if (texture_vk->t.swapchain)
+            view_count = texture_vk->t.swapchain->state.desc.backbuffer_count;
+    }
+
+    if (!(view_vk = calloc(1, offsetof(struct wined3d_rendertarget_view_vk, vk_image_view[view_count]))))
         return E_OUTOFMEMORY;
+
+    view_vk->view_count = view_count;
 
     if (FAILED(hr = wined3d_rendertarget_view_vk_init(view_vk, desc, resource, parent, parent_ops)))
     {
@@ -1518,11 +1528,17 @@ static void adapter_vk_destroy_rendertarget_view(struct wined3d_rendertarget_vie
 {
     struct wined3d_rendertarget_view_vk *view_vk = wined3d_rendertarget_view_vk(view);
     struct wined3d_resource *resource = view_vk->v.resource;
+    unsigned int i;
 
     TRACE("view_vk %p.\n", view_vk);
 
     wined3d_rendertarget_view_cleanup(&view_vk->v);
-    wined3d_view_vk_destroy(resource->device, NULL, &view_vk->vk_image_view,
+    for (i = view_vk->view_count - 1; i; --i)
+    {
+        wined3d_view_vk_destroy(resource->device, NULL, &view_vk->vk_image_view[i],
+                NULL, NULL, NULL, &view_vk->command_buffer_id, view_vk);
+    }
+    wined3d_view_vk_destroy(resource->device, NULL, &view_vk->vk_image_view[0],
             NULL, NULL, NULL, &view_vk->command_buffer_id, view_vk);
 }
 

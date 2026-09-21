@@ -907,12 +907,15 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
 {
     struct wined3d_rendertarget_view_vk *view_vk = object;
     struct wined3d_view_desc *desc = &view_vk->v.desc;
+    struct wined3d_texture **back_buffers = NULL;
+    struct wined3d_swapchain *swapchain = NULL;
     const struct wined3d_format_vk *format_vk;
     struct wined3d_texture_vk *texture_vk;
     struct wined3d_resource *resource;
     struct wined3d_context *context;
     VkImageUsageFlags vk_usage = 0;
     uint32_t default_flags = 0;
+    unsigned int i;
 
     TRACE("view_vk %p.\n", view_vk);
 
@@ -939,26 +942,37 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
         return;
     }
 
-    if (texture_vk->t.swapchain && texture_vk->t.swapchain->state.desc.backbuffer_count > 1)
-    {
-        FIXME("Swapchain views not supported.\n");
-        return;
-    }
-
     if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
         vk_usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     if (resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
         vk_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     context = context_acquire(resource->device, NULL, 0);
-    view_vk->vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
+
+    view_vk->vk_image_view[0] = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
             desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true, vk_usage);
+    if (!view_vk->vk_image_view[0])
+        goto release;
+
+    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(view_vk->vk_image_view[0]));
+
+    for (i = 1; i < view_vk->view_count; ++i)
+    {
+        /* A RTV can only be created on backbuffer 0, not higher buffers. So we don't have to worry
+         * about a start offset here. */
+        swapchain = texture_vk->t.swapchain;
+        back_buffers = swapchain->back_buffers;
+        texture_vk = wined3d_texture_vk(back_buffers[i]);
+        view_vk->vk_image_view[i] = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
+                desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true, vk_usage);
+        if (!view_vk->vk_image_view[i])
+            goto release;
+
+        TRACE("Created image view[%u] 0x%s.\n", i, wine_dbgstr_longlong(view_vk->vk_image_view[i]));
+    }
+
+release:
     context_release(context);
-
-    if (!view_vk->vk_image_view)
-        return;
-
-    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(view_vk->vk_image_view));
 }
 
 HRESULT wined3d_rendertarget_view_vk_init(struct wined3d_rendertarget_view_vk *view_vk,

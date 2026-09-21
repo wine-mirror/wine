@@ -1061,8 +1061,9 @@ struct wined3d_rendertarget_view_vk
 {
     struct wined3d_rendertarget_view v;
 
-    VkImageView vk_image_view;
+    unsigned int view_count;
     uint64_t command_buffer_id;
+    VkImageView vk_image_view[1];
 };
 
 static inline struct wined3d_rendertarget_view_vk *wined3d_rendertarget_view_vk(
@@ -1082,8 +1083,8 @@ static inline VkImageView wined3d_rendertarget_view_vk_get_image_view(struct win
 {
     struct wined3d_texture_vk *texture_vk;
 
-    if (rtv_vk->vk_image_view)
-        return rtv_vk->vk_image_view;
+    if (rtv_vk->vk_image_view[0])
+        return rtv_vk->vk_image_view[0];
 
     texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
     return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk)->imageView;
