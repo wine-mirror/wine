@@ -44,6 +44,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             ERR( "No libresolv support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        free_host_entries();
         break;
     }
     return TRUE;

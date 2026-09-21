@@ -36,7 +36,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-#define DEFAULT_TTL  1200
+#define DEFAULT_TTL_NETBIOS 1200
+#define DEFAULT_TTL_HOSTS   557890   /* resets when hosts file changes */
+
+static CRITICAL_SECTION hosts_cs;
+static CRITICAL_SECTION_DEBUG hosts_debug =
+{
+    0, 0, &hosts_cs, { &hosts_debug.ProcessLocksList, &hosts_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": hosts_cs") }
+};
+static CRITICAL_SECTION hosts_cs = { &hosts_debug, -1, 0, 0, 0, 0 };
 
 static DNS_RECORDA *alloc_record( const char *name )
 {
@@ -90,7 +99,7 @@ static DNS_STATUS do_query_netbios( const char *name, DNS_RECORDA **result )
         record->wType            = DNS_TYPE_A;
         record->Flags.S.Section  = DnsSectionAnswer;
         record->Flags.S.CharSet  = DnsCharSetUtf8;
-        record->dwTtl            = DEFAULT_TTL;
+        record->dwTtl            = DEFAULT_TTL_NETBIOS;
         /* FIXME: network byte order? */
         record->Data.A.IpAddress = *(DWORD *)((char *)buffer[i].destination_addr + 2);
 
@@ -99,6 +108,345 @@ static DNS_STATUS do_query_netbios( const char *name, DNS_RECORDA **result )
     status = ERROR_SUCCESS;
 
 exit:
+    DNS_RRSET_TERMINATE( rrset );
+
+    if (status != ERROR_SUCCESS)
+        DnsRecordListFree( rrset.pFirstRR, DnsFreeRecordList );
+    else
+        *result = (DNS_RECORDA *)rrset.pFirstRR;
+
+    return status;
+}
+
+static char *read_etc_hosts( DWORD *ret_size )
+{
+    HANDLE file;
+    DWORD size;
+    char *data;
+
+    file = CreateFileW( L"\\\\?\\unix/etc/hosts", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ERR( "failed to open /etc/hosts: %lu\n", GetLastError() );
+        return NULL;
+    }
+
+    size = GetFileSize( file, NULL );
+    if (!(data = malloc( size )) || !ReadFile( file, data, size, ret_size, NULL ))
+    {
+        WARN( "failed to read file: %lu\n", GetLastError() );
+        free( data );
+        data = NULL;
+    }
+    CloseHandle( file );
+    return data;
+}
+
+static struct host_entry
+{
+    IP4_ADDRESS *ip4;
+    IP6_ADDRESS *ip6;
+    char        *name;
+    char        *aliases;
+} **host_entries;
+
+static size_t host_entries_count;
+static size_t host_entries_allocated;
+
+static struct host_entry *create_host_entry( const IP4_ADDRESS *ip4, const IP6_ADDRESS *ip6, const char *name,
+                                             size_t len_name, const char *aliases, size_t len_aliases )
+{
+    struct host_entry *ret;
+    size_t size = sizeof(*ret) + len_name + 1 + len_aliases + 1;
+    char *ptr;
+
+    if (ip4) size += sizeof(*ip4);
+    else if (ip6) size += sizeof(*ip6);
+
+    if (!(ret = calloc( 1, size ))) return NULL;
+    ptr = (char *)(ret + 1);
+
+    if (ip4)
+    {
+        ret->ip4 = (IP4_ADDRESS *)ptr;
+        *ret->ip4 = *ip4;
+        ptr += sizeof(*ip4);
+    }
+    else if (ip6)
+    {
+        ret->ip6 = (IP6_ADDRESS *)ptr;
+        *ret->ip6 = *ip6;
+        ptr += sizeof(*ip6);
+    }
+
+    ret->name = ptr;
+    memcpy( ret->name, name, len_name );
+    ret->name[len_name] = 0;
+
+    if (aliases)
+    {
+        ret->aliases = ptr + len_name + 1;
+        memcpy( ret->aliases, aliases, len_aliases );
+        ret->aliases[len_aliases] = 0;
+    }
+    return ret;
+}
+
+/* returns "end" if there was no space */
+static char *next_space( const char *p, const char *end )
+{
+    while (p < end && !isspace( *p )) p++;
+    return (char *)p;
+}
+
+/* returns "end" if there was no non-space */
+static char *next_non_space( const char *p, const char *end )
+{
+    while (p < end && isspace( *p )) p++;
+    return (char *)p;
+}
+
+static struct host_entry *get_next_host_entry( const char **cursor, const char *end )
+{
+    const char *p = *cursor;
+
+    while (p < end)
+    {
+        const char *q, *line_end, *next_line, *addr, *name;
+        char *str, *aliases = NULL;
+        size_t len, len_name, len_aliases = 0;
+        struct host_entry *entry;
+        struct in_addr in4;
+        struct in6_addr in6;
+        IP4_ADDRESS *ip4 = NULL;
+        IP6_ADDRESS *ip6 = NULL;
+
+        for (line_end = p; line_end < end && *line_end != '\n' && *line_end != '#'; line_end++) ;
+        TRACE( "parsing line %s\n", debugstr_an(p, line_end - p) );
+
+        for (next_line = line_end; next_line < end && *next_line != '\n'; next_line++) ;
+        if (next_line < end) next_line++; /* skip over newline */
+
+        if ((p = next_non_space( p, line_end )) == line_end) { p = next_line; continue; }
+
+        /* parse address */
+        addr = p;
+        if ((p = next_space( p, line_end )) == line_end) { p = next_line; continue; }
+
+        if (!RtlIpv4StringToAddressA( addr, TRUE, &q, &in4 ) && q == p) ip4 = (IP4_ADDRESS *)&in4;
+        else if (!RtlIpv6StringToAddressA( addr, &q, &in6 ) && q == p) ip6 = (IP6_ADDRESS *)&in6;
+        else
+        {
+            WARN( "can't parse address %s, skipping this line\n", debugstr_an(addr, p - addr) );
+            p = next_line;
+            continue;
+        }
+
+        if ((p = next_non_space( p, line_end )) == line_end) { p = next_line; continue; }
+
+        /* parse name */
+        name = p;
+        p = next_space( p, line_end );
+        len_name = p - name;
+
+        /* parse aliases */
+        while ((p = next_non_space( p, line_end )) < line_end && (aliases || (str = aliases = malloc( line_end - p ))))
+        {
+            q = next_space( p, line_end );
+            len = q - p;
+            memcpy( str, p, len );
+            str[len++] = 0;
+
+            len_aliases += len;
+            str += len;
+            p = q;
+        }
+
+        entry = create_host_entry( ip4, ip6, name, len_name, aliases, len_aliases );
+        free( aliases );
+        if (!entry) return NULL;
+
+        *cursor = next_line;
+        return entry;
+    }
+    return NULL;
+}
+
+static DNS_STATUS append_host_entry( struct host_entry *entry )
+{
+    if (host_entries_count >= host_entries_allocated)
+    {
+        struct host_entry **tmp;
+        size_t count = host_entries_allocated ? host_entries_allocated * 2 : 8;
+
+        if (!(tmp = realloc( host_entries, count * sizeof(*tmp) ))) return ERROR_NOT_ENOUGH_MEMORY;
+        host_entries_allocated = count;
+        host_entries = tmp;
+    }
+
+    host_entries[host_entries_count++] = entry;
+    return ERROR_SUCCESS;
+}
+
+void free_host_entries( void )
+{
+    unsigned int i;
+    for (i = 0; i < host_entries_count; i++) free( host_entries[i] );
+    host_entries_count = host_entries_allocated = 0;
+    free( host_entries );
+    host_entries = NULL;
+}
+
+static DNS_STATUS parse_etc_hosts( void )
+{
+    DNS_STATUS status = ERROR_SUCCESS;
+    const char *cursor;
+    char *data;
+    struct host_entry *entry;
+    DWORD size;
+
+    if (host_entries) return ERROR_SUCCESS;
+
+    EnterCriticalSection( &hosts_cs );
+
+    if (!(cursor = data = read_etc_hosts( &size )))
+    {
+        LeaveCriticalSection( &hosts_cs );
+        return DNS_ERROR_DATAFILE_OPEN_FAILURE;
+    }
+
+    while ((entry = get_next_host_entry( &cursor, data + size )))
+    {
+        if ((status = append_host_entry( entry )))
+        {
+            free_host_entries();
+            break;
+        }
+    }
+
+    free( data );
+    LeaveCriticalSection( &hosts_cs );
+    return status;
+}
+
+static DNS_RECORDA *create_a_record( const char *name, const IP4_ADDRESS *ip4  )
+{
+    DNS_RECORDA *rec;
+
+    if (!(rec = alloc_record( name ))) return NULL;
+    rec->wType            = DNS_TYPE_A;
+    rec->wDataLength      = sizeof(rec->Data.A);
+    rec->Flags.S.Section  = DnsSectionAnswer;
+    rec->Flags.S.CharSet  = DnsCharSetUtf8;
+    rec->Flags.S.Reserved = 0x20;
+    rec->dwTtl            = DEFAULT_TTL_HOSTS;
+    rec->Data.A.IpAddress = *ip4;
+    return rec;
+}
+
+static DNS_RECORDA *create_aaaa_record( const char *name, const IP6_ADDRESS *ip6 )
+{
+    DNS_RECORDA *rec;
+
+    if (!(rec = alloc_record( name ))) return NULL;
+    rec->wType                = DNS_TYPE_AAAA;
+    rec->wDataLength          = sizeof(rec->Data.AAAA);
+    rec->Flags.S.Section      = DnsSectionAnswer;
+    rec->Flags.S.CharSet      = DnsCharSetUtf8;
+    rec->Flags.S.Reserved     = 0x20;
+    rec->dwTtl                = DEFAULT_TTL_HOSTS;
+    rec->Data.AAAA.Ip6Address = *ip6;
+    return rec;
+}
+
+static DNS_RECORDA *create_cname_record( const char *name, const char *cname )
+{
+    DNS_RECORDA *rec;
+
+    if (!(rec = alloc_record( name ))) return NULL;
+    rec->wType            = DNS_TYPE_CNAME;
+    rec->wDataLength      = sizeof(rec->Data.CNAME);
+    rec->Flags.S.Section  = DnsSectionAnswer;
+    rec->Flags.S.CharSet  = DnsCharSetUtf8;
+    rec->Flags.S.Reserved = 0x30;
+    rec->dwTtl            = DEFAULT_TTL_HOSTS;
+    if (!(rec->Data.CNAME.pNameHost = strdup( cname )))
+    {
+        free( rec );
+        return NULL;
+    }
+    return rec;
+}
+
+static DNS_STATUS do_query_hosts( const char *name, WORD type, DNS_RECORDA **result )
+{
+    DNS_RRSET rrset;
+    DNS_STATUS status;
+    unsigned int i;
+
+    if ((status = parse_etc_hosts())) return status;
+
+    DNS_RRSET_INIT( rrset );
+
+    status = DNS_ERROR_RECORD_DOES_NOT_EXIST;
+
+    for (i = 0; i < host_entries_count; i++)
+    {
+        const struct host_entry *entry = host_entries[i];
+        DNS_RECORDA *rec = NULL;
+        const char *ptr;
+
+        switch (type)
+        {
+        case DNS_TYPE_A:
+            if (!entry->ip4) break;
+            for (ptr = entry->aliases; ptr && *ptr; ptr += strlen( ptr ) + 1)
+            {
+                if (!strcasecmp( ptr, name ) && (rec = create_cname_record( ptr, entry->name )))
+                {
+                    DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+                    if ((rec = create_a_record( entry->name, entry->ip4 ))) DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+                    break;
+                }
+            }
+            if (!rec && !strcasecmp( entry->name, name ) && (rec = create_a_record( entry->name, entry->ip4 )))
+                DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+            break;
+
+        case DNS_TYPE_AAAA:
+            if (!entry->ip6) break;
+            for (ptr = entry->aliases; ptr && *ptr; ptr += strlen( ptr ) + 1)
+            {
+                if (!strcasecmp( ptr, name ) && (rec = create_cname_record( ptr, entry->name )))
+                {
+                    DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+                    if ((rec = create_aaaa_record( entry->name, entry->ip6 ))) DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+                    break;
+                }
+            }
+            if (!rec && !strcasecmp( entry->name, name ) && (rec = create_aaaa_record( entry->name, entry->ip6 )))
+                DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+            break;
+
+        case DNS_TYPE_CNAME:
+            for (ptr = entry->aliases; ptr && *ptr; ptr += strlen( ptr ) + 1)
+                if (!strcasecmp( ptr, name ) && (rec = create_cname_record( ptr, entry->name )))
+                {
+                    DNS_RRSET_ADD( rrset, (DNS_RECORD *)rec );
+                    break;
+                }
+            break;
+
+        default: break;
+        }
+
+        if (rec)
+        {
+            status = ERROR_SUCCESS;
+            break;
+        }
+    }
+
     DNS_RRSET_TERMINATE( rrset );
 
     if (status != ERROR_SUCCESS)
@@ -219,8 +567,15 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
     }
 
     if ((ret = DnsValidateName_UTF8( name, DnsNameDomain )) && ret != DNS_ERROR_NON_RFC_NAME) return ret;
-    if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
 
+    if ((type == DNS_TYPE_A || type == DNS_TYPE_AAAA || type == DNS_TYPE_CNAME) &&
+        !(options & DNS_QUERY_NO_HOSTS_FILE))
+    {
+        if (!do_query_hosts( name, type, result )) return ERROR_SUCCESS;
+        TRACE( "hosts lookup failed, trying dns query\n" );
+    }
+
+    if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
     if (!(ret = RESOLV_CALL( query, &query_params )))
     {
         DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
