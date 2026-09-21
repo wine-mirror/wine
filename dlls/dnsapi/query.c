@@ -38,7 +38,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
 #define DEFAULT_TTL  1200
 
-static DNS_STATUS do_query_netbios( PCSTR name, DNS_RECORDA **recp )
+static DNS_RECORDA *alloc_record( const char *name )
+{
+    DNS_RECORDA *rec;
+
+    if (!(rec = calloc( 1, sizeof(*rec) ))) return NULL;
+    if (!(rec->pName = strdup( name )))
+    {
+        free( rec );
+        return NULL;
+    }
+    return rec;
+}
+
+static DNS_STATUS do_query_netbios( const char *name, DNS_RECORDA **result )
 {
     NCB ncb;
     UCHAR ret;
@@ -69,32 +82,19 @@ static DNS_STATUS do_query_netbios( PCSTR name, DNS_RECORDA **recp )
 
     for (i = 0; i < header->node_count; i++)
     {
-        record = calloc( 1, sizeof(DNS_RECORDA) );
-        if (!record)
+        if (!(record = alloc_record( name )))
         {
             status = ERROR_NOT_ENOUGH_MEMORY;
             goto exit;
         }
-        else
-        {
-            record->pName = strdup( name );
-            if (!record->pName)
-            {
-                status = ERROR_NOT_ENOUGH_MEMORY;
-                free( record );
-                goto exit;
-            }
+        record->wType            = DNS_TYPE_A;
+        record->Flags.S.Section  = DnsSectionAnswer;
+        record->Flags.S.CharSet  = DnsCharSetUtf8;
+        record->dwTtl            = DEFAULT_TTL;
+        /* FIXME: network byte order? */
+        record->Data.A.IpAddress = *(DWORD *)((char *)buffer[i].destination_addr + 2);
 
-            record->wType = DNS_TYPE_A;
-            record->Flags.S.Section = DnsSectionAnswer;
-            record->Flags.S.CharSet = DnsCharSetUtf8;
-            record->dwTtl = DEFAULT_TTL;
-
-            /* FIXME: network byte order? */
-            record->Data.A.IpAddress = *(DWORD *)((char *)buffer[i].destination_addr + 2);
-
-            DNS_RRSET_ADD( rrset, (DNS_RECORD *)record );
-        }
+        DNS_RRSET_ADD( rrset, (DNS_RECORD *)record );
     }
     status = ERROR_SUCCESS;
 
@@ -104,7 +104,7 @@ exit:
     if (status != ERROR_SUCCESS)
         DnsRecordListFree( rrset.pFirstRR, DnsFreeRecordList );
     else
-        *recp = (DNS_RECORDA *)rrset.pFirstRR;
+        *result = (DNS_RECORDA *)rrset.pFirstRR;
 
     return status;
 }
