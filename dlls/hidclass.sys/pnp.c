@@ -24,6 +24,7 @@
 #include "initguid.h"
 #include "hid.h"
 #include "devguid.h"
+#include "devpkey.h"
 #include "ntddmou.h"
 #include "ntddkbd.h"
 #include "ddk/hidtypes.h"
@@ -132,28 +133,28 @@ static void send_wm_input_device_change( struct phys_device *pdo, LPARAM param )
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
 {
-    WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
+    WCHAR device_id[MAX_DEVICE_ID_LEN] = { 0 };
     struct func_device *fdo;
     BOOL is_xinput_class;
     DEVICE_OBJECT *device;
+    WCHAR *instance_id;
+    DEVPROPTYPE type;
     NTSTATUS status;
+    DWORD size;
     minidriver *minidriver;
 
-    if ((status = get_device_id(bus_pdo, BusQueryDeviceID, device_id)))
+    if ((status = IoGetDevicePropertyData( bus_pdo, &DEVPKEY_Device_InstanceId, LOCALE_NEUTRAL, 0,
+                    sizeof(device_id), device_id, &size, &type )))
     {
-        ERR( "Failed to get PDO device id, status %#lx.\n", status );
+        ERR( "Failed to get PDO device instance id, status %#lx.\n", status );
         return status;
     }
 
-    if ((status = get_device_id(bus_pdo, BusQueryInstanceID, instance_id)))
-    {
-        ERR( "Failed to get PDO instance id, status %#lx.\n", status );
-        return status;
-    }
-
-    TRACE("Adding device to PDO %p, id %s\\%s.\n", bus_pdo, debugstr_w(device_id), debugstr_w(instance_id));
+    TRACE("Adding device to PDO %p, id %s.\n", bus_pdo, debugstr_w(device_id));
     minidriver = find_minidriver(driver);
 
+    instance_id = wcsrchr( device_id, '\\' );
+    *instance_id++ = 0;
     if ((status = IoCreateDevice( driver, sizeof(*fdo) + minidriver->minidriver.DeviceExtensionSize,
                                   NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &device )))
     {
