@@ -355,7 +355,9 @@ static HRESULT midi_parser_handle_control(struct midi_parser *parser, struct mid
 static int midi_seqtrack_item_compare(const void *a, const void *b)
 {
     const DMUS_IO_SEQ_ITEM *item_a = a, *item_b = b;
-    return item_a->mtTime - item_b->mtTime;
+    if (item_a->mtTime == item_b->mtTime)
+        return 0;
+    return item_a->mtTime > item_b->mtTime ? 1 : -1;
 }
 
 static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment8 *segment)
