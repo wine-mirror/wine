@@ -1094,6 +1094,11 @@ static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
 static inline struct wined3d_gl_view wined3d_rendertarget_view_gl_get(
         const struct wined3d_rendertarget_view_gl *view)
 {
+    const struct wined3d_texture *texture = wined3d_texture_from_resource(view->v.resource);
+
+    if (texture->swapchain)
+        return view->gl_view[texture->swapchain->current_buffer_index];
+
     return view->gl_view[0];
 }
 

@@ -595,6 +595,9 @@ static void wined3d_swapchain_gl_rotate(struct wined3d_swapchain *swapchain, str
     wined3d_texture_invalidate_location(&texture_prev->t, 0, ~(locations0 & supported_locations));
 
     device_invalidate_state(swapchain->device, STATE_FRAMEBUFFER);
+
+    swapchain->current_buffer_index++;
+    swapchain->current_buffer_index %= swapchain->state.desc.backbuffer_count;
 }
 
 static bool swapchain_present_is_partial_copy(struct wined3d_swapchain *swapchain, const RECT *dst_rect)
@@ -1270,6 +1273,9 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
     wined3d_texture_invalidate_location(&texture_prev->t, 0, ~(locations0 & supported_locations));
 
     device_invalidate_state(swapchain->device, STATE_FRAMEBUFFER);
+
+    swapchain->current_buffer_index++;
+    swapchain->current_buffer_index %= swapchain->state.desc.backbuffer_count;
 }
 
 static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT *src_rect,

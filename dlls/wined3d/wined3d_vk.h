@@ -1083,10 +1083,14 @@ static inline VkImageView wined3d_rendertarget_view_vk_get_image_view(struct win
 {
     struct wined3d_texture_vk *texture_vk;
 
-    if (rtv_vk->vk_image_view[0])
-        return rtv_vk->vk_image_view[0];
-
     texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
+    if (rtv_vk->vk_image_view[0])
+    {
+        if (texture_vk->t.swapchain)
+            return rtv_vk->vk_image_view[texture_vk->t.swapchain->current_buffer_index];
+        return rtv_vk->vk_image_view[0];
+    }
+
     return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk)->imageView;
 }
 

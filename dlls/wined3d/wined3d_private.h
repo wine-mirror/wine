@@ -4121,6 +4121,7 @@ struct wined3d_swapchain
     unsigned int swap_interval;
     unsigned int max_frame_latency;
     HANDLE frame_latency_semaphore;
+    unsigned int current_buffer_index;
 
     /* Performance tracking */
     LARGE_INTEGER last_present_time;
