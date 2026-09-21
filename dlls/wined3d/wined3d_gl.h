@@ -1090,6 +1090,12 @@ static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
     return CONTAINING_RECORD(view, struct wined3d_rendertarget_view_gl, v);
 }
 
+static inline struct wined3d_gl_view wined3d_rendertarget_view_gl_get(
+        const struct wined3d_rendertarget_view_gl *view)
+{
+    return view->gl_view;
+}
+
 HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *view_gl,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops);
