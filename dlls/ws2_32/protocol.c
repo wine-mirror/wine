@@ -1798,7 +1798,7 @@ int WINAPI WSAStringToAddressW( WCHAR *string, int family, WSAPROTOCOL_INFOW *pr
 int WINAPI WSAAddressToStringA( struct sockaddr *addr, DWORD addr_len,
                                 WSAPROTOCOL_INFOA *info, char *string, DWORD *string_len )
 {
-    char buffer[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
+    char buffer[64];
     DWORD size;
 
     TRACE( "addr %s\n", debugstr_sockaddr(addr) );
@@ -1889,7 +1889,7 @@ int WINAPI WSAAddressToStringW( struct sockaddr *addr, DWORD addr_len,
                                 WSAPROTOCOL_INFOW *info, WCHAR *string, DWORD *string_len )
 {
     INT ret;
-    char buf[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
+    char buf[64];
 
     TRACE( "(%p, %lu, %p, %p, %p)\n", addr, addr_len, info, string, string_len );
 
