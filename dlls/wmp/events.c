@@ -172,10 +172,10 @@ static HRESULT WINAPI EnumConnections_Next(IEnumConnections *iface, ULONG cConne
             break;
 
         pgcd[cnt].pUnk = (IUnknown*)This->cp->sinks[This->iter];
+        IUnknown_AddRef(pgcd[cnt].pUnk);
         pgcd[cnt].dwCookie = cnt+1;
         This->iter++;
         cnt++;
-        IUnknown_AddRef(pgcd[cnt].pUnk);
     }
 
     if(pcFetched)
