@@ -7024,8 +7024,6 @@ static void test_sar(void)
 
     IMFClockStateSink_Release(state_sink);
 
-    IMFStreamSink_Release(stream_sink);
-
     /* Volume control */
     hr = MFGetService((IUnknown *)sink, &MR_POLICY_VOLUME_SERVICE, &IID_IMFSimpleAudioVolume, (void **)&simple_volume);
     ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
@@ -7058,6 +7056,10 @@ static void test_sar(void)
 
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_Flush(stream_sink);
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#lx.\n", hr);
+    IMFStreamSink_Release(stream_sink);
 
     hr = IMFMediaSink_AddStreamSink(sink, 123, NULL, &stream_sink);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
