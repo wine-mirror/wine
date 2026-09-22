@@ -1464,7 +1464,7 @@ static BOOL read_device_state_value( struct dinput_device *device, UINT index, s
 
     if (instance->wReportId != impl->base.device_state_report_id) return DIENUM_CONTINUE;
 
-    status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
+    status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, instance->wCollectionNumber, instance->wUsage,
                                  &logical_value, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#lx\n",
                                              instance->wUsagePage, instance->wUsage, status );
