@@ -492,6 +492,21 @@ library UIAutomationClient {
         const long UIA_SearchLandmarkTypeId = 80004;
     }
 
+    [dllname("<no entry points>")]
+    module UIA_HeadingLevelIds
+    {
+        const long HeadingLevel_None = 80050;
+        const long HeadingLevel1 = 80051;
+        const long HeadingLevel2 = 80052;
+        const long HeadingLevel3 = 80053;
+        const long HeadingLevel4 = 80054;
+        const long HeadingLevel5 = 80055;
+        const long HeadingLevel6 = 80056;
+        const long HeadingLevel7 = 80057;
+        const long HeadingLevel8 = 80058;
+        const long HeadingLevel9 = 80059;
+    }
+
     interface IUIAutomationElement;
     interface IUIAutomationElementArray;
 
