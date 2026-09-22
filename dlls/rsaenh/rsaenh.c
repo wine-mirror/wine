@@ -3747,6 +3747,12 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                                 &pCryptHash->tpPRFParams.blobSeed, pbData, *pdwDataLen);
             }
 
+            if (pCryptHash->aiAlgid == CALG_HMAC && !pCryptHash->hash.desc)
+            {
+                SetLastError(NTE_BAD_ALGID);
+                return FALSE;
+            }
+
             if (pCryptHash->dwState != RSAENH_HASHSTATE_FINISHED)
             {
                 finalize_hash(pCryptHash);
@@ -4613,6 +4619,12 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, const BYTE *pb
     }
 
     if (!get_algid_info(hProv, pCryptHash->aiAlgid) || pCryptHash->aiAlgid == CALG_SSL3_SHAMD5)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if (pCryptHash->aiAlgid == CALG_HMAC && !pCryptHash->hash.desc)
     {
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
