@@ -515,13 +515,11 @@ static void test_tmpnam(void)
     ret = tmpnam_s(name, ARRAY_SIZE(name));
     ok(!ret, "got %d\n", ret);
     sprintf(expect, "%su%s.0", temp, pid);
-    todo_wine
     ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
 
     ret = tmpnam_s(name, ARRAY_SIZE(name));
     ok(!ret, "got %d\n", ret);
     sprintf(expect, "%su%s.1", temp, pid);
-    todo_wine
     ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
 
     /* a buffer without room for the terminator: ERANGE, the buffer is
@@ -529,17 +527,13 @@ static void test_tmpnam(void)
     strcpy(name, "abc");
     errno = 0;
     ret = tmpnam_s(name, strlen(expect));
-    todo_wine
     ok(ret == ERANGE, "got %d\n", ret);
-    todo_wine
     ok(errno == ERANGE, "got errno %d\n", errno);
-    todo_wine
     ok(!name[0], "got %s\n", name);
 
     ret = tmpnam_s(name, ARRAY_SIZE(name));
     ok(!ret, "got %d\n", ret);
     sprintf(expect, "%su%s.3", temp, pid);
-    todo_wine
     ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
 
     /* a name that exists is skipped */
@@ -551,7 +545,6 @@ static void test_tmpnam(void)
     ok(!ret, "got %d\n", ret);
     DeleteFileA(expect);
     sprintf(expect, "%su%s.5", temp, pid);
-    todo_wine
     ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
 
     /* a NULL buffer is an invalid parameter */
@@ -565,12 +558,10 @@ static void test_tmpnam(void)
     /* tmpnam() has its own letter and counter */
     res = tmpnam(NULL);
     sprintf(expect, "%ss%s.0", temp, pid);
-    todo_wine
     ok(res && !strcmp(res, expect), "got %s, expected %s\n", res, expect);
     res = tmpnam(name);
     ok(res == name, "got %p, expected %p\n", res, name);
     sprintf(expect, "%ss%s.1", temp, pid);
-    todo_wine
     ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
 
     /* so do the wide functions */
@@ -578,13 +569,11 @@ static void test_tmpnam(void)
     ok(!ret, "got %d\n", ret);
     sprintf(expect, "%sx%s.0", temp, pid);
     MultiByteToWideChar(CP_ACP, 0, expect, -1, wexpect, ARRAY_SIZE(wexpect));
-    todo_wine
     ok(!wcscmp(wname, wexpect), "got %s, expected %s\n", wine_dbgstr_w(wname), wine_dbgstr_w(wexpect));
 
     wres = _wtmpnam(NULL);
     sprintf(expect, "%sv%s.0", temp, pid);
     MultiByteToWideChar(CP_ACP, 0, expect, -1, wexpect, ARRAY_SIZE(wexpect));
-    todo_wine
     ok(wres && !wcscmp(wres, wexpect), "got %s, expected %s\n", wine_dbgstr_w(wres), wine_dbgstr_w(wexpect));
 }
 
