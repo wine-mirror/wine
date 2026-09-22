@@ -1187,4 +1187,4 @@ static inline GLuint wined3d_gl_get_internal_format(struct wined3d_resource *res
         return format_gl->internal;
 }
 
-#endif /* __WINE_WINED3D_GL */
+#endif /* __WINE_WINED3D_GL_H */
