@@ -1903,7 +1903,7 @@ HRESULT WINAPI RoResolveNamespace(HSTRING name, HSTRING windowsMetaDataDir,
                     WindowsDeleteString(paths[i]);
                 paths_count = 0;
             }
-            tmp = CoTaskMemRealloc(paths, sizeof(*paths) * paths_count + 1);
+            tmp = CoTaskMemRealloc(paths, sizeof(*paths) * (paths_count + 1));
             if (!tmp)
             {
                 hr = E_OUTOFMEMORY;
