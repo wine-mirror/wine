@@ -617,14 +617,14 @@ static inline void free_hmac_info(PHMAC_INFO hmac_info) {
  * NOTES
  *  See Internet RFC 2104 for details on the HMAC algorithm.
  */
-static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
+static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src, DWORD block_len) {
     if (!src) return FALSE;
     *dst = malloc(sizeof(HMAC_INFO));
     if (!*dst) return FALSE;
     **dst = *src;
     (*dst)->pbInnerString = NULL;
     (*dst)->pbOuterString = NULL;
-    if ((*dst)->cbInnerString == 0) (*dst)->cbInnerString = RSAENH_HMAC_DEF_PAD_LEN;
+    if ((*dst)->cbInnerString == 0) (*dst)->cbInnerString = block_len;
     (*dst)->pbInnerString = malloc((*dst)->cbInnerString);
     if (!(*dst)->pbInnerString) {
         free_hmac_info(*dst);
@@ -633,8 +633,8 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     if (src->cbInnerString) 
         memcpy((*dst)->pbInnerString, src->pbInnerString, src->cbInnerString);
     else 
-        memset((*dst)->pbInnerString, RSAENH_HMAC_DEF_IPAD_CHAR, RSAENH_HMAC_DEF_PAD_LEN);
-    if ((*dst)->cbOuterString == 0) (*dst)->cbOuterString = RSAENH_HMAC_DEF_PAD_LEN;
+        memset((*dst)->pbInnerString, RSAENH_HMAC_DEF_IPAD_CHAR, block_len);
+    if ((*dst)->cbOuterString == 0) (*dst)->cbOuterString = block_len;
     (*dst)->pbOuterString = malloc((*dst)->cbOuterString);
     if (!(*dst)->pbOuterString) {
         free_hmac_info(*dst);
@@ -643,7 +643,7 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     if (src->cbOuterString) 
         memcpy((*dst)->pbOuterString, src->pbOuterString, src->cbOuterString);
     else 
-        memset((*dst)->pbOuterString, RSAENH_HMAC_DEF_OPAD_CHAR, RSAENH_HMAC_DEF_PAD_LEN);
+        memset((*dst)->pbOuterString, RSAENH_HMAC_DEF_OPAD_CHAR, block_len);
     return TRUE;
 }
 
@@ -2503,7 +2503,7 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
     if (*phHash != (HCRYPTHASH)INVALID_HANDLE_VALUE)
     {
         *pDestHash = *pSrcHash;
-        copy_hmac_info(&pDestHash->pHMACInfo, pSrcHash->pHMACInfo);
+        copy_hmac_info(&pDestHash->pHMACInfo, pSrcHash->pHMACInfo, 0);
         copy_data_blob(&pDestHash->tpPRFParams.blobLabel, &pSrcHash->tpPRFParams.blobLabel);
         copy_data_blob(&pDestHash->tpPRFParams.blobSeed, &pSrcHash->tpPRFParams.blobSeed);
     }
@@ -4744,7 +4744,7 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
     CRYPTHASH *pCryptHash;
     CRYPTKEY *pCryptKey;
     struct hash inner;
-    DWORD i;
+    DWORD block_len, i;
 
     TRACE("(hProv=%08Ix, hHash=%08Ix, dwParam=%08lx, pbData=%p, dwFlags=%08lx)\n",
            hProv, hHash, dwParam, pbData, dwFlags);
@@ -4776,8 +4776,10 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 return FALSE;
             }
 
+            block_len = hash_block_len_impl(&inner);
+
             free_hmac_info(pCryptHash->pHMACInfo);
-            if (!copy_hmac_info(&pCryptHash->pHMACInfo, (PHMAC_INFO)pbData)) return FALSE;
+            if (!copy_hmac_info(&pCryptHash->pHMACInfo, (PHMAC_INFO)pbData, block_len)) return FALSE;
 
             if (!lookup_handle(&handle_table, pCryptHash->hKey, RSAENH_MAGIC_KEY, 
                                (OBJECTHDR**)&pCryptKey)) 

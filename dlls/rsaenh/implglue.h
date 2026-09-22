@@ -68,6 +68,11 @@ static inline DWORD hash_len_impl(const struct hash *hash)
     return SymCryptHashResultSize( hash->desc );
 }
 
+static inline DWORD hash_block_len_impl(const struct hash *hash)
+{
+    return SymCryptHashInputBlockSize( hash->desc );
+}
+
 BOOL new_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen);
 BOOL free_key_impl(ALG_ID algid, KEY_CONTEXT *ctx);
 BOOL setup_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen, DWORD effective_keylen, DWORD saltlen,
