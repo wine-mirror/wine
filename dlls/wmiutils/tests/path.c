@@ -20,10 +20,13 @@
 
 #include <stdarg.h>
 #include "windows.h"
+#include "objbase.h"
 #include "initguid.h"
 #include "wmiutils.h"
 #include "wbemcli.h"
 #include "wine/test.h"
+
+static const GUID CLSID_ft_unmarshaler = {0x00000359, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
 
 static const WCHAR path1[] = L"";
 static const WCHAR path2[] = L"\\";
@@ -824,6 +827,33 @@ static void test_IWbemPath_SetNamespaceAt(void)
     IWbemPath_Release( path );
 }
 
+static void test_IWbemPath_marshal(void)
+{
+    IMultiQI *multiqi;
+    IMarshal *marshal;
+    IWbemPath *path;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (!(path = create_path())) return;
+
+    hr = IWbemPath_QueryInterface( path, &IID_IMarshal, (void **)&marshal );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = IMarshal_GetUnmarshalClass( marshal, &IID_IWbemPath, NULL, MSHCTX_INPROC, NULL, 0, &clsid );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( IsEqualIID(&clsid, &CLSID_InProcFreeMarshaler), "clsid = %s\n", wine_dbgstr_guid(&clsid) );
+    hr = IMarshal_GetUnmarshalClass( marshal, &IID_IWbemPath, NULL, MSHCTX_LOCAL, NULL, 0, &clsid );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( IsEqualIID(&clsid, &CLSID_StdMarshal) || IsEqualIID(&clsid, &CLSID_ft_unmarshaler),
+            "clsid = %s\n", wine_dbgstr_guid(&clsid) );
+    IMarshal_Release( marshal );
+
+    hr = IWbemPath_QueryInterface( path, &IID_IMultiQI, (void **)&multiqi );
+    ok( hr == E_NOINTERFACE, "got %#lx\n", hr );
+
+    IWbemPath_Release( path );
+}
+
 START_TEST (path)
 {
     CoInitialize( NULL );
@@ -839,6 +869,7 @@ START_TEST (path)
     test_IWbemPath_RemoveAllNamespaces();
     test_IWbemPath_RemoveNamespaceAt();
     test_IWbemPath_SetNamespaceAt();
+    test_IWbemPath_marshal();
 
     CoUninitialize();
 }

@@ -50,6 +50,7 @@ struct path
 {
     IWbemPath        IWbemPath_iface;
     LONG             refs;
+    IUnknown        *marshal;
     CRITICAL_SECTION cs;
     WCHAR           *text;
     int              len_text;
@@ -342,6 +343,7 @@ static ULONG WINAPI path_Release(
         clear_path( path );
         path->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &path->cs );
+        IUnknown_Release( path->marshal );
         free( path );
     }
     return refs;
@@ -360,6 +362,10 @@ static HRESULT WINAPI path_QueryInterface(
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
+    }
+    else if (IsEqualIID( riid, &IID_IMarshal ))
+    {
+        return IUnknown_QueryInterface( path->marshal, riid, ppvObject );
     }
     else
     {
@@ -1293,6 +1299,7 @@ static const struct IWbemPathVtbl path_vtbl =
 HRESULT WbemPath_create( LPVOID *ppObj )
 {
     struct path *path;
+    HRESULT hr;
 
     TRACE("%p\n", ppObj);
 
@@ -1300,6 +1307,12 @@ HRESULT WbemPath_create( LPVOID *ppObj )
 
     path->IWbemPath_iface.lpVtbl = &path_vtbl;
     path->refs = 1;
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&path->IWbemPath_iface, &path->marshal);
+    if (FAILED(hr))
+    {
+        free( path );
+        return hr;
+    }
     InitializeCriticalSectionEx( &path->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     path->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": wmiutils_path.cs");
     init_path( path );
