@@ -352,7 +352,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const struct sid *user, con
         ace = set_ace( ace_next( ace ), user, ACCESS_DENIED_ACE_TYPE, flags, 0 );
         if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
             ace->mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
-        if (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IROTH)))
+        if (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH)))
             ace->mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         ace->mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
     }
