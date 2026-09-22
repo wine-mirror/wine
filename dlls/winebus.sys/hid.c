@@ -224,17 +224,21 @@ static BOOL hid_device_add_hatswitch_count(struct unix_device *iface, BYTE count
 
 BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
 {
+    INT i;
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
         USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
-        LOGICAL_MINIMUM(1, 1),
-        LOGICAL_MAXIMUM(1, 8),
-        REPORT_SIZE(1, 4),
-        REPORT_COUNT(4, count),
-        UNIT(1, 0x0), /* None */
-        INPUT(1, Data|Var|Abs|Null),
+        COLLECTION(1, Physical),
+            USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+            LOGICAL_MINIMUM(1, 1),
+            LOGICAL_MAXIMUM(1, 8),
+            REPORT_SIZE(1, 4),
+            REPORT_COUNT(1, 1),
+            UNIT(1, 0x0), /* None */
+            INPUT(1, Data|Var|Abs|Null),
+        END_COLLECTION,
     };
     const BYTE template_pad[] =
     {
@@ -246,8 +250,9 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
     if (!hid_device_add_hatswitch_count(iface, count))
         return FALSE;
 
-    if (!hid_report_descriptor_append(desc, template, sizeof(template)))
-        return FALSE;
+    for (i = 0; i < count; ++i)
+        if (!hid_report_descriptor_append(desc, template, sizeof(template)))
+            return FALSE;
 
     if ((count % 2) && !hid_report_descriptor_append(desc, template_pad, sizeof(template_pad)))
         return FALSE;
