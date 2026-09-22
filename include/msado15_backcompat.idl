@@ -219,6 +219,28 @@ typedef [uuid(00000525-0000-0010-8000-00aa006d2ea4)] enum FieldAttributeEnum
     adFldIsCollection = 0x00040000
 } FieldAttributeEnum;
 
+typedef [uuid(00000527-0000-0010-8000-00aa006d2ea4)] enum
+{
+    adRecOK                   = 0x00000000,
+    adRecNew                  = 0x00000001,
+    adRecModified             = 0x00000002,
+    adRecDeleted              = 0x00000004,
+    adRecUnmodified           = 0x00000008,
+    adRecInvalid              = 0x00000010,
+    adRecMultipleChanges      = 0x00000040,
+    adRecPendingChanges       = 0x00000080,
+    adRecCanceled             = 0x00000100,
+    adRecCantRelease          = 0x00000400,
+    adRecConcurrencyViolation = 0x00000800,
+    adRecIntegrityViolation   = 0x00001000,
+    adRecMaxChangesExceeded   = 0x00002000,
+    adRecObjectOpen           = 0x00004000,
+    adRecOutOfMemory          = 0x00008000,
+    adRecPermissionDenied     = 0x00010000,
+    adRecSchemaViolation      = 0x00020000,
+    adRecDBDeleted            = 0x00040000
+} RecordStatusEnum;
+
 typedef [uuid(00000544-0000-0010-8000-00aa006d2ea4)] enum ResyncEnum
 {
     adResyncUnderlyingValues = 1,
