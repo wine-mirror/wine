@@ -1273,7 +1273,7 @@ static void test_RoResolveNamespace(void)
 
     paths = dummy;
     count = 0xdeadbeef;
-    WindowsCreateStringReference(L"Windows.Foundation", wcslen(L"Windows.Foundation") + 1, &hdr, &name);
+    WindowsCreateStringReference(L"Windows.Foundation\0", wcslen(L"Windows.Foundation") + 1, &hdr, &name);
     hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, NULL, NULL);
     ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
     ok(!count, "got count %lu\n", count);
