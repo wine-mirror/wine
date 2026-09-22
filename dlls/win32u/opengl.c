@@ -1351,7 +1351,7 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest,
     }
     *attrib++ = EGL_NONE;
 
-    if (!(pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, format ), attribs )))
+    if (!(pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format( egl, format ), attribs ))) return FALSE;
     funcs->p_eglQuerySurface( egl->display, pbuffer, EGL_WIDTH, &size.cx );
     funcs->p_eglQuerySurface( egl->display, pbuffer, EGL_HEIGHT, &size.cy );
 
