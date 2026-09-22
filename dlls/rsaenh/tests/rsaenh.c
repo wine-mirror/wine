@@ -1792,6 +1792,198 @@ static void test_hmac(void) {
     ok(!result && GetLastError() == NTE_BAD_KEY, "%08lx\n", GetLastError());
 }
 
+static void test_hmac_info(void)
+{
+    /* test cases 2 and 6 from RFC 4231, the MD2 digest is measured on Windows */
+    static const struct hmac_test_case {
+        ALG_ID algid;
+        DWORD digest_len;
+        const char *key;
+        DWORD key_len;
+        const char *data;
+        const DWORD data_len;
+        const char *digest;
+    } cases[] = {
+        { CALG_SHA_256, 32,
+          "Jefe", 4,
+          "what do ya want for nothing?", 28,
+          "\x5b\xdc\xc1\x46\xbf\x60\x75\x4e\x6a\x04\x24\x26\x08\x95\x75\xc7"
+          "\x5a\x00\x3f\x08\x9d\x27\x39\x83\x9d\xec\x58\xb9\x64\xec\x38\x43" },
+
+        { CALG_SHA_256, 32,
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+          "\xaa\xaa\xaa", 131,
+          "Test Using Larger Than Block-Size Key - Hash Key First", 54,
+          "\x60\xe4\x31\x59\x1e\xe0\xb6\x7f\x0d\x8a\x26\xaa\xcb\xf5\xb7\x7f"
+          "\x8e\x0b\xc6\x21\x37\x28\xc5\x14\x05\x46\x04\x0f\x0e\xe3\x7f\x54" },
+
+        { CALG_SHA_512, 64,
+          "Jefe", 4,
+          "what do ya want for nothing?", 28,
+          "\x16\x4b\x7a\x7b\xfc\xf8\x19\xe2\xe3\x95\xfb\xe7\x3b\x56\xe0\xa3"
+          "\x87\xbd\x64\x22\x2e\x83\x1f\xd6\x10\x27\x0c\xd7\xea\x25\x05\x54"
+          "\x97\x58\xbf\x75\xc0\x5a\x99\x4a\x6d\x03\x4f\x65\xf8\xf0\xe6\xfd"
+          "\xca\xea\xb1\xa3\x4d\x4a\x6b\x4b\x63\x6e\x07\x0a\x38\xbc\xe7\x37" },
+
+        { CALG_MD2, 16,
+          "Jefe", 4,
+          "what do ya want for nothing?", 28,
+          "\x29\x2f\x9d\x34\xf9\xe3\x11\x84\x6d\xe8\x6c\x49\x5d\x7a\xdf\xa2" }
+    };
+    static const ALG_ID bad_algs[] = { CALG_MAC, CALG_HMAC, 0xffff };
+    HCRYPTHASH sha256;
+    DWORD i;
+
+    /* SHA-256 isn't supported as a hash by the PROV_RSA_FULL providers */
+    SetLastError(0xdeadbeef);
+    if (!CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &sha256))
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx\n", GetLastError());
+    else
+        CryptDestroyHash(sha256);
+
+    /* but it is supported as the inner algorithm of an HMAC */
+    for (i = 0; i < ARRAY_SIZE(cases); i++)
+    {
+        const struct hmac_test_case *test_case = &cases[i];
+        DWORD size = sizeof(BLOBHEADER) + sizeof(DWORD) + test_case->key_len;
+        BYTE *blob = HeapAlloc(GetProcessHeap(), 0, size);
+
+        if (blob)
+        {
+            BLOBHEADER *header = (BLOBHEADER *)blob;
+            DWORD *key_len = (DWORD *)(header + 1);
+            BYTE *key_bytes = (BYTE *)(key_len + 1);
+            BOOL result;
+            HCRYPTKEY key;
+
+            header->bType = PLAINTEXTKEYBLOB;
+            header->bVersion = CUR_BLOB_VERSION;
+            header->reserved = 0;
+            header->aiKeyAlg = CALG_RC2;
+            *key_len = test_case->key_len;
+            memcpy(key_bytes, test_case->key, *key_len);
+
+            result = CryptImportKey(hProv, blob, size, 0, CRYPT_IPSEC_HMAC_KEY, &key);
+            ok(result, "CryptImportKey failed on test case %ld: %08lx\n", i, GetLastError());
+
+            if (result)
+            {
+                HCRYPTHASH hash;
+                HMAC_INFO hmac_info = { test_case->algid, 0 };
+                BYTE digest[64];
+                DWORD digest_size, hash_size;
+
+                result = CryptCreateHash(hProv, CALG_HMAC, key, 0, &hash);
+                ok(result, "CryptCreateHash failed on test case %ld: %08lx\n", i, GetLastError());
+
+                result = CryptSetHashParam(hash, HP_HMAC_INFO, (BYTE *)&hmac_info, 0);
+                ok(result, "CryptSetHashParam failed on test case %ld: %08lx\n", i, GetLastError());
+
+                hash_size = 0;
+                digest_size = sizeof(hash_size);
+                result = CryptGetHashParam(hash, HP_HASHSIZE, (BYTE *)&hash_size, &digest_size, 0);
+                ok(result, "CryptGetHashParam failed on test case %ld: %08lx\n", i, GetLastError());
+                ok(hash_size == test_case->digest_len, "Unexpected hash size %ld on test case %ld\n", hash_size, i);
+
+                result = CryptHashData(hash, (const BYTE *)test_case->data, test_case->data_len, 0);
+                ok(result, "CryptHashData failed on test case %ld: %08lx\n", i, GetLastError());
+
+                digest_size = sizeof(digest);
+                result = CryptGetHashParam(hash, HP_HASHVAL, digest, &digest_size, 0);
+                ok(result, "CryptGetHashParam failed on test case %ld: %08lx\n", i, GetLastError());
+                ok(!memcmp(digest, test_case->digest, test_case->digest_len), "Unexpected value on test case %ld\n", i);
+
+                CryptDestroyHash(hash);
+                CryptDestroyKey(key);
+            }
+            HeapFree(GetProcessHeap(), 0, blob);
+        }
+    }
+
+    /* check that algorithms which aren't hashes are refused */
+    for (i = 0; i < ARRAY_SIZE(bad_algs); i++)
+    {
+        HMAC_INFO hmac_info = { bad_algs[i], 0 };
+        BYTE digest[64];
+        DWORD digest_size, hash_size;
+        HCRYPTHASH hash;
+        HCRYPTKEY key;
+        BOOL result;
+
+        if (!derive_key(CALG_RC2, &key, 56)) return;
+
+        result = CryptCreateHash(hProv, CALG_HMAC, key, 0, &hash);
+        ok(result, "CryptCreateHash failed on algorithm %#x: %08lx\n", bad_algs[i], GetLastError());
+
+        SetLastError(0xdeadbeef);
+        result = CryptSetHashParam(hash, HP_HMAC_INFO, (BYTE *)&hmac_info, 0);
+        ok(!result, "CryptSetHashParam succeeded on algorithm %#x\n", bad_algs[i]);
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx on algorithm %#x\n",
+           GetLastError(), bad_algs[i]);
+
+        hash_size = 0xdeadbeef;
+        digest_size = sizeof(hash_size);
+        result = CryptGetHashParam(hash, HP_HASHSIZE, (BYTE *)&hash_size, &digest_size, 0);
+        ok(result, "CryptGetHashParam failed on algorithm %#x: %08lx\n", bad_algs[i], GetLastError());
+        ok(!hash_size, "Unexpected hash size %ld on algorithm %#x\n", hash_size, bad_algs[i]);
+
+        SetLastError(0xdeadbeef);
+        result = CryptHashData(hash, (const BYTE *)cases[0].data, cases[0].data_len, 0);
+        ok(!result, "CryptHashData succeeded on algorithm %#x\n", bad_algs[i]);
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx on algorithm %#x\n",
+           GetLastError(), bad_algs[i]);
+
+        digest_size = sizeof(digest);
+        SetLastError(0xdeadbeef);
+        result = CryptGetHashParam(hash, HP_HASHVAL, digest, &digest_size, 0);
+        ok(!result, "CryptGetHashParam succeeded on algorithm %#x\n", bad_algs[i]);
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx on algorithm %#x\n",
+           GetLastError(), bad_algs[i]);
+
+        CryptDestroyHash(hash);
+        CryptDestroyKey(key);
+    }
+
+    /* check that an HMAC can't hash anything until HP_HMAC_INFO is set */
+    {
+        HMAC_INFO hmac_info = { CALG_SHA_256, 0 };
+        BYTE digest[64];
+        DWORD digest_size;
+        HCRYPTHASH hash;
+        HCRYPTKEY key;
+        BOOL result;
+
+        if (!derive_key(CALG_RC2, &key, 56)) return;
+
+        result = CryptCreateHash(hProv, CALG_HMAC, key, 0, &hash);
+        ok(result, "CryptCreateHash failed: %08lx\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        result = CryptHashData(hash, (const BYTE *)cases[0].data, cases[0].data_len, 0);
+        ok(!result, "CryptHashData succeeded\n");
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx\n", GetLastError());
+
+        digest_size = sizeof(digest);
+        SetLastError(0xdeadbeef);
+        result = CryptGetHashParam(hash, HP_HASHVAL, digest, &digest_size, 0);
+        ok(!result, "CryptGetHashParam succeeded\n");
+        ok(GetLastError() == NTE_BAD_ALGID, "Unexpected error %08lx\n", GetLastError());
+
+        result = CryptSetHashParam(hash, HP_HMAC_INFO, (BYTE *)&hmac_info, 0);
+        ok(result, "CryptSetHashParam failed: %08lx\n", GetLastError());
+
+        CryptDestroyHash(hash);
+        CryptDestroyKey(key);
+    }
+}
+
 static void test_mac(void) {
     HCRYPTKEY hKey;
     HCRYPTHASH hHash;
@@ -4414,6 +4606,7 @@ START_TEST(rsaenh)
             test_import_private();
         }
         test_hmac();
+        test_hmac_info();
         test_mac();
         test_block_cipher_modes();
         test_verify_signature();
@@ -4441,6 +4634,7 @@ START_TEST(rsaenh)
     test_aes_duplicate_key(192);
     test_aes_duplicate_key(256);
     test_sha2();
+    test_hmac_info();
     test_key_derivation("AES");
     test_rc2_import();
     test_pubexp();
