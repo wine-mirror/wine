@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
 #include <errno.h>
 #include <direct.h>
 #include <stdarg.h>
@@ -474,6 +478,116 @@ static void test_utf8_argument(void)
         ok(wcscmp(buf, nameW), "environment was converted\n");
 }
 
+static int invalid_parameter_calls;
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression, const wchar_t *function,
+        const wchar_t *file, unsigned line, uintptr_t arg)
+{
+    invalid_parameter_calls++;
+}
+
+static void to_base36(unsigned int n, char *out)
+{
+    char tmp[16], *p = tmp + sizeof(tmp);
+
+    *--p = 0;
+    do
+    {
+        unsigned int d = n % 36;
+        *--p = d < 10 ? '0' + d : 'a' + d - 10;
+        n /= 36;
+    } while (n);
+    strcpy(out, p);
+}
+
+static void test_tmpnam(void)
+{
+    char temp[MAX_PATH], expect[MAX_PATH], name[MAX_PATH], pid[16], *res;
+    wchar_t wexpect[MAX_PATH], wname[MAX_PATH], *wres;
+    _invalid_parameter_handler old_handler;
+    HANDLE file;
+    int ret;
+
+    GetTempPathA(ARRAY_SIZE(temp), temp);
+    to_base36(GetCurrentProcessId(), pid);
+
+    /* the name lies in the temporary directory: one letter per function,
+     * the process id and a counter starting at 0, both in base 36 */
+    ret = tmpnam_s(name, ARRAY_SIZE(name));
+    ok(!ret, "got %d\n", ret);
+    sprintf(expect, "%su%s.0", temp, pid);
+    todo_wine
+    ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
+
+    ret = tmpnam_s(name, ARRAY_SIZE(name));
+    ok(!ret, "got %d\n", ret);
+    sprintf(expect, "%su%s.1", temp, pid);
+    todo_wine
+    ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
+
+    /* a buffer without room for the terminator: ERANGE, the buffer is
+     * emptied, and the number is used up all the same */
+    strcpy(name, "abc");
+    errno = 0;
+    ret = tmpnam_s(name, strlen(expect));
+    todo_wine
+    ok(ret == ERANGE, "got %d\n", ret);
+    todo_wine
+    ok(errno == ERANGE, "got errno %d\n", errno);
+    todo_wine
+    ok(!name[0], "got %s\n", name);
+
+    ret = tmpnam_s(name, ARRAY_SIZE(name));
+    ok(!ret, "got %d\n", ret);
+    sprintf(expect, "%su%s.3", temp, pid);
+    todo_wine
+    ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
+
+    /* a name that exists is skipped */
+    sprintf(expect, "%su%s.4", temp, pid);
+    file = CreateFileA(expect, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n", expect, GetLastError());
+    CloseHandle(file);
+    ret = tmpnam_s(name, ARRAY_SIZE(name));
+    ok(!ret, "got %d\n", ret);
+    DeleteFileA(expect);
+    sprintf(expect, "%su%s.5", temp, pid);
+    todo_wine
+    ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
+
+    /* a NULL buffer is an invalid parameter */
+    old_handler = _set_invalid_parameter_handler(test_invalid_parameter_handler);
+    invalid_parameter_calls = 0;
+    ret = tmpnam_s(NULL, 10);
+    ok(ret == EINVAL, "got %d\n", ret);
+    ok(invalid_parameter_calls == 1, "got %d calls\n", invalid_parameter_calls);
+    _set_invalid_parameter_handler(old_handler);
+
+    /* tmpnam() has its own letter and counter */
+    res = tmpnam(NULL);
+    sprintf(expect, "%ss%s.0", temp, pid);
+    todo_wine
+    ok(res && !strcmp(res, expect), "got %s, expected %s\n", res, expect);
+    res = tmpnam(name);
+    ok(res == name, "got %p, expected %p\n", res, name);
+    sprintf(expect, "%ss%s.1", temp, pid);
+    todo_wine
+    ok(!strcmp(name, expect), "got %s, expected %s\n", name, expect);
+
+    /* so do the wide functions */
+    ret = _wtmpnam_s(wname, ARRAY_SIZE(wname));
+    ok(!ret, "got %d\n", ret);
+    sprintf(expect, "%sx%s.0", temp, pid);
+    MultiByteToWideChar(CP_ACP, 0, expect, -1, wexpect, ARRAY_SIZE(wexpect));
+    todo_wine
+    ok(!wcscmp(wname, wexpect), "got %s, expected %s\n", wine_dbgstr_w(wname), wine_dbgstr_w(wexpect));
+
+    wres = _wtmpnam(NULL);
+    sprintf(expect, "%sv%s.0", temp, pid);
+    MultiByteToWideChar(CP_ACP, 0, expect, -1, wexpect, ARRAY_SIZE(wexpect));
+    todo_wine
+    ok(wres && !wcscmp(wres, wexpect), "got %s, expected %s\n", wine_dbgstr_w(wres), wine_dbgstr_w(wexpect));
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -491,4 +605,5 @@ START_TEST(file)
     test_std_stream_open();
     test_fopen();
     test_utf8(arg_v[0]);
+    test_tmpnam();
 }

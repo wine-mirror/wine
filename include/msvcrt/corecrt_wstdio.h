@@ -70,6 +70,7 @@ _ACRTIMP FILE*    __cdecl _wpopen(const wchar_t*,const wchar_t*);
 _ACRTIMP int      __cdecl _wremove(const wchar_t*);
 _ACRTIMP wchar_t* __cdecl _wtempnam(const wchar_t*,const wchar_t*);
 _ACRTIMP wchar_t* __cdecl _wtmpnam(wchar_t*);
+_ACRTIMP errno_t  __cdecl _wtmpnam_s(wchar_t*,size_t);
 
 _ACRTIMP wint_t   __cdecl fgetwc(FILE*);
 _ACRTIMP wchar_t* __cdecl fgetws(wchar_t*,int,FILE*);
