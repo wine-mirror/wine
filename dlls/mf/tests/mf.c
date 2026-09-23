@@ -12288,7 +12288,7 @@ static void test_media_session_unused_stream_selection(void)
 
         hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(media_source->pd, i, &selected, &sd);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine_if(i != active_stream_index) ok(i == active_stream_index ? selected : !selected, "Unexpected stream descriptor selection, index %i selected: %1u\n", i, selected);
+        ok(i == active_stream_index ? selected : !selected, "Unexpected stream descriptor selection, index %i selected: %1u\n", i, selected);
     }
 
     todo_wine
