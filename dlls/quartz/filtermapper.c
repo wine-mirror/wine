@@ -1351,7 +1351,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         if (SUCCEEDED(hrSub))
         {
             len = (wcslen(V_BSTR(&var)) + 1) * sizeof(WCHAR);
-            if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
+            if (!(regfilters[idx].Name = CoTaskMemAlloc(len)))
                 hr = E_OUTOFMEMORY;
         }
 
