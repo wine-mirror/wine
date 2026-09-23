@@ -63,6 +63,11 @@ static inline void finalize_hash_impl(struct hash *hash, BYTE *hash_value, DWORD
     SymCryptHashResult( hash->desc, &hash->state, hash_value, hash_size );
 }
 
+static inline DWORD hash_len_impl(const struct hash *hash)
+{
+    return SymCryptHashResultSize( hash->desc );
+}
+
 BOOL new_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen);
 BOOL free_key_impl(ALG_ID algid, KEY_CONTEXT *ctx);
 BOOL setup_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen, DWORD effective_keylen, DWORD saltlen,

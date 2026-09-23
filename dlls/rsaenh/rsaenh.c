@@ -683,18 +683,15 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
     {
         case CALG_HMAC:
             if (pCryptHash->pHMACInfo) { 
-                const PROV_ENUMALGS_EX *pAlgInfo;
-
-                pAlgInfo = get_algid_info(pCryptHash->hProv, pCryptHash->pHMACInfo->HashAlgid);
-                if (!pAlgInfo)
+                /* the algorithm doesn't have to be listed by the provider */
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash);
+                if (!pCryptHash->hash.desc)
                 {
-                    /* A number of hash algorithms (e. g., _SHA256) are supported for HMAC even for providers
-                     * which don't list the algorithm, so print a fixme here. */
-                    FIXME("Hash algroithm %#x not found.\n", pCryptHash->pHMACInfo->HashAlgid);
+                    SetLastError(NTE_BAD_ALGID);
                     return FALSE;
                 }
-                pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
-                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash);
+
+                pCryptHash->dwHashSize = hash_len_impl(&pCryptHash->hash);
                 update_hash_impl(&pCryptHash->hash, pCryptHash->pHMACInfo->pbInnerString,
                                  pCryptHash->pHMACInfo->cbInnerString);
             }
