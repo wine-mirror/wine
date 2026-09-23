@@ -1227,12 +1227,6 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
                     SkipChars++;
                     n--;
                 }
-                while(n > 0 && (*tx) == infoPtr->BreakChar)
-                {
-                    tx++;
-                    SkipChars++;
-                    n--;
-                }
             }
 
             szDim.cx = szDim.cy = 0;

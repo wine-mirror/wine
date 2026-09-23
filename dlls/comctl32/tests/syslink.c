@@ -358,9 +358,7 @@ static void test_LM_GETIDEALSIZE(void)
     ok(ret, "Unexpected return value, %ld.\n", ret);
     sz.cx = sz.cy = -1;
     ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
-    todo_wine
     ok(sz.cx >= 1 && sz.cx < 100, "Unexpected ideal width, sz.cx=%ld.\n", sz.cx);
-    todo_wine
     ok(sz.cy >= 1 && sz.cy < 100, "Unexpected ideal height, sz.cy=%ld.\n", sz.cy);
     ok(ret == sz.cy, "Unexpected return value, ret=%ld, sz.cy=%ld.\n", ret, sz.cy);
 
@@ -369,7 +367,6 @@ static void test_LM_GETIDEALSIZE(void)
     ok(ret, "Unexpected return value, %ld.\n", ret);
     sz2.cx = sz2.cy = -1;
     ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz2);
-    todo_wine
     ok(sz.cx < sz2.cx && sz2.cx < 100, "Unexpected ideal width, sz.cx=%ld, sz2.cx=%ld.\n", sz.cx, sz2.cx);
     ok(sz.cy == sz2.cy, "Unexpected ideal height, sz.cy=%ld, sz2.cy=%ld, ret=%ld.\n", sz.cy, sz2.cy, ret);
     ok(ret == sz2.cy, "Unexpected return value, ret=%ld, sz2.cy=%ld.\n", ret, sz2.cy);
