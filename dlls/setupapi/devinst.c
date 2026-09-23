@@ -3502,7 +3502,7 @@ BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hw
     GUID guid;
     HKEY enumKey = NULL;
     HKEY instanceKey = NULL;
-    DWORD phantom;
+    DWORD phantom = 0;
     DWORD size;
     DWORD error = ERROR_NO_SUCH_DEVINST;
 
@@ -3536,16 +3536,15 @@ BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hw
 
     /* If it's an unregistered instance, aka phantom instance, report ERROR_NO_SUCH_DEVINST */
     size = sizeof(phantom);
-    if (!RegQueryValueExW(instanceKey, L"Phantom", NULL, NULL, (BYTE *)&phantom, &size))
+    if (!RegQueryValueExW(instanceKey, L"Phantom", NULL, NULL, (BYTE *)&phantom, &size)
+            && phantom != 0)
         goto done;
 
-    /* Check class GUID */
+    /* Check class GUID, and use it if present. */
     size = sizeof(classW);
-    if (RegQueryValueExW(instanceKey, L"ClassGUID", NULL, NULL, (BYTE *)classW, &size))
-        goto done;
-
-    classW[37] = 0;
-    UuidFromStringW(&classW[1], &guid);
+    if (RegGetValueW(instanceKey, NULL, L"ClassGUID", RRF_RT_REG_SZ, NULL, classW, &size)
+            || !guid_from_string_w(classW, &guid))
+        guid = GUID_NULL;
 
     if (!IsEqualGUID(&set->ClassGuid, &GUID_NULL) && !IsEqualGUID(&guid, &set->ClassGuid))
     {

@@ -927,24 +927,18 @@ static void test_device_info(void)
     phantom = 0;
     RegSetValueExA(key, "Phantom", 0, REG_DWORD, (BYTE *)&phantom, sizeof(phantom));
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
-    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
-    if (ret)
-    {
-        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
-        check_device_info(set, 1, NULL, NULL);
-    }
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+    check_device_info(set, 1, NULL, NULL);
     SetupDiDestroyDeviceInfoList(set);
 
     /* Also succeeds without the phantom value, opening an empty key. */
     RegDeleteValueA(key, "Phantom");
     set = SetupDiCreateDeviceInfoList(NULL, NULL);
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
-    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
-    if (ret)
-    {
-        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
-        check_device_info(set, 1, NULL, NULL);
-    }
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+    check_device_info(set, 1, NULL, NULL);
     SetupDiDestroyDeviceInfoList(set);
 
     /*
@@ -954,18 +948,15 @@ static void test_device_info(void)
     set = SetupDiCreateDeviceInfoList(&guid, NULL);
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#lx.\n", GetLastError());
     check_device_info(set, 0, NULL, NULL);
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiCreateDeviceInfoList(&GUID_NULL, NULL);
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
-    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
-    if (ret)
-    {
-        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
-        check_device_info(set, 1, NULL, NULL);
-    }
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+    check_device_info(set, 1, NULL, NULL);
     SetupDiDestroyDeviceInfoList(set);
 
     /* Delete the key and try again. */
