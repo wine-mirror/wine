@@ -2127,7 +2127,6 @@ static void test_sink_writer_create(void)
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
     if (hr == S_OK)
     IMFTransform_Release(transform);
-    todo_wine
     ok(IsEqualGUID(&guid, &MFT_CATEGORY_AUDIO_EFFECT), "Unexpected guid %s.\n", debugstr_guid(&guid));
 
     IMFMediaTypeHandler_Release(handler);
@@ -2169,7 +2168,6 @@ static void test_sink_writer_create(void)
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
     if (hr == S_OK)
     IMFTransform_Release(transform);
-    todo_wine
     ok(IsEqualGUID(&guid, &MFT_CATEGORY_AUDIO_EFFECT), "Unexpected guid %s.\n", debugstr_guid(&guid));
 
     IMFSinkWriterEx_Release(writer_ex);

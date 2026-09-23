@@ -1048,9 +1048,11 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         DWORD stream_index, DWORD transform_index, GUID *out_category, IMFTransform **out_transform)
 {
     struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
+    GUID major_type = {}, category = {};
     IMFTransform *transform = NULL;
+    IMFMediaType *stream_type;
     struct stream *stream;
-    GUID category = {};
+    BOOL is_audio;
     HRESULT hr;
 
     TRACE("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, out_category, out_transform);
@@ -1067,16 +1069,25 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         return MF_E_INVALIDSTREAMNUMBER;
     }
 
+    if (FAILED(hr = stream_get_type(stream, &stream_type)))
+        goto done;
+    hr = IMFMediaType_GetMajorType(stream_type, &major_type);
+    IMFMediaType_Release(stream_type);
+
+    if (FAILED(hr))
+        goto done;
+
+    is_audio = IsEqualGUID(&major_type, &MFMediaType_Audio);
     if (stream->converter && transform_index == 0)
     {
         transform = stream->converter;
-        category = MFT_CATEGORY_VIDEO_PROCESSOR;
+        category = is_audio ? MFT_CATEGORY_AUDIO_EFFECT : MFT_CATEGORY_VIDEO_PROCESSOR;
     }
     else if ((stream->converter && transform_index == 1)
             || (!stream->converter && transform_index == 0))
     {
         transform = stream->encoder;
-        category = MFT_CATEGORY_VIDEO_ENCODER;
+        category = is_audio ? MFT_CATEGORY_AUDIO_ENCODER : MFT_CATEGORY_VIDEO_ENCODER;
     }
 
     hr = MF_E_INVALIDINDEX;
@@ -1088,6 +1099,7 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         hr = S_OK;
     }
 
+done:
     LeaveCriticalSection(&writer->cs);
     return hr;
 }
