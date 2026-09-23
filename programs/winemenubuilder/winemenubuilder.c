@@ -1546,12 +1546,11 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
                 d=szPath;
                 while (*s)
                 {
-                    if ((*s == '\t' || *s == ' ') && !in_quotes)
+                    if (!in_quotes)
                     {
                         /* skip the remaining spaces */
-                        do {
+                        while (*s == '\t' || *s == ' ')
                             s++;
-                        } while (*s == '\t' || *s == ' ');
                         break;
                     }
                     else if (*s == '\\')
