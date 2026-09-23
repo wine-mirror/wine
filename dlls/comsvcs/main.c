@@ -198,7 +198,7 @@ static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid
     if (!This->driver)
     {
         IDispenserDriver_DestroyResource(driver, res->resid);
-        free(resid);
+        free(res);
         hr = E_UNEXPECTED;
     }
     else
