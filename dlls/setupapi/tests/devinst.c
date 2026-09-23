@@ -714,7 +714,10 @@ static void test_device_info(void)
     static const GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
     SP_DEVINFO_DATA device = {0}, ret_device = {sizeof(ret_device)};
     char id[MAX_DEVICE_ID_LEN + 2];
+    DWORD phantom;
     HDEVINFO set;
+    LSTATUS ls;
+    HKEY key;
     BOOL ret;
     INT i = 0;
 
@@ -865,6 +868,86 @@ static void test_device_info(void)
     ok(!ret, "Expect failure\n");
     ok(GetLastError() == ERROR_DEVINST_ALREADY_EXISTS, "Got error %#lx\n", GetLastError());
     check_device_info(set, 0, NULL, NULL);
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* Create a registry key outside of setupapi. */
+    ls = RegCreateKeyA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Enum\\Root\\LEGACY_BOGUS\\0101", &key);
+    ok(!ls, "Failed to create key, error %lu.\n", ls);
+
+    /* Now attempt to create device info, this should fail. */
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", &guid, NULL, NULL, 0, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_DEVINST_ALREADY_EXISTS, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, NULL, NULL);
+
+    phantom = 1;
+    RegSetValueExA(key, "Phantom", 0, REG_DWORD, (BYTE *)&phantom, sizeof(phantom));
+
+    /*
+     * Can't open a device with this device instance ID if the phantom value
+     * is present and set to 1.
+     */
+    ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_NO_SUCH_DEVINST, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, NULL, NULL);
+
+    /* Present phantom value set to 0, it will open. */
+    phantom = 0;
+    RegSetValueExA(key, "Phantom", 0, REG_DWORD, (BYTE *)&phantom, sizeof(phantom));
+    ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
+    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+        check_device_info(set, 1, NULL, NULL);
+    }
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* Also succeeds without the phantom value, opening an empty key. */
+    RegDeleteValueA(key, "Phantom");
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
+    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+        check_device_info(set, 1, NULL, NULL);
+    }
+    SetupDiDestroyDeviceInfoList(set);
+
+    /*
+     * Set created with a GUID, no GUID value is present in the registry,
+     * defaults to GUID_NULL.
+     */
+    set = SetupDiCreateDeviceInfoList(&guid, NULL);
+    ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == ERROR_CLASS_MISMATCH, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, NULL, NULL);
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoList(&GUID_NULL, NULL);
+    ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", NULL, 0, &device);
+    todo_wine ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    if (ret)
+    {
+        check_device_info(set, 0, &GUID_NULL, "ROOT\\LEGACY_BOGUS\\0101");
+        check_device_info(set, 1, NULL, NULL);
+    }
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* Delete the key and try again. */
+    RegDeleteKeyA(key, "");
+    RegCloseKey(key);
+
+    /* No key, success. */
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0101", &guid, NULL, NULL, 0, &device);
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+    check_device_info(set, 0, &guid, "ROOT\\LEGACY_BOGUS\\0101");
+    check_device_info(set, 1, NULL, NULL);
     SetupDiDestroyDeviceInfoList(set);
 
     set = SetupDiGetClassDevsA(&guid, NULL, NULL, 0);
