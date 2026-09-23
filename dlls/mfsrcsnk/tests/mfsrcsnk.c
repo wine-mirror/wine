@@ -1417,7 +1417,7 @@ static void test_stream_selection(void)
 
         if (IsEqualGUID(&type, &MFMediaType_Video))
             ok(selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
-        else todo_wine ok(!selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
+        else ok(!selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
 
         IMFMediaTypeHandler_Release(mt_handler);
         IMFStreamDescriptor_Release(sd);
