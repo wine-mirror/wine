@@ -267,7 +267,7 @@ static struct winmd
     struct buffer userstrings, userstrings_idx;
     struct buffer blobs, blobs_idx;
     struct buffer guids;
-    struct buffer tables[TABLE_MAX], tables_idx[TABLE_MAX];
+    struct buffer tables[TABLE_MAX], tables_idx[TABLE_MAX], tables_merge_idx[TABLE_MAX];
     char         *name;
     char        **imports;
     UINT          num_imports;
@@ -494,6 +494,58 @@ static UINT add_row( enum table table, const BYTE *row, UINT row_size )
     return tables[table].count;
 }
 
+static inline int cmp_typename( const char *name, const char *namespace, const char *name2, const char *namespace2 )
+{
+    int ret;
+    if ((ret = strcmp( namespace, namespace2 ))) return ret;
+    return strcmp( name, name2 );
+}
+
+static const struct index *find_merge_index( const struct buffer *buf_idx, const struct buffer *buf_data,
+                                             const struct buffer *strings, const char *name, const char *namespace,
+                                             UINT row_offset_name, UINT row_offset_namespace, UINT *insert_idx )
+{
+    int i, c, min = 0, max = buf_idx->count - 1;
+    const struct index *idx, *base = (const struct index *)buf_idx->ptr;
+    const char *name2, *namespace2;
+    UINT offset;
+
+    while (min <= max)
+    {
+        i = (min + max) / 2;
+        idx = &base[i];
+
+        offset = *(UINT *)(buf_data->ptr + idx->offset + row_offset_name);
+        name2 = (const char *)&strings->ptr[offset];
+
+        offset = *(UINT *)(buf_data->ptr + idx->offset + row_offset_namespace);
+        namespace2 = (const char *)&strings->ptr[offset];
+
+        c = cmp_typename( name, namespace, name2, namespace2 );
+
+        if (c < 0) max = i - 1;
+        else if (c > 0) min = i + 1;
+        else return idx;
+    }
+
+    if (insert_idx) *insert_idx = max + 1;
+    return NULL;
+}
+
+/* add index sorted by name and namespace to speed up merge lookups */
+static void add_merge_index( enum table table, UINT name_offset, UINT namespace_offset, UINT row, UINT row_size,
+                             UINT row_offset_name, UINT row_offset_namespace )
+{
+    const char *name = (const char *)&current_winmd->strings.ptr[name_offset];
+    const char *namespace = (const char *)&current_winmd->strings.ptr[namespace_offset];
+    UINT insert_idx;
+
+    if (find_merge_index( &current_winmd->tables_merge_idx[table], &current_winmd->tables[table],
+                          &current_winmd->strings, name, namespace, row_offset_name, row_offset_namespace,
+                          &insert_idx )) return;
+    insert_index( &current_winmd->tables_merge_idx[table], insert_idx, (row - 1) * row_size, row_size );
+}
+
 static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 {
     grow_buffer( buf, size );
@@ -681,7 +733,10 @@ struct typeref_row
 static UINT add_typeref_row( UINT scope, UINT name, UINT namespace )
 {
     struct typeref_row row = { scope, name, namespace };
-    return add_row( TABLE_TYPEREF, (const BYTE *)&row, sizeof(row) );
+    UINT rownum = add_row( TABLE_TYPEREF, (const BYTE *)&row, sizeof(row) );
+    add_merge_index( TABLE_TYPEREF, name, namespace, rownum, sizeof(row), FIELD_OFFSET(struct typeref_row, name),
+                     FIELD_OFFSET(struct typeref_row, namespace) );
+    return rownum;
 }
 
 static void serialize_typeref_table( void )
@@ -711,10 +766,15 @@ struct typedef_row
 static UINT add_typedef_row( UINT flags, UINT name, UINT namespace, UINT extends, UINT fieldlist, UINT methodlist )
 {
     struct typedef_row row = { flags, name, namespace, extends, fieldlist, methodlist };
+    UINT rownum;
 
     if (!row.fieldlist) row.fieldlist = current_winmd->tables[TABLE_FIELD].count + 1;
     if (!row.methodlist) row.methodlist = current_winmd->tables[TABLE_METHODDEF].count + 1;
-    return add_row( TABLE_TYPEDEF, (const BYTE *)&row, sizeof(row) );
+
+    rownum = add_row( TABLE_TYPEDEF, (const BYTE *)&row, sizeof(row) );
+    add_merge_index( TABLE_TYPEDEF, name, namespace, rownum, sizeof(row), FIELD_OFFSET(struct typedef_row, name),
+                     FIELD_OFFSET(struct typedef_row, namespace) );
+    return rownum;
 }
 
 /* FIXME: enclosing classes should come before enclosed classes */
