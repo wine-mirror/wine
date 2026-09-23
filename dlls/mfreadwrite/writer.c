@@ -407,6 +407,8 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriterEx *iface)
 
 static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink *stream_sink, DWORD *index)
 {
+    IMFMediaTypeHandler *type_handler;
+    IMFMediaType *media_type;
     struct stream *stream;
     DWORD id = 0;
     HRESULT hr;
@@ -429,6 +431,20 @@ static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink 
     list_init(&stream->queue);
 
     writer->streams.next_id = max(writer->streams.next_id, id);
+
+    if (FAILED(hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler))) return hr;
+
+    if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type)))
+        IMFMediaType_Release(media_type);
+    else
+    {
+        if (SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 0, &media_type)))
+        {
+            hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+            IMFMediaType_Release(media_type);
+        }
+    }
+    IMFMediaTypeHandler_Release(type_handler);
 
     return hr;
 }

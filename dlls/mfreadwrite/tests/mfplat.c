@@ -2066,16 +2066,12 @@ static void test_sink_writer_create(void)
 
     /* Creating a sink writer on the media sink sets its type to the first available. */
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
     hr = IMFMediaType_IsEqual(media_type, first_media_type, &flags);
     ok(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES, "Mismatching major types.\n");
     ok(flags & MF_MEDIATYPE_EQUAL_FORMAT_TYPES, "Mismatching format types.\n");
     ok(flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA, "Mismatching format data.\n");
     IMFMediaType_Release(media_type);
-    }
 
     IMFMediaType_Release(first_media_type);
 
@@ -2086,7 +2082,7 @@ static void test_sink_writer_create(void)
     init_media_type(input_type, float_audio_type_desc, -1);
     hr = IMFSinkWriter_SetInputMediaType(writer, 0, input_type, NULL);
     /* Not all Windows machines succeed here. */
-    flaky todo_wine
+    flaky
     ok(hr == S_OK, "SetInputMediaType returned %#lx.\n", hr);
     if (FAILED(hr))
     {
@@ -2152,7 +2148,6 @@ static void test_sink_writer_create(void)
     hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &handler);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, input_type);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCreateSinkWriterFromMediaSink(sink, NULL, &writer);
