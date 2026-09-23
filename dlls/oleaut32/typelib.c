@@ -1978,7 +1978,7 @@ static HRESULT TLB_size_instance(ITypeInfoImpl *info, SYSKIND sys,
         break;
     case VT_VARIANT:
         *size = sizeof(VARIANT);
-        if(get_ptr_size(sys) != sizeof(void*))
+        if(ptr_size != sizeof(void*))
             *size += is_win64 ? -8 : 8; /* 32-bit VARIANT is 8 bytes smaller than 64-bit VARIANT */
         break;
     case VT_DECIMAL:
