@@ -855,19 +855,19 @@ static void test_device_info(void)
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root", &guid, NULL, NULL, 0, NULL);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
 
     /* Create device with only an enumerator and device ID. */
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS", &guid, NULL, NULL, 0, NULL);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
 
     /* Create device with an empty instance ID. */
     SetLastError(0xdeadbeef);
     ret = SetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\", &guid, NULL, NULL, 0, NULL);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
 
     /* Create device with a full device instance ID and DICD_GENERATE_ID. */
     SetLastError(0xdeadbeef);
@@ -1676,28 +1676,28 @@ static void test_open_device_info(void)
     id[MAX_DEVICE_ID_LEN + 1] = 0;
     SetLastError(0xdeadbeef);
     ret = SetupDiOpenDeviceInfoA(set, id, NULL, 0, &device);
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
     ok(!ret, "Expected failure.\n");
     check_device_info(set, 0, NULL, NULL);
 
     /* Open device with only an enumerator. */
     SetLastError(0xdeadbeef);
     ret = SetupDiOpenDeviceInfoA(set, "Root", NULL, 0, &device);
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
     ok(!ret, "Expected failure.\n");
     check_device_info(set, 0, NULL, NULL);
 
     /* Open device with only an enumerator and device ID. */
     SetLastError(0xdeadbeef);
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS", NULL, 0, &device);
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
     ok(!ret, "Expected failure.\n");
     check_device_info(set, 0, NULL, NULL);
 
     /* Open device with an empty instance ID. */
     SetLastError(0xdeadbeef);
     ret = SetupDiOpenDeviceInfoA(set, "Root\\LEGACY_BOGUS\\", NULL, 0, &device);
-    todo_wine ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME, "Got unexpected error %#lx.\n", GetLastError());
     ok(!ret, "Expected failure.\n");
     check_device_info(set, 0, NULL, NULL);
 
