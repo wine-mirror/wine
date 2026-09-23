@@ -4124,7 +4124,7 @@ struct thread_data *virtual_alloc_first_thread_data(void)
     }
 
     status = map_view( &view, NULL, signal_stack_mask + 1 + kernel_stack_size, MEM_TOP_DOWN,
-                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
+                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, 4 * limit_4g, 0, 0 );
     assert( !status );
     thread_data = init_thread_data( view->base );
     pthread_setspecific( thread_data_key, thread_data );
