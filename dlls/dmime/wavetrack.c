@@ -256,11 +256,13 @@ static HRESULT download_to_audio_path(struct wave_track *This, IUnknown *object)
             if (FAILED(hr = wave_download_to_dsound(item->object, dsound, &item->buffer)))
             {
                 WARN("Failed to download wave %p to direct sound, hr %#lx\n", item->object, hr);
-                return hr;
+                goto done;
             }
         }
     }
 
+done:
+    IDirectMusic_Release(dsound);
     return hr;
 }
 
