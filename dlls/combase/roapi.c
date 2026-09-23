@@ -111,6 +111,7 @@ static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
     }
 
     *out = buf;
+    RegCloseKey(hkey_class);
     return S_OK;
 
 done:
