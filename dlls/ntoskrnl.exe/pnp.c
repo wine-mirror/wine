@@ -415,6 +415,19 @@ static unsigned int hash_wchar_path( const WCHAR *id_path )
     return ret;
 }
 
+static HKEY get_device_registry_key( const WCHAR *device_instance_id )
+{
+    WCHAR path[MAX_PATH];
+    LSTATUS ret;
+    HKEY hkey;
+
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Enum\\%s", device_instance_id );
+    if ((ret = RegOpenKeyExW( HKEY_LOCAL_MACHINE, path, 0, KEY_ALL_ACCESS, &hkey )))
+        ERR( "Failed to open device instance %s registry key, ret %#lx.\n", debugstr_w(device_instance_id), ret );
+
+    return !ret ? hkey : INVALID_HANDLE_VALUE;
+}
+
 static void get_parent_id_prefix( DEVICE_OBJECT *parent, WCHAR *prefix_out )
 {
     struct wine_device *wine_device = CONTAINING_RECORD(parent, struct wine_device, device_obj);
@@ -427,11 +440,9 @@ static void get_parent_id_prefix( DEVICE_OBJECT *parent, WCHAR *prefix_out )
 
     *prefix_out = 0;
     get_device_instance_id( parent, instance_id );
-    swprintf( tmp_buf, ARRAY_SIZE(tmp_buf), L"%s\\%s", enum_key_path, instance_id );
-    ret = RegOpenKeyExW( HKEY_LOCAL_MACHINE, tmp_buf, 0, KEY_ALL_ACCESS, &dev_hkey );
-    if (ret)
+    if ((dev_hkey = get_device_registry_key( instance_id )) == INVALID_HANDLE_VALUE)
     {
-        ERR( "Failed to open parent device registry key, ret %#lx.\n", ret );
+        ERR( "Failed to open parent device registry key.\n" );
         return;
     }
 
@@ -509,6 +520,30 @@ static INT32 cm_devcaps_from_device_capabalities(DEVICE_CAPABILITIES *caps)
     return ret_val;
 }
 
+static BOOL create_or_open_setupapi_device_info(HDEVINFO set, const WCHAR *device_instance_id, SP_DEVINFO_DATA *sp_device)
+{
+    HKEY key;
+    BOOL ret;
+
+    if ((ret = SetupDiCreateDeviceInfoW( set, device_instance_id, &GUID_NULL, NULL, NULL, 0, sp_device ))
+            || (ret = SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, sp_device ))
+            || GetLastError() != ERROR_NO_SUCH_DEVINST)
+         return ret;
+
+    if ((key = get_device_registry_key( device_instance_id )) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    /*
+     * It's possible there's a half-created device info key in the registry
+     * causing both creating and opening to fail, delete it and try opening
+     * again.
+     */
+    if (!RegDeleteValueW( key, L"Phantom" ))
+        WARN("Found a preexisting device key for %s with a phantom key value, deleting.\n", debugstr_w(device_instance_id));
+    RegCloseKey( key );
+    return SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, sp_device );
+}
+
 static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OBJECT *parent_device )
 {
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
@@ -570,8 +605,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
     ExFreePool( id );
 
     wcscpy( wine_device->device_instance_id, device_instance_id );
-    if (!SetupDiCreateDeviceInfoW( set, device_instance_id, &GUID_NULL, NULL, NULL, 0, &sp_device )
-            && !SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
+    if (!create_or_open_setupapi_device_info( set, device_instance_id, &sp_device ))
     {
         ERR("Failed to create or open device %s, error %#lx.\n", debugstr_w(device_instance_id), GetLastError());
         return;
