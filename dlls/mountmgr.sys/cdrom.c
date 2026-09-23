@@ -1655,7 +1655,7 @@ static NTSTATUS dvd_read_structure( struct cdrom *cdrom, const DVD_READ_STRUCTUR
 
     case DvdDiskKeyDescriptor:
     {
-        DVD_COPYRIGHT_DESCRIPTOR *desc = buffer;
+        DVD_DISK_KEY_DESCRIPTOR *desc = buffer;
         DVDDiscKeyInfo disk_key;
 
         if (size < sizeof(*desc))
