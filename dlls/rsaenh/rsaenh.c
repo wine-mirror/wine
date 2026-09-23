@@ -4743,6 +4743,7 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 {
     CRYPTHASH *pCryptHash;
     CRYPTKEY *pCryptKey;
+    struct hash inner;
     DWORD i;
 
     TRACE("(hProv=%08Ix, hHash=%08Ix, dwParam=%08lx, pbData=%p, dwFlags=%08lx)\n",
@@ -4768,6 +4769,13 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 
     switch (dwParam) {
         case HP_HMAC_INFO:
+            init_hash_impl(((const HMAC_INFO *)pbData)->HashAlgid, &inner);
+            if (!inner.desc)
+            {
+                SetLastError(NTE_BAD_ALGID);
+                return FALSE;
+            }
+
             free_hmac_info(pCryptHash->pHMACInfo);
             if (!copy_hmac_info(&pCryptHash->pHMACInfo, (PHMAC_INFO)pbData)) return FALSE;
 
