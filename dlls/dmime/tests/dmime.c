@@ -5459,6 +5459,362 @@ static void test_segment_state(void)
     IDirectMusicTool_Release(tool);
 }
 
+struct expected_note
+{
+    UINT key;
+    BOOL todo_missing;
+    BOOL todo_type;
+    BOOL todo_time;
+    BOOL todo_key;
+};
+
+static void check_loop(const char *label, IDirectMusicSegment *segment, const struct expected_note *expected_notes,
+        DWORD expected_note_count)
+{
+    static const DWORD message_types[] =
+    {
+        DMUS_PMSGT_DIRTY,
+        DMUS_PMSGT_NOTE,
+    };
+    static const LARGE_INTEGER zero = {0};
+    IDirectMusicPerformance *performance;
+    IDirectMusicGraph *graph;
+    IDirectMusicTrack *track;
+    IPersistStream *persist;
+    IDirectMusicTool *tool;
+    MUSIC_TIME start_time;
+    DMUS_NOTE_PMSG *note;
+    IStream *stream;
+    DMUS_PMSG *msg;
+    HRESULT hr;
+    DWORD ret;
+    int i;
+
+    winetest_push_context("%s", label);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSeqTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack, (void **)&track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_BEGIN(stream, "seqt")
+    {
+        DMUS_IO_SEQ_ITEM items[128];
+        for (i = 0; i < 128; ++i)
+        {
+            items[i].mtTime = i * 10;
+            items[i].mtDuration = 0;
+            items[i].dwPChannel = 0;
+            items[i].nOffset = 0;
+            items[i].bStatus = 0x90;
+            items[i].bByte1 = i;
+            items[i].bByte2 = 127;
+        }
+        CHUNK_ARRAY(stream, "evtl", items);
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+    hr = IDirectMusicSegment_InsertTrack(segment, (IDirectMusicTrack *)track, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+    hr = IDirectMusicPerformance8_InitAudio((IDirectMusicPerformance8 *)performance, NULL, NULL,
+            NULL, DMUS_APATH_SHARED_STEREOPLUSREVERB, 64, DMUS_AUDIOF_ALL, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment8_Download((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, start_time, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 2000, &msg);
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    for (i = 0; i < expected_note_count; ++i)
+    {
+        ret = test_tool_wait_message(tool, 2000, (DMUS_PMSG **)&note);
+        todo_wine_if(expected_notes[i].todo_missing) ok(!ret, "%d: got %#lx\n", i, ret);
+        if (ret)
+            break;
+        todo_wine_if(expected_notes[i].todo_type) ok(note->dwType == DMUS_PMSGT_NOTE, "%d: got %#lx\n", i,
+                note->dwType);
+        if (note->dwType != DMUS_PMSGT_NOTE)
+        {
+            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            break;
+        }
+        todo_wine_if(expected_notes[i].todo_time) ok(note->mtTime == start_time + i * 10,
+                "%d: got mtTime %ld, expected %ld\n", i, note->mtTime, start_time + i * 10);
+        if (note->mtTime != start_time + i * 10)
+        {
+            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            break;
+        }
+        todo_wine_if(expected_notes[i].todo_key) ok(note->wMusicValue == expected_notes[i].key,
+                "%d: got wMusicValue %d, expected %d\n", i, note->wMusicValue, expected_notes[i].key);
+        if (note->wMusicValue != expected_notes[i].key)
+        {
+            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            break;
+        }
+        hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
+        ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    if (i == expected_note_count)
+    {
+        ret = test_tool_wait_message(tool, 2000, &msg);
+        ok(!ret, "got %#lx\n", ret);
+        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+        ok(hr == S_OK, "got %#lx\n", hr);
+
+        ret = test_tool_wait_message(tool, 100, (DMUS_PMSG **)&msg);
+        ok(ret == WAIT_TIMEOUT, "unexpected message\n");
+    }
+
+    hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicPerformance_Release(performance);
+    IDirectMusicTool_Release(tool);
+
+    hr = IDirectMusicSegment8_RemoveTrack(segment, track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicTrack_Release(track);
+
+    winetest_pop_context();
+}
+
+static void test_loop(void)
+{
+    static const struct expected_note expected_notes_default[] =
+    {
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_set_repeats[] =
+    {
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_set_start_point[] =
+    {
+        {2, .todo_time = TRUE}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_set_length[] =
+    {
+        {2, .todo_time = TRUE}, {3}, {4},
+        {0}, {1}, {2}, {3}, {4},
+        {0}, {1}, {2}, {3}, {4},
+    };
+    static const struct expected_note expected_notes_set_loop_points[] =
+    {
+        {2, .todo_time = TRUE}, {3},
+        {1}, {2}, {3},
+        {1}, {2}, {3}, {4},
+    };
+    static const struct expected_note expected_notes_wave_track_set_loop_points[] =
+    {
+        {2, .todo_time = TRUE}, {3},
+        {1}, {2}, {3},
+        {1}, {2}, {3}, {4},
+    };
+    static const struct expected_note expected_notes_rt_default[] =
+    {
+        {0}, {1}, {2}, {3, .todo_type = TRUE}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_rt_set_repeats[] =
+    {
+        {0}, {1}, {2}, {3, .todo_type = TRUE}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_rt_set_start_point[] =
+    {
+        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_rt_set_length[] =
+    {
+        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const struct expected_note expected_notes_rt_set_loop_points[] =
+    {
+        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+    };
+    static const LARGE_INTEGER zero = {0};
+    IDirectMusicSegment *wave_segment;
+    IDirectMusicSegment *segment;
+    IDirectMusicLoader8 *loader;
+    IDirectMusicTrack *track;
+    WCHAR test_wav[MAX_PATH];
+    IPersistStream *persist;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_RIFF(stream, "DMSG")
+    {
+        DMUS_IO_SEGMENT_HEADER head = {.mtLength = 70};
+        CHUNK_DATA(stream, "segh", head);
+        CHUNK_DATA(stream, "guid", CLSID_DirectMusicSegment);
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+    check_loop("default", segment, expected_notes_default, ARRAYSIZE(expected_notes_default));
+
+    hr = IDirectMusicSegment_SetRepeats(segment, 2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("SetRepeats", segment, expected_notes_set_repeats, ARRAYSIZE(expected_notes_set_repeats));
+
+    hr = IDirectMusicSegment_SetStartPoint(segment, 20);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("SetStartPoint", segment, expected_notes_set_start_point, ARRAYSIZE(expected_notes_set_start_point));
+
+    hr = IDirectMusicSegment_SetLength(segment, 50);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("SetLength", segment, expected_notes_set_length, ARRAYSIZE(expected_notes_set_length));
+
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 40);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("SetLoopPoints", segment, expected_notes_set_loop_points, ARRAYSIZE(expected_notes_set_loop_points));
+
+    load_resource(L"test.wav", test_wav);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicLoader8, (void **)&loader);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicLoader8_LoadObjectFromFile(loader, &CLSID_DirectMusicSegment,
+            &IID_IDirectMusicSegment, test_wav, (void **)&wave_segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicLoader8_Release(loader);
+
+    hr = IDirectMusicSegment_GetTrack(wave_segment, &CLSID_DirectMusicWaveTrack, -1, 0, &track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_InsertTrack(segment, track, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicTrack_Release(track);
+
+    check_loop("wave track, SetLoopPoints", segment, expected_notes_wave_track_set_loop_points,
+            ARRAYSIZE(expected_notes_wave_track_set_loop_points));
+
+    IDirectMusicSegment_Release(wave_segment);
+    IDirectMusicSegment_Release(segment);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_RIFF(stream, "DMSG")
+    {
+        DMUS_IO_SEGMENT_HEADER head =
+        {
+            .mtLength = 30,
+            .rtLength = 455729,
+            .dwFlags = DMUS_SEGIOF_REFLENGTH,
+        };
+        CHUNK_DATA(stream, "segh", head);
+        CHUNK_DATA(stream, "guid", CLSID_DirectMusicSegment);
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+    check_loop("RT length, default", segment, expected_notes_rt_default, ARRAYSIZE(expected_notes_rt_default));
+
+    hr = IDirectMusicSegment_SetRepeats(segment, 2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("RT length, SetRepeats", segment, expected_notes_rt_set_repeats,
+            ARRAYSIZE(expected_notes_rt_set_repeats));
+
+    hr = IDirectMusicSegment_SetStartPoint(segment, 20);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("RT length, SetStartPoint", segment, expected_notes_rt_set_start_point,
+        ARRAYSIZE(expected_notes_rt_set_start_point));
+
+    hr = IDirectMusicSegment_SetLength(segment, 50);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("RT length, SetLength", segment, expected_notes_rt_set_length, ARRAYSIZE(expected_notes_rt_set_length));
+
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 40);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_loop("RT length, SetLoopPoints", segment, expected_notes_rt_set_loop_points,
+        ARRAYSIZE(expected_notes_rt_set_loop_points));
+
+    IDirectMusicSegment_Release(segment);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -5500,6 +5856,7 @@ START_TEST(dmime)
     test_tempo_track_play();
     test_connect_to_collection();
     test_segment_state();
+    test_loop();
 
     CoUninitialize();
 }
