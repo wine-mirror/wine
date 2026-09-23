@@ -243,20 +243,41 @@ static HRESULT stream_enumerate_transforms(struct stream *stream, IMFMediaType *
 static HRESULT stream_set_transform(struct stream *stream, IMFTransform *transform,
         IMFMediaType *input_type, IMFMediaType *output_type, BOOL use_encoder)
 {
-    IMFMediaType *output_current_type;
+    IMFMediaType *current_type = NULL;
     HRESULT hr;
 
     /* Set the output type on transform. */
-    if (FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
-            || FAILED(hr = IMFTransform_GetOutputCurrentType(transform, 0, &output_current_type)))
-        return hr;
+    if (FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+    {
+        if (hr != MF_E_TRANSFORM_TYPE_NOT_SET)
+            return hr;
+    }
+    else
+    {
+        if (FAILED(hr = IMFTransform_GetOutputCurrentType(transform, 0, &current_type)))
+            return hr;
+    }
 
     /* Set the input type on transform. */
-    if (FAILED(hr = update_media_type(input_type, output_current_type, FALSE))
+    if ((current_type && FAILED(hr = update_media_type(input_type, current_type, FALSE)))
             || FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
     {
-        IMFMediaType_Release(output_current_type);
+        IMFMediaType_Release(current_type);
         return hr;
+    }
+
+    /* Set the output type on transform if input type is required first (e.g. audio converter). */
+    if (!current_type)
+    {
+        if (FAILED(hr = IMFTransform_GetInputCurrentType(transform, 0, &current_type)))
+            return hr;
+
+        if (FAILED(hr = update_media_type(output_type, current_type, FALSE))
+                || FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+        {
+            IMFMediaType_Release(current_type);
+            return hr;
+        }
     }
 
     /* Set the transform to stream. */
@@ -271,7 +292,7 @@ static HRESULT stream_set_transform(struct stream *stream, IMFTransform *transfo
         stream->converter = transform;
     }
 
-    IMFMediaType_Release(output_current_type);
+    IMFMediaType_Release(current_type);
     return hr;
 }
 

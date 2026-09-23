@@ -2114,7 +2114,6 @@ static void test_sink_writer_create(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     init_media_type(pcm_audio_type, pcm_audio_type_desc, -1);
     hr = IMFSinkWriter_SetInputMediaType(writer, 0, pcm_audio_type, NULL);
-    todo_wine
     ok(hr == S_OK, "SetInputMediaType returned %#lx.\n", hr);
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
@@ -2125,7 +2124,6 @@ static void test_sink_writer_create(void)
     IMFMediaType_Release(media_type);
 
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 0, &guid, &transform);
-    todo_wine
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
     if (hr == S_OK)
     IMFTransform_Release(transform);
@@ -2159,7 +2157,6 @@ static void test_sink_writer_create(void)
     ok(hr == MF_E_INVALIDINDEX, "GetTransformForStream returned %#lx.\n", hr);
 
     hr = IMFSinkWriter_SetInputMediaType(writer, 0, pcm_audio_type, NULL);
-    todo_wine
     ok(hr == S_OK, "SetInputMediaType returned %#lx.\n", hr);
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2169,7 +2166,6 @@ static void test_sink_writer_create(void)
     IMFMediaType_Release(media_type);
 
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 0, &guid, &transform);
-    todo_wine
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
     if (hr == S_OK)
     IMFTransform_Release(transform);
