@@ -4787,28 +4787,12 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
             }
 
             if (pCryptKey->aiAlgid == CALG_HMAC && !pCryptKey->dwKeyLen) {
-                HCRYPTHASH hKeyHash;
-                DWORD keyLen;
-
-                if (!RSAENH_CPCreateHash(hProv, ((PHMAC_INFO)pbData)->HashAlgid, 0, 0,
-                    &hKeyHash))
-                    return FALSE;
-                if (!RSAENH_CPHashData(hProv, hKeyHash, pCryptKey->blobHmacKey.pbData,
-                    pCryptKey->blobHmacKey.cbData, 0))
-                {
-                    RSAENH_CPDestroyHash(hProv, hKeyHash);
-                    return FALSE;
-                }
-                keyLen = sizeof(pCryptKey->abKeyValue);
-                if (!RSAENH_CPGetHashParam(hProv, hKeyHash, HP_HASHVAL, pCryptKey->abKeyValue,
-                    &keyLen, 0))
-                {
-                    RSAENH_CPDestroyHash(hProv, hKeyHash);
-                    return FALSE;
-                }
-                pCryptKey->dwKeyLen = keyLen;
-                RSAENH_CPDestroyHash(hProv, hKeyHash);
+                update_hash_impl(&inner, pCryptKey->blobHmacKey.pbData,
+                                 pCryptKey->blobHmacKey.cbData);
+                pCryptKey->dwKeyLen = hash_len_impl(&inner);
+                finalize_hash_impl(&inner, pCryptKey->abKeyValue, pCryptKey->dwKeyLen);
             }
+
             for (i=0; i<RSAENH_MIN(pCryptKey->dwKeyLen,pCryptHash->pHMACInfo->cbInnerString); i++) {
                 pCryptHash->pHMACInfo->pbInnerString[i] ^= pCryptKey->abKeyValue[i];
             }
