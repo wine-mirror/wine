@@ -584,6 +584,10 @@ static ULONG WINAPI synth_sink_Release(IDirectMusicSynthSink *iface)
             IDirectMusicSynthSink_Activate(iface, FALSE);
         if (This->master_clock)
             IReferenceClock_Release(This->master_clock);
+        if (This->dsound)
+            IDirectSound_Release(This->dsound);
+        if (This->dsound_buffer)
+            IDirectSoundBuffer_Release(This->dsound_buffer);
 
         This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
