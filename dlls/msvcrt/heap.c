@@ -580,6 +580,12 @@ void * CDECL _aligned_offset_malloc(size_t size, size_t alignment, size_t offset
     if (alignment < sizeof(void *))
         alignment = sizeof(void *);
 
+    if (size > (size_t)-1 - alignment - sizeof(void *))
+    {
+        *_errno() = ENOMEM;
+        return NULL;
+    }
+
     /* allocate enough space for void pointer and alignment */
     temp = malloc(size + alignment + sizeof(void *));
 
@@ -662,6 +668,12 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
         return NULL;
     }
     old_size -= old_padding;
+
+    if (size > (size_t)-1 - alignment - sizeof(void *))
+    {
+        *_errno() = ENOMEM;
+        return NULL;
+    }
 
     /* Ensure data is preserved if padding block is shrinked */
     if (alignment + sizeof(void *) < old_padding)
