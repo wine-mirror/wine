@@ -1546,23 +1546,21 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
                 d=szPath;
                 while (*s)
                 {
-                    if ((*s==0x0009 || *s==0x0020) && !in_quotes)
+                    if ((*s == '\t' || *s == ' ') && !in_quotes)
                     {
                         /* skip the remaining spaces */
                         do {
                             s++;
-                        } while (*s==0x0009 || *s==0x0020);
+                        } while (*s == '\t' || *s == ' ');
                         break;
                     }
-                    else if (*s==0x005c)
+                    else if (*s == '\\')
                     {
-                        /* '\\' */
                         *d++=*s++;
                         bcount++;
                     }
-                    else if (*s==0x0022)
+                    else if (*s == '"')
                     {
-                        /* '"' */
                         if ((bcount & 1)==0)
                         {
                             /* Preceded by an even number of '\', this is
