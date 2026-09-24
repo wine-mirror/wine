@@ -54,7 +54,14 @@ static struct object *allocate_object(enum object_type type)
     struct object *ret;
     if (!(ret = calloc(1, sizeof(*ret)))) return NULL;
     ret->type = type;
+    ret->refs = 1;
     return ret;
+}
+
+static void provider_addref(NCRYPT_PROV_HANDLE handle)
+{
+    struct object *object = (struct object *)handle;
+    InterlockedIncrement(&object->refs);
 }
 
 static struct object_property *get_object_property(struct object *object, const WCHAR *name)
@@ -166,6 +173,7 @@ static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE pro
     set_object_property(object, NCRYPT_KEY_USAGE_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
     dw_value = 0;
     set_object_property(object, NCRYPT_KEY_TYPE_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
+    provider_addref(provider);
     set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
     return object;
 }
@@ -350,6 +358,8 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
         break;
     }
     case STORAGE_PROVIDER:
+        if (InterlockedDecrement(&object->refs))
+            return 0;
         break;
 
     default:
@@ -359,6 +369,9 @@ SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE handle)
 
     for (i = 0; i < object->num_properties; i++)
     {
+        if (!wcscmp(object->properties[i].key, NCRYPT_PROVIDER_HANDLE_PROPERTY))
+            NCryptFreeObject(*(NCRYPT_HANDLE *)object->properties[i].value);
+
         free(object->properties[i].key);
         free(object->properties[i].value);
     }
@@ -384,6 +397,8 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     if (outsize < property->value_size) return NTE_BUFFER_TOO_SMALL;
 
     memcpy(output, property->value, property->value_size);
+    if (!wcscmp(name, NCRYPT_PROVIDER_HANDLE_PROPERTY))
+        provider_addref(*(NCRYPT_PROV_HANDLE*)property->value);
     return ERROR_SUCCESS;
 }
 

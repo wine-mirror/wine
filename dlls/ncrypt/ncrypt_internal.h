@@ -55,6 +55,7 @@ struct object_property
 struct object
 {
     enum object_type type;
+    LONG refs;
     DWORD num_properties;
     struct object_property *properties;
     union

@@ -193,7 +193,12 @@ static void check_property(int line, NCRYPT_KEY_HANDLE key, const struct expecte
         ok_(__FILE__, line)(ret == property->expected_status || broken(ret == property->broken_status),
                             "got unexpected return value %#lx\n", ret);
         if (ret == ERROR_SUCCESS)
+        {
             ok_(__FILE__, line)(size == property->expected_size, "got unexpected size %lu\n", size);
+
+            if (!wcscmp(property->name, NCRYPT_PROVIDER_HANDLE_PROPERTY))
+                NCryptFreeObject((NCRYPT_HANDLE)buffer);
+        }
 
         goto done;
     }
