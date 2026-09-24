@@ -956,7 +956,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 	    old_Sel = i;
 	    break;
 	}
-        if(SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) == newWord)
+        if(SendDlgItemMessageW(hDlg, nIDComboBox, CB_GETITEMDATA, i, 0) == newWord)
             Sel = i;
     }
 
