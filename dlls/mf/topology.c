@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mf_private.h"
+#include "intsafe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -123,6 +124,9 @@ static struct seq_source *impl_from_IMFMediaSourceTopologyProvider(IMFMediaSourc
 
 static HRESULT topology_node_reserve_streams(struct node_streams *streams, DWORD index)
 {
+    if (index == DWORD_MAX)
+        return E_OUTOFMEMORY;
+
     if (!mf_array_reserve((void **)&streams->streams, &streams->size, index + 1, sizeof(*streams->streams)))
         return E_OUTOFMEMORY;
 
