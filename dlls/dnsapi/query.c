@@ -132,12 +132,13 @@ static char *read_etc_hosts( DWORD *ret_size )
     }
 
     size = GetFileSize( file, NULL );
-    if (!(data = malloc( size )) || !ReadFile( file, data, size, ret_size, NULL ))
+    if (!(data = malloc( size + 1)) || !ReadFile( file, data, size, ret_size, NULL ))
     {
         WARN( "failed to read file: %lu\n", GetLastError() );
         free( data );
         data = NULL;
     }
+    data[size] = '\0';
     CloseHandle( file );
     return data;
 }
@@ -250,7 +251,7 @@ static struct host_entry *get_next_host_entry( const char **cursor, const char *
         len_name = p - name;
 
         /* parse aliases */
-        while ((p = next_non_space( p, line_end )) < line_end && (aliases || (str = aliases = malloc( line_end - p ))))
+        while ((p = next_non_space( p, line_end )) < line_end && (aliases || (str = aliases = malloc( line_end - p + 1 ))))
         {
             q = next_space( p, line_end );
             len = q - p;
