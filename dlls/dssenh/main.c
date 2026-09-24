@@ -1149,7 +1149,7 @@ BOOL WINAPI CPSetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, con
 
 BOOL WINAPI CPDeriveKey( HCRYPTPROV hprov, ALG_ID algid, HCRYPTHASH hhash, DWORD flags, HCRYPTKEY *ret_key )
 {
-    FIXME( "%p, %p, %08lx, %p\n", (void *)hprov, (void *)hhash, flags, ret_key );
+    FIXME( "%IX, %08x, %IX, %08lx, %p\n", hprov, algid, hhash, flags, ret_key );
     return FALSE;
 }
 
