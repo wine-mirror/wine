@@ -896,7 +896,7 @@ static BOOL topology_node_get_object_attributes(IMFTopologyNode *node, IMFAttrib
         return hr;
     }
 
-    return topology_node_get_object(node, &IID_IMFAttributes, (void **)&attributes);
+    return topology_node_get_object(node, &IID_IMFAttributes, (void **)attributes);
 }
 
 BOOL topology_node_is_d3d_aware(IMFTopologyNode *node)
