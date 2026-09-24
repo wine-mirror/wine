@@ -398,8 +398,8 @@ static HRESULT WINAPI IAssemblyNameImpl_GetName(IAssemblyName *iface,
         *lpcwBuffer = len;
         return E_NOT_SUFFICIENT_BUFFER;
     }
-    if (!name->name) lpcwBuffer[0] = 0;
-    else lstrcpyW(pwzName, name->name);
+    if (name->name)
+        lstrcpyW(pwzName, name->name);
 
     *lpcwBuffer = len;
     return S_OK;
