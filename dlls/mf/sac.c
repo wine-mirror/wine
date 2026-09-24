@@ -73,7 +73,11 @@ HRESULT enum_audio_capture_sources(IMFAttributes *attributes, IMFActivate ***ret
         goto done;
     if (FAILED(hr = IMMDeviceCollection_GetCount(devices, &count)))
         goto done;
-    sources = CoTaskMemAlloc(count * sizeof(*sources));
+    if (!(sources = CoTaskMemAlloc(count * sizeof(*sources))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
     for (i = 0; i < count; ++i)
     {
         IMMDevice *device = NULL;
