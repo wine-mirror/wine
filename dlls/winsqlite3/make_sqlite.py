@@ -414,7 +414,7 @@ if not Path(dir).is_dir():
     fn = "sqlite-amalgamation-" + SQLITE_VERSION + ".zip";
     if not Path(fn).is_file():
         url = "https://sqlite.org/2026/" + fn;
-        print("Dowloading", url);
+        print("Downloading", url);
         urllib.request.urlretrieve(url, fn);
     print("\nExtracting source");
     with zipfile.ZipFile(fn, 'r') as zip:
