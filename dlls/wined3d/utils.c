@@ -1906,7 +1906,7 @@ static void parse_channel_desc(struct wined3d_format *format, const char *channe
     unsigned int attrs = 0;
     unsigned int j;
 
-    for (j = 0; j < strlen(channel_desc); ++j)
+    for (j = 0; channel_desc[j]; ++j)
     {
         enum wined3d_channel_type channel_type = map_channel_type(channel_desc[j]);
 
