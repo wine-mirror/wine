@@ -259,7 +259,7 @@ static HRESULT parse_lyrics_track_events(IDirectMusicLyricsTrack *This, IStream 
             if (child.id != DMUS_FOURCC_LYRICSTRACKEVENTHEADER_CHUNK)
                 return DMUS_E_UNSUPPORTED_STREAM;
 
-            if (FAILED(hr = stream_chunk_get_data(stream, &child, &header, child.size))) {
+            if (FAILED(hr = stream_chunk_get_data(stream, &child, &header, sizeof(header)))) {
                 WARN("Failed to read data of %s\n", debugstr_chunk(&child));
                 return hr;
             }
@@ -276,7 +276,7 @@ static HRESULT parse_lyrics_track_events(IDirectMusicLyricsTrack *This, IStream 
             if (child.id != DMUS_FOURCC_LYRICSTRACKEVENTTEXT_CHUNK)
                 return DMUS_E_UNSUPPORTED_STREAM;
 
-            if (FAILED(hr = stream_chunk_get_data(stream, &child, &name, child.size))) {
+            if (FAILED(hr = stream_chunk_get_wstr(stream, &child, name, sizeof(name)))) {
                 WARN("Failed to read data of %s\n", debugstr_chunk(&child));
                 return hr;
             }
