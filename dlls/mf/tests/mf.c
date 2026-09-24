@@ -4253,6 +4253,21 @@ static void test_presentation_clock(void)
     hr = IMFRateControl_SetRate(rate_control, FALSE, 0.0f);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#lx.\n", hr);
 
+    /* SetTimer() with no time source. MFTIMER_RELATIVE is not tested because native crashes. */
+    for (i = 0; i < ARRAY_SIZE(callbacks); ++i)
+    {
+        callbacks[i] = create_test_callback(FALSE);
+        events[i] = impl_from_IMFAsyncCallback(callbacks[i])->event;
+    }
+
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFTimer_SetTimer(timer, 0, 1000000, callbacks[0], NULL, &timer_cancel_key);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTimer_CancelTimer(timer, timer_cancel_key);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     /* Set default time source. */
     hr = MFCreateSystemTimeSource(&time_source);
     ok(hr == S_OK, "Failed to create time source, hr %#lx.\n", hr);
@@ -4384,15 +4399,6 @@ static void test_presentation_clock(void)
     ok(!thin, "Unexpected thinning.\n");
 
     IMFRateControl_Release(rate_control);
-
-    for (i = 0; i < ARRAY_SIZE(callbacks); ++i)
-    {
-        callbacks[i] = create_test_callback(FALSE);
-        events[i] = impl_from_IMFAsyncCallback(callbacks[i])->event;
-    }
-
-    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
-    ok(hr == S_OK, "got hr %#lx.\n", hr);
 
     hr = IMFPresentationClock_Start(clock, 200000);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
