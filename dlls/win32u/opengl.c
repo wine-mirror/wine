@@ -631,6 +631,7 @@ failed:
 struct framebuffer_surface
 {
     struct opengl_drawable  base;
+    struct opengl_context  *root_context;
     struct opengl_drawable *target;         /* driver drawable to present to */
 };
 
@@ -884,23 +885,31 @@ static void destroy_framebuffer( struct opengl_drawable *drawable, const struct 
     TRACE( "drawable %p destroyed framebuffer %u\n", drawable, fbo );
 }
 
-static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
+static void framebuffer_surface_reset( struct opengl_drawable *drawable )
 {
-    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
 
     read_desc.samples = read_desc.sample_buffers = 0;
 
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 
-    make_thread_context_current( NULL, NULL );
-
     if (drawable->draw_fbo != drawable->read_fbo)
         destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
     destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
+    drawable->draw_fbo = drawable->read_fbo = 0;
+}
 
-    make_client_context_current();
+static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
+{
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
 
+    TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+
+    if (surface->root_context)
+    {
+        make_thread_context_current( surface->root_context, NULL );
+        framebuffer_surface_reset( drawable );
+    }
     if (surface->target) opengl_drawable_release( surface->target );
 }
 
@@ -962,17 +971,48 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
 {
     struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+    struct opengl_context *context = NtCurrentTeb()->glReserved2;
 
     TRACE( "%s, flags %#x\n", debugstr_opengl_drawable( drawable ), flags );
 
-    if (flags & (GL_FLUSH_UPDATED | GL_FLUSH_PRESENT)) make_thread_context_current( NULL, surface->target );
+    /* check for root context changes when we need to re-create the FBO, also used for initialization */
+    if (flags & GL_FLUSH_ACTIVATE && surface->root_context != context->root_context)
+    {
+        struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
 
-    if (flags & GL_FLUSH_UPDATED)
+        read_desc.samples = read_desc.sample_buffers = 0;
+
+        /* destroy the FBO with the previous root context if we have any */
+        if (surface->root_context)
+        {
+            FIXME( "Switching root contexts, discarding framebuffer %p contents\n", debugstr_opengl_drawable( drawable ) );
+            make_thread_context_current( surface->root_context, NULL );
+            framebuffer_surface_reset( drawable );
+        }
+
+        /* create the FBO with the new root context and keep track of it */
+        surface->root_context = context->root_context;
+        make_thread_context_current( surface->root_context, NULL );
+
+        read_desc.samples = read_desc.sample_buffers = 0;
+        surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc, surface->base.virtual_size );
+        if (!surface->base.read_fbo) ERR( "Failed to create read framebuffer object\n" );
+
+        if (!draw_desc.sample_buffers) surface->base.draw_fbo = surface->base.read_fbo;
+        else surface->base.draw_fbo = create_framebuffer( &surface->base, &draw_desc, surface->base.virtual_size );
+        if (!surface->base.draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
+
+        TRACE( "Initialized framebuffer %p with root context %p attrs %s\n", debugstr_opengl_drawable( drawable ),
+               surface->root_context, debugstr_opengl_context_attrs( &surface->root_context->attrs ) );
+    }
+    else if (flags & GL_FLUSH_UPDATED)
     {
         struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
         SIZE size = drawable->virtual_size;
 
         read_desc.samples = read_desc.sample_buffers = 0;
+
+        make_thread_context_current( surface->root_context, NULL );
 
         TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->read_fbo, wine_dbgstr_point( (POINT *)&size ) );
         resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size );
@@ -991,6 +1031,7 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
 
         if (flags & GL_FLUSH_PRESENT)
         {
+            make_thread_context_current( surface->root_context, surface->target );
             blit_framebuffer_surface( drawable );
             opengl_drawable_swap( surface->target );
         }
@@ -1006,11 +1047,11 @@ static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
 
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 
-    if (drawable->doublebuffer || surface->target) make_thread_context_current( NULL, surface->target );
-
     if (drawable->doublebuffer)
     {
         GLint front, back;
+
+        make_thread_context_current( surface->root_context, NULL );
 
         if (drawable->draw_fbo != drawable->read_fbo)
         {
@@ -1046,6 +1087,7 @@ static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
 
     if (surface->target)
     {
+        make_thread_context_current( surface->root_context, surface->target );
         blit_framebuffer_surface( drawable );
         opengl_drawable_swap( surface->target );
     }
@@ -1065,7 +1107,6 @@ static const struct opengl_drawable_funcs framebuffer_surface_funcs =
 
 static struct opengl_drawable *framebuffer_surface_create( int format, struct client_surface *client, struct opengl_drawable *target )
 {
-    struct wgl_pixel_format draw_desc = pixel_formats[format - 1], read_desc = draw_desc;
     struct framebuffer_surface *surface;
 
     if (!(surface = opengl_drawable_create( &framebuffer_surface_funcs, format, client, NULL ))) return NULL;
@@ -1088,18 +1129,6 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
         opengl_drawable_map_buffer( &surface->base, GL_RIGHT, attachment ); /* only front right */
         if (surface->base.doublebuffer) opengl_drawable_map_buffer( &surface->base, GL_BACK_RIGHT, GL_COLOR_ATTACHMENT3 );
     }
-
-    make_thread_context_current( NULL, NULL );
-
-    read_desc.samples = read_desc.sample_buffers = 0;
-    surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc, surface->base.virtual_size );
-    if (!surface->base.read_fbo) ERR( "Failed to create read framebuffer object\n" );
-
-    if (!draw_desc.sample_buffers) surface->base.draw_fbo = surface->base.read_fbo;
-    else surface->base.draw_fbo = create_framebuffer( &surface->base, &draw_desc, surface->base.virtual_size );
-    if (!surface->base.draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
-
-    make_client_context_current();
 
     return &surface->base;
 }
@@ -2507,8 +2536,8 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         if (old_read && old_read != context->draw && old_read != context->read && old_read->client)
             set_window_opengl_drawable( old_read->client->hwnd, old_read, FALSE );
 
-        opengl_drawable_flush( context->read, context->read->interval, 0 );
-        opengl_drawable_flush( context->draw, context->draw->interval, 0 );
+        opengl_drawable_flush( context->read, context->read->interval, GL_FLUSH_ACTIVATE );
+        opengl_drawable_flush( context->draw, context->draw->interval, GL_FLUSH_ACTIVATE );
     }
     else if (previous)
     {

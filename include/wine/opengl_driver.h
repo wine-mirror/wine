@@ -254,6 +254,7 @@ struct opengl_drawable_funcs
 #define GL_FLUSH_UPDATED       0x04
 #define GL_FLUSH_PRESENT       0x08
 #define GL_FLUSH_FORCE_SWAP    0x10
+#define GL_FLUSH_ACTIVATE      0x20
 
 /* a driver opengl drawable, either a client surface of a pbuffer */
 struct opengl_drawable
