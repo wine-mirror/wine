@@ -563,6 +563,7 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     if (flags) FIXME("flags %#lx not supported\n", flags);
 
     if (!object) return NTE_INVALID_HANDLE;
+    if (!wcscmp(name, NCRYPT_PROVIDER_HANDLE_PROPERTY)) return NTE_NOT_SUPPORTED;
     return set_object_property(object, name, input, insize);
 }
 

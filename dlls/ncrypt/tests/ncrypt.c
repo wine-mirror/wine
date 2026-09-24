@@ -442,6 +442,9 @@ static void test_set_property(void)
     ret = NCryptSetProperty(key, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
+    ret = NCryptSetProperty(key, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&prov, sizeof(prov), 0);
+    ok(ret == NTE_NOT_SUPPORTED, "got %#lx\n", ret);
+
     todo_wine
     {
     ret = NCryptSetProperty(key, NCRYPT_NAME_PROPERTY, (BYTE *)L"Key name", sizeof(L"Key name"), 0);
