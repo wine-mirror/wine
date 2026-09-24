@@ -1253,6 +1253,14 @@ static void test_converttoi8(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08lx\n", dst_status);
     ok(dst_len == 0x1234, "got %Id\n", dst_len);
+
+    V_VT((VARIANT*)src) = VT_I4;
+    V_I4((VARIANT*)src) = 0xaa;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_I8, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %Id\n", dst_len);
+    ok(dst.QuadPart == 0xaa, "got %d\n", (int)dst.QuadPart);
 }
 
 static void test_converttobstr(void)
