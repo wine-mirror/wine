@@ -1,5 +1,5 @@
 /* Unicode Vertical Orientation */
-/* generated from https://www.unicode.org/Public/17.0.0/ucd/UCD.zip:VerticalOrientation.txt */
+/* generated from https://www.unicode.org/Public/18.0.0/ucd/UCD.zip:VerticalOrientation.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"
