@@ -96,7 +96,7 @@ void destroy_view( struct view *view )
 
 static BOOL eval_like( const WCHAR *text, const WCHAR *pattern )
 {
-    if (wcsstr( pattern, L"[" )) FIXME( "character ranges (i.e. [abc], [^a-z]) are not supported\n" );
+    if (wcschr( pattern, '[' )) FIXME( "character ranges (i.e. [abc], [^a-z]) are not supported\n" );
 
     while (*text)
     {
