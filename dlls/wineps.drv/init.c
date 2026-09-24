@@ -428,7 +428,7 @@ print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
         {
             MESSAGE( "Disabling printer %s since it has no builtin fonts and "
                     "there are no TrueType fonts available.\n", debugstr_w(device) );
-            return FALSE;
+            return NULL;
         }
     }
 
