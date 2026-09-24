@@ -453,6 +453,7 @@ static struct message *alloc_hardware_message( lparam_t info, struct hw_msg_sour
     memset( msg, 0, sizeof(*msg) );
     msg->type      = MSG_HARDWARE;
     msg->time      = time;
+    msg->mergeable = true;
     msg->data      = msg_data;
     msg->data_size = sizeof(*msg_data) + extra_size;
 
