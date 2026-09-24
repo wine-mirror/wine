@@ -83,7 +83,7 @@ static const char *io2str( unsigned int io )
     X(IOCTL_TAPE_SET_POSITION);
     X(IOCTL_TAPE_WRITE_MARKS);
 #undef X
-    default: return wine_dbg_sprintf("IOCTL_TAPE_%d\n", io);
+    default: return wine_dbg_sprintf("IOCTL_TAPE_%d", io);
     }
 }
 
