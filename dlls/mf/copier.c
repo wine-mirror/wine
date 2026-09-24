@@ -494,6 +494,11 @@ static HRESULT WINAPI sample_copier_transform_ProcessOutput(IMFTransform *iface,
 
     TRACE("%p, %#lx, %lu, %p, %p.\n", iface, flags, count, buffers, status);
 
+    if (count != 1)
+        return E_INVALIDARG;
+
+    *status = buffers->dwStatus = 0;
+
     EnterCriticalSection(&transform->cs);
     if (!(transform->flags & SAMPLE_COPIER_OUTPUT_TYPE_SET))
         hr = MF_E_TRANSFORM_TYPE_NOT_SET;
