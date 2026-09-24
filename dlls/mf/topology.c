@@ -863,7 +863,7 @@ static TOPOID topology_generate_id(void)
     }
     while (InterlockedCompareExchange64((LONG64 *)&next_topology_id, old + 1, old) != old);
 
-    return next_topology_id;
+    return old + 1;
 }
 
 HRESULT create_topology(TOPOID id, IMFTopology **topology)
