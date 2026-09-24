@@ -423,6 +423,9 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
         struct wave *wave;
         void *next;
 
+        if (This->sink)
+            IDirectMusicSynthSink_Release(This->sink);
+
         LIST_FOR_EACH_ENTRY_SAFE(instrument, next, &This->instruments, struct instrument, entry)
         {
             list_remove(&instrument->entry);
