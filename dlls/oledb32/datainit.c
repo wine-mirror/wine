@@ -824,7 +824,7 @@ static int get_propvalue_length(DBPROP *prop)
     {
         length = SysStringLen(V_BSTR(v));
         /* Quotes values with '\"' if the value contains semicolons */
-        if (wcsstr(V_BSTR(v), L";"))
+        if (wcschr(V_BSTR(v), ';'))
             length += 2;
         return length;
     }
@@ -835,7 +835,7 @@ static int get_propvalue_length(DBPROP *prop)
     {
         length = SysStringLen(V_BSTR(&str));
         /* Quotes values with '\"' if the value contains semicolons */
-        if (wcsstr(V_BSTR(&str), L";"))
+        if (wcschr(V_BSTR(&str), ';'))
             length += 2;
         VariantClear(&str);
         return length;
@@ -852,7 +852,7 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
 
     if (V_VT(v) == VT_BSTR)
     {
-        if (wcsstr(V_BSTR(v), L";"))
+        if (wcschr(V_BSTR(v), ';'))
         {
             lstrcatW(str, L"\"");
             lstrcatW(str, V_BSTR(v));
@@ -869,7 +869,7 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
     hr = VariantChangeType(&vstr, v, VARIANT_ALPHABOOL, VT_BSTR);
     if (hr == S_OK)
     {
-        if (wcsstr(V_BSTR(&vstr), L";"))
+        if (wcschr(V_BSTR(&vstr), ';'))
         {
             lstrcatW(str, L"\"");
             lstrcatW(str, V_BSTR(&vstr));
