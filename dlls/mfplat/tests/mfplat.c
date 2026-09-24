@@ -12318,9 +12318,12 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 1, FALSE, &buffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2d_buffer);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **) &dxgi_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT,
+            &IID_IMFD3D12SynchronizationObjectCommands, (void **)&sync_cmd);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFDXGIBuffer_GetSubresourceIndex(dxgi_buffer, &index);
@@ -12334,6 +12337,7 @@ if (SUCCEEDED(hr))
     hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
     IMFDXGIBuffer_Release(dxgi_buffer);
     IMF2DBuffer2_Release(_2dbuffer2);
     IMFMediaBuffer_Release(buffer);
