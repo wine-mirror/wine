@@ -276,7 +276,7 @@ UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
     struct distinct_view *dv = NULL;
     UINT count = 0, r;
 
-    TRACE("%p\n", dv );
+    TRACE( "%p %p %p\n", db, view, table );
 
     r = table->ops->get_dimensions( table, NULL, &count );
     if( r != ERROR_SUCCESS )
