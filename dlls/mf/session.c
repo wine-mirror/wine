@@ -4666,6 +4666,9 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             BOOL is_sample;
             DWORD output;
 
+            if (!topo_node)
+                break;
+
             if (FAILED(hr = IMFMediaEvent_GetUINT32(event, &MF_EVENT_MFT_INPUT_STREAM_ID, &input)))
                 WARN("Failed to get input id, hr %#lx.\n", hr);
 
