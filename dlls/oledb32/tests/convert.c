@@ -4274,6 +4274,23 @@ static void test_converttodate(void)
     ok(dst == 1.0, "got %f\n", dst);
 }
 
+static void test_converttobool(void)
+{
+    BYTE src[sizeof(VARIANT)];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    VARIANT_BOOL dst;
+    HRESULT hr;
+
+    V_VT((VARIANT*)src) = VT_I4;
+    V_I4((VARIANT*)src) = 0xaa;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BOOL, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08lx\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %Id\n", dst_len);
+    ok(dst == VARIANT_TRUE, "got %d\n", dst);
+}
+
 START_TEST(convert)
 {
     HRESULT hr;
@@ -4317,6 +4334,7 @@ START_TEST(convert)
     test_converttoiunknown();
     test_converttonumeric();
     test_converttodate();
+    test_converttobool();
 
     IDataConvert_Release(convert);
 

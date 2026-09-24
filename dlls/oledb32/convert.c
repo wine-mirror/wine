@@ -439,6 +439,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_BSTR:        hr = VarBoolFromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        *d = *(VARIANT_BOOL*)src; hr = S_OK;            break;
         case DBTYPE_DECIMAL:     hr = VarBoolFromDec(src, d);                    break;
+        case DBTYPE_VARIANT:
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_BOOL)) == S_OK)
+                *d = V_BOOL(&tmp);
+            break;
         default: FIXME("Unimplemented conversion %04x -> BOOL\n", src_type); return E_NOTIMPL;
         }
         break;
@@ -481,7 +486,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         case DBTYPE_VARIANT:
         {
-            VARIANT tmp;
             VariantInit(&tmp);
             if ((hr = VariantChangeType(&tmp, src, 0, VT_DATE)) == S_OK)
                 *d = V_DATE(&tmp);
