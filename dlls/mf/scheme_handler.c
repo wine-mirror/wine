@@ -408,8 +408,8 @@ static HRESULT WINAPI scheme_handler_callback_Invoke(IMFAsyncCallback *iface, IM
                 hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, context->url, context->flags,
                         context->props, &obj_type, &object);
                 IMFSourceResolver_Release(resolver);
-                IMFByteStream_Release(stream);
             }
+            IMFByteStream_Release(stream);
         }
         else
         {
