@@ -1003,7 +1003,7 @@ HRESULT topology_node_set_device_manager(IMFTopologyNode *node, IUnknown *device
 
         for (i = 0; SUCCEEDED(hr) && i < count; i++)
         {
-            if (FAILED(IMFTopologyNode_GetInput(node, 0, &upstream, &output)))
+            if (FAILED(IMFTopologyNode_GetInput(node, i, &upstream, &output)))
                 continue;
 
             if (topology_node_is_d3d_aware(upstream))
