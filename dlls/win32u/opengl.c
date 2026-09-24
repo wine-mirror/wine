@@ -2886,16 +2886,16 @@ static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs
         }
     }
 
+    if (attrs.profile & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+    {
+        FIXME( "OpenGL ES contexts are not supported\n" );
+        RtlSetLastWin32Error( ERROR_INVALID_PROFILE_ARB );
+        return FALSE;
+    }
     if (attrs.profile & ~(WGL_CONTEXT_CORE_PROFILE_BIT_ARB | WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB))
     {
         WARN( "Invalid WGL_CONTEXT_PROFILE_MASK_ARB %#x\n", attrs.profile );
         RtlSetLastWin32Error( ERROR_INVALID_PROFILE_ARB );
-        return FALSE;
-    }
-    if (attrs.flags & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-    {
-        FIXME( "OpenGL ES contexts are not supported\n" );
-        RtlSetLastWin32Error( ERROR_INVALID_FLAGS );
         return FALSE;
     }
     if (attrs.flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
