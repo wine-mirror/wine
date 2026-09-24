@@ -835,7 +835,10 @@ static HRESULT mf_get_handler_strings(const WCHAR *path, WCHAR filter, unsigned 
         while (!RegEnumKeyExW(hkey, index++, buffW, &size, NULL, NULL, NULL, NULL))
         {
             if (filter && !wcschr(buffW, filter))
+            {
+                size = maxlen;
                 continue;
+            }
 
             if (FAILED(hr = prop_string_vector_append(dst, &capacity, i > 0, buffW)))
                 break;
