@@ -1319,7 +1319,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
     /* make sure assemble_files doesn't strip suffixes */
     dll_name = encode_dll_name( spec->file_name );
-    for (i = 0; i < strlen( dll_name ); ++i) if (dll_name[i] == '.') dll_name[i] = '_';
+    for (i = 0; dll_name[i]; ++i) if (dll_name[i] == '.') dll_name[i] = '_';
 
     import_desc = strmake( "__wine_import_%s_desc", dll_name );
     import_name = strmake( "__wine_import_%s_name", dll_name );
