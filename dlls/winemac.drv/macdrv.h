@@ -220,6 +220,10 @@ extern BOOL macdrv_ProcessEvents(DWORD mask);
 extern void macdrv_ThreadDetach(void);
 #endif
 
+/* ime.c */
+extern pthread_mutex_t ime_composition_rect_mutex;
+extern CGRect ime_composition_rect;
+extern void macdrv_im_set_text(const macdrv_event *event);
 
 /* macdrv private window data */
 struct macdrv_win_data

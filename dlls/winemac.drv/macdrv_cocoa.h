@@ -543,6 +543,7 @@ extern bool macdrv_get_view_backing_size(WineContentView *view, int backing_size
 extern void macdrv_set_view_backing_size(WineContentView *view, const int backing_size[2]);
 extern uint32_t macdrv_window_background_color(void);
 extern bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *data);
+extern void macdrv_clear_ime_text(void);
 extern bool macdrv_is_any_wine_window_visible(void);
 
 
@@ -580,9 +581,5 @@ extern void macdrv_destroy_status_item(WineStatusItem *item);
 extern void macdrv_set_status_item_image(WineStatusItem *item, CGImageRef cgimage);
 extern void macdrv_set_status_item_tooltip(WineStatusItem *item, CFStringRef cftip);
 
-/* ime */
-extern pthread_mutex_t ime_composition_rect_mutex;
-extern CGRect ime_composition_rect;
-extern void macdrv_clear_ime_text(void);
 
 #endif  /* __WINE_MACDRV_COCOA_H */
