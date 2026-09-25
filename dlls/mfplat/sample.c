@@ -1615,6 +1615,9 @@ static HRESULT WINAPI sample_allocator_InitializeSampleAllocatorEx(IMFVideoSampl
 
     TRACE("%p, %lu, %lu, %p, %p.\n", iface, initial_sample_count, max_sample_count, attributes, media_type);
 
+    if (!media_type)
+        return E_POINTER;
+
     EnterCriticalSection(&allocator->cs);
 
     hr = sample_allocator_initialize(allocator, initial_sample_count, max_sample_count, attributes, media_type);
