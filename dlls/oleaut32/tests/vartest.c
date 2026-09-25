@@ -2793,6 +2793,7 @@ static void test_VariantTimeToSystemTime(void)
 {
     DT2ST(29221.0,1,1,1,1980,0,0,0,0);
     DT2ST(29222.0,1,2,1,1980,0,0,0,0);
+    DT2ST(2958465.999999,1,31,12,9999,23,59,59,0);
 }
 
 #define MKDOSDATE(d,m,y) ((d & 0x1f) | ((m & 0xf) << 5) | (((y-1980) & 0x7f) << 9))

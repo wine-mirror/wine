@@ -1456,7 +1456,8 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
   lpUdate->st.wSecond = timePart;
   timePart -= lpUdate->st.wSecond;
   lpUdate->st.wMilliseconds = 0;
-  if (timePart > 0.5)
+  if ((dateIn < DATE_MAX || lpUdate->st.wHour != 23 || lpUdate->st.wMinute != 59 ||
+              lpUdate->st.wSecond != 59) && timePart > 0.5)
   {
     /* Round the milliseconds, adjusting the time/date forward if needed */
     if (lpUdate->st.wSecond < 59)
