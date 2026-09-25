@@ -8736,7 +8736,6 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     /* Test with tag WAVE_FORMAT_EXTENSIBLE, cbSize 0 and size sizeof(WAVEFORMATEX). */
     waveformatext.Format.cbSize = 0;
     hr = MFInitMediaTypeFromWaveFormatEx(mediatype, &waveformatext.Format, sizeof(*wfx));
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* MPEGLAYER3WAVEFORMAT */

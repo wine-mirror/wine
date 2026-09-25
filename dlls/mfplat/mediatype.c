@@ -3119,6 +3119,9 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
 
     if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
     {
+        if (format->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+            return E_INVALIDARG;
+
         memcpy(&subtype, &wfex->SubFormat, sizeof(subtype));
 
         if (wfex->dwChannelMask)
