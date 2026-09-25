@@ -8733,6 +8733,12 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
         validate_media_type(mediatype, &waveformatext.Format);
     }
 
+    /* Test with tag WAVE_FORMAT_EXTENSIBLE, cbSize 0 and size sizeof(WAVEFORMATEX). */
+    waveformatext.Format.cbSize = 0;
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, &waveformatext.Format, sizeof(*wfx));
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     /* MPEGLAYER3WAVEFORMAT */
     mp3format.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
     mp3format.wfx.nChannels = 2;
