@@ -1297,13 +1297,13 @@ static HRESULT WINAPI dxgi_buffer_GetSubresourceIndex(IMFDXGIBuffer *iface, UINT
 static HRESULT WINAPI dxgi_buffer_GetUnknown(IMFDXGIBuffer *iface, REFIID guid, REFIID riid, void **object)
 {
     struct buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+    HRESULT hr;
 
     TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(guid), debugstr_guid(riid), object);
 
-    if (attributes_GetUnknown(&buffer->dxgi_surface.attributes, guid, riid, object) == MF_E_ATTRIBUTENOTFOUND)
-        return MF_E_NOT_FOUND;
+    hr = attributes_GetUnknown(&buffer->dxgi_surface.attributes, guid, riid, object);
 
-    return S_OK;
+    return hr == MF_E_ATTRIBUTENOTFOUND ? MF_E_NOT_FOUND : hr;
 }
 
 static HRESULT WINAPI dxgi_buffer_SetUnknown(IMFDXGIBuffer *iface, REFIID guid, IUnknown *data)
