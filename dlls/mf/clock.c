@@ -820,6 +820,9 @@ static HRESULT present_clock_schedule_timer(struct presentation_clock *clock, DW
 
     if (flags & MFTIMER_RELATIVE)
     {
+        if (!clock->time_source)
+            return MF_E_CLOCK_NO_TIME_SOURCE;
+
         if (FAILED(hr = IMFPresentationTimeSource_GetCorrelatedTime(clock->time_source, 0, &clocktime, &systime)))
         {
             WARN("Failed to get clock time, hr %#lx.\n", hr);
