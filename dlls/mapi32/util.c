@@ -989,7 +989,7 @@ static void load_mapi_provider(HKEY hkeyMail, LPCWSTR valueName, HMODULE *mapi_p
 
                     /* Expand the path if necessary */
                     dwExpandLen = ExpandEnvironmentStringsW(dllPath, NULL, 0);
-                    dllPathExpanded = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * dwExpandLen + 1);
+                    dllPathExpanded = HeapAlloc(GetProcessHeap(), 0, (dwExpandLen + 1) * sizeof(WCHAR));
 
                     if (dllPathExpanded)
                     {
