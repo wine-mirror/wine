@@ -999,14 +999,14 @@ static VOID test_thread_processor(void)
         mask = affinity_new.Mask;
         affinity_new.Mask = 0;
         bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
-        todo_wine ok(bret, "got error %ld.\n", GetLastError());
+        ok(bret, "got error %ld.\n", GetLastError());
         ok(affinity.Mask == mask, "got %#Ix, expected %#Ix\n", affinity.Mask, mask);
 
         affinity_new.Mask = orig_mask;
         bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
         ok(bret, "got error %ld.\n", GetLastError());
         group_mask = ((UINT64)1 << GetActiveProcessorCount(affinity.Group)) - 1;
-        todo_wine ok(affinity.Mask == group_mask, "got %#Ix, expected %#Ix\n", affinity.Mask, group_mask);
+        ok(affinity.Mask == group_mask, "got %#Ix, expected %#Ix\n", affinity.Mask, group_mask);
         affinity.Mask = orig_mask;
 
         group_mask = ((DWORD_PTR)1 << GetActiveProcessorCount(affinity.Group)) - 1;
@@ -2747,12 +2747,12 @@ static void test_CreateRemoteThreadEx_affinity(void)
     ok(ret, "Couldn't update attr_list\n");
 
     handle = pCreateRemoteThreadEx(GetCurrentProcess(), NULL, 0, &thread_ex_proc, &thread_gaff, 0, attr_list, NULL);
-    todo_wine ok(handle != NULL, "Couldn't create thread %lu %lu\n", GetLastError(), RtlGetCurrentPeb()->NumberOfProcessors);
+    ok(handle != NULL, "Couldn't create thread %lu %lu\n", GetLastError(), RtlGetCurrentPeb()->NumberOfProcessors);
     ret = WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0;
-    todo_wine ok(ret, "Couldn't wait for thread termination\n");
+    ok(ret, "Couldn't wait for thread termination\n");
     ok(thread_gaff.Group == gaff.Group, "Unexpected group %x (expecting %x)\n", thread_gaff.Group, gaff.Group);
     gaff.Mask = ((UINT64)1 << GetActiveProcessorCount(gaff.Group)) - 1;
-    todo_wine ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
+    ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
     CloseHandle(handle);
 
     pDeleteProcThreadAttributeList(attr_list);
