@@ -2166,6 +2166,8 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     return S_OK;
 }
 
+#ifdef _WIN64
+
 static const RPC_SYNTAX_IDENTIFIER ndr_syntax_id =
     {{0x8a885d04, 0x1ceb, 0x11c9, {0x9f, 0xe8, 0x08, 0x00, 0x2b, 0x10, 0x48, 0x60}}, {2, 0}};
 
@@ -2308,3 +2310,5 @@ __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
                    "ret" )
 #endif
+
+#endif /* _WIN64 */
