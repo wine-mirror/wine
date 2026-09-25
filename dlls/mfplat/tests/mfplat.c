@@ -5929,34 +5929,42 @@ static const struct image_size_test
 image_size_tests[] =
 {
     /* RGB */
+    { &MFVideoFormat_RGB8, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_RGB8, 3, 5, 20, 0, 320, 20, 64 },
     { &MFVideoFormat_RGB8, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_RGB8, 320, 240, 76800, 0, 76800, 76800, 320 },
+    { &MFVideoFormat_RGB555, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_RGB555, 3, 5, 40, 0, 320, 40, 64 },
     { &MFVideoFormat_RGB555, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_RGB555, 320, 240, 153600, 0, 153600, 153600, 640 },
+    { &MFVideoFormat_RGB565, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_RGB565, 3, 5, 40, 0, 320, 40, 64 },
     { &MFVideoFormat_RGB565, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_RGB565, 320, 240, 153600, 0, 153600, 153600, 640 },
+    { &MFVideoFormat_RGB24, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_RGB24, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_RGB24, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_RGB24, 4, 3, 36, 0, 192, 36, 64 },
     { &MFVideoFormat_RGB24, 320, 240, 230400, 0, 230400, 230400, 960 },
+    { &MFVideoFormat_RGB32, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_RGB32, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_RGB32, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_RGB32, 320, 240, 307200, 0, 307200, 307200, 1280 },
+    { &MFVideoFormat_ARGB32, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_ARGB32, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_ARGB32, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_ARGB32, 320, 240, 307200, 0, 307200, 307200, 1280 },
     { &MFVideoFormat_ABGR32, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_ABGR32, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_ABGR32, 320, 240, 307200, 0, 307200, 307200, 1280 },
+    { &MFVideoFormat_A2R10G10B10, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_A2R10G10B10, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_A2R10G10B10, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_A2R10G10B10, 320, 240, 307200, 0, 307200, 307200, 1280 },
     { &MFVideoFormat_A2B10G10R10, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_A2B10G10R10, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_A2B10G10R10, 320, 240, 307200, 0, 307200, 307200, 1280 },
+    { &MFVideoFormat_A16B16G16R16F, 2, 0, 0, 0, 0, 0, 64 },
     { &MFVideoFormat_A16B16G16R16F, 3, 5, 120, 0, 320, 120, 64 },
     { &MFVideoFormat_A16B16G16R16F, 1, 1, 8, 0, 64, 8, 64 },
     { &MFVideoFormat_A16B16G16R16F, 320, 240, 614400, 0, 614400, 614400, 2560 },
@@ -5974,6 +5982,7 @@ image_size_tests[] =
     { &MEDIASUBTYPE_RGB32,  1, 1, 4  },
 
     /* YUV 4:4:4, 32 bpp, packed */
+    { &MFVideoFormat_AYUV, 2, 0, 0, 0,  0, 0, 64 },
     { &MFVideoFormat_AYUV, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_AYUV, 2, 1, 8, 0, 64, 8, 64 },
     { &MFVideoFormat_AYUV, 1, 2, 8, 0, 128, 8, 64 },
@@ -5981,11 +5990,13 @@ image_size_tests[] =
     { &MFVideoFormat_AYUV, 320, 240, 307200, 0, 307200, 307200, 1280 },
 
     /* YUV 4:2:2, 16 bpp, packed */
+    { &MFVideoFormat_YUY2, 2, 0, 0, 0,  0, 0, 64 },
     { &MFVideoFormat_YUY2, 2, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_YUY2, 4, 3, 24, 0, 192, 24, 64 },
     { &MFVideoFormat_YUY2, 128, 128, 32768, 0, 32768, 32768, 256 },
     { &MFVideoFormat_YUY2, 320, 240, 153600, 0, 153600, 153600, 640 },
 
+    { &MFVideoFormat_UYVY, 2, 0, 0, 0,  0, 0, 64 },
     { &MFVideoFormat_UYVY, 2, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_UYVY, 4, 3, 24, 0, 192, 24, 64 },
     { &MFVideoFormat_UYVY, 128, 128, 32768, 0, 32768, 32768, 256 },
@@ -5994,6 +6005,7 @@ image_size_tests[] =
     /* YUV 4:2:0, 16 bpp, planar (the secondary plane has the same
      * height, half the width and the same stride as the primary
      * one) */
+    { &MFVideoFormat_IMC1, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_IMC1, 1, 1, 4, 0, 256, 8, 128 },
     { &MFVideoFormat_IMC1, 2, 1, 4, 0, 256, 8, 128 },
     { &MFVideoFormat_IMC1, 1, 2, 8, 0, 512, 16, 128 },
@@ -6003,6 +6015,7 @@ image_size_tests[] =
     { &MFVideoFormat_IMC1, 4, 3, 24, 0, 768, 48, 128 },
     { &MFVideoFormat_IMC1, 320, 240, 153600, 0, 307200, 307200, 640 },
 
+    { &MFVideoFormat_IMC3, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_IMC3, 1, 1, 4, 0, 256, 8, 128 },
     { &MFVideoFormat_IMC3, 2, 1, 4, 0, 256, 8, 128 },
     { &MFVideoFormat_IMC3, 1, 2, 8, 0, 512, 16, 128 },
@@ -6015,6 +6028,7 @@ image_size_tests[] =
     /* YUV 4:2:0, 12 bpp, planar, full stride (the secondary plane has
      * half the height, the same width and the same stride as the
      * primary one) */
+    { &MFVideoFormat_NV12, 2, 0, 0, 0,   0, 0, 64 },
     { &MFVideoFormat_NV12, 1, 3, 9, 4, 288, 4, 64 },
     { &MFVideoFormat_NV12, 1, 2, 6, 3, 192, 3, 64 },
     { &MFVideoFormat_NV12, 2, 2, 6, 6, 192, 6, 64 },
@@ -6027,6 +6041,7 @@ image_size_tests[] =
     /* YUV 4:2:0, 12 bpp, planar, half stride (the secondary plane has
      * the same height, half the width and half the stride of the
      * primary one) */
+    { &MFVideoFormat_IMC2, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_IMC2, 1, 1, 3, 1, 192, 1, 128 },
     { &MFVideoFormat_IMC2, 1, 2, 6, 3, 384, 2, 128 },
     { &MFVideoFormat_IMC2, 1, 3, 9, 4, 576, 3, 128 },
@@ -6039,6 +6054,7 @@ image_size_tests[] =
     { &MFVideoFormat_IMC2, 4, 3, 18, 0, 576, 18, 128 },
     { &MFVideoFormat_IMC2, 320, 240, 115200, 0, 138240, 115200, 384 },
 
+    { &MFVideoFormat_IMC4, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_IMC4, 1, 1, 3, 1, 192, 1, 128 },
     { &MFVideoFormat_IMC4, 1, 2, 6, 3, 384, 2, 128 },
     { &MFVideoFormat_IMC4, 1, 3, 9, 4, 576, 3, 128 },
@@ -6052,6 +6068,7 @@ image_size_tests[] =
     { &MFVideoFormat_IMC4, 320, 240, 115200, 0, 138240, 115200, 384 },
 
     /* YUV 4:1:1, 12 bpp, semi-planar */
+    { &MFVideoFormat_NV11, 2,   0,    0,     0,    0,    0,      128 },
     { &MFVideoFormat_NV11, 1,   3,   18,     4,  576,    3,      128 },
     { &MFVideoFormat_NV11, 1,   2,   12,     3,  384,    2,      128 },
     { &MFVideoFormat_NV11, 2,   2,   12,     6,  384,    6,      128 },
@@ -6060,6 +6077,7 @@ image_size_tests[] =
     { &MFVideoFormat_NV11, 4,   2,   12,     0,  384,    12,     128 },
     { &MFVideoFormat_NV11, 320, 240, 115200, 0,  138240, 115200, 384 },
 
+    { &MFVideoFormat_YV12, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_YV12, 1, 1, 3, 1, 192, 1, 128 },
     { &MFVideoFormat_YV12, 1, 2, 6, 3, 384, 2, 128 },
     { &MFVideoFormat_YV12, 1, 3, 9, 4, 576, 3, 128 },
@@ -6072,6 +6090,7 @@ image_size_tests[] =
     { &MFVideoFormat_YV12, 4, 3, 18, 0, 576, 18, 128 },
     { &MFVideoFormat_YV12, 320, 240, 115200, 0, 138240, 115200, 384 },
 
+    { &MFVideoFormat_I420, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_I420, 1, 1, 3, 1, 192, 1, 128 },
     { &MFVideoFormat_I420, 1, 2, 6, 3, 384, 2, 128 },
     { &MFVideoFormat_I420, 1, 3, 9, 4, 576, 3, 128 },
@@ -6084,6 +6103,7 @@ image_size_tests[] =
     { &MFVideoFormat_I420, 4, 3, 18, 0, 576, 18, 128 },
     { &MFVideoFormat_I420, 320, 240, 115200, 0, 138240, 115200, 384 },
 
+    { &MFVideoFormat_IYUV, 2, 0, 0, 0,   0, 0, 128 },
     { &MFVideoFormat_IYUV, 1, 1, 3, 1, 192, 1, 128 },
     { &MFVideoFormat_IYUV, 1, 2, 6, 3, 384, 2, 128 },
     { &MFVideoFormat_IYUV, 1, 3, 9, 4, 576, 3, 128 },
@@ -6096,6 +6116,7 @@ image_size_tests[] =
     { &MFVideoFormat_IYUV, 4, 3, 18, 0, 576, 18, 128 },
     { &MFVideoFormat_IYUV, 320, 240, 115200, 0, 138240, 115200, 384 },
 
+    { &MFVideoFormat_P010, 2, 0,  0, 0,   0, 0, 64 },
     { &MFVideoFormat_P010, 1, 2, 12, 6, 192, 6, 64 },
     { &MFVideoFormat_P010, 2, 2, 12, 0, 192, 12, 64 },
     { &MFVideoFormat_P010, 2, 4, 24, 0, 384, 24, 64 },
@@ -6118,6 +6139,7 @@ static void test_MFCalculateImageSize(void)
     for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
         const struct image_size_test *ptr = &image_size_tests[i];
+        HRESULT expected_hr = ptr->height ? S_OK : E_INVALIDARG;
 
         /* Those are supported since Win10. */
         BOOL is_broken = IsEqualGUID(ptr->subtype, &MFVideoFormat_A16B16G16R16F) ||
@@ -6125,7 +6147,8 @@ static void test_MFCalculateImageSize(void)
                 IsEqualGUID(ptr->subtype, &MFVideoFormat_ABGR32);
 
         hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
-        ok(hr == S_OK || broken(is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
+        todo_wine_if(!ptr->height)
+        ok(hr == expected_hr || broken(is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
         if (hr == S_OK)
         {
             ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
@@ -7745,6 +7768,10 @@ static void test_MFCreate2DMediaBuffer(void)
     hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), TRUE, &buffer);
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
 
+    /* Zero width is not allowed. */
+    hr = pMFCreate2DMediaBuffer(0, 3, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
+
     hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
@@ -7914,6 +7941,26 @@ static void test_MFCreate2DMediaBuffer(void)
 
     IMFMediaBuffer_Release(buffer);
 
+    /* Zero height bottom-up is allowed. */
+    hr = pMFCreate2DMediaBuffer(2, 0, D3DFMT_A8R8G8B8, TRUE, &buffer);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data2, &pitch, &buffer_start, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* scanline0 has an overflow issue on 64-bit. */
+    ok(data2 == buffer_start + -pitch * (ULONG)-1, "Unexpected data pointer.\n");
+    ok(!!buffer_start, "Expected data pointer.\n");
+    ok(!!pitch, "Unexpected pitch.\n");
+    ok(length == 0, "Unexpected length.\n");
+
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
+
+    IMF2DBuffer2_Release(_2dbuffer2);
+    IMFMediaBuffer_Release(buffer);
+
     for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
         const struct image_size_test *ptr = &image_size_tests[i];
@@ -7947,7 +7994,7 @@ static void test_MFCreate2DMediaBuffer(void)
             data2[j] = j & 0x7f;
 
         hr = IMF2DBuffer2_ContiguousCopyFrom(_2dbuffer2, data2, ptr->contiguous_length - 1);
-        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(hr == (ptr->height ? E_INVALIDARG : S_OK), "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
@@ -8011,7 +8058,7 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
         hr = IMF2DBuffer2_ContiguousCopyTo(_2dbuffer2, data2, ptr->contiguous_length - 1);
-        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(hr == (ptr->height ? E_INVALIDARG : S_OK), "Unexpected hr %#lx.\n", hr);
 
         memset(data2, 0xff, ptr->contiguous_length + 16);
 
@@ -8376,6 +8423,19 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    /* Zero height is allowed */
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)7 << 32);
+    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
+    hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
+    ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
+    ok(max == 0, "Unexpected max length.\n");
+    ok(length == 0, "Unexpected length.\n");
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Failed to unlock, hr %#lx.\n", hr);
+    IMFMediaBuffer_Release(buffer);
 
     /* MF_MT_FRAME_SIZE forces the buffer size, regardless of min length */
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)7 << 32 | 8);
