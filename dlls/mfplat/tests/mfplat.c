@@ -13094,6 +13094,12 @@ static void test_sample_allocator_sysmem(void)
     hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -13227,6 +13233,9 @@ static void test_sample_allocator_sysmem(void)
 
     hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     EXPECT_REF(attributes, 1);
     hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
