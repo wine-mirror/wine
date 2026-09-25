@@ -1482,8 +1482,7 @@ dnl **** Check for OpenCL ****
 if test "x$with_opencl" != "xno"
 then
     WINE_PACKAGE_FLAGS(OPENCL,[OpenCL],[-lOpenCL],,,
-        [AC_CHECK_HEADERS([CL/cl.h])
-         AC_CHECK_FUNC(clGetPlatformInfo,[:])])
+        [AC_CHECK_HEADERS([CL/cl.h],[AC_CHECK_FUNC(clGetPlatformInfo)])])
 fi
 WINE_NOTICE_WITH(opencl,[test "x$ac_cv_func_clGetPlatformInfo" != xyes],
                  [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.],
@@ -1493,8 +1492,7 @@ dnl **** Check for libpcap ****
 if test "x$with_pcap" != "xno"
 then
     WINE_PACKAGE_FLAGS(PCAP,[libpcap],[-lpcap],,,
-        [AC_CHECK_HEADERS([pcap/pcap.h])
-         AC_CHECK_FUNC(pcap_init,[:],[PCAP_LIBS=""])])
+        [AC_CHECK_HEADER([pcap/pcap.h],[AC_CHECK_FUNC(pcap_init)])])
 fi
 WINE_NOTICE_WITH(pcap,[test "x$ac_cv_func_pcap_init" != xyes],
                  [pcap ${notice_platform}development files not found, wpcap won't be supported.],
@@ -1518,8 +1516,9 @@ dnl **** Check for inotify ****
 if test "x$with_inotify" != "xno"
 then
     WINE_PACKAGE_FLAGS(INOTIFY,[libinotify],[-linotify],,,
-        [AC_CHECK_HEADERS([sys/inotify.h])
-         AC_CHECK_FUNC(inotify_add_watch,[:],[INOTIFY_LIBS=""])])
+        [AC_CHECK_HEADERS([sys/inotify.h],
+            [AC_CHECK_FUNC(inotify_add_watch,,[INOTIFY_LIBS=""])],
+            [INOTIFY_LIBS=""])])
 fi
 WINE_NOTICE_WITH(inotify,[test "$ac_cv_header_sys_inotify_h" != "yes"],
                  [libinotify ${notice_platform}development files not found (or too old), filesystem change notifications won't be supported.])
@@ -1573,8 +1572,7 @@ dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"
 then
     WINE_PACKAGE_FLAGS(SANE,[sane-backends],,[`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`],[`${SANE_CONFIG:-sane-config} --ldflags 2>/dev/null`],
-        [AC_CHECK_HEADER(sane/sane.h,
-            [AC_CHECK_FUNC(sane_init,[:])])])
+        [AC_CHECK_HEADER(sane/sane.h,[AC_CHECK_FUNC(sane_init)])])
 fi
 WINE_NOTICE_WITH(sane,[test "$ac_cv_func_sane_init" != "yes"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.],
@@ -1584,9 +1582,7 @@ dnl **** Check for libusb ****
 if test "x$with_usb" != "xno"
 then
     WINE_PACKAGE_FLAGS(USB,[libusb-1.0],[-lusb-1.0],,,
-        [AC_CHECK_HEADER([libusb.h],
-            [AC_CHECK_FUNC(libusb_interrupt_event_handler,[:],[USB_LIBS=""])],
-            [USB_LIBS=""])])
+        [AC_CHECK_HEADER([libusb.h],[AC_CHECK_FUNC(libusb_interrupt_event_handler)])])
 fi
 WINE_NOTICE_WITH(usb,[test "$ac_cv_func_libusb_interrupt_event_handler" != "yes"],
                  [libusb-1.0 ${notice_platform}development files not found (or too old), USB devices won't be supported.],
@@ -1723,11 +1719,9 @@ dnl **** Check for PulseAudio ****
 if test "x$with_pulse" != "xno";
 then
     WINE_PACKAGE_FLAGS(PULSE,[libpulse],,,,
-        [AC_CHECK_HEADER([pulse/pulseaudio.h],
-            [AC_CHECK_FUNC(pa_stream_is_corked,[:],[PULSE_LIBS=""])],
-            [PULSE_LIBS=""])])
+        [AC_CHECK_HEADER([pulse/pulseaudio.h],[AC_CHECK_FUNC(pa_stream_is_corked)])])
 fi
-WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
+WINE_NOTICE_WITH(pulse, [test "x$ac_cv_func_pa_stream_is_corked" != xyes],
         [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.],
         [enable_winepulse_drv])
 
@@ -1776,9 +1770,9 @@ AC_SUBST(ALSA_LIBS,"")
 if test "x$with_alsa" != "xno"
 then
     WINE_PACKAGE_FLAGS(ALSA,[alsa],[-lasound],,,
-        [AC_CHECK_FUNC(snd_pcm_hw_params_get_access_mask,[:],[ALSA_LIBS=""])])
+        [AC_CHECK_FUNC(snd_pcm_hw_params_get_access_mask)])
 fi
-WINE_NOTICE_WITH(alsa,[test -z "$ALSA_LIBS"],
+WINE_NOTICE_WITH(alsa,[test "x$ac_cv_func_snd_pcm_hw_params_get_access_mask" != xyes],
                  [libasound ${notice_platform}development files not found, Alsa won't be supported.],
                  [enable_winealsa_drv])
 
@@ -1835,7 +1829,7 @@ then
     [AC_CHECK_HEADERS([capi20.h linux/capi.h],,,[#define __user])
     if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
     then
-        AC_CHECK_FUNC(capi20_register,[:],[CAPI20_LIBS=""])
+        AC_CHECK_FUNC(capi20_register)
     fi])
 fi
 WINE_NOTICE_WITH(capi,[test "x$ac_cv_func_capi20_register" != xyes],
@@ -1851,10 +1845,9 @@ then
                        [AC_CHECK_HEADERS(cups/cups.h cups/ppd.h)
                         if test "$ac_cv_header_cups_cups_h" = "yes"
                         then
-                            WINE_CHECK_SONAME(cups,cupsGetDefault,,[CUPS_LIBS=""])
+                            WINE_CHECK_SONAME(cups,cupsGetDefault,,[CUPS_CFLAGS=""])
                         else
                             CUPS_CFLAGS=""
-                            CUPS_LIBS=""
                         fi])
 fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
@@ -1886,8 +1879,8 @@ then
          fi])
 fi
 WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
-                 [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.])
-test "x$ac_cv_lib_soname_krb5" != "x" || with_gssapi=${with_gssapi:-no}
+                 [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.],
+                 [with_gssapi])
 
 dnl **** Check for gssapi ****
 if test "x$with_gssapi" != "xno"
@@ -1924,8 +1917,7 @@ then
       [WINE_CHECK_SONAME(netapi,libnetapi_init,,[AC_DEFINE_UNQUOTED(SONAME_LIBNETAPI,["libnetapi.$LIBEXT"])])])
 fi
 WINE_NOTICE_WITH(netapi,[test "x$ac_cv_lib_soname_netapi" = "x"],
-                 [libnetapi not found, Samba NetAPI won't be supported.],
-                 [enable_netapi])
+                 [libnetapi not found, Samba NetAPI won't be supported.])
 
 
 dnl **** Check for any sound system ****
