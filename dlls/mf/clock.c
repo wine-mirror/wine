@@ -818,8 +818,6 @@ static HRESULT present_clock_schedule_timer(struct presentation_clock *clock, DW
     MFTIME systime, clocktime;
     HRESULT hr;
 
-    timer->time = time;
-
     if (flags & MFTIMER_RELATIVE)
     {
         if (FAILED(hr = IMFPresentationTimeSource_GetCorrelatedTime(clock->time_source, 0, &clocktime, &systime)))
@@ -827,8 +825,10 @@ static HRESULT present_clock_schedule_timer(struct presentation_clock *clock, DW
             WARN("Failed to get clock time, hr %#lx.\n", hr);
             return hr;
         }
-        timer->time += clocktime;
+        time += clocktime;
     }
+
+    timer->time = time;
 
     return MFCreateAsyncResult(NULL, callback, state, &timer->result);
 }
