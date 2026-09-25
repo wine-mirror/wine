@@ -430,7 +430,7 @@ static BOOL device_is_overridden(HANDLE device)
     if ((appkey && !RegQueryValueExW(appkey, name, 0, NULL, (LPBYTE)buffer, &size)) ||
         (defkey && !RegQueryValueExW(defkey, name, 0, NULL, (LPBYTE)buffer, &size)))
     {
-        if ((disable = !wcscmp(buffer, L"override")))
+        if ((disable = !wcscmp(buffer, L"override") || !wcscmp(buffer, L"disabled")))
             TRACE("Disabling gamepad '%s' based on registry key.\n", debugstr_w(name));
     }
 
@@ -462,7 +462,7 @@ static BOOL open_device_at_index(const WCHAR *device_path, int index)
              caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
         WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
     else if (device_is_overridden(device))
-        WARN("ignoring HID device, overridden for dinput\n");
+        WARN("ignoring HID device, overridden for dinput or disabled\n");
     else if (!controller_init(&controllers[index], preparsed, &caps, device, device_path))
         WARN("ignoring HID device, failed to initialize\n");
     else
