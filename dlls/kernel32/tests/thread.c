@@ -879,7 +879,7 @@ static VOID test_thread_processor(void)
    HANDLE curthread,curproc;
    DWORD_PTR processMask,systemMask,retMask;
    SYSTEM_INFO sysInfo;
-   BOOL is_wow64, old_wow64 = FALSE;
+   BOOL is_wow64, old_wow64 = FALSE, bret;
    DWORD ret;
 
    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -914,6 +914,10 @@ static VOID test_thread_processor(void)
    retMask = SetThreadAffinityMask(curthread,~0);
    ok(broken(retMask==0) || retMask==processMask,
       "SetThreadAffinityMask(thread,-1) failed to request all processors.\n");
+
+    SetLastError(0xdeadbeef);
+    bret = SetThreadAffinityMask(curthread, 0);
+    ok(!bret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, err %ld.\n", bret, GetLastError());
 
     if (retMask == processMask)
     {
@@ -962,10 +966,17 @@ static VOID test_thread_processor(void)
     if (pGetThreadGroupAffinity && pSetThreadGroupAffinity)
     {
         GROUP_AFFINITY affinity, affinity_new;
+        unsigned int idx;
+        DWORD_PTR mask, orig_mask, group_mask;
         NTSTATUS status;
 
         memset(&affinity, 0, sizeof(affinity));
         ok(pGetThreadGroupAffinity(curthread, &affinity), "GetThreadGroupAffinity failed\n");
+        orig_mask = affinity.Mask;
+        ok(affinity.Mask, "zero mask.\n");
+        for (idx = 0; !(affinity.Mask & ((DWORD_PTR)1 << idx)); ++idx)
+            ;
+        mask = (DWORD_PTR)1 << idx;
 
         SetLastError(0xdeadbeef);
         ok(!pGetThreadGroupAffinity(curthread, NULL), "GetThreadGroupAffinity succeeded\n");
@@ -979,6 +990,26 @@ static VOID test_thread_processor(void)
         ok(pSetThreadGroupAffinity(curthread, &affinity_new, &affinity), "SetThreadGroupAffinity failed\n");
         ok(affinity_new.Mask == affinity.Mask, "Expected old affinity mask %Ix, got %Ix\n",
            affinity_new.Mask, affinity.Mask);
+
+        affinity_new.Mask &= ~mask;
+        bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
+        ok(bret, "got error %ld.\n", GetLastError());
+        ok(affinity.Mask == (affinity_new.Mask | mask), "got %#Ix\n", affinity.Mask);
+
+        mask = affinity_new.Mask;
+        affinity_new.Mask = 0;
+        bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
+        todo_wine ok(bret, "got error %ld.\n", GetLastError());
+        ok(affinity.Mask == mask, "got %#Ix, expected %#Ix\n", affinity.Mask, mask);
+
+        affinity_new.Mask = orig_mask;
+        bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
+        ok(bret, "got error %ld.\n", GetLastError());
+        group_mask = ((UINT64)1 << GetActiveProcessorCount(affinity.Group)) - 1;
+        todo_wine ok(affinity.Mask == group_mask, "got %#Ix, expected %#Ix\n", affinity.Mask, group_mask);
+        affinity.Mask = orig_mask;
+
+        group_mask = ((DWORD_PTR)1 << GetActiveProcessorCount(affinity.Group)) - 1;
 
         /* show that the "all processors" flag is not supported for SetThreadGroupAffinity */
         if (sysInfo.dwNumberOfProcessors < 8 * sizeof(DWORD_PTR))
@@ -2672,6 +2703,7 @@ static void test_CreateRemoteThreadEx_affinity(void)
 {
     struct _PROC_THREAD_ATTRIBUTE_LIST *attr_list;
     GROUP_AFFINITY gaff, thread_gaff;
+    DWORD_PTR prev_mask;
     HANDLE handle;
     SIZE_T size;
     BOOL ret;
@@ -2702,6 +2734,25 @@ static void test_CreateRemoteThreadEx_affinity(void)
     ok(ret, "Couldn't wait for thread termination\n");
     ok(thread_gaff.Group == gaff.Group, "Unexpected group %x (expecting %x)\n", thread_gaff.Group, gaff.Group);
     ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
+    CloseHandle(handle);
+
+    ret = pInitializeProcThreadAttributeList(attr_list, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    prev_mask = SetThreadAffinityMask(GetCurrentThread(), 0);
+    ok(!prev_mask, "got %#Ix.\n", prev_mask);
+    memset(&gaff, 0, sizeof(gaff));
+
+    ret = pUpdateProcThreadAttribute(attr_list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY,
+                                     &gaff, sizeof(gaff), NULL, NULL);
+    ok(ret, "Couldn't update attr_list\n");
+
+    handle = pCreateRemoteThreadEx(GetCurrentProcess(), NULL, 0, &thread_ex_proc, &thread_gaff, 0, attr_list, NULL);
+    todo_wine ok(handle != NULL, "Couldn't create thread %lu %lu\n", GetLastError(), RtlGetCurrentPeb()->NumberOfProcessors);
+    ret = WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0;
+    todo_wine ok(ret, "Couldn't wait for thread termination\n");
+    ok(thread_gaff.Group == gaff.Group, "Unexpected group %x (expecting %x)\n", thread_gaff.Group, gaff.Group);
+    gaff.Mask = ((UINT64)1 << GetActiveProcessorCount(gaff.Group)) - 1;
+    todo_wine ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
     CloseHandle(handle);
 
     pDeleteProcThreadAttributeList(attr_list);
