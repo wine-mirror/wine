@@ -2816,6 +2816,9 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
 
     TRACE("%s, %u, %u, %p.\n", debugstr_mf_guid(subtype), width, height, size);
 
+    if (!height)
+        return E_INVALIDARG;
+
     if (!(format = mf_get_video_format(subtype)))
     {
         *size = 0;

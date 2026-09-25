@@ -6147,7 +6147,6 @@ static void test_MFCalculateImageSize(void)
                 IsEqualGUID(ptr->subtype, &MFVideoFormat_ABGR32);
 
         hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
-        todo_wine_if(!ptr->height)
         ok(hr == expected_hr || broken(is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
         if (hr == S_OK)
         {
