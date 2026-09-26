@@ -246,7 +246,7 @@ BOOL WINAPI LogonUserA( LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassw
           debugstr_a(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
 
     if (lpszUsername && !(usernameW = strdupAW( lpszUsername ))) return FALSE;
-    if (lpszDomain && !(domainW = strdupAW( lpszUsername ))) goto done;
+    if (lpszDomain && !(domainW = strdupAW( lpszDomain ))) goto done;
     if (lpszPassword && !(passwordW = strdupAW( lpszPassword ))) goto done;
 
     ret = LogonUserW( usernameW, domainW, passwordW, dwLogonType, dwLogonProvider, phToken );
