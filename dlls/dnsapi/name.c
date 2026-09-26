@@ -35,10 +35,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
  * DnsNameCompare_A               [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsNameCompare_A( PCSTR name1, PCSTR name2 )
+BOOL WINAPI DnsNameCompare_A( const char *name1, const char *name2 )
 {
     BOOL ret;
-    PWSTR name1W, name2W;
+    WCHAR *name1W, *name2W;
 
     TRACE( "(%s,%s)\n", debugstr_a(name1), debugstr_a(name2) );
 
@@ -57,9 +57,9 @@ BOOL WINAPI DnsNameCompare_A( PCSTR name1, PCSTR name2 )
  * DnsNameCompare_W               [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsNameCompare_W( PCWSTR name1, PCWSTR name2 )
+BOOL WINAPI DnsNameCompare_W( const WCHAR *name1, const WCHAR *name2 )
 {
-    PCWSTR p, q;
+    const WCHAR *p, *q;
 
     TRACE( "(%s,%s)\n", debugstr_w(name1), debugstr_w(name2) );
 
@@ -79,9 +79,9 @@ BOOL WINAPI DnsNameCompare_W( PCWSTR name1, PCWSTR name2 )
  * DnsValidateName_A              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsValidateName_A( PCSTR name, DNS_NAME_FORMAT format )
+DNS_STATUS WINAPI DnsValidateName_A( const char *name, DNS_NAME_FORMAT format )
 {
-    PWSTR nameW;
+    WCHAR *nameW;
     DNS_STATUS ret;
 
     TRACE( "(%s, %d)\n", debugstr_a(name), format );
@@ -97,9 +97,9 @@ DNS_STATUS WINAPI DnsValidateName_A( PCSTR name, DNS_NAME_FORMAT format )
  * DnsValidateName_UTF8           [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsValidateName_UTF8( PCSTR name, DNS_NAME_FORMAT format )
+DNS_STATUS WINAPI DnsValidateName_UTF8( const char *name, DNS_NAME_FORMAT format )
 {
-    PWSTR nameW;
+    WCHAR *nameW;
     DNS_STATUS ret;
 
     TRACE( "(%s, %d)\n", debugstr_a(name), format );
@@ -126,9 +126,9 @@ DNS_STATUS WINAPI DnsValidateName_UTF8( PCSTR name, DNS_NAME_FORMAT format )
  * DnsValidateName_W              [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
+DNS_STATUS WINAPI DnsValidateName_W( const WCHAR *name, DNS_NAME_FORMAT format )
 {
-    PCWSTR p;
+    const WCHAR *p;
     unsigned int i, j, state = 0;
     static const WCHAR invalid[] = L"{|}~[\\]^':;<=>?@!\"#$%&`()+/,";
 

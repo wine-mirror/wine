@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     TRACE( "(%p, %lu, %p)\n", hinst, reason, reserved );
 
@@ -92,18 +92,18 @@ DNS_STATUS WINAPI DnsAcquireContextHandle_W( DWORD flags, void *cred, HANDLE *co
  * DnsFlushResolverCache               [DNSAPI.@]
  *
  */
-VOID WINAPI DnsFlushResolverCache(void)
+void WINAPI DnsFlushResolverCache( void )
 {
-    FIXME(": stub\n");
+    FIXME( "stub\n" );
 }
 
 /******************************************************************************
  * DnsFlushResolverCacheEntry_A               [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsFlushResolverCacheEntry_A( PCSTR entry )
+BOOL WINAPI DnsFlushResolverCacheEntry_A( const char *entry )
 {
-    FIXME( "%s: stub\n", debugstr_a(entry) );
+    FIXME( "(%s) stub\n", debugstr_a(entry) );
     if (!entry) return FALSE;
     return TRUE;
 }
@@ -112,9 +112,9 @@ BOOL WINAPI DnsFlushResolverCacheEntry_A( PCSTR entry )
  * DnsFlushResolverCacheEntry_UTF8               [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsFlushResolverCacheEntry_UTF8( PCSTR entry )
+BOOL WINAPI DnsFlushResolverCacheEntry_UTF8( const char *entry )
 {
-    FIXME( "%s: stub\n", debugstr_a(entry) );
+    FIXME( "(%s) stub\n", debugstr_a(entry) );
     if (!entry) return FALSE;
     return TRUE;
 }
@@ -123,9 +123,9 @@ BOOL WINAPI DnsFlushResolverCacheEntry_UTF8( PCSTR entry )
  * DnsFlushResolverCacheEntry_W               [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsFlushResolverCacheEntry_W( PCWSTR entry )
+BOOL WINAPI DnsFlushResolverCacheEntry_W( const WCHAR *entry )
 {
-    FIXME( "%s: stub\n", debugstr_w(entry) );
+    FIXME( "(%s) stub\n", debugstr_w(entry) );
     if (!entry) return FALSE;
     return TRUE;
 }
@@ -144,7 +144,7 @@ BOOL WINAPI DnsGetCacheDataTable( DNS_CACHE_ENTRY **entry )
  * DnsReleaseContextHandle                [DNSAPI.@]
  *
  */
-VOID WINAPI DnsReleaseContextHandle( HANDLE context )
+void WINAPI DnsReleaseContextHandle( HANDLE context )
 {
     FIXME( "(%p) stub\n", context );
 }
@@ -241,7 +241,7 @@ DNS_STATUS WINAPI DnsReplaceRecordSetW( DNS_RECORDW *set, DWORD options, HANDLE 
  * DnsServiceBrowse                        [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceBrowse( PDNS_SERVICE_BROWSE_REQUEST request, PDNS_SERVICE_CANCEL cancel)
+DNS_STATUS WINAPI DnsServiceBrowse( DNS_SERVICE_BROWSE_REQUEST *request, DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p, %p) stub\n", request, cancel );
     return ERROR_SUCCESS;
@@ -251,9 +251,9 @@ DNS_STATUS WINAPI DnsServiceBrowse( PDNS_SERVICE_BROWSE_REQUEST request, PDNS_SE
  * DnsServiceConstructInstance              [DNSAPI.@]
  *
  */
-PDNS_SERVICE_INSTANCE WINAPI DnsServiceConstructInstance( PCWSTR name, PCWSTR host,
-        PIP4_ADDRESS ip4, PIP6_ADDRESS ip6, WORD port, WORD priority, WORD weight,
-        DWORD count, PCWSTR *keys, PCWSTR *values )
+DNS_SERVICE_INSTANCE * WINAPI DnsServiceConstructInstance( const WCHAR *name, const WCHAR *host,
+        IP4_ADDRESS *ip4, IP6_ADDRESS *ip6, WORD port, WORD priority, WORD weight,
+        DWORD count, const WCHAR **keys, const WCHAR **values )
 {
     DNS_SERVICE_INSTANCE *instance;
     DWORD i;
@@ -284,7 +284,7 @@ PDNS_SERVICE_INSTANCE WINAPI DnsServiceConstructInstance( PCWSTR name, PCWSTR ho
  * DnsServiceFreeInstance                   [DNSAPI.@]
  *
  */
-void WINAPI DnsServiceFreeInstance( PDNS_SERVICE_INSTANCE instance )
+void WINAPI DnsServiceFreeInstance( DNS_SERVICE_INSTANCE *instance )
 {
     DWORD i;
 
@@ -310,7 +310,7 @@ void WINAPI DnsServiceFreeInstance( PDNS_SERVICE_INSTANCE instance )
  * DnsServiceRegister                       [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceRegister( PDNS_SERVICE_REGISTER_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceRegister( DNS_SERVICE_REGISTER_REQUEST *request, DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p, %p) stub\n", request, cancel );
 
@@ -327,7 +327,7 @@ DNS_STATUS WINAPI DnsServiceRegister( PDNS_SERVICE_REGISTER_REQUEST request, PDN
  * DnsServiceDeRegister                     [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceDeRegister( PDNS_SERVICE_REGISTER_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceDeRegister( DNS_SERVICE_REGISTER_REQUEST *request, DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p, %p) stub\n", request, cancel );
 
@@ -340,7 +340,7 @@ DNS_STATUS WINAPI DnsServiceDeRegister( PDNS_SERVICE_REGISTER_REQUEST request, P
  * DnsServiceRegisterCancel                 [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceRegisterCancel( PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceRegisterCancel( DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p) stub\n", cancel );
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -350,7 +350,7 @@ DNS_STATUS WINAPI DnsServiceRegisterCancel( PDNS_SERVICE_CANCEL cancel )
  * DnsServiceResolve                        [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceResolve( PDNS_SERVICE_RESOLVE_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceResolve( DNS_SERVICE_RESOLVE_REQUEST *request, DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p, %p) stub\n", request, cancel );
 
@@ -363,7 +363,7 @@ DNS_STATUS WINAPI DnsServiceResolve( PDNS_SERVICE_RESOLVE_REQUEST request, PDNS_
  * DnsServiceResolveCancel                  [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceResolveCancel( PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceResolveCancel( DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p) stub\n", cancel );
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -373,7 +373,7 @@ DNS_STATUS WINAPI DnsServiceResolveCancel( PDNS_SERVICE_CANCEL cancel )
  * DnsServiceBrowseCancel                   [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsServiceBrowseCancel( PDNS_SERVICE_CANCEL cancel )
+DNS_STATUS WINAPI DnsServiceBrowseCancel( DNS_SERVICE_CANCEL *cancel )
 {
     FIXME( "(%p) stub\n", cancel );
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -383,7 +383,7 @@ DNS_STATUS WINAPI DnsServiceBrowseCancel( PDNS_SERVICE_CANCEL cancel )
  * DnsStartMulticastQuery                  [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsStartMulticastQuery(MDNS_QUERY_REQUEST *request, MDNS_QUERY_HANDLE *handle)
+DNS_STATUS WINAPI DnsStartMulticastQuery( MDNS_QUERY_REQUEST *request, MDNS_QUERY_HANDLE *handle )
 {
     FIXME( "(%p, %p) stub\n", request, handle );
     return ERROR_SUCCESS;
@@ -393,7 +393,7 @@ DNS_STATUS WINAPI DnsStartMulticastQuery(MDNS_QUERY_REQUEST *request, MDNS_QUERY
  * DnsStopMulticastQuery                   [DNSAPI.@]
  *
  */
-DNS_STATUS WINAPI DnsStopMulticastQuery(MDNS_QUERY_HANDLE *handle)
+DNS_STATUS WINAPI DnsStopMulticastQuery( MDNS_QUERY_HANDLE *handle )
 {
     FIXME( "(%p) stub\n", handle );
     return ERROR_SUCCESS;
