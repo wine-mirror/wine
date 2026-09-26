@@ -247,6 +247,56 @@ static DNS_STATUS find_cache_result( enum service service, const char *name, WOR
     return DNS_ERROR_RECORD_DOES_NOT_EXIST;
 }
 
+BOOL get_cache_data_table( DNS_CACHE_ENTRY **ret_table )
+{
+    unsigned int i;
+    DNS_CACHE_ENTRY *entry, *table;
+    int len, strings_len = 0;
+    WCHAR *ptr;
+
+    if (!ret_table) return FALSE;
+
+    EnterCriticalSection( &cache_cs );
+
+    if (!cache_entries)
+    {
+        LeaveCriticalSection( &cache_cs );
+        return FALSE;
+    }
+
+    for (i = 0; i < cache_entries_count; i++)
+    {
+        strings_len += MultiByteToWideChar( CP_UTF8, 0, cache_entries[i].name, -1, NULL, 0 );
+    }
+
+    if (!(entry = table = malloc( cache_entries_count * sizeof(*entry) + strings_len * sizeof(WCHAR) )))
+    {
+        LeaveCriticalSection( &cache_cs );
+        return FALSE;
+    }
+    ptr = (WCHAR *)&entry[cache_entries_count];
+
+    for (i = 0; i < cache_entries_count; i++)
+    {
+        if (i == cache_entries_count - 1) entry->Next = NULL;
+        else entry->Next = entry + 1;
+
+        len = MultiByteToWideChar( CP_UTF8, 0, cache_entries[i].name, -1, ptr, strings_len );
+        entry->Name       = ptr;
+        entry->Type       = cache_entries[i].type;
+        entry->DataLength = 0;
+        entry->Flags      = 0;
+
+        strings_len -= len;
+        ptr += len;
+        entry++;
+    }
+
+    *ret_table = table;
+    LeaveCriticalSection( &cache_cs );
+    return TRUE;
+}
+
 static DNS_RECORDA *alloc_record( const char *name )
 {
     DNS_RECORDA *rec;

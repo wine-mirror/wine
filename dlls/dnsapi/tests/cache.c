@@ -31,16 +31,23 @@
 static void test_DnsGetCacheDataTable( void )
 {
     BOOL ret;
-    PDNS_CACHE_ENTRY entry = NULL;
+    DNS_CACHE_ENTRY *entry;
+    DNS_RECORDW *rec;
+    DNS_STATUS status;
+
+    /* make sure some entries are available */
+    status = DnsQuery_W( L"winehq.org", DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL );
+    ok(status == ERROR_SUCCESS, "got %lu\n", status);
+    DnsRecordListFree( rec, DnsFreeRecordList );
 
     ret = DnsGetCacheDataTable( NULL );
     ok( !ret, "DnsGetCacheDataTable succeeded\n" );
 
+    entry = NULL;
     ret = DnsGetCacheDataTable( &entry );
-    todo_wine
     ok( ret, "DnsGetCacheDataTable failed\n" );
-    todo_wine
     ok( entry != NULL, "DnsGetCacheDataTable returned NULL\n" );
+    DnsFree( entry, DnsFreeFlat );
 }
 
 START_TEST(cache)
