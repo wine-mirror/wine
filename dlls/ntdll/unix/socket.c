@@ -2401,7 +2401,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         {
             int value = *(DWORD *)in_buffer ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
 
-            return do_setsockopt( handle, io, IPPROTO_IP, IPV6_MTU_DISCOVER, &value, sizeof(value) );
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_MTU_DISCOVER, &value, sizeof(value) );
         }
 #else
         {
