@@ -3511,10 +3511,18 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
     if ((search_attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
         WCHAR path[] = {' ',':','\\',0};
+        WCHAR volume_label[MAX_PATH+1];
 
         if (count) return 0;
         path[0] = drive + 'A';
-        if (!GetVolumeInformationW(path, entry->cAlternateFileName, 13, NULL, NULL, NULL, NULL, 0)) return 0;
+        if (!GetVolumeInformationW(path, volume_label, ARRAY_SIZE(volume_label), NULL, NULL, NULL, NULL, 0)) return 0;
+
+        if (wcslen(volume_label) <= 8)
+            wcscpy(entry->cAlternateFileName, volume_label);
+        else
+            swprintf( entry->cAlternateFileName, ARRAY_SIZE(entry->cAlternateFileName),
+                      L"%.8s.%.3s", volume_label, volume_label + 8 );
+
         if (!entry->cAlternateFileName[0]) return 0;
         RtlSecondsSince1970ToTime( 0, (LARGE_INTEGER *)&entry->ftCreationTime );
         RtlSecondsSince1970ToTime( 0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
