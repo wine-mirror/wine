@@ -25,6 +25,7 @@
 #include "config.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -2653,17 +2654,21 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPALIVE, in_buffer, in_size );
 #endif
 
+#if defined(TCP_KEEPINTVL)
         case IOCTL_AFD_WINE_GET_TCP_KEEPINTVL:
             return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPINTVL, out_buffer, out_size );
 
         case IOCTL_AFD_WINE_SET_TCP_KEEPINTVL:
             return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPINTVL, in_buffer, in_size );
+#endif
 
+#if defined(TCP_KEEPCNT)
         case IOCTL_AFD_WINE_GET_TCP_KEEPCNT:
             return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPCNT, out_buffer, out_size );
 
         case IOCTL_AFD_WINE_SET_TCP_KEEPCNT:
             return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPCNT, in_buffer, in_size );
+#endif
 
         default:
         {
