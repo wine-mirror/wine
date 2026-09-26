@@ -278,13 +278,13 @@ IInternetProtocol *get_mime_filter(LPCWSTR mime)
     }
 
     res = RegOpenKeyW(hlist, mime, &hfilter);
-    CloseHandle(hlist);
+    RegCloseKey(hlist);
     if(res != ERROR_SUCCESS)
         return NULL;
 
     size = sizeof(clsidw);
     res = RegQueryValueExW(hfilter, L"CLSID", NULL, &type, (BYTE*)clsidw, &size);
-    CloseHandle(hfilter);
+    RegCloseKey(hfilter);
     if(res!=ERROR_SUCCESS || type!=REG_SZ) {
         WARN("Could not get filter CLSID for %s\n", debugstr_w(mime));
         return NULL;
