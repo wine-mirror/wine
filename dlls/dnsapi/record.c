@@ -632,7 +632,7 @@ error:
  * DnsRecordListFree                       [DNSAPI.@]
  *
  */
-VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
+void WINAPI DnsRecordListFree( DNS_RECORD *list, DNS_FREE_TYPE type )
 {
     DNS_RECORD *r, *next;
     unsigned int i;
@@ -644,7 +644,6 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
     switch (type)
     {
     case DnsFreeRecordList:
-    {
         for (r = list; (list = r); r = next)
         {
             free( r->pName );
@@ -657,7 +656,6 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
             case DNS_TYPE_X25:
                 for (i = 0; i < r->Data.TXT.dwStringCount; i++)
                     free( r->Data.TXT.pStringArray[i] );
-
                 break;
 
             case DNS_TYPE_MINFO:
@@ -700,18 +698,19 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
                 free( r->Data.SRV.pNameTarget );
                 break;
             }
-
             next = r->pNext;
             free( r );
         }
         break;
-    }
+
     case DnsFreeFlat:
+        free( list );
+        break;
+
     case DnsFreeParsedMessageFields:
-    {
         FIXME( "unhandled free type: %d\n", type );
         break;
-    }
+
     default:
         WARN( "unknown free type: %d\n", type );
         break;
@@ -722,8 +721,9 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
  * DnsFree                     [DNSAPI.@]
  *
  */
-void WINAPI DnsFree( PVOID data, DNS_FREE_TYPE type )
+void WINAPI DnsFree( void *data, DNS_FREE_TYPE type )
 {
+    TRACE( "(%p,%d)\n", data, type );
     DnsRecordListFree( data, type );
 }
 
