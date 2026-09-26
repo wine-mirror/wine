@@ -2032,11 +2032,16 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
             return ERROR_INVALID_FUNCTION;
         lastSlash = wcsrchr(pathtosearch, L'\\');
         sc->has_extension = wcschr(lastSlash ? lastSlash + 1 : firstParam, L'.') != NULL;
+        /* A quoted command line can be longer than any path */
+        if (wcslen(lastSlash ? lastSlash + 1 : firstParam) >= ARRAY_SIZE(stemofsearch))
+            return ERROR_FILENAME_EXCED_RANGE;
         wcscpy(stemofsearch, lastSlash ? lastSlash + 1 : firstParam);
 
         /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
            c:\windows\a.bat syntax                                                 */
         if (lastSlash) *(lastSlash + 1) = L'\0';
+        if (wcslen(pathtosearch) >= ARRAY_SIZE(sc->path))
+            return ERROR_FILENAME_EXCED_RANGE;
         sc->has_path = TRUE;
     }
 
@@ -2071,12 +2076,19 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
 
             if (*pos)  /* Reached semicolon */
             {
+                if (pos - pathposn >= ARRAY_SIZE(sc->path))
+                {
+                    /* An element of PATH longer than a path can be: skip it */
+                    pathposn = pos+1;
+                    continue;
+                }
                 memcpy(sc->path, pathposn, (pos-pathposn) * sizeof(WCHAR));
                 sc->path[(pos-pathposn)] = 0x00;
                 pathposn = pos+1;
             }
             else       /* Reached string end */
             {
+                if (wcslen(pathposn) >= ARRAY_SIZE(sc->path)) break;
                 wcscpy(sc->path, pathposn);
                 pathposn = NULL;
             }
