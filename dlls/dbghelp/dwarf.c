@@ -1619,7 +1619,7 @@ static struct symt* dwarf2_parse_base_type(dwarf2_debug_info_t* di)
     cpp_language = is_cpp_language(di->unit_ctx);
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
-        name.u.string = NULL;
+        name.u.string = "";
     if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
     if (!dwarf2_find_attribute(di, DW_AT_encoding, &encoding)) encoding.u.uvalue = DW_ATE_void;
 
