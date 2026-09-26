@@ -204,7 +204,7 @@ static HRESULT WINAPI ActiveIMMApp_GetCandidateListCountA(IActiveIMMApp* This,
 static HRESULT WINAPI ActiveIMMApp_GetCandidateListCountW(IActiveIMMApp* This,
         HIMC hIMC, DWORD *pdwListSize, DWORD *pdwBufLen)
 {
-   *pdwBufLen = ImmGetCandidateListCountA(hIMC, pdwListSize);
+    *pdwBufLen = ImmGetCandidateListCountW(hIMC, pdwListSize);
     return S_OK;
 }
 
