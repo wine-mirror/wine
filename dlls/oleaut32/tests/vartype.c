@@ -4208,6 +4208,40 @@ static void test_VarDecRound(void)
     CLEAR(out); SETDEC64(l, 0, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff); hres = VarDecRound(&l, 0, &out); EXPECTDEC64(0, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff);
     CLEAR(out); SETDEC64(l, 28, DECIMAL_NEG, 0xffffffff, 0xffffffff, 0xffffffff); hres = VarDecRound(&l, 0, &out); EXPECTDEC64(0, DECIMAL_NEG, 0, 0, 8);
 
+    /* the discarded digits are compared to half of the divisor, not to 5 */
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50005); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 5);
+    CLEAR(out); SETDEC(l, 4, DECIMAL_NEG, 0, 50005); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, DECIMAL_NEG, 0, 5);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50049); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 5);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50050); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 5);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50060); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 5);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 55000); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 6);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 54999); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 5);
+    CLEAR(out); SETDEC(l, 3, 0, 0, 1235); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 12);
+    CLEAR(out); SETDEC(l, 3, DECIMAL_NEG, 0, 1235); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, DECIMAL_NEG, 0, 12);
+    CLEAR(out); SETDEC(l, 5, 0, 0, 500050); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 50);
+    CLEAR(out); SETDEC64(l, 20, 0, 0, 0xffffffff, 0xffffffff); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 0);
+
+    /* a single discarded digit makes the remainder half of the divisor, which
+       is a tie, so 5.0005 rounds to 5.000 and 5.0015 to 5.002 */
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50005); hres = VarDecRound(&l, 3, &out); EXPECTDEC(3, 0, 0, 5000);
+    CLEAR(out); SETDEC(l, 4, 0, 0, 50015); hres = VarDecRound(&l, 3, &out); EXPECTDEC(3, 0, 0, 5002);
+
+    /* an exact half is rounded to the even neighbour */
+    CLEAR(out); SETDEC(l, 1, 0, 0, 15); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 2);
+    CLEAR(out); SETDEC(l, 1, 0, 0, 25); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 2);
+    CLEAR(out); SETDEC(l, 1, 0, 0, 35); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, 0, 0, 4);
+    CLEAR(out); SETDEC(l, 1, DECIMAL_NEG, 0, 25); hres = VarDecRound(&l, 0, &out); EXPECTDEC(0, DECIMAL_NEG, 0, 2);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 5); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 0);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 15); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 2);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 25); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 2);
+    CLEAR(out); SETDEC(l, 2, 0, 0, 35); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 4);
+    CLEAR(out); SETDEC(l, 3, 0, 0, 125); hres = VarDecRound(&l, 2, &out); EXPECTDEC(2, 0, 0, 12);
+    CLEAR(out); SETDEC(l, 3, 0, 0, 135); hres = VarDecRound(&l, 2, &out); EXPECTDEC(2, 0, 0, 14);
+
+    /* rounding up may carry into the next dword */
+    CLEAR(out); SETDEC64(l, 2, 0, 0, 99, 0xfffffffa); hres = VarDecRound(&l, 0, &out); EXPECTDEC64(0, 0, 0, 1, 0);
+    CLEAR(out); SETDEC64(l, 2, DECIMAL_NEG, 0, 99, 0xfffffffa); hres = VarDecRound(&l, 0, &out); EXPECTDEC64(0, DECIMAL_NEG, 0, 1, 0);
+
     CLEAR(out); SETDEC(l, 2, 0, 0, 0); hres = VarDecRound(&l, 1, &out); EXPECTDEC(1, 0, 0, 0);
 }
 

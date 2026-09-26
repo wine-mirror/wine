@@ -5236,12 +5236,28 @@ static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * di
             underflow = VARIANT_int_addlossy( quotient->bitsnum, &quotientscale,
                 ARRAY_SIZE(quotient->bitsnum), remainderplusquotient, &tempquotientscale, 4);
             if (round_remainder) {
-                if(remainderplusquotient[4] >= 5){
-                    unsigned int i;
-                    unsigned char remainder = 1;
-                    for (i = 0; i < ARRAY_SIZE(quotient->bitsnum) && remainder; i++) {
-                        ULONGLONG digit = quotient->bitsnum[i] + 1;
-                        remainder = (digit > 0xFFFFFFFF) ? 1 : 0;
+                /* Round the quotient to the nearest integer, with exact halves
+                   rounded to the even neighbour. The remainder is left in the
+                   second half of the buffer, and is always less than the divisor,
+                   so comparing it against half of the divisor decides the rounding.
+                 */
+                DWORD halfdivisor[4];
+                BOOL even_divisor;
+                int cmp = 0;
+                unsigned int i;
+
+                memset(halfdivisor, 0, sizeof(halfdivisor));
+                memcpy(halfdivisor, divisor->bitsnum, sizeof(divisor->bitsnum));
+                even_divisor = !VARIANT_int_divbychar(halfdivisor, ARRAY_SIZE(halfdivisor), 2);
+                for (i = ARRAY_SIZE(halfdivisor); i > 0 && !cmp; i--) {
+                    if (remainderplusquotient[3 + i] != halfdivisor[i - 1])
+                        cmp = (remainderplusquotient[3 + i] > halfdivisor[i - 1]) ? 1 : -1;
+                }
+                if (cmp > 0 || (cmp == 0 && even_divisor && (quotient->bitsnum[0] & 1))) {
+                    unsigned char carry = 1;
+                    for (i = 0; i < ARRAY_SIZE(quotient->bitsnum) && carry; i++) {
+                        ULONGLONG digit = (ULONGLONG)quotient->bitsnum[i] + carry;
+                        carry = (digit > 0xFFFFFFFF) ? 1 : 0;
                         quotient->bitsnum[i] = digit & 0xFFFFFFFF;
                     }
                 }
