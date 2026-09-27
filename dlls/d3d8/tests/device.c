@@ -884,6 +884,12 @@ cleanup:
         IDirect3DDevice8_DeletePixelShader(device, dPixelShader);
     /* Textures */
     CHECK_RELEASE(pTexture,             device, --refcount);
+    /* Releasing a texture that has no references left returns 0. */
+    if (pTexture)
+    {
+        CHECK_RELEASE_REFCOUNT(pTexture, 0);
+        CHECK_RELEASE_REFCOUNT(pTexture, 0);
+    }
     CHECK_RELEASE(pCubeTexture,         device, --refcount);
     CHECK_RELEASE(pVolumeTexture,       device, --refcount);
     /* Surfaces */

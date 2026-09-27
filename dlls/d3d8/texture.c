@@ -45,7 +45,15 @@ static ULONG d3d8_texture_incref(struct d3d8_texture *texture)
 
 static ULONG d3d8_texture_decref(struct d3d8_texture *texture)
 {
-    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
+    ULONG ref;
+
+    if (!texture->resource.refcount)
+    {
+        WARN("Texture does not have any references.\n");
+        return 0;
+    }
+
+    ref = InterlockedDecrement(&texture->resource.refcount);
 
     TRACE("%p decreasing refcount to %lu.\n", texture, ref);
 
