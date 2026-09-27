@@ -4343,6 +4343,9 @@ static void test_wave_pmsg(unsigned num_repeats)
     ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
     ok(!msg, "got %p\n", msg);
 
+    hr = IDirectMusicPerformance8_Stop(performance, segment, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
 
     /* a single DMUS_PMSGT_WAVE message is sent with punkUser set */
 
