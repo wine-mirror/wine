@@ -458,10 +458,10 @@ static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
 
 static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
 {
-    LPWSTR content;
+    WCHAR *content, *found;
     int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
-    SIZE_T pos;
+    DWORD pos;
 
     SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
     while(TRUE){
@@ -471,22 +471,14 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
         GetWindowTextW(Globals.hEdit, content, fileLen);
 
         SendMessageW(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);
-        switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
-        {
-            case FR_DOWN:
-                pos = StrStrIW(content+pos, fr->lpstrFindWhat) - content;
-                if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
-                break;
-            case FR_DOWN|FR_MATCHCASE:
-                pos = StrStrW(content+pos, fr->lpstrFindWhat) - content;
-                if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
-                break;
-            default:    /* shouldn't happen */
-                return;
-        }
+        if (fr->Flags & FR_MATCHCASE)
+            found = StrStrW(content + pos, fr->lpstrFindWhat);
+        else
+            found = StrStrIW(content + pos, fr->lpstrFindWhat);
+        pos = found - content;
         HeapFree(GetProcessHeap(), 0, content);
 
-        if(pos == ~(SIZE_T)0)
+        if (!found)
         {
             SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
             return;
