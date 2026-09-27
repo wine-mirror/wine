@@ -389,7 +389,7 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
     DWORD pos;
 
     fileLen = GetWindowTextLengthW(Globals.hEdit) + 1;
-    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
+    content = malloc(fileLen * sizeof(WCHAR));
     if (!content) return;
     GetWindowTextW(Globals.hEdit, content, fileLen);
 
@@ -412,7 +412,7 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
             return;
     }
     pos = found - content;
-    HeapFree(GetProcessHeap(), 0, content);
+    free(content);
 
     if (!found)
     {
@@ -433,7 +433,7 @@ static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
     DWORD pos_start;
 
     fileLen = GetWindowTextLengthW(Globals.hEdit) + 1;
-    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
+    content = malloc(fileLen * sizeof(WCHAR));
     if (!content) return;
     GetWindowTextW(Globals.hEdit, content, fileLen);
 
@@ -451,7 +451,7 @@ static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
         default:    /* shouldn't happen */
             return;
     }
-    HeapFree(GetProcessHeap(), 0, content);
+    free(content);
 
     NOTEPAD_DoFind(fr);
 }
@@ -466,7 +466,7 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
     SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
     while(TRUE){
         fileLen = GetWindowTextLengthW(Globals.hEdit) + 1;
-        content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
+        content = malloc(fileLen * sizeof(WCHAR));
         if (!content) return;
         GetWindowTextW(Globals.hEdit, content, fileLen);
 
@@ -476,7 +476,7 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
         else
             found = StrStrIW(content + pos, fr->lpstrFindWhat);
         pos = found - content;
-        HeapFree(GetProcessHeap(), 0, content);
+        free(content);
 
         if (!found)
         {

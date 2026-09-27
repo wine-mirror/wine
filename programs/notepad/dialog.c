@@ -223,7 +223,7 @@ static SAVE_STATUS DoSaveFile(LPCWSTR szFileName, ENCODING enc)
 
     /* lenW includes the byte-order mark, but not the \0. */
     lenW = GetWindowTextLengthW(Globals.hEdit) + 1;
-    textW = HeapAlloc(GetProcessHeap(), 0, (lenW+1) * sizeof(WCHAR));
+    textW = malloc((lenW + 1) * sizeof(WCHAR));
     if (!textW)
     {
         ShowLastError();
@@ -245,35 +245,35 @@ static SAVE_STATUS DoSaveFile(LPCWSTR szFileName, ENCODING enc)
 
     case ENCODING_UTF8:
         size = WideCharToMultiByte(CP_UTF8, 0, textW, lenW, NULL, 0, NULL, NULL);
-        pBytes = HeapAlloc(GetProcessHeap(), 0, size);
+        pBytes = malloc(size);
         if (!pBytes)
         {
             ShowLastError();
-            HeapFree(GetProcessHeap(), 0, textW);
+            free(textW);
             return SAVE_FAILED;
         }
         WideCharToMultiByte(CP_UTF8, 0, textW, lenW, pBytes, size, NULL, NULL);
-        HeapFree(GetProcessHeap(), 0, textW);
+        free(textW);
         break;
 
     default:
         if (is_conversion_to_ansi_lossy(textW+1, lenW-1)
             && AlertUnicodeCharactersLost(szFileName) == IDCANCEL)
         {
-            HeapFree(GetProcessHeap(), 0, textW);
+            free(textW);
             return SHOW_SAVEAS_DIALOG;
         }
 
         size = WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, NULL, 0, NULL, NULL);
-        pBytes = HeapAlloc(GetProcessHeap(), 0, size);
+        pBytes = malloc(size);
         if (!pBytes)
         {
             ShowLastError();
-            HeapFree(GetProcessHeap(), 0, textW);
+            free(textW);
             return SAVE_FAILED;
         }
         WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, pBytes, size, NULL, NULL);
-        HeapFree(GetProcessHeap(), 0, textW);
+        free(textW);
         break;
     }
 
@@ -282,19 +282,19 @@ static SAVE_STATUS DoSaveFile(LPCWSTR szFileName, ENCODING enc)
     if(hFile == INVALID_HANDLE_VALUE)
     {
         ShowLastError();
-        HeapFree(GetProcessHeap(), 0, pBytes);
+        free(pBytes);
         return SAVE_FAILED;
     }
     if (!WriteFile(hFile, pBytes, size, &dwNumWrite, NULL))
     {
         ShowLastError();
         CloseHandle(hFile);
-        HeapFree(GetProcessHeap(), 0, pBytes);
+        free(pBytes);
         return SAVE_FAILED;
     }
     SetEndOfFile(hFile);
     CloseHandle(hFile);
-    HeapFree(GetProcessHeap(), 0, pBytes);
+    free(pBytes);
 
     SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
     return SAVED_OK;
@@ -384,7 +384,7 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     }
 
     /* Extra memory for (WCHAR)'\0'-termination. */
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size+2);
+    pTemp = malloc(size + sizeof(WCHAR));
     if (!pTemp)
     {
 	CloseHandle(hFile);
@@ -395,7 +395,7 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     if (!ReadFile(hFile, pTemp, size, &dwNumRead, NULL))
     {
 	CloseHandle(hFile);
-	HeapFree(GetProcessHeap(), 0, pTemp);
+	free(pTemp);
 	ShowLastError();
 	return;
     }
@@ -435,15 +435,15 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
         {
             int cp = (enc==ENCODING_UTF8) ? CP_UTF8 : CP_ACP;
             lenW = MultiByteToWideChar(cp, 0, pTemp, size, NULL, 0);
-            textW = HeapAlloc(GetProcessHeap(), 0, (lenW+1) * sizeof(WCHAR));
+            textW = malloc((lenW + 1) * sizeof(WCHAR));
             if (!textW)
             {
                 ShowLastError();
-                HeapFree(GetProcessHeap(), 0, pTemp);
+                free(pTemp);
                 return;
             }
             MultiByteToWideChar(cp, 0, pTemp, size, textW, lenW);
-            HeapFree(GetProcessHeap(), 0, pTemp);
+            free(pTemp);
             break;
         }
     }
@@ -461,7 +461,7 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     else
         SetWindowTextW(Globals.hEdit, textW);
 
-    HeapFree(GetProcessHeap(), 0, textW);
+    free(textW);
 
     SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
     SendMessageW(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
@@ -737,7 +737,7 @@ static WCHAR *expand_header_vars(WCHAR *pattern, int page)
             length++;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
+    buffer = malloc((length + 1) * sizeof(WCHAR));
     if (buffer)
     {
         int j = 0;
@@ -778,7 +778,7 @@ static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTI
         if (StartPage(hdc) <= 0)
         {
             MessageBoxW(Globals.hMainWnd, L"StartPage failed", L"Print Error", MB_ICONEXCLAMATION);
-            HeapFree(GetProcessHeap(), 0, footer_text);
+            free(footer_text);
             return FALSE;
         }
     }
@@ -858,7 +858,7 @@ static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTI
     {
         EndPage(hdc);
     }
-    HeapFree(GetProcessHeap(), 0, footer_text);
+    free(footer_text);
     return TRUE;
 }
 
@@ -917,7 +917,7 @@ VOID DIALOG_FilePrint(VOID)
 
     /* Get the file text */
     size = GetWindowTextLengthW(Globals.hEdit) + 1;
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    pTemp = malloc(size * sizeof(WCHAR));
     if (!pTemp)
     {
        DeleteDC(printer.hDC);
@@ -982,7 +982,7 @@ VOID DIALOG_FilePrint(VOID)
         DeleteObject(hTextFont);
     }
     DeleteDC(printer.hDC);
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    free(pTemp);
 }
 
 VOID DIALOG_FilePrinterSetup(VOID)
@@ -1065,7 +1065,7 @@ VOID DIALOG_EditWrap(VOID)
     LPWSTR pTemp;
 
     size = GetWindowTextLengthW(Globals.hEdit) + 1;
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    pTemp = malloc(size * sizeof(WCHAR));
     if (!pTemp)
     {
         ShowLastError();
@@ -1083,7 +1083,7 @@ VOID DIALOG_EditWrap(VOID)
     SetWindowTextW(Globals.hEdit, pTemp);
     SendMessageW(Globals.hEdit, EM_SETMODIFY, modify, 0);
     SetFocus(Globals.hEdit);
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    free(pTemp);
     
     Globals.bWrapLongLines = !Globals.bWrapLongLines;
     CheckMenuItem(GetMenu(Globals.hMainWnd), CMD_WRAP,
