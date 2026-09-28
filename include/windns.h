@@ -106,7 +106,8 @@ extern "C" {
 #define DNS_QUERY_APPEND_MULTILABEL         0x00800000
 #define DNS_QUERY_DNSSEC_OK                 0x01000000
 #define DNS_QUERY_DNSSEC_CHECKING_DISABLED  0x02000000
-#define DNS_QUERY_RESERVED                  0xff000000
+#define DNS_QUERY_DNSSEC_REQUIRED           0x04000000
+#define DNS_QUERY_RESERVED                  0xf0000000
 
 #define INLINE_WORD_FLIP(out, in) { WORD _in = (in); (out) = (_in << 8) | (_in >> 8); }
 #define INLINE_HTONS(out, in) INLINE_WORD_FLIP(out, in)
