@@ -1284,7 +1284,7 @@ NTSTATUS WINAPI wow64_NtReleaseMutant( UINT *args )
 NTSTATUS WINAPI wow64_NtReleaseSemaphore( UINT *args )
 {
     HANDLE handle = get_handle( &args );
-    ULONG count = get_ulong( &args );
+    LONG count = get_ulong( &args );
     ULONG *previous = get_ptr( &args );
 
     return NtReleaseSemaphore( handle, count, previous );
