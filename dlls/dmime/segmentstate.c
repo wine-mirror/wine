@@ -52,6 +52,9 @@ struct segment_state
     IDirectMusicSegment *segment;
     MUSIC_TIME start_time;
     MUSIC_TIME start_point;
+    MUSIC_TIME length;
+    MUSIC_TIME loop_start;
+    MUSIC_TIME loop_end;
     MUSIC_TIME end_point;
     MUSIC_TIME played;
 
@@ -337,9 +340,14 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
 
     This->start_time = start_time;
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
-    if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLength(segment, &This->end_point);
+    if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLength(segment, &This->length);
+    if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLoopPoints(segment, &This->loop_start, &This->loop_end);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetRepeats(segment, &This->repeats);
-    if (SUCCEEDED(hr)) This->actual_repeats = This->repeats;
+    if (SUCCEEDED(hr))
+    {
+        This->end_point = This->length;
+        This->actual_repeats = This->repeats;
+    }
 
     for (i = 0; SUCCEEDED(hr); i++)
     {
@@ -445,9 +453,8 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             return S_FALSE;
         }
 
-        if (FAILED(hr = IDirectMusicSegment_GetLoopPoints(This->segment, &This->played,
-                &This->end_point)))
-            break;
+        This->end_point = This->loop_end;
+        This->played = This->loop_start;
         if (!This->played && !This->end_point)
         {
             if (!This->actual_end_point && This->actual_duration)
