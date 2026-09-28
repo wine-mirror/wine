@@ -58,8 +58,6 @@ struct segment_state
     MUSIC_TIME end_point;
     MUSIC_TIME played;
 
-    MUSIC_TIME actual_end_point;
-
     BOOL auto_download;
     DWORD repeats, actual_repeats;
     DWORD track_flags;
@@ -442,17 +440,17 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
         }
 
         This->start_time += This->end_point - This->start_point;
-        This->end_point = This->loop_end;
-        This->played = This->loop_start;
-        if (!This->played && !This->end_point)
+        if (S_OK == segment_get_rt_length(This->segment, &rt_length))
         {
-            if (!This->actual_end_point && S_OK == segment_get_rt_length(This->segment, &rt_length))
-            {
-                IDirectMusicPerformance8_MusicToReferenceTime(performance, This->start_time, &time);
-                IDirectMusicPerformance8_ReferenceToMusicTime(performance, time + rt_length, &This->actual_end_point);
-                This->actual_end_point -= This->start_time;
-            }
-            This->end_point = This->actual_end_point;
+            IDirectMusicPerformance8_MusicToReferenceTime(performance, This->start_time, &time);
+            IDirectMusicPerformance8_ReferenceToMusicTime(performance, time + rt_length, &This->end_point);
+            This->end_point -= This->start_time;
+            This->played = 0;
+        }
+        else
+        {
+            This->end_point = This->loop_end;
+            This->played = This->loop_start;
         }
         This->actual_repeats--;
         This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
