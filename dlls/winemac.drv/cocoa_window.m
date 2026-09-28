@@ -3784,22 +3784,34 @@ void macdrv_view_release_metal_view(WineMetalView *view)
 
 id<WineMetalSwapChain> macdrv_create_view_swapchain(WineContentView *view)
 {
+@autoreleasepool
+{
     return [[MetalViewSwapChain alloc] initWithView:view];
+}
 }
 
 id<WineMetalSwapChain> macdrv_create_offscreen_swapchain(void* hwnd, CGRect bounds)
 {
+@autoreleasepool
+{
     return [[CAContextSwapChain alloc] initWithHwnd:hwnd bounds:bounds];
+}
 }
 
 CAMetalLayer *macdrv_swapchain_get_layer(id<WineMetalSwapChain> swapchain)
 {
+@autoreleasepool
+{
     return [swapchain layer];
+}
 }
 
 void macdrv_destroy_swapchain(id<WineMetalSwapChain> swapchain)
 {
+@autoreleasepool
+{
     [swapchain release];
+}
 }
 
 void macdrv_window_create_ca_layer_host_view(WineWindow *window, unsigned int context_id)
