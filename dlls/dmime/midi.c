@@ -282,7 +282,7 @@ static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, str
 static HRESULT midi_parser_handle_note_on_off(struct midi_parser *parser, struct midi_event *event)
 {
     BYTE new_velocity = (event->status & 0xf0) == MIDI_NOTE_OFF ? 0 : event->data[1]; /* DirectMusic doesn't have noteoff velocity */
-    BYTE note = event->data[0], channel = event->status & 0xf;
+    BYTE note = event->data[0] & 0x7f, channel = event->status & 0xf;
     DWORD index = (DWORD)channel * 128 + note;
     MUSIC_TIME dmusic_time;
     struct midi_seqtrack_item *note_state = parser->note_states[index];
