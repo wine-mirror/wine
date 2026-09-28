@@ -5636,19 +5636,19 @@ static void test_loop(void)
     static const struct expected_note expected_notes_set_repeats[] =
     {
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
     static const struct expected_note expected_notes_set_start_point[] =
     {
         {2}, {3}, {4}, {5}, {6},
-        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
     static const struct expected_note expected_notes_set_length[] =
     {
         {2}, {3}, {4},
-        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4},
+        {0}, {1}, {2}, {3}, {4},
         {0}, {1}, {2}, {3}, {4},
     };
     static const struct expected_note expected_notes_set_loop_points[] =
@@ -5662,16 +5662,6 @@ static void test_loop(void)
         {2}, {3},
         {1, .todo_key = TRUE}, {2}, {3},
         {1}, {2}, {3}, {4},
-    };
-    static const struct expected_note expected_notes_rt_default[] =
-    {
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-    };
-    static const struct expected_note expected_notes_rt_set_repeats[] =
-    {
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
     static const LARGE_INTEGER zero = {0};
     IDirectMusicSegment *wave_segment;
@@ -5776,27 +5766,23 @@ static void test_loop(void)
     IPersistStream_Release(persist);
     IStream_Release(stream);
 
-    check_loop("RT length, default", segment, expected_notes_rt_default, ARRAYSIZE(expected_notes_rt_default));
+    check_loop("RT length, default", segment, expected_notes_default, ARRAYSIZE(expected_notes_default));
 
     hr = IDirectMusicSegment_SetRepeats(segment, 2);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetRepeats", segment, expected_notes_rt_set_repeats,
-            ARRAYSIZE(expected_notes_rt_set_repeats));
+    check_loop("RT length, SetRepeats", segment, expected_notes_set_repeats, ARRAYSIZE(expected_notes_set_repeats));
 
     hr = IDirectMusicSegment_SetStartPoint(segment, 20);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetStartPoint", segment, expected_notes_rt_set_repeats,
-            ARRAYSIZE(expected_notes_rt_set_repeats));
+    check_loop("RT length, SetStartPoint", segment, expected_notes_set_repeats, ARRAYSIZE(expected_notes_set_repeats));
 
     hr = IDirectMusicSegment_SetLength(segment, 50);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetLength", segment, expected_notes_rt_set_repeats,
-            ARRAYSIZE(expected_notes_rt_set_repeats));
+    check_loop("RT length, SetLength", segment, expected_notes_set_repeats, ARRAYSIZE(expected_notes_set_repeats));
 
     hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 40);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetLoopPoints", segment, expected_notes_rt_set_repeats,
-            ARRAYSIZE(expected_notes_rt_set_repeats));
+    check_loop("RT length, SetLoopPoints", segment, expected_notes_set_repeats, ARRAYSIZE(expected_notes_set_repeats));
 
     IDirectMusicSegment_Release(segment);
 }
