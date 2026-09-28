@@ -441,8 +441,6 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
                 This->actual_end_point -= This->start_time + This->played;
             }
             This->end_point = This->actual_end_point;
-            if (next_time < This->start_time + This->end_point)
-                next_time += This->end_point - This->start_point;
         }
         This->start_time += This->end_point - This->start_point;
         This->actual_repeats--;
