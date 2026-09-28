@@ -5654,13 +5654,7 @@ static void test_loop(void)
     static const struct expected_note expected_notes_set_loop_points[] =
     {
         {2}, {3},
-        {1, .todo_key = TRUE}, {2}, {3},
-        {1}, {2}, {3}, {4},
-    };
-    static const struct expected_note expected_notes_wave_track_set_loop_points[] =
-    {
-        {2}, {3},
-        {1, .todo_key = TRUE}, {2}, {3},
+        {1}, {2}, {3},
         {1}, {2}, {3}, {4},
     };
     static const LARGE_INTEGER zero = {0};
@@ -5731,8 +5725,8 @@ static void test_loop(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicTrack_Release(track);
 
-    check_loop("wave track, SetLoopPoints", segment, expected_notes_wave_track_set_loop_points,
-            ARRAYSIZE(expected_notes_wave_track_set_loop_points));
+    check_loop("wave track, SetLoopPoints", segment, expected_notes_set_loop_points,
+            ARRAYSIZE(expected_notes_set_loop_points));
 
     IDirectMusicSegment_Release(wave_segment);
     IDirectMusicSegment_Release(segment);

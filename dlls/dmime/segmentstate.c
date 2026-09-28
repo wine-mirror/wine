@@ -335,7 +335,7 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
         }
         else
         {
-            This->end_point = This->length;
+            This->end_point = This->repeats && This->loop_end ? This->loop_end : This->length;
             This->played = This->start_point;
         }
         This->actual_start_time = start_time - This->played;
@@ -444,6 +444,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             return S_FALSE;
         }
 
+        This->actual_repeats--;
         This->actual_start_time += This->end_point;
         if (S_OK == segment_get_rt_length(This->segment, &rt_length))
         {
@@ -454,11 +455,10 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
         }
         else
         {
-            This->end_point = This->loop_end ? This->loop_end : This->length;
+            This->end_point = This->actual_repeats && This->loop_end ? This->loop_end : This->length;
             This->played = This->loop_start;
         }
         This->actual_start_time -= This->played;
-        This->actual_repeats--;
         This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
 
         if (next_time <= This->actual_start_time || This->end_point <= 0) break;
