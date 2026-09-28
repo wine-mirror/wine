@@ -507,7 +507,7 @@ static const char* storage_class(BYTE sc)
     case IMAGE_SYM_CLASS_EXTERNAL:      return "extrnl";
     case IMAGE_SYM_CLASS_LABEL:         return "label ";
     }
-    sprintf(tmp, "#%d", sc);
+    snprintf(tmp, sizeof(tmp), "#%d", sc);
     return tmp;
 }
 
@@ -704,9 +704,9 @@ void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, 
             ptr = stabbuff;
         }
         if ((stab_ptr->n_type & 1) || !stabs_defs[stab_ptr->n_type / 2])
-            sprintf(n_buffer, "<0x%02x>", stab_ptr->n_type);
+            snprintf(n_buffer, sizeof(n_buffer), "<0x%02x>", stab_ptr->n_type);
         else
-            sprintf(n_buffer, "%-6s", stabs_defs[stab_ptr->n_type / 2]);
+            snprintf(n_buffer, sizeof(n_buffer), "%-6s", stabs_defs[stab_ptr->n_type / 2]);
         printf("%4d %s %-8x % 6d %-8x %-6x %s\n",
                i, n_buffer, stab_ptr->n_other, stab_ptr->n_desc, stab_ptr->n_value,
                stab_ptr->n_un.n_strx, ptr);

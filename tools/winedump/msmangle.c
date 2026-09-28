@@ -237,7 +237,7 @@ static const char* get_number(struct parsed_symbol* sym)
         if (*sym->current != '@') return NULL;
 
         ptr = und_alloc(sym, 17);
-        sprintf(ptr, "%s%u", sgn ? "-" : "", ret);
+        snprintf(ptr, 17, "%s%u", sgn ? "-" : "", ret);
         sym->current++;
     }
     else return NULL;

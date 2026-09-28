@@ -67,7 +67,7 @@ void  output_spec_symbol (const parsed_symbol *sym)
   assert (sym && sym->symbol);
 
   if (sym->ordinal >= 0)
-    sprintf(ord_spec, "%d", sym->ordinal);
+    snprintf(ord_spec, sizeof(ord_spec), "%d", sym->ordinal);
   else
   {
     ord_spec[0] = '@';
@@ -484,7 +484,7 @@ void  output_c_banner (const parsed_symbol *sym)
   size_t i;
 
   if (sym->ordinal >= 0)
-    sprintf(ord_spec, "%d", sym->ordinal);
+    snprintf(ord_spec, sizeof(ord_spec), "%d", sym->ordinal);
   else
   {
     ord_spec[0] = '@';

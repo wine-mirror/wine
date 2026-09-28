@@ -179,8 +179,8 @@ static const char* full_value_string(const struct full_value* fv)
 
     switch (fv->type)
     {
-    case fv_integer: sprintf(tmp, "0x%x", fv->v.i); break;
-    case fv_longlong: sprintf(tmp, "0x%x%08x", (unsigned)(fv->v.llu >> 32), (unsigned)fv->v.llu); break;
+    case fv_integer: snprintf(tmp, sizeof(tmp), "0x%x", fv->v.i); break;
+    case fv_longlong: snprintf(tmp, sizeof(tmp), "0x%x%08x", (unsigned)(fv->v.llu >> 32), (unsigned)fv->v.llu); break;
     }
     return tmp;
 }
@@ -244,9 +244,9 @@ static const char* get_property(cv_property_t prop)
     if (prop.is_scoped)                 X("scoped");
     if (prop.has_decorated_name)        X("decorated-name");
     if (prop.is_sealed)                 X("sealed");
-    if (prop.hfa)                       pos += sprintf(tmp, "hfa%x", prop.hfa);
+    if (prop.hfa)                       pos += snprintf(tmp, sizeof(tmp) - pos, "hfa%x", prop.hfa);
     if (prop.is_intrinsic)              X("intrinsic");
-    if (prop.mocom)                     pos += sprintf(tmp, "mocom%x", prop.mocom);
+    if (prop.mocom)                     pos += snprintf(tmp, sizeof(tmp) - pos, "mocom%x", prop.mocom);
 #undef X
     if (!pos) return "none";
 
@@ -266,7 +266,7 @@ static const char* get_funcattr(unsigned attr)
     if (attr & 0x0001) X("C++ReturnUDT");
     if (attr & 0x0002) X("Ctor");
     if (attr & 0x0004) X("Ctor-w/virtualbase");
-    if (attr & 0xfff8) pos += sprintf(tmp, "unk:%x", attr & 0xfff8);
+    if (attr & 0xfff8) pos += snprintf(tmp, sizeof(tmp), "unk:%x", attr & 0xfff8);
 #undef X
 
     tmp[pos] = '\0';
@@ -292,7 +292,7 @@ static const char* get_varflags(struct cv_local_varflag flags)
     if (flags.optimized_out)   X("optimized-out");
     if (flags.enreg_global)    X("enreg-global");
     if (flags.enreg_static)    X("enreg-static");
-    if (flags.unused)          pos += sprintf(tmp, "unk:%x", flags.unused);
+    if (flags.unused)          pos += snprintf(tmp, sizeof(tmp), "unk:%x", flags.unused);
 #undef X
 
     if (!pos) return "none";
@@ -386,7 +386,7 @@ static const char* get_machine(unsigned m)
     default:
         {
             static char tmp[16];
-            sprintf(tmp, "machine=%x", m);
+            snprintf(tmp, sizeof(tmp), "machine=%x", m);
             machine = tmp;
         }
         break;
@@ -420,7 +420,7 @@ static const char* get_language(unsigned l)
     default:
         {
             static char tmp[16];
-            sprintf(tmp, "lang=%x", l);
+            snprintf(tmp, sizeof(tmp), "lang=%x", l);
             lang = tmp;
         }
         break;
@@ -463,7 +463,7 @@ static const char* get_callconv(unsigned cc)
     default:
         {
             static char tmp[20];
-            sprintf(tmp, "callconv=%x", cc);
+            snprintf(tmp, sizeof(tmp), "callconv=%x", cc);
             callconv = tmp;
         }
         break;
