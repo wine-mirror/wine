@@ -10,6 +10,7 @@ VER_PRODUCTVERSION      = 9,19,949,2111
 SOURCES = \
 	animation.c \
 	core.c \
+	d3dx10_compiler.c \
 	d3dx_helpers.c \
 	effect.c \
 	font.c \

@@ -8624,7 +8624,6 @@ static void test_create_effect_from_memory(void)
 #if D3DX10_SDK_VERSION >= 40
     ok(desc.ConstantBuffers == 1, "Unexpected buffer count.\n");
 #else
-    todo_wine
     ok(desc.ConstantBuffers == 2, "Unexpected buffer count.\n");
 #endif
     effect->lpVtbl->Release(effect);

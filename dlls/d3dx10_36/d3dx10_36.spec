@@ -2,7 +2,7 @@
 @ stdcall D3DX10CheckVersion(long long)
 @ stdcall D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileA
 @ stdcall D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileW
-@ stdcall D3DX10CompileFromMemory(ptr long str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromMemory
+@ stdcall D3DX10CompileFromMemory(ptr long str ptr ptr str str long long ptr ptr ptr ptr)
 @ stdcall D3DX10CompileFromResourceA(long str str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromResourceA
 @ stdcall D3DX10CompileFromResourceW(long wstr wstr ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromResourceW
 @ stdcall D3DX10ComputeNormalMap(ptr long long long ptr) d3dx10_43.D3DX10ComputeNormalMap
@@ -20,11 +20,11 @@
 @ stdcall D3DX10CreateAsyncTextureProcessor(ptr ptr ptr) d3dx10_43.D3DX10CreateAsyncTextureProcessor
 @ stdcall D3DX10CreateDevice(ptr long long long ptr) d3dx10_43.D3DX10CreateDevice
 @ stdcall D3DX10CreateDeviceAndSwapChain(ptr long long long ptr ptr ptr) d3dx10_43.D3DX10CreateDeviceAndSwapChain
-@ stdcall D3DX10CreateEffectFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectFromFileA
-@ stdcall D3DX10CreateEffectFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectFromFileW
-@ stdcall D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectFromMemory
-@ stdcall D3DX10CreateEffectFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectFromResourceA
-@ stdcall D3DX10CreateEffectFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectFromResourceW
+@ stdcall D3DX10CreateEffectFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10CreateEffectPoolFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectPoolFromFileA
 @ stdcall D3DX10CreateEffectPoolFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectPoolFromFileW
 @ stdcall D3DX10CreateEffectPoolFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateEffectPoolFromMemory
@@ -60,7 +60,7 @@
 @ stdcall D3DX10LoadTextureFromTexture(ptr ptr ptr) d3dx10_43.D3DX10LoadTextureFromTexture
 @ stdcall D3DX10PreprocessShaderFromFileA(str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromFileA
 @ stdcall D3DX10PreprocessShaderFromFileW(wstr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromFileW
-@ stdcall D3DX10PreprocessShaderFromMemory(ptr long str ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromMemory
+@ stdcall D3DX10PreprocessShaderFromMemory(ptr long str ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10PreprocessShaderFromResourceA(long str str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceA
 @ stdcall D3DX10PreprocessShaderFromResourceW(long wstr wstr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceW
 @ stdcall D3DX10ReflectShader(ptr long ptr) d3dx10_39.D3DX10ReflectShader

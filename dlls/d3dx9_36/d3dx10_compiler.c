@@ -17,18 +17,28 @@
  *
  */
 
+#ifdef D3DX10_SDK_VERSION
+
 #include "wine/debug.h"
 
 #define COBJMACROS
 
+#include <stdint.h>
+#include "d3dx_helpers.h"
 #include "d3d10_1.h"
 #include "d3dx10.h"
 #include "d3dcompiler.h"
-#include "dxhelpers.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 #define D3DERR_INVALIDCALL 0x8876086c
+
+HRESULT WINAPI D3DCompileFromMemory(const void *data, SIZE_T data_size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
+        const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages);
+
+HRESULT WINAPI D3DPreprocessFromMemory(const void *data, SIZE_T size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **shader, ID3DBlob **error_messages);
 
 static HRESULT create_effect(const void *data, SIZE_T datasize, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *profile,
@@ -55,8 +65,13 @@ static HRESULT create_effect(const void *data, SIZE_T datasize, const char *file
     {
         if (!profile)
             return D3DERR_INVALIDCALL;
-        if (FAILED(hr = D3DCompile(data, datasize, filename, defines, include, "main", profile,
-                shader_flags, effect_flags, &code, errors)))
+#if D3DX10_SDK_VERSION < 40
+        if (FAILED(hr = D3DCompileFromMemory(data, datasize, filename, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+                        "main", profile, shader_flags, effect_flags, &code, (ID3DBlob **)errors)))
+#else
+        if (FAILED(hr = D3DCompile(data, datasize, filename, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+                        "main", profile, shader_flags, effect_flags, &code, (ID3DBlob **)errors)))
+#endif
         {
             WARN("Effect compilation failed, hr %#lx.\n", hr);
             return hr;
@@ -99,7 +114,7 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
 {
     char filename_a[MAX_PATH];
     void *buffer = NULL;
-    DWORD size = 0;
+    uint32_t size = 0;
     HRESULT hr;
 
     TRACE("filename %s, defines %p, include %p, profile %s, shader_flags %#x, effect_flags %#x, "
@@ -116,7 +131,10 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
     if (!include)
         include = D3D_COMPILE_STANDARD_FILE_INCLUDE;
 
-    if (SUCCEEDED((hr = load_file(filename, &buffer, &size))))
+    if ((hr = d3dx_load_file(filename, &buffer, &size)) == ERROR_FILE_NOT_FOUND)
+        return D3D10_ERROR_FILE_NOT_FOUND;
+
+    if (SUCCEEDED(hr))
     {
         WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, sizeof(filename_a), NULL, NULL);
         hr = create_effect(buffer, size, filename_a, defines, include, profile,
@@ -233,8 +251,40 @@ HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_si
     if (pump)
         FIXME("Unimplemented ID3DX10ThreadPump handling.\n");
 
-    hr = D3DPreprocess(data, data_size, filename, defines, include, shader_text, errors);
+#if D3DX10_SDK_VERSION < 40
+    hr = D3DPreprocessFromMemory(data, data_size, filename,
+        (const D3D_SHADER_MACRO *)defines, include, (ID3DBlob **)shader_text, (ID3DBlob **)errors);
+#else
+    hr = D3DPreprocess(data, data_size, filename,
+        (const D3D_SHADER_MACRO *)defines, include, (ID3DBlob **)shader_text, (ID3DBlob **)errors);
+#endif
+
     if (hresult)
         *hresult = hr;
     return hr;
 }
+
+HRESULT WINAPI D3DX10CompileFromMemory(const char *data, SIZE_T data_size, const char *filename,
+        const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *entry_point,
+        const char *target, UINT sflags, UINT eflags, ID3DX10ThreadPump *pump, ID3D10Blob **shader,
+        ID3D10Blob **error_messages, HRESULT *hresult)
+{
+    TRACE("data %s, data_size %Iu, filename %s, defines %p, include %p, entry_point %s, target %s, "
+            "sflags %#x, eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
+            debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include,
+            debugstr_a(entry_point), debugstr_a(target), sflags, eflags, pump, shader,
+            error_messages, hresult);
+
+    if (pump)
+        FIXME("Unimplemented ID3DX10ThreadPump handling.\n");
+
+#if D3DX10_SDK_VERSION < 40
+    return D3DCompileFromMemory(data, data_size, NULL, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+            entry_point, target, sflags, eflags, (ID3DBlob **)shader, (ID3DBlob **)error_messages);
+#else
+    return D3DCompile(data, data_size, NULL, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+            entry_point, target, sflags, eflags, (ID3DBlob **)shader, (ID3DBlob **)error_messages);
+#endif
+}
+
+#endif
