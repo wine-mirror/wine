@@ -2510,6 +2510,34 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS18
     BOOL RenderPassesValid;
 } D3D12_FEATURE_DATA_D3D12_OPTIONS18;
 
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS19
+{
+    BOOL MismatchingOutputDimensionsSupported;
+    UINT SupportedSampleCountsWithNoOutputs;
+    BOOL PointSamplingAddressesNeverRoundUp;
+    BOOL RasterizerDesc2Supported;
+    BOOL NarrowQuadrilateralLinesSupported;
+    BOOL AnisoFilterWithPointMipSupported;
+    UINT MaxSamplerDescriptorHeapSize;
+    UINT MaxSamplerDescriptorHeapSizeWithStaticSamplers;
+    UINT MaxViewDescriptorHeapSize;
+    BOOL ComputeOnlyCustomHeapSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS19;
+
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS20
+{
+    BOOL ComputeOnlyWriteWatchSupported;
+    D3D12_RECREATE_AT_TIER RecreateAtTier;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS20;
+
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21
+{
+    D3D12_WORK_GRAPHS_TIER WorkGraphsTier;
+    D3D12_EXECUTE_INDIRECT_TIER ExecuteIndirectTier;
+    BOOL SampleCmpGradientAndBiasSupported;
+    BOOL ExtendedCommandInfoSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS21;
+
 typedef enum D3D12_FEATURE
 {
     D3D12_FEATURE_D3D12_OPTIONS = 0,
