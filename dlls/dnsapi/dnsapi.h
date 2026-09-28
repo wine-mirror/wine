@@ -98,6 +98,7 @@ static inline char *strdup_ua( const char *src )
 }
 
 void free_host_entries( void );
+void destroy_cache( void );
 
 extern const char *debugstr_type( unsigned short );
 

@@ -46,6 +46,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         free_host_entries();
+        destroy_cache();
         break;
     }
     return TRUE;

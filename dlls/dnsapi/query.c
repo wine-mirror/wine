@@ -19,6 +19,8 @@
  */
 
 #include <stdarg.h>
+#include <time.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -39,13 +41,211 @@ WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 #define DEFAULT_TTL_NETBIOS 1200
 #define DEFAULT_TTL_HOSTS   557890   /* resets when hosts file changes */
 
-static CRITICAL_SECTION hosts_cs;
-static CRITICAL_SECTION_DEBUG hosts_debug =
+static CRITICAL_SECTION cache_cs;
+static CRITICAL_SECTION_DEBUG cache_debug =
 {
-    0, 0, &hosts_cs, { &hosts_debug.ProcessLocksList, &hosts_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": hosts_cs") }
+    0, 0, &cache_cs, { &cache_debug.ProcessLocksList, &cache_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": cache_cs") }
 };
-static CRITICAL_SECTION hosts_cs = { &hosts_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION cache_cs = { &cache_debug, -1, 0, 0, 0, 0 };
+
+enum service
+{
+    SERVICE_HOSTS,
+    SERVICE_DNS,
+    SERVICE_NETBIOS,
+};
+
+static struct cache_entry
+{
+    enum service  service;
+    WORD          type;     /* query type */
+    const char   *name;     /* query name, owned by first record */
+    __time64_t    updated;  /* last update */
+    __time64_t    ttl;      /* minimum of all records */
+    DNS_RECORDA  *result;   /* result list */
+} *cache_entries;
+
+static unsigned int cache_entries_count;
+static unsigned int cache_entries_allocated;
+static __time64_t   cache_updated;
+
+static int __cdecl cmp_cache_entry( const void *a, const void *b )
+{
+    const struct cache_entry *entry = a, *entry2 = b;
+
+    if (entry->service > entry2->service) return 1;
+    if (entry->service < entry2->service) return -1;
+    if (entry->type > entry2->type) return 1;
+    if (entry->type < entry2->type) return -1;
+    return strcasecmp( entry->name, entry2->name );
+}
+
+/* cache lock must be held */
+static struct cache_entry *find_cache_entry( enum service service, WORD type, const char *name )
+{
+    struct cache_entry entry;
+
+    entry.service = service;
+    entry.type    = type;
+    entry.name    = name;
+    return bsearch( &entry, cache_entries, cache_entries_count, sizeof(entry), cmp_cache_entry );
+}
+
+/* cache lock must be held */
+static DNS_STATUS append_cache_entry( struct cache_entry *entry )
+{
+    if (cache_entries_count >= cache_entries_allocated)
+    {
+        struct cache_entry *tmp;
+        size_t count = cache_entries_allocated ? cache_entries_allocated * 2 : 64;
+
+        if (!(tmp = realloc( cache_entries, count * sizeof(*tmp) ))) return ERROR_NOT_ENOUGH_MEMORY;
+        cache_entries_allocated = count;
+        cache_entries = tmp;
+    }
+
+    cache_entries[cache_entries_count++] = *entry;
+    return ERROR_SUCCESS;
+}
+
+static void purge_cache_entries( void )
+{
+    unsigned int i;
+    __time64_t now = _time64( NULL );
+
+    EnterCriticalSection( &cache_cs );
+
+    for (i = cache_entries_count; i > 0; i--)
+    {
+        struct cache_entry *entry = &cache_entries[i - 1];
+
+        if (now - entry->updated > entry->ttl)
+        {
+            TRACE( "entry for %s type %#x expired\n", debugstr_a(entry->name), entry->type );
+            DnsFree( entry->result, DnsFreeRecordList );
+            memmove( &cache_entries[i - 1], &cache_entries[i], (cache_entries_count - i) * sizeof(*entry) );
+            cache_entries_count--;
+        }
+    }
+
+    LeaveCriticalSection( &cache_cs );
+}
+
+void destroy_cache( void )
+{
+    unsigned int i;
+
+    EnterCriticalSection( &cache_cs );
+
+    for (i = 0; i < cache_entries_count; i++) DnsFree( cache_entries[i].result, DnsFreeRecordList );
+    cache_entries_count = cache_entries_allocated = 0;
+    free( cache_entries );
+    cache_entries = NULL;
+
+    LeaveCriticalSection( &cache_cs );
+}
+
+static DWORD get_minimum_ttl( const DNS_RECORDA *result )
+{
+    DWORD ttl = ~0u;
+    const DNS_RECORDA *cursor = result;
+    while (cursor)
+    {
+        ttl = min( ttl, cursor->dwTtl );
+        cursor = cursor->pNext;
+    }
+    return ttl;
+}
+
+static void cache_result( enum service service, const char *name, WORD type, const DNS_RECORDA *result )
+{
+    struct cache_entry *entry, new;
+    DNS_RECORDA *set;
+    DWORD ttl = get_minimum_ttl( result );
+    __time64_t now = _time64( NULL );
+
+    if (!(set = (DNS_RECORDA *)DnsRecordSetCopyEx( (DNS_RECORD *)result, DnsCharSetUtf8, DnsCharSetUtf8 ))) return;
+
+    EnterCriticalSection( &cache_cs );
+
+    if ((entry = find_cache_entry( service, type, name )))
+    {
+        DnsFree( entry->result, DnsFreeRecordList );
+        entry->name    = set->pName;
+        entry->updated = now;
+        entry->ttl     = ttl;
+        entry->result  = set;
+        TRACE( "updated entry for %s type %#x ttl %I64u\n", debugstr_a(entry->name), entry->type, entry->ttl );
+        goto done;
+    }
+
+    new.service = service;
+    new.type    = type;
+    new.name    = set->pName;
+    new.updated = now;
+    new.ttl     = ttl;
+    new.result  = set;
+
+    if (append_cache_entry( &new )) DnsFree( new.result, DnsFreeRecordList );
+    else
+    {
+        qsort( cache_entries, cache_entries_count, sizeof(*entry), cmp_cache_entry );
+        TRACE( "added entry for %s type %#x ttl %I64u\n", debugstr_a(new.name), new.type, new.ttl );
+    }
+
+done:
+    LeaveCriticalSection( &cache_cs );
+    if (now - cache_updated > 60) purge_cache_entries();
+    cache_updated = now;
+}
+
+static void update_ttl( DNS_RECORDA *result, DWORD delta )
+{
+    DNS_RECORDA *cursor = result;
+    while (cursor)
+    {
+        cursor->dwTtl -= delta;
+        cursor = cursor->pNext;
+    }
+}
+
+static DNS_STATUS find_cache_result( enum service service, const char *name, WORD type, DNS_RECORDA **result )
+{
+    struct cache_entry *entry;
+
+    EnterCriticalSection( &cache_cs );
+
+    if ((entry = find_cache_entry( service, type, name )))
+    {
+        __time64_t delta = _time64( NULL ) - entry->updated;
+        DNS_RECORDA *set;
+
+        if (delta > entry->ttl)
+            TRACE( "entry for %s type %#x expired\n", debugstr_a(entry->name), entry->type );
+        else
+        {
+            if (!(set = (DNS_RECORDA *)DnsRecordSetCopyEx( (DNS_RECORD *)entry->result, DnsCharSetUtf8, DnsCharSetUtf8 )))
+            {
+                LeaveCriticalSection( &cache_cs );
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            entry->ttl -= delta;
+            update_ttl( set, delta );
+
+            TRACE( "returning entry for %s type %#x ttl %I64u\n", debugstr_a(entry->name), entry->type, entry->ttl );
+            *result = set;
+
+            LeaveCriticalSection( &cache_cs );
+            return ERROR_SUCCESS;
+        }
+    }
+    else TRACE( "no entry for %s type %#x\n", debugstr_a(name), type );
+
+    LeaveCriticalSection( &cache_cs );
+    return DNS_ERROR_RECORD_DOES_NOT_EXIST;
+}
 
 static DNS_RECORDA *alloc_record( const char *name )
 {
@@ -138,7 +338,7 @@ static char *read_etc_hosts( DWORD *ret_size )
         free( data );
         data = NULL;
     }
-    data[size] = '\0';
+    data[size] = 0;
     CloseHandle( file );
     return data;
 }
@@ -308,11 +508,11 @@ static DNS_STATUS parse_etc_hosts( void )
 
     if (host_entries) return ERROR_SUCCESS;
 
-    EnterCriticalSection( &hosts_cs );
+    EnterCriticalSection( &cache_cs );
 
     if (!(cursor = data = read_etc_hosts( &size )))
     {
-        LeaveCriticalSection( &hosts_cs );
+        LeaveCriticalSection( &cache_cs );
         return DNS_ERROR_DATAFILE_OPEN_FAILURE;
     }
 
@@ -326,7 +526,7 @@ static DNS_STATUS parse_etc_hosts( void )
     }
 
     free( data );
-    LeaveCriticalSection( &hosts_cs );
+    LeaveCriticalSection( &cache_cs );
     return status;
 }
 
@@ -512,6 +712,41 @@ DNS_STATUS WINAPI DnsQuery_A( const char *name, WORD type, DWORD options, void *
     return status;
 }
 
+static DNS_STATUS do_query_dns( const char *name, WORD type, DWORD options, void *servers, DNS_RECORDA **result )
+{
+    DNS_STATUS ret;
+    unsigned char answer[4096];
+    DWORD len = sizeof(answer);
+    struct query_params query_params = { name, type, options, answer, &len };
+
+    if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
+
+    if (!(ret = RESOLV_CALL( query, &query_params )))
+    {
+        DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
+
+        if (len < sizeof(buffer->MessageHead)) return DNS_ERROR_BAD_PACKET;
+        DNS_BYTE_FLIP_HEADER_COUNTS( &buffer->MessageHead );
+        switch (buffer->MessageHead.ResponseCode)
+        {
+        case DNS_RCODE_NOERROR:  ret = DnsExtractRecordsFromMessage_UTF8( buffer, len, result ); break;
+        case DNS_RCODE_FORMERR:  ret = DNS_ERROR_RCODE_FORMAT_ERROR; break;
+        case DNS_RCODE_SERVFAIL: ret = DNS_ERROR_RCODE_SERVER_FAILURE; break;
+        case DNS_RCODE_NXDOMAIN: ret = DNS_ERROR_RCODE_NAME_ERROR; break;
+        case DNS_RCODE_NOTIMPL:  ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
+        case DNS_RCODE_REFUSED:  ret = DNS_ERROR_RCODE_REFUSED; break;
+        case DNS_RCODE_YXDOMAIN: ret = DNS_ERROR_RCODE_YXDOMAIN; break;
+        case DNS_RCODE_YXRRSET:  ret = DNS_ERROR_RCODE_YXRRSET; break;
+        case DNS_RCODE_NXRRSET:  ret = DNS_ERROR_RCODE_NXRRSET; break;
+        case DNS_RCODE_NOTAUTH:  ret = DNS_ERROR_RCODE_NOTAUTH; break;
+        case DNS_RCODE_NOTZONE:  ret = DNS_ERROR_RCODE_NOTZONE; break;
+        default:                 ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
+        }
+    }
+
+    return ret;
+}
+
 /******************************************************************************
  * DnsQuery_UTF8              [DNSAPI.@]
  *
@@ -520,9 +755,6 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
                                  void **reserved )
 {
     DNS_STATUS ret;
-    unsigned char answer[4096];
-    DWORD len = sizeof(answer);
-    struct query_params query_params = { name, type, options, answer, &len };
     const char *end;
 
     TRACE( "(%s, %s, %#lx, %p, %p, %p)\n", debugstr_a(name), debugstr_type( type ),
@@ -569,41 +801,34 @@ DNS_STATUS WINAPI DnsQuery_UTF8( const char *name, WORD type, DWORD options, voi
 
     if ((ret = DnsValidateName_UTF8( name, DnsNameDomain )) && ret != DNS_ERROR_NON_RFC_NAME) return ret;
 
-    if ((type == DNS_TYPE_A || type == DNS_TYPE_AAAA || type == DNS_TYPE_CNAME) &&
-        !(options & DNS_QUERY_NO_HOSTS_FILE))
+    if ((type == DNS_TYPE_A || type == DNS_TYPE_AAAA || type == DNS_TYPE_CNAME) && !(options & DNS_QUERY_NO_HOSTS_FILE))
     {
-        if (!do_query_hosts( name, type, result )) return ERROR_SUCCESS;
+        if (!(options & DNS_QUERY_BYPASS_CACHE) && !find_cache_result( SERVICE_HOSTS, name, type, result ))
+            return ERROR_SUCCESS;
+
+        if (!do_query_hosts( name, type, result ))
+        {
+            cache_result( SERVICE_HOSTS, name, type, *result );
+            return ERROR_SUCCESS;
+        }
         TRACE( "hosts lookup failed, trying dns query\n" );
     }
 
-    if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
-    if (!(ret = RESOLV_CALL( query, &query_params )))
-    {
-        DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
+    if (!(options & DNS_QUERY_BYPASS_CACHE) && !find_cache_result( SERVICE_DNS, name, type, result ))
+        return ERROR_SUCCESS;
 
-        if (len < sizeof(buffer->MessageHead)) return DNS_ERROR_BAD_PACKET;
-        DNS_BYTE_FLIP_HEADER_COUNTS( &buffer->MessageHead );
-        switch (buffer->MessageHead.ResponseCode)
-        {
-        case DNS_RCODE_NOERROR:  ret = DnsExtractRecordsFromMessage_UTF8( buffer, len, result ); break;
-        case DNS_RCODE_FORMERR:  ret = DNS_ERROR_RCODE_FORMAT_ERROR; break;
-        case DNS_RCODE_SERVFAIL: ret = DNS_ERROR_RCODE_SERVER_FAILURE; break;
-        case DNS_RCODE_NXDOMAIN: ret = DNS_ERROR_RCODE_NAME_ERROR; break;
-        case DNS_RCODE_NOTIMPL:  ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
-        case DNS_RCODE_REFUSED:  ret = DNS_ERROR_RCODE_REFUSED; break;
-        case DNS_RCODE_YXDOMAIN: ret = DNS_ERROR_RCODE_YXDOMAIN; break;
-        case DNS_RCODE_YXRRSET:  ret = DNS_ERROR_RCODE_YXRRSET; break;
-        case DNS_RCODE_NXRRSET:  ret = DNS_ERROR_RCODE_NXRRSET; break;
-        case DNS_RCODE_NOTAUTH:  ret = DNS_ERROR_RCODE_NOTAUTH; break;
-        case DNS_RCODE_NOTZONE:  ret = DNS_ERROR_RCODE_NOTZONE; break;
-        default:                 ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
-        }
+    if (!(ret = do_query_dns( name, type, options, servers, result )))
+    {
+        cache_result( SERVICE_DNS, name, type, *result );
+        return ERROR_SUCCESS;
     }
 
     if (ret == DNS_ERROR_RCODE_NAME_ERROR && type == DNS_TYPE_A && !(options & DNS_QUERY_NO_NETBT))
     {
         TRACE( "dns lookup failed, trying netbios query\n" );
-        ret = do_query_netbios( name, result );
+        if (!(options & DNS_QUERY_BYPASS_CACHE) && !find_cache_result( SERVICE_NETBIOS, name, type, result ))
+            return ERROR_SUCCESS;
+        if (!(ret = do_query_netbios( name, result ))) cache_result( SERVICE_NETBIOS, name, type, *result );
     }
 
     return ret;
