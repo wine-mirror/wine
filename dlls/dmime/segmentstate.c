@@ -447,8 +447,9 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
         {
             if (!This->actual_end_point && S_OK == segment_get_rt_length(This->segment, &rt_length))
             {
+                IDirectMusicPerformance8_MusicToReferenceTime(performance, This->start_time, &time);
                 IDirectMusicPerformance8_ReferenceToMusicTime(performance, time + rt_length, &This->actual_end_point);
-                This->actual_end_point -= This->start_time + This->played;
+                This->actual_end_point -= This->start_time;
             }
             This->end_point = This->actual_end_point;
         }
