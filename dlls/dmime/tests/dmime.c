@@ -5665,11 +5665,11 @@ static void test_loop(void)
     };
     static const struct expected_note expected_notes_rt_default[] =
     {
-        {0}, {1}, {2}, {3, .todo_type = TRUE}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
     static const struct expected_note expected_notes_rt_set_repeats[] =
     {
-        {0}, {1}, {2}, {3, .todo_time = TRUE}, {4}, {5}, {6},
+        {0}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };

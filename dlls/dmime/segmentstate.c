@@ -299,6 +299,8 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     struct segment_state *This;
     IDirectMusicGraph *graph;
     IDirectMusicTrack *track;
+    REFERENCE_TIME rt_length;
+    REFERENCE_TIME time;
     HRESULT hr;
     UINT i;
 
@@ -325,7 +327,15 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetRepeats(segment, &This->repeats);
     if (SUCCEEDED(hr))
     {
-        This->end_point = This->length;
+        if (S_OK == segment_get_rt_length(This->segment, &rt_length))
+        {
+            hr = IDirectMusicPerformance_MusicToReferenceTime(performance, start_time, &time);
+            if (SUCCEEDED(hr))
+                hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, time + rt_length, &This->end_point);
+            if (SUCCEEDED(hr)) This->end_point -= start_time;
+        }
+        else
+            This->end_point = This->length;
         This->actual_repeats = This->repeats;
     }
 
