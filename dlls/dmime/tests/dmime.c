@@ -739,7 +739,7 @@ static HRESULT WINAPI test_track_Play(IDirectMusicTrack *iface, void *state_data
     ok(state_data == &This->data, "got %p\n", state_data);
     ok(start_time == 50, "got %lu\n", start_time);
     ok(end_time == 100, "got %lu\n", end_time);
-    todo_wine ok(time_offset < 0, "got %lu\n", time_offset);
+    ok(time_offset < 0, "got %lu\n", time_offset);
     ok(segment_flags == (DMUS_TRACKF_DIRTY|DMUS_TRACKF_START|DMUS_TRACKF_SEEK),
             "got %#lx\n", segment_flags);
     ok(!!performance, "got %p\n", performance);
@@ -5641,26 +5641,26 @@ static void test_loop(void)
     };
     static const struct expected_note expected_notes_set_start_point[] =
     {
-        {2, .todo_time = TRUE}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        {2}, {3}, {4}, {5}, {6},
+        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
     static const struct expected_note expected_notes_set_length[] =
     {
-        {2, .todo_time = TRUE}, {3}, {4},
-        {0}, {1}, {2}, {3}, {4},
+        {2}, {3}, {4},
+        {0, .todo_type = TRUE}, {1}, {2}, {3}, {4},
         {0}, {1}, {2}, {3}, {4},
     };
     static const struct expected_note expected_notes_set_loop_points[] =
     {
-        {2, .todo_time = TRUE}, {3},
-        {1}, {2}, {3},
+        {2}, {3},
+        {1, .todo_key = TRUE}, {2}, {3},
         {1}, {2}, {3}, {4},
     };
     static const struct expected_note expected_notes_wave_track_set_loop_points[] =
     {
-        {2, .todo_time = TRUE}, {3},
-        {1}, {2}, {3},
+        {2}, {3},
+        {1, .todo_key = TRUE}, {2}, {3},
         {1}, {2}, {3}, {4},
     };
     static const struct expected_note expected_notes_rt_default[] =
@@ -5670,24 +5670,6 @@ static void test_loop(void)
     static const struct expected_note expected_notes_rt_set_repeats[] =
     {
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-    };
-    static const struct expected_note expected_notes_rt_set_start_point[] =
-    {
-        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-    };
-    static const struct expected_note expected_notes_rt_set_length[] =
-    {
-        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-    };
-    static const struct expected_note expected_notes_rt_set_loop_points[] =
-    {
-        {0, .todo_time = TRUE}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
         {0}, {1}, {2}, {3}, {4}, {5}, {6},
     };
@@ -5803,17 +5785,18 @@ static void test_loop(void)
 
     hr = IDirectMusicSegment_SetStartPoint(segment, 20);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetStartPoint", segment, expected_notes_rt_set_start_point,
-        ARRAYSIZE(expected_notes_rt_set_start_point));
+    check_loop("RT length, SetStartPoint", segment, expected_notes_rt_set_repeats,
+            ARRAYSIZE(expected_notes_rt_set_repeats));
 
     hr = IDirectMusicSegment_SetLength(segment, 50);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetLength", segment, expected_notes_rt_set_length, ARRAYSIZE(expected_notes_rt_set_length));
+    check_loop("RT length, SetLength", segment, expected_notes_rt_set_repeats,
+            ARRAYSIZE(expected_notes_rt_set_repeats));
 
     hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 40);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_loop("RT length, SetLoopPoints", segment, expected_notes_rt_set_loop_points,
-        ARRAYSIZE(expected_notes_rt_set_loop_points));
+    check_loop("RT length, SetLoopPoints", segment, expected_notes_rt_set_repeats,
+            ARRAYSIZE(expected_notes_rt_set_repeats));
 
     IDirectMusicSegment_Release(segment);
 }
