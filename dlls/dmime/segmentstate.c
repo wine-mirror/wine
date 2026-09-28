@@ -457,6 +457,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             This->end_point = This->loop_end ? This->loop_end : This->length;
             This->played = This->loop_start;
         }
+        This->actual_start_time -= This->played;
         This->actual_repeats--;
         This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
 
