@@ -115,6 +115,7 @@ static void test_signalandwait(void)
 {
     DWORD r;
     HANDLE event[2], semaphore[2], file;
+    LONG previous;
     int i;
 
     /* invalid parameters */
@@ -171,11 +172,33 @@ static void test_signalandwait(void)
     r = SignalObjectAndWait(semaphore[0], semaphore[1], 0, FALSE);
     ok( r == WAIT_FAILED, "should fail\n");
 
-    r = ReleaseSemaphore(semaphore[0],1,NULL);
-    ok( r == FALSE, "should fail\n");
+    previous = 123;
+    SetLastError(0xdeadbeef);
+    r = ReleaseSemaphore(semaphore[0], -1, &previous);
+    ok(r == FALSE, "should fail\n");
+    ok(previous == 123, "expected previous == 123, got %li\n", previous);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
-    r = ReleaseSemaphore(semaphore[1],1,NULL);
-    ok( r == TRUE, "should succeed\n");
+    previous = 123;
+    SetLastError(0xdeadbeef);
+    r = ReleaseSemaphore(semaphore[0], 0, &previous);
+    todo_wine ok(r == FALSE, "should fail\n");
+    todo_wine ok(previous == 123, "expected previous == 123, got %li\n", previous);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
+
+    previous = 123;
+    SetLastError(0xdeadbeef);
+    r = ReleaseSemaphore(semaphore[0], 1, &previous);
+    ok(r == FALSE, "should fail\n");
+    ok(previous == 123, "expected previous == 123, got %li\n", previous);
+    ok(GetLastError() == ERROR_TOO_MANY_POSTS, "wrong error %lu\n", GetLastError());
+
+    previous = 123;
+    SetLastError(0xdeadbeef);
+    r = ReleaseSemaphore(semaphore[1], 1, &previous);
+    ok(r == TRUE, "should succeed\n");
+    ok(previous == 0, "expected previous == 0, got %li\n", previous);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError());
 
     CloseHandle(semaphore[0]);
     CloseHandle(semaphore[1]);
