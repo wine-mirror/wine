@@ -1865,6 +1865,59 @@ static HRESULT __stdcall _3d_transform_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR color_management_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Color Management'/> \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Color Management'/> \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='SourceColorContext' type='iunknown' />                \
+    <Property name='SourceRenderingIntent' type='enum' />                 \
+    <Property name='DestinationColorContext' type='iunknown' />           \
+    <Property name='DestinationRenderingIntent' type='enum' />            \
+    <Property name='AlphaMode' type='enum' />                             \
+    <Property name='Quality' type='enum' />                               \
+  </Effect>";
+
+struct color_management_properties
+{
+    ID2D1ColorContext *source_color_context;
+    D2D1_COLORMANAGEMENT_RENDERING_INTENT source_rendering_intent;
+    ID2D1ColorContext *destination_color_context;
+    D2D1_COLORMANAGEMENT_RENDERING_INTENT destination_rendering_intent;
+    D2D1_COLORMANAGEMENT_ALPHA_MODE alpha_mode;
+    D2D1_COLORMANAGEMENT_QUALITY quality;
+};
+
+EFFECT_PROPERTY_RW(color_management, source_rendering_intent, ENUM)
+EFFECT_PROPERTY_RW(color_management, destination_rendering_intent, ENUM)
+EFFECT_PROPERTY_RW(color_management, alpha_mode, ENUM)
+EFFECT_PROPERTY_RW(color_management, quality, ENUM)
+
+static const D2D1_PROPERTY_BINDING color_management_bindings[] =
+{
+    { L"SourceRenderingIntent", BINDING_RW(color_management, source_rendering_intent) },
+    { L"DestinationRenderingIntent", BINDING_RW(color_management, destination_rendering_intent) },
+    { L"AlphaMode", BINDING_RW(color_management, alpha_mode) },
+    { L"Quality", BINDING_RW(color_management, quality) },
+};
+
+static HRESULT __stdcall color_management_factory(IUnknown **effect)
+{
+    static const struct color_management_properties properties =
+    {
+        .source_rendering_intent = D2D1_COLORMANAGEMENT_RENDERING_INTENT_PERCEPTUAL,
+        .destination_rendering_intent = D2D1_COLORMANAGEMENT_RENDERING_INTENT_PERCEPTUAL,
+        .alpha_mode = D2D1_COLORMANAGEMENT_ALPHA_MODE_PREMULTIPLIED,
+        .quality = D2D1_COLORMANAGEMENT_QUALITY_NORMAL,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1898,6 +1951,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Scale, X2(scale) },
         { &CLSID_D2D1Premultiply, X(premultiply) },
         { &CLSID_D2D13DTransform, X2(_3d_transform) },
+        { &CLSID_D2D1ColorManagement, X2(color_management) },
 #undef X2
 #undef X
     };
