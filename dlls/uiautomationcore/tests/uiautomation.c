@@ -9755,8 +9755,11 @@ static void test_UiaGetUpdatedCache(void)
     hr = UiaGetUpdatedCache(node, NULL, NormalizeState_None, NULL, &out_req, &tree_struct);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = UiaGetUpdatedCache(NULL, &cache_req, NormalizeState_None, NULL, &out_req, &tree_struct);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    if (0) /* Crashes on Windows 11 */
+    {
+        hr = UiaGetUpdatedCache(NULL, &cache_req, NormalizeState_None, NULL, &out_req, &tree_struct);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     /*
      * Cache request with NULL view condition, doesn't matter with
