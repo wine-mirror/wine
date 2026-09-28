@@ -177,14 +177,14 @@ static void test_signalandwait(void)
     r = ReleaseSemaphore(semaphore[0], -1, &previous);
     ok(r == FALSE, "should fail\n");
     ok(previous == 123, "expected previous == 123, got %li\n", previous);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     previous = 123;
     SetLastError(0xdeadbeef);
     r = ReleaseSemaphore(semaphore[0], 0, &previous);
-    todo_wine ok(r == FALSE, "should fail\n");
-    todo_wine ok(previous == 123, "expected previous == 123, got %li\n", previous);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
+    ok(r == FALSE, "should fail\n");
+    ok(previous == 123, "expected previous == 123, got %li\n", previous);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     previous = 123;
     SetLastError(0xdeadbeef);

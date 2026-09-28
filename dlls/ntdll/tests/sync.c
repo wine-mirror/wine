@@ -514,13 +514,13 @@ static void test_semaphore(void)
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, -1, &prev);
-    todo_wine ok( status == STATUS_INVALID_PARAMETER, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "NtReleaseSemaphore failed %08lx\n", status );
     ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 0, &prev);
-    todo_wine ok( status == STATUS_INVALID_PARAMETER, "NtReleaseSemaphore failed %08lx\n", status );
-    todo_wine ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %ld\n", prev );
+    ok( status == STATUS_INVALID_PARAMETER, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 3, &prev);
