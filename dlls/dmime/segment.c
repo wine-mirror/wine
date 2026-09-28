@@ -817,7 +817,10 @@ static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream
             TRACE("Loading segment %p from wave file\n", This);
 
             This->header.mtLength = 1;
-            if (FAILED(hr = wave_track_create_from_chunk(stream, &chunk, &track))) break;
+            This->header.dwFlags = DMUS_SEGIOF_REFLENGTH;
+            if (FAILED(hr = wave_track_create_from_chunk(stream, &chunk, &track,
+                    &This->header.rtLength)))
+                break;
             hr = segment_append_track(This, (IDirectMusicTrack *)track, 1, 0);
             IDirectMusicTrack8_Release(track);
             break;
