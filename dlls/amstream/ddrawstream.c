@@ -1896,7 +1896,6 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     object->IMemInputPin_iface.lpVtbl = &ddraw_meminput_vtbl;
     object->IMemAllocator_iface.lpVtbl = &ddraw_mem_allocator_vtbl;
     object->IPin_iface.lpVtbl = &ddraw_sink_vtbl;
-    object->IMemAllocator_iface.lpVtbl = &ddraw_mem_allocator_vtbl;
     object->ref = 1;
 
     object->format.width = 100;
