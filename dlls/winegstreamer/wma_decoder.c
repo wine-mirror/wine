@@ -398,6 +398,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     MF_ATTRIBUTE_TYPE item_type;
     ULONG i, sample_size;
     GUID major, subtype;
+    WAVEFORMATEX *wfx;
     HRESULT hr;
 
     TRACE("iface %p, id %lu, type %p, flags %#lx.\n", iface, id, type, flags);
@@ -448,12 +449,12 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     MoFreeMediaType(&decoder->output_type);
     memset(&decoder->output_type, 0, sizeof(decoder->output_type));
 
-    if (SUCCEEDED(hr = MFInitAMMediaTypeFromMFMediaType(type, GUID_NULL, &decoder->output_type)))
-    {
-        WAVEFORMATEX *wfx = (WAVEFORMATEX *)decoder->input_type.pbFormat;
-        wfx->wBitsPerSample = sample_size;
-        decoder->output_buf_size = 1024 * block_alignment * channel_count;
-    }
+    if (FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, GUID_NULL, &decoder->output_type)))
+        return hr;
+
+    wfx = (WAVEFORMATEX *)decoder->input_type.pbFormat;
+    wfx->wBitsPerSample = sample_size;
+    decoder->output_buf_size = 1024 * block_alignment * channel_count;
 
     if (FAILED(hr = try_create_wg_transform(decoder)))
         goto failed;
