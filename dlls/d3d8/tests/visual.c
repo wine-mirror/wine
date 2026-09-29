@@ -12660,6 +12660,133 @@ static void test_generated_texcoords(void)
     release_test_context(&context);
 }
 
+static void test_map_partial_range(void)
+{
+    /* Applications are not required to confine their writes to the range they
+     * locked. Native uploads the whole buffer, except for managed buffers,
+     * where only the locked range is uploaded. Pure Pinball locks four bytes
+     * of a vertex buffer and writes all of it. */
+    static const struct
+    {
+        struct vec4 position;
+        D3DCOLOR diffuse;
+    }
+    red_quad[] =
+    {
+        {{  0.0f,   0.0f, 0.0f, 1.0f}, 0xffff0000},
+        {{640.0f,   0.0f, 0.0f, 1.0f}, 0xffff0000},
+        {{  0.0f, 480.0f, 0.0f, 1.0f}, 0xffff0000},
+        {{640.0f, 480.0f, 0.0f, 1.0f}, 0xffff0000},
+    },
+    green_quad[] =
+    {
+        {{  0.0f,   0.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {{640.0f,   0.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {{  0.0f, 480.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {{640.0f, 480.0f, 0.0f, 1.0f}, 0xff00ff00},
+    };
+    static const struct
+    {
+        DWORD usage;
+        D3DPOOL pool;
+        unsigned int offset;
+        DWORD flags;
+        unsigned int expected_color;
+    }
+    tests[] =
+    {
+        {0,                                      D3DPOOL_DEFAULT,   0,  0,                   0x0000ff00},
+        {0,                                      D3DPOOL_DEFAULT,   20, 0,                   0x0000ff00},
+        {0,                                      D3DPOOL_DEFAULT,   0,  D3DLOCK_NOOVERWRITE, 0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_DEFAULT,   0,  0,                   0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_DEFAULT,   0,  D3DLOCK_NOOVERWRITE, 0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_DEFAULT,   20, D3DLOCK_NOOVERWRITE, 0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_DEFAULT,   0,  D3DLOCK_DISCARD,     0x0000ff00},
+        {0,                                      D3DPOOL_MANAGED,   0,  0,                   0x00ff0000},
+        {0,                                      D3DPOOL_MANAGED,   20, 0,                   0x00ff0000},
+        {0,                                      D3DPOOL_SYSTEMMEM, 0,  0,                   0x0000ff00},
+        {0,                                      D3DPOOL_SYSTEMMEM, 20, 0,                   0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_SYSTEMMEM, 0,  0,                   0x0000ff00},
+        {D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,  D3DPOOL_SYSTEMMEM, 0,  D3DLOCK_NOOVERWRITE, 0x0000ff00},
+    };
+    struct d3d8_test_context context;
+    IDirect3DVertexBuffer8 *buffer;
+    IDirect3DDevice8 *device;
+    unsigned int color, i;
+    BYTE *data;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        hr = IDirect3DDevice8_CreateVertexBuffer(device, sizeof(red_quad), tests[i].usage,
+                D3DFVF_XYZRHW | D3DFVF_DIFFUSE, tests[i].pool, &buffer);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DVertexBuffer8_Lock(buffer, 0, 0, &data,
+                tests[i].usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        memcpy(data, red_quad, sizeof(red_quad));
+        hr = IDirect3DVertexBuffer8_Unlock(buffer);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice8_SetStreamSource(device, 0, buffer, sizeof(*red_quad));
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+        /* Draw and read back once first, so that the buffer is uploaded and
+         * the GPU is done with it. Without this the contents never leave
+         * system memory and the range passed to Lock() is irrelevant. */
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 1.0f, 0);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        color = getPixelColor(device, 320, 240);
+        ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+        /* Write the whole buffer while locking only four bytes of it. */
+        hr = IDirect3DVertexBuffer8_Lock(buffer, tests[i].offset, 4, &data, tests[i].flags);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        memcpy(data - tests[i].offset, green_quad, sizeof(green_quad));
+        hr = IDirect3DVertexBuffer8_Unlock(buffer);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 1.0f, 0);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        color = getPixelColor(device, 320, 240);
+        ok(color == tests[i].expected_color, "Got unexpected color 0x%08x.\n", color);
+
+        hr = IDirect3DDevice8_SetStreamSource(device, 0, NULL, 0);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        IDirect3DVertexBuffer8_Release(buffer);
+
+        winetest_pop_context();
+    }
+
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -12757,4 +12884,5 @@ START_TEST(visual)
     test_specular_shaders();
     test_lighting_matrices();
     test_generated_texcoords();
+    test_map_partial_range();
 }
