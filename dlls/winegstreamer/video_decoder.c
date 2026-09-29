@@ -1188,7 +1188,11 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     type->lSampleSize = image_size;
     type->formattype = FORMAT_VideoInfo;
     type->cbFormat = sizeof(VIDEOINFOHEADER);
-    type->pbFormat = CoTaskMemAlloc(type->cbFormat);
+    if (!(type->pbFormat = CoTaskMemAlloc(type->cbFormat)))
+    {
+        IMFMediaType_Release(media_type);
+        return E_OUTOFMEMORY;
+    }
     memset(type->pbFormat, 0, type->cbFormat);
 
     info = (VIDEOINFOHEADER *)type->pbFormat;
