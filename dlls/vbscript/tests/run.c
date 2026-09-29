@@ -3682,6 +3682,18 @@ static void test_parse_errors(void)
             L"Class a\nEnd Class\nReDim a(2)\n",
             2, 6,
             L"ReDim a(2)", S_OK, 1041
+        },
+        {
+            /* A dot separated from a literal is not a member access */
+            L"Dim x, y\nWith x\ny = \"s\" .p\nEnd With\n",
+            2, 8,
+            L"y = \"s\" .p", S_OK
+        },
+        {
+            /* Member access on a literal can't start a statement - error 1024 */
+            L"Dim x\n  \"s\".p = 1\n",
+            1, 2,
+            L"  \"s\".p = 1", S_OK, 1024
         }
     };
     HRESULT hres;

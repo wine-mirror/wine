@@ -477,10 +477,33 @@ static int parse_oct_literal(parser_ctx_t *ctx, LONG *ret)
     return tInt;
 }
 
+static BOOL is_space(WCHAR c)
+{
+    return c == ' ' || c == '\t' || c == '\v' || c == '\f';
+}
+
 static void skip_spaces(parser_ctx_t *ctx)
 {
-    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\v' || *ctx->ptr == '\f')
+    while(is_space(*ctx->ptr))
         ctx->ptr++;
+}
+
+static BOOL is_literal_token(int token)
+{
+    switch(token) {
+    case tString:
+    case tInt:
+    case tDouble:
+    case tDate:
+    case tTRUE:
+    case tFALSE:
+    case tEMPTY:
+    case tNULL:
+    case tNOTHING:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 static int comment_line(parser_ctx_t *ctx)
@@ -578,6 +601,12 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         if ((is_identifier_char(c) || c == ')')
                 && (ctx->last_token == tIdentifier || ctx->last_token == ')'
                 || ctx->last_token == tEMPTYBRACKETS || ctx->last_token == tME)) {
+            ctx->ptr++;
+            return '.';
+        }
+        /* A dot right after a literal is a member access too, "s".p is valid
+         * and fails at run time. */
+        if(!is_space(c) && is_literal_token(ctx->last_token)) {
             ctx->ptr++;
             return '.';
         }

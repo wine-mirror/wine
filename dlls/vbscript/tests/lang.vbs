@@ -2035,6 +2035,53 @@ For Each reservedWord In Array("as", "boolean", "byte", "currency", "double", "e
     CheckParseErr reservedWord & " = 1", 1024
 Next
 
+Sub TestLiteralMemberAccess
+    Dim x
+    On Error Resume Next
+    Err.Clear : x = "s".p : Call ok(Err.Number = 424, "x = ""s"".p: Err.Number = " & Err.Number)
+    Err.Clear : x = "s". p : Call ok(Err.Number = 424, "x = ""s"". p: Err.Number = " & Err.Number)
+    Err.Clear : x = "s".p(1) : Call ok(Err.Number = 424, "x = ""s"".p(1): Err.Number = " & Err.Number)
+    Err.Clear : x = "s".p.q : Call ok(Err.Number = 424, "x = ""s"".p.q: Err.Number = " & Err.Number)
+    Err.Clear : x = "s".end : Call ok(Err.Number = 424, "x = ""s"".end: Err.Number = " & Err.Number)
+    Err.Clear : x = 1.5.p : Call ok(Err.Number = 424, "x = 1.5.p: Err.Number = " & Err.Number)
+    Err.Clear : x = &H10.p : Call ok(Err.Number = 424, "x = &H10.p: Err.Number = " & Err.Number)
+    Err.Clear : x = True.p : Call ok(Err.Number = 424, "x = True.p: Err.Number = " & Err.Number)
+    Err.Clear : x = False.p : Call ok(Err.Number = 424, "x = False.p: Err.Number = " & Err.Number)
+    Err.Clear : x = Nothing.p : Call ok(Err.Number = 424, "x = Nothing.p: Err.Number = " & Err.Number)
+    Err.Clear : x = Empty.p : Call ok(Err.Number = 424, "x = Empty.p: Err.Number = " & Err.Number)
+    Err.Clear : x = Null.p : Call ok(Err.Number = 424, "x = Null.p: Err.Number = " & Err.Number)
+    Err.Clear : x = #1/1/2020#.p : Call ok(Err.Number = 424, "x = #1/1/2020#.p: Err.Number = " & Err.Number)
+    Err.Clear : x = "a" & "s".p : Call ok(Err.Number = 424, "x = ""a"" & ""s"".p: Err.Number = " & Err.Number)
+    Err.Clear : x = -1.5.p : Call ok(Err.Number = 424, "x = -1.5.p: Err.Number = " & Err.Number)
+    Err.Clear : Call "s".p : Call ok(Err.Number = 424, "Call ""s"".p: Err.Number = " & Err.Number)
+    Err.Clear : Call "s".p(1) : Call ok(Err.Number = 424, "Call ""s"".p(1): Err.Number = " & Err.Number)
+End Sub
+Call TestLiteralMemberAccess
+
+Sub TestNewMemberAccess
+    Dim x, matches
+    x = New RegExp.Global
+    Call ok(x = False, "New RegExp.Global = " & x)
+    Call ok(getVT(New RegExp.Pattern) = "VT_BSTR", "getVT(New RegExp.Pattern) = " & getVT(New RegExp.Pattern))
+    Set matches = New RegExp.Execute("abc")
+    Call ok(matches.Count = 1, "New RegExp.Execute(""abc"").Count = " & matches.Count)
+    Call ok(New RegExp.Execute("abc").Count = 1, "New RegExp.Execute(""abc"").Count is not 1")
+
+    On Error Resume Next
+    Err.Clear
+    x = New RegExp.nosuchmember
+    Call ok(Err.Number = 438, "New RegExp.nosuchmember: Err.Number = " & Err.Number)
+End Sub
+Call TestNewMemberAccess
+
+CheckParseErr """s"".p = 1",                 1024
+CheckParseErr """s"".p",                     1024
+CheckParseErr """s"".p 1",                   1024
+CheckParseErr "1.5.p = 1",                   1024
+CheckParseErr "Nothing.p = 1",               1024
+CheckParseErr "New RegExp.Pattern = ""a""",  1024
+CheckParseErr "New RegExp.Execute ""a""",    1024
+
 Function ParenId(a)
     ParenId = a
 End Function

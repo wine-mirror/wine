@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(unsigned*,parser_ctx_t*,const char*);
 static void override_generic_error(parser_ctx_t*,HRESULT);
+static BOOL starts_with_literal(expression_t*);
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr);
 
@@ -236,11 +237,14 @@ Statement
     | SimpleStatement ':'                   { $$ = $1; }
 
 SimpleStatement
-    : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
+    : CallExpression ArgumentList_opt       { call_expression_t *call_expr;
+                                              if(starts_with_literal($1)) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
+                                              call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | CallExpression Arguments SubFirstArgOp Expression SubFirstArgRest
                                             { expression_t *first_arg, *combined;
                                               call_expression_t *call_expr;
+                                              if(starts_with_literal($1)) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
                                               first_arg = new_unary_expression(ctx, EXPR_BRACKETS, $2);
                                               CHECK_ERROR;
                                               combined = new_binary_expression(ctx, $3, first_arg, $4);
@@ -251,7 +255,7 @@ SimpleStatement
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
-                                            { if($1->type == EXPR_BRACKETS) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
+                                            { if($1->type == EXPR_BRACKETS || starts_with_literal($1)) { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
                                               $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
     | tREDIM Preserve_opt ReDimDeclList     { $$ = new_redim_statement(ctx, @$, $2, $3); CHECK_ERROR; }
@@ -330,8 +334,8 @@ SimpleStatement
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
-    | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
-    | CallExpression '.' error              { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    | UnaryExpression '.' tIdentifier       { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+    | UnaryExpression '.' error             { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
     | tDOT tIdentifier                      { expression_t *dot_expr = new_expression(ctx, EXPR_DOT, sizeof(*dot_expr)); CHECK_ERROR;
                                               $$ = new_member_expression(ctx, dot_expr, $2); CHECK_ERROR; }
     | tDOT error                            { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
@@ -748,6 +752,36 @@ static void override_generic_error(parser_ctx_t *ctx, HRESULT hres)
     if(ctx->hres == MAKE_VBSERROR(VBSE_SYNTAX_ERROR)
             || ctx->hres == MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT))
         ctx->hres = hres;
+}
+
+/* A member access on a literal or a new object, like "s".p or New C.p, is a
+ * valid expression but it can't start a statement. */
+static BOOL starts_with_literal(expression_t *expr)
+{
+    while(1) {
+        switch(expr->type) {
+        case EXPR_MEMBER:
+            expr = ((member_expression_t*)expr)->obj_expr;
+            if(!expr)
+                return FALSE;
+            break;
+        case EXPR_CALL:
+            expr = ((call_expression_t*)expr)->call_expr;
+            break;
+        case EXPR_BOOL:
+        case EXPR_DATE:
+        case EXPR_DOUBLE:
+        case EXPR_EMPTY:
+        case EXPR_INT:
+        case EXPR_NEW:
+        case EXPR_NOTHING:
+        case EXPR_NULL:
+        case EXPR_STRING:
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    }
 }
 
 static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
