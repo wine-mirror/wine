@@ -1684,7 +1684,7 @@ static void test_midi(void)
     ULONG ret;
     ULONG ref;
     DWORD track_length, trace2_length;
-    MUSIC_TIME next;
+    MUSIC_TIME next, start_time;
     DMUS_PMSG *msg;
     DMUS_NOTE_PMSG *note;
     DMUS_MIDI_PMSG *midi;
@@ -1940,7 +1940,10 @@ static void test_midi(void)
     /* now play the segment, and check produced messages */
     hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicPerformance_PlaySegment(performance, (IDirectMusicSegment *)segment, 0x800, 0, NULL);
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    start_time += 1000;
+    hr = IDirectMusicPerformance_PlaySegment(performance, (IDirectMusicSegment *)segment, 0, start_time, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
@@ -1953,7 +1956,7 @@ static void test_midi(void)
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_PATCH, "got msg type %#lx, expected PATCH\n", msg->dwType);
     ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
-    todo_wine ok(msg->mtTime == 23, "got mtTime %lu, expected 23\n", msg->mtTime);
+    todo_wine ok(msg->mtTime == start_time + 23, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 23);
     patch = (DMUS_PATCH_PMSG *)msg;
     ok(patch->byInstrument == 0x30, "got instrument %#x, expected 0x30\n", patch->byInstrument);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
@@ -1962,7 +1965,7 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
-    ok(msg->mtTime == 24, "got mtTime %lu, expected 24\n", msg->mtTime);
+    ok(msg->mtTime == start_time + 24, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 24);
     note = (DMUS_NOTE_PMSG *)msg;
     ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
     ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
@@ -1974,7 +1977,7 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
-    ok(msg->mtTime == 49, "got mtTime %lu, expected 49\n", msg->mtTime);
+    ok(msg->mtTime == start_time + 49, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 49);
     note = (DMUS_NOTE_PMSG *)msg;
     ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
     ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
@@ -1986,7 +1989,7 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
-    ok(msg->mtTime == 74, "got mtTime %lu, expected 74\n", msg->mtTime);
+    ok(msg->mtTime == start_time + 74, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 74);
     note = (DMUS_NOTE_PMSG *)msg;
     ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
     ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
@@ -1998,7 +2001,7 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_NOTE, "got msg type %#lx, expected NOTE\n", msg->dwType);
-    ok(msg->mtTime == 124, "got mtTime %lu, expected 124\n", msg->mtTime);
+    ok(msg->mtTime == start_time + 124, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 124);
     note = (DMUS_NOTE_PMSG *)msg;
     ok(note->bMidiValue == 0x3c, "got note %#x, expected 0x3c\n", note->bMidiValue);
     ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
@@ -2010,7 +2013,7 @@ static void test_midi(void)
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
     ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_MIDI, "got msg type %#lx, expected MIDI\n", msg->dwType);
-    ok(msg->mtTime == 649, "got mtTime %lu, expected 649\n", msg->mtTime);
+    ok(msg->mtTime == start_time + 649, "got mtTime %lu, expected %lu\n", msg->mtTime, start_time + 649);
     ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
     midi = (DMUS_MIDI_PMSG *)msg;
     ok(midi->bStatus == 0xb0, "got status %#x, expected 0xb1\n", midi->bStatus);
