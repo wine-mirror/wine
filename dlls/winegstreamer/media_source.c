@@ -607,7 +607,11 @@ static HRESULT media_source_start(struct media_source *source, IMFPresentationDe
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(descriptor, &count)))
+    {
         WARN("Failed to get presentation descriptor stream count, hr %#lx\n", hr);
+        free(descriptors);
+        return hr;
+    }
 
     for (i = 0; i < count; i++)
     {
