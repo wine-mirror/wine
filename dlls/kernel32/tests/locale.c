@@ -5871,6 +5871,22 @@ static void test_GetLocaleInfoEx(void)
         ret = GetLocaleInfoW(GetUserDefaultLCID(), LOCALE_SNAME, buffer2, ARRAY_SIZE(buffer2));
         ok(ret && ret == lstrlenW(buffer2)+1, "got ret value %d\n", ret);
         ok(!lstrcmpW(bufferW, buffer2), "LOCALE_SNAMEs don't match %s %s\n", wine_dbgstr_w(bufferW), wine_dbgstr_w(buffer2));
+
+        ret = pGetLocaleInfoEx(L"ku-Arab", LOCALE_SSORTLOCALE, bufferW, ARRAY_SIZE(bufferW));
+        if (ret)
+        {
+            ok(ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+            ret = pGetLocaleInfoEx(bufferW, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
+            todo_wine ok(ret && ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+        }
+
+        ret = pGetLocaleInfoEx(L"pap", LOCALE_SSORTLOCALE, bufferW, ARRAY_SIZE(bufferW));
+        if (ret)
+        {
+            ok(ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+            ret = pGetLocaleInfoEx(bufferW, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
+            todo_wine ok(ret && ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+        }
     }
 }
 
