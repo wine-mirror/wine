@@ -673,7 +673,7 @@ static HRESULT media_sink_begin_finalize(struct media_sink *media_sink, IMFAsync
         IUnknown_Release(&command->IUnknown_iface);
         return hr;
     }
-    IMFAsyncResult_AddRef((command->u.finalize.result = result));
+    command->u.finalize.result = result;
 
     hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD,
             &media_sink->async_callback, &command->IUnknown_iface);
