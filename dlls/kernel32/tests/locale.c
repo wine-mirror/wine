@@ -5877,7 +5877,7 @@ static void test_GetLocaleInfoEx(void)
         {
             ok(ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
             ret = pGetLocaleInfoEx(bufferW, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
-            todo_wine ok(ret && ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+            ok(ret && ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
         }
 
         ret = pGetLocaleInfoEx(L"pap", LOCALE_SSORTLOCALE, bufferW, ARRAY_SIZE(bufferW));

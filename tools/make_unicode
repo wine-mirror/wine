@@ -1071,7 +1071,7 @@ my @locales =
  { name => "ksh", sopentypelang => "KSH0" },
  { name => "ksh-DE" },
  { name => "ku", lcid => 0x00000092, slist => "\x{061b}", sortlocale => "ku-Arab-IQ", oemcp => 720 },
- { name => "ku-Arab", lcid => 0x00007c92, group => 13 },
+ { name => "ku-Arab", lcid => 0x00007c92, group => 13, sortlocale => "ku-Arab-IQ" },
  { name => "ku-Arab-IQ", lcid => 0x00000492 },
  { name => "ku-Arab-IR", oemcp => 65001 },
  { name => "ku-Latn" },
