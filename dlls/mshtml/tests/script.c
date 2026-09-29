@@ -179,6 +179,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_SETVIEWSIZE    0x30000E
 #define DISPID_EXTERNAL_NEWREFTEST     0x30000F
 #define DISPID_EXTERNAL_OBJWITHMETHOD  0x300010
+#define DISPID_EXTERNAL_GET_VARIANT    0x300011
 
 static const GUID CLSID_TestScript[] = {
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}},
@@ -1264,6 +1265,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_OBJWITHMETHOD;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"getVariant")) {
+        *pid = DISPID_EXTERNAL_GET_VARIANT;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -1576,6 +1581,17 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = (IDispatch*)&objWithMethod;
         return S_OK;
+
+    case DISPID_EXTERNAL_GET_VARIANT:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+        ok(V_VT(&pdp->rgvarg[1]) == VT_I4, "type VT = %d\n", V_VT(&pdp->rgvarg[1]));
+        ok(V_VT(&pdp->rgvarg[0]) == VT_BSTR, "value VT = %d\n", V_VT(&pdp->rgvarg[0]));
+        return VariantChangeType(pvarRes, &pdp->rgvarg[0], 0, V_I4(&pdp->rgvarg[1]));
 
     default:
         ok(0, "unexpected call\n");

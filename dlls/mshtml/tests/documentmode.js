@@ -4904,3 +4904,19 @@ async_test("window own props", function() {
     iframe.src = "about:blank";
     document.body.appendChild(iframe);
 });
+
+sync_test("i8 types", function() {
+    var v;
+
+    v = external.getVariant(21, "1");
+    ok(external.getVT(v) === "VT_I4", "VT_UI8 stored as " + external.getVT(v));
+    ok(v === 1, "v = " + v);
+
+    v = external.getVariant(21, "1099511627776");
+    ok(external.getVT(v) === "VT_R8", "VT_UI8 stored as " + external.getVT(v));
+    ok(v === 1099511627776, "v = " + v);
+
+    v = external.getVariant(21, "1152921504606846977");
+    ok(external.getVT(v) === "VT_R8", "VT_UI8 stored as " + external.getVT(v));
+    ok(v === 1152921504606846976, "v = " + v);
+});
