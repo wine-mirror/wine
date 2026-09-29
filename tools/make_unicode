@@ -1246,7 +1246,7 @@ my @locales =
  { name => "pa-Guru-IN", alias => "pa-IN" },
  { name => "pa-IN", lcid => 0x00000446, sparent => "pa-Guru", file => "pa_Guru_IN", group => 15 },
  { name => "pap", lcid => 0x00000079, oemcp => 850, sopentypelang => "PAP0" },
-## name => "pap-029", lcid => 0x00000479 },
+ { name => "pap-029", parent => "pap", file => "pap", lcid => 0x00000479 },
  { name => "pcm" },
  { name => "pcm-NG", alias => "pcm-Latn-NG" },
  { name => "pcm-Latn", file => "pcm" },
