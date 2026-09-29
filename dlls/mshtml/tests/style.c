@@ -575,11 +575,12 @@ static void test_style3(IHTMLStyle3 *style3, IHTMLCSSStyleDeclaration *css_style
     }
 }
 
-static void test_style4(IHTMLStyle4 *style4)
+static void test_style4(IHTMLStyle4 *style4, IHTMLCSSStyleDeclaration *css_style)
 {
     HRESULT hres;
     VARIANT v;
     VARIANT vdefault;
+    BSTR str, strdef;
 
     hres = IHTMLStyle4_get_minHeight(style4, &vdefault);
     ok(hres == S_OK, "get_minHeight failed: %08lx\n", hres);
@@ -599,6 +600,65 @@ static void test_style4(IHTMLStyle4 *style4)
     hres = IHTMLStyle4_put_minHeight(style4, vdefault);
     ok(hres == S_OK, "put_minHeight failed: %08lx\n", hres);
     VariantClear(&vdefault);
+
+    hres = IHTMLStyle4_get_textOverflow(style4, &strdef);
+    ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+
+    str = SysAllocString(L"clip");
+    hres = IHTMLStyle4_put_textOverflow(style4, str);
+    ok(hres == S_OK, "put_textOverflow failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle4_get_textOverflow(style4, &str);
+    ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+    ok(!lstrcmpW(str, L"clip"), "expect \"clip\" got (%s)\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    if (css_style)
+    {
+        hres = IHTMLCSSStyleDeclaration_get_textOverflow(css_style, &str);
+        ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+        ok(!lstrcmpW(str, L"clip"), "expect \"clip\" got (%s)\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        str = SysAllocString(L"x");
+        hres = IHTMLCSSStyleDeclaration_put_textOverflow(css_style, str);
+        SysFreeString(str);
+        if (compat_mode >= COMPAT_IE9)
+        {
+            ok(hres == S_OK, "put_textOverflow failed: %08lx\n", hres);
+
+            hres = IHTMLCSSStyleDeclaration_get_textOverflow(css_style, &str);
+            ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+            ok(!lstrcmpW(str, L"clip"), "expect \"clip\" got (%s)\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+        }
+        else
+        {
+            todo_wine ok(hres == E_INVALIDARG, "put_textOverflow returned: %08lx\n", hres);
+        }
+
+        str = SysAllocString(L"Ellipsis");
+        hres = IHTMLCSSStyleDeclaration_put_textOverflow(css_style, str);
+        ok(hres == S_OK, "put_textOverflow failed: %08lx\n", hres);
+        SysFreeString(str);
+
+        hres = IHTMLCSSStyleDeclaration_get_textOverflow(css_style, &str);
+        ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+        ok(!lstrcmpW(str, L"ellipsis"), "expect \"ellipsis\" got (%s)\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hres = IHTMLCSSStyleDeclaration_put_textOverflow(css_style, NULL);
+        ok(hres == S_OK, "put_textOverflow failed: %08lx\n", hres);
+
+        hres = IHTMLCSSStyleDeclaration_get_textOverflow(css_style, &str);
+        ok(hres == S_OK, "get_textOverflow failed: %08lx\n", hres);
+        ok(!str, "got %s\n", wine_dbgstr_w(str));
+    }
+
+    hres = IHTMLStyle4_put_textOverflow(style4, strdef);
+    ok(hres == S_OK, "put_textOverflow failed: %08lx\n", hres);
+    SysFreeString(strdef);
 }
 
 static void test_style5(IHTMLStyle5 *style5)
@@ -3371,7 +3431,7 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle4, (void**)&style4);
     ok(hres == S_OK, "Could not get IHTMLStyle4 iface: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
-        test_style4(style4);
+        test_style4(style4, css_style);
         IHTMLStyle4_Release(style4);
     }
 

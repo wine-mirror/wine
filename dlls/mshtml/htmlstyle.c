@@ -671,6 +671,11 @@ static const style_tbl_entry_t style_tbl[] = {
         ATTR_FIX_PX
     },
     {
+        L"text-overflow",
+        DISPID_IHTMLCSSSTYLEDECLARATION_TEXTOVERFLOW,
+        DISPID_A_TEXTOVERFLOW
+    },
+    {
         L"text-transform",
         DISPID_IHTMLCSSSTYLEDECLARATION_TEXTTRANSFORM,
         DISPID_A_TEXTTRANSFORM
@@ -4040,15 +4045,19 @@ DISPEX_IDISPATCH_IMPL(HTMLStyle4, IHTMLStyle4, impl_from_IHTMLStyle4(iface)->css
 static HRESULT WINAPI HTMLStyle4_put_textOverflow(IHTMLStyle4 *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_property(&This->css_style, STYLEID_TEXT_OVERFLOW, v);
 }
 
 static HRESULT WINAPI HTMLStyle4_get_textOverflow(IHTMLStyle4 *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle4(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_property(&This->css_style, STYLEID_TEXT_OVERFLOW, p);
 }
 
 static HRESULT WINAPI HTMLStyle4_put_minHeight(IHTMLStyle4 *iface, VARIANT v)
@@ -6419,15 +6428,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_textKashidaSpace(IHTMLCSSStyle
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_textOverflow(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_TEXT_OVERFLOW, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_textOverflow(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_TEXT_OVERFLOW, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_minHeight(IHTMLCSSStyleDeclaration *iface, VARIANT v)
