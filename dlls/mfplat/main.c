@@ -8686,6 +8686,8 @@ HRESULT WINAPI MFRegisterLocalByteStreamHandler(const WCHAR *extension, const WC
         goto failed;
     if (mime && !(handler->u.bytestream.mime = wcsdup(mime)))
         goto failed;
+    handler->activate = activate;
+    IMFActivate_AddRef(handler->activate);
 
     EnterCriticalSection(&local_handlers_section);
     list_add_head(&local_bytestream_handlers, &handler->entry);
