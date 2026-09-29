@@ -3420,7 +3420,7 @@ static HRESULT parse_criteria( const WCHAR **str, BSTR *col, DBCOMPAREOP *op, BS
     }
 
     *col = SysAllocStringLen( col_b, col_e - col_b );
-    if (!col) return E_OUTOFMEMORY;
+    if (!*col) return E_OUTOFMEMORY;
 
     *val = SysAllocStringLen( val_b, val_len );
     if (!*val)
