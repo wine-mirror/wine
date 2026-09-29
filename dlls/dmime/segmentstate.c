@@ -55,6 +55,7 @@ struct segment_state
     MUSIC_TIME length;
     MUSIC_TIME loop_start;
     MUSIC_TIME loop_end;
+    MUSIC_TIME actual_start_time;
     MUSIC_TIME end_point;
     MUSIC_TIME played;
 
@@ -334,6 +335,7 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
         }
         else
             This->end_point = This->length;
+        This->actual_start_time = start_time;
         This->actual_repeats = This->repeats;
     }
 
@@ -388,13 +390,13 @@ static HRESULT segment_state_play_until(struct segment_state *This, IDirectMusic
     HRESULT hr = S_OK;
     MUSIC_TIME played;
 
-    played = min(end_time - This->start_time, This->end_point - This->start_point);
+    played = min(end_time - This->actual_start_time, This->end_point - This->start_point);
 
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
         if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data,
                 This->start_point + This->played, This->start_point + played,
-                This->start_time, track_flags, (IDirectMusicPerformance *)performance,
+                This->actual_start_time, track_flags, (IDirectMusicPerformance *)performance,
                 iface, entry->track_id)))
         {
             WARN("Failed to play track %p, hr %#lx\n", entry->track, hr);
@@ -418,7 +420,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
     HRESULT hr;
 
     if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance,
-            This->start_time + This->played, &time)))
+            This->actual_start_time + This->played, &time)))
         return hr;
     if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(performance,
             time + duration, &next_time)))
@@ -428,7 +430,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
     {
         if (!This->actual_repeats)
         {
-            MUSIC_TIME end_time = This->start_time + This->played;
+            MUSIC_TIME end_time = This->actual_start_time + This->played;
 
             if (FAILED(hr = performance_send_segment_end(performance, end_time, iface, FALSE)))
             {
@@ -439,12 +441,12 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             return S_FALSE;
         }
 
-        This->start_time += This->end_point - This->start_point;
+        This->actual_start_time += This->end_point - This->start_point;
         if (S_OK == segment_get_rt_length(This->segment, &rt_length))
         {
-            IDirectMusicPerformance8_MusicToReferenceTime(performance, This->start_time, &time);
+            IDirectMusicPerformance8_MusicToReferenceTime(performance, This->actual_start_time, &time);
             IDirectMusicPerformance8_ReferenceToMusicTime(performance, time + rt_length, &This->end_point);
-            This->end_point -= This->start_time;
+            This->end_point -= This->actual_start_time;
             This->played = 0;
         }
         else
@@ -455,7 +457,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
         This->actual_repeats--;
         This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
 
-        if (next_time <= This->start_time || This->end_point <= This->start_point) break;
+        if (next_time <= This->actual_start_time || This->end_point <= This->start_point) break;
     }
 
     return S_OK;
@@ -468,7 +470,7 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
 
     TRACE("%p %p\n", iface, performance);
 
-    if (FAILED(hr = performance_send_segment_start(performance, This->start_time, iface)))
+    if (FAILED(hr = performance_send_segment_start(performance, This->actual_start_time, iface)))
     {
         ERR("Failed to send segment start, hr %#lx\n", hr);
         return hr;
@@ -479,7 +481,7 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
         return hr;
 
     if (hr == S_FALSE) return S_OK;
-    return performance_send_segment_tick(performance, This->start_time, iface);
+    return performance_send_segment_tick(performance, This->actual_start_time, iface);
 }
 
 HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
@@ -498,7 +500,7 @@ HRESULT segment_state_stop(IDirectMusicSegmentState *iface, IDirectMusicPerforma
     TRACE("%p %p\n", iface, performance);
 
     This->played = This->end_point - This->start_point;
-    return performance_send_segment_end(performance, This->start_time + This->played, iface, TRUE);
+    return performance_send_segment_end(performance, This->actual_start_time + This->played, iface, TRUE);
 }
 
 HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
