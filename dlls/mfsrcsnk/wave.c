@@ -935,6 +935,15 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    object->IMFFinalizableMediaSink_iface.lpVtbl = &wave_sink_vtbl;
+    object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
+    object->IMFStreamSink_iface.lpVtbl = &wave_stream_sink_vtbl;
+    object->IMFClockStateSink_iface.lpVtbl = &wave_sink_clock_sink_vtbl;
+    object->IMFMediaTypeHandler_iface.lpVtbl = &wave_sink_type_handler_vtbl;
+    object->refcount = 1;
+    IMFByteStream_AddRef((object->bytestream = bytestream));
+    InitializeCriticalSection(&object->cs);
+
     /* FIXME: do basic media type validation */
 
     if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(media_type, &object->fmt, &size, 0)))
@@ -946,15 +955,6 @@ HRESULT WINAPI MFCreateWAVEMediaSink(IMFByteStream *bytestream, IMFMediaType *me
     /* Update derived fields. */
     object->fmt->nAvgBytesPerSec = object->fmt->nSamplesPerSec * object->fmt->nChannels * object->fmt->wBitsPerSample / 8;
     object->fmt->nBlockAlign = object->fmt->nChannels * object->fmt->wBitsPerSample / 8;
-
-    object->IMFFinalizableMediaSink_iface.lpVtbl = &wave_sink_vtbl;
-    object->IMFMediaEventGenerator_iface.lpVtbl = &wave_sink_events_vtbl;
-    object->IMFStreamSink_iface.lpVtbl = &wave_stream_sink_vtbl;
-    object->IMFClockStateSink_iface.lpVtbl = &wave_sink_clock_sink_vtbl;
-    object->IMFMediaTypeHandler_iface.lpVtbl = &wave_sink_type_handler_vtbl;
-    object->refcount = 1;
-    IMFByteStream_AddRef((object->bytestream = bytestream));
-    InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto failed;
