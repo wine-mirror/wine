@@ -472,11 +472,11 @@ HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_M
 
     /* through IMFMediaType to normalize representation to MFVIDEOFORMAT / WAVEFORMATEX */
     if (FAILED(hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, (void *)input_format, &input_type)))
-        return 0;
+        return hr;
     if (FAILED(hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, (void *)output_format, &output_type)))
     {
         IMFMediaType_Release(input_type);
-        return 0;
+        return hr;
     }
 
     hr = wg_transform_create_mf(input_type, output_type, attrs, transform);
