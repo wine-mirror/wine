@@ -883,7 +883,7 @@ static HRESULT mpeg_video_codec_source_get_media_type(struct transform *filter, 
         WG_VIDEO_FORMAT_RGB15,
     };
 
-    const MPEG1VIDEOINFO *input_format = (MPEG1VIDEOINFO*)filter->sink.pin.mt.pbFormat;
+    const MPEG1VIDEOINFO *input_format;
     struct wg_format wg_format = {};
     VIDEOINFO *video_format;
 
