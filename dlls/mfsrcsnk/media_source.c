@@ -478,7 +478,7 @@ static HRESULT media_source_start(struct media_source *source, IMFPresentationDe
 
         if (FAILED(hr = IMFStreamDescriptor_GetStreamIdentifier(stream_descriptor, &id)))
             WARN("Failed to get stream descriptor id, hr %#lx\n", hr);
-        else if (id > source->stream_count)
+        else if (!id || id > source->stream_count)
             WARN("Invalid stream descriptor id %lu, hr %#lx\n", id, hr);
         else
         {
