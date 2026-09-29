@@ -503,10 +503,10 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
     switch (message)
     {
         case MFT_MESSAGE_COMMAND_DRAIN:
-            return wg_transform_drain(encoder->wg_transform);
+            return encoder->wg_transform ? wg_transform_drain(encoder->wg_transform) : MF_E_TRANSFORM_TYPE_NOT_SET;
 
         case MFT_MESSAGE_COMMAND_FLUSH:
-            return wg_transform_flush(encoder->wg_transform);
+            return encoder->wg_transform ? wg_transform_flush(encoder->wg_transform) : MF_E_TRANSFORM_TYPE_NOT_SET;
 
         default:
             FIXME("Ignoring message %#x.\n", message);
