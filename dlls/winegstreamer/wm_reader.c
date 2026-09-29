@@ -2710,7 +2710,6 @@ static HRESULT WINAPI reader_GetAllocateForOutput(IWMSyncReader2 *iface, DWORD o
         return E_INVALIDARG;
     }
 
-    stream = reader->streams + output;
     if ((*allocator = stream->output_allocator))
         IWMReaderAllocatorEx_AddRef(*allocator);
 
