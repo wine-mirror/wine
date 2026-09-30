@@ -1903,6 +1903,21 @@ static const struct test_image_load_info
             }
         }
     },
+    /* Pass in dimensions smaller than the block size. */
+    {
+        test_dds_dxt1, sizeof(test_dds_dxt1),
+        {
+            2, 2, D3DX11_DEFAULT, D3DX11_DEFAULT, 1, (D3D11_USAGE)D3DX11_DEFAULT,
+            D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT
+        },
+        S_OK, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        {
+            .desc_2d =
+            {
+                4, 4, 1, 1, DXGI_FORMAT_BC1_UNORM, { 1, 0 }, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0
+            }
+        }
+    },
 };
 
 static const struct test_invalid_image_load_info
