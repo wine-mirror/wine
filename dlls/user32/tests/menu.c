@@ -56,6 +56,9 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 static BOOL bMenuVisible;
 static INT popmenu;
 static BOOL got_input;
+static BOOL rebuild_menu_bar;
+static BOOL initmenu_rebuilt;
+static INT nccalcsize_calls_after_rebuild;
 static HMENU hMenus[4];
 
 #define MOD_SIZE 10
@@ -2293,6 +2296,7 @@ static struct menu_mouse_tests_s {
     WORD wVk[5]; /* keys */
     BOOL bMenuVisible;
     BOOL _todo_wine;
+    BOOL rebuild_menu_bar; /* during WM_INITMENU */
 } menu_tests[] = {
     /* for each test, send keys or clicks and check for menu visibility */
     { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE }, /* test 0 */
@@ -2327,6 +2331,12 @@ static struct menu_mouse_tests_s {
     { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
+
+    /* rebuild the menu bar inside WM_INITMENU, like Reason does */
+    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, TRUE, TRUE },
+    { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
     { -1 }
 };
 
@@ -2382,6 +2392,9 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
         int elapsed;
 
         got_input = i && menu_tests[i-1].bMenuVisible;
+        rebuild_menu_bar = menu_tests[i].rebuild_menu_bar;
+        initmenu_rebuilt = FALSE;
+        nccalcsize_calls_after_rebuild = 0;
 
         if (menu_tests[i].type == INPUT_KEYBOARD)
             for (j = 0; menu_tests[i].wVk[j] != 0; j++)
@@ -2440,10 +2453,38 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         case WM_ENTERMENULOOP:
             bMenuVisible = TRUE;
             break;
+        case WM_INITMENU:
+            if (rebuild_menu_bar)
+            {
+                hmenu = GetMenu(hWnd);
+                while (GetMenuItemCount(hmenu) > 0)
+                    RemoveMenu(hmenu, 0, MF_BYPOSITION);
+
+                AppendMenuA(hmenu, MF_STRING|MF_POPUP, (UINT_PTR)hMenus[2], "&Menu");
+                AppendMenuA(hmenu, MF_STRING, 0, "&Enabled");
+                AppendMenuA(hmenu, MF_STRING|MF_DISABLED, 0, "&Disabled");
+                initmenu_rebuilt = TRUE;
+            }
+            break;
+        case WM_NCCALCSIZE:
+            if (initmenu_rebuilt)
+                nccalcsize_calls_after_rebuild++;
+
+            return DefWindowProcA( hWnd, msg, wParam, lParam );
         case WM_INITMENUPOPUP:
         case WM_UNINITMENUPOPUP:
         case WM_EXITMENULOOP:
+            break;
         case WM_MENUSELECT:
+            /* the selected bar item must have a valid (non-empty) rect, esp after a rebuild via WM_INITMENU */
+            if (rebuild_menu_bar && (HMENU)lParam == GetMenu(hWnd) && LOWORD(wParam) != 0xffff)
+            {
+                RECT rect;
+                BOOL success = GetMenuItemRect(hWnd, (HMENU)lParam, LOWORD(wParam), &rect);
+                todo_wine
+                ok(success && !IsRectEmpty(&rect), "selected menu bar item %u has empty rect\n", LOWORD(wParam));
+                ok(!nccalcsize_calls_after_rebuild, "Received %d WM_NCCALCSIZE messages after WM_INITMENU rebuilt the menu bar\n", nccalcsize_calls_after_rebuild);
+            }
             break;
 
         case WM_KEYDOWN:
