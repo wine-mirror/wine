@@ -379,7 +379,7 @@ struct user_driver_funcs
     const KBDTABLES *(*pKbdLayerDescriptor)(HKL);
     void    (*pReleaseKbdTables)(const KBDTABLES *);
     /* IME functions */
-    UINT    (*pImeToAsciiEx)(UINT,UINT,const BYTE*,HIMC);
+    UINT    (*pImeToAsciiEx)(UINT,UINT,const BYTE*,void *);
     void    (*pNotifyIMEStatus)(HWND,UINT);
     BOOL    (*pSetIMECompositionRect)(HWND,RECT);
     /* cursor/icon functions */

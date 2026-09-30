@@ -669,7 +669,7 @@ static void nulldrv_ReleaseKbdTables( const KBDTABLES *tables )
 {
 }
 
-static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
+static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, void *update )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -1126,9 +1126,9 @@ static void loaderdrv_ReleaseKbdTables( const KBDTABLES *tables )
     return load_driver()->pReleaseKbdTables( tables );
 }
 
-static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc,const BYTE *state, HIMC himc )
+static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc,const BYTE *state, void *update )
 {
-    return load_driver()->pImeToAsciiEx( vkey, vsc, state, himc );
+    return load_driver()->pImeToAsciiEx( vkey, vsc, state, update );
 }
 
 static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )

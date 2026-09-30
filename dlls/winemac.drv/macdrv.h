@@ -206,7 +206,7 @@ extern BOOL macdrv_SetCursorPos(INT x, INT y);
 extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey);
 extern void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey);
 extern SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl);
-extern UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc);
+extern UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, void *update);
 extern UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl);
 extern INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                               LPWSTR bufW, int bufW_size, UINT flags, HKL hkl);

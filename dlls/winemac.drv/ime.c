@@ -34,7 +34,7 @@ CGRect ime_composition_rect;
 /***********************************************************************
  *              ImeToAsciiEx (MACDRV.@)
  */
-UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
+UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, void *update )
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
     unsigned int flags;
@@ -42,7 +42,7 @@ UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
     bool ret;
     BOOL repeat = !!(vsc & KF_REPEAT);
 
-    TRACE( "vkey %#x vsc %#x state %p himc %p\n", vkey, vsc, state, himc );
+    TRACE( "vkey %#x vsc %#x state %p update %p\n", vkey, vsc, state, update );
 
     if (!state) return STATUS_SUCCESS;
 
@@ -74,7 +74,7 @@ UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
 
     TRACE( "flags %#x keyc %#x\n", flags, keyc );
 
-    ret = macdrv_send_keydown_to_input_source( keyc, flags, repeat, himc );
+    ret = macdrv_send_keydown_to_input_source( keyc, flags, repeat, update );
     NtUserMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE | QS_SENDMESSAGE, 0 );
     return ret ? STATUS_SUCCESS : STATUS_NOT_IMPLEMENTED;
 }
@@ -105,19 +105,20 @@ void macdrv_NotifyIMEStatus( HWND hwnd, UINT status )
 }
 
 
-static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
+static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str, void *update )
 {
     const WCHAR *strings[] = { comp_str, result_str };
     NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)strings,
-                       NULL, NtUserImeDriverCall, FALSE );
+                       update, NtUserImeDriverCall, FALSE );
 }
 
 void macdrv_im_set_text( const macdrv_event *event )
 {
     HWND hwnd = macdrv_get_window_hwnd( event->window );
+    void *update = event->im_set_text.update;
     WCHAR *str = NULL;
 
-    TRACE( "win %p/%p himc %p text %s complete %u\n", hwnd, event->window, event->im_set_text.himc,
+    TRACE( "win %p/%p update %p text %s complete %u\n", hwnd, event->window, update,
            debugstr_cf( event->im_set_text.text ), event->im_set_text.complete );
 
     if (event->im_set_text.text)
@@ -128,8 +129,8 @@ void macdrv_im_set_text( const macdrv_event *event )
         str[length] = 0;
     }
 
-    if (event->im_set_text.complete) post_ime_update( hwnd, -1, NULL, str );
-    else post_ime_update( hwnd, MAKELONG(event->im_set_text.cursor_begin, event->im_set_text.cursor_end), str, NULL );
+    if (event->im_set_text.complete) post_ime_update( hwnd, -1, NULL, str, update );
+    else post_ime_update( hwnd, MAKELONG(event->im_set_text.cursor_begin, event->im_set_text.cursor_end), str, NULL, update );
 
     free( str );
 }

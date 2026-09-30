@@ -337,7 +337,7 @@ typedef struct macdrv_event {
             unsigned long   time_ms;
         }                                           hotkey_press;
         struct {
-            void           *himc;
+            void           *update;
             CFStringRef     text;       /* new text or NULL if just completing existing text */
             unsigned int    cursor_begin;
             unsigned int    cursor_end;
@@ -542,7 +542,7 @@ extern void macdrv_release_remote_layer(void* hwnd, unsigned int context_id);
 extern bool macdrv_get_view_backing_size(WineContentView *view, int backing_size[2]);
 extern void macdrv_set_view_backing_size(WineContentView *view, const int backing_size[2]);
 extern uint32_t macdrv_window_background_color(void);
-extern bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *data);
+extern bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *update);
 extern void macdrv_clear_ime_text(void);
 extern bool macdrv_is_any_wine_window_visible(void);
 

@@ -290,7 +290,7 @@ static inline BOOL stage_manager_enabled(void)
 
 @property (nonatomic) BOOL usePerPixelAlpha;
 
-@property (assign, nonatomic) void* himc;
+@property (assign, nonatomic) void* ime_update;
 @property (nonatomic) BOOL commandDone;
 
 @property (readonly, copy, nonatomic) NSArray* childWineWindows;
@@ -697,7 +697,7 @@ static inline BOOL stage_manager_enabled(void)
         WineWindow* window = (WineWindow*)[self window];
 
         event = macdrv_create_event(IM_SET_TEXT, window);
-        event->im_set_text.himc = [window himc];
+        event->im_set_text.update = [window ime_update];
         event->im_set_text.text = (CFStringRef)[text copy];
         event->im_set_text.complete = true;
 
@@ -780,7 +780,7 @@ static inline BOOL stage_manager_enabled(void)
             markedTextSelection.location += replacementRange.location;
 
             event = macdrv_create_event(IM_SET_TEXT, window);
-            event->im_set_text.himc = [window himc];
+            event->im_set_text.update = [window ime_update];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
             event->im_set_text.complete = false;
             event->im_set_text.cursor_begin = markedTextSelection.location;
@@ -916,7 +916,7 @@ static inline BOOL stage_manager_enabled(void)
     @synthesize drawnSinceShown;
     @synthesize shapeChangedSinceLastDraw;
     @synthesize usePerPixelAlpha;
-    @synthesize himc, commandDone;
+    @synthesize ime_update, commandDone;
     @synthesize contentViewMaskLayer;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
@@ -3934,7 +3934,7 @@ uint32_t macdrv_window_background_color(void)
  * processed by input sources (AKA IMEs). This is only called when there is an
  * active non-keyboard input source.
  */
-bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *himc)
+bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repeat, void *update)
 {
     __block bool ret;
 
@@ -3953,7 +3953,7 @@ bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repea
             CGEventRef c;
             NSEvent* event;
 
-            window.himc = himc;
+            window.ime_update = update;
             fix_device_modifiers_by_generic(&localFlags);
 
             // An NSEvent created with +keyEventWithType:... is internally marked
@@ -3967,6 +3967,7 @@ bool macdrv_send_keydown_to_input_source(int keyc, unsigned int flags, int repea
 
             window.commandDone = FALSE;
             ret = [[[window contentView] inputContext] handleEvent:event] && !window.commandDone;
+            window.ime_update = NULL;
         }
         else
             ret = false;
