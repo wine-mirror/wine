@@ -418,9 +418,11 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX11_IMAGE_LOAD_INFO 
 
     /* Potentially round up width/height to align with block size. */
     if (!load_info->Width || load_info->Width == D3DX11_FROM_FILE || load_info->Width == D3DX11_DEFAULT)
-        load_info->Width = (img_info.Width + fmt_desc->block_width - 1) & ~(fmt_desc->block_width - 1);
+        load_info->Width = img_info.Width;
+    load_info->Width = (load_info->Width + fmt_desc->block_width - 1) & ~(fmt_desc->block_width - 1);
     if (!load_info->Height || load_info->Height == D3DX11_FROM_FILE || load_info->Height == D3DX11_DEFAULT)
-        load_info->Height = (img_info.Height + fmt_desc->block_height - 1) & ~(fmt_desc->block_height - 1);
+        load_info->Height = img_info.Height;
+    load_info->Height = (load_info->Height + fmt_desc->block_height - 1) & ~(fmt_desc->block_height - 1);
     if (!load_info->Depth || load_info->Depth == D3DX11_FROM_FILE || load_info->Depth == D3DX11_DEFAULT)
         load_info->Depth = img_info.Depth;
 
