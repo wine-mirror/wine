@@ -40,7 +40,6 @@ static const char *dbgstr_event(int type)
         "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
         "HOTKEY_PRESS",
-        "IM_SET_TEXT",
         "KEY_PRESS",
         "KEY_RELEASE",
         "KEYBOARD_CHANGED",
@@ -113,7 +112,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
-        event_mask |= event_mask_for_type(IM_SET_TEXT);
         event_mask |= event_mask_for_type(LOST_PASTEBOARD_OWNERSHIP);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_BUTTON);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
@@ -335,9 +333,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case HOTKEY_PRESS:
         macdrv_hotkey_press(event);
-        break;
-    case IM_SET_TEXT:
-        macdrv_im_set_text(event);
         break;
     case KEY_PRESS:
     case KEY_RELEASE:

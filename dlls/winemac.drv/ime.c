@@ -39,7 +39,6 @@ UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, void *update )
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
     unsigned int flags;
     int keyc;
-    bool ret;
     BOOL repeat = !!(vsc & KF_REPEAT);
 
     TRACE( "vkey %#x vsc %#x state %p update %p\n", vkey, vsc, state, update );
@@ -74,9 +73,7 @@ UINT macdrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, void *update )
 
     TRACE( "flags %#x keyc %#x\n", flags, keyc );
 
-    ret = macdrv_send_keydown_to_input_source( keyc, flags, repeat, update );
-    NtUserMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE | QS_SENDMESSAGE, 0 );
-    return ret ? STATUS_SUCCESS : STATUS_NOT_IMPLEMENTED;
+    return macdrv_send_keydown_to_input_source( keyc, flags, repeat, update ) ? STATUS_SUCCESS : STATUS_NOT_IMPLEMENTED;
 }
 
 
@@ -112,25 +109,23 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
                        update, NtUserImeDriverCall, FALSE );
 }
 
-void macdrv_im_set_text( const macdrv_event *event )
+void macdrv_ime_set_text( HWND hwnd, CFStringRef text, bool complete, unsigned int cursor_begin,
+                          unsigned int cursor_end, void *update )
 {
-    HWND hwnd = macdrv_get_window_hwnd( event->window );
-    void *update = event->im_set_text.update;
     WCHAR *str = NULL;
 
-    TRACE( "win %p/%p update %p text %s complete %u\n", hwnd, event->window, update,
-           debugstr_cf( event->im_set_text.text ), event->im_set_text.complete );
+    TRACE( "hwnd %p text %s complete %u cursor %u-%u\n", hwnd, debugstr_cf( text ),
+           complete, cursor_begin, cursor_end );
 
-    if (event->im_set_text.text)
+    if (text)
     {
-        CFIndex length = CFStringGetLength( event->im_set_text.text );
+        CFIndex length = CFStringGetLength( text );
         if (!(str = malloc( (length + 1) * sizeof(WCHAR) ))) return;
-        if (length) CFStringGetCharacters( event->im_set_text.text, CFRangeMake( 0, length ), str );
+        if (length) CFStringGetCharacters( text, CFRangeMake( 0, length ), str );
         str[length] = 0;
     }
 
-    if (event->im_set_text.complete) post_ime_update( hwnd, -1, NULL, str, update );
-    else post_ime_update( hwnd, MAKELONG(event->im_set_text.cursor_begin, event->im_set_text.cursor_end), str, NULL, update );
-
+    if (complete) post_ime_update( hwnd, -1, NULL, str, update );
+    else post_ime_update( hwnd, MAKELONG(cursor_begin, cursor_end), str, NULL, update );
     free( str );
 }

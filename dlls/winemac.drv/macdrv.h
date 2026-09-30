@@ -223,7 +223,8 @@ extern void macdrv_ThreadDetach(void);
 /* ime.c */
 extern pthread_mutex_t ime_composition_rect_mutex;
 extern CGRect ime_composition_rect;
-extern void macdrv_im_set_text(const macdrv_event *event);
+extern void macdrv_ime_set_text(HWND hwnd, CFStringRef text, bool complete,
+                                unsigned int cursor_begin, unsigned int cursor_end, void *update);
 
 /* macdrv private window data */
 struct macdrv_win_data

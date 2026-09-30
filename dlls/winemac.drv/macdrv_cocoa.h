@@ -278,7 +278,6 @@ enum {
     APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
     HOTKEY_PRESS,
-    IM_SET_TEXT,
     KEY_PRESS,
     KEY_RELEASE,
     KEYBOARD_CHANGED,
@@ -336,13 +335,6 @@ typedef struct macdrv_event {
             unsigned int    keycode;
             unsigned long   time_ms;
         }                                           hotkey_press;
-        struct {
-            void           *update;
-            CFStringRef     text;       /* new text or NULL if just completing existing text */
-            unsigned int    cursor_begin;
-            unsigned int    cursor_end;
-            bool            complete;   /* is completing text? */
-        }                                           im_set_text;
         struct {
             CGKeyCode                   keycode;
             CGEventFlags                modifiers;

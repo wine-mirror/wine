@@ -693,18 +693,9 @@ static inline BOOL stage_manager_enabled(void)
 
     - (void) completeText:(NSString*)text
     {
-        macdrv_event* event;
         WineWindow* window = (WineWindow*)[self window];
 
-        event = macdrv_create_event(IM_SET_TEXT, window);
-        event->im_set_text.update = [window ime_update];
-        event->im_set_text.text = (CFStringRef)[text copy];
-        event->im_set_text.complete = true;
-
-        [[window queue] postEvent:event];
-
-        macdrv_release_event(event);
-
+        macdrv_ime_set_text(window.hwnd, (CFStringRef)text, true, 0, 0, [window ime_update]);
         [self clearMarkedText];
     }
 
@@ -769,7 +760,6 @@ static inline BOOL stage_manager_enabled(void)
 
         if ([string isKindOfClass:[NSString class]])
         {
-            macdrv_event* event;
             WineWindow* window = (WineWindow*)[self window];
 
             if (replacementRange.location == NSNotFound)
@@ -779,16 +769,10 @@ static inline BOOL stage_manager_enabled(void)
             markedTextSelection = selectedRange;
             markedTextSelection.location += replacementRange.location;
 
-            event = macdrv_create_event(IM_SET_TEXT, window);
-            event->im_set_text.update = [window ime_update];
-            event->im_set_text.text = (CFStringRef)[[markedText string] copy];
-            event->im_set_text.complete = false;
-            event->im_set_text.cursor_begin = markedTextSelection.location;
-            event->im_set_text.cursor_end = markedTextSelection.location + markedTextSelection.length;
-
-            [[window queue] postEvent:event];
-
-            macdrv_release_event(event);
+            macdrv_ime_set_text(window.hwnd, (CFStringRef)[markedText string], false,
+                                markedTextSelection.location,
+                                markedTextSelection.location + markedTextSelection.length,
+                                [window ime_update]);
 
             [[self inputContext] invalidateCharacterCoordinates];
         }

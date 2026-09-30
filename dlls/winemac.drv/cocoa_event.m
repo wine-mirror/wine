@@ -666,10 +666,6 @@ void macdrv_release_event(macdrv_event *event)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
         switch (event->type)
         {
-            case IM_SET_TEXT:
-                if (event->im_set_text.text)
-                    CFRelease(event->im_set_text.text);
-                break;
             case KEYBOARD_CHANGED:
                 CFRelease(event->keyboard_changed.uchr);
                 CFRelease(event->keyboard_changed.input_source);
