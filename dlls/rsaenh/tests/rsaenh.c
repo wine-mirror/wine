@@ -1775,6 +1775,11 @@ static void test_hmac(void) {
     result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08lx\n", GetLastError());
 
+    dwLen = 0;
+    result = CryptGetHashParam(hHash, HP_HASHVAL, NULL, &dwLen, 0);
+    ok(result, "%08lx\n", GetLastError());
+    ok(dwLen != 0, "Wrong value\n");
+
     dwLen = ARRAY_SIZE(abData);
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result, "%08lx\n", GetLastError());
