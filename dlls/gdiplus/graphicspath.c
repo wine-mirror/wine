@@ -2698,6 +2698,11 @@ static void remove_repeated_points(GpPath *path)
     path->pathdata.Count = path_size;
 }
 
+static BOOL is_dashed(const GpPen *pen)
+{
+    return pen->dash != DashStyleSolid && (pen->dash != DashStyleCustom || pen->numdashes);
+}
+
 GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     REAL flatness)
 {
@@ -2750,7 +2755,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
             if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
             {
-                if (pen->dash != DashStyleSolid)
+                if (is_dashed(pen))
                     widen_dashed_figure(flat_path, subpath_start, i, 1, pen, pen_width, &last_point);
                 else
                     widen_closed_figure(flat_path->pathdata.Points, subpath_start, i, pen, pen_width, &last_point);
@@ -2758,7 +2763,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
             else if (i == flat_path->pathdata.Count-1 ||
                 (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
             {
-                if (pen->dash != DashStyleSolid)
+                if (is_dashed(pen))
                     widen_dashed_figure(flat_path, subpath_start, i, 0, pen, pen_width, &last_point);
                 else
                     widen_open_figure(flat_path->pathdata.Points, subpath_start, i, pen, pen_width,

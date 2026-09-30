@@ -1609,6 +1609,21 @@ static path_test_t widenline_unit_path[] = {
     {5.0, 10.5,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*3*/
     };
 
+static path_test_t widenline_rect_path[] = {
+    {0.0, 0.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {55.0, 0.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {55.0, 30.0, PathPointTypeLine,  0, 0}, /*2*/
+    {0.0, 30.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*3*/
+    {10.0, 25.0, PathPointTypeStart, 0, 0}, /*4*/
+    {5.0, 20.0,  PathPointTypeLine,  0, 0}, /*5*/
+    {50.0, 20.0, PathPointTypeLine,  0, 0}, /*6*/
+    {45.0, 25.0, PathPointTypeLine,  0, 0}, /*7*/
+    {45.0, 5.0,  PathPointTypeLine,  0, 0}, /*8*/
+    {50.0, 10.0, PathPointTypeLine,  0, 0}, /*9*/
+    {5.0, 10.0,  PathPointTypeLine,  0, 0}, /*10*/
+    {10.0, 5.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*11*/
+    };
+
 static void test_widen(void)
 {
     GpStatus status;
@@ -1698,6 +1713,33 @@ static void test_widen(void)
 
     status = GdipSetPenDashStyle(pen, DashStyleSolid);
     expect(Ok, status);
+
+    /* custom dash style without a dash array is a solid line */
+    GdipDeletePen(pen);
+    GdipCreatePen1(0xffffffff, 10.0, UnitPixel, &pen);
+    status = GdipSetPenDashStyle(pen, DashStyleCustom);
+    expect(Ok, status);
+    status = GdipGetPenDashCount(pen, &count);
+    expect(Ok, status);
+    expect(0, count);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, ARRAY_SIZE(widenline_path), FALSE);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathRectangle(path, 5.0, 5.0, 45.0, 20.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_rect_path, ARRAY_SIZE(widenline_rect_path), FALSE);
 
     /* dashed line less than 1 pixel wide */
     GdipDeletePen(pen);
