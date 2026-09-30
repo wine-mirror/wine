@@ -177,14 +177,16 @@ static D3DX10_SPRITE * d3dx10_sprite_draw_batch(struct d3dx10_sprite *sprite,
     {
         ptr = d3dx10_get_sprite_ptr(sprites, i, stride);
 
-        if (ptr->pTexture != start_sprite->pTexture || i == count - 1)
+        if (ptr->pTexture != start_sprite->pTexture)
         {
             ID3D10Device_PSSetShaderResources(sprite->device, 0, 1, &start_sprite->pTexture);
-            ID3D10Device_DrawIndexed(sprite->device, (i - start + 1) * 6, start * 6, 0);
+            ID3D10Device_DrawIndexed(sprite->device, (i - start) * 6, start * 6, 0);
             start_sprite = ptr;
             start = i;
         }
     }
+    ID3D10Device_PSSetShaderResources(sprite->device, 0, 1, &start_sprite->pTexture);
+    ID3D10Device_DrawIndexed(sprite->device, (i - start) * 6, start * 6, 0);
 
     return d3dx10_get_sprite_ptr(sprites, count, stride);
 }
