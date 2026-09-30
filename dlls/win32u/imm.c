@@ -442,11 +442,12 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
     return STATUS_SUCCESS;
 }
 
-static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
+static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR **strings )
 {
     static UINT ime_update_count;
 
     struct imm_thread_data *data = get_imm_thread_data();
+    WCHAR *comp_str = strings[0], *result_str = strings[1];
     UINT id = -1, comp_len, result_len, prev_result_len;
     WCHAR *prev_result_str, *tmp;
     struct ime_update *update;
@@ -687,7 +688,7 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
         }
         return ime_to_tascii_ex( wparam, lparam, params->state, params->compstr, params->key_consumed, params->himc );
     case WINE_IME_POST_UPDATE:
-        post_ime_update( hwnd, wparam, (WCHAR *)lparam, (WCHAR *)params );
+        post_ime_update( hwnd, wparam, (WCHAR **)lparam );
         return 0;
     default:
         ERR( "Unknown IME driver call %#x\n", call );

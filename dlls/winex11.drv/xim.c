@@ -116,9 +116,10 @@ static void activate_ime_hkl( HWND hwnd )
 
 static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
 {
+    const WCHAR *strings[] = { comp_str, result_str };
     activate_ime_hkl( hwnd );
-    NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)comp_str,
-                       result_str, NtUserImeDriverCall, FALSE );
+    NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)strings,
+                       NULL, NtUserImeDriverCall, FALSE );
 }
 
 static void xim_update_comp_string( UINT offset, UINT old_len, const WCHAR *text, UINT new_len )

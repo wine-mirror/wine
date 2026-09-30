@@ -107,8 +107,9 @@ void macdrv_NotifyIMEStatus( HWND hwnd, UINT status )
 
 static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
 {
-    NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)comp_str, result_str,
-                       NtUserImeDriverCall, FALSE );
+    const WCHAR *strings[] = { comp_str, result_str };
+    NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)strings,
+                       NULL, NtUserImeDriverCall, FALSE );
 }
 
 void macdrv_im_set_text( const macdrv_event *event )
