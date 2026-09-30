@@ -616,6 +616,35 @@ HRESULT create_d3d_texture(ID3D11Device *device, D3DX11_IMAGE_LOAD_INFO *load_in
     return S_OK;
 }
 
+static void dump_image_info(const D3DX11_IMAGE_INFO *image_info)
+{
+    if (!image_info)
+    {
+        TRACE("image info (null).\n");
+        return;
+    }
+    TRACE("image info: Width %u, Height %u, Depth %u, ArraySize %u, MipLevels %u.\n",
+            image_info->Width, image_info->Height, image_info->Depth, image_info->ArraySize, image_info->MipLevels);
+    TRACE("MiscFlags %#x, Format %#x, ResourceDimension %u, ImageFileFormat %u.\n",
+            image_info->MiscFlags, image_info->Format, image_info->ResourceDimension, image_info->ImageFileFormat);
+}
+
+static void dump_image_load_info(const D3DX11_IMAGE_LOAD_INFO *load_info)
+{
+    if (!load_info)
+    {
+        TRACE("load info (null).\n");
+        return;
+    }
+    TRACE("Width %u, Height %u, Depth %u, FirstMipLevel %u, MipLevels %u, Usage %u.\n",
+            load_info->Width, load_info->Height, load_info->Depth, load_info->FirstMipLevel,
+            load_info->MipLevels, load_info->Usage);
+    TRACE("BindFlags %#x, CpuAccessFlags %#x, MiscFlags %#x, Format %u (%#x), Filter %u, MipFilter %u.\n",
+            load_info->BindFlags, load_info->CpuAccessFlags, load_info->MiscFlags,
+            load_info->Format, load_info->Format, load_info->Filter, load_info->MipFilter);
+    dump_image_info(load_info->pSrcInfo);
+}
+
 static HRESULT create_texture(ID3D11Device *device, const void *data, SIZE_T size,
         D3DX11_IMAGE_LOAD_INFO *load_info, ID3D11Resource **texture)
 {
@@ -623,6 +652,9 @@ static HRESULT create_texture(ID3D11Device *device, const void *data, SIZE_T siz
     D3DX11_IMAGE_LOAD_INFO load_info_copy;
     D3DX11_IMAGE_INFO img_info;
     HRESULT hr;
+
+    if (TRACE_ON(d3dx))
+        dump_image_load_info(load_info);
 
     init_load_info(load_info, &load_info_copy);
     if (!load_info_copy.pSrcInfo)
