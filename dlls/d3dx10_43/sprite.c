@@ -211,7 +211,7 @@ static void d3dx10_sprite_draw(struct d3dx10_sprite *sprite, D3DX10_SPRITE *spri
     ID3D10Device_PSSetConstantBuffers(sprite->device, 0, 0, NULL);
     ID3D10Device_PSSetSamplers(sprite->device, 0, 1, &sprite->sampler);
 
-    D3DXMatrixMultiply(&m, &sprite->projection, &sprite->view);
+    D3DXMatrixMultiply(&m, &sprite->view, &sprite->projection);
     ID3D10Device_UpdateSubresource(sprite->device, (ID3D10Resource *)sprite->vs_cb, 0, NULL,
             &m, 0, 0);
 
