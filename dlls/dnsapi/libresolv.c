@@ -69,37 +69,21 @@ static unsigned long map_options( DWORD options )
 {
     unsigned long ret = 0;
 
-    if (options == DNS_QUERY_STANDARD)
-        return RES_DEFAULT;
+    if (options == DNS_QUERY_STANDARD) return RES_DEFAULT;
 
-    if (options & DNS_QUERY_ACCEPT_TRUNCATED_RESPONSE)
-        ret |= RES_IGNTC;
-    if (options & DNS_QUERY_USE_TCP_ONLY)
-        ret |= RES_USEVC;
+    if (options & DNS_QUERY_ACCEPT_TRUNCATED_RESPONSE) ret |= RES_IGNTC;
+    if (options & DNS_QUERY_USE_TCP_ONLY) ret |= RES_USEVC;
+
     if (options & DNS_QUERY_NO_RECURSION)
-        ret &= ~RES_RECURSE;
-    if (options & DNS_QUERY_NO_LOCAL_NAME)
-        ret &= ~RES_DNSRCH;
-    if (options & DNS_QUERY_NO_HOSTS_FILE)
-        ret |= RES_NOALIASES;
-    if (options & DNS_QUERY_TREAT_AS_FQDN)
-        ret &= ~RES_DEFNAMES;
-
-    if (options & DNS_QUERY_DONT_RESET_TTL_VALUES)
-        FIXME( "option DNS_QUERY_DONT_RESET_TTL_VALUES not implemented\n" );
-    if (options & DNS_QUERY_RESERVED)
-        FIXME( "option DNS_QUERY_RESERVED not implemented\n" );
-    if (options & DNS_QUERY_WIRE_ONLY)
-        FIXME( "option DNS_QUERY_WIRE_ONLY not implemented\n" );
+        FIXME( "option DNS_QUERY_NO_RECURSION not implemented\n" );
     if (options & DNS_QUERY_NO_WIRE_QUERY)
         FIXME( "option DNS_QUERY_NO_WIRE_QUERY not implemented\n" );
-    if (options & DNS_QUERY_BYPASS_CACHE)
-        FIXME( "option DNS_QUERY_BYPASS_CACHE not implemented\n" );
+    if (options & DNS_QUERY_WIRE_ONLY)
+        FIXME( "option DNS_QUERY_WIRE_ONLY not implemented\n" );
     if (options & DNS_QUERY_RETURN_MESSAGE)
         FIXME( "option DNS_QUERY_RETURN_MESSAGE not implemented\n" );
-
-    if (options & DNS_QUERY_NO_NETBT)
-        TRACE( "netbios query disabled\n" );
+    if (options & DNS_QUERY_DONT_RESET_TTL_VALUES)
+        FIXME( "option DNS_QUERY_DONT_RESET_TTL_VALUES not implemented\n" );
 
     return ret;
 }
