@@ -2030,6 +2030,14 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     return S_OK;
 }
 
+static D3DFORMAT map_dxgi_format_to_dx9_format(DXGI_FORMAT format)
+{
+    if (format == DXGI_FORMAT_R8_UINT)
+        return MFMapDXGIFormatToDX9Format(DXGI_FORMAT_R8_UNORM);
+
+    return MFMapDXGIFormatToDX9Format(format);
+}
+
 static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_resource_idx,
         BOOL bottom_up, IMFMediaBuffer **buffer)
 {
@@ -2052,7 +2060,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
     TRACE("format %#x, %u x %u.\n", desc.Format, desc.Width, desc.Height);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
-    subtype.Data1 = format = MFMapDXGIFormatToDX9Format(desc.Format);
+    subtype.Data1 = format = map_dxgi_format_to_dx9_format(desc.Format);
 
     if (!(stride = mf_format_get_stride(&subtype, desc.Width, &is_yuv)))
     {

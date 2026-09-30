@@ -11735,10 +11735,8 @@ static void test_d3d11_surface_buffer(void)
     ok(hr == S_OK, "Failed to create a texture, hr %#lx.\n", hr);
 
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
-    todo_wine
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IMFMediaBuffer_Release(buffer);
+    IMFMediaBuffer_Release(buffer);
 
     ID3D11Texture2D_Release(texture);
 
