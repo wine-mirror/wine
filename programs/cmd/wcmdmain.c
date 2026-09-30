@@ -2171,7 +2171,7 @@ BOOL WCMD_split_command_build(const WCHAR *from, struct split_command *split_com
     split_command->num_arguments = 1;
     split_command->command = from;
     split_command->arguments = xalloc(sizeof(split_command->arguments[0]));
-    for (; wcschr(STANDARD_DELIMS, *from) != NULL; from++) {}
+    for (; *from && wcschr(STANDARD_DELIMS, *from) != NULL; from++) {}
     split_command->arguments[0].start_pos = from - split_command->command;
 
     if (*from == L':')
