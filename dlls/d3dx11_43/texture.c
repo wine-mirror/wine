@@ -576,7 +576,10 @@ HRESULT create_d3d_texture(ID3D11Device *device, D3DX11_IMAGE_LOAD_INFO *load_in
             texture_2d_desc.MiscFlags = load_info->MiscFlags;
 
             if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_2d_desc, resource_data, &texture_2d)))
+            {
+                WARN("Texture creation failed, hr %#lx.\n", hr);
                 return hr;
+            }
             *texture = (ID3D11Resource *)texture_2d;
             break;
         }
@@ -597,7 +600,10 @@ HRESULT create_d3d_texture(ID3D11Device *device, D3DX11_IMAGE_LOAD_INFO *load_in
             texture_3d_desc.MiscFlags = load_info->MiscFlags;
 
             if (FAILED(hr = ID3D11Device_CreateTexture3D(device, &texture_3d_desc, resource_data, &texture_3d)))
+            {
+                WARN("Texture creation failed, hr %#lx.\n", hr);
                 return hr;
+            }
             *texture = (ID3D11Resource *)texture_3d;
             break;
         }
