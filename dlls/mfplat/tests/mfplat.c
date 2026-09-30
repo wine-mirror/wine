@@ -11176,6 +11176,9 @@ static void test_MFMapDXGIFormatToDX9Format(void)
         ok(format == formats_map[i].d3d9_format || broken(formats_map[i].broken && format == 0),
                 "Unexpected d3d9 format %#lx, dxgi format %#x.\n", format, formats_map[i].dxgi_format);
     }
+
+    format = pMFMapDXGIFormatToDX9Format(DXGI_FORMAT_R8_UINT);
+    ok(!format, "Unexpected format %#lx.\n", format);
 }
 
 static void test_MFMapDX9FormatToDXGIFormat(void)
@@ -11718,6 +11721,26 @@ static void test_d3d11_surface_buffer(void)
         ID3D11Device_Release(device);
         return;
     }
+
+    /* R8_UINT */
+    memset(&desc, 0, sizeof(desc));
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8_UINT;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create a texture, hr %#lx.\n", hr);
+
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
+    todo_wine
+    ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IMFMediaBuffer_Release(buffer);
+
+    ID3D11Texture2D_Release(texture);
 
     /* Subresource index 1.
      * When WARP d3d11 device is used, this test leaves the device in a broken state, so it should
