@@ -1673,6 +1673,7 @@ enable_wow64cpu
 enable_wow64win
 enable_wpc
 enable_wpcap
+enable_wpnapps
 enable_ws2_32
 enable_wsdapi
 enable_wshom_ocx
@@ -22856,6 +22857,7 @@ wine_fn_config_makefile dlls/wpc enable_wpc
 wine_fn_config_makefile dlls/wpc/tests enable_tests
 wine_fn_config_makefile dlls/wpcap enable_wpcap
 wine_fn_config_makefile dlls/wpcap/tests enable_tests
+wine_fn_config_makefile dlls/wpnapps enable_wpnapps
 wine_fn_config_makefile dlls/ws2_32 enable_ws2_32
 wine_fn_config_makefile dlls/ws2_32/tests enable_tests
 wine_fn_config_makefile dlls/wsdapi enable_wsdapi
