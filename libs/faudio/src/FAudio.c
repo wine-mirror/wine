@@ -2431,12 +2431,16 @@ static uint32_t check_for_sends_to_voice(FAudioVoice *voice)
 	while (list != NULL)
 	{
 		source = (FAudioSourceVoice*) list->entry;
+		FAudio_PlatformLockMutex(source->sendLock);
+		LOG_MUTEX_LOCK(audio, source->sendLock)
 		for (i = 0; i < source->sends.SendCount; i += 1)
 			if (source->sends.pSends[i].pOutputVoice == voice)
 			{
 				ret = 0x80004005; /* E_FAIL */
 				break;
 			}
+		FAudio_PlatformUnlockMutex(source->sendLock);
+		LOG_MUTEX_UNLOCK(audio, source->sendLock)
 		if (ret)
 			break;
 		list = list->next;
@@ -2451,12 +2455,16 @@ static uint32_t check_for_sends_to_voice(FAudioVoice *voice)
 	while (list != NULL)
 	{
 		submix = (FAudioSubmixVoice*) list->entry;
+		FAudio_PlatformLockMutex(submix->sendLock);
+		LOG_MUTEX_LOCK(audio, submix->sendLock)
 		for (i = 0; i < submix->sends.SendCount; i += 1)
 			if (submix->sends.pSends[i].pOutputVoice == voice)
 			{
 				ret = 0x80004005; /* E_FAIL */
 				break;
 			}
+		FAudio_PlatformUnlockMutex(submix->sendLock);
+		LOG_MUTEX_UNLOCK(audio, submix->sendLock)
 		if (ret)
 			break;
 		list = list->next;
@@ -2497,8 +2505,14 @@ static void destroy_voice(FAudioVoice *voice)
 		FAudio_PlatformUnlockMutex(voice->audio->sourceLock);
 		LOG_MUTEX_UNLOCK(voice->audio, voice->audio->sourceLock)
 
-		voice->audio->pFree(voice->src.queued_buffers);
-		voice->audio->pFree(voice->src.flush_buffers);
+		if (voice->src.queued_buffers != NULL)
+		{
+			voice->audio->pFree(voice->src.queued_buffers);
+		}
+		if (voice->src.flush_buffers != NULL)
+		{
+			voice->audio->pFree(voice->src.flush_buffers);
+		}
 		voice->audio->pFree(voice->src.format);
 		LOG_MUTEX_DESTROY(voice->audio, voice->src.bufferLock)
 		FAudio_PlatformDestroyMutex(voice->src.bufferLock);
@@ -2508,7 +2522,10 @@ static void destroy_voice(FAudioVoice *voice)
 			FAudio_WMADEC_free(voice);
 		}
 #endif /* HAVE_WMADEC */
-		voice->audio->pFree(voice->src.unaligned_data);
+		if (voice->src.unaligned_data != NULL)
+		{
+			voice->audio->pFree(voice->src.unaligned_data);
+		}
 	}
 	else if (voice->type == FAUDIO_VOICE_SUBMIX)
 	{

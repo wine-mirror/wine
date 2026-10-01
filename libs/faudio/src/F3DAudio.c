@@ -27,13 +27,7 @@
 #include "F3DAudio.h"
 #include "FAudio_internal.h"
 
-#include <math.h> /* ONLY USE THIS FOR isnan! */
-#include <float.h> /* ONLY USE THIS FOR FLT_MIN/FLT_MAX! */
-
-/* VS2010 doesn't define isnan (which is C99), so here it is. */
-#if defined(_MSC_VER) && !defined(isnan)
-#define isnan(x) _isnan(x)
-#endif
+#include <float.h> /* ONLY USE THIS FOR FLT_MIN/FLT_MAX/FLT_EPSILON! */
 
 /* UTILITY MACROS */
 
@@ -1375,6 +1369,7 @@ static inline void CalculateMatrix(
  */
 static inline void CalculateDoppler(
 	float SpeedOfSound,
+	float SpeedOfSoundEpsilon,
 	const F3DAUDIO_LISTENER* pListener,
 	const F3DAUDIO_EMITTER* pEmitter,
 	F3DAUDIO_VECTOR emitterToListener,
@@ -1383,54 +1378,41 @@ static inline void CalculateDoppler(
 	float* emitterVelocityComponent,
 	float* DopplerFactor
 ) {
-	float scaledSpeedOfSound;
 	*DopplerFactor = 1.0f;
 
 	/* Project... */
-	if (eToLDistance != 0.0f)
+	if (eToLDistance > FLT_EPSILON)
 	{
 		*listenerVelocityComponent =
 			VectorDot(emitterToListener, pListener->Velocity) / eToLDistance;
 		*emitterVelocityComponent =
 			VectorDot(emitterToListener, pEmitter->Velocity) / eToLDistance;
+
+		if (pEmitter->DopplerScaler > 0.0f)
+		{
+			/* Multiply... */
+			float scaledListenerVelocityComponent = *listenerVelocityComponent * pEmitter->DopplerScaler;
+			float scaledEmitterVelocityComponent = *emitterVelocityComponent * pEmitter->DopplerScaler;
+
+			/* ... then Clamp. */
+			*DopplerFactor = (
+				SpeedOfSound - FAudio_clamp(scaledListenerVelocityComponent, -SpeedOfSoundEpsilon, SpeedOfSoundEpsilon)
+			) / (
+				SpeedOfSound - FAudio_clamp(scaledEmitterVelocityComponent, -SpeedOfSoundEpsilon, SpeedOfSoundEpsilon)
+			);
+
+			/* Limit the pitch shifting to 2 octaves up and 1 octave down */
+			*DopplerFactor = FAudio_clamp(
+				*DopplerFactor,
+				0.5f,
+				4.0f
+			);
+		}
 	}
 	else
 	{
 		*listenerVelocityComponent = 0.0f;
 		*emitterVelocityComponent = 0.0f;
-	}
-
-	if (pEmitter->DopplerScaler > 0.0f)
-	{
-		scaledSpeedOfSound = SpeedOfSound / pEmitter->DopplerScaler;
-
-		/* Clamp... */
-		*listenerVelocityComponent = FAudio_min(
-			*listenerVelocityComponent,
-			scaledSpeedOfSound
-		);
-		*emitterVelocityComponent = FAudio_min(
-			*emitterVelocityComponent,
-			scaledSpeedOfSound
-		);
-
-		/* ... then Multiply. */
-		*DopplerFactor = (
-			SpeedOfSound - pEmitter->DopplerScaler * *listenerVelocityComponent
-		) / (
-			SpeedOfSound - pEmitter->DopplerScaler * *emitterVelocityComponent
-		);
-		if (isnan(*DopplerFactor)) /* If emitter/listener are at the same pos... */
-		{
-			*DopplerFactor = 1.0f;
-		}
-
-		/* Limit the pitch shifting to 2 octaves up and 1 octave down */
-		*DopplerFactor = FAudio_clamp(
-			*DopplerFactor,
-			0.5f,
-			4.0f
-		);
 	}
 }
 
@@ -1445,13 +1427,19 @@ void F3DAudioCalculate(
 	F3DAUDIO_VECTOR emitterToListener;
 	float eToLDistance, normalizedDistance, dp;
 
+	/* Clang treats #pragma pack(push, 1) as both pack and align attributes.
+	 * 1 byte alignment can produce UB or even errors with modern Apple linker:
+	 * https://github.com/FNA-XNA/FAudio/issues/362
+	 * - F3DAUDIO_DISTANCE_CURVE_POINT requires 4 bytes alignment for float values
+	 * - F3DAUDIO_DISTANCE_CURVE requires 8 bytes alignment for 64-bit pointer
+	 */
 	#define DEFAULT_POINTS(name, x1, y1, x2, y2) \
-		static F3DAUDIO_DISTANCE_CURVE_POINT name##Points[2] = \
+		static ALIGN(F3DAUDIO_DISTANCE_CURVE_POINT, 4) name##Points[2] = \
 		{ \
 			{ x1, y1 }, \
 			{ x2, y2 } \
 		}; \
-		static F3DAUDIO_DISTANCE_CURVE name##Default = \
+		static ALIGN(F3DAUDIO_DISTANCE_CURVE, 8) name##Default = \
 		{ \
 			(F3DAUDIO_DISTANCE_CURVE_POINT*) &name##Points[0], 2 \
 		};
@@ -1521,6 +1509,7 @@ void F3DAudioCalculate(
 	{
 		CalculateDoppler(
 			SPEEDOFSOUND(Instance),
+			SPEEDOFSOUNDEPSILON(Instance),
 			pListener,
 			pEmitter,
 			emitterToListener,
@@ -1537,8 +1526,7 @@ void F3DAudioCalculate(
 		/* Determined roughly.
 		 * Below that distance, the emitter angle is considered to be PI/2.
 		 */
-		#define EMITTER_ANGLE_NULL_DISTANCE 1.2e-7
-		if (eToLDistance < EMITTER_ANGLE_NULL_DISTANCE)
+		if (eToLDistance < FLT_EPSILON)
 		{
 			pDSPSettings->EmitterToListenerAngle = F3DAUDIO_PI / 2.0f;
 		}

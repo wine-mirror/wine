@@ -1538,7 +1538,7 @@ static void test_create_wavebank(void)
     streaming_params.file = file;
     streaming_params.packetSize = 16;
     hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     CloseHandle(file);
 

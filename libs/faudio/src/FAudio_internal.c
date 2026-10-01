@@ -328,7 +328,7 @@ static uint32_t FAudio_INTERNAL_GetBytesRequested(
 ) {
 	const uint32_t block_size = voice->src.format->nBlockAlign;
 	const uint32_t samples_per_block = voice->src.samples_per_block;
-	uint32_t result = (decoding * block_size / samples_per_block);
+	uint32_t result;
 	FAudioWaveFormatExtensible *fmt;
 
 	LOG_FUNC_ENTER(voice->audio)
@@ -342,6 +342,7 @@ static uint32_t FAudio_INTERNAL_GetBytesRequested(
 	}
 #endif /* HAVE_WMADEC */
 
+	result = (decoding * block_size / samples_per_block);
 	for (size_t i = 0; i < voice->src.queued_buffer_count; ++i)
 	{
 		const struct queued_buffer *buffer = &voice->src.queued_buffers[i];
@@ -1147,6 +1148,7 @@ static void FAudio_INTERNAL_MixSource(FAudioSourceVoice *voice)
 	{
 		/* Actually, just use the existing buffer... */
 		finalSamples = voice->audio->decoded_audio;
+		voice->src.resampleOffset += (toResample << FIXED_PRECISION);
 	}
 	else
 	{
@@ -1175,30 +1177,44 @@ static void FAudio_INTERNAL_MixSource(FAudioSourceVoice *voice)
 				*dst++ = lerp(voice->src.resample_taps[0][i], voice->src.resample_taps[1][i], frac);
 
 			voice->src.resampleOffset += voice->src.resampleStep;
-			++tap_samples;
+
+			if (++tap_samples >= toResample)
+			{
+				break;
+			}
 		}
 
 		/* Then the samples between the last sample of the
 		 * previous quantum and the first sample of this one. */
-		while ((voice->src.resampleOffset >> FIXED_PRECISION) < prev_sample_count)
+		if (tap_samples < toResample)
 		{
-			float frac = fixed_to_float(voice->src.resampleOffset & FIXED_FRACTION_MASK);
+			while ((voice->src.resampleOffset >> FIXED_PRECISION) < prev_sample_count)
+			{
+				float frac = fixed_to_float(voice->src.resampleOffset & FIXED_FRACTION_MASK);
 
-			for (unsigned int i = 0; i < channels; ++i)
-				*dst++ = lerp(voice->src.resample_taps[1][i], voice->audio->decoded_audio[i], frac);
+				for (unsigned int i = 0; i < channels; ++i)
+					*dst++ = lerp(voice->src.resample_taps[1][i], voice->audio->decoded_audio[i], frac);
 
-			voice->src.resampleOffset += voice->src.resampleStep;
-			++tap_samples;
+				voice->src.resampleOffset += voice->src.resampleStep;
+
+				if (++tap_samples >= toResample)
+				{
+					break;
+				}
+			}
 		}
 
-		voice->src.resample(
-			voice->audio->decoded_audio,
-			dst,
-			(uint64_t *)&voice->src.resampleOffset,
-			voice->src.resampleStep,
-			toResample - tap_samples,
-			channels
-		);
+		if (tap_samples < toResample)
+		{
+			voice->src.resample(
+				voice->audio->decoded_audio,
+				dst,
+				(uint64_t *)&voice->src.resampleOffset,
+				voice->src.resampleStep,
+				toResample - tap_samples,
+				channels
+			);
+		}
 		finalSamples = voice->audio->resampled_audio;
 
 		/* Actually this is probably wrong in the case we do get a

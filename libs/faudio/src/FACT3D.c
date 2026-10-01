@@ -25,6 +25,7 @@
  */
 
 #include "FACT3D.h"
+#include "FAudio_internal.h"
 
 uint32_t FACT3DInitialize(
 	FACTAudioEngine *pEngine,
@@ -64,12 +65,18 @@ uint32_t FACT3DCalculate(
 	F3DAUDIO_EMITTER *pEmitter,
 	F3DAUDIO_DSP_SETTINGS *pDSPSettings
 ) {
-	static F3DAUDIO_DISTANCE_CURVE_POINT DefaultCurvePoints[2] =
+	/* Clang treats #pragma pack(push, 1) as both pack and align attributes.
+	 * 1 byte alignment can produce UB or even errors with modern Apple linker:
+	 * https://github.com/FNA-XNA/FAudio/issues/362
+	 * - F3DAUDIO_DISTANCE_CURVE_POINT requires 4 bytes alignment for float values
+	 * - F3DAUDIO_DISTANCE_CURVE requires 8 bytes alignment for 64-bit pointer
+	 */
+	static ALIGN(F3DAUDIO_DISTANCE_CURVE_POINT, 4) DefaultCurvePoints[2] =
 	{
 		{ 0.0f, 1.0f },
 		{ 1.0f, 1.0f }
 	};
-	static F3DAUDIO_DISTANCE_CURVE DefaultCurve =
+	static ALIGN(F3DAUDIO_DISTANCE_CURVE, 8) DefaultCurve =
 	{
 		(F3DAUDIO_DISTANCE_CURVE_POINT*) &DefaultCurvePoints[0], 2
 	};
