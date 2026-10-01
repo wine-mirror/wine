@@ -258,6 +258,7 @@ struct wayland_client_surface
     struct wl_surface *wl_surface;
     struct wl_subsurface *wl_subsurface;
     struct wp_viewport *wp_viewport;
+    struct wp_color_management_surface_v1 *color_management;
 };
 
 extern struct wayland_client_surface *impl_from_client_surface(struct client_surface *client);

@@ -1245,6 +1245,8 @@ static void wayland_client_surface_destroy(struct client_surface *client)
 
     TRACE("%s\n", debugstr_client_surface(client));
 
+    if (surface->color_management)
+        wp_color_management_surface_v1_destroy(surface->color_management);
     if (surface->wp_viewport)
         wp_viewport_destroy(surface->wp_viewport);
     if (surface->wl_subsurface)
@@ -1313,6 +1315,45 @@ static void wayland_client_surface_present(struct client_surface *client, HDC hd
     set_client_surface(hwnd, surface);
 }
 
+static BOOL wayland_client_surface_set_color_space(struct client_surface *client, VkColorSpaceKHR color_space)
+{
+    struct wayland_client_surface *surface = impl_from_client_surface(client);
+    struct wp_image_description_v1 *desc;
+    struct wp_color_manager_v1 *manager;
+
+    TRACE("%s color_space %#x\n", debugstr_client_surface(client), color_space);
+
+    if (!(manager = process_wayland.wp_color_manager_v1)) return FALSE;
+
+    switch (color_space)
+    {
+    case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT: desc = scrgb_desc; break;
+    case VK_COLOR_SPACE_HDR10_ST2084_EXT:         desc = bt2100_desc; break;
+    default:                                      desc = NULL; break;
+    }
+
+    if (!desc)
+    {
+        if (surface->color_management)
+        {
+            wp_color_management_surface_v1_destroy(surface->color_management);
+            surface->color_management = NULL;
+        }
+    }
+    else if (!surface->color_management && !(surface->color_management = wp_color_manager_v1_get_surface(manager, surface->wl_surface)))
+    {
+        WARN("Failed to create color management surface for %s\n", debugstr_client_surface(client));
+        return FALSE;
+    }
+    else
+    {
+        wp_color_management_surface_v1_set_image_description(surface->color_management, desc, WP_COLOR_MANAGER_V1_RENDER_INTENT_PERCEPTUAL);
+    }
+    wl_display_flush(process_wayland.wl_display);
+
+    return desc || color_space == -1;
+}
+
 static const struct client_surface_funcs wayland_client_surface_funcs =
 {
     .size = sizeof(struct wayland_client_surface),
@@ -1320,6 +1361,7 @@ static const struct client_surface_funcs wayland_client_surface_funcs =
     .detach = wayland_client_surface_detach,
     .update = wayland_client_surface_update,
     .present = wayland_client_surface_present,
+    .set_color_space = wayland_client_surface_set_color_space,
 };
 
 struct wayland_client_surface *impl_from_client_surface(struct client_surface *client)

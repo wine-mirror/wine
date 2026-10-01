@@ -38,6 +38,7 @@
 #include "shellapi.h"
 #include "ddk/d3dkmthk.h"
 #include "kbd.h"
+#include "wine/vulkan.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -257,6 +258,8 @@ struct client_surface_funcs
     void (*update)( struct client_surface *surface );
     /* present the client surface if necessary, hdc != NULL when offscreen, called from render thread */
     void (*present)( struct client_surface *surface, HDC hdc );
+    /* try to set the client surface color space directly for vulkan pass-through */
+    BOOL (*set_color_space)( struct client_surface *surface, VkColorSpaceKHR color_space );
 };
 
 struct client_surface
