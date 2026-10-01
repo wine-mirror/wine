@@ -309,36 +309,6 @@ static CRITICAL_SECTION MSVCRT_file_cs = { &MSVCRT_file_cs_debug, -1, 0, 0, 0, 0
 #define LOCK_FILES()    do { EnterCriticalSection(&MSVCRT_file_cs); } while (0)
 #define UNLOCK_FILES()  do { LeaveCriticalSection(&MSVCRT_file_cs); } while (0)
 
-static void msvcrt_stat64_to_stat(const struct _stat64 *buf64, struct _stat *buf)
-{
-    buf->st_dev   = buf64->st_dev;
-    buf->st_ino   = buf64->st_ino;
-    buf->st_mode  = buf64->st_mode;
-    buf->st_nlink = buf64->st_nlink;
-    buf->st_uid   = buf64->st_uid;
-    buf->st_gid   = buf64->st_gid;
-    buf->st_rdev  = buf64->st_rdev;
-    buf->st_size  = buf64->st_size;
-    buf->st_atime = buf64->st_atime;
-    buf->st_mtime = buf64->st_mtime;
-    buf->st_ctime = buf64->st_ctime;
-}
-
-static void msvcrt_stat64_to_stati64(const struct _stat64 *buf64, struct _stati64 *buf)
-{
-    buf->st_dev   = buf64->st_dev;
-    buf->st_ino   = buf64->st_ino;
-    buf->st_mode  = buf64->st_mode;
-    buf->st_nlink = buf64->st_nlink;
-    buf->st_uid   = buf64->st_uid;
-    buf->st_gid   = buf64->st_gid;
-    buf->st_rdev  = buf64->st_rdev;
-    buf->st_size  = buf64->st_size;
-    buf->st_atime = buf64->st_atime;
-    buf->st_mtime = buf64->st_mtime;
-    buf->st_ctime = buf64->st_ctime;
-}
-
 static void msvcrt_stat64_to_stat32(const struct _stat64 *buf64, struct _stat32 *buf)
 {
     buf->st_dev   = buf64->st_dev;
@@ -1993,33 +1963,6 @@ int CDECL _fstat64(int fd, struct _stat64* buf)
 }
 
 /*********************************************************************
- *		_fstati64 (MSVCRT.@)
- */
-int CDECL _fstati64(int fd, struct _stati64* buf)
-{
-  int ret;
-  struct _stat64 buf64;
-
-  ret = _fstat64(fd, &buf64);
-  if (!ret)
-    msvcrt_stat64_to_stati64(&buf64, buf);
-  return ret;
-}
-
-/*********************************************************************
- *             _fstat (MSVCRT.@)
- */
-int CDECL _fstat(int fd, struct _stat* buf)
-{ int ret;
-  struct _stat64 buf64;
-
-  ret = _fstat64(fd, &buf64);
-  if (!ret)
-      msvcrt_stat64_to_stat(&buf64, buf);
-  return ret;
-}
-
-/*********************************************************************
  *		_fstat32 (MSVCR80.@)
  */
 int CDECL _fstat32(int fd, struct _stat32* buf)
@@ -3198,36 +3141,6 @@ int CDECL _stat64(const char* path, struct _stat64 * buf)
 }
 
 /*********************************************************************
- *		_stati64 (MSVCRT.@)
- */
-int CDECL _stati64(const char* path, struct _stati64 * buf)
-{
-  int ret;
-  struct _stat64 buf64;
-
-  ret = _stat64(path, &buf64);
-  if (!ret)
-    msvcrt_stat64_to_stati64(&buf64, buf);
-  return ret;
-}
-
-/*********************************************************************
- *             _stat (MSVCRT.@)
- */
-int CDECL _stat(const char* path, struct _stat * buf)
-{
-  int ret;
-  struct _stat64 buf64;
-
-  ret = _stat64( path, &buf64);
-  if (!ret)
-      msvcrt_stat64_to_stat(&buf64, buf);
-  return ret;
-}
-
-#if _MSVCR_VER >= 80
-
-/*********************************************************************
  *  _stat32 (MSVCR80.@)
  */
 int CDECL _stat32(const char *path, struct _stat32 *buf)
@@ -3268,8 +3181,6 @@ int CDECL _stat64i32(const char* path, struct _stat64i32 *buf)
         msvcrt_stat64_to_stat64i32(&buf64, buf);
     return ret;
 }
-
-#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_wstat64 (MSVCRT.@)
@@ -3348,35 +3259,6 @@ int CDECL _wstat64(const wchar_t* path, struct _stat64 * buf)
 }
 
 /*********************************************************************
- *		_wstati64 (MSVCRT.@)
- */
-int CDECL _wstati64(const wchar_t* path, struct _stati64 * buf)
-{
-  int ret;
-  struct _stat64 buf64;
-
-  ret = _wstat64(path, &buf64);
-  if (!ret)
-    msvcrt_stat64_to_stati64(&buf64, buf);
-  return ret;
-}
-
-/*********************************************************************
- *             _wstat (MSVCRT.@)
- */
-int CDECL _wstat(const wchar_t* path, struct _stat * buf)
-{
-  int ret;
-  struct _stat64 buf64;
-
-  ret = _wstat64( path, &buf64 );
-  if (!ret) msvcrt_stat64_to_stat(&buf64, buf);
-  return ret;
-}
-
-#if _MSVCR_VER >= 80
-
-/*********************************************************************
  *  _wstat32 (MSVCR80.@)
  */
 int CDECL _wstat32(const wchar_t *path, struct _stat32 *buf)
@@ -3417,8 +3299,6 @@ int CDECL _wstat64i32(const wchar_t *path, struct _stat64i32 *buf)
         msvcrt_stat64_to_stat64i32(&buf64, buf);
     return ret;
 }
-
-#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_tell (MSVCRT.@)

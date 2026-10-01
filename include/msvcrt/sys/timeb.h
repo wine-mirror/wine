@@ -26,6 +26,8 @@
 
 #ifndef _TIMEB_DEFINED
 #define _TIMEB_DEFINED
+
+#ifndef _CRT_NO_TIME_T
 struct _timeb
 {
     time_t time;
@@ -33,6 +35,7 @@ struct _timeb
     short          timezone;
     short          dstflag;
 };
+#endif
 struct __timeb32
 {
     __time32_t     time;
@@ -61,6 +64,7 @@ _ACRTIMP void __cdecl _ftime64(struct __timeb64*);
 }
 #endif
 
+#ifndef _CRT_NO_TIME_T
 #ifdef _USE_32BIT_TIME_T
 static inline void __cdecl _ftime(struct _timeb *tb) { return _ftime32((struct __timeb32*)tb); }
 #else
@@ -70,6 +74,7 @@ static inline void __cdecl _ftime(struct _timeb *tb) { return _ftime64((struct _
 #define timeb _timeb
 
 static inline void ftime(struct _timeb* ptr) { return _ftime(ptr); }
+#endif
 
 #pragma pack(pop)
 

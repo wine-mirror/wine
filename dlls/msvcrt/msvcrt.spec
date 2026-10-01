@@ -476,9 +476,11 @@
 @ varargs _fscanf_s_l(ptr str ptr)
 @ cdecl _fseeki64(ptr int64 long)
 @ cdecl _fsopen(str str long)
-@ cdecl _fstat(long ptr)
+@ cdecl -arch=win32 _fstat(long ptr) _fstat32
+@ cdecl -arch=win64 _fstat(long ptr) _fstat64i32
 @ cdecl _fstat64(long ptr)
-@ cdecl _fstati64(long ptr)
+@ cdecl -arch=win32 _fstati64(long ptr) _fstat32i64
+@ cdecl -arch=win64 _fstati64(long ptr) _fstat64
 @ cdecl -ret64 _ftelli64(ptr)
 @ cdecl -arch=win32 _ftime(ptr) _ftime32
 @ cdecl -arch=win64 _ftime(ptr) _ftime64
@@ -949,9 +951,11 @@
 @ varargs _sprintf_s_l(ptr long str ptr)
 @ varargs _sscanf_l(str str ptr)
 @ varargs _sscanf_s_l(str str ptr)
-@ cdecl _stat(str ptr)
+@ cdecl -arch=win32 _stat(str ptr) _stat32
+@ cdecl -arch=win64 _stat(str ptr) _stat64i32
 @ cdecl _stat64(str ptr)
-@ cdecl _stati64(str ptr)
+@ cdecl -arch=win32 _stati64(str ptr) _stat32i64
+@ cdecl -arch=win64 _stati64(str ptr) _stat64
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _strcoll_l(str str ptr)
@@ -1221,9 +1225,11 @@
 @ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr)
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long)
-@ cdecl _wstat(wstr ptr)
-@ cdecl _wstati64(wstr ptr)
+@ cdecl -arch=win32 _wstat(wstr ptr) _wstat32
+@ cdecl -arch=win64 _wstat(wstr ptr) _wstat64i32
 @ cdecl _wstat64(wstr ptr)
+@ cdecl -arch=win32 _wstati64(wstr ptr) _wstat32i64
+@ cdecl -arch=win64 _wstati64(wstr ptr) _wstat64
 @ cdecl _wstrdate(ptr)
 @ cdecl _wstrdate_s(ptr long)
 @ cdecl _wstrtime(ptr)

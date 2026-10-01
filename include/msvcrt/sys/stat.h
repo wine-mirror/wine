@@ -49,6 +49,7 @@ typedef int _off_t;
 #ifndef _STAT_DEFINED
 #define _STAT_DEFINED
 
+#ifndef _CRT_NO_TIME_T
 struct _stat {
   _dev_t st_dev;
   _ino_t st_ino;
@@ -76,6 +77,21 @@ struct stat {
   time_t st_mtime;
   time_t st_ctime;
 };
+
+struct _stati64 {
+  _dev_t st_dev;
+  _ino_t st_ino;
+  unsigned short st_mode;
+  short          st_nlink;
+  short          st_uid;
+  short          st_gid;
+  _dev_t st_rdev;
+  __int64 _CRT_ALIGN(8) st_size;
+  time_t st_atime;
+  time_t st_mtime;
+  time_t st_ctime;
+};
+#endif /* _CRT_NO_TIME_T */
 
 struct _stat32 {
   _dev_t st_dev;
@@ -119,20 +135,6 @@ struct _stat64i32 {
   __time64_t st_ctime;
 };
 
-struct _stati64 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  _dev_t st_rdev;
-  __int64 _CRT_ALIGN(8) st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
-};
-
 struct _stat64 {
   _dev_t st_dev;
   _ino_t st_ino;
@@ -168,7 +170,7 @@ extern "C" {
 #  define _wstat      _wstat64i32
 #  define _wstati64   _wstat64
 # endif
-#else /* _UCRT */
+#elif !defined _CRT_NO_TIME_T
 # ifdef _USE_32BIT_TIME_T
 #  define _fstat32    _fstat
 #  define _fstat32i64 _fstati64
@@ -215,8 +217,10 @@ _ACRTIMP int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
+#ifndef _CRT_NO_TIME_T
 static inline int fstat(int fd, struct stat* ptr) { return _fstat(fd, (struct _stat*)ptr); }
 static inline int stat(const char* path, struct stat* ptr) { return _stat(path, (struct _stat*)ptr); }
+#endif
 #ifndef _UMASK_DEFINED
 static inline int umask(int fd) { return _umask(fd); }
 #define _UMASK_DEFINED

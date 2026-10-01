@@ -49,11 +49,13 @@ struct _timespec64
     __msvcrt_long tv_nsec;
 };
 
+#ifndef _CRT_NO_TIME_T
 struct timespec
 {
     time_t tv_sec;
     __msvcrt_long tv_nsec;
 };
+#endif
 
 #define _daylight (*__daylight())
 #define _dstbias (*__dstbias())
@@ -108,6 +110,7 @@ _ACRTIMP size_t      __cdecl _strftime_l(char*,size_t,const char*,const struct t
 _ACRTIMP __time32_t  __cdecl _time32(__time32_t*);
 _ACRTIMP __time64_t  __cdecl _time64(__time64_t*);
 
+#ifndef _CRT_NO_TIME_T
 #ifndef _USE_32BIT_TIME_T
 static inline char* ctime(const time_t *t) { return _ctime64(t); }
 static inline errno_t ctime_s(char *res, size_t len, const __time64_t *t) { return _ctime64_s(res, len, t); }
@@ -130,6 +133,7 @@ static inline errno_t localtime_s(struct tm *res, const time_t *t) { return _loc
 static inline time_t _mkgmtime(struct tm *tm) { return _mkgmtime32(tm); }
 static inline time_t mktime(struct tm *tm) { return _mktime32(tm); }
 static inline time_t time(time_t *t) { return _time32(t); }
+#endif
 #endif
 
 #define CLK_TCK CLOCKS_PER_SEC

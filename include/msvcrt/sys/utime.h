@@ -26,11 +26,14 @@
 
 #ifndef _UTIMBUF_DEFINED
 #define _UTIMBUF_DEFINED
+
+#ifndef _CRT_NO_TIME_T
 struct _utimbuf
 {
     time_t actime;
     time_t modtime;
 };
+#endif
 struct __utimbuf32
 {
     __time32_t actime;
@@ -54,6 +57,7 @@ _ACRTIMP int __cdecl _utime64(const char*,struct __utimbuf64*);
 _ACRTIMP int __cdecl _wutime32(const wchar_t*,struct __utimbuf32*);
 _ACRTIMP int __cdecl _wutime64(const wchar_t*,struct __utimbuf64*);
 
+#ifndef _CRT_NO_TIME_T
 #ifdef _USE_32BIT_TIME_T
 static inline int _futime(int fd, struct _utimbuf *buf) { return _futime32(fd, (struct __utimbuf32*)buf); }
 static inline int _utime(const char *s, struct _utimbuf *buf) { return _utime32(s, (struct __utimbuf32*)buf); }
@@ -64,14 +68,14 @@ static inline int _utime(const char *s, struct _utimbuf *buf) { return _utime64(
 static inline int _wutime(const wchar_t *s, struct _utimbuf *buf) { return _wutime64(s, (struct __utimbuf64*)buf); }
 #endif
 
+#define utimbuf _utimbuf
+static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
+
+#endif /* _CRT_NO_TIME_T */
+
 #ifdef __cplusplus
 }
 #endif
-
-
-#define utimbuf _utimbuf
-
-static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
 
 #pragma pack(pop)
 

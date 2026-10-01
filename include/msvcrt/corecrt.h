@@ -231,10 +231,12 @@ typedef __int64 _CRT_ALIGN(8) __time64_t;
 #endif
 
 #ifndef _TIME_T_DEFINED
+#ifndef _CRT_NO_TIME_T
 #ifdef _USE_32BIT_TIME_T
 typedef __time32_t time_t;
 #else
 typedef __time64_t time_t;
+#endif
 #endif
 #define _TIME_T_DEFINED
 #endif
