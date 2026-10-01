@@ -48,7 +48,6 @@
 #include "wine/asm.h"
 #include "main.h"
 
-#if defined(__x86_64__)
 /* Reserve the low 8GB using a zero-fill section, this is the only way to
  * prevent system frameworks from using any of it (including allocations
  * before any preloader code runs)
@@ -60,12 +59,6 @@ static const struct wine_preload_info zerofill_sections[] =
     { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
     { 0, 0 }                                 /* end of list */
 };
-#else
-static const struct wine_preload_info zerofill_sections[] =
-{
-    { 0, 0 }                                 /* end of list */
-};
-#endif
 
 #ifndef LC_MAIN
 #define LC_MAIN 0x80000028
@@ -80,18 +73,8 @@ struct entry_point_command
 
 static struct wine_preload_info preload_info[] =
 {
-    /* On macOS, we allocate the low 64k area in two steps because PAGEZERO
-     * might not always be available. */
-#ifdef __i386__
-    { (void *)0x00000000, 0x00001000 },  /* first page */
-    { (void *)0x00001000, 0x0000f000 },  /* low 64k */
-    { (void *)0x00010000, 0x00100000 },  /* DOS area */
-    { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
-    { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared user data + virtual heap */
-#else  /* __i386__ */
     { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
     { (void *)0x7ff000000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
-#endif /* __i386__ */
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
 };
@@ -180,82 +163,6 @@ __attribute__ ((section ("__DATA,__program_vars")))  = { &__dso_handle, &NXArgc,
  *  <https://github.com/apple-oss-distributions/dyld/blob/dyld-852.2/src/dyldStartup.s>
  */
 
-#ifdef __i386__
-
-static const size_t page_mask = 0xfff;
-#define target_mach_header      mach_header
-#define target_segment_command  segment_command
-#define TARGET_LC_SEGMENT       LC_SEGMENT
-#define target_thread_state_t   i386_thread_state_t
-#ifdef __DARWIN_UNIX03
-#define target_thread_ip(x)     (x)->__eip
-#else
-#define target_thread_ip(x)     (x)->eip
-#endif
-
-#define SYSCALL_FUNC( name, nr ) \
-    __ASM_GLOBAL_FUNC( name, \
-                       "\tmovl $" #nr ",%eax\n" \
-                       "\tint $0x80\n" \
-                       "\tjnb 1f\n" \
-                       "\tmovl $-1,%eax\n" \
-                       "1:\tret\n" )
-
-#define SYSCALL_NOERR( name, nr ) \
-    __ASM_GLOBAL_FUNC( name, \
-                       "\tmovl $" #nr ",%eax\n" \
-                       "\tint $0x80\n" \
-                       "\tret\n" )
-
-__ASM_GLOBAL_FUNC( start,
-                   __ASM_CFI("\t.cfi_undefined %eip\n")
-                   /* The first 16 bytes are used as a function signature on i386 */
-                   "\t.byte 0x6a,0x00\n"            /* pushl $0: push a zero for debugger end of frames marker */
-                   "\t.byte 0x89,0xe5\n"            /* movl %esp,%ebp: pointer to base of kernel frame */
-                   "\t.byte 0x83,0xe4,0xf0\n"       /* andl $-16,%esp: force SSE alignment */
-                   "\t.byte 0x83,0xec,0x10\n"       /* subl $16,%esp: room for new argc, argv, & envp, SSE aligned */
-                   "\t.byte 0x8b,0x5d,0x04\n"       /* movl 4(%ebp),%ebx: pickup argc in %ebx */
-                   "\t.byte 0x89,0x5c,0x24,0x00\n"  /* movl %ebx,0(%esp): argc to reserved stack word */
-
-                   /* call wld_start(stack, &is_unix_thread) */
-                   "\tleal 4(%ebp),%eax\n"
-                   "\tmovl %eax,0(%esp)\n"          /* stack */
-                   "\tleal 8(%esp),%eax\n"
-                   "\tmovl %eax,4(%esp)\n"          /* &is_unix_thread */
-                   "\tmovl $0,(%eax)\n"
-                   "\tcall _wld_start\n"
-
-                   /* jmp based on is_unix_thread */
-                   "\tcmpl $0,8(%esp)\n"
-                   "\tjne 2f\n"
-
-                   "\tmovl 4(%ebp),%edi\n"          /* %edi = argc */
-                   "\tleal 8(%ebp),%esi\n"          /* %esi = argv */
-                   "\tleal 4(%esi,%edi,4),%edx\n"   /* %edx = env */
-                   "\tmovl %edx,%ecx\n"
-                   "1:\tmovl (%ecx),%ebx\n"
-                   "\tadd $4,%ecx\n"
-                   "\torl %ebx,%ebx\n"              /* look for the NULL ending the env[] array */
-                   "\tjnz 1b\n"                     /* %ecx = apple data */
-
-                   /* LC_MAIN */
-                   "\tmovl %edi,0(%esp)\n"          /* argc */
-                   "\tmovl %esi,4(%esp)\n"          /* argv */
-                   "\tmovl %edx,8(%esp)\n"          /* env */
-                   "\tmovl %ecx,12(%esp)\n"         /* apple data */
-                   "\tcall *%eax\n"                 /* call main(argc,argv,env,apple) */
-                   "\tmovl %eax,(%esp)\n"           /* pass result from main() to exit() */
-                   "\tcall _wld_exit\n"             /* need to use call to keep stack aligned */
-                   "\thlt\n"
-
-                   /* LC_UNIXTHREAD */
-                   "\t2:movl %ebp,%esp\n"           /* restore the unaligned stack pointer */
-                   "\taddl $4,%esp\n"               /* remove the debugger end frame marker */
-                   "\tmovl $0,%ebp\n"               /* restore ebp back to zero */
-                   "\tjmpl *%eax\n" )               /* jump to the entry point */
-
-#elif defined(__x86_64__)
-
 static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header_64
 #define target_segment_command  segment_command_64
@@ -321,10 +228,6 @@ __ASM_GLOBAL_FUNC( start,
                    "\taddq $8,%rsp\n"               /* remove the debugger end frame marker */
                    "\tmovq $0,%rbp\n"               /* restore ebp back to zero */
                    "\tjmpq *%rax\n" )               /* jump to the entry point */
-
-#else
-#error preloader not implemented for this CPU
-#endif
 
 void wld_exit( int code ) __attribute__((noreturn));
 SYSCALL_NOERR( wld_exit, 1 /* SYS_exit */ );
@@ -613,10 +516,8 @@ static int map_region( struct wine_preload_info *info )
     if (ret == info->addr) return 1;
     if (ret != (void *)-1) wld_munmap( ret, info->size );
 
-    /* don't warn for zero page */
-    if (info->addr >= (void *)0x1000)
-        wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
-                    info->addr, (char *)info->addr + info->size );
+    wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
+                info->addr, (char *)info->addr + info->size );
     return 0;
 }
 
@@ -686,9 +587,6 @@ static void set_program_vars( void *stack, void *mod )
 
 void *wld_start( void *stack, int *is_unix_thread )
 {
-#ifdef __i386__
-    struct wine_preload_info builtin_dlls = { (void *)0x7a000000, 0x02000000 };
-#endif
     struct wine_preload_info **wine_main_preload_info;
     char **argv, **p, *reserve = NULL;
     struct target_mach_header *mh;
@@ -727,19 +625,9 @@ void *wld_start( void *stack, int *is_unix_thread )
         }
     }
 
-#ifdef __i386__
-    if (!map_region( &builtin_dlls ))
-        builtin_dlls.size = 0;
-#endif
-
     /* load the main binary */
     if (!(mod = pdlopen( argv[1], RTLD_NOW )))
         fatal_error( "%s: could not load binary\n", argv[1] );
-
-#ifdef __i386__
-    if (builtin_dlls.size)
-        wld_munmap( builtin_dlls.addr, builtin_dlls.size );
-#endif
 
     /* store pointer to the preload info into the appropriate main binary variable */
     wine_main_preload_info = pdlsym( mod, "wine_main_preload_info" );
