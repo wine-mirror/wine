@@ -524,6 +524,7 @@ extern void macdrv_get_input_source_info(CFDataRef* uchr,CGEventSourceKeyboardTy
                                          TISInputSourceRef* input_source);
 extern CFArrayRef macdrv_create_input_source_list(void);
 extern bool macdrv_select_input_source(TISInputSourceRef input_source);
+extern bool macdrv_get_ime_open_status(TISInputSourceRef input_source);
 extern const CFStringRef macdrv_input_source_input_key;
 extern const CFStringRef macdrv_input_source_type_key;
 extern const CFStringRef macdrv_input_source_lang_key;

@@ -515,6 +515,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
 
     macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);
     data->active_keyboard_layout = macdrv_get_hkl_from_source(input_source);
+    data->ime_open = macdrv_get_ime_open_status(input_source);
     CFRelease(input_source);
     macdrv_compute_keyboard_layout(data);
 

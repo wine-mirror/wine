@@ -1037,6 +1037,7 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->keyboard_type = event->keyboard_changed.keyboard_type;
     thread_data->iso_keyboard = event->keyboard_changed.iso_keyboard;
     thread_data->active_keyboard_layout = macdrv_get_hkl_from_source(event->keyboard_changed.input_source);
+    thread_data->ime_open = macdrv_get_ime_open_status(event->keyboard_changed.input_source);
     thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
@@ -1113,10 +1114,8 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     TRACE("hkl %p flags %04x\n", hkl, flags);
 
-    NtUserPostMessage( NULL, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, is_ime_hkl(hkl) );
-
     if (hkl == thread_data->active_keyboard_layout)
-        return TRUE;
+        goto done;
 
     pthread_mutex_lock(&layout_list_mutex);
     update_layout_list();
@@ -1134,6 +1133,7 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
                 macdrv_get_input_source_info(&thread_data->keyboard_layout_uchr, &thread_data->keyboard_type,
                                              &thread_data->iso_keyboard, NULL);
                 thread_data->active_keyboard_layout = hkl;
+                thread_data->ime_open = macdrv_get_ime_open_status(layout->input_source);
                 thread_data->dead_key_state = 0;
 
                 macdrv_compute_keyboard_layout(thread_data);
@@ -1143,7 +1143,11 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
     }
     pthread_mutex_unlock(&layout_list_mutex);
 
-    return ret;
+    if (!ret) return FALSE;
+
+done:
+    NtUserPostMessage( NULL, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, thread_data->ime_open );
+    return TRUE;
 }
 
 
