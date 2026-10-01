@@ -951,15 +951,14 @@ static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
     return NULL;
 }
 
-static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multiline)
+static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multiline, BOOL box)
 {
     LPWSTR text;
     UINT len, final_width;
-    UINT lines, final_height;
+    UINT final_height;
     SIZE size;
     RECT rc;
     HDC hdc;
-    WCHAR *c;
     HFONT font;
 
     TRACE("\n");
@@ -973,16 +972,20 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
     font = (HFONT)SendMessageW(hctrl, WM_GETFONT, 0, 0);
     font = SelectObject(hdc, font);
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
-    SelectObject(hdc, font);
-    ReleaseDC(hctrl, hdc);
+    final_width = min(max(size.cx, min_width) + 4, max_width);
 
     if(len && multiline)
     {
-        /* FIXME: line-wrap */
-        for(lines = 1, c = text; *c != '\0'; c++)
-            if(*c == '\n') lines++;
+        SetRect(&rc, 0, 0, final_width, 0);
+        /* Check boxes and radio buttons draw their text right of the box */
+        if(box)
+        {
+            INT char_width;
 
-        final_height = size.cy*lines + 2*4;
+            GetCharWidthW(hdc, '0', '0', &char_width);
+            rc.right -= 12 * GetDpiForWindow(hctrl) / USER_DEFAULT_SCREEN_DPI + 1 + char_width / 2;
+        }
+        final_height = DrawTextW(hdc, text, -1, &rc, DT_CALCRECT | DT_WORDBREAK) + 2*4;
     }
     else
     {
@@ -990,7 +993,8 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
         final_height = rc.bottom - rc.top;
     }
 
-    final_width = min(max(size.cx, min_width) + 4, max_width);
+    SelectObject(hdc, font);
+    ReleaseDC(hctrl, hdc);
     SetWindowPos(hctrl, NULL, 0, 0, final_width, final_height,
                  SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
@@ -1046,14 +1050,14 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
     case IDLG_CCTRL_CHECKBUTTON:
     case IDLG_CCTRL_TEXT:
         size = MulDiv(160, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
-        ctrl_resize(ctrl->hwnd, size, size, TRUE);
+        ctrl_resize(ctrl->hwnd, size, size, TRUE, ctrl->type == IDLG_CCTRL_CHECKBUTTON);
         GetWindowRect(ctrl->hwnd, &rc);
         SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, rc.right-rc.left, rc.bottom-rc.top,
                      SWP_NOZORDER|SWP_NOMOVE);
         break;
     case IDLG_CCTRL_VISUALGROUP:
         total_height = 0;
-        ctrl_resize(ctrl->hwnd, 0, This->cctrl_indent, TRUE);
+        ctrl_resize(ctrl->hwnd, 0, This->cctrl_indent, TRUE, FALSE);
 
         LIST_FOR_EACH_ENTRY(sub_ctrl, &ctrl->sub_cctrls, customctrl, sub_cctrls_entry)
         {
@@ -1073,6 +1077,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
             height = rc.bottom - rc.top;
 
             SetWindowPos(ctrl->hwnd, NULL, This->cctrl_indent - width, 0, width, height, SWP_NOZORDER);
+            total_height = max(total_height, height);
         }
 
         /* Resize the wrapper window to fit all the sub controls */
@@ -1089,7 +1094,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
         LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
         {
             size = MulDiv(160, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
-            ctrl_resize(item->hwnd, size, size, TRUE);
+            ctrl_resize(item->hwnd, size, size, TRUE, TRUE);
             SetWindowPos(item->hwnd, NULL, 0, total_height, 0, 0,
                          SWP_NOZORDER|SWP_NOSIZE);
 
@@ -2060,21 +2065,21 @@ static void update_control_text(FileDialogImpl *This)
        (hitem = GetDlgItem(This->dlg_hwnd, IDOK)))
     {
         SetWindowTextW(hitem, custom_okbutton);
-        ctrl_resize(hitem, min_width, max_width, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE, FALSE);
     }
 
     if(This->custom_cancelbutton &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDCANCEL)))
     {
         SetWindowTextW(hitem, This->custom_cancelbutton);
-        ctrl_resize(hitem, min_width, max_width, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE, FALSE);
     }
 
     if(This->custom_filenamelabel &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC)))
     {
         SetWindowTextW(hitem, This->custom_filenamelabel);
-        ctrl_resize(hitem, min_width, max_width, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE, FALSE);
     }
 }
 

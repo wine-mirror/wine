@@ -1599,6 +1599,7 @@ static const WCHAR radiobutton1W[] = {'r','a','d','i','o','b','u','t','t','o','n
 static const WCHAR radiobutton2W[] = {'r','a','d','i','o','b','u','t','t','o','n','2','_','i','t','e','m',0};
 static const WCHAR checkbutton1W[] = {'c','h','e','c','k','b','u','t','t','o','n','1','_','i','t','e','m',0};
 static const WCHAR checkbutton2W[] = {'c','h','e','c','k','b','u','t','t','o','n','2','_','i','t','e','m',0};
+static const WCHAR checkbutton3W[] = L"checkbutton3_item with a label that is too long for one line";
 static const WCHAR editbox1W[] = {'e','d','i','t','b','o','x','W','1','_','i','t','e','m',0};
 static const WCHAR editbox2W[] = {'e','d','i','t','b','o','x','W','2','_','i','t','e','m',0};
 static const WCHAR textW[] = {'t','e','x','t','_','i','t','e','m',0};
@@ -1613,6 +1614,7 @@ static const WCHAR RadioButtonListW[] = {'R','a','d','i','o','B','u','t','t','o'
 static void test_customize_onfolderchange(IFileDialog *pfd)
 {
     HWND dlg_hwnd, item, item_parent;
+    RECT rc = {0}, rc3 = {0};
     BOOL br;
     WCHAR buf[1024];
 
@@ -1626,6 +1628,12 @@ static void test_customize_onfolderchange(IFileDialog *pfd)
     item_parent = GetParent(item);
     GetClassNameW(item_parent, buf, 1024);
     ok(!lstrcmpW(buf, floatnotifysinkW), "Got %s\n", wine_dbgstr_w(buf));
+    GetWindowRect(item, &rc);
+    item = find_window(dlg_hwnd, NULL, checkbutton3W);
+    ok(item != NULL, "Failed to find item.\n");
+    GetWindowRect(item, &rc3);
+    ok(rc3.bottom - rc3.top > rc.bottom - rc.top, "Got height %ld, single line %ld.\n",
+       rc3.bottom - rc3.top, rc.bottom - rc.top);
     item = find_window(dlg_hwnd, NULL, text2W);
     ok(item != NULL, "Failed to find item.\n");
     item_parent = GetParent(item);
@@ -1967,6 +1975,9 @@ static void test_customize(void)
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
     todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
     ok(cdstate == 0xdeadbeef, "got 0x%08x.\n", cdstate);
+
+    hr = IFileDialogCustomize_AddCheckButton(pfdc, ++i, checkbutton3W, FALSE);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
     pfde = IFileDialogEvents_Constructor();
     pfdeimpl = impl_from_IFileDialogEvents(pfde);
