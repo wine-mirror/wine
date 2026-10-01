@@ -34,6 +34,95 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
+static struct wp_image_description_v1 *scrgb_desc;
+static struct wp_image_description_v1 *bt2100_desc;
+static BOOL color_manager_initialized;
+
+static void image_description_failed(void *user_data, struct wp_image_description_v1 *desc,
+                                     uint32_t cause, const char *message)
+{
+    struct wp_image_description_v1 **ret = user_data;
+
+    ERR("cause=%u message=%s\n", cause, debugstr_a(message));
+
+    *ret = NULL;
+    wp_image_description_v1_destroy(desc);
+}
+
+static void image_description_ready2(void *user_data, struct wp_image_description_v1 *desc,
+                                     uint32_t identity_hi, uint32_t identity_lo)
+{
+    struct wp_image_description_v1 **ret = user_data;
+
+    TRACE("id=%#x%x\n", identity_hi, identity_lo);
+
+    *ret = desc;
+}
+
+static void image_description_ready(void *user_data, struct wp_image_description_v1 *desc, uint32_t identity)
+{
+    image_description_ready2(user_data, desc, 0, identity);
+}
+
+static const struct wp_image_description_v1_listener image_description_listener =
+{
+    image_description_failed,
+    image_description_ready,
+    image_description_ready2,
+};
+
+static void color_manager_supported_intent(void *data, struct wp_color_manager_v1 *manager, uint32_t intent)
+{
+}
+
+static void color_manager_supported_feature(void *data, struct wp_color_manager_v1 *manager, uint32_t feature)
+{
+    struct wp_image_description_v1 *desc;
+
+    TRACE("feature %u\n", feature);
+
+    if (feature == WP_COLOR_MANAGER_V1_FEATURE_WINDOWS_SCRGB && (desc = wp_color_manager_v1_create_windows_scrgb(manager)))
+    {
+        scrgb_desc = (void *)-1;
+        wp_image_description_v1_add_listener(desc, &image_description_listener, &scrgb_desc);
+    }
+    if (feature == WP_COLOR_MANAGER_V1_FEATURE_WINDOWS_BT2100 && (desc = wp_color_manager_v1_create_windows_bt2100(manager)))
+    {
+        bt2100_desc = (void *)-1;
+        wp_image_description_v1_add_listener(desc, &image_description_listener, &bt2100_desc);
+    }
+}
+
+static void color_manager_supported_named_tf(void *data, struct wp_color_manager_v1 *manager, uint32_t tf)
+{
+}
+
+static void color_manager_supported_primaries(void *data, struct wp_color_manager_v1 *manager, uint32_t primaries)
+{
+}
+
+static void color_manager_done(void *data, struct wp_color_manager_v1 *manager)
+{
+    color_manager_initialized = TRUE;
+}
+
+const struct wp_color_manager_v1_listener color_manager_listener =
+{
+    color_manager_supported_intent,
+    color_manager_supported_feature,
+    color_manager_supported_named_tf,
+    color_manager_supported_primaries,
+    color_manager_done,
+};
+
+void color_management_init(void)
+{
+    while (!color_manager_initialized || scrgb_desc == (void *)-1 || bt2100_desc == (void *)-1)
+        wl_display_roundtrip_queue(process_wayland.wl_display, process_wayland.wl_event_queue);
+
+    TRACE("Initialized image descriptors, scRGB %p BT.2100 %p\n", scrgb_desc, bt2100_desc);
+}
+
 static void xdg_surface_handle_configure(void *private, struct xdg_surface *xdg_surface,
                                          uint32_t serial)
 {

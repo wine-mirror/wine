@@ -215,6 +215,14 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.wp_fractional_scale_manager_v1 =
             wl_registry_bind(registry, id, &wp_fractional_scale_manager_v1_interface, 1);
     }
+    else if (strcmp(interface, "wp_color_manager_v1") == 0)
+    {
+        process_wayland.wp_color_manager_v1 =
+            wl_registry_bind(registry, id, &wp_color_manager_v1_interface,
+                             version < 3 ? version : 3);
+        wp_color_manager_v1_add_listener(process_wayland.wp_color_manager_v1,
+                                         &color_manager_listener, NULL);
+    }
 #ifdef WL_FIXES_ACK_GLOBAL_REMOVE
     else if (strcmp(interface, "wl_fixes") == 0)
     {
@@ -372,6 +380,9 @@ BOOL wayland_process_init(void)
 
     if (!process_wayland.wp_fractional_scale_manager_v1)
         ERR("Wayland compositor doesn't support wp_fractional_scale_manager_v1 (fractional scaling will be broken)\n");
+
+    if (process_wayland.wp_color_manager_v1) color_management_init();
+    else WARN("Wayland compositor doesn't support wp_color_manager_v1 (color management will be broken)\n");
 
     process_wayland.initialized = TRUE;
 

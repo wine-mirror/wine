@@ -8,6 +8,7 @@ VER_FILEDESCRIPTION_STR = "Wine Wayland driver"
 
 SOURCES = \
 	alpha-modifier-v1.xml \
+	color-management-v1.xml \
 	cursor-shape-v1.xml \
 	display.c \
 	dllmain.c \
