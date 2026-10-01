@@ -427,19 +427,21 @@ static inline char *make_temp_dir( const char *tmpdir )
     int count;
     char *name;
 
+    if (!tmpdir)
+    {
+#ifdef _WIN32
+       tmpdir = getenv("TEMP");
+#else
+       if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
+#endif
+    }
+
     for (count = 0; count < 0x8000; count++)
     {
-        if (tmpdir)
-            name = strmake( "%s/tmp%08x", tmpdir, value );
-        else
-            name = strmake( "tmp%08x", value );
+        name = strmake( "%s/tmp%08x", tmpdir, value );
         if (!mkdir( name, 0700 )) return name;
         value += 7777;
-        if (errno == EACCES && !tmpdir)
-        {
-            if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
-        }
-        else if (errno != EEXIST) fatal_perror( "cannot create directory in %s", tmpdir ? tmpdir : "." );
+        if (errno != EEXIST) fatal_perror( "cannot create directory in %s", tmpdir );
         free( name );
     }
     fprintf( stderr, "failed to create directory for temp files\n" );
