@@ -73,8 +73,7 @@ struct entry_point_command
 
 static struct wine_preload_info preload_info[] =
 {
-    { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
-    { (void *)0x7ff000000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
+    { (void *)0x00001000, 0x1fffff000 }, /* WINE_RESERVE section */
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
 };

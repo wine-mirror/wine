@@ -112,10 +112,9 @@ static struct wine_preload_info preload_info[] =
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
     { (void *)0x7f000000, 0x03000000 },  /* top-down allocations + shared user data + virtual heap */
 #else
-    { (void *)0x000000010000, 0x00100000 },  /* DOS area */
-    { (void *)0x000000110000, 0x67ef0000 },  /* low memory area */
-    { (void *)0x00007f000000, 0x00ff0000 },  /* 32-bit top-down allocations + shared user data */
-    { (void *)0x7ffffe000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
+    { (void *)0x00010000, 0x00100000 },  /* DOS area */
+    { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
+    { (void *)0x7f000000, 0x00ff0000 },  /* 32-bit top-down allocations + shared user data */
 #endif
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
@@ -1448,11 +1447,7 @@ void* wld_start( void **stack )
                            MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
         {
             /* don't warn for low 64k */
-            if (preload_info[i].addr >= (void *)0x10000
-#ifdef __aarch64__
-                && preload_info[i].addr < (void *)0x7fffffffff /* ARM64 address space might end here*/
-#endif
-            )
+            if (preload_info[i].addr >= (void *)0x10000)
                 wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
                             preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
             remove_preload_range( i );

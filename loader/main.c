@@ -50,13 +50,9 @@
 __asm__(".zerofill WINE_RESERVE,WINE_RESERVE");
 static char __wine_reserve[0x1fffff000] __attribute__((section("WINE_RESERVE, WINE_RESERVE")));
 
-__asm__(".zerofill WINE_TOP_DOWN,WINE_TOP_DOWN");
-static char __wine_top_down[0x001ff0000] __attribute__((section("WINE_TOP_DOWN, WINE_TOP_DOWN")));
-
 static const struct wine_preload_info preload_info[] =
 {
     { __wine_reserve,  sizeof(__wine_reserve)  }, /*         0x1000 -    0x200000000: low 8GB */
-    { __wine_top_down, sizeof(__wine_top_down) }, /* 0x7ff000000000 - 0x7ff001ff0000: top-down allocations + virtual heap */
     { 0, 0 }                                      /* end of list */
 };
 
