@@ -54,12 +54,6 @@
  */
 __asm__(".zerofill WINE_RESERVE,WINE_RESERVE,___wine_reserve,0x1fffff000");
 
-static const struct wine_preload_info zerofill_sections[] =
-{
-    { (void *)0x000000001000, 0x1fffff000 }, /* WINE_RESERVE section */
-    { 0, 0 }                                 /* end of list */
-};
-
 #ifndef LC_MAIN
 #define LC_MAIN 0x80000028
 struct entry_point_command
@@ -74,7 +68,6 @@ struct entry_point_command
 static struct wine_preload_info preload_info[] =
 {
     { (void *)0x00001000, 0x1fffff000 }, /* WINE_RESERVE section */
-    { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
 };
 
@@ -162,7 +155,6 @@ __attribute__ ((section ("__DATA,__program_vars")))  = { &__dso_handle, &NXArgc,
  *  <https://github.com/apple-oss-distributions/dyld/blob/dyld-852.2/src/dyldStartup.s>
  */
 
-static const size_t page_mask = 0xfff;
 #define target_mach_header      mach_header_64
 #define target_segment_command  segment_command_64
 #define TARGET_LC_SEGMENT       LC_SEGMENT_64
@@ -237,9 +229,6 @@ SYSCALL_FUNC( wld_write, 4 /* SYS_write */ );
 void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
 SYSCALL_FUNC( wld_mmap, 197 /* SYS_mmap */ );
 
-void *wld_munmap( void *start, size_t len );
-SYSCALL_FUNC( wld_munmap, 73 /* SYS_munmap */ );
-
 static intptr_t (*p_dyld_get_image_slide)( const struct target_mach_header* mh );
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -267,13 +256,6 @@ void * memmove( void *dst, const void *src, size_t len )
             *lastd-- = *lasts--;
     }
     return dst;
-}
-
-static int wld_strncmp( const char *str1, const char *str2, size_t len )
-{
-    if (len <= 0) return 0;
-    while ((--len > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
 }
 
 /*
@@ -355,106 +337,6 @@ static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char 
     wld_exit(1);
 }
 
-static int preloader_overlaps_range( const void *start, const void *end )
-{
-    intptr_t slide = p_dyld_get_image_slide(&_mh_execute_header);
-    struct load_command *cmd = (struct load_command*)(&_mh_execute_header + 1);
-    int i;
-
-    for (i = 0; i < _mh_execute_header.ncmds; ++i)
-    {
-        if (cmd->cmd == TARGET_LC_SEGMENT)
-        {
-            struct target_segment_command *seg = (struct target_segment_command*)cmd;
-            const void *seg_start = (const void*)(seg->vmaddr + slide);
-            const void *seg_end = (const char*)seg_start + seg->vmsize;
-            static const char reserved_segname[] = "WINE_RESERVE";
-
-            if (!wld_strncmp( seg->segname, reserved_segname, sizeof(reserved_segname)-1 ))
-                continue;
-
-            if (end > seg_start && start <= seg_end)
-            {
-                char segname[sizeof(seg->segname) + 1];
-                memcpy(segname, seg->segname, sizeof(seg->segname));
-                segname[sizeof(segname) - 1] = 0;
-                wld_printf( "WINEPRELOADRESERVE range %p-%p overlaps preloader %s segment %p-%p\n",
-                             start, end, segname, seg_start, seg_end );
-                return 1;
-            }
-        }
-        cmd = (struct load_command*)((char*)cmd + cmd->cmdsize);
-    }
-
-    return 0;
-}
-
-/*
- *  preload_reserve
- *
- * Reserve a range specified in string format
- */
-static void preload_reserve( const char *str )
-{
-    const char *p;
-    unsigned long result = 0;
-    void *start = NULL, *end = NULL;
-    int i, first = 1;
-
-    for (p = str; *p; p++)
-    {
-        if (*p >= '0' && *p <= '9') result = result * 16 + *p - '0';
-        else if (*p >= 'a' && *p <= 'f') result = result * 16 + *p - 'a' + 10;
-        else if (*p >= 'A' && *p <= 'F') result = result * 16 + *p - 'A' + 10;
-        else if (*p == '-')
-        {
-            if (!first) goto error;
-            start = (void *)(result & ~page_mask);
-            result = 0;
-            first = 0;
-        }
-        else goto error;
-    }
-    if (!first) end = (void *)((result + page_mask) & ~page_mask);
-    else if (result) goto error;  /* single value '0' is allowed */
-
-    /* sanity checks */
-    if (end <= start || preloader_overlaps_range(start, end))
-        start = end = NULL;
-
-    /* check for overlap with low memory areas */
-    for (i = 0; preload_info[i].size; i++)
-    {
-        if ((char *)preload_info[i].addr > (char *)0x00110000) break;
-        if ((char *)end <= (char *)preload_info[i].addr + preload_info[i].size)
-        {
-            start = end = NULL;
-            break;
-        }
-        if ((char *)start < (char *)preload_info[i].addr + preload_info[i].size)
-            start = (char *)preload_info[i].addr + preload_info[i].size;
-    }
-
-    while (preload_info[i].size) i++;
-    preload_info[i].addr = start;
-    preload_info[i].size = (char *)end - (char *)start;
-    return;
-
-error:
-    fatal_error( "invalid WINEPRELOADRESERVE value '%s'\n", str );
-}
-
-/* remove a range from the preload list */
-static void remove_preload_range( int i )
-{
-    while (preload_info[i].size)
-    {
-        preload_info[i].addr = preload_info[i+1].addr;
-        preload_info[i].size = preload_info[i+1].size;
-        i++;
-    }
-}
-
 static void *get_entry_point( struct target_mach_header *mh, intptr_t slide, int *unix_thread )
 {
     struct entry_point_command *entry;
@@ -490,35 +372,6 @@ static void *get_entry_point( struct target_mach_header *mh, intptr_t slide, int
 
     return NULL;
 };
-
-static int is_zerofill( struct wine_preload_info *info )
-{
-    int i;
-
-    for (i = 0; zerofill_sections[i].size; i++)
-    {
-        if ((zerofill_sections[i].addr == info->addr) &&
-            (zerofill_sections[i].size == info->size))
-            return 1;
-    }
-    return 0;
-}
-
-static int map_region( struct wine_preload_info *info )
-{
-    int flags = MAP_PRIVATE | MAP_ANON;
-    void *ret;
-
-    if (!info->addr || is_zerofill( info )) flags |= MAP_FIXED;
-
-    ret = wld_mmap( info->addr, info->size, PROT_NONE, flags, -1, 0 );
-    if (ret == info->addr) return 1;
-    if (ret != (void *)-1) wld_munmap( ret, info->size );
-
-    wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
-                info->addr, (char *)info->addr + info->size );
-    return 0;
-}
 
 static inline void get_dyld_func( const char *name, void **func )
 {
@@ -587,7 +440,7 @@ static void set_program_vars( void *stack, void *mod )
 void *wld_start( void *stack, int *is_unix_thread )
 {
     struct wine_preload_info **wine_main_preload_info;
-    char **argv, **p, *reserve = NULL;
+    char **argv, **p;
     struct target_mach_header *mh;
     void *mod, *entry;
     int *pargc, i;
@@ -601,12 +454,7 @@ void *wld_start( void *stack, int *is_unix_thread )
     p = argv + *pargc + 1;
 
     /* skip over the environment */
-    while (*p)
-    {
-        static const char res[] = "WINEPRELOADRESERVE=";
-        if (!wld_strncmp( *p, res, sizeof(res)-1 )) reserve = *p + sizeof(res) - 1;
-        p++;
-    }
+    while (*p) p++;
 
     LOAD_POSIX_DYLD_FUNC( dlopen );
     LOAD_POSIX_DYLD_FUNC( dlsym );
@@ -614,14 +462,10 @@ void *wld_start( void *stack, int *is_unix_thread )
     LOAD_MACHO_DYLD_FUNC( _dyld_get_image_slide );
 
     /* reserve memory that Wine needs */
-    if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
     {
-        if (!map_region( &preload_info[i] ))
-        {
-            remove_preload_range( i );
-            i--;
-        }
+        wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
+                  MAP_PRIVATE | MAP_ANON | MAP_NORESERVE | MAP_FIXED, -1, 0 );
     }
 
     /* load the main binary */
