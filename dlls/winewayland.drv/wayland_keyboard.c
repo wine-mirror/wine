@@ -63,7 +63,7 @@ static BOOL is_ime_hkl(HKL hkl)
     case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
     case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
     case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
-    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
+    default: return (HIWORD(hkl) & 0xf000) == 0xe000;
     }
 }
 
