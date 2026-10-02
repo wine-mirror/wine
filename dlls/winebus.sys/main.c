@@ -762,6 +762,24 @@ static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
     return status;
 }
 
+static WCHAR *get_container_id(struct device_extension *ext)
+{
+    WCHAR *dst;
+    GUID guid;
+
+    memcpy(&guid, ext->parent_hash, sizeof(guid));
+
+    if ((dst = ExAllocatePool(PagedPool, 39 * sizeof(WCHAR))))
+    {
+        swprintf(dst, 39, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                 guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
+                 guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
+        TRACE("Returning container ID %s.\n", debugstr_w(dst));
+    }
+
+    return dst;
+}
+
 static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.Status;
@@ -789,9 +807,25 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Information = (ULONG_PTR)get_instance_id(device);
             break;
         case BusQueryContainerID:
+        {
+            struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+
             TRACE("BusQueryContainerID\n");
+
+            /*
+             * Each interface of a multi interface device is expected to have
+             * the same container ID. On native this comes from their parent
+             * device, but since we currently don't replicate the full device
+             * hierachy we will create a matching container ID here ourselves.
+             */
+            if (ext->desc.interface != -1)
+            {
+                irp->IoStatus.Information = (ULONG_PTR)get_container_id(ext);
+                break;
+            }
             irp->IoStatus.Information = 0;
             return STATUS_NOT_SUPPORTED;
+        }
         default:
             WARN("Unhandled type %08x\n", type);
             return status;
