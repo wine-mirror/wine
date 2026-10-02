@@ -2546,17 +2546,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadAffinityMask:
     {
-        const ULONG_PTR affinity_mask = get_system_affinity_mask();
         ULONG_PTR req_aff;
 
         if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
-        req_aff = *(const ULONG_PTR *)data & affinity_mask;
-        if (!req_aff) return STATUS_INVALID_PARAMETER;
+        req_aff = *(const ULONG_PTR *)data;
 
         SERVER_START_REQ( set_thread_info )
         {
             req->handle   = wine_server_obj_handle( handle );
             req->affinity = req_aff;
+            req->system_affinity = get_system_affinity_mask();
             req->mask     = SET_THREAD_INFO_AFFINITY;
             status = wine_server_call( req );
         }
@@ -2592,8 +2591,8 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadGroupInformation:
     {
-        ULONG_PTR affinity_mask = get_system_affinity_mask();
         const GROUP_AFFINITY *req_aff;
+        ULONG_PTR affinity_mask;
 
         if (length != sizeof(*req_aff)) return STATUS_INVALID_PARAMETER;
         if (!data) return STATUS_ACCESS_VIOLATION;
@@ -2605,13 +2604,13 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
         /* Wine only supports max 64 processors */
         if (req_aff->Group) return STATUS_INVALID_PARAMETER;
-        if (req_aff->Mask & ~affinity_mask) return STATUS_INVALID_PARAMETER;
-        if (req_aff->Mask) affinity_mask = req_aff->Mask;
+        affinity_mask = req_aff->Mask;
         SERVER_START_REQ( set_thread_info )
         {
             req->handle   = wine_server_obj_handle( handle );
             req->affinity = affinity_mask;
-            req->mask     = SET_THREAD_INFO_AFFINITY;
+            req->system_affinity = get_system_affinity_mask();
+            req->mask     = SET_THREAD_INFO_GROUP_AFFINITY;
             status = wine_server_call( req );
         }
         SERVER_END_REQ;

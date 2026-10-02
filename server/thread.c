@@ -862,12 +862,27 @@ static void set_thread_info( struct thread *thread,
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
     {
-        if ((req->affinity & thread->process->affinity) != req->affinity)
+        affinity_t affinity = req->affinity & req->system_affinity;
+        if (!affinity || (affinity & thread->process->affinity) != affinity)
             set_error( STATUS_INVALID_PARAMETER );
         else if (thread->state == TERMINATED)
             set_error( STATUS_THREAD_IS_TERMINATING );
-        else if (set_thread_affinity( thread, req->affinity ))
+        else if (set_thread_affinity( thread, affinity ))
             file_set_error();
+    }
+    else if (req->mask & SET_THREAD_INFO_GROUP_AFFINITY)
+    {
+        affinity_t affinity = req->affinity;
+        if (!affinity) affinity = thread->process->affinity & req->system_affinity;
+        if (affinity & ~req->system_affinity)
+            set_error( STATUS_INVALID_PARAMETER );
+        else if (thread->state == TERMINATED)
+            set_error( STATUS_THREAD_IS_TERMINATING );
+        else
+        {
+            if (affinity & ~thread->process->affinity) thread->process->affinity = ~0;
+            if (set_thread_affinity( thread, affinity )) file_set_error();
+        }
     }
     if (req->mask & SET_THREAD_INFO_TOKEN)
         security_set_thread_token( thread, req->token );

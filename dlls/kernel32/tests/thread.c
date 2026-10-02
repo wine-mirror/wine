@@ -1038,7 +1038,7 @@ static VOID test_thread_processor(void)
 
         affinity_new.Mask = 0;
         bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
-        todo_wine ok(bret, "got error %ld.\n", GetLastError());
+        ok(bret, "got error %ld.\n", GetLastError());
         ok(affinity.Mask == mask, "got %#Ix, expected %#Ix\n", affinity.Mask, mask);
 
         bret = GetThreadGroupAffinity(curthread, &affinity);
@@ -1051,12 +1051,12 @@ static VOID test_thread_processor(void)
 
         affinity_new.Mask = orig_mask & ~mask;
         bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
-        todo_wine ok(bret, "got error %ld.\n", GetLastError());
+        ok(bret, "got error %ld.\n", GetLastError());
         ok(affinity.Mask == mask, "got %#Ix, expected %#Ix\n", affinity.Mask, mask);
 
         bret = GetProcessAffinityMask(curproc, &retMask, &systemMask);
         ok(bret, "got error %ld.\n", GetLastError());
-        todo_wine ok(retMask == processMask, "got %#Ix, expected %#Ix.\n", retMask, processMask);
+        ok(retMask == processMask, "got %#Ix, expected %#Ix.\n", retMask, processMask);
 
         thread2 = CreateThread(NULL, 0, test_thread_processor_dummy_thread, NULL, CREATE_SUSPENDED, NULL);
 
@@ -1065,20 +1065,20 @@ static VOID test_thread_processor(void)
         ok(affinity.Mask == mask, "got %#Ix, expected %#Ix\n", affinity.Mask, mask);
         bret = GetThreadGroupAffinity(thread2, &affinity);
         ok(bret, "got error %ld.\n", GetLastError());
-        todo_wine ok(affinity.Mask == processMask, "got %#Ix, expected %#Ix\n", affinity.Mask, processMask);
+        ok(affinity.Mask == processMask, "got %#Ix, expected %#Ix\n", affinity.Mask, processMask);
 
         bret = GetThreadGroupAffinity(curthread, &affinity);
         ok(bret, "got error %ld.\n", GetLastError());
-        todo_wine ok(affinity.Mask == (orig_mask & ~mask), "got %#Ix, expected %#Ix\n", affinity.Mask, (orig_mask & ~mask));
+        ok(affinity.Mask == (orig_mask & ~mask), "got %#Ix, expected %#Ix\n", affinity.Mask, (orig_mask & ~mask));
 
         affinity_new.Mask = 0;
         bret = pSetThreadGroupAffinity(curthread, &affinity_new, &affinity);
-        todo_wine ok(bret, "got error %ld.\n", GetLastError());
-        todo_wine ok(affinity.Mask == (orig_mask & ~mask), "got %#Ix, expected %#Ix\n", affinity.Mask, (orig_mask & ~mask));
+        ok(bret, "got error %ld.\n", GetLastError());
+        ok(affinity.Mask == (orig_mask & ~mask), "got %#Ix, expected %#Ix\n", affinity.Mask, (orig_mask & ~mask));
 
         bret = GetThreadGroupAffinity(curthread, &affinity);
         ok(bret, "got error %ld.\n", GetLastError());
-        todo_wine ok(affinity.Mask == orig_mask, "got %#Ix, expected %#Ix\n", affinity.Mask, orig_mask);
+        ok(affinity.Mask == orig_mask, "got %#Ix, expected %#Ix\n", affinity.Mask, orig_mask);
 
         bret = SetProcessAffinityMask(GetCurrentProcess(), processMask);
         ok(bret, "got error %ld.\n", GetLastError());
