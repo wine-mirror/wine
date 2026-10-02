@@ -37838,6 +37838,76 @@ static void test_video_support(void)
     IDXGIFactory_Release(factory);
 }
 
+static void test_srgb_copy(void)
+{
+    ID3D11Texture2D *src_rgb, *src_srgb, *dst_rgb, *dst_srgb;
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext* context;
+    D3D11_SUBRESOURCE_DATA data;
+    ID3D11Device* device;
+    HRESULT hr;
+
+    static const struct resource_desc rgb_desc =
+    {
+        .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        .width = 1,
+        .height = 1,
+        .depth_or_array_size = 1,
+        .level_count = 1,
+        .format = DXGI_FORMAT_R8G8B8A8_UNORM,
+        .sample_desc.Count = 1,
+        .usage = D3D11_USAGE_DEFAULT,
+        .bind_flags = D3D11_BIND_SHADER_RESOURCE,
+    },
+    srgb_desc =
+    {
+        .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        .width = 1,
+        .height = 1,
+        .depth_or_array_size = 1,
+        .level_count = 1,
+        .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+        .sample_desc.Count = 1,
+        .usage = D3D11_USAGE_DEFAULT,
+        .bind_flags = D3D11_BIND_SHADER_RESOURCE,
+    };
+    static const unsigned int init_data = 0x11223344;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    data.pSysMem = &init_data;
+    data.SysMemPitch = rgb_desc.width * sizeof(init_data);
+    data.SysMemSlicePitch = rgb_desc.height * data.SysMemPitch;
+    hr = create_resource(device, &rgb_desc, &data, (ID3D11Resource **)&src_rgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = create_resource(device, &rgb_desc, NULL, (ID3D11Resource **)&dst_rgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = create_resource(device, &srgb_desc, &data, (ID3D11Resource **)&src_srgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = create_resource(device, &srgb_desc, NULL, (ID3D11Resource **)&dst_srgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)dst_rgb, (ID3D11Resource *)src_rgb);
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)dst_srgb, (ID3D11Resource *)src_rgb);
+    check_texture_color(dst_rgb, 0x11223344, 1);
+    check_texture_color(dst_srgb, 0x11223344, 1);
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource*)dst_rgb, (ID3D11Resource*)src_srgb);
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource*)dst_srgb, (ID3D11Resource*)src_srgb);
+    check_texture_color(dst_rgb, 0x11223344, 1);
+    check_texture_color(dst_srgb, 0x11223344, 1);
+
+    ID3D11Texture2D_Release(src_rgb);
+    ID3D11Texture2D_Release(dst_rgb);
+    ID3D11Texture2D_Release(src_srgb);
+    ID3D11Texture2D_Release(dst_srgb);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -38048,6 +38118,7 @@ START_TEST(d3d11)
     queue_test(test_h264_decoder);
     queue_test(test_filter_minmax);
     queue_test(test_video_support);
+    queue_test(test_srgb_copy);
 
     run_queued_tests();
 
