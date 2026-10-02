@@ -1922,23 +1922,22 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
     SIZE_T size = len_from_bitlen( key->a.bitlen );
     SYMCRYPT_ERROR error;
 
+    if (input_len < size) return STATUS_INVALID_PARAMETER;
     if (!flags || flags == BCRYPT_PAD_NONE)
     {
-        if (input_len % size) return STATUS_INVALID_PARAMETER;
-
         if (output_len < size)
         {
             *ret_len = size;
             if (output) return STATUS_BUFFER_TOO_SMALL;
             return STATUS_SUCCESS;
         }
-        error = SymCryptRsaRawDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                       output_len );
+        error = SymCryptRsaRawDecrypt( key->a.rsa.handle, input, size, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
+                                       size );
     }
     else if (flags == BCRYPT_PAD_PKCS1)
     {
-        error = SymCryptRsaPkcs1Decrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                         output_len, &size );
+        error = SymCryptRsaPkcs1Decrypt( key->a.rsa.handle, input, size, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST,
+                                         0, output, output_len, &size );
     }
     else if (flags == BCRYPT_PAD_OAEP)
     {
@@ -1948,7 +1947,7 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
         if (!pad) return STATUS_INVALID_PARAMETER;
         hash_desc = get_hash_from_str( pad->pszAlgId );
 
-        error = SymCryptRsaOaepDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, hash_desc,
+        error = SymCryptRsaOaepDecrypt( key->a.rsa.handle, input, size, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, hash_desc,
                                         pad->pbLabel, pad->cbLabel, 0, output, output_len, &size );
     }
     else

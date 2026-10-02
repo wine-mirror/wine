@@ -2783,13 +2783,13 @@ static void test_rsa_encrypt(void)
     memset(decrypted, 0xcc, sizeof(decrypted));
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size * 2, &decrypted_size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    todo_wine ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "unexpected output.\n");
+    ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "unexpected output.\n");
     for (i = sizeof(input_no_padding); i < sizeof(decrypted); ++i)
     {
         if (decrypted[i] != 0xcc)
             break;
     }
-    todo_wine ok(i == sizeof(decrypted), "data mismatch at %d.\n", i);
+    ok(i == sizeof(decrypted), "data mismatch at %d.\n", i);
 
     size = 0;
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size, &size, BCRYPT_PAD_NONE);
@@ -2842,7 +2842,7 @@ static void test_rsa_encrypt(void)
 
     ret = BCryptDecrypt(key, encrypted, encrypted_size - 1, NULL, NULL, 0, decrypted, sizeof(input),
                         &decrypted_size, BCRYPT_PAD_PKCS1);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %lx\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %lx\n", ret);
 
     decrypted_size = 0;
     ret = BCryptDecrypt(key, encrypted, sizeof(encrypted), NULL, NULL, 0, decrypted, sizeof(input) - 1,
@@ -2854,9 +2854,9 @@ static void test_rsa_encrypt(void)
     decrypted_size = 0;
     ret = BCryptDecrypt(key, encrypted, sizeof(encrypted), NULL, NULL, 0, decrypted, sizeof(decrypted),
                         &decrypted_size, BCRYPT_PAD_PKCS1);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    todo_wine ok(decrypted_size == sizeof(input) || broken(decrypted_size == 77) /* Before Win10 1709 */, "got size of %ld\n", decrypted_size);
-    todo_wine ok(!memcmp(decrypted, input, sizeof(input)), "unexpected output\n");
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(decrypted_size == sizeof(input) || broken(decrypted_size == 77) /* Before Win10 1709 */, "got size of %ld\n", decrypted_size);
+    ok(!memcmp(decrypted, input, sizeof(input)), "unexpected output\n");
     for (i = sizeof(input); i < sizeof(decrypted); ++i)
     {
         if (decrypted[i] != 0xcc)
@@ -2940,9 +2940,9 @@ static void test_rsa_encrypt(void)
     decrypted_size = sizeof(input);
     size = 0;
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size * 2, &oaep_pad, NULL, 0, decrypted, decrypted_size * 2, &size, BCRYPT_PAD_OAEP);
-    todo_wine ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER) /* Before Win10 1709 */, "got %lx\n", ret);
-    todo_wine ok(size == sizeof(input) || broken(ret == STATUS_INVALID_PARAMETER && !size), "got %lu\n", size);
-    todo_wine ok(!memcmp(decrypted, input, sizeof(input)) || broken(ret == STATUS_INVALID_PARAMETER), "unexpected output\n");
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER) /* Before Win10 1709 */, "got %lx\n", ret);
+    ok(size == sizeof(input) || broken(ret == STATUS_INVALID_PARAMETER && !size), "got %lu\n", size);
+    ok(!memcmp(decrypted, input, sizeof(input)) || broken(ret == STATUS_INVALID_PARAMETER), "unexpected output\n");
     for (i = sizeof(input); i < sizeof(decrypted); ++i)
     {
         if (decrypted[i] != 0xcc)
