@@ -4274,6 +4274,9 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
             t.matrix[2] * t.matrix[2] + t.matrix[3] * t.matrix[3]));
     }
 
+    if (is_antialiased(graphics))
+        flatness *= FlatnessDefault;
+
     if (stat == Ok)
         stat = GdipWidenPath(wide_path, pen, transform, flatness);
 
