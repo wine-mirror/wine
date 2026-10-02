@@ -145,6 +145,8 @@
 #ifndef _ACRTIMP
 # ifdef _CRTIMP
 #  define _ACRTIMP _CRTIMP
+# elif defined _CORECRT_BUILD
+#  define _ACRTIMP
 # elif __has_declspec_attribute(dllimport)
 #  define _ACRTIMP __declspec(dllimport)
 # elif defined(__MINGW32__) || defined(__CYGWIN__)
@@ -224,6 +226,10 @@ typedef __int64 __time64_t;
 typedef __int64 _CRT_ALIGN(8) __time64_t;
 #endif
 #define _TIME64_T_DEFINED
+#endif
+
+#ifdef _CORECRT_BUILD
+#define _CRT_NO_TIME_T
 #endif
 
 #ifdef _USE_32BIT_TIME_T
