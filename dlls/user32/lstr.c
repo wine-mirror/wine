@@ -89,7 +89,7 @@ BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
 BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 {
     if (!s || !d) return FALSE;
-    WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len, NULL, NULL );
+    WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len * 2, "_", NULL );
     return TRUE;
 }
 

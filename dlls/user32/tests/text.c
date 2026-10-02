@@ -852,8 +852,6 @@ static void test_CharToOem_OemToChar(void)
     };
     BOOL ret;
     int i;
-    char oem;
-    WCHAR uni, expect;
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
@@ -916,9 +914,34 @@ static void test_CharToOem_OemToChar(void)
         ok(!lstrcmpW(buf, expected), "test %d: got '%s'\n", i, wine_dbgstr_w(buf));
     }
 
+    for (i = 0; i < 0x10000; i++)
+    {
+        WCHAR uni[4] = {i, 0x23, i, 0x23};
+        unsigned char expect[8], oem[8];
+        int len;
+
+        /* CharToOemBuffW writes up to as many bytes as it reads */
+        for (len = 0; len <= ARRAY_SIZE(uni); len++)
+        {
+            memset(expect, 0, sizeof(expect));
+            WideCharToMultiByte(CP_OEMCP, 0, uni, len, (char*)expect, len * 2, "_", NULL);
+
+            memset(oem, 0, sizeof(oem));
+            ret = CharToOemBuffW(uni, (char*)oem, len);
+            ok(ret, "%04x: returns FALSE\n", i);
+            ok(!memcmp(oem, expect, sizeof(oem)),
+               "char=%04x len=%i: got %02x %02x %02x %02x %02x %02x %02x %02x "
+               "expected %02x %02x %02x %02x %02x %02x %02x %02x\n", i, len,
+               oem[0], oem[1], oem[2], oem[3], oem[4], oem[5], oem[6], oem[7],
+               expect[0], expect[1], expect[2], expect[3], expect[4], expect[5], expect[6], expect[7]);
+        }
+    }
+
     for (i = 0; i < 0x100; i++)
     {
-        oem = i;
+        char oem = i;
+        WCHAR expect, uni;
+
         ret = OemToCharBuffW( &oem, &uni, 1 );
         ok( ret, "%02x: returns FALSE\n", i );
         MultiByteToWideChar( CP_OEMCP, MB_PRECOMPOSED | MB_USEGLYPHCHARS, &oem, 1, &expect, 1 );
