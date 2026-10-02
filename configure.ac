@@ -1862,17 +1862,11 @@ then
     WINE_PACKAGE_FLAGS(KRB5,[krb5],,
                        [`${KRB5_CONFIG:-krb5-config} --cflags 2>/dev/null`],
                        [`${KRB5_CONFIG:-krb5-config} --libs 2>/dev/null`],
-        [AC_CHECK_HEADERS([krb5/krb5.h])
-         if test "$ac_cv_header_krb5_krb5_h" = "yes"
-         then
-             WINE_CHECK_SONAME(krb5,krb5_is_config_principal,,[KRB5_CFLAGS=""])
-         else
-             KRB5_CFLAGS=""
-         fi])
+        [AC_CHECK_HEADER([krb5/krb5.h],[WINE_CHECK_SONAME(krb5,krb5_is_config_principal)])])
 fi
 WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
                  [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.],
-                 [with_gssapi])
+                 [enable_kerberos])
 
 dnl **** Check for gssapi ****
 if test "x$with_gssapi" != "xno"
@@ -1880,16 +1874,13 @@ then
     WINE_PACKAGE_FLAGS(GSSAPI,[krb5-gssapi],,
                        [`${KRB5_CONFIG:-krb5-config} --cflags gssapi 2>/dev/null`],
                        [`${KRB5_CONFIG:-krb5-config} --libs gssapi 2>/dev/null`],
-        [AC_CHECK_HEADERS([gssapi/gssapi.h gssapi/gssapi_ext.h])
-        if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
-        then
-            WINE_CHECK_SONAME(gssapi_krb5, gss_init_sec_context,,[GSSAPI_CFLAGS=""])
-        else
-            GSSAPI_CFLAGS=""
-        fi])
+        [AC_CHECK_HEADER([gssapi/gssapi.h],
+             [AC_CHECK_HEADER([gssapi/gssapi_ext.h],
+                  [WINE_CHECK_SONAME(gssapi_krb5, gss_init_sec_context)])])])
 fi
 WINE_NOTICE_WITH(gssapi,[test "x$ac_cv_lib_soname_gssapi_krb5" = "x"],
-                 [libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support.])
+                 [libgssapi_krb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.],
+                 [enable_kerberos])
 
 dnl **** Check for libprocstat ****
 if test "$ac_cv_header_libprocstat_h" = "yes"

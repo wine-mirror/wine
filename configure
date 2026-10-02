@@ -19128,13 +19128,7 @@ LIBS="$KRB5_LIBS $LIBS"
 ac_fn_c_check_header_compile "$LINENO" "krb5/krb5.h" "ac_cv_header_krb5_krb5_h" "$ac_includes_default"
 if test "x$ac_cv_header_krb5_krb5_h" = xyes
 then :
-  printf '%s\n' "#define HAVE_KRB5_KRB5_H 1" >>confdefs.h
-
-fi
-
-         if test "$ac_cv_header_krb5_krb5_h" = "yes"
-         then
-             { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lkrb5" >&5
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lkrb5" >&5
 printf %s "checking for -lkrb5... " >&6; }
 if test ${ac_cv_lib_soname_krb5+y}
 then :
@@ -19187,7 +19181,7 @@ if ${ac_cv_lib_soname_krb5:+false} :
 then :
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 printf '%s\n' "not found" >&6; }
-       KRB5_CFLAGS=""
+
 else case e in #(
   e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_krb5" >&5
 printf '%s\n' "$ac_cv_lib_soname_krb5" >&6; }
@@ -19197,9 +19191,8 @@ printf '%s\n' "#define SONAME_LIBKRB5 \"$ac_cv_lib_soname_krb5\"" >>confdefs.h
         ;;
 esac
 fi
-         else
-             KRB5_CFLAGS=""
-         fi
+fi
+
 CPPFLAGS=$ac_save_pkg_CPPFLAGS
 LIBS=$ac_save_pkg_LIBS
 fi
@@ -19213,7 +19206,7 @@ then :
   *)   as_fn_error $? "libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.
 This is an error since --with-krb5 was requested." "$LINENO" 5 ;;
 esac
-with_gssapi=${with_gssapi:-no}
+enable_kerberos=${enable_kerberos:-no}
 fi
 
 if test "x$with_gssapi" != "xno"
@@ -19252,19 +19245,10 @@ LIBS="$GSSAPI_LIBS $LIBS"
 ac_fn_c_check_header_compile "$LINENO" "gssapi/gssapi.h" "ac_cv_header_gssapi_gssapi_h" "$ac_includes_default"
 if test "x$ac_cv_header_gssapi_gssapi_h" = xyes
 then :
-  printf '%s\n' "#define HAVE_GSSAPI_GSSAPI_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "gssapi/gssapi_ext.h" "ac_cv_header_gssapi_gssapi_ext_h" "$ac_includes_default"
+  ac_fn_c_check_header_compile "$LINENO" "gssapi/gssapi_ext.h" "ac_cv_header_gssapi_gssapi_ext_h" "$ac_includes_default"
 if test "x$ac_cv_header_gssapi_gssapi_ext_h" = xyes
 then :
-  printf '%s\n' "#define HAVE_GSSAPI_GSSAPI_EXT_H 1" >>confdefs.h
-
-fi
-
-        if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
-        then
-            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lgssapi_krb5" >&5
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lgssapi_krb5" >&5
 printf %s "checking for -lgssapi_krb5... " >&6; }
 if test ${ac_cv_lib_soname_gssapi_krb5+y}
 then :
@@ -19317,7 +19301,7 @@ if ${ac_cv_lib_soname_gssapi_krb5:+false} :
 then :
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 printf '%s\n' "not found" >&6; }
-       GSSAPI_CFLAGS=""
+
 else case e in #(
   e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gssapi_krb5" >&5
 printf '%s\n' "$ac_cv_lib_soname_gssapi_krb5" >&6; }
@@ -19327,9 +19311,10 @@ printf '%s\n' "#define SONAME_LIBGSSAPI_KRB5 \"$ac_cv_lib_soname_gssapi_krb5\"" 
         ;;
 esac
 fi
-        else
-            GSSAPI_CFLAGS=""
-        fi
+fi
+
+fi
+
 CPPFLAGS=$ac_save_pkg_CPPFLAGS
 LIBS=$ac_save_pkg_LIBS
 fi
@@ -19338,12 +19323,12 @@ fi
 if test "x$ac_cv_lib_soname_gssapi_krb5" = "x"
 then :
   case "x$with_gssapi" in
-  x)   as_fn_append wine_notices "|libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support." ;;
+  x)   as_fn_append wine_notices "|libgssapi_krb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support.
+  *)   as_fn_error $? "libgssapi_krb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.
 This is an error since --with-gssapi was requested." "$LINENO" 5 ;;
 esac
-
+enable_kerberos=${enable_kerberos:-no}
 fi
 
 if test "$ac_cv_header_libprocstat_h" = "yes"

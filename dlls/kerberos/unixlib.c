@@ -27,21 +27,12 @@
 
 #include "config.h"
 
-#if defined(SONAME_LIBKRB5) && defined(SONAME_LIBGSSAPI_KRB5)
-
 #include <stdarg.h>
 #include <sys/types.h>
 #include <dlfcn.h>
-
-#ifdef HAVE_KRB5_KRB5_H
-# include <krb5/krb5.h>
-#endif
-#ifdef HAVE_GSSAPI_GSSAPI_H
-# include <gssapi/gssapi.h>
-#endif
-#ifdef HAVE_GSSAPI_GSSAPI_EXT_H
-# include <gssapi/gssapi_ext.h>
-#endif
+#include <krb5/krb5.h>
+#include <gssapi/gssapi.h>
+#include <gssapi/gssapi_ext.h>
 
 #include "ntstatus.h"
 #include "windef.h"
@@ -1586,5 +1577,3 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
 
 #endif /* _WIN64 */
-
-#endif /* defined(SONAME_LIBKRB5) && defined(SONAME_LIBGSSAPI_KRB5) */
