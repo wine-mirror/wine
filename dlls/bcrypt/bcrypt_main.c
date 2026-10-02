@@ -1920,25 +1920,25 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
                              UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     SIZE_T size = len_from_bitlen( key->a.bitlen );
+    SYMCRYPT_ERROR error;
 
     if (!flags || flags == BCRYPT_PAD_NONE)
     {
         if (input_len % size) return STATUS_INVALID_PARAMETER;
 
-        *ret_len = size;
         if (output_len < size)
         {
+            *ret_len = size;
             if (output) return STATUS_BUFFER_TOO_SMALL;
             return STATUS_SUCCESS;
         }
-        if (SymCryptRsaRawDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                   output_len )) return STATUS_INTERNAL_ERROR;
+        error = SymCryptRsaRawDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
+                                       output_len );
     }
     else if (flags == BCRYPT_PAD_PKCS1)
     {
-        if (SymCryptRsaPkcs1Decrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                     output_len, &size )) return STATUS_INTERNAL_ERROR;
-        *ret_len = size;
+        error = SymCryptRsaPkcs1Decrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
+                                         output_len, &size );
     }
     else if (flags == BCRYPT_PAD_OAEP)
     {
@@ -1948,10 +1948,8 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
         if (!pad) return STATUS_INVALID_PARAMETER;
         hash_desc = get_hash_from_str( pad->pszAlgId );
 
-        if (SymCryptRsaOaepDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, hash_desc,
-                                    pad->pbLabel, pad->cbLabel, 0, output, output_len, &size ))
-            return STATUS_INTERNAL_ERROR;
-        *ret_len = size;
+        error = SymCryptRsaOaepDecrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, hash_desc,
+                                        pad->pbLabel, pad->cbLabel, 0, output, output_len, &size );
     }
     else
     {
@@ -1959,6 +1957,8 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
         return STATUS_NOT_SUPPORTED;
     }
 
+    if (error) return STATUS_INTERNAL_ERROR;
+    *ret_len = size;
     return STATUS_SUCCESS;
 }
 
