@@ -1956,7 +1956,12 @@ static NTSTATUS decrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (error) return STATUS_INTERNAL_ERROR;
+    if (error == SYMCRYPT_BUFFER_TOO_SMALL)
+    {
+        *ret_len = size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    if (error) return STATUS_INVALID_PARAMETER;
     *ret_len = size;
     return STATUS_SUCCESS;
 }

@@ -2847,8 +2847,8 @@ static void test_rsa_encrypt(void)
     decrypted_size = 0;
     ret = BCryptDecrypt(key, encrypted, sizeof(encrypted), NULL, NULL, 0, decrypted, sizeof(input) - 1,
                         &decrypted_size, BCRYPT_PAD_PKCS1);
-    todo_wine ok(ret == STATUS_BUFFER_TOO_SMALL || broken(!ret) /* Win 10 1809 */, "got %lx\n", ret);
-    todo_wine ok(decrypted_size == sizeof(input) || broken(decrypted_size == 77) /* Before Win10 1709 */, "got size of %ld\n", decrypted_size);
+    ok(ret == STATUS_BUFFER_TOO_SMALL || broken(!ret) /* Win 10 1809 */, "got %lx\n", ret);
+    ok(decrypted_size == sizeof(input) || broken(decrypted_size == 77) /* Before Win10 1709 */, "got size of %ld\n", decrypted_size);
 
     memset(decrypted, 0xcc, sizeof(decrypted));
     decrypted_size = 0;
@@ -2935,8 +2935,8 @@ static void test_rsa_encrypt(void)
     memset(decrypted, 0xcc, sizeof(decrypted));
     size = 0;
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size * 2, &oaep_pad, NULL, 0, decrypted, decrypted_size - 1, &size, BCRYPT_PAD_OAEP);
-    todo_wine ok(ret == STATUS_BUFFER_TOO_SMALL || broken(ret == STATUS_INVALID_PARAMETER) /* Before Win10 1709 */, "got %lx\n", ret);
-    todo_wine ok(size == sizeof(input) || broken(!size) /* Before Win10 1709 */, "got %lu\n", size);
+    ok(ret == STATUS_BUFFER_TOO_SMALL || broken(ret == STATUS_INVALID_PARAMETER) /* Before Win10 1709 */, "got %lx\n", ret);
+    ok(size == sizeof(input) || broken(!size) /* Before Win10 1709 */, "got %lu\n", size);
     decrypted_size = sizeof(input);
     size = 0;
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size * 2, &oaep_pad, NULL, 0, decrypted, decrypted_size * 2, &size, BCRYPT_PAD_OAEP);
