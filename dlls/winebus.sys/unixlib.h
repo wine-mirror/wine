@@ -43,6 +43,7 @@ struct device_desc
     BOOL is_gamepad;
     BOOL is_hidraw;
 
+    WCHAR parent[MAX_PATH]; /* backend specific string uniquely identifying the device parent */
     WCHAR manufacturer[MAX_PATH];
     WCHAR product[MAX_PATH];
     WCHAR serialnumber[MAX_PATH];

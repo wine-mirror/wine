@@ -932,6 +932,7 @@ static void sdl_add_device(unsigned int index)
         .interface = -1,
         .bus_id = -1,
         .manufacturer = {'S','D','L',0},
+        .parent = { '/','b','u','s','/','s','d','l',0 },
     };
     struct sdl_device *impl;
 

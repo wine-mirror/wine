@@ -386,6 +386,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     struct device_desc desc =
     {
         .interface = -1, .bus_id = -1, .is_hidraw = TRUE,
+        .parent = { '/','b','u','s','/','i','o','h','i','d',0 },
     };
     struct iohid_device *impl;
     USAGE_AND_PAGE usages;

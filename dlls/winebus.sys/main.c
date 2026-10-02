@@ -54,6 +54,18 @@ static DEVICE_OBJECT *bus_fdo;
 static struct bus_options options = {.devices = LIST_INIT(options.devices)};
 static HANDLE driver_key;
 
+typedef struct
+{
+   ULONG Unknown[6];
+   ULONG State[5];
+   ULONG Count[2];
+   UCHAR Buffer[64];
+} SHA_CTX, *PSHA_CTX;
+
+extern void WINAPI A_SHAInit(SHA_CTX *ctx);
+extern void WINAPI A_SHAUpdate(SHA_CTX *ctx, const unsigned char *buffer, UINT size);
+extern void WINAPI A_SHAFinal(SHA_CTX *ctx, ULONG *result);
+
 struct hid_report
 {
     struct list entry;
@@ -80,7 +92,7 @@ struct device_extension
     enum device_state state;
 
     struct device_desc desc;
-    GUID container_id;
+    ULONG parent_hash[5];
     DWORD index;
 
     BYTE *report_desc;
@@ -188,16 +200,20 @@ static DWORD get_device_index(struct device_desc *desc, struct list **before)
 static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    const WCHAR *serial_str = !*ext->desc.serialnumber ? L"0000" : ext->desc.serialnumber;
+    const WCHAR *serial_str = !*ext->desc.serialnumber ? L"00000000" : ext->desc.serialnumber;
     DWORD len = wcslen(serial_str) + 33;
     WCHAR *dst;
 
-    if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
+    if (*ext->desc.serialnumber && (dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
         swprintf(dst, len, L"%u&%s&%x&%u&%u", ext->desc.version, serial_str,
                  ext->desc.uid, ext->index, ext->desc.is_gamepad);
+        return dst;
     }
 
+    if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
+        swprintf(dst, len, L"%u&%08x&%x&%x&%u", ext->desc.version, ext->parent_hash[0],
+                 ext->desc.uid, ext->index, ext->desc.is_gamepad);
     return dst;
 }
 
@@ -351,8 +367,9 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     WCHAR dev_name[256];
     struct list *before;
     NTSTATUS status;
+    SHA_CTX ctx;
 
-    TRACE("desc %s, unix_device %#I64x\n", debugstr_device_desc(desc), unix_device);
+    TRACE("desc %s, parent %s, unix_device %#I64x\n", debugstr_device_desc(desc), debugstr_w(desc->parent), unix_device);
 
     swprintf(dev_name, ARRAY_SIZE(dev_name), L"\\Device\\WINEBUS#%p", unix_device);
     RtlInitUnicodeString(&nameW, dev_name);
@@ -372,6 +389,10 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext->index              = get_device_index(desc, &before);
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
+
+    A_SHAInit(&ctx);
+    A_SHAUpdate(&ctx, (BYTE *)desc->parent, wcslen(desc->parent) * sizeof(WCHAR));
+    A_SHAFinal(&ctx, ext->parent_hash);
 
     if (desc->is_hidraw && (desc->bus_type == BUS_TYPE_BLUETOOTH) && is_dualshock4_gamepad(desc->vid, desc->pid))
     {
