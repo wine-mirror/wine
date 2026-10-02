@@ -822,14 +822,19 @@ static void destroy_framebuffer_attachment( struct opengl_drawable *drawable, GL
     TRACE( "drawable %p/%u destroyed %s buffer %#x/%u\n", drawable, fbo, kind, attachment, name );
 }
 
-static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, SIZE size )
+static UINT framebuffer_image_count( struct opengl_drawable *drawable )
 {
-    const struct opengl_funcs *funcs = &display_funcs;
-    GLuint count = 1, fbo, name;
-    GLenum ret;
-
+    GLuint count = 1;
     if (drawable->doublebuffer) count *= 2;
     if (drawable->stereo) count *= 2;
+    return count;
+}
+
+static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, SIZE size )
+{
+    GLuint count = framebuffer_image_count( drawable ), fbo, name;
+    const struct opengl_funcs *funcs = &display_funcs;
+    GLenum ret;
 
     funcs->p_glGenFramebuffers( 1, &fbo );
     funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, fbo );
@@ -870,11 +875,8 @@ static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct
 static void resize_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo, SIZE size )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    GLuint count = 1;
+    GLuint count = framebuffer_image_count( drawable );
     GLenum ret;
-
-    if (drawable->doublebuffer) count *= 2;
-    if (drawable->stereo) count *= 2;
 
     funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, fbo );
 
@@ -889,10 +891,7 @@ static void resize_framebuffer( struct opengl_drawable *drawable, const struct w
 static void destroy_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo )
 {
     const struct opengl_funcs *funcs = &display_funcs;
-    GLuint count = 1;
-
-    if (drawable->doublebuffer) count *= 2;
-    if (drawable->stereo) count *= 2;
+    GLuint count = framebuffer_image_count( drawable );
 
     funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, fbo );
 
