@@ -152,6 +152,11 @@ _ACRTIMP int      __cdecl rename(const char*,const char*);
 }
 #endif
 
+#ifndef _UMASK_DEFINED
+static inline int umask(int fd) { return _umask(fd); }
+#define _UMASK_DEFINED
+#endif
+
 #pragma pack(pop)
 
 #endif /* _IO_DEFINED */

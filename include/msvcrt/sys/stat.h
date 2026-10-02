@@ -154,7 +154,7 @@ struct _stat64 {
 extern "C" {
 #endif
 
-#ifdef _UCRT
+#if _MSVCR_VER >= 80
 # ifdef _USE_32BIT_TIME_T
 #  define _fstat      _fstat32
 #  define _fstati64   _fstat32i64
@@ -170,39 +170,30 @@ extern "C" {
 #  define _wstat      _wstat64i32
 #  define _wstati64   _wstat64
 # endif
+
+_ACRTIMP int __cdecl _fstat32(int, struct _stat32*);
+_ACRTIMP int __cdecl _fstat32i64(int, struct _stat32i64*);
+_ACRTIMP int __cdecl _fstat64i32(int,struct _stat64i32*);
+_ACRTIMP int __cdecl _stat32(const char*, struct _stat32*);
+_ACRTIMP int __cdecl _stat32i64(const char*, struct _stat32i64*);
+_ACRTIMP int __cdecl _stat64i32(const char*,struct _stat64i32*);
+_ACRTIMP int __cdecl _wstat32(const wchar_t*,struct _stat32*);
+_ACRTIMP int __cdecl _wstat32i64(const wchar_t*, struct _stat32i64*);
+_ACRTIMP int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 #elif !defined _CRT_NO_TIME_T
-# ifdef _USE_32BIT_TIME_T
-#  define _fstat32    _fstat
-#  define _fstat32i64 _fstati64
-#  define _stat32i64  _stati64
-#  define _stat32     _stat
-#  define _wstat32    _wstat
-#  define _wstat32i64 _wstati64
-# else
-#  define _fstat64i32 _fstat
-#  define _fstat64    _fstati64
-#  define _stat64     _stati64
-#  define _stat64i32  _stat
-#  define _wstat64i32 _wstat
-#  define _wstat64    _wstati64
-# endif
+_ACRTIMP int __cdecl _fstat(int, struct _stat*);
+_ACRTIMP int __cdecl _fstati64(int, struct _stati64*);
+_ACRTIMP int __cdecl _stat(const char*, struct _stat*);
+_ACRTIMP int __cdecl _stati64(const char*, struct _stati64*);
+_ACRTIMP int __cdecl _wstat(const wchar_t*,struct _stat*);
+_ACRTIMP int __cdecl _wstati64(const wchar_t*,struct _stati64*);
 #endif
 
 #define __stat64 _stat64
 
-_ACRTIMP int __cdecl _fstat32(int, struct _stat32*);
-_ACRTIMP int __cdecl _fstat32i64(int, struct _stat32i64*);
 _ACRTIMP int __cdecl _fstat64(int,struct _stat64*);
-_ACRTIMP int __cdecl _fstat64i32(int,struct _stat64i32*);
-_ACRTIMP int __cdecl _stat32(const char*, struct _stat32*);
-_ACRTIMP int __cdecl _stat32i64(const char*, struct _stat32i64*);
 _ACRTIMP int __cdecl _stat64(const char*,struct _stat64*);
-_ACRTIMP int __cdecl _stat64i32(const char*,struct _stat64i32*);
-_ACRTIMP int __cdecl _umask(int);
-_ACRTIMP int __cdecl _wstat32(const wchar_t*,struct _stat32*);
-_ACRTIMP int __cdecl _wstat32i64(const wchar_t*, struct _stat32i64*);
 _ACRTIMP int __cdecl _wstat64(const wchar_t*,struct _stat64*);
-_ACRTIMP int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 
 #ifdef __cplusplus
 }
@@ -220,10 +211,6 @@ _ACRTIMP int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 #ifndef _CRT_NO_TIME_T
 static inline int fstat(int fd, struct stat* ptr) { return _fstat(fd, (struct _stat*)ptr); }
 static inline int stat(const char* path, struct stat* ptr) { return _stat(path, (struct _stat*)ptr); }
-#endif
-#ifndef _UMASK_DEFINED
-static inline int umask(int fd) { return _umask(fd); }
-#define _UMASK_DEFINED
 #endif
 
 #pragma pack(pop)
