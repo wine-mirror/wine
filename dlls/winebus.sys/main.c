@@ -92,6 +92,7 @@ struct device_extension
     enum device_state state;
 
     struct device_desc desc;
+    BOOL unique_serial;
     ULONG parent_hash[5];
     DWORD index;
 
@@ -173,6 +174,24 @@ static void unix_device_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKE
     winebus_call(device_set_feature_report, &params);
 }
 
+static BOOL has_unique_serial_number(struct device_desc *desc)
+{
+    struct device_extension *ext;
+
+    if (!*desc->serialnumber) return FALSE;
+
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
+    {
+        if (ext->desc.vid == desc->vid && ext->desc.pid == desc->pid && ext->desc.interface == desc->interface
+                && !wcscmp(desc->serialnumber, ext->desc.serialnumber))
+        {
+            WARN("Found device with duplicate serial number %s.\n", debugstr_w(desc->serialnumber));
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static DWORD get_device_index(struct device_desc *desc, struct list **before)
 {
     struct device_extension *ext;
@@ -204,10 +223,16 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     DWORD len = wcslen(serial_str) + 33;
     WCHAR *dst;
 
-    if (*ext->desc.serialnumber && (dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
+    /*
+     * Single interface USB devices (and parent devices of USB interfaces for
+     * composite devices) use their serial number string as the instance ID.
+     * If a second device with the same device ID and serial number string is
+     * added, just fall back to the path based instance ID.
+     */
+    if (ext->desc.interface == -1 && ext->unique_serial)
     {
-        swprintf(dst, len, L"%u&%s&%x&%u&%u", ext->desc.version, serial_str,
-                 ext->desc.uid, ext->index, ext->desc.is_gamepad);
+        if ((dst = ExAllocatePool(PagedPool, (wcslen(ext->desc.serialnumber) + 1) * sizeof(WCHAR))))
+            wcscpy(dst, ext->desc.serialnumber);
         return dst;
     }
 
@@ -386,6 +411,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext = (struct device_extension *)device->DeviceExtension;
     ext->device             = device;
     ext->desc               = *desc;
+    ext->unique_serial      = has_unique_serial_number(desc);
     ext->index              = get_device_index(desc, &before);
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
