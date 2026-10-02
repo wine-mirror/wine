@@ -2773,7 +2773,7 @@ static void test_rsa_encrypt(void)
 
     ret = BCryptEncrypt(key, input_no_padding, sizeof(input_no_padding), NULL, NULL, 0, encrypted_b, encrypted_size, &encrypted_size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    todo_wine ok(!memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs should be the same\n");
+    ok(!memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs should be the same\n");
     ok(!memcmp(encrypted_b, rsa_encrypted_no_padding, encrypted_size), "Data mismatch.\n");
 
     decrypted_size = 0;
@@ -2795,7 +2795,7 @@ static void test_rsa_encrypt(void)
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size, &size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(size == sizeof(input_no_padding), "got %lu\n", size);
-    todo_wine ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "unexpected output\n");
+    ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "unexpected output\n");
 
     /*  PKCS1 Padding  */
     encrypted_size = 0;
@@ -2929,8 +2929,8 @@ static void test_rsa_encrypt(void)
     decrypted_size = 0;
     memset(decrypted, 0, sizeof(decrypted));
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, &oaep_pad, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_OAEP);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    todo_wine ok(decrypted_size == sizeof(input), "got %lu\n", decrypted_size);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(decrypted_size == sizeof(input), "got %lu\n", decrypted_size);
 
     memset(decrypted, 0xcc, sizeof(decrypted));
     size = 0;

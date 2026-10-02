@@ -2266,12 +2266,12 @@ static NTSTATUS encrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
         if (input_len % size) return STATUS_INVALID_PARAMETER;
 
         if (SymCryptRsaRawEncrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                   output_len )) return STATUS_INTERNAL_ERROR;
+                                   size )) return STATUS_INTERNAL_ERROR;
     }
     else if (flags == BCRYPT_PAD_PKCS1)
     {
         if (SymCryptRsaPkcs1Encrypt( key->a.rsa.handle, input, input_len, SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, 0, output,
-                                     output_len, &size )) return STATUS_INTERNAL_ERROR;
+                                     size, &size )) return STATUS_INTERNAL_ERROR;
         *ret_len = size;
     }
     else if (flags == BCRYPT_PAD_OAEP)
@@ -2288,7 +2288,7 @@ static NTSTATUS encrypt_rsa( const struct key *key, const UCHAR *input, ULONG in
             label_len = pad->cbLabel;
         }
         if (SymCryptRsaOaepEncrypt( key->a.rsa.handle, input, input_len, hash_desc, label, label_len, 0,
-                                    SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, output, output_len, &size ))
+                                    SYMCRYPT_NUMBER_FORMAT_MSB_FIRST, output, size, &size ))
             return STATUS_INTERNAL_ERROR;
         *ret_len = size;
     }
