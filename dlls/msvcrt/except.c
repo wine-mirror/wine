@@ -381,8 +381,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG_PTR frame,
     cxx_exception_type *exc_type;
     ULONG_PTR orig_frame = frame;
     ULONG_PTR throw_base;
-    DWORD throw_func_off;
-    void *throw_func;
+    void *throw_func = NULL;
     UINT i, j;
     int unwindlevel = -1;
 
@@ -400,9 +399,6 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG_PTR frame,
         return ExceptionContinueSearch;  /* handle only c++ exceptions */
 
     /* update orig_frame if it's a nested exception */
-    throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
-    throw_func = cxx_rva(throw_func_off, throw_base);
-    TRACE("reconstructed handler pointer: %p\n", throw_func);
     for (i=descr->tryblock_count; i>0; i--)
     {
         const tryblock_info *tryblock = cxx_rva(descr->tryblock, dispatch->ImageBase);
@@ -410,6 +406,16 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG_PTR frame,
 
         if (trylevel>tryblock->end_level && trylevel<=tryblock->catch_level)
         {
+            if (!throw_func)
+            {
+                RUNTIME_FUNCTION *func = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL);
+
+                throw_func = func ? cxx_rva(func->BeginAddress, throw_base) : NULL;
+                if (!throw_func)
+                    ERR("no function entry for %p\n", (void *)dispatch->ControlPc);
+                else
+                    TRACE("reconstructed handler pointer: %p\n", throw_func);
+            }
             for (j=0; j<tryblock->catchblock_count; j++)
             {
                 const catchblock_info *catchblock = cxx_rva(tryblock->catchblock, dispatch->ImageBase);
