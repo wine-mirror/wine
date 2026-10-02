@@ -15742,7 +15742,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: File non trovato\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -15783,6 +15783,12 @@ msgstr ""
 "  /S  Elabora i file corrispondenti nella cartella attuale e in tutte le "
 "sottocartelle.\n"
 "  /D  Elabora anche le cartelle.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Errore nel parametro\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

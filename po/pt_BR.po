@@ -14689,7 +14689,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: Arquivo Não Encontrado\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14729,6 +14729,12 @@ msgstr ""
 "      Especifica um ou mais arquivos para o attrib processar.\n"
 "  /S  Processa os arquivos correspondentes na pasta atual e  nas subpastas.\n"
 "  /D  Processa também as pastas.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Erro de parâmetro\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

@@ -14505,7 +14505,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: Dosya Bulunamadı\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14544,6 +14544,12 @@ msgstr ""
 "      Öznitelikleme için işlenecek dosya veya dosyaları belirtir.\n"
 "  /S  Geçerli klasör ve alt klasörlerinde eşleşen dosyaları işler.\n"
 "  /D  Klasörleri de işler.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Parametre hatası\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

@@ -14494,7 +14494,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "'%s' pout nén esse trové."
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14514,6 +14514,10 @@ msgid ""
 "      Specifies a file or files for attrib to process.\n"
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
+msgstr ""
+
+#: programs/attrib/attrib.rc:32
+msgid "Parameter format not correct\n"
 msgstr ""
 
 #: programs/chcp.com/chcp.rc:28

@@ -14581,7 +14581,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: Fitxer no trobat\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14621,6 +14621,12 @@ msgstr ""
 "  /S  Processa fitxers coincidents a la carpeta actual i totes les\n"
 "      subcarpetes.\n"
 "  /D  Processa les carpetes també.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Error de paràmetre\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

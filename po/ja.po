@@ -14388,7 +14388,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: ファイルが見つかりません\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14428,6 +14428,12 @@ msgstr ""
 "  /S  カレント フォルダーと全サブフォルダーでマッチするファイルを処理しま"
 "す。\n"
 "  /D  フォルダーも同様に処理します。\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "パラメーター エラー\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

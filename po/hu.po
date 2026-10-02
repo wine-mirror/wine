@@ -15669,7 +15669,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1 fájl nem található\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -15710,6 +15710,12 @@ msgstr ""
 "  /S  Beállítja a fájlt vagy fájlokat, az aktuális mappában és minden "
 "alkönytárában.\n"
 "  /D  Beállítja a mappákat is.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Paraméter hiba\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

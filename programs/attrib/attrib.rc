@@ -28,6 +28,7 @@ STRINGTABLE
 {
     STRING_NYI, "Not Yet Implemented\n\n"
     STRING_FILENOTFOUND, "%1: File Not Found\n"
+    STRING_PARAMFORMAT, "Parameter format not correct\n"
     STRING_HELP,
 "ATTRIB - Displays or changes file attributes.\n\
 \n\

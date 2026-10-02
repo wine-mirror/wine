@@ -26,3 +26,4 @@
 #define STRING_NYI              101
 #define STRING_FILENOTFOUND     102
 #define STRING_HELP             103
+#define STRING_PARAMFORMAT      104

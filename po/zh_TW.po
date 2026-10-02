@@ -14370,7 +14370,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: 找不到檔案\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14409,6 +14409,12 @@ msgstr ""
 "      指定 attrib 要處理的一個或多個檔案。\n"
 "  /S  處理在目前資料夾和所有子資料夾中的匹配檔案。\n"
 "  /D  同樣處理資料夾。\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "參數錯誤\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"

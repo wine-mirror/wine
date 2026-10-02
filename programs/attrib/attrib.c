@@ -245,6 +245,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     BOOL  attrib_includedirs = FALSE;
     int i = 1;
     BOOL  found = FALSE;
+    DWORD len;
 
     if ((argc >= 2) && !lstrcmpW(argv[1], L"/?")) {
         ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_HELP));
@@ -281,6 +282,10 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                 WINE_FIXME("Unknown option %s\n", debugstr_w(param));
             }
         } else if (param[0]) {
+            if (lstrlenW(param) >= ARRAY_SIZE(originalname)) {
+                ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_PARAMFORMAT));
+                return 0;
+            }
             lstrcpyW(originalname, param);
         }
     }
@@ -288,7 +293,11 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     /* Name may be a relative or explicit path, so calculate curdir based on
        current locations, stripping off the filename                         */
     WINE_TRACE("Supplied name: '%s'\n", wine_dbgstr_w(originalname));
-    GetFullPathNameW(originalname, ARRAY_SIZE(curdir), curdir, &namepart);
+    len = GetFullPathNameW(originalname, ARRAY_SIZE(curdir), curdir, &namepart);
+    if (!len || len >= ARRAY_SIZE(curdir)) {
+        ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_PARAMFORMAT));
+        return 0;
+    }
     WINE_TRACE("Result: '%s'\n", wine_dbgstr_w(curdir));
     if (namepart) {
         lstrcpyW(name, namepart);

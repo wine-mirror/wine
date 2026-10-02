@@ -14349,7 +14349,7 @@ msgstr ""
 msgid "%1: File Not Found\n"
 msgstr "%1: Bestand niet gevonden\n"
 
-#: programs/attrib/attrib.rc:50
+#: programs/attrib/attrib.rc:51
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -14389,6 +14389,12 @@ msgstr ""
 "      Specificeert een bestand of bestanden om te verwerken.\n"
 "  /S  Verwerk passende bestanden in de huidige map en alle submappen.\n"
 "  /D  Verwerk ook de mappen zelf.\n"
+
+#: programs/attrib/attrib.rc:32
+#, fuzzy
+#| msgid "Parameter error\n"
+msgid "Parameter format not correct\n"
+msgstr "Parameter onjuist\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
