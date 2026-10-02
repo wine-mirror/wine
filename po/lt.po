@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-05-04 21:55+0300\n"
+"PO-Revision-Date: 2026-10-03 00:33+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14360,10 +14360,8 @@ msgstr ""
 "  /D  Taip pat apdoroja aplankus.\n"
 
 #: programs/attrib/attrib.rc:32
-#, fuzzy
-#| msgid "Parameter error\n"
 msgid "Parameter format not correct\n"
-msgstr "Parametro klaida\n"
+msgstr "Parametro formatas neteisingas\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
