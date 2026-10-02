@@ -4201,13 +4201,15 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
     GpStatus stat;
     GpPath *wide_path;
     GpMatrix *transform=NULL;
+    GpPen hairline;
     REAL flatness=1.0;
+    BOOL thin=FALSE;
 
     /* Check if the final pen thickness in pixels is too thin. */
     if (pen->unit == UnitPixel)
     {
         if (pen->width < 1.415)
-            return SOFTWARE_GdipDrawThinPath(graphics, pen, path);
+            thin = TRUE;
     }
     else
     {
@@ -4226,7 +4228,20 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
              (points[1].Y-points[0].Y)*(points[1].Y-points[0].Y) < 2.0001) &&
             ((points[2].X-points[0].X)*(points[2].X-points[0].X) +
              (points[2].Y-points[0].Y)*(points[2].Y-points[0].Y) < 2.0001))
+            thin = TRUE;
+    }
+
+    if (thin)
+    {
+        if (!is_antialiased(graphics))
             return SOFTWARE_GdipDrawThinPath(graphics, pen, path);
+
+        /* antialiased thin lines are one pixel wide and not mitered */
+        hairline = *pen;
+        hairline.unit = UnitPixel;
+        hairline.width = 1.0;
+        hairline.join = LineJoinBevel;
+        pen = &hairline;
     }
 
     stat = GdipClonePath(path, &wide_path);
