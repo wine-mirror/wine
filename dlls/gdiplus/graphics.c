@@ -4185,6 +4185,17 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
     return stat;
 }
 
+static BOOL is_antialiased(const GpGraphics *graphics)
+{
+    DWORD type = GetObjectType(graphics->hdc);
+
+    /* metafiles get aliased vectors as on native; printers can't blend, and SourceCopy would also
+     * replace the uncovered pixels around the path */
+    return !graphics->printer_display && type != OBJ_METADC && type != OBJ_ENHMETADC &&
+        (graphics->smoothing == SmoothingModeHighQuality || graphics->smoothing >= SmoothingModeAntiAlias) &&
+        graphics->compmode != CompositingModeSourceCopy;
+}
+
 static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
@@ -4289,7 +4300,8 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 
     if (is_metafile_graphics(graphics))
         retval = METAFILE_DrawPath((GpMetafile*)graphics->image, pen, path);
-    else if (!has_gdi_dc(graphics) || graphics->alpha_hdc || !brush_can_fill_path(pen->brush, FALSE))
+    else if (!has_gdi_dc(graphics) || graphics->alpha_hdc || !brush_can_fill_path(pen->brush, FALSE) ||
+            is_antialiased(graphics))
         retval = SOFTWARE_GdipDrawPath(graphics, pen, path);
     else
         retval = GDI32_GdipDrawPath(graphics, pen, path);
@@ -4601,6 +4613,96 @@ static void bitmap_scanline_span_fill(GpBitmap *dst_bitmap, const DWORD *src_row
     }
 }
 
+static GpStatus SOFTWARE_GdipFillPathAntialiased(GpGraphics *graphics, GpBrush *brush, GpPath *path)
+{
+    INT ss_x = 8, ss_y = graphics->smoothing == SmoothingModeAntiAlias8x8 ? 8 : 4;
+    struct region_element element = { RegionDataPath };
+    struct span_list spans = { 0 };
+    REAL offset, left, top, right, bottom;
+    GpRectF bounds, device_bounds;
+    INT *coverage = NULL, *row, x, next;
+    DWORD *pixels = NULL;
+    GpMatrix transform;
+    GpStatus stat;
+    RECT sample_rect;
+    GpRect rect;
+    size_t i;
+
+    stat = gdi_transform_acquire(graphics);
+    if (stat != Ok)
+        return stat;
+
+    /* pixel centers lie on integers unless the pixel offset is half a pixel */
+    offset = graphics->pixeloffset == PixelOffsetModeHalf || graphics->pixeloffset == PixelOffsetModeHighQuality ?
+        0.0 : 0.5;
+    stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &transform);
+    if (stat == Ok)
+        stat = GdipTranslateMatrix(&transform, offset, offset, MatrixOrderAppend);
+    if (stat == Ok)
+        stat = GdipClonePath(path, &element.elementdata.path);
+    if (stat == Ok)
+        stat = GdipFlattenPath(element.elementdata.path, &transform, FlatnessDefault);
+    if (stat == Ok)
+        stat = GdipGetPathWorldBounds(element.elementdata.path, &bounds, NULL, NULL);
+    if (stat == Ok)
+        stat = get_graphics_device_bounds(graphics, &device_bounds);
+    if (stat != Ok)
+        goto done;
+
+    left = max(floorf(bounds.X), device_bounds.X);
+    top = max(floorf(bounds.Y), device_bounds.Y);
+    right = min(ceilf(bounds.X + bounds.Width), device_bounds.X + device_bounds.Width);
+    bottom = min(ceilf(bounds.Y + bounds.Height), device_bounds.Y + device_bounds.Height);
+    if (right <= left || bottom <= top)
+        goto done;
+
+    rect.X = left;
+    rect.Y = top;
+    rect.Width = right - left;
+    rect.Height = bottom - top;
+    SetRect(&sample_rect, rect.X * ss_x, rect.Y * ss_y, (rect.X + rect.Width) * ss_x, (rect.Y + rect.Height) * ss_y);
+    GdipSetMatrixElements(&transform, ss_x, 0.0, 0.0, ss_y, 0.0, 0.0);
+
+    pixels = calloc(rect.Width * rect.Height, sizeof(*pixels));
+    coverage = calloc(rect.Width * rect.Height, sizeof(*coverage));
+    if (!pixels || !coverage)
+        stat = OutOfMemory;
+    if (stat == Ok)
+        stat = GdipTransformPath(element.elementdata.path, &transform);
+    if (stat == Ok)
+        stat = region_element_to_spans(&element, &sample_rect, &spans);
+    if (stat == Ok)
+        stat = brush_fill_pixels(graphics, brush, pixels, &rect, rect.Width);
+    if (stat == Ok)
+    {
+        for (i = 0; i < spans.length; i++)
+        {
+            row = coverage + (spans.spans[i].y / ss_y - rect.Y) * rect.Width;
+            for (x = spans.spans[i].x[0]; x < spans.spans[i].x[1]; x = next)
+            {
+                next = min((x / ss_x + 1) * ss_x, spans.spans[i].x[1]);
+                row[x / ss_x - rect.X] += next - x;
+            }
+        }
+
+        for (i = 0; i < rect.Width * rect.Height; i++)
+            pixels[i] = (pixels[i] & 0xffffff) |
+                (((pixels[i] >> 24) * coverage[i] + ss_x * ss_y / 2) / (ss_x * ss_y) << 24);
+
+        stat = alpha_blend_pixels(graphics, rect.X, rect.Y, (BYTE *)pixels, rect.Width, rect.Height,
+            rect.Width * 4, PixelFormat32bppARGB);
+    }
+
+done:
+    free(spans.spans);
+    free(coverage);
+    free(pixels);
+    GdipDeletePath(element.elementdata.path);
+    gdi_transform_release(graphics);
+
+    return stat;
+}
+
 static GpStatus SOFTWARE_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
 {
     GpStatus stat;
@@ -4608,6 +4710,9 @@ static GpStatus SOFTWARE_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPa
 
     if (!brush_can_fill_pixels(brush))
         return NotImplemented;
+
+    if (is_antialiased(graphics))
+        return SOFTWARE_GdipFillPathAntialiased(graphics, brush, path);
 
     /* FIXME: This could probably be done more efficiently without regions. */
 
@@ -4641,7 +4746,7 @@ GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *p
     if (is_metafile_graphics(graphics))
         return METAFILE_FillPath((GpMetafile*)graphics->image, brush, path);
 
-    if (!graphics->image && !graphics->alpha_hdc)
+    if (!graphics->image && !graphics->alpha_hdc && !is_antialiased(graphics))
         stat = GDI32_GdipFillPath(graphics, brush, path);
 
     if (stat == NotImplemented)
