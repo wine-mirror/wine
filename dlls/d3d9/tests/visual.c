@@ -4531,6 +4531,18 @@ static void test_multisample_stretch_rect(void)
         D3DTEXF_POINT,
         D3DTEXF_LINEAR,
     };
+    static const struct
+    {
+        struct vec3 position;
+        unsigned int diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0x00808080},
+        {{-1.0f,  1.0f, 0.1f}, 0x00808080},
+        {{ 1.0f, -1.0f, 0.1f}, 0x00808080},
+        {{ 1.0f,  1.0f, 0.1f}, 0x00808080},
+    };
     IDirect3DSurface9 *rt, *ms_rt, *ms_rt2, *rt_r5g6b5;
     struct surface_readback rb;
     IDirect3DDevice9 *device;
@@ -4689,6 +4701,62 @@ static void test_multisample_stretch_rect(void)
     }
 
     IDirect3DSurface9_Release(rt_r5g6b5);
+
+    /* sRGB. Clears are affected by SRGBWRITEENABLE (see clear_test), but a draw is needed anyway to
+     * make the state stick. So just draw. */
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, ms_rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, D3DTEXF_NONE);
+    ok(hr == D3D_OK, "Multisample resolve: got unexpected hr %#lx.\n", hr);
+
+    get_rt_readback(rt, &rb);
+    color = get_readback_color(&rb, 1, 1);
+    ok(color_match(color, 0x00bbbbbb, 1), "Test %u, got unexpected color 0x%08x.\n", i, color);
+    release_surface_readback(&rb);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Like the previous draw, this one is to make the SRGBWRITEENABLE = FALSE stick. We read it
+     * back and check because we can, but the actually interesting part is the StretchRect
+     * afterwards. */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
+    get_rt_readback(rt, &rb);
+    color = get_readback_color(&rb, 1, 1);
+    ok(color_match(color, 0x00808080, 1), "Test %u, got unexpected color 0x%08x.\n", i, color);
+    release_surface_readback(&rb);
+
+    /* The resolve result is the same as it was with SRGBWRITEENABLE on. Note that the content of
+     * the source ms_rt surface is unchanged. */
+    hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, D3DTEXF_NONE);
+    ok(hr == D3D_OK, "Multisample resolve: got unexpected hr %#lx.\n", hr);
+    get_rt_readback(rt, &rb);
+    color = get_readback_color(&rb, 1, 1);
+    ok(color_match(color, 0x00bbbbbb, 1), "Test %u, got unexpected color 0x%08x.\n", i, color);
+    release_surface_readback(&rb);
 
 done:
     IDirect3DSurface9_Release(ms_rt2);
