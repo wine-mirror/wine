@@ -123,7 +123,9 @@ enum SmoothingMode
     SmoothingModeHighSpeed   = QualityModeLow,
     SmoothingModeHighQuality = QualityModeHigh,
     SmoothingModeNone,
-    SmoothingModeAntiAlias
+    SmoothingModeAntiAlias,
+    SmoothingModeAntiAlias8x4 = SmoothingModeAntiAlias,
+    SmoothingModeAntiAlias8x8
 };
 
 enum CompositingQuality
