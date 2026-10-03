@@ -85,7 +85,7 @@ static HRESULT WINAPI d3dx9_line_GetDevice(struct ID3DXLine *iface, struct IDire
 {
     struct d3dx9_line *line = impl_from_ID3DXLine(iface);
 
-    TRACE("iface %p, device %p.\n", iface, line);
+    TRACE("iface %p, device %p.\n", iface, device);
 
     if (!device)
         return D3DERR_INVALIDCALL;
