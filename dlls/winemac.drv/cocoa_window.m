@@ -2734,14 +2734,14 @@ static inline BOOL stage_manager_enabled(void)
 
     - (void)windowDidMiniaturize:(NSNotification *)notification
     {
-        macdrv_event* event;
+        WineApplicationController* controller = [WineApplicationController sharedController];
 
         if (fullscreen && [self isOnActiveSpace])
-            [[WineApplicationController sharedController] updateFullscreenWindows];
+            [controller updateFullscreenWindows];
 
-        event = macdrv_create_event(WINDOW_DID_MINIMIZE, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        /* If all our windows are minimized, disable cursor clipping. */
+        if (![controller isAnyWineWindowVisible])
+            NtUserClipCursor(NULL);
     }
 
     - (void)windowDidMove:(NSNotification *)notification

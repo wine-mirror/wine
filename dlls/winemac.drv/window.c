@@ -1874,21 +1874,6 @@ void macdrv_window_minimize_requested(HWND hwnd)
 
 
 /***********************************************************************
- *              macdrv_window_did_minimize
- *
- * Handler for WINDOW_DID_MINIMIZE events.
- */
-void macdrv_window_did_minimize(HWND hwnd)
-{
-    TRACE("win %p\n", hwnd);
-
-    /* If all our windows are minimized, disable cursor clipping. */
-    if (!macdrv_is_any_wine_window_visible())
-        NtUserClipCursor(NULL);
-}
-
-
-/***********************************************************************
  *              macdrv_window_did_unminimize
  *
  * Handler for WINDOW_DID_UNMINIMIZE events.

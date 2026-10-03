@@ -55,7 +55,6 @@ static const char *dbgstr_event(int type)
         "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_BROUGHT_FORWARD",
         "WINDOW_CLOSE_REQUESTED",
-        "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
         "WINDOW_DRAG_BEGIN",
         "WINDOW_DRAG_END",
@@ -370,9 +369,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
-        break;
-    case WINDOW_DID_MINIMIZE:
-        macdrv_window_did_minimize(hwnd);
         break;
     case WINDOW_DID_UNMINIMIZE:
         macdrv_window_did_unminimize(hwnd);

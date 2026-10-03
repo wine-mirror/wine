@@ -2712,14 +2712,3 @@ void macdrv_set_cocoa_retina_mode(bool new_mode)
         [[WineApplicationController sharedController] setRetinaMode:new_mode];
     });
 }
-
-bool macdrv_is_any_wine_window_visible(void)
-{
-    __block bool ret = false;
-
-    OnMainThread(^{
-        ret = [[WineApplicationController sharedController] isAnyWineWindowVisible];
-    });
-
-    return ret;
-}
