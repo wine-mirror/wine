@@ -120,7 +120,7 @@ struct OH_NativeBuffer;
     #endif
 #endif
 #define VK_FALSE 0
-#define VK_HEADER_VERSION 362
+#define VK_HEADER_VERSION 363
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_LOD_CLAMP_NONE 1000.0F
 #define VK_LUID_SIZE 8
@@ -631,6 +631,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_IMG_FORMAT_PVRTC_SPEC_VERSION 1
 #define VK_IMG_RELAXED_LINE_RASTERIZATION_EXTENSION_NAME "VK_IMG_relaxed_line_rasterization"
 #define VK_IMG_RELAXED_LINE_RASTERIZATION_SPEC_VERSION 1
+#define VK_INTEL_DEVICE_INFO_EXTENSION_NAME "VK_INTEL_device_info"
+#define VK_INTEL_DEVICE_INFO_SPEC_VERSION 1
 #define VK_INTEL_PERFORMANCE_QUERY_EXTENSION_NAME "VK_INTEL_performance_query"
 #define VK_INTEL_PERFORMANCE_QUERY_SPEC_VERSION 2
 #define VK_INTEL_SHADER_INTEGER_FUNCTIONS_2_EXTENSION_NAME "VK_INTEL_shader_integer_functions2"
@@ -7022,6 +7024,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT = 1000687000,
     VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT = 1000687001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV = 1000689000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL = 1000708000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE = 1000709000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE = 1000709001,
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE = 1000709002,
@@ -16393,6 +16396,15 @@ typedef struct VkPhysicalDeviceIndexTypeUint8Features
 } VkPhysicalDeviceIndexTypeUint8Features;
 typedef VkPhysicalDeviceIndexTypeUint8Features VkPhysicalDeviceIndexTypeUint8FeaturesKHR, VkPhysicalDeviceIndexTypeUint8FeaturesEXT;
 
+typedef struct VkPhysicalDeviceInfoPropertiesINTEL
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t deviceIpVersionArch;
+    uint32_t deviceIpVersionRelease;
+    uint32_t deviceIpVersionRevision;
+} VkPhysicalDeviceInfoPropertiesINTEL;
+
 typedef struct VkPhysicalDeviceInheritedViewportScissorFeaturesNV
 {
     VkStructureType sType;
@@ -23662,6 +23674,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_IMG_filter_linear_2d) \
     USE_VK_EXT(VK_IMG_format_pvrtc) \
     USE_VK_EXT(VK_IMG_relaxed_line_rasterization) \
+    USE_VK_EXT(VK_INTEL_device_info) \
     USE_VK_EXT(VK_INTEL_performance_query) \
     USE_VK_EXT(VK_INTEL_shader_integer_functions2) \
     USE_VK_EXT(VK_KHR_16bit_storage) \

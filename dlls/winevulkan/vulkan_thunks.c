@@ -6339,6 +6339,15 @@ typedef struct VkPhysicalDeviceIndexTypeUint8Features32
 } VkPhysicalDeviceIndexTypeUint8Features32;
 typedef VkPhysicalDeviceIndexTypeUint8Features32 VkPhysicalDeviceIndexTypeUint8FeaturesKHR32, VkPhysicalDeviceIndexTypeUint8FeaturesEXT32;
 
+typedef struct VkPhysicalDeviceInfoPropertiesINTEL32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t deviceIpVersionArch;
+    uint32_t deviceIpVersionRelease;
+    uint32_t deviceIpVersionRevision;
+} VkPhysicalDeviceInfoPropertiesINTEL32;
+
 typedef struct VkPhysicalDeviceInheritedViewportScissorFeaturesNV32
 {
     VkStructureType sType;
@@ -40832,6 +40841,15 @@ static void convert_VkPhysicalDeviceProperties2_win64_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL:
+        {
+            VkPhysicalDeviceInfoPropertiesINTEL *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES:
         {
             VkPhysicalDeviceInlineUniformBlockProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -42156,6 +42174,17 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win64(const VkPhysicalDe
             out_ext->maxWeightFilterDimension = in_ext->maxWeightFilterDimension;
             out_ext->maxBlockMatchRegion = in_ext->maxBlockMatchRegion;
             out_ext->maxBoxFilterBlockSize = in_ext->maxBoxFilterBlockSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL:
+        {
+            VkPhysicalDeviceInfoPropertiesINTEL *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL);
+            const VkPhysicalDeviceInfoPropertiesINTEL *in_ext = (const VkPhysicalDeviceInfoPropertiesINTEL *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL;
+            out_ext->deviceIpVersionArch = in_ext->deviceIpVersionArch;
+            out_ext->deviceIpVersionRelease = in_ext->deviceIpVersionRelease;
+            out_ext->deviceIpVersionRevision = in_ext->deviceIpVersionRevision;
             out_header = (void *)out_ext;
             break;
         }
@@ -43637,6 +43666,15 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL:
+        {
+            VkPhysicalDeviceInfoPropertiesINTEL *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES:
         {
             VkPhysicalDeviceInlineUniformBlockProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -44955,6 +44993,17 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             out_ext->maxWeightFilterDimension = in_ext->maxWeightFilterDimension;
             out_ext->maxBlockMatchRegion = in_ext->maxBlockMatchRegion;
             out_ext->maxBoxFilterBlockSize = in_ext->maxBoxFilterBlockSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL:
+        {
+            VkPhysicalDeviceInfoPropertiesINTEL32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL);
+            const VkPhysicalDeviceInfoPropertiesINTEL *in_ext = (const VkPhysicalDeviceInfoPropertiesINTEL *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INFO_PROPERTIES_INTEL;
+            out_ext->deviceIpVersionArch = in_ext->deviceIpVersionArch;
+            out_ext->deviceIpVersionRelease = in_ext->deviceIpVersionRelease;
+            out_ext->deviceIpVersionRevision = in_ext->deviceIpVersionRevision;
             out_header = (void *)out_ext;
             break;
         }
