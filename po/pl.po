@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-28 18:12+0200\n"
+"PO-Revision-Date: 2026-10-04 12:11+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -14405,10 +14405,8 @@ msgstr ""
 "  /D  Przetwarza także katalogi.\n"
 
 #: programs/attrib/attrib.rc:32
-#, fuzzy
-#| msgid "Parameter error\n"
 msgid "Parameter format not correct\n"
-msgstr "Błąd parametru\n"
+msgstr "Nieprawidłowy format parametru\n"
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
