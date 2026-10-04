@@ -812,6 +812,9 @@ static const char shift_jis_xml[] =
 static const char shift_jis_xml2[] =
     "<?xml version=\"1.0\" encoding=\"shift-jis\" ?><a>" "\x83\x89" "</a>";
 
+static const WCHAR unicode_xml[] =
+    L"\xfeff<?xml version=\"1.0\" encoding=\"unicode\" ?><u></u>";
+
 static const char nocontent[] = "no xml content here";
 
 static const char szExampleXML[] =
@@ -11465,6 +11468,21 @@ static void write_to_file(const char *name, const char *data)
     CloseHandle(hfile);
 }
 
+static void write_to_file_w(const char *name, const WCHAR *data)
+{
+    DWORD written;
+    HANDLE hfile;
+    BOOL ret;
+
+    hfile = CreateFileA(name, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file: %s\n", name);
+
+    ret = WriteFile(hfile, data, wcslen(data) * sizeof(*data), &written, NULL);
+    ok(ret, "WriteFile failed: %s, %ld\n", name, GetLastError());
+
+    CloseHandle(hfile);
+}
+
 #define TEST_DOC_LOAD_FROM_PATH(doc,path,expected_hr, expected_ret) \
     _test_doc_load_from_path(doc, path, expected_hr, expected_ret, __LINE__)
 static void _test_doc_load_from_path(IXMLDOMDocument *doc, const char *path,
@@ -11795,6 +11813,30 @@ static void test_load(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(bstr1, L"\u30e9"), "Unexpected text %s.\n", debugstr_w(bstr1));
     SysFreeString(bstr1);
+    DeleteFileA(path);
+    IXMLDOMDocument_Release(doc);
+
+    /* The 'unicode' encoding */
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "unicode.xml");
+    write_to_file_w(path, unicode_xml);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = _bstr_(path);
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    DeleteFileA(path);
+
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "saved-unicode.xml");
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = _bstr_(path);
+    hr = IXMLDOMDocument_save(doc, src);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     DeleteFileA(path);
     IXMLDOMDocument_Release(doc);
 

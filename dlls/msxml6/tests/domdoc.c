@@ -1340,6 +1340,59 @@ static void test_selection_namespaces(void)
     free_bstrs();
 }
 
+static const WCHAR unicode_xml[] =
+    L"\xfeff<?xml version=\"1.0\" encoding=\"unicode\" ?><u></u>";
+
+static void write_to_file_w(const WCHAR *name, const WCHAR *data)
+{
+    DWORD written;
+    HANDLE hfile;
+    BOOL ret;
+
+    hfile = CreateFileW(name, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file: %s\n", debugstr_w(name));
+
+    ret = WriteFile(hfile, data, wcslen(data) * sizeof(*data), &written, NULL);
+    ok(ret, "WriteFile failed: %s, %ld\n", debugstr_w(name), GetLastError());
+
+    CloseHandle(hfile);
+}
+
+static void test_encoding(void)
+{
+    WCHAR path[MAX_PATH];
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    VARIANT v;
+
+    /* The 'unicode' encoding */
+    GetTempPathW(MAX_PATH, path);
+    wcscat(path, L"unicode.xml");
+    write_to_file_w(path, unicode_xml);
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_(path);
+    hr = IXMLDOMDocument_load(doc, v, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    DeleteFileW(path);
+
+    GetTempPathW(MAX_PATH, path);
+    wcscat(path, L"saved-unicode.xml");
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_(path);
+    hr = IXMLDOMDocument_save(doc, v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    DeleteFileW(path);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -1367,6 +1420,7 @@ START_TEST(domdoc)
     test_dtd_validation();
     test_max_element_depth_values();
     test_selection_namespaces();
+    test_encoding();
 
     CoUninitialize();
 }
