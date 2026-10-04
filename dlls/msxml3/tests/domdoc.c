@@ -11834,7 +11834,6 @@ static void test_load(void)
     V_VT(&src) = VT_BSTR;
     V_BSTR(&src) = _bstr_(path);
     hr = IXMLDOMDocument_save(doc, src);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     DeleteFileA(path);

@@ -35,20 +35,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-/* should be ordered as encoding names are sorted */
 typedef enum
 {
-    XmlEncoding_ISO_8859_1 = 0,
-    XmlEncoding_ISO_8859_13,
-    XmlEncoding_ISO_8859_15,
+    XmlEncoding_Unknown,
+
+    XmlEncoding_ISO_8859_1,
     XmlEncoding_ISO_8859_2,
     XmlEncoding_ISO_8859_3,
     XmlEncoding_ISO_8859_4,
     XmlEncoding_ISO_8859_5,
     XmlEncoding_ISO_8859_7,
     XmlEncoding_ISO_8859_9,
-    XmlEncoding_UTF16,
+    XmlEncoding_ISO_8859_13,
+    XmlEncoding_ISO_8859_15,
+
     XmlEncoding_UTF8,
+    XmlEncoding_UTF16,
+
     XmlEncoding_windows_1250,
     XmlEncoding_windows_1251,
     XmlEncoding_windows_1252,
@@ -58,37 +61,65 @@ typedef enum
     XmlEncoding_windows_1256,
     XmlEncoding_windows_1257,
     XmlEncoding_windows_1258,
-    XmlEncoding_Unknown
+
+    XmlEncoding_Last = XmlEncoding_windows_1258,
 } xml_encoding;
 
 struct xml_encoding_data
 {
     const WCHAR *encoding;
     xml_encoding enc;
-    UINT cp;
 };
 
-static const struct xml_encoding_data xml_encoding_map[] = {
-    { L"iso-8859-1",   XmlEncoding_ISO_8859_1,  28591 },
-    { L"iso-8859-13",  XmlEncoding_ISO_8859_13, 28603 },
-    { L"iso-8859-15",  XmlEncoding_ISO_8859_15, 28605 },
-    { L"iso-8859-2",   XmlEncoding_ISO_8859_2,  28592 },
-    { L"iso-8859-3",   XmlEncoding_ISO_8859_3,  28593 },
-    { L"iso-8859-4",   XmlEncoding_ISO_8859_4,  28594 },
-    { L"iso-8859-5",   XmlEncoding_ISO_8859_5,  28595 },
-    { L"iso-8859-7",   XmlEncoding_ISO_8859_7,  28597 },
-    { L"iso-8859-9",   XmlEncoding_ISO_8859_9,  28599 },
-    { L"UTF-16",       XmlEncoding_UTF16,          ~0 },
-    { L"UTF-8",        XmlEncoding_UTF8,      CP_UTF8 },
-    { L"windows-1250", XmlEncoding_windows_1250, 1250 },
-    { L"windows-1251", XmlEncoding_windows_1251, 1251 },
-    { L"windows-1252", XmlEncoding_windows_1252, 1252 },
-    { L"windows-1253", XmlEncoding_windows_1253, 1253 },
-    { L"windows-1254", XmlEncoding_windows_1254, 1254 },
-    { L"windows-1255", XmlEncoding_windows_1255, 1255 },
-    { L"windows-1256", XmlEncoding_windows_1256, 1256 },
-    { L"windows-1257", XmlEncoding_windows_1257, 1257 },
-    { L"windows-1258", XmlEncoding_windows_1258, 1258 }
+static const struct xml_encoding_data xml_encoding_map[] =
+{
+    { L"iso-8859-1",   XmlEncoding_ISO_8859_1 },
+    { L"iso-8859-13",  XmlEncoding_ISO_8859_13 },
+    { L"iso-8859-15",  XmlEncoding_ISO_8859_15 },
+    { L"iso-8859-2",   XmlEncoding_ISO_8859_2 },
+    { L"iso-8859-3",   XmlEncoding_ISO_8859_3 },
+    { L"iso-8859-4",   XmlEncoding_ISO_8859_4 },
+    { L"iso-8859-5",   XmlEncoding_ISO_8859_5 },
+    { L"iso-8859-7",   XmlEncoding_ISO_8859_7 },
+    { L"iso-8859-9",   XmlEncoding_ISO_8859_9 },
+    { L"unicode",      XmlEncoding_UTF16 },
+    { L"UTF-16",       XmlEncoding_UTF16 },
+    { L"UTF-8",        XmlEncoding_UTF8 },
+    { L"windows-1250", XmlEncoding_windows_1250 },
+    { L"windows-1251", XmlEncoding_windows_1251 },
+    { L"windows-1252", XmlEncoding_windows_1252 },
+    { L"windows-1253", XmlEncoding_windows_1253 },
+    { L"windows-1254", XmlEncoding_windows_1254 },
+    { L"windows-1255", XmlEncoding_windows_1255 },
+    { L"windows-1256", XmlEncoding_windows_1256 },
+    { L"windows-1257", XmlEncoding_windows_1257 },
+    { L"windows-1258", XmlEncoding_windows_1258 },
+};
+
+static const UINT encoding_to_cp_map[] =
+{
+    [XmlEncoding_ISO_8859_1] = 28591,
+    [XmlEncoding_ISO_8859_2] = 28592,
+    [XmlEncoding_ISO_8859_3] = 28593,
+    [XmlEncoding_ISO_8859_4] = 28594,
+    [XmlEncoding_ISO_8859_5] = 28595,
+    [XmlEncoding_ISO_8859_7] = 28597,
+    [XmlEncoding_ISO_8859_9] = 28599,
+    [XmlEncoding_ISO_8859_13] = 28603,
+    [XmlEncoding_ISO_8859_15] = 28605,
+
+    [XmlEncoding_UTF8] = CP_UTF8,
+    [XmlEncoding_UTF16] = ~0,
+
+    [XmlEncoding_windows_1250] = 1250,
+    [XmlEncoding_windows_1251] = 1251,
+    [XmlEncoding_windows_1252] = 1252,
+    [XmlEncoding_windows_1253] = 1253,
+    [XmlEncoding_windows_1254] = 1254,
+    [XmlEncoding_windows_1255] = 1255,
+    [XmlEncoding_windows_1256] = 1256,
+    [XmlEncoding_windows_1257] = 1257,
+    [XmlEncoding_windows_1258] = 1258,
 };
 
 typedef enum
@@ -256,16 +287,16 @@ static void free_encoded_buffer(encoded_buffer *buffer)
 
 static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
 {
-    const struct xml_encoding_data *data;
-
     if (encoding == XmlEncoding_Unknown)
     {
         FIXME("unsupported encoding %d\n", encoding);
         return E_NOTIMPL;
     }
 
-    data = &xml_encoding_map[encoding];
-    *cp = data->cp;
+    if (encoding > XmlEncoding_Last)
+        return E_UNEXPECTED;
+
+    *cp = encoding_to_cp_map[encoding];
 
     return S_OK;
 }
@@ -275,7 +306,7 @@ UINT get_codepage_for_encoding(const WCHAR *encoding)
     for (int i = 0; i < ARRAYSIZE(xml_encoding_map); ++i)
     {
         if (!wcsicmp(encoding, xml_encoding_map[i].encoding))
-            return xml_encoding_map[i].cp;
+            return encoding_to_cp_map[xml_encoding_map[i].enc];
     }
 
     return 0;

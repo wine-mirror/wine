@@ -1385,7 +1385,6 @@ static void test_encoding(void)
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = _bstr_(path);
     hr = IXMLDOMDocument_save(doc, v);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     DeleteFileW(path);
