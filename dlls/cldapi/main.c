@@ -28,3 +28,10 @@ HRESULT WINAPI CfGetPlaceholderInfo(HANDLE h, CF_PLACEHOLDER_INFO_CLASS info, vo
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI CfGetPlatformInfo(CF_PLATFORM_INFO *info)
+{
+    FIXME("%p\n", info);
+
+    return E_NOTIMPL;
+}

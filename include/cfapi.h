@@ -25,6 +25,14 @@ typedef enum CF_PLACEHOLDER_INFO_CLASS
   CF_PLACEHOLDER_INFO_STANDARD = 1
 } CF_PLACEHOLDER_INFO_CLASS;
 
+typedef struct CF_PLATFORM_INFO
+{
+  DWORD BuildNumber;
+  DWORD RevisionNumber;
+  DWORD IntegrationNumber;
+} CF_PLATFORM_INFO;
+
 HRESULT WINAPI CfGetPlaceholderInfo(HANDLE h, CF_PLACEHOLDER_INFO_CLASS info, void *buf, DWORD len, DWORD *retlen);
+HRESULT WINAPI CfGetPlatformInfo(CF_PLATFORM_INFO *info);
 
 #endif  /* CFAPI_H */
