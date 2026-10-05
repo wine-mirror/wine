@@ -1,5 +1,6 @@
 MODULE    = regsvr32.exe
 IMPORTS   = ole32 user32 kernelbase
+ENABLE_ARCHS = $(PE_ARCHS)
 
 EXTRADLLFLAGS = -mwindows -municode
 

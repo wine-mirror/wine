@@ -1,5 +1,6 @@
 MODULE    = iccvid.dll
 IMPORTS   = user32
+ENABLE_ARCHS = i386
 
 SOURCES = \
 	iccvid.c \

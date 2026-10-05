@@ -1,6 +1,7 @@
 MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 DELAYIMPORTS = user32
+ENABLE_ARCHS = $(WIN16_ARCH)
 EXTRADLLFLAGS = -m16 -Wb,--dll-name,kernel
 
 VER_PRODUCTVERSION = 1,0,0,0

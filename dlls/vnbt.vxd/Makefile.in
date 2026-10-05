@@ -1,5 +1,6 @@
 MODULE    = vnbt.vxd
 IMPORTS   = iphlpapi ws2_32
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 SOURCES = \
 	vnbt.c

@@ -2,8 +2,9 @@ EXTRADEFS = -D_CORECRT_BUILD -D_DEBUG=
 MODULE    = msvcrtd.dll
 IMPORTLIB = msvcrtd
 IMPORTS   = $(MUSL_PE_LIBS) ntdll
-PARENTSRC = ../msvcrt
 DELAYIMPORTS = advapi32 user32
+ENABLE_ARCHS = i386
+PARENTSRC = ../msvcrt
 
 SOURCES = \
 	console.c \

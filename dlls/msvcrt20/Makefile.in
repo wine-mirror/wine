@@ -1,5 +1,6 @@
 MODULE    = msvcrt20.dll
 IMPORTS   = msvcrt
+ENABLE_ARCHS = i386
 
 SOURCES = \
 	msvcrt20.c

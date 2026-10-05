@@ -1,4 +1,5 @@
 STATICLIB = libfluidsynth.a
+ENABLE_ARCHS = $(CXX_PE_ARCHS)
 EXTRADEFS = -DNDEBUG -DWITH_PROFILING
 EXTRAINCL = -I$(srcdir)/src \
             -I$(srcdir)/src/bindings \

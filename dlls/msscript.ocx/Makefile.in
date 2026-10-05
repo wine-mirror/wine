@@ -1,5 +1,6 @@
 MODULE    = msscript.ocx
 IMPORTS   = gdi32 user32 ole32 oleaut32
+ENABLE_ARCHS = i386
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

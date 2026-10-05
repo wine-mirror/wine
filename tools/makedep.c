@@ -138,6 +138,7 @@ static struct strarray lddll_flags;
 static struct strarray libs;
 static struct strarray enable_tests;
 static struct strarray external_dirs;
+static struct strarray disabled_dirs;
 static struct strarray cmdline_vars;
 static struct strarray subdirs;
 static struct strarray delay_import_libs;
@@ -185,7 +186,6 @@ static struct strarray debug_flags[MAX_ARCHS];
 static struct strarray target_flags[MAX_ARCHS];
 static struct strarray extra_cflags[MAX_ARCHS];
 static struct strarray extra_cxxflags[MAX_ARCHS];
-static struct strarray disabled_dirs[MAX_ARCHS];
 static unsigned int native_archs[MAX_ARCHS];
 static unsigned int hybrid_archs[MAX_ARCHS];
 static struct strarray hybrid_target_flags[MAX_ARCHS];
@@ -4822,7 +4822,7 @@ static void output_top_makefile( struct makefile *make )
             silent_rules ? " -S" : "" );
     strarray_add( &make->phony_targets, "depend" );
 
-    if (!strarray_exists( disabled_dirs[0], "tools/wine" ))
+    if (!strarray_exists( disabled_dirs, "tools/wine" ))
     {
         const char *loader = "tools/wine/wine";
         if (!strarray_exists( subdirs, "tools/wine" )) loader = tools_path( "wine" );
@@ -4889,7 +4889,7 @@ static void output_dependencies( struct makefile *make )
 static void load_sources( struct makefile *make )
 {
     unsigned int i, arch;
-    struct strarray value;
+    struct strarray value, enable_archs;
     struct incl_file *file;
 
     strarray_set_value( &make->vars, "top_srcdir", root_src_dir_path( "" ));
@@ -4908,26 +4908,45 @@ static void load_sources( struct makefile *make )
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );
     make->extradllflags = get_expanded_make_var_array( make, "EXTRADLLFLAGS" );
     make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
+    enable_archs        = get_expanded_make_var_array( make, "ENABLE_ARCHS" );
     for (i = 0; i < NB_INSTALL_RULES; i++)
         make->install[i] = get_expanded_make_var_array( make, install_variables[i] );
 
     if (make->staticlib) make->module = make->staticlib;
 
-    if (make->obj_dir)
-    {
-        const char *parent_dir = make->testdll ? replace_extension( make->obj_dir, "/tests", "" ) : NULL;
-        make->disabled[0] = strarray_exists( disabled_dirs[0], make->obj_dir ) ||
-                            (parent_dir && strarray_exists( disabled_dirs[0], parent_dir ));
-        for (arch = 1; arch < archs.count; arch++)
-            make->disabled[arch] = make->disabled[0] ||
-                                   strarray_exists( disabled_dirs[arch], make->obj_dir ) ||
-                                   (parent_dir && strarray_exists( disabled_dirs[arch], parent_dir ));
-    }
     make->external   = make->obj_dir && strarray_exists( external_dirs, make->obj_dir );
     make->is_win16   = strarray_exists( make->extradllflags, "-m16" );
     make->data_only  = strarray_exists( make->extradllflags, "-Wb,--data-only" );
     make->is_exe     = strarray_exists( make->extradllflags, "-mconsole" ) ||
                        strarray_exists( make->extradllflags, "-mwindows" );
+
+    if (enable_archs.count)
+    {
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (!is_multiarch( arch )) continue;
+            if (!strarray_exists( enable_archs, archs.str[arch] )) make->disabled[arch] = true;
+        }
+        if (strarray_exists( enable_archs, "none" )) make->disabled[0] = true;
+    }
+    else if (make->is_exe)  /* programs are disabled on arm64ec by default */
+    {
+        for (arch = 1; arch < archs.count; arch++) if (native_archs[arch]) make->disabled[arch] = true;
+    }
+
+    /* disable tests if the tested module is disabled */
+    if (make->testdll)
+    {
+        struct makefile *parent = get_parent_makefile( make );
+        for (arch = 0; arch < archs.count; arch++)
+        {
+            if (parent->disabled[arch]) make->disabled[arch] = true;
+            if (parent->is_exe && native_archs[arch]) make->disabled[arch] = true;
+        }
+    }
+
+    if (make->obj_dir && strarray_exists( disabled_dirs, make->obj_dir )) make->disabled[0] = true;
+    if (make->disabled[0]) for (arch = 1; arch < archs.count; arch++) make->disabled[arch] = true;
 
     /* add default install rules if nothing was specified */
     for (i = 0; i < NB_INSTALL_RULES; i++) if (make->install[i].count) break;
@@ -5096,6 +5115,7 @@ int main( int argc, char *argv[] )
     lddll_flags        = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
     libs               = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests       = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
+    disabled_dirs      = get_expanded_make_var_array( top_makefile, "DISABLED_SUBDIRS" );
     external_dirs      = get_expanded_make_var_array( top_makefile, "EXTERNAL_SUBDIRS" );
     for (i = 0; i < NB_INSTALL_RULES; i++)
         top_install[i] = get_expanded_make_var_array( top_makefile, strmake( "TOP_%s", install_variables[i] ));
@@ -5174,7 +5194,6 @@ int main( int argc, char *argv[] )
         arch_pe_dirs[arch] = strmake( "%s-windows", archs.str[arch] );
         extra_cflags[arch] = get_expanded_arch_var_array( top_makefile, "EXTRACFLAGS", arch );
         extra_cxxflags[arch] = get_expanded_arch_var_array( top_makefile, "EXTRACXXFLAGS", arch );
-        disabled_dirs[arch] = get_expanded_arch_var_array( top_makefile, "DISABLED_SUBDIRS", arch );
         if (!is_multiarch( arch )) continue;
         delay_load_flags[arch] = get_expanded_arch_var( top_makefile, "DELAYLOADFLAG", arch );
         debug_flags[arch] = get_expanded_arch_var_array( top_makefile, "DEBUG", arch );

@@ -1,6 +1,7 @@
 MODULE    = dmsynth.dll
 IMPORTS   = $(FLUIDSYNTH_PE_LIBS) $(CXX_PE_LIBS) dxguid uuid ole32 advapi32 user32
 EXTRAINCL = $(FLUIDSYNTH_PE_CFLAGS)
+ENABLE_ARCHS = $(CXX_PE_ARCHS)
 PARENTSRC = ../dmusic
 
 VER_FILEDESCRIPTION_STR = "Wine DirectMusic Software Synthesizer"

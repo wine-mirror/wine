@@ -1,6 +1,7 @@
 MODULE    = olecli32.dll
 IMPORTLIB = olecli32
 IMPORTS   = ole32 gdi32
+ENABLE_ARCHS = i386
 
 SOURCES = \
 	olecli_main.c

@@ -1,6 +1,7 @@
 MODULE  = vcruntime140_1.dll
 IMPORTS = vcruntime140
 PARENTSRC = ../msvcrt
+ENABLE_ARCHS = x86_64 arm64ec
 
 VER_FILEDESCRIPTION_STR = "Wine runtime library"
 VER_PRODUCTVERSION      = 14,50,35719,0

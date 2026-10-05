@@ -1,5 +1,6 @@
 MODULE    = rundll32.exe
 IMPORTS   = user32 kernelbase
+ENABLE_ARCHS = $(PE_ARCHS)
 
 EXTRADLLFLAGS = -mwindows -municode
 

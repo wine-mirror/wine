@@ -1,5 +1,6 @@
 MODULE    = wing.dll16
 IMPORTS   = gdi32
+ENABLE_ARCHS = $(WIN16_ARCH)
 EXTRADLLFLAGS = -m16
 
 SOURCES = \

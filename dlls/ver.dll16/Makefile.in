@@ -1,5 +1,6 @@
 MODULE    = ver.dll16
 IMPORTS   = version lz32
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 EXTRADLLFLAGS = -m16 -Wb,--main-module,version.dll
 

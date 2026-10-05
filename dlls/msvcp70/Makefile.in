@@ -1,6 +1,7 @@
 MODULE = msvcp70.dll
 IMPORTS = msvcr70
 EXTRADEFS = -D_MSVCP_VER=70
+ENABLE_ARCHS = i386
 PARENTSRC = ../msvcp90
 
 SOURCES = \

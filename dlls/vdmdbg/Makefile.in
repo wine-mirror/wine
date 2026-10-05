@@ -1,5 +1,6 @@
 MODULE    = vdmdbg.dll
 IMPORTLIB = vdmdbg
+ENABLE_ARCHS = i386
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

@@ -1,6 +1,7 @@
 MODULE    = conhost.exe
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = comctl32 winmm
+ENABLE_ARCHS = $(HOST_ARCH)
 
 EXTRADLLFLAGS = -mwindows -municode
 

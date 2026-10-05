@@ -1,6 +1,7 @@
 MODULE    = dplayx.dll
 IMPORTLIB = dplayx
 IMPORTS   = dxguid uuid winmm ole32 user32 advapi32
+ENABLE_ARCHS = i386
 
 VER_FILEDESCRIPTION_STR = "Wine DirectPlay"
 VER_PRODUCTVERSION      = 5,3,1,904

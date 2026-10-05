@@ -1,5 +1,6 @@
 MODULE    = display.drv16
 IMPORTS   = user32
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 EXTRADLLFLAGS = -m16
 

@@ -786,6 +786,9 @@ DLLFLAGS
 OPENGL_LIBS
 I386_LIBS
 DLLEXT
+WIN16_ARCH
+CPPABI_PE_ARCHS
+CXX_PE_ARCHS
 PE_ARCHS
 MSGFMT
 ICOTOOL
@@ -802,7 +805,6 @@ RUNTESTFLAGS
 wine64dir
 toolsdir
 toolsext
-x86_64_DISABLED_SUBDIRS
 x86_64_DELAYLOADFLAG
 x86_64_STRIP
 x86_64_TARGET
@@ -814,7 +816,6 @@ x86_64_CXXFLAGS
 x86_64_CFLAGS
 x86_64_CXX
 x86_64_CC
-i386_DISABLED_SUBDIRS
 i386_DELAYLOADFLAG
 i386_STRIP
 i386_TARGET
@@ -826,7 +827,6 @@ i386_CXXFLAGS
 i386_CFLAGS
 i386_CXX
 i386_CC
-arm64ec_DISABLED_SUBDIRS
 arm64ec_DELAYLOADFLAG
 arm64ec_STRIP
 arm64ec_TARGET
@@ -838,7 +838,6 @@ arm64ec_CXXFLAGS
 arm64ec_CFLAGS
 arm64ec_CXX
 arm64ec_CC
-arm_DISABLED_SUBDIRS
 arm_DELAYLOADFLAG
 arm_STRIP
 arm_TARGET
@@ -850,7 +849,6 @@ arm_CXXFLAGS
 arm_CFLAGS
 arm_CXX
 arm_CC
-aarch64_DISABLED_SUBDIRS
 aarch64_DELAYLOADFLAG
 aarch64_STRIP
 aarch64_TARGET
@@ -1014,6 +1012,7 @@ enable_atmlib
 enable_authz
 enable_avicap32
 enable_avifil32
+enable_avifile
 enable_avrt
 enable_bcp47langs
 enable_bcrypt
@@ -1037,6 +1036,9 @@ enable_comctl32
 enable_comctl32_v6
 enable_comdlg32
 enable_coml2
+enable_comm_drv16
+enable_commdlg
+enable_compobj
 enable_compstui
 enable_comsvcs
 enable_concrt140
@@ -1055,7 +1057,9 @@ enable_cryptsp
 enable_cryptui
 enable_cryptxml
 enable_ctapi32
+enable_ctl3d
 enable_ctl3d32
+enable_ctl3dv2
 enable_d2d1
 enable_d3d10
 enable_d3d10_1
@@ -1122,6 +1126,7 @@ enable_dbgeng
 enable_dbghelp
 enable_dciman32
 enable_dcomp
+enable_ddeml
 enable_ddraw
 enable_ddrawex
 enable_desk_cpl
@@ -1134,7 +1139,9 @@ enable_difxapi
 enable_dinput
 enable_dinput8
 enable_directmanipulation
+enable_dispdib
 enable_dispex
+enable_display_drv16
 enable_dmband
 enable_dmcompos
 enable_dmime
@@ -1184,6 +1191,7 @@ enable_fwpuclnt
 enable_gameinput
 enable_gameux
 enable_gamingtcui
+enable_gdi_exe16
 enable_gdi32
 enable_gdiplus
 enable_geolocation
@@ -1212,8 +1220,10 @@ enable_icuuc
 enable_ieframe
 enable_ieproxy
 enable_iertutil
+enable_ifsmgr_vxd
 enable_imaadp32_acm
 enable_imagehlp
+enable_imm
 enable_imm32
 enable_inetcomm
 enable_inetcpl_cpl
@@ -1235,6 +1245,8 @@ enable_jsproxy
 enable_kerberos
 enable_kernel32
 enable_kernelbase
+enable_keyboard_drv16
+enable_krnl386_exe16
 enable_ksecdd_sys
 enable_ksproxy_ax
 enable_ksuser
@@ -1245,6 +1257,7 @@ enable_loadperf
 enable_localspl
 enable_localui
 enable_lz32
+enable_lzexpand
 enable_magnification
 enable_mapi32
 enable_mapistub
@@ -1269,11 +1282,16 @@ enable_midimap
 enable_mlang
 enable_mmcndmgr
 enable_mmdevapi
+enable_mmdevldr_vxd
+enable_mmsystem
+enable_monodebg_vxd
 enable_mouhid_sys
 enable_mountmgr_sys
+enable_mouse_drv16
 enable_mp3dmod
 enable_mpr
 enable_mprapi
+enable_msacm
 enable_msacm32_drv
 enable_msacm32
 enable_msado15
@@ -1349,6 +1367,7 @@ enable_msvcrtd
 enable_msvdsp
 enable_msvfw32
 enable_msvidc32
+enable_msvideo
 enable_msvproc
 enable_mswsock
 enable_msxml
@@ -1382,13 +1401,21 @@ enable_odbc32
 enable_odbcbcp
 enable_odbccp32
 enable_odbccu32
+enable_ole2
+enable_ole2conv
+enable_ole2disp
+enable_ole2nls
+enable_ole2prox
+enable_ole2thk
 enable_ole32
 enable_oleacc
 enable_oleaut32
+enable_olecli
 enable_olecli32
 enable_oledb32
 enable_oledlg
 enable_olepro32
+enable_olesvr
 enable_olesvr32
 enable_olethk32
 enable_opcservices
@@ -1415,6 +1442,7 @@ enable_qmgrprxy
 enable_quartz
 enable_query
 enable_qwave
+enable_rasapi16
 enable_rasapi32
 enable_rasdlg
 enable_regapi
@@ -1448,11 +1476,13 @@ enable_security
 enable_sensapi
 enable_serialui
 enable_setupapi
+enable_setupx
 enable_sfc
 enable_sfc_os
 enable_shcore
 enable_shdoclc
 enable_shdocvw
+enable_shell
 enable_shell32
 enable_shfolder
 enable_shlwapi
@@ -1460,6 +1490,7 @@ enable_slbcsp
 enable_slc
 enable_snmpapi
 enable_softpub
+enable_sound_drv16
 enable_spoolss
 enable_sppc
 enable_srclient
@@ -1469,9 +1500,12 @@ enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
 enable_sti
+enable_storage
+enable_stress
 enable_strmdll
 enable_svrapi
 enable_sxs
+enable_system_drv16
 enable_t2embed
 enable_tapi32
 enable_taskschd
@@ -1481,10 +1515,13 @@ enable_tdi_sys
 enable_threadpoolwinrt
 enable_thumbcache
 enable_tiptsf
+enable_toolhelp
 enable_traffic
+enable_twain
 enable_twain_32
 enable_twaindsm
 enable_twinapi_appcore
+enable_typelib
 enable_tzres
 enable_ucrtbase
 enable_uianimation
@@ -1495,6 +1532,7 @@ enable_updspapi
 enable_url
 enable_urlmon
 enable_usbd_sys
+enable_user_exe16
 enable_user32
 enable_userenv
 enable_usp10
@@ -1510,14 +1548,22 @@ enable_vcomp140
 enable_vcomp90
 enable_vcruntime140
 enable_vcruntime140_1
+enable_vdhcp_vxd
 enable_vdmdbg
+enable_ver
 enable_version
 enable_vga
 enable_vidreszr
 enable_virtdisk
+enable_vmm_vxd
+enable_vnbt_vxd
+enable_vnetbios_vxd
 enable_vssapi
+enable_vtdapi_vxd
 enable_vulkan_1
+enable_vwin32_vxd
 enable_w32skrnl
+enable_w32sys
 enable_wbemdisp
 enable_wbemprox
 enable_wdscore
@@ -1528,9 +1574,13 @@ enable_wevtapi
 enable_wevtsvc
 enable_wiaservc
 enable_wimgapi
+enable_win32s16
 enable_win32u
+enable_win87em
+enable_winaspi
 enable_winbio
 enable_winbrand
+enable_windebug
 enable_windows_applicationmodel
 enable_windows_devices_bluetooth
 enable_windows_devices_enumeration
@@ -1575,22 +1625,27 @@ enable_winemac_drv
 enable_winemapi
 enable_wineoss_drv
 enable_wineps_drv
+enable_wineps16_drv16
 enable_winepulse_drv
 enable_wineusb_sys
 enable_winevulkan
 enable_winewayland_drv
 enable_winex11_drv
 enable_winexinput_sys
+enable_wing
 enable_wing32
 enable_winhttp
 enable_wininet
 enable_winmm
+enable_winnls
 enable_winnls32
 enable_winprint
 enable_winscard
+enable_winsock
 enable_winspool_drv
 enable_winsqlite3
 enable_winsta
+enable_wintab
 enable_wintab32
 enable_wintrust
 enable_wintypes
@@ -1778,6 +1833,7 @@ enable_regsvr32
 enable_robocopy
 enable_rpcss
 enable_runas
+enable_rundll_exe16
 enable_rundll32
 enable_sc
 enable_schtasks
@@ -1817,8 +1873,10 @@ enable_winemsibuilder
 enable_winepath
 enable_winetest
 enable_winevdm
+enable_winhelp_exe16
 enable_winhlp32
 enable_winmgmt
+enable_winoldap_mod16
 enable_winver
 enable_wmic
 enable_wmplayer
@@ -7256,6 +7314,19 @@ fi
 
 PE_ARCHS=""
 
+CXX_PE_ARCHS=""
+
+CPPABI_PE_ARCHS=""
+
+if test "x$enable_win16" = xno
+then :
+  WIN16_ARCH=none
+
+else case e in #(
+  e) WIN16_ARCH=i386 ;;
+esac
+fi
+
 cross_archs=
 if test ${enable_archs+y}
 then :
@@ -8734,14 +8805,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     case "x$res" in
       x) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
 printf '%s\n' "none needed" >&6; }
-         enable_cplusplus="$enable_cplusplus,$wine_arch" ;;
+         as_fn_append CXX_PE_ARCHS " $wine_arch" ;;
       xno) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
 printf '%s\n' "unsupported" >&6; }
            as_fn_append wine_warnings "|$wine_arch PE compiler supporting C++17 not found, some modules won't be built." ;;
       x*) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $res" >&5
 printf '%s\n' "$res" >&6; }
           as_fn_append ${wine_arch}_CXX " $res"
-          enable_cplusplus="$enable_cplusplus,$wine_arch" ;;
+          as_fn_append CXX_PE_ARCHS " $wine_arch" ;;
     esac
 
     if test "x$res" = xno
@@ -8749,7 +8820,7 @@ then :
   eval "${wine_arch}_CXX="
 else case e in #(
   e) case "$target" in
-                 *mingw*|*-windows-gnu) enable_cppabi="$enable_cppabi,$wine_arch" ;;
+                 *mingw*|*-windows-gnu) as_fn_append CPPABI_PE_ARCHS " $wine_arch" ;;
                esac ;;
 esac
 fi
@@ -10449,6 +10520,9 @@ CFLAGS=$saved_CFLAGS
 CPPFLAGS=$saved_CPPFLAGS
 CXXFLAGS=$saved_CXXFLAGS
 LDFLAGS=$saved_LDFLAGS
+
+CXX_PE_ARCHS=${CXX_PE_ARCHS:-none}
+CPPABI_PE_ARCHS=${CPPABI_PE_ARCHS:-none}
 
 case $HOST_ARCH-$host_os in
   x86_64-darwin*|arm-*|aarch64-*|*-cygwin*|*-mingw32*)
@@ -12294,25 +12368,10 @@ CONFIGURE_TARGETS=""
 wine_fn_config_makefile ()
 {
     as_fn_append SUBDIRS " \\$as_nl	$1"
-    eval enable=\$$2
-    case "$enable" in
-      no) as_fn_append DISABLED_SUBDIRS " $1" ;;
-      yes) ;;
-      *aarch64*|*arm*|*i386*|*x86_64*)
-        if test -n "$PE_ARCHS" -a "$PE_ARCHS" != none
-        then
-            for i in $PE_ARCHS
-            do
-                test $(expr ",$enable," : ".*,$i,") -gt 0 || as_fn_append ${i}_DISABLED_SUBDIRS " $1"
-            done
-        else
-            test $(expr ",$enable," : ".*,$HOST_ARCH,") -gt 0 || as_fn_append DISABLED_SUBDIRS " $1"
-        fi ;;
-      "")
-        case "$1, $PE_ARCHS " in
-          programs/*,*\ arm64ec\ *) as_fn_append arm64ec_DISABLED_SUBDIRS " $1" ;;
-        esac ;;
-    esac
+    if eval test \"x\$"$2"\" = x"no"
+then :
+  as_fn_append DISABLED_SUBDIRS " $1"
+fi
 }
 
 case $host_os in
@@ -21906,85 +21965,14 @@ fi ;;
 esac
 
 
-enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
-
-if test -n "$PE_ARCHS"
+if test -z "$PE_ARCHS"
 then
-    enable_wow64=${enable_wow64:-aarch64,x86_64}
-    enable_wow64win=${enable_wow64win:-aarch64,x86_64}
-    enable_wow64cpu=${enable_wow64cpu:-x86_64}
-    enable_xtajit64=${enable_xtajit64:-arm64ec}
-else
     enable_wow64=${enable_wow64:-no}
     enable_wow64win=${enable_wow64win:-no}
     enable_wow64cpu=${enable_wow64cpu:-no}
     enable_xtajit64=${enable_xtajit64:-no}
     enable_compiler_rt=${enable_compiler_rt:-no}
 fi
-
-enable_cplusplus=${enable_cplusplus:-no}
-enable_cpp=${enable_cpp:-$enable_cplusplus}
-enable_cppabi=${enable_cppabi:-no}
-enable_unwind=${enable_unwind:-$enable_cppabi}
-enable_dmsynth=${enable_dmsynth:-$enable_cplusplus}
-enable_fluidsynth=${enable_fluidsynth:-$enable_cplusplus}
-enable_icu=${enable_icu:-$enable_cplusplus}
-enable_icucommon=${enable_icucommon:-$enable_cplusplus}
-enable_icui18n=${enable_icui18n:-$enable_cplusplus}
-
-enable_conhost=${enable_conhost:-$HOST_ARCH}
-enable_lsass=${enable_lsass:-$HOST_ARCH}
-enable_plugplay=${enable_plugplay:-$HOST_ARCH}
-enable_rpcss=${enable_rpcss:-$HOST_ARCH}
-enable_services=${enable_services:-$HOST_ARCH}
-enable_spoolsv=${enable_spoolsv:-$HOST_ARCH}
-enable_termsv=${enable_termsv:-$HOST_ARCH}
-enable_wineboot=${enable_wineboot:-$HOST_ARCH}
-enable_winemenubuilder=${enable_winemenubuilder:-$HOST_ARCH}
-enable_wuauserv=${enable_wuauserv:-$HOST_ARCH}
-
-enable_cmd=${enable_cmd:-yes}
-enable_dllhost=${enable_dllhost:-yes}
-enable_dpnsvr=${enable_dpnsvr:-i386,x86_64,arm64ec}
-enable_dxdiag=${enable_dxdiag:-yes}
-enable_msiexec=${enable_msiexec:-yes}
-enable_netsh=${enable_netsh:-yes}
-enable_regsvr32=${enable_regsvr32:-yes}
-enable_rundll32=${enable_rundll32:-yes}
-
-enable_crtdll=${enable_crtdll:-i386}
-enable_ctl3d32=${enable_ctl3d32:-i386}
-enable_d3d8=${enable_d3d8:-i386}
-enable_d3dim=${enable_d3dim:-i386}
-enable_d3dim700=${enable_d3dim700:-i386}
-enable_dmband=${enable_dmband:-i386}
-enable_dmcompos=${enable_dmcompos:-i386}
-enable_dmime=${enable_dmime:-i386}
-enable_dmscript=${enable_dmscript:-i386}
-enable_dmstyle=${enable_dmstyle:-i386}
-enable_dplay=${enable_dplay:-i386}
-enable_dplayx=${enable_dplayx:-i386}
-enable_dpwsockx=${enable_dpwsockx:-i386}
-enable_iccvid=${enable_iccvid:-i386}
-enable_iprop=${enable_iprop:-i386}
-enable_msscript_ocx=${enable_msscript_ocx:-i386}
-enable_msvcp70=${enable_msvcp70:-i386}
-enable_msvcp71=${enable_msvcp71:-i386}
-enable_msvcr70=${enable_msvcr70:-i386}
-enable_msvcr71=${enable_msvcr71:-i386}
-enable_msvcrt20=${enable_msvcrt20:-i386}
-enable_msvcrt40=${enable_msvcrt40:-i386}
-enable_msvcrtd=${enable_msvcrtd:-i386}
-enable_olecli32=${enable_olecli32:-i386}
-enable_olepro32=${enable_olepro32:-i386}
-enable_olethk32=${enable_olethk32:-i386}
-enable_twain_32=${enable_twain_32:-i386}
-enable_vdmdbg=${enable_vdmdbg:-i386}
-
-enable_win16=${enable_win16:-i386}
-enable_w32skrnl=${enable_w32skrnl:-$enable_win16}
-enable_wow32=${enable_wow32:-$enable_win16}
-enable_winevdm=${enable_winevdm:-$enable_win16}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -22040,7 +22028,7 @@ wine_fn_config_makefile dlls/authz enable_authz
 wine_fn_config_makefile dlls/avicap32 enable_avicap32
 wine_fn_config_makefile dlls/avifil32 enable_avifil32
 wine_fn_config_makefile dlls/avifil32/tests enable_tests
-wine_fn_config_makefile dlls/avifile.dll16 enable_win16
+wine_fn_config_makefile dlls/avifile.dll16 enable_avifile
 wine_fn_config_makefile dlls/avrt enable_avrt
 wine_fn_config_makefile dlls/bcp47langs enable_bcp47langs
 wine_fn_config_makefile dlls/bcp47langs/tests enable_tests
@@ -22074,9 +22062,9 @@ wine_fn_config_makefile dlls/comctl32_v6 enable_comctl32_v6
 wine_fn_config_makefile dlls/comdlg32 enable_comdlg32
 wine_fn_config_makefile dlls/comdlg32/tests enable_tests
 wine_fn_config_makefile dlls/coml2 enable_coml2
-wine_fn_config_makefile dlls/comm.drv16 enable_win16
-wine_fn_config_makefile dlls/commdlg.dll16 enable_win16
-wine_fn_config_makefile dlls/compobj.dll16 enable_win16
+wine_fn_config_makefile dlls/comm.drv16 enable_comm_drv16
+wine_fn_config_makefile dlls/commdlg.dll16 enable_commdlg
+wine_fn_config_makefile dlls/compobj.dll16 enable_compobj
 wine_fn_config_makefile dlls/compstui enable_compstui
 wine_fn_config_makefile dlls/compstui/tests enable_tests
 wine_fn_config_makefile dlls/comsvcs enable_comsvcs
@@ -22106,9 +22094,9 @@ wine_fn_config_makefile dlls/cryptui/tests enable_tests
 wine_fn_config_makefile dlls/cryptxml enable_cryptxml
 wine_fn_config_makefile dlls/cryptxml/tests enable_tests
 wine_fn_config_makefile dlls/ctapi32 enable_ctapi32
-wine_fn_config_makefile dlls/ctl3d.dll16 enable_win16
+wine_fn_config_makefile dlls/ctl3d.dll16 enable_ctl3d
 wine_fn_config_makefile dlls/ctl3d32 enable_ctl3d32
-wine_fn_config_makefile dlls/ctl3dv2.dll16 enable_win16
+wine_fn_config_makefile dlls/ctl3dv2.dll16 enable_ctl3dv2
 wine_fn_config_makefile dlls/d2d1 enable_d2d1
 wine_fn_config_makefile dlls/d2d1/tests enable_tests
 wine_fn_config_makefile dlls/d3d10 enable_d3d10
@@ -22209,7 +22197,7 @@ wine_fn_config_makefile dlls/dbghelp enable_dbghelp
 wine_fn_config_makefile dlls/dbghelp/tests enable_tests
 wine_fn_config_makefile dlls/dciman32 enable_dciman32
 wine_fn_config_makefile dlls/dcomp enable_dcomp
-wine_fn_config_makefile dlls/ddeml.dll16 enable_win16
+wine_fn_config_makefile dlls/ddeml.dll16 enable_ddeml
 wine_fn_config_makefile dlls/ddraw enable_ddraw
 wine_fn_config_makefile dlls/ddraw/tests enable_tests
 wine_fn_config_makefile dlls/ddrawex enable_ddrawex
@@ -22228,10 +22216,10 @@ wine_fn_config_makefile dlls/dinput/tests enable_tests
 wine_fn_config_makefile dlls/dinput8 enable_dinput8
 wine_fn_config_makefile dlls/directmanipulation enable_directmanipulation
 wine_fn_config_makefile dlls/directmanipulation/tests enable_tests
-wine_fn_config_makefile dlls/dispdib.dll16 enable_win16
+wine_fn_config_makefile dlls/dispdib.dll16 enable_dispdib
 wine_fn_config_makefile dlls/dispex enable_dispex
 wine_fn_config_makefile dlls/dispex/tests enable_tests
-wine_fn_config_makefile dlls/display.drv16 enable_win16
+wine_fn_config_makefile dlls/display.drv16 enable_display_drv16
 wine_fn_config_makefile dlls/dmband enable_dmband
 wine_fn_config_makefile dlls/dmband/tests enable_tests
 wine_fn_config_makefile dlls/dmcompos enable_dmcompos
@@ -22308,7 +22296,7 @@ wine_fn_config_makefile dlls/gameinput enable_gameinput
 wine_fn_config_makefile dlls/gameux enable_gameux
 wine_fn_config_makefile dlls/gameux/tests enable_tests
 wine_fn_config_makefile dlls/gamingtcui enable_gamingtcui
-wine_fn_config_makefile dlls/gdi.exe16 enable_win16
+wine_fn_config_makefile dlls/gdi.exe16 enable_gdi_exe16
 wine_fn_config_makefile dlls/gdi32 enable_gdi32
 wine_fn_config_makefile dlls/gdi32/tests enable_tests
 wine_fn_config_makefile dlls/gdiplus enable_gdiplus
@@ -22352,11 +22340,11 @@ wine_fn_config_makefile dlls/ieframe/tests enable_tests
 wine_fn_config_makefile dlls/ieproxy enable_ieproxy
 wine_fn_config_makefile dlls/iertutil enable_iertutil
 wine_fn_config_makefile dlls/iertutil/tests enable_tests
-wine_fn_config_makefile dlls/ifsmgr.vxd enable_win16
+wine_fn_config_makefile dlls/ifsmgr.vxd enable_ifsmgr_vxd
 wine_fn_config_makefile dlls/imaadp32.acm enable_imaadp32_acm
 wine_fn_config_makefile dlls/imagehlp enable_imagehlp
 wine_fn_config_makefile dlls/imagehlp/tests enable_tests
-wine_fn_config_makefile dlls/imm.dll16 enable_win16
+wine_fn_config_makefile dlls/imm.dll16 enable_imm
 wine_fn_config_makefile dlls/imm32 enable_imm32
 wine_fn_config_makefile dlls/imm32/tests enable_tests
 wine_fn_config_makefile dlls/inetcomm enable_inetcomm
@@ -22390,8 +22378,8 @@ wine_fn_config_makefile dlls/kernel32 enable_kernel32
 wine_fn_config_makefile dlls/kernel32/tests enable_tests
 wine_fn_config_makefile dlls/kernelbase enable_kernelbase
 wine_fn_config_makefile dlls/kernelbase/tests enable_tests
-wine_fn_config_makefile dlls/keyboard.drv16 enable_win16
-wine_fn_config_makefile dlls/krnl386.exe16 enable_win16
+wine_fn_config_makefile dlls/keyboard.drv16 enable_keyboard_drv16
+wine_fn_config_makefile dlls/krnl386.exe16 enable_krnl386_exe16
 wine_fn_config_makefile dlls/ksecdd.sys enable_ksecdd_sys
 wine_fn_config_makefile dlls/ksproxy.ax enable_ksproxy_ax
 wine_fn_config_makefile dlls/ksuser enable_ksuser
@@ -22405,7 +22393,7 @@ wine_fn_config_makefile dlls/localui enable_localui
 wine_fn_config_makefile dlls/localui/tests enable_tests
 wine_fn_config_makefile dlls/lz32 enable_lz32
 wine_fn_config_makefile dlls/lz32/tests enable_tests
-wine_fn_config_makefile dlls/lzexpand.dll16 enable_win16
+wine_fn_config_makefile dlls/lzexpand.dll16 enable_lzexpand
 wine_fn_config_makefile dlls/magnification enable_magnification
 wine_fn_config_makefile dlls/mapi32 enable_mapi32
 wine_fn_config_makefile dlls/mapi32/tests enable_tests
@@ -22440,18 +22428,18 @@ wine_fn_config_makefile dlls/mmcndmgr enable_mmcndmgr
 wine_fn_config_makefile dlls/mmcndmgr/tests enable_tests
 wine_fn_config_makefile dlls/mmdevapi enable_mmdevapi
 wine_fn_config_makefile dlls/mmdevapi/tests enable_tests
-wine_fn_config_makefile dlls/mmdevldr.vxd enable_win16
-wine_fn_config_makefile dlls/mmsystem.dll16 enable_win16
-wine_fn_config_makefile dlls/monodebg.vxd enable_win16
+wine_fn_config_makefile dlls/mmdevldr.vxd enable_mmdevldr_vxd
+wine_fn_config_makefile dlls/mmsystem.dll16 enable_mmsystem
+wine_fn_config_makefile dlls/monodebg.vxd enable_monodebg_vxd
 wine_fn_config_makefile dlls/mouhid.sys enable_mouhid_sys
 wine_fn_config_makefile dlls/mountmgr.sys enable_mountmgr_sys
-wine_fn_config_makefile dlls/mouse.drv16 enable_win16
+wine_fn_config_makefile dlls/mouse.drv16 enable_mouse_drv16
 wine_fn_config_makefile dlls/mp3dmod enable_mp3dmod
 wine_fn_config_makefile dlls/mp3dmod/tests enable_tests
 wine_fn_config_makefile dlls/mpr enable_mpr
 wine_fn_config_makefile dlls/mpr/tests enable_tests
 wine_fn_config_makefile dlls/mprapi enable_mprapi
-wine_fn_config_makefile dlls/msacm.dll16 enable_win16
+wine_fn_config_makefile dlls/msacm.dll16 enable_msacm
 wine_fn_config_makefile dlls/msacm32.drv enable_msacm32_drv
 wine_fn_config_makefile dlls/msacm32 enable_msacm32
 wine_fn_config_makefile dlls/msacm32/tests enable_tests
@@ -22562,7 +22550,7 @@ wine_fn_config_makefile dlls/msvdsp enable_msvdsp
 wine_fn_config_makefile dlls/msvfw32 enable_msvfw32
 wine_fn_config_makefile dlls/msvfw32/tests enable_tests
 wine_fn_config_makefile dlls/msvidc32 enable_msvidc32
-wine_fn_config_makefile dlls/msvideo.dll16 enable_win16
+wine_fn_config_makefile dlls/msvideo.dll16 enable_msvideo
 wine_fn_config_makefile dlls/msvproc enable_msvproc
 wine_fn_config_makefile dlls/mswsock enable_mswsock
 wine_fn_config_makefile dlls/msxml enable_msxml
@@ -22612,26 +22600,26 @@ wine_fn_config_makefile dlls/odbcbcp enable_odbcbcp
 wine_fn_config_makefile dlls/odbccp32 enable_odbccp32
 wine_fn_config_makefile dlls/odbccp32/tests enable_tests
 wine_fn_config_makefile dlls/odbccu32 enable_odbccu32
-wine_fn_config_makefile dlls/ole2.dll16 enable_win16
-wine_fn_config_makefile dlls/ole2conv.dll16 enable_win16
-wine_fn_config_makefile dlls/ole2disp.dll16 enable_win16
-wine_fn_config_makefile dlls/ole2nls.dll16 enable_win16
-wine_fn_config_makefile dlls/ole2prox.dll16 enable_win16
-wine_fn_config_makefile dlls/ole2thk.dll16 enable_win16
+wine_fn_config_makefile dlls/ole2.dll16 enable_ole2
+wine_fn_config_makefile dlls/ole2conv.dll16 enable_ole2conv
+wine_fn_config_makefile dlls/ole2disp.dll16 enable_ole2disp
+wine_fn_config_makefile dlls/ole2nls.dll16 enable_ole2nls
+wine_fn_config_makefile dlls/ole2prox.dll16 enable_ole2prox
+wine_fn_config_makefile dlls/ole2thk.dll16 enable_ole2thk
 wine_fn_config_makefile dlls/ole32 enable_ole32
 wine_fn_config_makefile dlls/ole32/tests enable_tests
 wine_fn_config_makefile dlls/oleacc enable_oleacc
 wine_fn_config_makefile dlls/oleacc/tests enable_tests
 wine_fn_config_makefile dlls/oleaut32 enable_oleaut32
 wine_fn_config_makefile dlls/oleaut32/tests enable_tests
-wine_fn_config_makefile dlls/olecli.dll16 enable_win16
+wine_fn_config_makefile dlls/olecli.dll16 enable_olecli
 wine_fn_config_makefile dlls/olecli32 enable_olecli32
 wine_fn_config_makefile dlls/oledb32 enable_oledb32
 wine_fn_config_makefile dlls/oledb32/tests enable_tests
 wine_fn_config_makefile dlls/oledlg enable_oledlg
 wine_fn_config_makefile dlls/oledlg/tests enable_tests
 wine_fn_config_makefile dlls/olepro32 enable_olepro32
-wine_fn_config_makefile dlls/olesvr.dll16 enable_win16
+wine_fn_config_makefile dlls/olesvr.dll16 enable_olesvr
 wine_fn_config_makefile dlls/olesvr32 enable_olesvr32
 wine_fn_config_makefile dlls/olethk32 enable_olethk32
 wine_fn_config_makefile dlls/opcservices enable_opcservices
@@ -22673,7 +22661,7 @@ wine_fn_config_makefile dlls/quartz/tests enable_tests
 wine_fn_config_makefile dlls/query enable_query
 wine_fn_config_makefile dlls/qwave enable_qwave
 wine_fn_config_makefile dlls/qwave/tests enable_tests
-wine_fn_config_makefile dlls/rasapi16.dll16 enable_win16
+wine_fn_config_makefile dlls/rasapi16.dll16 enable_rasapi16
 wine_fn_config_makefile dlls/rasapi32 enable_rasapi32
 wine_fn_config_makefile dlls/rasapi32/tests enable_tests
 wine_fn_config_makefile dlls/rasdlg enable_rasdlg
@@ -22722,7 +22710,7 @@ wine_fn_config_makefile dlls/serialui enable_serialui
 wine_fn_config_makefile dlls/serialui/tests enable_tests
 wine_fn_config_makefile dlls/setupapi enable_setupapi
 wine_fn_config_makefile dlls/setupapi/tests enable_tests
-wine_fn_config_makefile dlls/setupx.dll16 enable_win16
+wine_fn_config_makefile dlls/setupx.dll16 enable_setupx
 wine_fn_config_makefile dlls/sfc enable_sfc
 wine_fn_config_makefile dlls/sfc_os enable_sfc_os
 wine_fn_config_makefile dlls/shcore enable_shcore
@@ -22730,7 +22718,7 @@ wine_fn_config_makefile dlls/shcore/tests enable_tests
 wine_fn_config_makefile dlls/shdoclc enable_shdoclc
 wine_fn_config_makefile dlls/shdocvw enable_shdocvw
 wine_fn_config_makefile dlls/shdocvw/tests enable_tests
-wine_fn_config_makefile dlls/shell.dll16 enable_win16
+wine_fn_config_makefile dlls/shell.dll16 enable_shell
 wine_fn_config_makefile dlls/shell32 enable_shell32
 wine_fn_config_makefile dlls/shell32/tests enable_tests
 wine_fn_config_makefile dlls/shfolder enable_shfolder
@@ -22742,7 +22730,7 @@ wine_fn_config_makefile dlls/slc/tests enable_tests
 wine_fn_config_makefile dlls/snmpapi enable_snmpapi
 wine_fn_config_makefile dlls/snmpapi/tests enable_tests
 wine_fn_config_makefile dlls/softpub enable_softpub
-wine_fn_config_makefile dlls/sound.drv16 enable_win16
+wine_fn_config_makefile dlls/sound.drv16 enable_sound_drv16
 wine_fn_config_makefile dlls/spoolss enable_spoolss
 wine_fn_config_makefile dlls/spoolss/tests enable_tests
 wine_fn_config_makefile dlls/sppc enable_sppc
@@ -22754,13 +22742,13 @@ wine_fn_config_makefile dlls/stdole2.tlb enable_stdole2_tlb
 wine_fn_config_makefile dlls/stdole32.tlb enable_stdole32_tlb
 wine_fn_config_makefile dlls/sti enable_sti
 wine_fn_config_makefile dlls/sti/tests enable_tests
-wine_fn_config_makefile dlls/storage.dll16 enable_win16
-wine_fn_config_makefile dlls/stress.dll16 enable_win16
+wine_fn_config_makefile dlls/storage.dll16 enable_storage
+wine_fn_config_makefile dlls/stress.dll16 enable_stress
 wine_fn_config_makefile dlls/strmdll enable_strmdll
 wine_fn_config_makefile dlls/svrapi enable_svrapi
 wine_fn_config_makefile dlls/sxs enable_sxs
 wine_fn_config_makefile dlls/sxs/tests enable_tests
-wine_fn_config_makefile dlls/system.drv16 enable_win16
+wine_fn_config_makefile dlls/system.drv16 enable_system_drv16
 wine_fn_config_makefile dlls/t2embed enable_t2embed
 wine_fn_config_makefile dlls/t2embed/tests enable_tests
 wine_fn_config_makefile dlls/tapi32 enable_tapi32
@@ -22776,15 +22764,15 @@ wine_fn_config_makefile dlls/threadpoolwinrt/tests enable_tests
 wine_fn_config_makefile dlls/thumbcache enable_thumbcache
 wine_fn_config_makefile dlls/thumbcache/tests enable_tests
 wine_fn_config_makefile dlls/tiptsf enable_tiptsf
-wine_fn_config_makefile dlls/toolhelp.dll16 enable_win16
+wine_fn_config_makefile dlls/toolhelp.dll16 enable_toolhelp
 wine_fn_config_makefile dlls/traffic enable_traffic
-wine_fn_config_makefile dlls/twain.dll16 enable_win16
+wine_fn_config_makefile dlls/twain.dll16 enable_twain
 wine_fn_config_makefile dlls/twain_32 enable_twain_32
 wine_fn_config_makefile dlls/twain_32/tests enable_tests
 wine_fn_config_makefile dlls/twaindsm enable_twaindsm
 wine_fn_config_makefile dlls/twinapi.appcore enable_twinapi_appcore
 wine_fn_config_makefile dlls/twinapi.appcore/tests enable_tests
-wine_fn_config_makefile dlls/typelib.dll16 enable_win16
+wine_fn_config_makefile dlls/typelib.dll16 enable_typelib
 wine_fn_config_makefile dlls/tzres enable_tzres
 wine_fn_config_makefile dlls/ucrtbase enable_ucrtbase
 wine_fn_config_makefile dlls/ucrtbase/tests enable_tests
@@ -22799,7 +22787,7 @@ wine_fn_config_makefile dlls/url enable_url
 wine_fn_config_makefile dlls/urlmon enable_urlmon
 wine_fn_config_makefile dlls/urlmon/tests enable_tests
 wine_fn_config_makefile dlls/usbd.sys enable_usbd_sys
-wine_fn_config_makefile dlls/user.exe16 enable_win16
+wine_fn_config_makefile dlls/user.exe16 enable_user_exe16
 wine_fn_config_makefile dlls/user32 enable_user32
 wine_fn_config_makefile dlls/user32/tests enable_tests
 wine_fn_config_makefile dlls/userenv enable_userenv
@@ -22823,25 +22811,25 @@ wine_fn_config_makefile dlls/vcomp140 enable_vcomp140
 wine_fn_config_makefile dlls/vcomp90 enable_vcomp90
 wine_fn_config_makefile dlls/vcruntime140 enable_vcruntime140
 wine_fn_config_makefile dlls/vcruntime140_1 enable_vcruntime140_1
-wine_fn_config_makefile dlls/vdhcp.vxd enable_win16
+wine_fn_config_makefile dlls/vdhcp.vxd enable_vdhcp_vxd
 wine_fn_config_makefile dlls/vdmdbg enable_vdmdbg
-wine_fn_config_makefile dlls/ver.dll16 enable_win16
+wine_fn_config_makefile dlls/ver.dll16 enable_ver
 wine_fn_config_makefile dlls/version enable_version
 wine_fn_config_makefile dlls/version/tests enable_tests
 wine_fn_config_makefile dlls/vga enable_vga
 wine_fn_config_makefile dlls/vidreszr enable_vidreszr
 wine_fn_config_makefile dlls/virtdisk enable_virtdisk
 wine_fn_config_makefile dlls/virtdisk/tests enable_tests
-wine_fn_config_makefile dlls/vmm.vxd enable_win16
-wine_fn_config_makefile dlls/vnbt.vxd enable_win16
-wine_fn_config_makefile dlls/vnetbios.vxd enable_win16
+wine_fn_config_makefile dlls/vmm.vxd enable_vmm_vxd
+wine_fn_config_makefile dlls/vnbt.vxd enable_vnbt_vxd
+wine_fn_config_makefile dlls/vnetbios.vxd enable_vnetbios_vxd
 wine_fn_config_makefile dlls/vssapi enable_vssapi
-wine_fn_config_makefile dlls/vtdapi.vxd enable_win16
+wine_fn_config_makefile dlls/vtdapi.vxd enable_vtdapi_vxd
 wine_fn_config_makefile dlls/vulkan-1 enable_vulkan_1
 wine_fn_config_makefile dlls/vulkan-1/tests enable_tests
-wine_fn_config_makefile dlls/vwin32.vxd enable_win16
+wine_fn_config_makefile dlls/vwin32.vxd enable_vwin32_vxd
 wine_fn_config_makefile dlls/w32skrnl enable_w32skrnl
-wine_fn_config_makefile dlls/w32sys.dll16 enable_win16
+wine_fn_config_makefile dlls/w32sys.dll16 enable_w32sys
 wine_fn_config_makefile dlls/wbemdisp enable_wbemdisp
 wine_fn_config_makefile dlls/wbemdisp/tests enable_tests
 wine_fn_config_makefile dlls/wbemprox enable_wbemprox
@@ -22858,14 +22846,14 @@ wine_fn_config_makefile dlls/wevtsvc enable_wevtsvc
 wine_fn_config_makefile dlls/wiaservc enable_wiaservc
 wine_fn_config_makefile dlls/wiaservc/tests enable_tests
 wine_fn_config_makefile dlls/wimgapi enable_wimgapi
-wine_fn_config_makefile dlls/win32s16.dll16 enable_win16
+wine_fn_config_makefile dlls/win32s16.dll16 enable_win32s16
 wine_fn_config_makefile dlls/win32u enable_win32u
 wine_fn_config_makefile dlls/win32u/tests enable_tests
-wine_fn_config_makefile dlls/win87em.dll16 enable_win16
-wine_fn_config_makefile dlls/winaspi.dll16 enable_win16
+wine_fn_config_makefile dlls/win87em.dll16 enable_win87em
+wine_fn_config_makefile dlls/winaspi.dll16 enable_winaspi
 wine_fn_config_makefile dlls/winbio enable_winbio
 wine_fn_config_makefile dlls/winbrand enable_winbrand
-wine_fn_config_makefile dlls/windebug.dll16 enable_win16
+wine_fn_config_makefile dlls/windebug.dll16 enable_windebug
 wine_fn_config_makefile dlls/windows.applicationmodel enable_windows_applicationmodel
 wine_fn_config_makefile dlls/windows.applicationmodel/tests enable_tests
 wine_fn_config_makefile dlls/windows.devices.bluetooth enable_windows_devices_bluetooth
@@ -22940,14 +22928,14 @@ wine_fn_config_makefile dlls/winemac.drv enable_winemac_drv
 wine_fn_config_makefile dlls/winemapi enable_winemapi
 wine_fn_config_makefile dlls/wineoss.drv enable_wineoss_drv
 wine_fn_config_makefile dlls/wineps.drv enable_wineps_drv
-wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
+wine_fn_config_makefile dlls/wineps16.drv16 enable_wineps16_drv16
 wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
 wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
 wine_fn_config_makefile dlls/winevulkan enable_winevulkan
 wine_fn_config_makefile dlls/winewayland.drv enable_winewayland_drv
 wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
 wine_fn_config_makefile dlls/winexinput.sys enable_winexinput_sys
-wine_fn_config_makefile dlls/wing.dll16 enable_win16
+wine_fn_config_makefile dlls/wing.dll16 enable_wing
 wine_fn_config_makefile dlls/wing32 enable_wing32
 wine_fn_config_makefile dlls/wing32/tests enable_tests
 wine_fn_config_makefile dlls/winhttp enable_winhttp
@@ -22956,18 +22944,18 @@ wine_fn_config_makefile dlls/wininet enable_wininet
 wine_fn_config_makefile dlls/wininet/tests enable_tests
 wine_fn_config_makefile dlls/winmm enable_winmm
 wine_fn_config_makefile dlls/winmm/tests enable_tests
-wine_fn_config_makefile dlls/winnls.dll16 enable_win16
+wine_fn_config_makefile dlls/winnls.dll16 enable_winnls
 wine_fn_config_makefile dlls/winnls32 enable_winnls32
 wine_fn_config_makefile dlls/winprint enable_winprint
 wine_fn_config_makefile dlls/winscard enable_winscard
 wine_fn_config_makefile dlls/winscard/tests enable_tests
-wine_fn_config_makefile dlls/winsock.dll16 enable_win16
+wine_fn_config_makefile dlls/winsock.dll16 enable_winsock
 wine_fn_config_makefile dlls/winspool.drv enable_winspool_drv
 wine_fn_config_makefile dlls/winspool.drv/tests enable_tests
 wine_fn_config_makefile dlls/winsqlite3 enable_winsqlite3
 wine_fn_config_makefile dlls/winsqlite3/tests enable_tests
 wine_fn_config_makefile dlls/winsta enable_winsta
-wine_fn_config_makefile dlls/wintab.dll16 enable_win16
+wine_fn_config_makefile dlls/wintab.dll16 enable_wintab
 wine_fn_config_makefile dlls/wintab32 enable_wintab32
 wine_fn_config_makefile dlls/wintab32/tests enable_tests
 wine_fn_config_makefile dlls/wintrust enable_wintrust
@@ -23186,7 +23174,7 @@ wine_fn_config_makefile programs/regsvr32 enable_regsvr32
 wine_fn_config_makefile programs/robocopy enable_robocopy
 wine_fn_config_makefile programs/rpcss enable_rpcss
 wine_fn_config_makefile programs/runas enable_runas
-wine_fn_config_makefile programs/rundll.exe16 enable_win16
+wine_fn_config_makefile programs/rundll.exe16 enable_rundll_exe16
 wine_fn_config_makefile programs/rundll32 enable_rundll32
 wine_fn_config_makefile programs/sc enable_sc
 wine_fn_config_makefile programs/sc/tests enable_tests
@@ -23231,10 +23219,10 @@ wine_fn_config_makefile programs/winemsibuilder enable_winemsibuilder
 wine_fn_config_makefile programs/winepath enable_winepath
 wine_fn_config_makefile programs/winetest enable_winetest
 wine_fn_config_makefile programs/winevdm enable_winevdm
-wine_fn_config_makefile programs/winhelp.exe16 enable_win16
+wine_fn_config_makefile programs/winhelp.exe16 enable_winhelp_exe16
 wine_fn_config_makefile programs/winhlp32 enable_winhlp32
 wine_fn_config_makefile programs/winmgmt enable_winmgmt
-wine_fn_config_makefile programs/winoldap.mod16 enable_win16
+wine_fn_config_makefile programs/winoldap.mod16 enable_winoldap_mod16
 wine_fn_config_makefile programs/winver enable_winver
 wine_fn_config_makefile programs/wmic enable_wmic
 wine_fn_config_makefile programs/wmplayer enable_wmplayer
@@ -24069,7 +24057,6 @@ aarch64_DEBUG = $aarch64_DEBUG
 aarch64_TARGET = $aarch64_TARGET
 aarch64_STRIP = $aarch64_STRIP
 aarch64_DELAYLOADFLAG = $aarch64_DELAYLOADFLAG
-aarch64_DISABLED_SUBDIRS = $aarch64_DISABLED_SUBDIRS
 arm_CC = $arm_CC
 arm_CXX = $arm_CXX
 arm_CFLAGS = $arm_CFLAGS
@@ -24081,7 +24068,6 @@ arm_DEBUG = $arm_DEBUG
 arm_TARGET = $arm_TARGET
 arm_STRIP = $arm_STRIP
 arm_DELAYLOADFLAG = $arm_DELAYLOADFLAG
-arm_DISABLED_SUBDIRS = $arm_DISABLED_SUBDIRS
 arm64ec_CC = $arm64ec_CC
 arm64ec_CXX = $arm64ec_CXX
 arm64ec_CFLAGS = $arm64ec_CFLAGS
@@ -24093,7 +24079,6 @@ arm64ec_DEBUG = $arm64ec_DEBUG
 arm64ec_TARGET = $arm64ec_TARGET
 arm64ec_STRIP = $arm64ec_STRIP
 arm64ec_DELAYLOADFLAG = $arm64ec_DELAYLOADFLAG
-arm64ec_DISABLED_SUBDIRS = $arm64ec_DISABLED_SUBDIRS
 i386_CC = $i386_CC
 i386_CXX = $i386_CXX
 i386_CFLAGS = $i386_CFLAGS
@@ -24105,7 +24090,6 @@ i386_DEBUG = $i386_DEBUG
 i386_TARGET = $i386_TARGET
 i386_STRIP = $i386_STRIP
 i386_DELAYLOADFLAG = $i386_DELAYLOADFLAG
-i386_DISABLED_SUBDIRS = $i386_DISABLED_SUBDIRS
 x86_64_CC = $x86_64_CC
 x86_64_CXX = $x86_64_CXX
 x86_64_CFLAGS = $x86_64_CFLAGS
@@ -24117,7 +24101,6 @@ x86_64_DEBUG = $x86_64_DEBUG
 x86_64_TARGET = $x86_64_TARGET
 x86_64_STRIP = $x86_64_STRIP
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
-x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
 toolsext = $toolsext
 toolsdir = $toolsdir
 wine64dir = $wine64dir
@@ -24134,6 +24117,9 @@ CONVERT = $CONVERT
 ICOTOOL = $ICOTOOL
 MSGFMT = $MSGFMT
 PE_ARCHS = $PE_ARCHS
+CXX_PE_ARCHS = $CXX_PE_ARCHS
+CPPABI_PE_ARCHS = $CPPABI_PE_ARCHS
+WIN16_ARCH = $WIN16_ARCH
 DLLEXT = $DLLEXT
 I386_LIBS = $I386_LIBS
 OPENGL_LIBS = $OPENGL_LIBS

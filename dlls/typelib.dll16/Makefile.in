@@ -1,5 +1,6 @@
 MODULE    = typelib.dll16
 IMPORTS   = oleaut32 advapi32
+ENABLE_ARCHS = $(WIN16_ARCH)
 EXTRADLLFLAGS = -m16 -Wb,--main-module,oleaut32.dll
 
 SOURCES = \

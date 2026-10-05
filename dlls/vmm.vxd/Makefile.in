@@ -1,4 +1,5 @@
 MODULE    = vmm.vxd
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 SOURCES = \
 	vmm.c

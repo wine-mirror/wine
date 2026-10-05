@@ -1,5 +1,6 @@
 MODULE    = w32skrnl.dll
 IMPORTS   = kernel
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 SOURCES = \
 	w32skernel.c

@@ -1,2 +1,3 @@
 MODULE    = twain_32.dll
 IMPORTS   = twaindsm
+ENABLE_ARCHS = i386

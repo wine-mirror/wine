@@ -1,6 +1,7 @@
 MODULE    = xtajit64.dll
 IMPORTS   = ntdll
 EXTRADEFS = -D_CRTIMP=
+ENABLE_ARCHS = arm64ec
 
 EXTRADLLFLAGS = -nodefaultlibs
 

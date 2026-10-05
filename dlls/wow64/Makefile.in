@@ -1,6 +1,7 @@
 MODULE    = wow64.dll
 IMPORTLIB = wow64
 IMPORTS   = ntdll
+ENABLE_ARCHS = aarch64 x86_64
 
 EXTRADLLFLAGS = -nodefaultlibs
 

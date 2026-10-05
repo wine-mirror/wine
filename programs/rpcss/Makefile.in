@@ -1,5 +1,6 @@
 MODULE    = rpcss.exe
 IMPORTS   = rpcrt4 advapi32
+ENABLE_ARCHS = $(HOST_ARCH)
 
 EXTRADLLFLAGS = -mconsole -municode
 

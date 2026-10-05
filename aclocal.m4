@@ -296,25 +296,7 @@ AC_SUBST(CONFIGURE_TARGETS,"")
 wine_fn_config_makefile ()
 {
     AS_VAR_APPEND([SUBDIRS],[" \\$as_nl	$[1]"])
-    AS_VAR_COPY([enable],[$[2]])
-    case "$enable" in
-      no) AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"]) ;;
-      yes) ;;
-      *aarch64*|*arm*|*i386*|*x86_64*)
-        if test -n "$PE_ARCHS" -a "$PE_ARCHS" != none
-        then
-            for i in $PE_ARCHS
-            do
-                test $(expr ",$enable," : ".*,$i,") -gt 0 || AS_VAR_APPEND([${i}_DISABLED_SUBDIRS],[" $[1]"])
-            done
-        else
-            test $(expr ",$enable," : ".*,$HOST_ARCH,") -gt 0 || AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"])
-        fi ;;
-      "")
-        case "$[1], $PE_ARCHS " in
-          programs/*,*\ arm64ec\ *) AS_VAR_APPEND([arm64ec_DISABLED_SUBDIRS],[" $[1]"]) ;;
-        esac ;;
-    esac
+    AS_VAR_IF([$[2]],[no],[AS_VAR_APPEND([DISABLED_SUBDIRS],[" $[1]"])])
 }])
 
 dnl **** Define helper function to append a rule to a makefile command list ****
@@ -329,7 +311,7 @@ dnl
 dnl Usage: WINE_CONFIG_MAKEFILE(file)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],[enable_]m4_bpatsubst(m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1]),[.*\.\(.*16\|vxd\)$],[win16]))dnl
+AS_VAR_PUSHDEF([ac_enable],[enable_]m4_bpatsubst(m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1]),[\(.*\)\.dll16$],[\1]))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
 m4_if(m4_bregexp([$1],[^tools]),[-1],[],

@@ -1,5 +1,6 @@
 MODULE    = vnetbios.vxd
 IMPORTS   = netapi32
+ENABLE_ARCHS = $(WIN16_ARCH)
 
 SOURCES = \
 	vnetbios.c

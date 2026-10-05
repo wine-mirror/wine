@@ -3,6 +3,7 @@ MODULE    = msvcr70.dll
 IMPORTLIB = msvcr70
 IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
+ENABLE_ARCHS = i386
 PARENTSRC = ../msvcrt
 
 SOURCES = \

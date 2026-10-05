@@ -1,5 +1,6 @@
 MODULE    = dpwsockx.dll
 IMPORTS   = dxguid ws2_32
+ENABLE_ARCHS = i386
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
