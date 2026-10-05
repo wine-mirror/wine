@@ -515,65 +515,59 @@ static BOOL make_thread_context_current( struct opengl_context *root, struct ope
     return make_internal_context_current( get_thread_context( root ? root->attrs : core_attrs ), drawable );
 }
 
-static pthread_mutex_t gamma_lock = PTHREAD_MUTEX_INITIALIZER;
-static GLuint framebuffer_program, gamma_ramp;
-static GLsync gamma_sync;
-static LONG gamma_serial;
-
-static const char *framebuffer_vertex_shader =
-"#version 330\n"
-"\n"
-"const vec4 pos[4] = vec4[4](\n"
-"    vec4(-1.0, -1.0, 0.0, 1.0),\n"
-"    vec4(-1.0, 1.0, 0.0, 1.0),\n"
-"    vec4(1.0, -1.0, 0.0, 1.0),\n"
-"    vec4(1.0, 1.0, 0.0, 1.0)\n"
-");\n"
-"const vec2 tex[4] = vec2[4](\n"
-"    vec2(0.0, 0.0),\n"
-"    vec2(0.0, 1.0),\n"
-"    vec2(1.0, 0.0),\n"
-"    vec2(1.0, 1.0)\n"
-");\n"
-"out vec2 uv;\n"
-"\n"
-"void main(void)\n"
-"{\n"
-"    gl_Position = pos[gl_VertexID];\n"
-"    uv = tex[gl_VertexID];\n"
-"}\n"
-;
-
-static const char *framebuffer_fragment_shader =
-"#version 330\n"
-"\n"
-"uniform sampler2D tex;\n"
-"layout (std140) uniform ramp {\n"
-"    vec3 values[256];\n"
-"};\n"
-"in vec2 uv;\n"
-"layout(location = 0) out vec4 color;\n"
-"\n"
-"vec3 color_from_index(vec3 index)\n"
-"{\n"
-"    ivec3 i = ivec3(index);\n"
-"    return vec3(values[i.r].r, values[i.g].g, values[i.b].b);\n"
-"}\n"
-"\n"
-"void main(void)\n"
-"{\n"
-"    vec3 sample = texture(tex, uv).xyz * 255.0;\n"
-"    vec3 prev = floor(sample);\n"
-"    vec3 next = ceil(sample);\n"
-"    color.xyz = mix(color_from_index(prev), color_from_index(next), sample - prev);\n"
-"    color.a = 1.0;\n"
-"}\n"
-;
-
 #define GAMMA_RAMP_SIZE 256
 
-static void init_framebuffer_program(void)
+static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp )
 {
+    static const char *vertex_shader =
+        "#version 330\n"
+        "\n"
+        "const vec4 pos[4] = vec4[4](\n"
+        "    vec4(-1.0, -1.0, 0.0, 1.0),\n"
+        "    vec4(-1.0, 1.0, 0.0, 1.0),\n"
+        "    vec4(1.0, -1.0, 0.0, 1.0),\n"
+        "    vec4(1.0, 1.0, 0.0, 1.0)\n"
+        ");\n"
+        "const vec2 tex[4] = vec2[4](\n"
+        "    vec2(0.0, 0.0),\n"
+        "    vec2(0.0, 1.0),\n"
+        "    vec2(1.0, 0.0),\n"
+        "    vec2(1.0, 1.0)\n"
+        ");\n"
+        "out vec2 uv;\n"
+        "\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_Position = pos[gl_VertexID];\n"
+        "    uv = tex[gl_VertexID];\n"
+        "}\n"
+        "";
+    static const char *fragment_shader =
+        "#version 330\n"
+        "\n"
+        "uniform sampler2D tex;\n"
+        "layout (std140) uniform ramp {\n"
+        "    vec3 values[256];\n"
+        "};\n"
+        "in vec2 uv;\n"
+        "layout(location = 0) out vec4 color;\n"
+        "\n"
+        "vec3 color_from_index(vec3 index)\n"
+        "{\n"
+        "    ivec3 i = ivec3(index);\n"
+        "    return vec3(values[i.r].r, values[i.g].g, values[i.b].b);\n"
+        "}\n"
+        "\n"
+        "void main(void)\n"
+        "{\n"
+        "    vec3 sample = texture(tex, uv).xyz * 255.0;\n"
+        "    vec3 prev = floor(sample);\n"
+        "    vec3 next = ceil(sample);\n"
+        "    color.xyz = mix(color_from_index(prev), color_from_index(next), sample - prev);\n"
+        "    color.a = 1.0;\n"
+        "}\n"
+        "";
+
     GLuint vs = 0, fs = 0, program = 0, ramp_index, tex;
     const struct opengl_funcs *funcs = &display_funcs;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
@@ -581,13 +575,13 @@ static void init_framebuffer_program(void)
     GLint success;
 
     if (!(vs = funcs->p_glCreateShader( GL_VERTEX_SHADER ))) goto failed;
-    funcs->p_glShaderSource( vs, 1, &framebuffer_vertex_shader, NULL );
+    funcs->p_glShaderSource( vs, 1, &vertex_shader, NULL );
     funcs->p_glCompileShader( vs );
     funcs->p_glGetShaderiv( vs, GL_COMPILE_STATUS, &success );
     if (!success) goto failed;
 
     if (!(fs = funcs->p_glCreateShader( GL_FRAGMENT_SHADER ))) goto failed;
-    funcs->p_glShaderSource( fs, 1, &framebuffer_fragment_shader, NULL );
+    funcs->p_glShaderSource( fs, 1, &fragment_shader, NULL );
     funcs->p_glCompileShader( fs );
     funcs->p_glGetShaderiv( fs, GL_COMPILE_STATUS, &success );
     if (!success) goto failed;
@@ -602,23 +596,21 @@ static void init_framebuffer_program(void)
     funcs->p_glDeleteShader( fs );
     funcs->p_glDeleteShader( vs );
 
-    get_float_gamma_ramp( ramp_data, &gamma_serial );
-    funcs->p_glGenBuffers( 1, &gamma_ramp );
-    funcs->p_glBindBuffer( GL_UNIFORM_BUFFER, gamma_ramp );
-    funcs->p_glBufferData( GL_UNIFORM_BUFFER, sizeof(float) * 4 * GAMMA_RAMP_SIZE, ramp_data, GL_DYNAMIC_DRAW );
-    gamma_sync = funcs->p_glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+    get_float_gamma_ramp( ramp_data, gamma_serial );
+    funcs->p_glGenBuffers( 1, gamma_ramp );
+    funcs->p_glBindBuffer( GL_UNIFORM_BUFFER, *gamma_ramp );
+    funcs->p_glBufferData( GL_UNIFORM_BUFFER, sizeof(ramp_data), ramp_data, GL_DYNAMIC_DRAW );
 
     ramp_index = funcs->p_glGetUniformBlockIndex( program, "ramp" );
     funcs->p_glUniformBlockBinding( program, ramp_index, 0 );
 
     funcs->p_glUseProgram( program );
-    funcs->p_glBindBufferBase( GL_UNIFORM_BUFFER, 0, gamma_ramp );
+    funcs->p_glBindBufferBase( GL_UNIFORM_BUFFER, 0, *gamma_ramp );
 
     tex = funcs->p_glGetUniformLocation( program, "tex" );
     funcs->p_glUniform1i( tex, 0 );
 
-    framebuffer_program = program;
-    return;
+    return program;
 
 failed:
     if (vs)
@@ -639,7 +631,7 @@ failed:
         ERR( "Program info log: %s\n", error );
         funcs->p_glDeleteProgram( program );
     }
-    return;
+    return 0;
 }
 
 struct framebuffer_surface
@@ -647,6 +639,10 @@ struct framebuffer_surface
     struct opengl_drawable  base;
     struct opengl_context  *root_context;
     struct opengl_drawable *target;         /* driver drawable to present to */
+
+    LONG gamma_serial;
+    GLuint gamma_ramp;
+    GLuint program;
 };
 
 static const struct opengl_drawable_funcs framebuffer_surface_funcs;
@@ -905,6 +901,7 @@ static void destroy_framebuffer( struct opengl_drawable *drawable, const struct 
 static void framebuffer_surface_reset( struct opengl_drawable *drawable )
 {
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
 
     read_desc.samples = read_desc.sample_buffers = 0;
 
@@ -914,6 +911,15 @@ static void framebuffer_surface_reset( struct opengl_drawable *drawable )
         destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
     destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
     drawable->draw_fbo = drawable->read_fbo = 0;
+
+    if (surface->program)
+    {
+        const struct opengl_funcs *funcs = &display_funcs;
+
+        surface->gamma_serial = 0;
+        funcs->p_glDeleteProgram( surface->program );
+        surface->program = 0;
+    }
 }
 
 static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
@@ -932,9 +938,8 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 
 static void blit_framebuffer_surface( struct opengl_drawable *drawable )
 {
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
-
     const struct opengl_funcs *funcs = &display_funcs;
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
 
@@ -951,27 +956,19 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
         funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, dst.cx, dst.cy, GL_COLOR_BUFFER_BIT, GL_LINEAR );
     }
-    else
+    else if (surface->program || (surface->program = framebuffer_program_create( &surface->gamma_serial, &surface->gamma_ramp )))
     {
         GLint front;
         GLuint vao;
 
-        pthread_once( &once, init_framebuffer_program );
-        funcs->p_glUseProgram( framebuffer_program );
+        funcs->p_glUseProgram( surface->program );
 
         funcs->p_glActiveTexture( GL_TEXTURE0 );
         funcs->p_glGetFramebufferAttachmentParameteriv( GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &front );
         funcs->p_glBindTexture( GL_TEXTURE_2D, front );
 
-        pthread_mutex_lock( &gamma_lock );
-        if (get_float_gamma_ramp( ramp_data, &gamma_serial ))
-        {
-            funcs->p_glDeleteSync( gamma_sync );
-            funcs->p_glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(float) * 4 * GAMMA_RAMP_SIZE, ramp_data );
-            gamma_sync = funcs->p_glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
-        }
-        funcs->p_glWaitSync( gamma_sync, 0, GL_TIMEOUT_IGNORED );
-        pthread_mutex_unlock( &gamma_lock );
+        if (get_float_gamma_ramp( ramp_data, &surface->gamma_serial ))
+            funcs->p_glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(ramp_data), ramp_data );
 
         funcs->p_glViewport( 0, 0, dst.cx, dst.cy );
 
