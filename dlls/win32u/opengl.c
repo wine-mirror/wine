@@ -515,6 +515,12 @@ static BOOL make_thread_context_current( struct opengl_context *root, struct ope
     return make_internal_context_current( get_thread_context( root ? root->attrs : core_attrs ), drawable );
 }
 
+struct vertex
+{
+    struct { float x; float y; } pos;
+    struct { float x; float y; } tex;
+};
+
 #define GAMMA_RAMP_SIZE 256
 
 static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp )
@@ -522,35 +528,26 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
     static const char *vertex_shader =
         "#version 330\n"
         "\n"
-        "const vec4 pos[4] = vec4[4](\n"
-        "    vec4(-1.0, -1.0, 0.0, 1.0),\n"
-        "    vec4(-1.0, 1.0, 0.0, 1.0),\n"
-        "    vec4(1.0, -1.0, 0.0, 1.0),\n"
-        "    vec4(1.0, 1.0, 0.0, 1.0)\n"
-        ");\n"
-        "const vec2 tex[4] = vec2[4](\n"
-        "    vec2(0.0, 0.0),\n"
-        "    vec2(0.0, 1.0),\n"
-        "    vec2(1.0, 0.0),\n"
-        "    vec2(1.0, 1.0)\n"
-        ");\n"
+        "in vec2 pos;\n"
+        "in vec2 tex;\n"
         "out vec2 uv;\n"
         "\n"
         "void main(void)\n"
         "{\n"
-        "    gl_Position = pos[gl_VertexID];\n"
-        "    uv = tex[gl_VertexID];\n"
+        "    gl_Position.xy = pos;\n"
+        "    gl_Position.zw = vec2(0, 1);\n"
+        "    uv = tex;\n"
         "}\n"
         "";
     static const char *fragment_shader =
         "#version 330\n"
         "\n"
-        "uniform sampler2D tex;\n"
+        "uniform sampler2D color;\n"
         "layout (std140) uniform ramp {\n"
         "    vec3 values[256];\n"
         "};\n"
         "in vec2 uv;\n"
-        "layout(location = 0) out vec4 color;\n"
+        "layout(location = 0) out vec4 frag;\n"
         "\n"
         "vec3 color_from_index(vec3 index)\n"
         "{\n"
@@ -560,11 +557,11 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
         "\n"
         "void main(void)\n"
         "{\n"
-        "    vec3 sample = texture(tex, uv).xyz * 255.0;\n"
+        "    vec3 sample = texture(color, uv).xyz * 255.0;\n"
         "    vec3 prev = floor(sample);\n"
         "    vec3 next = ceil(sample);\n"
-        "    color.xyz = mix(color_from_index(prev), color_from_index(next), sample - prev);\n"
-        "    color.a = 1.0;\n"
+        "    frag.xyz = mix(color_from_index(prev), color_from_index(next), sample - prev);\n"
+        "    frag.a = 1.0;\n"
         "}\n"
         "";
 
@@ -589,6 +586,10 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
     if (!(program = funcs->p_glCreateProgram())) goto failed;
     funcs->p_glAttachShader( program, vs );
     funcs->p_glAttachShader( program, fs );
+
+    funcs->p_glBindAttribLocation( program, 0, "pos" );
+    funcs->p_glBindAttribLocation( program, 1, "tex" );
+
     funcs->p_glLinkProgram( program );
     funcs->p_glGetProgramiv( program, GL_LINK_STATUS, &success );
     if (!success) goto failed;
@@ -958,8 +959,15 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     }
     else if (surface->program || (surface->program = framebuffer_program_create( &surface->gamma_serial, &surface->gamma_ramp )))
     {
+        struct vertex vertex[] =
+        {
+            {{-1, -1}, {0, 0}},
+            {{+1, -1}, {1, 0}},
+            {{-1, +1}, {0, 1}},
+            {{+1, +1}, {1, 1}},
+        };
+        GLuint vao, vbo;
         GLint front;
-        GLuint vao;
 
         funcs->p_glUseProgram( surface->program );
 
@@ -972,11 +980,21 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
 
         funcs->p_glViewport( 0, 0, dst.cx, dst.cy );
 
-        /* macOS OpenGL requires a VAO for glDrawArrays */
+        funcs->p_glGenBuffers( 1, &vbo );
+        funcs->p_glBindBuffer( GL_ARRAY_BUFFER, vbo );
+        funcs->p_glBufferData( GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW );
+
         funcs->p_glGenVertexArrays( 1, &vao );
         funcs->p_glBindVertexArray( vao );
+        funcs->p_glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof(struct vertex), (void *)offsetof(struct vertex, pos) );
+        funcs->p_glEnableVertexAttribArray( 0 );
+        funcs->p_glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof(struct vertex), (void *)offsetof(struct vertex, tex) );
+        funcs->p_glEnableVertexAttribArray( 1 );
+
         funcs->p_glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+
         funcs->p_glDeleteVertexArrays( 1, &vao );
+        funcs->p_glDeleteBuffers( 1, &vbo );
     }
 
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
