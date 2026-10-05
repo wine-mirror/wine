@@ -37,13 +37,14 @@ struct device_desc
     UINT pid;
     UINT version;
     UINT interface;
-    UINT uid;
     UINT bus_type;
     UINT bus_id; /* USB: class << 16 | subclass << 8 | protocol, -1 when unset */
     BOOL is_gamepad;
     BOOL is_hidraw;
 
     WCHAR parent[MAX_PATH]; /* backend specific string uniquely identifying the device parent */
+    UINT index;             /* index in the parent child devices, (hint only, in case of collisions) */
+
     WCHAR manufacturer[MAX_PATH];
     WCHAR product[MAX_PATH];
     WCHAR serialnumber[MAX_PATH];
@@ -161,8 +162,8 @@ enum unix_funcs
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
-    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, interface %d, uid %08x, is_gamepad %u, is_hidraw %u, bus_type %u, bus_id %08x}",
-                            desc->vid, desc->pid, desc->version, desc->interface, desc->uid,
+    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, interface %d, index %08x, is_gamepad %u, is_hidraw %u, bus_type %u, bus_id %08x}",
+                            desc->vid, desc->pid, desc->version, desc->interface, desc->index,
                             desc->is_gamepad, desc->is_hidraw, desc->bus_type, desc->bus_id);
 }
 

@@ -192,30 +192,6 @@ static BOOL has_unique_serial_number(struct device_desc *desc)
     return TRUE;
 }
 
-static DWORD get_device_index(struct device_desc *desc, struct list **before)
-{
-    struct device_extension *ext;
-    DWORD index = 0;
-
-    *before = NULL;
-
-    /* The device list is sorted, so just increment the index until it doesn't match an index already in the list */
-    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
-    {
-        if (ext->desc.vid == desc->vid && ext->desc.pid == desc->pid && ext->desc.interface == desc->interface)
-        {
-            if (ext->index != index)
-            {
-                *before = &ext->entry;
-                break;
-            }
-            index++;
-        }
-    }
-
-    return index;
-}
-
 static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -237,8 +213,8 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     }
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-        swprintf(dst, len, L"%u&%08x&%x&%x&%u", ext->desc.version, ext->parent_hash[0],
-                 ext->desc.uid, ext->index, ext->desc.is_gamepad);
+        swprintf(dst, len, L"%u&%08x&%x&%u", ext->desc.version, ext->parent_hash[0],
+                 ext->index, ext->desc.is_gamepad);
     return dst;
 }
 
@@ -386,11 +362,10 @@ static void remove_pending_irps(DEVICE_OBJECT *device)
 
 static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 unix_device)
 {
-    struct device_extension *ext;
+    struct device_extension *ext, *next;
     DEVICE_OBJECT *device;
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
-    struct list *before;
     NTSTATUS status;
     SHA_CTX ctx;
 
@@ -412,13 +387,13 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext->device             = device;
     ext->desc               = *desc;
     ext->unique_serial      = has_unique_serial_number(desc);
-    ext->index              = get_device_index(desc, &before);
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
 
     A_SHAInit(&ctx);
     A_SHAUpdate(&ctx, (BYTE *)desc->parent, wcslen(desc->parent) * sizeof(WCHAR));
     A_SHAFinal(&ctx, ext->parent_hash);
+    ext->index = ext->desc.index;
 
     if (desc->is_hidraw && (desc->bus_type == BUS_TYPE_BLUETOOTH) && is_dualshock4_gamepad(desc->vid, desc->pid))
     {
@@ -434,11 +409,17 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     InitializeCriticalSectionEx(&ext->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     ext->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
-    /* add to list of pnp devices */
-    if (before)
-        list_add_before(before, &ext->entry);
-    else
-        list_add_tail(&device_list, &ext->entry);
+    /* find an unused index in the device list if necessary, keep it sorted by (parent hash, index) */
+    LIST_FOR_EACH_ENTRY(next, &device_list, struct device_extension, entry)
+    {
+        if (next->parent_hash[0] < ext->parent_hash[0]) continue;
+        if (next->parent_hash[0] > ext->parent_hash[0]) break;
+        if (next->index < ext->index) continue;
+        if (next->index > ext->index) break;
+        WARN("Duplicate device with parent %s (%#lx), index %lu\n", debugstr_w(desc->parent), ext->parent_hash[0], ext->index);
+        ext->index++;
+    }
+    list_add_before(&next->entry, &ext->entry);
 
     RtlLeaveCriticalSection(&device_list_cs);
 
