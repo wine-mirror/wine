@@ -523,8 +523,22 @@ struct vertex
 
 #define GAMMA_RAMP_SIZE 256
 
-static GLuint framebuffer_program_create( LONG *gamma_serial )
+static GLuint framebuffer_program_create( BOOL compat, LONG *gamma_serial )
 {
+    static const char *vertex_shader_compat =
+        "#version 120\n"
+        "\n"
+        "attribute vec2 pos;\n"
+        "attribute vec2 tex;\n"
+        "varying vec2 uv;\n"
+        "\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_Position.xy = pos;\n"
+        "    gl_Position.zw = vec2(0, 1);\n"
+        "    uv = tex;\n"
+        "}\n"
+        "";
     static const char *vertex_shader =
         "#version 330\n"
         "\n"
@@ -537,6 +551,29 @@ static GLuint framebuffer_program_create( LONG *gamma_serial )
         "    gl_Position.xy = pos;\n"
         "    gl_Position.zw = vec2(0, 1);\n"
         "    uv = tex;\n"
+        "}\n"
+        "";
+    static const char *fragment_shader_compat =
+        "#version 120\n"
+        "\n"
+        "uniform sampler2D color;\n"
+        "uniform vec4 ramp[256];\n"
+        "\n"
+        "varying vec2 uv;\n"
+        "\n"
+        "vec3 color_from_index(vec3 index)\n"
+        "{\n"
+        "    ivec3 i = ivec3(index);\n"
+        "    return vec3(ramp[i.r].r, ramp[i.g].g, ramp[i.b].b);\n"
+        "}\n"
+        "\n"
+        "void main(void)\n"
+        "{\n"
+        "    vec3 sample = texture2D(color, uv).rgb * 255.0;\n"
+        "    vec3 prev = floor(sample);\n"
+        "    vec3 next = ceil(sample);\n"
+        "    gl_FragColor.rgb = mix(color_from_index(prev), color_from_index(next), sample - prev);\n"
+        "    gl_FragColor.a = 1.0;\n"
         "}\n"
         "";
     static const char *fragment_shader =
@@ -571,13 +608,13 @@ static GLuint framebuffer_program_create( LONG *gamma_serial )
     GLint success;
 
     if (!(vs = funcs->p_glCreateShader( GL_VERTEX_SHADER ))) goto failed;
-    funcs->p_glShaderSource( vs, 1, &vertex_shader, NULL );
+    funcs->p_glShaderSource( vs, 1, compat ? &vertex_shader_compat : &vertex_shader, NULL );
     funcs->p_glCompileShader( vs );
     funcs->p_glGetShaderiv( vs, GL_COMPILE_STATUS, &success );
     if (!success) goto failed;
 
     if (!(fs = funcs->p_glCreateShader( GL_FRAGMENT_SHADER ))) goto failed;
-    funcs->p_glShaderSource( fs, 1, &fragment_shader, NULL );
+    funcs->p_glShaderSource( fs, 1, compat ? &fragment_shader_compat : &fragment_shader, NULL );
     funcs->p_glCompileShader( fs );
     funcs->p_glGetShaderiv( fs, GL_COMPILE_STATUS, &success );
     if (!success) goto failed;
@@ -933,6 +970,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     const struct opengl_funcs *funcs = &display_funcs;
     struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
+    BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), wine_dbgstr_point( (POINT *)&src ),
@@ -948,7 +986,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
         funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, dst.cx, dst.cy, GL_COLOR_BUFFER_BIT, GL_LINEAR );
     }
-    else if (surface->program || (surface->program = framebuffer_program_create( &surface->gamma_serial )))
+    else if (surface->program || (surface->program = framebuffer_program_create( compat, &surface->gamma_serial )))
     {
         struct vertex vertex[] =
         {
