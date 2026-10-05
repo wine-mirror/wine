@@ -1368,7 +1368,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_call() || KRB5_CALL( process_attach, NULL ))
+        if (__wine_init_unix_call())
         {
             ERR( "no Kerberos support\n" );
             return FALSE;

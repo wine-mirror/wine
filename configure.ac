@@ -1869,9 +1869,9 @@ then
     WINE_PACKAGE_FLAGS(KRB5,[krb5],,
                        [`${KRB5_CONFIG:-krb5-config} --cflags 2>/dev/null`],
                        [`${KRB5_CONFIG:-krb5-config} --libs 2>/dev/null`],
-        [AC_CHECK_HEADER([krb5/krb5.h],[WINE_CHECK_SONAME(krb5,krb5_is_config_principal)])])
+        [AC_CHECK_HEADER([krb5/krb5.h],[AC_CHECK_FUNC(krb5_is_config_principal)])])
 fi
-WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
+WINE_NOTICE_WITH(krb5,[test "x$ac_cv_func_krb5_is_config_principal" != xyes],
                  [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.],
                  [enable_kerberos])
 
@@ -1883,9 +1883,9 @@ then
                        [`${KRB5_CONFIG:-krb5-config} --libs gssapi 2>/dev/null`],
         [AC_CHECK_HEADER([gssapi/gssapi.h],
              [AC_CHECK_HEADER([gssapi/gssapi_ext.h],
-                  [WINE_CHECK_SONAME(gssapi_krb5, gss_init_sec_context)])])])
+                  [AC_CHECK_FUNC(gss_init_sec_context)])])])
 fi
-WINE_NOTICE_WITH(gssapi,[test "x$ac_cv_lib_soname_gssapi_krb5" = "x"],
+WINE_NOTICE_WITH(gssapi,[test "x$ac_cv_func_gss_init_sec_context" != xyes],
                  [libgssapi_krb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.],
                  [enable_kerberos])
 

@@ -141,7 +141,6 @@ struct verify_signature_params
 
 enum unix_funcs
 {
-    unix_process_attach,
     unix_accept_context,
     unix_acquire_credentials_handle,
     unix_delete_context,

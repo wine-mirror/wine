@@ -29,7 +29,6 @@
 
 #include <stdarg.h>
 #include <sys/types.h>
-#include <dlfcn.h>
 #include <krb5/krb5.h>
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_ext.h>
@@ -47,90 +46,6 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
-
-static void *libkrb5_handle;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p_##f
-MAKE_FUNCPTR( krb5_cc_close );
-MAKE_FUNCPTR( krb5_cc_default );
-MAKE_FUNCPTR( krb5_cc_end_seq_get );
-MAKE_FUNCPTR( krb5_cc_initialize );
-MAKE_FUNCPTR( krb5_cc_next_cred );
-MAKE_FUNCPTR( krb5_cc_start_seq_get );
-MAKE_FUNCPTR( krb5_cc_store_cred );
-MAKE_FUNCPTR( krb5_cccol_cursor_free );
-MAKE_FUNCPTR( krb5_cccol_cursor_new );
-MAKE_FUNCPTR( krb5_cccol_cursor_next );
-MAKE_FUNCPTR( krb5_decode_ticket );
-MAKE_FUNCPTR( krb5_free_context );
-MAKE_FUNCPTR( krb5_free_cred_contents );
-MAKE_FUNCPTR( krb5_free_principal );
-MAKE_FUNCPTR( krb5_free_ticket );
-MAKE_FUNCPTR( krb5_free_unparsed_name );
-MAKE_FUNCPTR( krb5_get_init_creds_opt_alloc );
-MAKE_FUNCPTR( krb5_get_init_creds_opt_free );
-MAKE_FUNCPTR( krb5_get_init_creds_opt_set_out_ccache );
-MAKE_FUNCPTR( krb5_get_init_creds_password );
-MAKE_FUNCPTR( krb5_init_context );
-MAKE_FUNCPTR( krb5_is_config_principal );
-MAKE_FUNCPTR( krb5_parse_name_flags );
-MAKE_FUNCPTR( krb5_unparse_name_flags );
-#undef MAKE_FUNCPTR
-
-static BOOL load_krb5(void)
-{
-    if (!(libkrb5_handle = dlopen( SONAME_LIBKRB5, RTLD_NOW )))
-    {
-        WARN_(winediag)( "failed to load %s, Kerberos support will be disabled\n", SONAME_LIBKRB5 );
-        return FALSE;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if (!(p_##f = dlsym( libkrb5_handle, #f ))) \
-    { \
-        ERR( "failed to load %s\n", #f ); \
-        goto fail; \
-    }
-
-    LOAD_FUNCPTR( krb5_cc_close )
-    LOAD_FUNCPTR( krb5_cc_default )
-    LOAD_FUNCPTR( krb5_cc_end_seq_get )
-    LOAD_FUNCPTR( krb5_cc_initialize )
-    LOAD_FUNCPTR( krb5_cc_next_cred )
-    LOAD_FUNCPTR( krb5_cc_start_seq_get )
-    LOAD_FUNCPTR( krb5_cc_store_cred )
-    LOAD_FUNCPTR( krb5_cccol_cursor_free )
-    LOAD_FUNCPTR( krb5_cccol_cursor_new )
-    LOAD_FUNCPTR( krb5_cccol_cursor_next )
-    LOAD_FUNCPTR( krb5_decode_ticket )
-    LOAD_FUNCPTR( krb5_free_context )
-    LOAD_FUNCPTR( krb5_free_cred_contents )
-    LOAD_FUNCPTR( krb5_free_principal )
-    LOAD_FUNCPTR( krb5_free_ticket )
-    LOAD_FUNCPTR( krb5_free_unparsed_name )
-    LOAD_FUNCPTR( krb5_get_init_creds_opt_alloc )
-    LOAD_FUNCPTR( krb5_get_init_creds_opt_free )
-    LOAD_FUNCPTR( krb5_get_init_creds_opt_set_out_ccache )
-    LOAD_FUNCPTR( krb5_get_init_creds_password )
-    LOAD_FUNCPTR( krb5_init_context )
-    LOAD_FUNCPTR( krb5_is_config_principal )
-    LOAD_FUNCPTR( krb5_parse_name_flags )
-    LOAD_FUNCPTR( krb5_unparse_name_flags )
-#undef LOAD_FUNCPTR
-    return TRUE;
-
-fail:
-    dlclose( libkrb5_handle );
-    libkrb5_handle = NULL;
-    return FALSE;
-}
-
-static void unload_krb5(void)
-{
-    dlclose( libkrb5_handle );
-    libkrb5_handle = NULL;
-}
 
 static NTSTATUS krb5_error_to_status( krb5_error_code err )
 {
@@ -187,10 +102,10 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
     char *server_name_with_realm, *server_name, *server_realm;
     char *client_name_with_realm, *client_name, *client_realm;
 
-    if ((err = p_krb5_cc_start_seq_get( ctx, cache, &cursor ))) return krb5_error_to_status( err );
+    if ((err = krb5_cc_start_seq_get( ctx, cache, &cursor ))) return krb5_error_to_status( err );
     for (;;)
     {
-        if ((err = p_krb5_cc_next_cred( ctx, cache, &cursor, &creds )))
+        if ((err = krb5_cc_next_cred( ctx, cache, &cursor, &creds )))
         {
             if (err == KRB5_CC_END)
                 status = STATUS_SUCCESS;
@@ -199,9 +114,9 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
             break;
         }
 
-        if (p_krb5_is_config_principal( ctx, creds.server ))
+        if (krb5_is_config_principal( ctx, creds.server ))
         {
-            p_krb5_free_cred_contents( ctx, &creds );
+            krb5_free_cred_contents( ctx, &creds );
             continue;
         }
 
@@ -211,7 +126,7 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
             KERB_TICKET_CACHE_INFO_EX *new_tickets = realloc( list->tickets, sizeof(*new_tickets) * new_allocated );
             if (!new_tickets)
             {
-                p_krb5_free_cred_contents( ctx, &creds );
+                krb5_free_cred_contents( ctx, &creds );
                 status = STATUS_NO_MEMORY;
                 break;
             }
@@ -219,9 +134,9 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
             list->allocated = new_allocated;
         }
 
-        if ((err = p_krb5_unparse_name_flags( ctx, creds.server, 0, &server_name_with_realm )))
+        if ((err = krb5_unparse_name_flags( ctx, creds.server, 0, &server_name_with_realm )))
         {
-            p_krb5_free_cred_contents( ctx, &creds );
+            krb5_free_cred_contents( ctx, &creds );
             status = krb5_error_to_status( err );
             break;
         }
@@ -232,9 +147,9 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
         utf8_to_wstr( &list->tickets[list->count].ServerName, server_name );
         utf8_to_wstr( &list->tickets[list->count].ServerRealm, server_realm );
 
-        if ((err = p_krb5_unparse_name_flags( ctx, creds.client, 0, &client_name_with_realm )))
+        if ((err = krb5_unparse_name_flags( ctx, creds.client, 0, &client_name_with_realm )))
         {
-            p_krb5_free_cred_contents( ctx, &creds );
+            krb5_free_cred_contents( ctx, &creds );
             status = krb5_error_to_status( err );
             break;
         }
@@ -255,10 +170,10 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
         list->tickets[list->count].RenewTime.QuadPart = creds.times.renew_till;
         list->tickets[list->count].TicketFlags        = creds.ticket_flags;
 
-        err = p_krb5_decode_ticket( &creds.ticket, &ticket );
-        p_krb5_free_unparsed_name( ctx, server_name_with_realm );
-        p_krb5_free_unparsed_name( ctx, client_name_with_realm );
-        p_krb5_free_cred_contents( ctx, &creds );
+        err = krb5_decode_ticket( &creds.ticket, &ticket );
+        krb5_free_unparsed_name( ctx, server_name_with_realm );
+        krb5_free_unparsed_name( ctx, client_name_with_realm );
+        krb5_free_cred_contents( ctx, &creds );
         if (err)
         {
             status = krb5_error_to_status( err );
@@ -266,11 +181,11 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
         }
 
         list->tickets[list->count].EncryptionType = ticket->enc_part.enctype;
-        p_krb5_free_ticket( ctx, ticket );
+        krb5_free_ticket( ctx, ticket );
         list->count++;
     }
 
-    p_krb5_cc_end_seq_get( ctx, cache, &cursor );
+    krb5_cc_end_seq_get( ctx, cache, &cursor );
     return status;
 }
 
@@ -325,8 +240,8 @@ static NTSTATUS kerberos_fill_ticket_list( struct ticket_list *list )
     krb5_cccol_cursor cursor = NULL;
     krb5_ccache cache;
 
-    if ((err = p_krb5_init_context( &ctx ))) return krb5_error_to_status( err );
-    if ((err = p_krb5_cccol_cursor_new( ctx, &cursor )))
+    if ((err = krb5_init_context( &ctx ))) return krb5_error_to_status( err );
+    if ((err = krb5_cccol_cursor_new( ctx, &cursor )))
     {
         status = krb5_error_to_status( err );
         goto done;
@@ -334,7 +249,7 @@ static NTSTATUS kerberos_fill_ticket_list( struct ticket_list *list )
 
     for (;;)
     {
-        if ((err = p_krb5_cccol_cursor_next( ctx, cursor, &cache )))
+        if ((err = krb5_cccol_cursor_next( ctx, cursor, &cache )))
         {
             status = krb5_error_to_status( err );
             goto done;
@@ -342,13 +257,13 @@ static NTSTATUS kerberos_fill_ticket_list( struct ticket_list *list )
         if (!cache) break;
 
         status = copy_tickets_from_cache( ctx, cache, list );
-        p_krb5_cc_close( ctx, cache );
+        krb5_cc_close( ctx, cache );
         if (status != STATUS_SUCCESS) goto done;
     }
 
 done:
-    if (cursor) p_krb5_cccol_cursor_free( ctx, &cursor );
-    if (ctx) p_krb5_free_context( ctx );
+    if (cursor) krb5_cccol_cursor_free( ctx, &cursor );
+    if (ctx) krb5_free_context( ctx );
 
     return status;
 }
@@ -382,81 +297,10 @@ static NTSTATUS query_ticket_cache( void *args )
     return status;
 }
 
-static void *libgssapi_krb5_handle;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR( gss_accept_sec_context );
-MAKE_FUNCPTR( gss_acquire_cred );
-MAKE_FUNCPTR( gss_delete_sec_context );
-MAKE_FUNCPTR( gss_display_status );
-MAKE_FUNCPTR( gss_export_sec_context );
-MAKE_FUNCPTR( gss_get_mic );
-MAKE_FUNCPTR( gss_import_name );
-MAKE_FUNCPTR( gss_import_sec_context );
-MAKE_FUNCPTR( gss_init_sec_context );
-MAKE_FUNCPTR( gss_inquire_context );
-MAKE_FUNCPTR( gss_inquire_sec_context_by_oid );
-MAKE_FUNCPTR( gss_release_buffer );
-MAKE_FUNCPTR( gss_release_buffer_set );
-MAKE_FUNCPTR( gss_release_cred );
-MAKE_FUNCPTR( gss_release_iov_buffer );
-MAKE_FUNCPTR( gss_release_name );
-MAKE_FUNCPTR( gss_unwrap );
-MAKE_FUNCPTR( gss_unwrap_iov );
-MAKE_FUNCPTR( gss_verify_mic );
-MAKE_FUNCPTR( gss_wrap );
-MAKE_FUNCPTR( gss_wrap_iov );
-#undef MAKE_FUNCPTR
-
-static BOOL load_gssapi_krb5(void)
-{
-    if (!(libgssapi_krb5_handle = dlopen( SONAME_LIBGSSAPI_KRB5, RTLD_NOW )))
-    {
-        WARN_(winediag)( "failed to load %s, Kerberos support will be disabled\n", SONAME_LIBGSSAPI_KRB5 );
-        return FALSE;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if (!(p##f = dlsym( libgssapi_krb5_handle, #f ))) \
-    { \
-        ERR( "failed to load %s\n", #f ); \
-        goto fail; \
-    }
-
-    LOAD_FUNCPTR( gss_accept_sec_context )
-    LOAD_FUNCPTR( gss_acquire_cred )
-    LOAD_FUNCPTR( gss_delete_sec_context )
-    LOAD_FUNCPTR( gss_display_status )
-    LOAD_FUNCPTR( gss_export_sec_context );
-    LOAD_FUNCPTR( gss_get_mic )
-    LOAD_FUNCPTR( gss_import_name )
-    LOAD_FUNCPTR( gss_import_sec_context );
-    LOAD_FUNCPTR( gss_init_sec_context )
-    LOAD_FUNCPTR( gss_inquire_context )
-    LOAD_FUNCPTR( gss_inquire_sec_context_by_oid )
-    LOAD_FUNCPTR( gss_release_buffer )
-    LOAD_FUNCPTR( gss_release_buffer_set )
-    LOAD_FUNCPTR( gss_release_cred )
-    LOAD_FUNCPTR( gss_release_iov_buffer )
-    LOAD_FUNCPTR( gss_release_name )
-    LOAD_FUNCPTR( gss_unwrap )
-    LOAD_FUNCPTR( gss_unwrap_iov )
-    LOAD_FUNCPTR( gss_verify_mic )
-    LOAD_FUNCPTR( gss_wrap )
-    LOAD_FUNCPTR( gss_wrap_iov )
-#undef LOAD_FUNCPTR
-    return TRUE;
-
-fail:
-    dlclose( libgssapi_krb5_handle );
-    libgssapi_krb5_handle = NULL;
-    return FALSE;
-}
-
 static OM_uint32 get_context_flags( gss_ctx_id_t ctx )
 {
     OM_uint32 ret, minor_status, flags;
-    ret = pgss_inquire_context( &minor_status, ctx, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
+    ret = gss_inquire_context( &minor_status, ctx, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
     return ret == GSS_S_COMPLETE ? flags : 0;
 }
 
@@ -501,14 +345,14 @@ static void trace_gss_status_ex( OM_uint32 code, int type )
 
     for (;;)
     {
-        ret = pgss_display_status( &minor_status, code, type, GSS_C_NULL_OID, &msg_ctx, &buf );
+        ret = gss_display_status( &minor_status, code, type, GSS_C_NULL_OID, &msg_ctx, &buf );
         if (GSS_ERROR( ret ))
         {
             TRACE( "gss_display_status(%#x, %d) returned %#x minor status %#x\n", code, type, ret, minor_status );
             return;
         }
         TRACE( "GSS-API error: %#x: %s\n", code, debugstr_an(buf.value, buf.length) );
-        pgss_release_buffer( &minor_status, &buf );
+        gss_release_buffer( &minor_status, &buf );
         if (!msg_ctx) return;
     }
 }
@@ -571,7 +415,7 @@ static NTSTATUS accept_context( void *args )
     output_token.length = 0;
     output_token.value  = NULL;
 
-    ret = pgss_accept_sec_context( &minor_status, &ctx_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
+    ret = gss_accept_sec_context( &minor_status, &ctx_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
                                    NULL, NULL, &output_token, &ret_flags, &expiry_time, NULL );
     TRACE( "gss_accept_sec_context returned %#x minor status %#x ret_flags %#x\n", ret, minor_status, ret_flags );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
@@ -580,14 +424,14 @@ static NTSTATUS accept_context( void *args )
         if (output_token.length > *params->output_token_length) /* FIXME: check if larger buffer exists */
         {
             TRACE( "buffer too small %lu > %u\n",
-                   (SIZE_T)output_token.length, (unsigned int)*params->output_token_length );
-            pgss_release_buffer( &minor_status, &output_token );
-            pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+                   (SIZE_T)output_token.length, *params->output_token_length );
+            gss_release_buffer( &minor_status, &output_token );
+            gss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_BUFFER_TOO_SMALL;
         }
         *params->output_token_length = output_token.length;
         memcpy( params->output_token, output_token.value, output_token.length );
-        pgss_release_buffer( &minor_status, &output_token );
+        gss_release_buffer( &minor_status, &output_token );
 
         ctxhandle_gss_to_sspi( ctx_handle, params->new_context );
         if (params->context_attr) *params->context_attr = flags_gss_to_asc_ret( ret_flags );
@@ -607,23 +451,23 @@ static NTSTATUS init_creds( const char *user_at_domain, const char *password )
     krb5_error_code err;
 
     if (!user_at_domain) return STATUS_SUCCESS;
-    if ((err = p_krb5_init_context( &ctx ))) return krb5_error_to_status( err );
-    if ((err = p_krb5_parse_name_flags( ctx, user_at_domain, 0, &principal ))) goto done;
-    if ((err = p_krb5_cc_default( ctx, &cache ))) goto done;
-    if ((err = p_krb5_get_init_creds_opt_alloc( ctx, &options ))) goto done;
-    if ((err = p_krb5_get_init_creds_opt_set_out_ccache( ctx, options, cache ))) goto done;
-    if ((err = p_krb5_get_init_creds_password( ctx, &creds, principal, password, 0, NULL, 0, NULL, 0 ))) goto done;
-    if ((err = p_krb5_cc_initialize( ctx, cache, principal ))) goto done;
-    if ((err = p_krb5_cc_store_cred( ctx, cache, &creds ))) goto done;
+    if ((err = krb5_init_context( &ctx ))) return krb5_error_to_status( err );
+    if ((err = krb5_parse_name_flags( ctx, user_at_domain, 0, &principal ))) goto done;
+    if ((err = krb5_cc_default( ctx, &cache ))) goto done;
+    if ((err = krb5_get_init_creds_opt_alloc( ctx, &options ))) goto done;
+    if ((err = krb5_get_init_creds_opt_set_out_ccache( ctx, options, cache ))) goto done;
+    if ((err = krb5_get_init_creds_password( ctx, &creds, principal, password, 0, NULL, 0, NULL, 0 ))) goto done;
+    if ((err = krb5_cc_initialize( ctx, cache, principal ))) goto done;
+    if ((err = krb5_cc_store_cred( ctx, cache, &creds ))) goto done;
 
     TRACE( "success\n" );
-    p_krb5_free_cred_contents( ctx, &creds );
+    krb5_free_cred_contents( ctx, &creds );
 
 done:
-    if (cache) p_krb5_cc_close( ctx, cache );
-    if (principal) p_krb5_free_principal( ctx, principal );
-    if (options) p_krb5_get_init_creds_opt_free( ctx, options );
-    p_krb5_free_context( ctx );
+    if (cache) krb5_cc_close( ctx, cache );
+    if (principal) krb5_free_principal( ctx, principal );
+    if (options) krb5_get_init_creds_opt_free( ctx, options );
+    krb5_free_context( ctx );
     return krb5_error_to_status( err );
 }
 
@@ -634,7 +478,7 @@ static NTSTATUS import_name( const char *src, gss_name_t *dst )
 
     buf.length = strlen( src );
     buf.value  = (void *)src;
-    ret = pgss_import_name( &minor_status, &buf, GSS_C_NO_OID, dst );
+    ret = gss_import_name( &minor_status, &buf, GSS_C_NO_OID, dst );
     TRACE( "gss_import_name returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
@@ -667,7 +511,7 @@ static NTSTATUS acquire_credentials_handle( void *args )
 
     if (params->principal && (status = import_name( params->principal, &name ))) return status;
 
-    ret = pgss_acquire_cred( &minor_status, name, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage, &cred_handle,
+    ret = gss_acquire_cred( &minor_status, name, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage, &cred_handle,
                              NULL, &expiry_time );
     TRACE( "gss_acquire_cred returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
@@ -677,7 +521,7 @@ static NTSTATUS acquire_credentials_handle( void *args )
         *params->expiry = expiry_time;
     }
 
-    if (name != GSS_C_NO_NAME) pgss_release_name( &minor_status, &name );
+    if (name != GSS_C_NO_NAME) gss_release_name( &minor_status, &name );
     return status_gss_to_sspi( ret );
 }
 
@@ -687,7 +531,7 @@ static NTSTATUS delete_context( void *args )
     OM_uint32 ret, minor_status;
     gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
 
-    ret = pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+    ret = gss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
     TRACE( "gss_delete_sec_context returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
@@ -701,7 +545,7 @@ static NTSTATUS export_context( void *args )
     OM_uint32 ret, minor_status;
     NTSTATUS status = STATUS_SUCCESS;
 
-    ret = pgss_export_sec_context( &minor_status, &ctx_handle, &data );
+    ret = gss_export_sec_context( &minor_status, &ctx_handle, &data );
     TRACE( "gss_export_sec_context returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret ))
     {
@@ -710,11 +554,11 @@ static NTSTATUS export_context( void *args )
     }
 
     /* FIXME: don't re-import the context on Lsa side */
-    ret = pgss_import_sec_context( &minor_status, &data, &ctx_handle );
+    ret = gss_import_sec_context( &minor_status, &data, &ctx_handle );
     TRACE( "gss_import_sec_context returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret ))
     {
-        pgss_release_buffer(&minor_status, &data);
+        gss_release_buffer(&minor_status, &data);
         *params->context = 0;
         trace_gss_status( ret, minor_status );
         return status_gss_to_sspi( ret );
@@ -727,7 +571,7 @@ static NTSTATUS export_context( void *args )
         memcpy( params->buf, data.value, data.length );
     ctxhandle_gss_to_sspi( ctx_handle, params->context );
     *params->size = data.length;
-    pgss_release_buffer(&minor_status, &data);
+    gss_release_buffer(&minor_status, &data);
     return status;
 }
 
@@ -737,7 +581,7 @@ static NTSTATUS free_credentials_handle( void *args )
     OM_uint32 ret, minor_status;
     gss_cred_id_t cred = credhandle_sspi_to_gss( params->credential );
 
-    ret = pgss_release_cred( &minor_status, &cred );
+    ret = gss_release_cred( &minor_status, &cred );
     TRACE( "gss_release_cred returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
@@ -752,7 +596,7 @@ static NTSTATUS import_context( void *args )
 
     data.length = params->size;
     data.value = params->buf;
-    ret = pgss_import_sec_context( &minor_status, &data, &ctx_handle );
+    ret = gss_import_sec_context( &minor_status, &data, &ctx_handle );
     TRACE( "gss_import_sec_context returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
 
@@ -811,7 +655,7 @@ static NTSTATUS initialize_context( void *args )
 
     if (req_flags & GSS_C_CONF_FLAG) req_flags |= GSS_C_INTEG_FLAG;
 
-    ret = pgss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
+    ret = gss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
                                  GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
                                  &expiry_time );
     TRACE( "gss_init_sec_context returned %#x minor status %#x ret_flags %#x\n", ret, minor_status, ret_flags );
@@ -820,22 +664,22 @@ static NTSTATUS initialize_context( void *args )
     {
         if (output_token.length > *params->output_token_length) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, (unsigned int)*params->output_token_length);
-            pgss_release_buffer( &minor_status, &output_token );
-            pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
-            if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, *params->output_token_length);
+            gss_release_buffer( &minor_status, &output_token );
+            gss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+            if (target != GSS_C_NO_NAME) gss_release_name( &minor_status, &target );
             return SEC_E_INCOMPLETE_MESSAGE;
         }
         *params->output_token_length = output_token.length;
         memcpy( params->output_token, output_token.value, output_token.length );
-        pgss_release_buffer( &minor_status, &output_token );
+        gss_release_buffer( &minor_status, &output_token );
 
         ctxhandle_gss_to_sspi( ctx_handle, params->new_context );
         if (params->context_attr) *params->context_attr = flags_gss_to_isc_ret( ret_flags );
         *params->expiry = expiry_time;
     }
 
-    if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
+    if (target != GSS_C_NO_NAME) gss_release_name( &minor_status, &target );
     return status_gss_to_sspi( ret );
 }
 
@@ -851,14 +695,14 @@ static NTSTATUS make_signature( void *args )
     token_buffer.length = 0;
     token_buffer.value  = NULL;
 
-    ret = pgss_get_mic( &minor_status, ctx_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
+    ret = gss_get_mic( &minor_status, ctx_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
     TRACE( "gss_get_mic returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         memcpy( params->token, token_buffer.value, token_buffer.length );
         *params->token_length = token_buffer.length;
-        pgss_release_buffer( &minor_status, &token_buffer );
+        gss_release_buffer( &minor_status, &token_buffer );
     }
 
     return status_gss_to_sspi( ret );
@@ -876,27 +720,27 @@ static NTSTATUS get_session_key( gss_ctx_id_t ctx, SecPkgContext_SessionKey *key
     OM_uint32 ret, minor_status;
     gss_buffer_set_t buffer_set = GSS_C_NO_BUFFER_SET;
 
-    ret = pgss_inquire_sec_context_by_oid( &minor_status, ctx, &GSS_C_INQ_SSPI_SESSION_KEY, &buffer_set );
+    ret = gss_inquire_sec_context_by_oid( &minor_status, ctx, &GSS_C_INQ_SSPI_SESSION_KEY, &buffer_set );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret != GSS_S_COMPLETE) return STATUS_INTERNAL_ERROR;
 
     if (buffer_set == GSS_C_NO_BUFFER_SET || buffer_set->count != 2)
     {
-        pgss_release_buffer_set( &minor_status, &buffer_set );
+        gss_release_buffer_set( &minor_status, &buffer_set );
         return STATUS_INTERNAL_ERROR;
     }
 
     if (key->SessionKeyLength < buffer_set->elements[0].length )
     {
         key->SessionKeyLength = buffer_set->elements[0].length;
-        pgss_release_buffer_set( &minor_status, &buffer_set );
+        gss_release_buffer_set( &minor_status, &buffer_set );
         return STATUS_BUFFER_TOO_SMALL;
     }
 
     memcpy( key->SessionKey, buffer_set->elements[0].value, buffer_set->elements[0].length );
     key->SessionKeyLength = buffer_set->elements[0].length;
 
-    pgss_release_buffer_set( &minor_status, &buffer_set );
+    gss_release_buffer_set( &minor_status, &buffer_set );
     return STATUS_SUCCESS;
 }
 
@@ -974,14 +818,14 @@ static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, const struct seal_message
     iov[3].buffer.length = 0;
     iov[3].buffer.value  = NULL;
 
-    ret = pgss_wrap_iov( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
+    ret = gss_wrap_iov( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
     TRACE( "gss_wrap_iov returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         memcpy( params->token, iov[3].buffer.value, iov[3].buffer.length );
         *params->token_length = iov[3].buffer.length;
-        pgss_release_iov_buffer( &minor_status, iov, 4 );
+        gss_release_iov_buffer( &minor_status, iov, 4 );
     }
 
     return status_gss_to_sspi( ret );
@@ -1006,7 +850,7 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, const struct seal_mess
     input.length = params->data_length;
     input.value  = params->data;
 
-    ret = pgss_wrap( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
+    ret = gss_wrap( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
     TRACE( "gss_wrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
@@ -1015,13 +859,13 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, const struct seal_mess
         if (len_token < output.length - len_data)
         {
             TRACE( "buffer too small %lu > %u\n", (SIZE_T)output.length - len_data, len_token );
-            pgss_release_buffer( &minor_status, &output );
+            gss_release_buffer( &minor_status, &output );
             return SEC_E_BUFFER_TOO_SMALL;
         }
         memcpy( params->data, output.value, len_data );
         memcpy( params->token, (char *)output.value + len_data, output.length - len_data );
         *params->token_length = output.length - len_data;
-        pgss_release_buffer( &minor_status, &output );
+        gss_release_buffer( &minor_status, &output );
     }
 
     return status_gss_to_sspi( ret );
@@ -1056,7 +900,7 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, struct unseal_message_p
         iov[1].buffer.length = 0;
         iov[1].buffer.value  = NULL;
 
-        ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 2 );
+        ret = gss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 2 );
         TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
         if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
         if (ret == GSS_S_COMPLETE)
@@ -1086,7 +930,7 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, struct unseal_message_p
     iov[3].buffer.length = params->token_length;
     iov[3].buffer.value  = params->token;
 
-    ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 4 );
+    ret = gss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 4 );
     TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && params->qop)
@@ -1115,7 +959,7 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
         memcpy( (char *)input.value + *params->data_length, params->token, params->token_length );
     }
 
-    ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
+    ret = gss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
     if (input.value != params->stream) free( input.value );
     TRACE( "gss_unwrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
@@ -1129,7 +973,7 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
             *params->data_length = output.length;
         }
         else memcpy( *params->data, output.value, output.length );
-        pgss_release_buffer( &minor_status, &output );
+        gss_release_buffer( &minor_status, &output );
     }
 
     return status_gss_to_sspi( ret );
@@ -1156,7 +1000,7 @@ static NTSTATUS verify_signature( void *args )
     token_buffer.length = params->token_length;
     token_buffer.value  = params->token;
 
-    ret = pgss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
+    ret = gss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
     TRACE( "gss_verify_mic returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && params->qop) *params->qop = 0;
@@ -1164,16 +1008,8 @@ static NTSTATUS verify_signature( void *args )
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS process_attach( void *args )
-{
-    if (load_krb5() && load_gssapi_krb5()) return STATUS_SUCCESS;
-    if (libkrb5_handle) unload_krb5();
-    return STATUS_DLL_NOT_FOUND;
-}
-
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    process_attach,
     accept_context,
     acquire_credentials_handle,
     delete_context,
@@ -1558,7 +1394,6 @@ static NTSTATUS wow64_verify_signature( void *args )
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    process_attach,
     wow64_accept_context,
     wow64_acquire_credentials_handle,
     wow64_delete_context,
