@@ -672,6 +672,7 @@ DECL_HANDLER(d3dkmt_object_open_name)
 /* Acquire a global d3dkmt keyed mutex */
 DECL_HANDLER(d3dkmt_mutex_acquire)
 {
+    data_size_t runtime_size = get_reply_max_size();
     struct d3dkmt_mutex *mutex;
     struct object *sync;
 
@@ -691,6 +692,9 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
         release_object( sync );
     }
 
+    if (runtime_size >= mutex->base.runtime_size) set_reply_data( mutex->base.runtime, mutex->base.runtime_size );
+    reply->runtime_size = mutex->base.runtime_size;
+
     release_object( mutex );
 
     if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( mutex, req->key_value );
@@ -699,16 +703,19 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 /* Release a global d3dkmt keyed mutex */
 DECL_HANDLER(d3dkmt_mutex_release)
 {
+    const void *runtime = get_req_data();
     struct d3dkmt_mutex *mutex;
 
     if (!(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) return;
 
     if (mutex->abandoned) set_error( STATUS_ABANDONED );
     else if (mutex->owner != current) set_error( STATUS_INVALID_PARAMETER );
+    else if (runtime && get_req_data_size() != mutex->base.runtime_size) set_error( STATUS_INVALID_PARAMETER );
     else
     {
         mutex->key_value = req->key_value;
         mutex->fence_value = req->fence_value;
+        if (runtime) memcpy( mutex->base.runtime, runtime, mutex->base.runtime_size );
         mutex_release( mutex, req->abandon );
     }
 

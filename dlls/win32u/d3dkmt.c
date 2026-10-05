@@ -1629,6 +1629,8 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMN
  */
 NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params )
 {
+    UINT runtime_size = params->PrivateRuntimeDataSize;
+    void *runtime = params->pPrivateRuntimeData;
     NTSTATUS status = STATUS_SUCCESS;
     LARGE_INTEGER now, *timeout;
     struct d3dkmt_mutex *mutex;
@@ -1654,12 +1656,14 @@ NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params 
             req->key_value = params->Key;
             req->wait_handle = wine_server_obj_handle( wait_handle );
             req->wait_status = status;
+            if (runtime) wine_server_set_reply( req, runtime, runtime_size );
 
             status = wine_server_call( req );
             params->FenceValue = reply->fence_value;
             /* server never creates a new handle if one is provided, and always returns a handle if pending */
             if (reply->wait_handle) wait_handle = wine_server_ptr_handle( reply->wait_handle );
             else if (wait_handle) NtClose( wait_handle );
+            params->PrivateRuntimeDataSize = reply->runtime_size;
         }
         SERVER_END_REQ;
     } while (status == STATUS_PENDING);
@@ -1699,6 +1703,7 @@ NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex( D3DKMT_ACQUIREKEYEDMUTEX *params )
  */
 NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params )
 {
+    void *runtime = params->pPrivateRuntimeData;
     struct d3dkmt_mutex *mutex;
     NTSTATUS status;
 
@@ -1711,6 +1716,7 @@ NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params 
         req->mutex = mutex->obj.global;
         req->key_value = params->Key;
         req->fence_value = params->FenceValue;
+        if (runtime) wine_server_add_data( req, runtime, params->PrivateRuntimeDataSize );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
