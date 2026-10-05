@@ -5455,16 +5455,16 @@ static void test_other_process_window_process( HWND hwnd, int expect_format )
 
     /* from the other process pov, the pixel format hasn't been set */
     format = GetPixelFormat( hdc );
-    todo_wine ok_u4( format, ==, 0 );
+    ok_u4( format, ==, 0 );
 
     /* using a different pixel format from the window owner is allowed */
     format = ChoosePixelFormat( hdc, &pfd );
     ok_u4( format, !=, 0 );
     ok_u4( format, !=, expect_format );
-    todo_wine ok_ret( TRUE, SetPixelFormat( hdc, format, NULL ) );
+    ok_ret( TRUE, SetPixelFormat( hdc, format, NULL ) );
 
     ctx = wglCreateContext( hdc );
-    todo_wine ok_ptr( ctx, !=, NULL );
+    ok_ptr( ctx, !=, NULL );
     ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
 
     init_functions();
@@ -5475,7 +5475,7 @@ static void test_other_process_window_process( HWND hwnd, int expect_format )
         msg_wait_for_events( 0, NULL, 1000 );
     }
 
-    todo_wine ok_ptr( ext.glGetFramebufferParameteriv, !=, NULL );
+    ok_ptr( ext.glGetFramebufferParameteriv, !=, NULL );
     if (!ext.glGetFramebufferParameteriv) skip( "missing glGetFramebufferParameteriv\n" );
     else
     {
@@ -5486,8 +5486,8 @@ static void test_other_process_window_process( HWND hwnd, int expect_format )
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok_ret( 0, glGetError() );
-    todo_wine ok( (pixel & 0xffffff) == 0, "got %#x\n", pixel );
+    ok_ret( 0, glGetError() );
+    ok( (pixel & 0xffffff) == 0, "got %#x\n", pixel );
 
     if (winetest_interactive)
     {
@@ -5496,14 +5496,14 @@ static void test_other_process_window_process( HWND hwnd, int expect_format )
     }
 
     glClearColor( 0.0, 1.0, 0.0, 1.0 );
-    todo_wine ok_ret( 0, glGetError() );
+    ok_ret( 0, glGetError() );
     glClear( GL_COLOR_BUFFER_BIT );
-    todo_wine ok_ret( 0, glGetError() );
+    ok_ret( 0, glGetError() );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok_ret( 0, glGetError() );
-    todo_wine ok( (pixel & 0xffffff) == 0x00ff00, "got %#x\n", pixel );
+    ok_ret( 0, glGetError() );
+    ok( (pixel & 0xffffff) == 0x00ff00, "got %#x\n", pixel );
 
     if (winetest_interactive)
     {
@@ -5511,12 +5511,12 @@ static void test_other_process_window_process( HWND hwnd, int expect_format )
         msg_wait_for_events( 0, NULL, 1000 );
     }
 
-    todo_wine ok_ret( TRUE, SwapBuffers( hdc ) );
+    ok_ret( TRUE, SwapBuffers( hdc ) );
 
     pixel = 0xdeadbeef;
     glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
-    todo_wine ok_ret( 0, glGetError() );
-    todo_wine ok( (pixel & 0xffffff) == 0x00ff00, "got %#x\n", pixel );
+    ok_ret( 0, glGetError() );
+    ok( (pixel & 0xffffff) == 0x00ff00, "got %#x\n", pixel );
 
     if (winetest_interactive)
     {

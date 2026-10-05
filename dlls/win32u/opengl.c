@@ -2083,7 +2083,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     int format;
     HWND hwnd;
 
-    if ((hwnd = NtUserWindowFromDC( hdc )))
+    if ((hwnd = NtUserWindowFromDC( hdc )) && is_current_process_window( hwnd ))
         format = get_window_pixel_format( hwnd );
     else if ((format = get_dc_pixel_format( hdc )) < 0)
     {
@@ -2455,7 +2455,7 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
     funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
     if (new_format <= 0 || new_format > total) return FALSE;
 
-    if ((hwnd = NtUserWindowFromDC( hdc )))
+    if ((hwnd = NtUserWindowFromDC( hdc )) && is_current_process_window( hwnd ))
     {
         struct opengl_drawable *drawable;
         int old_format;
@@ -2515,7 +2515,7 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
     HWND hwnd;
 
     if (!(hwnd = NtUserWindowFromDC( hdc )) || !is_cache_dc( hdc )) return FALSE;
-    if (format && get_window_pixel_format( hwnd ) == format) return TRUE;
+    if (format && is_current_process_window( hwnd ) && get_window_pixel_format( hwnd ) == format) return TRUE;
 
     TRACE( "%p/%p format %d\n", hdc, hwnd, format );
 
