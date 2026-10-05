@@ -1155,6 +1155,27 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
     }
 }
 
+static void get_usb_device_path(struct udev_device *dev, struct device_desc *desc)
+{
+    struct udev_device *parent;
+    char buffer[MAX_PATH];
+    const char *path;
+
+    if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device")))
+        return;
+    if (!(path = udev_device_get_property_value(parent, "ID_PATH_WITH_USB_REVISION"))
+            && !(path = udev_device_get_property_value(parent, "ID_PATH")))
+        return;
+
+    /*
+     * Combine path and VID/PID of parent to uniquely identify a particular
+     * device at a position in the USB device tree. This also prevents overlap
+     * for USBv2/USBv3 root hubs, which don't export ID_PATH_WITH_USB_REVISION.
+     */
+    snprintf(buffer, sizeof(buffer), "%s-%s", path, udev_device_get_property_value(parent, "PRODUCT"));
+    ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc->parent, ARRAY_SIZE(desc->parent));
+}
+
 static void get_device_usb_info(struct udev_device *dev, struct device_desc *desc)
 {
     UINT class = 0, subclass = 0, protocol = 0, num_ifaces = 0, iface_num = -1;
@@ -1187,7 +1208,10 @@ static void get_device_usb_info(struct udev_device *dev, struct device_desc *des
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceSubClass"))) sscanf(tmp, "%x", &subclass);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceProtocol"))) sscanf(tmp, "%x", &protocol);
     desc->bus_id = ((class & 0xff) << 16) | ((subclass & 0xff) << 8) | (protocol & 0xff);
-    desc->interface = iface_num;
+
+    get_usb_device_path(iface_num == -1 ? usb_dev : iface, desc);
+    if ((desc->interface = iface_num) != -1) desc->index = iface_num;
+    else if ((tmp = udev_device_get_sysnum(usb_dev))) sscanf(tmp, "%u", &desc->index);
 }
 
 static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char *devnode, struct device_desc desc)
