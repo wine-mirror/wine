@@ -31,14 +31,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#define __user
-#ifdef HAVE_LINUX_CAPI_H
-# include <linux/capi.h>
-#endif
-#ifdef HAVE_CAPI20_H
-# include <capi20.h>
-#endif
+#include <capi20.h>
 #include "unixlib.h"
 
 static NTSTATUS capi_register( void *args )

@@ -1599,14 +1599,10 @@ dnl **** Check for libva ****
 if test "x$with_va" != "xno"
 then
     WINE_PACKAGE_FLAGS(VA,[libva libva-drm],[-lva-drm -lva],,,
-        [AC_CHECK_HEADERS(va/va_drm.h)
-        if test "$ac_cv_header_va_va_drm_h" = "yes"
-        then
-            WINE_CHECK_SONAME(va-drm, vaGetDisplayDRM,,[VA_CFLAGS=""])
-            WINE_CHECK_SONAME(va, vaInitialize,,[VA_CFLAGS=""])
-        else
-            VA_CFLAGS=""
-        fi])
+        [AC_CHECK_HEADER([va/va_drm.h],
+            [WINE_CHECK_SONAME(va-drm, vaGetDisplayDRM,,[VA_CFLAGS=""])
+             WINE_CHECK_SONAME(va, vaInitialize,,[VA_CFLAGS=""])],
+            [VA_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(va,[test "x$ac_cv_lib_soname_va_drm" = x -o "x$ac_cv_lib_soname_va" = x],
                  [libva-drm ${notice_platform}development files not found, VA video acceleration won't be supported.])
@@ -1786,7 +1782,7 @@ then
     ac_oss_incl="-I${OSSLIBDIR:-/usr/lib/oss}/include"
     CPPFLAGS="$CPPFLAGS $ac_oss_incl"
     AC_CHECK_HEADER([sys/soundcard.h],
-        [AC_CHECK_MEMBERS([oss_sysinfo.numaudioengines],
+        [AC_CHECK_MEMBER([oss_sysinfo.numaudioengines],
             [AC_SUBST(OSS4_CFLAGS,"$ac_oss_incl")
              AC_CHECK_LIB(ossaudio,_oss_ioctl,
                  [AC_SUBST(OSS4_LIBS,"-lossaudio")])],,
@@ -1824,12 +1820,7 @@ dnl **** Check for capi4linux ****
 if test "x$with_capi" != "xno"
 then
     WINE_PACKAGE_FLAGS(CAPI20,[capi20],,,,
-     dnl Check for broken kernel header that doesn't define __user
-    [AC_CHECK_HEADERS([capi20.h linux/capi.h],,,[#define __user])
-    if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
-    then
-        AC_CHECK_FUNC(capi20_register)
-    fi])
+        [AC_CHECK_HEADER([capi20.h],[AC_CHECK_FUNC(capi20_register)])])
 fi
 WINE_NOTICE_WITH(capi,[test "x$ac_cv_func_capi20_register" != xyes],
                  [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.],
@@ -1920,13 +1911,11 @@ fi
 dnl *** Check for Vulkan ***
 if test "x$with_vulkan" != "xno"
 then
-    WINE_CHECK_SONAME(vulkan, vkGetInstanceProcAddr)
-    if test "x$ac_cv_lib_soname_vulkan" = "x"
-    then
-        WINE_CHECK_SONAME(MoltenVK, vkGetInstanceProcAddr, [AC_DEFINE_UNQUOTED(SONAME_LIBVULKAN,["$ac_cv_lib_soname_MoltenVK"])])
-    fi
+    WINE_CHECK_SONAME(vulkan, vkGetInstanceProcAddr,
+        [WINE_CHECK_SONAME(MoltenVK, vkGetInstanceProcAddr,
+            [AC_DEFINE_UNQUOTED(SONAME_LIBVULKAN,["$ac_cv_lib_soname_MoltenVK"])])])
 fi
-WINE_NOTICE_WITH(vulkan,[test "x$ac_cv_lib_soname_vulkan" = "x" -a "x$ac_cv_lib_soname_MoltenVK" = "x"],
+WINE_NOTICE_WITH(vulkan,[test "x$ac_cv_lib_soname_vulkan$ac_cv_lib_soname_MoltenVK" = "x"],
                  [libvulkan and libMoltenVK ${notice_platform}development files not found, Vulkan won't be supported.])
 
 dnl **** Check for gcc specific options ****

@@ -30,9 +30,6 @@
 /* Define to 1 if you have the <bluetooth/rfcomm.h> header file. */
 #undef HAVE_BLUETOOTH_RFCOMM_H
 
-/* Define to 1 if you have the <capi20.h> header file. */
-#undef HAVE_CAPI20_H
-
 /* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -149,9 +146,6 @@
 
 /* Define to 1 if you have the <link.h> header file. */
 #undef HAVE_LINK_H
-
-/* Define to 1 if you have the <linux/capi.h> header file. */
-#undef HAVE_LINUX_CAPI_H
 
 /* Define to 1 if you have the <linux/cdrom.h> header file. */
 #undef HAVE_LINUX_CDROM_H
@@ -308,9 +302,6 @@
 
 /* Define to 1 if you have the <OpenCL/opencl.h> header file. */
 #undef HAVE_OPENCL_OPENCL_H
-
-/* Define to 1 if 'numaudioengines' is a member of 'oss_sysinfo'. */
-#undef HAVE_OSS_SYSINFO_NUMAUDIOENGINES
 
 /* Define to 1 if you have the 'pipe2' function. */
 #undef HAVE_PIPE2
@@ -653,9 +644,6 @@
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
-
-/* Define to 1 if you have the <va/va_drm.h> header file. */
-#undef HAVE_VA_VA_DRM_H
 
 /* Define to 1 if the Wine preloader is being used. */
 #undef HAVE_WINE_PRELOADER

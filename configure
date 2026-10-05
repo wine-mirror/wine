@@ -17649,13 +17649,7 @@ LIBS="$VA_LIBS $LIBS"
 ac_fn_c_check_header_compile "$LINENO" "va/va_drm.h" "ac_cv_header_va_va_drm_h" "$ac_includes_default"
 if test "x$ac_cv_header_va_va_drm_h" = xyes
 then :
-  printf '%s\n' "#define HAVE_VA_VA_DRM_H 1" >>confdefs.h
-
-fi
-
-        if test "$ac_cv_header_va_va_drm_h" = "yes"
-        then
-            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva-drm" >&5
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva-drm" >&5
 printf %s "checking for -lva-drm... " >&6; }
 if test ${ac_cv_lib_soname_va_drm+y}
 then :
@@ -17718,7 +17712,7 @@ printf '%s\n' "#define SONAME_LIBVA_DRM \"$ac_cv_lib_soname_va_drm\"" >>confdefs
         ;;
 esac
 fi
-            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva" >&5
+             { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva" >&5
 printf %s "checking for -lva... " >&6; }
 if test ${ac_cv_lib_soname_va+y}
 then :
@@ -17781,9 +17775,11 @@ printf '%s\n' "#define SONAME_LIBVA \"$ac_cv_lib_soname_va\"" >>confdefs.h
         ;;
 esac
 fi
-        else
-            VA_CFLAGS=""
-        fi
+else case e in #(
+  e) VA_CFLAGS="" ;;
+esac
+fi
+
 CPPFLAGS=$ac_save_pkg_CPPFLAGS
 LIBS=$ac_save_pkg_LIBS
 fi
@@ -18564,10 +18560,7 @@ then :
 "
 if test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes
 then :
-
-printf '%s\n' "#define HAVE_OSS_SYSINFO_NUMAUDIOENGINES 1" >>confdefs.h
-
-OSS4_CFLAGS="$ac_oss_incl"
+  OSS4_CFLAGS="$ac_oss_incl"
 
              { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for _oss_ioctl in -lossaudio" >&5
 printf %s "checking for _oss_ioctl in -lossaudio... " >&6; }
@@ -18861,30 +18854,17 @@ then :
 ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
 LIBS="$CAPI20_LIBS $LIBS"
-    ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "#define __user
-"
+ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "$ac_includes_default"
 if test "x$ac_cv_header_capi20_h" = xyes
 then :
-  printf '%s\n' "#define HAVE_CAPI20_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "linux/capi.h" "ac_cv_header_linux_capi_h" "#define __user
-"
-if test "x$ac_cv_header_linux_capi_h" = xyes
-then :
-  printf '%s\n' "#define HAVE_LINUX_CAPI_H 1" >>confdefs.h
-
-fi
-
-    if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
-    then
-        ac_fn_c_check_func "$LINENO" "capi20_register" "ac_cv_func_capi20_register"
+  ac_fn_c_check_func "$LINENO" "capi20_register" "ac_cv_func_capi20_register"
 if test "x$ac_cv_func_capi20_register" = xyes
 then :
 
 fi
 
-    fi
+fi
+
 CPPFLAGS=$ac_save_pkg_CPPFLAGS
 LIBS=$ac_save_pkg_LIBS
 fi
@@ -19579,12 +19559,7 @@ printf '%s\n' "$ac_cv_lib_soname_vulkan" >&6; }
 
 printf '%s\n' "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_vulkan\"" >>confdefs.h
 
-        ;;
-esac
-fi
-    if test "x$ac_cv_lib_soname_vulkan" = "x"
-    then
-        { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lMoltenVK" >&5
+       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lMoltenVK" >&5
 printf %s "checking for -lMoltenVK... " >&6; }
 if test ${ac_cv_lib_soname_MoltenVK+y}
 then :
@@ -19647,10 +19622,11 @@ printf '%s\n' "#define SONAME_LIBMOLTENVK \"$ac_cv_lib_soname_MoltenVK\"" >>conf
        printf '%s\n' "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_MoltenVK\"" >>confdefs.h
  ;;
 esac
+fi ;;
+esac
 fi
-    fi
 fi
-if test "x$ac_cv_lib_soname_vulkan" = "x" -a "x$ac_cv_lib_soname_MoltenVK" = "x"
+if test "x$ac_cv_lib_soname_vulkan$ac_cv_lib_soname_MoltenVK" = "x"
 then :
   case "x$with_vulkan" in
   x)   as_fn_append wine_notices "|libvulkan and libMoltenVK ${notice_platform}development files not found, Vulkan won't be supported." ;;
