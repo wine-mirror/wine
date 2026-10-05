@@ -523,7 +523,7 @@ struct vertex
 
 #define GAMMA_RAMP_SIZE 256
 
-static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp )
+static GLuint framebuffer_program_create( LONG *gamma_serial )
 {
     static const char *vertex_shader =
         "#version 330\n"
@@ -543,16 +543,15 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
         "#version 330\n"
         "\n"
         "uniform sampler2D color;\n"
-        "layout (std140) uniform ramp {\n"
-        "    vec3 values[256];\n"
-        "};\n"
+        "uniform vec4 ramp[256];\n"
+        "\n"
         "in vec2 uv;\n"
         "layout(location = 0) out vec4 frag;\n"
         "\n"
         "vec3 color_from_index(vec3 index)\n"
         "{\n"
         "    ivec3 i = ivec3(index);\n"
-        "    return vec3(values[i.r].r, values[i.g].g, values[i.b].b);\n"
+        "    return vec3(ramp[i.r].r, ramp[i.g].g, ramp[i.b].b);\n"
         "}\n"
         "\n"
         "void main(void)\n"
@@ -565,9 +564,9 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
         "}\n"
         "";
 
-    GLuint vs = 0, fs = 0, program = 0, ramp_index, tex;
     const struct opengl_funcs *funcs = &display_funcs;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
+    GLuint vs = 0, fs = 0, program = 0;
     char error[512];
     GLint success;
 
@@ -597,19 +596,12 @@ static GLuint framebuffer_program_create( LONG *gamma_serial, GLuint *gamma_ramp
     funcs->p_glDeleteShader( fs );
     funcs->p_glDeleteShader( vs );
 
-    get_float_gamma_ramp( ramp_data, gamma_serial );
-    funcs->p_glGenBuffers( 1, gamma_ramp );
-    funcs->p_glBindBuffer( GL_UNIFORM_BUFFER, *gamma_ramp );
-    funcs->p_glBufferData( GL_UNIFORM_BUFFER, sizeof(ramp_data), ramp_data, GL_DYNAMIC_DRAW );
-
-    ramp_index = funcs->p_glGetUniformBlockIndex( program, "ramp" );
-    funcs->p_glUniformBlockBinding( program, ramp_index, 0 );
-
     funcs->p_glUseProgram( program );
-    funcs->p_glBindBufferBase( GL_UNIFORM_BUFFER, 0, *gamma_ramp );
 
-    tex = funcs->p_glGetUniformLocation( program, "tex" );
-    funcs->p_glUniform1i( tex, 0 );
+    funcs->p_glUniform1i( funcs->p_glGetUniformLocation( program, "color" ), 0 );
+
+    get_float_gamma_ramp( ramp_data, gamma_serial );
+    funcs->p_glUniform4fv( funcs->p_glGetUniformLocation( program, "ramp" ), GAMMA_RAMP_SIZE, ramp_data );
 
     return program;
 
@@ -642,7 +634,6 @@ struct framebuffer_surface
     struct opengl_drawable *target;         /* driver drawable to present to */
 
     LONG gamma_serial;
-    GLuint gamma_ramp;
     GLuint program;
 };
 
@@ -957,7 +948,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
         funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, dst.cx, dst.cy, GL_COLOR_BUFFER_BIT, GL_LINEAR );
     }
-    else if (surface->program || (surface->program = framebuffer_program_create( &surface->gamma_serial, &surface->gamma_ramp )))
+    else if (surface->program || (surface->program = framebuffer_program_create( &surface->gamma_serial )))
     {
         struct vertex vertex[] =
         {
@@ -976,7 +967,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glBindTexture( GL_TEXTURE_2D, front );
 
         if (get_float_gamma_ramp( ramp_data, &surface->gamma_serial ))
-            funcs->p_glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(ramp_data), ramp_data );
+            funcs->p_glUniform4fv( funcs->p_glGetUniformLocation( surface->program, "ramp" ), GAMMA_RAMP_SIZE, ramp_data );
 
         funcs->p_glViewport( 0, 0, dst.cx, dst.cy );
 
