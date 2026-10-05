@@ -746,6 +746,7 @@ SOURCES = \
 	netlistmgr.idl \
 	newdev.h \
 	nldef.h \
+	notificationactivationcallback.idl \
 	npapi.h \
 	nserror.h \
 	nspapi.h \
