@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
@@ -324,12 +325,51 @@ static NTSTATUS resolv_query( void *args )
     return ret;
 }
 
+static NTSTATUS get_hostinfo( void *args )
+{
+    struct addrinfo hints = { .ai_flags = AI_CANONNAME }, *result, *next;
+    struct get_hostinfo_params *params = args;
+    struct sockaddr_in *ip4;
+    struct sockaddr_in6 *ip6;
+
+    *params->name  = 0;
+    *params->cname = 0;
+    *params->ip4   = 0;
+    memset( params->ip6, 0, sizeof(*params->ip6) );
+
+    if (gethostname( params->name, DNS_MAX_NAME_LENGTH )) return map_h_errno( h_errno );
+
+    if (!getaddrinfo( params->name, NULL, &hints, &result ))
+    {
+        if (result->ai_canonname) strcpy( params->cname, result->ai_canonname );
+
+        next = result;
+        while (next && next->ai_family != AF_INET) next = next->ai_next;
+        if (next)
+        {
+            ip4 = (struct sockaddr_in *)next->ai_addr;
+            *params->ip4 = ip4->sin_addr.s_addr;
+        }
+        next = result;
+        while (next && next->ai_family != AF_INET6) next = next->ai_next;
+        if (next)
+        {
+            ip6 = (struct sockaddr_in6 *)next->ai_addr;
+            memcpy( params->ip6, ip6->sin6_addr.s6_addr, sizeof(*params->ip6) );
+        }
+        freeaddrinfo( result );
+    }
+
+    return ERROR_SUCCESS;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     resolv_get_searchlist,
     resolv_get_serverlist,
     resolv_set_serverlist,
     resolv_query,
+    get_hostinfo,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
@@ -397,12 +437,34 @@ static NTSTATUS wow64_resolv_query( void *args )
     return resolv_query( &params );
 }
 
+static NTSTATUS wow64_get_hostinfo( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 cname;
+        PTR32 ip4;
+        PTR32 ip6;
+    } const *params32 = args;
+
+    struct get_hostinfo_params params =
+    {
+        ULongToPtr(params32->name),
+        ULongToPtr(params32->cname),
+        ULongToPtr(params32->ip4),
+        ULongToPtr(params32->ip6)
+    };
+
+    return get_hostinfo( &params );
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_resolv_get_searchlist,
     wow64_resolv_get_serverlist,
     resolv_set_serverlist,
     wow64_resolv_query,
+    wow64_get_hostinfo,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );

@@ -97,6 +97,7 @@ static inline char *strdup_ua( const char *src )
     return dst;
 }
 
+void init_hostinfo( void );
 void free_host_entries( void );
 void destroy_cache( void );
 BOOL get_cache_data_table( DNS_CACHE_ENTRY ** );
@@ -125,12 +126,21 @@ struct query_params
     DWORD           *len;
 };
 
+struct get_hostinfo_params
+{
+    char        *name;
+    char        *cname;
+    IP4_ADDRESS *ip4;
+    IP6_ADDRESS *ip6;
+};
+
 enum unix_funcs
 {
     unix_get_searchlist,
     unix_get_serverlist,
     unix_set_serverlist,
     unix_query,
+    unix_get_hostinfo,
     unix_funcs_count
 };
 

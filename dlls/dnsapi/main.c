@@ -40,8 +40,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_call())
-            ERR( "No libresolv support, expect problems\n" );
+        if (!__wine_init_unix_call()) init_hostinfo();
+        else ERR( "No libresolv support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
