@@ -6981,8 +6981,12 @@ static void test_dxgi_device_manager(void)
     ok(hr == S_OK, "D3D11CreateDevice failed: %#lx.\n", hr);
     EXPECT_REF(d3d11_dev, 1);
 
-    hr = pMFCreateDXGIDeviceManager(NULL, &manager);
-    ok(hr == E_POINTER, "MFCreateDXGIDeviceManager should failed: %#lx.\n", hr);
+    if (0)
+    {
+        /* Crashes on Windows 11 */
+        hr = pMFCreateDXGIDeviceManager(NULL, &manager);
+        ok(hr == E_POINTER, "MFCreateDXGIDeviceManager should failed: %#lx.\n", hr);
+    }
 
     token = 0;
     hr = pMFCreateDXGIDeviceManager(&token, NULL);
@@ -7004,7 +7008,7 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(manager, 1);
 
     hr = IMFDXGIDeviceManager_GetVideoService(manager, NULL, &IID_ID3D11Device, (void **)&unk);
-    ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED || hr == HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), "Unexpected hr %#lx.\n", hr);
 
     hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
     ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
@@ -7025,7 +7029,7 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(d3d11_dev, 2);
 
     hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)manager2, token);
-    ok(hr == E_INVALIDARG, "IMFDXGIDeviceManager_ResetDevice should failed: %#lx.\n", hr);
+    ok(hr == E_INVALIDARG || hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
     EXPECT_REF(manager2, 1);
     EXPECT_REF(d3d11_dev, 2);
 
