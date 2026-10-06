@@ -458,7 +458,7 @@ static HRESULT parse_lbnd_list(struct band_track *This, IStream *stream, struct 
     struct chunk_entry chunk = {.parent = parent};
     DMUS_IO_BAND_ITEM_HEADER2 header2;
     struct band_entry *entry;
-    IDirectMusicBand *band;
+    IDirectMusicBand *band = NULL;
     HRESULT hr;
 
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
@@ -505,10 +505,10 @@ static HRESULT parse_lbnd_list(struct band_track *This, IStream *stream, struct 
             break;
         }
 
-        if (FAILED(hr)) break;
+        if (FAILED(hr)) return hr;
     }
 
-    if (FAILED(hr)) return hr;
+    if (!band) return S_FALSE;
 
     if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
     entry->head = header2;
