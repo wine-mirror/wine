@@ -3244,7 +3244,7 @@ static BOOL query_renderer_integer( struct egl_platform *egl, GLenum attribute, 
     case WGL_RENDERER_ACCELERATED_WINE: *value = egl->accelerated; return TRUE;
     case WGL_RENDERER_DEVICE_ID_WINE: *value = egl->device_id; return TRUE;
     case WGL_RENDERER_VENDOR_ID_WINE: *value = egl->vendor_id; return TRUE;
-    case WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE: *value = 0; return TRUE;
+    case WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE: *value = (egl->device_type == EGL_DEVICE_TYPE_INTEGRATED_GPU_EXT); return TRUE;
     case WGL_RENDERER_VERSION_WINE: memcpy( value, egl->version, sizeof(egl->version) ); return TRUE;
     case WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE:
         value[0] = egl->compat_version / 10;
