@@ -182,6 +182,7 @@ static const UINT_PTR host_page_mask = 0xfff;
 #endif
 
 /* Note: these are Windows limits, you cannot change them. */
+static void *dos_space_start     = (void *)0x10000;         /* start of available DOS space (between 0 and 64K) */
 static void *address_space_start = (void *)0x10000;
 #ifdef _WIN64
 static void *address_space_limit = (void *)0x7fffffff0000;  /* top of the total available address space */
@@ -2637,44 +2638,34 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     const size_t dosmem_size = 0x110000;
     int unix_prot = get_unix_prot( vprot ) & ~PROT_EXEC;
 
-    /* check for existing view */
-
-    if (find_view_range( 0, dosmem_size )) return STATUS_CONFLICTING_ADDRESSES;
-
     /* check without the first 64K */
 
-    if (mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
+    if (map_fixed_area( low_64k, dosmem_size - 0x10000, unix_prot ))
     {
-        addr = anon_mmap_tryfixed( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
-        if (addr == MAP_FAILED) return map_view( view, NULL, dosmem_size, 0, vprot, 0, 0, 0 );
+        TRACE( "failed to allocate DOS area at 64K\n" );
+        return map_view( view, NULL, dosmem_size, 0, vprot, 0, 0, 0 );
     }
 
     /* now try to allocate the low 64K too */
 
-    if (mmap_is_in_reserved_area( NULL, 0x10000 ) != 1)
+    if (dos_space_start == low_64k)
     {
         addr = anon_mmap_tryfixed( (void *)host_page_size, 0x10000 - host_page_size, unix_prot, 0 );
-        if (addr != MAP_FAILED)
-        {
-            if (!anon_mmap_fixed( NULL, host_page_size, unix_prot, 0 ))
-            {
-                addr = NULL;
-                TRACE( "successfully mapped low 64K range\n" );
-            }
-            else TRACE( "failed to map page 0\n" );
-        }
-        else
-        {
-            addr = low_64k;
-            TRACE( "failed to map low 64K range\n" );
-        }
+        if (addr != MAP_FAILED) dos_space_start = addr;
+        else TRACE( "failed to map low 64K range\n" );
     }
+    if (dos_space_start == (void *)host_page_size)
+    {
+        if (!anon_mmap_fixed( NULL, host_page_size, unix_prot, 0 )) dos_space_start = NULL;
+        else TRACE( "failed to map page 0\n" );
+    }
+    if (!dos_space_start) TRACE( "successfully mapped low 64K range\n" );
 
     /* now reserve the whole range */
 
-    size = (char *)dosmem_size - (char *)addr;
-    anon_mmap_fixed( addr, size, unix_prot, 0 );
-    return create_view( view, addr, size, vprot );
+    size = (char *)dosmem_size - (char *)dos_space_start;
+    anon_mmap_fixed( dos_space_start, size, unix_prot, 0 );
+    return create_view( view, dos_space_start, size, vprot );
 }
 
 
@@ -3640,8 +3631,9 @@ static void *alloc_virtual_heap( SIZE_T size )
  */
 void virtual_init(void)
 {
-    const struct preload_info **preload_info = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
-    int i;
+    void * const low_64k = (void *)0x10000;
+    const struct preload_info **preload_info_ptr = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
+    const struct preload_info *preload_info = preload_info_ptr ? *preload_info_ptr : NULL;
     pthread_mutexattr_t attr;
 
     pthread_key_create( &thread_data_key, NULL );
@@ -3663,11 +3655,21 @@ void virtual_init(void)
     host_addr_space_limit = address_space_limit;
 #endif
 
-    if (preload_info && *preload_info)
-        for (i = 0; (*preload_info)[i].size; i++)
-            mmap_add_reserved_area( (*preload_info)[i].addr, (*preload_info)[i].size );
+    if (preload_info) for (int i = 0; preload_info[i].size; i++)
+    {
+        void *addr = preload_info[i].addr;
+        size_t size = preload_info[i].size;
 
-    mmap_init( preload_info ? *preload_info : NULL );
+        dos_space_start = min( dos_space_start, addr );
+        if (addr < low_64k)
+        {
+            size -= (char *)low_64k - (char *)addr;
+            addr = low_64k;
+        }
+        mmap_add_reserved_area( addr, size );
+    }
+
+    mmap_init( preload_info );
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
@@ -4040,8 +4042,7 @@ static void set_large_address_space(void)
         char *end, *start = address_space_start;  /* low 64K */
         address_space_start = (void *)0x110000;
         end = min( address_space_start, main_module );
-        if (end > start && mmap_is_in_reserved_area( start, end - start ) == 1)
-            anon_mmap_fixed( start, end - start, PROT_READ | PROT_WRITE, 0 );
+        if (end > start) map_fixed_area( start, end - start, PROT_READ | PROT_WRITE );
     }
 
     if (is_win64)
