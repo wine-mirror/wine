@@ -1000,7 +1000,7 @@ sub get_arg_len($)
 my $ogl_url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
 my $ogl_commit="0b449b97cdf1043eef5e1f0e235cbbab6ec10c86";
 my $egl_url="https://raw.githubusercontent.com/KhronosGroup/EGL-Registry";
-my $egl_commit="3ae2b7c48690d2ce13cc6db3db02dfc0572be65e";
+my $egl_commit="e80a2e0050f02ae349e822f964671e364e05e711";
 my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
 
 system "mkdir", "-p", $cache;

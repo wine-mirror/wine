@@ -272,6 +272,11 @@ typedef unsigned int GLhandleARB;
 #define EGL_DEPTH_SIZE                                                             0x3025
 #define EGL_DEQUEUE_READY_TIME_ANDROID                                             0x343B
 #define EGL_DEVICE_EXT                                                             0x322C
+#define EGL_DEVICE_TYPE_CPU_EXT                                                    0x3594
+#define EGL_DEVICE_TYPE_DISCRETE_GPU_EXT                                           0x3593
+#define EGL_DEVICE_TYPE_EXT                                                        0x3590
+#define EGL_DEVICE_TYPE_INTEGRATED_GPU_EXT                                         0x3592
+#define EGL_DEVICE_TYPE_OTHER_EXT                                                  0x3591
 #define EGL_DEVICE_UUID_EXT                                                        0x335C
 #define EGL_DISCARD_SAMPLES_ARM                                                    0x3286
 #define EGL_DISPLAY_PRESENT_TIME_ANDROID                                           0x343A
@@ -10850,6 +10855,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(EGL_EXT_device_persistent_id) \
     USE_GL_EXT(EGL_EXT_device_query) \
     USE_GL_EXT(EGL_EXT_device_query_name) \
+    USE_GL_EXT(EGL_EXT_device_type) \
     USE_GL_EXT(EGL_EXT_display_alloc) \
     USE_GL_EXT(EGL_EXT_explicit_device) \
     USE_GL_EXT(EGL_EXT_gl_colorspace_bt2020_hlg) \
