@@ -537,7 +537,7 @@ static HRESULT parse_lbdl_list(struct band_track *This, IStream *stream, struct 
             break;
         }
 
-        if (FAILED(hr)) break;
+        if (FAILED(hr)) return hr;
     }
 
     return S_OK;
