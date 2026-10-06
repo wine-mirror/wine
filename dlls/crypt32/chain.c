@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <string.h>
 #include <wchar.h>
 
 #include "windef.h"
@@ -29,6 +30,10 @@
 #include "wininet.h"
 #include "wine/debug.h"
 #include "crypt32_private.h"
+#include "inaddr.h"
+#include "in6addr.h"
+#include "ip2string.h"
+#include "ntstatus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 WINE_DECLARE_DEBUG_CHANNEL(chain);
@@ -3199,6 +3204,10 @@ static BOOL match_dns_to_subject_alt_name(const CERT_EXTENSION *ext,
     BOOL matches = FALSE;
     CERT_ALT_NAME_INFO *subjectName;
     DWORD size;
+    IN_ADDR server_ip_v4;
+    IN6_ADDR server_ip_v6;
+    const WCHAR *terminator;
+    BOOL have_v4 = FALSE, have_v6 = FALSE, parsed_ip = FALSE;
 
     TRACE_(chain)("%s\n", debugstr_w(server_name));
     /* This could be spoofed by the embedded NULL vulnerability, since the
@@ -3253,6 +3262,28 @@ static BOOL match_dns_to_subject_alt_name(const CERT_EXTENSION *ext,
                 }
                 else if (!wcsicmp(server_name,
                  subjectName->rgAltEntry[i].pwszDNSName))
+                    matches = TRUE;
+            }
+            if (subjectName->rgAltEntry[i].dwAltNameChoice ==
+             CERT_ALT_NAME_IP_ADDRESS)
+            {
+                if (!parsed_ip)
+                {
+                    parsed_ip = TRUE;
+                    have_v4 = RtlIpv4StringToAddressW(server_name, TRUE,
+                     &terminator, &server_ip_v4) == STATUS_SUCCESS &&
+                     *terminator == 0;
+                    have_v6 = !have_v4 && RtlIpv6StringToAddressW(server_name,
+                     &terminator, &server_ip_v6) == STATUS_SUCCESS &&
+                     *terminator == 0;
+                }
+                if (subjectName->rgAltEntry[i].IPAddress.cbData == 4 &&
+                 have_v4 && !memcmp(&server_ip_v4.S_un.S_addr,
+                 subjectName->rgAltEntry[i].IPAddress.pbData, 4))
+                    matches = TRUE;
+                else if (subjectName->rgAltEntry[i].IPAddress.cbData == 16 &&
+                 have_v6 && !memcmp(server_ip_v6.u.Byte,
+                 subjectName->rgAltEntry[i].IPAddress.pbData, 16))
                     matches = TRUE;
             }
         }
