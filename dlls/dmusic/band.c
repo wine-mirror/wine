@@ -323,10 +323,12 @@ static HRESULT parse_dmbd_chunk(struct band *This, IStream *stream, struct chunk
             break;
         }
 
-        if (FAILED(hr)) break;
+        if (FAILED(hr)) return hr;
     }
 
-    return hr;
+    if (list_empty(&This->instruments))
+        return DMUS_E_UNSUPPORTED_STREAM;
+    return S_OK;
 }
 
 static HRESULT WINAPI band_object_ParseDescriptor(IDirectMusicObject *iface,
