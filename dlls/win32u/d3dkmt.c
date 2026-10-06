@@ -266,7 +266,7 @@ static void free_object_handle( struct d3dkmt_object *object )
     pthread_mutex_unlock( &d3dkmt_lock );
 }
 
-/* return a pointer to a d3dkmt object from its local handle */
+/* return a pointer to a generic d3dkmt object from its local handle, use type-specific helpers below instead */
 static void *get_d3dkmt_object( D3DKMT_HANDLE local, enum d3dkmt_type type )
 {
     unsigned int index = handle_to_index( local );
@@ -281,6 +281,7 @@ static void *get_d3dkmt_object( D3DKMT_HANDLE local, enum d3dkmt_type type )
     return object;
 }
 
+/* allocate memory for a generic d3dkmt object, use type-specific helpers below instead */
 static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **obj )
 {
     struct d3dkmt_object *object;
@@ -383,12 +384,37 @@ static NTSTATUS d3dkmt_object_query( enum d3dkmt_type type, D3DKMT_HANDLE global
     return status;
 }
 
+/* free a generic d3dkmt object and its handles, use type-specific helpers below instead */
 static void d3dkmt_object_free( struct d3dkmt_object *object )
 {
     TRACE( "object %p/%#x, global %#x\n", object, object->local, object->global );
     if (object->local) free_object_handle( object );
     if (object->handle) NtClose( object->handle );
     free( object );
+}
+
+static void d3dkmt_adapter_free( struct d3dkmt_adapter *adapter )
+{
+    if (adapter) d3dkmt_object_free( &adapter->obj );
+}
+
+static NTSTATUS d3dkmt_adapter_alloc( struct d3dkmt_adapter **ret )
+{
+    struct d3dkmt_adapter *adapter;
+    NTSTATUS status;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*adapter), D3DKMT_ADAPTER, (void **)&adapter ))) goto done;
+    if ((status = alloc_object_handle( &adapter->obj ))) d3dkmt_adapter_free( adapter );
+done:
+    *ret = status ? NULL : adapter;
+    return status;
+}
+
+static struct d3dkmt_adapter *get_d3dkmt_adapter( D3DKMT_HANDLE handle )
+{
+    struct d3dkmt_object *obj;
+    if (!(obj = get_d3dkmt_object( handle, D3DKMT_ADAPTER ))) return NULL;
+    return CONTAINING_RECORD( obj, struct d3dkmt_adapter, obj );
 }
 
 static struct vulkan_instance *d3dkmt_vulkan_instance; /* Vulkan instance for D3DKMT functions */
@@ -481,14 +507,14 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
-    struct d3dkmt_object *adapter;
+    struct d3dkmt_adapter *adapter;
 
     TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hAdapter) return STATUS_INVALID_PARAMETER;
-    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+    if (!(adapter = get_d3dkmt_adapter( desc->hAdapter ))) return STATUS_INVALID_PARAMETER;
 
-    d3dkmt_object_free( adapter );
+    d3dkmt_adapter_free( adapter );
     return STATUS_SUCCESS;
 }
 
@@ -524,8 +550,7 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
     struct d3dkmt_adapter *adapter;
     NTSTATUS status;
 
-    if ((status = d3dkmt_object_alloc( sizeof(*adapter), D3DKMT_ADAPTER, (void **)&adapter ))) return status;
-    if ((status = alloc_object_handle( &adapter->obj ))) goto failed;
+    if ((status = d3dkmt_adapter_alloc( &adapter ))) return status;
 
     if (!(instance = get_d3dkmt_vulkan_instance())) WARN( "Vulkan is unavailable.\n" );
     else adapter->physical_device = get_vulkan_physical_device( instance, &desc->AdapterLuid );
@@ -533,10 +558,6 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
 
     desc->hAdapter = adapter->obj.local;
     return STATUS_SUCCESS;
-
-failed:
-    d3dkmt_object_free( &adapter->obj );
-    return status;
 }
 
 /******************************************************************************
@@ -553,7 +574,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
     if (!desc) return STATUS_INVALID_PARAMETER;
     if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout) FIXME( "Flags unsupported.\n" );
 
-    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+    if (!(adapter = get_d3dkmt_adapter( desc->hAdapter ))) return STATUS_INVALID_PARAMETER;
     if ((status = d3dkmt_object_alloc( sizeof(*device), D3DKMT_DEVICE, (void **)&device ))) return status;
     if ((status = alloc_object_handle( &device->obj ))) goto failed;
 
@@ -662,7 +683,7 @@ NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *des
     if (status != STATUS_SUCCESS) return status;
     if (!(info.GrantedAccess & PROCESS_QUERY_INFORMATION)) return STATUS_ACCESS_DENIED;
 
-    if (!(adapter = get_d3dkmt_object( desc->hAdapter, D3DKMT_ADAPTER ))) return STATUS_INVALID_PARAMETER;
+    if (!(adapter = get_d3dkmt_adapter( desc->hAdapter ))) return STATUS_INVALID_PARAMETER;
 
     desc->Budget = 0;
     desc->CurrentUsage = 0;
