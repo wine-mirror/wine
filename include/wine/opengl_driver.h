@@ -219,6 +219,7 @@ struct egl_platform
     /* filled by win32u after init_egl_platform */
     unsigned int         index;
     EGLDeviceEXT         device;
+    UINT                 device_type;
     EGLDisplay           display;
     UINT                 config_count;
     EGLConfig           *configs;

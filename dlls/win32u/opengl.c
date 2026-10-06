@@ -1750,20 +1750,24 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     for (int i = 0; i < count; i++)
     {
         BOOLEAN extensions[GL_EXTENSION_COUNT] = {0};
+        EGLAttrib device_type = EGL_DEVICE_TYPE_OTHER_EXT;
 
         if (!(str = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS ))) continue;
         parse_extensions( str, extensions, TRUE );
         TRACE( "EGL device %#x extensions:\n", i );
         dump_extensions( extensions );
 
+        if (extensions[EGL_EXT_device_type])
+            funcs->p_eglQueryDeviceAttribEXT( devices[i], EGL_DEVICE_TYPE_EXT, &device_type );
+
         if (devices[i] == display_egl.device)
         {
+            display_egl.device_type = device_type;
             memcpy( display_egl.extensions, extensions, sizeof(extensions) );
             continue;
         }
 
-        /* Assume that all devices without EGL_MESA_device_software are accelerated. */
-        if (extensions[EGL_MESA_device_software]) continue;
+        if (device_type == EGL_DEVICE_TYPE_CPU_EXT || extensions[EGL_MESA_device_software]) continue;
 
         if (!(egl = calloc( 1, sizeof(*egl) ))) break;
 
@@ -1771,6 +1775,7 @@ static void init_egl_devices( struct opengl_funcs *funcs )
         egl->type = EGL_PLATFORM_DEVICE_EXT;
         egl->native_display = devices[i];
         egl->device = devices[i];
+        egl->device_type = device_type;
         egl->index = list_count( &devices_egl );
         memcpy( egl->extensions, extensions, sizeof(extensions) );
 
@@ -1846,8 +1851,9 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 
     TRACE( "Initializing device %u (%p)\n", egl->index, egl->device);
 
-    /* Assume that all devices without EGL_MESA_device_software are accelerated. */
-    egl->accelerated = !egl->extensions[EGL_MESA_device_software];
+    egl->accelerated = (egl->device_type != EGL_DEVICE_TYPE_CPU_EXT) && !egl->extensions[EGL_MESA_device_software];
+
+    TRACE( "  - device_type: %#x\n", egl->device_type );
     TRACE( "  - accelerated: %u\n", egl->accelerated );
 
     /* EGL does not provide a convenient way to get device / vendor ID, so we have to do it
