@@ -442,10 +442,10 @@ static void mmap_add_reserved_area( void *addr, SIZE_T size )
     struct list *ptr, *next;
     void *end, *area_end;
 
-    assert( !((UINT_PTR)addr & host_page_mask) );
-    assert( !(size & host_page_mask) );
+    assert( !((UINT_PTR)addr & granularity_mask) );
+    assert( !(size & granularity_mask) );
 
-    if (!((intptr_t)addr + size)) size -= host_page_size;  /* avoid wrap-around */
+    if (!((intptr_t)addr + size)) size -= granularity_mask + 1;  /* avoid wrap-around */
     end = (char *)addr + size;
 
     LIST_FOR_EACH( ptr, &reserved_areas )
@@ -494,10 +494,10 @@ static void mmap_remove_reserved_area( void *addr, SIZE_T size )
     struct reserved_area *area;
     struct list *ptr;
 
-    assert( !((UINT_PTR)addr & host_page_mask) );
-    assert( !(size & host_page_mask) );
+    assert( !((UINT_PTR)addr & granularity_mask) );
+    assert( !(size & granularity_mask) );
 
-    if (!((intptr_t)addr + size)) size -= host_page_size;  /* avoid wrap-around */
+    if (!((intptr_t)addr + size)) size -= granularity_mask + 1;  /* avoid wrap-around */
 
     ptr = list_head( &reserved_areas );
     /* find the first area covering address */
@@ -608,21 +608,13 @@ static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
 static void reserve_area( void *addr, void *end )
 {
 #ifdef __APPLE__
-
-#ifdef __i386__
-    static const mach_vm_address_t max_address = VM_MAX_ADDRESS;
-#else
-    static const mach_vm_address_t max_address = MACH_VM_MAX_ADDRESS;
-#endif
     mach_vm_address_t address = (mach_vm_address_t)addr;
     mach_vm_address_t end_address = (mach_vm_address_t)end;
-
-    if (!end_address || max_address < end_address)
-        end_address = max_address;
 
     while (address < end_address)
     {
         mach_vm_address_t hole_address = address;
+        size_t hole_size;
         kern_return_t ret;
         mach_vm_size_t size;
         vm_region_basic_info_data_64_t info;
@@ -634,16 +626,16 @@ static void reserve_area( void *addr, void *end )
                              (vm_region_info_t)&info, &count, &dummy_object_name);
         if (ret != KERN_SUCCESS)
         {
-            address = max_address;
+            address = end_address;
             size = 0;
         }
 
         if (end_address < address)
             address = end_address;
-        if (hole_address < address)
+
+        if (hole_address < address && (hole_size = (address - hole_address) & ~granularity_mask))
         {
             /* found a hole, attempt to reserve it. */
-            size_t hole_size = address - hole_address;
             mach_vm_address_t alloc_address = hole_address;
 
             ret = mach_vm_map( mach_task_self(), &alloc_address, hole_size, 0, VM_FLAGS_FIXED,
@@ -657,7 +649,7 @@ static void reserve_area( void *addr, void *end )
                 continue;
             }
         }
-        address += size;
+        address = (address + size + granularity_mask) & ~granularity_mask;
     }
 #else
     size_t size = (char *)end - (char *)addr;
@@ -3596,7 +3588,7 @@ static void *alloc_virtual_heap( SIZE_T size )
         unsetenv( "WINEPRELOADRESERVE" );
     }
 
-    size = ROUND_SIZE( 0, size, host_page_mask );
+    size = ROUND_SIZE( 0, size, granularity_mask );
 
     LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
     {
