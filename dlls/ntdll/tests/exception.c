@@ -7863,6 +7863,22 @@ static void test_thread_context(void)
     ok( orig_context.X[0] && orig_context.X[0] != fill, "unexpected x0 = %Ix\n", orig_context.X[0] );
     ok( orig_context.X[18] && orig_context.X[18] != fill, "unexpected x18 = %Ix\n", orig_context.X[18] );
 
+    context = orig_context;
+    context.ContextFlags = CONTEXT_ARM64_CONTROL;
+    context.Cpsr = ~orig_context.Cpsr;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_CONTROL;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( (orig_context.Cpsr ^ context.Cpsr) == 0xf620fc30, "unexpected cpsr modification = %lx\n",
+        orig_context.Cpsr ^ context.Cpsr );
+
+    status = pNtSetContextThread( thread, &orig_context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
     memset( &context, 0xcc, sizeof(context) );
     context.ContextFlags = CONTEXT_ARM64_FULL;
     status = pNtGetContextThread( thread, &context );
