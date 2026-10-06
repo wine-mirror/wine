@@ -1929,7 +1929,8 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
             memcpy( egl->version, values, sizeof(egl->version) );
         TRACE( "  - version: %u.%u.%u\n", egl->version[0], egl->version[1], egl->version[2] );
 
-        parse_extensions( (const char *)funcs->p_glGetString( GL_EXTENSIONS ), extensions, TRUE );
+        parse_current_extensions( (context == core_context ? egl->core_version : egl->compat_version) / 10, extensions );
+
         if (extensions[GL_NVX_gpu_memory_info])
         {
             funcs->p_glGetIntegerv( GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, values );
