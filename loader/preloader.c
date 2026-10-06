@@ -143,6 +143,7 @@ static struct wine_preload_info preload_info[] =
 #endif
 
 static size_t page_size, page_mask;
+static const size_t granularity_mask = 0xffff;
 static char *preloader_start, *preloader_end;
 
 struct wld_link_map {
@@ -1287,13 +1288,13 @@ static void preload_reserve( const char *str )
         else if (*p == '-')
         {
             if (!first) goto error;
-            start = (void *)(result & ~page_mask);
+            start = (void *)(result & ~granularity_mask);
             result = 0;
             first = 0;
         }
         else goto error;
     }
-    if (!first) end = (void *)((result + page_mask) & ~page_mask);
+    if (!first) end = (void *)((result + granularity_mask) & ~granularity_mask);
     else if (result) goto error;  /* single value '0' is allowed */
 
     /* sanity checks */

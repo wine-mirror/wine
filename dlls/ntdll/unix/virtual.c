@@ -3590,8 +3590,8 @@ static void *alloc_virtual_heap( SIZE_T size )
         unsigned long start, end;
         if (sscanf( preload, "%lx-%lx", &start, &end ) == 2)
         {
-            preload_reserve_start = ROUND_ADDR( start, host_page_mask );
-            preload_reserve_end = (void *)ROUND_SIZE( 0, end, host_page_mask );
+            preload_reserve_start = ROUND_ADDR( start, granularity_mask );
+            preload_reserve_end = (void *)ROUND_SIZE( 0, end, granularity_mask );
         }
         unsetenv( "WINEPRELOADRESERVE" );
     }
