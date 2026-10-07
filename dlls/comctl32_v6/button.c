@@ -578,9 +578,9 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     case WM_KEYDOWN:
 	if (wParam == VK_SPACE)
 	{
+            SetCapture( hWnd );
 	    SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
             infoPtr->state |= BUTTON_BTNPRESSED;
-            SetCapture( hWnd );
 	}
         else if (wParam == VK_UP || wParam == VK_DOWN)
         {
