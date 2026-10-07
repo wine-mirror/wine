@@ -17260,6 +17260,85 @@ static void test_clipper_in_exclusive_fullscreen(void)
     pump_messages();
 }
 
+static void test_sysmem_depth_fill(void)
+{
+    DDSURFACEDESC surface_desc;
+    IDirectDrawSurface *surface;
+    IDirectDraw *ddraw;
+    WORD *data, *data2;
+    HWND window;
+    DDBLTFX fx;
+    HRESULT hr;
+    LONG pitch;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER | DDSCAPS_SYSTEMMEMORY;
+    surface_desc.dwZBufferBitDepth = 16;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a system memory depth buffer, hr %#lx.\n", hr);
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    data = surface_desc.lpSurface;
+    pitch = surface_desc.lPitch;
+    hr = IDirectDrawSurface_Unlock(surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    data[5 * pitch / sizeof(*data) + 3] = 0x1234;
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.dwFillDepth = 0xffff;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(data[5 * pitch / sizeof(*data) + 3] == 0xffff, "Got unexpected depth %#x.\n",
+            data[5 * pitch / sizeof(*data) + 3]);
+    todo_wine ok(data[63 * pitch / sizeof(*data) + 63] == 0xffff, "Got unexpected depth %#x.\n",
+            data[63 * pitch / sizeof(*data) + 63]);
+
+    data[5 * pitch / sizeof(*data) + 3] = 0x4321;
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    data2 = surface_desc.lpSurface;
+    ok(data2 == data, "Got unexpected pointer %p, expected %p.\n", data2, data);
+    todo_wine ok(data2[5 * pitch / sizeof(*data) + 3] == 0x4321, "Got unexpected depth %#x.\n",
+            data2[5 * pitch / sizeof(*data) + 3]);
+    ok(data2[5 * pitch / sizeof(*data) + 4] == 0xffff, "Got unexpected depth %#x.\n",
+            data2[5 * pitch / sizeof(*data) + 4]);
+    hr = IDirectDrawSurface_Unlock(surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    fx.dwFillDepth = 0x8000;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(data[5 * pitch / sizeof(*data) + 3] == 0x8000, "Got unexpected depth %#x.\n",
+            data[5 * pitch / sizeof(*data) + 3]);
+    todo_wine ok(data[0] == 0x8000, "Got unexpected depth %#x.\n", data[0]);
+
+    IDirectDrawSurface_Release(surface);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -17388,4 +17467,5 @@ START_TEST(ddraw1)
     test_yuv_blit();
     test_blit_to_self();
     test_clipper_in_exclusive_fullscreen();
+    test_sysmem_depth_fill();
 }
