@@ -670,23 +670,6 @@ static void reserve_area( void *addr, void *end )
 #endif /* __APPLE__ */
 }
 
-static void mmap_init( const struct preload_info *preload_info )
-{
-#ifndef _WIN64
-    if (!preload_info)
-    {
-        reserve_area( (void *)0x00010000, (void *)0x40000000 );
-        reserve_area( (void *)0x7f000000, (void *)0x81000000 );
-    }
-#else
-    reserve_area( (void *)0x7ffff0000000, (void *)0x7ffffe000000 ); /* top-down area */
-    if (preload_info) return;
-    reserve_area( (void *)0x000000010000, (void *)0x000068000000 );
-    reserve_area( (void *)0x00007f000000, (void *)0x00007fff0000 );
-#endif
-}
-
-
 /***********************************************************************
  *           get_wow_user_space_limit
  */
@@ -3532,53 +3515,6 @@ done:
 }
 
 
-/* allocate some space for the virtual heap, if possible from a reserved area */
-#ifndef _WIN64
-static void *alloc_virtual_heap( SIZE_T size )
-{
-    struct reserved_area *area;
-    const char *preload = getenv( "WINEPRELOADRESERVE" );
-    void *ret, *preload_reserve_start = NULL, *preload_reserve_end = NULL;
-
-    if (preload)
-    {
-        unsigned long start, end;
-        if (sscanf( preload, "%lx-%lx", &start, &end ) == 2)
-        {
-            preload_reserve_start = ROUND_ADDR( start, granularity_mask );
-            preload_reserve_end = (void *)ROUND_SIZE( 0, end, granularity_mask );
-        }
-        unsetenv( "WINEPRELOADRESERVE" );
-    }
-
-    size = ROUND_SIZE( 0, size, granularity_mask );
-
-    LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
-    {
-        void *base = area->base;
-        void *end = (char *)base + area->size;
-
-        if (preload_reserve_end >= end)
-        {
-            if (preload_reserve_start <= base) continue;  /* no space in that area */
-            if (preload_reserve_start < end) end = preload_reserve_start;
-        }
-        else if (preload_reserve_end > base)
-        {
-            if (preload_reserve_start <= base) base = preload_reserve_end;
-            else if ((char *)end - (char *)preload_reserve_end >= size) base = preload_reserve_end;
-            else end = preload_reserve_start;
-        }
-        if ((char *)end - (char *)base < size) continue;
-        ret = anon_mmap_fixed( (char *)end - size, size, PROT_READ | PROT_WRITE, 0 );
-        if (ret == MAP_FAILED) continue;
-        mmap_remove_reserved_area( ret, size );
-        return ret;
-    }
-    return anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
-}
-#endif
-
 /***********************************************************************
  *           virtual_init
  */
@@ -3616,25 +3552,26 @@ void virtual_init(void)
         }
         mmap_add_reserved_area( addr, size );
     }
+    else
+    {
+        reserve_area( (void *)0x00010000, (void *)0x40000000 );
+        reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
+    }
 
-    mmap_init( preload_info );
+    if (is_win64) reserve_area( (void *)0x7ffff0000000, (void *)0x7ffffe000000 ); /* top-down area */
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
-    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     pages_vprot = anon_mmap_alloc( pages_vprot_size * sizeof(*pages_vprot), PROT_READ | PROT_WRITE );
 #else
-    /* try to find space in a reserved area for the views and pages protection table */
-    view_block_start = alloc_virtual_heap( 2 * view_block_size + (1U << (32 - page_shift)) );
-    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-    free_ranges = (void *)((char *)view_block_start + view_block_size);
-    pages_vprot = (void *)((char *)view_block_start + 2 * view_block_size);
+    pages_vprot = anon_mmap_alloc( 1U << (32 - page_shift), PROT_READ | PROT_WRITE );
 #endif
-    assert( view_block_start != MAP_FAILED );
-    assert( free_ranges != MAP_FAILED );
     assert( pages_vprot != MAP_FAILED );
+    view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+    assert( view_block_start != MAP_FAILED );
+    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+    assert( free_ranges != MAP_FAILED );
     wine_rb_init( &views_tree, compare_view );
     kernel_writewatch_init();
 
