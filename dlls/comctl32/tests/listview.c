@@ -3884,6 +3884,9 @@ static void test_ownerdata(void)
                 "ownerdata remove focus all notification", TRUE);
 
     /* set all cut */
+    res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_CUT);
+    ok(!res, "Unexpected item state %#lx.\n", res);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     item.stateMask = LVIS_CUT;
     item.state     = LVIS_CUT;
@@ -3901,6 +3904,10 @@ static void test_ownerdata(void)
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_setstate_all_parent_seq,
                 "ownerdata cut all notification", FALSE);
+
+    res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_CUT);
+    todo_wine
+    ok(res == LVIS_CUT, "Unexpected item state %#lx.\n", res);
 
     /* all marked cut, try again */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
