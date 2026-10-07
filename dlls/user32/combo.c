@@ -1592,8 +1592,8 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
        {
 	   /* drop down the listbox and start tracking */
 
-           lphc->wState |= CBF_CAPTURE;
            NtUserSetCapture( hWnd );
+           lphc->wState |= CBF_CAPTURE;
            CBDropDown( lphc );
        }
        if( bButton ) CBRepaintButton( lphc );
