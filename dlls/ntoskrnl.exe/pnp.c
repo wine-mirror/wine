@@ -353,6 +353,7 @@ static void create_dyn_data_key( DEVICE_OBJECT *device )
     static unsigned int counter;
     WCHAR key_path[29];
     DWORD disposition;
+    DWORD problem = 0;
     LSTATUS ret;
     HKEY key;
 
@@ -374,6 +375,7 @@ static void create_dyn_data_key( DEVICE_OBJECT *device )
         {
             RegSetValueExW( key, L"HardWareKey", 0, REG_SZ, (BYTE *)device_instance_id,
                     wcslen( device_instance_id ) * sizeof(WCHAR) );
+            RegSetValueExW( key, L"Problem", 0, REG_DWORD, (BYTE *)&problem, sizeof(problem) );
             wine_device->dyn_data_key = key;
             break;
         }
