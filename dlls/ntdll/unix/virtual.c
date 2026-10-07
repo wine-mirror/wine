@@ -607,6 +607,8 @@ static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
 
 static void reserve_area( void *addr, void *end )
 {
+    /* use a larger alignment for 64-bit space, we don't need to reserve every single block */
+    size_t align_mask = ((ULONGLONG)(UINT_PTR)addr >> 32) ? 0xffffff : granularity_mask;
 #ifdef __APPLE__
     mach_vm_address_t address = (mach_vm_address_t)addr;
     mach_vm_address_t end_address = (mach_vm_address_t)end;
@@ -633,7 +635,7 @@ static void reserve_area( void *addr, void *end )
         if (end_address < address)
             address = end_address;
 
-        if (hole_address < address && (hole_size = (address - hole_address) & ~granularity_mask))
+        if (hole_address < address && (hole_size = (address - hole_address) & ~align_mask))
         {
             /* found a hole, attempt to reserve it. */
             mach_vm_address_t alloc_address = hole_address;
@@ -649,19 +651,20 @@ static void reserve_area( void *addr, void *end )
                 continue;
             }
         }
-        address = (address + size + granularity_mask) & ~granularity_mask;
+        address = (address + size + align_mask) & ~align_mask;
     }
 #else
     size_t size = (char *)end - (char *)addr;
 
     if (!size) return;
+    if (addr >= host_addr_space_limit) return;
 
     if (anon_mmap_tryfixed( addr, size, PROT_NONE, MAP_NORESERVE ) != MAP_FAILED)
     {
         mmap_add_reserved_area( addr, size );
         return;
     }
-    size = (size / 2) & ~granularity_mask;
+    size = (size / 2) & ~align_mask;
     if (size)
     {
         reserve_area( addr, (char *)addr + size );
@@ -3558,7 +3561,7 @@ void virtual_init(void)
         reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
     }
 
-    if (is_win64) reserve_area( (void *)0x7ffff0000000, (void *)0x7ffffe000000 ); /* top-down area */
+    if (is_win64) reserve_area( (void *)0x7ff000000000, (void *)0x7ff600000000 ); /* top-down area */
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
