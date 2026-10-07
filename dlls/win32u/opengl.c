@@ -1751,12 +1751,16 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     {
         BOOLEAN extensions[GL_EXTENSION_COUNT] = {0};
 
-        if (devices[i] == display_egl.device) continue;
-
         if (!(str = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS ))) continue;
         parse_extensions( str, extensions, TRUE );
         TRACE( "EGL device %#x extensions:\n", i );
         dump_extensions( extensions );
+
+        if (devices[i] == display_egl.device)
+        {
+            memcpy( display_egl.extensions, extensions, sizeof(extensions) );
+            continue;
+        }
 
         /* Assume that all devices without EGL_MESA_device_software are accelerated. */
         if (extensions[EGL_MESA_device_software]) continue;
