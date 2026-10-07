@@ -131,6 +131,7 @@ struct swapchain_desc
     unsigned int width, height;
     DXGI_SWAP_EFFECT swap_effect;
     DWORD flags;
+    DXGI_FORMAT format;
 };
 
 static ID3D10Blob *compile_shader(const char *source, size_t len, const char *profile)
@@ -1763,6 +1764,7 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window,
         dxgi_desc.Windowed = swapchain_desc->windowed;
         dxgi_desc.SwapEffect = swapchain_desc->swap_effect;
         dxgi_desc.BufferCount = swapchain_desc->buffer_count;
+        dxgi_desc.BufferDesc.Format = swapchain_desc->format;
         if (swapchain_desc->width)
             dxgi_desc.BufferDesc.Width = swapchain_desc->width;
         if (swapchain_desc->height)
@@ -15961,8 +15963,13 @@ done:
 
 static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
 {
+    static const struct vec4 clear_color = {0.2f, 0.3f, 0.5f, 1.0f};
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     struct device_desc device_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Texture2D *backbuffer;
+    ID3D11RenderTargetView *rtv;
     IDXGISwapChain *swapchain;
     IDXGIDevice *dxgi_device;
     HRESULT hr, expected_hr;
@@ -15971,6 +15978,9 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
     ID3D11Device *device;
     unsigned int i;
     ULONG refcount;
+    COLORREF color;
+    RECT rect;
+    HDC dc;
 
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
@@ -15982,10 +15992,14 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchain_desc.BufferCount = 1;
-    swapchain_desc.OutputWindow = CreateWindowA("static", "d3d11_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
     swapchain_desc.Windowed = TRUE;
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
+
+    SetRect(&rect, 0, 0, swapchain_desc.BufferDesc.Width, swapchain_desc.BufferDesc.Height);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+    swapchain_desc.OutputWindow = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
 
     device_desc.feature_level = &feature_level;
     device_desc.flags = 0;
@@ -15994,6 +16008,7 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
         skip("Failed to create device.\n");
         return;
     }
+    ID3D11Device_GetImmediateContext(device, &context);
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -16041,10 +16056,74 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
                     hr, expected_hr, format);
         if (FAILED(hr))
             continue;
+
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        switch (format)
+        {
+            case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+                rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                break;
+            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+                rtv_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+                break;
+
+            default:
+                rtv_desc.Format = format;
+        }
+        rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtv_desc.Texture2D.MipSlice = 0;
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer,
+                &rtv_desc, &rtv);
+        /* DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM can't create RTVs */
+        if (SUCCEEDED(hr))
+        {
+            ID3D11DeviceContext_ClearRenderTargetView(context, rtv, (const float *)&clear_color);
+
+            IDXGISwapChain_Present(swapchain, 0, 0);
+
+            refcount = ID3D11RenderTargetView_Release(rtv);
+            ok(!refcount, "RTV has %lu references left.\n", refcount);
+
+            /* Reading from the Window is supposed to be more reliable at least on Windows, but
+             * fails on Wine. */
+            dc = GetDC(swapchain_desc.OutputWindow);
+            color = GetPixel(dc, 100, 100);
+            ReleaseDC(swapchain_desc.OutputWindow, dc);
+            if (!color || color == 0xffffff)
+            {
+                /* Try to read from the screen if reading the window returned obvious garbage. */
+                POINT p = {100, 100};
+                MapWindowPoints(swapchain_desc.OutputWindow, NULL, &p, 1);
+                dc = GetDC(NULL);
+                color = GetPixel(dc, p.x, p.y);
+                ReleaseDC(NULL, dc);
+            }
+            if (format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+            {
+                /* This is todo because Wine doesn't implement the sRGB conversion for float back
+                 * buffers. */
+                todo_wine ok(compare_color(color, 0x00bc957c, 1), "Got unexpected color %#lx, format %#x\n",
+                        color, format);
+            }
+            else
+            {
+                /* Wine's WGL fails to set some pixel formats but the error is not reported back to
+                 * the test. */
+                todo_wine_if(!color || color == 0xffffff)
+                        ok(compare_color(color, 0x00804d33, 1), "Got unexpected color %#lx, format %#x\n",
+                        color, format);
+            }
+        }
+
+        refcount = ID3D11Texture2D_Release(backbuffer);
+        ok(!refcount, "Backbuffer has %lu references left.\n", refcount);
         refcount = IDXGISwapChain_Release(swapchain);
         ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     }
 
+    ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
@@ -16223,6 +16302,7 @@ static void test_swapchain_flip(void)
     desc.swap_effect = DXGI_SWAP_EFFECT_SEQUENTIAL;
     desc.windowed = TRUE;
     desc.flags = SWAPCHAIN_FLAG_SHADER_INPUT;
+    desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain = create_swapchain(device, window, &desc);
 
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer_0);
@@ -21757,32 +21837,52 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     release_test_context(&test_context);
 }
 
+static const D3D_FEATURE_LEVEL all_feature_levels[] =
+{
+    D3D_FEATURE_LEVEL_11_1,
+    D3D_FEATURE_LEVEL_11_0,
+    D3D_FEATURE_LEVEL_10_1,
+    D3D_FEATURE_LEVEL_10_0,
+    D3D_FEATURE_LEVEL_9_3,
+    D3D_FEATURE_LEVEL_9_2,
+    D3D_FEATURE_LEVEL_9_1
+};
+
 static void queue_for_each_feature_level_in_range(D3D_FEATURE_LEVEL begin,
         D3D_FEATURE_LEVEL end, void (*test_func)(const D3D_FEATURE_LEVEL fl))
 {
-    static const D3D_FEATURE_LEVEL feature_levels[] =
-    {
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
-        D3D_FEATURE_LEVEL_9_3,
-        D3D_FEATURE_LEVEL_9_2,
-        D3D_FEATURE_LEVEL_9_1
-    };
     unsigned int i;
 
     assert(begin <= end);
-    for (i = 0; i < ARRAY_SIZE(feature_levels); ++i)
+    for (i = 0; i < ARRAY_SIZE(all_feature_levels); ++i)
     {
-        if (begin <= feature_levels[i] && feature_levels[i] <= end)
-            queue_test_fl(test_func, feature_levels[i]);
+        if (begin <= all_feature_levels[i] && all_feature_levels[i] <= end)
+            queue_test_fl(test_func, all_feature_levels[i]);
+    }
+}
+
+static void run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL begin,
+        D3D_FEATURE_LEVEL end, void (*test_func)(const D3D_FEATURE_LEVEL fl))
+{
+    unsigned int i;
+
+    assert(begin <= end);
+    for (i = 0; i < ARRAY_SIZE(all_feature_levels); ++i)
+    {
+        if (begin <= all_feature_levels[i] && all_feature_levels[i] <= end)
+            test_func(all_feature_levels[i]);
     }
 }
 
 static void queue_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
 {
     queue_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_9_1,
+            D3D_FEATURE_LEVEL_11_1, test_func);
+}
+
+static void run_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
+{
+    run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_9_1,
             D3D_FEATURE_LEVEL_11_1, test_func);
 }
 
@@ -28793,6 +28893,7 @@ static void test_depth_bias(void)
     swapchain_desc.buffer_count = 1;
     swapchain_desc.width = 200;
     swapchain_desc.height = 200;
+    swapchain_desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.flags = 0;
     if (!init_test_context_ext(&test_context, NULL, &swapchain_desc))
@@ -32097,6 +32198,7 @@ static void test_sample_shading(void)
     swapchain_desc.buffer_count = 1;
     swapchain_desc.width = 32;
     swapchain_desc.height = 32;
+    swapchain_desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.flags = 0;
     if (!init_test_context_ext(&test_context, &feature_level, &swapchain_desc))
@@ -32572,6 +32674,7 @@ static void test_standard_pattern(void)
     swapchain_desc.buffer_count = 1;
     swapchain_desc.width = 32;
     swapchain_desc.height = 32;
+    swapchain_desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.flags = 0;
     if (!init_test_context_ext(&test_context, &feature_level, &swapchain_desc))
@@ -38003,7 +38106,6 @@ START_TEST(d3d11)
     queue_test(test_resource_map);
     queue_for_each_feature_level(test_resource_access);
     queue_test(test_check_multisample_quality_levels);
-    queue_for_each_feature_level(test_swapchain_formats);
     queue_test(test_swapchain_views);
     queue_test(test_swapchain_flip);
     queue_test(test_clear_render_target_view_1d);
@@ -38121,6 +38223,8 @@ START_TEST(d3d11)
     queue_test(test_srgb_copy);
 
     run_queued_tests();
+
+    run_for_each_feature_level(test_swapchain_formats);
 
     /* There should be no reason these tests can't be run in parallel with the
      * others, yet they randomly fail or crash when doing so.
