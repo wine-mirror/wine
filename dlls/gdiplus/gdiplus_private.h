@@ -290,6 +290,8 @@ struct GpGraphics{
     GpMatrix worldtrans; /* world transform */
     BOOL busy;      /* hdc handle obtained by GdipGetDC */
     GpRegion *clip; /* in device coords */
+    HRGN clip_hrgn; /* in device coords, cached */
+    RECT clip_hrgn_bounds; /* device bounds at the time clip_hrgn was created */
     UINT textcontrast; /* not used yet. get/set only */
     struct list containers;
     GraphicsContainer contid; /* last-issued container ID */

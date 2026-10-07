@@ -459,7 +459,17 @@ static GpStatus get_graphics_device_bounds(GpGraphics* graphics, GpRectF* rect)
     return stat;
 }
 
-static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
+static void invalidate_clip(GpGraphics *graphics)
+{
+    if (graphics->clip_hrgn)
+    {
+        DeleteObject(graphics->clip_hrgn);
+        graphics->clip_hrgn = NULL;
+    }
+    SetRect(&graphics->clip_hrgn_bounds, 0, 0, -1, -1);
+}
+
+static GpStatus update_clip_hrgn(GpGraphics *graphics)
 {
     GpRegion *rgn;
     GpMatrix transform;
@@ -467,6 +477,7 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
     GpRectF bounds;
     RECT gdi_bounds;
     BOOL identity;
+    HRGN hrgn;
 
     stat = get_graphics_device_bounds(graphics, &bounds);
 
@@ -476,6 +487,11 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
         gdi_bounds.top = floorf(bounds.Y);
         gdi_bounds.right = ceilf(bounds.X + bounds.Width);
         gdi_bounds.bottom = ceilf(bounds.Y + bounds.Height);
+
+        if (EqualRect(&gdi_bounds, &graphics->clip_hrgn_bounds))
+            return Ok;
+
+        invalidate_clip(graphics);
 
         stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &transform);
     }
@@ -492,20 +508,26 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
             stat = GdipTransformRegion(rgn, &transform);
 
         if (stat == Ok)
-            stat = get_region_hrgn(&rgn->node, &gdi_bounds, hrgn);
+            stat = get_region_hrgn(&rgn->node, &gdi_bounds, &hrgn);
 
         GdipDeleteRegion(rgn);
     }
 
-    if (stat == Ok && graphics->gdi_clip)
+    if (stat == Ok)
     {
-        if (*hrgn)
-            CombineRgn(*hrgn, *hrgn, graphics->gdi_clip, RGN_AND);
-        else
+        if (graphics->gdi_clip)
         {
-            *hrgn = CreateRectRgn(0,0,0,0);
-            CombineRgn(*hrgn, graphics->gdi_clip, graphics->gdi_clip, RGN_COPY);
+            if (hrgn)
+                CombineRgn(hrgn, hrgn, graphics->gdi_clip, RGN_AND);
+            else
+            {
+                hrgn = CreateRectRgn(0,0,0,0);
+                CombineRgn(hrgn, graphics->gdi_clip, graphics->gdi_clip, RGN_COPY);
+            }
         }
+
+        graphics->clip_hrgn = hrgn;
+        graphics->clip_hrgn_bounds = gdi_bounds;
     }
 
     return stat;
@@ -633,7 +655,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
         int size;
         RGNDATA *rgndata;
         RECT *rects;
-        HRGN hrgn, visible_rgn;
+        HRGN hrgn;
 
         hrgn = CreateRectRgn(dst_x, dst_y, dst_x + src_width, dst_y + src_height);
         if (!hrgn)
@@ -643,18 +665,14 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
             CombineRgn(hrgn, hrgn, hregion, RGN_AND);
         else
         {
-            stat = get_clip_hrgn(graphics, &visible_rgn);
+            stat = update_clip_hrgn(graphics);
             if (stat != Ok)
             {
                 DeleteObject(hrgn);
                 return stat;
             }
 
-            if (visible_rgn)
-            {
-                CombineRgn(hrgn, hrgn, visible_rgn, RGN_AND);
-                DeleteObject(visible_rgn);
-            }
+            CombineRgn(hrgn, hrgn, graphics->clip_hrgn, RGN_AND);
         }
 
         size = GetRegionData(hrgn, 0, NULL);
@@ -692,7 +710,6 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
     else
     {
         HDC hdc;
-        HRGN hrgn;
         int save;
 
         stat = gdi_dc_acquire(graphics, &hdc);
@@ -706,7 +723,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
             ExtSelectClipRgn(hdc, hregion, RGN_COPY);
         else
         {
-            stat = get_clip_hrgn(graphics, &hrgn);
+            stat = update_clip_hrgn(graphics);
 
             if (stat != Ok)
             {
@@ -715,9 +732,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
                 return stat;
             }
 
-            ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
-
-            DeleteObject(hrgn);
+            ExtSelectClipRgn(hdc, graphics->clip_hrgn, RGN_COPY);
         }
 
         stat = alpha_blend_hdc_pixels(graphics, dst_x, dst_y, src, src_width,
@@ -2316,6 +2331,7 @@ static GpStatus restore_container(GpGraphics* graphics,
     graphics->pixeloffset = container->pixeloffset;
     graphics->origin_x = container->origin_x;
     graphics->origin_y = container->origin_y;
+    invalidate_clip(graphics);
 
     return Ok;
 }
@@ -2564,6 +2580,9 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
         (*graphics)->gdi_clip = NULL;
     }
 
+    (*graphics)->clip_hrgn = NULL;
+    SetRect(&(*graphics)->clip_hrgn_bounds, 0, 0, -1, -1);
+
     TRACE("<-- %p\n", *graphics);
 
     return Ok;
@@ -2604,6 +2623,8 @@ GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
     (*graphics)->textcontrast = 4;
     list_init(&(*graphics)->containers);
     (*graphics)->contid = 0;
+    (*graphics)->clip_hrgn = NULL;
+    SetRect(&(*graphics)->clip_hrgn_bounds, 0, 0, -1, -1);
 
     TRACE("<-- %p\n", *graphics);
 
@@ -2700,6 +2721,8 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     GdipDeleteRegion(graphics->clip);
 
     DeleteObject(graphics->gdi_clip);
+
+    invalidate_clip(graphics);
 
     /* Native returns ObjectBusy on the second free, instead of crashing as we'd
      * do otherwise, but we can't have that in the test suite because it means
@@ -3494,7 +3517,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         {
             HDC src_hdc, dst_hdc;
             HBITMAP hbitmap, old_hbm=NULL;
-            HRGN hrgn;
             INT save_state;
             BITMAPINFOHEADER bih;
             BYTE *temp_bits;
@@ -3539,12 +3561,11 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             save_state = SaveDC(dst_hdc);
 
-            stat = get_clip_hrgn(graphics, &hrgn);
+            stat = update_clip_hrgn(graphics);
 
             if (stat == Ok)
             {
-                ExtSelectClipRgn(dst_hdc, hrgn, RGN_COPY);
-                DeleteObject(hrgn);
+                ExtSelectClipRgn(dst_hdc, graphics->clip_hrgn, RGN_COPY);
             }
 
             gdi_transform_acquire(graphics);
@@ -3772,7 +3793,6 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
     HDC hdc;
     INT save_state;
     GpStatus retval;
-    HRGN hrgn=NULL;
 
     retval = gdi_dc_acquire(graphics, &hdc);
     if (retval != Ok)
@@ -3780,12 +3800,12 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
 
     save_state = prepare_dc(graphics, hdc, pen);
 
-    retval = get_clip_hrgn(graphics, &hrgn);
+    retval = update_clip_hrgn(graphics);
 
     if (retval != Ok)
         goto end;
 
-    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+    ExtSelectClipRgn(graphics->hdc, graphics->clip_hrgn, RGN_COPY);
 
     gdi_transform_acquire(graphics);
 
@@ -3796,7 +3816,6 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
 
 end:
     restore_dc(graphics, hdc, save_state);
-    DeleteObject(hrgn);
     gdi_dc_release(graphics, hdc);
 
     return retval;
@@ -4560,7 +4579,6 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
     HDC hdc;
     INT save_state;
     GpStatus retval;
-    HRGN hrgn=NULL;
 
     if(!brush_can_fill_path(brush, TRUE))
         return NotImplemented;
@@ -4573,12 +4591,12 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
     EndPath(hdc);
     SetPolyFillMode(hdc, (path->fill == FillModeAlternate ? ALTERNATE : WINDING));
 
-    retval = get_clip_hrgn(graphics, &hrgn);
+    retval = update_clip_hrgn(graphics);
 
     if (retval != Ok)
         goto end;
 
-    ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
+    ExtSelectClipRgn(hdc, graphics->clip_hrgn, RGN_COPY);
 
     gdi_transform_acquire(graphics);
 
@@ -4596,7 +4614,6 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
 
 end:
     RestoreDC(hdc, save_state);
-    DeleteObject(hrgn);
     gdi_dc_release(graphics, hdc);
 
     return retval;
@@ -6816,6 +6833,8 @@ GpStatus WINGDIPAPI GdipResetClip(GpGraphics *graphics)
             return stat;
     }
 
+    invalidate_clip(graphics);
+
     return GdipSetInfinite(graphics->clip);
 }
 
@@ -7061,6 +7080,8 @@ GpStatus WINGDIPAPI GdipSetClipGraphics(GpGraphics *graphics, GpGraphics *srcgra
 
     if(!graphics || !srcgraphics)
         return InvalidParameter;
+
+    invalidate_clip(graphics);
 
     return GdipCombineRegionRegion(graphics->clip, srcgraphics->clip, mode);
 }
@@ -7426,6 +7447,8 @@ GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode
         if (status == Ok)
             status = GdipCombineRegionRegion(graphics->clip, region, mode);
 
+        invalidate_clip(graphics);
+
         GdipDeleteRegion(region);
     }
     return status;
@@ -7461,6 +7484,8 @@ GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineM
         status = GdipTransformPath(clip_path, &world_to_device);
         if (status == Ok)
             GdipCombineRegionPath(graphics->clip, clip_path, mode);
+
+        invalidate_clip(graphics);
 
         GdipDeletePath(clip_path);
     }
@@ -7503,6 +7528,8 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
             status = GdipTransformRegion(region, &world_to_device);
         if (status == Ok)
             status = GdipCombineRegionRegion(graphics->clip, region, mode);
+
+        invalidate_clip(graphics);
 
         GdipDeleteRegion(region);
     }
@@ -7557,6 +7584,8 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
             status = GdipTransformRegion(clip, &world_to_device);
         if (status == Ok)
             status = GdipCombineRegionRegion(graphics->clip, clip, mode);
+
+        invalidate_clip(graphics);
 
         GdipDeleteRegion(clip);
     }
@@ -8065,6 +8094,8 @@ GpStatus WINGDIPAPI GdipTranslateClip(GpGraphics *graphics, REAL dx, REAL dy)
             return stat;
     }
 
+    invalidate_clip(graphics);
+
     return GdipTranslateRegion(graphics->clip, dx, dy);
 }
 
@@ -8230,7 +8261,6 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     UINT eto_flags=0;
     GpStatus status;
     HDC hdc;
-    HRGN hrgn;
     BOOL vertical = !!(flags & DriverStringOptionsVertical);
 
     if (!(flags & DriverStringOptionsCmapLookup))
@@ -8260,12 +8290,11 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, get_gdi_brush_color(brush));
 
-    status = get_clip_hrgn(graphics, &hrgn);
+    status = update_clip_hrgn(graphics);
 
     if (status == Ok)
     {
-        ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
-        DeleteObject(hrgn);
+        ExtSelectClipRgn(hdc, graphics->clip_hrgn, RGN_COPY);
     }
 
     pt = positions[0];
