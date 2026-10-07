@@ -674,10 +674,6 @@ static void reserve_area( void *addr, void *end )
 static void mmap_init( const struct preload_info *preload_info )
 {
 #ifndef _WIN64
-#ifndef __APPLE__
-    char stack;
-    char * const stack_ptr = &stack;
-#endif
     char *user_space_limit = (char *)0x7ffe0000;
     int i;
 
@@ -697,24 +693,7 @@ static void mmap_init( const struct preload_info *preload_info )
     }
     else reserve_area( (void *)0x00010000, (void *)0x40000000 );
 
-
-#ifndef __APPLE__
-    if (stack_ptr >= user_space_limit)
-    {
-        char *end = 0;
-        char *base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) - (granularity_mask + 1);
-        if (base > user_space_limit) reserve_area( user_space_limit, base );
-        base = stack_ptr - ((unsigned int)stack_ptr & granularity_mask) + (granularity_mask + 1);
-#if defined(linux) || defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
-        /* Heuristic: assume the stack is near the end of the address */
-        /* space, this avoids a lot of futile allocation attempts */
-        end = (char *)(((unsigned long)base + 0x0fffffff) & 0xf0000000);
-#endif
-        reserve_area( base, end );
-    }
-    else
-#endif
-        reserve_area( user_space_limit, 0 );
+    reserve_area( user_space_limit, host_addr_space_limit );
 
 #else
     reserve_area( (void *)0x7ffff0000000, (void *)0x7ffffe000000 ); /* top-down area */
@@ -2699,8 +2678,6 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, size_t map_size, int fd, 
     return STATUS_SUCCESS;  /* page protections will be updated later */
 }
 
-#ifdef _WIN64
-
 /***********************************************************************
  *           get_host_addr_space_limit
  */
@@ -2709,30 +2686,33 @@ static void *get_host_addr_space_limit(void)
 #ifdef __APPLE__
     /* See MACH_VM_MAX_ADDRESS_RAW in xnu osfmk/mach/arm/vm_param.h */
     return (void *)0x7ffffe000000;
-#else
-    unsigned int flags = MAP_PRIVATE | MAP_ANON;
+#elif defined _WIN64
     UINT_PTR addr = (UINT_PTR)1 << 63;
-
-#ifdef MAP_FIXED_NOREPLACE
-    flags |= MAP_FIXED_NOREPLACE;
-#endif
 
     while (addr >> 32)
     {
-        void *ret = mmap( (void *)addr, host_page_size, PROT_NONE, flags, -1, 0 );
+        void *ret = anon_mmap_tryfixed( (void *)addr, host_page_size, PROT_NONE, 0 );
         if (ret != MAP_FAILED)
         {
             munmap( ret, host_page_size );
-            if (ret >= (void *)addr) break;
+            break;
         }
         else if (errno == EEXIST) break;
         addr >>= 1;
     }
     return (void *)((addr << 1) - (granularity_mask + 1));
+#else
+    if (__builtin_frame_address(0) < address_space_limit)
+    {
+        void *ret = anon_mmap_tryfixed( address_space_limit, host_page_size, PROT_NONE, MAP_NORESERVE );
+        if (ret == MAP_FAILED && errno != EEXIST) return address_space_limit;
+    }
+    /* assume 4G space (and make sure that the last block is not available) */
+    address_space_limit = (void *)0xffff0000;
+    anon_mmap_tryfixed( address_space_limit, host_page_size, PROT_NONE, MAP_NORESERVE );
+    return address_space_limit;
 #endif
 }
-
-#endif /* _WIN64 */
 
 #ifdef __aarch64__
 
@@ -3595,8 +3575,6 @@ static void *alloc_virtual_heap( SIZE_T size )
         void *base = area->base;
         void *end = (char *)base + area->size;
 
-        if (is_beyond_limit( base, area->size, address_space_limit ))
-            address_space_limit = host_addr_space_limit = end;
         if (preload_reserve_end >= end)
         {
             if (preload_reserve_start <= base) continue;  /* no space in that area */
@@ -3639,13 +3617,8 @@ void virtual_init(void)
     host_page_mask = host_page_size - 1;
     TRACE( "host page size: %uk\n", (UINT)host_page_size / 1024 );
 #endif
-
-#ifdef _WIN64
     host_addr_space_limit = get_host_addr_space_limit();
     TRACE( "host addr space limit: %p\n", host_addr_space_limit );
-#else
-    host_addr_space_limit = address_space_limit;
-#endif
 
     if (preload_info) for (int i = 0; preload_info[i].size; i++)
     {
