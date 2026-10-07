@@ -2055,6 +2055,9 @@ static void test_source_resolver(void)
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
+    /* Restore the original in case a ref remains on the stream after function exit. */
+    stream->lpVtbl = bytestream_vtbl_orig;
+
     IMFRateSupport_Release(rate_support);
     IMFGetService_Release(get_service);
     IMFMediaSource_Release(mediasource);
@@ -6548,6 +6551,11 @@ struct activate_object
     LONG refcount;
 };
 
+static struct activate_object *impl_from_IMFActivate(IMFActivate *iface)
+{
+    return CONTAINING_RECORD(iface, struct activate_object, IMFActivate_iface);
+}
+
 static HRESULT WINAPI activate_object_QueryInterface(IMFActivate *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFActivate) ||
@@ -6565,12 +6573,19 @@ static HRESULT WINAPI activate_object_QueryInterface(IMFActivate *iface, REFIID 
 
 static ULONG WINAPI activate_object_AddRef(IMFActivate *iface)
 {
-    return 2;
+    struct activate_object *object = impl_from_IMFActivate(iface);
+    return InterlockedIncrement(&object->refcount);
 }
 
 static ULONG WINAPI activate_object_Release(IMFActivate *iface)
 {
-    return 1;
+    struct activate_object *object = impl_from_IMFActivate(iface);
+    ULONG ref = InterlockedDecrement(&object->refcount);
+
+    if (!ref)
+        free(object);
+
+    return ref;
 }
 
 static HRESULT WINAPI activate_object_GetItem(IMFActivate *iface, REFGUID key, PROPVARIANT *value)
@@ -6782,9 +6797,21 @@ static const IMFActivateVtbl activate_object_vtbl =
     activate_object_DetachObject,
 };
 
+static IMFActivate *activate_object_create(void)
+{
+    struct activate_object *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return NULL;
+
+    object->IMFActivate_iface.lpVtbl = &activate_object_vtbl;
+    object->refcount = 1;
+    return &object->IMFActivate_iface;
+}
+
 static void test_local_handlers(void)
 {
-    IMFActivate local_activate = { &activate_object_vtbl };
+    IMFActivate *local_activate = activate_object_create();
     static const WCHAR localW[] = L"local";
     HRESULT hr;
 
@@ -6803,32 +6830,34 @@ static void test_local_handlers(void)
     hr = pMFRegisterLocalSchemeHandler(localW, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalSchemeHandler(NULL, &local_activate);
+    hr = pMFRegisterLocalSchemeHandler(NULL, local_activate);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalSchemeHandler(localW, &local_activate);
+    hr = pMFRegisterLocalSchemeHandler(localW, local_activate);
     ok(hr == S_OK, "Failed to register scheme handler, hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalSchemeHandler(localW, &local_activate);
+    hr = pMFRegisterLocalSchemeHandler(localW, local_activate);
     ok(hr == S_OK, "Failed to register scheme handler, hr %#lx.\n", hr);
 
     hr = pMFRegisterLocalByteStreamHandler(NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalByteStreamHandler(NULL, NULL, &local_activate);
+    hr = pMFRegisterLocalByteStreamHandler(NULL, NULL, local_activate);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalByteStreamHandler(NULL, localW, &local_activate);
+    hr = pMFRegisterLocalByteStreamHandler(NULL, localW, local_activate);
     ok(hr == S_OK, "Failed to register stream handler, hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalByteStreamHandler(localW, NULL, &local_activate);
+    hr = pMFRegisterLocalByteStreamHandler(localW, NULL, local_activate);
     ok(hr == S_OK, "Failed to register stream handler, hr %#lx.\n", hr);
 
-    hr = pMFRegisterLocalByteStreamHandler(localW, localW, &local_activate);
+    hr = pMFRegisterLocalByteStreamHandler(localW, localW, local_activate);
     ok(hr == S_OK, "Failed to register stream handler, hr %#lx.\n", hr);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    IMFActivate_Release(local_activate);
 }
 
 static void test_create_property_store(void)
@@ -7426,6 +7455,17 @@ static void test_MFCreateTransformActivate(void)
     IMFActivate_Release(activate);
 }
 
+struct test_mft_factory
+{
+    IClassFactory IClassFactory_iface;
+    LONG refcount;
+};
+
+static struct test_mft_factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_mft_factory, IClassFactory_iface);
+}
+
 static HRESULT WINAPI test_mft_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IClassFactory) ||
@@ -7442,12 +7482,19 @@ static HRESULT WINAPI test_mft_factory_QueryInterface(IClassFactory *iface, REFI
 
 static ULONG WINAPI test_mft_factory_AddRef(IClassFactory *iface)
 {
-    return 2;
+    struct test_mft_factory *factory = impl_from_IClassFactory(iface);
+    return InterlockedIncrement(&factory->refcount);
 }
 
 static ULONG WINAPI test_mft_factory_Release(IClassFactory *iface)
 {
-    return 1;
+    struct test_mft_factory *factory = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&factory->refcount);
+
+    if (!ref)
+        free(factory);
+
+    return ref;
 }
 
 static HRESULT WINAPI test_mft_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **obj)
@@ -7470,9 +7517,21 @@ static const IClassFactoryVtbl test_mft_factory_vtbl =
     test_mft_factory_LockServer,
 };
 
+static IClassFactory *test_mft_factory_create(void)
+{
+    struct test_mft_factory *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return NULL;
+
+    object->IClassFactory_iface.lpVtbl = &test_mft_factory_vtbl;
+    object->refcount = 1;
+    return &object->IClassFactory_iface;
+}
+
 static void test_MFTRegisterLocal(void)
 {
-    IClassFactory test_factory = { &test_mft_factory_vtbl };
+    IClassFactory *test_factory = test_mft_factory_create();
     MFT_REGISTER_TYPE_INFO input_types[1], *in_types, *out_types;
     IMFAttributes *attributes;
     IMFActivate **activate;
@@ -7488,10 +7547,10 @@ static void test_MFTRegisterLocal(void)
 
     input_types[0].guidMajorType = MFMediaType_Audio;
     input_types[0].guidSubtype = MFAudioFormat_PCM;
-    hr = pMFTRegisterLocal(&test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
+    hr = pMFTRegisterLocal(test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
     ok(hr == S_OK, "Failed to register MFT, hr %#lx.\n", hr);
 
-    hr = pMFTRegisterLocal(&test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
+    hr = pMFTRegisterLocal(test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
     ok(hr == S_OK, "Failed to register MFT, hr %#lx.\n", hr);
 
     hr = pMFTEnumEx(MFT_CATEGORY_OTHER, MFT_ENUM_FLAG_LOCALMFT, NULL, NULL, &activate, &count);
@@ -7499,7 +7558,7 @@ static void test_MFTRegisterLocal(void)
     ok(count > 0, "Unexpected count %u.\n", count);
     CoTaskMemFree(activate);
 
-    hr = pMFTUnregisterLocal(&test_factory);
+    hr = pMFTUnregisterLocal(test_factory);
     ok(hr == S_OK, "Failed to unregister MFT, hr %#lx.\n", hr);
 
     hr = pMFTEnumEx(MFT_CATEGORY_OTHER, MFT_ENUM_FLAG_LOCALMFT, NULL, NULL, &activate, &count2);
@@ -7507,7 +7566,7 @@ static void test_MFTRegisterLocal(void)
     ok(count2 < count, "Unexpected count %u.\n", count2);
     CoTaskMemFree(activate);
 
-    hr = pMFTUnregisterLocal(&test_factory);
+    hr = pMFTUnregisterLocal(test_factory);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Unexpected hr %#lx.\n", hr);
 
     hr = pMFTUnregisterLocal(NULL);
@@ -7532,6 +7591,8 @@ static void test_MFTRegisterLocal(void)
 
     hr = pMFTUnregisterLocalByCLSID(MFT_CATEGORY_OTHER);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IClassFactory_Release(test_factory);
 }
 
 static void test_queue_com(void)
@@ -11266,7 +11327,18 @@ static void test_MFMapDX9FormatToDXGIFormat(void)
     }
 }
 
-static HRESULT WINAPI test_notify_callback_QueryInterface(IMFVideoSampleAllocatorNotify *iface,
+struct sample_allocator_notify
+{
+    IMFVideoSampleAllocatorNotify IMFVideoSampleAllocatorNotify_iface;
+    LONG refcount;
+};
+
+static struct sample_allocator_notify *impl_from_IMFVideoSampleAllocatorNotify(IMFVideoSampleAllocatorNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_allocator_notify, IMFVideoSampleAllocatorNotify_iface);
+}
+
+static HRESULT WINAPI sample_allocator_notify_QueryInterface(IMFVideoSampleAllocatorNotify *iface,
         REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorNotify) ||
@@ -11281,28 +11353,47 @@ static HRESULT WINAPI test_notify_callback_QueryInterface(IMFVideoSampleAllocato
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI test_notify_callback_AddRef(IMFVideoSampleAllocatorNotify *iface)
+static ULONG WINAPI sample_allocator_notify_AddRef(IMFVideoSampleAllocatorNotify *iface)
 {
-    return 2;
+    struct sample_allocator_notify *callback = impl_from_IMFVideoSampleAllocatorNotify(iface);
+    return InterlockedIncrement(&callback->refcount);
 }
 
-static ULONG WINAPI test_notify_callback_Release(IMFVideoSampleAllocatorNotify *iface)
+static ULONG WINAPI sample_allocator_notify_Release(IMFVideoSampleAllocatorNotify *iface)
 {
-    return 1;
+    struct sample_allocator_notify *callback = impl_from_IMFVideoSampleAllocatorNotify(iface);
+    ULONG ref = InterlockedDecrement(&callback->refcount);
+
+    if (!ref)
+        free(callback);
+
+    return ref;
 }
 
-static HRESULT WINAPI test_notify_callback_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
+static HRESULT WINAPI sample_allocator_notify_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
 {
     return E_NOTIMPL;
 }
 
-static const IMFVideoSampleAllocatorNotifyVtbl test_notify_callback_vtbl =
+static const IMFVideoSampleAllocatorNotifyVtbl sample_allocator_notify_vtbl =
 {
-    test_notify_callback_QueryInterface,
-    test_notify_callback_AddRef,
-    test_notify_callback_Release,
-    test_notify_callback_NotifyRelease,
+    sample_allocator_notify_QueryInterface,
+    sample_allocator_notify_AddRef,
+    sample_allocator_notify_Release,
+    sample_allocator_notify_NotifyRelease,
 };
+
+static IMFVideoSampleAllocatorNotify *sample_allocator_notify_create(void)
+{
+    struct sample_allocator_notify *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return NULL;
+
+    object->IMFVideoSampleAllocatorNotify_iface.lpVtbl = &sample_allocator_notify_vtbl;
+    object->refcount = 1;
+    return &object->IMFVideoSampleAllocatorNotify_iface;
+}
 
 static IMFMediaType * create_video_type(const GUID *subtype)
 {
@@ -13075,7 +13166,7 @@ notsupported:
 
 static void test_sample_allocator_sysmem(void)
 {
-    IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
+    IMFVideoSampleAllocatorNotify *test_notify = sample_allocator_notify_create();
     IMFMediaType *media_type, *video_type, *video_type2;
     IMFVideoSampleAllocatorCallback *allocator_cb;
     IMFVideoSampleAllocatorEx *allocatorex;
@@ -13109,7 +13200,7 @@ static void test_sample_allocator_sysmem(void)
     hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, &test_notify);
+    hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, test_notify);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, NULL);
@@ -13306,6 +13397,7 @@ static void test_sample_allocator_sysmem(void)
 
     IMFSample_Release(sample);
 
+    IMFVideoSampleAllocatorNotify_Release(test_notify);
     IMFVideoSampleAllocatorCallback_Release(allocator_cb);
     IMFVideoSampleAllocatorEx_Release(allocatorex);
     IMFAttributes_Release(attributes);
