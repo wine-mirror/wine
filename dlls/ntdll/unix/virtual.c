@@ -670,31 +670,14 @@ static void reserve_area( void *addr, void *end )
 #endif /* __APPLE__ */
 }
 
-
 static void mmap_init( const struct preload_info *preload_info )
 {
 #ifndef _WIN64
-    char *user_space_limit = (char *)0x7ffe0000;
-    int i;
-
-    if (preload_info)
+    if (!preload_info)
     {
-        /* check for a reserved area starting at the user space limit */
-        /* to avoid wasting time trying to allocate it again */
-        for (i = 0; preload_info[i].size; i++)
-        {
-            if ((char *)preload_info[i].addr > user_space_limit) break;
-            if ((char *)preload_info[i].addr + preload_info[i].size > user_space_limit)
-            {
-                user_space_limit = (char *)preload_info[i].addr + preload_info[i].size;
-                break;
-            }
-        }
+        reserve_area( (void *)0x00010000, (void *)0x40000000 );
+        reserve_area( (void *)0x7f000000, (void *)0x81000000 );
     }
-    else reserve_area( (void *)0x00010000, (void *)0x40000000 );
-
-    reserve_area( user_space_limit, host_addr_space_limit );
-
 #else
     reserve_area( (void *)0x7ffff0000000, (void *)0x7ffffe000000 ); /* top-down area */
     if (preload_info) return;
@@ -4026,10 +4009,10 @@ static void set_large_address_space(void)
         }
         else user_space_wow_limit = limit_2g - 1;
     }
-    else
+    else if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE))
     {
-        if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
-        free_reserved_memory( (char *)0x80000000, address_space_limit );
+        reserve_area( (void *)limit_2g, host_addr_space_limit );
+        return;
     }
     user_space_limit = working_set_limit = address_space_limit;
 }
