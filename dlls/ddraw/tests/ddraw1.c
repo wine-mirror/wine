@@ -17307,9 +17307,9 @@ static void test_sysmem_depth_fill(void)
     fx.dwFillDepth = 0xffff;
     hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(data[5 * pitch / sizeof(*data) + 3] == 0xffff, "Got unexpected depth %#x.\n",
+    ok(data[5 * pitch / sizeof(*data) + 3] == 0xffff, "Got unexpected depth %#x.\n",
             data[5 * pitch / sizeof(*data) + 3]);
-    todo_wine ok(data[63 * pitch / sizeof(*data) + 63] == 0xffff, "Got unexpected depth %#x.\n",
+    ok(data[63 * pitch / sizeof(*data) + 63] == 0xffff, "Got unexpected depth %#x.\n",
             data[63 * pitch / sizeof(*data) + 63]);
 
     data[5 * pitch / sizeof(*data) + 3] = 0x4321;
@@ -17319,7 +17319,7 @@ static void test_sysmem_depth_fill(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     data2 = surface_desc.lpSurface;
     ok(data2 == data, "Got unexpected pointer %p, expected %p.\n", data2, data);
-    todo_wine ok(data2[5 * pitch / sizeof(*data) + 3] == 0x4321, "Got unexpected depth %#x.\n",
+    ok(data2[5 * pitch / sizeof(*data) + 3] == 0x4321, "Got unexpected depth %#x.\n",
             data2[5 * pitch / sizeof(*data) + 3]);
     ok(data2[5 * pitch / sizeof(*data) + 4] == 0xffff, "Got unexpected depth %#x.\n",
             data2[5 * pitch / sizeof(*data) + 4]);
@@ -17329,9 +17329,9 @@ static void test_sysmem_depth_fill(void)
     fx.dwFillDepth = 0x8000;
     hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(data[5 * pitch / sizeof(*data) + 3] == 0x8000, "Got unexpected depth %#x.\n",
+    ok(data[5 * pitch / sizeof(*data) + 3] == 0x8000, "Got unexpected depth %#x.\n",
             data[5 * pitch / sizeof(*data) + 3]);
-    todo_wine ok(data[0] == 0x8000, "Got unexpected depth %#x.\n", data[0]);
+    ok(data[0] == 0x8000, "Got unexpected depth %#x.\n", data[0]);
 
     IDirectDrawSurface_Release(surface);
     IDirectDraw_Release(ddraw);

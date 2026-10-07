@@ -1568,52 +1568,47 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Flip(IDirectDrawSurface2 
             src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
 }
 
+static HRESULT ddraw_surface_clear(struct ddraw_surface *surface, const RECT *rect,
+        DWORD flags, DWORD fill_colour, DWORD clear_flags)
+{
+    struct ddraw *ddraw = surface->ddraw;
+    struct wined3d_color colour;
+    unsigned int location_flags = rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE;
+    DWORD wined3d_flags = clear_flags;
+
+    if (!(flags & DDBLT_ASYNC))
+        wined3d_flags |= WINED3DCLEAR_SYNCHRONOUS;
+
+    if (!wined3d_colour_from_ddraw_colour(&surface->surface_desc.ddpfPixelFormat,
+            surface->palette, fill_colour, &colour))
+        return DDERR_INVALIDPARAMS;
+
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+        return wined3d_device_context_clear_sysmem_texture(ddraw->immediate_context,
+                ddraw_surface_get_default_texture(surface, location_flags),
+                surface->sub_resource_idx, rect, wined3d_flags, &colour);
+
+    ddraw_surface_get_draw_texture(surface, location_flags);
+    return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
+            ddraw_surface_get_rendertarget_view(surface), rect, wined3d_flags,
+            (clear_flags & WINED3DCLEAR_TARGET) ? &colour : NULL,
+            (clear_flags & WINED3DCLEAR_TARGET) ? 0.0f : colour.r, 0);
+}
+
 static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *dst_rect,
         struct ddraw_surface *src_surface, const RECT *src_rect, DWORD flags, DWORD fill_colour,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct ddraw *ddraw = dst_surface->ddraw;
-    struct wined3d_color colour;
     DWORD wined3d_flags;
 
     if (flags & DDBLT_COLORFILL)
-    {
-        unsigned int location_flags = dst_rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE;
-
-        wined3d_flags = WINED3DCLEAR_TARGET;
-        if (!(flags & DDBLT_ASYNC))
-            wined3d_flags |= WINED3DCLEAR_SYNCHRONOUS;
-
-        if (!wined3d_colour_from_ddraw_colour(&dst_surface->surface_desc.ddpfPixelFormat,
-                dst_surface->palette, fill_colour, &colour))
-            return DDERR_INVALIDPARAMS;
-
-        if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-            return wined3d_device_context_clear_sysmem_texture(ddraw->immediate_context,
-                    ddraw_surface_get_default_texture(dst_surface, location_flags),
-                    dst_surface->sub_resource_idx, dst_rect, wined3d_flags, &colour);
-
-        ddraw_surface_get_draw_texture(dst_surface, location_flags);
-        return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
-                ddraw_surface_get_rendertarget_view(dst_surface),
-                dst_rect, wined3d_flags, &colour, 0.0f, 0);
-    }
+        return ddraw_surface_clear(dst_surface, dst_rect, flags, fill_colour,
+                WINED3DCLEAR_TARGET);
 
     if (flags & DDBLT_DEPTHFILL)
-    {
-        wined3d_flags = WINED3DCLEAR_ZBUFFER;
-        if (!(flags & DDBLT_ASYNC))
-            wined3d_flags |= WINED3DCLEAR_SYNCHRONOUS;
-
-        if (!wined3d_colour_from_ddraw_colour(&dst_surface->surface_desc.ddpfPixelFormat,
-                dst_surface->palette, fill_colour, &colour))
-            return DDERR_INVALIDPARAMS;
-
-        ddraw_surface_get_draw_texture(dst_surface, dst_rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE);
-        return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
-                ddraw_surface_get_rendertarget_view(dst_surface),
-                dst_rect, wined3d_flags, NULL, colour.r, 0);
-    }
+        return ddraw_surface_clear(dst_surface, dst_rect, flags, fill_colour,
+                WINED3DCLEAR_ZBUFFER);
 
     wined3d_flags = flags & ~DDBLT_ASYNC;
     if (wined3d_flags & ~WINED3D_BLT_MASK)
