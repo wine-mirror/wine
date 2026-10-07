@@ -2155,6 +2155,11 @@ static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style,
     if (visible_rect.top >= visible_rect.bottom) visible_rect.bottom = visible_rect.top + 1;
     if (visible_rect.left >= visible_rect.right) visible_rect.right = visible_rect.left + 1;
 
+    /* if client rect extends into non-visible area, use the full window rect */
+    if (rects->client.top < visible_rect.top || rects->client.left < visible_rect.left ||
+        rects->client.bottom > visible_rect.bottom || rects->client.right > visible_rect.right)
+        visible_rect = rects->window;
+
     TRACE( "hwnd %p, rects %s, style %#x, ex_style %#x -> visible_rect %s\n", hwnd,
            debugstr_window_rects( rects ), style, ex_style, wine_dbgstr_rect( &visible_rect ) );
     return visible_rect;
