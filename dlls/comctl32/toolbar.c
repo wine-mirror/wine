@@ -5678,6 +5678,7 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
                 }
                 /* otherwise drop through and process as pushed */
             }
+            SetCapture (infoPtr->hwndSelf);
             infoPtr->bCaptured = TRUE;
             infoPtr->nButtonDown = nHit;
             infoPtr->bDragOutSent = FALSE;
@@ -5689,7 +5690,6 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
             if (btnPtr->fsState & TBSTATE_ENABLED)
                 InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
             UpdateWindow(infoPtr->hwndSelf);
-            SetCapture (infoPtr->hwndSelf);
         }
 
         memset(&nmtb, 0, sizeof(nmtb));

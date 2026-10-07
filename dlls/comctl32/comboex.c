@@ -1867,8 +1867,8 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	    if (PtInRect(&rect, pt))
 		break;
 
-	    infoPtr->flags |= WCBE_MOUSECAPTURED;
 	    SetCapture(hwnd);
+	    infoPtr->flags |= WCBE_MOUSECAPTURED;
 	    return 0;
 
     case WM_LBUTTONUP:
