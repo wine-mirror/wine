@@ -4876,6 +4876,36 @@ static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ..
     va_end(ap);
 }
 
+static HRESULT node_validate_root(struct domnode *node, IXMLDOMParseError **err)
+{
+    struct domnode *dtd, *root;
+
+    if (node->type != NODE_DOCUMENT)
+        return S_OK;
+
+    /* Check for root element presence. Tree manipulation should ensure that there is only
+       one top level element. */
+
+    if (!(root = domnode_get_root_element(node)))
+    {
+        if (err)
+            *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
+        return S_FALSE;
+    }
+
+    if ((dtd = domnode_get_dtd(node)))
+    {
+        if (wcscmp(dtd->qname, root->qname))
+        {
+            if (err)
+                *err = create_parseError(E_DOM_ROOT_NAME_MISMATCH, NULL, NULL, NULL, 0, 0, 0);
+            return S_FALSE;
+        }
+    }
+
+    return S_OK;
+}
+
 HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseError **err)
 {
     IXMLDOMSchemaCollection2 *schema;
@@ -4914,13 +4944,10 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         node = doc;
     }
 
-    /* Check for root element presence. Tree manipulation should ensure that there is only
-       one top level element. */
-    if (node->type == NODE_DOCUMENT && !domnode_get_root_element(node))
+    if (node->type == NODE_DOCUMENT)
     {
-        if (err)
-            *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
-        return S_FALSE;
+        if ((hr = node_validate_root(node, err)) != S_OK)
+            return hr;
     }
 
     xmldoc = create_xmldoc_from_domdoc(node, &xmlnode);

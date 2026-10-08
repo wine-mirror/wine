@@ -17814,7 +17814,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_ROOT_NAME_MISMATCH */
-    todo_wine ok(res == 0xC00CE013, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce013, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_14), NULL);
