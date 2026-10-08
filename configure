@@ -19553,13 +19553,6 @@ if ${ac_cv_lib_soname_vulkan:+false} :
 then :
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 printf '%s\n' "not found" >&6; }
-
-else case e in #(
-  e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vulkan" >&5
-printf '%s\n' "$ac_cv_lib_soname_vulkan" >&6; }
-
-printf '%s\n' "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_vulkan\"" >>confdefs.h
-
        { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lMoltenVK" >&5
 printf %s "checking for -lMoltenVK... " >&6; }
 if test ${ac_cv_lib_soname_MoltenVK+y}
@@ -19623,7 +19616,14 @@ printf '%s\n' "#define SONAME_LIBMOLTENVK \"$ac_cv_lib_soname_MoltenVK\"" >>conf
        printf '%s\n' "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_MoltenVK\"" >>confdefs.h
  ;;
 esac
-fi ;;
+fi
+else case e in #(
+  e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vulkan" >&5
+printf '%s\n' "$ac_cv_lib_soname_vulkan" >&6; }
+
+printf '%s\n' "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_vulkan\"" >>confdefs.h
+
+        ;;
 esac
 fi
 fi
