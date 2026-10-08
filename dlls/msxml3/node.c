@@ -4901,8 +4901,9 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         node = doc;
     }
 
-    /* TODO: for now simply treat empty document as not well-formed */
-    if (list_empty(&node->children))
+    /* Check for root element presence. Tree manipulation should ensure that there is only
+       one top level element. */
+    if (node->type == NODE_DOCUMENT && !domnode_get_root_element(node))
     {
         if (err)
             *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
