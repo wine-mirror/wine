@@ -1753,29 +1753,15 @@ static HRESULT WINAPI domdoc_putref_schemas(IXMLDOMDocument3 *iface, VARIANT sch
     return hr;
 }
 
-static HRESULT WINAPI domdoc_validateNode(IXMLDOMDocument3 *iface, IXMLDOMNode *node, IXMLDOMParseError **err)
+static HRESULT WINAPI domdoc_validate(IXMLDOMDocument3 *iface, IXMLDOMParseError **err)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
 
-    TRACE("%p, %p, %p.\n", iface, node, err);
+    TRACE("%p, %p.\n", iface, err);
 
     /* TODO: check ready state */
 
-    if (!node)
-    {
-        if (err)
-            *err = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
-        return E_POINTER;
-    }
-
-    return node_validate(doc->node, node, err);
-}
-
-static HRESULT WINAPI domdoc_validate(IXMLDOMDocument3 *iface, IXMLDOMParseError **err)
-{
-    TRACE("%p, %p.\n", iface, err);
-
-    return IXMLDOMDocument3_validateNode(iface, (IXMLDOMNode *)iface, err);
+    return node_validate(doc->node, (IXMLDOMNode *)iface, err);
 }
 
 static HRESULT variant_get_bool_property(const VARIANT *v, VARIANT_BOOL *ret)
@@ -1960,6 +1946,20 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
 
     FIXME("Unknown property %s\n", debugstr_w(p));
     return E_FAIL;
+}
+
+static HRESULT WINAPI domdoc_validateNode(IXMLDOMDocument3 *iface, IXMLDOMNode *node, IXMLDOMParseError **err)
+{
+    domdoc *doc = impl_from_IXMLDOMDocument3(iface);
+
+    TRACE("%p, %p, %p.\n", iface, node, err);
+
+    /* TODO: check ready state */
+
+    if (!node || !err)
+        return E_INVALIDARG;
+
+    return node_validate(doc->node, node, err);
 }
 
 static HRESULT WINAPI domdoc_importNode(IXMLDOMDocument3 *iface, IXMLDOMNode *node, VARIANT_BOOL deep, IXMLDOMNode **clone)

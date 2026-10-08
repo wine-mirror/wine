@@ -1411,18 +1411,14 @@ static void test_validateNode(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument3_validateNode(doc, NULL, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)doc, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     err = (void *)0x1;
     hr = IXMLDOMDocument3_validateNode(doc, NULL, &err);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(err == (void *)0x1, "Unexpected error object %p.\n", err);
 
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)doc, &err);
