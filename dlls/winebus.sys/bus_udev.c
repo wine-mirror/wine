@@ -1208,6 +1208,8 @@ static void get_device_usb_info(struct udev_device *dev, struct device_desc *des
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceSubClass"))) sscanf(tmp, "%x", &subclass);
     if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceProtocol"))) sscanf(tmp, "%x", &protocol);
     desc->bus_id = ((class & 0xff) << 16) | ((subclass & 0xff) << 8) | (protocol & 0xff);
+    if (iface_num != -1 && (tmp = udev_device_get_sysattr_value(iface, "interface")))
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
 
     get_usb_device_path(iface_num == -1 ? usb_dev : iface, desc);
     if ((desc->interface = iface_num) != -1) desc->index = iface_num;
