@@ -258,6 +258,7 @@ extern void domnode_destroy_tree(struct domnode *tree);
 extern struct domnode *domnode_addref(struct domnode *node);
 extern void domnode_release(struct domnode *node);
 extern struct domnode *domnode_get_root_element(struct domnode *doc);
+extern struct domnode *domnode_get_dtd(struct domnode *doc);
 extern struct domnode *domnode_get_first_attribute(struct domnode *node);
 extern struct domnode *domnode_get_next_attribute_sibling(struct domnode *node);
 extern struct domnode *domnode_get_first_child(struct domnode *node);

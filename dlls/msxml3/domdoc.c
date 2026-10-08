@@ -791,20 +791,15 @@ static HRESULT WINAPI domdoc_transformNodeToObject(IXMLDOMDocument3 *iface,
 static HRESULT WINAPI domdoc_get_doctype(IXMLDOMDocument3 *iface, IXMLDOMDocumentType **doctype)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
-    struct domnode *node = NULL;
+    struct domnode *dtd;
 
     TRACE("%p, %p.\n", iface, doctype);
 
     if (!doctype)
         return E_INVALIDARG;
 
-    LIST_FOR_EACH_ENTRY(node, &doc->node->children, struct domnode, entry)
-    {
-        if (node->type == NODE_DOCUMENT_TYPE)
-        {
-            return create_node(node, (IXMLDOMNode **)doctype);
-        }
-    }
+    if ((dtd = domnode_get_dtd(doc->node)))
+        return create_node(dtd, (IXMLDOMNode **)doctype);
 
     return return_null_node((IXMLDOMNode **)doctype);
 }
