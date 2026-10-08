@@ -1429,13 +1429,11 @@ static void test_validateNode(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)doc, &err);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMParseError_get_errorCode(err, &res);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* Can't use validateNode() on a document node. */
-    todo_wine ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument3_get_doctype(doc, &doctype);
@@ -1445,7 +1443,7 @@ static void test_validateNode(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* Can't use validateNode() on a doctype node. */
-    todo_wine ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
     IXMLDOMDocumentType_Release(doctype);
 

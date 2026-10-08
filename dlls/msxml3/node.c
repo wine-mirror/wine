@@ -4884,6 +4884,17 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
                 *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
             return E_FAIL;
         }
+
+        switch (node->type)
+        {
+            case NODE_DOCUMENT:
+            case NODE_DOCUMENT_TYPE:
+                if (err)
+                    *err = create_parseError(E_DOM_INVALIDTYPE, NULL, NULL, NULL, 0, 0, 0);
+                return S_FALSE;
+            default:
+                ;
+        }
     }
     else
     {
