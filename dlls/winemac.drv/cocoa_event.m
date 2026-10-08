@@ -280,7 +280,7 @@ static const OSType WineHotKeySignature = 'Wine';
                 [events removeObjectAtIndex:index];
 
                 if (event->event->deliver == INT_MAX ||
-                    __atomic_sub_fetch(&event->event->deliver, 1, __ATOMIC_RELAXED) >= 0)
+                    InterlockedDecrementNoFence(&event->event->deliver) >= 0)
                 {
                     ret = event;
                     break;
@@ -646,7 +646,7 @@ macdrv_event* macdrv_create_event(int type, WineWindow* window)
  */
 macdrv_event* macdrv_retain_event(macdrv_event *event)
 {
-    __atomic_add_fetch(&event->refs, 1, __ATOMIC_RELAXED);
+    InterlockedIncrementNoFence(&event->refs);
     return event;
 }
 
@@ -661,9 +661,8 @@ void macdrv_release_event(macdrv_event *event)
 {
 @autoreleasepool
 {
-    if (__atomic_sub_fetch(&event->refs, 1, __ATOMIC_RELEASE) <= 0)
+    if (InterlockedDecrement(&event->refs) <= 0)
     {
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
         switch (event->type)
         {
             case KEYBOARD_CHANGED:
@@ -702,7 +701,7 @@ macdrv_query* macdrv_create_query(void)
  */
 macdrv_query* macdrv_retain_query(macdrv_query *query)
 {
-    __atomic_add_fetch(&query->refs, 1, __ATOMIC_RELAXED);
+    InterlockedIncrementNoFence(&query->refs);
     return query;
 }
 
@@ -711,9 +710,8 @@ macdrv_query* macdrv_retain_query(macdrv_query *query)
  */
 void macdrv_release_query(macdrv_query *query)
 {
-    if (__atomic_sub_fetch(&query->refs, 1, __ATOMIC_RELEASE) <= 0)
+    if (InterlockedDecrement(&query->refs) <= 0)
     {
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
         switch (query->type)
         {
             case QUERY_DRAG_DROP_ENTER:
