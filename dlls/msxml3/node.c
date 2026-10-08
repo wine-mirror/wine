@@ -4873,14 +4873,21 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
     xmlDocPtr xmldoc;
     xmlNodePtr xmlnode;
 
-    if (!(node = get_node_obj(node_obj)))
-        return E_FAIL;
-
-    if (node->owner != doc && node != doc)
+    if (node_obj)
     {
-        if (err)
-            *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
-        return E_FAIL;
+        if (!(node = get_node_obj(node_obj)))
+            return E_FAIL;
+
+        if (node->owner != doc && node != doc)
+        {
+            if (err)
+                *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        node = doc;
     }
 
     /* TODO: for now simply treat empty document as not well-formed */
@@ -4903,7 +4910,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         vctx->warning = validate_warning;
         ++validated;
 
-        ret = node == doc ? xmlValidateDocument(vctx, xmldoc) : xmlValidateElement(vctx, xmldoc, xmlnode);
+        ret = node->type == NODE_DOCUMENT ? xmlValidateDocument(vctx, xmldoc) : xmlValidateElement(vctx, xmldoc, xmlnode);
         if (!ret)
         {
             /* TODO: get a real error code here */

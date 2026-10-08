@@ -1761,7 +1761,7 @@ static HRESULT WINAPI domdoc_validate(IXMLDOMDocument3 *iface, IXMLDOMParseError
 
     /* TODO: check ready state */
 
-    return node_validate(doc->node, (IXMLDOMNode *)iface, err);
+    return node_validate(doc->node, NULL, err);
 }
 
 static HRESULT variant_get_bool_property(const VARIANT *v, VARIANT_BOOL *ret)
