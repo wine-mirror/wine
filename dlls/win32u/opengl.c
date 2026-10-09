@@ -1614,12 +1614,13 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_activate = egldrv_context_activate,
 };
 
-static void dump_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
-{
 #define USE_GL_EXT(x) [x] = #x,
-    static const char *names[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
+static const char *extension_names[] = { ALL_EGL_EXTS ALL_GL_EXTS ALL_WGL_EXTS };
 #undef USE_GL_EXT
-    for (UINT i = 0; i < GL_EXTENSION_COUNT; i++) if (extensions[i]) TRACE( "- %s\n", names[i] );
+
+static void dump_extensions( const BOOLEAN extensions[GL_EXTENSION_COUNT] )
+{
+    for (UINT i = 0; i < GL_EXTENSION_COUNT; i++) if (extensions[i]) TRACE( "- %s\n", extension_names[i] );
 }
 
 static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
@@ -1763,7 +1764,14 @@ static void init_egl_devices( struct opengl_funcs *funcs )
         if (devices[i] == display_egl.device)
         {
             display_egl.device_type = device_type;
-            memcpy( display_egl.extensions, extensions, sizeof(extensions) );
+
+            TRACE( "EGL display device extensions:\n" );
+            for (UINT i = 0; i < GL_EXTENSION_COUNT; i++)
+            {
+                if (display_egl.extensions[i] || !extensions[i]) continue;
+                TRACE( "- %s\n", extension_names[i] );
+                display_egl.extensions[i] = TRUE;
+            }
             continue;
         }
 
