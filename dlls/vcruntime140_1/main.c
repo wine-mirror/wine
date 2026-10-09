@@ -28,9 +28,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, VOID *reserved)
   {
   case DLL_PROCESS_ATTACH:
       return msvcrt_init_handler4();
-  case DLL_THREAD_ATTACH:
-      msvcrt_attach_handler4();
-      break;
   case DLL_PROCESS_DETACH:
       if (reserved) break;
       msvcrt_free_handler4();

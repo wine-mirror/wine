@@ -106,6 +106,16 @@ typedef struct
     int trylevel;
 } se_translator_ctx;
 
+static int thread_get_trylevel(void)
+{
+    return (int)(DWORD_PTR)FlsGetValue(fls_index) - 2;
+}
+
+static void thread_set_trylevel(int trylevel)
+{
+    FlsSetValue(fls_index, (void*)(DWORD_PTR)(trylevel + 2));
+}
+
 static UINT decode_uint(BYTE **b)
 {
     UINT ret;
@@ -382,7 +392,7 @@ static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs, void *c)
     if (rec->ExceptionCode == CXX_EXCEPTION && !rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
         return EXCEPTION_EXECUTE_HANDLER;
 
-    FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx->search_state);
+    thread_set_trylevel(ctx->search_state);
     if (rec->ExceptionCode != CXX_EXCEPTION)
         return EXCEPTION_CONTINUE_SEARCH;
     if (rec->ExceptionInformation[1] == ctx->prev_rec->ExceptionInformation[1])
@@ -395,7 +405,7 @@ static void CALLBACK cxx_catch_cleanup(BOOL normal, void *c)
     cxx_catch_ctx *ctx = c;
     __CxxUnregisterExceptionObject(&ctx->frame_info, ctx->rethrow);
 
-    FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx->unwind_state);
+    thread_set_trylevel(ctx->unwind_state);
 }
 
 static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
@@ -423,7 +433,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
         {
             TRACE("detect rethrow: exception code: %lx\n", prev_rec->ExceptionCode);
             ctx.rethrow = TRUE;
-            FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx.search_state);
+            thread_set_trylevel(ctx.search_state);
 
             if (untrans_rec)
             {
@@ -441,7 +451,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
     }
     __FINALLY_CTX(cxx_catch_cleanup, &ctx)
 
-    FlsSetValue(fls_index, (void*)-2);
+    thread_set_trylevel(-2);
     TRACE("handler returned %p, ret_addr[0] %#Ix, ret_addr[1] %#Ix.\n",
           ret_addr, rec->ExceptionInformation[8], rec->ExceptionInformation[9]);
 
@@ -680,8 +690,8 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
 
     TRACE("%p %Ix %p %p\n", rec, frame, context, dispatch);
 
-    trylevel = (DWORD_PTR)FlsGetValue(fls_index);
-    FlsSetValue(fls_index, (void*)-2);
+    trylevel = thread_get_trylevel();
+    thread_set_trylevel(-2);
 
     memset(&descr, 0, sizeof(descr));
     p = cxx_rva(*(UINT*)dispatch->HandlerData, dispatch->ImageBase);
@@ -750,15 +760,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
 BOOL msvcrt_init_handler4(void)
 {
     fls_index = FlsAlloc(NULL);
-    if (fls_index == FLS_OUT_OF_INDEXES)
-        return FALSE;
-    msvcrt_attach_handler4();
-    return TRUE;
-}
-
-void msvcrt_attach_handler4(void)
-{
-    FlsSetValue(fls_index, (void*)-2);
+    return fls_index != FLS_OUT_OF_INDEXES;
 }
 
 void msvcrt_free_handler4(void)

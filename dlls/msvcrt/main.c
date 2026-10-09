@@ -136,11 +136,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_clock();
     TRACE("finished process init\n");
     break;
-  case DLL_THREAD_ATTACH:
-#if defined(__x86_64__) && _MSVCR_VER>=140
-    msvcrt_attach_handler4();
-#endif
-    break;
   case DLL_PROCESS_DETACH:
     _flushall();
     if (lpvReserved) break;
