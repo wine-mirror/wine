@@ -2143,58 +2143,58 @@ for /R %%i in (.) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo Plain directory enumeration from provided root
+if "%CD%"=="" goto :SkipBrokenNT4
 set WINE_expectedresults=4
 set WINE_expectedresults.1=%WINE_CURDIR%\.
 set WINE_expectedresults.2=%WINE_CURDIR%\bar\.
 set WINE_expectedresults.3=%WINE_CURDIR%\baz\.
 set WINE_expectedresults.4=%WINE_CURDIR%\foo\.
-if "%CD%"=="" goto :SkipBrokenNT4
 call :SetExpected
-for /R "%WINE_CURDIR%" %%i in (.) do call temp.bat "%%i"
+for /R "%WINE_CURDIR%"\. %%i in (.) do call temp.bat "%%i"
 call :ValidateExpected
 :SkipBrokenNT4
 
-echo File enumeration
+echo --- File enumeration
 set WINE_expectedresults=2
 set WINE_expectedresults.1=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.2=%WINE_CURDIR%\bazbaz
 call :SetExpected
-for /R %%i in (baz*) do call temp.bat "%%i"
+for /R %%i in (b"a"z*) do call temp.bat "%%i"
 call :ValidateExpected
 
-echo File enumeration from provided root
+echo --- File enumeration from provided root
 set WINE_expectedresults=2
 set WINE_expectedresults.1=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.2=%WINE_CURDIR%\bazbaz
 call :SetExpected
-for /R %%i in (baz*) do call temp.bat "%%i"
+for /R "%WINE_CURDIR%"\. %%i in (baz*) do call temp.bat "%%i"
 call :ValidateExpected
 
-echo Mixed enumeration
+echo --- Mixed enumeration
 set WINE_expectedresults=6
-set WINE_expectedresults.1=%WINE_CURDIR%\.
-set WINE_expectedresults.2=%WINE_CURDIR%\bar\.
-set WINE_expectedresults.3=%WINE_CURDIR%\baz\.
+set WINE_expectedresults.1=%WINE_CURDIR%\"".
+set WINE_expectedresults.2=%WINE_CURDIR%\bar\"".
+set WINE_expectedresults.3=%WINE_CURDIR%\baz\"".
 set WINE_expectedresults.4=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.5=%WINE_CURDIR%\bazbaz
-set WINE_expectedresults.6=%WINE_CURDIR%\foo\.
+set WINE_expectedresults.6=%WINE_CURDIR%\foo\"".
 call :SetExpected
-for /R %%i in (. baz*) do call temp.bat "%%i"
+for /R %%i in ("". b"a"z*) do call temp.bat "%%i"
 call :ValidateExpected
 
-echo Mixed enumeration from provided root
+echo --- Mixed enumeration from provided root
 set WINE_expectedresults=6
-set WINE_expectedresults.1=%WINE_CURDIR%\.
-set WINE_expectedresults.2=%WINE_CURDIR%\bar\.
-set WINE_expectedresults.3=%WINE_CURDIR%\baz\.
+set WINE_expectedresults.1=%WINE_CURDIR%\"".
+set WINE_expectedresults.2=%WINE_CURDIR%\bar\"".
+set WINE_expectedresults.3=%WINE_CURDIR%\baz\"".
 set WINE_expectedresults.4=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.5=%WINE_CURDIR%\bazbaz
-set WINE_expectedresults.6=%WINE_CURDIR%\foo\.
+set WINE_expectedresults.6=%WINE_CURDIR%\foo\"".
 call :SetExpected
-for /R %%i in (. baz*) do call temp.bat "%%i"
+for /R "%WINE_CURDIR%"\. %%i in ("". b"a"z*) do call temp.bat "%%i"
 call :ValidateExpected
 
-echo With duplicates enumeration
+echo --- With duplicates enumeration
 set WINE_expectedresults=12
 set WINE_expectedresults.1=%WINE_CURDIR%\bar\bazbaz
 set WINE_expectedresults.2=%WINE_CURDIR%\bar\fred
@@ -2212,7 +2212,7 @@ call :SetExpected
 for /R %%i in (baz* bazbaz fred ba*) do call temp.bat "%%i"
 call :ValidateExpected
 
-echo Strip missing wildcards, keep unwildcarded names
+echo --- Strip missing wildcards, keep unwildcarded names
 set WINE_expectedresults=6
 set WINE_expectedresults.1=%WINE_CURDIR%\bar\jim
 set WINE_expectedresults.2=%WINE_CURDIR%\baz\bazbaz
@@ -2272,6 +2272,10 @@ for /L %%i in (2,2,1) do (
   echo %%i
   echo FAILED
 )
+rem test exotic bits (quotes, errors...)
+for /L %%i in ("1",2,1) do echo %%i
+for /L %%i in (-,2,1) do echo %%i
+for /L %%i in (--1,2,1) do echo %%i
 echo --- rems inside for loops
 for /f %%i IN ("hello") DO (
    REM foo|echo ERROR unexpected execution 1
