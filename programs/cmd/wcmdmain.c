@@ -1525,28 +1525,28 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
     if (!wcsicmp(iterator.raw_argument, L"/I"))
     {
         if (cond) cond->case_insensitive = 1;
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
     }
     if (!wcsicmp(iterator.raw_argument, L"NOT"))
     {
         if (cond) cond->negated = 1;
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
     }
     if (!wcsicmp(iterator.raw_argument, L"errorlevel"))
     {
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
         if (cond) cond->op = CMD_IF_ERRORLEVEL;
         if (cond) cond->operand = xstrdupW(iterator.raw_argument);
     }
     else if (!wcsicmp(iterator.raw_argument, L"exist"))
     {
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
         if (cond) cond->op = CMD_IF_EXIST;
         if (cond) cond->operand = xstrdupW(iterator.unquoted_argument);
     }
     else if (!wcsicmp(iterator.raw_argument, L"defined"))
     {
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
         if (cond) cond->op = CMD_IF_DEFINED;
         if (cond) cond->operand = xstrdupW(iterator.raw_argument);
     }
@@ -1588,7 +1588,7 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
             if (i == ARRAY_SIZE(allowed_operators))
             {
                 if (cond) free((void*)cond->left);
-                return FALSE;
+                goto failure;
             }
             if (cond) cond->op = allowed_operators[i].binop;
         }
@@ -1596,17 +1596,20 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
         if (!WCMD_word_iterator_advance(&iterator))
         {
             if (cond) free((void*)cond->left);
-            return FALSE;
+            goto failure;
         }
         if (cond) cond->right = xstrdupW(iterator.raw_argument);
     }
     /* check all remaning args are present, and compute pointer to end of condition */
     if (end)
     {
-        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        if (!WCMD_word_iterator_advance(&iterator)) goto failure;
         *end = (WCHAR*)&iterator.from[iterator.position];
     }
     return TRUE;
+failure:
+    WCMD_word_iterator_dispose(&iterator);
+    return FALSE;
 }
 
 static const char *debugstr_if_condition(const CMD_IF_CONDITION *cond)
