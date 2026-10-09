@@ -405,11 +405,11 @@ static struct d3dkmt_object *d3dkmt_mutex_create( unsigned int key_value, data_s
     return &object->base;
 }
 
-static struct object *keyed_wait_grab( struct d3dkmt_mutex *mutex, int key )
+static struct object *keyed_wait_grab( struct list *waits, int key )
 {
     struct keyed_wait *wait;
 
-    LIST_FOR_EACH_ENTRY( wait, &mutex->waits, struct keyed_wait, entry )
+    LIST_FOR_EACH_ENTRY( wait, waits, struct keyed_wait, entry )
     {
         if (wait->key != key) continue;
         wait->waiters++;
@@ -425,15 +425,15 @@ static struct object *keyed_wait_grab( struct d3dkmt_mutex *mutex, int key )
         return NULL;
     }
 
-    list_add_tail( &mutex->waits, &wait->entry );
+    list_add_tail( waits, &wait->entry );
     return grab_object( wait->sync );
 }
 
-static void keyed_wait_release( struct d3dkmt_mutex *mutex, int key )
+static void keyed_wait_release( struct list *waits, int key )
 {
     struct keyed_wait *wait;
 
-    LIST_FOR_EACH_ENTRY( wait, &mutex->waits, struct keyed_wait, entry )
+    LIST_FOR_EACH_ENTRY( wait, waits, struct keyed_wait, entry )
     {
         if (wait->key == key && !--wait->waiters)
         {
@@ -731,7 +731,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 {
     data_size_t runtime_size = get_reply_max_size();
     struct d3dkmt_mutex *mutex;
-    struct object *sync;
+    struct object *wait;
 
     if (!(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) return;
 
@@ -743,10 +743,10 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
         mutex_grab( mutex );
     }
     else if ((reply->wait_handle = req->wait_handle)) set_error( STATUS_PENDING );
-    else if ((sync = keyed_wait_grab( mutex, req->key_value )))
+    else if ((wait = keyed_wait_grab( &mutex->waits, req->key_value )))
     {
-        if ((reply->wait_handle = alloc_handle( current->process, sync, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
-        release_object( sync );
+        if ((reply->wait_handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
+        release_object( wait );
     }
 
     if (runtime_size >= mutex->base.runtime_size) set_reply_data( mutex->base.runtime, mutex->base.runtime_size );
@@ -754,7 +754,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 
     release_object( mutex );
 
-    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( mutex, req->key_value );
+    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( &mutex->waits, req->key_value );
 }
 
 /* Release a global d3dkmt keyed mutex */
