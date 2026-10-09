@@ -100,6 +100,8 @@ static const struct object_ops d3dkmt_mutex_ops =
 struct d3dkmt_sync
 {
     struct d3dkmt_object base;
+    unsigned __int64     fence_value;    /* last signaled fence value */
+    struct list          waits;          /* list of pending keyed_waits */
 };
 
 static void d3dkmt_sync_dump( struct object *obj, int verbose );
@@ -490,8 +492,16 @@ static void d3dkmt_sync_dump( struct object *obj, int verbose )
 static void d3dkmt_sync_destroy( struct object *obj )
 {
     struct d3dkmt_sync *sync = (struct d3dkmt_sync *)obj;
+    struct keyed_wait *wait, *next;
 
     assert( obj->ops == &d3dkmt_sync_ops );
+
+    LIST_FOR_EACH_ENTRY_SAFE( wait, next, &sync->waits, struct keyed_wait, entry )
+    {
+        release_object( wait->sync );
+        list_remove( &wait->entry );
+        free( wait );
+    }
 
     if (sync->base.global) free_object_handle( sync->base.global );
     free( sync->base.runtime );
@@ -506,6 +516,8 @@ static struct d3dkmt_object *d3dkmt_sync_create( data_size_t runtime_size, const
     object->base.global          = 0;
     object->base.runtime_size    = runtime_size;
     object->base.fd              = NULL;
+    object->fence_value          = 0;
+    list_init( &object->waits );
 
     if (!(object->base.runtime = memdup( runtime, runtime_size )) ||
         !(object->base.global = alloc_object_handle( &object->base )))
@@ -777,4 +789,40 @@ DECL_HANDLER(d3dkmt_mutex_release)
     }
 
     release_object( mutex );
+}
+
+/* Wait on a global d3dkmt sync fence value */
+DECL_HANDLER(d3dkmt_sync_wait)
+{
+    struct d3dkmt_sync *sync;
+    struct object *wait;
+
+    if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+
+    if (req->wait_status) set_error( req->wait_status );
+    else if (sync->fence_value >= req->fence_value) set_error( STATUS_SUCCESS );
+    else if ((reply->wait_handle = req->wait_handle)) set_error( STATUS_PENDING );
+    else if ((wait = keyed_wait_grab( &sync->waits, req->fence_value )))
+    {
+        if ((reply->wait_handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
+        release_object( wait );
+    }
+
+    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( &sync->waits, req->fence_value );
+    release_object( sync );
+}
+
+/* Signal a global d3dkmt sync fence value */
+DECL_HANDLER(d3dkmt_sync_signal)
+{
+    struct d3dkmt_sync *sync;
+    struct keyed_wait *wait;
+
+    if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+    sync->fence_value = req->fence_value;
+
+    LIST_FOR_EACH_ENTRY( wait, &sync->waits, struct keyed_wait, entry )
+        if (wait->key <= sync->fence_value) signal_sync( wait->sync );
+
+    release_object( sync );
 }

@@ -4343,6 +4343,24 @@ enum inproc_sync_type
 @END
 
 
+/* Wait on a global d3dkmt sync fence value */
+@REQ(d3dkmt_sync_wait)
+    d3dkmt_handle_t     sync;           /* sync global handle */
+    unsigned int        fence_value;    /* fence value to wait for */
+    obj_handle_t        wait_handle;    /* previously returned wait handle */
+    unsigned int        wait_status;    /* status returned from previous wait */
+@REPLY
+    obj_handle_t        wait_handle;    /* wait handle for pending acquire */
+@END
+
+
+/* Signal a global d3dkmt sync fence value */
+@REQ(d3dkmt_sync_signal)
+    d3dkmt_handle_t     sync;           /* sync global handle */
+    unsigned __int64    fence_value;    /* signaled fence value */
+@END
+
+
 /* Create a new ALPC object */
 @REQ(alpc_create_port)
     unsigned int        flags;          /* flags in port attributes */

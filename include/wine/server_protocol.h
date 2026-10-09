@@ -6245,6 +6245,37 @@ struct d3dkmt_mutex_release_reply
 
 
 
+struct d3dkmt_sync_wait_request
+{
+    struct request_header __header;
+    d3dkmt_handle_t     sync;
+    unsigned int        fence_value;
+    obj_handle_t        wait_handle;
+    unsigned int        wait_status;
+    char __pad_28[4];
+};
+struct d3dkmt_sync_wait_reply
+{
+    struct reply_header __header;
+    obj_handle_t        wait_handle;
+    char __pad_12[4];
+};
+
+
+
+struct d3dkmt_sync_signal_request
+{
+    struct request_header __header;
+    d3dkmt_handle_t     sync;
+    unsigned __int64    fence_value;
+};
+struct d3dkmt_sync_signal_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct alpc_create_port_request
 {
     struct request_header __header;
@@ -6570,6 +6601,8 @@ enum request
     REQ_d3dkmt_object_open_name,
     REQ_d3dkmt_mutex_acquire,
     REQ_d3dkmt_mutex_release,
+    REQ_d3dkmt_sync_wait,
+    REQ_d3dkmt_sync_signal,
     REQ_alpc_create_port,
     REQ_NB_REQUESTS
 };
@@ -6886,6 +6919,8 @@ union generic_request
     struct d3dkmt_object_open_name_request d3dkmt_object_open_name_request;
     struct d3dkmt_mutex_acquire_request d3dkmt_mutex_acquire_request;
     struct d3dkmt_mutex_release_request d3dkmt_mutex_release_request;
+    struct d3dkmt_sync_wait_request d3dkmt_sync_wait_request;
+    struct d3dkmt_sync_signal_request d3dkmt_sync_signal_request;
     struct alpc_create_port_request alpc_create_port_request;
 };
 union generic_reply
@@ -7200,9 +7235,11 @@ union generic_reply
     struct d3dkmt_object_open_name_reply d3dkmt_object_open_name_reply;
     struct d3dkmt_mutex_acquire_reply d3dkmt_mutex_acquire_reply;
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
+    struct d3dkmt_sync_wait_reply d3dkmt_sync_wait_reply;
+    struct d3dkmt_sync_signal_reply d3dkmt_sync_signal_reply;
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 970
+#define SERVER_PROTOCOL_VERSION 971
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

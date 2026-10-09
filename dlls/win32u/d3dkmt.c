@@ -1929,8 +1929,22 @@ NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNC
  */
 NTSTATUS WINAPI NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    struct d3dkmt_sync *sync;
+    NTSTATUS status;
+
+    if (params->ObjectCount != 1) FIXME( "Not implemented\n" );
+
+    if (!(sync = get_d3dkmt_sync( params->ObjectHandleArray[0] ))) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( d3dkmt_sync_signal )
+    {
+        req->sync = sync->obj.global;
+        req->fence_value = params->FenceValueArray[0];
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************
@@ -1938,8 +1952,35 @@ NTSTATUS WINAPI NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNA
  */
 NTSTATUS WINAPI NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params )
 {
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+    HANDLE wait_handle = NULL;
+    struct d3dkmt_sync *sync;
+
+    TRACE( "params %p\n", params );
+
+    if (params->ObjectCount != 1) FIXME( "Not implemented\n" );
+
+    if (!(sync = get_d3dkmt_sync( params->ObjectHandleArray[0] ))) return STATUS_INVALID_PARAMETER;
+
+    do
+    {
+        if (wait_handle) status = NtWaitForSingleObject( wait_handle, FALSE, NULL );
+        SERVER_START_REQ( d3dkmt_sync_wait )
+        {
+            req->sync = sync->obj.global;
+            req->fence_value = params->FenceValueArray[0];
+            req->wait_handle = wine_server_obj_handle( wait_handle );
+            req->wait_status = status;
+
+            status = wine_server_call( req );
+            /* server never creates a new handle if one is provided, and always returns a handle if pending */
+            if (reply->wait_handle) wait_handle = wine_server_ptr_handle( reply->wait_handle );
+            else if (wait_handle) NtClose( wait_handle );
+        }
+        SERVER_END_REQ;
+    } while (status == STATUS_PENDING);
+
+    return status;
 }
 
 static void get_resource_global_keyed_mutex( struct d3dkmt_dxgi_desc *desc, D3DKMT_HANDLE *mutex_global, D3DKMT_HANDLE *sync_global )
