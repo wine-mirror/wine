@@ -417,6 +417,28 @@ static struct d3dkmt_adapter *get_d3dkmt_adapter( D3DKMT_HANDLE handle )
     return CONTAINING_RECORD( obj, struct d3dkmt_adapter, obj );
 }
 
+static void d3dkmt_allocation_free( struct d3dkmt_object *allocation )
+{
+    if (allocation) d3dkmt_object_free( allocation );
+}
+
+static NTSTATUS d3dkmt_allocation_alloc( struct d3dkmt_object **ret )
+{
+    struct d3dkmt_object *allocation;
+    NTSTATUS status;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto done;
+    if ((status = alloc_object_handle( allocation ))) d3dkmt_allocation_free( allocation );
+done:
+    *ret = status ? NULL : allocation;
+    return status;
+}
+
+static struct d3dkmt_object *get_d3dkmt_allocation( D3DKMT_HANDLE handle )
+{
+    return get_d3dkmt_object( handle, D3DKMT_ALLOCATION );
+}
+
 static void d3dkmt_device_free( struct d3dkmt_device *device )
 {
     if (device) d3dkmt_object_free( &device->obj );
@@ -1056,7 +1078,6 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
         if (params->hResource && !(resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE )))
             return STATUS_INVALID_HANDLE;
         if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
-        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
 
         if (!params->Flags.CreateShared) status = alloc_object_handle( &resource->obj );
         else status = d3dkmt_object_create( &resource->obj, -1, 0, params->Flags.NtSecuritySharing,
@@ -1074,11 +1095,10 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
             resource = get_d3dkmt_object( params->hResource, D3DKMT_RESOURCE );
             return resource ? STATUS_INVALID_PARAMETER : STATUS_INVALID_HANDLE;
         }
-        if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) return status;
         params->hGlobalShare = 0;
     }
 
-    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     if (resource) resource->allocation = allocation->local;
     alloc_info->hAllocation = allocation->local;
     return STATUS_SUCCESS;
@@ -1124,13 +1144,13 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *p
 
     for (i = 0; i < params->AllocationCount; i++)
     {
-        if (!(allocation = get_d3dkmt_object( params->phAllocationList[i], D3DKMT_ALLOCATION )))
+        if (!(allocation = get_d3dkmt_allocation( params->phAllocationList[i] )))
             return STATUS_INVALID_PARAMETER;
-        d3dkmt_object_free( allocation );
+        d3dkmt_allocation_free( allocation );
     }
 
-    if (alloc_handle && (allocation = get_d3dkmt_object( alloc_handle, D3DKMT_ALLOCATION )))
-        d3dkmt_object_free( allocation );
+    if (alloc_handle && (allocation = get_d3dkmt_allocation( alloc_handle )))
+        d3dkmt_allocation_free( allocation );
 
     return STATUS_SUCCESS;
 }
@@ -1176,12 +1196,11 @@ NTSTATUS WINAPI NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *params )
     if (!(alloc_info = params->pOpenAllocationInfo)) return STATUS_INVALID_PARAMETER;
 
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
-    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
 
     runtime_size = params->PrivateRuntimeDataSize;
     if ((status = d3dkmt_object_open( &resource->obj, params->hGlobalShare, NULL, params->pPrivateRuntimeData, &runtime_size ))) goto failed;
 
-    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     resource->allocation = allocation->local;
     alloc_info->hAllocation = allocation->local;
     alloc_info->PrivateDriverDataSize = 0;
@@ -1220,12 +1239,11 @@ NTSTATUS WINAPI NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *params )
     if (!(alloc_info = params->pOpenAllocationInfo2)) return STATUS_INVALID_PARAMETER;
 
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) return status;
-    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
 
     runtime_size = params->PrivateRuntimeDataSize;
     if ((status = d3dkmt_object_open( &resource->obj, params->hGlobalShare, NULL, params->pPrivateRuntimeData, &runtime_size ))) goto failed;
 
-    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     resource->allocation = allocation->local;
     alloc_info->hAllocation = allocation->local;
     alloc_info->PrivateDriverDataSize = 0;
@@ -1872,10 +1890,9 @@ D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
     TRACE( "fd %d, global %p\n", fd, global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
-    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
     if ((status = d3dkmt_object_create( &resource->obj, fd, 0, !global, NULL, 0 ))) goto failed;
 
-    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     resource->allocation = allocation->local;
 
     if (global) *global = resource->obj.global;
@@ -1883,7 +1900,7 @@ D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
 
 failed:
     WARN( "Failed to create resource, status %#x\n", status );
-    if (allocation) d3dkmt_object_free( allocation );
+    d3dkmt_allocation_free( allocation );
     if (resource) d3dkmt_object_free( &resource->obj );
     return 0;
 }
@@ -1906,10 +1923,9 @@ D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto failed;
     if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) goto failed;
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto failed;
-    if ((status = d3dkmt_object_alloc( sizeof(*allocation), D3DKMT_ALLOCATION, (void **)&allocation ))) goto failed;
     if ((status = d3dkmt_object_open( &resource->obj, global, shared, runtime_data, &runtime_size ))) goto failed;
 
-    if ((status = alloc_object_handle( allocation ))) goto failed;
+    if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     resource->allocation = allocation->local;
 
     if (!runtime_data || runtime_size <= sizeof(struct d3dkmt_dxgi_desc)) WARN( "Unsupported runtime data size %#x\n", runtime_size );
@@ -1933,7 +1949,7 @@ D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_
 
 failed:
     WARN( "Failed to open resource, status %#x\n", status );
-    if (allocation) d3dkmt_object_free( allocation );
+    d3dkmt_allocation_free( allocation );
     if (resource) d3dkmt_object_free( &resource->obj );
     if (mutex) d3dkmt_object_free( mutex );
     if (sync) d3dkmt_object_free( sync );
@@ -1945,12 +1961,11 @@ failed:
 NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
 {
     struct d3dkmt_resource *resource;
-    struct d3dkmt_object *allocation;
 
     TRACE( "local %#x\n", local );
 
     if (!(resource = get_d3dkmt_object( local, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
-    if ((allocation = get_d3dkmt_object( resource->allocation, D3DKMT_ALLOCATION ))) d3dkmt_object_free( allocation );
+    d3dkmt_allocation_free( get_d3dkmt_allocation( resource->allocation ) );
     d3dkmt_object_free( &resource->obj );
 
     return STATUS_SUCCESS;
