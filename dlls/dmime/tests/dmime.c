@@ -5462,16 +5462,7 @@ static void test_segment_state(void)
     IDirectMusicTool_Release(tool);
 }
 
-struct expected_note
-{
-    UINT key;
-    BOOL todo_missing;
-    BOOL todo_type;
-    BOOL todo_time;
-    BOOL todo_key;
-};
-
-static void check_loop(const char *label, IDirectMusicSegment *segment, const struct expected_note *expected_notes,
+static void check_loop(const char *label, IDirectMusicSegment *segment, const WORD *expected_notes,
         DWORD expected_note_count)
 {
     static const DWORD message_types[] =
@@ -5569,47 +5560,23 @@ static void check_loop(const char *label, IDirectMusicSegment *segment, const st
     for (i = 0; i < expected_note_count; ++i)
     {
         ret = test_tool_wait_message(tool, 2000, (DMUS_PMSG **)&note);
-        todo_wine_if(expected_notes[i].todo_missing) ok(!ret, "%d: got %#lx\n", i, ret);
-        if (ret)
-            break;
-        todo_wine_if(expected_notes[i].todo_type) ok(note->dwType == DMUS_PMSGT_NOTE, "%d: got %#lx\n", i,
-                note->dwType);
-        if (note->dwType != DMUS_PMSGT_NOTE)
-        {
-            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
-            ok(hr == S_OK, "got %#lx\n", hr);
-            break;
-        }
-        todo_wine_if(expected_notes[i].todo_time) ok(note->mtTime == start_time + i * 10,
-                "%d: got mtTime %ld, expected %ld\n", i, note->mtTime, start_time + i * 10);
-        if (note->mtTime != start_time + i * 10)
-        {
-            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
-            ok(hr == S_OK, "got %#lx\n", hr);
-            break;
-        }
-        todo_wine_if(expected_notes[i].todo_key) ok(note->wMusicValue == expected_notes[i].key,
-                "%d: got wMusicValue %d, expected %d\n", i, note->wMusicValue, expected_notes[i].key);
-        if (note->wMusicValue != expected_notes[i].key)
-        {
-            hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
-            ok(hr == S_OK, "got %#lx\n", hr);
-            break;
-        }
+        ok(!ret, "%d: got %#lx\n", i, ret);
+        ok(note->dwType == DMUS_PMSGT_NOTE, "%d: got %#lx\n", i, note->dwType);
+        ok(note->mtTime == start_time + i * 10, "%d: got mtTime %ld, expected %ld\n", i, note->mtTime,
+                start_time + i * 10);
+        ok(note->wMusicValue == expected_notes[i], "%d: got wMusicValue %d, expected %d\n", i, note->wMusicValue,
+                expected_notes[i]);
         hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
         ok(hr == S_OK, "got %#lx\n", hr);
     }
 
-    if (i == expected_note_count)
-    {
-        ret = test_tool_wait_message(tool, 2000, &msg);
-        ok(!ret, "got %#lx\n", ret);
-        hr = IDirectMusicPerformance_FreePMsg(performance, msg);
-        ok(hr == S_OK, "got %#lx\n", hr);
+    ret = test_tool_wait_message(tool, 2000, &msg);
+    ok(!ret, "got %#lx\n", ret);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
-        ret = test_tool_wait_message(tool, 100, (DMUS_PMSG **)&msg);
-        ok(ret == WAIT_TIMEOUT, "unexpected message\n");
-    }
+    ret = test_tool_wait_message(tool, 100, (DMUS_PMSG **)&msg);
+    ok(ret == WAIT_TIMEOUT, "unexpected message\n");
 
     hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -5629,33 +5596,33 @@ static void check_loop(const char *label, IDirectMusicSegment *segment, const st
 
 static void test_loop(void)
 {
-    static const struct expected_note expected_notes_default[] =
+    static const WORD expected_notes_default[] =
     {
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        0, 1, 2, 3, 4, 5, 6,
     };
-    static const struct expected_note expected_notes_set_repeats[] =
+    static const WORD expected_notes_set_repeats[] =
     {
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        0, 1, 2, 3, 4, 5, 6,
+        0, 1, 2, 3, 4, 5, 6,
+        0, 1, 2, 3, 4, 5, 6,
     };
-    static const struct expected_note expected_notes_set_start_point[] =
+    static const WORD expected_notes_set_start_point[] =
     {
-        {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
-        {0}, {1}, {2}, {3}, {4}, {5}, {6},
+        2, 3, 4, 5, 6,
+        0, 1, 2, 3, 4, 5, 6,
+        0, 1, 2, 3, 4, 5, 6,
     };
-    static const struct expected_note expected_notes_set_length[] =
+    static const WORD expected_notes_set_length[] =
     {
-        {2}, {3}, {4},
-        {0}, {1}, {2}, {3}, {4},
-        {0}, {1}, {2}, {3}, {4},
+        2, 3, 4,
+        0, 1, 2, 3, 4,
+        0, 1, 2, 3, 4,
     };
-    static const struct expected_note expected_notes_set_loop_points[] =
+    static const WORD expected_notes_set_loop_points[] =
     {
-        {2}, {3},
-        {1}, {2}, {3},
-        {1}, {2}, {3}, {4},
+        2, 3,
+        1, 2, 3,
+        1, 2, 3, 4,
     };
     static const LARGE_INTEGER zero = {0};
     IDirectMusicSegment *wave_segment;
