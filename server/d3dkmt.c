@@ -97,6 +97,22 @@ static const struct object_ops d3dkmt_mutex_ops =
     .destroy = d3dkmt_mutex_destroy,
 };
 
+struct d3dkmt_sync
+{
+    struct d3dkmt_object base;
+};
+
+static void d3dkmt_sync_dump( struct object *obj, int verbose );
+static void d3dkmt_sync_destroy( struct object *obj );
+
+static const struct object_ops d3dkmt_sync_ops =
+{
+    .size    = sizeof(struct d3dkmt_sync),
+    .type    = &no_type,
+    .dump    = d3dkmt_sync_dump,
+    .destroy = d3dkmt_sync_destroy,
+};
+
 #define DXGK_SHARED_SYNC_QUERY_STATE  0x0001
 #define DXGK_SHARED_SYNC_MODIFY_STATE 0x0002
 #define DXGK_SHARED_SYNC_ALL_ACCESS   (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
@@ -463,6 +479,44 @@ void abandon_d3dkmt_mutexes( struct thread *thread )
         mutex_release( mutex, true );
 }
 
+static void d3dkmt_sync_dump( struct object *obj, int verbose )
+{
+    struct d3dkmt_sync *sync = (struct d3dkmt_sync *)obj;
+    assert( obj->ops == &d3dkmt_sync_ops );
+
+    fprintf( stderr, "d3dkmt sync global=%#x\n", sync->base.global );
+}
+
+static void d3dkmt_sync_destroy( struct object *obj )
+{
+    struct d3dkmt_sync *sync = (struct d3dkmt_sync *)obj;
+
+    assert( obj->ops == &d3dkmt_sync_ops );
+
+    if (sync->base.global) free_object_handle( sync->base.global );
+    free( sync->base.runtime );
+}
+
+static struct d3dkmt_object *d3dkmt_sync_create( data_size_t runtime_size, const void *runtime )
+{
+    struct d3dkmt_sync *object;
+
+    if (!(object = alloc_object( &d3dkmt_sync_ops ))) return NULL;
+    object->base.type            = D3DKMT_SYNC;
+    object->base.global          = 0;
+    object->base.runtime_size    = runtime_size;
+    object->base.fd              = NULL;
+
+    if (!(object->base.runtime = memdup( runtime, runtime_size )) ||
+        !(object->base.global = alloc_object_handle( &object->base )))
+    {
+        release_object( object );
+        return NULL;
+    }
+
+    return &object->base;
+}
+
 /* return a pointer to a d3dkmt object from its global handle */
 static void *d3dkmt_object_open( d3dkmt_handle_t global, enum d3dkmt_type type )
 {
@@ -523,6 +577,9 @@ DECL_HANDLER(d3dkmt_object_create)
     {
     case D3DKMT_MUTEX:
         if (!(object = d3dkmt_mutex_create( req->value, get_req_data_size(), get_req_data() ))) goto done;
+        break;
+    case D3DKMT_SYNC:
+        if (!(object = d3dkmt_sync_create( get_req_data_size(), get_req_data() ))) goto done;
         break;
     default:
         if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
