@@ -36,41 +36,13 @@ typedef unsigned short _ino_t;
 #define _INO_T_DEFINED
 #endif
 
-#ifndef _MODE_T_DEFINED
-typedef unsigned short _mode_t;
-#define _MODE_T_DEFINED
-#endif
-
 #ifndef _OFF_T_DEFINED
-typedef int _off_t;
+typedef __msvcrt_long _off_t;
 #define _OFF_T_DEFINED
 #endif
 
-#ifndef _BSDTYPES_DEFINED
-typedef unsigned char u_char;
-typedef unsigned short u_short;
-typedef unsigned int  u_int;
-typedef __msvcrt_ulong u_long;
-#define _BSDTYPES_DEFINED
-#endif
-
-#define dev_t _dev_t
-#define ino_t _ino_t
-#define mode_t _mode_t
-#define off_t _off_t
-
-#ifndef _PID_T_DEFINED
-typedef int pid_t;
-#define _PID_T_DEFINED
-#endif
-
-#ifndef _SSIZE_T_DEFINED
-#ifdef _WIN64
-typedef __int64 ssize_t;
-#else
-typedef int ssize_t;
-#endif
-#define _SSIZE_T_DEFINED
-#endif
+typedef _dev_t dev_t;
+typedef _ino_t ino_t;
+typedef _off_t off_t;
 
 #endif /* __WINE_SYS_TYPES_H */

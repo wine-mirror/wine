@@ -164,11 +164,11 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
     return adapter->vram_bytes_used;
 }
 
-ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size)
+SSIZE_T adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, SSIZE_T size)
 {
     /* Note that this needs to be thread-safe; the Vulkan adapter may map from
      * client threads. */
-    ssize_t ret = InterlockedExchangeAddSizeT(&adapter->mapped_size, size) + size;
+    SSIZE_T ret = InterlockedExchangeAddSizeT(&adapter->mapped_size, size) + size;
     TRACE("Adjusted mapped adapter memory by %Id to %Id.\n", size, ret);
     return ret;
 }

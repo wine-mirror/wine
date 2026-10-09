@@ -2487,7 +2487,7 @@ static void test_stat(void)
         ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
         ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
         ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
-        ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
+        ok(buf.st_size == 0, "st_size is %ld, expected 0\n", buf.st_size);
 
         ret = stat("stat.tst", &buf);
         ok(!ret, "stat failed: errno=%d\n", errno);
@@ -2495,7 +2495,7 @@ static void test_stat(void)
         ok((buf.st_mode & 0777) == 0666, "bad st_mode = %06o\n", buf.st_mode);
         ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n", buf.st_dev, buf.st_rdev);
         ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
-        ok(buf.st_size == 0, "st_size is %d, expected 0\n", buf.st_size);
+        ok(buf.st_size == 0, "st_size is %ld, expected 0\n", buf.st_size);
 
         errno = 0xdeadbeef;
         ret = stat("stat.tst\\", &buf);

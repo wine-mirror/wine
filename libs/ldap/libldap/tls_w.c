@@ -161,7 +161,7 @@ tlsw_session_accept( tls_session *session )
 	return -1;
 }
 
-static ssize_t
+static SSIZE_T
 tlsw_recv( Sockbuf_IO_Desc *sbiod, void *buf, size_t len )
 {
 	tlsw_session *session;
@@ -171,7 +171,7 @@ tlsw_recv( Sockbuf_IO_Desc *sbiod, void *buf, size_t len )
 	return LBER_SBIOD_READ_NEXT( sbiod, buf, len );
 }
 
-static ssize_t
+static SSIZE_T
 tlsw_send( Sockbuf_IO_Desc *sbiod, const void *buf, size_t len )
 {
 	tlsw_session *session;
@@ -193,7 +193,7 @@ tlsw_session_connect( LDAP *ld, tls_session *session, const char *name_in )
 	ULONG attrs, flags = ISC_REQ_CONFIDENTIALITY | ISC_REQ_STREAM |
 						 ISC_REQ_USE_SUPPLIED_CREDS | ISC_REQ_ALLOCATE_MEMORY;
 	SECURITY_STATUS status;
-	ssize_t size, max_token, recv_offset = 0, expected = TLS_HEADER_SIZE;
+	SSIZE_T size, max_token, recv_offset = 0, expected = TLS_HEADER_SIZE;
 	SecPkgInfoA *info;
 
 	status = QuerySecurityPackageInfoA( UNISP_NAME_A, &info );
@@ -524,7 +524,7 @@ tlsw_sb_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	SecBuffer bufs[4];
 	SecBufferDesc buf_desc = { SECBUFFER_VERSION, 4, bufs };
 	SECURITY_STATUS status = SEC_E_OK;
-	ssize_t size, expected = max( len, tls->header.size ), ret = -1;
+	SSIZE_T size, expected = max( len, tls->header.size ), ret = -1;
 
 	if ( !len )
 		return 0;
@@ -585,7 +585,7 @@ tlsw_sb_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	SecBuffer bufs[3];
 	SecBufferDesc buf_desc = { SECBUFFER_VERSION, 3, bufs };
 	SECURITY_STATUS status;
-	ssize_t size, ret = len;
+	SSIZE_T size, ret = len;
 	unsigned int i;
 
 	if ( !len )

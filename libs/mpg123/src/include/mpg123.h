@@ -98,7 +98,7 @@
 #ifndef MPG123_PORTABLE_API
 #include <sys/types.h>
 /** A little hack to help MSVC not having ssize_t. */
-#ifdef _MSC_VER
+#ifdef _WIN32
 typedef ptrdiff_t mpg123_ssize_t;
 #else
 typedef ssize_t mpg123_ssize_t;

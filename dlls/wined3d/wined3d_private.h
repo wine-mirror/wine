@@ -2618,7 +2618,7 @@ struct wined3d_adapter
     void *formats;
     size_t format_size;
 
-    ssize_t mapped_size;
+    SSIZE_T mapped_size;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
@@ -2640,7 +2640,7 @@ struct wined3d_adapter *wined3d_adapter_gl_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags);
 
 BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter);
-ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size);
+SSIZE_T adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, SSIZE_T size);
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount);
 
 #define ARG_UNUSED          0xff

@@ -117,7 +117,7 @@ typedef unsigned __int64 EGLuint64NV;
 typedef unsigned __int64 EGLuint64KHR;
 typedef __int64 EGLnsecsANDROID;
 typedef int EGLNativeFileDescriptorKHR;
-typedef ssize_t EGLsizeiANDROID;
+typedef SSIZE_T EGLsizeiANDROID;
 typedef void (*EGLSetBlobFuncANDROID) (const void *key, EGLsizeiANDROID keySize, const void *value, EGLsizeiANDROID valueSize);
 typedef EGLsizeiANDROID (*EGLGetBlobFuncANDROID) (const void *key, EGLsizeiANDROID keySize, void *value, EGLsizeiANDROID valueSize);
 struct EGLClientPixmapHI {
