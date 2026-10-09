@@ -101,10 +101,10 @@ static void flush_events(void)
 
 static void init_functions(void)
 {
-#define USE_GL_FUNC( func ) ext.func = (void *)wglGetProcAddress( #func );
-    ALL_GL_EXT_FUNCS
-    ALL_WGL_EXT_FUNCS
+#define USE_GL_FUNC(func) { .name = #func, .ptr = (void *)&ext.func },
+    static const struct { const char *name; void **ptr; } procs[] = { ALL_GL_EXT_FUNCS ALL_WGL_EXT_FUNCS };
 #undef USE_GL_FUNC
+    for (int i = 0; i < ARRAY_SIZE(procs); i++) *procs[i].ptr = wglGetProcAddress( procs[i].name );
 }
 
 static BOOL gl_extension_supported(const char *extensions, const char *extension_string)
