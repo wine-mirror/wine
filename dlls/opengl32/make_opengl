@@ -998,7 +998,7 @@ sub get_arg_len($)
 # Fetch the registry files
 #
 my $ogl_url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
-my $ogl_commit="0b449b97cdf1043eef5e1f0e235cbbab6ec10c86";
+my $ogl_commit="e8f7cd0e35ac8d6f5667a021ff83d04b1fec41ef";
 my $egl_url="https://raw.githubusercontent.com/KhronosGroup/EGL-Registry";
 my $egl_commit="e80a2e0050f02ae349e822f964671e364e05e711";
 my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
@@ -1107,6 +1107,7 @@ my %unexposed_extensions =
     "GL_APPLE_pixel_buffer" => 1,
     "GL_EXT_memory_object_fd" => 1,
     "GL_EXT_semaphore_fd" => 1,
+    "GL_MESA_map_buffer_client_pointer" => 1,
     # GLES-only extensions:
     "GL_APPLE_copy_texture_levels" => 1,
     "GL_APPLE_framebuffer_multisample" => 1,

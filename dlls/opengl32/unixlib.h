@@ -8480,7 +8480,7 @@ struct glGetFixedv_params
 {
     TEB *teb;
     GLenum pname;
-    GLfixed *params;
+    GLfixed *data;
 };
 
 struct glGetFixedvOES_params

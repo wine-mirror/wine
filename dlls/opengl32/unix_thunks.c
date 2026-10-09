@@ -9429,7 +9429,7 @@ static NTSTATUS ext_glGetFixedv( void *args )
     struct glGetFixedv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glGetFixedv) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetFixedv( params->pname, params->params );
+    funcs->p_glGetFixedv( params->pname, params->data );
     return STATUS_SUCCESS;
 }
 
@@ -47873,12 +47873,12 @@ static NTSTATUS wow64_ext_glGetFixedv( void *args )
     {
         PTR32 teb;
         GLenum pname;
-        PTR32 params;
+        PTR32 data;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glGetFixedv) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetFixedv( params->pname, ULongToPtr(params->params) );
+    funcs->p_glGetFixedv( params->pname, ULongToPtr(params->data) );
     return STATUS_SUCCESS;
 }
 
