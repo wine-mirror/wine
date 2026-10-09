@@ -1120,7 +1120,7 @@ static BOOL get_main_clsid(const char *name, CLSID *clsid)
 
     for(mapping = clsid_list; mapping->name; mapping++)
     {
-        if(!strcasecmp(name, mapping->name))
+        if(!stricmp(name, mapping->name))
         {
             *clsid = mapping->clsid;
             return TRUE;

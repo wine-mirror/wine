@@ -279,7 +279,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
         return;
     }
     CloseHandle( hFile);
-    if( (p = strrchr( progname, '.')) && !strcasecmp( p, ".bat"))
+    if( (p = strrchr( progname, '.')) && !stricmp( p, ".bat"))
         WINE_FIXME(".bat programs in pif files are not supported.\n"); 
     /* first change dir, so the search below can start from there */
     if( startdir[0] && !SetCurrentDirectoryA( startdir)) {
@@ -497,7 +497,7 @@ int main( int argc, char *argv[] )
         if (instance == 11)
         {
             /* first see if it is a .pif file */
-            if( ( p = strrchr( appname, '.' )) && !strcasecmp( p, ".pif"))
+            if( ( p = strrchr( appname, '.' )) && !stricmp( p, ".pif"))
                 pif_cmd( appname, cmdline + 1);
             else
                 /* try DOS format */

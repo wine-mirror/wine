@@ -67,7 +67,7 @@ static void add_target(struct args *args, ULONG class, const char *address)
 {
     static const char smtp[] = "smtp:";
 
-    if (!strncasecmp(address, smtp, sizeof(smtp) - 1))
+    if (!strnicmp(address, smtp, sizeof(smtp) - 1))
         address += sizeof(smtp) - 1;
 
     switch (class)

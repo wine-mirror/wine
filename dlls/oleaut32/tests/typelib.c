@@ -7062,12 +7062,12 @@ static void test_register_typelib(BOOL system_registration)
 
             if (attrs[i].kind == TKIND_INTERFACE || (attrs[i].flags & TYPEFLAG_FDUAL))
             {
-                ok(!strcasecmp(uuid, "{00020424-0000-0000-c000-000000000046}"),
+                ok(!stricmp(uuid, "{00020424-0000-0000-c000-000000000046}"),
                         "Got unexpected proxy CLSID %s.\n", uuid);
             }
             else
             {
-                ok(!strcasecmp(uuid, "{00020420-0000-0000-c000-000000000046}"),
+                ok(!stricmp(uuid, "{00020420-0000-0000-c000-000000000046}"),
                         "Got unexpected proxy CLSID %s.\n", uuid);
             }
 

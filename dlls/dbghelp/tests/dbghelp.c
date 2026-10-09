@@ -716,7 +716,7 @@ static void test_modules_overlap(void)
             if (!nth.could_fail)
             {
                 ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
-                ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
+                ok(!stricmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
             }
         }
         memset(sym, 0, sizeof(*sym));

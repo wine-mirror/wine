@@ -1014,7 +1014,7 @@ static int MACRO_DoLookUp(struct MacroDesc* start, const char* name, struct lexr
 
     for (md = start; md->name && len != 0; md++, len--)
     {
-        if (strcasecmp(md->name, name) == 0 || (md->alias != NULL && strcasecmp(md->alias, name) == 0))
+        if (stricmp(md->name, name) == 0 || (md->alias != NULL && stricmp(md->alias, name) == 0))
         {
             lr->proto = md->arguments;
             lr->function = md->fn;

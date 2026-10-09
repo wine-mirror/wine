@@ -343,10 +343,10 @@ static void snapshot_check_first_main_module(const struct moduleex_snapshot* sna
     winetest_push_context("%d", snap->list);
     ret = GetModuleBaseNameA(proc, snap->modules[0], buffer, sizeof(buffer));
     ok(ret, "got error %lu\n", GetLastError());
-    ok(!strcasecmp(buffer, modname), "expecting %s but got %s\n", modname, buffer);
+    ok(!stricmp(buffer, modname), "expecting %s but got %s\n", modname, buffer);
     ret = GetModuleFileNameExA(proc, snap->modules[0], buffer, sizeof(buffer));
     ok(ret, "got error %lu\n", GetLastError());
-    ok(!strcasecmp(filename, buffer), "expecting %s but got %s\n", filename, buffer);
+    ok(!stricmp(filename, buffer), "expecting %s but got %s\n", filename, buffer);
 
     ret = GetModuleInformation(proc, snap->modules[0], &info, sizeof(info));
     ok(ret, "got error %lu\n", GetLastError());
@@ -368,7 +368,7 @@ static unsigned int snapshot_count_in_dir(const struct moduleex_snapshot* snap, 
     {
         ret = GetModuleFileNameExA(proc, snap->modules[i], buffer, sizeof(buffer));
         ok(ret, "got error %lu\n", GetLastError());
-        if (!strncasecmp(buffer, dirname, dirname_len)) count++;
+        if (!strnicmp(buffer, dirname, dirname_len)) count++;
     }
     return count;
 }

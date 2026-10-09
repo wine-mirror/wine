@@ -339,4 +339,9 @@ void (*INT123_catchsignal(int signum, void(*handler)(int)))(int);
 #define EOVERFLOW 132
 #endif
 
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#endif
+
 #endif

@@ -943,7 +943,7 @@ static void test_GetVolumePathNameA(void)
         if (ret)
         {
             ok(!strcmp( volume_path, test_paths[i].path_name )
-                    || broken(!strcasecmp( volume_path, test_paths[i].path_name )), /* XP */
+                    || broken(!stricmp( volume_path, test_paths[i].path_name )), /* XP */
                     "GetVolumePathName test %d unexpectedly returned path %s (expected %s).\n",
                     i, volume_path, test_paths[i].path_name);
         }

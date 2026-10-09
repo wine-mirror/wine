@@ -2049,13 +2049,13 @@ static void test_find_executable(void)
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA("notepad.exe", NULL, command);
     ok(rc > 32, "FindExecutable(%s) returned %Id\n", "notepad.exe", rc);
-    ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
+    ok(stricmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
 
     /* Search for something that should be in the system-wide search path (with default directory) */
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA("notepad.exe", tmpdir, command);
     ok(rc > 32, "FindExecutable(%s) returned %Id\n", "notepad.exe", rc);
-    ok(strcasecmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
+    ok(stricmp(command, notepad_path) == 0, "FindExecutable(%s) returned command=[%s]\n", "notepad.exe", command);
 
     strcpy(command, "your word");
     rc=(INT_PTR)FindExecutableA(tmpdir, NULL, command);

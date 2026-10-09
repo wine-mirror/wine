@@ -604,7 +604,7 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
     if (!s1 && !s2) return 0;
     if (!s2) return -1;
     if (!s1) return 1;
-    return (sensitive) ? strcmp(s1, s2) : strcasecmp(s1, s2);
+    return (sensitive) ? strcmp(s1, s2) : stricmp(s1, s2);
 }
 
 static void ok_child_string( int line, const char *sect, const char *key,

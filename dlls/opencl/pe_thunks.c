@@ -669,7 +669,7 @@ BOOL extension_is_supported( const char *name, size_t len )
 
     for (i = 0; i < ARRAY_SIZE(unsupported); ++i)
     {
-        if (!strncasecmp( name, unsupported[i], len ))
+        if (!strnicmp( name, unsupported[i], len ))
             return FALSE;
     }
     return TRUE;

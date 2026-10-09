@@ -4729,8 +4729,8 @@ static void test_InMemoryOrderModuleList(void)
 static BOOL is_path_made_of(const char *filename, const char *pfx, const char *sfx)
 {
     const size_t len = strlen(pfx);
-    return !strncasecmp(filename, pfx, len) && filename[len] == '\\' &&
-        !strcasecmp(filename + len + 1, sfx);
+    return !strnicmp(filename, pfx, len) && filename[len] == '\\' &&
+           !stricmp(filename + len + 1, sfx);
 }
 
 static void test_wow64_redirection_for_dll(const char *libname, BOOL will_fail)

@@ -1295,7 +1295,7 @@ struct protoent * WINAPI getprotobyname( const char *name )
     cursor = file;
     while ((proto = get_next_protocol( &cursor, file + size )))
     {
-        if (!strcasecmp( proto->p_name, name ))
+        if (!stricmp( proto->p_name, name ))
             break;
     }
 
@@ -1490,7 +1490,7 @@ struct servent * WINAPI getservbyname( const char *name, const char *proto )
     cursor = file;
     while ((serv = get_next_service( &cursor, file + size )))
     {
-        if (!strcasecmp( serv->s_name, name ) && (!proto || !strcasecmp( serv->s_proto, proto )))
+        if (!stricmp( serv->s_name, name ) && (!proto || !stricmp( serv->s_proto, proto )))
             break;
     }
 
@@ -1520,7 +1520,7 @@ struct servent * WINAPI getservbyport( int port, const char *proto )
     cursor = file;
     while ((serv = get_next_service( &cursor, file + size )))
     {
-        if (serv->s_port == port && (!proto || !strcasecmp( serv->s_proto, proto )))
+        if (serv->s_port == port && (!proto || !stricmp( serv->s_proto, proto )))
             break;
     }
 

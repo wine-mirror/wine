@@ -70,6 +70,9 @@ LDAP_F(char *) ldap_pvt_strtok LDAP_P(( char *str,
 #ifndef _WIN32
 LDAP_LIBC_F(int) (strcasecmp) LDAP_P((const char *s1, const char *s2));
 LDAP_LIBC_F(int) (strncasecmp) LDAP_P((const char *s1, const char *s2, size_t n));
+#else
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
 #endif
 
 #ifndef SAFEMEMCPY

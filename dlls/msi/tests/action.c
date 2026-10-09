@@ -2500,7 +2500,7 @@ static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase
         if (bcase)
             ok_(__FILE__, line)(!strcmp(val, expected), "got %s\n", debugstr_a(val));
         else
-            ok_(__FILE__, line)(!strcasecmp(val, expected), "got %s\n", debugstr_a(val));
+            ok_(__FILE__, line)(!stricmp(val, expected), "got %s\n", debugstr_a(val));
     }
 }
 

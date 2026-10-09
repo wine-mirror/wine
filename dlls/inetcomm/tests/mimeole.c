@@ -639,7 +639,7 @@ static void test_CreateMessage(void)
     hr = IMimeMessage_GetBodyProp(msg, hbody, att_pritype, 0, &prop);
     ok(hr == S_OK, "ret %08lx\n", hr);
     ok(prop.vt == VT_LPSTR, "vt %08x\n", prop.vt);
-    ok(!strcasecmp(prop.pszVal, "multipart"), "got %s\n", prop.pszVal);
+    ok(!stricmp(prop.pszVal, "multipart"), "got %s\n", prop.pszVal);
     PropVariantClear(&prop);
 
     hr = IMimeMessage_GetBody(msg, IBL_FIRST, hbody, &hbody);

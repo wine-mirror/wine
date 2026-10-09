@@ -74,13 +74,11 @@ _ACRTIMP size_t  __cdecl strxfrm(char*,const char*,size_t);
 #endif
 
 
-static inline int strcasecmp(const char* s1, const char* s2) { return _stricmp(s1, s2); }
 static inline int strcmpi(const char* s1, const char* s2) { return _strcmpi(s1, s2); }
 static inline char* strdup(const char* buf) { return _strdup(buf); }
 static inline int stricmp(const char* s1, const char* s2) { return _stricmp(s1, s2); }
 static inline int stricoll(const char* s1, const char* s2) { return _stricoll(s1, s2); }
 static inline char* strlwr(char* str) { return _strlwr(str); }
-static inline int strncasecmp(const char *str1, const char *str2, size_t n) { return _strnicmp(str1, str2, n); }
 static inline int strnicmp(const char* s1, const char* s2, size_t n) { return _strnicmp(s1, s2, n); }
 static inline char* strnset(char* str, int value, unsigned int len) { return _strnset(str, value, len); }
 static inline char* strrev(char* str) { return _strrev(str); }
