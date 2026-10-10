@@ -3391,15 +3391,20 @@ static BOOL rebuild_append(struct command_rebuild *rb, const WCHAR *toappend)
     return TRUE;
 }
 
-static BOOL rebuild_expand_and_append(struct command_rebuild *rb, const WCHAR *toappend, BOOL expand)
+static BOOL rebuild_expand_and_append(struct command_rebuild *rb, const WCHAR *toappend, BOOL expand, BOOL quotes)
 {
     WCHAR output[MAXSTRING];
-
-    if (!expand) return rebuild_append(rb, toappend);
-    /* it would be better to expand in place in rb, but handleExpansion doesn't take a string size */
-    wcscpy(output, toappend);
-    handleExpansion(output, TRUE);
-    return rebuild_append(rb, output);
+    if (expand)
+    {
+        if (wcslen(toappend) >= ARRAY_SIZE(output)) return FALSE;
+        /* it would be better to expand in place in rb, but handleExpansion doesn't take a string size */
+        wcscpy(output, toappend);
+        handleExpansion(output, TRUE);
+        toappend = output;
+    }
+    return (quotes ? rebuild_append(rb, L"\"") : TRUE) &&
+        rebuild_append(rb, toappend) &&
+        (quotes ? rebuild_append(rb, L"\"") : TRUE);
 }
 
 static BOOL rebuild_sprintf(struct command_rebuild *rb, const WCHAR *format, ...)
@@ -3430,11 +3435,8 @@ static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_RED
 {
     WCHAR number[2] = {L'0' + redir->fd, L'\0'};
     WCHAR clonestr[2] = {};
-    WCHAR output[MAXSTRING];
     const WCHAR *op;
     const WCHAR *dst = redir->file;
-    const WCHAR *p;
-    BOOL quote = FALSE;
 
     switch (redir->kind)
     {
@@ -3454,34 +3456,9 @@ static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_RED
         break;
     default: return FALSE;
     }
-    if (redir->kind == REDIR_WRITE_CLONE)
-        return rebuild_append(rb, number) &&
-            rebuild_append(rb, op) &&
-            rebuild_expand_and_append(rb, dst, expand);
-    if (expand)
-    {
-        wcscpy(output, dst);
-        handleExpansion(output, TRUE);
-        dst = output;
-    }
-    if (!*dst) quote = TRUE;
-    for (p = dst; *p; p++)
-    {
-        if (wcschr(L" \t,=;", *p))
-        {
-            quote = TRUE;
-            break;
-        }
-    }
-    if (!quote)
-        return rebuild_append(rb, number) &&
-            rebuild_append(rb, op) &&
-            rebuild_append(rb, dst);
     return rebuild_append(rb, number) &&
         rebuild_append(rb, op) &&
-        rebuild_append(rb, L"\"") &&
-        rebuild_append(rb, dst) &&
-        rebuild_append(rb, L"\"");
+        rebuild_expand_and_append(rb, dst, expand, dst == redir->file);
 }
 
 static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CMD_NODE *node, BOOL expand)
@@ -3570,13 +3547,13 @@ static BOOL rebuild_command_if(struct command_rebuild *rb, const CMD_NODE *node,
     if (unop)
     {
         ret = ret && rebuild_append(rb, unop);
-        ret = ret && rebuild_expand_and_append(rb, node->condition.operand, rbflags.depth == 0);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.operand, rbflags.depth == 0, node->condition.op == CMD_IF_EXIST);
     }
     else if (binop)
     {
-        ret = ret && rebuild_expand_and_append(rb, node->condition.left, rbflags.depth == 0);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.left, rbflags.depth == 0, FALSE);
         ret = ret && rebuild_append(rb, binop);
-        ret = ret && rebuild_expand_and_append(rb, node->condition.right, rbflags.depth == 0);
+        ret = ret && rebuild_expand_and_append(rb, node->condition.right, rbflags.depth == 0, FALSE);
     }
     else
         return FALSE;
@@ -3634,7 +3611,7 @@ static BOOL rebuild_command_for(struct command_rebuild *rb, const CMD_NODE *node
     {
     case CMD_FOR_FILETREE:
         if ((for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE) && for_ctrl->root_dir)
-            ret = ret && rebuild_expand_and_append(rb, for_ctrl->root_dir, rbflags.depth == 0) &&
+            ret = ret && rebuild_expand_and_append(rb, for_ctrl->root_dir, rbflags.depth == 0, TRUE) &&
                 rebuild_append(rb, L" ");
         break;
     case CMD_FOR_FILE_SET:
@@ -3666,7 +3643,7 @@ static BOOL rebuild_command_for(struct command_rebuild *rb, const CMD_NODE *node
 
     /* append variable and the rest */
     ret = ret && rebuild_sprintf(rb, L"%%%c in (", for_ctrl->variable_index) &&
-        rebuild_expand_and_append(rb, for_ctrl->set, rbflags.depth == 0) &&
+        rebuild_expand_and_append(rb, for_ctrl->set, rbflags.depth == 0, FALSE) &&
         rebuild_append(rb, L") do ") &&
         rebuild_append_command(rb, node->do_block, new_rflags);
     if (ret && node->do_block->op == CMD_SINGLE)
@@ -3686,7 +3663,7 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
     switch (node->op)
     {
     case CMD_SINGLE:
-        ret = rebuild_expand_and_append(rb, node->command, rbflags.depth == 0);
+        ret = rebuild_expand_and_append(rb, node->command, rbflags.depth == 0, FALSE);
         /* I don't know why Windows puts a space here but it does */
         /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
         if (rbflags.in_echo &&

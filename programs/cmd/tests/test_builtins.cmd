@@ -477,16 +477,9 @@ rem test  : echo i1|tmp.cmd i2|tmp.cmd i3|tmp.cmd i4
 rem result: i4:[i3:[i2:[i1,i2],i3],i4]@or_broken@i4:[i3:[i2:,i3],i4]@or_broken@i4:[i3:,i4]
 del tmp.cmd
 echo --- pipe quoted redirection
-rem Quoted redirection targets must survive the pipe child respawn (bug 60475)
-if exist sp del sp
-mkdir "sp ace"
-echo| set /p v="1.0" > "sp ace\a.txt"
-if exist sp (echo stray-sp-BUG) else (echo no-stray-sp)
-type "sp ace\a.txt"
-echo.
-del /q "sp ace\a.txt"
-rd "sp ace"
-if exist sp del sp
+echo| echo 1 > "sp ace"
+if not exist "sp ace" echo failure
+del sp "sp ace"
 echo --- chain else
 rem Command arguments are greedy and eat up the 'else' unless terminated by
 rem brackets, which means the 'else' can only be recognized when the

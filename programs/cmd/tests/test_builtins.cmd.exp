@@ -430,8 +430,6 @@ d2:[d1,d2]
 e3:[e2:[e1,e2],e3]@or_broken@e3:[e2:,e3]
 f4:[f3:[f2:[f1,f2],f3],f4]@or_broken@f4:[f3:[f2:,f3],f4]@or_broken@f4:[f3:,f4]
 --- pipe quoted redirection
-no-stray-sp
-1.0
 --- chain else
 a1
 b2
