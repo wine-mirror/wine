@@ -537,6 +537,13 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
 
     switch (vid)
     {
+#ifdef __APPLE__
+    case 0x0810:
+        /* Twin USB Gamepad has two joystick collections in one HID interface.
+         * macOS SDL exposes them as one joystick, while IOHID keeps both. */
+        if (pid == 0x0001) prefer_hidraw = TRUE;
+        break;
+#endif
     case 0x044f:
         if (pid == 0xb679) prefer_hidraw = TRUE; /* ThrustMaster T-Rudder */
         if (pid == 0xb687) prefer_hidraw = TRUE; /* ThrustMaster TWCS Throttle */
