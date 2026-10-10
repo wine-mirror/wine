@@ -87,6 +87,7 @@ struct joystick
     UINT timer;
     DWORD threshold;
     BOOL changed;
+    BOOL disconnected;
 };
 
 static DIDEVICEINSTANCEW instances[16];
@@ -236,6 +237,38 @@ static HRESULT set_data_format( IDirectInputDevice8W *device )
     return IDirectInputDevice8_SetDataFormat( device, &data_format );
 }
 
+static void update_connected_state(void)
+{
+    IDirectInputDevice8W *device;
+    struct joystick_state state;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(joysticks); ++i)
+    {
+        if (!(device = joysticks[i].device)) continue;
+        if (SUCCEEDED(hr = IDirectInputDevice8_GetDeviceState( device, sizeof(struct joystick_state), &state )))
+        {
+            joysticks[i].disconnected = FALSE;
+            TRACE( "joystick %u connected.\n", i );
+            continue;
+        }
+        if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
+        {
+            joysticks[i].disconnected = FAILED((hr = IDirectInputDevice8_Acquire( device )));
+            if (joysticks[i].disconnected)
+                TRACE( "joystick %u disconnected, hr %#lx.\n", i, hr );
+            else
+                TRACE( "joystick %u reconnected.\n", i );
+            continue;
+        }
+        WARN( "GetDeviceState device %p returned %#lx, removing device\n", device, hr );
+        IDirectInputDevice8_Release( joysticks[i].device );
+        CloseHandle( joysticks[i].event );
+        memset( &joysticks[i], 0, sizeof(*joysticks) );
+    }
+}
+
 static void add_joystick( const DIDEVICEINSTANCEW *instance )
 {
     int index = -1;
@@ -247,7 +280,7 @@ static void add_joystick( const DIDEVICEINSTANCEW *instance )
     for (i = 0; i < ARRAY_SIZE(joysticks); ++i)
     {
         if (!memcmp( &joysticks[i].instance, instance, sizeof(DIDEVICEINSTANCEW) )) return;
-        if (index == -1 && !joysticks[i].device) index = i;
+        if (index == -1 && (!joysticks[i].device || joysticks[i].disconnected)) index = i;
     }
     if (index == -1)
     {
@@ -301,6 +334,8 @@ static void find_joysticks(void)
     count = 0;
     IDirectInput8_EnumDevices( dinput, DI8DEVCLASS_ALL, enum_instances, &count, DIEDFL_ATTACHEDONLY );
     TRACE( "found %lu device instances\n", count );
+
+    update_connected_state();
 
     for (i = 0; i < count; ++i) add_joystick( &instances[i] );
 }
@@ -534,7 +569,7 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsA( UINT_PTR id, JOYCAPSA *caps, U
  */
 MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx( UINT id, JOYINFOEX *info )
 {
-    static ULONG last_check;
+    static ULONG last_find_ticks, last_reconnect_ticks;
     DWORD i, ticks = GetTickCount();
     MMRESULT res = JOYERR_NOERROR;
     IDirectInputDevice8W *device;
@@ -548,18 +583,35 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx( UINT id, JOYINFOEX *info )
 
     EnterCriticalSection( &joystick_cs );
 
-    if (!(device = joysticks[id].device) && (ticks - last_check) >= 2000)
+    if (!(device = joysticks[id].device) && (ticks - last_find_ticks) >= 2000)
     {
-        last_check = ticks;
+        last_find_ticks = ticks;
         find_joysticks();
     }
+    if ((device = joysticks[id].device) && joysticks[id].disconnected && (ticks - last_reconnect_ticks) >= 2000)
+    {
+        last_reconnect_ticks = ticks;
+        update_connected_state();
+        device = joysticks[id].device;
+    }
 
-    if (!(device = joysticks[id].device))
+    if (!device)
         res = JOYERR_PARMS;
+    else if (joysticks[id].disconnected)
+        res = JOYERR_UNPLUGGED;
     else if (FAILED(hr = IDirectInputDevice8_GetDeviceState( device, sizeof(struct joystick_state), &state )))
     {
-        WARN( "GetDeviceState device %p returned %#lx\n", device, hr );
-        res = JOYERR_PARMS;
+        if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
+        {
+            TRACE( "joystick %u, device %p is unplugged\n", id, device );
+            joysticks[id].disconnected = TRUE;
+            res = JOYERR_UNPLUGGED;
+        }
+        else
+        {
+            WARN( "GetDeviceState device %p returned %#lx\n", device, hr );
+            res = JOYERR_PARMS;
+        }
     }
     else
     {
