@@ -3673,8 +3673,8 @@ static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
 
         /* Check the year, if it's in the UTCTime range call that encode func */
         if (!FileTimeToSystemTime(pvStructInfo, &sysTime))
-            return FALSE;
-        if (sysTime.wYear >= 1950 && sysTime.wYear <= 2050)
+            ret = FALSE;
+        else if (sysTime.wYear >= 1950 && sysTime.wYear <= 2050)
             ret = CRYPT_AsnEncodeUtcTime(dwCertEncodingType, lpszStructType,
              pvStructInfo, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
         else
