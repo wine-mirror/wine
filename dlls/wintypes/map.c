@@ -49,7 +49,7 @@ static void map_entry_clear( struct map_entry *entry )
 {
     WindowsDeleteString( entry->key );
     entry->key = NULL;
-    IInspectable_AddRef( entry->value );
+    IInspectable_Release( entry->value );
     entry->value = NULL;
 }
 
