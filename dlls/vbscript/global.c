@@ -3272,6 +3272,20 @@ static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_c
     return return_short(res, result);
 }
 
+static HRESULT get_object_typeinfo(IDispatch *disp, ITypeInfo **typeinfo)
+{
+    IProvideClassInfo *classinfo;
+    HRESULT hres;
+
+    if (SUCCEEDED(IDispatch_QueryInterface(disp, &IID_IProvideClassInfo, (void**)&classinfo)))
+    {
+        hres = IProvideClassInfo_GetClassInfo(classinfo, typeinfo);
+        IProvideClassInfo_Release(classinfo);
+        return hres;
+    }
+    return IDispatch_GetTypeInfo(disp, 0, GetUserDefaultLCID(), typeinfo);
+}
+
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     ITypeInfo *typeinfo;
@@ -3317,7 +3331,7 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
                 return return_string(res, L"Nothing");
             if ((class_name = vbdisp_class_name(V_DISPATCH(arg))))
                 return return_string(res, class_name);
-            if (SUCCEEDED(IDispatch_GetTypeInfo(V_DISPATCH(arg), 0, GetUserDefaultLCID(), &typeinfo)))
+            if (SUCCEEDED(get_object_typeinfo(V_DISPATCH(arg), &typeinfo)))
             {
                 hres = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &name, NULL, NULL, NULL);
                 ITypeInfo_Release(typeinfo);

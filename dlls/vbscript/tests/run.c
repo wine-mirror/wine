@@ -101,6 +101,7 @@ DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
 DEFINE_EXPECT(testobj_value_i);
 DEFINE_EXPECT(testobj_valueput_i);
+DEFINE_EXPECT(testobj_getclassinfo);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_propargput1_d);
@@ -1038,12 +1039,69 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
     return E_FAIL;
 }
 
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IProvideClassInfo)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo *iface)
+{
+    return 1;
+}
+
+static BOOL testobj_classinfo;
+static int testobj_gettypeinfo_cnt;
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo *iface, ITypeInfo **ppTI)
+{
+    CHECK_EXPECT(testobj_getclassinfo);
+    *ppTI = NULL;
+    return E_NOTIMPL;
+}
+
+static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo
+};
+
+static IProvideClassInfo testObjClassInfo = { &ProvideClassInfoVtbl };
+
+static HRESULT WINAPI testObj_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    if(testobj_classinfo && IsEqualGUID(riid, &IID_IProvideClassInfo)) {
+        *ppv = &testObjClassInfo;
+        return S_OK;
+    }
+
+    return DispatchEx_QueryInterface(iface, riid, ppv);
+}
+
+static HRESULT WINAPI testObj_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    testobj_gettypeinfo_cnt++;
+    *ppTInfo = NULL;
+    return E_NOTIMPL;
+}
+
 static IDispatchExVtbl testObjVtbl = {
-    DispatchEx_QueryInterface,
+    testObj_QueryInterface,
     DispatchEx_AddRef,
     DispatchEx_Release,
     DispatchEx_GetTypeInfoCount,
-    DispatchEx_GetTypeInfo,
+    testObj_GetTypeInfo,
     DispatchEx_GetIDsOfNames,
     DispatchEx_Invoke,
     testObj_GetDispID,
@@ -4620,6 +4678,18 @@ static void run_tests(void)
     CHECK_CALLED(collectionobj_newenum_i);
     CHECK_CALLED(Next);
     ok(next_cnt == 4, "next_cnt = %d\n", next_cnt);
+
+    testobj_classinfo = TRUE;
+    testobj_gettypeinfo_cnt = 0;
+    SET_EXPECT(testobj_getclassinfo);
+    parse_script_w(L"x = TypeName(testObj)\nCall ok(x = \"Object\", \"TypeName(testObj) = \" & x)");
+    CHECK_CALLED(testobj_getclassinfo);
+    ok(!testobj_gettypeinfo_cnt, "GetTypeInfo called %d times\n", testobj_gettypeinfo_cnt);
+
+    testobj_classinfo = FALSE;
+    testobj_gettypeinfo_cnt = 0;
+    parse_script_w(L"x = TypeName(testObj)\nCall ok(x = \"Object\", \"TypeName(testObj) = \" & x)");
+    ok(testobj_gettypeinfo_cnt == 1, "GetTypeInfo called %d times\n", testobj_gettypeinfo_cnt);
 
     parse_script_w(L"x = 1\n Call ok(x = 1, \"x = \" & x)");
 

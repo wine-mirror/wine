@@ -1803,6 +1803,15 @@ Call ok(TypeName(collectionObj) = "Object", "TypeName(collectionObj) = " & TypeN
 Dim regex
 set regex = new RegExp
 Call ok(TypeName(regex) = "IRegExp2", "TypeName(regex) = " & TypeName(regex))
+Dim dict
+Set dict = CreateObject("Scripting.Dictionary")
+Call ok(TypeName(dict) = "Dictionary", "TypeName(dict) = " & TypeName(dict))
+Dim fso
+Set fso = CreateObject("Scripting.FileSystemObject")
+Call ok(TypeName(fso) = "FileSystemObject", "TypeName(fso) = " & TypeName(fso))
+Dim shell
+Set shell = CreateObject("WScript.Shell")
+Call ok(TypeName(shell) = "IWshShell3", "TypeName(shell) = " & TypeName(shell))
 
 ' TypeName for VBScript class instances
 Dim emptyClsObj
