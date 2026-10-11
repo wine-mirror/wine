@@ -3430,8 +3430,11 @@ static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_RED
 {
     WCHAR number[2] = {L'0' + redir->fd, L'\0'};
     WCHAR clonestr[2] = {};
+    WCHAR output[MAXSTRING];
     const WCHAR *op;
     const WCHAR *dst = redir->file;
+    const WCHAR *p;
+    BOOL quote = FALSE;
 
     switch (redir->kind)
     {
@@ -3451,9 +3454,34 @@ static BOOL rebuild_append_redirection(struct command_rebuild *rb, const CMD_RED
         break;
     default: return FALSE;
     }
+    if (redir->kind == REDIR_WRITE_CLONE)
+        return rebuild_append(rb, number) &&
+            rebuild_append(rb, op) &&
+            rebuild_expand_and_append(rb, dst, expand);
+    if (expand)
+    {
+        wcscpy(output, dst);
+        handleExpansion(output, TRUE);
+        dst = output;
+    }
+    if (!*dst) quote = TRUE;
+    for (p = dst; *p; p++)
+    {
+        if (wcschr(L" \t,=;", *p))
+        {
+            quote = TRUE;
+            break;
+        }
+    }
+    if (!quote)
+        return rebuild_append(rb, number) &&
+            rebuild_append(rb, op) &&
+            rebuild_append(rb, dst);
     return rebuild_append(rb, number) &&
         rebuild_append(rb, op) &&
-        rebuild_expand_and_append(rb, dst, expand);
+        rebuild_append(rb, L"\"") &&
+        rebuild_append(rb, dst) &&
+        rebuild_append(rb, L"\"");
 }
 
 static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CMD_NODE *node, BOOL expand)
