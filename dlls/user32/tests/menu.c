@@ -57,6 +57,7 @@ static BOOL bMenuVisible;
 static INT popmenu;
 static BOOL got_input;
 static BOOL rebuild_menu_bar;
+static BOOL check_popup_pos;
 static BOOL initmenu_rebuilt;
 static INT nccalcsize_calls_after_rebuild;
 static HMENU hMenus[4];
@@ -2297,6 +2298,7 @@ static struct menu_mouse_tests_s {
     BOOL bMenuVisible;
     BOOL _todo_wine;
     BOOL rebuild_menu_bar; /* during WM_INITMENU */
+    BOOL check_popup_pos; /* check that the popup menu is not covering the menu bar */
 } menu_tests[] = {
     /* for each test, send keys or clicks and check for menu visibility */
     { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE }, /* test 0 */
@@ -2337,6 +2339,8 @@ static struct menu_mouse_tests_s {
     { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE, TRUE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 0}, TRUE, FALSE, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
     { -1 }
 };
 
@@ -2379,6 +2383,35 @@ static BOOL click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     return ret;
 }
 
+static void check_popup_below_menu_bar( HWND hwnd )
+{
+    RECT menu_bar_rect, popup_rect;
+    HWND popup;
+    int elapsed;
+    BOOL ret;
+    static char popup_menu_class[] = "#32768";
+
+    for (elapsed = 0; elapsed <= 200; elapsed += 20)
+    {
+        popup = NULL;
+        while ((popup = FindWindowExA( NULL, popup, popup_menu_class, NULL )) && !IsWindowVisible( popup ))
+            ;
+
+        if (popup) break;
+        Sleep( 20 );
+    }
+
+    ok( popup != NULL, "popup menu window not found\n" );
+    if (!popup) return;
+
+    ret = GetMenuItemRect( hwnd, GetMenu( hwnd ), 0, &menu_bar_rect );
+    ok( ret, "GetMenuItemRect failed, error %ld\n", GetLastError() );
+    GetWindowRect( popup, &popup_rect );
+    todo_wine
+    ok( popup_rect.top >= menu_bar_rect.bottom - 1, "popup %s overlaps the menu bar %s\n",
+        wine_dbgstr_rect( &popup_rect ), wine_dbgstr_rect( &menu_bar_rect ) );
+}
+
 static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
 {
     int i, j;
@@ -2393,6 +2426,7 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
 
         got_input = i && menu_tests[i-1].bMenuVisible;
         rebuild_menu_bar = menu_tests[i].rebuild_menu_bar;
+        check_popup_pos = menu_tests[i].check_popup_pos;
         initmenu_rebuilt = FALSE;
         nccalcsize_calls_after_rebuild = 0;
 
@@ -2437,6 +2471,8 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
 
         todo_wine_if (menu_tests[i]._todo_wine)
             ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
+
+        if (menu_tests[i].check_popup_pos) check_popup_below_menu_bar( hWnd );
     }
     return 0;
 }
@@ -2476,8 +2512,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         case WM_EXITMENULOOP:
             break;
         case WM_MENUSELECT:
-            /* the selected bar item must have a valid (non-empty) rect, esp after a rebuild via WM_INITMENU */
-            if (rebuild_menu_bar && (HMENU)lParam == GetMenu(hWnd) && LOWORD(wParam) != 0xffff)
+            /* the selected bar item must have a valid (non-empty) rect, esp. after a rebuild via WM_INITMENU */
+            /* skip when checking the popup position because GetMenuItemRect will recompute the layout */
+            if (rebuild_menu_bar && !check_popup_pos && (HMENU)lParam == GetMenu(hWnd) && LOWORD(wParam) != 0xffff)
             {
                 RECT rect;
                 BOOL success = GetMenuItemRect(hWnd, (HMENU)lParam, LOWORD(wParam), &rect);
