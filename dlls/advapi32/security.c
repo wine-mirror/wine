@@ -146,8 +146,8 @@ const char * debugstr_sid(PSID sid)
             psid->SubAuthority[3], psid->SubAuthority[4]);
     case 6:
         return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
-            psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
-            psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5]);
     case 7:
         return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
