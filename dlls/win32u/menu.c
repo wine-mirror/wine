@@ -2157,18 +2157,19 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
 }
 
 /* Calculate the size of the menu bar */
-static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND owner )
+static void calc_menu_bar_size( HDC hdc, POINT pos, UINT width, struct menu *menu, HWND owner )
 {
     UINT start, i, help_pos;
     int org_x, org_y;
     struct menu_item *item;
 
-    if (!rect || !menu || !menu->nItems) return;
+    if (!menu || !menu->nItems) return;
 
-    TRACE( "rect %p %s\n", rect, wine_dbgstr_rect( rect ));
+    TRACE( "pos %s width %u\n", wine_dbgstr_point(&pos), width );
+
     /* Start with a 1 pixel top border.
        This corresponds to the difference between SM_CYMENU and SM_CYMENUSIZE. */
-    SetRect( &menu->items_rect, 0, 0, rect->right - rect->left, 1 );
+    SetRect( &menu->items_rect, 0, 0, width, 1 );
     start = 0;
     help_pos = ~0u;
     menu->textOffset = 0;
@@ -2200,17 +2201,16 @@ static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND own
         while (start < i) menu->items[start++].rect.bottom = menu->items_rect.bottom;
     }
 
-    OffsetRect( &menu->items_rect, rect->left, rect->top );
+    OffsetRect( &menu->items_rect, pos.x, pos.y );
     menu->Width = menu->items_rect.right - menu->items_rect.left;
     menu->Height = menu->items_rect.bottom - menu->items_rect.top;
-    rect->bottom = menu->items_rect.bottom;
 
     /* Flush right all items between the MF_RIGHTJUSTIFY and */
     /* the last item (if several lines, only move the last line) */
     if (help_pos == ~0u) return;
     item = &menu->items[menu->nItems-1];
     org_y = item->rect.top;
-    org_x = rect->right - rect->left;
+    org_x = width;
     for (i = menu->nItems - 1; i >= help_pos; i--, item--)
     {
         if (item->rect.top != org_y) break;    /* other line */
@@ -2223,8 +2223,8 @@ static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND own
 
 UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
 {
+    POINT pos = { org_x, org_y };
     struct menu *menu;
-    RECT rect_bar;
     HDC hdc;
 
     TRACE( "hwnd %p, width %d, at (%d, %d).\n", hwnd, width, org_x, org_y );
@@ -2233,8 +2233,7 @@ UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
 
     hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     NtGdiSelectFont( hdc, get_menu_font(FALSE));
-    SetRect( &rect_bar, org_x, org_y, org_x + width, org_y + get_system_metrics( SM_CYMENU ));
-    calc_menu_bar_size( hdc, &rect_bar, menu, hwnd );
+    calc_menu_bar_size( hdc, pos, width, menu, hwnd );
     NtUserReleaseDC( hwnd, hdc );
     return menu->Height;
 }
@@ -2760,7 +2759,11 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
 
     prev_font = NtGdiSelectFont( hdc, font );
 
-    if (!menu->Height) calc_menu_bar_size( hdc, rect, menu, hwnd );
+    if (!menu->Height)
+    {
+        POINT pos = { rect->left, rect->top };
+        calc_menu_bar_size( hdc, pos, rect->right - rect->left, menu, hwnd );
+    }
 
     rect->bottom = rect->top + menu->Height;
 
