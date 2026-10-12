@@ -238,6 +238,7 @@ enum area_state
 {
     AREA_FREE,      /* free (but may have been allocated by host) */
     AREA_RESERVED,  /* reserved, available for allocations */
+    AREA_BLOCKED,   /* reserved, but blocked for allocations */
 };
 
 struct range_entry
@@ -361,7 +362,7 @@ static void set_mem_area_state( void *addr, SIZE_T size, enum area_state state )
 
 static void dump_mem_areas(void)
 {
-    static const char *states[] = { "free", "reserved" };
+    static const char *states[] = { "free", "reserved", "blocked" };
 
     TRACE_(mem_areas)( "%u memory areas:\n", mem_areas_count );
     for (UINT i = 0; i < mem_areas_count - 1; i++)
@@ -2031,14 +2032,18 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
  */
 static NTSTATUS map_fixed_area( void *base, size_t size, int unix_prot )
 {
-    unsigned int area;
+    unsigned int area, start_area;
     NTSTATUS status;
-    char *start = base, *end = (char *)base + ROUND_SIZE( 0, size, host_page_mask );
+    char *start, *end = (char *)base + ROUND_SIZE( 0, size, host_page_mask );
 
     if ((UINT_PTR)base & host_page_mask) return STATUS_CONFLICTING_ADDRESSES;
     if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
 
-    for (area = find_mem_area( start ); start < end; start = mem_area_base( ++area ))
+    start_area = find_mem_area( base );
+    for (start = base, area = start_area; start < end; start = mem_area_base( ++area ))
+        if (mem_area_state( area ) == AREA_BLOCKED) return STATUS_CONFLICTING_ADDRESSES;
+
+    for (start = base, area = start_area; start < end; start = mem_area_base( ++area ))
     {
         size_t size = min( end, (char *)mem_area_end( area )) - start;
 
@@ -3871,10 +3876,14 @@ static void set_large_address_space(void)
         else if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
         {
             user_space_wow_limit = limit_4g - 1;
-            /* reserve space for top-down allocations; some apps break if the entire high 2G is available */
-            reserve_area( (void *)0xfff00000, (void *)0xffff0000 );
+            /* block a bit of top memory: some apps break if the entire high 2G is available */
+            set_mem_area_state( (void *)0xfffe0000, 0x20000, AREA_BLOCKED );
         }
-        else user_space_wow_limit = limit_2g - 1;
+        else
+        {
+            user_space_wow_limit = limit_2g - 1;
+            set_mem_area_state( (void *)0x7fff0000, 0x10000, AREA_BLOCKED );
+        }
     }
     else if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE))
     {
