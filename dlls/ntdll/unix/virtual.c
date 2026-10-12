@@ -1555,6 +1555,8 @@ static void *find_reserved_free_area( void *base, void *end, size_t size, int to
 }
 
 
+#ifndef _WIN64
+
 /***********************************************************************
  *           remove_reserved_area
  *
@@ -1603,6 +1605,19 @@ static void free_reserved_memory( void *base, void *end )
     }
     set_mem_area_state( base, (char *)end - (char *)base, AREA_FREE );
 }
+
+
+/***********************************************************************
+ *           virtual_release_address_space
+ *
+ * Release some address space once we have loaded and initialized the app.
+ */
+static void virtual_release_address_space(void)
+{
+    free_reserved_memory( (char *)0x20000000, (char *)0x7f000000 );
+}
+
+#endif  /* _WIN64 */
 
 
 /***********************************************************************
@@ -3487,13 +3502,16 @@ void virtual_init(void)
         }
         set_mem_area_state( addr, size, AREA_RESERVED );
     }
+    else if (is_win64)
+    {
+        reserve_area( (void *)0x00010000, (void *)0x200000000 );
+        reserve_area( (void *)0x7ff000000000, (void *)0x7ff600000000 ); /* top-down area */
+    }
     else
     {
         reserve_area( (void *)0x00010000, (void *)0x40000000 );
         reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
     }
-
-    if (is_win64) reserve_area( (void *)0x7ff000000000, (void *)0x7ff600000000 ); /* top-down area */
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
@@ -3855,6 +3873,8 @@ static struct thread_data *init_thread_data( void *ptr )
 /* enable use of a large address space when allowed by the application */
 static void set_large_address_space(void)
 {
+    if (is_machine_64bit( main_image_info.Machine )) return;
+
     if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
     {
         /* reserve the DOS area, and make it accessible (except the low 64K)
@@ -3867,13 +3887,7 @@ static void set_large_address_space(void)
 
     if (is_win64)
     {
-        if (!is_wow64())
-        {
-#ifndef __APPLE__  /* don't free the zerofill section on macOS */
-            if (use_aslr()) free_reserved_memory( 0, (char *)0x7ffe0000 );
-#endif
-        }
-        else if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
+        if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
         {
             user_space_wow_limit = limit_4g - 1;
             /* block a bit of top memory: some apps break if the entire high 2G is available */
@@ -4909,24 +4923,6 @@ void virtual_enable_write_exceptions( BOOL enable )
     enable_write_exceptions = enable;
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 }
-
-
-#ifndef _WIN64
-
-/***********************************************************************
- *           virtual_release_address_space
- *
- * Release some address space once we have loaded and initialized the app.
- */
-static void virtual_release_address_space(void)
-{
-#ifndef __APPLE__  /* On macOS, we still want to free some of low memory, for OpenGL resources */
-    if (user_space_limit > (void *)limit_2g) return;
-#endif
-    free_reserved_memory( (char *)0x20000000, (char *)0x7f000000 );
-}
-
-#endif  /* _WIN64 */
 
 
 /***********************************************************************
