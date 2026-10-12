@@ -306,7 +306,7 @@ static void add_connections_providers(HWND lv)
                 LVITEMW item;
                 struct datasource *data;
 
-                data = create_datasource(guidkey);
+                data = create_datasource(provider);
 
                 item.mask = LVIF_TEXT | LVIF_PARAM;
                 item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
