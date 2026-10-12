@@ -6889,7 +6889,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_SetExceptionMode(ID3D10Device1 *if
 {
     FIXME("iface %p, flags %#x stub!\n", iface, flags);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static UINT STDMETHODCALLTYPE d3d10_device_GetExceptionMode(ID3D10Device1 *iface)
