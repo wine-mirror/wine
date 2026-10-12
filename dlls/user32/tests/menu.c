@@ -352,7 +352,7 @@ static void test_GetMenuItemRect(void)
     RECT window_rect;
     RECT item_rect;
     POINT client_top_left;
-    INT caption_height;
+    INT caption_height, item;
     BOOL ret;
 
     hwnd = CreateWindowW((LPCWSTR)MAKEINTATOM(atomMenuCheckClass), NULL, WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL,
@@ -411,6 +411,14 @@ static void test_GetMenuItemRect(void)
     ret = GetMenuItemRect(hwnd, hmenu, 1, &item_rect);
     ok(ret, "GetMenuItemRect failed\n");
     todo_wine ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* MenuItemFromPoint recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    item = MenuItemFromPoint(hwnd, hmenu, *(POINT *)&item_rect);
+    todo_wine ok(item == 1, "MenuItemFromPoint returned %d\n", item);
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
     todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
