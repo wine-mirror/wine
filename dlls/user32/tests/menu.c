@@ -34,11 +34,13 @@
 #include "wine/test.h"
 
 static ATOM atomMenuCheckClass;
+static UINT nccalcsize_count;
 
 static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
+    case WM_NCCALCSIZE: nccalcsize_count++; break;
     case WM_ENTERMENULOOP:
         /* mark window as having entered menu loop */
         SetWindowLongPtrA(hwnd, GWLP_USERDATA, TRUE);
@@ -326,8 +328,24 @@ static void test_getmenubarinfo(void)
     DestroyWindow(hwnd);
 }
 
+static void invalidate_menu_bar(HWND hwnd, HMENU popup_hmenu)
+{
+    MENUBARINFO info = { .cbSize = sizeof(MENUBARINFO) };
+    HMENU hmenu = GetMenu(hwnd);
+    BOOL ret;
+
+    while (GetMenuItemCount(hmenu) > 0) RemoveMenu(hmenu, 0, MF_BYPOSITION);
+    AppendMenuA(hmenu, MF_STRING, 0, "&Enabled");
+    AppendMenuA(hmenu, MF_STRING | MF_POPUP, (UINT_PTR)popup_hmenu, "Menu");
+    AppendMenuA(hmenu, MF_STRING|MF_DISABLED, 0, "&Disabled");
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+}
+
 static void test_GetMenuItemRect(void)
 {
+    MENUBARINFO info = { .cbSize = sizeof(MENUBARINFO) };
     HWND hwnd;
     HMENU hmenu;
     HMENU popup_hmenu;
@@ -379,6 +397,25 @@ static void test_GetMenuItemRect(void)
     ok(item_rect.bottom == client_top_left.y, "Expect item_rect.bottom %ld == %ld\n", item_rect.bottom,
        client_top_left.y);
 
+    nccalcsize_count = 0;
+    /* GetMenuItemRect recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = GetMenuItemRect(hwnd, hmenu, 0, &item_rect);
+    ok(ret, "GetMenuItemRect failed\n");
+    todo_wine ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = GetMenuItemRect(hwnd, hmenu, 1, &item_rect);
+    ok(ret, "GetMenuItemRect failed\n");
+    todo_wine ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    ok(!nccalcsize_count, "got %u WM_NCCALCSIZE\n", nccalcsize_count);
     DestroyWindow(hwnd);
 }
 
