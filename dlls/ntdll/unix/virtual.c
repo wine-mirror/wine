@@ -3565,7 +3565,7 @@ void virtual_init(void)
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    pages_vprot = anon_mmap_alloc( pages_vprot_size * sizeof(*pages_vprot), PROT_READ | PROT_WRITE );
+    pages_vprot = calloc( pages_vprot_size, sizeof(*pages_vprot) );
 #else
     pages_vprot = anon_mmap_alloc( 1U << (32 - page_shift), PROT_READ | PROT_WRITE );
 #endif
