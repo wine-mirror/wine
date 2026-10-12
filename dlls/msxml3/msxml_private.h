@@ -531,8 +531,7 @@ static inline HRESULT return_var_false(VARIANT_BOOL *p)
     return S_FALSE;
 }
 
-extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
-                                             LONG line, LONG linepos, LONG filepos );
+extern HRESULT create_parse_error(LONG code, BSTR reason, IXMLDOMParseError **err);
 extern HRESULT SchemaCache_create(MSXML_VERSION, void**);
 extern HRESULT XMLDocument_create(void**);
 extern HRESULT SAXXMLReader_create(MSXML_VERSION, void**);

@@ -4876,6 +4876,19 @@ static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ..
     va_end(ap);
 }
 
+static HRESULT return_validation_error(LONG code, IXMLDOMParseError **err)
+{
+    HRESULT hr;
+
+    if (err)
+    {
+        if (FAILED(hr = create_parse_error(code, NULL, err)))
+            return hr;
+    }
+
+    return S_FALSE;
+}
+
 static HRESULT node_validate_root(struct domnode *node, IXMLDOMParseError **err)
 {
     struct domnode *dtd, *root;
@@ -4887,20 +4900,12 @@ static HRESULT node_validate_root(struct domnode *node, IXMLDOMParseError **err)
        one top level element. */
 
     if (!(root = domnode_get_root_element(node)))
-    {
-        if (err)
-            *err = create_parseError(E_XML_NOTWF, NULL, NULL, NULL, 0, 0, 0);
-        return S_FALSE;
-    }
+        return return_validation_error(E_XML_NOTWF, err);
 
     if ((dtd = domnode_get_dtd(node)))
     {
         if (wcscmp(dtd->qname, root->qname))
-        {
-            if (err)
-                *err = create_parseError(E_DOM_ROOT_NAME_MISMATCH, NULL, NULL, NULL, 0, 0, 0);
-            return S_FALSE;
-        }
+            return return_validation_error(E_DOM_ROOT_NAME_MISMATCH, err);
     }
 
     return S_OK;
@@ -4923,8 +4928,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
 
         if (node->owner != doc && node != doc)
         {
-            if (err)
-                *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+            return_validation_error(err_code, err);
             return E_FAIL;
         }
 
@@ -4932,9 +4936,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         {
             case NODE_DOCUMENT:
             case NODE_DOCUMENT_TYPE:
-                if (err)
-                    *err = create_parseError(E_DOM_INVALIDTYPE, NULL, NULL, NULL, 0, 0, 0);
-                return S_FALSE;
+                return return_validation_error(E_DOM_INVALIDTYPE, err);
             default:
                 ;
         }
@@ -5008,8 +5010,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         hr = S_FALSE;
     }
 
-    if (err)
-        *err = create_parseError(err_code, NULL, NULL, NULL, 0, 0, 0);
+    return_validation_error(err_code, err);
 
     return hr;
 }

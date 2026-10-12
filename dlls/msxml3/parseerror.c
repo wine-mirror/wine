@@ -317,27 +317,22 @@ static dispex_static_data_t parseError_dispex = {
     parseError_iface_tids
 };
 
-IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
-                                      LONG line, LONG linepos, LONG filepos )
+HRESULT create_parse_error(LONG code, BSTR reason, IXMLDOMParseError **ret)
 {
-    parse_error_t *This;
+    parse_error_t *object;
 
-    This = malloc(sizeof(*This));
-    if ( !This )
-        return NULL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IXMLDOMParseError2_iface.lpVtbl = &XMLDOMParseError2Vtbl;
-    This->ref = 1;
+    object->IXMLDOMParseError2_iface.lpVtbl = &XMLDOMParseError2Vtbl;
+    object->ref = 1;
 
-    This->code = code;
-    This->url = url;
-    This->reason = reason;
-    This->srcText = srcText;
-    This->line = line;
-    This->linepos = linepos;
-    This->filepos = filepos;
+    object->code = code;
+    object->reason = reason;
 
-    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMParseError2_iface, &parseError_dispex);
+    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMParseError2_iface, &parseError_dispex);
 
-    return (IXMLDOMParseError*)&This->IXMLDOMParseError2_iface;
+    *ret = (IXMLDOMParseError *)&object->IXMLDOMParseError2_iface;
+
+    return S_OK;
 }
