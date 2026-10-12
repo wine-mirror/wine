@@ -40,6 +40,7 @@ enum error_codes
     E_SAX_UNPARSEDENTITYREF = 0xc00ce006,
     E_SAX_CONTAINSCOLON = 0xc00ce00c,
 
+    E_DOM_ELEMENT_UNDECLARED = 0xc00ce00d,
     E_DOM_ROOT_NAME_MISMATCH = 0xc00ce013,
 
     E_SAX_UNDECLAREDPREFIX = 0xc00ce01d,
@@ -360,6 +361,7 @@ extern HRESULT parse_xml_decl_body(const WCHAR *text, BSTR *version, BSTR *encod
 
 extern struct dtd * parser_dtd_addref(struct dtd *dtd);
 extern void parser_dtd_release(struct dtd *dtd);
+struct element_decl * parser_dtd_get_element_decl(struct dtd *dtd, BSTR name);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);

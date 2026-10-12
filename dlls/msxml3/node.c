@@ -4889,32 +4889,119 @@ static HRESULT return_validation_error(LONG code, IXMLDOMParseError **err)
     return S_FALSE;
 }
 
-static HRESULT node_validate_root(struct domnode *node, IXMLDOMParseError **err)
+struct validation_context
+{
+    LONG code;
+};
+
+static bool node_validate_root(struct validation_context *ctxt, struct domnode *node)
 {
     struct domnode *dtd, *root;
 
     if (node->type != NODE_DOCUMENT)
-        return S_OK;
+        return true;
 
     /* Check for root element presence. Tree manipulation should ensure that there is only
        one top level element. */
 
     if (!(root = domnode_get_root_element(node)))
-        return return_validation_error(E_XML_NOTWF, err);
+    {
+        ctxt->code = E_XML_NOTWF;
+        return false;
+    }
 
     if ((dtd = domnode_get_dtd(node)))
     {
         if (wcscmp(dtd->qname, root->qname))
-            return return_validation_error(E_DOM_ROOT_NAME_MISMATCH, err);
+        {
+            ctxt->code = E_DOM_ROOT_NAME_MISMATCH;
+            return false;
+        }
     }
 
-    return S_OK;
+    return true;
+}
+
+static bool node_dtd_validate_attribute(struct validation_context *ctxt, struct dtd *dtd, struct domnode *attr)
+{
+    struct domnode *elem = attr->parent;
+
+    if (!elem)
+        return true;
+
+    /* FIXME: validate attribute */
+
+    return true;
+}
+
+static bool node_dtd_validate_single_node(struct validation_context *ctxt, struct dtd *dtd, struct domnode *node)
+{
+    struct element_decl *elem_decl;
+
+    if (node->type == NODE_ATTRIBUTE)
+        return node_dtd_validate_attribute(ctxt, dtd, node);
+
+    if (node->type != NODE_ELEMENT)
+        return true;
+
+    if (!(elem_decl = parser_dtd_get_element_decl(dtd, node->qname)))
+    {
+        ctxt->code = E_DOM_ELEMENT_UNDECLARED;
+        return false;
+    }
+
+    /* FIXME: validate content */
+
+    return true;
+}
+
+static bool node_dtd_validate_node(struct validation_context *ctxt, struct dtd *dtd, struct domnode *node)
+{
+    struct domnode *attr, *root, *child;
+    bool ret = true;
+
+    root = node;
+    while (ret)
+    {
+        ret &= node_dtd_validate_single_node(ctxt, dtd, node);
+
+        if (node->type == NODE_ELEMENT)
+        {
+            attr = domnode_get_first_attribute(node);
+
+            while (attr && ret)
+            {
+                ret &= node_dtd_validate_attribute(ctxt, dtd, attr);
+                attr = domnode_get_next_attribute_sibling(attr);
+            }
+
+            if ((child = domnode_get_first_child(node)))
+            {
+                node = child;
+                continue;
+            }
+        }
+
+        for (;;)
+        {
+            if (node == root)
+                return ret;
+            if (domnode_get_next_sibling(node))
+                break;
+            node = node->parent;
+        }
+
+        node = domnode_get_next_sibling(node);
+    }
+
+    return ret;
 }
 
 HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseError **err)
 {
+    struct validation_context ctxt = { 0 };
+    struct domnode *node, *root, *dtd;
     IXMLDOMSchemaCollection2 *schema;
-    struct domnode *node;
     LONG err_code = 0;
     HRESULT hr = S_OK;
     int validated = 0;
@@ -4948,8 +5035,19 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
 
     if (node->type == NODE_DOCUMENT)
     {
-        if ((hr = node_validate_root(node, err)) != S_OK)
-            return hr;
+        if (!node_validate_root(&ctxt, node))
+            return return_validation_error(ctxt.code, err);
+    }
+
+    if ((dtd = domnode_get_dtd(node_get_doc(node))))
+    {
+        if (node->type == NODE_DOCUMENT)
+            root = domnode_get_root_element(node);
+        else
+            root = node;
+
+        if (!node_dtd_validate_node(&ctxt, dtd->dtd, root))
+            return return_validation_error(ctxt.code, err);
     }
 
     xmldoc = create_xmldoc_from_domdoc(node, &xmlnode);

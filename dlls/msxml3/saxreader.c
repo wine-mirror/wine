@@ -44,6 +44,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+static bool bstr_equal(BSTR s1, BSTR s2)
+{
+    if (SysStringLen(s1) != SysStringLen(s2)) return false;
+    return !memcmp(s1, s2, SysStringLen(s1) * sizeof(WCHAR));
+}
+
 struct stream_wrapper
 {
     ISequentialStream ISequentialStream_iface;
@@ -1104,6 +1110,19 @@ static void saxreader_free_element_decl(struct element_decl *decl)
         saxreader_free_element_content(decl->content);
     SysFreeString(decl->name);
     free(decl);
+}
+
+struct element_decl * parser_dtd_get_element_decl(struct dtd *dtd, BSTR name)
+{
+    struct element_decl *decl;
+
+    LIST_FOR_EACH_ENTRY(decl, &dtd->elements, struct element_decl, entry)
+    {
+        if (bstr_equal(decl->name, name))
+            return decl;
+    }
+
+    return NULL;
 }
 
 struct dtd *parser_dtd_addref(struct dtd *dtd)
@@ -3744,12 +3763,6 @@ static struct element *saxreader_new_element(struct saxlocator *locator, struct 
     saxreader_clear_attributes(locator);
 
     return element;
-}
-
-static bool bstr_equal(BSTR s1, BSTR s2)
-{
-    if (SysStringLen(s1) != SysStringLen(s2)) return false;
-    return !memcmp(s1, s2, SysStringLen(s1) * sizeof(WCHAR));
 }
 
 static bool bstr_startswith(BSTR s, const WCHAR *prefix, UINT length)
