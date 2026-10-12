@@ -1970,8 +1970,8 @@ DECLARE_INTERFACE_(IDebugControl2, IUnknown)
     STDMETHOD(GetLastEventInformation)(THIS_ ULONG *type, ULONG *pid, ULONG *tid, void *extra_info,
             ULONG extra_info_size, ULONG *extra_info_used, char *description, ULONG desc_size, ULONG *desc_used) PURE;
     /* IDebugControl2 */
-    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG timedate) PURE;
-    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG uptime) PURE;
+    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG *timedate) PURE;
+    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG *uptime) PURE;
     STDMETHOD(GetDumpFormatFlags)(THIS_ ULONG *flags) PURE;
     STDMETHOD(GetNumberTextPlacements)(THIS_ ULONG *count) PURE;
     STDMETHOD(GetNumberTextReplacement)(THIS_ const char *src_text, ULONG index, char *src_buffer,
@@ -2100,8 +2100,8 @@ DECLARE_INTERFACE_(IDebugControl3, IUnknown)
     STDMETHOD(GetLastEventInformation)(THIS_ ULONG *type, ULONG *pid, ULONG *tid, void *extra_info,
             ULONG extra_info_size, ULONG *extra_info_used, char *description, ULONG desc_size, ULONG *desc_used) PURE;
     /* IDebugControl2 */
-    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG timedate) PURE;
-    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG uptime) PURE;
+    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG *timedate) PURE;
+    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG *uptime) PURE;
     STDMETHOD(GetDumpFormatFlags)(THIS_ ULONG *flags) PURE;
     STDMETHOD(GetNumberTextPlacements)(THIS_ ULONG *count) PURE;
     STDMETHOD(GetNumberTextReplacement)(THIS_ const char *src_text, ULONG index, char *src_buffer,
@@ -2246,8 +2246,8 @@ DECLARE_INTERFACE_(IDebugControl4, IUnknown)
     STDMETHOD(GetLastEventInformation)(THIS_ ULONG *type, ULONG *pid, ULONG *tid, void *extra_info,
             ULONG extra_info_size, ULONG *extra_info_used, char *description, ULONG desc_size, ULONG *desc_used) PURE;
     /* IDebugControl2 */
-    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG timedate) PURE;
-    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG uptime) PURE;
+    STDMETHOD(GetCurrentTimeDate)(THIS_ ULONG *timedate) PURE;
+    STDMETHOD(GetCurrentSystemUpTime)(THIS_ ULONG *uptime) PURE;
     STDMETHOD(GetDumpFormatFlags)(THIS_ ULONG *flags) PURE;
     STDMETHOD(GetNumberTextPlacements)(THIS_ ULONG *count) PURE;
     STDMETHOD(GetNumberTextReplacement)(THIS_ const char *src_text, ULONG index, char *src_buffer,

@@ -3522,16 +3522,16 @@ static HRESULT STDMETHODCALLTYPE debugcontrol_GetLastEventInformation(IDebugCont
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE debugcontrol_GetCurrentTimeDate(IDebugControl4 *iface, ULONG timedate)
+static HRESULT STDMETHODCALLTYPE debugcontrol_GetCurrentTimeDate(IDebugControl4 *iface, ULONG *timedate)
 {
-    FIXME("%p, %lu stub.\n", iface, timedate);
+    FIXME("%p, %p stub.\n", iface, timedate);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE debugcontrol_GetCurrentSystemUpTime(IDebugControl4 *iface, ULONG uptime)
+static HRESULT STDMETHODCALLTYPE debugcontrol_GetCurrentSystemUpTime(IDebugControl4 *iface, ULONG *uptime)
 {
-    FIXME("%p, %lu stub.\n", iface, uptime);
+    FIXME("%p, %p stub.\n", iface, uptime);
 
     return E_NOTIMPL;
 }
