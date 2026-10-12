@@ -5806,7 +5806,7 @@ static HRESULT WINAPI MFPluginControl_GetDisabledByIndex(IMFPluginControl *iface
 static HRESULT WINAPI MFPluginControl_SetDisabled(IMFPluginControl *iface, DWORD plugin_type, REFCLSID clsid, BOOL disabled)
 {
     FIXME("(%ld %s %x)\n", plugin_type, debugstr_guid(clsid), disabled);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IMFPluginControlVtbl MFPluginControlVtbl = {
