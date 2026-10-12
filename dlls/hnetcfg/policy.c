@@ -1447,13 +1447,13 @@ HRESULT NetFwPolicy2_create( IUnknown *outer, void **obj )
     fp->INetFwPolicy2_iface.lpVtbl = &fw_policy2_vtbl;
     fp->refs = 1;
 
-    *obj = &fp->INetFwPolicy2_iface;
-
     if (FAILED(create_INetFwRules(&fp->fw_policy2_rules)))
     {
         free( fp );
         return E_OUTOFMEMORY;
     }
+
+    *obj = &fp->INetFwPolicy2_iface;
 
     TRACE("returning iface %p\n", *obj);
     return S_OK;
