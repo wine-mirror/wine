@@ -93,6 +93,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(mem_areas);
 WINE_DECLARE_DEBUG_CHANNEL(virtual_ranges);
 
 struct preload_info
@@ -100,15 +101,6 @@ struct preload_info
     void  *addr;
     size_t size;
 };
-
-struct reserved_area
-{
-    struct list entry;
-    void       *base;
-    size_t      size;
-};
-
-static struct list reserved_areas = LIST_INIT(reserved_areas);
 
 struct builtin_module
 {
@@ -237,6 +229,17 @@ static const size_t view_block_size = 0x100000;
 static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
 static BOOL enable_write_exceptions;  /* raise exception on writes to executable memory */
 
+static UINT_PTR *mem_areas;
+static const UINT_PTR initial_mem_areas[] = { 0, ~(UINT_PTR)0 };
+static unsigned int mem_areas_size = 0x1000 << sizeof(void*);
+static unsigned int mem_areas_count = ARRAY_SIZE(initial_mem_areas);
+
+enum area_state
+{
+    AREA_FREE,      /* free (but may have been allocated by host) */
+    AREA_RESERVED,  /* reserved, available for allocations */
+};
+
 struct range_entry
 {
     void *base;
@@ -279,6 +282,91 @@ void *anon_mmap_alloc( size_t size, int prot )
     assert( !(size & host_page_mask) );
 
     return mmap( NULL, size, prot, MAP_PRIVATE | MAP_ANON, -1, 0 );
+}
+
+static inline UINT_PTR make_mem_area( void *base, enum area_state state )
+{
+    return (UINT_PTR)base | state;
+}
+
+static inline void *mem_area_base( unsigned int pos )
+{
+    return (void *)(mem_areas[pos] & ~(UINT_PTR)0xff);
+}
+
+static inline void *mem_area_end( unsigned int pos )
+{
+    return mem_area_base( pos + 1 );
+}
+
+static inline enum area_state mem_area_state( unsigned int pos )
+{
+    return mem_areas[pos] & 0xff;
+}
+
+/* find the mem area containing the address */
+static unsigned int find_mem_area( void *addr )
+{
+    int min = 0, max = mem_areas_count - 1;
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (mem_area_base( pos ) > addr) max = pos - 1;
+        else if (mem_area_base( pos ) < addr) min = pos + 1;
+        else return pos;
+    }
+    return max;
+}
+
+/* helper for set_mem_area_state */
+static void move_mem_areas( unsigned int dst, unsigned int src )
+{
+    int diff = dst - src;
+
+    assert( mem_areas_count + diff <= mem_areas_size );
+    if (!diff) return;
+    memmove( &mem_areas[dst], &mem_areas[src], (mem_areas_count - src) * sizeof(mem_areas[0]) );
+    mem_areas_count += diff;
+}
+
+/* set the mem area state for the specified address range */
+static void set_mem_area_state( void *addr, SIZE_T size, enum area_state state )
+{
+    void *end = (char *)addr + size;
+    unsigned int start_pos, end_pos;
+
+    assert( !((UINT_PTR)addr & granularity_mask) );
+    assert( !(size & granularity_mask) );
+    if (!end) end = (void *)~granularity_mask;  /* avoid wrap-around */
+
+    start_pos = end_pos = find_mem_area( addr );
+    while (end >= mem_area_base( end_pos + 1 )) end_pos++;
+
+    if (mem_area_state( start_pos ) == state)
+    {
+        if (start_pos == end_pos) return;  /* nothing to do */
+        addr = mem_area_base( start_pos );
+    }
+    else if (start_pos && mem_area_state( start_pos - 1 ) == state)
+    {
+        if (addr == mem_area_base( start_pos )) addr = mem_area_base( --start_pos );  /* merge with prev */
+    }
+    if (mem_area_state( end_pos ) == state) end = mem_area_base( ++end_pos );  /* merge with next */
+    if (addr == mem_area_base( start_pos )) start_pos--;  /* reuse prev */
+
+    move_mem_areas( start_pos + 2, end_pos );
+    mem_areas[start_pos + 1] = make_mem_area( addr, state );
+    mem_areas[start_pos + 2] = make_mem_area( end, mem_area_state( start_pos + 2 ) );
+}
+
+static void dump_mem_areas(void)
+{
+    static const char *states[] = { "free", "reserved" };
+
+    TRACE_(mem_areas)( "%u memory areas:\n", mem_areas_count );
+    for (UINT i = 0; i < mem_areas_count - 1; i++)
+        TRACE_(mem_areas)( "    %p-%p: %s\n",
+                           mem_area_base( i ), mem_area_base( i + 1 ), states[mem_area_state(i)] );
 }
 
 #ifdef USE_UFFD_WRITEWATCH
@@ -436,135 +524,13 @@ static void kernel_get_write_watches( void *base, SIZE_T size, void **buffer, UL
 }
 #endif
 
-static void mmap_add_reserved_area( void *addr, SIZE_T size )
-{
-    struct reserved_area *area;
-    struct list *ptr, *next;
-    void *end, *area_end;
-
-    assert( !((UINT_PTR)addr & granularity_mask) );
-    assert( !(size & granularity_mask) );
-
-    if (!((intptr_t)addr + size)) size -= granularity_mask + 1;  /* avoid wrap-around */
-    end = (char *)addr + size;
-
-    LIST_FOR_EACH( ptr, &reserved_areas )
-    {
-        area = LIST_ENTRY( ptr, struct reserved_area, entry );
-        area_end = (char *)area->base + area->size;
-
-        if (area->base > end) break;
-        if (area_end < addr) continue;
-        if (area->base > addr)
-        {
-            area->size += (char *)area->base - (char *)addr;
-            area->base = addr;
-        }
-        if (area_end >= end) return;
-
-        /* try to merge with the following ones */
-        while ((next = list_next( &reserved_areas, ptr )))
-        {
-            struct reserved_area *area_next = LIST_ENTRY( next, struct reserved_area, entry );
-            void *next_end = (char *)area_next->base + area_next->size;
-
-            if (area_next->base > end) break;
-            list_remove( next );
-            free( area_next );
-            if (next_end >= end)
-            {
-                end = next_end;
-                break;
-            }
-        }
-        area->size = (char *)end - (char *)area->base;
-        return;
-    }
-
-    if ((area = malloc( sizeof(*area) )))
-    {
-        area->base = addr;
-        area->size = size;
-        list_add_before( ptr, &area->entry );
-    }
-}
-
-static void mmap_remove_reserved_area( void *addr, SIZE_T size )
-{
-    struct reserved_area *area;
-    struct list *ptr;
-
-    assert( !((UINT_PTR)addr & granularity_mask) );
-    assert( !(size & granularity_mask) );
-
-    if (!((intptr_t)addr + size)) size -= granularity_mask + 1;  /* avoid wrap-around */
-
-    ptr = list_head( &reserved_areas );
-    /* find the first area covering address */
-    while (ptr)
-    {
-        area = LIST_ENTRY( ptr, struct reserved_area, entry );
-        if ((char *)area->base >= (char *)addr + size) break;  /* outside the range */
-        if ((char *)area->base + area->size > (char *)addr)  /* overlaps range */
-        {
-            if (area->base >= addr)
-            {
-                if ((char *)area->base + area->size > (char *)addr + size)
-                {
-                    /* range overlaps beginning of area only -> shrink area */
-                    area->size -= (char *)addr + size - (char *)area->base;
-                    area->base = (char *)addr + size;
-                    break;
-                }
-                else
-                {
-                    /* range contains the whole area -> remove area completely */
-                    ptr = list_next( &reserved_areas, ptr );
-                    list_remove( &area->entry );
-                    free( area );
-                    continue;
-                }
-            }
-            else
-            {
-                if ((char *)area->base + area->size > (char *)addr + size)
-                {
-                    /* range is in the middle of area -> split area in two */
-                    struct reserved_area *new_area = malloc( sizeof(*new_area) );
-                    if (new_area)
-                    {
-                        new_area->base = (char *)addr + size;
-                        new_area->size = (char *)area->base + area->size - (char *)new_area->base;
-                        list_add_after( ptr, &new_area->entry );
-                    }
-                    area->size = (char *)addr - (char *)area->base;
-                    break;
-                }
-                else
-                {
-                    /* range overlaps end of area only -> shrink area */
-                    area->size = (char *)addr - (char *)area->base;
-                }
-            }
-        }
-        ptr = list_next( &reserved_areas, ptr );
-    }
-}
-
 static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
 {
-    struct reserved_area *area;
+    void *end = (char *)addr + size;
+    unsigned int area = find_mem_area( addr );
 
-    LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
-    {
-        if ((char *)area->base > (char *)addr + size) break;
-        if ((char *)area->base + area->size <= (char *)addr) continue;
-        /* area must contain block completely */
-        if (area->base > addr) return -1;
-        if ((char *)area->base + area->size < (char *)addr + size) return -1;
-        return 1;
-    }
-    return 0;
+    if (mem_area_end( area ) >= end) return mem_area_state( area ) == AREA_RESERVED;
+    return -1;
 }
 
 static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
@@ -642,7 +608,7 @@ static void reserve_area( void *addr, void *end )
 
             ret = mach_vm_map( mach_task_self(), &alloc_address, hole_size, 0, VM_FLAGS_FIXED,
                                MEMORY_OBJECT_NULL, 0, 0, PROT_NONE, VM_PROT_ALL, VM_INHERIT_COPY );
-            if (!ret) mmap_add_reserved_area( (void*)hole_address, hole_size );
+            if (!ret) set_mem_area_state( (void*)hole_address, hole_size, AREA_RESERVED );
             else if (ret == KERN_NO_SPACE)
             {
                 /* something filled (part of) the hole before we could.
@@ -661,7 +627,7 @@ static void reserve_area( void *addr, void *end )
 
     if (anon_mmap_tryfixed( addr, size, PROT_NONE, MAP_NORESERVE ) != MAP_FAILED)
     {
-        mmap_add_reserved_area( addr, size );
+        set_mem_area_state( addr, size, AREA_RESERVED );
         return;
     }
     size = (size / 2) & ~align_mask;
@@ -1600,7 +1566,6 @@ static void remove_reserved_area( void *addr, size_t size )
     size_t view_size;
 
     TRACE( "removing %p-%p\n", addr, (char *)addr + size );
-    mmap_remove_reserved_area( addr, size );
 
     /* unmap areas not covered by an existing view */
     WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
@@ -1622,29 +1587,20 @@ static void remove_reserved_area( void *addr, size_t size )
  *
  * Free reserved areas within a given range.
  */
-static void free_reserved_memory( char *base, char *limit )
+static void free_reserved_memory( void *base, void *end )
 {
-    struct reserved_area *area;
+    unsigned int area;
+    void *start = base;
 
-    for (;;)
+    assert( !((UINT_PTR)base & host_page_mask) );
+    assert( !((UINT_PTR)end & host_page_mask) );
+
+    for (area = find_mem_area( start ); start < end; start = mem_area_base( ++area ))
     {
-        int removed = 0;
-
-        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
-        {
-            char *area_base = area->base;
-            char *area_end = area_base + area->size;
-
-            if (area_end <= base) continue;
-            if (area_base >= limit) return;
-            if (area_base < base) area_base = base;
-            if (area_end > limit) area_end = limit;
-            remove_reserved_area( area_base, area_end - area_base );
-            removed = 1;
-            break;
-        }
-        if (!removed) return;
+        if (mem_area_state( area ) == AREA_RESERVED)
+            remove_reserved_area( start, (char *)min( end, mem_area_end( area )) - (char *)start );
     }
+    set_mem_area_state( base, (char *)end - (char *)base, AREA_FREE );
 }
 
 
@@ -1656,34 +1612,20 @@ static void free_reserved_memory( char *base, char *limit )
  */
 static void unmap_area( void *start, size_t size )
 {
-    struct reserved_area *area;
+    unsigned int area;
     void *end;
 
     assert( !((UINT_PTR)start & host_page_mask) );
     size = ROUND_SIZE( 0, size, host_page_mask );
     end = (char *)start + size;
 
-    LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+    for (area = find_mem_area( start ); start < end; start = mem_area_base( ++area ))
     {
-        void *area_start = area->base;
-        void *area_end = (char *)area_start + area->size;
+        size_t size = (char *)min( end, mem_area_end( area )) - (char *)start;
 
-        if (area_start >= end) break;
-        if (area_end <= start) continue;
-        if (area_start > start)
-        {
-            munmap( start, (char *)area_start - (char *)start );
-            start = area_start;
-        }
-        if (area_end >= end)
-        {
-            anon_mmap_fixed( start, (char *)end - (char *)start, PROT_NONE, MAP_NORESERVE );
-            return;
-        }
-        anon_mmap_fixed( start, (char *)area_end - (char *)start, PROT_NONE, MAP_NORESERVE );
-        start = area_end;
+        if (mem_area_state( area ) == AREA_FREE) munmap( start, size );
+        else anon_mmap_fixed( start, size, PROT_NONE, MAP_NORESERVE );
     }
-    munmap( start, (char *)end - (char *)start );
 }
 
 
@@ -2049,35 +1991,30 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
 static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, int top_down,
                                 int unix_prot, size_t align_mask )
 {
-    void *ptr = NULL;
-    struct reserved_area *area;
+    void *start, *end, *ptr = NULL;
+    unsigned int area;
+
+    limit_low = (void *)ROUND_SIZE( 0, limit_low, align_mask );
+    limit_high = ROUND_ADDR( limit_high, host_page_mask );
 
     if (top_down)
     {
-        LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
+        end = limit_high;
+        for (area = find_mem_area( end ); end > limit_low; end = mem_area_end( --area ))
         {
-            void *start = area->base;
-            void *end = (char *)start + area->size;
-
-            if (start >= limit_high) continue;
-            if (end <= limit_low) return NULL;
-            if (start < limit_low) start = (void *)ROUND_SIZE( 0, limit_low, host_page_mask );
-            if (end > limit_high) end = ROUND_ADDR( limit_high, host_page_mask );
+            if (mem_area_state( area ) != AREA_RESERVED) continue;
+            start = max( limit_low, mem_area_base( area ));
             ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
             if (ptr) break;
         }
     }
     else
     {
-        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+        start = limit_low;
+        for (area = find_mem_area( start ); start < limit_high; start = mem_area_base( ++area ))
         {
-            void *start = area->base;
-            void *end = (char *)start + area->size;
-
-            if (start >= limit_high) return NULL;
-            if (end <= limit_low) continue;
-            if (start < limit_low) start = (void *)ROUND_SIZE( 0, limit_low, host_page_mask );
-            if (end > limit_high) end = ROUND_ADDR( limit_high, host_page_mask );
+            if (mem_area_state( area ) != AREA_RESERVED) continue;
+            end = min( limit_high, mem_area_end( area ));
             ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
             if (ptr) break;
         }
@@ -2094,35 +2031,22 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
  */
 static NTSTATUS map_fixed_area( void *base, size_t size, int unix_prot )
 {
-    struct reserved_area *area;
+    unsigned int area;
     NTSTATUS status;
     char *start = base, *end = (char *)base + ROUND_SIZE( 0, size, host_page_mask );
 
     if ((UINT_PTR)base & host_page_mask) return STATUS_CONFLICTING_ADDRESSES;
     if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
 
-    LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+    for (area = find_mem_area( start ); start < end; start = mem_area_base( ++area ))
     {
-        char *area_start = area->base;
-        char *area_end = area_start + area->size;
+        size_t size = min( end, (char *)mem_area_end( area )) - start;
 
-        if (area_start >= end) break;
-        if (area_end <= start) continue;
-        if (area_start > start)
-        {
-            if (anon_mmap_tryfixed( start, area_start - start, unix_prot, 0 ) == MAP_FAILED) goto failed;
-            start = area_start;
-        }
-        if (area_end >= end)
-        {
-            if (anon_mmap_fixed( start, end - start, unix_prot, 0 ) == MAP_FAILED) goto failed;
-            return STATUS_SUCCESS;
-        }
-        if (anon_mmap_fixed( start, area_end - start, unix_prot, 0 ) == MAP_FAILED) goto failed;
-        start = area_end;
+        if ((mem_area_state( area ) == AREA_RESERVED ?
+             anon_mmap_fixed( start, size, unix_prot, 0 ) :
+             anon_mmap_tryfixed( start, size, unix_prot, 0 )) == MAP_FAILED)
+            goto failed;
     }
-
-    if (anon_mmap_tryfixed( start, end - start, unix_prot, 0 ) == MAP_FAILED) goto failed;
     return STATUS_SUCCESS;
 
 failed:
@@ -3542,6 +3466,9 @@ void virtual_init(void)
     host_addr_space_limit = get_host_addr_space_limit();
     TRACE( "host addr space limit: %p\n", host_addr_space_limit );
 
+    mem_areas = anon_mmap_alloc( mem_areas_size * sizeof(*mem_areas), PROT_READ | PROT_WRITE );
+    memcpy( mem_areas, initial_mem_areas, mem_areas_count * sizeof(*mem_areas) );
+
     if (preload_info) for (int i = 0; preload_info[i].size; i++)
     {
         void *addr = preload_info[i].addr;
@@ -3553,7 +3480,7 @@ void virtual_init(void)
             size -= (char *)low_64k - (char *)addr;
             addr = low_64k;
         }
-        mmap_add_reserved_area( addr, size );
+        set_mem_area_state( addr, size, AREA_RESERVED );
     }
     else
     {
@@ -4025,6 +3952,7 @@ void virtual_alloc_first_teb(void)
     if (arm64ec_view) peb->EcCodeBitMap = arm64ec_view->base;
     init_teb( data, ptr );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
+    if (TRACE_ON(mem_areas)) dump_mem_areas();
 }
 
 
@@ -5535,41 +5463,32 @@ static struct file_view *get_memory_region_size( char *base, char **region_start
     }
 #ifdef __i386__
     {
-        struct reserved_area *area;
+        unsigned int area = find_mem_area( base );
 
         /* on i386, pretend that space outside of a reserved area is allocated,
          * so that the app doesn't believe it's fully available */
-        LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
+        if (mem_area_state( area ) != AREA_FREE)
         {
-            char *area_start = area->base;
-            char *area_end = area_start + area->size;
+            *region_start = max( *region_start, (char *)mem_area_base( area ));
+            *region_end   = min( *region_end, (char *)mem_area_end( area ));
+            return NULL;
+        }
 
-            if (area_end <= base)
+        /* report the remaining part of the 64K after the view as free */
+        if ((UINT_PTR)*region_start & granularity_mask)
+        {
+            char *next = (char *)ROUND_ADDR( *region_start, granularity_mask ) + granularity_mask + 1;
+
+            if (base < next)
             {
-                if (*region_start < area_end) *region_start = area_end;
-                continue;
-            }
-            if (area_start <= base || area_start <= (char *)address_space_start)
-            {
-                if (area_end < *region_end) *region_end = area_end;
+                *region_end = min( next, *region_end );
                 return NULL;
             }
-            /* report the remaining part of the 64K after the view as free */
-            if ((UINT_PTR)*region_start & granularity_mask)
-            {
-                char *next = (char *)ROUND_ADDR( *region_start, granularity_mask ) + granularity_mask + 1;
-
-                if (base < next)
-                {
-                    *region_end = min( next, *region_end );
-                    return NULL;
-                }
-                else *region_start = base;
-            }
-            /* pretend it's allocated */
-            if (area_start < *region_end) *region_end = area_start;
-            break;
+            *region_start = base;
         }
+        /* pretend it's allocated */
+        if (mem_area_end( area ) <= address_space_start) area++;
+        *region_end = min( *region_end, (char *)mem_area_end( area ));
         *fake_reserved = TRUE;
     }
 #endif
