@@ -2890,8 +2890,6 @@ typedef struct tagTVKEYDOWN
 		TreeView_GetNextItem(hwnd, NULL, TVGN_DROPHILITE)
 #define TreeView_GetRoot(hwnd) \
 		TreeView_GetNextItem(hwnd, NULL, TVGN_ROOT)
-#define TreeView_GetLastVisible(hwnd) \
-		TreeView_GetNextItem(hwnd, NULL, TVGN_LASTVISIBLE)
 #define TreeView_GetNextSelected(hwnd) \
 		TreeView_GetNextItem(hwnd, NULL, TVGN_NEXTSELECTED)
 
@@ -3854,7 +3852,7 @@ typedef struct tagTCHITTESTINFO
 
 typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
-#define NMLVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMLCUSTOMDRW, clrTextBk)
+#define NMLVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMLVCUSTOMDRAW, clrTextBk)
 
 typedef struct tagNMLVCUSTOMDRAW
 {
@@ -4363,9 +4361,9 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 #define TabCtrl_SetUnicodeFormat(hwnd, fUnicode) \
     (BOOL)SNDMSG((hwnd), TCM_SETUNICODEFORMAT, (WPARAM)fUnicode, 0)
 #define TabCtrl_GetExtendedStyle(hwnd) \
-    (BOOL)SNDMSG((hwnd), TCM_GETEXTENDEDSTYLE, 0, 0)
+    (DWORD)SNDMSG((hwnd), TCM_GETEXTENDEDSTYLE, 0, 0)
 #define TabCtrl_SetExtendedStyle(hwnd, dwExStyle) \
-    (BOOL)SNDMSG((hwnd), TCM_GETEXTENDEDSTYLE, 0, (LPARAM)dwExStyle)
+    (DWORD)SNDMSG((hwnd), TCM_SETEXTENDEDSTYLE, 0, (LPARAM)dwExStyle)
 #define TabCtrl_HighlightItem(hwnd, i, fHighlight) \
     (BOOL)SNDMSG((hwnd), TCM_HIGHLIGHTITEM, (WPARAM)i, (LPARAM)MAKELONG(fHighlight, 0))
 
@@ -4916,7 +4914,7 @@ typedef struct tagMCGRIDINFO
 #define MonthCal_SetColor(hmc, iColor, clr)\
         SNDMSG(hmc, MCM_SETCOLOR, iColor, clr)
 #define MonthCal_GetColor(hmc, iColor) \
-		SNDMSG(hmc, MCM_SETCOLOR, iColor, 0)
+		SNDMSG(hmc, MCM_GETCOLOR, iColor, 0)
 #define MonthCal_GetToday(hmc, pst)\
 		(BOOL)SNDMSG(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
 #define MonthCal_SetToday(hmc, pst)\
