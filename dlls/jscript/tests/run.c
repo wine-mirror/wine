@@ -114,6 +114,9 @@ DEFINE_EXPECT(testobj_newenum);
 DEFINE_EXPECT(testobj_getidfail_d);
 DEFINE_EXPECT(testobj_tolocalestr_d);
 DEFINE_EXPECT(testobj_tolocalestr_i);
+DEFINE_EXPECT(testobj_GetMemberName);
+DEFINE_EXPECT(testobj_GetNextDispID_start);
+DEFINE_EXPECT(testobj_GetNextDispID_newenum);
 DEFINE_EXPECT(test_caller_get);
 DEFINE_EXPECT(test_caller_null);
 DEFINE_EXPECT(test_caller_obj);
@@ -437,12 +440,35 @@ static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID 
 
 static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
 {
+    ok(pbstrName != NULL, "pbstrName == NULL\n");
+
+    switch(id) {
+    case DISPID_NEWENUM:
+        CHECK_EXPECT(testobj_GetMemberName);
+        *pbstrName = SysAllocString(L"newenum");
+        return S_OK;
+    }
+
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
+    test_grfdex(grfdex, fdexEnumDefault);
+    ok(pid != NULL, "pid == NULL\n");
+
+    switch(id) {
+    case DISPID_STARTENUM:
+        CHECK_EXPECT(testobj_GetNextDispID_start);
+        *pid = DISPID_NEWENUM;
+        return S_OK;
+    case DISPID_NEWENUM:
+        CHECK_EXPECT(testobj_GetNextDispID_newenum);
+        *pid = 0;
+        return S_FALSE;
+    }
+
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
@@ -4393,6 +4419,14 @@ static BOOL run_tests(void)
     ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
     hres = parse_htmlscript(L"var a=1;\nif(a\n-->0) a=5;\n");
     ok(hres != S_OK, "ParseScriptText have not failed\n");
+
+    SET_EXPECT(testobj_GetNextDispID_start);
+    SET_EXPECT(testobj_GetMemberName);
+    SET_EXPECT(testobj_GetNextDispID_newenum);
+    run_script(L"for(var prop in testObj) {}");
+    CHECK_CALLED(testobj_GetNextDispID_start);
+    CHECK_CALLED(testobj_GetMemberName);
+    CHECK_CALLED(testobj_GetNextDispID_newenum);
 
     test_script_exprs();
     test_invokeex();

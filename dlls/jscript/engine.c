@@ -1029,7 +1029,7 @@ static HRESULT interp_forin(script_ctx_t *ctx)
     if(obj) {
         hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, id, &id);
+            hres = IDispatchEx_GetNextDispID(dispex, make_grfdex(ctx, fdexEnumDefault), id, &id);
             if(hres == S_OK)
                 hres = IDispatchEx_GetMemberName(dispex, id, &name);
             IDispatchEx_Release(dispex);
