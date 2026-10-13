@@ -638,8 +638,6 @@ typedef struct {
     void (NSAPI *delete_cycle_collectable)(void*);
 } CCObjCallback;
 
-DEFINE_GUID(IID_nsXPCOMCycleCollectionParticipant, 0x9674489b,0x1f6f,0x4550,0xa7,0x30, 0xcc,0xae,0xdd,0x10,0x4c,0xf9);
-
 extern nsrefcnt (__cdecl *ccref_incr)(nsCycleCollectingAutoRefCnt*,nsISupports*);
 extern nsrefcnt (__cdecl *ccref_decr)(nsCycleCollectingAutoRefCnt*,nsISupports*,ExternalCycleCollectionParticipant*);
 extern void (__cdecl *ccref_init)(nsCycleCollectingAutoRefCnt*,nsrefcnt);

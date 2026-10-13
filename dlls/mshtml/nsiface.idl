@@ -4432,5 +4432,3 @@ interface nsIXMLHttpRequest : nsISupports
     nsresult GetMozSystem(bool *aMozSystem);
     nsresult GetResponseBuffer(void *buffer, uint32_t buffer_size, uint32_t *_retval);
 }
-
-cpp_quote("DEFINE_GUID(IID_nsCycleCollectionISupports, 0xc61eac14,0x5f7a,0x4481,0x96,0x5e,0x7e,0xaa,0x6e,0xff,0xa8,0x5f);")
