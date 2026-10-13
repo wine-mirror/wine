@@ -756,7 +756,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     ok(grfdex & 0xf0000000, "grfdex = %lx\n", grfdex);
     ok(id == DISPID_STARTENUM, "id = %lx\n", id);
     ok(pid != NULL, "pid = NULL\n");
-    return S_FALSE;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)

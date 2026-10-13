@@ -1032,6 +1032,8 @@ static HRESULT interp_forin(script_ctx_t *ctx)
             if (ctx->html_mode)
             {
                 hres = IDispatchEx_GetNextDispID(dispex, make_grfdex(ctx, fdexEnumAll), id, &id);
+                if (FAILED(hres))
+                    hres = S_FALSE;
             }
             else
             {
