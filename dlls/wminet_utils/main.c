@@ -117,6 +117,13 @@ HRESULT WINAPI Put(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG lFlag
     return IWbemClassObject_Put(ptr, wszName, lFlags, pVal, vtType);
 }
 
+HRESULT WINAPI Delete(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName)
+{
+    TRACE("%i %p %s\n", vFunc, ptr, debugstr_w(wszName));
+
+    return IWbemClassObject_Delete(ptr, wszName);
+}
+
 HRESULT WINAPI GetCurrentApartmentType(int vFunc, IComThreadingInfo *ptr, APTTYPE *aptType)
 {
     TRACE("%i %p %p\n", vFunc, ptr, aptType);
