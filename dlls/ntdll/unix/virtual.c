@@ -94,7 +94,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(mem_areas);
-WINE_DECLARE_DEBUG_CHANNEL(virtual_ranges);
 
 struct preload_info
 {
@@ -204,7 +203,6 @@ static struct list teb_list = LIST_INIT( teb_list );
 #define ROUND_SIZE(addr,size,mask) (((SIZE_T)(size) + ((UINT_PTR)(addr) & (mask)) + (mask)) & ~(UINT_PTR)(mask))
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) do { if (TRACE_ON(virtual)) dump_view(view); } while (0)
-#define VIRTUAL_DEBUG_DUMP_RANGES() do { if (TRACE_ON(virtual_ranges)) dump_free_ranges(); } while (0)
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -239,16 +237,8 @@ enum area_state
     AREA_FREE,      /* free (but may have been allocated by host) */
     AREA_RESERVED,  /* reserved, available for allocations */
     AREA_BLOCKED,   /* reserved, but blocked for allocations */
+    AREA_ALLOCATED, /* reserved and allocated to a view */
 };
-
-struct range_entry
-{
-    void *base;
-    void *end;
-};
-
-static struct range_entry *free_ranges;
-static struct range_entry *free_ranges_end;
 
 
 static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *limit )
@@ -362,7 +352,7 @@ static void set_mem_area_state( void *addr, SIZE_T size, enum area_state state )
 
 static void dump_mem_areas(void)
 {
-    static const char *states[] = { "free", "reserved", "blocked" };
+    static const char *states[] = { "free", "reserved", "blocked", "allocated" };
 
     TRACE_(mem_areas)( "%u memory areas:\n", mem_areas_count );
     for (UINT i = 0; i < mem_areas_count - 1; i++)
@@ -525,13 +515,38 @@ static void kernel_get_write_watches( void *base, SIZE_T size, void **buffer, UL
 }
 #endif
 
-static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
+static void mem_area_add_view( struct file_view *view )
 {
-    void *end = (char *)addr + size;
-    unsigned int area = find_mem_area( addr );
+    size_t size = ROUND_SIZE( view->base, view->size, granularity_mask );
+    void *base = ROUND_ADDR( view->base, granularity_mask );
+    void *end = (char *)base + size;
+    unsigned int area = find_mem_area( base );
 
-    if (mem_area_end( area ) >= end) return mem_area_state( area ) == AREA_RESERVED;
-    return -1;
+    if (mem_area_end( area ) >= end && mem_area_state( area ) == AREA_FREE) return;
+    set_mem_area_state( base, size, AREA_ALLOCATED );
+}
+
+static void mem_area_remove_view( struct file_view *view )
+{
+    struct file_view *prev, *next;
+    void *base = ROUND_ADDR( view->base, granularity_mask );
+    void *end = (char *)base + ROUND_SIZE( view->base, view->size, granularity_mask );
+    unsigned int area = find_mem_area( base );
+
+    if (mem_area_state( area ) == AREA_FREE) return;
+
+    if ((prev = RB_ENTRY_VALUE( rb_prev( &view->entry ), struct file_view, entry )))
+    {
+        void *prev_base = ROUND_ADDR( prev->base, granularity_mask );
+        void *prev_end = (char *)prev_base + ROUND_SIZE( prev->base, prev->size, granularity_mask );
+        if (prev_end > base) base = prev_end;
+    }
+    if ((next = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry )))
+    {
+        void *next_base = ROUND_ADDR( next->base, granularity_mask );
+        if (next_base < end) end = next_base;
+    }
+    if (base < end) set_mem_area_state( base, (char *)end - (char *)base, AREA_RESERVED );
 }
 
 static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
@@ -775,187 +790,6 @@ NTSTATUS set_builtin_unixlib_name( void *module, const char *name )
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
-}
-
-
-/***********************************************************************
- *           free_ranges_lower_bound
- *
- * Returns the first range whose end is not less than addr, or end if there's none.
- */
-static struct range_entry *free_ranges_lower_bound( void *addr )
-{
-    struct range_entry *begin = free_ranges;
-    struct range_entry *end = free_ranges_end;
-    struct range_entry *mid;
-
-    while (begin < end)
-    {
-        mid = begin + (end - begin) / 2;
-        if (mid->end < addr)
-            begin = mid + 1;
-        else
-            end = mid;
-    }
-
-    return begin;
-}
-
-static void dump_free_ranges(void)
-{
-    struct range_entry *r;
-    for (r = free_ranges; r != free_ranges_end; ++r)
-        TRACE_(virtual_ranges)("%p - %p.\n", r->base, r->end);
-}
-
-/***********************************************************************
- *           free_ranges_insert_view
- *
- * Updates the free_ranges after a new view has been created.
- */
-static void free_ranges_insert_view( struct file_view *view )
-{
-    void *view_base = ROUND_ADDR( view->base, granularity_mask );
-    void *view_end = ROUND_ADDR( (char *)view->base + view->size + granularity_mask, granularity_mask );
-    struct range_entry *range = free_ranges_lower_bound( view_base );
-    struct range_entry *next = range + 1;
-
-    /* free_ranges initial value is such that the view is either inside range or before another one. */
-    assert( range != free_ranges_end );
-    assert( range->end > view_base || next != free_ranges_end );
-
-    /* Free ranges addresses are aligned at granularity_mask while the views may be not. */
-
-    if (range->base > view_base)
-        view_base = range->base;
-    if (range->end < view_end)
-        view_end = range->end;
-    if (range->end == view_base && next->base >= view_end)
-        view_end = view_base;
-
-    TRACE_(virtual_ranges)( "%p - %p, aligned %p - %p.\n",
-                            view->base, (char *)view->base + view->size, view_base, view_end );
-
-    if (view_end <= view_base)
-    {
-        VIRTUAL_DEBUG_DUMP_RANGES();
-        return;
-    }
-
-    /* this should never happen */
-    if (range->base > view_base || range->end < view_end)
-        ERR( "range %p - %p is already partially mapped\n", view_base, view_end );
-    assert( range->base <= view_base && range->end >= view_end );
-
-    /* need to split the range in two */
-    if (range->base < view_base && range->end > view_end)
-    {
-        memmove( next + 1, next, (free_ranges_end - next) * sizeof(struct range_entry) );
-        free_ranges_end += 1;
-        if ((char *)free_ranges_end - (char *)free_ranges > view_block_size)
-            ERR( "Free range sequence is full, trouble ahead!\n" );
-        assert( (char *)free_ranges_end - (char *)free_ranges <= view_block_size );
-
-        next->base = view_end;
-        next->end = range->end;
-        range->end = view_base;
-    }
-    else
-    {
-        /* otherwise we just have to shrink it */
-        if (range->base < view_base)
-            range->end = view_base;
-        else
-            range->base = view_end;
-
-        if (range->base < range->end)
-        {
-            VIRTUAL_DEBUG_DUMP_RANGES();
-            return;
-        }
-        /* and possibly remove it if it's now empty */
-        memmove( range, next, (free_ranges_end - next) * sizeof(struct range_entry) );
-        free_ranges_end -= 1;
-        assert( free_ranges_end - free_ranges > 0 );
-    }
-    VIRTUAL_DEBUG_DUMP_RANGES();
-}
-
-/***********************************************************************
- *           free_ranges_remove_view
- *
- * Updates the free_ranges after a view has been destroyed.
- */
-static void free_ranges_remove_view( struct file_view *view )
-{
-    void *view_base = ROUND_ADDR( view->base, granularity_mask );
-    void *view_end = ROUND_ADDR( (char *)view->base + view->size + granularity_mask, granularity_mask );
-    struct range_entry *range = free_ranges_lower_bound( view_base );
-    struct range_entry *next = range + 1;
-
-    /* Free ranges addresses are aligned at granularity_mask while the views may be not. */
-    struct file_view *prev_view = RB_ENTRY_VALUE( rb_prev( &view->entry ), struct file_view, entry );
-    struct file_view *next_view = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry );
-    void *prev_view_base = prev_view ? ROUND_ADDR( prev_view->base, granularity_mask ) : NULL;
-    void *prev_view_end = prev_view ? ROUND_ADDR( (char *)prev_view->base + prev_view->size + granularity_mask, granularity_mask ) : NULL;
-    void *next_view_base = next_view ? ROUND_ADDR( next_view->base, granularity_mask ) : NULL;
-    void *next_view_end = next_view ? ROUND_ADDR( (char *)next_view->base + next_view->size + granularity_mask, granularity_mask ) : NULL;
-
-    if (prev_view_end && prev_view_end > view_base && prev_view_base < view_end)
-        view_base = prev_view_end;
-    if (next_view_base && next_view_base < view_end && next_view_end > view_base)
-        view_end = next_view_base;
-
-    TRACE_(virtual_ranges)( "%p - %p, aligned %p - %p.\n",
-                            view->base, (char *)view->base + view->size, view_base, view_end );
-
-    if (view_end <= view_base)
-    {
-        VIRTUAL_DEBUG_DUMP_RANGES();
-        return;
-    }
-    /* free_ranges initial value is such that the view is either inside range or before another one. */
-    assert( range != free_ranges_end );
-    assert( range->end > view_base || next != free_ranges_end );
-
-    /* this should never happen, but we can safely ignore it */
-    if (range->base <= view_base && range->end >= view_end)
-    {
-        WARN( "range %p - %p is already unmapped\n", view_base, view_end );
-        return;
-    }
-
-    /* this should never happen */
-    if (range->base < view_end && range->end > view_base)
-        ERR( "range %p - %p is already partially unmapped\n", view_base, view_end );
-    assert( range->end <= view_base || range->base >= view_end );
-
-    /* merge with next if possible */
-    if (range->end == view_base && next->base == view_end)
-    {
-        range->end = next->end;
-        memmove( next, next + 1, (free_ranges_end - next - 1) * sizeof(struct range_entry) );
-        free_ranges_end -= 1;
-        assert( free_ranges_end - free_ranges > 0 );
-    }
-    /* or try growing the range */
-    else if (range->end == view_base)
-        range->end = view_end;
-    else if (range->base == view_end)
-        range->base = view_base;
-    /* otherwise create a new one */
-    else
-    {
-        memmove( range + 1, range, (free_ranges_end - range) * sizeof(struct range_entry) );
-        free_ranges_end += 1;
-        if ((char *)free_ranges_end - (char *)free_ranges > view_block_size)
-            ERR( "Free range sequence is full, trouble ahead!\n" );
-        assert( (char *)free_ranges_end - (char *)free_ranges <= view_block_size );
-
-        range->base = view_base;
-        range->end = view_end;
-    }
-    VIRTUAL_DEBUG_DUMP_RANGES();
 }
 
 
@@ -1295,6 +1129,8 @@ static void dump_view( struct file_view *view )
     if (count)
         TRACE( "      %p - %p %s\n",
                  addr, addr + (count << page_shift) - 1, get_prot_str(prot) );
+
+    if (TRACE_ON(mem_areas)) dump_mem_areas();
 }
 
 
@@ -1503,107 +1339,30 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
     return start;
 }
 
-
-/***********************************************************************
- *           find_reserved_free_area
- *
- * Find a free area between views inside the specified range.
- * virtual_mutex must be held by caller.
- * The range must be inside a reserved area.
- */
-static void *find_reserved_free_area( void *base, void *end, size_t size, int top_down, size_t align_mask )
-{
-    struct range_entry *range;
-    void *start;
-
-    base = ROUND_ADDR( (char *)base + align_mask, align_mask );
-    end = (char *)ROUND_ADDR( (char *)end - size, align_mask ) + size;
-
-    if (top_down)
-    {
-        start = (char *)end - size;
-        range = free_ranges_lower_bound( start );
-        assert(range != free_ranges_end && range->end >= start);
-
-        if ((char *)range->end - (char *)start < size) start = ROUND_ADDR( (char *)range->end - size, align_mask );
-        do
-        {
-            if (start >= end || start < base || (char *)end - (char *)start < size) return NULL;
-            if (start < range->end && start >= range->base && (char *)range->end - (char *)start >= size) break;
-            if (--range < free_ranges) return NULL;
-            start = ROUND_ADDR( (char *)range->end - size, align_mask );
-        }
-        while (1);
-    }
-    else
-    {
-        start = base;
-        range = free_ranges_lower_bound( start );
-        assert(range != free_ranges_end && range->end >= start);
-
-        if (start < range->base) start = ROUND_ADDR( (char *)range->base + align_mask, align_mask );
-        do
-        {
-            if (start >= end || start < base || (char *)end - (char *)start < size) return NULL;
-            if (start < range->end && start >= range->base && (char *)range->end - (char *)start >= size) break;
-            if (++range == free_ranges_end) return NULL;
-            start = ROUND_ADDR( (char *)range->base + align_mask, align_mask );
-        }
-        while (1);
-    }
-    return start;
-}
-
-
 #ifndef _WIN64
-
-/***********************************************************************
- *           remove_reserved_area
- *
- * Remove a reserved area from the list maintained by libwine.
- * virtual_mutex must be held by caller.
- */
-static void remove_reserved_area( void *addr, size_t size )
-{
-    struct file_view *view;
-    size_t view_size;
-
-    TRACE( "removing %p-%p\n", addr, (char *)addr + size );
-
-    /* unmap areas not covered by an existing view */
-    WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
-    {
-        if ((char *)view->base >= (char *)addr + size) break;
-        if ((char *)view->base + view->size <= (char *)addr) continue;
-        if (view->base > addr) munmap( addr, (char *)view->base - (char *)addr );
-        if ((char *)view->base + view->size > (char *)addr + size) return;
-        view_size = ROUND_SIZE( view->base, view->size, host_page_mask );
-        size = (char *)addr + size - ((char *)view->base + view_size);
-        addr = (char *)view->base + view_size;
-    }
-    munmap( addr, size );
-}
-
 
 /***********************************************************************
  *           free_reserved_memory
  *
  * Free reserved areas within a given range.
  */
-static void free_reserved_memory( void *base, void *end )
+static void free_reserved_memory( void *start, void *end )
 {
     unsigned int area;
-    void *start = base;
 
-    assert( !((UINT_PTR)base & host_page_mask) );
-    assert( !((UINT_PTR)end & host_page_mask) );
+    assert( !((UINT_PTR)start & granularity_mask) );
+    assert( !((UINT_PTR)end & granularity_mask) );
 
     for (area = find_mem_area( start ); start < end; start = mem_area_base( ++area ))
     {
         if (mem_area_state( area ) == AREA_RESERVED)
-            remove_reserved_area( start, (char *)min( end, mem_area_end( area )) - (char *)start );
+        {
+            size_t size = (char *)min( end, mem_area_end( area )) - (char *)start;
+            munmap( start, size );
+            set_mem_area_state( start, size, AREA_FREE );
+            area = find_mem_area( start );  /* area offsets have changed */
+        }
     }
-    set_mem_area_state( base, (char *)end - (char *)base, AREA_FREE );
 }
 
 
@@ -1684,12 +1443,11 @@ static void free_view( struct file_view *view )
 /***********************************************************************
  *           unregister_view
  *
- * Remove view from the tree and update free ranges. virtual_mutex must be held by caller.
+ * Remove view from the tree and update mem areas. virtual_mutex must be held by caller.
  */
 static void unregister_view( struct file_view *view )
 {
-    if (mmap_is_in_reserved_area( view->base, view->size ))
-        free_ranges_remove_view( view );
+    mem_area_remove_view( view );
     wine_rb_remove( &views_tree, &view->entry );
 }
 
@@ -1712,13 +1470,12 @@ static void delete_view( struct file_view *view ) /* [in] View */
 /***********************************************************************
  *           register_view
  *
- * Add view to the tree and update free ranges. virtual_mutex must be held by caller.
+ * Add view to the tree and update mem areas. virtual_mutex must be held by caller.
  */
 static void register_view( struct file_view *view )
 {
     wine_rb_put( &views_tree, view->base, &view->entry );
-    if (mmap_is_in_reserved_area( view->base, view->size ))
-        free_ranges_insert_view( view );
+    mem_area_add_view( view );
 }
 
 
@@ -2019,9 +1776,10 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
         for (area = find_mem_area( end ); end > limit_low; end = mem_area_end( --area ))
         {
             if (mem_area_state( area ) != AREA_RESERVED) continue;
-            start = max( limit_low, mem_area_base( area ));
-            ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
-            if (ptr) break;
+            start = ROUND_ADDR( (char *)mem_area_base( area ) + align_mask, align_mask );
+            if ((char *)end - (char *)start < size) continue;
+            ptr = ROUND_ADDR( (char *)end - size, align_mask );
+            break;
         }
     }
     else
@@ -2030,9 +1788,11 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
         for (area = find_mem_area( start ); start < limit_high; start = mem_area_base( ++area ))
         {
             if (mem_area_state( area ) != AREA_RESERVED) continue;
+            start = ROUND_ADDR( (char *)start + align_mask, align_mask );
             end = min( limit_high, mem_area_end( area ));
-            ptr = find_reserved_free_area( start, end, size, top_down, align_mask );
-            if (ptr) break;
+            if ((char *)end - (char *)start < size) continue;
+            ptr = start;
+            break;
         }
     }
     if (ptr && anon_mmap_fixed( ptr, size, unix_prot, 0 ) != ptr) ptr = NULL;
@@ -2052,17 +1812,24 @@ static NTSTATUS map_fixed_area( void *base, size_t size, int unix_prot )
     char *start, *end = (char *)base + ROUND_SIZE( 0, size, host_page_mask );
 
     if ((UINT_PTR)base & host_page_mask) return STATUS_CONFLICTING_ADDRESSES;
-    if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
 
     start_area = find_mem_area( base );
     for (start = base, area = start_area; start < end; start = mem_area_base( ++area ))
         if (mem_area_state( area ) == AREA_BLOCKED) return STATUS_CONFLICTING_ADDRESSES;
 
+    for (area = start_area; (char *)mem_area_base(area) < end; area++)
+    {
+        if (mem_area_state( area ) != AREA_ALLOCATED) continue;
+        /* if any part of the range is allocated, we need a (slower) explicit check for views */
+        if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
+        break;
+    }
+
     for (start = base, area = start_area; start < end; start = mem_area_base( ++area ))
     {
         size_t size = min( end, (char *)mem_area_end( area )) - start;
 
-        if ((mem_area_state( area ) == AREA_RESERVED ?
+        if ((mem_area_state( area ) != AREA_FREE ?
              anon_mmap_fixed( start, size, unix_prot, 0 ) :
              anon_mmap_tryfixed( start, size, unix_prot, 0 )) == MAP_FAILED)
             goto failed;
@@ -3523,14 +3290,8 @@ void virtual_init(void)
     view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
     assert( view_block_start != MAP_FAILED );
-    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
-    assert( free_ranges != MAP_FAILED );
     wine_rb_init( &views_tree, compare_view );
     kernel_writewatch_init();
-
-    free_ranges[0].base = (void *)0;
-    free_ranges[0].end = (void *)~0;
-    free_ranges_end = free_ranges + 1;
 }
 
 
@@ -3975,7 +3736,6 @@ void virtual_alloc_first_teb(void)
     if (arm64ec_view) peb->EcCodeBitMap = arm64ec_view->base;
     init_teb( data, ptr );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
-    if (TRACE_ON(mem_areas)) dump_mem_areas();
 }
 
 
