@@ -2523,7 +2523,9 @@ async_test("weakmap_obj", function() {
 
     r = external.newRefTest();
     ok(r.ref === 1, "wrong ref after newRefTest: " + r.ref);
-    o = { val: r.get(), map: s };
+    o = document.createElement("div");
+    o.val = r.get();
+    o.map = s;
     s.set(o, o);
     ok(r.ref > 1, "map entry released");
 
