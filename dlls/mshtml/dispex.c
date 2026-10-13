@@ -138,6 +138,8 @@ PRIVATE_TID_LIST
 #undef XDIID
 };
 
+static nsresult NSAPI dispex_unlink(void*);
+
 static HRESULT load_typelib(void)
 {
     WCHAR module_path[MAX_PATH + 3];
@@ -2077,7 +2079,10 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IWineJSDispatchHost *iface, REFI
         *ppv = &This->IWineJSDispatchHost_iface;
     else if(IsEqualGUID(&IID_IWineJSDispatchHost, riid))
         *ppv = &This->IWineJSDispatchHost_iface;
-    else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
+    else if(IsEqualGUID(&IID_IWineGetJSDispatch, riid)) {
+        *ppv = This->jsdisp;
+        return S_OK;
+    }else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
         *ppv = &dispex_ccp;
         return S_OK;
     }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
@@ -2880,6 +2885,20 @@ static ULONG WINAPI JSDispatchHost_GetRefCount(IWineJSDispatchHost *iface)
     return NS_REFCOUNT_VALUE(This->ccref);
 }
 
+static HRESULT WINAPI JSDispatchHost_Traverse(IWineJSDispatchHost *iface, void *context, const struct cc_traverse_ops *ops)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    return cc_participant_Traverse(&This->IWineJSDispatchHost_iface, &dispex_ccp, context, ops);
+}
+
+static void WINAPI JSDispatchHost_Unlink(IWineJSDispatchHost *iface)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    dispex_unlink(&This->IWineJSDispatchHost_iface);
+}
+
 static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -2908,7 +2927,80 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_GetOuterDispatch,
     JSDispatchHost_ToString,
     JSDispatchHost_GetRefCount,
+    JSDispatchHost_Traverse,
+    JSDispatchHost_Unlink
 };
+
+struct cc_callback_ctx {
+    void *context;
+    const struct cc_traverse_ops *ops;
+    nsCycleCollectionTraversalCallback cb;
+    HRESULT hres;
+};
+
+static inline struct cc_callback_ctx *impl_from_nsCycleCollectionTraversalCallback(nsCycleCollectionTraversalCallback *cb)
+{
+    return CONTAINING_RECORD(cb, struct cc_callback_ctx, cb);
+}
+
+static void NSAPI cc_callback_DescribeRefCountedNode(nsCycleCollectionTraversalCallback *This, nsrefcnt refcount, const char *objName)
+{
+}
+
+static void NSAPI cc_callback_DescribeGCedNode(nsCycleCollectionTraversalCallback *This, unsigned char isMarked, const char *objName, UINT64 compartmentAddress)
+{
+}
+
+static void NSAPI cc_callback_NoteXPCOMChild(nsCycleCollectionTraversalCallback *This, nsISupports *child)
+{
+    struct cc_callback_ctx *ctx = impl_from_nsCycleCollectionTraversalCallback(This);
+    if(ctx->hres == S_OK && child)
+        ctx->hres = ctx->ops->note_edge(ctx->context, (IUnknown*)child);
+}
+
+static void NSAPI cc_callback_NoteJSObject(nsCycleCollectionTraversalCallback *This, void *child)
+{
+    /* FIXME: somehow obtain the participant and traverse JS objects */
+}
+
+static void NSAPI cc_callback_NoteJSScript(nsCycleCollectionTraversalCallback *This, void *child)
+{
+}
+
+static void NSAPI cc_callback_NoteNativeChild(nsCycleCollectionTraversalCallback *This, void *child, nsCycleCollectionParticipant *participant)
+{
+    /* FIXME: traverse raw external objects */
+}
+
+static void NSAPI cc_callback_NoteNextEdgeName(nsCycleCollectionTraversalCallback *This, const char *name)
+{
+}
+
+static const nsCycleCollectionTraversalCallbackVtbl cc_callback_vtbl = {
+    cc_callback_DescribeRefCountedNode,
+    cc_callback_DescribeGCedNode,
+    cc_callback_NoteXPCOMChild,
+    cc_callback_NoteJSObject,
+    cc_callback_NoteJSScript,
+    cc_callback_NoteNativeChild,
+    cc_callback_NoteNextEdgeName
+};
+
+HRESULT cc_participant_Traverse(void *obj, void *participant, void *context, const struct cc_traverse_ops *ops)
+{
+    nsCycleCollectionParticipant *ccp = participant;
+    struct cc_callback_ctx ctx;
+    nsresult nsres;
+
+    ctx.cb.lpVtbl = &cc_callback_vtbl;
+    ctx.cb.flags = nsCycleCollectionTraversalCallback_WANT_ALL_TRACES;
+    ctx.context = context;
+    ctx.ops = ops;
+    ctx.hres = S_FALSE;
+
+    nsres = ccp->lpVtbl->Traverse(ccp, obj, &ctx.cb);
+    return NS_FAILED(nsres) ? map_nsresult(nsres) : ctx.hres;
+}
 
 struct EnumVARIANT {
     IEnumVARIANT IEnumVARIANT_iface;

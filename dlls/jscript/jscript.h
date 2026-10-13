@@ -166,6 +166,7 @@ void release_named_item(named_item_t*);
 HRESULT gc_run(script_ctx_t*);
 HRESULT gc_process_linked_obj(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*,void**);
 HRESULT gc_process_linked_val(struct gc_ctx*,enum gc_traverse_op,jsval_t*);
+HRESULT host_dispatch_gc_traverse(struct gc_ctx*, enum gc_traverse_op, IWineJSDispatchHost*);
 
 typedef struct {
     const WCHAR *name;

@@ -208,6 +208,48 @@ typedef void *JSContext;
 typedef void *JSObject;
 typedef uint64_t jsval;
 
+typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;
+typedef struct nsCycleCollectionParticipant nsCycleCollectionParticipant;
+
+typedef struct nsCycleCollectionParticipantVtbl
+{
+    nsresult (__stdcall *Traverse)(nsCycleCollectionParticipant *This, void *p, nsCycleCollectionTraversalCallback *cb);
+    void (__stdcall *Root)(nsCycleCollectionParticipant *This, void *p);
+    void (__stdcall *Unlink)(nsCycleCollectionParticipant *This, void *p);
+    void (__stdcall *Unroot)(nsCycleCollectionParticipant *This, void *p);
+    void (__stdcall *Trace)(nsCycleCollectionParticipant *This, void *p, const void /*TraceCallbacks*/ *cb, void *closure);
+    void (__stdcall *DeleteCycleCollectable)(nsCycleCollectionParticipant *This, void *p);
+    bool (__stdcall *CanSkipReal)(nsCycleCollectionParticipant *This, bool removingAllowed);
+    bool (__stdcall *CanSkipInCCReal)(nsCycleCollectionParticipant *This, void *p);
+    bool (__stdcall *CanSkipThisReal)(nsCycleCollectionParticipant *This, void *p);
+} nsCycleCollectionParticipantVtbl;
+
+struct nsCycleCollectionParticipant
+{
+    const nsCycleCollectionParticipantVtbl *lpVtbl;
+    bool mightSkip;
+};
+
+typedef struct nsCycleCollectionTraversalCallbackVtbl
+{
+    void (__stdcall *DescribeRefCountedNode)(nsCycleCollectionTraversalCallback *This, nsrefcnt refcount, const char *objName);
+    void (__stdcall *DescribeGCedNode)(nsCycleCollectionTraversalCallback *This, bool isMarked, const char *objName, uint64_t compartmentAddress);
+    void (__stdcall *NoteXPCOMChild)(nsCycleCollectionTraversalCallback *This, nsISupports *child);
+    void (__stdcall *NoteJSObject)(nsCycleCollectionTraversalCallback *This, void /*JSObject*/ *child);
+    void (__stdcall *NoteJSScript)(nsCycleCollectionTraversalCallback *This, void /*JSScript*/ *child);
+    void (__stdcall *NoteNativeChild)(nsCycleCollectionTraversalCallback *This, void *child, nsCycleCollectionParticipant *participant);
+    void (__stdcall *NoteNextEdgeName)(nsCycleCollectionTraversalCallback *This, const char *name);
+} nsCycleCollectionTraversalCallbackVtbl;
+
+struct nsCycleCollectionTraversalCallback
+{
+    const nsCycleCollectionTraversalCallbackVtbl *lpVtbl;
+    uint32_t flags;
+};
+
+const unsigned int nsCycleCollectionTraversalCallback_WANT_DEBUG_INFO = 1;
+const unsigned int nsCycleCollectionTraversalCallback_WANT_ALL_TRACES = 2;
+
 [
     object,
     uuid(8bb35ed9-e332-462d-9155-4a002ab5c958),

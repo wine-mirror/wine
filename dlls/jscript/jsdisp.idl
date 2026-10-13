@@ -45,6 +45,12 @@ const unsigned int HOSTOBJ_VOLATILE_PROPS = 0x0004;
 
 cpp_quote("DEFINE_GUID(IID_nsCycleCollectionISupports, 0xc61eac14,0x5f7a,0x4481,0x96,0x5e,0x7e,0xaa,0x6e,0xff,0xa8,0x5f);")
 cpp_quote("DEFINE_GUID(IID_nsXPCOMCycleCollectionParticipant, 0x9674489b,0x1f6f,0x4550,0xa7,0x30, 0xcc,0xae,0xdd,0x10,0x4c,0xf9);")
+cpp_quote("DEFINE_GUID(IID_IWineGetJSDispatch, 0xfb61e83d,0x7b1f,0x4e9a,0xa2,0x54, 0x5a,0x70,0xc5,0x3a,0xa9,0x0b);")
+
+struct cc_traverse_ops
+{
+    HRESULT (__stdcall *note_edge)(void *context, IUnknown *obj);
+};
 
 interface IWineJSDispatchHost;
 
@@ -82,6 +88,8 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT GetOuterDispatch(IWineJSDispatchHost **ret);
     HRESULT ToString(BSTR *str);
     ULONG GetRefCount();
+    HRESULT Traverse(void *context, const struct cc_traverse_ops *ops);
+    void Unlink();
 }
 
 const unsigned int SCRIPTLANGUAGEVERSION_HTML  = 0x400;

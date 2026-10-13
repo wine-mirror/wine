@@ -1189,12 +1189,19 @@ static void HostConstructor_destructor(FunctionInstance *func)
 {
 }
 
+static HRESULT HostConstructor_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, FunctionInstance *func)
+{
+    HostConstructor *constr = (HostConstructor*)func;
+
+    return host_dispatch_gc_traverse(gc_ctx, op, constr->host_iface);
+}
+
 static const function_vtbl_t HostConstructorVtbl = {
     HostConstructor_call,
     HostConstructor_toString,
     HostConstructor_get_code,
     HostConstructor_destructor,
-    no_gc_traverse,
+    HostConstructor_gc_traverse,
 };
 
 HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_constr, const WCHAR *method_name, IWineJSDispatch **ret)
