@@ -9667,6 +9667,7 @@ static void test_xsltemplate(void)
     check_interface(template, &IID_IXSLTemplate, TRUE);
     check_interface(template, &IID_IDispatch, TRUE);
     check_interface(template, &IID_IDispatchEx, TRUE);
+    check_interface(template, &IID_IProvideClassInfo, FALSE);
 
     /* works as reset */
     hr = IXSLTemplate_putref_stylesheet(template, NULL);
@@ -17721,7 +17722,9 @@ static void test_prohibitdtd(void)
 
 static void test_interfaces(void)
 {
+    IXMLDOMSchemaCollection *cache;
     IXMLDOMDocument *doc;
+    HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -17744,6 +17747,15 @@ todo_wine
     check_interface(doc, &IID_IProvideClassInfo, TRUE);
 }
     IXMLDOMDocument_Release(doc);
+
+    hr = CoCreateInstance(&CLSID_XMLSchemaCache, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMSchemaCollection, (void **)&cache);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(cache, &IID_IDispatch, TRUE);
+    check_interface(cache, &IID_IDispatchEx, TRUE);
+    check_interface(cache, &IID_IProvideClassInfo, FALSE);
+
+    IXMLDOMSchemaCollection_Release(cache);
 }
 
 static void test_dtd_validation(void)

@@ -2208,6 +2208,7 @@ static void test_saxreader(void)
         check_interface(reader, &IID_IVBSAXXMLReader, TRUE);
         check_interface(reader, &IID_ISAXLocator, FALSE);
         check_interface(reader, &IID_IVBSAXLocator, FALSE);
+        check_interface(reader, &IID_IProvideClassInfo, FALSE);
 
             msxml_version = 0;
 
@@ -5182,6 +5183,9 @@ static void test_saxreader_dispex(void)
 
     hr = ISAXXMLReader_QueryInterface(reader, &IID_IVBSAXXMLReader, (void**)&vbreader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(vbreader, &IID_IProvideClassInfo, FALSE);
+
     hr = IVBSAXXMLReader_QueryInterface(vbreader, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     test_obj_dispex(unk);
@@ -6063,9 +6067,10 @@ static void test_mxattr_dispex(void)
     IMXAttributes_Release(mxattr);
 }
 
-static void test_mxattr_qi(void)
+static void test_mxattr_interfaces(void)
 {
     static const GUID *classes[] = { &CLSID_SAXAttributes, &CLSID_SAXAttributes30 };
+    IVBSAXAttributes *vbattr;
     IMXAttributes *mxattr;
     HRESULT hr;
 
@@ -6079,6 +6084,12 @@ static void test_mxattr_qi(void)
         check_interface(mxattr, &IID_IVBSAXAttributes, TRUE);
         check_interface(mxattr, &IID_IDispatch, TRUE);
         check_interface(mxattr, &IID_IDispatchEx, TRUE);
+        check_interface(mxattr, &IID_IProvideClassInfo, FALSE);
+
+        hr = IMXAttributes_QueryInterface(mxattr, &IID_IVBSAXAttributes, (void **)&vbattr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_interface(vbattr, &IID_IProvideClassInfo, FALSE);
+        IVBSAXAttributes_Release(vbattr);
 
         IMXAttributes_Release(mxattr);
     }
@@ -6457,6 +6468,23 @@ static void test_saxreader_max_element_depth(void)
     ISAXXMLReader_Release(reader);
 }
 
+static void test_mxwriter_interfaces(void)
+{
+    IMXWriter *writer;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void **)&writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(writer, &IID_IUnknown, TRUE);
+    check_interface(writer, &IID_IDispatch, TRUE);
+    check_interface(writer, &IID_IDispatchEx, TRUE);
+    check_interface(writer, &IID_IProvideClassInfo, FALSE);
+
+    IMXWriter_Release(writer);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -6516,6 +6544,7 @@ START_TEST(saxreader)
         test_mxwriter_dispex();
         test_mxwriter_indent();
         test_mxwriter_from_reader();
+        test_mxwriter_interfaces();
     }
     else
         win_skip("MXXMLWriter not supported\n");
@@ -6524,7 +6553,7 @@ START_TEST(saxreader)
     get_class_support_data(mxattributes_support_data, &IID_IMXAttributes);
     if (is_clsid_supported(&CLSID_SAXAttributes, mxattributes_support_data))
     {
-        test_mxattr_qi();
+        test_mxattr_interfaces();
         test_mxattr_addAttribute();
         test_mxattr_clear();
         test_mxattr_localname();
