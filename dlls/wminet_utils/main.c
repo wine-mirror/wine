@@ -109,6 +109,14 @@ HRESULT WINAPI Get(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG lFlag
     return IWbemClassObject_Get(ptr, wszName, lFlags, pVal, pvtType, plFlavor);
 }
 
+HRESULT WINAPI Put(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG lFlags, VARIANT *pVal,
+    CIMTYPE vtType)
+{
+    TRACE("%i %p %s %lx %p %li\n", vFunc, ptr, debugstr_w(wszName), lFlags, pVal, vtType);
+
+    return IWbemClassObject_Put(ptr, wszName, lFlags, pVal, vtType);
+}
+
 HRESULT WINAPI GetCurrentApartmentType(int vFunc, IComThreadingInfo *ptr, APTTYPE *aptType)
 {
     TRACE("%i %p %p\n", vFunc, ptr, aptType);
