@@ -63,17 +63,18 @@ static HRESULT WINAPI client_security_QueryInterface(
     return S_OK;
 }
 
+/* client_security is a singleton, so no ref counting needed */
 static ULONG WINAPI client_security_AddRef(
     IClientSecurity *iface )
 {
-    FIXME("%p\n", iface);
+    TRACE("%p\n", iface);
     return 2;
 }
 
 static ULONG WINAPI client_security_Release(
     IClientSecurity *iface )
 {
-    FIXME("%p\n", iface);
+    TRACE("%p\n", iface);
     return 1;
 }
 
