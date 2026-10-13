@@ -4925,11 +4925,19 @@ static bool node_validate_root(struct validation_context *ctxt, struct domnode *
 static bool node_dtd_validate_attribute(struct validation_context *ctxt, struct dtd *dtd, struct domnode *attr)
 {
     struct domnode *elem = attr->parent;
+    struct attlist_attr *decl;
 
+    /* Detached attribute node */
     if (!elem)
         return true;
 
-    /* FIXME: validate attribute */
+    if (!(decl = parser_dtd_get_attr_decl(dtd, attr)))
+    {
+        ctxt->code = E_DOM_ATTRIBUTE_NOT_DEFINED;
+        return false;
+    }
+
+    /* FIXME: validate attribute value */
 
     return true;
 }

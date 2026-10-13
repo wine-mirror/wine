@@ -1125,6 +1125,26 @@ struct element_decl * parser_dtd_get_element_decl(struct dtd *dtd, BSTR name)
     return NULL;
 }
 
+struct attlist_attr * parser_dtd_get_attr_decl(struct dtd *dtd, struct domnode *attr)
+{
+    struct domnode *elem = attr->parent;
+    struct attlist_decl *decl;
+
+    LIST_FOR_EACH_ENTRY(decl, &dtd->attr_decls, struct attlist_decl, entry)
+    {
+        if (bstr_equal(decl->name, elem->qname))
+        {
+            for (size_t i = 0; i < decl->count; ++i)
+            {
+                if (bstr_equal(decl->attributes[i].name.qname, attr->qname))
+                    return &decl->attributes[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
 struct dtd *parser_dtd_addref(struct dtd *dtd)
 {
     if (dtd)
