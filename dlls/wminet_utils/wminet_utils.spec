@@ -35,7 +35,7 @@
 @ stub InheritsFrom
 @ stdcall Initialize(long)
 @ stub Lock
-@ stub Next
+@ stdcall Next(long ptr long wstr ptr ptr ptr)
 @ stdcall NextMethod(long ptr long ptr ptr ptr)
 @ stdcall Put(long ptr wstr long ptr long)
 @ stub PutClassWmi

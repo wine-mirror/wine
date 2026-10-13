@@ -151,6 +151,14 @@ HRESULT WINAPI BeginEnumeration(int vFunc, IWbemClassObject *ptr, LONG lEnumFlag
     return IWbemClassObject_BeginEnumeration(ptr, lEnumFlags);
 }
 
+HRESULT WINAPI Next(int vFunc, IWbemClassObject *ptr, LONG lFlags, BSTR *pstrName,
+    VARIANT *pVal, CIMTYPE *pvtType, LONG* plFlavor)
+{
+    TRACE("%i %p %lx %p %p %p %p\n", vFunc, ptr, lFlags, pstrName, pVal, pvtType, plFlavor);
+
+    return IWbemClassObject_Next(ptr, lFlags, pstrName, pVal, pvtType, plFlavor);
+}
+
 HRESULT WINAPI BeginMethodEnumeration(int vFunc, IWbemClassObject *ptr, LONG lEnumFlags)
 {
     TRACE("%i %p %lx\n", vFunc, ptr, lEnumFlags);
