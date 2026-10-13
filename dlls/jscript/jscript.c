@@ -722,6 +722,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
 {
     JScript *This = impl_from_IActiveScript(iface);
     struct thread_data *thread_data;
+    IServiceProvider *sp;
     named_item_t *item;
     LCID lcid;
     HRESULT hres;
@@ -740,6 +741,11 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
     if(InterlockedCompareExchangePointer((void**)&This->thread_data, thread_data, NULL)) {
         release_thread_data(thread_data);
         return E_UNEXPECTED;
+    }
+
+    if(This->html_mode && !thread_data->cc_participant && IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&sp) == S_OK) {
+        IServiceProvider_QueryService(sp, &IID_IWineCCParticipant, &IID_IWineCCParticipant, (void**)&thread_data->cc_participant);
+        IServiceProvider_Release(sp);
     }
 
     if(!This->ctx) {

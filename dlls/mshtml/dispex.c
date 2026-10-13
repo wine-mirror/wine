@@ -2889,7 +2889,7 @@ static HRESULT WINAPI JSDispatchHost_Traverse(IWineJSDispatchHost *iface, void *
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    return cc_participant_Traverse(&This->IWineJSDispatchHost_iface, &dispex_ccp, context, ops);
+    return cc_participant_Traverse(&cc_participant, &This->IWineJSDispatchHost_iface, &dispex_ccp, context, ops);
 }
 
 static void WINAPI JSDispatchHost_Unlink(IWineJSDispatchHost *iface)
@@ -2945,6 +2945,9 @@ static inline struct cc_callback_ctx *impl_from_nsCycleCollectionTraversalCallba
 
 static void NSAPI cc_callback_DescribeRefCountedNode(nsCycleCollectionTraversalCallback *This, nsrefcnt refcount, const char *objName)
 {
+    struct cc_callback_ctx *ctx = impl_from_nsCycleCollectionTraversalCallback(This);
+    if(SUCCEEDED(ctx->hres))
+        ctx->hres = ctx->ops->advise_ref_count(ctx->context, refcount);
 }
 
 static void NSAPI cc_callback_DescribeGCedNode(nsCycleCollectionTraversalCallback *This, unsigned char isMarked, const char *objName, UINT64 compartmentAddress)
@@ -2969,7 +2972,9 @@ static void NSAPI cc_callback_NoteJSScript(nsCycleCollectionTraversalCallback *T
 
 static void NSAPI cc_callback_NoteNativeChild(nsCycleCollectionTraversalCallback *This, void *child, nsCycleCollectionParticipant *participant)
 {
-    /* FIXME: traverse raw external objects */
+    struct cc_callback_ctx *ctx = impl_from_nsCycleCollectionTraversalCallback(This);
+    if(ctx->hres == S_OK && child)
+        ctx->hres = ctx->ops->note_raw_edge(ctx->context, child, participant);
 }
 
 static void NSAPI cc_callback_NoteNextEdgeName(nsCycleCollectionTraversalCallback *This, const char *name)
@@ -2986,7 +2991,7 @@ static const nsCycleCollectionTraversalCallbackVtbl cc_callback_vtbl = {
     cc_callback_NoteNextEdgeName
 };
 
-HRESULT cc_participant_Traverse(void *obj, void *participant, void *context, const struct cc_traverse_ops *ops)
+HRESULT WINAPI cc_participant_Traverse(IWineCCParticipant *This, void *obj, void *participant, void *context, const struct cc_traverse_ops *ops)
 {
     nsCycleCollectionParticipant *ccp = participant;
     struct cc_callback_ctx ctx;
@@ -3001,6 +3006,12 @@ HRESULT cc_participant_Traverse(void *obj, void *participant, void *context, con
     nsres = ccp->lpVtbl->Traverse(ccp, obj, &ctx.cb);
     return NS_FAILED(nsres) ? map_nsresult(nsres) : ctx.hres;
 }
+
+static const IWineCCParticipantVtbl cc_participant_vtbl = {
+    cc_participant_Traverse,
+};
+
+IWineCCParticipant cc_participant = { .lpVtbl = &cc_participant_vtbl };
 
 struct EnumVARIANT {
     IEnumVARIANT IEnumVARIANT_iface;

@@ -726,6 +726,13 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
 {
     ScriptHost *This = impl_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(guidService, &IID_IWineCCParticipant)) {
+        TRACE("IID_IWineCCParticipant\n");
+
+        *ppv = &cc_participant;
+        return S_OK;
+    }
+
     if(!This->window || !This->window->doc)
         return E_NOINTERFACE;
 

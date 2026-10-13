@@ -3574,7 +3574,7 @@ static HRESULT WINAPI WindowDispEx_Traverse(IWineJSDispatchHost *iface, void *co
 {
     HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
-    return cc_participant_Traverse(&This->base.IHTMLWindow2_iface, &outer_window_ccp, context, ops);
+    return cc_participant_Traverse(&cc_participant, &This->base.IHTMLWindow2_iface, &outer_window_ccp, context, ops);
 }
 
 static void WINAPI WindowDispEx_Unlink(IWineJSDispatchHost *iface)

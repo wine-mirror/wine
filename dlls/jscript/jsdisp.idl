@@ -49,10 +49,22 @@ cpp_quote("DEFINE_GUID(IID_IWineGetJSDispatch, 0xfb61e83d,0x7b1f,0x4e9a,0xa2,0x5
 
 struct cc_traverse_ops
 {
+    HRESULT (__stdcall *advise_ref_count)(void *context, ULONG refcount);
     HRESULT (__stdcall *note_edge)(void *context, IUnknown *obj);
+    HRESULT (__stdcall *note_raw_edge)(void *context, void *obj, void *participant);
 };
 
 interface IWineJSDispatchHost;
+
+[
+    object,
+    uuid(fb61e83c-7b1f-4e9a-a254-5a70c53aa90b),
+    local
+]
+interface IWineCCParticipant
+{
+    HRESULT Traverse(void *obj, void *participant, void *context, const struct cc_traverse_ops *ops);
+}
 
 [
     object,

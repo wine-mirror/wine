@@ -134,6 +134,7 @@ struct thread_data {
 
     BOOL gc_is_unlinking;
     DWORD gc_last_tick;
+    IWineCCParticipant *cc_participant;
 
     struct list objects;
     struct rb_tree weak_refs;
