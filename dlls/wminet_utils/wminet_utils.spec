@@ -1,4 +1,4 @@
-@ stub BeginEnumeration
+@ stdcall BeginEnumeration(long ptr long)
 @ stdcall BeginMethodEnumeration(long ptr long)
 @ stub BlessIWbemServices
 @ stub BlessIWbemServicesObject
