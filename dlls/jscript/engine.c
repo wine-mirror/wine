@@ -1029,7 +1029,14 @@ static HRESULT interp_forin(script_ctx_t *ctx)
     if(obj) {
         hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_GetNextDispID(dispex, make_grfdex(ctx, fdexEnumDefault), id, &id);
+            if (ctx->html_mode)
+            {
+                hres = IDispatchEx_GetNextDispID(dispex, make_grfdex(ctx, fdexEnumAll), id, &id);
+            }
+            else
+            {
+                hres = IDispatchEx_GetNextDispID(dispex, make_grfdex(ctx, fdexEnumDefault), id, &id);
+            }
             if(hres == S_OK)
                 hres = IDispatchEx_GetMemberName(dispex, id, &name);
             IDispatchEx_Release(dispex);

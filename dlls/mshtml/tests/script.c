@@ -752,8 +752,11 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(grfdex & fdexEnumAll, "grfdex = %lx\n", grfdex);
+    ok(grfdex & 0xf0000000, "grfdex = %lx\n", grfdex);
+    ok(id == DISPID_STARTENUM, "id = %lx\n", id);
+    ok(pid != NULL, "pid = NULL\n");
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)

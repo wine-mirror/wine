@@ -4932,3 +4932,10 @@ sync_test("i8 types", function() {
     ok(external.getVT(v) === "VT_R8", "VT_I8 stored as " + external.getVT(v));
     ok(v === 1152921504606846976, "v = " + v);
 });
+
+sync_test("properties enumeration", function() {
+    for (var prop in external)
+    {
+        ok(false, "got property");
+    }
+});
