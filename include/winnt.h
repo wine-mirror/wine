@@ -7650,6 +7650,13 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #elif defined(__aarch64__) || defined(__arm64ec__)
 
+#ifndef __clang__
+#pragma intrinsic(__ldar32)
+#pragma intrinsic(__ldar64)
+#pragma intrinsic(__stlr32)
+#pragma intrinsic(__stlr64)
+#endif
+
 static FORCEINLINE void MemoryBarrier(void)
 {
     __dmb(_ARM64_BARRIER_SY);
@@ -7690,42 +7697,69 @@ void _ReadWriteBarrier(void);
 #pragma intrinsic(_ReadWriteBarrier)
 #endif  /* defined(__i386__) || defined(__x86_64__) */
 
-static void __wine_memory_barrier_acq_rel(void)
-{
-#if defined(__aarch64__) || defined(__arm64ec__)
-    __dmb(_ARM64_BARRIER_ISH);
-#elif defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
 #pragma warning(suppress:4996)
-    _ReadWriteBarrier();
+static void __wine_memory_barrier_acq_rel(void) { _ReadWriteBarrier(); }
 #elif defined(__arm__)
-    __dmb(_ARM_BARRIER_ISH);
+static void __wine_memory_barrier_acq_rel(void) { __dmb(_ARM_BARRIER_ISH); }
 #endif
-}
 
 static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
 {
+#if defined(__aarch64__) || defined(__arm64ec__)
+#ifdef __clang__
+    return __atomic_load_n( src, __ATOMIC_ACQUIRE );
+#else
+    return (LONG)__ldar32( (unsigned __int32 volatile *)src );
+#endif
+#else
     LONG value = ReadNoFence( src );
     __wine_memory_barrier_acq_rel();
     return value;
+#endif
 }
 
 static FORCEINLINE LONG64 ReadAcquire64( LONG64 const volatile *src )
 {
+#if defined(__aarch64__) || defined(__arm64ec__)
+#ifdef __clang__
+    return __atomic_load_n( src, __ATOMIC_ACQUIRE );
+#else
+    return (LONG64)__ldar64( (unsigned __int64 volatile *)src );
+#endif
+#else
     LONG64 value = ReadNoFence64( src );
     __wine_memory_barrier_acq_rel();
     return value;
+#endif
 }
 
 static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
 {
+#if defined(__aarch64__) || defined(__arm64ec__)
+#ifdef __clang__
+    __atomic_store_n( dest, value, __ATOMIC_RELEASE );
+#else
+    __stlr32( (unsigned __int32 volatile *)dest, (unsigned __int32)value );
+#endif
+#else
     __wine_memory_barrier_acq_rel();
     WriteNoFence( dest, value );
+#endif
 }
 
 static FORCEINLINE void WriteRelease64( LONG64 volatile *dest, LONG64 value )
 {
+#if defined(__aarch64__) || defined(__arm64ec__)
+#ifdef __clang__
+    __atomic_store_n( dest, value, __ATOMIC_RELEASE );
+#else
+    __stlr64( (unsigned __int64 volatile *)dest, (unsigned __int64)value );
+#endif
+#else
     __wine_memory_barrier_acq_rel();
     WriteNoFence64( dest, value );
+#endif
 }
 
 #elif defined(__GNUC__)
