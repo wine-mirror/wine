@@ -1143,7 +1143,10 @@ void HTMLDOMNode_unlink(DispatchEx *dispex)
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
 
     release_event_target(&This->event_target);
-    unlink_ref(&This->nsnode);
+    if(This->nsnode) {
+        nsIDOMNode_SetMshtmlNode(This->nsnode, NULL);
+        unlink_ref(&This->nsnode);
+    }
 
     if(This->doc) {
         HTMLDocumentNode *doc = This->doc;
