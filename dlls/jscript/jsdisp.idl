@@ -81,6 +81,7 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT FillProperties();
     HRESULT GetOuterDispatch(IWineJSDispatchHost **ret);
     HRESULT ToString(BSTR *str);
+    ULONG GetRefCount();
 }
 
 const unsigned int SCRIPTLANGUAGEVERSION_HTML  = 0x400;

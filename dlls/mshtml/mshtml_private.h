@@ -377,6 +377,11 @@ typedef struct {
     UINT_PTR x;
 } nsCycleCollectingAutoRefCnt;
 
+static inline UINT_PTR NS_REFCOUNT_VALUE(nsCycleCollectingAutoRefCnt ref)
+{
+    return ref.x >> 2;
+}
+
 /*
    dispex is our base IDispatchEx implementation for all mshtml objects, and the vtbl allows
    customizing the behavior depending on the object. Objects have basically 3 types of props:

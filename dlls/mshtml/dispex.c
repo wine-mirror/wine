@@ -2873,6 +2873,13 @@ static HRESULT WINAPI JSDispatchHost_ToString(IWineJSDispatchHost *iface, BSTR *
     return dispex_to_string(This, str);
 }
 
+static ULONG WINAPI JSDispatchHost_GetRefCount(IWineJSDispatchHost *iface)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    return NS_REFCOUNT_VALUE(This->ccref);
+}
+
 static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -2900,6 +2907,7 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_FillProperties,
     JSDispatchHost_GetOuterDispatch,
     JSDispatchHost_ToString,
+    JSDispatchHost_GetRefCount,
 };
 
 struct EnumVARIANT {

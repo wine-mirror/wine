@@ -946,13 +946,12 @@ HRESULT gc_run(script_ctx_t *ctx)
             chunk->next = NULL;
         }
         chunk->ref[chunk_idx++] = obj->ref;
+
+        /* Obtain actual refcount from host objects with external reference counter */
+        if(obj->builtin_info->get_host_disp)
+            obj->ref = IWineJSDispatchHost_GetRefCount(obj->builtin_info->get_host_disp(obj));
     }
     LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
-        /* Skip objects with external reference counter */
-        if(obj->builtin_info->get_host_disp) {
-            obj->gc_marked = FALSE;
-            continue;
-        }
         for(prop = obj->props, props_end = prop + obj->prop_cnt; prop < props_end; prop++) {
             switch(prop->type) {
             case PROP_JSVAL:
