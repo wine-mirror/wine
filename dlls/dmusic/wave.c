@@ -69,7 +69,7 @@ static HRESULT WINAPI wave_QueryInterface(IUnknown *iface, REFIID riid, void **r
     if (IsEqualIID(riid, &IID_IPersistStream))
     {
         *ret_iface = &This->dmobj.IPersistStream_iface;
-        IDirectMusicObject_AddRef(&This->dmobj.IPersistStream_iface);
+        IPersistStream_AddRef(&This->dmobj.IPersistStream_iface);
         return S_OK;
     }
 

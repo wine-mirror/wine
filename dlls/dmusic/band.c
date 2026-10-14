@@ -106,7 +106,7 @@ static HRESULT WINAPI band_QueryInterface(IDirectMusicBand *iface, REFIID riid,
         return E_NOINTERFACE;
     }
 
-    IDirectMusicBand_AddRef((IUnknown*)*ret_iface);
+    IUnknown_AddRef((IUnknown*)*ret_iface);
     return S_OK;
 }
 
