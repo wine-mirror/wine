@@ -947,6 +947,8 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
     if (import_win32)
     {
+        VkExternalMemoryHandleTypeFlagBits type;
+
         switch (import_win32->handleType)
         {
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
@@ -980,15 +982,22 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             if ((res = import_semaphore_from_d3dkmt_sync( device, memory->sync, memory->semaphore ))) goto failed;
         }
 
-        if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
+        switch ((type = get_host_external_memory_type()))
         {
-            res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
-            goto failed;
+        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT:
+            if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
+            {
+                res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+                goto failed;
+            }
+            fd_info.handleType = type;
+            fd_info.pNext = alloc_info->pNext;
+            alloc_info->pNext = &fd_info;
+            break;
+        default:
+            FIXME( "Unsupported memory handle type %#x\n", type );
+            break;
         }
-
-        fd_info.handleType = get_host_external_memory_type();
-        fd_info.pNext = alloc_info->pNext;
-        alloc_info->pNext = &fd_info;
     }
 
     if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory ))) goto failed;
@@ -997,16 +1006,19 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     {
         if (!memory->local)
         {
-            VkMemoryGetFdInfoKHR get_fd_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR, .memory = host_device_memory};
+            VkExternalMemoryHandleTypeFlagBits type;
             int fd = -1;
 
-            switch ((get_fd_info.handleType = get_host_external_memory_type()))
+            switch ((type = get_host_external_memory_type()))
             {
             case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT:
+            {
+                VkMemoryGetFdInfoKHR get_fd_info = {.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR, .memory = host_device_memory, .handleType = type};
                 if ((res = device->p_vkGetMemoryFdKHR( device->host.device, &get_fd_info, &fd ))) goto failed;
                 break;
+            }
             default:
-                FIXME( "Unsupported handle type %#x\n", get_fd_info.handleType );
+                FIXME( "Unsupported memory handle type %#x\n", type );
                 break;
             }
 
