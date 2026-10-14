@@ -3272,12 +3272,24 @@ void virtual_init(void)
     else if (is_win64)
     {
         reserve_area( (void *)0x00010000, (void *)0x200000000 );
-        reserve_area( (void *)0x7ff000000000, (void *)0x7ff600000000 ); /* top-down area */
     }
     else
     {
         reserve_area( (void *)0x00010000, (void *)0x40000000 );
         reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
+    }
+
+    if (is_win64) /* top-down area */
+    {
+        void *start = (void *)0x7ff000000000;
+        void *end = (void *)0x7ff600000000;
+
+        if (start > host_addr_space_limit)
+        {
+            end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
+            start = (char *)end - limit_4g;
+        }
+        reserve_area( start, end );
     }
 
 #ifdef _WIN64
