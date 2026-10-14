@@ -786,9 +786,9 @@ static GLenum depth_format_from_pfd( const struct wgl_pixel_format *desc )
     return 0;
 }
 
-static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment, GLenum type,
-                                         GLuint name, const struct wgl_pixel_format *desc, SIZE size )
+static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment, GLenum type, GLuint name, SIZE size )
 {
+    const struct wgl_pixel_format *desc = pixel_formats + drawable->format - 1;
     GLenum internal_format = attachment == GL_DEPTH_ATTACHMENT ? depth_format_from_pfd( desc ) : color_format_from_pfd( desc, drawable->srgb );
     const char *kind = attachment == GL_DEPTH_ATTACHMENT ? "depth" : "color";
     const struct opengl_funcs *funcs = &display_funcs;
@@ -796,12 +796,12 @@ static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenu
     switch (type)
     {
     case GL_RENDERBUFFER:
-        if (attachment != GL_DEPTH_ATTACHMENT && !desc->samples) ERR( "Unexpected samples %u\n", desc->samples );
+        if (attachment != GL_DEPTH_ATTACHMENT && fbo == drawable->read_fbo) ERR( "Unexpected GL_RENDERBUFFER for read FBO\n" );
         funcs->p_glBindRenderbuffer( GL_RENDERBUFFER, name );
         funcs->p_glRenderbufferStorageMultisample( GL_RENDERBUFFER, desc->samples, internal_format, size.cx, size.cy );
         break;
     case GL_TEXTURE:
-        if (desc->samples) ERR( "Unexpected samples %u\n", desc->samples );
+        if (fbo == drawable->draw_fbo) ERR( "Unexpected GL_TEXTURE for draw FBO\n" );
         funcs->p_glBindTexture( GL_TEXTURE_2D, name );
         funcs->p_glTexImage2D( GL_TEXTURE_2D, 0, internal_format, size.cx, size.cy, 0, format_from_pfd( desc ), GL_BYTE, NULL );
         funcs->p_glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
@@ -814,8 +814,7 @@ static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenu
     TRACE( "drawable %p/%u resized %s buffer %#x/%u to %s\n", drawable, fbo, kind, attachment, name, debugstr_size( &size ) );
 }
 
-static void resize_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment,
-                                           const struct wgl_pixel_format *desc, SIZE size )
+static void resize_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment, SIZE size )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     GLenum type;
@@ -824,7 +823,7 @@ static void resize_framebuffer_attachment( struct opengl_drawable *drawable, GLe
     funcs->p_glGetFramebufferAttachmentParameteriv( GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint *)&name );
     funcs->p_glGetFramebufferAttachmentParameteriv( GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, (GLint *)&type );
 
-    init_framebuffer_attachment( drawable, fbo, attachment, type, name, desc, size );
+    init_framebuffer_attachment( drawable, fbo, attachment, type, name, size );
 }
 
 static void destroy_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment )
@@ -855,66 +854,68 @@ static UINT framebuffer_image_count( struct opengl_drawable *drawable )
     return count;
 }
 
-static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, SIZE size )
+static void create_framebuffer( struct opengl_drawable *drawable, GLuint *fbo, SIZE size )
 {
-    GLuint count = framebuffer_image_count( drawable ), fbo, name;
+    const struct wgl_pixel_format *desc = pixel_formats + drawable->format - 1;
+    GLuint count = framebuffer_image_count( drawable ), name;
     const struct opengl_funcs *funcs = &display_funcs;
     GLenum ret;
 
-    funcs->p_glGenFramebuffers( 1, &fbo );
-    funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, fbo );
+    funcs->p_glGenFramebuffers( 1, fbo );
+    funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, *fbo );
 
     for (GLuint i = 0; i < count; i++)
     {
-        if (desc->samples)
+        if (fbo == &drawable->draw_fbo)
         {
             funcs->p_glGenRenderbuffers( 1, &name );
-            init_framebuffer_attachment( drawable, fbo, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, name, desc, size );
+            init_framebuffer_attachment( drawable, *fbo, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, name, size );
             funcs->p_glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, name );
         }
         else
         {
             funcs->p_glGenTextures( 1, &name );
-            init_framebuffer_attachment( drawable, fbo, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE, name, desc, size );
+            init_framebuffer_attachment( drawable, *fbo, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE, name, size );
             funcs->p_glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, name, 0 );
         }
-        TRACE( "drawable %p/%u created color buffer %#x/%u, %s\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name, debugstr_size( &size ) );
+        TRACE( "drawable %p/%u created color buffer %#x/%u, %s\n", drawable, *fbo, GL_COLOR_ATTACHMENT0 + i, name, debugstr_size( &size ) );
     }
 
     if (desc->pfd.cDepthBits)
     {
         funcs->p_glGenRenderbuffers( 1, &name );
-        init_framebuffer_attachment( drawable, fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name, desc, size );
+        init_framebuffer_attachment( drawable, *fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name, size );
         funcs->p_glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name );
         if (desc->pfd.cStencilBits) funcs->p_glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name );
-        TRACE( "drawable %p/%u created depth buffer %u, %s\n", drawable, fbo, name, debugstr_size( &size ) );
+        TRACE( "drawable %p/%u created depth buffer %u, %s\n", drawable, *fbo, name, debugstr_size( &size ) );
     }
 
-    TRACE( "drawable %p created framebuffer %u\n", drawable, fbo );
+    TRACE( "drawable %p created framebuffer %u\n", drawable, *fbo );
 
     ret = funcs->p_glCheckFramebufferStatus( GL_FRAMEBUFFER );
-    if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckFramebufferStatus returned %#x\n", ret );
-    return fbo;
+    if (ret != GL_FRAMEBUFFER_COMPLETE) ERR( "glCheckFramebufferStatus returned %#x\n", ret );
 }
 
-static void resize_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo, SIZE size )
+static void resize_framebuffer( struct opengl_drawable *drawable, GLuint fbo, BOOL read, SIZE size )
 {
+    const struct wgl_pixel_format *desc = pixel_formats + drawable->format - 1;
     const struct opengl_funcs *funcs = &display_funcs;
     GLuint count = framebuffer_image_count( drawable );
     GLenum ret;
 
     funcs->p_glBindFramebuffer( GL_FRAMEBUFFER, fbo );
 
-    for (GLuint i = 0; i < count; i++) resize_framebuffer_attachment( drawable, fbo, GL_COLOR_ATTACHMENT0 + i, desc, size );
-    if (desc->pfd.cDepthBits) resize_framebuffer_attachment( drawable, fbo, GL_DEPTH_ATTACHMENT, desc, size );
+    for (GLuint i = 0; i < count; i++) resize_framebuffer_attachment( drawable, fbo, GL_COLOR_ATTACHMENT0 + i, size );
+    if (desc->pfd.cDepthBits) resize_framebuffer_attachment( drawable, fbo, GL_DEPTH_ATTACHMENT, size );
 
     ret = funcs->p_glCheckFramebufferStatus( GL_FRAMEBUFFER );
-    if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckFramebufferStatus returned %#x\n", ret );
+    if (ret != GL_FRAMEBUFFER_COMPLETE) ERR( "glCheckFramebufferStatus returned %#x\n", ret );
     TRACE( "drawable %p/%u resized buffers to %s\n", drawable, fbo, debugstr_size( &size ) );
 }
 
-static void destroy_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo )
+static void destroy_framebuffer( struct opengl_drawable *drawable, GLuint fbo )
 {
+    const struct wgl_pixel_format *desc = pixel_formats + drawable->format - 1;
     const struct opengl_funcs *funcs = &display_funcs;
     GLuint count = framebuffer_image_count( drawable );
 
@@ -929,16 +930,13 @@ static void destroy_framebuffer( struct opengl_drawable *drawable, const struct 
 
 static void framebuffer_surface_reset( struct opengl_drawable *drawable )
 {
-    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
     struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
-
-    read_desc.samples = read_desc.sample_buffers = 0;
 
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 
     if (drawable->draw_fbo != drawable->read_fbo)
-        destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
-    destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
+        destroy_framebuffer( drawable, drawable->draw_fbo );
+    destroy_framebuffer( drawable, drawable->read_fbo );
     drawable->draw_fbo = drawable->read_fbo = 0;
 
     if (surface->program)
@@ -1038,9 +1036,7 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
     /* check for root context changes when we need to re-create the FBO, also used for initialization */
     if (flags & GL_FLUSH_ACTIVATE && surface->root_context != context->root_context)
     {
-        struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
-
-        read_desc.samples = read_desc.sample_buffers = 0;
+        const struct wgl_pixel_format *desc = pixel_formats + drawable->format - 1;
 
         /* destroy the FBO with the previous root context if we have any */
         if (surface->root_context)
@@ -1054,12 +1050,11 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
         surface->root_context = context->root_context;
         make_thread_context_current( surface->root_context, NULL );
 
-        read_desc.samples = read_desc.sample_buffers = 0;
-        surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc, surface->base.virtual_size );
+        create_framebuffer( &surface->base, &surface->base.read_fbo, surface->base.virtual_size );
         if (!surface->base.read_fbo) ERR( "Failed to create read framebuffer object\n" );
 
-        if (!draw_desc.sample_buffers) surface->base.draw_fbo = surface->base.read_fbo;
-        else surface->base.draw_fbo = create_framebuffer( &surface->base, &draw_desc, surface->base.virtual_size );
+        if (!desc->sample_buffers) surface->base.draw_fbo = surface->base.read_fbo;
+        else create_framebuffer( &surface->base, &surface->base.draw_fbo, surface->base.virtual_size );
         if (!surface->base.draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
 
         TRACE( "Initialized framebuffer %p with root context %p attrs %s\n", debugstr_opengl_drawable( drawable ),
@@ -1067,20 +1062,17 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
     }
     else if (flags & GL_FLUSH_UPDATED)
     {
-        struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
         SIZE size = drawable->virtual_size;
-
-        read_desc.samples = read_desc.sample_buffers = 0;
 
         make_thread_context_current( surface->root_context, NULL );
 
         TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->read_fbo, debugstr_size( &size ) );
-        resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size );
+        resize_framebuffer( drawable, drawable->read_fbo, TRUE, size );
 
         if (drawable->draw_fbo != drawable->read_fbo)
         {
             TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->draw_fbo, debugstr_size( &size ) );
-            resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, size );
+            resize_framebuffer( drawable, drawable->draw_fbo, FALSE, size );
         }
     }
 
