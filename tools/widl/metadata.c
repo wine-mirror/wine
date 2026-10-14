@@ -3926,11 +3926,145 @@ static void merge_typerefs( void )
     }
 }
 
+static bool token_list_get_bounds( const struct winmd *winmd, size_t row_size, UINT row_idx, size_t col_offset,
+                                   enum table table, enum table list_table, UINT *idx_start, UINT *idx_end )
+{
+    UINT table_rows = winmd->tables[table].count, start, end;
+
+    start = *(UINT *)(winmd->tables[table].ptr + (row_idx * row_size) + col_offset);
+    if (row_idx != table_rows - 1) /* Use the next row to get the last token */
+        end = *(UINT *)(winmd->tables[table].ptr + ((row_idx + 1) * row_size) + col_offset) - 1;
+    else /* This is the last row, so the final token can be derived from the number of rows in list_table. */
+        end = winmd->tables[list_table].count;
+
+    if (end < start)
+        return false;
+
+    *idx_start = start - 1;
+    *idx_end = end - 1;
+    return true;
+}
+
+static UINT merge_typedef_row( const struct winmd *winmd, UINT idx );
+
+static UINT merge_typedef_or_ref( const struct winmd *winmd, UINT token )
+{
+    UINT row, new_row = 0;
+    enum table table;
+
+    table = typedef_or_ref_to_table( token );
+    row = typedef_or_ref_to_row( token );
+
+    switch (table)
+    {
+    case TABLE_TYPEDEF:
+        new_row = merge_typedef_row( winmd, row - 1 );
+        break;
+    case TABLE_TYPEREF:
+    {
+        const struct typeref_row *typeref =
+            &((struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[row - 1];
+        const char *ref_namespace = winmd_get_string( winmd, typeref->namespace );
+        const char *ref_name = winmd_get_string( winmd, typeref->name );
+
+        new_row = winmd_find_typeref_row( current_winmd, ref_name, ref_namespace );
+        break;
+    }
+    default:
+        fprintf( stderr, "%s: unknown TypeDefOrRef table: %#x\n", winmd->name, table );
+        exit( 1 );
+    }
+
+    assert( new_row );
+    return typedef_or_ref( table, new_row );
+}
+
+static UINT rewrite_sig_blob( const struct winmd *winmd, const BYTE *sig, UINT idx, UINT sig_len, struct buffer *out )
+{
+    const UINT start = idx;
+
+    assert( sig_len && idx < sig_len );
+    switch (sig[idx])
+    {
+    case ELEMENT_TYPE_VALUETYPE:
+    case ELEMENT_TYPE_CLASS:
+    {
+        UINT token, len;
+        BYTE encoded[4];
+
+        add_bytes( out, &sig[idx++], 1 );
+        assert( idx < sig_len );
+        token = decode_int( &sig[idx], &len );
+        idx += len;
+
+        len = encode_int( merge_typedef_or_ref( winmd, token ), encoded );
+        add_bytes( out, encoded, len );
+        break;
+    }
+    case ELEMENT_TYPE_BYREF:
+    case ELEMENT_TYPE_SZARRAY:
+    {
+        add_bytes( out, &sig[idx++], 1 );
+        assert( idx < sig_len );
+        idx += rewrite_sig_blob( winmd, sig, idx, sig_len, out );
+        break;
+    }
+
+    case ELEMENT_TYPE_OBJECT:
+    case ELEMENT_TYPE_STRING:
+    case ELEMENT_TYPE_BOOLEAN:
+    case ELEMENT_TYPE_U2:
+    case ELEMENT_TYPE_I2:
+    case ELEMENT_TYPE_U4:
+    case ELEMENT_TYPE_I4:
+    case ELEMENT_TYPE_U8:
+    case ELEMENT_TYPE_I8:
+    case ELEMENT_TYPE_U1:
+    case ELEMENT_TYPE_CHAR:
+    case ELEMENT_TYPE_R4:
+    case ELEMENT_TYPE_R8:
+        add_bytes( out, &sig[idx++], 1 );
+        break;
+    default:
+        fprintf( stderr, "%s: unsupported signature element type: %#hhx\n", winmd->name, sig[idx] );
+        exit( 1 );
+    }
+
+    return idx - start;
+}
+
+static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
+{
+    static const BYTE field_prefix[] = {SIG_TYPE_FIELD};
+    struct buffer new_sig = {0};
+    UINT i, first_field = 0;
+
+    assert( idx_start <= idx_end );
+
+    for (i = idx_start; i <= idx_end; i++)
+    {
+        const struct field_row *field = &((struct field_row *)winmd->tables[TABLE_FIELD].ptr)[i];
+        const char *name = winmd_get_string( winmd, field->name );
+        UINT sig_len, new_field;
+        const BYTE *sig;
+
+        new_sig.offset = 0;
+        sig = winmd_get_blob( winmd, field->signature, &sig_len );
+        assert( sig_len && sig[0] == SIG_TYPE_FIELD );
+
+        add_bytes( &new_sig, field_prefix, ARRAY_SIZE( field_prefix ) );
+        rewrite_sig_blob( winmd, sig, 1, sig_len, &new_sig );
+        new_field = add_field_row( field->flags, add_string( name ), add_blob( new_sig.ptr, new_sig.offset ) );
+        if (!first_field) first_field = new_field;
+    }
+    return first_field;
+}
+
 static UINT merge_typedef_row( const struct winmd *winmd, UINT idx )
 {
     const struct typedef_row *def = &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[idx];
+    UINT start_idx, end_idx, row, new_extends = 0, new_fieldlist = 0;
     const char *name, *namespace;
-    UINT row, new_extends = 0;
 
     name = winmd_get_string( winmd, def->name );
     namespace = winmd_get_string( winmd, def->namespace );
@@ -3938,35 +4072,12 @@ static UINT merge_typedef_row( const struct winmd *winmd, UINT idx )
     if (row) return row;
 
     if (def->extends)
-    {
-        UINT extends_row = typedef_or_ref_to_row( def->extends ), new_row;
-        enum table table = typedef_or_ref_to_table( def->extends );
+        new_extends = merge_typedef_or_ref( winmd, def->extends );
+    if (token_list_get_bounds( winmd, sizeof( *def ), idx, FIELD_OFFSET( struct typedef_row, fieldlist ), TABLE_TYPEDEF,
+                               TABLE_FIELD, &start_idx, &end_idx ))
+        new_fieldlist = merge_field_list( winmd, start_idx, end_idx );
 
-        switch (table)
-        {
-        case TABLE_TYPEDEF:
-            new_row = merge_typedef_row( winmd, extends_row - 1);
-            break;
-        case TABLE_TYPEREF:
-        {
-            const struct typeref_row *ref;
-            const char *ref_name, *ref_namespace;
-
-            ref = &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[extends_row - 1];
-            ref_name = winmd_get_string( winmd, ref->name );
-            ref_namespace = winmd_get_string( winmd, ref->namespace );
-            new_row = winmd_find_typeref_row( current_winmd, ref_name, ref_namespace );
-            break;
-        }
-        default:
-            fprintf( stderr, "%s: unsupported TypeDefOrRef table: %#x\n", winmd->name, table );
-            exit( 1 );
-        }
-        assert( new_row );
-        new_extends = typedef_or_ref( table, new_row );
-    }
-
-    return add_typedef_row( def->flags, add_string( name ), add_string( namespace ), new_extends, 0, 0 );
+    return add_typedef_row( def->flags, add_string( name ), add_string( namespace ), new_extends, new_fieldlist, 0 );
 }
 
 static void merge_typedefs( void )
