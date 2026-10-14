@@ -13059,7 +13059,7 @@ size_t __cdecl _Strxfrm(char *dest, char *dest_end,
     _Collvec cv;
     WCHAR *buf;
     LCID lcid;
-    int len;
+    int len, sortkey_len;
 
     TRACE("(%p %p %p %p %p)\n", dest, dest_end, src, src_end, coll);
 
@@ -13085,11 +13085,11 @@ size_t __cdecl _Strxfrm(char *dest, char *dest_end,
     if (!buf) return INT_MAX;
     MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, buf, len);
 
-    len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, NULL, 0);
-    if (len <= dest_len)
+    sortkey_len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, NULL, 0);
+    if (sortkey_len <= dest_len)
         LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
     free(buf);
-    return len;
+    return sortkey_len;
 }
 
 size_t __cdecl _Wcsxfrm(wchar_t *dest, wchar_t *dest_end,
