@@ -3685,7 +3685,7 @@ size_t __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *l
 
         *facet = operator_new(sizeof(codecvt_wchar));
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
-        codecvt_short_ctor((codecvt_wchar*)*facet);
+        codecvt_short_ctor_locinfo((codecvt_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
 
