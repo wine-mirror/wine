@@ -1311,6 +1311,11 @@ static UINT typedef_or_ref( enum table table, UINT row )
     }
 }
 
+static UINT typedef_or_ref_to_row( UINT token )
+{
+    return token >> 2;
+}
+
 static UINT methoddef_or_ref( enum table table, UINT row )
 {
     switch (table)
@@ -3921,6 +3926,63 @@ static void merge_typerefs( void )
     }
 }
 
+static UINT merge_typedef_row( const struct winmd *winmd, UINT idx )
+{
+    const struct typedef_row *def = &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[idx];
+    const char *name, *namespace;
+    UINT row, new_extends = 0;
+
+    name = winmd_get_string( winmd, def->name );
+    namespace = winmd_get_string( winmd, def->namespace );
+    row = winmd_find_typedef_row( current_winmd, name, namespace );
+    if (row) return row;
+
+    if (def->extends)
+    {
+        UINT extends_row = typedef_or_ref_to_row( def->extends ), new_row;
+        enum table table = typedef_or_ref_to_table( def->extends );
+
+        switch (table)
+        {
+        case TABLE_TYPEDEF:
+            new_row = merge_typedef_row( winmd, extends_row - 1);
+            break;
+        case TABLE_TYPEREF:
+        {
+            const struct typeref_row *ref;
+            const char *ref_name, *ref_namespace;
+
+            ref = &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[extends_row - 1];
+            ref_name = winmd_get_string( winmd, ref->name );
+            ref_namespace = winmd_get_string( winmd, ref->namespace );
+            new_row = winmd_find_typeref_row( current_winmd, ref_name, ref_namespace );
+            break;
+        }
+        default:
+            fprintf( stderr, "%s: unsupported TypeDefOrRef table: %#x\n", winmd->name, table );
+            exit( 1 );
+        }
+        assert( new_row );
+        new_extends = typedef_or_ref( table, new_row );
+    }
+
+    return add_typedef_row( def->flags, add_string( name ), add_string( namespace ), new_extends, 0, 0 );
+}
+
+static void merge_typedefs( void )
+{
+    UINT i;
+
+    for (i = 0; i < winmd_count - 1; i++)
+    {
+        const struct winmd *winmd = winmd_list[i];
+        UINT row;
+
+        for (row = 0; row < winmd->tables[TABLE_TYPEDEF].count; row++)
+            merge_typedef_row( winmd, row );
+    }
+}
+
 static void merge_tables( void )
 {
     if (winmd_count <= 1) return;
@@ -3928,4 +3990,5 @@ static void merge_tables( void )
     add_winmd();
 
     merge_typerefs();
+    merge_typedefs();
 }
