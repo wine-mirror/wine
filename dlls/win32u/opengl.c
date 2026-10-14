@@ -3045,7 +3045,7 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
         attrs.flags &= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
     }
 
-    if ((attrs.major >= 0 && attrs.major < 3) || (attrs.major == 3 && attrs.minor == 0 && !attrs.flags))
+    if ((attrs.major >= 0 && attrs.major < 3) || (attrs.major == 3 && attrs.minor <= 1 && !attrs.flags))
     {
         WARN( "Ignoring legacy OpenGL version %d.%d\n", attrs.major, attrs.minor == -1 ? 0 : attrs.minor );
         attrs.profile = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
