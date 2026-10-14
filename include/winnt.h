@@ -7674,25 +7674,16 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #endif /* __i386__ */
 
-/* Since Visual Studio 2012, volatile accesses do not always imply acquire and
- * release semantics.  We explicitly use ISO volatile semantics, manually
- * placing barriers as appropriate.
- */
-#if _MSC_VER >= 1700
 #pragma intrinsic(__iso_volatile_load32)
 #pragma intrinsic(__iso_volatile_load64)
 #pragma intrinsic(__iso_volatile_store32)
 #pragma intrinsic(__iso_volatile_store64)
-#define __WINE_LOAD32_NO_FENCE(src) (__iso_volatile_load32(src))
-#define __WINE_LOAD64_NO_FENCE(src) (__iso_volatile_load64(src))
-#define __WINE_STORE32_NO_FENCE(dest, value) (__iso_volatile_store32(dest, value))
-#define __WINE_STORE64_NO_FENCE(dest, value) (__iso_volatile_store64(dest, value))
-#else  /* _MSC_VER >= 1700 */
-#define __WINE_LOAD32_NO_FENCE(src) (*(src))
-#define __WINE_LOAD64_NO_FENCE(src) (*(src))
-#define __WINE_STORE32_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
-#define __WINE_STORE64_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
-#endif  /* _MSC_VER >= 1700 */
+
+static FORCEINLINE LONG   ReadNoFence( LONG const volatile *src )     { return __iso_volatile_load32( (__int32 const volatile *)src ); }
+static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src ) { return __iso_volatile_load64( (__int64 const volatile *)src ); }
+
+static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )       { __iso_volatile_store32( (__int32 volatile *)dest, value ); }
+static FORCEINLINE void WriteNoFence64( LONG64 volatile *dest, LONG64 value ) { __iso_volatile_store64( (__int64 volatile *)dest, value ); }
 
 #if defined(__i386__) || defined(__x86_64__)
 void _ReadWriteBarrier(void);
@@ -7713,76 +7704,28 @@ static void __wine_memory_barrier_acq_rel(void)
 
 static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
 {
-    LONG value = __WINE_LOAD32_NO_FENCE( (int const volatile *)src );
+    LONG value = ReadNoFence( src );
     __wine_memory_barrier_acq_rel();
     return value;
 }
 
 static FORCEINLINE LONG64 ReadAcquire64( LONG64 const volatile *src )
 {
-    LONG64 value;
-#if defined(__i386__) && _MSC_VER < 1700
-    __asm {
-        mov   eax, src
-        fild  qword ptr [eax]
-        fistp value
-    }
-#else
-    value = __WINE_LOAD64_NO_FENCE( (__int64 const volatile *)src );
+    LONG64 value = ReadNoFence64( src );
     __wine_memory_barrier_acq_rel();
-#endif
-    return value;
-}
-
-static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
-{
-    LONG value = __WINE_LOAD32_NO_FENCE( (int const volatile *)src );
-    return value;
-}
-
-static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
-{
-    LONG64 value;
-#if defined(__i386__) && _MSC_VER < 1700
-    __asm {
-        mov   eax, src
-        fild  qword ptr [eax]
-        fistp value
-    }
-#else
-    value = __WINE_LOAD64_NO_FENCE( (__int64 const volatile *)src );
-#endif
     return value;
 }
 
 static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
 {
     __wine_memory_barrier_acq_rel();
-    __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
+    WriteNoFence( dest, value );
 }
 
 static FORCEINLINE void WriteRelease64( LONG64 volatile *dest, LONG64 value )
 {
-#if defined(__i386__) && _MSC_VER < 1700
-    __asm {
-        mov   eax, dest
-        fild  value
-        fistp qword ptr [eax]
-    }
-#else
     __wine_memory_barrier_acq_rel();
-    __WINE_STORE64_NO_FENCE( (__int64 volatile *)dest, value );
-#endif
-}
-
-static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
-{
-    __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
-}
-
-static FORCEINLINE void WriteNoFence64( LONG64 volatile *dest, LONG64 value )
-{
-    __WINE_STORE64_NO_FENCE( (__int64 volatile *)dest, value );
+    WriteNoFence64( dest, value );
 }
 
 #elif defined(__GNUC__)
