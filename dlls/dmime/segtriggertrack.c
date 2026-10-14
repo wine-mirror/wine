@@ -277,7 +277,7 @@ static HRESULT parse_segment_item(IDirectMusicSegTriggerTrack *This, IStream *st
         goto error;
 
     TRACE("Found DMUS_IO_SEGMENT_ITEM_HEADER\n");
-    TRACE("\tlTimePhysical: %lu\n", item->header.lTimeLogical);
+    TRACE("\tlTimeLogical\t: %lu\n", item->header.lTimeLogical);
     TRACE("\tlTimePhysical: %lu\n", item->header.lTimePhysical);
     TRACE("\tdwPlayFlags: %#08lx\n", item->header.dwPlayFlags);
     TRACE("\tdwFlags: %#08lx\n", item->header.dwFlags);
