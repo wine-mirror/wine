@@ -2909,6 +2909,7 @@ KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
     TRACE("affinity %#Ix.\n", affinity);
 
     affinity &= system_affinity;
+    if (!affinity) return 0;
 
     NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
             &old, sizeof(old), NULL);
