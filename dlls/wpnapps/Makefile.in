@@ -1,5 +1,4 @@
 MODULE    = wpnapps.dll
-IMPORTLIB = wpnapps
 IMPORTS   = combase
 
 SOURCES = \
