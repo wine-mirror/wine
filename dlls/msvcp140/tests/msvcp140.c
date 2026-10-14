@@ -2386,6 +2386,17 @@ void test_codecvt_char16(void)
         ok(str_ptr - str == 3, "got %Id.\n", str_ptr - str);
         ok(state.wchar == 1, "got %#x.\n", state.wchar);
 
+        strcpy(str, "\xf0\x90\x80\x80");
+        memset(&state, 0, sizeof(state));
+        memset(str16, 0, sizeof(str16));
+        ret = (int)call_func8(p_codecvt_char16_do_in, &this, &state, str, str + 4, (const char **)&str_ptr,
+                str16, str16 + 4, &str16_ptr);
+        ok(ret == CODECVT_ok, "got %d.\n", ret);
+        ok(str16_ptr - str16 == 2, "got %Id.\n", str16_ptr - str16);
+        ok(!wcscmp(str16, L"\xd800\xdc00"), "got %s.\n", debugstr_w(str16));
+        ok(str_ptr - str == 4, "got %Id.\n", str_ptr - str);
+        ok(state.wchar == 1, "got %#x.\n", state.wchar);
+
         for (i = 0; i < ARRAY_SIZE(tests); ++i)
         {
             winetest_push_context("test %u", i);

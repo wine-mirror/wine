@@ -4210,7 +4210,7 @@ int __thiscall codecvt_char16_do_in(const codecvt_char16 *this, _Mbstatet *state
 
         if (fourbyte)
         {
-            if (res > 0x10000)
+            if (res >= 0x10000)
             {
                 res -= 0x10000;
                 MBSTATET_TO_INT(state) = 0xdc00 | (res & 0x3ff);
