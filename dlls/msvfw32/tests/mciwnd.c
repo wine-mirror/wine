@@ -262,6 +262,7 @@ static void test_window_create(unsigned line, const char* fname, HWND parent,
                         wnd_creation.open_msg >= WM_USER ? "WM_USER+" : "",
                         wnd_creation.open_msg >= WM_USER ? wnd_creation.open_msg - WM_USER : wnd_creation.open_msg);
     ret = SendMessageA(window, MCIWNDM_GETERRORA, sizeof(error), (LPARAM)error);
+    todo_wine_if (sizeof(void*) > sizeof(int))  /* iccvid is missing on 64-bit */
     ok_(__FILE__, line)(!ret || broken(ret == ERROR_INVALID_HANDLE) /* w2003std, w2008s64 */,
                         "Unexpected error %Id\n", ret);
     DestroyWindow(window);
