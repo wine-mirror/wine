@@ -1387,8 +1387,8 @@ static int ProcessWindowsFileProtection(void)
             RegQueryValueExW( hkey, L"SFCDllCacheDir", 0, NULL, (LPBYTE)dllcache, &sz);
             lstrcatW( dllcache, L"\\*" );
         }
+        RegCloseKey(hkey);
     }
-    RegCloseKey(hkey);
 
     if (!dllcache)
     {
