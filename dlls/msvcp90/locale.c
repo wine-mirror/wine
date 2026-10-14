@@ -12981,9 +12981,15 @@ size_t __cdecl mbsrtowcs(wchar_t *dst, const char **pstr, size_t n, mbstate_t *s
         if (!len) break;
         if (dst) dst[ret] = wc;
         ret++;
-        if (!wc) break;
+        if (!wc)
+        {
+            src = NULL;
+            break;
+        }
         src += len;
     }
+
+    if (dst) *pstr = src;
     return ret;
 }
 

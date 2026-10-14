@@ -762,6 +762,31 @@ static void test_basic_string_wchar_swap(void) {
     call_func1(p_basic_string_wchar_dtor, &str2);
 }
 
+static void test_mbsrtowcs(void)
+{
+    const char src[] = "test";
+    const char *pstr;
+    mbstate_t state;
+    WCHAR dst[20];
+    size_t ret;
+
+    state = 0;
+    pstr = src;
+    dst[1] = 'x';
+    ret = mbsrtowcs(dst, &pstr, 1, &state);
+    ok(ret == 1, "mbsrtowcs returned %Id\n", ret);
+    ok(pstr == src + 1, "pstr = %p, src = %p\n", pstr, src);
+    ok(!state, "state = %d\n", state);
+    ok(dst[0] == 't', "dst[0] = '%c'\n", dst[0]);
+    ok(dst[1] == 'x', "dst[1] = '%c'\n", dst[1]);
+
+    ret = mbsrtowcs(dst, &pstr, 20, &state);
+    ok(ret == 3, "mbsrtowcs returned %Id\n", ret);
+    ok(!pstr, "pstr = %p, src = %p\n", pstr, src);
+    ok(!state, "state = %d\n", state);
+    ok(!wcscmp(dst, L"est"), "dst = %s\n", wine_dbgstr_w(dst));
+}
+
 static void test_wcsrtombs(void)
 {
     const wchar_t test_str1[] = L"\x3042";
@@ -911,6 +936,7 @@ START_TEST(string)
     test_basic_string_char_replace();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
+    test_mbsrtowcs();
     test_wcsrtombs();
     test_exception();
 
