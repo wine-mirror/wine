@@ -6240,7 +6240,32 @@ static void test_cloneNode(void )
     SysFreeString(str);
     IXMLDOMNode_Release(node);
     IXMLDOMComment_Release(comment);
+    IXMLDOMDocument2_Release(doc);
 
+    /* test with namespaces */
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_( "<root xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "Unexpected value %d.\n", b);
+
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node = NULL;
+    hr = IXMLDOMElement_cloneNode(element, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<root xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>"), "Unexpected str %s.\n", debugstr_w(str));
+
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMElement_Release(element);
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
 }
