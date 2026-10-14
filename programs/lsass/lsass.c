@@ -96,7 +96,7 @@ static struct package * lsa_lookup_package( const WCHAR *name )
 
     for (i = 0; i < packages_count; i++)
     {
-        if (!wcscmp( packages[i].info.Name, name ))
+        if (!wcsicmp( packages[i].info.Name, name ))
             return packages + i;
     }
     return NULL;

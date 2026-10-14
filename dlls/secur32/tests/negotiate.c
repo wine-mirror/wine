@@ -246,7 +246,7 @@ static void test_authentication(void)
         skip( "setup_client returned %08lx, skipping test\n", status );
         return;
     }
-    if ((status = setup_server( &server, (SEC_CHAR *)"Negotiate" )))
+    if ((status = setup_server( &server, (SEC_CHAR *)"negotiate" )))
     {
         skip( "setup_server returned %08lx, skipping test\n", status );
         FreeCredentialsHandle( &client.cred );
