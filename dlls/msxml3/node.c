@@ -4889,11 +4889,6 @@ static HRESULT return_validation_error(LONG code, IXMLDOMParseError **err)
     return S_FALSE;
 }
 
-struct validation_context
-{
-    LONG code;
-};
-
 static bool node_validate_root(struct validation_context *ctxt, struct domnode *node)
 {
     struct domnode *dtd, *root;
@@ -4937,9 +4932,7 @@ static bool node_dtd_validate_attribute(struct validation_context *ctxt, struct 
         return false;
     }
 
-    /* FIXME: validate attribute value */
-
-    return true;
+    return parser_dtd_validate_attribute_value(ctxt, dtd, decl, attr);
 }
 
 static bool node_dtd_validate_single_node(struct validation_context *ctxt, struct dtd *dtd, struct domnode *node)
