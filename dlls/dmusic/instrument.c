@@ -1057,7 +1057,7 @@ HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index
         This->header.Locale.ulBank = F_INSTRUMENT_DRUMS;
     This->header.Locale.ulInstrument = preset->preset;
     MultiByteToWideChar(CP_ACP, 0, preset->name, strlen(preset->name) + 1,
-            desc->wszName, sizeof(desc->wszName));
+            desc->wszName, ARRAY_SIZE(desc->wszName));
 
     for (i = preset->bag_ndx; SUCCEEDED(hr) && i < (preset + 1)->bag_ndx; i++)
     {
