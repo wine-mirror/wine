@@ -6260,7 +6260,6 @@ static void test_cloneNode(void )
     str = NULL;
     hr = IXMLDOMNode_get_xml(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"<root xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>"), "Unexpected str %s.\n", debugstr_w(str));
 
     SysFreeString(str);

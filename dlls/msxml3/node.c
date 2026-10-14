@@ -1457,7 +1457,7 @@ HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **clo
 
     *cloned = NULL;
 
-    if (FAILED(hr = domnode_create(node->type, node->name, SysStringLen(node->name), node->uri, SysStringLen(node->uri),
+    if (FAILED(hr = domnode_create(node->type, node->qname, SysStringLen(node->qname), node->uri, SysStringLen(node->uri),
             node->owner, &object)))
     {
         return hr;
