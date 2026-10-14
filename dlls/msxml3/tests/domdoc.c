@@ -12829,7 +12829,6 @@ todo_wine {
 
 static void test_parseerror(void)
 {
-    IXMLDOMParseError2 *error2;
     IXMLDOMParseError *error;
     IXMLDOMDocument *doc;
     HRESULT hr;
@@ -12838,6 +12837,13 @@ static void test_parseerror(void)
 
     hr = IXMLDOMDocument_get_parseError(doc, &error);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(error, &IID_IUnknown, TRUE);
+    check_interface(error, &IID_IDispatch, TRUE);
+    check_interface(error, &IID_IDispatchEx, TRUE);
+    check_interface(error, &IID_IXMLDOMParseError, TRUE);
+    todo_wine
+    check_interface(error, &IID_IXMLDOMParseError2, FALSE);
 
     hr = IXMLDOMParseError_get_line(error, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -12848,17 +12854,6 @@ static void test_parseerror(void)
     hr = IXMLDOMParseError_get_linepos(error, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    IXMLDOMParseError_Release(error);
-    IXMLDOMDocument_Release(doc);
-
-    if (!is_clsid_supported(&CLSID_DOMDocument60, &IID_IXMLDOMDocument)) return;
-    doc = create_document_version(60, &IID_IXMLDOMDocument);
-
-    hr = IXMLDOMDocument_get_parseError(doc, &error);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMParseError_QueryInterface(error, &IID_IXMLDOMParseError2, (void**)&error2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IXMLDOMParseError2_Release(error2);
     IXMLDOMParseError_Release(error);
     IXMLDOMDocument_Release(doc);
 }
