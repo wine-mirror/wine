@@ -12665,7 +12665,6 @@ locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, cons
     _Locinfo_ctor_cat_cstr(&locinfo, cat, locname);
     if(!memcmp(locale_string_char_c_str(&locinfo.newlocname), "*", 2)) {
         _Locinfo_dtor(&locinfo);
-        operator_delete(this->ptr);
         _Xruntime_error("bad locale name");
     }
 
