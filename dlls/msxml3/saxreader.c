@@ -1165,6 +1165,22 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
         ret = false;
     }
 
+    if (ret && decl->type == ATTR_TYPE_ENUMERATION)
+    {
+        ret = false;
+        for (size_t i = 0; i < decl->valuelist.count; ++i)
+        {
+            if (!wcscmp(decl->valuelist.values[i], value))
+            {
+                ret = true;
+                break;
+            }
+        }
+
+        if (!ret)
+            ctxt->code = E_DOM_ATTRIBUTE_VALUE;
+    }
+
     SysFreeString(value);
 
     return ret;
