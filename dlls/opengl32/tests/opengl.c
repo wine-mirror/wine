@@ -3376,6 +3376,7 @@ static void test_wglCreateContextAttribsARB( HDC hdc )
     GLint num, major, minor, expect_major, expect_minor, flags, profile;
     const GLubyte *extension;
     HGLRC ctx, tmp;
+    void *ptr;
 
 
     /* Try to pass an invalid HDC */
@@ -3537,6 +3538,11 @@ static void test_wglCreateContextAttribsARB( HDC hdc )
     glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
     ok_ret( 0, glGetError() );
     ok_x4( flags, ==, 0 );
+
+    extension = glGetString( GL_EXTENSIONS );
+    todo_wine ok_ret( 0, glGetError() );
+    ptr = extension ? strstr( (const char *)extension, "GL_ARB_compatibility" ) : NULL;
+    todo_wine ok_ptr( ptr, !=, NULL );
 
     ok_ret( TRUE, wglDeleteContext( ctx ) );
 
