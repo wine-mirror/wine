@@ -361,7 +361,10 @@ static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite 
     TRACE("(%p)->(%p)\n", This, ppClientSite);
 
     *ppClientSite = This->client_site;
-    return This->client_site ? S_OK : E_FAIL;
+    if (!This->client_site)
+        return E_FAIL;
+    IOleClientSite_AddRef(This->client_site);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp, LPCOLESTR szContainerObj)
