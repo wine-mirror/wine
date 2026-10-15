@@ -504,22 +504,17 @@ static fpos_int*            (*__thiscall p_basic_istream_wchar_tellg)(basic_istr
 static basic_istream_wchar* (*__cdecl    p_basic_istream_wchar_getline_bstr_delim)(basic_istream_wchar*, basic_string_wchar*, wchar_t);
 
 /* ostream */
+static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_ctor)(
+        basic_ostream_wchar*, basic_streambuf_wchar*, MSVCP_bool, MSVCP_bool);
+static void (*__thiscall p_basic_ostream_wchar_vbase_dtor)(basic_ostream_wchar*);
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_float)(basic_ostream_char*, float);
-
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
-
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_double)(basic_ostream_wchar*, double);
-
 static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_float)(basic_ostream_char*, complex_float*);
-
 static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_double)(basic_ostream_char*, complex_double*);
-
 static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_ldouble)(basic_ostream_char*, complex_double*);
-
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_short_print_ushort)(basic_ostream_wchar*, unsigned short);
-
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_int)(basic_ostream_char*, int);
-
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_int)(basic_ostream_wchar*, int);
 
 /* basic_ios */
@@ -747,30 +742,26 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
+        SET(p_basic_ostream_wchar_ctor,
+            "??0?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAA@PEAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@_N@Z");
+        SET(p_basic_ostream_wchar_vbase_dtor,
+            "??_D?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ");
         SET(p_basic_ostream_char_print_float,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@M@Z");
-
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
-
         SET(p_basic_ostream_wchar_print_double,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@N@Z");
-
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z");
-
         SET(p_basic_ostream_char_print_complex_float,
             "??$?6MDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@M@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_double,
             "??$?6NDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@N@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@O@0@@Z");
-
         SET(p_basic_ostream_char_print_int,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@J@Z");
-
         SET(p_basic_ostream_wchar_print_int,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@J@Z");
 
@@ -910,30 +901,26 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
+        SET(p_basic_ostream_wchar_ctor,
+            "??0?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAA@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@_N@Z");
+        SET(p_basic_ostream_wchar_vbase_dtor,
+            "??_D?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAAXXZ");
         SET(p_basic_ostream_char_print_float,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@M@Z");
-
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@N@Z");
-
         SET(p_basic_ostream_wchar_print_double,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAAAAV01@N@Z");
-
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAAAAV01@G@Z");
-
         SET(p_basic_ostream_char_print_complex_float,
             "??$?6MDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@M@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_double,
             "??$?6NDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@N@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
-
         SET(p_basic_ostream_char_print_int,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@J@Z");
-
         SET(p_basic_ostream_wchar_print_int,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAAAAV01@J@Z");
 
@@ -1069,30 +1056,26 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
+        SET(p_basic_ostream_wchar_ctor,
+            "??0?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAE@PAV?$basic_streambuf@_WU?$char_traits@_W@std@@@1@_N@Z");
+        SET(p_basic_ostream_wchar_vbase_dtor,
+            "??_D?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEXXZ");
         SET(p_basic_ostream_char_print_float,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@M@Z");
-
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
-
         SET(p_basic_ostream_wchar_print_double,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@N@Z");
-
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z");
-
         SET(p_basic_ostream_char_print_complex_float,
             "??$?6MDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@M@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_double,
             "??$?6NDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@N@0@@Z");
-
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
-
         SET(p_basic_ostream_char_print_int,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@J@Z");
-
         SET(p_basic_ostream_wchar_print_int,
             "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@J@Z");
 
@@ -2276,6 +2259,7 @@ static void test_ostream_print_double(void)
 
 static void test_ostream_wchar_print_double(void)
 {
+    basic_ostream_wchar ostream;
     basic_stringstream_wchar wss;
     basic_string_wchar pwstr;
     const wchar_t *wstr;
@@ -2291,6 +2275,10 @@ static void test_ostream_wchar_print_double(void)
     ok(!lstrcmpW(L"3.14159", wstr), "wstr = %s\n", wine_dbgstr_w(wstr));
     call_func1(p_basic_string_wchar_dtor, &pwstr);
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+
+    call_func4(p_basic_ostream_wchar_ctor, &ostream, NULL, FALSE, TRUE);
+    call_func2_ptr_dbl(p_basic_ostream_wchar_print_double, &ostream, val);
+    call_func1(p_basic_ostream_wchar_vbase_dtor, &ostream);
 }
 
 static void test_istream_read_float(void)
