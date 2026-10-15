@@ -534,7 +534,6 @@ static BOOL load_tablet_info( HWND hwnd )
     gSysContext.lcBtnUpMask = 0xffffffff;
     gSysContext.lcSensX = 65536;
     gSysContext.lcSensY = 65536;
-    gSysContext.lcSensX = 65536;
     gSysContext.lcSensZ = 65536;
     gSysContext.lcSysSensX= 65536;
     gSysContext.lcSysSensY= 65536;
