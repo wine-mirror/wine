@@ -37,6 +37,7 @@ static LOGCONTEXTA glogContext;
 static HCTX (WINAPI *pWTOpenA)(HWND, LPLOGCONTEXTA, BOOL);
 static BOOL (WINAPI *pWTClose)(HCTX);
 static UINT (WINAPI *pWTInfoA)(UINT, UINT, void*);
+static UINT (WINAPI *pWTQueueSizeGet)(HCTX);
 
 static HMODULE load_functions(void)
 {
@@ -54,7 +55,8 @@ static HMODULE load_functions(void)
 
     if (GET_PROC(WTOpenA) &&
         GET_PROC(WTInfoA) &&
-        GET_PROC(WTClose) )
+        GET_PROC(WTClose) &&
+        GET_PROC(WTQueueSizeGet) )
     {
         return hWintab;
     }
@@ -132,6 +134,61 @@ static void test_WTOpenContextValidation(void)
     memdiff = memcmp(&testLogCtx, &refLogCtx, sizeof(LOGCONTEXTA));
     ok(0 == memdiff, "Expected 0 == memcmp(testLogCtx, refLogCtx), got %i\n",
         memdiff);
+
+    if (hCtx)
+        pWTClose(hCtx);
+
+    wintab_destroy_window(defaultWindow);
+}
+
+static void test_WTQueueSizeGet(void)
+{
+#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
+#define PACKETMODE PK_BUTTONS
+
+    HWND defaultWindow = NULL;
+    HCTX hCtx = NULL;
+    LOGCONTEXTA glogContext = { 0 };
+    UINT size;
+    AXIS TabletX = { 0 };
+    AXIS TabletY = { 0 };
+
+    glogContext.lcOptions |= CXO_SYSTEM;
+
+    wintab_create_window(&defaultWindow);
+
+    pWTInfoA(WTI_DEFSYSCTX, 0, &glogContext);
+
+    strcpy(glogContext.lcName, contextName);
+
+    glogContext.lcOptions |= CXO_MESSAGES;
+    glogContext.lcPktData = PACKETDATA;
+    glogContext.lcPktMode = PACKETMODE;
+    glogContext.lcMoveMask = PACKETDATA;
+    glogContext.lcBtnUpMask = glogContext.lcBtnDnMask;
+
+    pWTInfoA(WTI_DEVICES, DVC_X, &TabletX);
+    pWTInfoA(WTI_DEVICES, DVC_Y, &TabletY);
+
+    glogContext.lcInOrgX = 0;
+    glogContext.lcInOrgY = 0;
+    glogContext.lcInExtX = TabletX.axMax;
+    glogContext.lcInExtY = TabletY.axMax;
+
+    glogContext.lcOutOrgX = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    glogContext.lcOutOrgY = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    glogContext.lcOutExtX = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    glogContext.lcOutExtY = -GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+    hCtx = pWTOpenA(defaultWindow, &glogContext, TRUE);
+    if (!hCtx)
+    {
+        trace("No Stylus connected\n");
+        return;
+    }
+
+    size = pWTQueueSizeGet(hCtx);
+    ok(size == 50, "size = %u\n", size);
 
     if (hCtx)
         pWTClose(hCtx);
@@ -217,6 +274,7 @@ START_TEST(context)
 
     test_WTOpenContextValidation();
     test_WTInfoA();
+    test_WTQueueSizeGet();
 
     FreeLibrary(hWintab);
 }

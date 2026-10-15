@@ -477,9 +477,9 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
     newcontext->context = *lpLogCtx;
     newcontext->hwndOwner = hWnd;
     newcontext->ActiveCursor = -1;
-    newcontext->QueueSize = 10;
+    newcontext->QueueSize = 50;
     newcontext->PacketsQueued = 0;
-    newcontext->PacketQueue = malloc(sizeof(WTPACKET) * 10);
+    newcontext->PacketQueue = malloc(sizeof(WTPACKET) * newcontext->QueueSize);
 
     EnterCriticalSection(&csTablet);
     newcontext->handle = gTopContext++;
