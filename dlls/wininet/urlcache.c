@@ -1401,7 +1401,7 @@ static DWORD urlcache_set_entry_info(entry_url *url_entry, const INTERNET_CACHE_
     if (field_control & CACHE_ENTRY_MODTIME_FC)
         url_entry->modification_time = entry_info->LastModifiedTime;
     if (field_control & CACHE_ENTRY_SYNCTIME_FC)
-        file_time_to_dos_date_time(&entry_info->LastAccessTime, &url_entry->sync_date, &url_entry->sync_time);
+        file_time_to_dos_date_time(&entry_info->LastSyncTime, &url_entry->sync_date, &url_entry->sync_time);
 
     return ERROR_SUCCESS;
 }
