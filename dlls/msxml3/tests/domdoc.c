@@ -985,7 +985,7 @@ static const CHAR szBasicTransformOutput[] =
 
 #define SZ_EMAIL_DTD \
 "<!DOCTYPE email ["\
-"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*,data?)>"\
+"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*,data?,mix?)>"\
 "       <!ATTLIST email attachments IDREFS #REQUIRED>"\
 "       <!ATTLIST email sent (yes|no) \"no\">"\
 "   <!ELEMENT recipients    (to+,cc*)>"\
@@ -1004,6 +1004,7 @@ static const CHAR szBasicTransformOutput[] =
 "       <!ATTLIST attachment id ID #REQUIRED>"\
 "   <!ELEMENT data EMPTY>"\
 "   <!ELEMENT a ANY>"\
+"   <!ELEMENT mix (#PCDATA|a)*>"\
 "]>"
 
 static const CHAR szEmailXML[] =
@@ -1108,6 +1109,22 @@ SZ_EMAIL_DTD
 "   </body>"
 "   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
 "   <data><a/></data>"
+"</email>";
+
+static const CHAR szEmailXML_14_2[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 90)</subject>"
+"   <body>"
+"       XML_INVALID_CONTENT 0xC00CE014"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"   <mix><data/></mix>"
 "</email>";
 
 static const CHAR szEmailXML_15[] =
@@ -17871,6 +17888,18 @@ static void test_dtd_validation(void)
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_14_1), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    err = NULL;
+    hr = IXMLDOMDocument2_validate(doc, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    res = 0;
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* XML_INVALID_CONTENT */
+    ok(res == 0xc00ce014, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_14_2), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     err = NULL;
     hr = IXMLDOMDocument2_validate(doc, &err);

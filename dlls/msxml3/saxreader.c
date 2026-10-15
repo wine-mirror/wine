@@ -1186,6 +1186,45 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
     return ret;
 }
 
+static bool parser_dtd_validate_element_mixed_content(struct validation_context *ctxt, struct dtd *dtd,
+        struct element_decl *decl, struct domnode *elem)
+{
+    struct domnode *child = domnode_get_first_child(elem);
+    struct element_content *content;
+
+    while (child)
+    {
+        if (child->type == NODE_ELEMENT)
+        {
+            content = decl->content;
+            while (content)
+            {
+                if (content->type == ELEMENT_CONTENT_ELEMENT)
+                {
+                    if (bstr_equal(content->name, elem->qname)) break;
+                }
+                else if (content->type == ELEMENT_CONTENT_OR
+                        && content->left && content->left->type == ELEMENT_CONTENT_ELEMENT)
+                {
+                    if (bstr_equal(content->left->name, elem->qname)) break;
+                }
+
+                content = content->right;
+            }
+
+            if (!content)
+            {
+                ctxt->code = E_DOM_INVALID_CONTENT;
+                return false;
+            }
+        }
+
+        child = domnode_get_next_sibling(child);
+    }
+
+    return true;
+}
+
 bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
         struct element_decl *decl, struct domnode *elem)
 {
@@ -1212,6 +1251,10 @@ bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct
 
             return false;
         }
+    }
+    else if (decl->type == ELEMENT_TYPE_MIXED)
+    {
+        return parser_dtd_validate_element_mixed_content(ctxt, dtd, decl, elem);
     }
 
     return true;
