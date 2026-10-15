@@ -1,2 +1,6 @@
 MODULE    = iprop.dll
 ENABLE_ARCHS = i386
+EXTRADLLFLAGS = -Wb,--data-only
+
+SOURCES = \
+	iprop.spec
