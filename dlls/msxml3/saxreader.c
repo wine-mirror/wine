@@ -1186,6 +1186,37 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
     return ret;
 }
 
+bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
+        struct element_decl *decl, struct domnode *elem)
+{
+    struct domnode *child;
+
+    if (decl->type == ELEMENT_TYPE_EMPTY)
+    {
+        child = domnode_get_first_child(elem);
+        if (child)
+        {
+            switch (child->type)
+            {
+                case NODE_PROCESSING_INSTRUCTION:
+                case NODE_ENTITY_REFERENCE:
+                case NODE_CDATA_SECTION:
+                case NODE_COMMENT:
+                case NODE_TEXT:
+                    ctxt->code = E_DOM_ILLEGAL_TEXT;
+                    break;
+                default:
+                    ctxt->code = E_DOM_INVALID_CONTENT;
+                    break;
+            }
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
 struct dtd *parser_dtd_addref(struct dtd *dtd)
 {
     if (dtd)

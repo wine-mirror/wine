@@ -42,9 +42,11 @@ enum error_codes
 
     E_DOM_ELEMENT_UNDECLARED = 0xc00ce00d,
     E_DOM_ROOT_NAME_MISMATCH = 0xc00ce013,
+    E_DOM_INVALID_CONTENT = 0xc00ce014,
     E_DOM_ATTRIBUTE_NOT_DEFINED = 0xc00ce015,
     E_DOM_ATTRIBUTE_FIXED = 0xc00ce016,
     E_DOM_ATTRIBUTE_VALUE = 0xc00ce017,
+    E_DOM_ILLEGAL_TEXT = 0xc00ce018,
 
     E_SAX_UNDECLAREDPREFIX = 0xc00ce01d,
 
@@ -373,6 +375,8 @@ extern struct element_decl * parser_dtd_get_element_decl(struct dtd *dtd, BSTR n
 extern struct attlist_attr * parser_dtd_get_attr_decl(struct dtd *dtd, struct domnode *attr);
 extern bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct dtd *dtd,
          struct attlist_attr *decl, struct domnode *attr);
+extern bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
+        struct element_decl *decl, struct domnode *elem);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);

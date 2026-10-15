@@ -4951,9 +4951,7 @@ static bool node_dtd_validate_single_node(struct validation_context *ctxt, struc
         return false;
     }
 
-    /* FIXME: validate content */
-
-    return true;
+    return parser_dtd_validate_element_content(ctxt, dtd, elem_decl, node);
 }
 
 static bool node_dtd_validate_node(struct validation_context *ctxt, struct dtd *dtd, struct domnode *node)
