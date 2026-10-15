@@ -63,7 +63,7 @@ static VOID TABLET_Register(void)
 
 static VOID TABLET_Unregister(void)
 {
-    UnregisterClassW(L"WineTabletClass", NULL);
+    UnregisterClassW(L"WineTabletClass", wintab_instance);
 }
 
 static BOOL WINAPI create_internal_window(INIT_ONCE *once, void *param, void **context)
