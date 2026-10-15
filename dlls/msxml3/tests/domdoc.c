@@ -9518,8 +9518,8 @@ static void test_get_xml(void)
 {
     static const char xml2A[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
     IXMLDOMProcessingInstruction *pi;
-    IXMLDOMNode *first;
-    IXMLDOMElement *elem = NULL;
+    IXMLDOMElement *elem, *elem1;
+    IXMLDOMNode *first, *node;
     IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
@@ -9681,6 +9681,50 @@ static void test_get_xml(void)
     todo_wine
     ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
+
+    hr = IXMLDOMElement_cloneNode(elem, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMElement_cloneNode(elem, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMNode_Release(node);
+
+    /* Add and remove a subtree, checking for produced output. */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("b"), &elem1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem1, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<b/>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMElement_appendChild(elem, (IXMLDOMNode *)elem1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<a><b/></a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMElement_removeChild(elem, (IXMLDOMNode *)elem1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    IXMLDOMElement_Release(elem1);
+
     IXMLDOMElement_Release(elem);
 
     hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a/>"), &b);
@@ -9692,6 +9736,23 @@ static void test_get_xml(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(xml, L"<a/>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
+
+    hr = IXMLDOMElement_cloneNode(elem, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<a/>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMElement_cloneNode(elem, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<a/>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMNode_Release(node);
+
     IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
