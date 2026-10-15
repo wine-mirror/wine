@@ -413,6 +413,59 @@ static void test_comboex_CB_GETLBTEXT(void)
     DestroyWindow(hCombo);
 }
 
+static WCHAR end_edit_text[CBEMAXSTRLEN];
+
+static LRESULT CALLBACK end_edit_parent_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    NMCBEENDEDITW *edit = (NMCBEENDEDITW *)lp;
+
+    if (msg == WM_NOTIFY && edit->hdr.code == CBEN_ENDEDITW)
+        lstrcpynW(end_edit_text, edit->szText, CBEMAXSTRLEN);
+    return DefWindowProcW(hwnd, msg, wp, lp);
+}
+
+static void test_comboex_empty_text_end_edit(void)
+{
+    WNDCLASSW wc = { 0 };
+    COMBOBOXEXITEMW item = { 0 };
+    HWND parent, combo;
+    LRESULT ret;
+
+    wc.lpfnWndProc = end_edit_parent_proc;
+    wc.hInstance = hMainHinst;
+    wc.lpszClassName = L"ComboExEndEditParent";
+    RegisterClassW(&wc);
+    parent = CreateWindowW(wc.lpszClassName, L"parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           0, 0, 400, 300, NULL, NULL, hMainHinst, NULL);
+    combo = CreateWindowExW(0, WC_COMBOBOXEXW, NULL, WS_VISIBLE | WS_CHILD | CBS_DROPDOWN,
+                            0, 0, 300, 200, parent, NULL, hMainHinst, NULL);
+
+    item.mask = CBEIF_TEXT;
+    item.iItem = -1;
+    item.pszText = (WCHAR *)L"";
+    ret = SendMessageW(combo, CBEM_INSERTITEMW, 0, (LPARAM)&item);
+    ok(ret == 0, "got %Id\n", ret);
+
+    /* Empty item text is returned as NULL. */
+    item.mask = CBEIF_TEXT;
+    item.iItem = 0;
+    item.pszText = NULL;
+    ret = SendMessageW(combo, CBEM_GETITEMW, 0, (LPARAM)&item);
+    ok(ret, "CBEM_GETITEMW failed\n");
+    ok(item.pszText == NULL, "got %p\n", item.pszText);
+
+    SetFocus(combo);
+    SendMessageW(combo, CB_SETCURSEL, 0, 0);
+
+    wcscpy(end_edit_text, L"untouched");
+    SendMessageW(combo, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageW(combo, CB_SHOWDROPDOWN, FALSE, 0);
+    ok(!end_edit_text[0], "got %s\n", debugstr_w(end_edit_text));
+
+    DestroyWindow(parent);
+    UnregisterClassW(wc.lpszClassName, hMainHinst);
+}
+
 static void test_comboex_WM_WINDOWPOSCHANGING(void)
 {
     HWND hCombo;
@@ -1769,6 +1822,7 @@ START_TEST(combo)
     test_comboex();
     test_comboex_WM_LBUTTONDOWN();
     test_comboex_CB_GETLBTEXT();
+    test_comboex_empty_text_end_edit();
     test_comboex_WM_WINDOWPOSCHANGING();
     test_comboex_subclass();
     test_comboex_get_set_item();
@@ -1782,6 +1836,7 @@ START_TEST(combo)
 
     test_comboex();
     test_comboex_CB_GETLBTEXT();
+    test_comboex_empty_text_end_edit();
     test_comboex_WM_WINDOWPOSCHANGING();
     test_comboex_get_set_item();
     test_comboex_CBEN_GETDISPINFO();

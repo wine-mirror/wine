@@ -221,6 +221,9 @@ COMBOEX_NotifyItem (const COMBOEX_INFO *infoPtr, UINT code, NMCOMBOBOXEXW *hdr)
 
 static INT COMBOEX_NotifyEndEdit (const COMBOEX_INFO *infoPtr, NMCBEENDEDITW *neew, LPCWSTR wstr)
 {
+    /* Items with empty text have a NULL text pointer. */
+    if (!wstr) wstr = L"";
+
     /* Change the Text item from Unicode to ANSI if necessary for NOTIFY */
     if (infoPtr->NtfUnicode) {
 	lstrcpynW(neew->szText, wstr, CBEMAXSTRLEN);
