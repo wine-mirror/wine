@@ -1,3 +1,4 @@
 MODULE    = vga.dll
+EXTRADLLFLAGS = -Wb,--data-only -Wl,--subsystem,native
 
 VER_PRODUCTVERSION = 6,1,7600,16385
