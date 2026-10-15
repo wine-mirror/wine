@@ -2,7 +2,7 @@ EXTRADEFS = -D_WMI_SOURCE_
 MODULE    = wmi.dll
 IMPORTS   = advapi32
 
-EXTRADLLFLAGS = -Wb,--data-only
+EXTRADLLFLAGS = -Wl,-noentry
 
 SOURCES = \
 	wmi.spec

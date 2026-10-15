@@ -281,6 +281,7 @@ sub assign_sources_to_makefiles(@)
             next unless defined ${$make}{"TESTDLL"} ||
                 ${$make}{"MODULE"} =~ /\.drv$/ ||
                 ($dllflags =~ /-Wb,--data-only/) ||
+                ($dllflags =~ /-Wl,-noentry/) ||
                 ($dllflags =~ /-Wl,--subsystem,native/);
         }
         elsif ($name =~ /\.nls$/)

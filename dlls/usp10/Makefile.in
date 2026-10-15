@@ -1,7 +1,7 @@
 MODULE    = usp10.dll
 IMPORTLIB = usp10
 
-EXTRADLLFLAGS = -Wb,--data-only
+EXTRADLLFLAGS = -Wl,-noentry
 
 SOURCES = \
 	usp10.spec

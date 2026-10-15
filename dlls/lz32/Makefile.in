@@ -1,7 +1,7 @@
 MODULE    = lz32.dll
 IMPORTLIB = lz32
 
-EXTRADLLFLAGS = -Wb,--data-only
+EXTRADLLFLAGS = -Wl,-noentry
 
 VER_PRODUCTVERSION = 5,1,2600,2180
 

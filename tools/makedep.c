@@ -3935,7 +3935,8 @@ static void output_module( struct makefile *make, unsigned int arch )
     if (!make->is_exe)
     {
         if (make->data_only || strendswith( make->module, ".drv" ) ||
-            strarray_exists( make->extradllflags, "-Wl,--subsystem,native" ))
+            strarray_exists( make->extradllflags, "-Wl,--subsystem,native" ) ||
+            strarray_exists( make->extradllflags, "-Wl,-noentry" ))
         {
             /* spec file is optional */
             struct incl_file *spec = find_src_file( make, replace_extension( make->module, ".dll", ".spec" ));
