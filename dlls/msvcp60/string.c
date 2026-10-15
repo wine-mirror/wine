@@ -1556,7 +1556,8 @@ basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *th
 
     memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(char));
     MSVCP_char_traits_char_assignn(ptr+off, count, ch);
-    basic_string_char__Eos(this, this->size-len+count);
+    if(this->ptr)
+        basic_string_char__Eos(this, this->size-len+count);
 
     return this;
 }
@@ -3093,7 +3094,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
 
     memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
     MSVCP_char_traits_wchar_assignn(ptr+off, count, ch);
-    basic_string_wchar__Eos(this, this->size-len+count);
+    if(this->ptr)
+        basic_string_wchar__Eos(this, this->size-len+count);
 
     return this;
 }

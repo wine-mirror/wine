@@ -96,6 +96,7 @@ static int (__thiscall *p_basic_string_char_compare_substr_cstr_len)(basic_strin
 static size_t (__thiscall *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 static size_t (__thiscall *p_basic_string_char_rfind_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 static basic_string_char* (__thiscall *p_basic_string_char_replace_cstr)(basic_string_char*, size_t, size_t, const char*);
+static basic_string_char* (__thiscall *p_basic_string_char_replace_ch)(basic_string_char*, size_t, size_t, size_t, char);
 
 static size_t *p_basic_string_char_npos;
 
@@ -239,6 +240,8 @@ static BOOL init(void)
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
         SET(p_basic_string_char_replace_cstr,
                 "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD@Z");
+        SET(p_basic_string_char_replace_ch,
+                "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K00D@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB");
 
@@ -324,6 +327,8 @@ static BOOL init(void)
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
         SET(p_basic_string_char_replace_cstr,
                 "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIPBD@Z");
+        SET(p_basic_string_char_replace_ch,
+                "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIID@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB");
 
@@ -662,6 +667,12 @@ static void test_basic_string_char_replace(void) {
 
         call_func1(p_basic_string_char_dtor, &str);
     }
+
+    call_func1(p_basic_string_char_ctor, &str);
+    call_func5(p_basic_string_char_replace_ch, &str, 0, 0, 0, 'x');
+    ok(!strcmp(call_func1(p_basic_string_char_cstr, &str), ""), "str = %s\n",
+            (const char*)call_func1(p_basic_string_char_cstr, &str));
+    call_func1(p_basic_string_char_dtor, &str);
 }
 
 static void test_basic_string_wchar(void) {
