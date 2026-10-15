@@ -251,6 +251,42 @@ L"<?xml version=\"1.0\"?>"
 "   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
 "</email>";
 
+static const WCHAR email_xml_14_1[] =
+L"<?xml version=\"1.0\"?>"
+"<!DOCTYPE email ["\
+"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*,data?)>"\
+"       <!ATTLIST email attachments IDREFS #REQUIRED>"\
+"       <!ATTLIST email sent (yes|no) \"no\">"\
+"   <!ELEMENT recipients    (to+,cc*)>"\
+"   <!ELEMENT to            (#PCDATA)>"\
+"       <!ATTLIST to name CDATA #IMPLIED>"\
+"   <!ELEMENT cc            (#PCDATA)>"\
+"       <!ATTLIST cc name CDATA #IMPLIED>"\
+"   <!ELEMENT from          (#PCDATA)>"\
+"       <!ATTLIST from name CDATA #IMPLIED>"\
+"   <!ELEMENT reply-to      (#PCDATA)>"\
+"       <!ATTLIST reply-to name CDATA #IMPLIED>"\
+"   <!ELEMENT subject       ANY>"\
+"   <!ELEMENT body          ANY>"\
+"       <!ATTLIST body enc CDATA #FIXED \"UTF-8\">"\
+"   <!ELEMENT attachment    (#PCDATA)>"\
+"       <!ATTLIST attachment id ID #REQUIRED>"\
+"   <!ELEMENT data EMPTY>"\
+"   <!ELEMENT a ANY>"\
+"]>"
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 92)</subject>"
+"   <body>"
+"       XML_INVALID_CONTENT 0xC00CE014"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"   <data><a/></data>"
+"</email>";
+
 static const WCHAR email_xml_15[] =
 L"<?xml version=\"1.0\"?>"
 "<!DOCTYPE email ["\
@@ -382,6 +418,41 @@ L"<?xml version=\"1.0\"?>"
 "       XML_ILLEGAL_TEXT 0xC00CE018"
 "   </body>"
 "   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const WCHAR email_xml_18_1[] =
+L"<?xml version=\"1.0\"?>"
+"<!DOCTYPE email ["\
+"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*,data?)>"\
+"       <!ATTLIST email attachments IDREFS #REQUIRED>"\
+"       <!ATTLIST email sent (yes|no) \"no\">"\
+"   <!ELEMENT recipients    (to+,cc*)>"\
+"   <!ELEMENT to            (#PCDATA)>"\
+"       <!ATTLIST to name CDATA #IMPLIED>"\
+"   <!ELEMENT cc            (#PCDATA)>"\
+"       <!ATTLIST cc name CDATA #IMPLIED>"\
+"   <!ELEMENT from          (#PCDATA)>"\
+"       <!ATTLIST from name CDATA #IMPLIED>"\
+"   <!ELEMENT reply-to      (#PCDATA)>"\
+"       <!ATTLIST reply-to name CDATA #IMPLIED>"\
+"   <!ELEMENT subject       ANY>"\
+"   <!ELEMENT body          ANY>"\
+"       <!ATTLIST body enc CDATA #FIXED \"UTF-8\">"\
+"   <!ELEMENT attachment    (#PCDATA)>"\
+"       <!ATTLIST attachment id ID #REQUIRED>"\
+"   <!ELEMENT data EMPTY>"\
+"]>"
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 96)</subject>"
+"   <body>"
+"       XML_ILLEGAL_TEXT 0xC00CE018"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"   <data>some text</data>"
 "</email>";
 
 static const WCHAR email_xml_20[] =
@@ -1163,6 +1234,18 @@ static void test_dtd_validation(void)
     todo_wine ok(res == 0xC00CE014, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml_14_1), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    err = NULL;
+    hr = IXMLDOMDocument2_validate(doc, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    res = 0;
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* XML_INVALID_CONTENT */
+    todo_wine ok(res == 0xc00ce014, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml_15), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     err = NULL;
@@ -1210,6 +1293,18 @@ static void test_dtd_validation(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_ILLEGAL_TEXT */
     todo_wine ok(res == 0xC00CE018, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml_18_1), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    err = NULL;
+    hr = IXMLDOMDocument2_validate(doc, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    res = 0;
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* XML_ILLEGAL_TEXT */
+    todo_wine ok(res == 0xc00ce018, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml_20), NULL);
