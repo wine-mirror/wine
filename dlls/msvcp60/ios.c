@@ -7822,13 +7822,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_short, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_short(basic_istream_wchar *this, short *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
         LONG tmp;
 
@@ -7852,13 +7852,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_int, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_int(basic_istream_wchar *this, int *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7876,13 +7876,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_uint, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_uint(basic_istream_wchar *this, unsigned int *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7900,13 +7900,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_long, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_long(basic_istream_wchar *this, LONG *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7924,13 +7924,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_ulong, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_ulong(basic_istream_wchar *this, ULONG *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7948,13 +7948,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_float, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_float(basic_istream_wchar *this, float *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7972,13 +7972,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_double, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_double(basic_istream_wchar *this, double *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -7996,13 +7996,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_ldouble, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_ldouble(basic_istream_wchar *this, double *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -8020,13 +8020,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_ptr, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_ptr(basic_istream_wchar *this, void **v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -8044,13 +8044,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_int64, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_int64(basic_istream_wchar *this, __int64 *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -8068,13 +8068,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_uint64, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_uint64(basic_istream_wchar *this, unsigned __int64 *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -8092,13 +8092,13 @@ DEFINE_THISCALL_WRAPPER(basic_istream_short_read_bool, 8)
 basic_istream_wchar* __thiscall basic_istream_short_read_bool(basic_istream_wchar *this, bool *v)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(this);
-    const num_get *numget = num_get_short_use_facet(IOS_LOCALE(base->strbuf));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, v);
 
     if(basic_istream_short_sentry_create(this, FALSE)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_get *numget = num_get_short_use_facet(IOS_LOCALE(strbuf));
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
@@ -8153,13 +8153,13 @@ basic_istream_wchar* __cdecl basic_istream_short_read_bstr(
         basic_istream_wchar *istream, basic_string_wchar *str)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(istream);
-    const ctype_wchar *ctype = ctype_short_use_facet(IOS_LOCALE(base->strbuf));
     IOSB_iostate state = IOSTATE_failbit;
     int c = '\n';
 
     TRACE("(%p %p)\n", istream, str);
 
     if(basic_istream_short_sentry_create(istream, FALSE)) {
+        const ctype_wchar *ctype = ctype_short_use_facet(IOS_LOCALE(base->strbuf));
         size_t count = ios_base_width_get(&base->base);
 
         if(!count)
@@ -8186,13 +8186,13 @@ basic_istream_wchar* __cdecl basic_istream_short_read_bstr(
 basic_istream_wchar* __cdecl basic_istream_short_read_str(basic_istream_wchar *istream, wchar_t *str)
 {
     basic_ios_wchar *base = basic_istream_short_get_basic_ios(istream);
-    const ctype_wchar *ctype = ctype_short_use_facet(IOS_LOCALE(base->strbuf));
     IOSB_iostate state = IOSTATE_failbit;
     unsigned short c = '\n';
 
     TRACE("(%p %p)\n", istream, str);
 
     if(basic_istream_short_sentry_create(istream, FALSE)) {
+        const ctype_wchar *ctype = ctype_short_use_facet(IOS_LOCALE(base->strbuf));
         size_t count = ios_base_width_get(&base->base)-1;
 
         for(c = basic_streambuf_wchar_sgetc(basic_ios_short_rdbuf_get(base));
