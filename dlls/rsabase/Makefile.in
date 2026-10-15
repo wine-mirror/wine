@@ -1,4 +1,7 @@
 MODULE    = rsabase.dll
-IMPORTS   = rsaenh
+EXTRADLLFLAGS = -Wb,--data-only
 
 VER_PRODUCTVERSION = 5,1,2600,2180
+
+SOURCES = \
+	rsabase.spec
