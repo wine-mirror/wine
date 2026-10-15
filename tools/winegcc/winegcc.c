@@ -582,7 +582,7 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add( &flags, "-Wl,--large-address-aware" );
 
         if (entry_point)
-            strarray_add( &flags, strmake( "-Wl,--entry,%s%s", target.cpu == CPU_i386 ? "_" : "", entry_point ));
+            strarray_add( &flags, strmake( "-Wl,--entry=%s%s", (*entry_point && target.cpu == CPU_i386) ? "_" : "", entry_point ));
 
         STRARRAY_FOR_EACH( file, &output_debug_files )
             if (strendswith(file, ".pdb")) strarray_add(&link_args, strmake("-Wl,--pdb=%s", file));
@@ -604,8 +604,9 @@ static struct strarray get_link_args( const char *output_name )
         else if (!try_link( link_args, "-Wl,--file-alignment,0x1000,--section-alignment,0x1000" ))
             strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s,--section-alignment,%s",
                                                file_align, section_align ));
-        strarray_add( &link_args, target.cpu == CPU_i386 ?
-                      "-Wl,--undefined,___wine_call_gcc_ctors" : "-Wl,--undefined,__wine_call_gcc_ctors" );
+        if (!entry_point || *entry_point)
+            strarray_add( &link_args, target.cpu == CPU_i386 ?
+                          "-Wl,--undefined,___wine_call_gcc_ctors" : "-Wl,--undefined,__wine_call_gcc_ctors" );
         strarray_addall( &link_args, flags );
         return link_args;
 
@@ -628,7 +629,11 @@ static struct strarray get_link_args( const char *output_name )
             if (!safeseh) strarray_add( &flags, "-Wl,-safeseh:no" );
         }
 
-        if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
+        if (entry_point)
+        {
+            if (*entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
+            else strarray_add( &flags, "-Wl,-noentry" );
+        }
 
         if ((version = strchr( subsystem, ':' ))) subsystem = strmake( "%.*s,%s", (int)(version - subsystem), subsystem, version + 1 );
         strarray_add( &flags, "-Xlinker" );
@@ -1128,11 +1133,7 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
 
     if (!is_shared && large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
 
-    if (entry_point)
-    {
-        strarray_add(&spec_args, "--entry");
-        strarray_add(&spec_args, entry_point);
-    }
+    if (entry_point) strarray_add( &spec_args, strmake( "--entry=%s", entry_point ));
 
     if (!is_pe) STRARRAY_FOR_EACH( imp, &delayimports ) strarray_add(&spec_args, strmake("-d%s", imp));
 
@@ -1169,6 +1170,7 @@ static void build_data_lib( const char *spec_file, const char *output_file, stru
         strarray_add(&spec_args, "-E");
         strarray_add(&spec_args, spec_file);
     }
+    strarray_add( &spec_args, "--data-only" );
     strarray_add( &spec_args, "--subsystem" );
     strarray_add( &spec_args, subsystem );
 
@@ -1337,7 +1339,7 @@ static void build(struct strarray input_files, const char *output)
     }
 
     /* run winebuild to generate the .spec.o file */
-    if (data_only)
+    if (data_only || (!is_pe && entry_point && !*entry_point))
     {
         build_data_lib( spec_file, output_file, files );
         return;
@@ -1887,6 +1889,16 @@ int main(int argc, char **argv)
                                 entry_point = xstrdup( Wl.str[++j] );
                                 continue;
                             }
+                            if (!strncmp(Wl.str[j], "--entry=", 8))
+                            {
+                                entry_point = xstrdup( Wl.str[j] + 8 );
+                                continue;
+                            }
+                            if (!strcmp(Wl.str[j], "-noentry"))
+                            {
+                                entry_point = "";
+                                continue;
+                            }
                             if (!strcmp(Wl.str[j], "-delayload") && j < Wl.count - 1)
                             {
                                 strarray_add( &delayimports, Wl.str[++j] );
@@ -1926,7 +1938,7 @@ int main(int argc, char **argv)
                         STRARRAY_FOR_EACH( arg, &Wb )
                         {
                             if (!strcmp(arg, "--data-only")) data_only = true;
-                            if (!strcmp(arg, "--fake-module")) fake_module = true;
+                            else if (!strcmp(arg, "--fake-module")) fake_module = true;
                             else strarray_add( &winebuild_args, arg );
                             if (!strcmp(arg, "--safeseh")) safeseh = true;
                         }
