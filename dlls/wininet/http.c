@@ -5599,7 +5599,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 
     if (lpBuffersIn)
     {
-        BuffersInW.dwStructSize = sizeof(LPINTERNET_BUFFERSW);
+        BuffersInW.dwStructSize = sizeof(INTERNET_BUFFERSW);
         if (lpBuffersIn->lpcszHeader)
         {
             if (lpBuffersIn->dwHeadersLength == 0 && *lpBuffersIn->lpcszHeader != '\0')
