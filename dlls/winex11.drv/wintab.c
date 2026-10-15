@@ -1364,8 +1364,7 @@ static UINT get_tablet_info( UINT wCategory, UINT nIndex, void *lpOutput )
                                             sizeof(BYTE));
                         break;
                     case CSR_BTNNAMES:
-                        FIXME("Button Names not returned correctly\n");
-                        rc = CopyTabletData(lpOutput,&tgtcursor->BTNNAMES,
+                        rc = CopyTabletData(lpOutput,tgtcursor->BTNNAMES,
                                             tgtcursor->cchBTNNAMES*sizeof(WCHAR));
                         break;
                     case CSR_BUTTONMAP:
