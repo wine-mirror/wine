@@ -5555,13 +5555,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_short, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_short(basic_ostream_wchar *this, short val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %d)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5582,13 +5582,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ushort, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_ushort(basic_ostream_wchar *this, unsigned short val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %d)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5609,13 +5609,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_int, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_int(basic_ostream_wchar *this, int val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %d)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5636,13 +5636,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_uint, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_uint(basic_ostream_wchar *this, unsigned int val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %u)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5661,13 +5661,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_float, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_float(basic_ostream_wchar *this, float val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %f)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5686,13 +5686,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_double, 12)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_double(basic_ostream_wchar *this, double val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %lf)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5711,13 +5711,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ldouble, 12)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_ldouble(basic_ostream_wchar *this, double val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %lf)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5767,13 +5767,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_ptr, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_ptr(basic_ostream_wchar *this, const void *val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %p)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5792,13 +5792,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_int64, 12)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_int64(basic_ostream_wchar *this, __int64 val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p)\n", this);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5817,13 +5817,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_uint64, 12)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_uint64(basic_ostream_wchar *this, unsigned __int64 val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p)\n", this);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
@@ -5842,13 +5842,13 @@ DEFINE_THISCALL_WRAPPER(basic_ostream_short_print_bool, 8)
 basic_ostream_wchar* __thiscall basic_ostream_short_print_bool(basic_ostream_wchar *this, bool val)
 {
     basic_ios_wchar *base = basic_ostream_short_get_basic_ios(this);
-    const num_put *numput = num_put_short_use_facet(IOS_LOCALE(basic_ios_short_rdbuf_get(base)));
     int state = IOSTATE_goodbit;
 
     TRACE("(%p %x)\n", this, val);
 
     if(basic_ostream_short_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_short_rdbuf_get(base);
+        const num_put *numput = num_put_short_use_facet(IOS_LOCALE(strbuf));
         ostreambuf_iterator_wchar dest;
 
         memset(&dest, 0, sizeof(dest));
