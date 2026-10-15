@@ -1,5 +1,4 @@
 MODULE    = twaindsm.dll
-IMPORTLIB = twaindsm
 IMPORTS   = user32
 
 SOURCES = \
