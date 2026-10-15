@@ -1166,6 +1166,8 @@ static void build_data_lib( const char *spec_file, const char *output_file, stru
         strarray_add(&spec_args, "-E");
         strarray_add(&spec_args, spec_file);
     }
+    strarray_add( &spec_args, "--subsystem" );
+    strarray_add( &spec_args, subsystem );
 
     /* add resource files */
     STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add(&spec_args, file);
