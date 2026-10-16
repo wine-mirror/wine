@@ -715,6 +715,44 @@ void * CDECL _aligned_realloc(void *memblock, size_t size, size_t alignment)
     return _aligned_offset_realloc(memblock, size, alignment, 0);
 }
 
+#if _MSVCR_VER>=80
+/*********************************************************************
+ *		_aligned_offset_recalloc (MSVCR80.@)
+ */
+void * CDECL _aligned_offset_recalloc(void *memblock, size_t num, size_t size,
+                                      size_t alignment, size_t offset)
+{
+    size_t old_size = 0;
+    void *ret;
+
+    TRACE("(%p, %Iu, %Iu, %Iu, %Iu)\n", memblock, num, size, alignment, offset);
+
+    if (num && size > (size_t)-1 / num)
+    {
+        *_errno() = ENOMEM;
+        return NULL;
+    }
+    size *= num;
+
+    if (memblock)
+        old_size = _aligned_msize(memblock, alignment, offset);
+
+    ret = _aligned_offset_realloc(memblock, size, alignment, offset);
+    if (ret && size > old_size)
+        memset((char *)ret + old_size, 0, size - old_size);
+    return ret;
+}
+
+/*********************************************************************
+ *		_aligned_recalloc (MSVCR80.@)
+ */
+void * CDECL _aligned_recalloc(void *memblock, size_t num, size_t size, size_t alignment)
+{
+    TRACE("(%p, %Iu, %Iu, %Iu)\n", memblock, num, size, alignment);
+    return _aligned_offset_recalloc(memblock, num, size, alignment, 0);
+}
+#endif
+
 /*********************************************************************
  *		memmove_s (MSVCRT.@)
  */

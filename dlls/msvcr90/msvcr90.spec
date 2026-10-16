@@ -358,9 +358,9 @@
 @ cdecl _aligned_msize(ptr long long)
 @ cdecl _aligned_offset_malloc(long long long)
 @ cdecl _aligned_offset_realloc(ptr long long long)
-@ stub _aligned_offset_recalloc
+@ cdecl _aligned_offset_recalloc(ptr long long long long)
 @ cdecl _aligned_realloc(ptr long long)
-@ stub _aligned_recalloc
+@ cdecl _aligned_recalloc(ptr long long long)
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str)

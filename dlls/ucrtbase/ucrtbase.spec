@@ -190,9 +190,9 @@
 @ cdecl _aligned_msize(ptr long long)
 @ cdecl _aligned_offset_malloc(long long long)
 @ cdecl _aligned_offset_realloc(ptr long long long)
-@ stub _aligned_offset_recalloc
+@ cdecl _aligned_offset_recalloc(ptr long long long long)
 @ cdecl _aligned_realloc(ptr long long)
-@ stub _aligned_recalloc
+@ cdecl _aligned_recalloc(ptr long long long)
 @ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str)
 @ cdecl _atodbl_l(ptr str ptr)
@@ -842,9 +842,9 @@
 @ cdecl _o__aligned_msize(ptr long long) _aligned_msize
 @ cdecl _o__aligned_offset_malloc(long long long) _aligned_offset_malloc
 @ cdecl _o__aligned_offset_realloc(ptr long long long) _aligned_offset_realloc
-@ stub _o__aligned_offset_recalloc
+@ cdecl _o__aligned_offset_recalloc(ptr long long long long) _aligned_offset_recalloc
 @ cdecl _o__aligned_realloc(ptr long long) _aligned_realloc
-@ stub _o__aligned_recalloc
+@ cdecl _o__aligned_recalloc(ptr long long long) _aligned_recalloc
 @ cdecl _o__atodbl(ptr str) _atodbl
 @ cdecl _o__atodbl_l(ptr str ptr) _atodbl_l
 @ cdecl _o__atof_l(str ptr) _atof_l

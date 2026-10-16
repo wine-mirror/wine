@@ -997,9 +997,9 @@
 @ cdecl _aligned_msize(ptr long long) msvcr120._aligned_msize
 @ cdecl _aligned_offset_malloc(long long long) msvcr120._aligned_offset_malloc
 @ cdecl _aligned_offset_realloc(ptr long long long) msvcr120._aligned_offset_realloc
-@ stub _aligned_offset_recalloc
+@ cdecl _aligned_offset_recalloc(ptr long long long long) msvcr120._aligned_offset_recalloc
 @ cdecl _aligned_realloc(ptr long long) msvcr120._aligned_realloc
-@ stub _aligned_recalloc
+@ cdecl _aligned_recalloc(ptr long long long) msvcr120._aligned_recalloc
 @ cdecl _amsg_exit(long) msvcr120._amsg_exit
 @ cdecl _assert(str str long) msvcr120._assert
 @ cdecl _atodbl(ptr str) msvcr120._atodbl
