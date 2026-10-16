@@ -3935,10 +3935,9 @@ static HRESULT WINAPI parse_content_handler_endPrefixMapping(ISAXContentHandler 
     return S_OK;
 }
 
-static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *iface, const WCHAR *uri, int uri_len,
-        const WCHAR *name, int name_len, const WCHAR *qname, int qname_len, ISAXAttributes *attrs)
+static HRESULT parse_context_start_element(struct parse_context *c, const WCHAR *uri, int uri_len,
+        const WCHAR *name, int name_len, const WCHAR *qname, int qname_len, ISAXAttributes *attrs, bool is_empty)
 {
-    struct parse_context *c = impl_from_ISAXContentHandler(iface);
     struct domnode *element, *attr;
     int max_depth = c->max_depth;
     int count, length;
@@ -3952,6 +3951,9 @@ static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *ifa
     parse_context_node_create(c, NODE_ELEMENT, qname, qname_len, uri, uri_len, c->root, &element);
     parse_context_append_child(c, c->node, element);
     c->node = element;
+
+    if (is_empty)
+        element->flags |= DOMNODE_USE_EMPTY_TAG;
 
     /* TODO: error handling */
 
@@ -3982,16 +3984,27 @@ static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *ifa
     return c->status;
 }
 
-static HRESULT WINAPI parse_content_handler_endElement(ISAXContentHandler *iface, const WCHAR *uri, int uri_len,
-        const WCHAR *name, int name_len, const WCHAR *qname, int qname_len)
+static HRESULT parse_context_end_element(struct parse_context *c)
 {
-    struct parse_context *c = impl_from_ISAXContentHandler(iface);
-
     --c->depth;
     parse_context_create_text_node(c, NODE_TEXT);
     c->node = c->node->parent;
 
     return c->status;
+}
+
+static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *iface, const WCHAR *uri, int uri_len,
+        const WCHAR *name, int name_len, const WCHAR *qname, int qname_len, ISAXAttributes *attrs)
+{
+    struct parse_context *c = impl_from_ISAXContentHandler(iface);
+    return parse_context_start_element(c, uri, uri_len, name, name_len, qname, qname_len, attrs, false);
+}
+
+static HRESULT WINAPI parse_content_handler_endElement(ISAXContentHandler *iface, const WCHAR *uri, int uri_len,
+        const WCHAR *name, int name_len, const WCHAR *qname, int qname_len)
+{
+    struct parse_context *c = impl_from_ISAXContentHandler(iface);
+    return parse_context_end_element(c);
 }
 
 static HRESULT WINAPI parse_content_handler_characters(ISAXContentHandler *iface, const WCHAR *chars, int count)
@@ -4281,6 +4294,22 @@ static HRESULT WINAPI parse_extension_handler_dtd(ISAXExtensionHandler *iface,
     return c->status;
 }
 
+static HRESULT WINAPI parse_extension_handler_startEmptyElement(ISAXExtensionHandler *iface,
+        const WCHAR *uri, int uri_len, const WCHAR *name, int name_len,
+        const WCHAR *qname, int qname_len, ISAXAttributes *attrs)
+{
+    struct parse_context *c = impl_from_ISAXExtensionHandler(iface);
+    return parse_context_start_element(c, uri, uri_len, name, name_len, qname, qname_len, attrs, true);
+}
+
+static HRESULT WINAPI parse_extension_handler_endEmptyElement(ISAXExtensionHandler *iface,
+        const WCHAR *uri, int uri_len, const WCHAR *name, int name_len,
+        const WCHAR *qname, int qname_len)
+{
+    struct parse_context *c = impl_from_ISAXExtensionHandler(iface);
+    return parse_context_end_element(c);
+}
+
 static const ISAXExtensionHandlerVtbl parse_extension_handler_vtbl =
 {
     parse_extension_handler_QueryInterface,
@@ -4288,6 +4317,8 @@ static const ISAXExtensionHandlerVtbl parse_extension_handler_vtbl =
     parse_extension_handler_Release,
     parse_extension_handler_xmldecl,
     parse_extension_handler_dtd,
+    parse_extension_handler_startEmptyElement,
+    parse_extension_handler_endEmptyElement,
 };
 
 static struct parse_context *impl_from_ISAXLexicalHandler(ISAXLexicalHandler *iface)

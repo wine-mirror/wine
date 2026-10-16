@@ -22,6 +22,8 @@ import "unknwn.idl";
 import "objidl.idl";
 import "oaidl.idl";
 
+interface ISAXAttributes;
+
 struct dtd;
 
 [
@@ -33,6 +35,23 @@ interface ISAXExtensionHandler : IUnknown
 {
     HRESULT xmldecl([in] BSTR version, [in] BSTR encoding,[in] BSTR standalone);
     HRESULT dtd([in] BSTR data, [in] struct dtd *dtd);
+
+    HRESULT startEmptyElement(
+        [in] const WCHAR *uri,
+        [in] int uri_len,
+        [in] const WCHAR *name,
+        [in] int name_len,
+        [in] const WCHAR *qname,
+        [in] int qname_len,
+        [in] ISAXAttributes *attrs);
+
+    HRESULT endEmptyElement(
+        [in] const WCHAR *uri,
+        [in] int uri_len,
+        [in] const WCHAR *name,
+        [in] int name_len,
+        [in] const WCHAR *qname,
+        [in] int qname_len);
 }
 
 [

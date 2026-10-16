@@ -205,6 +205,7 @@ enum domnode_flags
     DOMNODE_PARSED_VALUE = 0x8,
     DOMNODE_NS_DECL = 0x10,
     DOMNODE_NO_PARENT = 0x20,
+    DOMNODE_USE_EMPTY_TAG = 0x40,
 };
 
 struct domdoc_properties

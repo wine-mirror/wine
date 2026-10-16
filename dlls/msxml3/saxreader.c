@@ -2699,8 +2699,9 @@ static void saxlocator_end_document(struct saxlocator *locator)
 }
 
 static void saxlocator_start_element(struct saxlocator *locator, const struct text_position *position,
-        struct element *element)
+        struct element *element, bool is_empty)
 {
+    struct saxextensionhandler_iface *extension_handler = saxreader_get_extensionhandler(locator->saxreader);
     struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(locator->saxreader);
     int max_depth = locator->saxreader->max_element_depth;
     MSXML_VERSION version = locator->saxreader->version;
@@ -2751,7 +2752,15 @@ static void saxlocator_start_element(struct saxlocator *locator, const struct te
         local = element->name.local;
     }
 
-    if (locator->vbInterface)
+    if (is_empty && saxreader_has_handler(locator, SAXExtensionHandler))
+    {
+        hr = ISAXExtensionHandler_startEmptyElement(extension_handler->handler,
+                uri ? uri : &empty_str, SysStringLen(uri),
+                local ? local : &empty_str, SysStringLen(local),
+                element->name.qname, SysStringLen(element->name.qname),
+                &locator->ISAXAttributes_iface);
+    }
+    else if (locator->vbInterface)
     {
         if (!uri) uri = locator->saxreader->empty_bstr;
         hr = IVBSAXContentHandler_startElement(handler->vbhandler, &uri, &local, &element->name.qname,
@@ -2767,8 +2776,10 @@ static void saxlocator_start_element(struct saxlocator *locator, const struct te
     locator->status = saxlocator_callback_result(locator, hr);
 }
 
-static void saxlocator_end_element(struct saxlocator *locator, const struct text_position *position, struct element *element)
+static void saxlocator_end_element(struct saxlocator *locator, const struct text_position *position,
+        struct element *element, bool is_empty)
 {
+    struct saxextensionhandler_iface *extension_handler = saxreader_get_extensionhandler(locator->saxreader);
     struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(locator->saxreader);
     BSTR uri = NULL, local = NULL;
     HRESULT hr;
@@ -2792,7 +2803,14 @@ static void saxlocator_end_element(struct saxlocator *locator, const struct text
             local = element->name.local;
         }
 
-        if (locator->vbInterface)
+        if (is_empty && saxreader_has_handler(locator, SAXExtensionHandler))
+        {
+            hr = ISAXExtensionHandler_endEmptyElement(extension_handler->handler,
+                    uri ? uri : &empty_str, SysStringLen(uri),
+                    local ? local : &empty_str, SysStringLen(local),
+                    element->name.qname, SysStringLen(element->name.qname));
+        }
+        else if (locator->vbInterface)
         {
             if (!uri) uri = locator->saxreader->empty_bstr;
             hr = IVBSAXContentHandler_endElement(handler->vbhandler, &uri, &local, &element->name.qname);
@@ -4454,10 +4472,10 @@ static void saxreader_parse_starttag(struct saxlocator *locator)
        so we have to reiterate after all attributes were parsed. */
     saxreader_set_element_uri(locator, element);
 
-    saxlocator_start_element(locator, &position, element);
+    saxlocator_start_element(locator, &position, element, empty_element);
     if (empty_element)
     {
-        saxlocator_end_element(locator, &position, element);
+        saxlocator_end_element(locator, &position, element, true);
         list_remove(&element->entry);
         saxreader_free_element(element);
     }
@@ -4488,7 +4506,7 @@ static void saxreader_parse_endtag(struct saxlocator *locator)
         element = LIST_ENTRY(list_head(&locator->elements), struct element, entry);
 
         if (!wcscmp(element->name.qname, name.qname))
-            saxlocator_end_element(locator, &position, element);
+            saxlocator_end_element(locator, &position, element, false);
         else
             hr = E_SAX_ENDTAGMISMATCH;
 

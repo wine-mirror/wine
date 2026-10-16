@@ -1160,6 +1160,11 @@ static HRESULT WINAPI domdoc_createNode(IXMLDOMDocument3 *iface, VARIANT type, B
         return hr;
     }
 
+    if (node_type == NODE_ELEMENT)
+    {
+        domnode->flags |= DOMNODE_USE_EMPTY_TAG;
+    }
+
     return create_node(domnode, node);
 }
 
