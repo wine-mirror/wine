@@ -9678,7 +9678,6 @@ static void test_get_xml(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMElement_get_xml(elem, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
 
@@ -9686,7 +9685,6 @@ static void test_get_xml(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_xml(node, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
     IXMLDOMNode_Release(node);
@@ -9695,7 +9693,6 @@ static void test_get_xml(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_xml(node, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
     IXMLDOMNode_Release(node);
@@ -9719,7 +9716,6 @@ static void test_get_xml(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMElement_get_xml(elem, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
     SysFreeString(xml);
 

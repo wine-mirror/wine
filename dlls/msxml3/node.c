@@ -1462,6 +1462,7 @@ HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **clo
     {
         return hr;
     }
+    object->flags |= node->flags & DOMNODE_USE_EMPTY_TAG;
 
     if (node->type == NODE_DOCUMENT)
         object->properties = domdoc_properties_clone(node->properties);
@@ -2066,7 +2067,16 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
             node_dump_element_attributes(context, node);
             if (list_empty(&node->children))
             {
-                node_dump_append(context, L"/>", 2);
+                if (node->flags & DOMNODE_USE_EMPTY_TAG)
+                {
+                    node_dump_append(context, L"/>", 2);
+                }
+                else
+                {
+                    node_dump_append(context, L"></", 3);
+                    node_dump_qualified_name(context, node);
+                    node_dump_append(context, L">", 1);
+                }
             }
             else
             {
