@@ -1821,6 +1821,62 @@ static void test__get_heap_handle(void)
     ok((HANDLE)_get_heap_handle() == GetProcessHeap(), "Expected _get_heap_handle() to return GetProcessHeap()\n");
 }
 
+static BOOL mem_is(const unsigned char *mem, unsigned char c, size_t size)
+{
+    size_t i;
+
+    for (i = 0; i < size; i++)
+        if (mem[i] != c) return FALSE;
+    return TRUE;
+}
+
+static void test__aligned_recalloc(void)
+{
+    void* (CDECL *p__aligned_recalloc)(void*, size_t, size_t, size_t);
+    unsigned char *mem, *mem2;
+
+    p__aligned_recalloc = (void*)GetProcAddress(GetModuleHandleW(L"ucrtbase.dll"), "_aligned_recalloc");
+
+    mem = p__aligned_recalloc(NULL, 4, 8, 16);
+    ok(mem != NULL, "_aligned_recalloc failed\n");
+    ok(!((uintptr_t)mem & 15), "mem = %p\n", mem);
+    ok(mem_is(mem, 0, 32), "memory not zeroed\n");
+    memset(mem, 0xcc, 32);
+
+    mem2 = p__aligned_recalloc(mem, 8, 8, 16);
+    ok(mem2 != NULL, "_aligned_recalloc failed\n");
+    ok(!((uintptr_t)mem2 & 15), "mem2 = %p\n", mem2);
+    ok(mem_is(mem2, 0xcc, 32), "old data not preserved\n");
+    ok(mem_is(mem2 + 32, 0, 32), "new memory not zeroed\n");
+    mem = mem2;
+
+    mem2 = p__aligned_recalloc(mem, 2, 8, 16);
+    ok(mem2 != NULL, "_aligned_recalloc failed\n");
+    ok(!((uintptr_t)mem2 & 15), "mem2 = %p\n", mem2);
+    ok(mem_is(mem2, 0xcc, 16), "old data not preserved\n");
+    mem = mem2;
+
+    errno = 0xdeadbeef;
+    mem2 = p__aligned_recalloc(mem, ~(size_t)0, 2, 16);
+    ok(!mem2, "_aligned_recalloc returned %p\n", mem2);
+    ok(errno == ENOMEM, "errno = %d\n", errno);
+    ok(mem_is(mem, 0xcc, 16), "old data changed\n");
+    _aligned_free(mem);
+
+    mem = _aligned_offset_recalloc(NULL, 3, 8, 32, 8);
+    ok(mem != NULL, "_aligned_offset_recalloc failed\n");
+    ok(!(((uintptr_t)mem + 8) & 31), "mem = %p\n", mem);
+    ok(mem_is(mem, 0, 24), "memory not zeroed\n");
+    memset(mem, 0xcc, 24);
+
+    mem2 = _aligned_offset_recalloc(mem, 6, 8, 32, 8);
+    ok(mem2 != NULL, "_aligned_offset_recalloc failed\n");
+    ok(!(((uintptr_t)mem2 + 8) & 31), "mem2 = %p\n", mem2);
+    ok(mem_is(mem2, 0xcc, 24), "old data not preserved\n");
+    ok(mem_is(mem2 + 24, 0, 24), "new memory not zeroed\n");
+    _aligned_free(mem2);
+}
+
 static void test_exp(void)
 {
     static const struct {
@@ -2202,6 +2258,7 @@ START_TEST(misc)
 #endif
     test_gmtime64();
     test__get_heap_handle();
+    test__aligned_recalloc();
     test_exp();
     test_expf();
     test_cexp();
