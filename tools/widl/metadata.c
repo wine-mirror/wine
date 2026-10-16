@@ -4033,6 +4033,82 @@ static UINT rewrite_sig_blob( const struct winmd *winmd, const BYTE *sig, UINT i
     return idx - start;
 }
 
+static UINT merge_param_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
+{
+    UINT i, first_param = 0;
+
+    for (i = idx_start; i <= idx_end; i++)
+    {
+        const struct param_row *param = &((const struct param_row *)winmd->tables[TABLE_PARAM].ptr)[i];
+        const char *name = winmd_get_string( winmd, param->name );
+        UINT row;
+
+        row = add_param_row( param->flags, param->sequence, add_string( name ) );
+        if (!first_param) first_param = row;
+    }
+    assert( first_param );
+    return first_param;
+}
+
+static UINT merge_method_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
+{
+    struct buffer new_sig = {0};
+    UINT i, first_method = 0;
+
+    for (i = idx_start; i <= idx_end; i++)
+    {
+        const struct methoddef_row *def = &((const struct methoddef_row *)winmd->tables[TABLE_METHODDEF].ptr)[i];
+        UINT sig_len, param_count, read, len, j, param_start, param_end, method, new_params = 0;
+        BYTE return_type, encoded[4];
+        const char *name;
+        const BYTE *sig;
+
+        sig = winmd_get_blob( winmd, def->signature, &sig_len );
+        assert( sig_len >= 3 );
+        if (sig[0] != SIG_TYPE_DEFAULT && sig[0] != SIG_TYPE_HASTHIS)
+        {
+            fprintf( stderr, "%s: unsupported calling convention: %#hhx\n", winmd->name, sig[0] );
+            exit( 1 );
+        }
+        new_sig.offset = 0;
+        add_bytes( &new_sig, &sig[0], 1 );
+
+        param_count = decode_int( &sig[1], &read );
+        len = encode_int( param_count, encoded );
+        add_bytes( &new_sig, encoded, len );
+
+        return_type = sig[1 + read];
+        if (return_type != ELEMENT_TYPE_VOID)
+            read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
+        else
+        {
+            add_bytes( &new_sig, &return_type, 1 );
+            read++;
+        }
+
+        assert( !!param_count == !!(sig_len - 1 - read));
+        for (j = 0; j < param_count; j++)
+            read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
+
+        if (param_count &&
+            token_list_get_bounds( winmd, sizeof( *def ), i, FIELD_OFFSET( struct methoddef_row, paramlist ),
+                                   TABLE_METHODDEF, TABLE_PARAM, &param_start, &param_end ))
+        {
+            if (return_type == ELEMENT_TYPE_VOID)
+                assert( param_count == (param_end - param_start) + 1);
+            else
+                assert( param_count == (param_end - param_start) );
+            new_params = merge_param_list( winmd, param_start, param_end );
+        }
+        name = winmd_get_string( winmd, def->name );
+        method = add_methoddef_row( def->implflags, def->flags, add_string( name ),
+                                    add_blob( new_sig.ptr, new_sig.offset ), new_params );
+        if (!first_method) first_method = method;
+    }
+    assert( first_method );
+    return first_method;
+}
+
 static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
 {
     static const BYTE field_prefix[] = {SIG_TYPE_FIELD};
@@ -4063,7 +4139,7 @@ static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT id
 static UINT merge_typedef_row( const struct winmd *winmd, UINT idx )
 {
     const struct typedef_row *def = &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[idx];
-    UINT start_idx, end_idx, row, new_extends = 0, new_fieldlist = 0;
+    UINT start_idx, end_idx, row, new_extends = 0, new_fieldlist = 0, new_methodlist = 0;
     const char *name, *namespace;
 
     name = winmd_get_string( winmd, def->name );
@@ -4076,8 +4152,12 @@ static UINT merge_typedef_row( const struct winmd *winmd, UINT idx )
     if (token_list_get_bounds( winmd, sizeof( *def ), idx, FIELD_OFFSET( struct typedef_row, fieldlist ), TABLE_TYPEDEF,
                                TABLE_FIELD, &start_idx, &end_idx ))
         new_fieldlist = merge_field_list( winmd, start_idx, end_idx );
+    if (token_list_get_bounds( winmd, sizeof( *def ), idx, FIELD_OFFSET( struct typedef_row, methodlist ),
+                               TABLE_TYPEDEF, TABLE_METHODDEF, &start_idx, &end_idx ))
+        new_methodlist = merge_method_list( winmd, start_idx, end_idx );
 
-    return add_typedef_row( def->flags, add_string( name ), add_string( namespace ), new_extends, new_fieldlist, 0 );
+    return add_typedef_row( def->flags, add_string( name ), add_string( namespace ), new_extends, new_fieldlist,
+                            new_methodlist );
 }
 
 static void merge_typedefs( void )
