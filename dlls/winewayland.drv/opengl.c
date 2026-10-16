@@ -187,7 +187,7 @@ static BOOL wayland_pbuffer_create(HDC hdc, int format, SIZE size, BOOL largest,
     struct wayland_pbuffer *gl;
 
     TRACE("hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
-          hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable);
+          hdc, format, debugstr_size(&size), largest, texture_format, texture_target, max_level, drawable);
 
     if (!(gl = opengl_drawable_create(&wayland_pbuffer_funcs, format, NULL, &size))) return FALSE;
     /* Wayland EGL doesn't support pixmap or pbuffer, create a dummy window surface to act as the target render surface. */

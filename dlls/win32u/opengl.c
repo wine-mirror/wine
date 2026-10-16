@@ -811,7 +811,7 @@ static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenu
         return;
     }
 
-    TRACE( "drawable %p/%u resized %s buffer %#x/%u to %s\n", drawable, fbo, kind, attachment, name, wine_dbgstr_point( (POINT *)&size ) );
+    TRACE( "drawable %p/%u resized %s buffer %#x/%u to %s\n", drawable, fbo, kind, attachment, name, debugstr_size( &size ) );
 }
 
 static void resize_framebuffer_attachment( struct opengl_drawable *drawable, GLenum fbo, GLenum attachment,
@@ -878,7 +878,7 @@ static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct
             init_framebuffer_attachment( drawable, fbo, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE, name, desc, size );
             funcs->p_glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, name, 0 );
         }
-        TRACE( "drawable %p/%u created color buffer %#x/%u, %s\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name, wine_dbgstr_point( (POINT *)&size ) );
+        TRACE( "drawable %p/%u created color buffer %#x/%u, %s\n", drawable, fbo, GL_COLOR_ATTACHMENT0 + i, name, debugstr_size( &size ) );
     }
 
     if (desc->pfd.cDepthBits)
@@ -887,7 +887,7 @@ static GLuint create_framebuffer( struct opengl_drawable *drawable, const struct
         init_framebuffer_attachment( drawable, fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name, desc, size );
         funcs->p_glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name );
         if (desc->pfd.cStencilBits) funcs->p_glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name );
-        TRACE( "drawable %p/%u created depth buffer %u, %s\n", drawable, fbo, name, wine_dbgstr_point( (POINT *)&size ) );
+        TRACE( "drawable %p/%u created depth buffer %u, %s\n", drawable, fbo, name, debugstr_size( &size ) );
     }
 
     TRACE( "drawable %p created framebuffer %u\n", drawable, fbo );
@@ -910,7 +910,7 @@ static void resize_framebuffer( struct opengl_drawable *drawable, const struct w
 
     ret = funcs->p_glCheckFramebufferStatus( GL_FRAMEBUFFER );
     if (ret != GL_FRAMEBUFFER_COMPLETE) WARN( "glCheckFramebufferStatus returned %#x\n", ret );
-    TRACE( "drawable %p/%u resized buffers to %s\n", drawable, fbo, wine_dbgstr_point( (POINT *)&size ) );
+    TRACE( "drawable %p/%u resized buffers to %s\n", drawable, fbo, debugstr_size( &size ) );
 }
 
 static void destroy_framebuffer( struct opengl_drawable *drawable, const struct wgl_pixel_format *desc, GLuint fbo )
@@ -973,8 +973,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
 
-    TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), wine_dbgstr_point( (POINT *)&src ),
-           wine_dbgstr_point( (POINT *)&dst ), drawable->read_fbo );
+    TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
@@ -1075,12 +1074,12 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
 
         make_thread_context_current( surface->root_context, NULL );
 
-        TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->read_fbo, wine_dbgstr_point( (POINT *)&size ) );
+        TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->read_fbo, debugstr_size( &size ) );
         resize_framebuffer( drawable, &read_desc, drawable->read_fbo, size );
 
         if (drawable->draw_fbo != drawable->read_fbo)
         {
-            TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->draw_fbo, wine_dbgstr_point( (POINT *)&size ) );
+            TRACE( "Resizing drawable %p/%u to %s\n", drawable, drawable->draw_fbo, debugstr_size( &size ) );
             resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, size );
         }
     }
@@ -1444,7 +1443,7 @@ static BOOL egldrv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest,
     EGLSurface pbuffer;
 
     TRACE( "hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
-           hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable );
+           hdc, format, debugstr_size( &size ), largest, texture_format, texture_target, max_level, drawable );
 
     *attrib++ = EGL_WIDTH;
     *attrib++ = size.cx;
@@ -2707,7 +2706,7 @@ static BOOL win32u_pbuffer_create( HDC hdc, int format, SIZE size, const int *at
     struct pbuffer *pbuffer;
     UINT total, onscreen;
 
-    TRACE( "(%p, %d, %s, %p)\n", hdc, format, wine_dbgstr_point((POINT *)&size), attribs );
+    TRACE( "(%p, %d, %s, %p)\n", hdc, format, debugstr_size( &size ), attribs );
 
     funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
     if (format <= 0 || format > total)

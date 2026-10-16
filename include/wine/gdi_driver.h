@@ -59,6 +59,11 @@ static inline const char *debugstr_window_rects( const struct window_rects *rect
                              wine_dbgstr_rect( &rects->client ), wine_dbgstr_rect( &rects->visible ) );
 }
 
+static inline const char *debugstr_size( const SIZE *size )
+{
+    return wine_dbgstr_point( (POINT *)size );
+}
+
 /* convert a visible rect to the corresponding window rect, using the window_rects offsets */
 static inline RECT window_rect_from_visible( const struct window_rects *rects, RECT visible_rect )
 {

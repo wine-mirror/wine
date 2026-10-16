@@ -1271,7 +1271,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, SIZE size, BOOL largest,
     RECT rect;
 
     TRACE( "hdc %p, format %d, size %s, largest %u, texture_format %#x, texture_target %#x, max_level %#x, drawable %p\n",
-           hdc, format, wine_dbgstr_point((POINT *)&size), largest, texture_format, texture_target, max_level, drawable );
+           hdc, format, debugstr_size(&size), largest, texture_format, texture_target, max_level, drawable );
 
     glx_attribs[count++] = GLX_PBUFFER_WIDTH;
     glx_attribs[count++] = size.cx;

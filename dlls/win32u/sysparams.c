@@ -2060,7 +2060,7 @@ static UINT add_screen_size( SIZE *sizes, UINT count, SIZE size )
     while (i < count && memcmp( sizes + i, &size, sizeof(size) )) i++;
     if (i < count) return 0;
 
-    TRACE( "adding size %s\n", wine_dbgstr_point((POINT *)&size) );
+    TRACE( "adding size %s\n", debugstr_size( &size ) );
     sizes[i] = size;
     return 1;
 }
