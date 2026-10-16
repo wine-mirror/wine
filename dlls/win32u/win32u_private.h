@@ -328,7 +328,7 @@ extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest, BOOL send_nchi
 extern HWND get_shell_window(void);
 extern HWND get_progman_window(void);
 extern HWND get_taskman_window(void);
-extern BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd );
+extern HWND get_client_surface_window( struct client_surface *surface );
 extern void client_surface_update( struct client_surface *surface );
 extern BOOL client_surface_set_color_space( struct client_surface *surface, VkColorSpaceKHR color_space );
 extern BOOL client_surface_get_size( struct client_surface *surface, SIZE *virtual_size, SIZE *monitor_size );

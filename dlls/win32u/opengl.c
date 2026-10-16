@@ -374,6 +374,7 @@ void *opengl_drawable_create( const struct opengl_drawable_funcs *funcs, int for
     if (!(drawable->client = client)) drawable->virtual_size = drawable->monitor_size = *size;
     else
     {
+        drawable->hwnd = get_client_surface_window( client );
         client_surface_get_size( client, &drawable->virtual_size, &drawable->monitor_size );
         client_surface_add_ref( client );
     }
@@ -430,7 +431,7 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 {
     if (!drawable->funcs->flush) return;
 
-    if (is_client_surface_window( drawable->client, 0 ))
+    if (get_client_surface_window( drawable->client ) != NULL)
     {
         if (client_surface_get_size( drawable->client, &drawable->virtual_size, &drawable->monitor_size ))
             flags |= GL_FLUSH_UPDATED;
@@ -447,7 +448,7 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 
 static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
 {
-    if (!is_client_surface_window( drawable->client, 0 )) return FALSE;
+    if (get_client_surface_window( drawable->client ) == NULL) return FALSE;
     client_surface_update( drawable->client );
     return drawable->funcs->swap( drawable );
 }
@@ -2105,7 +2106,7 @@ void set_window_opengl_drawable( HWND hwnd, struct opengl_drawable *new_drawable
     struct opengl_drawable *old_drawable = NULL;
     WND *win;
 
-    if ((win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    if (hwnd && (win = get_win_ptr( hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
     {
         struct opengl_drawable **ptr = current ? &win->current_drawable : &win->unused_drawable;
         old_drawable = *ptr;
@@ -2567,11 +2568,11 @@ static struct opengl_drawable *get_updated_drawable( HDC hdc, int format, struct
 
     /* return the memory DCs drawables directly */
     if (hdc && !(hwnd = NtUserWindowFromDC( hdc ))) return get_dc_opengl_drawable( hdc );
-    if (!hdc && drawable && drawable->client) hwnd = drawable->client->hwnd;
+    if (!hdc && drawable) hwnd = drawable->hwnd;
     if (!hwnd) return NULL;
 
     /* if the drawable we were using is for the same window, keep using it */
-    if (drawable && is_client_surface_window( drawable->client, hwnd ))
+    if (drawable && get_client_surface_window( drawable->client ) == hwnd)
     {
         opengl_drawable_add_ref( drawable );
         return drawable;
@@ -2589,7 +2590,6 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 {
     struct opengl_drawable *new_draw, *new_read, *old_draw = NULL, *old_read = NULL;
     struct opengl_context *previous = NtCurrentTeb()->glReserved2;
-    struct client_surface *client;
     BOOL ret;
 
     if (!(new_draw = get_updated_drawable( draw_hdc, context->attrs.format, context->draw ))) return FALSE;
@@ -2615,10 +2615,10 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         context_exchange_drawables( context, &new_draw, &new_read );
         get_opengl_thread_data()->client_current = TRUE;
 
-        if (old_draw && old_draw != context->draw && old_draw != context->read && old_draw->client)
-            set_window_opengl_drawable( old_draw->client->hwnd, old_draw, FALSE );
-        if (old_read && old_read != context->draw && old_read != context->read && old_read->client)
-            set_window_opengl_drawable( old_read->client->hwnd, old_read, FALSE );
+        if (old_draw && old_draw != context->draw && old_draw != context->read)
+            set_window_opengl_drawable( old_draw->hwnd, old_draw, FALSE );
+        if (old_read && old_read != context->draw && old_read != context->read)
+            set_window_opengl_drawable( old_read->hwnd, old_read, FALSE );
 
         opengl_drawable_flush( context->read, context->read->interval, GL_FLUSH_ACTIVATE );
         opengl_drawable_flush( context->draw, context->draw->interval, GL_FLUSH_ACTIVATE );
@@ -2635,11 +2635,9 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
 done:
     if (new_draw) opengl_drawable_release( new_draw );
     if (new_read) opengl_drawable_release( new_read );
-    if (ret && (client = context->draw->client))
-    {
-        /* update the current window drawable to the last used draw surface */
-        set_window_opengl_drawable( client->hwnd, context->draw, TRUE );
-    }
+
+    /* update the current window drawable to the last used draw surface */
+    if (ret) set_window_opengl_drawable( context->draw->hwnd, context->draw, TRUE );
     return ret;
 }
 
@@ -2659,9 +2657,9 @@ static BOOL win32u_make_current( HDC draw_hdc, HDC read_hdc, struct opengl_conte
         NtCurrentTeb()->glContext = NULL;
 
         context_exchange_drawables( context, &draw, &read );
-        if (draw->client) set_window_opengl_drawable( draw->client->hwnd, draw, FALSE );
+        set_window_opengl_drawable( draw->hwnd, draw, FALSE );
         opengl_drawable_release( draw );
-        if (read->client) set_window_opengl_drawable( read->client->hwnd, read, FALSE );
+        set_window_opengl_drawable( read->hwnd, read, FALSE );
         opengl_drawable_release( read );
 
         return TRUE;
@@ -2991,7 +2989,7 @@ static int get_window_swap_interval( HWND hwnd )
     int interval;
     WND *win;
 
-    if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return 0;
+    if (!hwnd || !(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return 0;
     interval = win->swap_interval;
     release_win_ptr( win );
 
@@ -3104,10 +3102,10 @@ static BOOL win32u_context_flush( struct opengl_context *context, void (*flush)(
     int interval;
 
     if (!draw->client) return flush_memory_pbuffer( flush );
-    interval = get_window_swap_interval( draw->client->hwnd );
+    interval = get_window_swap_interval( draw->hwnd );
     if (flags & GL_FLUSH_FORCE_SWAP) interval = 0;
 
-    TRACE( "context %p, hwnd %p, interval %d, flush %p, flags %#x\n", context, draw->client->hwnd, interval, flush, flags );
+    TRACE( "context %p, hwnd %p, interval %d, flush %p, flags %#x\n", context, draw->hwnd, interval, flush, flags );
 
     context_sync_drawables( context, 0, 0 );
     if (!(draw = context->draw)) return FALSE; /* should never happen */
@@ -3616,9 +3614,9 @@ void cleanup_opengl_thread(void)
         struct opengl_drawable *draw = NULL, *read = NULL;
 
         context_exchange_drawables( context, &draw, &read );
-        if (draw->client) set_window_opengl_drawable( draw->client->hwnd, draw, FALSE );
+        set_window_opengl_drawable( draw->hwnd, draw, FALSE );
         opengl_drawable_release( draw );
-        if (read->client) set_window_opengl_drawable( read->client->hwnd, read, FALSE );
+        set_window_opengl_drawable( read->hwnd, read, FALSE );
         opengl_drawable_release( read );
     }
 

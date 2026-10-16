@@ -526,14 +526,13 @@ struct client_surface *get_unused_client_surface( HWND hwnd, int format, BOOL ra
     return surface ? surface : user_driver->pCreateClientSurface( hwnd, format, raw );
 }
 
-BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )
+HWND get_client_surface_window( struct client_surface *surface )
 {
-    BOOL ret;
+    HWND ret;
 
     if (!surface) return FALSE;
     pthread_mutex_lock( &surfaces_lock );
-    if (hwnd) ret = surface->hwnd == hwnd;
-    else ret = surface->hwnd != NULL;
+    ret = surface->hwnd;
     pthread_mutex_unlock( &surfaces_lock );
 
     return ret;
