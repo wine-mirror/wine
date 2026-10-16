@@ -186,6 +186,11 @@ struct d3dkmt_vidpn_source
     struct list entry;                      /* List entry */
 };
 
+struct d3dkmt_swapchain
+{
+    struct d3dkmt_object obj;
+};
+
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
@@ -2073,6 +2078,54 @@ NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local )
 
     if (!(sync = get_d3dkmt_sync( local ))) return STATUS_INVALID_PARAMETER;
     d3dkmt_sync_free( sync );
+
+    return STATUS_SUCCESS;
+}
+
+static void d3dkmt_swapchain_free( struct d3dkmt_swapchain *swapchain )
+{
+    if (!swapchain) return;
+
+    d3dkmt_object_free( &swapchain->obj );
+}
+
+static struct d3dkmt_swapchain *get_d3dkmt_swapchain( D3DKMT_HANDLE handle )
+{
+    struct d3dkmt_object *obj;
+    if (!(obj = get_d3dkmt_object( handle, D3DKMT_SWAPCHAIN ))) return NULL;
+    return CONTAINING_RECORD( obj, struct d3dkmt_swapchain, obj );
+}
+
+NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, D3DKMT_HANDLE *local )
+{
+    struct d3dkmt_swapchain *swapchain;
+    NTSTATUS status;
+    HWND toplevel;
+    RECT rect;
+
+    TRACE( "hwnd %p local %p\n", hwnd, local );
+
+    if (!(toplevel = NtUserGetAncestor( hwnd, GA_ROOT ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
+    if (is_current_process_window( hwnd ) && is_current_process_window( toplevel )) return STATUS_NOT_IMPLEMENTED;
+    if (!get_client_rect( hwnd, &rect, get_dpi_for_window( hwnd ) )) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
+    if ((status = alloc_object_handle( &swapchain->obj ))) d3dkmt_swapchain_free( swapchain );
+    else *local = swapchain->obj.local;
+
+    if (status) WARN( "Failed to create swapchain, status %#x\n", status );
+    else TRACE( "Created remote swapchain %p/%#x\n", swapchain, *local );
+    return status;
+}
+
+NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_swapchain *swapchain;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
+    d3dkmt_swapchain_free( swapchain );
 
     return STATUS_SUCCESS;
 }

@@ -670,9 +670,9 @@ struct framebuffer_surface
     struct opengl_drawable  base;
     struct opengl_context  *root_context;
     struct opengl_drawable *target;         /* driver drawable to present to */
-
-    LONG gamma_serial;
-    GLuint program;
+    LONG                    gamma_serial;   /* serial of the last gamma ramp update */
+    GLuint                  program;        /* shader program for gamma or multisampled blits */
+    D3DKMT_HANDLE           swapchain;      /* target swapchain for cross-process rendering */
 };
 
 static const struct opengl_drawable_funcs framebuffer_surface_funcs;
@@ -961,6 +961,7 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
         make_thread_context_current( surface->root_context, NULL );
         framebuffer_surface_reset( drawable );
     }
+    if (surface->swapchain) d3dkmt_swapchain_destroy_remote( surface->swapchain );
     if (surface->target) opengl_drawable_release( surface->target );
 }
 
@@ -971,8 +972,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
+    NTSTATUS status;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
+
+    if (!surface->swapchain && (status = d3dkmt_swapchain_create_remote( drawable->hwnd, &surface->swapchain )) && status != STATUS_NOT_IMPLEMENTED)
+        WARN( "Failed to create remote swapchain, status %#x\n", status );
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
