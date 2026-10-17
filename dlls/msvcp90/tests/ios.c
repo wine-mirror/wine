@@ -2259,7 +2259,11 @@ static void test_ostream_print_double(void)
 
 static void test_ostream_wchar_print_double(void)
 {
-    basic_ostream_wchar ostream;
+    struct
+    {
+        basic_ostream_wchar ostream;
+        basic_ios_wchar basic_ios;
+    } ostream;
     basic_stringstream_wchar wss;
     basic_string_wchar pwstr;
     const wchar_t *wstr;
@@ -2276,9 +2280,9 @@ static void test_ostream_wchar_print_double(void)
     call_func1(p_basic_string_wchar_dtor, &pwstr);
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
 
-    call_func4(p_basic_ostream_wchar_ctor, &ostream, NULL, FALSE, TRUE);
-    call_func2_ptr_dbl(p_basic_ostream_wchar_print_double, &ostream, val);
-    call_func1(p_basic_ostream_wchar_vbase_dtor, &ostream);
+    call_func4(p_basic_ostream_wchar_ctor, &ostream.ostream, NULL, FALSE, TRUE);
+    call_func2_ptr_dbl(p_basic_ostream_wchar_print_double, &ostream.ostream, val);
+    call_func1(p_basic_ostream_wchar_vbase_dtor, &ostream.ostream);
 }
 
 static void test_istream_read_float(void)
