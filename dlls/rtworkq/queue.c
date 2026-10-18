@@ -609,6 +609,8 @@ static struct work_item * alloc_work_item(struct queue *queue, LONG priority, IR
     struct work_item *item;
 
     item = calloc(1, sizeof(*item));
+    if (!item)
+        return NULL;
 
     item->IUnknown_iface.lpVtbl = &work_item_vtbl;
     item->result = result;
