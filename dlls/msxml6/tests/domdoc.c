@@ -1561,6 +1561,7 @@ static void test_encoding(void)
 
 static void test_validateNode(void)
 {
+    IXMLDOMDocumentFragment *frag;
     IXMLDOMDocumentType *doctype;
     IXMLDOMNamedNodeMap *attrs;
     IXMLDOMElement *element;
@@ -1646,6 +1647,39 @@ static void test_validateNode(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMAttribute_Release(attr);
+
+    /* Validate fragment. */
+    hr = IXMLDOMDocument3_createDocumentFragment(doc, &frag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)frag, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* Can't use validateNode() on document fragments. */
+    todo_wine
+    ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
+    hr = IXMLDOMDocument3_createElement(doc, _bstr_(L"to"), &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_put_text(element, _bstr_(L"wine-patches@winehq.org"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_appendChild(frag, (IXMLDOMNode *)element, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)frag, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* Can't use validateNode() on document fragments. */
+    todo_wine
+    ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocumentFragment_Release(frag);
 
     IXMLDOMDocument3_Release(doc);
 
