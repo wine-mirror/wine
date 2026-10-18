@@ -3520,6 +3520,27 @@ HRESULT node_get_attribute_count(const struct domnode *node, LONG *count)
     return S_OK;
 }
 
+HRESULT node_get_next_attribute(const struct domnode *node, LONG *iter, IXMLDOMNode **attr)
+{
+    struct domnode *curr = NULL, *n;
+    LONG count = *iter;
+
+    *attr = NULL;
+
+    LIST_FOR_EACH_ENTRY(n, &node->attributes, struct domnode, entry)
+    {
+        curr = n;
+        if (!count--) break;
+        curr = NULL;
+    }
+
+    if (!curr)
+        return S_FALSE;
+
+    (*iter)++;
+    return create_node(curr, attr);
+}
+
 HRESULT node_get_attribute_value(struct domnode *node, const WCHAR *name, VARIANT *value)
 {
     struct string_buffer buffer;

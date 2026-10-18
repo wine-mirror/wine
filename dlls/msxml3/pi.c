@@ -600,10 +600,11 @@ static HRESULT dom_pi_get_length(struct domnode *node, LONG *length)
     return node_get_attribute_count(node, length);
 }
 
-static HRESULT dom_pi_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **nextNode)
+static HRESULT dom_pi_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **item)
 {
-    FIXME("%p, %ld, %p: stub\n", node, *iter, nextNode);
-    return E_NOTIMPL;
+    TRACE("%p, %ld, %p.\n", node, *iter, item);
+
+    return node_get_next_attribute(node, iter, item);
 }
 
 static const struct nodemap_funcs dom_pi_attr_map =

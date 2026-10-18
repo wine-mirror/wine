@@ -1221,27 +1221,11 @@ static HRESULT domelem_get_length(struct domnode *node, LONG *length)
     return node_get_attribute_count(node, length);
 }
 
-static HRESULT domelem_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **nextNode)
+static HRESULT domelem_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **item)
 {
-    struct domnode *curr = NULL, *n;
-    LONG count = *iter;
+    TRACE("%p, %ld, %p.\n", node, *iter, item);
 
-    TRACE("%p, %ld, %p.\n", node, *iter, nextNode);
-
-    *nextNode = NULL;
-
-    LIST_FOR_EACH_ENTRY(n, &node->attributes, struct domnode, entry)
-    {
-        curr = n;
-        if (!count--) break;
-        curr = NULL;
-    }
-
-    if (!curr)
-        return S_FALSE;
-
-    (*iter)++;
-    return create_node(curr, nextNode);
+    return node_get_next_attribute(node, iter, item);
 }
 
 static const struct nodemap_funcs domelem_attr_map =

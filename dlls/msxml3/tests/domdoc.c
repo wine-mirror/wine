@@ -2515,6 +2515,8 @@ static void test_domnode( void )
         IXMLDOMNode_Release( node );
 
         /* test sequential access of attributes */
+        hr = IXMLDOMNamedNodeMap_nextNode( map, NULL );
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
         node = NULL;
         hr = IXMLDOMNamedNodeMap_nextNode( map, &node );
         ok ( hr == S_OK, "nextNode (first time) wrong code\n");
@@ -14117,6 +14119,8 @@ static void test_namedmap_newenum(void)
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
+    hr = IXMLDOMNamedNodeMap_nextNode(map, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_nodeName(node, &str);
@@ -16951,6 +16955,34 @@ static void test_xmldecl_attributes(void)
     hr = IXMLDOMProcessingInstruction_get_attributes(pi, &map);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IXMLDOMNamedNodeMap_nextNode(map, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"version"), "Unexpected node %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"encoding"), "Unexpected node %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"standalone"), "Unexpected node %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    node = (void *)0x1;
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected value %p.\n", node);
+
     node = NULL;
     hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("encoding"), &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -18128,6 +18160,8 @@ if (hr == S_OK)
     hr = IXMLDOMNamedNodeMap_get_length(map, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(length == 1, "Unexpected length %ld.\n", length);
+    hr = IXMLDOMNamedNodeMap_nextNode(map, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
