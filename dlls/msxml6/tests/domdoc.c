@@ -1657,7 +1657,6 @@ static void test_validateNode(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* Can't use validateNode() on document fragments. */
-    todo_wine
     ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
@@ -1674,7 +1673,6 @@ static void test_validateNode(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* Can't use validateNode() on document fragments. */
-    todo_wine
     ok(res == 0xc00ce208, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 

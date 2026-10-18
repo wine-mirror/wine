@@ -5066,6 +5066,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         {
             case NODE_DOCUMENT:
             case NODE_DOCUMENT_TYPE:
+            case NODE_DOCUMENT_FRAGMENT:
                 return return_validation_error(E_DOM_INVALIDTYPE, err);
             default:
                 ;
