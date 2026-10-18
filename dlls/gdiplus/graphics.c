@@ -3824,7 +3824,7 @@ end:
 static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
-    GpPath *flat_path, *anchor_path;
+    GpPath *flat_path, *anchor_path = NULL;
     GpRegion *anchor_region;
     GpMatrix* transform;
     GpRectF gp_bound_rect;
