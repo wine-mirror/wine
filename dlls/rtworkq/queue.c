@@ -1211,6 +1211,8 @@ static HRESULT create_async_result(IUnknown *object, IRtwqAsyncCallback *callbac
     if (!out)
         return E_INVALIDARG;
 
+    *out = NULL;
+
     if (!(result = async_result_cache_pop()))
     {
         if (!(result = calloc(1, sizeof(*result))))
