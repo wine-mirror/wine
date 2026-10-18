@@ -50,6 +50,8 @@ enum error_codes
 
     E_SAX_UNDECLAREDPREFIX = 0xc00ce01d,
 
+    E_DOM_REQUIRED_ATTRIBUTE_MISSING = 0xc00ce020,
+
     E_DOM_INVALIDTYPE = 0xc00ce208,
 
     E_SAX_MISSINGEQUALS = 0xc00ce501,
@@ -378,6 +380,8 @@ extern bool parser_dtd_validate_attribute_value(struct validation_context *ctxt,
          struct attlist_attr *decl, struct domnode *attr);
 extern bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
         struct element_decl *decl, struct domnode *elem);
+extern bool parser_dtd_check_required_attributes(struct validation_context *ctxt, struct dtd *dtd,
+        struct domnode *elem);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);

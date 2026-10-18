@@ -1225,6 +1225,32 @@ static bool parser_dtd_validate_element_mixed_content(struct validation_context 
     return true;
 }
 
+bool parser_dtd_check_required_attributes(struct validation_context *ctxt, struct dtd *dtd, struct domnode *elem)
+{
+    struct attlist_decl *attlist_decl;
+    struct domnode *attr;
+
+    LIST_FOR_EACH_ENTRY(attlist_decl, &dtd->attr_decls, struct attlist_decl, entry)
+    {
+        if (bstr_equal(attlist_decl->name, elem->qname))
+        {
+            for (size_t i = 0; i < attlist_decl->count; ++i)
+            {
+                if (attlist_decl->attributes[i].valuetype == ATTR_DEF_TYPE_REQUIRED)
+                {
+                    if (domnode_get_attribute(elem, attlist_decl->attributes[i].name.qname, &attr) != S_OK)
+                    {
+                        ctxt->code = E_DOM_REQUIRED_ATTRIBUTE_MISSING;
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
         struct element_decl *decl, struct domnode *elem)
 {

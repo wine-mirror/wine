@@ -5015,6 +5015,9 @@ static bool node_dtd_validate_node(struct validation_context *ctxt, struct dtd *
                 attr = domnode_get_next_attribute_sibling(attr);
             }
 
+            if (ret)
+                ret &= parser_dtd_check_required_attributes(ctxt, dtd, node);
+
             if ((child = domnode_get_first_child(node)))
             {
                 node = child;

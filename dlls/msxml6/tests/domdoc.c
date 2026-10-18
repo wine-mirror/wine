@@ -1311,14 +1311,12 @@ static void test_dtd_validation(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     err = NULL;
     hr = IXMLDOMDocument2_validate(doc, &err);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     res = 0;
     hr = IXMLDOMParseError_get_errorCode(err, &res);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_REQUIRED_ATTRIBUTE_MISSING */
-    todo_wine ok(res == 0xC00CE020, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce020, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     /* Multiple validation errors */
