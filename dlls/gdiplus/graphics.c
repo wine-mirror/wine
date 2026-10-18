@@ -6746,7 +6746,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         if (scaled_rect.Height >= 0.5)
         {
             scaled_rect.Height -= margin_x * 2.0 * rel_height;
-            if (scaled_rect.Width < 0.5) /* doesn't fit */
+            if (scaled_rect.Height < 0.5) /* doesn't fit */
                 goto end;
         }
     }
