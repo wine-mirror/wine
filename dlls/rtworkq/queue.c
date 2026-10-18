@@ -1486,8 +1486,9 @@ HRESULT WINAPI RtwqAddPeriodicCallback(RTWQPERIODICCALLBACK callback, IUnknown *
 
     /* Same period MFGetTimerPeriodicity() returns. */
     hr = queue_submit_timer(queue, result, 0, 10, key ? &workitem_key : NULL);
-
     IRtwqAsyncResult_Release(result);
+    if (FAILED(hr))
+        return hr;
 
     if (key)
         *key = workitem_key;
