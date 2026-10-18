@@ -382,13 +382,13 @@ static char *read_etc_hosts( DWORD *ret_size )
     }
 
     size = GetFileSize( file, NULL );
-    if (!(data = malloc( size + 1)) || !ReadFile( file, data, size, ret_size, NULL ))
+    if (!(data = malloc( size + 1 )) || !ReadFile( file, data, size, ret_size, NULL ))
     {
         WARN( "failed to read file: %lu\n", GetLastError() );
         free( data );
         data = NULL;
     }
-    data[size] = 0;
+    else data[size] = 0;
     CloseHandle( file );
     return data;
 }
