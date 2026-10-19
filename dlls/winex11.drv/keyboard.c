@@ -2483,17 +2483,18 @@ UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
 
         case MAPVK_VK_TO_CHAR: /* vkey-code to unshifted ANSI code */
         {
-            /* we still don't know what "unshifted" means. in windows VK_W (0x57)
-             * returns 0x57, which is uppercase 'W'. So we have to return the uppercase
-             * key.. Looks like something is wrong with the MS docs?
-             * This is only true for letters, for example VK_0 returns '0' not ')'.
-             * - hence we use the lock mask to ensure this happens.
-             */
             /* let's do vkey -> keycode -> (XLookupString) ansi char */
             XKeyEvent e;
             KeySym keysym;
             int len;
             char s[10];
+
+            /* VK_A to VK_Z just return the uppercase letter regardless of the layout */
+            if (wCode >= 'A' && wCode <= 'Z')
+            {
+                ret = wCode;
+                break;
+            }
 
             e.display = display;
             e.state = 0;
@@ -2538,7 +2539,7 @@ UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
             if (len)
             {
                 WCHAR wch;
-                if (ntdll_umbstowcs( s, len, &wch, 1 )) ret = RtlUpcaseUnicodeChar( wch );
+                if (ntdll_umbstowcs( s, len, &wch, 1 )) ret = wch;
             }
             break;
         }
