@@ -1123,7 +1123,7 @@ static const KBDTABLES *loaderdrv_KbdLayerDescriptor( HKL layout )
 
 static void loaderdrv_ReleaseKbdTables( const KBDTABLES *tables )
 {
-    return load_driver()->pReleaseKbdTables( tables );
+    load_driver()->pReleaseKbdTables( tables );
 }
 
 static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc,const BYTE *state, void *update )
@@ -1133,7 +1133,7 @@ static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc,const BYTE *state, void 
 
 static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
-    return load_driver()->pNotifyIMEStatus( hwnd, status );
+    load_driver()->pNotifyIMEStatus( hwnd, status );
 }
 
 static BOOL loaderdrv_SetIMECompositionRect( HWND hwnd, RECT rect )
