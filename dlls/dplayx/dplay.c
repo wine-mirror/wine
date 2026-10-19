@@ -3692,7 +3692,7 @@ static HRESULT WINAPI IDirectPlay4Impl_GetSessionDesc( IDirectPlay4 *iface, void
         DWORD *lpdwDataSize )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-    return DP_GetSessionDesc( This, lpData, lpdwDataSize, TRUE );
+    return DP_GetSessionDesc( This, lpData, lpdwDataSize, FALSE );
 }
 
 static HRESULT WINAPI IDirectPlay2AImpl_Initialize( IDirectPlay2A *iface, GUID *guid )
