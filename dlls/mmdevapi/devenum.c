@@ -967,7 +967,7 @@ static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD 
     if (This->devices_count)
     {
         This->devices = malloc(This->devices_count * sizeof(IMMDevice *));
-        if (!This->devices_count)
+        if (!This->devices)
             return E_OUTOFMEMORY;
 
         LIST_FOR_EACH_ENTRY(cur, &device_list, MMDevice, entry)
