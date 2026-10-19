@@ -40,6 +40,8 @@ static LSTATUS (WINAPI *pSHRegGetValueA)(HKEY,LPCSTR,LPCSTR,SRRF,LPDWORD,LPVOID,
 static LSTATUS (WINAPI *pSHRegCreateUSKeyW)(LPCWSTR,REGSAM,HUSKEY,PHUSKEY,DWORD);
 static LSTATUS (WINAPI *pSHRegOpenUSKeyW)(LPCWSTR,REGSAM,HUSKEY,PHUSKEY,BOOL);
 static LSTATUS (WINAPI *pSHRegCloseUSKey)(HUSKEY);
+static LSTATUS (WINAPI *pSHRegGetUSValueW)(LPCWSTR,LPCWSTR,DWORD*,void*,DWORD*,BOOL,void*,DWORD);
+
 
 static const char sTestpath1[] = "%LONGSYSTEMVAR%\\subdir1";
 static const char sTestpath2[] = "%FOO%\\subdir1";
@@ -483,6 +485,36 @@ static void test_SHRegCloseUSKey(void)
     ok(ret == ERROR_SUCCESS, "got %ld\n", ret);
 }
 
+static void test_SHRegGetUSValueW(void)
+{
+    DWORD size;
+    LONG ret;
+
+    if (!pSHRegGetUSValueW)
+    {
+        win_skip("SHRegGetUSValueW available\n");
+        return;
+    }
+
+    ret = pSHRegGetUSValueW(L"Software\\RegisteredApplications", L"Windows Media Player", NULL, NULL, NULL, TRUE, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %ld\n", ret);
+
+    ret = pSHRegGetUSValueW(L"Software\\RegisteredApplications", L"Wine Media Player", NULL, NULL, &size, TRUE, NULL, 0);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %ld\n", ret);
+
+    size = 80;
+    ret = pSHRegGetUSValueW(L"Software\\RegisteredApplications", L"Windows Media Player", NULL, NULL, &size, TRUE, NULL, 0);
+    ok(ret == ERROR_SUCCESS || ret == ERROR_FILE_NOT_FOUND, "got %ld\n", ret);
+    if (ret == ERROR_SUCCESS)
+        ok(size != 0, "got %ld\n", size);
+
+    size = 0 ;
+    ret = pSHRegGetUSValueW(L"Software\\RegisteredApplications", L"Windows Media Player", NULL, NULL, &size, TRUE, NULL, 0);
+    ok(ret == ERROR_SUCCESS || ret == ERROR_FILE_NOT_FOUND, "got %ld\n", ret);
+    if (ret == ERROR_SUCCESS)
+        ok(size != 0, "got %ld\n", size);
+}
+
 START_TEST(shreg)
 {
     HKEY hkey = create_test_entries();
@@ -503,9 +535,11 @@ START_TEST(shreg)
     pSHRegCreateUSKeyW = (void*)GetProcAddress(hshlwapi, "SHRegCreateUSKeyW");
     pSHRegOpenUSKeyW = (void*)GetProcAddress(hshlwapi, "SHRegOpenUSKeyW");
     pSHRegCloseUSKey = (void*)GetProcAddress(hshlwapi, "SHRegCloseUSKey");
+    pSHRegGetUSValueW = (void*)GetProcAddress(hshlwapi, "SHRegGetUSValueW");
 
     test_SHGetValue();
     test_SHRegGetValue();
+    test_SHRegGetUSValueW();
     test_SHQueryValueEx();
     test_SHGetRegPath();
     test_SHCopyKey();
