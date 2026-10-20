@@ -674,12 +674,21 @@ interface IMFByteStream : IUnknown
     HRESULT SetCurrentPosition([in] QWORD qwPosition);
     HRESULT IsEndOfStream([out] BOOL *pfEndOfStream);
 
-    [local] HRESULT Read([in] BYTE* pb, [in] ULONG cb, [out] ULONG *pcbRead);
-    [local] HRESULT BeginRead([in] BYTE *pb, [in] ULONG cb, [in] IMFAsyncCallback *pCallback, [in] IUnknown *punkState);
+    HRESULT Read([out, size_is(cb)] BYTE* pb, [in] ULONG cb, [out] ULONG *pcbRead);
+    [local] HRESULT BeginRead([out] BYTE *pb, [in] ULONG cb, [in] IMFAsyncCallback *pCallback, [in] IUnknown *punkState);
+    [call_as(BeginRead)]
+    HRESULT RemoteBeginRead( [in] ULONG cb, [in] IMFRemoteAsyncCallback *pCallback);
     [local] HRESULT EndRead([in] IMFAsyncResult *pResult, [out] ULONG *pcbRead);
-    [local] HRESULT Write([in] const BYTE *pb, [in] ULONG cb, [out] ULONG *pcbWritten);
+    [call_as(EndRead)]
+    HRESULT RemoteEndRead( [in] IUnknown *pResult, [in, out, size_is(cb), length_is(*pcbRead)] BYTE *pb,
+        [in] ULONG cb, [in, out] ULONG *pcbRead);
+    [local] HRESULT Write([in, size_is(cb)] const BYTE *pb, [in] ULONG cb, [out] ULONG *pcbWritten);
     [local] HRESULT BeginWrite([in] const BYTE *pb, [in] ULONG cb, [in] IMFAsyncCallback *pCallback, [in] IUnknown *punkState);
+    [call_as(BeginWrite)]
+    HRESULT RemoteBeginWrite([in, size_is(cb)] const BYTE* pb, [in] ULONG cb, [in] IMFRemoteAsyncCallback* pCallback);
     [local] HRESULT EndWrite([in] IMFAsyncResult *pResult, [out] ULONG *pcbWritten);
+    [call_as(EndWrite)]
+    HRESULT RemoteEndWrite([in] IUnknown* punkResult, [out] ULONG* pcbWritten);
     [local] HRESULT Seek([in] MFBYTESTREAM_SEEK_ORIGIN SeekOrigin, [in] LONGLONG llSeekOffset, [in] DWORD dwSeekFlags,
                     [out] QWORD *pqwCurrentPosition);
 
