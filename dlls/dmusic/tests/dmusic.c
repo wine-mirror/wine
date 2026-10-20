@@ -29,6 +29,7 @@
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmksctrl.h"
+#include "mmreg.h"
 
 static ULONG get_refcount(void *iface)
 {
@@ -1252,15 +1253,15 @@ static void test_download_instrument(void)
 
     CHUNK_RIFF(stream, "DLS ")
     {
-        DLSHEADER colh = {.cInstruments = 1};
+        DLSHEADER colh = {.cInstruments = 2};
         struct
         {
             POOLTABLE head;
-            POOLCUE cues[1];
+            POOLCUE cues[2];
         } ptbl =
         {
             .head = {.cbSize = sizeof(POOLTABLE), .cCues = ARRAY_SIZE(ptbl.cues)},
-            .cues = {{.ulOffset = 0}}, /* offsets in wvpl */
+            .cues = {{.ulOffset = 0}, {.ulOffset = 12 + 8 + 16 + 8 + sizeof(WAVEFORMATEX)}}, /* offsets in wvpl */
         };
 
         CHUNK_DATA(stream, "colh", colh);
@@ -1281,6 +1282,39 @@ static void test_download_instrument(void)
                             .RangeVelocity = {.usLow = 1, .usHigh = 127},
                         };
                         WAVELINK wlnk = {.ulChannel = 1, .ulTableIndex = 0};
+                        WSMPL wsmp = {.cbSize = sizeof(WSMPL)};
+
+                        CHUNK_DATA(stream, "rgnh", rgnh);
+                        CHUNK_DATA(stream, "wsmp", wsmp);
+                        CHUNK_DATA(stream, "wlnk", wlnk);
+                    }
+                    CHUNK_END;
+                }
+                CHUNK_END;
+
+                CHUNK_LIST(stream, "lart")
+                {
+                    CONNECTIONLIST connections = {.cbSize = sizeof(connections)};
+                    CHUNK_DATA(stream, "art1", connections);
+                }
+                CHUNK_END;
+            }
+            CHUNK_END;
+            CHUNK_LIST(stream, "ins ")
+            {
+                INSTHEADER insh = {.cRegions = 1, .Locale = {.ulBank = 0x12, .ulInstrument = 0x35}};
+
+                CHUNK_DATA(stream, "insh", insh);
+                CHUNK_LIST(stream, "lrgn")
+                {
+                    CHUNK_LIST(stream, "rgn ")
+                    {
+                        RGNHEADER rgnh =
+                        {
+                            .RangeKey = {.usLow = 0, .usHigh = 127},
+                            .RangeVelocity = {.usLow = 1, .usHigh = 127},
+                        };
+                        WAVELINK wlnk = {.ulChannel = 1, .ulTableIndex = 1};
                         WSMPL wsmp = {.cbSize = sizeof(WSMPL)};
 
                         CHUNK_DATA(stream, "rgnh", rgnh);
@@ -1322,6 +1356,63 @@ static void test_download_instrument(void)
                 CHUNK_DATA(stream, "fmt ", fmt);
             }
             CHUNK_END;
+            CHUNK_LIST(stream, "wave")
+            {
+                struct
+                {
+                    WORD reserved;
+                    WAVEFORMATEX wfx;
+                } wavu =
+                {
+                    .reserved = 0x0101,
+                    .wfx =
+                    {
+                        .wFormatTag = WAVE_FORMAT_PCM,
+                        .nChannels = 1,
+                        .wBitsPerSample = 16,
+                        .nSamplesPerSec = 22050,
+                        .nAvgBytesPerSec = 44100,
+                        .nBlockAlign = 2,
+                    },
+                };
+                static const struct
+                {
+                    WAVEFORMATEX wfx;
+                    WORD samples_per_block;
+                    WORD coef_count;
+                    ADPCMCOEFSET coefs[7];
+                } fmt =
+                {
+                    .wfx =
+                    {
+                        .wFormatTag = WAVE_FORMAT_ADPCM,
+                        .nChannels = 1,
+                        .wBitsPerSample = 4,
+                        .nSamplesPerSec = 22050,
+                        .nAvgBytesPerSec = 11155,
+                        .nBlockAlign = 512,
+                        .cbSize = 32,
+                    },
+                    .samples_per_block = 1012,
+                    .coef_count = 7,
+                    .coefs = {
+                        {256, 0},
+                        {512, -256},
+                        {0, 0},
+                        {192, 64},
+                        {240, 0},
+                        {460, -208},
+                        {392, -232},
+                    },
+                };
+                BYTE data[512] = {0};
+
+                /* native returns DMUS_E_INVALIDOFFSET from DownloadInstrument if data is last */
+                CHUNK_DATA(stream, "wavu", wavu);
+                CHUNK_DATA(stream, "data", data);
+                CHUNK_DATA(stream, "fmt ", fmt);
+            }
+            CHUNK_END;
         }
         CHUNK_END;
     }
@@ -1340,7 +1431,13 @@ static void test_download_instrument(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(patch == 0x1234, "got %#lx\n", patch);
     ok(*name == 0, "got %s\n", debugstr_w(name));
+    patch = 0xdeadbeef;
+    wcscpy(name, L"DeadBeef");
     hr = IDirectMusicCollection_EnumInstrument(collection, 1, &patch, name, ARRAY_SIZE(name));
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(patch == 0x1235, "got %#lx\n", patch);
+    ok(*name == 0, "got %s\n", debugstr_w(name));
+    hr = IDirectMusicCollection_EnumInstrument(collection, 2, &patch, name, ARRAY_SIZE(name));
     ok(hr == S_FALSE, "got %#lx\n", hr);
 
     hr = IDirectMusicCollection_GetInstrument(collection, 0x1234, &instrument);
@@ -1395,6 +1492,15 @@ static void test_download_instrument(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicDownloadedInstrument_Release(downloaded);
 
+    IDirectMusicInstrument_Release(instrument);
+
+    hr = IDirectMusicCollection_GetInstrument(collection, 0x1235, &instrument);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPort_DownloadInstrument(port, instrument, &downloaded, NULL, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicDownloadedInstrument_Release(downloaded);
     IDirectMusicInstrument_Release(instrument);
 
     IDirectMusicCollection_Release(collection);
