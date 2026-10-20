@@ -116,8 +116,12 @@ static const IClassFactoryVtbl PropertySystemFactoryVtbl =
 
 static IClassFactory PropertySystemFactory = { &PropertySystemFactoryVtbl };
 
+extern HRESULT WINAPI PROPSYS_DllGetClassObject(REFCLSID, REFIID, LPVOID *);
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
     if(IsEqualGUID(&CLSID_InMemoryPropertyStore, rclsid)) {
         TRACE("(CLSID_InMemoryPropertyStore %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&InMemoryPropertyStoreFactory, riid, ppv);
@@ -128,8 +132,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         return IClassFactory_QueryInterface(&PropertySystemFactory, riid, ppv);
     }
 
-    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    return CLASS_E_CLASSNOTAVAILABLE;
+    return PROPSYS_DllGetClassObject(rclsid, riid, ppv);
 }
 
 static HRESULT WINAPI propsys_QueryInterface(IPropertySystem *iface, REFIID riid, void **obj)
@@ -913,4 +916,18 @@ static HRESULT propdesc_get_by_key( const PROPERTYKEY *key, IPropertyDescription
     }
 
     return TYPE_E_ELEMENTNOTFOUND;
+}
+
+
+HRESULT CALLBACK IPropertyDescription_CoerceToCanonicalValue_Proxy(IPropertyDescription* This, PROPVARIANT *propvar)
+{
+    FIXME("%p, %p\n", This, propvar);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IPropertyDescription_CoerceToCanonicalValue_Stub( IPropertyDescription* This,
+                REFPROPVARIANT propvar, PROPVARIANT *ppropvar)
+{
+    FIXME("%p, %p, %p\n", This, propvar, ppropvar);
+    return E_NOTIMPL;
 }
