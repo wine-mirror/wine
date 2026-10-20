@@ -3772,7 +3772,6 @@ static void init_winmd( struct winmd *winmd )
 {
     static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
     static const USHORT space = 0x20;
-    char *ptr;
 
     memset( winmd, 0, sizeof(*winmd) );
 
@@ -3781,12 +3780,11 @@ static void init_winmd( struct winmd *winmd )
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
 
-    winmd->name = xstrdup( metadata_name );
-    if ((ptr = strrchr( winmd->name, '.' ))) *ptr = 0;
+    winmd->name = get_basename_noext( metadata_name );
 
     add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
     add_assembly_row( add_string(winmd->name) );
-    add_module_row( add_string(metadata_name), add_guid(&guid) );
+    add_module_row( add_string(get_basename(metadata_name)), add_guid(&guid) );
     add_assemblyref_row( 0, add_blob(mscorlib_token, sizeof(mscorlib_token)), add_string("mscorlib") );
 }
 
