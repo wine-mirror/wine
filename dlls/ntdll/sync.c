@@ -329,19 +329,16 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    NTSTATUS ret;
     HANDLE sem = get_semaphore( crit );
 
-    if (sem) ret = NtReleaseSemaphore( sem, 1, NULL );
+    if (sem) NtReleaseSemaphore( sem, 1, NULL );
     else
     {
         LONG *lock = (LONG *)&crit->LockSemaphore;
         InterlockedExchange( lock, 1 );
         RtlWakeAddressSingle( lock );
-        ret = STATUS_SUCCESS;
     }
-    if (ret) RtlRaiseStatus( ret );
-    return ret;
+    return STATUS_SUCCESS;
 }
 
 
