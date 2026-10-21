@@ -706,12 +706,104 @@ static void test_aes(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 }
 
-static void test_3des(void)
+static void test_des(void)
 {
+    static UCHAR secret[] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07};
+    static UCHAR data[] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07};
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
     ULONG size, len;
-    UCHAR mode[64];
+    UCHAR mode[64], ciphertext[8], plaintext[8];
+    NTSTATUS ret;
+
+    alg = NULL;
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_DES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    len = size = 0;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(len, "expected non-zero len\n");
+    ok(size == sizeof(len), "got %lu\n", size);
+
+    len = size = 0;
+    ret = BCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(len == 8, "got %lu\n", len);
+    ok(size == sizeof(len), "got %lu\n", size);
+
+    size = 0;
+    ret = BCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", ret);
+    ok(size == 64, "got %lu\n", size);
+
+    size = 0;
+    ret = BCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode) - 1, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", ret);
+    ok(size == 64, "got %lu\n", size);
+
+    size = 0;
+    memset(mode, 0, sizeof(mode));
+    ret = BCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+    ok(size == 64, "got %lu\n", size);
+
+    size = 0;
+    memset(&key_lengths, 0, sizeof(key_lengths));
+    ret = BCryptGetProperty(alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == sizeof(key_lengths), "got %lu\n", size);
+    ok(key_lengths.dwMinLength == 64, "got %lu\n", key_lengths.dwMinLength);
+    ok(key_lengths.dwMaxLength == 64, "got %lu\n", key_lengths.dwMaxLength);
+    ok(key_lengths.dwIncrement == 0, "got %lu\n", key_lengths.dwIncrement);
+
+    memcpy(mode, BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM));
+    ret = BCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %#lx\n", ret);
+
+    test_alg_name(alg, L"DES");
+
+    memcpy(mode, BCRYPT_CHAIN_MODE_ECB, sizeof(BCRYPT_CHAIN_MODE_ECB));
+    ret = BCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, secret, sizeof(secret), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    size = 0;
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = BCryptEncrypt(key, data, 8, NULL, NULL, 0, ciphertext, 8, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+
+    size = 0;
+    memset(plaintext, 0, sizeof(plaintext));
+    ret = BCryptDecrypt(key, ciphertext, 8, NULL, NULL, 0, plaintext, 8, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+    ok(!memcmp(data, plaintext, sizeof(plaintext)), "wrong data\n");
+
+    ret = BCryptDestroyKey(key);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+}
+
+static void test_3des(void)
+{
+    static UCHAR secret[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+         0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07};
+    static UCHAR data[] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07};
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    ULONG size, len;
+    UCHAR mode[64], ciphertext[8], plaintext[8];
     NTSTATUS ret;
 
     alg = NULL;
@@ -762,6 +854,29 @@ static void test_3des(void)
     ok(ret == STATUS_NOT_SUPPORTED, "got %#lx\n", ret);
 
     test_alg_name(alg, L"3DES");
+
+    memcpy(mode, BCRYPT_CHAIN_MODE_ECB, sizeof(BCRYPT_CHAIN_MODE_ECB));
+    ret = BCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, secret, sizeof(secret), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    size = 0;
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = BCryptEncrypt(key, data, 8, NULL, NULL, 0, ciphertext, 8, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+
+    size = 0;
+    memset(plaintext, 0, sizeof(plaintext));
+    ret = BCryptDecrypt(key, ciphertext, 8, NULL, NULL, 0, plaintext, 8, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == 8, "got %lu\n", size);
+    ok(!memcmp(data, plaintext, sizeof(plaintext)), "wrong data\n");
+
+    ret = BCryptDestroyKey(key);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -5663,6 +5778,7 @@ START_TEST(bcrypt)
     test_BcryptHash();
     test_BcryptDeriveKeyPBKDF2();
     test_rng();
+    test_des();
     test_3des();
     test_aes();
     test_BCryptGenerateSymmetricKey();
