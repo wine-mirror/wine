@@ -76,6 +76,7 @@ interface IOverlay;
 interface IOverlayNotify;
 interface IOverlayNotify2;
 interface IQualityControl;
+interface IRegisterServiceProvider;
 interface ISeekingPassThru;
 
 typedef struct
@@ -1498,3 +1499,14 @@ interface IVideoFrameStep : IUnknown
     HRESULT CanStep(long multiple, [in] IUnknown *filter);
     HRESULT CancelStep();
 }
+
+[
+    local,
+    object,
+    uuid(7b3a2f01-0751-48dd-b556-004785171c54),
+    pointer_default(unique)
+]
+interface IRegisterServiceProvider : IUnknown
+{
+    HRESULT RegisterService([in] REFGUID guidService, [in] IUnknown *pObject);
+};
