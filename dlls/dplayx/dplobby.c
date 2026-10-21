@@ -273,7 +273,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_Connect( IDirectPlayLobby3A *iface,
 static HRESULT WINAPI IDirectPlayLobby3Impl_Connect( IDirectPlayLobby3 *iface, DWORD flags,
         IDirectPlay2 **dp, IUnknown *unk)
 {
-    return IDirectPlayLobby_ConnectEx( iface, flags, &IID_IDirectPlay2A, (void**)dp, unk );
+    return IDirectPlayLobby_ConnectEx( iface, flags, &IID_IDirectPlay2, (void**)dp, unk );
 }
 
 /********************************************************************
