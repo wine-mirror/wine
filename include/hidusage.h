@@ -183,7 +183,7 @@ typedef USHORT USAGE, *PUSAGE;
 #define HID_USAGE_LED_RED                       ((USAGE) 0x48)
 #define HID_USAGE_LED_GREEN                     ((USAGE) 0x49)
 #define HID_USAGE_LED_AMBER                     ((USAGE) 0x4A)
-#define HID_USAGE_LED_GENERIC_INDICATOR         ((USAGE) 0x3B)
+#define HID_USAGE_LED_GENERIC_INDICATOR         ((USAGE) 0x4B)
 
 #define HID_USAGE_PAGE_UNDEFINED          ((USAGE) 0x00)
 #define HID_USAGE_PAGE_GENERIC            ((USAGE) 0x01)
