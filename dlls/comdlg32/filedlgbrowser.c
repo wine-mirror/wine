@@ -947,8 +947,6 @@ static HRESULT WINAPI IShellBrowserImpl_IServiceProvider_QueryInterface(
 {
     IShellBrowserImpl *This = impl_from_IServiceProvider(iface);
 
-    FIXME("(%p)\n", This);
-
     return IShellBrowserImpl_QueryInterface(&This->IShellBrowser_iface,riid,ppvObj);
 }
 
@@ -959,8 +957,6 @@ static ULONG WINAPI IShellBrowserImpl_IServiceProvider_AddRef(IServiceProvider *
 {
     IShellBrowserImpl *This = impl_from_IServiceProvider(iface);
 
-    FIXME("(%p)\n", This);
-
     return IShellBrowserImpl_AddRef(&This->IShellBrowser_iface);
 }
 
@@ -970,8 +966,6 @@ static ULONG WINAPI IShellBrowserImpl_IServiceProvider_AddRef(IServiceProvider *
 static ULONG WINAPI IShellBrowserImpl_IServiceProvider_Release(IServiceProvider * iface)
 {
     IShellBrowserImpl *This = impl_from_IServiceProvider(iface);
-
-    FIXME("(%p)\n", This);
 
     return IShellBrowserImpl_Release(&This->IShellBrowser_iface);
 }
