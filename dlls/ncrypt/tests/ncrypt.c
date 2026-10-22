@@ -765,8 +765,6 @@ static void test_NCryptEncrypt(void)
     ok(ret == NTE_BAD_FLAGS, "got %lx\n", ret);
 
     /* Test no padding with RSA */
-    todo_wine
-    {
     ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, NULL, 0, &output_size,
                         NCRYPT_NO_PADDING_FLAG);
     ok(ret == ERROR_SUCCESS, "got %lx\n", ret);
@@ -777,7 +775,6 @@ static void test_NCryptEncrypt(void)
                         &output_size, NCRYPT_NO_PADDING_FLAG);
     ok(ret == NTE_INVALID_PARAMETER, "got %lx\n", ret);
     free(output_a);
-    }
 
     /* Test output RSA with PKCS1. PKCS1 should append a random padding to the data, so the output should be different
      * with each call. */
