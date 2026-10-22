@@ -387,6 +387,7 @@ static HRESULT create_holder(IDispenserManager *manager, IDispenserDriver *drive
     (*hold)->manager = manager;
     IDispenserManager_AddRef(manager);
     (*hold)->driver = driver;
+    IDispenserDriver_AddRef(driver);
     list_init(&(*hold)->pool);
     return S_OK;
 }
