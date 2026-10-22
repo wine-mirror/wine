@@ -1331,7 +1331,7 @@ static void test_object_info(void)
     offset.QuadPart = (LONGLONG)-2; /* FILE_USE_FILE_POINTER_POSITION */
     status = NtReadFile(file, NULL, NULL, NULL, &io, &ret_offset, sizeof(ret_offset), &offset, NULL);
     ok(!status, "got status %#lx\n", status);
-    todo_wine ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
+    ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
 
     position = 0xbeef;
     status = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io, IOCTL_WINETEST_GET_POSITION, NULL, 0, &position, sizeof(position));

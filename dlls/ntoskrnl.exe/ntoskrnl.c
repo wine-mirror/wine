@@ -646,6 +646,8 @@ static NTSTATUS dispatch_read( struct dispatch_context *context )
     if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
 
     offset.QuadPart = context->params.read.pos;
+    if (offset.QuadPart == (LONGLONG)-2) /* FILE_USE_FILE_POINTER_POSITION */
+        offset = file->CurrentByteOffset;
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ, device, out_buff, out_size,
                                               &offset, NULL, NULL )))
@@ -682,6 +684,8 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
     TRACE( "device %p file %p size %lu\n", device, file, context->in_size );
 
     offset.QuadPart = context->params.write.pos;
+    if (offset.QuadPart == (LONGLONG)-2) /* FILE_USE_FILE_POINTER_POSITION */
+        offset = file->CurrentByteOffset;
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, context->in_buff, context->in_size,
                                               &offset, NULL, NULL )))
