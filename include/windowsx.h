@@ -1327,7 +1327,7 @@ extern "C" {
 
 /* BOOL Cls_OnDeviceChange(HWND hwnd, UINT uEvent, DWORD dwEventData) */
 #define HANDLE_WM_DEVICECHANGE(hwnd, wParam, lParam, fn) \
-    (LRESULT)(DWORD)(BOOL)(fn)((hwnd), (UINT)(wParam), (DWORD)(wParam))
+    (LRESULT)(DWORD)(BOOL)(fn)((hwnd), (UINT)(wParam), (DWORD)(lParam))
 #define FORWARD_WM_DEVICECHANGE(hwnd, uEvent, dwEventData, fn) \
     (BOOL)(DWORD)(fn)((hwnd), WM_DEVICECHANGE, (WPARAM)(UINT)(uEvent), (LPARAM)(DWORD)(dwEventData))
 
