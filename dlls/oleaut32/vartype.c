@@ -5421,7 +5421,7 @@ static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, BOOL isDoub
         }
     } else {
         while (exponent10 < 0 && (val->bitsnum[2] != 0 || val->bitsnum[1] != 0 ||
-            (val->bitsnum[2] == 0 && val->bitsnum[1] == 0 && (val->bitsnum[0] & 0xFF000000) != 0))) {
+            (val->bitsnum[2] == 0 && val->bitsnum[1] == 0 && val->bitsnum[0] > 9999999))) {
             int rem10;
 
             rem10 = VARIANT_int_divbychar(val->bitsnum, 3, 10);

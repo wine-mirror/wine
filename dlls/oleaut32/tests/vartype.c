@@ -3762,6 +3762,10 @@ static void test_VarDecFromR4(void)
   CONVERT(VarDecFromR4,0.4f);  EXPECTDEC(1,0,0,4);
   CONVERT(VarDecFromR4,0.5f);  EXPECTDEC(1,0,0,5);
   CONVERT(VarDecFromR4,0.6f);  EXPECTDEC(1,0,0,6);
+  CONVERT(VarDecFromR4,0.001f);EXPECTDEC(3,0,0,1);
+  CONVERT(VarDecFromR4,0.006f);EXPECTDEC(3,0,0,6);
+  CONVERT(VarDecFromR4,0.008f);EXPECTDEC(3,0,0,8);
+  CONVERT(VarDecFromR4,0.005f);EXPECTDEC(3,0,0,5);
 }
 
 static void test_VarDecFromR8(void)
