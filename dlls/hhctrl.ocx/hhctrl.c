@@ -417,7 +417,7 @@ static void wintypeWtoA(const HH_WINTYPEW *wdata, HH_WINTYPEA *data, struct wint
     data->pszType       = stringsA->pszType       = strdupWtoA(wdata->pszType);
     data->pszCaption    = stringsA->pszCaption    = strdupWtoA(wdata->pszCaption);
     data->pszToc        = stringsA->pszToc        = strdupWtoA(wdata->pszToc);
-    data->pszIndex      = stringsA->pszFile       = strdupWtoA(wdata->pszIndex);
+    data->pszIndex      = stringsA->pszIndex      = strdupWtoA(wdata->pszIndex);
     data->pszFile       = stringsA->pszFile       = strdupWtoA(wdata->pszFile);
     data->pszHome       = stringsA->pszHome       = strdupWtoA(wdata->pszHome);
     data->pszJump1      = stringsA->pszJump1      = strdupWtoA(wdata->pszJump1);
