@@ -1746,7 +1746,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	    /* get count of this streamtype up to this stream */
 	    count = 0;
 	    for (n = nStream; 0 <= n; n--) {
-	      if (This->ppStreams[n]->sInfo.fccHandler == streamHdr.fccType)
+	      if (This->ppStreams[n]->sInfo.fccType == streamHdr.fccType)
 		count++;
 	    }
 
