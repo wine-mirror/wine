@@ -5251,7 +5251,6 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
 {
     BOOL ret = FALSE;
     LPWSTR destW = NULL, sourceW = NULL, locationW = NULL;
-    DWORD size;
 
     TRACE("%s, %s, %ld, %ld, %p, %ld, %p, %p\n", debugstr_a(source), debugstr_a(location),
           media_type, style, dest, buffer_size, required_size, component);
@@ -5260,19 +5259,12 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
     if (source && !(sourceW = strdupAtoW( source ))) goto done;
     if (location && !(locationW = strdupAtoW( location ))) goto done;
 
-    ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, buffer_size, &size, NULL );
-
-    if (required_size) *required_size = size;
+    ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, buffer_size, required_size, NULL );
 
     if (dest && (ret || GetLastError() == ERROR_FILE_EXISTS))
     {
-        if (buffer_size >= size)
-        {
-            WideCharToMultiByte( CP_ACP, 0, destW, -1, dest, buffer_size, NULL, NULL );
-            if (component) *component = strrchr( dest, '\\' ) + 1;
-        }
-        else
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        WideCharToMultiByte( CP_ACP, 0, destW, -1, dest, buffer_size, NULL, NULL );
+        if (component) *component = strrchr( dest, '\\' ) + 1;
     }
 
 done:
@@ -5845,37 +5837,6 @@ static void queue_copy_file(const struct driver_package *package, HSPFILEQ queue
     }
 }
 
-static DWORD driver_package_install_to_store(const struct driver_package *package, DWORD style, WCHAR *infdir_path)
-{
-    HSPFILEQ queue = SetupOpenFileQueue();
-    DWORD ret = ERROR_SUCCESS;
-    void *setupapi_ctx;
-    WCHAR *store_inf;
-
-    for (size_t i = 0; i < package->file_count; ++i)
-        queue_copy_file(package, queue, &package->files[i]);
-
-    setupapi_ctx = SetupInitDefaultQueueCallback(NULL);
-    if (!SetupCommitFileQueueW(NULL, queue, SetupDefaultQueueCallbackW, setupapi_ctx))
-    {
-        ERR("Failed to commit queue, error %lu.\n", GetLastError());
-        ret = GetLastError();
-    }
-
-    SetupTermDefaultQueueCallback(setupapi_ctx);
-    SetupCloseFileQueue(queue);
-
-    if (!ret)
-    {
-        store_inf = concat_path(package->dst_root, package->inf_name);
-        if ((ret = copy_inf(store_inf, style, infdir_path)))
-            ERR("Failed to copy INF %s, error %lu.\n", debugstr_w(store_inf), GetLastError());
-        free(store_inf);
-    }
-
-    return ret;
-}
-
 static DWORD driver_package_delete(const struct driver_package *package)
 {
     WCHAR infdir_path[MAX_PATH];
@@ -5938,6 +5899,40 @@ static DWORD driver_package_delete(const struct driver_package *package)
     return ERROR_SUCCESS;
 }
 
+static DWORD driver_package_install_to_store(const struct driver_package *package, DWORD style, WCHAR *infdir_path)
+{
+    HSPFILEQ queue = SetupOpenFileQueue();
+    DWORD ret = ERROR_SUCCESS;
+    void *setupapi_ctx;
+    WCHAR *store_inf;
+
+    for (size_t i = 0; i < package->file_count; ++i)
+        queue_copy_file(package, queue, &package->files[i]);
+
+    setupapi_ctx = SetupInitDefaultQueueCallback(NULL);
+    if (!SetupCommitFileQueueW(NULL, queue, SetupDefaultQueueCallbackW, setupapi_ctx))
+    {
+        ERR("Failed to commit queue, error %lu.\n", GetLastError());
+        ret = GetLastError();
+    }
+
+    SetupTermDefaultQueueCallback(setupapi_ctx);
+    SetupCloseFileQueue(queue);
+
+    if (!ret)
+    {
+        store_inf = concat_path(package->dst_root, package->inf_name);
+        if ((ret = copy_inf(store_inf, style, infdir_path)))
+        {
+            ERR("Failed to copy INF %s, error %lu.\n", debugstr_w(store_inf), GetLastError());
+            driver_package_delete(package);
+        }
+        free(store_inf);
+    }
+
+    return ret;
+}
+
 /***********************************************************************
  *      SetupCopyOEMInfW  (SETUPAPI.@)
  */
@@ -5984,6 +5979,14 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
         ret = driver_package_install_to_store(&package, style, target);
     }
 
+    driver_package_cleanup(&package);
+
+    if (ret && ret != ERROR_FILE_EXISTS)
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
+
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW(source);
 
@@ -5991,7 +5994,7 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
     if (required_size)
         *required_size = size;
 
-    if ((!ret || ret == ERROR_FILE_EXISTS) && dest)
+    if (dest)
     {
         if (buffer_size >= size)
         {

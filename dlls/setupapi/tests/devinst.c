@@ -4900,10 +4900,15 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
 
     /* try a relative nonexistent SourceInfFileName, with dest parameter */
     memset(dest, 0xcc, sizeof(dest));
+    size = 0xdeadbeef;
+    filepart = (char *)0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, NULL);
+    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), &size, &filepart);
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+    ok(dest[0] == (char)0xcc, "Got dest %s.\n", debugstr_a(dest));
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
+    ok(filepart == (char *)0xdeadbeef, "Got filepart %p.\n", filepart);
 
     /* try an absolute nonexistent SourceInfFileName */
     GetCurrentDirectoryA(sizeof(path), path);
@@ -5179,10 +5184,10 @@ static void create_driver_store_test_device(HDEVINFO set, const char *name, SP_D
 static void test_driver_store(struct testsign_context *ctx)
 {
     static const char repository_dir[] = "C:\\windows\\system32\\DriverStore\\FileRepository\\";
-    SP_DEVINFO_DATA device = {sizeof(device)}, device2 = {sizeof(device2)};
     char dest[MAX_PATH], orig_dest[MAX_PATH], inf_path[MAX_PATH];
+    SP_DEVINFO_DATA device = {sizeof(device)};
     SP_DRVINFO_DATA_A driver = {sizeof(driver)};
-    char orig_cwd[MAX_PATH], *cwd;
+    char orig_cwd[MAX_PATH], *cwd, *filepart;
     char driver_path[MAX_PATH];
     SYSTEM_INFO system_info;
     HANDLE catalog;
@@ -5481,13 +5486,28 @@ static void test_driver_store(struct testsign_context *ctx)
      * ERROR_SHARING_VIOLATION, even though FindFirstFile() confirms that it's
      * empty. */
 
+    delete_file("winetest.cat");
+
+    memset(dest, 0xcc, sizeof(dest));
+    size = 0xdeadbeef;
+    filepart = (char *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(inf_path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE,
+            dest, sizeof(dest), &size, &filepart);
+    ok(!ret, "Got %d.\n", ret);
+    todo_wine ok(GetLastError() == ERROR_NO_CATALOG_FOR_OEM_INF, "Got error %#lx.\n", GetLastError());
+    ok(file_exists(inf_path), "Expected source inf to exist.\n");
+    ok(!file_exists(orig_dest), "Expected driver store inf not to exist.\n");
+    ok(dest[0] == (char)0xcc, "Got dest %s.\n", debugstr_a(dest));
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
+    ok(filepart == (char *)0xdeadbeef, "Got filepart %p.\n", filepart);
+
     delete_file("subdir\\winetest_child.txt");
     delete_file("sister\\winetest_niece.txt");
     delete_file("winetest_cab.cab");
     delete_file("winetest_coinst.txt");
     delete_file("winetest_ignored2.txt");
     delete_file("winetest_src.txt");
-    delete_file("winetest.cat");
     delete_file("winetest.inf");
     delete_directory("subdir");
     delete_directory("sister");
