@@ -70,6 +70,7 @@ static struct list device_list = LIST_INIT(device_list);
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(SDL_GetError);
 MAKE_FUNCPTR(SDL_Init);
+MAKE_FUNCPTR(SDL_SetHint);
 MAKE_FUNCPTR(SDL_JoystickClose);
 MAKE_FUNCPTR(SDL_JoystickEventState);
 MAKE_FUNCPTR(SDL_JoystickGetGUID);
@@ -1094,6 +1095,7 @@ NTSTATUS sdl_bus_init(void *args)
     }
     LOAD_FUNCPTR(SDL_GetError);
     LOAD_FUNCPTR(SDL_Init);
+    LOAD_FUNCPTR(SDL_SetHint);
     LOAD_FUNCPTR(SDL_JoystickClose);
     LOAD_FUNCPTR(SDL_JoystickEventState);
     LOAD_FUNCPTR(SDL_JoystickGetGUID);
@@ -1148,6 +1150,8 @@ NTSTATUS sdl_bus_init(void *args)
     pSDL_JoystickGetType = dlsym(sdl_handle, "SDL_JoystickGetType");
     pSDL_JoystickGetSerial = dlsym(sdl_handle, "SDL_JoystickGetSerial");
 
+    /* SDL_QUIT does not stop winedevice; keep the existing signal handlers. */
+    pSDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if (pSDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) < 0)
     {
         ERR("could not init SDL: %s\n", pSDL_GetError());
