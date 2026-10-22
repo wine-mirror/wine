@@ -2830,7 +2830,7 @@ static void test_device_object(void)
     ok(lower_device->AttachedDevice == upper_device, "Got attached device %p.\n", lower_device->AttachedDevice);
     ok(!lower_device->CurrentIrp, "Got current IRP %p.\n", lower_device->CurrentIrp);
     ok(!lower_device->Timer, "Got timer %p.\n", lower_device->Timer);
-    todo_wine ok(lower_device->Flags == 0x40, "Got flags %#lx.\n", lower_device->Flags);
+    todo_wine ok(lower_device->Flags == (0x40 | DO_BUFFERED_IO), "Got flags %#lx.\n", lower_device->Flags);
     ok(lower_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
             "Got characteristics %#lx.\n", lower_device->Characteristics);
     ok(!lower_device->Vpb, "Got VPB %p.\n", lower_device->Vpb);
@@ -2850,7 +2850,7 @@ static void test_device_object(void)
     ok(!upper_device->AttachedDevice, "Got attached device %p.\n", upper_device->AttachedDevice);
     todo_wine ok(!upper_device->CurrentIrp, "Got current IRP %p.\n", upper_device->CurrentIrp);
     ok(!upper_device->Timer, "Got timer %p.\n", upper_device->Timer);
-    todo_wine ok(upper_device->Flags == 0x40, "Got flags %#lx.\n", upper_device->Flags);
+    todo_wine ok(upper_device->Flags == (0x40 | DO_BUFFERED_IO), "Got flags %#lx.\n", upper_device->Flags);
     ok(upper_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE),
             "Got characteristics %#lx.\n", upper_device->Characteristics);
     ok(!upper_device->Vpb, "Got VPB %p.\n", upper_device->Vpb);
@@ -3131,6 +3131,43 @@ static void cancel_complete(IRP *irp)
 {
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
+static NTSTATUS WINAPI driver_Read(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    void *buffer = irp->AssociatedIrp.SystemBuffer;
+    NTSTATUS status;
+
+    if (stack->Parameters.Read.Length < sizeof(stack->Parameters.Read.ByteOffset))
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+    else
+    {
+        memcpy(buffer, &stack->Parameters.Read.ByteOffset, sizeof(stack->Parameters.Read.ByteOffset));
+        status = STATUS_SUCCESS;
+        irp->IoStatus.Information = sizeof(stack->Parameters.Read.ByteOffset);
+    }
+
+    irp->IoStatus.Status = status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
+}
+
+static NTSTATUS WINAPI driver_Write(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS status;
+
+    status = STATUS_SUCCESS;
+    if (stack->Parameters.Write.ByteOffset.QuadPart < 0)
+        irp->IoStatus.Information = -stack->Parameters.Write.ByteOffset.QuadPart;
+    else
+        irp->IoStatus.Information = stack->Parameters.Write.ByteOffset.QuadPart;
+    irp->IoStatus.Status = status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
 }
 
 static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
@@ -3475,6 +3512,8 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 
     /* Set driver functions */
     driver->MajorFunction[IRP_MJ_CREATE]            = driver_Create;
+    driver->MajorFunction[IRP_MJ_READ]              = driver_Read;
+    driver->MajorFunction[IRP_MJ_WRITE]             = driver_Write;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
     driver->MajorFunction[IRP_MJ_SET_INFORMATION]   = driver_SetInformation;
@@ -3501,6 +3540,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     status = IoCreateSymbolicLink(&linkW, &nameW);
     ok(!status, "failed to create link, status %#lx\n", status);
     lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
+    lower_device->Flags |= DO_BUFFERED_IO;
 
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
     status = IoCreateDevice(driver, 16, &nameW, FILE_DEVICE_UNKNOWN,
@@ -3509,6 +3549,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 
     IoAttachDeviceToDeviceStack(upper_device, lower_device);
     upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
+    upper_device->Flags |= DO_BUFFERED_IO;
 
     work_item = IoAllocateWorkItem(lower_device);
     ok(work_item != NULL, "work_item = NULL\n");

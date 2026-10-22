@@ -1237,6 +1237,8 @@ static void test_object_info(void)
     FILE_NAME_INFORMATION *file_info = (FILE_NAME_INFORMATION *)buffer;
     FILE_POSITION_INFORMATION position_info;
     FILE_FS_DEVICE_INFORMATION device_info;
+    LARGE_INTEGER offset;
+    LONGLONG ret_offset;
     unsigned int position;
     HANDLE file;
     NTSTATUS status;
@@ -1289,16 +1291,58 @@ static void test_object_info(void)
     ok(!status, "got %#lx\n", status);
     ok(position == 0x1234, "got %#x\n", position);
 
-    file = CreateFileA("\\\\.\\WineTestDriver", FILE_WRITE_DATA, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileA("\\\\.\\WineTestDriver", FILE_READ_DATA | FILE_WRITE_DATA, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+
+    position_info.CurrentByteOffset.QuadPart = 0x55;
+    status = NtSetInformationFile(file, &io, &position_info, sizeof(position_info), FilePositionInformation);
+    ok(!status, "got %#lx\n", status);
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
-    position_info.CurrentByteOffset.QuadPart = 0x1234;
+    position_info.CurrentByteOffset.QuadPart = 0xab;
     status = NtSetInformationFile(file, &io, &position_info, sizeof(position_info), FileEndOfFileInformation);
     ok(!status, "got %#lx\n", status);
     ok(!io.Status, "got status %#lx\n", io.Status);
     ok(!io.Information, "got information %Iu\n", io.Information);
+
+    position = 0xbeef;
+    status = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io, IOCTL_WINETEST_GET_POSITION, NULL, 0, &position, sizeof(position));
+    ok(!status, "got %#lx\n", status);
+    ok(position == 0x55, "got %#x\n", position);
+
+    ret_offset = 0xdeadbeef;
+    status = NtReadFile(file, NULL, NULL, NULL, &io, &ret_offset, sizeof(ret_offset), NULL, NULL);
+    ok(!status, "got status %#lx\n", status);
+    todo_wine ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
+
+    ret_offset = 0xdeadbeef;
+    offset.QuadPart = 0x2345;
+    status = NtReadFile(file, NULL, NULL, NULL, &io, &ret_offset, sizeof(ret_offset), &offset, NULL);
+    ok(!status, "got status %#lx\n", status);
+    ok(ret_offset == 0x2345, "got %#I64x\n", ret_offset);
+
+    position = 0xbeef;
+    status = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io, IOCTL_WINETEST_GET_POSITION, NULL, 0, &position, sizeof(position));
+    ok(!status, "got %#lx\n", status);
+    ok(position == 0x55, "got %#x\n", position);
+
+    ret_offset = 0xdeadbeef;
+    offset.QuadPart = (LONGLONG)-2; /* FILE_USE_FILE_POINTER_POSITION */
+    status = NtReadFile(file, NULL, NULL, NULL, &io, &ret_offset, sizeof(ret_offset), &offset, NULL);
+    ok(!status, "got status %#lx\n", status);
+    todo_wine ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
+
+    position = 0xbeef;
+    status = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io, IOCTL_WINETEST_GET_POSITION, NULL, 0, &position, sizeof(position));
+    ok(!status, "got %#lx\n", status);
+    ok(position == 0x55, "got %#x\n", position);
+
+    io.Information = 0xdeadbeef;
+    offset.QuadPart = (LONGLONG)-1; /* FILE_WRITE_TO_END_OF_FILE */
+    status = NtWriteFile(file, NULL, NULL, NULL, &io, buffer, sizeof(buffer), &offset, NULL);
+    ok(!status, "got status %#lx\n", status);
+    ok(io.Information == 1, "got %#Ix\n", io.Information);
 
     CloseHandle(file);
 
