@@ -27,6 +27,8 @@ enum algid
     DSA,
     ECDSA,
     ECDSA_P256,
+    ECDSA_P384,
+    ECDSA_P521,
 };
 
 struct key
