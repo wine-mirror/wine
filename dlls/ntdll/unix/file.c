@@ -5373,7 +5373,7 @@ static unsigned int server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     SERVER_START_REQ( read )
     {
         req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
-        req->pos   = offset ? offset->QuadPart : 0;
+        req->pos   = offset ? offset->QuadPart : FILE_USE_FILE_POINTER_POSITION;
         wine_server_set_reply( req, buffer, size );
         status = virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -5408,7 +5408,7 @@ static unsigned int server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUT
     SERVER_START_REQ( write )
     {
         req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
-        req->pos   = offset ? offset->QuadPart : 0;
+        req->pos   = offset ? offset->QuadPart : FILE_USE_FILE_POINTER_POSITION;
         wine_server_add_data( req, buffer, size );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );

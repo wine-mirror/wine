@@ -1314,7 +1314,7 @@ static void test_object_info(void)
     ret_offset = 0xdeadbeef;
     status = NtReadFile(file, NULL, NULL, NULL, &io, &ret_offset, sizeof(ret_offset), NULL, NULL);
     ok(!status, "got status %#lx\n", status);
-    todo_wine ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
+    ok(ret_offset == 0x55, "got %#I64x\n", ret_offset);
 
     ret_offset = 0xdeadbeef;
     offset.QuadPart = 0x2345;
