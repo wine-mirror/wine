@@ -253,7 +253,7 @@ DECLARE_INTERFACE_IID_(IDXCoreAdapterList, IUnknown, "526c7776-40e9-459b-b711-f3
 #define IDXCoreAdapterList_AddRef(p)                         (p)->AddRef()
 #define IDXCoreAdapterList_Release(p)                        (p)->Release()
 /*** IDXCoreAdapterList methods ***/
-#define IDXCoreAdapterList_GetAdapter(p,a,b)                 (p)->GetAdapter(a,b)
+#define IDXCoreAdapterList_GetAdapter(p,a,b,c)               (p)->GetAdapter(a,b,c)
 #define IDXCoreAdapterList_GetAdapterCount(p)                (p)->GetAdapterCount()
 #define IDXCoreAdapterList_IsStale(p)                        (p)->IsStale()
 #define IDXCoreAdapterList_GetFactory(p,a,b)                 (p)->GetFactory(a,b)
