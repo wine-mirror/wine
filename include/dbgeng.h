@@ -2428,6 +2428,7 @@ DECLARE_INTERFACE_(IDebugSystemObjects, IUnknown)
     STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
     STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetCurrentProcessId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
     STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
     STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
@@ -2467,6 +2468,7 @@ DECLARE_INTERFACE_(IDebugSystemObjects2, IUnknown)
     STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
     STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetCurrentProcessId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
     STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
     STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
@@ -2512,6 +2514,7 @@ DECLARE_INTERFACE_(IDebugSystemObjects3, IUnknown)
     STDMETHOD(GetEventProcess)(THIS_ ULONG *id) PURE;
     STDMETHOD(GetCurrentThreadId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentThreadId)(THIS_ ULONG id) PURE;
+    STDMETHOD(GetCurrentProcessId)(THIS_ ULONG *id) PURE;
     STDMETHOD(SetCurrentProcessId)(THIS_ ULONG id) PURE;
     STDMETHOD(GetNumberThreads)(THIS_ ULONG *number) PURE;
     STDMETHOD(GetTotalNumberThreads)(THIS_ ULONG *total, ULONG *largest_process) PURE;
