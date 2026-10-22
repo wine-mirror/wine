@@ -1237,6 +1237,7 @@ static void test_object_info(void)
     FILE_NAME_INFORMATION *file_info = (FILE_NAME_INFORMATION *)buffer;
     FILE_POSITION_INFORMATION position_info;
     FILE_FS_DEVICE_INFORMATION device_info;
+    unsigned int position;
     HANDLE file;
     NTSTATUS status;
     IO_STATUS_BLOCK io;
@@ -1274,6 +1275,19 @@ static void test_object_info(void)
     ok(device_info.DeviceType == FILE_DEVICE_UNKNOWN, "Got type %#lx.\n", device_info.DeviceType);
     ok(device_info.Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
             "Got characteristics %#lx.\n", device_info.Characteristics);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    position_info.CurrentByteOffset.QuadPart = 0x1234;
+    status = NtSetInformationFile(device, &io, &position_info, sizeof(position_info), FilePositionInformation);
+    ok(!status, "got %#lx\n", status);
+    ok(!io.Status, "got status %#lx\n", io.Status);
+    ok(!io.Information, "got information %Iu\n", io.Information);
+
+    position = 0xbeef;
+    status = NtDeviceIoControlFile(device, NULL, NULL, NULL, &io, IOCTL_WINETEST_GET_POSITION, NULL, 0, &position, sizeof(position));
+    ok(!status, "got %#lx\n", status);
+    ok(position == 0x1234, "got %#x\n", position);
 
     file = CreateFileA("\\\\.\\WineTestDriver", FILE_WRITE_DATA, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());

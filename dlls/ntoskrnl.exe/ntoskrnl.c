@@ -715,6 +715,18 @@ static NTSTATUS dispatch_set_info( struct dispatch_context *context )
     TRACE( "device %p file %p class %#x size %lu\n",
            device, file, context->params.set_info.class, context->in_size );
 
+    if (context->params.set_info.class == FilePositionInformation)
+    {
+        /* Handled by ntoskrnl; never passed to the driver. */
+        FILE_POSITION_INFORMATION *info = context->in_buff;
+
+        if (context->in_size < sizeof(FILE_POSITION_INFORMATION))
+            return STATUS_INFO_LENGTH_MISMATCH;
+
+        file->CurrentByteOffset = info->CurrentByteOffset;
+        return STATUS_SUCCESS;
+    }
+
     if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
         return STATUS_NO_MEMORY;
 

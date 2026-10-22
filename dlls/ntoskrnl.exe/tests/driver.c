@@ -3203,6 +3203,9 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_COMPLETION:
             return completion_ioctl(device, irp, stack);
+        case IOCTL_WINETEST_GET_POSITION:
+            status = get_dword(irp, stack, &irp->IoStatus.Information, stack->FileObject->CurrentByteOffset.QuadPart);
+            break;
         default:
             break;
     }
@@ -3282,6 +3285,9 @@ static NTSTATUS WINAPI driver_SetInformation(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
 
+        case FilePositionInformation:
+            ok(0, "unexpected call\n");
+            /* fall through */
         default:
             ret = STATUS_NOT_IMPLEMENTED;
             break;
