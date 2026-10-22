@@ -240,12 +240,18 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
     return ERROR_SUCCESS;
 }
 
-SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
-                                     BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
+SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE handle, BYTE *input, DWORD insize, void *padding, BYTE *output,
+                                     DWORD outsize, DWORD *result, DWORD flags)
 {
-    FIXME("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx): stub\n", key, input, insize, padding,
-          output, outsize, result, flags);
-    return NTE_NOT_SUPPORTED;
+    struct object *key = (struct object *)handle;
+    NTSTATUS status;
+
+    TRACE("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx)\n", handle, input, insize, padding, output, outsize, result, flags);
+
+    if (key->type != KEY) return NTE_INVALID_HANDLE;
+
+    status = BCryptDecrypt(key->key.bcrypt_key, input, insize, padding, NULL, 0, output, outsize, result, flags);
+    return map_ntstatus(status);
 }
 
 SECURITY_STATUS WINAPI NCryptDeleteKey(NCRYPT_KEY_HANDLE key, DWORD flags)
@@ -254,23 +260,23 @@ SECURITY_STATUS WINAPI NCryptDeleteKey(NCRYPT_KEY_HANDLE key, DWORD flags)
     return NTE_NOT_SUPPORTED;
 }
 
-SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
-                                     BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
+SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE handle, BYTE *input, DWORD insize, void *padding, BYTE *output,
+                                     DWORD outsize, DWORD *result, DWORD flags)
 {
-    struct object *key_object = (struct object *)key;
+    struct object *key = (struct object *)handle;
+    NTSTATUS status;
 
-    TRACE("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx)\n", key, input, insize, padding,
-          output, outsize, result, flags);
+    TRACE("(%#Ix, %p, %lu, %p, %p, %lu, %p, %#lx)\n", handle, input, insize, padding, output, outsize, result, flags);
 
     if (flags & ~(NCRYPT_NO_PADDING_FLAG | NCRYPT_PAD_OAEP_FLAG | NCRYPT_PAD_PKCS1_FLAG | NCRYPT_SILENT_FLAG))
     {
         FIXME("Flags %lx not supported\n", flags);
         return NTE_BAD_FLAGS;
     }
-    if (key_object->type != KEY) return NTE_INVALID_HANDLE;
+    if (key->type != KEY) return NTE_INVALID_HANDLE;
 
-    return map_ntstatus(BCryptEncrypt(key_object->key.bcrypt_key, input, insize, padding,
-                                      NULL, 0, output, outsize, result, flags));
+    status = BCryptEncrypt(key->key.bcrypt_key, input, insize, padding, NULL, 0, output, outsize, result, flags);
+    return map_ntstatus(status);
 }
 
 SECURITY_STATUS WINAPI NCryptEnumAlgorithms(NCRYPT_PROV_HANDLE provider, DWORD alg_ops,

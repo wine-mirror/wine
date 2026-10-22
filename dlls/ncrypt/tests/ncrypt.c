@@ -806,6 +806,37 @@ static void test_NCryptEncrypt(void)
     NCryptFreeObject(prov);
 }
 
+static void test_NCryptDecrypt(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    BYTE encrypted[128], unencrypted[128];
+    DWORD size;
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(!ret, "got %lx\n", ret);
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(!ret, "got %lx\n", ret);
+    ret = NCryptFinalizeKey(key, 0);
+    ok(!ret, "got %lx\n", ret);
+
+    size = sizeof(encrypted);
+    memset(encrypted, 0, sizeof(encrypted));
+    ret = NCryptEncrypt(key, data_to_encrypt, sizeof(data_to_encrypt), NULL, encrypted, size, &size,
+                        NCRYPT_PAD_PKCS1_FLAG);
+    ok(!ret, "got %lx\n", ret);
+
+    size = sizeof(unencrypted);
+    memset(unencrypted, 0, sizeof(unencrypted));
+    ret = NCryptDecrypt(key, encrypted, sizeof(encrypted), NULL, unencrypted, size, &size, NCRYPT_PAD_PKCS1_FLAG);
+    ok(!ret, "got %lx\n", ret);
+    ok(!memcmp(unencrypted, data_to_encrypt, sizeof(data_to_encrypt)), "wrong data\n");
+
+    NCryptDeleteKey(key, 0);
+    NCryptFreeObject(prov);
+}
+
 static void test_NCryptExportKey(void)
 {
     NCRYPT_PROV_HANDLE prov;
@@ -848,5 +879,6 @@ START_TEST(ncrypt)
     test_verify_signature();
     test_NCryptIsAlgSupported();
     test_NCryptEncrypt();
+    test_NCryptDecrypt();
     test_NCryptExportKey();
 }
