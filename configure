@@ -16615,7 +16615,22 @@ then :
   ac_fn_c_check_func "$LINENO" "wl_display_connect" "ac_cv_func_wl_display_connect"
 if test "x$ac_cv_func_wl_display_connect" = xyes
 then :
-  # Extract the first word of "wayland-scanner", so it can be a program name with args.
+  :
+else case e in #(
+  e) WAYLAND_CLIENT_LIBS="" ;;
+esac
+fi
+
+else case e in #(
+  e) WAYLAND_CLIENT_LIBS="" ;;
+esac
+fi
+
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
+fi
+
+    # Extract the first word of "wayland-scanner", so it can be a program name with args.
 set dummy wayland-scanner; ac_word=$2
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 printf %s "checking for $ac_word... " >&6; }
@@ -16661,17 +16676,6 @@ else
 printf '%s\n' "no" >&6; }
 fi
 
-
-else case e in #(
-  e) WAYLAND_CLIENT_LIBS="" ;;
-esac
-fi
-
-fi
-
-CPPFLAGS=$ac_save_pkg_CPPFLAGS
-LIBS=$ac_save_pkg_LIBS
-fi
 
     rm -f conftest.err
 if ${XKBCOMMON_CFLAGS:+false} :
@@ -16785,12 +16789,52 @@ fi
         fi
     fi
 fi
-if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"
+if test -z "$WAYLAND_CLIENT_LIBS"
 then :
   case "x$with_wayland" in
-  x)   as_fn_append wine_notices "|Wayland ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
+  x)   as_fn_append wine_notices "|wayland-client ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.
+  *)   as_fn_error $? "wayland-client ${notice_platform}development files not found, the Wayland driver won't be supported.
+This is an error since --with-wayland was requested." "$LINENO" 5 ;;
+esac
+enable_winewayland_drv=${enable_winewayland_drv:-no}
+fi
+if test -z "$WAYLAND_SCANNER"
+then :
+  case "x$with_wayland" in
+  x)   as_fn_append wine_notices "|wayland-scanner not found, the Wayland driver won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "wayland-scanner not found, the Wayland driver won't be supported.
+This is an error since --with-wayland was requested." "$LINENO" 5 ;;
+esac
+enable_winewayland_drv=${enable_winewayland_drv:-no}
+fi
+if test -z "$XKBCOMMON_LIBS"
+then :
+  case "x$with_wayland" in
+  x)   as_fn_append wine_notices "|libxkbcommon ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libxkbcommon ${notice_platform}development files not found, the Wayland driver won't be supported.
+This is an error since --with-wayland was requested." "$LINENO" 5 ;;
+esac
+enable_winewayland_drv=${enable_winewayland_drv:-no}
+fi
+if test -z "$XKBREGISTRY_LIBS"
+then :
+  case "x$with_wayland" in
+  x)   as_fn_append wine_notices "|libxkbregistry ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libxkbregistry ${notice_platform}development files not found, the Wayland driver won't be supported.
+This is an error since --with-wayland was requested." "$LINENO" 5 ;;
+esac
+enable_winewayland_drv=${enable_winewayland_drv:-no}
+fi
+if test "$ac_cv_header_linux_input_h" = "no"
+then :
+  case "x$with_wayland" in
+  x)   as_fn_append wine_notices "|linux/input.h not found, the Wayland driver won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "linux/input.h not found, the Wayland driver won't be supported.
 This is an error since --with-wayland was requested." "$LINENO" 5 ;;
 esac
 enable_winewayland_drv=${enable_winewayland_drv:-no}

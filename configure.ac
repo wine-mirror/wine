@@ -1440,10 +1440,10 @@ if test "x$with_wayland" != "xno"
 then
     WINE_PACKAGE_FLAGS(WAYLAND_CLIENT,[wayland-client],,,,
         [AC_CHECK_HEADER([wayland-client.h],
-           [AC_CHECK_FUNC(wl_display_connect,
-              [AC_PATH_PROG(WAYLAND_SCANNER,wayland-scanner,
-                            [`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`])],
-              [WAYLAND_CLIENT_LIBS=""])])])
+           [AC_CHECK_FUNC(wl_display_connect,[:],[WAYLAND_CLIENT_LIBS=""])],
+           [WAYLAND_CLIENT_LIBS=""])])
+    AC_PATH_PROG(WAYLAND_SCANNER,wayland-scanner,
+                 [`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`])
     WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
         [AC_CHECK_FUNC(xkb_context_new,[:],[XKBCOMMON_LIBS=""])])
     if test "x$with_opengl" != "xno"
@@ -1460,8 +1460,20 @@ then
         fi
     fi
 fi
-WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
-                 [Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.],
+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS"],
+                 [wayland-client ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_SCANNER"],
+                 [wayland-scanner not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$XKBCOMMON_LIBS"],
+                 [libxkbcommon ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$XKBREGISTRY_LIBS"],
+                 [libxkbregistry ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test "$ac_cv_header_linux_input_h" = "no"],
+                 [linux/input.h not found, the Wayland driver won't be supported.],
                  [enable_winewayland_drv])
 
 if test "$enable_wineandroid_drv$enable_winemac_drv$enable_winewayland_drv" = "nonono"
