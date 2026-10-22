@@ -700,6 +700,39 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
     return dispatch_irp( device, irp, context );
 }
 
+/* process a set file information request for a given device */
+static NTSTATUS dispatch_set_info( struct dispatch_context *context )
+{
+    IRP *irp;
+    IO_STACK_LOCATION *irpsp;
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.set_info.file );
+
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = IoGetAttachedDevice( file->DeviceObject );
+
+    TRACE( "device %p file %p class %#x size %lu\n",
+           device, file, context->params.set_info.class, context->in_size );
+
+    if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MajorFunction = IRP_MJ_SET_INFORMATION;
+    irpsp->Parameters.SetFile.FileInformationClass = context->params.set_info.class;
+    irpsp->Parameters.SetFile.Length = context->in_size;
+    irpsp->FileObject = file;
+    irp->AssociatedIrp.SystemBuffer = context->in_buff;
+    irp->RequestorMode = UserMode;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
+    irp->Tail.Overlay.OriginalFileObject = file;
+
+    context->in_buff = NULL;
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
+    return dispatch_irp( device, irp, context );
+}
+
 /* process a flush request for a given device */
 static NTSTATUS dispatch_flush( struct dispatch_context *context )
 {
@@ -882,6 +915,7 @@ static const dispatch_func dispatch_funcs[] =
     dispatch_close,    /* IRP_CALL_CLOSE */
     dispatch_read,     /* IRP_CALL_READ */
     dispatch_write,    /* IRP_CALL_WRITE */
+    dispatch_set_info, /* IRP_CALL_SET_INFO */
     dispatch_flush,    /* IRP_CALL_FLUSH */
     dispatch_ioctl,    /* IRP_CALL_IOCTL */
     dispatch_volume,   /* IRP_CALL_VOLUME */

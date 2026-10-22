@@ -440,6 +440,11 @@ static void dump_irp_params( const char *prefix, const union irp_params *data )
         dump_uint64( ",file=", &data->write.file );
         fputc( '}', stderr );
         break;
+    case IRP_CALL_SET_INFO:
+        fprintf( stderr, "%s{SET_INFO,class=%08x", prefix, data->set_info.class );
+        dump_uint64( ",file=", &data->set_info.file );
+        fputc( '}', stderr );
+        break;
     case IRP_CALL_FLUSH:
         fprintf( stderr, "%s{FLUSH", prefix );
         dump_uint64( ",file=", &data->flush.file );

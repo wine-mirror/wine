@@ -774,6 +774,7 @@ enum irp_type
     IRP_CALL_CLOSE,
     IRP_CALL_READ,
     IRP_CALL_WRITE,
+    IRP_CALL_SET_INFO,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
     IRP_CALL_VOLUME,
@@ -815,6 +816,12 @@ union irp_params
         client_ptr_t     file;      /* opaque ptr for the file object */
         file_pos_t       pos;       /* file position */
     } write;
+    struct
+    {
+        enum irp_type    type;      /* IRP_CALL_SET_INFO */
+        int              class;     /* information class */
+        client_ptr_t     file;      /* opaque ptr for the file object */
+    } set_info;
     struct
     {
         enum irp_type    type;      /* IRP_CALL_FLUSH */

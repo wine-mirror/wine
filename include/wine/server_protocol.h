@@ -758,6 +758,7 @@ enum irp_type
     IRP_CALL_CLOSE,
     IRP_CALL_READ,
     IRP_CALL_WRITE,
+    IRP_CALL_SET_INFO,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
     IRP_CALL_VOLUME,
@@ -799,6 +800,12 @@ union irp_params
         client_ptr_t     file;
         file_pos_t       pos;
     } write;
+    struct
+    {
+        enum irp_type    type;
+        int              class;
+        client_ptr_t     file;
+    } set_info;
     struct
     {
         enum irp_type    type;
@@ -7190,6 +7197,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 978
+#define SERVER_PROTOCOL_VERSION 979
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

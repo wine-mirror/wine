@@ -3258,6 +3258,40 @@ static BOOL compare_file_name(const struct file_context *context, const WCHAR *e
             && !kmemcmp(context->name, expect, context->namelen);
 }
 
+static NTSTATUS WINAPI driver_SetInformation(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret;
+
+    switch (stack->Parameters.SetFile.FileInformationClass)
+    {
+        case FileEndOfFileInformation:
+        {
+            FILE_END_OF_FILE_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
+
+            if (stack->Parameters.SetFile.Length < sizeof(*info))
+            {
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+                break;
+            }
+
+            if (info->EndOfFile.QuadPart == 1234)
+                ret = STATUS_DEVICE_BUSY;
+            else
+                ret = STATUS_SUCCESS;
+            break;
+        }
+
+        default:
+            ret = STATUS_NOT_IMPLEMENTED;
+            break;
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return ret;
+}
+
 static NTSTATUS WINAPI driver_QueryInformation(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -3437,6 +3471,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_CREATE]            = driver_Create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
+    driver->MajorFunction[IRP_MJ_SET_INFORMATION]   = driver_SetInformation;
     driver->MajorFunction[IRP_MJ_QUERY_INFORMATION] = driver_QueryInformation;
     driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = driver_QueryVolumeInformation;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
