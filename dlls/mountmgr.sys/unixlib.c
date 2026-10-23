@@ -648,6 +648,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     check_device_access,
     cdrom_open,
     cdrom_close,
+    cdrom_read,
     cdrom_ioctl,
     dismount,
     detect_serial_ports,

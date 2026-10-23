@@ -2611,3 +2611,20 @@ NTSTATUS cdrom_ioctl( void *args )
             return STATUS_NOT_SUPPORTED;
     }
 }
+
+NTSTATUS cdrom_read( void *args )
+{
+    struct cdrom_read_params *params = args;
+    ssize_t ret;
+
+    TRACE( "read %u bytes at %zu\n", params->size, (size_t)params->offset );
+
+    while ((ret = pread( params->cdrom->fd, params->output, params->size, params->offset )) < 0)
+    {
+        if (errno != EINTR)
+            return errno_to_status( errno );
+    }
+    if (params->size && !ret) return STATUS_END_OF_FILE;
+    params->ret_size = ret;
+    return STATUS_SUCCESS;
+}
