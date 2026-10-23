@@ -6963,6 +6963,54 @@ static void test_af_priority(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_uncommitted_cache_file(int port)
+{
+    char initial_file[MAX_PATH], url[256];
+    HINTERNET ses, con, req;
+    DWORD size, attrs;
+    BOOL ret;
+
+    sprintf(url, "http://localhost:%d/async_read", port);
+    DeleteUrlCacheEntryA(url);
+    ResetEvent(conn_wait_event);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpenA failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnectA failed: %lu\n", GetLastError());
+
+    req = HttpOpenRequestA(con, "GET", "/async_read", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0);
+    ok(req != NULL, "HttpOpenRequestA failed: %lu\n", GetLastError());
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequestA failed: %lu\n", GetLastError());
+
+    initial_file[0] = 0;
+    size = sizeof(initial_file);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_DATAFILE_NAME, initial_file, &size);
+    ok(ret, "InternetQueryOptionA(DATAFILE_NAME) failed: %lu\n", GetLastError());
+
+    attrs = GetFileAttributesA(initial_file);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "expected cache file to exist\n");
+
+    SetEvent(conn_wait_event);
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
+    SetLastError(0xdeadbeef);
+    attrs = GetFileAttributesA(initial_file);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected uncommitted cache file to be deleted, got %#lx\n", attrs);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+    DeleteFileA(initial_file);
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteUrlCacheEntryA(url);
+    ok(!ret, "DeleteUrlCacheEntryA succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -7022,6 +7070,7 @@ static void test_http_connection(void)
     test_basic_auth_credentials_manual(si.port);
     test_basic_auth_credentials_cached_manual(si.port);
     test_async_read(si.port);
+    test_uncommitted_cache_file(si.port);
     test_http_read(si.port);
     test_file_pointer(si.port);
     test_connection_break(si.port);

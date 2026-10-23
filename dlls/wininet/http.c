@@ -2458,13 +2458,13 @@ static void create_cache_entry(http_request_t *req)
     BOOL b = TRUE;
 
     /* FIXME: We should free previous cache file earlier */
-    if(req->req_file) {
-        req_file_release(req->req_file);
-        req->req_file = NULL;
-    }
     if(req->hCacheFile) {
         CloseHandle(req->hCacheFile);
         req->hCacheFile = NULL;
+    }
+    if(req->req_file) {
+        req_file_release(req->req_file);
+        req->req_file = NULL;
     }
 
     if(req->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE)
