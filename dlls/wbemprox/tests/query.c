@@ -479,7 +479,11 @@ static void test_Win32_Service( IWbemServices *services )
         return;
     }
 
+    check_property( service, L"Description", VT_BSTR, CIM_STRING );
     check_property( service, L"ProcessID", VT_I4, CIM_UINT32 );
+    check_property( service, L"PathName", VT_BSTR, CIM_STRING );
+    check_property( service, L"StartName", VT_BSTR, CIM_STRING );
+
     type = 0xdeadbeef;
     VariantInit( &state );
     hr = IWbemClassObject_Get( service, L"State", 0, &state, &type, NULL );

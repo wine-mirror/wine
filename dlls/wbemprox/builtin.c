@@ -469,11 +469,14 @@ static const struct column col_service[] =
 {
     { L"AcceptPause",   CIM_BOOLEAN },
     { L"AcceptStop",    CIM_BOOLEAN },
+    { L"Description",   CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DisplayName",   CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Name",          CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { L"PathName",      CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ProcessID",     CIM_UINT32 },
     { L"ServiceType",   CIM_STRING },
     { L"StartMode",     CIM_STRING },
+    { L"StartName",     CIM_STRING|COL_FLAG_DYNAMIC },
     { L"State",         CIM_STRING },
     { L"SystemName",    CIM_STRING|COL_FLAG_DYNAMIC },
     /* methods */
@@ -1047,15 +1050,19 @@ struct record_rawsmbiostables
     UINT8        minor_version;
     int          used_20_calling_method;
 };
+
 struct record_service
 {
     int          accept_pause;
     int          accept_stop;
+    const WCHAR *description;
     const WCHAR *displayname;
     const WCHAR *name;
+    const WCHAR *pathname;
     UINT32       process_id;
     const WCHAR *servicetype;
     const WCHAR *startmode;
+    const WCHAR *startname;
     const WCHAR *state;
     const WCHAR *systemname;
     /* methods */
@@ -1064,6 +1071,7 @@ struct record_service
     class_method *start_service;
     class_method *stop_service;
 };
+
 struct record_sid
 {
     const WCHAR *accountname;
@@ -4364,6 +4372,26 @@ done:
     return config;
 }
 
+static WCHAR *get_service_description( SC_HANDLE manager, const WCHAR *name )
+{
+    SC_HANDLE service;
+    SERVICE_DESCRIPTIONW *desc;
+    DWORD size;
+    WCHAR *ret = NULL;
+
+    if (!(service = OpenServiceW( manager, name, SERVICE_QUERY_CONFIG ))) return NULL;
+    QueryServiceConfig2W( service, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &size );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
+    if (!(desc = malloc( size ))) goto done;
+    if (!QueryServiceConfig2W( service, SERVICE_CONFIG_DESCRIPTION, (BYTE *)desc, size, &size )) goto done;
+    ret = wcsdup( desc->lpDescription );
+    free( desc );
+
+done:
+    CloseServiceHandle( service );
+    return ret;
+}
+
 static enum fill_status fill_service( struct table *table, const struct expr *cond )
 {
     struct record_service *rec;
@@ -4408,11 +4436,14 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
         rec = (struct record_service *)(table->data + offset);
         rec->accept_pause   = (status->dwControlsAccepted & SERVICE_ACCEPT_PAUSE_CONTINUE) ? -1 : 0;
         rec->accept_stop    = (status->dwControlsAccepted & SERVICE_ACCEPT_STOP) ? -1 : 0;
+        rec->description    = get_service_description( manager, services[i].lpServiceName );
         rec->displayname    = wcsdup( services[i].lpDisplayName );
         rec->name           = wcsdup( services[i].lpServiceName );
+        rec->pathname       = wcsdup( config->lpBinaryPathName );
         rec->process_id     = status->dwProcessId;
         rec->servicetype    = get_service_type( status->dwServiceType );
         rec->startmode      = get_service_startmode( config->dwStartType );
+        rec->startname      = wcsdup( config->lpServiceStartName );
         rec->state          = get_service_state( status->dwCurrentState );
         rec->systemname     = wcsdup( sysnameW );
         rec->pause_service  = service_pause_service;
