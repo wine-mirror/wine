@@ -5184,7 +5184,12 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     SetupTermDefaultQueueCallback(callback_ctx);
     SetupCloseInfFile(hinf);
 
-    SetupCopyOEMInfW(driver->inf_path, NULL, SPOST_NONE, 0, inf_path, ARRAY_SIZE(inf_path), NULL, &filepart);
+    if (!SetupCopyOEMInfW(driver->inf_path, NULL, SPOST_NONE, 0, inf_path, ARRAY_SIZE(inf_path), NULL, &filepart))
+    {
+        RegCloseKey(device_key);
+        RegCloseKey(driver_key);
+        return FALSE;
+    }
     TRACE("Copied INF file %s to %s.\n", debugstr_w(driver->inf_path), debugstr_w(inf_path));
 
     RegSetValueExW(driver_key, L"InfPath", 0, REG_SZ, (BYTE *)filepart, lstrlenW(filepart) * sizeof(WCHAR));
