@@ -2437,14 +2437,16 @@ static void write_cache_file(http_request_t *req, const BYTE *buf, DWORD len)
     }
 
     if(len) {
-        BOOL bres;
         DWORD written;
 
-        bres = WriteFile(req->hCacheFile, buf, len, &written, NULL);
-        if(bres)
+        if(WriteFile(req->hCacheFile, buf, len, &written, NULL)) {
             req->cache_size += written;
-        else
-            FIXME("WriteFile failed: %lu\n", GetLastError());
+        }else {
+            WARN("WriteFile failed: %lu\n", GetLastError());
+            CloseHandle(req->hCacheFile);
+            req->hCacheFile = NULL;
+            return;
+        }
     }
 
     if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
@@ -2520,10 +2522,15 @@ static void create_cache_entry(http_request_t *req)
     b = CreateUrlCacheEntryW(url, req->contentLength == ~0 ? 0 : req->contentLength, NULL, file_name, 0);
     if(!b) {
         WARN("Could not create cache entry: %08lx\n", GetLastError());
+        free(url);
         return;
     }
 
-    create_req_file(file_name, &req->req_file);
+    if(create_req_file(file_name, &req->req_file) != ERROR_SUCCESS) {
+        DeleteFileW(file_name);
+        free(url);
+        return;
+    }
     req->req_file->url = url;
     req->content_pos = 0;
     req->cache_size = 0;
@@ -3046,6 +3053,11 @@ static DWORD read_req_file(http_request_t *req, BYTE *buffer, DWORD size, DWORD 
     LARGE_INTEGER off;
     BYTE buf[1024];
 
+    if (!req->hCacheFile && !req->req_file->is_committed) {
+        *read = 0;
+        return ERROR_SUCCESS;
+    }
+
     while (req->content_pos > req->cache_size) {
         res = read_http_stream(req, (BYTE*)buf, min(sizeof(buf), req->content_pos - req->cache_size),
                                &ret_read, allow_blocking);
@@ -3154,7 +3166,7 @@ static void async_read_file_proc(task_header_t *hdr)
 
     TRACE("req %p buf %p size %lu read_pos %lu ret_read %p\n", req, task->buf, task->size, task->read_pos, task->ret_read);
 
-    if(req->req_file && req->req_file->file_handle) {
+    if(req->req_file && req->req_file->file_handle && (req->hCacheFile || req->req_file->is_committed)) {
         DWORD ret, ret_read;
         BYTE buf[1024];
         while (req->content_pos > req->cache_size) {
