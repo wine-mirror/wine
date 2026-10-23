@@ -5487,7 +5487,7 @@ typedef struct _SYSTEM_ALARM_OBJECT_ACE {
     GUID        ObjectType;
     GUID        InheritedObjectType;
     DWORD       SidStart;
-} SYSTEM_ALARM_OBJECT_ACE, *PSYSTEM_ALARM_OBJECT_aCE;
+} SYSTEM_ALARM_OBJECT_ACE, *PSYSTEM_ALARM_OBJECT_ACE;
 
 typedef struct _ACCESS_ALLOWED_CALLBACK_ACE {
     ACE_HEADER  Header;
