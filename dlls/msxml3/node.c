@@ -2027,6 +2027,16 @@ static void node_dump_element_attributes(struct node_dump_context *context, stru
     }
 }
 
+static void node_dump_attribute_value(struct node_dump_context *context, struct domnode *node)
+{
+    struct domnode *n;
+
+    LIST_FOR_EACH_ENTRY(n, &node->children, struct domnode, entry)
+    {
+        node_dump_xml_attr(n, context);
+    }
+}
+
 static void node_dump(struct domnode *node, struct node_dump_context *context)
 {
     struct domnode *n;
@@ -2111,10 +2121,7 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
         case NODE_ATTRIBUTE:
             node_dump_qualified_name(context, node);
             node_dump_append(context, L"=\"", 2);
-            LIST_FOR_EACH_ENTRY(n, &node->children, struct domnode, entry)
-            {
-                node_dump_xml_attr(n, context);
-            }
+            node_dump_attribute_value(context, node);
             node_dump_append(context, L"\"", 1);
             break;
 
@@ -2126,6 +2133,28 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
 
         case NODE_DOCUMENT_TYPE:
             node_dump_append(context, node->data, SysStringLen(node->data));
+            break;
+
+        case NODE_NOTATION:
+            node_dump_append(context, L"<!NOTATION ", 11);
+            node_dump_append(context, node->name, SysStringLen(node->name));
+            node_dump_append(context, L" ", 1);
+
+            if ((n = domnode_get_first_attribute(node)))
+            {
+                node_dump_append(context, n->name, SysStringLen(n->name));
+                node_dump_append(context, L" \"", 2);
+                node_dump_attribute_value(context, n);
+                node_dump_append(context, L"\"", 1);
+
+                if ((n = domnode_get_next_attribute_sibling(n)))
+                {
+                    node_dump_append(context, L" \"", 2);
+                    node_dump_attribute_value(context, n);
+                    node_dump_append(context, L"\"", 1);
+                }
+            }
+            node_dump_append(context, L">", 1);
             break;
 
         default:

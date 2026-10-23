@@ -18446,13 +18446,9 @@ static void test_dtd_notation(void)
     hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_xml(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"<!NOTATION notation0 PUBLIC \"pub-id-0\" \"sys-id-0\">"), "Unexpected type %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     /* Notation attributes */
     hr = IXMLDOMNode_get_attributes(node, &map);
@@ -18498,13 +18494,9 @@ if (hr == S_OK)
     hr = IXMLDOMDocumentType_get_lastChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_xml(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"<!NOTATION notation1 PUBLIC \"pub-id-1\">"), "Unexpected type %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     hr = IXMLDOMNode_get_previousSibling(node, &node2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -18529,13 +18521,9 @@ if (hr == S_OK)
     SysFreeString(str);
 
     hr = IXMLDOMNode_get_xml(node2, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"<!NOTATION notation2 SYSTEM \"sys-id-2\">"), "Unexpected type %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     IXMLDOMNode_Release(node2);
     IXMLDOMNode_Release(node);
