@@ -2868,7 +2868,7 @@ static DWORD read_more_data( struct request *request )
     return ret;
 }
 
-static DWORD read_line( struct request *request, char *buffer, DWORD *len )
+static DWORD read_line( struct request *request, DWORD *len )
 {
     int count, bytes_read, pos = 0;
     DWORD ret;
@@ -2884,7 +2884,7 @@ static DWORD read_line( struct request *request, char *buffer, DWORD *len )
         else count = bytes_read = request->read.size;
 
         count = min( count, *len - pos );
-        memcpy( buffer + pos, request->read.buf + request->read.pos, count );
+        memcpy( request->reply + pos, request->read.buf + request->read.pos, count );
         pos += count;
         remove_data( request, bytes_read );
         if (eol) break;
@@ -2899,35 +2899,37 @@ static DWORD read_line( struct request *request, char *buffer, DWORD *len )
     }
     if (pos < *len)
     {
-        if (pos && buffer[pos - 1] == '\r') pos--;
+        if (pos && request->reply[pos - 1] == '\r') pos--;
         *len = pos + 1;
     }
-    buffer[*len - 1] = 0;
-    TRACE("returning %s\n", debugstr_a(buffer));
+    else return ERROR_WINHTTP_HEADER_SIZE_OVERFLOW;
+
+    request->reply[*len - 1] = 0;
+    TRACE("returning %s\n", debugstr_a(request->reply));
     return ERROR_SUCCESS;
 }
 
-#define MAX_REPLY_LEN   1460
-#define INITIAL_HEADER_BUFFER_LEN  512
+#define MAX_REPLY_LEN     65536
+#define HEADER_BUFFER_LEN 4096
 
 static DWORD read_reply( struct request *request )
 {
-    char buffer[MAX_REPLY_LEN];
     DWORD ret, buflen, len, offset, crlf_len = 2; /* lstrlenW(crlf) */
     const char *status_text, *ptr;
     WCHAR *versionW, *status_textW, *raw_headers;
     WCHAR status_code[4]; /* sizeof("nnn") */
 
     if (!request->netconn) return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+    if (!request->reply && !(request->reply = malloc( MAX_REPLY_LEN ))) return ERROR_OUTOFMEMORY;
 
     do
     {
         buflen = MAX_REPLY_LEN;
-        if ((ret = read_line( request, buffer, &buflen ))) return ret;
+        if ((ret = read_line( request, &buflen ))) return ret;
 
         /* first line should look like 'HTTP/1.x nnn OK' where nnn is the status code */
-        if (!(ptr = strchr( buffer, ' ' ))) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-        len = ptr - buffer;
+        if (!(ptr = strchr( request->reply, ' ' ))) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        len = ptr - request->reply;
 
         while (*ptr == ' ') ptr++;
         if (!isdigit( ptr[0] ) || !isdigit( ptr[1] ) || !isdigit( ptr[2] )) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
@@ -2939,7 +2941,7 @@ static DWORD read_reply( struct request *request )
         while (*ptr == ' ') ptr++;
         status_text = ptr;
 
-        TRACE( "version [%s] status code [%s] status text [%s]\n", debugstr_an(buffer, len),
+        TRACE( "version [%s] status code [%s] status text [%s]\n", debugstr_an(request->reply, len),
                debugstr_w(status_code), debugstr_a(status_text) );
 
     } while (!wcscmp( status_code, L"100" )); /* ignore "100 Continue" responses */
@@ -2948,7 +2950,7 @@ static DWORD read_reply( struct request *request )
                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, FALSE ))) return ret;
 
     if (!(versionW = malloc( (len + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-    MultiByteToWideChar( CP_ACP, 0, buffer, len, versionW, len );
+    MultiByteToWideChar( CP_ACP, 0, request->reply, len, versionW, len );
     versionW[len] = 0;
 
     free( request->version );
@@ -2961,9 +2963,9 @@ static DWORD read_reply( struct request *request )
     free( request->status_text );
     request->status_text = status_textW;
 
-    len = max( buflen + crlf_len, INITIAL_HEADER_BUFFER_LEN );
+    len = max( buflen + crlf_len, HEADER_BUFFER_LEN );
     if (!(raw_headers = malloc( len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-    MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers, buflen );
+    MultiByteToWideChar( CP_ACP, 0, request->reply, buflen, raw_headers, buflen );
     memcpy( raw_headers + buflen - 1, L"\r\n", sizeof(L"\r\n") );
 
     free( request->raw_headers );
@@ -2976,8 +2978,8 @@ static DWORD read_reply( struct request *request )
         int lenW;
 
         buflen = MAX_REPLY_LEN;
-        if (read_line( request, buffer, &buflen )) return ERROR_SUCCESS;
-        if (!*buffer) buflen = 1;
+        if (read_line( request, &buflen )) return ERROR_SUCCESS;
+        if (!*request->reply) buflen = 1;
 
         while (len - offset < buflen + crlf_len)
         {
@@ -2986,12 +2988,12 @@ static DWORD read_reply( struct request *request )
             if (!(tmp = realloc( raw_headers, len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
             request->raw_headers = raw_headers = tmp;
         }
-        if (!*buffer)
+        if (!*request->reply)
         {
             memcpy( raw_headers + offset, L"\r\n", sizeof(L"\r\n") );
             break;
         }
-        lenW = MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
+        lenW = MultiByteToWideChar( CP_ACP, 0, request->reply, buflen, raw_headers + offset, buflen );
 
         if (!(header = parse_header( raw_headers + offset, lenW - 1, TRUE ))) break;
         if ((ret = process_header( request, header->field, header->value, WINHTTP_ADDREQ_FLAG_ADD, FALSE )))

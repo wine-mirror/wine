@@ -223,9 +223,10 @@ struct request
     WCHAR *verb;
     WCHAR *path;
     WCHAR *version;
-    WCHAR *raw_headers;
     void *optional;
     DWORD optional_len;
+    char  *reply;
+    WCHAR *raw_headers;
     struct netconn *netconn;
     DWORD security_flags;
     BOOL check_revocation;

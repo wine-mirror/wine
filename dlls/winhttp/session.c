@@ -754,6 +754,7 @@ static void request_destroy( struct object_header *hdr )
     free( request->verb );
     free( request->path );
     free( request->version );
+    free( request->reply );
     free( request->raw_headers );
     free( request->status_text );
     for (i = 0; i < request->num_headers; i++)
