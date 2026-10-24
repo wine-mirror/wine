@@ -208,6 +208,17 @@ static struct list teb_list = LIST_INIT( teb_list );
 #define MAP_NORESERVE 0
 #endif
 
+#undef MAP_FIXED_NOREPLACE
+#ifndef MAP_FIXED_NOREPLACE
+# ifdef linux
+#  define MAP_FIXED_NOREPLACE 0x100000
+# elif defined MAP_TRYFIXED
+#  define MAP_FIXED_NOREPLACE MAP_TRYFIXED
+# else
+#  define MAP_FIXED_NOREPLACE 0
+# endif
+#endif
+
 #ifdef _WIN64  /* on 64-bit the page protection bytes use a 2-level table */
 static const size_t pages_vprot_shift = 20;
 static const size_t pages_vprot_mask = (1 << 20) - 1;
@@ -553,11 +564,7 @@ static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
 {
     void *ptr;
 
-#ifdef MAP_FIXED_NOREPLACE
-    ptr = mmap( start, size, prot, MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
-#elif defined(MAP_TRYFIXED)
-    ptr = mmap( start, size, prot, MAP_TRYFIXED | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     ptr = mmap( start, size, prot, MAP_FIXED | MAP_EXCL | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
     if (ptr == MAP_FAILED && errno == EINVAL) errno = EEXIST;
 #elif defined(__APPLE__)
@@ -576,7 +583,7 @@ static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
         ptr = MAP_FAILED;
     }
 #else
-    ptr = mmap( start, size, prot, MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
+    ptr = mmap( start, size, prot, MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
 #endif
     if (ptr != MAP_FAILED && ptr != start)
     {
@@ -2371,11 +2378,12 @@ static void *get_host_addr_space_limit(void)
 
     while (addr >> 32)
     {
-        void *ret = anon_mmap_tryfixed( (void *)addr, host_page_size, PROT_NONE, 0 );
+        void *ret = mmap( (void *)addr, host_page_size, PROT_NONE,
+                          MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANON, -1, 0 );
         if (ret != MAP_FAILED)
         {
             munmap( ret, host_page_size );
-            break;
+            if (ret >= (void *)addr) break;
         }
         else if (errno == EEXIST) break;
         addr >>= 1;
@@ -3295,10 +3303,11 @@ void virtual_init(void)
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
     pages_vprot = calloc( pages_vprot_size, sizeof(*pages_vprot) );
+    assert( pages_vprot != NULL );
 #else
     pages_vprot = anon_mmap_alloc( 1U << (32 - page_shift), PROT_READ | PROT_WRITE );
-#endif
     assert( pages_vprot != MAP_FAILED );
+#endif
     view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
     assert( view_block_start != MAP_FAILED );
