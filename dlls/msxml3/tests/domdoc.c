@@ -18678,8 +18678,6 @@ if (hr == S_OK)
     hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-todo_wine
-{
     hr = IXMLDOMNode_get_firstChild(node, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     node2 = (void *)0x1;
@@ -18699,7 +18697,6 @@ todo_wine
     hr = IXMLDOMNode_hasChildNodes(node, &b);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
-}
 
     IXMLDOMNode_Release(node);
 

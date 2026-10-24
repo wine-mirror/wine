@@ -193,16 +193,16 @@ static HRESULT WINAPI domnotation_get_childNodes(IXMLDOMNotation *iface, IXMLDOM
 
 static HRESULT WINAPI domnotation_get_firstChild(IXMLDOMNotation *iface, IXMLDOMNode **node)
 {
-    FIXME("%p, %p: stub\n", iface, node);
+    TRACE("%p, %p.\n", iface, node);
 
-    return E_NOTIMPL;
+    return return_null_node(node);
 }
 
 static HRESULT WINAPI domnotation_get_lastChild(IXMLDOMNotation *iface, IXMLDOMNode **node)
 {
-    FIXME("%p, %p: stub\n", iface, node);
+    TRACE("%p, %p.\n", iface, node);
 
-    return E_NOTIMPL;
+    return return_null_node(node);
 }
 
 static HRESULT WINAPI domnotation_get_previousSibling(IXMLDOMNotation *iface, IXMLDOMNode **node)
@@ -266,9 +266,9 @@ static HRESULT WINAPI domnotation_appendChild(IXMLDOMNotation *iface, IXMLDOMNod
 
 static HRESULT WINAPI domnotation_hasChildNodes(IXMLDOMNotation *iface, VARIANT_BOOL *v)
 {
-    FIXME("%p, %p: stub\n", iface, v);
+    TRACE("%p, %p.\n", iface, v);
 
-    return E_NOTIMPL;
+    return return_var_false(v);
 }
 
 static HRESULT WINAPI domnotation_get_ownerDocument(IXMLDOMNotation *iface, IXMLDOMDocument **doc)
