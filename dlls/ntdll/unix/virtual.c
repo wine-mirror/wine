@@ -3847,6 +3847,8 @@ void virtual_free_thread_data( struct thread_data *data )
     sigset_t sigset;
     WOW_TEB *wow_teb;
 
+    if (process_exiting) return;
+
     if (!(teb = data->teb)) goto done;
 
     if (teb->DeallocationStack)
