@@ -363,11 +363,7 @@ struct env_stack
 {
     struct batch_context *context;
     struct env_stack *next;
-    union
-    {
-        int     stackdepth;   /* Only used for pushd and popd */
-        WCHAR   cwd;          /* Only used for set/endlocal   */
-    } u;
+    WCHAR cwd;                /* Only used for set/endlocal   */
     WCHAR *strings;
     BOOL delayedsubst;        /* Is delayed substitution in effect */
 };

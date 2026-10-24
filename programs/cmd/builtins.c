@@ -1841,10 +1841,6 @@ RETURN_CODE WCMD_pushd(struct word_iterator *iterator)
         }
         curdir->next = pushd_directories;
         curdir->strings = thisdir;
-        if (pushd_directories == NULL)
-            curdir->u.stackdepth = 1;
-        else
-            curdir->u.stackdepth = pushd_directories->u.stackdepth + 1;
         pushd_directories = curdir;
     }
 
@@ -2282,7 +2278,7 @@ RETURN_CODE WCMD_setlocal(struct word_iterator *iterator)
 
         /* Save the current drive letter */
         GetCurrentDirectoryW(MAX_PATH, cwd);
-        env_copy->u.cwd = cwd[0];
+        env_copy->cwd = cwd[0];
     }
     else
         free(env_copy);
@@ -2350,11 +2346,11 @@ RETURN_CODE WCMD_endlocal(void)
   }
 
   /* Restore current drive letter */
-  if (IsCharAlphaW(temp->u.cwd)) {
+  if (IsCharAlphaW(temp->cwd)) {
     WCHAR envvar[4];
     WCHAR cwd[MAX_PATH];
 
-    wsprintfW(envvar, L"=%c:", temp->u.cwd);
+    wsprintfW(envvar, L"=%c:", temp->cwd);
     if (GetEnvironmentVariableW(envvar, cwd, MAX_PATH)) {
       WINE_TRACE("Resetting cwd to %s\n", wine_dbgstr_w(cwd));
       SetCurrentDirectoryW(cwd);

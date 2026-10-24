@@ -874,9 +874,10 @@ static void WCMD_show_prompt(void)
 	  *q++ = '\n';
 	  break;
 	case '+':
-	  if (pushd_directories) {
-	    memset(q, '+', pushd_directories->u.stackdepth);
-	    q = q + pushd_directories->u.stackdepth;
+	  {
+              struct env_stack *s;
+              for (s = pushd_directories; s; s = s->next)
+                  *q++ = '+';
 	  }
 	  break;
       }
