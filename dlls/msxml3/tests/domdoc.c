@@ -18553,6 +18553,7 @@ static void test_dtd_entity(void)
     DOMNodeType node_type;
     IXMLDOMNodeList *list;
     IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
     HRESULT hr;
     BSTR str;
     LONG len;
@@ -18672,6 +18673,35 @@ if (hr == S_OK)
     IXMLDOMNode_Release(node);
 
     IXMLDOMNodeList_Release(list);
+
+    /* Child list methods. */
+    hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+todo_wine
+{
+    hr = IXMLDOMNode_get_firstChild(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    node2 = (void *)0x1;
+    hr = IXMLDOMNode_get_firstChild(node, &node2);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node2, "Unexpected value %p.\n", node2);
+    hr = IXMLDOMNode_get_lastChild(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    node2 = (void *)0x1;
+    hr = IXMLDOMNode_get_lastChild(node, &node2);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node2, "Unexpected value %p.\n", node2);
+
+    hr = IXMLDOMNode_hasChildNodes(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    b = VARIANT_TRUE;
+    hr = IXMLDOMNode_hasChildNodes(node, &b);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
+}
+
+    IXMLDOMNode_Release(node);
 
     IXMLDOMDocumentType_Release(doctype);
 
