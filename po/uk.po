@@ -15813,6 +15813,18 @@ msgstr "%1!d! файл(ів) скопійовано\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "Немає доступу до файлу.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Невірний шлях.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Неможливо видалити поточну теку.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Розмір курсора"

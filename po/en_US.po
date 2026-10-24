@@ -15295,6 +15295,14 @@ msgstr "%t%1!u! file(s) copied\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "File cannot be copied onto itself.\n"
 
+#: programs/cmd/cmd.rc:412
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Path %1 isn't a valid directory.\n"
+
+#: programs/cmd/cmd.rc:413
+msgid "Can't resolve current directory.\n"
+msgstr "Can't resolve current directory.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursor size"

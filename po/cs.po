@@ -16323,6 +16323,18 @@ msgstr "%1!d! souborů zkopírováno\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "K souboru není možné přistupovat.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Neplatné zadání cesty.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Nelze smazat složku, ve které se právě nacházíte.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kurzoru"

@@ -16118,6 +16118,18 @@ msgstr "%1!d! fichier(s) copiés\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "Accès impossible au fichier.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Chemin invalide.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Impossible de supprimer le répertoire courant.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Taille du curseur"

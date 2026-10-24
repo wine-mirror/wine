@@ -15623,6 +15623,18 @@ msgstr "%1!d! fitxer(s) copiat(s)\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "No es pot accedir al fitxer.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "El camí no és vàlid.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "No es pot suprimir el directori actual.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Mida de cursor"

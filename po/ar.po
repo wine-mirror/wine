@@ -16814,6 +16814,18 @@ msgstr "تم نسخ الملفات %1!d!\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "لم يتمكن من الوصول إلى الملف.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "المسار غير سليم.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "لم يتمكن من حذف الدليل الحالي.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "حجم المؤشر"

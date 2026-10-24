@@ -253,6 +253,21 @@ BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator)
                           &start, &length, (iterator->flags & WORD_WITH_EMPTY_LAST_ARG) != 0);
 }
 
+void WCMD_word_iterator_extend_rest_of_line(struct word_iterator *iterator)
+{
+    size_t length = wcslen(&iterator->from[iterator->position]);
+    if (!length) return;
+    /* Remove trailing white-spaces (if any)
+     * strangely enough, separators are not used here
+     */
+    while (length && iswspace(iterator->from[iterator->position + length - 1]))
+        length--;
+    free(iterator->raw_argument);
+    free(iterator->unquoted_argument);
+    iterator->raw_argument = WCMD_dup(&iterator->from[iterator->position], length);
+    iterator->unquoted_argument = WCMD_dup_unquoted(&iterator->from[iterator->position], length);
+}
+
 BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, BOOL optsep, WCHAR **arg)
 {
     size_t option_len;

@@ -1739,51 +1739,116 @@ RETURN_CODE WCMD_goto(struct word_iterator *iterator)
     return ERROR_INVALID_FUNCTION;
 }
 
+static RETURN_CODE resolve_wildcards(const WCHAR *path, WCHAR *dst, size_t dst_len)
+{
+    RETURN_CODE return_code = NO_ERROR;
+
+    if (wcspbrk(path, L"*?"))
+    {
+        WIN32_FIND_DATAW fd;
+        WCHAR full_path[MAX_PATH];
+        HANDLE hff;
+
+        if (!GetFullPathNameW(path, ARRAY_SIZE(full_path), full_path, NULL))
+            return ERROR_INVALID_FUNCTION;
+
+        hff = FindFirstFileW(full_path, &fd);
+
+        /* resolution on native picks up first entry */
+        if (hff != INVALID_HANDLE_VALUE)
+        {
+            const WCHAR *pos = wcsrchr(full_path, L'\\');
+
+            pos = pos ? pos + 1 : full_path;
+            if (pos - full_path + wcslen(fd.cFileName) < dst_len)
+            {
+                memcpy(dst, full_path, (pos - full_path) * sizeof(WCHAR));
+                wcscpy(dst + (pos - full_path), fd.cFileName);
+            }
+            else
+                return_code = ERROR_INVALID_FUNCTION;
+            FindClose(hff);
+        }
+        else
+            return_code = ERROR_INVALID_FUNCTION;
+    }
+    else if (!GetFullPathNameW(path, dst_len, dst, NULL))
+        return ERROR_INVALID_FUNCTION;
+
+    return return_code;
+}
+
+static RETURN_CODE set_current_directory(const WCHAR *path, BOOL change_drive)
+{
+    int dst_drive, curr_drive;
+    WCHAR dst[MAX_PATH];
+
+    /* Change to that directory */
+    WINE_TRACE("Really changing to directory '%s'\n", wine_dbgstr_w(path));
+
+    if (!GetCurrentDirectoryW(ARRAY_SIZE(dst), dst))
+        return ERROR_INVALID_FUNCTION;
+    curr_drive = (iswalpha(dst[0]) && dst[1] == L':') ? towupper(dst[0]) : -1;
+
+    if (resolve_wildcards(path, dst, ARRAY_SIZE(dst)) != NO_ERROR)
+        return ERROR_INVALID_FUNCTION;
+    dst_drive = (iswalpha(dst[0]) && dst[1] == L':') ? towupper(dst[0]) : curr_drive;
+    if ((change_drive || curr_drive == dst_drive) && !SetCurrentDirectoryW(dst))
+        return ERROR_INVALID_FUNCTION;
+    if (!change_drive && dst_drive != -1)
+    {
+        /* Set special =C: type environment variable (current directory on another drive) */
+        WCHAR env[4] = {L'=', (WCHAR)dst_drive, L':', L'\0'};
+
+        WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(dst));
+        SetEnvironmentVariableW(env, dst);
+    }
+    return NO_ERROR;
+}
+
 /*****************************************************************************
  * WCMD_pushd
  *
  *	Push a directory onto the stack
  */
 
-RETURN_CODE WCMD_pushd(const WCHAR *args)
+RETURN_CODE WCMD_pushd(struct word_iterator *iterator)
 {
     struct env_stack *curdir;
-    WCHAR *thisdir;
-    RETURN_CODE return_code;
+    WCHAR *thisdir = NULL;
 
-    if (!*args)
-        return errorlevel = NO_ERROR;
-
-    if (*args == '/') {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      WCMD_print_error();
-      return errorlevel = ERROR_INVALID_FUNCTION;
-    }
-
-    curdir  = xalloc(sizeof(struct env_stack));
-    thisdir = xalloc(1024 * sizeof(WCHAR));
-
-    /* Change directory using CD code with /D parameter */
-    lstrcpyW(quals, L"/D");
-    GetCurrentDirectoryW (1024, thisdir);
-
-    return_code = WCMD_setshow_default(args);
-    if (return_code != NO_ERROR)
+    while (WCMD_word_iterator_advance(iterator))
     {
-      free(curdir);
-      free(thisdir);
-      return errorlevel = ERROR_INVALID_FUNCTION;
-    } else {
-      curdir -> next    = pushd_directories;
-      curdir -> strings = thisdir;
-      if (pushd_directories == NULL) {
-        curdir -> u.stackdepth = 1;
-      } else {
-        curdir -> u.stackdepth = pushd_directories -> u.stackdepth + 1;
-      }
-      pushd_directories = curdir;
+        if (iterator->is_an_option)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            WCMD_print_error();
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+
+        WCMD_word_iterator_extend_rest_of_line(iterator);
+        curdir  = xalloc(sizeof(struct env_stack));
+        thisdir = xalloc(1024 * sizeof(WCHAR));
+
+        GetCurrentDirectoryW(1024, thisdir);
+
+        if (set_current_directory(iterator->unquoted_argument, TRUE) != NO_ERROR)
+        {
+            free(curdir);
+            free(thisdir);
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_INVALID_DIRECTORY), iterator->unquoted_argument);
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+        curdir->next = pushd_directories;
+        curdir->strings = thisdir;
+        if (pushd_directories == NULL)
+            curdir->u.stackdepth = 1;
+        else
+            curdir->u.stackdepth = pushd_directories->u.stackdepth + 1;
+        pushd_directories = curdir;
     }
-    return errorlevel = return_code;
+
+    return errorlevel = NO_ERROR;
 }
 
 

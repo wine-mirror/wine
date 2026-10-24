@@ -15241,6 +15241,18 @@ msgstr "已复制 %t%1!u! 个文件\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "文件无法被复制到自身。\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "路径无效。\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "无法删除当前目录。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "光标尺寸"

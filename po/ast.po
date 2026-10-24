@@ -15387,6 +15387,18 @@ msgstr ""
 msgid "File cannot be copied onto itself.\n"
 msgstr "Nun se pue acceder al ficheru.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "El camín ye inválidu.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Nun se pue desaniciar el direutoriu actual.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamañu del cursor"

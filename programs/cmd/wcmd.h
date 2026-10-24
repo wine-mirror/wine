@@ -208,7 +208,7 @@ RETURN_CODE WCMD_output_asis_stderr(const WCHAR *message);
 RETURN_CODE WCMD_pause(void);
 RETURN_CODE WCMD_popd(void);
 void WCMD_print_error (void);
-RETURN_CODE WCMD_pushd(const WCHAR *args);
+RETURN_CODE WCMD_pushd(struct word_iterator *);
 RETURN_CODE WCMD_remove_dir(struct word_iterator *);
 RETURN_CODE WCMD_rename(void);
 RETURN_CODE WCMD_setlocal(struct word_iterator *);
@@ -262,7 +262,13 @@ static inline void WCMD_word_iterator_reset(struct word_iterator *iterator)
 {
     iterator->position = 0;
     iterator->length = 0;
+    free(iterator->raw_argument);
+    free(iterator->unquoted_argument);
+    iterator->raw_argument = NULL;
+    iterator->unquoted_argument = NULL;
 }
+void WCMD_word_iterator_extend_rest_of_line(struct word_iterator *iterator);
+
 WCHAR *WCMD_parameter(WCHAR *s, int n, WCHAR **start, BOOL raw);
 WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
@@ -486,54 +492,56 @@ extern WCHAR anykey[];
 extern WCHAR version_string[];
 
 /* Translated messages */
-#define WCMD_ALLHELP          1000
-#define WCMD_CONFIRM          1001
-#define WCMD_YES              1002
-#define WCMD_NO               1003
-#define WCMD_NOASSOC          1004
-#define WCMD_NOFTYPE          1005
-#define WCMD_OVERWRITE        1006
-#define WCMD_MORESTR          1007
-#define WCMD_TRUNCATEDLINE    1008
-#define WCMD_NYI              1009
-#define WCMD_NOARG            1010
-#define WCMD_SYNTAXERR        1011
-#define WCMD_FILENOTFOUND     1012
-#define WCMD_NOCMDHELP        1013
-#define WCMD_NOTARGET         1014
-#define WCMD_CURRENTDATE      1015
-#define WCMD_CURRENTTIME      1016
-#define WCMD_NEWDATE          1017
-#define WCMD_NEWTIME          1018
-#define WCMD_MISSINGENV       1019
-#define WCMD_READFAIL         1020
-#define WCMD_CALLINSCRIPT     1021
-#define WCMD_ALL              1022
-#define WCMD_DELPROMPT        1023
-#define WCMD_ECHOPROMPT       1024
-#define WCMD_VERIFYPROMPT     1025
-#define WCMD_VERIFYERR        1026
-#define WCMD_ARGERR           1027
-#define WCMD_VOLUMESERIALNO   1028
-#define WCMD_VOLUMEPROMPT     1029
-#define WCMD_ANYKEY           1031
-#define WCMD_CONSTITLE        1032
-#define WCMD_VERSION          1033
-#define WCMD_MOREPROMPT       1034
-#define WCMD_LINETOOLONG      1035
-#define WCMD_VOLUMELABEL      1036
-#define WCMD_VOLUMENOLABEL    1037
-#define WCMD_YESNO            1038
-#define WCMD_YESNOALL         1039
-#define WCMD_NO_COMMAND_FOUND 1040
-#define WCMD_DIVIDEBYZERO     1041
-#define WCMD_NOOPERAND        1042
-#define WCMD_NOOPERATOR       1043
-#define WCMD_BADPAREN         1044
-#define WCMD_BADHEXOCT        1045
-#define WCMD_FILENAMETOOLONG  1046
-#define WCMD_BADTOKEN         1047
-#define WCMD_ENDOFLINE        1048
-#define WCMD_ENDOFFILE        1049
-#define WCMD_NUMCOPIED        1050
-#define WCMD_NOCOPYTOSELF     1051
+#define WCMD_ALLHELP                    1000
+#define WCMD_CONFIRM                    1001
+#define WCMD_YES                        1002
+#define WCMD_NO                         1003
+#define WCMD_NOASSOC                    1004
+#define WCMD_NOFTYPE                    1005
+#define WCMD_OVERWRITE                  1006
+#define WCMD_MORESTR                    1007
+#define WCMD_TRUNCATEDLINE              1008
+#define WCMD_NYI                        1009
+#define WCMD_NOARG                      1010
+#define WCMD_SYNTAXERR                  1011
+#define WCMD_FILENOTFOUND               1012
+#define WCMD_NOCMDHELP                  1013
+#define WCMD_NOTARGET                   1014
+#define WCMD_CURRENTDATE                1015
+#define WCMD_CURRENTTIME                1016
+#define WCMD_NEWDATE                    1017
+#define WCMD_NEWTIME                    1018
+#define WCMD_MISSINGENV                 1019
+#define WCMD_READFAIL                   1020
+#define WCMD_CALLINSCRIPT               1021
+#define WCMD_ALL                        1022
+#define WCMD_DELPROMPT                  1023
+#define WCMD_ECHOPROMPT                 1024
+#define WCMD_VERIFYPROMPT               1025
+#define WCMD_VERIFYERR                  1026
+#define WCMD_ARGERR                     1027
+#define WCMD_VOLUMESERIALNO             1028
+#define WCMD_VOLUMEPROMPT               1029
+#define WCMD_ANYKEY                     1031
+#define WCMD_CONSTITLE                  1032
+#define WCMD_VERSION                    1033
+#define WCMD_MOREPROMPT                 1034
+#define WCMD_LINETOOLONG                1035
+#define WCMD_VOLUMELABEL                1036
+#define WCMD_VOLUMENOLABEL              1037
+#define WCMD_YESNO                      1038
+#define WCMD_YESNOALL                   1039
+#define WCMD_NO_COMMAND_FOUND           1040
+#define WCMD_DIVIDEBYZERO               1041
+#define WCMD_NOOPERAND                  1042
+#define WCMD_NOOPERATOR                 1043
+#define WCMD_BADPAREN                   1044
+#define WCMD_BADHEXOCT                  1045
+#define WCMD_FILENAMETOOLONG            1046
+#define WCMD_BADTOKEN                   1047
+#define WCMD_ENDOFLINE                  1048
+#define WCMD_ENDOFFILE                  1049
+#define WCMD_NUMCOPIED                  1050
+#define WCMD_NOCOPYTOSELF               1051
+#define WCMD_INVALID_DIRECTORY          1052
+#define WCMD_NO_CURRENT_DIRECTORY       1053

@@ -2459,7 +2459,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_volume();
         break;
     case WCMD_PUSHD:
-        return_code = WCMD_pushd(parms_start);
+        return_code = WCMD_pushd(&iterator);
         break;
     case WCMD_POPD:
         return_code = WCMD_popd();
