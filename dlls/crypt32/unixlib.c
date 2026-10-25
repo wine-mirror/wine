@@ -567,6 +567,9 @@ static NTSTATUS close_cert_store( void *args )
 
 static NTSTATUS export_cert_store( void *args )
 {
+    /* GnuTLS randomizes the PBKDF2 salt length between 12 and 21 bytes, which can also grow
+     * enclosing ASN.1 DER length headers by up to 7 bytes if a boundary is crossed. */
+    static const DWORD max_salt_size_variance = 16;
     struct export_cert_store_params *params = args;
     gnutls_pkcs12_t p12 = NULL;
     gnutls_pkcs12_bag_t cert_bag = NULL, key_bag = NULL;
@@ -656,12 +659,12 @@ static NTSTATUS export_cert_store( void *args )
     if (!params->pfx_data)
     {
         /* Size query. */
-        *params->pfx_size = out.size + 8;
+        *params->pfx_size = out.size + max_salt_size_variance;
         status = STATUS_SUCCESS;
     }
     else if (*params->pfx_size < out.size)
     {
-        *params->pfx_size = out.size + 8;
+        *params->pfx_size = out.size + max_salt_size_variance;
         status = STATUS_BUFFER_TOO_SMALL;
     }
     else
