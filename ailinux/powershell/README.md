@@ -53,3 +53,23 @@ cryptographic inventory of every installed application file. Restores must be
 performed with Wine closed. The transaction tool validates backup provenance
 and restricts operations to dedicated AILinux prefix/backup roots. No system
 APT modifications, unrestricted software sources, or MS-DLL redistribution.
+
+## Install a disposable Windows 11 AppCompat prefix
+
+The PowerShell orchestrator creates a new isolated Wine prefix, initializes
+Win11 mode, creates a verified snapshot, installs pinned DXVK/VKD3D-Proton
+and the current official Microsoft VC++ v14 x86/x64 redistributables using
+Xvfb. Optional Winetricks extras include d3dcompiler_47, gdiplus, and msxml6.
+
+    pwsh -NoProfile -File ./ailinux/powershell/Install-AILinuxWineAppCompat.ps1 -WhatIf
+    pwsh -NoProfile -File ./ailinux/powershell/Install-AILinuxWineAppCompat.ps1 -Confirm:$false
+
+Use -IncludeExtras only after reviewing the required Microsoft licensing and
+runtime dependencies. Do not combine Framework 4.8 with all prefixes by
+default; managed applications should receive their own tested prefix.
+
+The initial integrated installation on zombie-pc (2026-10-25) completed with
+DXVK/VKD3D and VC++ x86/x64 verified, and Winetricks extras completed with
+exit code zero. A later Winetricks list-installed check encountered a separate
+wineserver protocol mismatch (964/965); the six DLL files for extras were
+present on disk, but their behavior still requires regression testing.
