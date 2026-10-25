@@ -19,6 +19,10 @@ $items = foreach($property in $catalog.apps.PSObject.Properties){
  if($entry.kind -eq 'wine-builtin'){
    $basename=$entry.exe
    $path=Join-Path $ctx.Prefix "drive_c/windows/system32/$basename"
+   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+     $fallback=Join-Path $ctx.Prefix "drive_c/windows/$basename"
+     if (Test-Path -LiteralPath $fallback -PathType Leaf) { $path=$fallback }
+   }
    $available=Test-Path -LiteralPath $path -PathType Leaf
  } elseif($entry.kind -eq 'staged-unverified'){
    $path=Join-Path $ctx.Prefix ('drive_c/'+($entry.exe -replace '^C:\\','' -replace '\\','/'))
