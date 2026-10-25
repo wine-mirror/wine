@@ -38,7 +38,7 @@ case "$ACTION" in
     ;;
   install-fonts|install-corefonts|install-allfonts|install-dotnet48|install-vcrun2022|install-extras)
     check_prefix
-    command -v winetricks >/dev/null
+    test -x "$SELF_DIR/winetricks-pinned.sh"
     BACKUP_ROOT="$HOME/.local/share/ailinux-wine/backups"
     mkdir -p "$BACKUP_ROOT"
     BACKUP="$BACKUP_ROOT/$(basename "$PREFIX")-$(date +%Y%m%d-%H%M%S)-$ACTION"
@@ -52,7 +52,7 @@ case "$ACTION" in
       install-vcrun2022) VERBS=(vcrun2022) ;;
       install-extras) VERBS=(d3dcompiler_47 gdiplus msxml6) ;;
     esac
-    WINE="$WINE_BIN" WINESERVER="$(dirname "$WINE_BIN")/wineserver" winetricks -q "${VERBS[@]}"
+    WINE="$WINE_BIN" WINESERVER="$(dirname "$WINE_BIN")/wineserver" "$SELF_DIR/winetricks-pinned.sh" -q "${VERBS[@]}"
     "$(dirname "$WINE_BIN")/wineserver" -w
     echo "Done. Backup: $BACKUP"
     ;;

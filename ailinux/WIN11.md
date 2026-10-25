@@ -81,3 +81,15 @@ an initialized disposable prefix. Keep its snapshot for rollback.
 **.NET Framework 4.8:** Winetricks may downgrade its configured Wine OS mode
 and remove Wine-Mono; install to a separate test prefix and verify with actual
 .NET applications, not only a marker file. No .NET 4.8 install is claimed yet.
+
+## Updated Winetricks and read-only runtime audit
+
+The system Winetricks is 20250102, upstream latest tagged release is 20260125.
+Use ailinux/winetricks-pinned.sh (exact source SHA256), leaving /usr/bin unchanged.
+The vcrun2022 and dotnet48 recipes retain older installer/OS assumptions.
+To inspect a selected prefix without modifying it:
+
+    python3 -B ailinux/runtime-audit.py --wine "$ALPHA_WINE" --prefix "$ALPHA_PREFIX"
+
+Registry keys and DLL presence are compatibility signals, NOT proof that a
+Microsoft redistributable installed or that it works in applications.
