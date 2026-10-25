@@ -151,4 +151,76 @@ function Test-AILinuxWineHostIntegrity {
     }
 }
 
-Export-ModuleMember -Function Get-AILinuxWineStatus,Test-AILinuxWineIntegrity,Backup-AILinuxWinePrefix,Get-AILinuxWineRuntimeAudit,Invoke-AILinuxWineGraphicsRuntime,Get-AILinuxWineHostPackages,Test-AILinuxWineHostIntegrity
+function Get-AILinuxWineProfile {
+    [CmdletBinding()]
+    param([ValidatePattern('^[a-z0-9-]+$')][string]$Name = 'windows11-gaming')
+    $path = Join-Path $PSScriptRoot "../profiles/$Name.json"
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Unknown profile: $Name" }
+    $profile = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    if ($profile.schema -ne 1 -or $profile.name -ne $Name) { throw 'Invalid profile schema or name' }
+    $profile
+}
+
+function Compare-AILinuxWineProfile {
+    [CmdletBinding()]
+    param([ValidatePattern('^[a-z0-9-]+$')][string]$Name = 'windows11-gaming',
+          [string]$Prefix = "$HOME/.local/share/ailinux-wine/prefixes/ailinux-win11",
+          [string]$Wine = "$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine")
+    $profile = Get-AILinuxWineProfile -Name $Name
+    $status = Get-AILinuxWineStatus -Prefix $Prefix -Wine $Wine
+    $integrity = Test-AILinuxWineIntegrity -Prefix $Prefix -Wine $Wine
+    $audit = Get-AILinuxWineRuntimeAudit -Prefix $Prefix -Wine $Wine
+    $versionOk = $audit.windows_compat_version -match '10\.0\.22000'
+    $components = @()
+    foreach ($component in @('dxvk','vkd3d-proton')) {
+        $expected = $profile.graphics.$component
+        $matched = $integrity.Runtimes -match "(?m)^$([regex]::Escape($component)) $([regex]::Escape($expected)) healthy"
+        $components += [pscustomobject]@{ Component = $component; Required = $expected; Matches = [bool]$matched }
+    }
+    [pscustomobject]@{
+        Profile = $Name; Prefix = $status.Prefix; Wine = $status.Version
+        VersionMatches = [bool]$versionOk; IntegrityHealthy = [bool]$integrity.Healthy
+        Components = $components
+        Compliant = ([bool]$versionOk -and [bool]$integrity.Healthy -and @($components | Where-Object { -not $_.Matches }).Count -eq 0)
+        Note = 'Read-only evaluation; VC++ and .NET requirements are application-specific and never automatically installed.'
+    }
+}
+
+function New-AILinuxWineSnapshot {
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
+    param([string]$Prefix = "$HOME/.local/share/ailinux-wine/prefixes/ailinux-win11",
+          [string]$Wine = "$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine")
+    $ctx = Get-AILinuxWineContext -Prefix $Prefix -Wine $Wine
+    if (-not $PSCmdlet.ShouldProcess($ctx.Prefix, 'Create verified prefix snapshot')) { return }
+    $tool = Join-Path $PSScriptRoot '../prefix-transaction.py'
+    $res = Invoke-AILinuxWineTool -Executable '/usr/bin/python3' -Arguments @('-B',$tool,'snapshot','--prefix',$ctx.Prefix,'--wine',$ctx.Wine) -TimeoutSeconds 180
+    if ($res.ExitCode -ne 0) { throw "Snapshot failed: $($res.Stderr)" }
+    $res.Stdout | ConvertFrom-Json
+}
+
+function Test-AILinuxWineSnapshot {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Backup,
+          [string]$Prefix = "$HOME/.local/share/ailinux-wine/prefixes/ailinux-win11",
+          [string]$Wine = "$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine")
+    $ctx = Get-AILinuxWineContext -Prefix $Prefix -Wine $Wine
+    $tool = Join-Path $PSScriptRoot '../prefix-transaction.py'
+    $res = Invoke-AILinuxWineTool -Executable '/usr/bin/python3' -Arguments @('-B',$tool,'verify','--prefix',$ctx.Prefix,'--backup',$Backup,'--wine',$ctx.Wine)
+    if ($res.ExitCode -ne 0) { throw "Snapshot invalid: $($res.Stderr)" }
+    $res.Stdout | ConvertFrom-Json
+}
+
+function Restore-AILinuxWineSnapshot {
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param([Parameter(Mandatory)][string]$Backup,
+          [string]$Prefix = "$HOME/.local/share/ailinux-wine/prefixes/ailinux-win11",
+          [string]$Wine = "$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine")
+    $ctx = Get-AILinuxWineContext -Prefix $Prefix -Wine $Wine
+    if (-not $PSCmdlet.ShouldProcess($ctx.Prefix, "Restore verified snapshot $Backup (current state backed up first)")) { return }
+    $tool = Join-Path $PSScriptRoot '../prefix-transaction.py'
+    $res = Invoke-AILinuxWineTool -Executable '/usr/bin/python3' -Arguments @('-B',$tool,'restore','--prefix',$ctx.Prefix,'--backup',$Backup,'--wine',$ctx.Wine) -TimeoutSeconds 240
+    if ($res.ExitCode -ne 0) { throw "Restore failed: $($res.Stderr)" }
+    $res.Stdout | ConvertFrom-Json
+}
+
+Export-ModuleMember -Function Get-AILinuxWineStatus,Test-AILinuxWineIntegrity,Backup-AILinuxWinePrefix,Get-AILinuxWineRuntimeAudit,Invoke-AILinuxWineGraphicsRuntime,Get-AILinuxWineHostPackages,Test-AILinuxWineHostIntegrity,New-AILinuxWineSnapshot,Test-AILinuxWineSnapshot,Restore-AILinuxWineSnapshot,Get-AILinuxWineProfile,Compare-AILinuxWineProfile

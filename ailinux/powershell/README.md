@@ -31,3 +31,25 @@ under `$HOME/.local/opt/ailinux-powershell/7.6.9` without changing the host
 package manager. Do not bundle Microsoft PowerShell with this Wine source repo.
 
 See https://learn.microsoft.com/powershell/scripting/install/install-ubuntu
+
+## Declarative gaming profile and transactional prefix snapshots
+
+`ailinux/profiles/windows11-gaming.json` defines the desired Win11 mode,
+DXVK 3.1.1 and VKD3D-Proton 3.0.1 without embedding installer code.
+Compare-AILinuxWineProfile provides **read-only** drift reporting, not an
+automatic Windows application installer.
+
+```powershell
+Compare-AILinuxWineProfile -Prefix $prefix
+# A real verified COW copy; preserves existing prefix:
+$snapshot = New-AILinuxWineSnapshot -Prefix $prefix -Confirm:$false
+Test-AILinuxWineSnapshot -Prefix $prefix -Backup $snapshot.backup
+# Restore requires explicit confirmation and creates a pre-restore backup:
+Restore-AILinuxWineSnapshot -Prefix $prefix -Backup $snapshot.backup -WhatIf
+```
+
+Registry/runtime hashes in backup manifest are integrity samples, not a full
+cryptographic inventory of every installed application file. Restores must be
+performed with Wine closed. The transaction tool validates backup provenance
+and restricts operations to dedicated AILinux prefix/backup roots. No system
+APT modifications, unrestricted software sources, or MS-DLL redistribution.
