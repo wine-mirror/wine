@@ -32,3 +32,15 @@ and PSGallery over HTTPS, user scope, with support for -WhatIf:
 This installs modules into native Linux PowerShell, **not** Windows PowerShell
 inside Wine. Modules from PSGallery require independent publisher and code
 review before real installation. The repository is not marked trusted.
+
+## Terminal formatting and MSI integration
+
+Capabilities now default to compact one-line text that stays readable in a
+narrow terminal. Detailed shows descriptions on their own lines. AsObject
+retains pipeline-friendly structured records. Portable ZIP is labeled planned
+because its installer has not been implemented.
+
+A harmless MSI installation and restoration end-to-end test passed on
+zombie-pc in a disposable Wine prefix, including actual file verification.
+See ailinux/packages/tests/README.md. Real vendor packages still require
+individual behavioral testing.

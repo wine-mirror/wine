@@ -6,6 +6,8 @@ param(
   [string]$PackageFile='',
   [string]$Sha256='',
   [ValidateSet('msi','exe')][string]$Type='msi',
+  [switch]$Detailed,
+  [switch]$AsObject,
   [string]$Prefix="$HOME/.local/share/ailinux-wine/prefixes/win11-complete-alpha",
   [string]$Wine="$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine"
 )
@@ -13,7 +15,26 @@ $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'AILinux.Wine.psm1') -Force
 $catalog=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../packages/catalog.json') -Raw | ConvertFrom-Json
 if($catalog.schema -ne 1){ throw 'Unsupported package catalog schema' }
-if($Action -eq 'capabilities'){ $catalog.capabilities | Select-Object id,status,detail; return }
+if($Action -eq 'capabilities'){
+  if($AsObject){ $catalog.capabilities | Select-Object id,status,detail; return }
+  $statusLabels=@{
+    'supported-with-verification'='MSI/EXE pruefbar'
+    'linux-control-plane'='Linux-PowerShell'
+    'planned'='In Planung'
+    'unsupported'='Nicht verfuegbar'
+  }
+  foreach($entry in $catalog.capabilities){
+    $label=$statusLabels[$entry.status]
+    if(-not $label){$label=$entry.status}
+    if($Detailed){
+      Write-Output "$($entry.id): $label"
+      Write-Output "  $($entry.detail)"
+    }else{
+      Write-Output ('{0,-23} {1}' -f $entry.id,$label)
+    }
+  }
+  return
+}
 $ctx=Get-AILinuxWineStatus -Prefix $Prefix -Wine $Wine
 if(-not $PackageFile){throw 'Explicit local package file required'}
 $full=[IO.Path]::GetFullPath($PackageFile)
