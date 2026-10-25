@@ -36,6 +36,10 @@ jobs:
       - name: Check shell syntax
         run: |
           bash -n ailinux/*.sh
+      - name: Validate Windows application catalog
+        run: |
+          python3 -m json.tool ailinux/apps/catalog.json > /dev/null
+          python3 -B ailinux/apps/validate-catalog.py
       - name: Run offline runtime manager rollback tests
         run: python3 -B -m unittest discover -s ailinux/tests -p "test_*.py" -v
       - name: Compile Windows PE probes

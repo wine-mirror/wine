@@ -37,9 +37,9 @@
       "display": "Wine-Dateimanager"
     },
     "wordpad": {
-      "exe": "wordpad.exe",
+      "exe": "write.exe",
       "kind": "wine-builtin",
-      "display": "WordPad"
+      "display": "WordPad (Wine Write)"
     },
     "clock": {
       "exe": "clock.exe",
