@@ -125,7 +125,9 @@ Void AdaptFixed (CAdaptiveHuffman *pAdHuff);
 Void AdaptDiscriminant (CAdaptiveHuffman *pAdHuff);
 
 #ifndef _PREFAST_
+#ifdef _MSC_VER
 #pragma warning(disable:4068)
+#endif
 #endif
 
 #endif  // WMI_COMMON_H

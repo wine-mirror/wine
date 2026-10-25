@@ -2,16 +2,16 @@
 //
 // Copyright © Microsoft Corp.
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // • Redistributions of source code must retain the above copyright notice,
 //   this list of conditions and the following disclaimer.
 // • Redistributions in binary form must reproduce the above copyright notice,
 //   this list of conditions and the following disclaimer in the documentation
 //   and/or other materials provided with the distribution.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,7 +33,7 @@
 Void dequantizeBlock4x4(PixelI * pRec, Int * pOrg, const Int * pIndex, Int iQPLP)
 {
     Int i;
-    
+
     for(i = 1; i < 16; i ++)
         pRec[pIndex[i]] = DEQUANT(pOrg[i], iQPLP);
 }
@@ -67,10 +67,14 @@ Int dequantizeMacroblock(CWMImageStrCodec * pSC)
 
     for(i = 0; i < iChannels; i ++){
         //dequantize DC
+        if(!pTile->pQuantizerDC[i]) // Sanity check
+            return ICERR_ERROR;
         pSC->p1MBbuffer[i][0] = DEQUANT(pMBInfo->iBlockDC[i][0], pTile->pQuantizerDC[i]->iQP);
 
         // dequantize LP
         if(pSC->WMISCP.sbSubband != SB_DC_ONLY) {
+            if(!pTile->pQuantizerLP[i]) // Sanity check
+                return ICERR_ERROR;
             if(i == 0 || (cf != YUV_422 && cf != YUV_420))
                 dequantizeBlock4x4(pSC->p1MBbuffer[i] , pMBInfo->iBlockDC[i], dctIndex[2], pTile->pQuantizerLP[i][pMBInfo->iQIndexLP].iQP);
             else if(cf == YUV_422)
@@ -205,7 +209,7 @@ Void predACDec(CWMImageStrCodec * pSC)
                 // predict from top
                 static U8 blkIdx[] = {1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15};
 
-                for (j = 0; j < sizeof(blkIdx) / sizeof(*blkIdx); ++j)
+                for (j = 0; j < (Int)(sizeof(blkIdx) / sizeof(*blkIdx)); ++j)
                 {
                     pOrg = pSrc + 16 * blkIdx[j];
                     pRef = pOrg - 16;
@@ -315,7 +319,7 @@ Void predACDec(CWMImageStrCodec * pSC)
                     break;
             }
         }
-    }    
+    }
 }
 
 /*************************************************************************
@@ -478,7 +482,7 @@ static Int predCBPC422Dec(CWMImageStrCodec * pSC, Int iCBP, size_t mbX, size_t m
             Int iLeftCBP = (pSC->PredInfo[c] + mbX - 1)->iCBP;
             iCBP ^= ((iLeftCBP >> 1) & 1); // left(1) => 0
         }
-        
+
         iCBP ^= (iCBP & 0x1) << 1; // [0]->[1]
         iCBP ^= (iCBP & 0x3) << 2; // [0 1]->[2 3]
         iCBP ^= (iCBP & 0xc) << 2; // [2 3]->[4 5]

@@ -153,7 +153,7 @@ Int writeTileHeaderLP(CWMImageStrCodec * pSC, BitIOInfo * pIO)
                 for(i = 0; i < pTile->cNumQPLP; i ++){
                     pTile->cChModeLP[i] = (U8)(rand() & 3); // channel mode, just for concept proofing!
                     
-                    for(j = 0; j < pSC->m_param.cNumChannels; j ++)
+                    for(j = 0; j < (U8)pSC->m_param.cNumChannels; j ++)
                         pTile->pQuantizerLP[j][i].iIndex = (U8)((rand() & 0xfe) + 1); // QP indexes, just for concept proofing!
                     formatQuantizer(pTile->pQuantizerLP, pTile->cChModeLP[i], pSC->m_param.cNumChannels, i, TRUE, pSC->m_param.bScaledArith);
                     writeQuantizer(pTile->pQuantizerLP, pIO, pTile->cChModeLP[i], pSC->m_param.cNumChannels, i);
@@ -196,7 +196,7 @@ Int writeTileHeaderHP(CWMImageStrCodec * pSC, BitIOInfo * pIO)
                 for(i = 0; i < pTile->cNumQPHP; i ++){
                     pTile->cChModeHP[i] = (U8)(rand() & 3); // channel mode, just for concept proofing!
                     
-                    for(j = 0; j < pSC->m_param.cNumChannels; j ++)
+                    for(j = 0; j < (U8)pSC->m_param.cNumChannels; j ++)
                         pTile->pQuantizerHP[j][i].iIndex = (U8)((rand() & 0xfe) + 1); // QP indexes, just for concept proofing!
                     formatQuantizer(pTile->pQuantizerHP, pTile->cChModeHP[i], pSC->m_param.cNumChannels, i, FALSE, pSC->m_param.bScaledArith);
                     writeQuantizer(pTile->pQuantizerHP, pIO, pTile->cChModeHP[i], pSC->m_param.cNumChannels, i);
@@ -435,19 +435,19 @@ Int StrIOEncInit(CWMImageStrCodec* pSC)
 #endif
         char * pFilename;
 
-        pSC->ppWStream = (struct WMPStream **)malloc(pSC->cNumBitIO * sizeof(struct WMPStream *));
-        if(pSC->ppWStream == NULL) return ICERR_ERROR;
-        memset(pSC->ppWStream, 0, pSC->cNumBitIO * sizeof(struct WMPStream *));
+        pSC->ppWStream = (struct WMPStream **)calloc(pSC->cNumBitIO, sizeof(struct WMPStream *));
+        if(pSC->ppWStream == NULL)
+            return ICERR_ERROR;
 
         if (pSC->cmbHeight * pSC->cmbWidth * pSC->WMISCP.cChannel >= MAX_MEMORY_SIZE_IN_WORDS) {
 #ifdef _WINDOWS_
-            pSC->ppTempFile = (TCHAR **)malloc(pSC->cNumBitIO * sizeof(TCHAR *));
-            if(pSC->ppTempFile == NULL) return ICERR_ERROR;
-            memset(pSC->ppTempFile, 0, pSC->cNumBitIO * sizeof(TCHAR *)); 
+            pSC->ppTempFile = (TCHAR **)calloc(pSC->cNumBitIO, sizeof(TCHAR *));
+            if(pSC->ppTempFile == NULL)
+                return ICERR_ERROR;
 #else
-            pSC->ppTempFile = (char **)malloc(pSC->cNumBitIO * sizeof(char *));
-            if(pSC->ppTempFile == NULL) return ICERR_ERROR;
-            memset(pSC->ppTempFile, 0, pSC->cNumBitIO * sizeof(char *));
+            pSC->ppTempFile = (char **)calloc(pSC->cNumBitIO, sizeof(char *));
+            if(pSC->ppTempFile == NULL)
+                return ICERR_ERROR;
 #endif
         }
 
@@ -482,11 +482,17 @@ Int StrIOEncInit(CWMImageStrCodec* pSC)
                 pSC->ppTempFile[i] = (char *)malloc(FILENAME_MAX * sizeof(char));
                 if(pSC->ppTempFile[i] == NULL) return ICERR_ERROR;
 
-                if ((pFilename = tmpnam(NULL)) == NULL)
-                    return ICERR_ERROR;                
+                char szTmpBuf[L_tmpnam];
+                if ((pFilename = tmpnam(szTmpBuf)) == NULL)
+                    return ICERR_ERROR;
                 strcpy(pSC->ppTempFile[i], pFilename);
 #endif
-                if(CreateWS_File(pSC->ppWStream + i, pFilename, "w+b") != ICERR_OK) return ICERR_ERROR;                
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#   define FOPEN_WRITE_EXCL "w+bx"
+#else
+#   define FOPEN_WRITE_EXCL "w+b"
+#endif
+                if(CreateWS_File(pSC->ppWStream + i, pFilename, FOPEN_WRITE_EXCL) != ICERR_OK) return ICERR_ERROR;
 
             }
             else {
@@ -1382,12 +1388,11 @@ Int ImageStrEncInit(
     i *= cMacBlock * 2;
     cb += i;
 
-    pb = malloc(cb);
+    pb = calloc(1, cb);
     if (NULL == pb)
     {
         goto ErrorExit;
     }
-    memset(pb, 0, cb);
 
     //================================================
     pSC = (CWMImageStrCodec*)pb; pb += sizeof(*pSC);
@@ -1438,12 +1443,11 @@ Int ImageStrEncInit(
         // 1. allocate new pNextSC info
         //================================================
         cb = sizeof(*pNextSC) + (128 - 1) + cbMacBlockStride * cMacBlock * 2;
-        pb = malloc(cb);
+        pb = calloc(1, cb);
         if (NULL == pb)
         {
             goto ErrorExit;
         }
-        memset(pb, 0, cb);
         //================================================
         pNextSC = (CWMImageStrCodec*)pb; pb += sizeof(*pNextSC);
 

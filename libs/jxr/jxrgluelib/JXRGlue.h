@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <JXRMeta.h>
+#include <JXRVersion.h>
 #include <guiddef.h>
 
 //================================================================
@@ -636,7 +637,17 @@ ERR PKFree(void** ppv);
 ERR PKAllocAligned(void** ppv, size_t cb, size_t iAlign);
 ERR PKFreeAligned(void** ppv);
 
+//--------------- JXR 1.3.9+ -------------------------------------
+
+// Sets the maximum allocable memory (in bytes) for PKAlloc/PKAllocAligned (0 means unlimited (default)).
+// NOTE: Memory limits are used for decoding only.
+ERR PKAlloc_SetLimit(size_t cb);
+// Gets the maximum allocable memory (in bytes) for PKAlloc/PKAllocAligned
+ERR PKAlloc_GetLimit(size_t *pcb);
+
+// Returns the library version in the format 0x00MMmmPP. For example, version 1.3.9 is encoded as 0x00010309.
+ERR PKLibJxr_GetVersion(U32 *version);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
-

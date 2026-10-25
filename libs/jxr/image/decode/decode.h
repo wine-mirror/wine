@@ -48,7 +48,9 @@ typedef struct CWMDecoderParameters {
 
     // table lookups for rotation and flip
     size_t * pOffsetX;
+    size_t cbOffsetX; // Sanity check
     size_t * pOffsetY;
+    size_t cbOffsetY; // Sanity check
 } CWMDecoderParameters;
 
 Void predCBPDec(CWMImageStrCodec *, CCodingContext *);
@@ -140,4 +142,3 @@ Void strPost4x4Stage2Split_alternate(PixelI*, PixelI*);
 Int getHuff(const short *pDecodeTable, BitIOInfo* pIO);
 
 #endif // WMI_DECODE_H
-

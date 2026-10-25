@@ -56,9 +56,9 @@ static U32 Convert_Half_To_Float(U16 u16)
     {
         return s << 31;
     }
-    else if (~(~0u << 5) == e) // inf, snan, qnan
+    else if (~(~0U << 5) == e) // inf, snan, qnan
     {
-        return (s << 31) | ~(~0u << 8) << 23| (m << 13);
+        return (s << 31) | ~(~0U << 8) << 23| (m << 13);
     }
 
     return (s << 31) | ((e - 15 + 127) << 23) | (m << 13); // norm
@@ -2141,8 +2141,8 @@ static PKPixelConverterInfo s_pcInfo[] = {
     {&GUID_PKPixelFormat32bppPRGBA, &GUID_PKPixelFormat32bppPBGRA, RGBA32_BGRA32}, // Fwd
     {&GUID_PKPixelFormat32bppPBGRA, &GUID_PKPixelFormat32bppPRGBA, BGRA32_RGBA32}, // Rev
 
-	// conversions to 8bppGray / 24bppRGB / 32bppRGBA
-	{&GUID_PKPixelFormatBlackWhite, &GUID_PKPixelFormat8bppGray, BlackWhite_Gray8},
+    // conversions to 8bppGray / 24bppRGB / 32bppRGBA
+    {&GUID_PKPixelFormatBlackWhite, &GUID_PKPixelFormat8bppGray, BlackWhite_Gray8},
     {&GUID_PKPixelFormat16bppGray, &GUID_PKPixelFormat8bppGray, Gray16_Gray8},
     {&GUID_PKPixelFormat48bppRGB, &GUID_PKPixelFormat24bppRGB, RGB48_RGB24},
     {&GUID_PKPixelFormat64bppRGBA, &GUID_PKPixelFormat32bppRGBA, RGBA64_RGBA32},
@@ -2190,7 +2190,7 @@ static PKPixelConverter2Info s_pcInfo2[] = {
 ERR PKFormatConverter_Initialize(PKFormatConverter* pFC, PKImageDecode* pID, char *pExt, PKPixelFormatGUID enPF)
 {
     ERR err;
-    PKPixelFormatGUID   enPFFrom;
+    PKPixelFormatGUID enPFFrom = GUID_PKPixelFormatUndefined;
 
     Call(pID->GetPixelFormat(pID, &enPFFrom));
     Call(PKFormatConverter_InitializeConvert(pFC, enPFFrom, pExt, enPF));

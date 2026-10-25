@@ -39,6 +39,7 @@ Revision History:
 *******************************************************************************/
 #include "strcodec.h"
 #include "decode.h"
+#include "memory_lim.h"
 
 #ifdef MEM_TRACE
 #define TRACE_MALLOC    1
@@ -121,12 +122,11 @@ Int AllocateCodingContextDec(CWMImageStrCodec *pSC, Int iNumContexts)
     if (pSC == NULL)
         return ICERR_ERROR;
 
-    pSC->m_pCodingContext = malloc (iNumContexts * sizeof (CCodingContext));
+    pSC->m_pCodingContext = calloc_lim (iNumContexts, sizeof (CCodingContext));
     if (pSC->m_pCodingContext == NULL) {
         pSC->cNumCodingContext = 0;
         return ICERR_ERROR;
     }
-    memset (pSC->m_pCodingContext, 0, iNumContexts * sizeof (CCodingContext));
 
     pSC->cNumCodingContext = iNumContexts;
     iCBPSize = (pSC->m_param.cfColorFormat == Y_ONLY || pSC->m_param.cfColorFormat == NCOMPONENT
@@ -195,6 +195,6 @@ Void FreeCodingContextDec(CWMImageStrCodec *pSC)
                 CleanAH (&pContext->m_pAHexpt[k]);
         }
         free (pSC->m_pCodingContext);
+        pSC->m_pCodingContext = NULL;
     }
 }
-

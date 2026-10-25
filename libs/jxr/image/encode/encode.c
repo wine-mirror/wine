@@ -62,12 +62,11 @@ Int AllocateCodingContextEnc(CWMImageStrCodec *pSC, Int iNumContexts, Int iTrimF
     if (pSC == NULL)
         return ICERR_ERROR;
 
-    pSC->m_pCodingContext = malloc (iNumContexts * sizeof (CCodingContext));
+    pSC->m_pCodingContext = calloc(iNumContexts, sizeof (CCodingContext));
     if (pSC->m_pCodingContext == NULL) {
         pSC->cNumCodingContext = 0;
         return ICERR_ERROR;
     }
-    memset (pSC->m_pCodingContext, 0, iNumContexts * sizeof (CCodingContext));
 
     pSC->cNumCodingContext = iNumContexts;
     iCBPSize = (pSC->m_param.cfColorFormat == Y_ONLY || pSC->m_param.cfColorFormat == NCOMPONENT
@@ -141,4 +140,3 @@ Void FreeCodingContextEnc(CWMImageStrCodec *pSC)
         free (pSC->m_pCodingContext);
     }
 }
-

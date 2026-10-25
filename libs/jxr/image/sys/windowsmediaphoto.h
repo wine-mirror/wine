@@ -249,30 +249,33 @@ typedef long ERR;
 #define CT_ASSERT(exp, uniq) typedef char __CT_ASSERT__##uniq[(exp) ? 1 : -1] // Caller must provide a unique tag, or this fails to compile under GCC
 
 #if defined(_DEBUG) || defined(DBG)
+
+#if __STDC_VERSION__ >= 201112L
+#define Report(err, szExp, szFile, nLine) \
+    fprintf_s(stderr, "FAILED: %ld=%s" CRLF, (err), (szExp)); \
+    fprintf_s(stderr, "        %s:%ld" CRLF, (szFile), (nLine));
+#else
 #define Report(err, szExp, szFile, nLine) \
     fprintf(stderr, "FAILED: %ld=%s" CRLF, (err), (szExp)); \
-    fprintf(stderr, "        %s:%ld" CRLF, (szFile), (nLine));  \
+    fprintf(stderr, "        %s:%ld" CRLF, (szFile), (nLine));
+#endif // __STDC_VERSION__
 
 #else
 #define Report(err, szExp, szFile, lLine) err = err
 #endif
 
-#define Call(exp) do { \
-    if (Failed(err = (exp))) \
+#define Call(exp) \
+    do if (Failed(err = (exp))) \
     { \
         Report(err, #exp, __FILE__, (long)__LINE__); \
         goto Cleanup; \
-    } \
-    else err = err; \
     } while(0)
 
-#define CallIgnoreError(errTmp, exp) do { \
-    if (Failed(errTmp = (exp))) \
+#define CallIgnoreError(errTmp, exp) \
+    do if (Failed(errTmp = (exp))) \
     { \
         Report(errTmp, #exp, __FILE__, (long)__LINE__); \
-    } \
-    else errTmp = errTmp; \
-    } while(0)
+    } while (0)
 
 
 #define Test(exp, err) Call((exp) ? WMP_errSuccess : (err))
