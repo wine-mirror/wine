@@ -2,11 +2,12 @@
 # Install *only* reviewed local MSI/EXE assets in isolated Wine prefixes.
 [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact='High')]
 param(
-  [ValidateSet('capabilities','inspect','install')][string]$Action='capabilities',
+  [ValidateSet('capabilities','inspect','install','list','audit','remove','check-update','update')][string]$Action='capabilities',
   [string]$PackageFile='',
   [string]$Sha256='',
   [ValidateSet('msi','exe','zip')][string]$Type='msi',
   [string]$AppName='',
+  [string]$Version='unknown',
   [switch]$Detailed,
   [switch]$AsObject,
   [string]$Prefix="$HOME/.local/share/ailinux-wine/prefixes/win11-complete-alpha",
@@ -37,6 +38,55 @@ if($Action -eq 'capabilities'){
   return
 }
 $ctx=Get-AILinuxWineStatus -Prefix $Prefix -Wine $Wine
+$portable=Join-Path $PSScriptRoot '../packages/safe-portable.py'
+if($Action -in @('list','audit','remove','check-update','update')){
+  if($Type -ne 'zip'){throw 'These actions currently support portable ZIP only; MSI/EXE remain unmanaged'}
+  if($Action -ne 'list' -and $AppName -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$'){
+    throw 'Portable ZIP requires a safe -AppName'
+  }
+  if($Action -eq 'list'){
+    & /usr/bin/python3 -B $portable --action list --prefix $ctx.Prefix
+    if($LASTEXITCODE -ne 0){throw 'Portable package listing failed'}
+    return
+  }
+  if($Action -eq 'audit'){
+    & /usr/bin/python3 -B $portable --action audit --prefix $ctx.Prefix --name $AppName
+    if($LASTEXITCODE -ne 0){throw 'Portable package audit failed'}
+    return
+  }
+  if($Action -eq 'check-update'){
+    if($Sha256 -notmatch '^[0-9a-fA-F]{64}$'){throw 'Candidate SHA256 required'}
+    & /usr/bin/python3 -B $portable --action check-update --prefix $ctx.Prefix --name $AppName --sha256 $Sha256
+    if($LASTEXITCODE -ne 0){throw 'Portable update check failed'}
+    return
+  }
+  if($Action -eq 'remove'){
+    if(-not $PSCmdlet.ShouldProcess($ctx.Prefix,"Remove managed portable app $AppName after verified snapshot")){return}
+    $env:WINEPREFIX=$ctx.Prefix
+    $env:PATH="$(Split-Path $ctx.Engine):$env:PATH"
+    $server=Join-Path (Split-Path $ctx.Engine) 'wineserver'
+    & $server -w
+    if($LASTEXITCODE -ne 0){throw 'Wine server is not idle'}
+    $backup=New-AILinuxWineSnapshot -Prefix $ctx.Prefix -Wine $ctx.Engine -Confirm:$false
+    if(-not $backup.backup){throw 'Snapshot failed'}
+    Write-Output "ROLLBACK_PREFIX=$($backup.backup)"
+    try{
+      & /usr/bin/python3 -B $portable --action remove --prefix $ctx.Prefix --name $AppName
+      if($LASTEXITCODE -ne 0){throw 'Portable remove rejected'}
+      $health=Test-AILinuxWineIntegrity -Prefix $ctx.Prefix -Wine $ctx.Engine
+      if(-not $health.Healthy){throw 'Prefix integrity failed after removal'}
+    }catch{
+      $msg=$_.Exception.Message
+      try{
+        $restore=Restore-AILinuxWineSnapshot -Prefix $ctx.Prefix -Wine $ctx.Engine -Backup $backup.backup -Confirm:$false
+        if(-not $restore.verified){throw 'Restore unverified'}
+        Write-Output "AUTO_ROLLBACK_VERIFIED=$($backup.backup)"
+      }catch{throw "Removal failed: $msg; restore failed: $_; backup: $($backup.backup)"}
+      throw "Removal failed: $msg; prefix restored"
+    }
+    return
+  }
+}
 if(-not $PackageFile){throw 'Explicit local package file required'}
 $full=[IO.Path]::GetFullPath($PackageFile)
 if(-not (Test-Path -LiteralPath $full -PathType Leaf)){throw 'Package file not found'}
@@ -45,6 +95,7 @@ $ext=[IO.Path]::GetExtension($full).ToLowerInvariant()
 if($ext -ne ".$Type"){throw 'Package extension does not match installer type'}
 if($full -match '[\r\n]'){throw 'Invalid package path'}
 if($Type -eq 'zip' -and $AppName -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$'){throw 'Portable ZIP needs safe -AppName'}
+if($Action -eq 'update' -and $Type -ne 'zip'){throw 'Only portable ZIP update is supported'}
 if($Sha256 -notmatch '^[0-9a-fA-F]{64}$'){throw 'Exact vendor-published SHA256 required'}
 $digest=(Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash
 if($digest -ne $Sha256.ToUpperInvariant()){throw 'Package checksum mismatch'}
@@ -65,7 +116,8 @@ try {
   if($Type -eq 'msi'){
     & $ctx.Engine msiexec /i $full /qn /norestart
   }elseif($Type -eq 'zip'){
-    & /usr/bin/python3 -B (Join-Path $PSScriptRoot '../packages/safe-portable.py') --prefix $ctx.Prefix --archive $full --sha256 $digest --name $AppName
+    $portableAction=if($Action -eq 'update'){'update'}else{'install'}
+    & /usr/bin/python3 -B $portable --action $portableAction --prefix $ctx.Prefix --archive $full --sha256 $digest --name $AppName --version $Version
   }else{
     & $ctx.Engine $full
   }

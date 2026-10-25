@@ -46,3 +46,21 @@ See ailinux/packages/tests/README.md. Real vendor packages still require
 individual behavioral testing.
 
 Automatic rollback is now enabled after MSI, EXE and ZIP installation errors. Portable ZIP installations require SHA256 and AppName; extracted payloads remain application-unverified until smoke tested.
+
+## Managed portable package lifecycle (alpha)
+
+Portable ZIP installations now write a per-package manifest containing the
+local ZIP SHA256, user-supplied version and hashes of extracted payloads.
+This is not a vendor signature or a guarantee that the EXE runs correctly.
+
+The PowerShell manager supports list, audit, check-update, update and remove
+for Type zip only. All state-changing operations require confirmation and a
+verified prefix snapshot. The audit rejects modified files, untracked user
+files, missing files and symlinks before deletion or update. An update is
+based only on the supplied local candidate ZIP; there is no online tracking.
+MSI and EXE installs are not part of the portable package inventory.
+
+Four isolated Python unit tests cover the package lifecycle, modified data,
+ZIP path traversal, case-insensitive filename collisions and bad checksums.
+A host integration test installed two successive ZIP versions and removed
+one managed application using native PowerShell in gui-app-smoke-alpha.
