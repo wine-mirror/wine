@@ -52,12 +52,15 @@ jobs:
             "$cc" -O2 -Wall -Wextra \
               ailinux/probes/graphics-probe.c -o "build/probes/graphics-$target.exe" \
               -ld3d11 -ld3d12 -ldxgi -ldxguid
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/vc14-probe.c -o "build/probes/vc14-$target.exe"
             file "build/probes/library-$target.exe"
             file "build/probes/graphics-$target.exe"
             file "build/probes/functional-$target.exe"
             test -s "build/probes/library-$target.exe"
             test -s "build/probes/functional-$target.exe"
             test -s "build/probes/graphics-$target.exe"
+            test -s "build/probes/vc14-$target.exe"
           done
       - name: Report probe boundaries
         run: |
