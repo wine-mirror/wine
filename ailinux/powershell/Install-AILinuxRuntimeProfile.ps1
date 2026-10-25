@@ -13,6 +13,7 @@ $ctx=Get-AILinuxWineStatus -Prefix $Prefix -Wine $Wine
 $catalog=Get-Content -Raw (Join-Path $root 'profiles/runtime-catalog.json') | ConvertFrom-Json
 $entry=$catalog.profiles.$Profile
 if ($null -eq $entry) { throw "Profile not found: $Profile" }
+if (($entry.PSObject.Properties.Name -contains "status") -and $entry.status -eq "blocked") { throw "Profile blocked: $($entry.block_reason)" }
 if (($entry.PSObject.Properties.Name -contains 'isolation') -and $entry.isolation -and -not $AllowSharedDotNet -and ($Prefix -notmatch "/$Profile(-|$)")) {
   throw "Profile $Profile needs a separate prefix named $Profile or use -AllowSharedDotNet after reviewing compatibility"
 }

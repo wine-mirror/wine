@@ -1,11 +1,66 @@
 {
   "schema": 1,
   "profiles": {
-    "fonts": {"description": "Common Windows-compatible fonts", "verbs": ["corefonts", "tahoma", "fontsmooth=rgb"], "requires": []},
-    "legacy-games": {"description": "Legacy DirectX 9 and XACT audio helpers", "verbs": ["d3dx9", "xact"], "requires": []},
-    "legacy-apps": {"description": "Old VC++ and COM/media application dependencies", "verbs": ["vcrun2010", "vcrun2012", "vcrun2013", "quartz", "amstream", "devenum"], "requires": []},
-    "office-compat": {"description": "GDI+, XML and Direct3D shader compiler", "verbs": ["gdiplus", "msxml6", "d3dcompiler_47"], "requires": []},
-    "dotnet48": {"description": "Framework 4.8; isolated .NET-only prefix recommended", "verbs": ["dotnet48"], "requires": [], "isolation": true},
-    "allfonts": {"description": "Optional Microsoft-distributed font collection", "verbs": ["allfonts"], "requires": [], "isolation": true}
+    "fonts": {
+      "description": "Common Windows-compatible fonts",
+      "verbs": [
+        "corefonts",
+        "tahoma",
+        "fontsmooth=rgb"
+      ],
+      "requires": [],
+      "status": "installed"
+    },
+    "legacy-games": {
+      "description": "Legacy DirectX 9 and XACT audio helpers",
+      "verbs": [
+        "d3dx9",
+        "xact"
+      ],
+      "requires": [],
+      "status": "installed-tested"
+    },
+    "legacy-apps": {
+      "description": "Old VC++ and COM/media application dependencies",
+      "verbs": [
+        "vcrun2010",
+        "vcrun2012",
+        "vcrun2013",
+        "quartz",
+        "amstream",
+        "devenum"
+      ],
+      "requires": [],
+      "status": "blocked",
+      "block_reason": "Wine 11.20: vcrun2010 returns failure; automatic rollback verified; must reproduce in graphical session before enabling"
+    },
+    "office-compat": {
+      "description": "GDI+, XML and Direct3D shader compiler",
+      "verbs": [
+        "gdiplus",
+        "msxml6",
+        "d3dcompiler_47"
+      ],
+      "requires": []
+    },
+    "dotnet48": {
+      "description": "Framework 4.8; isolated .NET-only prefix recommended",
+      "verbs": [
+        "dotnet48"
+      ],
+      "requires": [],
+      "isolation": true,
+      "status": "verified-isolated",
+      "verified_prefix": "dotnet48-isolated-alpha-test",
+      "note": "CLR x86/x64 behavior verified; prefix currently reports Windows 7 for compatibility with vendor installer"
+    },
+    "allfonts": {
+      "description": "Optional Microsoft-distributed font collection",
+      "verbs": [
+        "allfonts"
+      ],
+      "requires": [],
+      "isolation": true
+    }
   }
 }
