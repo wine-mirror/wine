@@ -299,7 +299,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const struct sid *user, con
     char *ptr;
 
     dacl_size = sizeof(*dacl) + sizeof(*ace) + sid_len( &local_system_sid );
-    if (mode & S_IRWXU) dacl_size += sizeof(*ace) + sid_len( user );
+    if (mode & S_IRWXU) dacl_size += sizeof(*ace) + sid_len( user ) + sizeof(*ace) + sid_len( &builtin_admins_sid );
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
         (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
@@ -324,7 +324,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const struct sid *user, con
     dacl->size     = dacl_size;
     dacl->count    = 1;
     dacl->pad2     = 0;
-    if (mode & S_IRWXU) dacl->count++;
+    if (mode & S_IRWXU) dacl->count += 2;
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
         (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
@@ -343,6 +343,11 @@ struct security_descriptor *mode_to_sd( mode_t mode, const struct sid *user, con
         ace = set_ace( ace_next( ace ), user, ACCESS_ALLOWED_ACE_TYPE, flags, WRITE_DAC | WRITE_OWNER );
         if (mode & S_IRUSR) ace->mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (mode & S_IWUSR) ace->mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
+
+        /* Applications that lock a folder down to its owner (e.g. MathWorks'
+         * secrets store) expect the owner, Local System and the Administrators
+         * group to be the only entries, each with full control. */
+        ace = set_ace( ace_next( ace ), &builtin_admins_sid, ACCESS_ALLOWED_ACE_TYPE, flags, FILE_ALL_ACCESS );
     }
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||

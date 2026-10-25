@@ -161,6 +161,7 @@ struct gcm_key
 {
     SYMCRYPT_GCM_EXPANDED_KEY expanded;
     SYMCRYPT_GCM_STATE        state;
+    BOOL                      chaining; /* a BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG sequence is in progress */
 };
 
 struct hkdf_key
@@ -1887,20 +1888,31 @@ static NTSTATUS decrypt_gcm( struct key *key, const UCHAR *input, ULONG input_le
                              const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output, ULONG output_len,
                              ULONG *ret_len )
 {
+    BOOL chain = info && (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG);
     SYMCRYPT_ERROR error;
 
     if (!info || !info->pbNonce || !info->pbTag || info->cbTag < 12 || info->cbTag > 16)
         return STATUS_INVALID_PARAMETER;
-    if (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG) FIXME( "call chaining not implemented\n" );
 
     if (!output) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     EnterCriticalSection( &key->s.cs );
 
-    SymCryptGcmInit( &key->s.gcm.state, &key->s.gcm.expanded, info->pbNonce, info->cbNonce );
-    SymCryptGcmAuthPart( &key->s.gcm.state, info->pbAuthData, info->cbAuthData );
+    /* Nonce and additional data belong to the first call of a chain, the tag is checked by the last one. */
+    if (!key->s.gcm.chaining)
+    {
+        SymCryptGcmInit( &key->s.gcm.state, &key->s.gcm.expanded, info->pbNonce, info->cbNonce );
+        SymCryptGcmAuthPart( &key->s.gcm.state, info->pbAuthData, info->cbAuthData );
+    }
     SymCryptGcmDecryptPart( &key->s.gcm.state, input, output, input_len );
+    if (chain)
+    {
+        key->s.gcm.chaining = TRUE;
+        LeaveCriticalSection( &key->s.cs );
+        return STATUS_SUCCESS;
+    }
+    key->s.gcm.chaining = FALSE;
     error = SymCryptGcmDecryptFinal( &key->s.gcm.state, info->pbTag, info->cbTag );
 
     LeaveCriticalSection( &key->s.cs );
@@ -2259,18 +2271,30 @@ static NTSTATUS encrypt_gcm( struct key *key, const UCHAR *input, ULONG input_le
                              const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output, ULONG output_len,
                              ULONG *ret_len )
 {
+    BOOL chain = info && (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG);
+
     if (!info || !info->pbNonce || !info->pbTag || info->cbTag < 12 || info->cbTag > 16)
         return STATUS_INVALID_PARAMETER;
-    if (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG) FIXME( "call chaining not implemented\n" );
 
     if (input && !input_len) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     EnterCriticalSection( &key->s.cs );
 
-    SymCryptGcmInit( &key->s.gcm.state, &key->s.gcm.expanded, info->pbNonce, info->cbNonce );
-    SymCryptGcmAuthPart( &key->s.gcm.state, info->pbAuthData, info->cbAuthData );
+    /* Nonce and additional data belong to the first call of a chain, the tag is produced by the last one. */
+    if (!key->s.gcm.chaining)
+    {
+        SymCryptGcmInit( &key->s.gcm.state, &key->s.gcm.expanded, info->pbNonce, info->cbNonce );
+        SymCryptGcmAuthPart( &key->s.gcm.state, info->pbAuthData, info->cbAuthData );
+    }
     SymCryptGcmEncryptPart( &key->s.gcm.state, input, output, input_len );
+    if (chain)
+    {
+        key->s.gcm.chaining = TRUE;
+        LeaveCriticalSection( &key->s.cs );
+        return STATUS_SUCCESS;
+    }
+    key->s.gcm.chaining = FALSE;
     SymCryptGcmEncryptFinal( &key->s.gcm.state, info->pbTag, info->cbTag );
 
     LeaveCriticalSection( &key->s.cs );
@@ -3781,6 +3805,7 @@ static NTSTATUS duplicate_key( const struct key *src, struct key **ret_key )
         {
             SymCryptGcmKeyCopy( &src->s.gcm.expanded, &dst->s.gcm.expanded );
             SymCryptGcmStateCopy( &src->s.gcm.state, &src->s.gcm.expanded, &dst->s.gcm.state );
+            dst->s.gcm.chaining = src->s.gcm.chaining;
         }
         else SymCryptAesKeyCopy( &src->s.aes.expanded, &dst->s.aes.expanded );
         break;
