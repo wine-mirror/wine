@@ -1,0 +1,58 @@
+name: AILinux Wine Alpha PE build checks
+
+on:
+  push:
+    branches:
+      - "ailinux/**"
+    paths:
+      - "ailinux/**"
+      - ".github/workflows/ailinux-alpha-pe-probes.yml"
+  pull_request:
+    paths:
+      - "ailinux/**"
+      - ".github/workflows/ailinux-alpha-pe-probes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pe-cross-compile:
+    name: Compile Win32 and Win64 API regression probes
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out only AILinux test sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: ailinux
+      - name: Install MinGW cross compilers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-i686-posix gcc-mingw-w64-x86-64-posix file
+      - name: Check shell syntax
+        run: |
+          bash -n ailinux/*.sh
+      - name: Compile Windows PE probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/probes
+          for target in i686 x86_64; do
+            cc="$target-w64-mingw32-gcc-posix"
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/library-probe.c -o "build/probes/library-$target.exe"
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/functional-probe.c -o "build/probes/functional-$target.exe" \
+              -lws2_32 -lole32 -ladvapi32 -lbcrypt
+            file "build/probes/library-$target.exe"
+            file "build/probes/functional-$target.exe"
+            test -s "build/probes/library-$target.exe"
+            test -s "build/probes/functional-$target.exe"
+          done
+      - name: Report probe boundaries
+        run: |
+          echo "Both x86 and x64 PE probes compiled."
+          echo "This lightweight workflow does NOT validate Wine engine runtime behavior."

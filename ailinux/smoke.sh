@@ -4,6 +4,7 @@ WINE_BIN="${1:-wine}"
 command -v "$WINE_BIN" >/dev/null 2>&1 || { echo "Wine binary missing: $WINE_BIN" >&2; exit 2; }
 export WINEPREFIX="${WINEPREFIX:-$HOME/.local/share/ailinux-wine/prefixes/alpha-smoke}"
 export WINEARCH=win64
+[[ "$WINEPREFIX" != "$HOME/.wine" ]] || { echo "Refusing the default Wine prefix" >&2; exit 2; }
 mkdir -p "$WINEPREFIX"
 echo "Wine: $("$WINE_BIN" --version)"
 echo "Prefix: $WINEPREFIX"
