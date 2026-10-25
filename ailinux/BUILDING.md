@@ -81,3 +81,21 @@ VKD3D-Proton requires a capable Vulkan driver and DXGI implementation,
 which DXVK provides. Neither component installs proprietary Microsoft VC++,
 .NET, DirectX redistributables or other Microsoft code; obtain those only
 from the vendor subject to the applicable license and terms.
+
+## Direct3D hardware smoke tests (real AMDGPU/Vulkan, not headless CI)
+
+The optional graphics-probe.c client calls DXGI CreateDXGIFactory1,
+D3D11CreateDevice(HARDWARE), and D3D12CreateDevice with a real adapter.
+It prints raw HRESULT values and returns nonzero on any failure.
+Compile and run the x86/x64 probes on a Vulkan-capable host:
+
+    export WINEPREFIX="$ALPHA_PREFIX"
+    export WINEDLLOVERRIDES='d3d8=n;d3d9=n;d3d10core=n;d3d11=n;dxgi=n;d3d12=n;d3d12core=n'
+    ./ailinux/run-graphics-probe.sh "$ALPHA_WINE"
+
+The tests do not render frames or exercise games, so successful creation alone
+does not prove shader correctness, performance or 100% DirectX compatibility.
+As of 2026-10-25 the separate system Wine-Staging 11.20 baseline successfully
+created both D3D11 and D3D12 devices through DXVK 3.1.1 + VKD3D-Proton 3.0.1
+on the local AMD GPU in both PE architectures. The *AILinux-built* Wine engine
+must be tested again before any release.

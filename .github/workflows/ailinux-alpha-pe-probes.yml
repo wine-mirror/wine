@@ -49,10 +49,15 @@ jobs:
             "$cc" -O2 -Wall -Wextra \
               ailinux/probes/functional-probe.c -o "build/probes/functional-$target.exe" \
               -lws2_32 -lole32 -ladvapi32 -lbcrypt
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/graphics-probe.c -o "build/probes/graphics-$target.exe" \
+              -ld3d11 -ld3d12 -ldxgi -ldxguid
             file "build/probes/library-$target.exe"
+            file "build/probes/graphics-$target.exe"
             file "build/probes/functional-$target.exe"
             test -s "build/probes/library-$target.exe"
             test -s "build/probes/functional-$target.exe"
+            test -s "build/probes/graphics-$target.exe"
           done
       - name: Report probe boundaries
         run: |
