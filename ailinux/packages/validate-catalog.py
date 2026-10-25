@@ -12,6 +12,6 @@ assert entries['winget']=='unsupported'
 assert entries['msix-appx']=='unsupported'
 assert entries['windows-store']=='unsupported'
 assert entries['windows-msi']=='supported-with-verification'
-assert entries['portable-zip']=='planned'
+assert entries['portable-zip']=='supported-with-verification'
 assert entries['powershell-modules']=='linux-control-plane'
 print('WINDOWS_PACKAGE_CAPABILITY_MATRIX_OK',len(entries))

@@ -44,3 +44,5 @@ A harmless MSI installation and restoration end-to-end test passed on
 zombie-pc in a disposable Wine prefix, including actual file verification.
 See ailinux/packages/tests/README.md. Real vendor packages still require
 individual behavioral testing.
+
+Automatic rollback is now enabled after MSI, EXE and ZIP installation errors. Portable ZIP installations require SHA256 and AppName; extracted payloads remain application-unverified until smoke tested.

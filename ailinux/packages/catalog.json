@@ -20,8 +20,8 @@
     },
     {
       "id": "portable-zip",
-      "status": "planned",
-      "detail": "Portable ZIP installer is not implemented yet"
+      "status": "supported-with-verification",
+      "detail": "SHA256-pinned ZIP, safe extraction and Windows EXE detection"
     },
     {
       "id": "powershell-modules",

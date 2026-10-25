@@ -5,7 +5,8 @@ param(
   [ValidateSet('capabilities','inspect','install')][string]$Action='capabilities',
   [string]$PackageFile='',
   [string]$Sha256='',
-  [ValidateSet('msi','exe')][string]$Type='msi',
+  [ValidateSet('msi','exe','zip')][string]$Type='msi',
+  [string]$AppName='',
   [switch]$Detailed,
   [switch]$AsObject,
   [string]$Prefix="$HOME/.local/share/ailinux-wine/prefixes/win11-complete-alpha",
@@ -43,6 +44,7 @@ if((Get-Item -LiteralPath $full -Force).LinkType){throw 'Symlink package file re
 $ext=[IO.Path]::GetExtension($full).ToLowerInvariant()
 if($ext -ne ".$Type"){throw 'Package extension does not match installer type'}
 if($full -match '[\r\n]'){throw 'Invalid package path'}
+if($Type -eq 'zip' -and $AppName -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$'){throw 'Portable ZIP needs safe -AppName'}
 if($Sha256 -notmatch '^[0-9a-fA-F]{64}$'){throw 'Exact vendor-published SHA256 required'}
 $digest=(Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash
 if($digest -ne $Sha256.ToUpperInvariant()){throw 'Package checksum mismatch'}
@@ -59,15 +61,31 @@ if($LASTEXITCODE -ne 0){throw 'Wineserver not idle'}
 $backup=New-AILinuxWineSnapshot -Prefix $ctx.Prefix -Wine $ctx.Engine -Confirm:$false
 if(-not $backup.backup){throw 'Snapshot was not created'}
 Write-Output "ROLLBACK_PREFIX=$($backup.backup)"
-if($Type -eq 'msi'){
-  & $ctx.Engine msiexec /i $full /qn /norestart
-}else{
-  # Explicitly no arbitrary silent flags for unknown EXE installers.
-  & $ctx.Engine $full
+try {
+  if($Type -eq 'msi'){
+    & $ctx.Engine msiexec /i $full /qn /norestart
+  }elseif($Type -eq 'zip'){
+    & /usr/bin/python3 -B (Join-Path $PSScriptRoot '../packages/safe-portable.py') --prefix $ctx.Prefix --archive $full --sha256 $digest --name $AppName
+  }else{
+    & $ctx.Engine $full
+  }
+  if($LASTEXITCODE -ne 0){throw "Installer exited with code $LASTEXITCODE"}
+  & $server -w
+  if($LASTEXITCODE -ne 0){throw "Wine server returned code $LASTEXITCODE"}
+  $health=Test-AILinuxWineIntegrity -Prefix $ctx.Prefix -Wine $ctx.Engine
+  if(-not $health.Healthy){throw 'Prefix integrity failed after package install'}
+}catch{
+  $errorMessage=$_.Exception.Message
+  Write-Warning "Install failed: $errorMessage"
+  try {
+    # Stop only this prefix's wineserver; never kill system-wide Wine.
+    & $server -k 2>$null
+    $recovery=Restore-AILinuxWineSnapshot -Prefix $ctx.Prefix -Wine $ctx.Engine -Backup $backup.backup -Confirm:$false
+    if(-not $recovery.verified){throw 'Restore did not report verified status'}
+    Write-Output "AUTO_ROLLBACK_VERIFIED=$($backup.backup)"
+  }catch{
+    throw "Install failed: $errorMessage; automatic restore ALSO FAILED: $($_.Exception.Message); manual backup: $($backup.backup)"
+  }
+  throw "Install failed: $errorMessage; prefix restored from $($backup.backup)"
 }
-if($LASTEXITCODE -ne 0){throw "Installer failed: $LASTEXITCODE; snapshot: $($backup.backup)"}
-& $server -w
-if($LASTEXITCODE -ne 0){throw "Wine server returned error; snapshot: $($backup.backup)"}
-$health=Test-AILinuxWineIntegrity -Prefix $ctx.Prefix -Wine $ctx.Engine
-if(-not $health.Healthy){throw "Prefix integrity failed; snapshot: $($backup.backup)"}
 Write-Output 'INSTALLER_EXECUTED_APPLICATION_VERIFICATION_REQUIRED'

@@ -19,3 +19,5 @@ When scripting noninteractive installation, use PowerShell -Command and
 an explicit native -Confirm:$false invocation. For regular use, inspect
 first, and then -WhatIf. The default still asks for confirmation.
 Never use arbitrary unreviewed vendor packages with the test prefix.
+
+Failure injection (Win32 PE exit 23) and portable ZIP smoke tests passed on zombie-pc. The failing executable wrote a marker, and automatic snapshot restore removed it. A ZIP path traversal was rejected, while a SHA256-pinned archive with a Windows PE was installed and restored.
