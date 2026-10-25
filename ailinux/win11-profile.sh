@@ -29,7 +29,7 @@ case "$ACTION" in
     "$WINE_BIN" --version
     "$WINE_BIN" cmd /c ver
     python3 -B "$SELF_DIR/runtime-manager.py" --prefix "$PREFIX" status
-    if [[ "$ACTION" == verify ]]; then "$SELF_DIR/smoke.sh" "$WINE_BIN"; fi
+    if [[ "$ACTION" == verify ]]; then WINEPREFIX="$PREFIX" "$SELF_DIR/smoke.sh" "$WINE_BIN"; fi
     ;;
   install-graphics|remove-graphics)
     check_prefix

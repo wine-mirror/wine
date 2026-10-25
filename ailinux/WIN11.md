@@ -63,3 +63,21 @@ https://github.com/Winetricks/winetricks
   dependencies and are not made automatically compatible by the win11 flag.
 - Windows kernel drivers and anti-cheat cannot be translated by a normal Wine
   userspace DLL; do not claim Windows NT kernel equivalence.
+
+## Current Microsoft VC++ v14 (2026)
+
+The currently tested official aka.ms/vc14 URLs redirect to Visual Studio 18
+runtime installers, rather than the fixed 2024 binaries embedded in old
+Winetricks recipes. A separate `ailinux/vc14-manager.sh` invokes official x86
+and x64 installers in an *isolated prefix*, saving a full copy first.
+
+**Important:** In a fresh test prefix both vendor installers returned exit code
+130. The x64 registry contained version 14.51.36247.00, but x86 registration
+was absent. That is not a clean successful installation: do not treat it as a
+validated package. See the prefix-specific registry and vendor setup logs.
+Use `./ailinux/vc14-manager.sh status` to inspect, and `install` only on
+an initialized disposable prefix. Keep its snapshot for rollback.
+
+**.NET Framework 4.8:** Winetricks may downgrade its configured Wine OS mode
+and remove Wine-Mono; install to a separate test prefix and verify with actual
+.NET applications, not only a marker file. No .NET 4.8 install is claimed yet.
