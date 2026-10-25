@@ -22,3 +22,13 @@ PowerShell Gallery modules can be managed on the Linux control plane
 using Microsoft's PSResourceGet with CurrentUser scope, but such modules
 do not automatically become installed in the Wine Windows PowerShell runtime.
 Do not mark a package installed purely from installer exit code.
+
+The optional PSResourceGet adapter is restricted to known PowerShell modules
+and PSGallery over HTTPS, user scope, with support for -WhatIf:
+
+    ~/.local/opt/ailinux-powershell/7.6.9/pwsh -NoProfile -File ailinux/powershell/Manage-AILinuxPowerShellModules.ps1 -Action list
+    ~/.local/opt/ailinux-powershell/7.6.9/pwsh -NoProfile -File ailinux/powershell/Manage-AILinuxPowerShellModules.ps1 -Action install -Name Microsoft.PowerShell.SecretManagement -WhatIf
+
+This installs modules into native Linux PowerShell, **not** Windows PowerShell
+inside Wine. Modules from PSGallery require independent publisher and code
+review before real installation. The repository is not marked trusted.
