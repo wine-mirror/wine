@@ -39,3 +39,16 @@ mounting nor guest-side test execution has been confirmed.
 The Windows setup still needs completion and valid licensing. The VM was
 started but Windows installation and activation were NOT automated.
 The Linux production Wine prefix was not modified.
+
+## Viewer from SSH/automation shells
+
+KDE Plasma may be active while SSH/MCP shells have no DISPLAY. The view
+command now reads only enumerated graphics variables from the current user's
+systemd session environment, validates Xwayland via xwininfo and selects
+GDK_BACKEND=x11; otherwise it tries a live Wayland socket. It does not source
+or eval session data. If neither display works, it exits with a diagnostic.
+
+On zombie-pc the graphical smoke test opened a real virt-viewer window named
+ailinux-win11-reference (1) on Xwayland DISPLAY=:1, while the VM remained
+running. Graphical login must already exist. This does not install Windows
+inside the guest automatically.
