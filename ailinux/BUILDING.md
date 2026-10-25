@@ -39,3 +39,45 @@ Sources:
 
 Do not commit proprietary DLLs or download redistributables from third-party mirrors.
 Do not integrate unreviewed ReactOS code; evaluate license and provenance.
+
+## DXVK and VKD3D-Proton, opt-in and reversible
+
+ailinux/runtimes.lock.json pins official GitHub release URLs and SHA-256
+asset digests. No compiled DXVK or VKD3D DLLs are committed to this repo.
+
+Do not modify any prefix while Windows programs are running. Create a new,
+**isolated** prefix with your chosen Wine binary first:
+
+    export ALPHA_WINE="$HOME/.local/opt/ailinux-wine/alpha-0.1.0/bin/wine"
+    export ALPHA_PREFIX="$HOME/.local/share/ailinux-wine/prefixes/my-game"
+    WINEPREFIX="$ALPHA_PREFIX" WINEARCH=win64 "$ALPHA_WINE" wineboot -u
+
+Then, after the prefix system.reg exists:
+
+    python3 -B ailinux/runtime-manager.py --prefix "$ALPHA_PREFIX" install
+    python3 -B ailinux/runtime-manager.py --prefix "$ALPHA_PREFIX" status
+    # Only this launch receives native DLL overrides:
+    python3 -B ailinux/runtime-manager.py --prefix "$ALPHA_PREFIX" --wine "$ALPHA_WINE" run -- "C:\Games\MyGame\game.exe"
+    # Restore the original Wine DLLs:
+    python3 -B ailinux/runtime-manager.py --prefix "$ALPHA_PREFIX" remove
+
+The runtime manager requires a preinitialized prefix and rejects ~/.wine.
+It checks GitHub-provided SHA-256 release digests and verifies the PE machine
+architecture before writing DLLs. Backups remain under the prefix in
+.ailinux-wine/runtime-manager/, including original Wine file symlinks.
+Uninstall refuses to overwrite externally modified runtime files.
+Installation does not alter Wine registry values: WINEDLLOVERRIDES is scoped to
+the run command. Test Vulkan drivers and actual applications before releases.
+
+Offline tests:
+
+    python3 -B -m unittest discover -s ailinux/tests -p 'test_*.py' -v
+
+Official component releases:
+- DXVK 3.1.1: https://github.com/doitsujin/dxvk/releases/tag/v3.1.1
+- VKD3D-Proton 3.0.1: https://github.com/HansKristian-Work/vkd3d-proton/releases/tag/v3.0.1
+
+VKD3D-Proton requires a capable Vulkan driver and DXGI implementation,
+which DXVK provides. Neither component installs proprietary Microsoft VC++,
+.NET, DirectX redistributables or other Microsoft code; obtain those only
+from the vendor subject to the applicable license and terms.

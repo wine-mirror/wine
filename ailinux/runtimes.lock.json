@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "source": "Official GitHub Release API asset digest, checked 2026-10-25",
+  "components": {
+    "dxvk": {
+      "version": "3.1.1",
+      "file": "dxvk-3.1.1.tar.gz",
+      "url": "https://github.com/doitsujin/dxvk/releases/download/v3.1.1/dxvk-3.1.1.tar.gz",
+      "sha256": "40565b4a724aadc4433fa4e010b4b23916d9b1f1baeee64e17186db94f54e608",
+      "archive_root": "dxvk-3.1.1",
+      "source_dirs": {"x86": "x32", "x64": "x64"},
+      "dlls": ["d3d8", "d3d9", "d3d10core", "d3d11", "dxgi"]
+    },
+    "vkd3d-proton": {
+      "version": "3.0.1",
+      "file": "vkd3d-proton-3.0.1.tar.zst",
+      "url": "https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v3.0.1/vkd3d-proton-3.0.1.tar.zst",
+      "sha256": "3cf2315522af5e43605ef6d3c41dad91387040bf97199934f3f7ab76caaa2f0c",
+      "archive_root": "vkd3d-proton-3.0.1",
+      "source_dirs": {"x86": "x86", "x64": "x64"},
+      "dlls": ["d3d12", "d3d12core"]
+    }
+  }
+}

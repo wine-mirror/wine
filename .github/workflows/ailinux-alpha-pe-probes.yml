@@ -35,6 +35,8 @@ jobs:
       - name: Check shell syntax
         run: |
           bash -n ailinux/*.sh
+      - name: Run offline runtime manager rollback tests
+        run: python3 -B -m unittest discover -s ailinux/tests -p "test_*.py" -v
       - name: Compile Windows PE probes
         shell: bash
         run: |
