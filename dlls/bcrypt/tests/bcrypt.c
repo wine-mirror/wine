@@ -5760,6 +5760,78 @@ static void test_CHACHA20_POLY1305(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }
 
+static void test_aes_gcm_chaining(void)
+{
+    static const UCHAR secret[16] = "0123456789abcdef";
+    static const UCHAR nonce[12] = "nonce_12byte";
+    static const UCHAR aad[5] = "hello";
+    UCHAR data[40], whole[40], parts[40], tag_whole[16], tag_parts[16], out[40];
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO info;
+    BCRYPT_ALG_HANDLE aes;
+    BCRYPT_KEY_HANDLE key;
+    ULONG size;
+    NTSTATUS ret;
+
+    ret = BCryptOpenAlgorithmProvider(&aes, BCRYPT_AES_ALGORITHM, NULL, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ret = BCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM), 0);
+    ok(!ret, "got %#lx\n", ret);
+    ret = BCryptGenerateSymmetricKey(aes, &key, NULL, 0, (UCHAR *)secret, sizeof(secret), 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    memset(data, 0x5a, sizeof(data));
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    info.dwInfoVersion = BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_VERSION;
+    info.pbNonce = (UCHAR *)nonce;
+    info.cbNonce = sizeof(nonce);
+    info.pbAuthData = (UCHAR *)aad;
+    info.cbAuthData = sizeof(aad);
+
+    /* the whole message in a single call */
+    info.pbTag = tag_whole;
+    info.cbTag = sizeof(tag_whole);
+    ret = BCryptEncrypt(key, data, sizeof(data), &info, NULL, 0, whole, sizeof(whole), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    /* the same message in three chained calls; the tag comes with the last one */
+    info.pbTag = tag_parts;
+    info.dwFlags = BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG;
+    ret = BCryptEncrypt(key, data, 16, &info, NULL, 0, parts, 16, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ret = BCryptEncrypt(key, data + 16, 23, &info, NULL, 0, parts + 16, 23, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    info.dwFlags = 0;
+    ret = BCryptEncrypt(key, data + 39, 1, &info, NULL, 0, parts + 39, 1, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(!memcmp(whole, parts, sizeof(whole)), "chained ciphertext differs\n");
+    ok(!memcmp(tag_whole, tag_parts, sizeof(tag_whole)), "chained tag differs\n");
+
+    /* decrypt the chained message, again in two calls */
+    info.pbTag = tag_whole;
+    info.dwFlags = BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG;
+    ret = BCryptDecrypt(key, whole, 20, &info, NULL, 0, out, 20, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    info.dwFlags = 0;
+    ret = BCryptDecrypt(key, whole + 20, 20, &info, NULL, 0, out + 20, 20, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(!memcmp(out, data, sizeof(data)), "wrong plaintext\n");
+
+    /* a wrong tag is only detected by the last call */
+    tag_whole[0] ^= 1;
+    info.dwFlags = BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG;
+    ret = BCryptDecrypt(key, whole, 20, &info, NULL, 0, out, 20, &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    info.dwFlags = 0;
+    ret = BCryptDecrypt(key, whole + 20, 20, &info, NULL, 0, out + 20, 20, &size, 0);
+    ok(ret == STATUS_AUTH_TAG_MISMATCH, "got %#lx\n", ret);
+
+    ret = BCryptDestroyKey(key);
+    ok(!ret, "got %#lx\n", ret);
+    ret = BCryptCloseAlgorithmProvider(aes, 0);
+    ok(!ret, "got %#lx\n", ret);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -5784,6 +5856,7 @@ START_TEST(bcrypt)
     test_BCryptGenerateSymmetricKey();
     test_BCryptEncrypt();
     test_BCryptDecrypt();
+    test_aes_gcm_chaining();
     test_key_import_export();
     test_ECDSA();
     test_RSA();
