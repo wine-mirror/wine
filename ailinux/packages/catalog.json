@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "policy": {
+    "default_prefix": "win11-complete-alpha",
+    "require_sha256": true,
+    "require_snapshot": true,
+    "allow_msix_appx": false,
+    "allow_system_wine_change": false
+  },
+  "capabilities": [
+    {"id":"win32-exe","status":"supported-with-verification","detail":"Classic Win32 EXE installer from verified local file"},
+    {"id":"windows-msi","status":"supported-with-verification","detail":"MSI installer, exit code and application smoke required"},
+    {"id":"portable-zip","status":"supported-with-verification","detail":"Signed or SHA256 pinned portable Windows executable archives"},
+    {"id":"powershell-modules","status":"linux-control-plane","detail":"PSResourceGet installs modules to Linux PowerShell CurrentUser"},
+    {"id":"winget","status":"unsupported","detail":"Windows App Installer registration and package manager services missing"},
+    {"id":"msix-appx","status":"unsupported","detail":"Windows AppX Deployment Service unavailable"},
+    {"id":"windows-store","status":"unsupported","detail":"Windows Store licensing and identity unavailable"},
+    {"id":"windows-update","status":"unsupported","detail":"Not a full Windows OS"},
+    {"id":"windows-kernel-drivers","status":"unsupported","detail":"Wine is user-mode compatibility, not NT kernel"}
+  ]
+}
