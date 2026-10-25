@@ -25,7 +25,9 @@ $env:WINEDEBUG='-all'
 $env:WINE="$($ctx.Engine)"
 $env:WINESERVER=Join-Path (Split-Path $ctx.Engine) 'wineserver'
 $env:PATH="$(Split-Path $ctx.Engine):$env:PATH"
+$env:WINETRICKS_STATS_REPORT='0'
 $tool=Join-Path $root 'winetricks-pinned.sh'
+try {
 foreach($verb in @($entry.verbs)) {
   Write-Output "INSTALL=$verb"
   & $tool -q $verb
@@ -36,3 +38,13 @@ foreach($verb in @($entry.verbs)) {
 $integrity=Test-AILinuxWineIntegrity -Prefix $ctx.Prefix -Wine $ctx.Engine
 if (-not $integrity.Healthy) { throw "Prefix integrity failed after $Profile; snapshot=$($before.backup)" }
 Write-Output "PROFILE_INSTALLED=$Profile"
+} catch {
+  Write-Warning "Runtime profile $Profile failed. Restoring verified snapshot $($before.backup)"
+  try {
+    $restored=Restore-AILinuxWineSnapshot -Prefix $ctx.Prefix -Wine $ctx.Engine -Backup $before.backup -Confirm:$false
+    Write-Output "ROLLBACK_COMPLETED=$($restored.pre_restore_backup)"
+  } catch {
+    Write-Warning "Automatic rollback failed; manual recovery needed from $($before.backup): $_"
+  }
+  throw
+}

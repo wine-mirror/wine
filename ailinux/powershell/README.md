@@ -95,3 +95,21 @@ passed. The legacy-apps profile stopped at vcrun2010 because Microsoft
 vcredist_x86.exe returned exit code 2 in a headless prefix. No remaining
 verbs were executed. The snapshot is preserved. This profile is NOT marked
 installed; use Xvfb diagnostics and targeted installer tests before retrying.
+
+## Runtime profiles (Alpha)
+
+`Install-AILinuxRuntimeProfile.ps1` reads the allowlisted verbs in
+`ailinux/profiles/runtime-catalog.json`. Currently implemented profiles:
+fonts (tested), legacy-games (tested), office-compat, legacy-apps,
+dotnet48 (isolation required) and allfonts (isolation required).
+Each action creates a verified prefix snapshot before running.
+A failed Winetricks action now triggers an automatic restore from that
+snapshot, with a preserved pre-restore backup. Failed installers are NOT
+marked as installed. Winetricks usage reporting is disabled in this manager.
+
+On 2026-10-25 the legacy-apps recipe failed at vcrun2010 (exit 1);
+a real rollback test confirmed automatic restoration. Investigate legacy
+Microsoft installers separately using an isolated graphical session rather
+than disabling the error gate or mixing older VC runtimes into the primary
+Win11 prefix. Windows 11 application support is not equivalent to having
+all vendor runtimes installed in one environment.
