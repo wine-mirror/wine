@@ -12,7 +12,11 @@ export WINEPREFIX="$PREFIX" WINEARCH=win64 WINEDEBUG="${WINEDEBUG:--all}"
 export PATH="$(dirname "$WINE_BIN"):$PATH"
 wine_reg() { "$WINE_BIN" reg query "HKLM\\Software\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\$1" /v Version 2>/dev/null || true; }
 if [[ "$ACTION" == status ]]; then
-  for arch in x86 x64; do echo "VC++ $arch:"; wine_reg "$arch"; done
+  for arch in x86 x64; do
+    echo "VC++ $arch:"
+    wine_reg "$arch"
+    echo "NOTE: registry presence is not installer success"
+  done
   exit 0
 fi
 "$(dirname "$WINE_BIN")/wineserver" -w
@@ -42,6 +46,7 @@ for arch in x86 x64; do
   fi
   echo "$version"
   if [[ "$result" != 0 ]]; then
-    echo "WARNING: nonzero exit ($result), inspect vendor logs despite registry entry" >&2
+    echo "FAILED: Microsoft installer returned $result, despite registry value. See dd_vcredist logs. Backup: $BACKUP" >&2
+    exit 1
   fi
 done
