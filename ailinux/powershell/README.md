@@ -73,3 +73,25 @@ DXVK/VKD3D and VC++ x86/x64 verified, and Winetricks extras completed with
 exit code zero. A later Winetricks list-installed check encountered a separate
 wineserver protocol mismatch (964/965); the six DLL files for extras were
 present on disk, but their behavior still requires regression testing.
+
+## Runtime profile catalog
+
+`ailinux/profiles/runtime-catalog.json` contains isolated installable profiles:
+fonts (Corefonts/Tahoma), legacy-games (D3DX9/XACT), office-compat (GDI+/MSXML6/
+D3DCompiler), legacy-apps (VC++ 2010/2012/2013 and legacy multimedia),
+dotnet48, and optional allfonts. Run explicitly through PowerShell:
+
+    pwsh -NoProfile -File ./ailinux/powershell/Install-AILinuxRuntimeProfile.ps1 -Profile fonts -WhatIf
+    pwsh -NoProfile -File ./ailinux/powershell/Install-AILinuxRuntimeProfile.ps1 -Profile fonts -Confirm:$false
+
+Every invocation takes an isolated Prefix snapshot first; optional .NET and
+allfonts need a dedicated prefix unless isolation checks are explicitly
+bypassed. Never conflate DLL presence with tested application compatibility.
+
+On 2026-10-25 the fonts profile completed on win11-appcompat, and the
+legacy-games profile completed successfully in legacy-games-alpha including
+x86/x64 D3DX9_43, XACT3_7 and XAudio2_7 files. Win32/Win64 API regressions
+passed. The legacy-apps profile stopped at vcrun2010 because Microsoft
+vcredist_x86.exe returned exit code 2 in a headless prefix. No remaining
+verbs were executed. The snapshot is preserved. This profile is NOT marked
+installed; use Xvfb diagnostics and targeted installer tests before retrying.
