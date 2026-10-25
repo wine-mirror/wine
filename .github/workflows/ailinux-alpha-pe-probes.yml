@@ -61,6 +61,9 @@ jobs:
               ailinux/probes/cxx-runtime-probe.cpp -o "build/probes/cxx-$target.exe"
             "$cc" -O2 -Wall -Wextra -Werror \
               ailinux/probes/vc100-probe.c -o "build/probes/vc100-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/win11-extras-probe.c -o "build/probes/extras-$target.exe" \
+              -lole32 -luuid
             file "build/probes/library-$target.exe"
             file "build/probes/graphics-$target.exe"
             file "build/probes/functional-$target.exe"
@@ -71,6 +74,7 @@ jobs:
             test -s "build/probes/win11api-$target.exe"
             test -s "build/probes/cxx-$target.exe"
             test -s "build/probes/vc100-$target.exe"
+            test -s "build/probes/extras-$target.exe"
           done
       - name: Report probe boundaries
         run: |

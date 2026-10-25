@@ -16,6 +16,8 @@ $env:WINEDEBUG = '-all'
 if ($LASTEXITCODE -ne 0) { throw 'VC++ x86/x64 behavior test failed' }
 & (Join-Path $root 'run-win11-api-probe.sh') $Wine
 if ($LASTEXITCODE -ne 0) { throw 'Windows API tests failed' }
+& (Join-Path $root 'run-win11-extras-probe.sh') $Wine
+if ($LASTEXITCODE -ne 0) { throw 'MSXML6 GDI+ or D3DCompiler test failed' }
 $env:WINEDLLOVERRIDES = 'd3d8=n;d3d9=n;d3d10core=n;d3d11=n;dxgi=n;d3d12=n;d3d12core=n'
 & (Join-Path $root 'run-graphics-probe.sh') $Wine
 if ($LASTEXITCODE -ne 0) { throw 'Graphics hardware tests failed' }
