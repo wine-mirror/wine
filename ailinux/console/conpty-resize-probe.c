@@ -56,6 +56,9 @@ int wmain(int argc, WCHAR **argv)
     DWORD code = 255;
     BOOL started = FALSE;
     BOOL attrs_initialized = FALSE;
+    BOOL stress = argc > 1 && !lstrcmpiW(argv[1], L"--stress");
+    BOOL close_only = argc > 1 && !lstrcmpiW(argv[1], L"--close-only");
+    DWORD i;
     int result = 1;
 
     if (argc > 1 && !lstrcmpiW(argv[1], L"--child")) return run_child();
@@ -74,6 +77,28 @@ int wmain(int argc, WCHAR **argv)
     printf("CREATE_PSEUDOCONSOLE=0x%08lx\n", (unsigned long)hr);
     if (FAILED(hr) || !pty) goto cleanup;
 
+    if (close_only)
+    {
+        puts("CONPTY_CLOSE_ONLY_READY");
+        result = 0;
+        goto cleanup;
+    }
+    if (stress)
+    {
+        for (i = 0; i < 256; i++)
+        {
+            COORD size = { (SHORT)(80 + i % 77), (SHORT)(25 + i % 42) };
+            hr = resize_pty(pty, size);
+            if (FAILED(hr))
+            {
+                printf("CONPTY_STRESS_WRITE_FAILED=%lu hresult=0x%08lx\n",
+                       (unsigned long)i, (unsigned long)hr);
+                goto cleanup;
+            }
+        }
+        printf("CONPTY_STRESS_WRITES=%lu\n", (unsigned long)i);
+    }
+
     hr = resize_pty(pty, zero);
     printf("RESIZE_ZERO_HRESULT=0x%08lx\n", (unsigned long)hr);
     /* Reference winconpty accepts zero size at its API boundary. */
@@ -89,7 +114,7 @@ int wmain(int argc, WCHAR **argv)
     hr = resize_pty(pty, desired);
     printf("RESIZE_VALID_HRESULT=0x%08lx\n", (unsigned long)hr);
     if (FAILED(hr)) goto cleanup;
-    Sleep(250);
+    Sleep(stress ? 750 : 250);
 
     InitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
     ZeroMemory(&startup, sizeof(startup));
@@ -122,7 +147,7 @@ int wmain(int argc, WCHAR **argv)
     if (!GetExitCodeProcess(pi.hProcess, &code)) goto cleanup;
     printf("CHILD_CONSOLE_RESIZE_EXIT=%lu\n", code);
     if (code) goto cleanup;
-    puts("CONPTY_RESIZE_BEHAVIOR_PASS");
+    puts(stress ? "CONPTY_STRESS_PASS" : "CONPTY_RESIZE_BEHAVIOR_PASS");
     result = 0;
 
 cleanup:
@@ -133,7 +158,12 @@ cleanup:
     }
     handles_close(&pi.hThread);
     handles_close(&pi.hProcess);
-    if (pty) close_pty(pty);
+    if (pty)
+    {
+        ULONGLONG before_close = GetTickCount64();
+        close_pty(pty);
+        printf("CONPTY_CLOSE_MS=%llu\n", (unsigned long long)(GetTickCount64() - before_close));
+    }
     handles_close(&input_r);
     handles_close(&input_w);
     handles_close(&output_r);

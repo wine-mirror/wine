@@ -29,3 +29,18 @@ recognizes a terminated TTY input thread separately from the ConPTY resize
 signal, including consoles without a signal handle. This avoids interpreting
 input-thread completion as a resize packet and observes newly created TTY
 threads. The separately compiled Wine x86 and x64 ConPTY probes still pass.
+
+## Parallel lifecycle regression (October 26, 2026)
+
+Run the separate rebuilt Wine engine with:
+
+    ./ailinux/console/run-lifecycle-tests.sh
+
+The test executes normal resize, 256-message resize stress, and close-without-
+child in four parallel processes for both i686 and x86_64. It enforces
+30-second individual timeouts, checks all exit codes and success markers,
+and records the ConPTY close duration. Override AILINUX_CONPTY_PARALLEL
+with a number from 1 to 12. Tests use the disposable gui-app-smoke-alpha
+prefix by default; the system Wine, installed alpha engine and default Wine
+prefix are not modified. Do not interpret an isolated stress pass as proof
+of correct behavior on a genuine Windows 11 reference system.
