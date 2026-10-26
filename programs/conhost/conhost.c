@@ -2950,12 +2950,7 @@ static int main_loop( struct console *console, HANDLE signal )
     HANDLE signal_event = NULL;
     HANDLE wait_handles[3];
     unsigned int wait_cnt = 0;
-    struct
-    {
-        USHORT id;
-        SHORT width;
-        SHORT height;
-    } signal_request;
+    struct wine_pty_resize_signal signal_request;
     IO_STATUS_BLOCK signal_io;
     NTSTATUS status;
     DWORD res;
@@ -3012,7 +3007,8 @@ static int main_loop( struct console *console, HANDLE signal )
                 TRACE( "signaled quit\n" );
                 return 0;
             }
-            if (signal_request.id == 1 && signal_request.width > 0 && signal_request.height > 0)
+            if (signal_request.id == WINE_PTY_SIGNAL_RESIZE_WINDOW &&
+                signal_request.width > 0 && signal_request.height > 0)
             {
                 struct screen_buffer *screen = console->active;
                 NTSTATUS resize_status;
@@ -3035,6 +3031,8 @@ static int main_loop( struct console *console, HANDLE signal )
                 TRACE( "pseudo console resized to %u x %u status %#lx\n",
                        signal_request.width, signal_request.height, resize_status );
             }
+            else if (signal_request.id == WINE_PTY_SIGNAL_RESIZE_WINDOW)
+                TRACE( "ignoring zero-size pseudo console resize\n" );
             else FIXME( "unimplemented pseudo console signal %x\n", signal_request.id );
             status = NtReadFile( signal, signal_event, NULL, NULL, &signal_io, &signal_request,
                                  sizeof(signal_request), NULL, NULL );

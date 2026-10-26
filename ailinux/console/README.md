@@ -11,11 +11,13 @@ the window-size event is emitted. These components must be deployed together.
 The out-of-tree alpha Wine build was rebuilt for kernelbase x64 and x86 and
 conhost x64. No installed Wine binaries or the default prefix were changed.
 
-The PE probe tests dimensions 80x25 -> 100x40; invalid dimensions return
-E_INVALIDARG and a child process sees the new console size via CONOUT$.
+The PE probe tests dimensions 80x25 -> 120x50 -> 100x40; negative
+sizes return E_INVALIDARG. Microsoft Windows Terminal winconpty permits
+zero-size packets at the API write layer, so the host accepts them and
+the guest skips applying them. A child sees 100x40 via CONOUT$.
 Both x86 and x64 pass on the locally rebuilt Wine.
 
 LIMITATION: resizing currently uses an asynchronous private signal. The
-test allows 250 ms for processing; this is not Windows-level synchronous
-acknowledgement or failure propagation. Before release, design a signal
-acknowledgement, check failed allocation and compare with genuine Windows.
+test allows 250 ms for processing; the Windows winconpty reference also returns after its signal-pipe write,
+not after an acknowledgement. Verify the full behavior in genuine Windows
+before promoting from alpha, and investigate allocation failure handling.

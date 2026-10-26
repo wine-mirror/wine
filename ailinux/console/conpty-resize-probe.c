@@ -50,7 +50,7 @@ int wmain(int argc, WCHAR **argv)
     close_pty_fn close_pty = (close_pty_fn)(void *)GetProcAddress(kernel, "ClosePseudoConsole");
     HRESULT hr;
     HPCON pty = NULL;
-    COORD initial = {80,25}, desired = {100,40}, invalid = {0,40}, negative = {-1,40};
+    COORD initial = {80,25}, desired = {100,40}, zero = {0,40}, negative = {-1,40}, intermediate = {120,50};
     SIZE_T attr_size = 0;
     WCHAR exe[MAX_PATH], cmd[MAX_PATH + 48];
     DWORD code = 255;
@@ -74,12 +74,17 @@ int wmain(int argc, WCHAR **argv)
     printf("CREATE_PSEUDOCONSOLE=0x%08lx\n", (unsigned long)hr);
     if (FAILED(hr) || !pty) goto cleanup;
 
-    hr = resize_pty(pty, invalid);
-    printf("RESIZE_INVALID_HRESULT=0x%08lx\n", (unsigned long)hr);
-    if (hr != E_INVALIDARG) goto cleanup;
+    hr = resize_pty(pty, zero);
+    printf("RESIZE_ZERO_HRESULT=0x%08lx\n", (unsigned long)hr);
+    /* Reference winconpty accepts zero size at its API boundary. */
+    if (hr != S_OK) goto cleanup;
     hr = resize_pty(pty, negative);
     printf("RESIZE_NEGATIVE_HRESULT=0x%08lx\n", (unsigned long)hr);
     if (hr != E_INVALIDARG) goto cleanup;
+
+    hr = resize_pty(pty, intermediate);
+    printf("RESIZE_INTERMEDIATE_HRESULT=0x%08lx\n", (unsigned long)hr);
+    if (FAILED(hr)) goto cleanup;
 
     hr = resize_pty(pty, desired);
     printf("RESIZE_VALID_HRESULT=0x%08lx\n", (unsigned long)hr);
