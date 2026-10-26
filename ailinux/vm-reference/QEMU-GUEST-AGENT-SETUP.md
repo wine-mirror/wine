@@ -36,3 +36,14 @@ have NOT yet been executed, and their results must never be fabricated.
 The attempted automated credential entry was blocked by security checks.
 Do not bypass those controls or expose credentials in command-line arguments,
 version control, shell logs, screenshots or CI.
+
+## Automated host-side preflight
+
+Run `python3 -B ailinux/vm-reference/qga-preflight.py` on zombie-pc.
+It verifies SHA256 of the approved Windows MSI and serial driver, checks
+whether the QEMU agent channel and approved tools CD are present in BOTH
+persistent and running VM configurations, and attempts the guest-ping.
+It neither signs into Windows nor installs software behind the user's login.
+On October 26 the results were: package hashes valid; persistent channel
+present; live channel absent; guest ping unavailable. Therefore a normal
+Windows guest agent installation and a guest restart remain mandatory.
