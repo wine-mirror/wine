@@ -5470,6 +5470,7 @@ LRESULT destroy_window( HWND hwnd )
     HMENU menu = 0, sys_menu;
     WND *win;
     HWND *children, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    struct list swapchains = LIST_INIT(swapchains);
 
     TRACE( "%p\n", hwnd );
 
@@ -5518,6 +5519,7 @@ LRESULT destroy_window( HWND hwnd )
     NtUserDestroyCursor( win->hIconSmall2, 0 );
     surface = win->surface;
     win->surface = NULL;
+    list_move_tail( &swapchains, &win->opengl_swapchains );
     release_win_ptr( win );
 
     release_opengl_drawables( &drawables );
@@ -5530,6 +5532,7 @@ LRESULT destroy_window( HWND hwnd )
         window_surface_release( surface );
     }
 
+    free_opengl_swapchains( &swapchains );
     detach_client_surfaces( hwnd );
     if (win->current_drawable) opengl_drawable_release( win->current_drawable );
     if (win->unused_drawable) opengl_drawable_release( win->unused_drawable );
@@ -5643,7 +5646,7 @@ void destroy_thread_windows(void)
         struct destroy_entry *next;
     } *entry, *free_list = NULL;
     HWND capture = get_capture(), toplevel = NtUserGetAncestor( capture, GA_ROOT );
-    struct list drawables = LIST_INIT(drawables);
+    struct list drawables = LIST_INIT(drawables), swapchains = LIST_INIT(swapchains);
     HANDLE handle = 0;
     WND *win;
 
@@ -5656,6 +5659,7 @@ void destroy_thread_windows(void)
         BOOL is_child = (win->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD;
         struct destroy_entry tmp = {0};
 
+        list_move_tail( &swapchains, &win->opengl_swapchains );
         free_dce( win->dce, win->handle, &drawables );
         set_user_handle_ptr( handle, NULL );
         free( win->pScroll );
@@ -5686,6 +5690,7 @@ void destroy_thread_windows(void)
     user_unlock();
 
     release_opengl_drawables( &drawables );
+    free_opengl_swapchains( &swapchains );
 
     while ((entry = free_list))
     {
@@ -5802,6 +5807,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->parent     = full_parent;
     win->owner      = full_owner;
     win->class      = class;
+    list_init( &win->opengl_swapchains );
     set_user_handle_ptr( handle, win );
     return win;
 }

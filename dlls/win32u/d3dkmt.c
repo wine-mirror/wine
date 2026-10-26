@@ -186,9 +186,16 @@ struct d3dkmt_vidpn_source
     struct list entry;                      /* List entry */
 };
 
+/* constant swapchain description, in the swapchain objects runtime data */
+struct swapchain_desc
+{
+    HWND toplevel;
+};
+
 struct d3dkmt_swapchain
 {
     struct d3dkmt_object obj;
+    struct swapchain_desc desc;
 };
 
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -2096,10 +2103,28 @@ static struct d3dkmt_swapchain *get_d3dkmt_swapchain( D3DKMT_HANDLE handle )
     return CONTAINING_RECORD( obj, struct d3dkmt_swapchain, obj );
 }
 
+static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, D3DKMT_HANDLE *local )
+{
+    struct d3dkmt_swapchain *swapchain = NULL;
+    UINT desc_size = sizeof(swapchain->desc);
+    NTSTATUS status;
+
+    if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
+    if ((status = d3dkmt_object_open( &swapchain->obj, global, NULL, &swapchain->desc, &desc_size ))) goto failed;
+    *local = swapchain->obj.local;
+
+    TRACE( "Opened global %#x swapchain %p/%#x\n", global, swapchain, *local );
+    return STATUS_SUCCESS;
+
+failed:
+    WARN( "Failed to open swapchain, status %#x\n", status );
+    d3dkmt_swapchain_free( swapchain );
+    return status;
+}
+
 NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, D3DKMT_HANDLE *local )
 {
-    struct d3dkmt_swapchain *swapchain;
-    NTSTATUS status;
+    D3DKMT_HANDLE global;
     HWND toplevel;
     RECT rect;
 
@@ -2108,17 +2133,48 @@ NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, D3DKMT_HANDLE *local )
     if (!(toplevel = NtUserGetAncestor( hwnd, GA_ROOT ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
     if (is_current_process_window( hwnd ) && is_current_process_window( toplevel )) return STATUS_NOT_IMPLEMENTED;
     if (!get_client_rect( hwnd, &rect, get_dpi_for_window( hwnd ) )) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
+    if (!(global = send_message( toplevel, WM_WINE_SWAPCHAIN_CREATE, (WPARAM)hwnd, 0 ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
 
-    if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
-    if ((status = alloc_object_handle( &swapchain->obj ))) d3dkmt_swapchain_free( swapchain );
-    else *local = swapchain->obj.local;
-
-    if (status) WARN( "Failed to create swapchain, status %#x\n", status );
-    else TRACE( "Created remote swapchain %p/%#x\n", swapchain, *local );
-    return status;
+    return d3dkmt_swapchain_open( global, local );
 }
 
 NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_swapchain *swapchain;
+
+    TRACE( "local %#x\n", local );
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
+    NtUserPostMessage( swapchain->desc.toplevel, WM_WINE_SWAPCHAIN_DESTROY, swapchain->obj.global, 0 );
+    d3dkmt_swapchain_free( swapchain );
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, D3DKMT_HANDLE *local, D3DKMT_HANDLE *global )
+{
+    struct d3dkmt_swapchain *swapchain = NULL;
+    NTSTATUS status;
+
+    TRACE( "toplevel %p hwnd %p local %p global %p\n", toplevel, hwnd, local, global );
+
+    if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
+    swapchain->desc.toplevel = toplevel;
+
+    if ((status = d3dkmt_object_create( &swapchain->obj, -1, 0, FALSE, &swapchain->desc, sizeof(swapchain->desc) ))) goto failed;
+    *local = swapchain->obj.local;
+    *global = swapchain->obj.global;
+
+    TRACE( "Created swapchain %p/%#x global %#x\n", swapchain, *local, *global );
+    return status;
+
+failed:
+    WARN( "Failed to create swapchain, status %#x\n", status );
+    d3dkmt_swapchain_free( swapchain );
+    return status;
+}
+
+NTSTATUS d3dkmt_swapchain_destroy( D3DKMT_HANDLE local )
 {
     struct d3dkmt_swapchain *swapchain;
 
