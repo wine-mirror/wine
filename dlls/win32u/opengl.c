@@ -3923,6 +3923,7 @@ BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index )
     TRACE( "toplevel %p global %#x index %#x\n", toplevel, global, index );
 
     if (!(swapchain = get_opengl_swapchain( toplevel, global, FALSE ))) return FALSE;
+    d3dkmt_swapchain_release_image( swapchain->local, index );
     return TRUE;
 }
 

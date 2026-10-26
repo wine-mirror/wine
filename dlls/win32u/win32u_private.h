@@ -250,6 +250,8 @@ extern NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local );
 extern NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index );
 extern NTSTATUS d3dkmt_swapchain_queue_present( D3DKMT_HANDLE local, UINT index );
 
+extern NTSTATUS d3dkmt_swapchain_release_image( D3DKMT_HANDLE local, UINT index );
+
 /* opengl.c */
 
 extern BOOL get_opengl_gpus( struct list *gpus );

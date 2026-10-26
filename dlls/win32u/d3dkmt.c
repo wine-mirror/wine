@@ -198,6 +198,11 @@ struct swapchain_desc
     SIZE size;
 };
 
+struct swapchain_state
+{
+    UINT free_mask;
+};
+
 struct d3dkmt_swapchain
 {
     struct d3dkmt_object obj;
@@ -2180,7 +2185,8 @@ static struct d3dkmt_swapchain *get_d3dkmt_swapchain( D3DKMT_HANDLE handle )
 static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, SIZE *size, D3DKMT_HANDLE *local )
 {
     struct d3dkmt_swapchain *swapchain = NULL;
-    UINT desc_size = sizeof(swapchain->desc), dummy = 0;
+    struct swapchain_state state;
+    UINT desc_size = sizeof(swapchain->desc), state_size = sizeof(state), dummy = 0;
     NTSTATUS status;
 
     if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
@@ -2191,7 +2197,7 @@ static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, SIZE *size, D3DKMT_
         status = d3dkmt_resource_open( swapchain->desc.resources[i], NULL, NULL, &dummy, &swapchain->resources[i] );
         if (status) goto failed;
     }
-    if ((status = d3dkmt_mutex_open( swapchain->desc.mutex, NULL, NULL, &dummy, &swapchain->mutex ))) goto failed;
+    if ((status = d3dkmt_mutex_open( swapchain->desc.mutex, NULL, &state, &state_size, &swapchain->mutex ))) goto failed;
     if ((status = d3dkmt_sync_open( swapchain->desc.sync, NULL, &swapchain->sync ))) goto failed;
 
     *size = swapchain->desc.size;
@@ -2244,6 +2250,7 @@ NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local )
 NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index )
 {
     struct d3dkmt_swapchain *swapchain;
+    NTSTATUS status;
     HWND toplevel;
     SIZE size;
 
@@ -2257,7 +2264,31 @@ NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index )
     size = get_client_swapchain_size( swapchain->desc.toplevel, swapchain->desc.hwnd );
     if (memcmp( &size, &swapchain->desc.size, sizeof(size) )) return STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST;
 
-    return STATUS_SUCCESS;
+    for (;;)
+    {
+        D3DKMT_HANDLE mutex = swapchain->mutex->obj.local, sync = swapchain->sync->obj.local;
+        struct swapchain_state state;
+        UINT64 value = 0;
+
+        D3DKMT_ACQUIREKEYEDMUTEX2 acquire = { .hKeyedMutex = mutex, .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+        D3DKMT_RELEASEKEYEDMUTEX2 release = { .hKeyedMutex = mutex, .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+        D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU wait = { .ObjectCount = 1, .ObjectHandleArray = &sync, .FenceValueArray = &value };
+
+        status = STATUS_SUCCESS;
+
+        NtGdiDdDDIAcquireKeyedMutex2( &acquire );
+        release.FenceValue = acquire.FenceValue;
+        if (state.free_mask == -1) status = STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST;
+        else if (BitScanForward( index, state.free_mask )) state.free_mask &= ~(1 << *index);
+        else value = acquire.FenceValue + 1;
+        NtGdiDdDDIReleaseKeyedMutex2( &release );
+        if (!value) break;
+
+        NtGdiDdDDIWaitForSynchronizationObjectFromCpu( &wait );
+    }
+
+    TRACE( "returning %#x index %d\n", status, *index );
+    return status;
 }
 
 NTSTATUS d3dkmt_swapchain_queue_present( D3DKMT_HANDLE local, UINT index )
@@ -2271,10 +2302,36 @@ NTSTATUS d3dkmt_swapchain_queue_present( D3DKMT_HANDLE local, UINT index )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS d3dkmt_swapchain_release_image( D3DKMT_HANDLE local, UINT index )
+{
+    struct d3dkmt_swapchain *swapchain;
+    struct swapchain_state state;
+    UINT64 value = 0;
+
+    D3DKMT_ACQUIREKEYEDMUTEX2 acquire = { .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+    D3DKMT_RELEASEKEYEDMUTEX2 release = { .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = { .ObjectCount = 1, .FenceValueArray = &value };
+
+    TRACE( "local %#x index %#x\n", local, index );
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
+    acquire.hKeyedMutex = release.hKeyedMutex = swapchain->mutex->obj.local;
+    signal.ObjectHandleArray = &swapchain->sync->obj.local;
+
+    NtGdiDdDDIAcquireKeyedMutex2( &acquire );
+    value = release.FenceValue = acquire.FenceValue + 1;
+    if (state.free_mask != -1) state.free_mask |= (1 << index);
+    NtGdiDdDDISignalSynchronizationObjectFromCpu( &signal );
+    NtGdiDdDDIReleaseKeyedMutex2( &release );
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE resources[3],
                                   D3DKMT_HANDLE *local, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_swapchain *swapchain = NULL;
+    struct swapchain_state state = { 0 };
     NTSTATUS status;
 
     TRACE( "toplevel %p hwnd %p size %s resources %p local %p global %p\n", toplevel, hwnd,
@@ -2286,8 +2343,9 @@ NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HA
     {
         if (!(swapchain->resources[i] = get_d3dkmt_resource( resources[i] ))) break;
         swapchain->desc.resources[i] = swapchain->resources[i]->obj.global;
+        state.free_mask |= 1 << i;
     }
-    if ((status = d3dkmt_mutex_create( 0, FALSE, NULL, 0, &swapchain->mutex ))) goto failed;
+    if ((status = d3dkmt_mutex_create( 0, FALSE, &state, sizeof(state), &swapchain->mutex ))) goto failed;
     swapchain->desc.mutex = swapchain->mutex->obj.global;
     if ((status = d3dkmt_sync_create( -1, no_fd, FALSE, &swapchain->sync ))) goto failed;
     swapchain->desc.sync = swapchain->sync->obj.global;
@@ -2310,13 +2368,28 @@ failed:
 
 NTSTATUS d3dkmt_swapchain_destroy( D3DKMT_HANDLE local )
 {
+    struct swapchain_state state = { 0 };
+    UINT64 value;
+
+    D3DKMT_ACQUIREKEYEDMUTEX2 acquire = { .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+    D3DKMT_RELEASEKEYEDMUTEX2 release = { .pPrivateRuntimeData = &state, .PrivateRuntimeDataSize = sizeof(state) };
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = { .ObjectCount = 1, .FenceValueArray = &value };
     struct d3dkmt_swapchain *swapchain;
 
     TRACE( "local %#x\n", local );
 
     if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
-    d3dkmt_swapchain_free( swapchain );
+    release.hKeyedMutex = acquire.hKeyedMutex = swapchain->mutex->obj.local;
+    signal.ObjectHandleArray = &swapchain->sync->obj.local;
 
+    /* invalidate the swapchain and signal any acquire_image waiter */
+    NtGdiDdDDIAcquireKeyedMutex2( &acquire );
+    value = release.FenceValue = acquire.FenceValue + 1;
+    state.free_mask = -1;
+    NtGdiDdDDISignalSynchronizationObjectFromCpu( &signal );
+    NtGdiDdDDIReleaseKeyedMutex2( &release );
+
+    d3dkmt_swapchain_free( swapchain );
     return STATUS_SUCCESS;
 }
 
