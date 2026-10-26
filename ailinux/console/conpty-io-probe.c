@@ -45,6 +45,24 @@ static int io_child(void)
         CloseHandle(conin);
         return 22;
     }
+    {
+        DWORD original = 0, modified = 0, check = 0;
+        if (!GetConsoleMode(conin, &original))
+        {
+            CloseHandle(conout);
+            CloseHandle(conin);
+            return 31;
+        }
+        modified = original ^ ENABLE_ECHO_INPUT;
+        if (!SetConsoleMode(conin, modified) ||
+            !GetConsoleMode(conin, &check) || check != modified ||
+            !SetConsoleMode(conin, original))
+        {
+            CloseHandle(conout);
+            CloseHandle(conin);
+            return 32;
+        }
+    }
     if (!WriteConsoleA(conout, ready, (DWORD)strlen(ready), &written, NULL) ||
         written != strlen(ready))
     {

@@ -53,3 +53,11 @@ The terminal Enter input uses CR. Earlier LF-only tests blocked or failed.
 PE32 and PE32+ pass on the isolated rebuilt Wine 11.20 engine, including
 four simultaneous I/O tests per architecture. Real Windows VM testing
 remains open until the QEMU guest agent is available.
+
+## Console input mode roundtrip
+
+The bidirectional I/O probe now checks GetConsoleMode and SetConsoleMode
+on CONIN$ by toggling ENABLE_ECHO_INPUT, verifying the new flags, and
+restoring the original mode before reading the input line. Both PE32 and
+PE32+ passed under the isolated Wine test build. Comparison on genuine
+Windows remains outstanding.
