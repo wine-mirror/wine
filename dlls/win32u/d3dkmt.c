@@ -2199,6 +2199,17 @@ NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS d3dkmt_swapchain_queue_present( D3DKMT_HANDLE local, UINT index )
+{
+    struct d3dkmt_swapchain *swapchain;
+
+    TRACE( "local %#x index %#x\n", local, index );
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
+    NtUserPostMessage( swapchain->desc.toplevel, WM_WINE_SWAPCHAIN_PRESENT, swapchain->obj.global, index );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE resources[3],
                                   D3DKMT_HANDLE *local, D3DKMT_HANDLE *global )
 {

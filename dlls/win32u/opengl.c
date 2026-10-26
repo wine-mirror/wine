@@ -992,6 +992,17 @@ static NTSTATUS framebuffer_swapchain_acquire_image( struct opengl_drawable *dra
     }
 }
 
+static NTSTATUS framebuffer_swapchain_queue_present( struct opengl_drawable *drawable, UINT index )
+{
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+    struct client_surface *client;
+
+    if (!(client = drawable->client)) return STATUS_NOT_IMPLEMENTED;
+    if (!surface->swapchain) return STATUS_NOT_IMPLEMENTED;
+
+    return d3dkmt_swapchain_queue_present( surface->swapchain, index );
+}
+
 static void blit_framebuffer_surface( struct opengl_drawable *drawable )
 {
     const struct opengl_funcs *funcs = &display_funcs;
@@ -1005,7 +1016,10 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
     if ((status = framebuffer_swapchain_acquire_image( drawable, &index )))
+    {
         WARN( "Failed to acquire swapchain image, status %#x\n", status );
+        index = -1;
+    }
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
@@ -1058,6 +1072,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     }
 
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+
+    if (index != -1)
+    {
+        status = framebuffer_swapchain_queue_present( drawable, index );
+        if (status) WARN( "Failed to present swapchain image, status %#x\n", status );
+    }
 }
 
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
@@ -3747,6 +3767,16 @@ BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global )
 
     if (!(swapchain = get_opengl_swapchain( toplevel, global, TRUE ))) return FALSE;
     free_opengl_swapchain( swapchain );
+    return TRUE;
+}
+
+BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index )
+{
+    struct opengl_swapchain *swapchain;
+
+    TRACE( "toplevel %p global %#x index %#x\n", toplevel, global, index );
+
+    if (!(swapchain = get_opengl_swapchain( toplevel, global, FALSE ))) return FALSE;
     return TRUE;
 }
 

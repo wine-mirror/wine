@@ -2267,6 +2267,8 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return 0;
     case WM_WINE_SWAPCHAIN_CREATE:
         return create_opengl_swapchain( hwnd, (HWND)wparam );
+    case WM_WINE_SWAPCHAIN_PRESENT:
+        return present_opengl_swapchain( hwnd, wparam, lparam );
     case WM_WINE_SWAPCHAIN_DESTROY:
         return destroy_opengl_swapchain( hwnd, wparam );
     case WM_WINE_SETPIXELFORMAT:
