@@ -67,9 +67,6 @@ static BOOL fetch_process_info(struct dump_context* dc)
                 if (!dc->threads) break;
                 for (i = 0; i < spi->dwThreadCount; i++)
                 {
-                    /* don't include current thread */
-                    if (HandleToULong(spi->ti[i].ClientId.UniqueThread) == GetCurrentThreadId())
-                        continue;
                     dc->threads[dc->num_threads].tid        = HandleToULong(spi->ti[i].ClientId.UniqueThread);
                     dc->threads[dc->num_threads].prio_class = spi->ti[i].dwBasePriority; /* FIXME */
                     dc->threads[dc->num_threads].curr_prio  = spi->ti[i].dwCurrentPriority;
@@ -150,12 +147,15 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
         mdThd->Teb = (ULONG_PTR)tbi.TebBaseAddress;
         if (tbi.ExitStatus == STILL_ACTIVE)
         {
-            mdThd->SuspendCount = SuspendThread(hThread);
+            BOOL is_current_thread = (tid == GetCurrentThreadId());
+            if (!is_current_thread)
+                mdThd->SuspendCount = SuspendThread(hThread);
             ctx->ContextFlags = CONTEXT_ALL;
             if (!GetThreadContext(hThread, ctx))
                 memset(ctx, 0, sizeof(*ctx));
             fetch_thread_stack(dc, tbi.TebBaseAddress, ctx, &mdThd->Stack);
-            ResumeThread(hThread);
+            if (!is_current_thread)
+                ResumeThread(hThread);
         }
         else
             mdThd->SuspendCount = (DWORD)-1;
@@ -889,9 +889,8 @@ static unsigned         dump_misc_info(struct dump_context* dc)
     return sizeof(mmi);
 }
 
-static DWORD CALLBACK write_minidump(void *_args)
+static BOOL write_minidump(struct dump_context *dc)
 {
-    struct dump_context *dc = _args;
     static const MINIDUMP_DIRECTORY emptyDir = {UnusedStream, {0, 0}};
     MINIDUMP_HEADER     mdHead;
     MINIDUMP_DIRECTORY  mdDir;
@@ -1070,22 +1069,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.except_param = (ExceptionParam && ExceptionParam->ExceptionPointers) ? ExceptionParam : NULL;
     dc.user_stream = UserStreamParam;
 
-    /* have a dedicated thread for fetching info on self */
-    if (dc.pid != GetCurrentProcessId())
-        ret = write_minidump(&dc);
-    else
-    {
-        DWORD  exit_code;
-        HANDLE h = CreateThread(NULL, 0, write_minidump, &dc, 0, NULL);
-        if (h)
-        {
-            if (WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0 && GetExitCodeThread(h, &exit_code))
-                ret = exit_code;
-            else
-                TerminateThread(h, 0);
-            CloseHandle(h);
-        }
-    }
+    ret = write_minidump(&dc);
 
     if (sym_initialized)
         SymCleanup(hProcess);
