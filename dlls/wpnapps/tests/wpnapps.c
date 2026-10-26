@@ -389,7 +389,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
 
     WindowsCreateStringReference( class_name_manager, wcslen( class_name_manager ), &str_hdr, &str );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    todo_wine ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
         todo_wine win_skip( "%s runtimeclass not registered\n", debugstr_w( class_name_manager ) );
@@ -400,7 +400,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     check_interface( factory, &IID_IInspectable, TRUE );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IToastNotificationManagerStatics, (void **)&statics );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     IActivationFactory_Release( factory );
 
     WindowsCreateStringReference( class_name_notif, wcslen( class_name_notif ), &str_hdr, &str );
@@ -408,7 +408,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
-        skip( "%s runtimeclass not registered\n", debugstr_w( class_name_manager ) );
+        skip( "%s runtimeclass not registered\n", debugstr_w( class_name_notif ) );
         return;
     }
 
