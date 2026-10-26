@@ -40,4 +40,26 @@ for arch in x86_64 i686; do
     echo "PASS arch=$arch mode=$mode parallel=$PARALLEL"
   done
 done
+for arch in x86_64 i686; do
+  io_exe="$OUT/conpty-io-$arch.exe"
+  test -s "$io_exe"
+  failed=0
+  pids=()
+  for ((n=1;n<=PARALLEL;n++)); do
+    logfile="$OUT/lifecycle-$arch-io-$n.log"
+    ( WINEPREFIX="$PREFIX" WINEDEBUG=-all timeout 30s "$WINE_BIN" "$io_exe" > "$logfile" 2>&1 &&
+      grep -q '^CONPTY_IO_CHILD_EXIT=0' "$logfile" &&
+      grep -q '^CONPTY_IO_ROUNDTRIP_PASS' "$logfile" ) &
+    pids+=( "$!" )
+  done
+  for pid in "${pids[@]}"; do
+    if ! wait "$pid"; then failed=1; fi
+  done
+  pids=()
+  if (( failed )); then
+    echo "FAIL arch=$arch mode=io" >&2
+    exit 1
+  fi
+  echo "PASS arch=$arch mode=io parallel=$PARALLEL"
+done
 echo CONPTY_LIFECYCLE_SUITE_PASS

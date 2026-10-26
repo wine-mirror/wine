@@ -44,3 +44,12 @@ with a number from 1 to 12. Tests use the disposable gui-app-smoke-alpha
 prefix by default; the system Wine, installed alpha engine and default Wine
 prefix are not modified. Do not interpret an isolated stress pass as proof
 of correct behavior on a genuine Windows 11 reference system.
+
+## ConPTY bidirectional I/O
+
+The conpty-io-probe.c starts an attached child, sends a line to the
+ConPTY input pipe, and checks for the child response in the output pipe.
+The terminal Enter input uses CR. Earlier LF-only tests blocked or failed.
+PE32 and PE32+ pass on the isolated rebuilt Wine 11.20 engine, including
+four simultaneous I/O tests per architecture. Real Windows VM testing
+remains open until the QEMU guest agent is available.

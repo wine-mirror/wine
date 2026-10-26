@@ -14,5 +14,6 @@ cp "$ROOT/ailinux/vm-reference/"{Install-QemuGuestAgent.ps1,Start-ReferenceGuest
 cp "$OUT"/winapi-probe-{i686,x86_64}.exe "$STAGE/"
 cp "$OUT"/win11-api-probe-{i686,x86_64}.exe "$STAGE/"
 cp "$OUT"/conpty-resize-{i686,x86_64}.exe "$STAGE/"
+cp "$OUT"/conpty-io-{i686,x86_64}.exe "$STAGE/"
 xorriso -as mkisofs -quiet -J -V AILINUX_QGA -o "$ISO" "$STAGE"
 sha256sum "$ISO"
