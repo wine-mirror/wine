@@ -21,3 +21,11 @@ LIMITATION: resizing currently uses an asynchronous private signal. The
 test allows 250 ms for processing; the Windows winconpty reference also returns after its signal-pipe write,
 not after an acknowledgement. Verify the full behavior in genuine Windows
 before promoting from alpha, and investigate allocation failure handling.
+
+## Event dispatcher correction
+
+The console event-loop now refreshes wait handles on every iteration and
+recognizes a terminated TTY input thread separately from the ConPTY resize
+signal, including consoles without a signal handle. This avoids interpreting
+input-thread completion as a resize packet and observes newly created TTY
+threads. The separately compiled Wine x86 and x64 ConPTY probes still pass.

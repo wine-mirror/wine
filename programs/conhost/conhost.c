@@ -2949,7 +2949,7 @@ static int main_loop( struct console *console, HANDLE signal )
 {
     HANDLE signal_event = NULL;
     HANDLE wait_handles[3];
-    unsigned int wait_cnt = 0;
+    unsigned int wait_cnt, input_index;
     struct wine_pty_resize_signal signal_request;
     IO_STATUS_BLOCK signal_io;
     NTSTATUS status;
@@ -2965,12 +2965,17 @@ static int main_loop( struct console *console, HANDLE signal )
 
     if (!alloc_ioctl_buffer( 4096 )) return 1;
 
-    wait_handles[wait_cnt++] = console->server;
-    if (signal) wait_handles[wait_cnt++] = signal_event;
-    if (console->input_thread) wait_handles[wait_cnt++] = console->input_thread;
-
     for (;;)
     {
+        wait_cnt = 0;
+        input_index = ~0u;
+        wait_handles[wait_cnt++] = console->server;
+        if (signal) wait_handles[wait_cnt++] = signal_event;
+        if (console->input_thread)
+        {
+            input_index = wait_cnt;
+            wait_handles[wait_cnt++] = console->input_thread;
+        }
         if (console->win)
             res = MsgWaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE, QS_ALLINPUT );
         else
@@ -3002,6 +3007,11 @@ static int main_loop( struct console *console, HANDLE signal )
             break;
 
         case WAIT_OBJECT_0 + 1:
+            if (!signal)
+            {
+                TRACE( "tty input thread terminated\n" );
+                return 0;
+            }
             if (signal_io.Status || signal_io.Information != sizeof(signal_request))
             {
                 TRACE( "signaled quit\n" );
