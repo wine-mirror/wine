@@ -151,6 +151,7 @@ struct import_context
     IMAGE_EXPORT_DIRECTORY *exports;
     DWORD                   exp_size;
     BOOL                    dynamic;
+    int                     fwd_depth;
 };
 
 static UINT tls_module_count = 32;     /* number of modules with TLS directory */
@@ -966,6 +967,7 @@ static NTSTATUS find_forwarded_export( const struct import_context *imp_context,
 
     if (!end) return status;
     if (build_import_name( context.importer, mod_name, forward, end - forward )) return status;
+    if (context.fwd_depth++ >= 32) return STATUS_INVALID_IMAGE_FORMAT;
 
     if (!(wm = find_basename_module( mod_name )))
     {

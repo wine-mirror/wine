@@ -3070,6 +3070,52 @@ static void test_export_forwarder_dep_chain(void)
     winetest_pop_context();
 }
 
+static void test_export_forwarder_loop(void)
+{
+    char path[MAX_PATH], prev_path[MAX_PATH], loop_path[MAX_PATH];
+    HMODULE modules[34], module;
+    HANDLE files[34], file;
+    FARPROC proc;
+    unsigned int i;
+    BOOL ret;
+
+    /* A module forwarding an export to itself. */
+    GetTempPathA( ARRAY_SIZE(loop_path), loop_path );
+    strcat( loop_path, "fwdloop.dll" );
+    file = gen_forward_chain_testdll( path, loop_path, TRUE, FALSE, NULL, NULL );
+    ret = CopyFileA( path, loop_path, FALSE );
+    ok( ret, "CopyFile failed, error %lu.\n", GetLastError() );
+    module = LoadLibraryA( loop_path );
+    ok( !!module, "LoadLibrary failed, error %lu.\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    proc = GetProcAddress( module, "forward_test_func" );
+    ok( !proc, "Got %p.\n", proc );
+    ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %lu.\n", GetLastError() );
+    FreeLibrary( module );
+    DeleteFileA( loop_path );
+    CloseHandle( file );
+
+    /* At most 32 forwards are followed. */
+    for (i = 0; i < ARRAY_SIZE(modules); i++)
+    {
+        files[i] = gen_forward_chain_testdll( path, i ? prev_path : NULL, TRUE, FALSE, NULL, NULL );
+        modules[i] = LoadLibraryA( path );
+        strcpy( prev_path, path );
+        ok( !!modules[i], "LoadLibrary failed, error %lu.\n", GetLastError() );
+    }
+    proc = GetProcAddress( modules[32], "forward_test_func" );
+    ok( proc == (FARPROC)((char *)modules[0] + page_size + 0x4), "Got %p.\n", proc );
+    SetLastError( 0xdeadbeef );
+    proc = GetProcAddress( modules[33], "forward_test_func" );
+    ok( !proc, "Got %p.\n", proc );
+    ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %lu.\n", GetLastError() );
+    for (i = 0; i < ARRAY_SIZE(modules); i++)
+    {
+        FreeLibrary( modules[i] );
+        CloseHandle( files[i] );
+    }
+}
+
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT];
 static DWORD attached_thread_count;
@@ -5009,6 +5055,7 @@ START_TEST(loader)
     test_security_cookie_readonly();
     test_import_resolution();
     test_export_forwarder_dep_chain();
+    test_export_forwarder_loop();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
     test_LoadPackagedLibrary();
