@@ -189,6 +189,8 @@ struct d3dkmt_vidpn_source
 /* constant swapchain description, in the swapchain objects runtime data */
 struct swapchain_desc
 {
+    D3DKMT_HANDLE mutex;
+    D3DKMT_HANDLE sync;
     HWND toplevel;
     HWND hwnd;
     SIZE size;
@@ -198,6 +200,8 @@ struct d3dkmt_swapchain
 {
     struct d3dkmt_object obj;
     struct swapchain_desc desc;
+    struct d3dkmt_mutex *mutex;
+    struct d3dkmt_sync *sync;
 };
 
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -2023,7 +2027,8 @@ D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_
     {
         d3dkmt_mutex_free( mutex );
         d3dkmt_sync_free( sync );
-        *mutex_local = *sync_local = 0;
+        if (mutex_local) *mutex_local = 0;
+        if (sync_local) *sync_local = 0;
     }
 
     free( runtime_data );
@@ -2095,6 +2100,8 @@ static void d3dkmt_swapchain_free( struct d3dkmt_swapchain *swapchain )
 {
     if (!swapchain) return;
 
+    d3dkmt_mutex_free( swapchain->mutex );
+    d3dkmt_sync_free( swapchain->sync );
     d3dkmt_object_free( &swapchain->obj );
 }
 
@@ -2108,11 +2115,14 @@ static struct d3dkmt_swapchain *get_d3dkmt_swapchain( D3DKMT_HANDLE handle )
 static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, SIZE *size, D3DKMT_HANDLE *local )
 {
     struct d3dkmt_swapchain *swapchain = NULL;
-    UINT desc_size = sizeof(swapchain->desc);
+    UINT desc_size = sizeof(swapchain->desc), dummy = 0;
     NTSTATUS status;
 
     if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
     if ((status = d3dkmt_object_open( &swapchain->obj, global, NULL, &swapchain->desc, &desc_size ))) goto failed;
+
+    if ((status = d3dkmt_mutex_open( swapchain->desc.mutex, NULL, NULL, &dummy, &swapchain->mutex ))) goto failed;
+    if ((status = d3dkmt_sync_open( swapchain->desc.sync, NULL, &swapchain->sync ))) goto failed;
 
     *size = swapchain->desc.size;
     *local = swapchain->obj.local;
@@ -2182,6 +2192,10 @@ NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HA
     TRACE( "toplevel %p hwnd %p size %s local %p global %p\n", toplevel, hwnd, debugstr_size(&size), local, global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
+    if ((status = d3dkmt_mutex_create( 0, FALSE, NULL, 0, &swapchain->mutex ))) goto failed;
+    swapchain->desc.mutex = swapchain->mutex->obj.global;
+    if ((status = d3dkmt_sync_create( -1, FALSE, &swapchain->sync ))) goto failed;
+    swapchain->desc.sync = swapchain->sync->obj.global;
     swapchain->desc.toplevel = toplevel;
     swapchain->desc.hwnd = hwnd;
     swapchain->desc.size = size;
