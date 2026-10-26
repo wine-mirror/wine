@@ -965,6 +965,28 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
     if (surface->target) opengl_drawable_release( surface->target );
 }
 
+static NTSTATUS framebuffer_swapchain_acquire_image( struct opengl_drawable *drawable, UINT *index )
+{
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+    NTSTATUS status;
+    SIZE size;
+
+    if (!drawable->hwnd) return STATUS_NOT_IMPLEMENTED;
+
+    for (;;)
+    {
+        if (surface->swapchain)
+        {
+            if (!(status = d3dkmt_swapchain_acquire_image( surface->swapchain, index ))) return status;
+            d3dkmt_swapchain_destroy_remote( surface->swapchain );
+            surface->swapchain = 0;
+            if (status != STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST) return status;
+        }
+
+        if ((status = d3dkmt_swapchain_create_remote( drawable->hwnd, &size, &surface->swapchain ))) return status;
+    }
+}
+
 static void blit_framebuffer_surface( struct opengl_drawable *drawable )
 {
     const struct opengl_funcs *funcs = &display_funcs;
@@ -973,11 +995,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
     NTSTATUS status;
+    UINT index = -1;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
-    if (!surface->swapchain && (status = d3dkmt_swapchain_create_remote( drawable->hwnd, &surface->swapchain )) && status != STATUS_NOT_IMPLEMENTED)
-        WARN( "Failed to create remote swapchain, status %#x\n", status );
+    if ((status = framebuffer_swapchain_acquire_image( drawable, &index )))
+        WARN( "Failed to acquire swapchain image, status %#x\n", status );
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
@@ -3670,6 +3693,7 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
     struct opengl_swapchain *swapchain;
     const struct opengl_funcs *funcs;
     int format;
+    SIZE size;
     WND *win;
 
     TRACE( "toplevel %p hwnd %p\n", toplevel, hwnd );
@@ -3686,7 +3710,9 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 
     if (!(swapchain = calloc( 1, sizeof(*swapchain) ))) return 0;
     if (!(swapchain->drawable = get_window_unused_drawable( hwnd, format, TRUE ))) goto failed;
-    if (d3dkmt_swapchain_create( toplevel, hwnd, &swapchain->local, &swapchain->global )) goto failed;
+    size = swapchain->drawable->virtual_size;
+
+    if (d3dkmt_swapchain_create( toplevel, hwnd, size, &swapchain->local, &swapchain->global )) goto failed;
 
     if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) goto failed;
     list_add_tail( &win->opengl_swapchains, &swapchain->entry );

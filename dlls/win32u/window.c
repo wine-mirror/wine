@@ -480,6 +480,13 @@ BOOL client_surface_get_size( struct client_surface *surface, SIZE *virtual_size
     return updated;
 }
 
+SIZE get_client_swapchain_size( HWND toplevel, HWND hwnd )
+{
+    RECT monitor, rect = get_client_surface_rects( toplevel, hwnd, &monitor );
+    SIZE size = { max( 1, rect.right - rect.left ), max( 1, rect.bottom - rect.top ) };
+    return size;
+}
+
 void use_window_client_surface( struct client_surface *surface, BOOL use )
 {
     TRACE( "surface %s, use %u\n", debugstr_client_surface( surface ), use );

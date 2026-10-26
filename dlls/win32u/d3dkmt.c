@@ -190,6 +190,8 @@ struct d3dkmt_vidpn_source
 struct swapchain_desc
 {
     HWND toplevel;
+    HWND hwnd;
+    SIZE size;
 };
 
 struct d3dkmt_swapchain
@@ -2103,7 +2105,7 @@ static struct d3dkmt_swapchain *get_d3dkmt_swapchain( D3DKMT_HANDLE handle )
     return CONTAINING_RECORD( obj, struct d3dkmt_swapchain, obj );
 }
 
-static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, D3DKMT_HANDLE *local )
+static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, SIZE *size, D3DKMT_HANDLE *local )
 {
     struct d3dkmt_swapchain *swapchain = NULL;
     UINT desc_size = sizeof(swapchain->desc);
@@ -2111,9 +2113,11 @@ static NTSTATUS d3dkmt_swapchain_open( D3DKMT_HANDLE global, D3DKMT_HANDLE *loca
 
     if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
     if ((status = d3dkmt_object_open( &swapchain->obj, global, NULL, &swapchain->desc, &desc_size ))) goto failed;
+
+    *size = swapchain->desc.size;
     *local = swapchain->obj.local;
 
-    TRACE( "Opened global %#x swapchain %p/%#x\n", global, swapchain, *local );
+    TRACE( "Opened global %#x swapchain %p/%#x size %s\n", global, swapchain, *local, debugstr_size(size) );
     return STATUS_SUCCESS;
 
 failed:
@@ -2122,20 +2126,20 @@ failed:
     return status;
 }
 
-NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, D3DKMT_HANDLE *local )
+NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, SIZE *size, D3DKMT_HANDLE *local )
 {
     D3DKMT_HANDLE global;
     HWND toplevel;
     RECT rect;
 
-    TRACE( "hwnd %p local %p\n", hwnd, local );
+    TRACE( "hwnd %p size %p local %p\n", hwnd, size, local );
 
     if (!(toplevel = NtUserGetAncestor( hwnd, GA_ROOT ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
     if (is_current_process_window( hwnd ) && is_current_process_window( toplevel )) return STATUS_NOT_IMPLEMENTED;
     if (!get_client_rect( hwnd, &rect, get_dpi_for_window( hwnd ) )) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
     if (!(global = send_message( toplevel, WM_WINE_SWAPCHAIN_CREATE, (WPARAM)hwnd, 0 ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
 
-    return d3dkmt_swapchain_open( global, local );
+    return d3dkmt_swapchain_open( global, size, local );
 }
 
 NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local )
@@ -2151,15 +2155,36 @@ NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, D3DKMT_HANDLE *local, D3DKMT_HANDLE *global )
+NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index )
+{
+    struct d3dkmt_swapchain *swapchain;
+    HWND toplevel;
+    SIZE size;
+
+    TRACE( "local %#x index %p\n", local, index );
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return STATUS_INVALID_PARAMETER;
+
+    if (!(toplevel = NtUserGetAncestor( swapchain->desc.hwnd, GA_ROOT ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
+    if (toplevel != swapchain->desc.toplevel) return STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST;
+
+    size = get_client_swapchain_size( swapchain->desc.toplevel, swapchain->desc.hwnd );
+    if (memcmp( &size, &swapchain->desc.size, sizeof(size) )) return STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST;
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE *local, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_swapchain *swapchain = NULL;
     NTSTATUS status;
 
-    TRACE( "toplevel %p hwnd %p local %p global %p\n", toplevel, hwnd, local, global );
+    TRACE( "toplevel %p hwnd %p size %s local %p global %p\n", toplevel, hwnd, debugstr_size(&size), local, global );
 
     if ((status = d3dkmt_object_alloc( sizeof(*swapchain), D3DKMT_SWAPCHAIN, (void **)&swapchain ))) return status;
     swapchain->desc.toplevel = toplevel;
+    swapchain->desc.hwnd = hwnd;
+    swapchain->desc.size = size;
 
     if ((status = d3dkmt_object_create( &swapchain->obj, -1, 0, FALSE, &swapchain->desc, sizeof(swapchain->desc) ))) goto failed;
     *local = swapchain->obj.local;
