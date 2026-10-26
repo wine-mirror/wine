@@ -1980,7 +1980,6 @@ static void test_DialogBoxParam(void)
     ok(ret == -123, "Unexpected ret value %Id.\n", ret);
 
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestLargeReturnValueDlgProc, 0);
-    todo_wine_if( sizeof(INT_PTR) > sizeof(INT) )
     ok(ret == (INT_PTR)0xdeadbeefdeadbeef, "Unexpected ret value %Ix\n", ret);
 }
 
