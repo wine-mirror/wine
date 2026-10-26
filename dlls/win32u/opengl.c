@@ -3691,6 +3691,7 @@ static void free_opengl_swapchain( struct opengl_swapchain *swapchain )
 D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 {
     struct opengl_swapchain *swapchain;
+    D3DKMT_HANDLE resources[3], global;
     const struct opengl_funcs *funcs;
     int format;
     SIZE size;
@@ -3712,7 +3713,13 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
     if (!(swapchain->drawable = get_window_unused_drawable( hwnd, format, TRUE ))) goto failed;
     size = swapchain->drawable->virtual_size;
 
-    if (d3dkmt_swapchain_create( toplevel, hwnd, size, &swapchain->local, &swapchain->global )) goto failed;
+    for (UINT i = 0; i < ARRAY_SIZE(resources); i++)
+    {
+        resources[i] = d3dkmt_create_resource( -1, &global );
+        if (!resources[i]) goto failed;
+    }
+
+    if (d3dkmt_swapchain_create( toplevel, hwnd, size, resources, &swapchain->local, &swapchain->global )) goto failed;
 
     if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) goto failed;
     list_add_tail( &win->opengl_swapchains, &swapchain->entry );

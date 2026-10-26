@@ -237,7 +237,8 @@ extern D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared );
 extern NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local );
 
-extern NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE *local, D3DKMT_HANDLE *global );
+extern NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE resources[3],
+                                         D3DKMT_HANDLE *local, D3DKMT_HANDLE *global );
 extern NTSTATUS d3dkmt_swapchain_destroy( D3DKMT_HANDLE local );
 
 extern NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, SIZE *size, D3DKMT_HANDLE *local );
