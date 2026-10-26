@@ -2345,7 +2345,23 @@ void WINAPI ClosePseudoConsole( HPCON handle )
  */
 HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
 {
-    FIXME( "%p (%u,%u) stub, faking success\n", handle, size.X, size.Y );
+    struct pseudo_console *pseudo_console = handle;
+    struct
+    {
+        USHORT id;
+        SHORT width;
+        SHORT height;
+    } signal = { 1, size.X, size.Y };
+    DWORD written;
+
+    TRACE( "%p (%u,%u)\n", handle, size.X, size.Y );
+
+    if (size.X <= 0 || size.Y <= 0) return E_INVALIDARG;
+    if (!pseudo_console || !pseudo_console->signal) return E_INVALIDARG;
+
+    if (!WriteFile( pseudo_console->signal, &signal, sizeof(signal), &written, NULL ))
+        return HRESULT_FROM_WIN32( GetLastError() );
+    if (written != sizeof(signal)) return E_FAIL;
     return S_OK;
 }
 

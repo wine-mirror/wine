@@ -13,5 +13,7 @@ for a in i686 x86_64; do
  WINEPREFIX="$P" WINEDEBUG=-all timeout 40s "$W" "$OUT/win11-api-probe-$a.exe" > "$OUT/wine-behavior-$a.txt"
  grep -q '^SUMMARY pass=5 fail=0' "$OUT/wine-behavior-$a.txt"
  echo "WINE_BEHAVIOR_PASS=$a"
+ "$a-w64-mingw32-gcc-posix" -O2 -Wall -Wextra -Werror -municode "$ROOT/ailinux/console/conpty-resize-probe.c" -o "$OUT/conpty-resize-$a.exe"
+ echo "CONPTY_PROBE_BUILT=$a"
  echo "WINE_PROBE_PASS=$a"
 done
