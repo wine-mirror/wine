@@ -1791,7 +1791,8 @@ static NTSTATUS dvd_read_structure( struct cdrom *cdrom, const DVD_READ_STRUCTUR
 #endif
 }
 
-static NTSTATUS scsi_pass_through( struct cdrom *cdrom, const SCSI_PASS_THROUGH *in_pkt, SCSI_PASS_THROUGH *out_pkt )
+static NTSTATUS scsi_pass_through( struct cdrom *cdrom, const SCSI_PASS_THROUGH *in_pkt,
+                                   SCSI_PASS_THROUGH *out_pkt, unsigned int *ret_size )
 {
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
@@ -1919,11 +1920,13 @@ static NTSTATUS scsi_pass_through( struct cdrom *cdrom, const SCSI_PASS_THROUGH 
     out_pkt->DataBufferOffset = in_pkt->DataBufferOffset;
     out_pkt->SenseInfoOffset = in_pkt->SenseInfoOffset;
     memmove( out_pkt->Cdb, in_pkt->Cdb, sizeof(in_pkt->Cdb) );
+    *ret_size = max( out_pkt->SenseInfoOffset + out_pkt->SenseInfoLength,
+                     out_pkt->DataBufferOffset + out_pkt->DataTransferLength );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS scsi_pass_through_32( struct cdrom *cdrom, const SCSI_PASS_THROUGH32 *in_pkt32,
-                                      SCSI_PASS_THROUGH32 *out_pkt32 )
+                                      SCSI_PASS_THROUGH32 *out_pkt32, unsigned int *ret_size )
 {
     SCSI_PASS_THROUGH *pkt;
     NTSTATUS status;
@@ -1974,7 +1977,7 @@ static NTSTATUS scsi_pass_through_32( struct cdrom *cdrom, const SCSI_PASS_THROU
                 (const char *)in_pkt32 + in_pkt32->DataBufferOffset,
                 in_pkt32->DataTransferLength );
 
-    if ((status = scsi_pass_through( cdrom, pkt, pkt )))
+    if ((status = scsi_pass_through( cdrom, pkt, pkt, ret_size )))
         goto done;
 
     out_pkt32->Length = sizeof(SCSI_PASS_THROUGH32);
@@ -1995,6 +1998,8 @@ static NTSTATUS scsi_pass_through_32( struct cdrom *cdrom, const SCSI_PASS_THROU
     if (pkt->DataIn == SCSI_IOCTL_DATA_IN)
         memcpy( (char *)out_pkt32 + out_pkt32->DataBufferOffset,
                 (const char *)pkt + pkt->DataBufferOffset, pkt->DataTransferLength );
+    *ret_size = max( out_pkt32->SenseInfoOffset + out_pkt32->SenseInfoLength,
+                     out_pkt32->DataBufferOffset + out_pkt32->DataTransferLength );
 
 done:
     free( pkt );
@@ -2566,8 +2571,7 @@ NTSTATUS cdrom_ioctl( void *args )
                     return STATUS_INVALID_PARAMETER;
                 if (params->output_size < sizeof(SCSI_PASS_THROUGH32))
                     return STATUS_BUFFER_TOO_SMALL;
-                params->ret_size = sizeof(SCSI_PASS_THROUGH32);
-                return scsi_pass_through_32( params->cdrom, params->input, params->output );
+                return scsi_pass_through_32( params->cdrom, params->input, params->output, &params->ret_size );
             }
             else
             {
@@ -2575,8 +2579,7 @@ NTSTATUS cdrom_ioctl( void *args )
                     return STATUS_INVALID_PARAMETER;
                 if (params->output_size < sizeof(SCSI_PASS_THROUGH))
                     return STATUS_BUFFER_TOO_SMALL;
-                params->ret_size = sizeof(SCSI_PASS_THROUGH);
-                return scsi_pass_through( params->cdrom, params->input, params->output );
+                return scsi_pass_through( params->cdrom, params->input, params->output, &params->ret_size );
             }
 
         case IOCTL_SCSI_PASS_THROUGH_DIRECT:
