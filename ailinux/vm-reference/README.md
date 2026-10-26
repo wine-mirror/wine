@@ -69,3 +69,11 @@ The VM has no configured QEMU guest agent. Host virsh cannot launch
 PowerShell inside the Windows guest. Guest-side scripts require an authorized
 Windows login and execution inside that session. No guest credentials,
 proprietary Windows DLLs, activation bypass or backdoor are included here.
+
+Guest result handoff: vm-control.sh push-probes now stages export and
+behavior test executables plus all guest PowerShell scripts in the bounded
+inbox. compare refuses to operate when actual Windows-generated JSON files
+are missing. The Windows-side Export-WindowsReference.ps1 validates four
+expected result files and copies them only to a pre-existing mounted outbox.
+Its syntax is checked, but execution inside Windows remains unverified.
+Windows VirtioFS setup and Windows Update inside the VM are still open.

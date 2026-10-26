@@ -65,14 +65,22 @@ case "$ACTION" in
     OUT="$HOME/workspace/.wine-build-state/windows-reference"
     install -m 0644 "$OUT/winapi-probe-i686.exe" "$INBOX/winapi-probe-i686.exe"
     install -m 0644 "$OUT/winapi-probe-x86_64.exe" "$INBOX/winapi-probe-x86_64.exe"
-    install -m 0644 "$ROOT/ailinux/vm-reference/Run-WindowsReference.ps1" "$INBOX/Run-WindowsReference.ps1"
-    sha256sum "$INBOX"/winapi-probe-*.exe
+    for arch in i686 x86_64; do
+      install -m 0644 "$OUT/win11-api-probe-$arch.exe" "$INBOX/win11-api-probe-$arch.exe"
+    done
+    for script in Run-WindowsReference.ps1 Test-WindowsReference.ps1 Update-WindowsReference.ps1 Export-WindowsReference.ps1; do
+      install -m 0644 "$ROOT/ailinux/vm-reference/$script" "$INBOX/$script"
+    done
+    sha256sum "$INBOX"/winapi-probe-*.exe "$INBOX"/win11-api-probe-*.exe
     ;;
   compare)
     OUT="$HOME/workspace/.wine-build-state/windows-reference"
     for arch in i686 x86_64; do
       test -f "$OUT/wine-winapi-$arch.json"
-      test -f "$OUTBOX/windows-winapi-$arch.json"
+      if [[ ! -s "$OUTBOX/windows-winapi-$arch.json" ]]; then
+        echo "Missing genuine Windows result: $OUTBOX/windows-winapi-$arch.json" >&2
+        exit 4
+      fi
       python3 -B "$ROOT/ailinux/vm-reference/compare-probes.py" \
         --windows "$OUTBOX/windows-winapi-$arch.json" \
         --wine "$OUT/wine-winapi-$arch.json" \
