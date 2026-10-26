@@ -52,3 +52,20 @@ On zombie-pc the graphical smoke test opened a real virt-viewer window named
 ailinux-win11-reference (1) on Xwayland DISPLAY=:1, while the VM remained
 running. Graphical login must already exist. This does not install Windows
 inside the guest automatically.
+
+## Updated conformance comparison (October 26, 2026)
+
+The same 32- and 64-bit native PE source sets now run two categories of tests:
+- winapi-probe-i686.exe and winapi-probe-x86_64.exe: JSON API export inventory.
+- win11-api-probe-i686.exe and win11-api-probe-x86_64.exe: five behavioral
+  probes for AppModel, WinRT HSTRING, Media Foundation, DPI and WinHTTP.
+
+Both behavioral executables passed 5/5 under own-built Wine 11.20.
+Genuine Windows 11 results have NOT yet been obtained. The comparison tool
+rejects mismatched x86/x64 data and reports API gaps, but an export match
+does not prove that a function behaves correctly.
+
+The VM has no configured QEMU guest agent. Host virsh cannot launch
+PowerShell inside the Windows guest. Guest-side scripts require an authorized
+Windows login and execution inside that session. No guest credentials,
+proprietary Windows DLLs, activation bypass or backdoor are included here.

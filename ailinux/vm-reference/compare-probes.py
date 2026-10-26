@@ -1,20 +1,64 @@
 #!/usr/bin/env python3
-"""Compare Win32 export availability on a Windows VM and local Wine."""
+"""Compare results from genuine Windows and Wine; never fabricate Windows evidence."""
 import argparse
 import json
 from pathlib import Path
-p=argparse.ArgumentParser()
-p.add_argument('--windows',required=True)
-p.add_argument('--wine',required=True)
-a=p.parse_args()
-w=json.loads(Path(a.windows).read_text())
-v=json.loads(Path(a.wine).read_text())
-if w.get('schema')!=1 or v.get('schema')!=1 or not isinstance(w.get('api'),dict) or not isinstance(v.get('api'),dict):
-    raise ValueError("Invalid probe format")
-rows=[{'export':k,'windows':w['api'].get(k),'wine':v['api'].get(k),
-       'matches':w['api'].get(k)==v['api'].get(k)}
-      for k in sorted(set(w['api'])|set(v['api']))]
-print(json.dumps({'schema':1,'arch_match':w.get('arch_bits')==v.get('arch_bits'),
-  'export_matches':sum(x['matches'] for x in rows),'total':len(rows),
-  'note':'Export presence is not behavioral compatibility.',
-  'results':rows},indent=2))
+
+REQUIRED = {"schema", "arch_bits", "api"}
+
+
+def load(path):
+    obj = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    if not isinstance(obj, dict) or not REQUIRED.issubset(obj):
+        raise ValueError("Missing schema, architecture or API fields")
+    if obj["schema"] != 1 or obj["arch_bits"] not in (32, 64):
+        raise ValueError("Unsupported probe schema or bitness")
+    apis = obj["api"]
+    if not isinstance(apis, dict) or not apis:
+        raise ValueError("Empty or non-object API table")
+    if not all(isinstance(k, str) and isinstance(v, bool) for k, v in apis.items()):
+        raise ValueError("API export fields must be string-to-boolean")
+    return obj
+
+
+def compare(win, wine):
+    if win["arch_bits"] != wine["arch_bits"]:
+        raise ValueError("Architecture mismatch; do not mix x86/x64 evidence")
+    keys = sorted(set(win["api"]) | set(wine["api"]))
+    results = []
+    missing = []
+    for key in keys:
+        expected = win["api"].get(key)
+        actual = wine["api"].get(key)
+        match = expected is not None and actual is not None and expected == actual
+        results.append({"export": key, "windows": expected, "wine": actual, "matches": match})
+        if expected is True and actual is not True:
+            missing.append(key)
+    return {
+        "schema": 1, "arch_bits": win["arch_bits"],
+        "windows_version": win.get("windows_version"),
+        "wine_compat_version": wine.get("windows_version"),
+        "export_matches": sum(item["matches"] for item in results),
+        "total": len(results), "wine_missing_windows_exports": missing,
+        "note": "Export presence only; behavioral equivalence remains unverified.",
+        "results": results,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--windows", required=True, help="Genuine Windows guest output")
+    parser.add_argument("--wine", required=True, help="Wine output of same architecture")
+    parser.add_argument("--output", help="Write JSON report to path; stdout by default")
+    args = parser.parse_args()
+    report = compare(load(args.windows), load(args.wine))
+    encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        Path(args.output).write_text(encoded, encoding="utf-8")
+        print(f"COMPARISON_WRITTEN={args.output}")
+    else:
+        print(encoded, end="")
+
+
+if __name__ == "__main__":
+    main()
