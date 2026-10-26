@@ -481,6 +481,8 @@ static struct strarray get_translator(void)
 
 static int try_link( struct strarray link_tool, const char *cflags )
 {
+    static const char *arm64ec_vars = "void *__os_arm64x_dispatch_ret = 0;\n"
+                                      "const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };\n";
     const char *in = make_temp_file( "try_link", ".c" );
     const char *out = make_temp_file( "try_link", ".out" );
     const char *err = make_temp_file( "try_link", ".err" );
@@ -488,7 +490,8 @@ static int try_link( struct strarray link_tool, const char *cflags )
     int sout = -1, serr = -1;
     int ret;
 
-    create_file( in, 0644, "int %s(void){return 1;}\n", is_pe ? "mainCRTStartup" : "main");
+    create_file( in, 0644, "int %s(void){return 1;}\n%s", is_pe ? "mainCRTStartup" : "main",
+                 target.cpu == CPU_ARM64EC ? arm64ec_vars : "" );
 
     strarray_addall( &link, link_tool );
     strarray_add( &link, "-o" );
