@@ -3938,3 +3938,28 @@ void free_opengl_swapchains( struct list *swapchains )
         free_opengl_swapchain( swapchain );
     }
 }
+
+BOOL invalidate_opengl_swapchains( HWND toplevel, HWND hwnd )
+{
+    struct list swapchains = LIST_INIT(swapchains);
+    struct opengl_swapchain *swapchain, *next;
+    WND *win;
+
+    if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        if (win == WND_OTHER_PROCESS) NtUserPostMessage( toplevel, WM_WINE_SWAPCHAIN_INVALIDATE, (WPARAM)hwnd, 0 );
+        return TRUE;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( swapchain, next, &win->opengl_swapchains, struct opengl_swapchain, entry )
+    {
+        struct opengl_drawable *drawable = swapchain->drawable;
+        if (hwnd != drawable->hwnd && !is_child( hwnd, drawable->hwnd )) continue;
+        list_remove( &swapchain->entry );
+        list_add_tail( &swapchains, &swapchain->entry );
+    }
+    release_win_ptr( win );
+
+    free_opengl_swapchains( &swapchains );
+    return TRUE;
+}

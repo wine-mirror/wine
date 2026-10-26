@@ -260,6 +260,7 @@ extern void cleanup_opengl_thread(void);
 extern D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd );
 extern BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index );
 extern BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global );
+extern BOOL invalidate_opengl_swapchains( HWND toplevel, HWND hwnd );
 extern void free_opengl_swapchains( struct list *swapchains );
 
 /* winstation.c */
