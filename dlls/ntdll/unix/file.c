@@ -115,6 +115,7 @@
 #include "winioctl.h"
 #include "winternl.h"
 #include "ddk/ntddk.h"
+#include "ntddscsi.h"
 #include "ddk/ntddser.h"
 #include "ddk/ntifs.h"
 #include "ddk/wdm.h"
@@ -5166,6 +5167,15 @@ struct async_irp
     ULONG               size;     /* size of buffer */
 };
 
+struct async_scsi_pass_through_direct
+{
+    struct async_fileio io;
+    const void         *orig_input;
+    void               *orig_output;
+    void               *buffer;
+    ULONG               size;
+};
+
 static struct async_fileio *fileio_freelist;
 
 void release_fileio( struct async_fileio *io )
@@ -5210,6 +5220,100 @@ static BOOL irp_completion( void *user, ULONG_PTR *info, unsigned int *status )
         }
         SERVER_END_REQ;
     }
+    release_fileio( &async->io );
+    return TRUE;
+}
+
+typedef struct _SCSI_PASS_THROUGH32
+{
+    USHORT Length;
+    UCHAR ScsiStatus;
+    UCHAR PathId;
+    UCHAR TargetId;
+    UCHAR Lun;
+    UCHAR CdbLength;
+    UCHAR SenseInfoLength;
+    UCHAR DataIn;
+    ULONG DataTransferLength;
+    ULONG TimeOutValue;
+    ULONG DataBufferOffset;
+    ULONG SenseInfoOffset;
+    UCHAR Cdb[16];
+} SCSI_PASS_THROUGH32;
+
+typedef struct _SCSI_PASS_THROUGH_DIRECT32
+{
+    USHORT Length;
+    UCHAR ScsiStatus;
+    UCHAR PathId;
+    UCHAR TargetId;
+    UCHAR Lun;
+    UCHAR CdbLength;
+    UCHAR SenseInfoLength;
+    UCHAR DataIn;
+    ULONG DataTransferLength;
+    ULONG TimeOutValue;
+    ULONG DataBuffer;
+    ULONG SenseInfoOffset;
+    UCHAR Cdb[16];
+} SCSI_PASS_THROUGH_DIRECT32;
+
+/* special callback for IOCTL_SCSI_PASS_THROUGH_DIRECT irp completion */
+static BOOL scsi_pass_through_direct_completion( void *user, ULONG_PTR *info, unsigned int *status )
+{
+    struct async_scsi_pass_through_direct *async = user;
+
+    if (*status == STATUS_ALERTED)
+    {
+        SERVER_START_REQ( get_async_result )
+        {
+            req->user_arg = wine_server_client_ptr( async );
+            wine_server_set_reply( req, async->buffer, async->size );
+            *status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+
+        if (!NT_ERROR(*status))
+        {
+            if (in_wow64_call())
+            {
+                const SCSI_PASS_THROUGH_DIRECT32 *orig_input = async->orig_input;
+                SCSI_PASS_THROUGH_DIRECT32 *orig_output = async->orig_output;
+                const SCSI_PASS_THROUGH32 *output = async->buffer;
+                ULONG sense_offset = orig_input->SenseInfoOffset;
+                ULONG data_buffer = orig_input->DataBuffer;
+
+                memcpy( orig_output, output, sizeof(*orig_output) );
+                orig_output->SenseInfoOffset = sense_offset;
+                memcpy( (char *)orig_output + sense_offset, output + 1, output->SenseInfoLength );
+                orig_output->DataBuffer = data_buffer;
+                memcpy( UlongToPtr( data_buffer ), (char *)output + output->DataBufferOffset, output->DataTransferLength );
+                if (orig_output->SenseInfoLength)
+                    *info = orig_output->SenseInfoOffset + orig_output->SenseInfoLength;
+                else
+                    *info = sizeof(*orig_output);
+            }
+            else
+            {
+                const SCSI_PASS_THROUGH_DIRECT *orig_input = async->orig_input;
+                SCSI_PASS_THROUGH_DIRECT *orig_output = async->orig_output;
+                const SCSI_PASS_THROUGH *output = async->buffer;
+                ULONG sense_offset = orig_input->SenseInfoOffset;
+                void *data_buffer = orig_input->DataBuffer;
+
+                memcpy( orig_output, output, sizeof(*orig_output) );
+                orig_output->SenseInfoOffset = sense_offset;
+                memcpy( (char *)orig_output + sense_offset, output + 1, output->SenseInfoLength );
+                orig_output->DataBuffer = data_buffer;
+                memcpy( data_buffer, (char *)output + output->DataBufferOffset, output->DataTransferLength );
+                if (orig_output->SenseInfoLength)
+                    *info = orig_output->SenseInfoOffset + orig_output->SenseInfoLength;
+                else
+                    *info = sizeof(*orig_output);
+            }
+        }
+    }
+
     release_fileio( &async->io );
     return TRUE;
 }
@@ -5425,6 +5529,90 @@ static unsigned int server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUT
     return status;
 }
 
+
+/* IOCTL_SCSI_PASS_THROUGH_DIRECT has a pointer in it, so we convert it to
+ * IOCTL_SCSI_PASS_THROUGH */
+static NTSTATUS ioctl_scsi_pass_through_direct( HANDLE handle, HANDLE event,
+                                                PIO_APC_ROUTINE apc, void *apc_context,
+                                                IO_STATUS_BLOCK *io,
+                                                const void *in_buffer, UINT in_size,
+                                                void *out_buffer, UINT out_size )
+{
+    struct async_scsi_pass_through_direct *async;
+    struct async_fileio *fileio;
+    unsigned int status;
+    HANDLE wait_handle;
+    ULONG options;
+
+    if (!(fileio = alloc_fileio( sizeof(*async), scsi_pass_through_direct_completion )))
+        return STATUS_NO_MEMORY;
+    async = CONTAINING_RECORD( fileio, struct async_scsi_pass_through_direct, io );
+    async->orig_input = in_buffer;
+    async->orig_output = out_buffer;
+
+    if (in_wow64_call())
+    {
+        const SCSI_PASS_THROUGH_DIRECT32 *in_direct = in_buffer;
+        SCSI_PASS_THROUGH32 *input;
+
+        async->size = sizeof(*input) + in_direct->DataTransferLength + in_direct->SenseInfoLength;
+        if (!(input = malloc( async->size )))
+        {
+            free( fileio );
+            return STATUS_NO_MEMORY;
+        }
+        async->buffer = input;
+
+        /* The structures are bitwise identical except that the DataBuffer
+         * member is a pointer instead of a ULONG_PTR. */
+        memcpy( input, in_direct, sizeof(*input) );
+        input->SenseInfoOffset = sizeof(*input);
+        memcpy( input + 1, (char *)in_direct + in_direct->SenseInfoOffset, in_direct->SenseInfoLength );
+        input->DataBufferOffset = sizeof(*input) + input->SenseInfoLength;
+        memcpy( (char *)input + input->DataBufferOffset, UlongToPtr( in_direct->DataBuffer ), in_direct->DataTransferLength );
+    }
+    else
+    {
+        const SCSI_PASS_THROUGH_DIRECT *in_direct = in_buffer;
+        SCSI_PASS_THROUGH *input;
+
+        async->size = sizeof(*input) + in_direct->DataTransferLength + in_direct->SenseInfoLength;
+        if (!(input = malloc( async->size )))
+        {
+            free( fileio );
+            return STATUS_NO_MEMORY;
+        }
+        async->buffer = input;
+
+        /* The structures are bitwise identical except that the DataBuffer
+         * member is a pointer instead of a ULONG_PTR. */
+        memcpy( input, in_direct, sizeof(*input) );
+        input->SenseInfoOffset = sizeof(*input);
+        memcpy( input + 1, (char *)in_direct + in_direct->SenseInfoOffset, in_direct->SenseInfoLength );
+        input->DataBufferOffset = sizeof(*input) + input->SenseInfoLength;
+        memcpy( (char *)input + input->DataBufferOffset, in_direct->DataBuffer, in_direct->DataTransferLength );
+    }
+
+    SERVER_START_REQ( ioctl )
+    {
+        req->code        = IOCTL_SCSI_PASS_THROUGH;
+        req->async       = server_async( handle, fileio, event, apc, apc_context, iosb_client_ptr(io) );
+        wine_server_add_data( req, async->buffer, async->size );
+        wine_server_set_reply( req, async->buffer, async->size );
+        status = wine_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        options     = reply->options;
+        if (wait_handle && status != STATUS_PENDING)
+            set_sync_iosb( io, status, wine_server_reply_size( reply ), options );
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_PENDING) free( async );
+
+    if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT) );
+    return status;
+}
+
 /* do an ioctl call through the server */
 static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PIO_APC_ROUTINE apc, PVOID apc_context,
@@ -5436,6 +5624,9 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     unsigned int status;
     HANDLE wait_handle;
     ULONG options;
+
+    if (code == IOCTL_SCSI_PASS_THROUGH_DIRECT)
+        return ioctl_scsi_pass_through_direct( handle, event, apc, apc_context, io, in_buffer, in_size, out_buffer, out_size );
 
     if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion )))
         return STATUS_NO_MEMORY;

@@ -1580,7 +1580,7 @@ static void test_scsi_pass_through_direct(HANDLE device)
 
     trace("size %lu, sense %lu+%u, data %lu\n",
             size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength, buf.packet.DataTransferLength);
-    todo_wine ok(size == buf.packet.SenseInfoOffset + buf.packet.SenseInfoLength, "unexpected size %lu\n", size);
+    ok(size == buf.packet.SenseInfoOffset + buf.packet.SenseInfoLength, "unexpected size %lu\n", size);
 
     ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
     ok(buf.packet.ScsiStatus == SCSISTAT_CHECK_CONDITION, "got ScsiStatus %d\n", buf.packet.ScsiStatus);
