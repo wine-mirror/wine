@@ -41,6 +41,8 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     if (!wcscmp( nameW, RuntimeClass_Windows_UI_Notifications_ToastNotificationManager ))
         return IActivationFactory_QueryInterface( toast_manager_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( nameW, RuntimeClass_Windows_UI_Notifications_ToastNotification ))
+        return IActivationFactory_QueryInterface( toast_notification_factory, &IID_IActivationFactory, (void **)factory );
 
     *factory = NULL;
     return CLASS_E_CLASSNOTAVAILABLE;

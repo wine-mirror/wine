@@ -405,7 +405,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
 
     WindowsCreateStringReference( class_name_notif, wcslen( class_name_notif ), &str_hdr, &str );
     hr = RoGetActivationFactory( str, &IID_IToastNotificationFactory, (void **)&notif_factory );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
         skip( "%s runtimeclass not registered\n", debugstr_w( class_name_notif ) );
@@ -415,6 +415,11 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     WindowsCreateStringReference( aumid, wcslen( aumid ), &str_hdr, &str );
     hr = IToastNotificationManagerStatics_CreateToastNotifierWithId( statics, str, &notifier );
     todo_wine ok(hr == S_OK, "got hr %#lx\n", hr );
+    if (FAILED(hr))
+    {
+        skip( "CreateToastNotifierWithId failed\n" );
+        goto done;
+    }
 
     todo_wine check_interface( notifier, &IID_IUnknown, TRUE );
     todo_wine check_interface( notifier, &IID_IInspectable, TRUE );
@@ -456,6 +461,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     IToastNotification_Release( notif );
     IToastNotifier_Release( notifier );
 
+done:
     IToastNotificationFactory_Release( notif_factory );
     IToastNotificationManagerStatics_Release( statics );
 }

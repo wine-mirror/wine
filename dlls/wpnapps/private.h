@@ -27,6 +27,7 @@
 #include <windows.ui.notifications.h>
 
 extern IActivationFactory *toast_manager_factory;
+extern IActivationFactory *toast_notification_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

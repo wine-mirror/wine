@@ -172,3 +172,120 @@ static struct toast_manager_statics toast_manager_statics =
 };
 
 IActivationFactory *toast_manager_factory = &toast_manager_statics.IActivationFactory_iface;
+
+struct toast_factory
+{
+    IActivationFactory IActivationFactory_iface;
+    IToastNotificationFactory IToastNotificationFactory_iface;
+    LONG ref;
+};
+
+static inline struct toast_factory *impl_toast_factory_from_IActivationFactory( IActivationFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct toast_factory, IActivationFactory_iface );
+}
+
+static HRESULT WINAPI toast_act_factory_QueryInterface( IActivationFactory *iface, REFIID iid, void **out )
+{
+    struct toast_factory *impl = impl_toast_factory_from_IActivationFactory( iface );
+
+    TRACE( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) || IsEqualGUID( iid, &IID_IInspectable ) || IsEqualGUID( iid, &IID_IActivationFactory ))
+    {
+        IActivationFactory_AddRef( (*out = &impl->IActivationFactory_iface) );
+        return S_OK;
+    }
+    if (IsEqualGUID( iid, &IID_IToastNotificationFactory ))
+    {
+        IToastNotificationFactory_AddRef( (*out = &impl->IToastNotificationFactory_iface) );
+        return S_OK;
+    }
+
+    *out = NULL;
+    FIXME( "%s not implemented, returning E_NOINTERFACE\n", debugstr_guid( iid ) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI toast_act_factory_AddRef( IActivationFactory *iface )
+{
+    struct toast_factory *impl = impl_toast_factory_from_IActivationFactory( iface );
+    TRACE( "(%p)\n", iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI toast_act_factory_Release( IActivationFactory *iface )
+{
+    struct toast_factory *impl = impl_toast_factory_from_IActivationFactory( iface );
+    TRACE( "(%p)\n", iface );
+    return InterlockedDecrement( &impl->ref );
+}
+
+static HRESULT WINAPI toast_act_factory_GetIids( IActivationFactory *iface, ULONG *iids_count, IID **iids )
+{
+    FIXME( "(%p, %p, %p): stub!\n", iface, iids_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_act_factory_GetRuntimeClassName( IActivationFactory *iface, HSTRING *name )
+{
+    FIXME( "(%p, %p): stub!\n", iface, name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_act_factory_GetTrustLevel( IActivationFactory *iface, TrustLevel *level )
+{
+    FIXME( "(%p, %p): stub!\n", iface, level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_act_factory_ActivateInstance( IActivationFactory *iface, IInspectable **out )
+{
+    FIXME( "(%p, %p): stub!\n", iface, out );
+    return E_NOTIMPL;
+}
+
+static const IActivationFactoryVtbl toast_act_factory_vtbl =
+{
+    /* IUnknown */
+    toast_act_factory_QueryInterface,
+    toast_act_factory_AddRef,
+    toast_act_factory_Release,
+    /* IInspectable */
+    toast_act_factory_GetIids,
+    toast_act_factory_GetRuntimeClassName,
+    toast_act_factory_GetTrustLevel,
+    /* IActivactionFactory */
+    toast_act_factory_ActivateInstance
+};
+
+DEFINE_IINSPECTABLE( toast_factory, IToastNotificationFactory, struct toast_factory, IActivationFactory_iface );
+
+static HRESULT WINAPI toast_factory_CreateToastNotification( IToastNotificationFactory *iface, IXmlDocument *content, IToastNotification **out )
+{
+    FIXME( "(%p, %p, %p): stub!\n", iface, content, out );
+    return E_NOTIMPL;
+}
+
+static const IToastNotificationFactoryVtbl toast_factory_vtbl =
+{
+    /* IUnknown */
+    toast_factory_QueryInterface,
+    toast_factory_AddRef,
+    toast_factory_Release,
+    /* IInspectable */
+    toast_factory_GetIids,
+    toast_factory_GetRuntimeClassName,
+    toast_factory_GetTrustLevel,
+    /* IToastNotificationFactory */
+    toast_factory_CreateToastNotification
+};
+
+static struct toast_factory toast_factory =
+{
+    { &toast_act_factory_vtbl },
+    { &toast_factory_vtbl },
+    1
+};
+
+IActivationFactory *toast_notification_factory = &toast_factory.IActivationFactory_iface;
