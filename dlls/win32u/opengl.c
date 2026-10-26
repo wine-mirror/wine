@@ -984,6 +984,11 @@ static NTSTATUS framebuffer_swapchain_acquire_image( struct opengl_drawable *dra
         }
 
         if ((status = d3dkmt_swapchain_create_remote( drawable->hwnd, &size, &surface->swapchain ))) return status;
+        if (memcmp( &size, &drawable->virtual_size, sizeof(size) ))
+        {
+            drawable->virtual_size = drawable->monitor_size = size;
+            opengl_drawable_flush( drawable, drawable->interval, GL_FLUSH_UPDATED );
+        }
     }
 }
 
