@@ -77,3 +77,18 @@ are missing. The Windows-side Export-WindowsReference.ps1 validates four
 expected result files and copies them only to a pre-existing mounted outbox.
 Its syntax is checked, but execution inside Windows remains unverified.
 Windows VirtioFS setup and Windows Update inside the VM are still open.
+
+## Restricted guest command bridge
+
+`guest-control.py` uses libvirt's `qemu-agent-command` and an explicit
+allowlist of read-only checks (`ping`, `guest-agent`, `build`, `users`). It
+never accepts arbitrary shell or PowerShell commands from CLI arguments,
+never reads local guest account passwords, and rejects failed guest process
+exit codes. It will not work until a guest agent is installed, running and
+the configured virtio-serial channel is active after VM restart.
+
+`Install-QemuGuestAgent.ps1` and `build-qga-media.sh` provide the verified
+VirtIO serial/QGA package media. They must be run inside an authorized
+Windows administrator session. The guest-agent installation itself has not
+been verified. Unit tests for the host bridge pass; current `ping` fails as
+expected because the running VM has no active agent channel.
