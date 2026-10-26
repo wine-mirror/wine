@@ -61,3 +61,22 @@ on CONIN$ by toggling ENABLE_ECHO_INPUT, verifying the new flags, and
 restoring the original mode before reading the input line. Both PE32 and
 PE32+ passed under the isolated Wine test build. Comparison on genuine
 Windows remains outstanding.
+
+## Console control and VT probes (October 26, 2026)
+
+The new conpty-control-probe.c compiles as x86 and x64 native PE and
+checks VT output escape sequences plus exploratory Ctrl+C and Ctrl+Break
+signal routing. VT output passed on the isolated Wine build in both
+architectures.
+
+Signal delivery is NOT yet compliant with our probe: Ctrl+C child exits
+zero but the expected child handler response is missing from ConPTY output.
+Ctrl+Break exits with status 1. The two signal cases are preserved as
+opt-in diagnostics; they are not treated as passing or enabled in default CI.
+To reproduce and capture failures:
+
+    AILINUX_CONPTY_DIAG_SIGNALS=1 ./ailinux/console/run-control-tests.sh
+
+This returns nonzero if unresolved. The normal command validates VT only.
+No genuine Windows measurements have been collected yet; compare against
+Windows before attributing all differences to Wine.
