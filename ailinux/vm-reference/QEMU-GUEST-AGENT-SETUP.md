@@ -47,3 +47,18 @@ It neither signs into Windows nor installs software behind the user's login.
 On October 26 the results were: package hashes valid; persistent channel
 present; live channel absent; guest ping unavailable. Therefore a normal
 Windows guest agent installation and a guest restart remain mandatory.
+
+## Windows-side one-command setup
+
+Sign in as the authorized local guest administrator and open an elevated
+Windows PowerShell window. Run the following from the guest:
+
+    $d = (Get-Volume -FileSystemLabel 'AILINUX_QGA').DriveLetter
+    & ($d + ':\Start-ReferenceGuestSetup.ps1') -InstallGuestAgent -Confirm:$false
+
+The wrapper only runs inside an elevated Windows login; it neither reveals
+credentials nor enables unattended sign-in. The approved installer checks
+official source SHA256 hashes. Without -InstallGuestAgent the wrapper is
+read-only. After a normal guest restart, use qga-preflight.py and
+guest-control.py ping from the Linux host. Success remains unverified until
+these checks pass.
