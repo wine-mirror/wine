@@ -80,3 +80,16 @@ To reproduce and capture failures:
 This returns nonzero if unresolved. The normal command validates VT only.
 No genuine Windows measurements have been collected yet; compare against
 Windows before attributing all differences to Wine.
+
+
+## October 26 Ctrl+C / Ctrl+Break follow-up
+
+Both x86 and x64 VT probes remain passing. Explicitly enabled signal
+diagnostics still fail on both architectures: Ctrl+C exits without the
+expected handler response, while Ctrl+Break returns a nonzero child exit.
+A controlled CREATE_NEW_PROCESS_GROUP experiment did not resolve either
+failure and was reverted. The signal probes remain opt-in and return a
+nonzero status, rather than claiming Windows conformance. Additional
+child-exit and signal-timeout diagnostics are recorded for investigation.
+An actual Windows reference result remains a prerequisite for changing
+the Wine signal-routing implementation.

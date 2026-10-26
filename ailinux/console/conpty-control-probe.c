@@ -93,12 +93,17 @@ static int run_child(const wchar_t *mode)
     {
         if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, 0))
         {
+            printf("CONPTY_BREAK_GENERATE_ERROR=%lu\n", (unsigned long)GetLastError());
             result = 19;
             goto unhook;
         }
     }
     if (WaitForSingleObject(signal_event, 8000) != WAIT_OBJECT_0)
     {
+        DWORD waited_error = GetLastError();
+        emit(conout, "AILINUX_CONPTY_SIGNAL_HANDLER_TIMEOUT\r\n");
+        printf("CONPTY_CHILD_SIGNAL_TIMEOUT event=%lu last_error=%lu\n",
+               (unsigned long)expected_signal, (unsigned long)waited_error);
         result = 20;
         goto unhook;
     }
@@ -218,7 +223,12 @@ int wmain(int argc, wchar_t **argv)
     }
     if (!GetExitCodeProcess(pi.hProcess, &exitcode)) goto cleanup;
     printf("CONPTY_CONTROL_CHILD_EXIT=%lu\n", (unsigned long)exitcode);
-    if (exitcode) goto cleanup;
+    if (exitcode)
+    {
+        printf("CONPTY_CONTROL_CHILD_FAILED mode=%ls exit=%lu\n",
+               mode, (unsigned long)exitcode);
+        goto cleanup;
+    }
     deadline = GetTickCount64() + 1600;
     while (GetTickCount64() < deadline)
     {
