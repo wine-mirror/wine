@@ -119,10 +119,12 @@ static HRESULT WINAPI toast_manager_statics_CreateToastNotifier( IToastNotificat
     return E_NOTIMPL;
 }
 
+static HRESULT create_toast_notifier( IToastNotifier ** );
+
 static HRESULT WINAPI toast_manager_statics_CreateToastNotifierWithId( IToastNotificationManagerStatics *iface, HSTRING app_id, IToastNotifier **out )
 {
-    FIXME( "(%p, %s, %p): stub!\n", iface, debugstr_hstring( app_id ), out );
-    return E_NOTIMPL;
+    FIXME( "(%p, %s, %p): semi-stub!\n", iface, debugstr_hstring( app_id ), out );
+    return create_toast_notifier( out );
 }
 
 static const char *debugstr_ToastTemplateType( ToastTemplateType type )
@@ -289,3 +291,135 @@ static struct toast_factory toast_factory =
 };
 
 IActivationFactory *toast_notification_factory = &toast_factory.IActivationFactory_iface;
+
+struct toast_notifier
+{
+    IToastNotifier IToastNotifier_iface;
+    LONG ref;
+};
+
+static inline struct toast_notifier *impl_from_IToastNotifier( IToastNotifier *iface )
+{
+    return CONTAINING_RECORD( iface, struct toast_notifier, IToastNotifier_iface );
+}
+
+static HRESULT WINAPI toast_notifier_QueryInterface( IToastNotifier *iface, REFIID iid, void **out )
+{
+    struct toast_notifier *impl = impl_from_IToastNotifier( iface );
+
+    TRACE( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) || IsEqualGUID( iid, &IID_IInspectable ) || IsEqualGUID( iid, &IID_IToastNotifier ))
+    {
+        IToastNotifier_AddRef( (*out = &impl->IToastNotifier_iface) );
+        return S_OK;
+    }
+
+    *out = NULL;
+    FIXME( "%s not implemented, returning E_NOINTERFACE\n", debugstr_guid( iid ) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI toast_notifier_AddRef( IToastNotifier *iface )
+{
+    struct toast_notifier *impl = impl_from_IToastNotifier( iface );
+    TRACE( "(%p)\n", iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI toast_notifier_Release( IToastNotifier *iface )
+{
+    struct toast_notifier *impl = impl_from_IToastNotifier( iface );
+    ULONG ref;
+
+    TRACE( "(%p)\n", iface );
+
+    ref = InterlockedDecrement( &impl->ref );
+    if (!ref) free( iface );
+    return ref;
+}
+
+static HRESULT WINAPI toast_notifier_GetIids( IToastNotifier *iface, ULONG *iids_count, IID **iids )
+{
+    FIXME( "(%p, %p, %p): stub!\n", iface, iids_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_GetRuntimeClassName( IToastNotifier *iface, HSTRING *out )
+{
+    FIXME( "(%p, %p): stub!\n", iface, out );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_GetTrustLevel( IToastNotifier *iface, TrustLevel *level )
+{
+    FIXME( "(%p, %p): stub!\n", iface, level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_Show( IToastNotifier *iface, IToastNotification *notification )
+{
+    FIXME( "(%p, %p): stub!\n", iface, notification );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_Hide( IToastNotifier *iface, IToastNotification *notification )
+{
+    FIXME( "(%p, %p): stub!\n", iface, notification );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_get_Setting( IToastNotifier *iface, NotificationSetting *setting )
+{
+    FIXME( "(%p, %p): stub!\n", iface, setting );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_AddToSchedule( IToastNotifier *iface, IScheduledToastNotification *scheduled )
+{
+    FIXME( "(%p, %p): stub!\n", iface, scheduled );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_RemoveFromSchedule( IToastNotifier *iface, IScheduledToastNotification *scheduled )
+{
+    FIXME( "(%p, %p): stub!\n", iface, scheduled );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notifier_GetScheduledToastNotifications( IToastNotifier *iface, IVectorView_ScheduledToastNotification **notifications )
+{
+    FIXME( "(%p, %p): stub!\n", iface, notifications );
+    return E_NOTIMPL;
+}
+
+static const IToastNotifierVtbl toast_notifier_vtbl =
+{
+    /* IUnknown */
+    toast_notifier_QueryInterface,
+    toast_notifier_AddRef,
+    toast_notifier_Release,
+    /* IInspectable */
+    toast_notifier_GetIids,
+    toast_notifier_GetRuntimeClassName,
+    toast_notifier_GetTrustLevel,
+    /* IToastNotifier */
+    toast_notifier_Show,
+    toast_notifier_Hide,
+    toast_notifier_get_Setting,
+    toast_notifier_AddToSchedule,
+    toast_notifier_RemoveFromSchedule,
+    toast_notifier_GetScheduledToastNotifications
+};
+
+static HRESULT create_toast_notifier( IToastNotifier **out )
+{
+    struct toast_notifier *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IToastNotifier_iface.lpVtbl = &toast_notifier_vtbl;
+    impl->ref = 1;
+    *out = &impl->IToastNotifier_iface;
+    return S_OK;
+}

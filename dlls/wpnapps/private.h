@@ -21,6 +21,7 @@
 
 #include <activation.h>
 
+#define WIDL_using_Windows_Foundation_Collections
 #define WIDL_using_Windows_Data_Xml_Dom
 #include <windows.data.xml.dom.h>
 #define WIDL_using_Windows_UI_Notifications

@@ -414,19 +414,20 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
 
     WindowsCreateStringReference( aumid, wcslen( aumid ), &str_hdr, &str );
     hr = IToastNotificationManagerStatics_CreateToastNotifierWithId( statics, str, &notifier );
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr );
-    if (FAILED(hr))
-    {
-        skip( "CreateToastNotifierWithId failed\n" );
-        goto done;
-    }
+    ok(hr == S_OK, "got hr %#lx\n", hr );
 
-    todo_wine check_interface( notifier, &IID_IUnknown, TRUE );
-    todo_wine check_interface( notifier, &IID_IInspectable, TRUE );
+    check_interface( notifier, &IID_IUnknown, TRUE );
+    check_interface( notifier, &IID_IInspectable, TRUE );
     check_interface( notifier, &IID_IAgileObject, FALSE );
 
     hr = IToastNotificationManagerStatics_GetTemplateContent( statics, ToastTemplateType_ToastText01, &notif_xml );
     todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    if (FAILED(hr))
+    {
+        skip( "GetTemplateContent failed\n" );
+        IToastNotifier_Release( notifier );
+        goto done;
+    }
 
     todo_wine check_interface( notif_xml, &IID_IUnknown, TRUE );
     todo_wine check_interface( notif_xml, &IID_IInspectable, TRUE );
