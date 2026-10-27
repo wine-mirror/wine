@@ -1938,7 +1938,7 @@ C_ASSERT( offsetof(struct add_clipboard_listener_request, window) == 12 );
 C_ASSERT( sizeof(struct add_clipboard_listener_request) == 16 );
 C_ASSERT( offsetof(struct remove_clipboard_listener_request, window) == 12 );
 C_ASSERT( sizeof(struct remove_clipboard_listener_request) == 16 );
-C_ASSERT( offsetof(struct create_token_request, token_id) == 12 );
+C_ASSERT( offsetof(struct create_token_request, auth_id) == 12 );
 C_ASSERT( offsetof(struct create_token_request, access) == 20 );
 C_ASSERT( offsetof(struct create_token_request, primary) == 24 );
 C_ASSERT( offsetof(struct create_token_request, impersonation_level) == 28 );

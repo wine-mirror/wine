@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
  *             NtCreateToken  (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                               TOKEN_TYPE type, LUID *token_id, LARGE_INTEGER *expire, TOKEN_USER *user,
+                               TOKEN_TYPE type, LUID *auth_id, LARGE_INTEGER *expire, TOKEN_USER *user,
                                TOKEN_GROUPS *groups, TOKEN_PRIVILEGES *privs, TOKEN_OWNER *owner,
                                TOKEN_PRIMARY_GROUP *group, TOKEN_DEFAULT_DACL *dacl, TOKEN_SOURCE *source)
 {
@@ -52,7 +52,7 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     SID *sid;
 
     TRACE( "(%p,0x%08x,%p,%d,%p,%p,%p,%p,%p,%p,%p,%p,%p)\n", handle, access, attr,
-            type, token_id, expire, user, groups, privs, owner, group, dacl, source );
+            type, auth_id, expire, user, groups, privs, owner, group, dacl, source );
 
     *handle = 0;
     if ((status = wine_server_alloc_object_attributes( attr, &objattr, &objattr_size ))) return status;
@@ -94,8 +94,8 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
 
     SERVER_START_REQ( create_token )
     {
-        req->token_id.low_part = token_id->LowPart;
-        req->token_id.high_part = token_id->HighPart;
+        req->auth_id.low_part = auth_id->LowPart;
+        req->auth_id.high_part = auth_id->HighPart;
         req->access = access;
         req->primary = (type == TokenPrimary);
         req->impersonation_level = level;
