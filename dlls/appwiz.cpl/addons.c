@@ -516,10 +516,6 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
             MessageBoxW(NULL, message, NULL, MB_ICONERROR);
     }
 
-    DeleteFileW(msi_file);
-    free(msi_file);
-    msi_file = NULL;
-
     EndDialog(install_dialog, 0);
     return S_OK;
 }
@@ -784,7 +780,16 @@ BOOL install_addon(addon_t addon_type)
         && install_from_default_dir() == INSTALL_NEXT
         && install_from_cache() == INSTALL_NEXT
         && (url = get_url()))
+    {
         DialogBoxW(hInst, addon->dialog_template, 0, installer_proc);
+
+        if (msi_file)
+        {
+            DeleteFileW(msi_file);
+            free(msi_file);
+            msi_file = NULL;
+        }
+    }
 
     free(url);
     url = NULL;
