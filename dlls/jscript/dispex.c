@@ -1091,7 +1091,7 @@ static int cc_map_compare(const void *k, const struct rb_entry *e)
     return (a > b) - (a < b);
 }
 
-HRESULT gc_run(script_ctx_t *ctx)
+HRESULT gc_run(struct thread_data *thread_data)
 {
     /* Save original refcounts in a linked list of chunks */
     struct chunk
@@ -1099,7 +1099,6 @@ HRESULT gc_run(script_ctx_t *ctx)
         struct chunk *next;
         LONG ref[1020];
     } *head, *chunk;
-    struct thread_data *thread_data = ctx->thread_data;
     struct cc_map_entry *cc_map_iter, *cc_map_iter2;
     dispex_prop_t *prop, *props_end;
     unsigned chunk_idx = 0;
@@ -2736,7 +2735,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
 
     /* FIXME: Use better heuristics to decide when to run the GC */
     if(GetTickCount() - ctx->thread_data->gc_last_tick > 30000)
-        gc_run(ctx);
+        gc_run(ctx->thread_data);
 
     TRACE("%p (%p)\n", dispex, prototype);
 
