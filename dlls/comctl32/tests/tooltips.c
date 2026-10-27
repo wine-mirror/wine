@@ -1249,15 +1249,12 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     /* Test adjusting an empty text rect */
     SetRectEmpty(&rect);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
-    todo_wine
     ok(!IsRectEmpty(&rect), "Got an empty rect.\n");
 
     /* Test adjusting a window rect */
     SetRect(&rect2, 0, 0, 100, 100);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok((100 - (rect2.right - rect2.left)) == (rect.right - rect.left)
        && (100 - (rect2.bottom - rect2.top)) == (rect.bottom - rect.top),
@@ -1266,9 +1263,7 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     /* Test adjusting a window rect with an empty rect  */
     SetRect(&rect, 0, 0, 0, 0);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
-    todo_wine
     ok(rect.right < rect.left && rect.bottom < rect.top,
        "Got an unexpected rect %s.\n", wine_dbgstr_rect(&rect));
 
@@ -1280,7 +1275,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, GetSystemMetrics(SM_XVIRTUALSCREEN) - 200, GetSystemMetrics(SM_YVIRTUALSCREEN) - 200,
             GetSystemMetrics(SM_XVIRTUALSCREEN) - 100, GetSystemMetrics(SM_YVIRTUALSCREEN) - 100);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok(!IntersectRect(&intersect_rect, &virtual_rect, &rect), "Got an unexpected rect %s.\n",
        wine_dbgstr_rect(&rect));
@@ -1290,7 +1284,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, GetSystemMetrics(SM_XVIRTUALSCREEN) - 200, GetSystemMetrics(SM_YVIRTUALSCREEN) - 200,
             GetSystemMetrics(SM_XVIRTUALSCREEN) - 100, GetSystemMetrics(SM_YVIRTUALSCREEN) - 100);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok(!IntersectRect(&intersect_rect, &virtual_rect, &rect), "Got an unexpected rect %s.\n",
        wine_dbgstr_rect(&rect));
@@ -1304,10 +1297,8 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, 0, 0, 100, 100);
     rect2 = rect;
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok(EqualRect(&rect, &rect2), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect),
        wine_dbgstr_rect(&rect2));
@@ -1320,7 +1311,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
 
     SetRectEmpty(&rect);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
 
     SetRect(&margin_rect, 100, 100, 100, 100);
@@ -1328,13 +1318,12 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
 
     SetRectEmpty(&rect2);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     if (is_v6)
+        todo_wine
         ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
            wine_dbgstr_rect(&rect));
     else
-        todo_wine
         ok(((rect2.right - rect2.left) - (rect.right - rect.left)) == 200
            && ((rect2.bottom - rect2.top) - (rect.bottom - rect.top)) == 200,
            "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect2));
@@ -1345,7 +1334,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     /* Test that comctl32 v5 uses the margins set to adjust the text rect but v6 doesn't */
     SetRect(&rect, 0, 0, 500, 500);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
 
     SetRect(&margin_rect, 100, 100, 100, 100);
@@ -1353,13 +1341,12 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
 
     SetRect(&rect2, 0, 0, 500, 500);
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     if (is_v6)
+        todo_wine
         ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
            wine_dbgstr_rect(&rect));
     else
-        todo_wine
         ok(((rect.right - rect.left) - (rect2.right - rect2.left)) == 200
            && ((rect.bottom - rect.top) - (rect2.bottom - rect2.top)) == 200,
            "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect2));
@@ -1375,12 +1362,9 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, 0, 0, 100, 100);
     rect2 = rect;
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
-    todo_wine
     ok((rect2.right - rect2.left) > (rect.right - rect.left)
        && (rect2.bottom - rect2.top) > (rect.bottom - rect.top),
        "Expected rect %s larger than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
@@ -1388,12 +1372,9 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, 0, 0, 100, 100);
     rect2 = rect;
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
-    todo_wine
     ok((rect2.right - rect2.left) < (rect.right - rect.left)
        && (rect2.bottom - rect2.top) < (rect.bottom - rect.top),
        "Expected rect %s smaller than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
@@ -1408,19 +1389,17 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, 0, 0, 100, 100);
     rect2 = rect;
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
 
     ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM)"A very long title ...............");
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     if (is_v6)
+        todo_wine
         ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
            wine_dbgstr_rect(&rect));
     else
-        todo_wine
         ok((rect2.right - rect2.left) > (rect.right - rect.left)
            && (rect2.bottom - rect2.top) > (rect.bottom - rect.top),
            "Expected rect %s larger than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
@@ -1432,7 +1411,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
 
     SetRect(&rect2, 0, 0, 100, 100);
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
        wine_dbgstr_rect(&rect));
@@ -1442,18 +1420,16 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
     SetRect(&rect, 0, 0, 500, 500);
     rect2 = rect;
     ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM)"A very long title ...............");
     ok(ret, "Got unexpected ret.\n");
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     if (is_v6)
+        todo_wine
         ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
            wine_dbgstr_rect(&rect));
     else
-        todo_wine
         ok((rect2.right - rect2.left) < (rect.right - rect.left)
            && (rect2.bottom - rect2.top) < (rect.bottom - rect.top),
            "Expected rect %s smaller than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
@@ -1465,7 +1441,6 @@ static void test_TTM_ADJUSTRECT(BOOL is_v6)
 
     SetRect(&rect2, 0, 0, 500, 500);
     ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
-    todo_wine
     ok(ret, "Got unexpected ret.\n");
     ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
        wine_dbgstr_rect(&rect));
