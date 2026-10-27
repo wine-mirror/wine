@@ -3484,11 +3484,11 @@ enum caret_state
     int            impersonation_level; /* impersonation level of the new token */
     abstime_t      expire;         /* expiration time */
     int            group_count;
-    int            primary_group;
     int            priv_count;
     /* VARARG(objattr,object_attributes);  */
     /* VARARG(user,sid); */
     /* VARARG(owner,sid); */
+    /* VARARG(primary_group,sid); */
     /* VARARG(groups,sid); */
     /* VARARG(privs,luid_attr); */
     /* VARARG(dacl,acl); */

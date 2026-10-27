@@ -8816,17 +8816,14 @@ static void test_NtCreateToken(void)
     primary_group.PrimaryGroup = (PSID)&system;
     status = NtCreateToken(&token, TOKEN_ALL_ACCESS, &attr, TokenPrimary, &statistics.AuthenticationId,
                            &expire, &user, &groups, &privileges, &owner, &primary_group, NULL, &source);
-    todo_wine
     ok(!status, "NtCreateToken failed, status %#lx.\n", status);
-    if (!status)
-    {
-        ret = GetTokenInformation(token, TokenPrimaryGroup, buffer, sizeof(buffer), &size);
-        ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
-        ok(EqualSid(((TOKEN_PRIMARY_GROUP *)buffer)->PrimaryGroup, (PSID)&system),
-           "Got unexpected primary group.\n");
 
-        CloseHandle(token);
-    }
+    ret = GetTokenInformation(token, TokenPrimaryGroup, buffer, sizeof(buffer), &size);
+    ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+    ok(EqualSid(((TOKEN_PRIMARY_GROUP *)buffer)->PrimaryGroup, (PSID)&system),
+       "Got unexpected primary group.\n");
+
+    CloseHandle(token);
 
     ret = AdjustTokenPrivileges(process_token, FALSE, previous_privileges, 0, NULL, NULL);
     ok(ret, "AdjustTokenPrivileges failed, error %lu.\n", GetLastError());

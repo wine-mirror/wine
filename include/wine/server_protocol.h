@@ -4831,7 +4831,6 @@ struct create_token_request
     int            impersonation_level;
     abstime_t      expire;
     int            group_count;
-    int            primary_group;
     int            priv_count;
 
 
@@ -4839,7 +4838,7 @@ struct create_token_request
 
 
 
-    char __pad_52[4];
+
 };
 struct create_token_reply
 {
@@ -7202,6 +7201,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 965
+#define SERVER_PROTOCOL_VERSION 966
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
