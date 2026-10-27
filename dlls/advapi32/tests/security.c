@@ -8731,6 +8731,109 @@ static void test_window_security(void)
     LocalFree(sd);
 }
 
+static void test_NtCreateToken(void)
+{
+    TOKEN_PRIVILEGES privileges, *previous_privileges;
+    unsigned char previous_privileges_buffer[512];
+    TOKEN_PRIMARY_GROUP primary_group;
+    HANDLE token, process_token;
+    TOKEN_STATISTICS statistics;
+    LARGE_INTEGER expire = {0};
+    TOKEN_SOURCE source = {0};
+    unsigned char buffer[256];
+    MAX_SID system, guests;
+    OBJECT_ATTRIBUTES attr;
+    TOKEN_USER user = {0};
+    LUID privilege_luid;
+    TOKEN_GROUPS groups;
+    TOKEN_OWNER owner;
+    NTSTATUS status;
+    DWORD size;
+    BOOL ret;
+
+    /* SeCreateTokenPrivilege needs to be added to the current user account via Local Security
+     * Policy (secpol.msc) for this test to run (Security Settings -> Local Policies -> User Rights
+     * Assignment -> Create a token object). A re-logon is necessary for it to take effect */
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &process_token);
+    ok(ret, "OpenProcessToken failed, error %lu.\n", GetLastError());
+    ret = LookupPrivilegeValueW(NULL, L"SeCreateTokenPrivilege", &privilege_luid);
+    ok(ret, "LookupPrivilegeValueW SeCreateTokenPrivilege failed, error %lu.\n", GetLastError());
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = privilege_luid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    previous_privileges = (TOKEN_PRIVILEGES *)previous_privileges_buffer;
+    ret = AdjustTokenPrivileges(process_token, FALSE, &privileges, sizeof(previous_privileges_buffer),
+                                previous_privileges, &size);
+    ok(ret, "AdjustTokenPrivileges SeCreateTokenPrivilege failed, error %lu.\n", GetLastError());
+    if (!winetest_platform_is_wine && GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+    {
+        win_skip("AdjustTokenPrivileges failed, missing SeCreateTokenPrivilege assignment?\n");
+        CloseHandle(process_token);
+        return;
+    }
+
+    ret = GetTokenInformation(process_token, TokenStatistics, &statistics, sizeof(statistics), &size);
+    ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+
+    /* Test that owner doesn't have to be in the user group */
+    size = sizeof(system);
+    ret = CreateWellKnownSid(WinLocalSystemSid, NULL, &system, &size);
+    ok(ret, "CreateWellKnownSid failed, error %lu.\n", GetLastError());
+    user.User.Sid = (PSID)&system;
+    owner.Owner = (PSID)&system;
+
+    size = sizeof(guests);
+    ret = CreateWellKnownSid(WinBuiltinGuestsSid, NULL, &guests, &size);
+    ok(ret, "CreateWellKnownSid failed, error %lu.\n", GetLastError());
+    groups.GroupCount = 1;
+    groups.Groups[0].Sid = (PSID)&guests;
+    groups.Groups[0].Attributes = SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_OWNER;
+    primary_group.PrimaryGroup = (PSID)&guests;
+
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = privilege_luid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED;
+
+    InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
+    status = NtCreateToken(&token, TOKEN_ALL_ACCESS, &attr, TokenPrimary, &statistics.AuthenticationId,
+                           &expire, &user, &groups, &privileges, &owner, &primary_group, NULL, &source);
+    ok(!status, "NtCreateToken failed, status %#lx.\n", status);
+
+    ret = GetTokenInformation(token, TokenOwner, buffer, sizeof(buffer), &size);
+    ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+    todo_wine
+    ok(EqualSid(((TOKEN_OWNER *)buffer)->Owner, (PSID)&system), "Got unexpected owner.\n");
+
+    /* Test default TokenElevationType */
+    ret = GetTokenInformation(token, TokenElevationType, buffer, sizeof(buffer), &size);
+    ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+    todo_wine
+    ok(*(TOKEN_ELEVATION_TYPE *)buffer == TokenElevationTypeFull,
+       "Got unexpected elevation type %d.\n", *(TOKEN_ELEVATION_TYPE *)buffer);
+
+    CloseHandle(token);
+
+    /* Test that the primary group doesn't have to be in the user group */
+    primary_group.PrimaryGroup = (PSID)&system;
+    status = NtCreateToken(&token, TOKEN_ALL_ACCESS, &attr, TokenPrimary, &statistics.AuthenticationId,
+                           &expire, &user, &groups, &privileges, &owner, &primary_group, NULL, &source);
+    todo_wine
+    ok(!status, "NtCreateToken failed, status %#lx.\n", status);
+    if (!status)
+    {
+        ret = GetTokenInformation(token, TokenPrimaryGroup, buffer, sizeof(buffer), &size);
+        ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+        ok(EqualSid(((TOKEN_PRIMARY_GROUP *)buffer)->PrimaryGroup, (PSID)&system),
+           "Got unexpected primary group.\n");
+
+        CloseHandle(token);
+    }
+
+    ret = AdjustTokenPrivileges(process_token, FALSE, previous_privileges, 0, NULL, NULL);
+    ok(ret, "AdjustTokenPrivileges failed, error %lu.\n", GetLastError());
+    CloseHandle(process_token);
+}
+
 START_TEST(security)
 {
     init();
@@ -8803,6 +8906,7 @@ START_TEST(security)
     test_group_as_file_owner();
     test_IsValidSecurityDescriptor();
     test_window_security();
+    test_NtCreateToken();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
