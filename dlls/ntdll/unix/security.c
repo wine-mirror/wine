@@ -123,6 +123,9 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
         sid = user->User.Sid;
         wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
 
+        sid = owner->Owner;
+        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
+
         req->group_count = groups->GroupCount;
         wine_server_add_data( req, groups_info, groups_size );
 

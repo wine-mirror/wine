@@ -8801,7 +8801,6 @@ static void test_NtCreateToken(void)
 
     ret = GetTokenInformation(token, TokenOwner, buffer, sizeof(buffer), &size);
     ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
-    todo_wine
     ok(EqualSid(((TOKEN_OWNER *)buffer)->Owner, (PSID)&system), "Got unexpected owner.\n");
 
     /* Test default TokenElevationType */

@@ -107,7 +107,7 @@ struct token
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     struct sid    *user;            /* SID of user this token represents */
-    struct sid    *owner;           /* SID of owner (points to user or one of groups) */
+    struct sid    *owner;           /* SID of owner */
     struct sid    *primary_group;   /* SID of user's primary group (points to one of groups) */
     unsigned int   primary;         /* is this a primary or impersonation token? */
     unsigned int   session_id;      /* token session id */
@@ -433,6 +433,7 @@ static void token_destroy( struct object *obj )
     token = (struct token *)obj;
 
     free( token->user );
+    free( token->owner );
 
     LIST_FOR_EACH_SAFE( cursor, cursor_next, &token->privileges )
     {
@@ -459,10 +460,11 @@ static void token_destroy( struct object *obj )
  *   allocated.
  */
 static struct token *create_token( unsigned int primary, unsigned int session_id, const struct sid *user,
-                                   const struct sid_attrs *groups, unsigned int group_count,
-                                   const struct luid_attr *privs, unsigned int priv_count,
-                                   const struct acl *default_dacl, const struct luid *modified_id,
-                                   unsigned int primary_group, int impersonation_level, int elevation )
+                                   const struct sid *owner, const struct sid_attrs *groups,
+                                   unsigned int group_count, const struct luid_attr *privs,
+                                   unsigned int priv_count, const struct acl *default_dacl,
+                                   const struct luid *modified_id, unsigned int primary_group,
+                                   int impersonation_level, int elevation )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -496,6 +498,14 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
             return NULL;
         }
 
+        /* copy owner */
+        token->owner = memdup( owner, sid_len( owner ));
+        if (!token->owner)
+        {
+            release_object( token );
+            return NULL;
+        }
+
         /* copy groups */
         for (i = 0; i < group_count; i++)
         {
@@ -512,10 +522,7 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
             list_add_tail( &token->groups, &group->entry );
 
             if (primary_group == i)
-            {
-                token->owner = &group->sid;
                 token->primary_group = &group->sid;
-            }
         }
 
         /* copy privileges */
@@ -587,7 +594,7 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
         return NULL;
     }
 
-    token = create_token( primary, src_token->session_id, src_token->user, NULL, 0,
+    token = create_token( primary, src_token->session_id, src_token->user, src_token->owner, NULL, 0,
                           NULL, 0, src_token->default_dacl, modified_id,
                           0, impersonation_level, src_token->elevation );
     if (!token) return token;
@@ -611,10 +618,7 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
         }
         list_add_tail( &token->groups, &newgroup->entry );
         if (src_token->primary_group == &group->sid)
-        {
-            token->owner = &newgroup->sid;
             token->primary_group = &newgroup->sid;
-        }
     }
     assert( token->primary_group );
 
@@ -780,9 +784,9 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
         { &logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
     };
 
-    token = create_token( primary, session_id, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
-                          admin_privs, ARRAY_SIZE( admin_privs ), default_dacl,
-                          NULL, 4 /* domain_users */, impersonation_level, elevation );
+    token = create_token( primary, session_id, user_sid, &domain_users_sid, admin_groups,
+                          ARRAY_SIZE( admin_groups ), admin_privs, ARRAY_SIZE( admin_privs ),
+                          default_dacl, NULL, 4 /* domain_users */, impersonation_level, elevation );
     /* we really need a primary group */
     assert( token->primary_group );
 
@@ -1113,6 +1117,7 @@ DECL_HANDLER(create_token)
     struct token *token;
     struct object_params params;
     struct sid *user;
+    struct sid *owner;
     struct sid_attrs *groups;
     struct luid_attr *privs;
     struct acl *dacl = NULL;
@@ -1134,6 +1139,16 @@ DECL_HANDLER(create_token)
     }
 
     data_size -= sid_len( user );
+
+    owner = (struct sid *)((char *)user + sid_len( user ));
+    if (!sid_valid_size( owner, data_size ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    data_size -= sid_len( owner );
+
     groups_size = req->group_count * sizeof( attrs[0] );
 
     if (data_size < groups_size)
@@ -1151,7 +1166,7 @@ DECL_HANDLER(create_token)
     groups = mem_alloc( req->group_count * sizeof( groups[0] ) );
     if (!groups) return;
 
-    attrs = (unsigned int *)((char *)user + sid_len( user ));
+    attrs = (unsigned int *)((char *)owner + sid_len( owner ));
     sid = (struct sid *)&attrs[req->group_count];
 
     for (i = 0; i < req->group_count; i++)
@@ -1195,7 +1210,7 @@ DECL_HANDLER(create_token)
     else
         dacl = default_dacl = create_default_dacl( &domain_users_sid );
 
-    token = create_token( req->primary, default_session_id, user, groups, req->group_count,
+    token = create_token( req->primary, default_session_id, user, owner, groups, req->group_count,
                           privs, req->priv_count, dacl, NULL, req->primary_group, req->impersonation_level, 0 );
     if (token)
     {
