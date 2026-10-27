@@ -91,7 +91,14 @@ static void Enumerator_destructor(jsdisp_t *dispex)
 
 static HRESULT Enumerator_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
 {
-    return gc_process_linked_val(gc_ctx, op, &enumerator_from_jsdisp(dispex)->item);
+    EnumeratorInstance *This = enumerator_from_jsdisp(dispex);
+    HRESULT hres;
+
+    hres = gc_process_linked_raw_obj(gc_ctx, op, (IUnknown**)&This->enumvar);
+    if(FAILED(hres))
+        return hres;
+
+    return gc_process_linked_val(gc_ctx, op, &This->item);
 }
 
 static HRESULT Enumerator_atEnd(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

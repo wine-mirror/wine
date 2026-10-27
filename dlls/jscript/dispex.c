@@ -1375,6 +1375,23 @@ HRESULT gc_process_linked_val(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsv
     return unmark_edge(gc_ctx, get_object(*link));
 }
 
+HRESULT gc_process_linked_raw_obj(struct gc_ctx *gc_ctx, enum gc_traverse_op op, IUnknown **raw_obj_ref)
+{
+    if(!*raw_obj_ref)
+        return S_OK;
+
+    if(op == GC_TRAVERSE_UNLINK) {
+        IUnknown *raw_obj = *raw_obj_ref;
+        *raw_obj_ref = NULL;
+        IUnknown_Release(raw_obj);
+        return S_OK;
+    }
+
+    if(op == GC_TRAVERSE_SPECULATIVELY)
+        return cc_traverse_speculative_note_edge(gc_ctx, *raw_obj_ref);
+    return cc_traverse_unmark_note_edge(gc_ctx, *raw_obj_ref);
+}
+
 HRESULT host_dispatch_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, IWineJSDispatchHost *host_disp)
 {
     if(op == GC_TRAVERSE_UNLINK) {
