@@ -24,6 +24,7 @@
 #include "widltypes.h"
 
 int parser_parse(void);
+void parser_reset(void);
 
 extern void parser_warning( const struct location *where, const char *message );
 extern void parser_error( const struct location *where, const char *message );

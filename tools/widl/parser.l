@@ -567,6 +567,7 @@ void close_all_inputs(void)
 {
     while (!list_empty( &import_stack )) pop_import();
     if (yyin) fclose( yyin );
+    list_init( &imports );
 }
 
 static void reset_location( struct location *where, const char *input_name )

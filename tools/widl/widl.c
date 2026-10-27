@@ -851,15 +851,16 @@ int main(int argc,char *argv[])
   }
   else
   {
-    init_types();
     STRARRAY_FOR_EACH( file, &files )
     {
+      init_types();
       input_name = xstrdup( file );
       idl_name = get_basename( input_name );
       parser_in = open_input_file( input_name );
       ret = parser_parse();
       close_all_inputs();
       if (ret) break;
+      parser_reset();
     }
   }
   if (ret) exit(1);
