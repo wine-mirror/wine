@@ -1784,7 +1784,7 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
         {
             if (mem_area_state( area ) != AREA_RESERVED) continue;
             start = ROUND_ADDR( (char *)mem_area_base( area ) + align_mask, align_mask );
-            if ((char *)end - (char *)start < size) continue;
+            if (start >= end || (char *)end - (char *)start < size) continue;
             ptr = ROUND_ADDR( (char *)end - size, align_mask );
             break;
         }
@@ -1797,7 +1797,7 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
             if (mem_area_state( area ) != AREA_RESERVED) continue;
             start = ROUND_ADDR( (char *)start + align_mask, align_mask );
             end = min( limit_high, mem_area_end( area ));
-            if ((char *)end - (char *)start < size) continue;
+            if (start >= end || (char *)end - (char *)start < size) continue;
             ptr = start;
             break;
         }
