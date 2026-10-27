@@ -1,73 +1,29 @@
 # msvcrtd.dll - MS VC++ Run Time Library
 
 @ cdecl -norelay $I10_OUTPUT(double long long ptr) I10_OUTPUT
-@ cdecl -arch=arm ??0__non_rtti_object@@QAA@ABV0@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) __non_rtti_object_copy_ctor
-@ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@AEBV0@@Z(ptr ptr) __non_rtti_object_copy_ctor
-@ cdecl -arch=arm ??0__non_rtti_object@@QAA@PBD@Z(ptr ptr) __non_rtti_object_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) __non_rtti_object_ctor
-@ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@PEBD@Z(ptr ptr) __non_rtti_object_ctor
-@ cdecl -arch=arm ??0bad_cast@@QAA@ABQBD@Z(ptr ptr) bad_cast_ctor
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
-@ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBQEBD@Z(ptr ptr) bad_cast_ctor
-@ cdecl -arch=win64 ??0bad_cast@@AEAA@PEBQEBD@Z(ptr ptr) bad_cast_ctor
-@ cdecl -arch=arm ??0bad_cast@@QAA@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
-@ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBV0@@Z(ptr ptr) bad_cast_copy_ctor
-@ cdecl -arch=arm ??0bad_typeid@@QAA@ABV0@@Z(ptr ptr) bad_typeid_copy_ctor
 @ thiscall -arch=i386 ??0bad_typeid@@QAE@ABV0@@Z(ptr ptr) bad_typeid_copy_ctor
-@ cdecl -arch=win64 ??0bad_typeid@@QEAA@AEBV0@@Z(ptr ptr) bad_typeid_copy_ctor
-@ cdecl -arch=arm ??0bad_typeid@@QAA@PBD@Z(ptr str) bad_typeid_ctor
 @ thiscall -arch=i386 ??0bad_typeid@@QAE@PBD@Z(ptr str) bad_typeid_ctor
-@ cdecl -arch=win64 ??0bad_typeid@@QEAA@PEBD@Z(ptr str) bad_typeid_ctor
-@ cdecl -arch=arm ??0exception@@QAA@ABQBD@Z(ptr ptr) exception_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@ABQBD@Z(ptr ptr) exception_ctor
-@ cdecl -arch=win64 ??0exception@@QEAA@AEBQEBD@Z(ptr ptr) exception_ctor
-@ cdecl -arch=arm ??0exception@@QAA@ABV0@@Z(ptr ptr) exception_copy_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@ABV0@@Z(ptr ptr) exception_copy_ctor
-@ cdecl -arch=win64 ??0exception@@QEAA@AEBV0@@Z(ptr ptr) exception_copy_ctor
-@ cdecl -arch=arm ??0exception@@QAA@XZ(ptr) exception_default_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@XZ(ptr) exception_default_ctor
-@ cdecl -arch=win64 ??0exception@@QEAA@XZ(ptr) exception_default_ctor
-@ cdecl -arch=arm ??1__non_rtti_object@@UAA@XZ(ptr) __non_rtti_object_dtor
 @ thiscall -arch=i386 ??1__non_rtti_object@@UAE@XZ(ptr) __non_rtti_object_dtor
-@ cdecl -arch=win64 ??1__non_rtti_object@@UEAA@XZ(ptr) __non_rtti_object_dtor
-@ cdecl -arch=arm ??1bad_cast@@UAA@XZ(ptr) bad_cast_dtor
 @ thiscall -arch=i386 ??1bad_cast@@UAE@XZ(ptr) bad_cast_dtor
-@ cdecl -arch=win64 ??1bad_cast@@UEAA@XZ(ptr) bad_cast_dtor
-@ cdecl -arch=arm ??1bad_typeid@@UAA@XZ(ptr) bad_typeid_dtor
 @ thiscall -arch=i386 ??1bad_typeid@@UAE@XZ(ptr) bad_typeid_dtor
-@ cdecl -arch=win64 ??1bad_typeid@@UEAA@XZ(ptr) bad_typeid_dtor
-@ cdecl -arch=arm ??1exception@@UAA@XZ(ptr) exception_dtor
 @ thiscall -arch=i386 ??1exception@@UAE@XZ(ptr) exception_dtor
-@ cdecl -arch=win64 ??1exception@@UEAA@XZ(ptr) exception_dtor
-@ cdecl -arch=arm ??1type_info@@UAA@XZ(ptr) type_info_dtor
 @ thiscall -arch=i386 ??1type_info@@UAE@XZ(ptr) type_info_dtor
-@ cdecl -arch=win64 ??1type_info@@UEAA@XZ(ptr) type_info_dtor
 @ cdecl -arch=win32 ??2@YAPAXI@Z(long) operator_new
-@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) operator_new
 @ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) operator_new_dbg
-@ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) operator_new_dbg
 @ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
-@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) operator_delete
-@ cdecl -arch=arm ??4__non_rtti_object@@QAAAAV0@ABV0@@Z(ptr ptr) __non_rtti_object_opequals
 @ thiscall -arch=i386 ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr ptr) __non_rtti_object_opequals
-@ cdecl -arch=win64 ??4__non_rtti_object@@QEAAAEAV0@AEBV0@@Z(ptr ptr) __non_rtti_object_opequals
-@ cdecl -arch=arm ??4bad_cast@@QAAAAV0@ABV0@@Z(ptr ptr) bad_cast_opequals
 @ thiscall -arch=i386 ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr ptr) bad_cast_opequals
-@ cdecl -arch=win64 ??4bad_cast@@QEAAAEAV0@AEBV0@@Z(ptr ptr) bad_cast_opequals
-@ cdecl -arch=arm ??4bad_typeid@@QAAAAV0@ABV0@@Z(ptr ptr) bad_typeid_opequals
 @ thiscall -arch=i386 ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr ptr) bad_typeid_opequals
-@ cdecl -arch=win64 ??4bad_typeid@@QEAAAEAV0@AEBV0@@Z(ptr ptr) bad_typeid_opequals
-@ cdecl -arch=arm ??4exception@@QAAAAV0@ABV0@@Z(ptr ptr) exception_opequals
 @ thiscall -arch=i386 ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) exception_opequals
-@ cdecl -arch=win64 ??4exception@@QEAAAEAV0@AEBV0@@Z(ptr ptr) exception_opequals
-@ cdecl -arch=arm ??8type_info@@QBAHABV0@@Z(ptr ptr) type_info_opequals_equals
 @ thiscall -arch=i386 ??8type_info@@QBEHABV0@@Z(ptr ptr) type_info_opequals_equals
-@ cdecl -arch=win64 ??8type_info@@QEBAHAEBV0@@Z(ptr ptr) type_info_opequals_equals
-@ cdecl -arch=arm ??9type_info@@QBAHABV0@@Z(ptr ptr) type_info_opnot_equals
 @ thiscall -arch=i386 ??9type_info@@QBEHABV0@@Z(ptr ptr) type_info_opnot_equals
-@ cdecl -arch=win64 ??9type_info@@QEBAHAEBV0@@Z(ptr ptr) type_info_opnot_equals
 @ extern ??_7__non_rtti_object@@6B@ __non_rtti_object_vtable
 @ extern ??_7bad_cast@@6B@ bad_cast_vtable
 @ extern ??_7bad_typeid@@6B@ bad_typeid_vtable
@@ -81,30 +37,19 @@
 @ thiscall -arch=i386 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_scalar_dtor
 @ thiscall -arch=i386 ??_Gexception@@UAEPAXI@Z(ptr long) exception_scalar_dtor
 @ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() _query_new_handler
-@ cdecl -arch=win64 ?_query_new_handler@@YAP6AH_K@ZXZ() _query_new_handler
 @ cdecl ?_query_new_mode@@YAHXZ() _query_new_mode
 @ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
-@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) _set_new_handler
 @ cdecl ?_set_new_mode@@YAHH@Z(long) _set_new_mode
 @ cdecl -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
-@ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
-@ cdecl -arch=arm ?before@type_info@@QBAHABV1@@Z(ptr ptr) type_info_before
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) type_info_before
-@ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) type_info_before
-@ cdecl -arch=arm ?name@type_info@@QBAPBDXZ(ptr) type_info_name
 @ thiscall -arch=i386 ?name@type_info@@QBEPBDXZ(ptr) type_info_name
-@ cdecl -arch=win64 ?name@type_info@@QEBAPEBDXZ(ptr) type_info_name
-@ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) type_info_raw_name
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) type_info_raw_name
-@ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) type_info_raw_name
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) set_terminate
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) set_unexpected
 @ cdecl ?terminate@@YAXXZ() terminate
 @ cdecl ?unexpected@@YAXXZ() unexpected
-@ cdecl -arch=arm ?what@exception@@UBAPBDXZ(ptr) exception_what
 @ thiscall -arch=i386 ?what@exception@@UBEPBDXZ(ptr) exception_what
-@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) exception_what
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
 @ cdecl -arch=i386 _CIatan()
@@ -327,15 +272,11 @@
 @ cdecl _free_dbg(ptr) free
 @ cdecl _fsopen(str str long)
 @ cdecl -arch=win32 _fstat(long ptr) _fstat32
-@ cdecl -arch=win64 _fstat(long ptr) _fstat64i32
 @ cdecl -arch=win32 _fstati64(long ptr) _fstat32i64
-@ cdecl -arch=win64 _fstati64(long ptr) _fstat64
 @ cdecl -arch=win32 _ftime(ptr) _ftime32
-@ cdecl -arch=win64 _ftime(ptr) _ftime64
 @ cdecl -arch=i386 -ret64 _ftol()
 @ cdecl _fullpath(ptr str long)
 @ cdecl -arch=win32 _futime(long ptr) _futime32
-@ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
 @ cdecl _get_sbh_threshold()
@@ -408,7 +349,6 @@
 @ cdecl _kbhit()
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
-@ cdecl -arch=win64 _local_unwind(ptr ptr)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
 @ cdecl _lock(long)
 @ cdecl _locking(long long long)
@@ -540,9 +480,7 @@
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl -arch=win32 _stat(str ptr) _stat32
-@ cdecl -arch=win64 _stat(str ptr) _stat64i32
 @ cdecl -arch=win32 _stati64(str ptr) _stat32i64
-@ cdecl -arch=win64 _stati64(str ptr) _stat64
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _strdate(ptr)
@@ -580,7 +518,6 @@
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
 @ cdecl -arch=win32 _utime(str ptr) _utime32
-@ cdecl -arch=win64 _utime(str ptr) _utime64
 @ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _waccess(wstr long)
@@ -601,7 +538,6 @@
 @ cdecl _wcsset(wstr long)
 @ cdecl _wcsupr(wstr)
 @ cdecl -arch=win32 _wctime(ptr) _wctime32
-@ cdecl -arch=win64 _wctime(ptr) _wctime64
 @ extern _wenviron MSVCRT__wenviron
 @ varargs _wexecl(wstr wstr)
 @ varargs _wexecle(wstr wstr)
@@ -651,9 +587,7 @@
 @ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr)
 @ cdecl -arch=win32 _wstat(wstr ptr) _wstat32
-@ cdecl -arch=win64 _wstat(wstr ptr) _wstat64i32
 @ cdecl -arch=win32 _wstati64(wstr ptr) _wstat32i64
-@ cdecl -arch=win64 _wstati64(wstr ptr) _wstat64
 @ cdecl _wstrdate(ptr)
 @ cdecl _wstrtime(ptr)
 @ cdecl _wsystem(wstr)
@@ -664,7 +598,6 @@
 @ cdecl _wtol(wstr)
 @ cdecl _wunlink(wstr)
 @ cdecl -arch=win32 _wutime(wstr ptr) _wutime32
-@ cdecl -arch=win64 _wutime(wstr ptr) _wutime64
 @ cdecl _y0(double)
 @ cdecl _y1(double)
 @ cdecl _yn(long double)
@@ -687,9 +620,7 @@
 @ cdecl cos(double)
 @ cdecl cosh(double)
 @ cdecl -arch=win32 ctime(ptr) _ctime32
-@ cdecl -arch=win64 ctime(ptr) _ctime64
 @ cdecl -arch=win32 difftime(long long) _difftime32
-@ cdecl -arch=win64 difftime(long long) _difftime64
 @ cdecl -ret64 div(long long)
 @ cdecl exit(long)
 @ cdecl exp(double)
@@ -729,7 +660,6 @@
 @ cdecl getwc(ptr)
 @ cdecl getwchar()
 @ cdecl -arch=win32 gmtime(ptr) _gmtime32
-@ cdecl -arch=win64 gmtime(ptr) _gmtime64
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)
@@ -761,7 +691,6 @@
 @ cdecl -ret64 ldiv(long long)
 @ cdecl localeconv()
 @ cdecl -arch=win32 localtime(ptr) _localtime32
-@ cdecl -arch=win64 localtime(ptr) _localtime64
 @ cdecl log(double)
 @ cdecl log10(double)
 @ cdecl longjmp(ptr long)
@@ -775,7 +704,6 @@
 @ cdecl memmove(ptr ptr long)
 @ cdecl memset(ptr long long)
 @ cdecl -arch=win32 mktime(ptr) _mktime32
-@ cdecl -arch=win64 mktime(ptr) _mktime64
 @ cdecl modf(double ptr)
 @ cdecl perror(str)
 @ cdecl pow(double double)
@@ -830,7 +758,6 @@
 @ cdecl tan(double)
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=win32 time(ptr) _time32
-@ cdecl -arch=win64 time(ptr) _time64
 @ cdecl tmpfile()
 @ cdecl tmpnam(ptr)
 @ cdecl tolower(long)

@@ -1,11 +1,8 @@
 # Old C runtime library. All functions provided by msvcrt
 
 @ cdecl -arch=win32 ??2@YAPAXI@Z(long) operator_new
-@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) operator_new
 @ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
-@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) operator_delete
 @ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
-@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) _set_new_handler
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
 @ cdecl -arch=i386 _CIatan()
@@ -114,13 +111,10 @@
 @ cdecl _fputwchar(long)
 @ cdecl _fsopen(str str long)
 @ cdecl -arch=win32 _fstat(long ptr) _fstat32
-@ cdecl -arch=win64 _fstat(long ptr) _fstat64i32
 @ cdecl -arch=win32 _ftime(ptr) _ftime32
-@ cdecl -arch=win64 _ftime(ptr) _ftime64
 @ cdecl -arch=i386 -ret64 _ftol()
 @ cdecl _fullpath(ptr str long)
 @ cdecl -arch=win32 _futime(long ptr) _futime32
-@ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
 @ cdecl _getch()
@@ -286,7 +280,6 @@
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl -arch=win32 _stat(str ptr) _stat32
-@ cdecl -arch=win64 _stat(str ptr) _stat64i32
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _strdate(ptr)
@@ -323,7 +316,6 @@
 @ cdecl _unlink(str)
 @ cdecl _unloaddll(long)
 @ cdecl -arch=win32 _utime(str ptr) _utime32
-@ cdecl -arch=win64 _utime(str ptr) _utime64
 @ cdecl _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _wcsdup(wstr)
@@ -363,9 +355,7 @@
 @ cdecl cos(double)
 @ cdecl cosh(double)
 @ cdecl -arch=win32 ctime(ptr) _ctime32
-@ cdecl -arch=win64 ctime(ptr) _ctime64
 @ cdecl -arch=win32 difftime(long long) _difftime32
-@ cdecl -arch=win64 difftime(long long) _difftime64
 @ cdecl -ret64 div(long long)
 @ cdecl exit(long)
 @ cdecl exp(double)
@@ -401,7 +391,6 @@
 @ cdecl getenv(str)
 @ cdecl gets(str)
 @ cdecl -arch=win32 gmtime(ptr) _gmtime32
-@ cdecl -arch=win64 gmtime(ptr) _gmtime64
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)
@@ -433,7 +422,6 @@
 @ cdecl -ret64 ldiv(long long)
 @ cdecl localeconv()
 @ cdecl -arch=win32 localtime(ptr) _localtime32
-@ cdecl -arch=win64 localtime(ptr) _localtime64
 @ cdecl log(double)
 @ cdecl log10(double)
 @ cdecl longjmp(ptr long)
@@ -447,7 +435,6 @@
 @ cdecl memmove(ptr ptr long)
 @ cdecl memset(ptr long long)
 @ cdecl -arch=win32 mktime(ptr) _mktime32
-@ cdecl -arch=win64 mktime(ptr) _mktime64
 @ cdecl modf(double ptr)
 @ cdecl perror(str)
 @ cdecl pow(double double)
@@ -500,7 +487,6 @@
 @ cdecl tan(double)
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=win32 time(ptr) _time32
-@ cdecl -arch=win64 time(ptr) _time64
 @ cdecl tmpfile()
 @ cdecl tmpnam(ptr)
 @ cdecl tolower(long)
