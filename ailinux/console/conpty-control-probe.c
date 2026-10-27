@@ -100,10 +100,9 @@ static int run_child(const wchar_t *mode)
     }
     if (WaitForSingleObject(signal_event, 8000) != WAIT_OBJECT_0)
     {
-        DWORD waited_error = GetLastError();
         emit(conout, "AILINUX_CONPTY_SIGNAL_HANDLER_TIMEOUT\r\n");
-        printf("CONPTY_CHILD_SIGNAL_TIMEOUT event=%lu last_error=%lu\n",
-               (unsigned long)expected_signal, (unsigned long)waited_error);
+        printf("CONPTY_CHILD_SIGNAL_TIMEOUT event=%lu\n",
+               (unsigned long)expected_signal);
         result = 20;
         goto unhook;
     }
@@ -113,7 +112,23 @@ static int run_child(const wchar_t *mode)
         goto unhook;
     }
     if (!emit(conout, CTRL_MARK "\r\n")) { result = 22; goto unhook; }
-    Sleep(300);
+    /* The host must consume the output before this child closes CONOUT$.
+     * Otherwise a fast exit can race the ConPTY output thread and discard
+     * the final reply. Ack uses an actual CR, not LF, in canonical mode. */
+    {
+        char ack[32] = {0};
+        DWORD n = 0;
+        if (!ReadConsoleA(conin, ack, sizeof(ack) - 1, &n, NULL))
+        {
+            result = 23;
+            goto unhook;
+        }
+        if (n < 3 || memcmp(ack, "ack", 3))
+        {
+            result = 24;
+            goto unhook;
+        }
+    }
     result = 0;
 unhook:
     SetConsoleCtrlHandler(signal_handler, FALSE);
@@ -215,7 +230,30 @@ int wmain(int argc, wchar_t **argv)
             goto cleanup;
         }
     }
-    if (WaitForSingleObject(pi.hProcess, 11000) != WAIT_OBJECT_0)
+    if (wcscmp(mode, L"--vt"))
+    {
+        /* Drain asynchronously while child is alive. Wait for its explicit
+         * output marker before sending the input acknowledgement. */
+        deadline = GetTickCount64() + 9000;
+        while (GetTickCount64() < deadline)
+        {
+            if (!read_output(out_r, output, &got, sizeof(output))) break;
+            if (strstr(output, expected)) break;
+            if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) break;
+            Sleep(15);
+        }
+        if (strstr(output, expected))
+        {
+            const char ack[] = "ack\r";
+            if (!WriteFile(in_w, ack, sizeof(ack) - 1, &written, NULL) ||
+                written != sizeof(ack) - 1)
+            {
+                puts("CONPTY_CONTROL_ACK_WRITE_FAILED");
+                goto cleanup;
+            }
+        }
+    }
+    if (WaitForSingleObject(pi.hProcess, 10500) != WAIT_OBJECT_0)
     {
         puts("CONPTY_CONTROL_CHILD_TIMEOUT");
         TerminateProcess(pi.hProcess, 90);

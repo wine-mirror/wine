@@ -93,3 +93,25 @@ nonzero status, rather than claiming Windows conformance. Additional
 child-exit and signal-timeout diagnostics are recorded for investigation.
 An actual Windows reference result remains a prerequisite for changing
 the Wine signal-routing implementation.
+
+## Signal routing debug (October 27, 2026)
+
+The opt-in x86 and x64 Ctrl+C/Ctrl+Break cases still fail after a
+parent-child output acknowledgement was added. The child now waits to read
+an explicit "ack" terminal line after emitting its handler marker and
+the parent drains the output pipe before acknowledging. This rules out a
+simple child-exit/output-flush race as the sole reason for the failure.
+
+The Wine WINEDEBUG=+console,+process,+seh trace shows:
+- Ctrl+C: the child registers a handler and outputs READY, but the parent
+  sees child exit 0 without the control handler marker.
+- Ctrl+Break: GenerateConsoleCtrlEvent(1,0) is invoked, child exits
+  nonzero and no handler marker is produced.
+- VT (the positive control) still passes on both architectures.
+
+Wine server/console.c maps CTRL_C_EVENT to SIGINT and CTRL_BREAK_EVENT
+to SIGQUIT. The ntdll signal_x86_64.c SIGQUIT handler aborts the thread
+and is also used internally for forced thread termination, so modifying
+that handler globally would risk unrelated Wine features. No such
+unverified modification was made. The genuine Windows comparison remains
+blocked on the guest agent.
