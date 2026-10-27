@@ -1277,6 +1277,7 @@ enable_mfplat
 enable_mfplay
 enable_mfreadwrite
 enable_mfsrcsnk
+enable_mfwmaaec
 enable_mgmtapi
 enable_midimap
 enable_mlang
@@ -22327,6 +22328,7 @@ wine_fn_config_makefile dlls/mfreadwrite enable_mfreadwrite
 wine_fn_config_makefile dlls/mfreadwrite/tests enable_tests
 wine_fn_config_makefile dlls/mfsrcsnk enable_mfsrcsnk
 wine_fn_config_makefile dlls/mfsrcsnk/tests enable_tests
+wine_fn_config_makefile dlls/mfwmaaec enable_mfwmaaec
 wine_fn_config_makefile dlls/mgmtapi enable_mgmtapi
 wine_fn_config_makefile dlls/midimap enable_midimap
 wine_fn_config_makefile dlls/mlang enable_mlang

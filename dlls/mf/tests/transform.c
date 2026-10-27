@@ -494,7 +494,7 @@ static void check_mft_get_info(const GUID *class_id, const struct transform_info
         ok(IsEqualGUID(&output_types[i].guidMajorType, expect->major_type),
                 "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
         ok(IsEqualGUID(&output_types[i].guidSubtype, expect->outputs[i].subtype),
-                "got output[%u] subtype %s wanted %s\n", i, debugstr_guid(&output_types[i].guidSubtype), debugstr_guid(expect->inputs[i].subtype));
+                "got output[%u] subtype %s wanted %s\n", i, debugstr_guid(&output_types[i].guidSubtype), debugstr_guid(expect->outputs[i].subtype));
     }
     for (; expect->outputs[i].subtype; ++i)
         ok(0, "missing output[%u] subtype %s\n", i, debugstr_guid(expect->outputs[i].subtype));
@@ -12279,6 +12279,80 @@ failed:
     CoUninitialize();
 }
 
+static void test_aaec(void)
+{
+    const GUID *const class_id = &CLSID_CWMAudioAEC;
+    const struct transform_info expect_mft_info =
+    {
+        .name = L"AEC",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+    };
+    const struct transform_info expect_dmo_info =
+    {
+        .name = L"AEC",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+    };
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+    IMFTransform *transform;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    check_mft_enum(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, class_id);
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
+
+    hr = MFStartup(MF_VERSION, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* Test MFT */
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    IMFTransform_Release(transform);
+
+    /* Test DMO */
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    IMediaObject_Release(dmo);
+
+    MFShutdown();
+    CoUninitialize();
+}
+
 START_TEST(transform)
 {
     winetest_mute_threshold = 1;
@@ -12321,4 +12395,5 @@ START_TEST(transform)
     test_h264_decoder_concat_streams();
 
     test_video_processor_with_dxgi_manager();
+    test_aaec();
 }

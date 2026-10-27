@@ -699,6 +699,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.51.362
 11,,mfasfsrcsnk.dll,1
 11,,mfh264enc.dll,1
 11,,mfmp4srcsnk.dll,1
+11,,mfwmaaec.dll,1
 11,,mp3dmod.dll,1
 11,,msauddecmft.dll,1
 11,,mscoree.dll,1
