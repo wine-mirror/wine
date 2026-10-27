@@ -2280,14 +2280,14 @@ static void free_gpu_infos( struct list *infos )
 
 static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 {
+    if (!list_empty( &sources )) last_query_display_time = 0;
+    if (ctx->gpu_count) cleanup_devices();
+
     if (ctx->mutex)
     {
         release_display_device_init_mutex( ctx->mutex );
         ctx->mutex = 0;
     }
-
-    if (!list_empty( &sources )) last_query_display_time = 0;
-    if (ctx->gpu_count) cleanup_devices();
 
     free_gpu_infos( &ctx->vulkan_gpus );
     free_gpu_infos( &ctx->opengl_gpus );
