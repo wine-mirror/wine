@@ -485,6 +485,12 @@ static const WCHAR * const WellKnownPrivNames[SE_MAX_WELL_KNOWN_PRIVILEGE + 1] =
     L"SeManageVolumePrivilege",
     L"SeImpersonatePrivilege",
     L"SeCreateGlobalPrivilege",
+    L"SeTrustedCredManAccessPrivilege",
+    L"SeRelabelPrivilege",
+    L"SeIncreaseWorkingSetPrivilege",
+    L"SeTimeZonePrivilege",
+    L"SeCreateSymbolicLinkPrivilege",
+    L"SeDelegateSessionUserImpersonatePrivilege",
 };
 
 const WCHAR *get_wellknown_privilege_name(const LUID *luid)

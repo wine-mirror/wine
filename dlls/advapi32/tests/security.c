@@ -680,6 +680,12 @@ static void test_lookupPrivilegeValue(void)
      { "SeManageVolumePrivilege", SE_MANAGE_VOLUME_PRIVILEGE },
      { "SeImpersonatePrivilege", SE_IMPERSONATE_PRIVILEGE },
      { "SeCreateGlobalPrivilege", SE_CREATE_GLOBAL_PRIVILEGE },
+     { "SeTrustedCredManAccessPrivilege", SE_TRUSTED_CREDMAN_ACCESS_PRIVILEGE },
+     { "SeRelabelPrivilege", SE_RELABEL_PRIVILEGE },
+     { "SeIncreaseWorkingSetPrivilege", SE_INC_WORKING_SET_PRIVILEGE },
+     { "SeTimeZonePrivilege", SE_TIME_ZONE_PRIVILEGE },
+     { "SeCreateSymbolicLinkPrivilege", SE_CREATE_SYMBOLIC_LINK_PRIVILEGE },
+     { "SeDelegateSessionUserImpersonatePrivilege", SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE },
     };
     BOOL (WINAPI *pLookupPrivilegeValueA)(LPCSTR, LPCSTR, PLUID);
     unsigned int i;

@@ -6813,7 +6813,7 @@ static void test_reparse_points(void)
     ret = OpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &token );
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
     ret = LookupPrivilegeValueA( NULL, "SeCreateSymbolicLinkPrivilege", &luid );
-    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
 
     if (ret)
     {
@@ -6824,6 +6824,7 @@ static void test_reparse_points(void)
         ok( ret == TRUE, "got error %lu\n", GetLastError() );
         if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
         {
+            todo_wine
             win_skip("Insufficient permissions to perform symlink tests.\n");
             CloseHandle( token );
             goto out;
