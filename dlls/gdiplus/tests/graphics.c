@@ -8159,6 +8159,14 @@ static void test_antialiasing(void)
     expect(Ok, status);
     ok(!color, "got %08lx below the join\n", color);
 
+    /* Ending at a dot boundary raised EXCEPTION_FLT_INVALID_OPERATION. */
+    status = GdipSetPenDashStyle(pen, DashStyleDot);
+    expect(Ok, status);
+    status = GdipSetPenLineCap197819(pen, LineCapRound, LineCapRound, DashCapRound);
+    expect(Ok, status);
+    status = GdipDrawLine(graphics, pen, 2.0, 2.0, 2.0, 4.0);
+    expect(Ok, status);
+
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage *)bitmap);

@@ -2526,6 +2526,8 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
                 if ((dash_index % 2) == 0)
                 {
                     /* start dash */
+                    if (segment_pos == segment_length)
+                        break;
                     num_tmp_points = 1;
                     tmp_points[0].X = path->pathdata.Points[i].X + segment_dx * segment_pos / segment_length;
                     tmp_points[0].Y = path->pathdata.Points[i].Y + segment_dy * segment_pos / segment_length;
