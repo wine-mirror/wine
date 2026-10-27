@@ -220,6 +220,8 @@ struct makefile
     bool            external;
     bool            is_win16;
     bool            is_exe;
+    bool            noentry;
+    bool            nodefaultlibs;
     bool            disabled[MAX_ARCHS];
 
     /* values generated at output time */
@@ -2427,7 +2429,7 @@ static const char *get_crt_define( const struct makefile *make )
 
     if (!crt_dll)
     {
-        if (strarray_exists( make->extradllflags, "-nodefaultlibs" )) return "-D_MSVCR_VER=0";
+        if (make->nodefaultlibs) return "-D_MSVCR_VER=0";
         if (!(crt_dll = get_default_crt( make ))) crt_dll = make->module;
     }
     if (!strncmp( crt_dll, "ucrt", 4 )) return "-D_UCRT";
@@ -3934,9 +3936,8 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (!make->is_exe)
     {
-        if (make->data_only || strendswith( make->module, ".drv" ) ||
-            strarray_exists( make->extradllflags, "-Wl,--subsystem,native" ) ||
-            strarray_exists( make->extradllflags, "-Wl,-noentry" ))
+        if (make->data_only || make->noentry || strendswith( make->module, ".drv" ) ||
+            strarray_exists( make->extradllflags, "-Wl,--subsystem,native" ))
         {
             /* spec file is optional */
             struct incl_file *spec = find_src_file( make, replace_extension( make->module, ".dll", ".spec" ));
@@ -3945,13 +3946,12 @@ static void output_module( struct makefile *make, unsigned int arch )
         else spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
     }
 
-    if (!make->data_only)
+    if (!make->data_only && (arch || !make->noentry))
     {
         if (!get_link_arch( make, arch, &link_arch )) return;
 
         module_name = arch_module_name( make->module, arch );
-        default_imports = get_default_imports( make, imports,
-                                               strarray_exists( make->extradllflags, "-nodefaultlibs" ));
+        default_imports = get_default_imports( make, imports, make->nodefaultlibs );
 
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, IMPORT_TYPE_DELAYED, arch ));
@@ -3968,6 +3968,7 @@ static void output_module( struct makefile *make, unsigned int arch )
         }
         if (!make->disabled[link_arch]) install_program( make, make->module, arch,
                                                          module_name, arch_install_dirs[arch] );
+        if (!arch && unix_lib_supported) output_fake_module( make, spec_file );
     }
     else
     {
@@ -4010,8 +4011,6 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
-
-    if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make, spec_file );
 }
 
 
@@ -4920,6 +4919,8 @@ static void load_sources( struct makefile *make )
     make->data_only  = strarray_exists( make->extradllflags, "-Wb,--data-only" );
     make->is_exe     = strarray_exists( make->extradllflags, "-mconsole" ) ||
                        strarray_exists( make->extradllflags, "-mwindows" );
+    make->noentry       = strarray_exists( make->extradllflags, "-Wl,-noentry" );
+    make->nodefaultlibs = strarray_exists( make->extradllflags, "-nodefaultlibs" );
 
     if (enable_archs.count)
     {
