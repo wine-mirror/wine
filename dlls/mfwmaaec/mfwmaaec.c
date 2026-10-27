@@ -34,6 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(aaec);
 
+static const WAVEFORMATEX default_output_format = { WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16, 0 };
+
 struct aaec
 {
     IUnknown IUnknown_inner;
@@ -127,15 +129,19 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
 static HRESULT WINAPI transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
         DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
 {
-    FIXME("iface %p, input_minimum %p, input_maximum %p, output_minimum %p, output_maximum %p stub.\n",
+    TRACE("iface %p, input_minimum %p, input_maximum %p, output_minimum %p, output_maximum %p.\n",
             iface, input_minimum, input_maximum, output_minimum, output_maximum);
-    return E_NOTIMPL;
+    *input_minimum = *input_maximum = 0;
+    *output_minimum = *output_maximum = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
 {
-    FIXME("iface %p, inputs %p, outputs %p stub.\n", iface, inputs, outputs);
-    return E_NOTIMPL;
+    TRACE("iface %p, inputs %p, outputs %p.\n", iface, inputs, outputs);
+    *inputs = 0;
+    *outputs = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
@@ -155,24 +161,27 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
     FIXME("iface %p, id %#lx, info %p stub.\n", iface, id, info);
-    return E_NOTIMPL;
+
+    memset(info, 0, sizeof(*info));
+    info->dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES;
+    return MF_E_TRANSFORM_TYPE_NOT_SET;
 }
 
 static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
 {
-    FIXME("iface %p, attributes %p stub.\n", iface, attributes);
+    TRACE("iface %p, attributes %p.\n", iface, attributes);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
-    FIXME("iface %p, id %#lx, attributes %p stub.\n", iface, id, attributes);
+    TRACE("iface %p, id %#lx, attributes %p.\n", iface, id, attributes);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
-    FIXME("iface %p, id %#lx, attributes %p stub.\n", iface, id, attributes);
+    TRACE("iface %p, id %#lx, attributes %p.\n", iface, id, attributes);
     return E_NOTIMPL;
 }
 
@@ -198,8 +207,39 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, index %#lx, type %p stub.\n", iface, id, index, type);
-    return E_NOTIMPL;
+    IMFMediaType *media_type;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+    if (id) return MF_E_INVALIDSTREAMNUMBER;
+    if (index) return MF_E_NO_MORE_TYPES;
+
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
+        return hr;
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, default_output_format.nChannels);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, default_output_format.nSamplesPerSec);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, default_output_format.nAvgBytesPerSec);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, default_output_format.wBitsPerSample);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, default_output_format.nBlockAlign);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1);
+
+    if (SUCCEEDED(hr))
+        IMFMediaType_AddRef((*type = media_type));
+    IMFMediaType_Release(media_type);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
@@ -322,8 +362,10 @@ static ULONG WINAPI media_object_Release(IMediaObject *iface)
 
 static HRESULT WINAPI media_object_GetStreamCount(IMediaObject *iface, DWORD *input, DWORD *output)
 {
-    FIXME("iface %p, input %p, output %p stub.\n", iface, input, output);
-    return E_NOTIMPL;
+    TRACE("iface %p, input %p, output %p stub.\n", iface, input, output);
+    *input = 0;
+    *output = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
@@ -334,8 +376,11 @@ static HRESULT WINAPI media_object_GetInputStreamInfo(IMediaObject *iface, DWORD
 
 static HRESULT WINAPI media_object_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %lu, flags %p stub.\n", iface, index, flags);
-    return E_NOTIMPL;
+    TRACE("iface %p, index %lu, flags %p.\n", iface, index, flags);
+
+    if (index) return DMO_E_INVALIDSTREAMINDEX;
+    *flags = DMO_OUTPUT_STREAMF_WHOLE_SAMPLES;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index,
@@ -349,9 +394,22 @@ static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index
 static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type_index %lu, type %p stub.\n", impl_from_IMediaObject(iface), index,
+    TRACE("iface %p, index %lu, type_index %lu, type %p.\n", impl_from_IMediaObject(iface), index,
             type_index, type);
-    return E_NOTIMPL;
+    if (index) return DMO_E_INVALIDSTREAMINDEX;
+    if (type_index) return DMO_E_NO_MORE_ITEMS;
+
+    memset(type, 0, sizeof(*type));
+    type->majortype = MEDIATYPE_Audio;
+    type->subtype = MEDIASUBTYPE_PCM;
+    type->formattype = FORMAT_WaveFormatEx;
+    type->bFixedSizeSamples = TRUE;
+    type->cbFormat = sizeof(default_output_format);
+    if (!(type->pbFormat = CoTaskMemAlloc(sizeof(default_output_format))))
+        return E_OUTOFMEMORY;
+    *(WAVEFORMATEX *)type->pbFormat = default_output_format;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index,
