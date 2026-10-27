@@ -73,6 +73,8 @@ jobs:
             "$cc" -O2 -Wall -Wextra -Werror -municode \
               ailinux/console/conpty-io-probe.c -o "build/probes/conpty-io-$target.exe"
             "$cc" -O2 -Wall -Wextra -Werror -municode \
+              ailinux/console/console-signal-isolation.c -o "build/probes/console-signal-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror -municode \
               ailinux/console/conpty-control-probe.c -o "build/probes/conpty-control-$target.exe"
             "$target-w64-mingw32-g++-posix" -std=c++17 -O2 -Wall -Wextra -Werror -static -pthread \
               ailinux/probes/cxx-runtime-probe.cpp -o "build/probes/cxx-$target.exe"
@@ -91,6 +93,7 @@ jobs:
             test -s "build/probes/win11api-$target.exe"
             test -s "build/probes/conpty-resize-$target.exe"
             test -s "build/probes/conpty-io-$target.exe"
+            test -s "build/probes/console-signal-$target.exe"
             test -s "build/probes/conpty-control-$target.exe"
             test -s "build/probes/cxx-$target.exe"
             test -s "build/probes/vc100-$target.exe"

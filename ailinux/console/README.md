@@ -115,3 +115,23 @@ and is also used internally for forced thread termination, so modifying
 that handler globally would risk unrelated Wine features. No such
 unverified modification was made. The genuine Windows comparison remains
 blocked on the guest agent.
+
+## Direct console control isolation (October 27, 2026)
+
+console-signal-isolation.c is a *separate* control-event probe intended for
+execution within an attached genuine Windows console. It does not create a
+ConPTY. It checks whether a Ctrl+C or Ctrl+Break event reaches a registered
+Windows console handler. When invoked directly via headless Wine, the process
+has no allocated console: GenerateConsoleCtrlEvent fails with Win32 error 12
+and AllocConsole fails with error 5. Those outcomes are environment setup
+failures, NOT evidence for or against correct control-signal routing.
+
+The ConPTY control probe now requires a distinct exit sentinel (77) after
+the child receives and acknowledges its handler event, so an unexpected
+exit code zero cannot impersonate a complete Ctrl+C success. Both x86 and
+x64 ConPTY Ctrl+C/Ctrl+Break cases remain explicitly unresolved. The VT
+positive-control cases continue to pass.
+
+Next: run these probes inside the authenticated Windows reference guest,
+or under a validated standalone attached Wine console; compare the two
+before changing Wine's SIGINT/SIGQUIT dispatch rules.

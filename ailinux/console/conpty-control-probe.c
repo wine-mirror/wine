@@ -129,7 +129,8 @@ static int run_child(const wchar_t *mode)
             goto unhook;
         }
     }
-    result = 0;
+    /* Sentinel proves the child completed its control-handler handshake. */
+    result = 77;
 unhook:
     SetConsoleCtrlHandler(signal_handler, FALSE);
 done:
@@ -261,10 +262,11 @@ int wmain(int argc, wchar_t **argv)
     }
     if (!GetExitCodeProcess(pi.hProcess, &exitcode)) goto cleanup;
     printf("CONPTY_CONTROL_CHILD_EXIT=%lu\n", (unsigned long)exitcode);
-    if (exitcode)
+    if (exitcode != (!wcscmp(mode, L"--vt") ? 0u : 77u))
     {
-        printf("CONPTY_CONTROL_CHILD_FAILED mode=%ls exit=%lu\n",
-               mode, (unsigned long)exitcode);
+        printf("CONPTY_CONTROL_CHILD_FAILED mode=%ls exit=%lu expected=%lu\n",
+               mode, (unsigned long)exitcode,
+               (unsigned long)(!wcscmp(mode, L"--vt") ? 0u : 77u));
         goto cleanup;
     }
     deadline = GetTickCount64() + 1600;

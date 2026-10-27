@@ -17,6 +17,8 @@ for a in i686 x86_64; do
  "$a-w64-mingw32-gcc-posix" -O2 -Wall -Wextra -Werror -municode "$ROOT/ailinux/console/conpty-io-probe.c" -o "$OUT/conpty-io-$a.exe"
  "$a-w64-mingw32-gcc-posix" -O2 -Wall -Wextra -Werror -municode "$ROOT/ailinux/console/conpty-control-probe.c" -o "$OUT/conpty-control-$a.exe"
  echo "CONPTY_CONTROL_PROBE_BUILT=$a"
+ "$a-w64-mingw32-gcc-posix" -O2 -Wall -Wextra -Werror -municode "$ROOT/ailinux/console/console-signal-isolation.c" -o "$OUT/console-signal-$a.exe"
+ echo "CONSOLE_SIGNAL_PROBE_BUILT=$a"
  echo "CONPTY_IO_PROBE_BUILT=$a"
  echo "CONPTY_PROBE_BUILT=$a"
  echo "WINE_PROBE_PASS=$a"
