@@ -1214,7 +1214,8 @@ DECL_HANDLER(create_token)
         dacl = default_dacl = create_default_dacl( &domain_users_sid );
 
     token = create_token( req->primary, default_session_id, user, owner, primary_group, groups,
-                          req->group_count, privs, req->priv_count, dacl, NULL, req->impersonation_level, 0 );
+                          req->group_count, privs, req->priv_count, dacl, NULL,
+                          req->impersonation_level, TokenElevationTypeFull );
     if (token)
     {
         reply->token = alloc_handle( current->process, token, req->access, params.attr );

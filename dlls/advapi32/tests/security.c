@@ -8806,7 +8806,6 @@ static void test_NtCreateToken(void)
     /* Test default TokenElevationType */
     ret = GetTokenInformation(token, TokenElevationType, buffer, sizeof(buffer), &size);
     ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
-    todo_wine
     ok(*(TOKEN_ELEVATION_TYPE *)buffer == TokenElevationTypeFull,
        "Got unexpected elevation type %d.\n", *(TOKEN_ELEVATION_TYPE *)buffer);
 
