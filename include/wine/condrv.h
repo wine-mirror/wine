@@ -24,6 +24,17 @@
 #include "winioctl.h"
 #include "wincon.h"
 
+/* Private conhost control pipe: Windows ConPTY uses signal id 8 for resize.
+ * The packet is three 16-bit words (id, width, height), 6 bytes total.
+ */
+#define WINE_PTY_SIGNAL_RESIZE_WINDOW 8
+struct wine_pty_resize_signal
+{
+    USHORT id;
+    SHORT width;
+    SHORT height;
+};
+
 /* common console input and output ioctls */
 #define IOCTL_CONDRV_GET_MODE              CTL_CODE(FILE_DEVICE_CONSOLE,  0, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CONDRV_SET_MODE              CTL_CODE(FILE_DEVICE_CONSOLE,  1, METHOD_BUFFERED, FILE_WRITE_ACCESS)

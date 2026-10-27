@@ -1,0 +1,105 @@
+name: AILinux Wine Alpha PE build checks
+
+on:
+  push:
+    branches:
+      - "ailinux/**"
+    paths:
+      - "ailinux/**"
+      - "dlls/kernelbase/console.c"
+      - "programs/conhost/conhost.c"
+      - ".github/workflows/ailinux-alpha-pe-probes.yml"
+  pull_request:
+    paths:
+      - "ailinux/**"
+      - "dlls/kernelbase/console.c"
+      - "programs/conhost/conhost.c"
+      - ".github/workflows/ailinux-alpha-pe-probes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pe-cross-compile:
+    name: Compile Win32 and Win64 API regression probes
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out only AILinux test sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: ailinux
+      - name: Install MinGW cross compilers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-i686-posix gcc-mingw-w64-x86-64-posix \
+            g++-mingw-w64-i686-posix g++-mingw-w64-x86-64-posix file
+      - name: Check shell syntax
+        run: |
+          bash -n ailinux/*.sh
+      - name: Validate Windows application catalog
+        run: |
+          python3 -m json.tool ailinux/apps/catalog.json > /dev/null
+          python3 -B ailinux/apps/validate-catalog.py
+          python3 -B ailinux/packages/validate-catalog.py
+          python3 -B -m unittest discover -s ailinux/vm-reference -p "test_*.py" -v
+          python3 -B -m unittest discover -s ailinux/packages/tests -p "test_*.py" -v
+      - name: Run offline runtime manager rollback tests
+        run: python3 -B -m unittest discover -s ailinux/tests -p "test_*.py" -v
+      - name: Compile Windows PE probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/probes
+          for target in i686 x86_64; do
+            cc="$target-w64-mingw32-gcc-posix"
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/library-probe.c -o "build/probes/library-$target.exe"
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/functional-probe.c -o "build/probes/functional-$target.exe" \
+              -lws2_32 -lole32 -ladvapi32 -lbcrypt
+            "$cc" -O2 -Wall -Wextra \
+              ailinux/probes/graphics-probe.c -o "build/probes/graphics-$target.exe" \
+              -ld3d11 -ld3d12 -ldxgi -ldxguid
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/vc14-probe.c -o "build/probes/vc14-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/win11-api-probe.c -o "build/probes/win11api-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror -municode \
+              ailinux/console/conpty-resize-probe.c -o "build/probes/conpty-resize-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror -municode \
+              ailinux/console/conpty-io-probe.c -o "build/probes/conpty-io-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror -municode \
+              ailinux/console/console-signal-isolation.c -o "build/probes/console-signal-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror -municode \
+              ailinux/console/conpty-control-probe.c -o "build/probes/conpty-control-$target.exe"
+            "$target-w64-mingw32-g++-posix" -std=c++17 -O2 -Wall -Wextra -Werror -static -pthread \
+              ailinux/probes/cxx-runtime-probe.cpp -o "build/probes/cxx-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/vc100-probe.c -o "build/probes/vc100-$target.exe"
+            "$cc" -O2 -Wall -Wextra -Werror \
+              ailinux/probes/win11-extras-probe.c -o "build/probes/extras-$target.exe" \
+              -lole32 -luuid
+            file "build/probes/library-$target.exe"
+            file "build/probes/graphics-$target.exe"
+            file "build/probes/functional-$target.exe"
+            test -s "build/probes/library-$target.exe"
+            test -s "build/probes/functional-$target.exe"
+            test -s "build/probes/graphics-$target.exe"
+            test -s "build/probes/vc14-$target.exe"
+            test -s "build/probes/win11api-$target.exe"
+            test -s "build/probes/conpty-resize-$target.exe"
+            test -s "build/probes/conpty-io-$target.exe"
+            test -s "build/probes/console-signal-$target.exe"
+            test -s "build/probes/conpty-control-$target.exe"
+            test -s "build/probes/cxx-$target.exe"
+            test -s "build/probes/vc100-$target.exe"
+            test -s "build/probes/extras-$target.exe"
+          done
+      - name: Report probe boundaries
+        run: |
+          echo "Both x86 and x64 PE probes compiled."
+          echo "This lightweight workflow does NOT validate Wine engine runtime behavior."
