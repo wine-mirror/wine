@@ -40,7 +40,7 @@ static void test_DwmGetCompositionTimingInfo(void)
     DWM_TIMING_INFO timing_info;
     QPC_TIME refresh_period;
     DEVMODEA mode;
-    BOOL enabled;
+    BOOL enabled, have_performance_frequency;
     HRESULT hr;
 
     enabled = FALSE;
@@ -60,18 +60,31 @@ static void test_DwmGetCompositionTimingInfo(void)
     hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
     ok(hr == MILERR_MISMATCHED_SIZE, "Got hr %#lx.\n", hr);
 
+    timing_info.cbSize = sizeof(timing_info);
+    hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(timing_info.cbSize == sizeof(timing_info),
+        "Got wrong struct size %d.\n", timing_info.cbSize);
+
     memset(&mode, 0, sizeof(mode));
     mode.dmSize = sizeof(mode);
     result = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &mode);
     ok(!!result, "Failed to get display mode %#lx.\n", GetLastError());
+    have_performance_frequency = QueryPerformanceFrequency(&performance_frequency);
+    ok(have_performance_frequency, "Failed to get performance counter frequency.\n");
+    if (!result)
+        return;
+    if (!(mode.dmFields & DM_DISPLAYFREQUENCY) || mode.dmDisplayFrequency == 0)
+    {
+        skip("Display refresh rate is not available (fields %#lx, frequency %lu).\n",
+            mode.dmFields, mode.dmDisplayFrequency);
+        return;
+    }
+    if (!have_performance_frequency)
+        return;
     display_frequency = mode.dmDisplayFrequency;
-    ok(!!QueryPerformanceFrequency(&performance_frequency), "Failed to get performance counter frequency.\n");
     refresh_period = performance_frequency.QuadPart / display_frequency;
 
-    timing_info.cbSize = sizeof(timing_info);
-    hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(timing_info.cbSize == sizeof(timing_info), "Got wrong struct size %d.\n", timing_info.cbSize);
     ok(timing_info.rateRefresh.uiDenominator == 1 && timing_info.rateRefresh.uiNumerator == display_frequency,
             "Got wrong monitor refresh rate %d/%d.\n", timing_info.rateRefresh.uiDenominator,
             timing_info.rateRefresh.uiNumerator);
