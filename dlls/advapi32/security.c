@@ -927,14 +927,19 @@ LookupAccountSidW(
                             ac = L"RAS and IAS Servers";
                             break;
                         case 1000:	/* first user account */
+                        {
+                            DWORD length;
+
                             size = UNLEN + 1;
                             account_name = malloc(size * sizeof(WCHAR));
-                            if (GetUserNameW(account_name, &size))
+                            length = GetEnvironmentVariableW( L"WINEUSERNAME", account_name, size );
+                            if (length && length < size)
                                 ac = account_name;
                             else
                                 dm = NULL;
 
                             break;
+                        }
                         default:
                             dm = NULL;
                             break;
