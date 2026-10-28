@@ -1682,7 +1682,7 @@ RETURN_CODE WCMD_give_help(struct word_iterator *iterator)
     int i;
 
     /* yes, return code / errorlevel look inverted, but native does it this way */
-    while (WCMD_word_iterator_advance(iterator))
+    while (WCMD_word_iterator_can_advance(iterator) && WCMD_word_iterator_advance(iterator))
     {
         if (iterator->is_an_option || help_on)
         {

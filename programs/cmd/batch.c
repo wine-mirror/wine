@@ -243,6 +243,14 @@ BOOL WCMD_word_iterator_advance(struct word_iterator *iterator)
     return iterator->length != 0;
 }
 
+BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator)
+{
+    WCHAR *start;
+    size_t length;
+
+    return WCMD_next_word(&iterator->from[iterator->position + iterator->length], iterator->delimiters, &start, &length);
+}
+
 BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, BOOL optsep, WCHAR **arg)
 {
     size_t option_len;

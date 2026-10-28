@@ -250,6 +250,7 @@ struct word_iterator
 
 struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags);
 BOOL WCMD_word_iterator_advance(struct word_iterator *iterator);
+BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator);
 BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *opt, BOOL optsep, WCHAR **arg);
 static inline void WCMD_word_iterator_dispose(struct word_iterator *iterator)
 {
