@@ -3931,11 +3931,42 @@ BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global )
 
 BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index )
 {
+    const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_swapchain *swapchain;
+    D3DKMT_HANDLE image;
+    GLuint fbo, tex;
+    SIZE src, dst;
 
     TRACE( "toplevel %p global %#x index %#x\n", toplevel, global, index );
 
     if (!(swapchain = get_opengl_swapchain( toplevel, global, FALSE ))) return FALSE;
+
+    image = d3dkmt_swapchain_get_image( swapchain->local, index, &src );
+    dst = swapchain->drawable->monitor_size;
+
+    make_thread_context_current( NULL, swapchain->drawable );
+    opengl_drawable_flush( swapchain->drawable, 0, GL_FLUSH_ACTIVATE );
+
+    funcs->p_glGenFramebuffers( 1, &fbo );
+    funcs->p_glGenTextures( 1, &tex );
+
+    driver_funcs->p_texture_import( tex, image, src );
+
+    funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, fbo );
+    funcs->p_glFramebufferTexture( GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0 );
+    funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
+
+    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
+    funcs->p_glDrawBuffer( GL_BACK );
+    funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, dst.cx, dst.cy, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+    funcs->p_glDeleteFramebuffers( 1, &fbo );
+    funcs->p_glDeleteTextures( 1, &tex );
+
+    opengl_drawable_swap( swapchain->drawable );
+
+    make_client_context_current();
+
     d3dkmt_swapchain_release_image( swapchain->local, index );
     return TRUE;
 }
