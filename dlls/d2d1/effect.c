@@ -3576,7 +3576,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
 
     if (FAILED(hr = d2d_transform_graph_create(input_count, &object->graph)))
     {
-        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+        ID2D1Effect_Release(&object->ID2D1Effect_iface);
         return hr;
     }
 
