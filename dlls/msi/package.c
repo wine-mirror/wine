@@ -670,7 +670,10 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     lstrcatW(pth, L"\\");
     msi_set_property( package->db, L"TemplateFolder", pth, -1 );
 
-    SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, 0, pth);
+    if (msi_get_property_int( package->db, L"ALLUSERS", 0 ) == 1)
+        SHGetFolderPathW(NULL, CSIDL_COMMON_DESKTOPDIRECTORY, NULL, 0, pth);
+    else
+        SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, 0, pth);
     lstrcatW(pth, L"\\");
     msi_set_property( package->db, L"DesktopFolder", pth, -1 );
 

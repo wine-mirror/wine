@@ -9597,7 +9597,6 @@ static void test_desktopfolder(void)
     ok(r == ERROR_SUCCESS, "Failed to open package: %u\n", r);
     r = MsiGetPropertyA(package, "DesktopFolder", actual_path, &size);
     ok(r == ERROR_SUCCESS, "Failed to get DesktopFolder: %u\n", r);
-    todo_wine
     ok(!lstrcmpiA(actual_path, expected_path), "Expected %s, got %s\n", expected_path, actual_path);
     MsiCloseHandle(package);
     DeleteFileA(msifile);
