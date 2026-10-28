@@ -2156,7 +2156,13 @@ NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, SIZE *size, D3DKMT_HANDLE *l
     if (!(toplevel = NtUserGetAncestor( hwnd, GA_ROOT ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
     if (is_current_process_window( hwnd ) && is_current_process_window( toplevel )) return STATUS_NOT_IMPLEMENTED;
     if (!get_client_rect( hwnd, &rect, get_dpi_for_window( hwnd ) )) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
-    if (!(global = send_message( toplevel, WM_WINE_SWAPCHAIN_CREATE, (WPARAM)hwnd, 0 ))) return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
+
+    /* FIXME: Sending a message isn't ideal as some window may not be actively processing messages. Use a timeout to workaround
+     * this issue and retry creating the swapchain next time, if it fails. This will require another kind of IPC to create the
+     * swapchain in the remote process which we currently don't have.
+     */
+    if (!(global = send_message_timeout( toplevel, WM_WINE_SWAPCHAIN_CREATE, (WPARAM)hwnd, 0, SMTO_ABORTIFHUNG, 100, FALSE )))
+        return STATUS_GRAPHICS_PRESENT_INVALID_WINDOW;
 
     return d3dkmt_swapchain_open( global, size, local );
 }
