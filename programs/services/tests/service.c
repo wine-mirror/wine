@@ -69,6 +69,19 @@ static void WINAPIV service_ok(int cnd, const char *msg, ...)
     send_msg(cnd ? "OK" : "FAIL", buf);
 }
 
+static void WINAPIV service_todo_wine_ok(int cnd, const char *msg, ...) __WINE_PRINTF_ATTR(2,3);
+static void WINAPIV service_todo_wine_ok(int cnd, const char *msg, ...)
+{
+    va_list valist;
+    char buf[512];
+
+    va_start(valist, msg);
+    vsprintf(buf, msg, valist);
+    va_end(valist);
+
+    send_msg(cnd ? "TODO_WINE OK" : "TODO_WINE FAIL", buf);
+}
+
 static void test_winstation(void)
 {
     HWINSTA winstation;
@@ -259,7 +272,15 @@ static void check_token_information(const char *username, HANDLE token)
     {
         memset(buffer, 0, sizeof(buffer));
         ret = GetTokenInformation(token, classes[i], buffer, sizeof(buffer), &size);
-        service_ok(ret, "GetTokenInformation %d failed, error %lu.\n", classes[i], GetLastError());
+        if (classes[i] == TokenSource)
+        {
+            service_todo_wine_ok(ret, "GetTokenInformation %d failed, error %lu.\n", classes[i], GetLastError());
+            continue;
+        }
+        else
+        {
+            service_ok(ret, "GetTokenInformation %d failed, error %lu.\n", classes[i], GetLastError());
+        }
 
         switch (classes[i])
         {
@@ -458,28 +479,28 @@ static void check_token_information(const char *username, HANDLE token)
         {
             DWORD *id = (DWORD *)buffer;
 
-            service_ok(*id == 0, "Got unexpected id %#lx.\n", *id);
+            service_todo_wine_ok(*id == 0, "Got unexpected id %#lx.\n", *id);
             break;
         }
         case TokenElevationType:
         {
             TOKEN_ELEVATION_TYPE *type = (TOKEN_ELEVATION_TYPE *)buffer;
 
-            service_ok(*type == TokenElevationTypeDefault, "Got unexpected type %d.\n", *type);
+            service_todo_wine_ok(*type == TokenElevationTypeDefault, "Got unexpected type %d.\n", *type);
             break;
         }
         case TokenIntegrityLevel:
         {
             TOKEN_MANDATORY_LABEL *label = (TOKEN_MANDATORY_LABEL *)buffer;
 
-            service_ok(EqualSid(label->Label.Sid, (PSID)&system_label), "Got unexpected label.\n");
+            service_todo_wine_ok(EqualSid(label->Label.Sid, (PSID)&system_label), "Got unexpected label.\n");
             break;
         }
         case TokenUIAccess:
         {
             DWORD *access = (DWORD *)buffer;
 
-            service_ok(*access == 0, "Got unexpected UI access %#lx.\n", *access);
+            service_todo_wine_ok(*access == 0, "Got unexpected access %#lx.\n", *access);
             break;
         }
         default:
@@ -506,6 +527,7 @@ static void test_LogonUser(void)
         DWORD provider;
         BOOL expected_ret;
         DWORD expected_error;
+        BOOL todo;
     }
     tests[] =
     {
@@ -533,17 +555,17 @@ static void test_LogonUser(void)
 
         /* Logon type should be LOGON32_LOGON_SERVICE. Using LOGON32_LOGON_NEW_CREDENTIALS can
          * succeed but it breaks the named pipe used by the tests. Exclude it for now */
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_BATCH, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_UNLOCK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK_CLEARTEXT, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_BATCH, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_UNLOCK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK_CLEARTEXT, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
 
         /* Provider type should be LOGON32_PROVIDER_DEFAULT. Using LOGON32_PROVIDER_WINNT50 can
          * succeed but it breaks the named pipe used by the tests. Exclude it for now */
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT35, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT40, FALSE, ERROR_LOGON_FAILURE},
-        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_VIRTUAL, FALSE, ERROR_ACCESS_DENIED},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT35, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT40, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_VIRTUAL, FALSE, ERROR_ACCESS_DENIED, TRUE},
     };
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
@@ -554,13 +576,22 @@ static void test_LogonUser(void)
                          tests[i].provider, &token);
         error = GetLastError();
 
-        /* Wine doesn't return a real token from LogonUser() */
-        if (token == (HANDLE)0xdeadbeef)
+        if (tests[i].todo)
+        {
+            service_todo_wine_ok(ret == tests[i].expected_ret, "test %d: got unexpected return value %d.\n", i, ret);
+            service_todo_wine_ok(error == tests[i].expected_error, "test %d: expected error %lu, got %lu.\n",
+                                 i, tests[i].expected_error, error);
+            if (ret && token && token != (HANDLE)0xdeadbeef /* Wine */)
+                CloseHandle(token);
             continue;
+        }
+        else
+        {
+            service_ok(ret == tests[i].expected_ret, "test %d: got unexpected return value %d.\n", i, ret);
+            service_ok(error == tests[i].expected_error, "test %d: expected error %lu, got %lu.\n",
+                       i, tests[i].expected_error, error);
+        }
 
-        service_ok(ret == tests[i].expected_ret, "test %d: got unexpected return value %d.\n", i, ret);
-        service_ok(error == tests[i].expected_error, "test %d: expected error %lu, got %lu.\n", i,
-                   tests[i].expected_error, error);
         if (ret)
         {
             check_token_information(tests[i].username, token);
@@ -816,6 +847,10 @@ static DWORD WINAPI pipe_thread(void *arg)
                 ok(1, "service: %s", ptr+3);
             }else if(!strncmp(ptr, "FAIL:", 5)) {
                 ok(0, "service: %s", ptr+5);
+            }else if(!strncmp(ptr, "TODO_WINE OK:", 13)) {
+                todo_wine ok(1, "service: %s", ptr+13);
+            }else if(!strncmp(ptr, "TODO_WINE FAIL:", 15)) {
+                todo_wine ok(0, "service: %s", ptr+15);
             }else if(!strncmp(ptr, "EVENT:", 6)) {
                 trace("service event: %s\n", ptr+6);
                 EnterCriticalSection(&event_cs);
