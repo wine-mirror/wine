@@ -1,24 +1,24 @@
 # Old C runtime library. All functions provided by msvcrt
 
-@ cdecl -arch=win32 ??2@YAPAXI@Z(long) operator_new
-@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
-@ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
-@ cdecl -arch=i386 _CIacos()
-@ cdecl -arch=i386 _CIasin()
-@ cdecl -arch=i386 _CIatan()
-@ cdecl -arch=i386 _CIatan2()
-@ cdecl -arch=i386 _CIcos()
-@ cdecl -arch=i386 _CIcosh()
-@ cdecl -arch=i386 _CIexp()
-@ cdecl -arch=i386 _CIfmod()
-@ cdecl -arch=i386 _CIlog()
-@ cdecl -arch=i386 _CIlog10()
-@ cdecl -arch=i386 _CIpow()
-@ cdecl -arch=i386 _CIsin()
-@ cdecl -arch=i386 _CIsinh()
-@ cdecl -arch=i386 _CIsqrt()
-@ cdecl -arch=i386 _CItan()
-@ cdecl -arch=i386 _CItanh()
+@ cdecl ??2@YAPAXI@Z(long) operator_new
+@ cdecl ??3@YAXPAX@Z(ptr) operator_delete
+@ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
+@ cdecl _CIacos()
+@ cdecl _CIasin()
+@ cdecl _CIatan()
+@ cdecl _CIatan2()
+@ cdecl _CIcos()
+@ cdecl _CIcosh()
+@ cdecl _CIexp()
+@ cdecl _CIfmod()
+@ cdecl _CIlog()
+@ cdecl _CIlog10()
+@ cdecl _CIpow()
+@ cdecl _CIsin()
+@ cdecl _CIsinh()
+@ cdecl _CIsqrt()
+@ cdecl _CItan()
+@ cdecl _CItanh()
 @ extern _HUGE_dll MSVCRT__HUGE
 @ cdecl _XcptFilter(long ptr)
 @ cdecl __GetMainArgs(ptr ptr ptr long)
@@ -77,7 +77,7 @@
 @ extern _environ_dll MSVCRT__environ
 @ cdecl _eof(long)
 @ cdecl _errno()
-@ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
+@ cdecl _except_handler2(ptr ptr ptr ptr)
 @ varargs _execl(str str)
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
@@ -110,11 +110,11 @@
 @ cdecl _fputchar(long)
 @ cdecl _fputwchar(long)
 @ cdecl _fsopen(str str long)
-@ cdecl -arch=win32 _fstat(long ptr) _fstat32
-@ cdecl -arch=win32 _ftime(ptr) _ftime32
-@ cdecl -arch=i386 -ret64 _ftol()
+@ cdecl _fstat(long ptr) _fstat32
+@ cdecl _ftime(ptr) _ftime32
+@ cdecl -ret64 _ftol()
 @ cdecl _fullpath(ptr str long)
-@ cdecl -arch=win32 _futime(long ptr) _futime32
+@ cdecl _futime(long ptr) _futime32
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
 @ cdecl _getch()
@@ -128,7 +128,7 @@
 @ cdecl _getpid()
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr)
-@ cdecl -arch=i386 _global_unwind2(ptr)
+@ cdecl _global_unwind2(ptr)
 @ cdecl _heapchk()
 @ cdecl _heapmin()
 @ cdecl _heapset(long)
@@ -172,7 +172,7 @@
 @ cdecl _kbhit()
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
-@ cdecl -arch=i386 _local_unwind2(ptr long)
+@ cdecl _local_unwind2(ptr long)
 @ cdecl _locking(long long long)
 @ cdecl _logb(double) logb
 @ cdecl _lrotl(long long) MSVCRT__lrotl
@@ -279,7 +279,7 @@
 @ cdecl _spawnvp(long str ptr)
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr)
-@ cdecl -arch=win32 _stat(str ptr) _stat32
+@ cdecl _stat(str ptr) _stat32
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _strdate(ptr)
@@ -315,7 +315,7 @@
 @ cdecl _ungetch(long)
 @ cdecl _unlink(str)
 @ cdecl _unloaddll(long)
-@ cdecl -arch=win32 _utime(str ptr) _utime32
+@ cdecl _utime(str ptr) _utime32
 @ cdecl _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _wcsdup(wstr)
@@ -354,8 +354,8 @@
 @ cdecl clock()
 @ cdecl cos(double)
 @ cdecl cosh(double)
-@ cdecl -arch=win32 ctime(ptr) _ctime32
-@ cdecl -arch=win32 difftime(long long) _difftime32
+@ cdecl ctime(ptr) _ctime32
+@ cdecl difftime(long long) _difftime32
 @ cdecl -ret64 div(long long)
 @ cdecl exit(long)
 @ cdecl exp(double)
@@ -390,7 +390,7 @@
 @ cdecl getchar()
 @ cdecl getenv(str)
 @ cdecl gets(str)
-@ cdecl -arch=win32 gmtime(ptr) _gmtime32
+@ cdecl gmtime(ptr) _gmtime32
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)
@@ -421,7 +421,7 @@
 @ cdecl ldexp(double long)
 @ cdecl -ret64 ldiv(long long)
 @ cdecl localeconv()
-@ cdecl -arch=win32 localtime(ptr) _localtime32
+@ cdecl localtime(ptr) _localtime32
 @ cdecl log(double)
 @ cdecl log10(double)
 @ cdecl longjmp(ptr long)
@@ -434,7 +434,7 @@
 @ cdecl memcpy(ptr ptr long)
 @ cdecl memmove(ptr ptr long)
 @ cdecl memset(ptr long long)
-@ cdecl -arch=win32 mktime(ptr) _mktime32
+@ cdecl mktime(ptr) _mktime32
 @ cdecl modf(double ptr)
 @ cdecl perror(str)
 @ cdecl pow(double double)
@@ -486,7 +486,7 @@
 @ cdecl system(str)
 @ cdecl tan(double)
 @ cdecl tanh(double) MSVCRT_tanh
-@ cdecl -arch=win32 time(ptr) _time32
+@ cdecl time(ptr) _time32
 @ cdecl tmpfile()
 @ cdecl tmpnam(ptr)
 @ cdecl tolower(long)
