@@ -19,6 +19,18 @@
 import "mediaobj.idl";
 import "strmif.idl";
 
+typedef enum AEC_SYSTEM_MODE
+{
+    SINGLE_CHANNEL_AEC,
+    ADAPTIVE_ARRAY_ONLY,
+    OPTIBEAM_ARRAY_ONLY,
+    ADAPTIVE_ARRAY_AND_AEC,
+    OPTIBEAM_ARRAY_AND_AEC,
+    SINGLE_CHANNEL_NSAGC,
+    MODE_NOT_SET,
+}
+AEC_SYSTEM_MODE;
+
 typedef enum AEC_VAD_MODE
 {
     AEC_VAD_DISABLED,

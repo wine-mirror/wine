@@ -17,6 +17,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <assert.h>
 
 #define COBJMACROS
 #include "windef.h"
@@ -31,13 +32,21 @@
 #include "wmcodecdsp.h"
 #include "dmort.h"
 
+#include "initguid.h"
+
+#include "mmdeviceapi.h"
+#include "audioclient.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aaec);
 
 static const WAVEFORMATEX default_output_format = { WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16, 0 };
 static const DWORD supported_rates[] = { 8000, 11025, 16000, 22050 };
+static const unsigned int default_frame_lengths[] = { 80, 128, 160, 256 };
+static const unsigned int supported_frame_lengths[] = { 80, 128, 160, 240, 256, 320 };
 static const unsigned int max_frame_size_ms = 40;
+static const unsigned int backlog_buffer_size_ms = 100;
 
 struct aaec
 {
@@ -57,9 +66,58 @@ struct aaec
     unsigned int feat_frame_size;
     unsigned int feat_vad;
 
+    unsigned int frame_length;
+    unsigned int frame_size;
+    unsigned int sample_size;
+    unsigned int samples_per_sec;
+    unsigned int held_frames;
+    unsigned int max_held_frames;
+    REFERENCE_TIME held_frames_start_time;
+    BYTE *held_buffer;
+
     DMO_MEDIA_TYPE output_type;
     MFT_OUTPUT_STREAM_INFO output_info;
+    IMMDeviceEnumerator *mme;
+    IAudioClient *ac;
+    IAudioCaptureClient *acc;
 };
+
+static HRESULT get_capture_device(struct aaec *aaec, IMMDevice **dev)
+{
+    IMMDeviceCollection *col;
+    unsigned short index;
+    HRESULT hr;
+
+    index = aaec->device_indexes & 0xffff;
+
+    *dev = NULL;
+    if (!aaec->mme)
+    {
+        if (FAILED((hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&aaec->mme))))
+        {
+            ERR("Failed to create MMDeviceEnumerator.\n");
+            return hr;
+        }
+    }
+    if (index == 0xffff)
+    {
+        if (FAILED(hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(aaec->mme, eCapture, eCommunications, dev)))
+        {
+            WARN("Failed to get default audio endpoint, hr %#lx.\n", hr);
+            return E_PROP_ID_UNSUPPORTED;
+        }
+        return S_OK;
+    }
+
+    if (FAILED(hr = IMMDeviceEnumerator_EnumAudioEndpoints(aaec->mme, eCapture, DEVICE_STATE_ACTIVE, &col)))
+    {
+        WARN("EnumAudioEndpoints failed.\n");
+        return hr;
+    }
+    hr = IMMDeviceCollection_Item(col, index, dev);
+    IMMDeviceCollection_Release(col);
+    return FAILED(hr) ? E_INVALIDARG : S_OK;
+}
 
 static const struct
 {
@@ -79,6 +137,91 @@ property_def[] =
     { &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, offsetof(struct aaec, feat_frame_size) },
     { &MFPKEY_WMAAECMA_FEATR_VAD, VT_I4, offsetof(struct aaec, feat_vad) },
 };
+
+static HRESULT start_audio_capture(struct aaec *aaec)
+{
+    IMMDevice *dev = NULL;
+    UINT32 ac_buffer_len;
+    WAVEFORMATEX *wfx;
+    unsigned int i;
+    HRESULT hr;
+
+    if (aaec->ac) return S_OK;
+    if (IsEqualGUID(&aaec->output_type.majortype, &GUID_NULL)) return DMO_E_TYPE_NOT_SET;
+
+    wfx = (WAVEFORMATEX *)aaec->output_type.pbFormat;
+    if (aaec->feature_mode && aaec->feat_frame_size)
+    {
+        for (i = 0; i < ARRAY_SIZE(supported_frame_lengths); ++i)
+        {
+            if (supported_frame_lengths[i] == aaec->feat_frame_size) break;
+        }
+        if (i == ARRAY_SIZE(supported_frame_lengths)) return E_FAIL;
+        aaec->frame_length = supported_frame_lengths[i];
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
+        {
+            if (supported_rates[i] == wfx->nSamplesPerSec) break;
+        }
+        if (i == ARRAY_SIZE(supported_rates)) return E_FAIL;
+        aaec->frame_length = default_frame_lengths[i];
+    }
+
+    if (FAILED(hr = get_capture_device(aaec, &dev))) return hr;
+    if (FAILED(hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&aaec->ac)))
+        goto done;
+
+    hr = IAudioClient_Initialize(aaec->ac, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
+            | AUDCLNT_STREAMFLAGS_RATEADJUST, backlog_buffer_size_ms * 10000, 0, (WAVEFORMATEX *)aaec->output_type.pbFormat, NULL);
+    if (FAILED(hr)) goto done;
+    if (FAILED(hr = IAudioClient_GetService(aaec->ac, &IID_IAudioCaptureClient, (void**)&aaec->acc))) goto done;
+    if (FAILED(hr = IAudioClient_GetBufferSize(aaec->ac, &ac_buffer_len))) goto done;
+
+    if (FAILED(hr = IAudioClient_Start(aaec->ac))) goto done;
+
+    aaec->held_frames = 0;
+    aaec->samples_per_sec = wfx->nSamplesPerSec;
+    aaec->sample_size = wfx->wBitsPerSample * wfx->nChannels / 8;
+    aaec->frame_size = aaec->frame_length * aaec->sample_size;
+    aaec->max_held_frames = ac_buffer_len;
+    aaec->held_buffer = malloc(aaec->max_held_frames * aaec->sample_size);
+
+done:
+    if (dev) IMMDevice_Release(dev);
+    if (FAILED(hr))
+    {
+        WARN("Failed to start audio capture, hr %#lx.\n", hr);
+        if (aaec->ac)
+        {
+            IAudioClient_Release(aaec->ac);
+            aaec->ac = NULL;
+        }
+        if (aaec->acc)
+        {
+            IAudioCaptureClient_Release(aaec->acc);
+            aaec->acc = NULL;
+        }
+    }
+    else
+    {
+        TRACE("Started audio capture.\n");
+    }
+    return hr;
+}
+
+static void stop_audio_capture(struct aaec *aaec)
+{
+    if (!aaec->ac) return;
+    IAudioClient_Stop(aaec->ac);
+    IAudioCaptureClient_Release(aaec->acc);
+    IAudioClient_Release(aaec->ac);
+    aaec->ac = NULL;
+    aaec->acc = NULL;
+    free(aaec->held_buffer);
+    aaec->held_buffer = NULL;
+}
 
 static struct aaec *impl_from_IUnknown(IUnknown *iface)
 {
@@ -129,6 +272,9 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        stop_audio_capture(impl);
+        if (impl->mme)
+            IMMDeviceEnumerator_Release(impl->mme);
         MoFreeMediaType(&impl->output_type);
         free(impl);
     }
@@ -339,7 +485,7 @@ static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DW
 
 static HRESULT WINAPI transform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
 {
-    FIXME("iface %p, flags %p stub.\n", iface, flags);
+    TRACE("iface %p, flags %p.\n", iface, flags);
     return E_NOTIMPL;
 }
 
@@ -607,14 +753,21 @@ static HRESULT WINAPI media_object_Discontinuity(IMediaObject *iface, DWORD inde
 
 static HRESULT WINAPI media_object_AllocateStreamingResources(IMediaObject *iface)
 {
-    FIXME("iface %p stub.\n", iface);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return start_audio_capture(aaec);
 }
 
 static HRESULT WINAPI media_object_FreeStreamingResources(IMediaObject *iface)
 {
-    FIXME("iface %p stub.\n", iface);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    stop_audio_capture(aaec);
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
@@ -634,9 +787,86 @@ static HRESULT WINAPI media_object_ProcessInput(IMediaObject *iface, DWORD index
 static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count,
         DMO_OUTPUT_DATA_BUFFER *output, DWORD *output_status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, output %p, output_status %p stub.\n", iface, flags, count,
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+    DWORD max_len, size, ac_flags, curr_frame_size, initial_buffer_size;
+    UINT32 ac_rem_frames, ac_buffer_size, frame_count = 0;
+    BYTE *buffer_data, *data, *ac_ptr;
+    UINT64 dev_pos, qpc_pos;
+    HRESULT hr;
+
+    TRACE("iface %p, flags %#lx, count %lu, output %p, output_status %p.\n", iface, flags, count,
             output, output_status);
-    return E_NOTIMPL;
+
+    if (flags) FIXME("Unsupported flags %#lx.\n", flags);
+    if (count != 1) return E_INVALIDARG;
+    if (FAILED(hr = start_audio_capture(aaec))) return hr;
+    if (!output->pBuffer) return S_FALSE;
+    if (FAILED(hr = IMediaBuffer_GetMaxLength(output->pBuffer, &max_len))) return hr;
+    if (FAILED(hr = IMediaBuffer_GetBufferAndLength(output->pBuffer, &buffer_data, &initial_buffer_size)))
+    {
+        ERR("IMediaBuffer_GetBufferAndLength failed with %#lx.\n", hr);
+        return hr;
+    }
+    if (initial_buffer_size > max_len) return E_INVALIDARG;
+    if (max_len - initial_buffer_size < aaec->frame_size) return E_FAIL;
+    buffer_data += initial_buffer_size;
+    if (FAILED(hr = IAudioClient_GetCurrentPadding(aaec->ac, &ac_rem_frames))) return hr;
+    *output_status = 0;
+
+    output->dwStatus = 0;
+    if (aaec->held_frames + ac_rem_frames < aaec->frame_length) return S_FALSE;
+    if (!initial_buffer_size)
+        output->rtTimestamp = aaec->held_frames ? aaec->held_frames_start_time : 0;
+    data = buffer_data;
+    while (1)
+    {
+        curr_frame_size = aaec->frame_size;
+        size = min(curr_frame_size, aaec->held_frames * aaec->sample_size);
+        memcpy(data, aaec->held_buffer, size);
+        curr_frame_size -= size;
+        aaec->held_frames -= size / aaec->sample_size;
+        memmove(aaec->held_buffer, aaec->held_buffer + size, aaec->held_frames * aaec->sample_size);
+        data += size;
+
+        assert(!curr_frame_size || !aaec->held_frames);
+        while (curr_frame_size)
+        {
+            if ((hr = IAudioCaptureClient_GetBuffer(aaec->acc, &ac_ptr, &ac_buffer_size, &ac_flags, &dev_pos, &qpc_pos)))
+            {
+                ERR("failed to get AC buffer.\n");
+                if (FAILED(hr)) return hr;
+                memset(data, 0, curr_frame_size);
+                data += curr_frame_size;
+                curr_frame_size = 0;
+                break;
+            }
+            ac_rem_frames -= min(ac_rem_frames, ac_buffer_size);
+            if (!initial_buffer_size && !output->rtTimestamp) output->rtTimestamp = qpc_pos;
+            ac_buffer_size *= aaec->sample_size;
+            size = min(curr_frame_size, ac_buffer_size);
+            memcpy(data, ac_ptr, size);
+            data += size;
+            curr_frame_size -= size;
+            if (ac_buffer_size > size)
+            {
+                assert(!curr_frame_size);
+                assert(ac_buffer_size < aaec->max_held_frames * aaec->sample_size);
+                aaec->held_frames = (ac_buffer_size - size) / aaec->sample_size;
+                memcpy(aaec->held_buffer, ac_ptr + size, ac_buffer_size - size);
+                aaec->held_frames_start_time = qpc_pos + (REFERENCE_TIME)size / aaec->sample_size * 10000000 / aaec->samples_per_sec;
+            }
+            IAudioCaptureClient_ReleaseBuffer(aaec->acc, ac_buffer_size / aaec->sample_size);
+        }
+        max_len -= aaec->frame_size;
+        ++frame_count;
+        if (max_len < aaec->frame_size) break;
+        if (FAILED((hr = IAudioClient_GetCurrentPadding(aaec->ac, &ac_rem_frames)))) return hr;
+        if (aaec->held_frames + ac_rem_frames < aaec->frame_length) break;
+    }
+    if (aaec->held_frames + ac_rem_frames >= aaec->frame_length) output->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+    if (!initial_buffer_size) output->rtTimelength = 0;
+    output->rtTimelength += (REFERENCE_TIME)frame_count * aaec->frame_length * 10000000 / aaec->samples_per_sec;
+    return IMediaBuffer_SetLength(output->pBuffer, initial_buffer_size + frame_count * aaec->frame_length * aaec->sample_size);
 }
 
 static HRESULT WINAPI media_object_Lock(IMediaObject *iface, LONG lock)
@@ -762,6 +992,7 @@ static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTY
                 ERR("Unknown vt %d.\n", property_def[i].vt);
                 break;
         }
+        stop_audio_capture(aaec);
         return S_OK;
     }
 

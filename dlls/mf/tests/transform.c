@@ -47,6 +47,7 @@
 
 #include "codecapi.h"
 #include "icodecapi.h"
+#include "vfwmsgs.h"
 
 #include "d3d11_4.h"
 
@@ -12374,9 +12375,23 @@ static void test_aaec(void)
         { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 2 / 8, 16, 0}, FALSE, },
         { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
     };
+    static const struct
+    {
+        WAVEFORMATEX format;
+        unsigned int frame_len;
+    }
+    process_output_tests[] =
+    {
+        { {WAVE_FORMAT_PCM, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, 0 },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, 0 },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, 240 },
+    };
 
     static const PROPERTYKEY null_key = { 0 };
-    DWORD in_count, out_count, flags, size, align;
+    DWORD in_count, out_count, flags, size, align, status, start_tick, tick, curr_rate;
+    unsigned int i, frame_count, frame_size, sample_size;
+    struct media_buffer *output_media_buffer = NULL;
+    DMO_OUTPUT_DATA_BUFFER dmo_buffer;
     MFT_OUTPUT_STREAM_INFO info;
     IMFMediaType *media_type;
     IMFTransform *transform;
@@ -12385,8 +12400,9 @@ static void test_aaec(void)
     DMO_MEDIA_TYPE type;
     WAVEFORMATEX format;
     IMediaObject *dmo;
+    LARGE_INTEGER qpc;
     PROPVARIANT val;
-    unsigned int i;
+    UINT64 timeval;
     LONG ref;
 
     winetest_push_context("aaec");
@@ -12479,6 +12495,9 @@ static void test_aaec(void)
         winetest_pop_context();
     }
 
+    hr = IMFTransform_GetOutputStatus(transform, &status);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
     IMFTransform_Release(transform);
 
     /* Test DMO */
@@ -12522,6 +12541,17 @@ static void test_aaec(void)
     ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
 
     hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &align);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    hr = IMediaObject_FreeStreamingResources(dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IMediaObject_AllocateStreamingResources(dmo);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+    dmo_buffer.pBuffer = NULL;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
     ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
@@ -12568,10 +12598,194 @@ static void test_aaec(void)
     check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_CENTER_CLIP, VT_BOOL, 0xffff);
     check_scalar_property(store, &MFPKEY_WMAAECMA_FEATURE_MODE, VT_BOOL, 0);
     check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_VAD, VT_I4, 0);
 
     hr = IPropertyStore_GetValue(store, &null_key, &val);
     ok(hr == MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED, "got %#lx.\n", hr);
 
+    hr = IMediaObject_SetOutputType(dmo, 0, &expected_output_type, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+    dmo_buffer.pBuffer = NULL;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+    ok(hr == S_FALSE || hr == E_PROP_ID_UNSUPPORTED, "got %#lx.\n", hr);
+    if (hr == E_PROP_ID_UNSUPPORTED)
+    {
+        skip("No audio input available, skipping tests.\n");
+        goto skip_dmo_process_output;
+    }
+
+    hr = IMediaObject_ProcessOutput(dmo, 0, 0, &dmo_buffer, &status);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = media_buffer_create(1024 * 1024, &output_media_buffer);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    V_VT(&val) = VT_I4;
+    /* Disable echo cancellation. That doesn't affect test results for _ProcessOutput frame size and timestamp tests
+     * below except for with echo cancellation enabled _ProcessOutput doesn't work on Testbot VMs: results in
+     * WMAAECMA_E_NO_ACTIVE_RENDER_STREAM after spinning for 4sec returning S_FALSE. */
+    val.ulVal = SINGLE_CHANNEL_NSAGC;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    timeBeginPeriod(1);
+
+    for (i = 0; i < ARRAY_SIZE(process_output_tests); ++i)
+    {
+        const WAVEFORMATEX *format = &process_output_tests[i].format;
+
+        winetest_push_context("test %u", i);
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)format;
+
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, 0);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        sample_size = format->nChannels * format->wBitsPerSample / 8;
+        curr_rate = format->nSamplesPerSec;
+        if (process_output_tests[i].frame_len)
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0xffff;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            V_VT(&val) = VT_I4;
+            val.ulVal = process_output_tests[i].frame_len;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+
+            frame_size = process_output_tests[i].frame_len * sample_size;
+        }
+        else
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            switch (curr_rate)
+            {
+                case 8000: frame_size = 80 * sample_size; break;
+                case 11025: frame_size = 128 * sample_size; break;
+                case 16000: frame_size = 160 * sample_size; break;
+                case 22050: frame_size = 256 * sample_size; break;
+                default:
+                    ok(0, "unexpected frame rate.\n");
+                    frame_size = 0;
+                    break;
+            }
+        }
+
+        /* New output type won't be picked up otherwise once _ProcessOutput was called. */
+        hr = IMediaObject_FreeStreamingResources(dmo);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+        dmo_buffer.pBuffer = NULL;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == S_FALSE, "got %#lx.\n", hr);
+
+        dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+        output_media_buffer->length = 0;
+        output_media_buffer->max_length = frame_size / 2;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_FAIL, "got %#lx.\n", hr);
+
+        dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+        output_media_buffer->length = 0;
+        output_media_buffer->max_length = frame_size;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == S_OK || hr == S_FALSE, "got %#lx.\n", hr);
+
+        output_media_buffer->length = 4;
+        output_media_buffer->max_length = frame_size;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_FAIL, "got %#lx.\n", hr);
+
+        output_media_buffer->max_length = 1048576;
+
+        output_media_buffer->length = 0xcccccccc;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+        start_tick = GetTickCount();
+        frame_count = 0;
+        while ((tick = GetTickCount()) - start_tick < 5000 && frame_count < 3)
+        {
+            unsigned int buffer_offset;
+
+            winetest_push_context("frame %d", frame_count);
+            memset(output_media_buffer->data, 0xcc, output_media_buffer->max_length);
+            memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+            dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+            dmo_buffer.rtTimelength = 0xcccccccccccccccc;
+            status = 0xdeadbeef;
+            buffer_offset = frame_count ? 0 : 4;
+            output_media_buffer->length = buffer_offset;
+            hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+            ok(hr == S_OK || hr == S_FALSE || hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, "got %#lx.\n", hr);
+            if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            {
+                skip("Got WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, skipping tests, elapsed %lums.\n", tick - start_tick);
+                break;
+            }
+            ok(!status, "got %#lx.\n", status);
+            ok(dmo_buffer.pBuffer == &output_media_buffer->IMediaBuffer_iface, "got %p.\n", dmo_buffer.pBuffer);
+            ok(!dmo_buffer.dwStatus, "got %#lx.\n", dmo_buffer.dwStatus);
+            if (hr == S_OK)
+            {
+                QueryPerformanceCounter(&qpc);
+                if (buffer_offset)
+                    ok(*(DWORD *)output_media_buffer->data == 0xcccccccc, "got %#lx.\n", *(DWORD *)output_media_buffer->data);
+                ok(*(DWORD *)(output_media_buffer->data + buffer_offset) != 0xcccccccc, "got %#lx.\n",
+                        *(DWORD *)(output_media_buffer->data + 4));
+                ok(output_media_buffer->length > buffer_offset, "got %ld.\n", output_media_buffer->length);
+                output_media_buffer->length -= buffer_offset;
+                ok((output_media_buffer->length % frame_size) == 0, "got length %ld, frame_size %d.\n",
+                        output_media_buffer->length, frame_size);
+                timeval = (UINT64)output_media_buffer->length / sample_size * 10000000 / curr_rate;
+                if (buffer_offset)
+                    timeval += 0xcccccccccccccccc;
+                ok(timeval - dmo_buffer.rtTimelength <= 1, "got %I64u, expected %I64u.\n", dmo_buffer.rtTimelength, timeval);
+                if (buffer_offset)
+                {
+                    ok(dmo_buffer.rtTimestamp == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimestamp);
+                }
+                else
+                {
+                    ok(dmo_buffer.rtTimestamp < qpc.QuadPart, "timestamp is in the future (%I64u, %I64u).\n",
+                            dmo_buffer.rtTimestamp, qpc.QuadPart);
+                    ok(dmo_buffer.rtTimestamp > qpc.QuadPart - 50 * 10000, "timestamp is too old %I64ums (%I64u, %I64u).\n",
+                            (qpc.QuadPart - dmo_buffer.rtTimestamp) / 10000, dmo_buffer.rtTimestamp, qpc.QuadPart);
+                }
+                ++frame_count;
+            }
+            else
+            {
+                ok(dmo_buffer.rtTimelength == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimelength);
+                ok(dmo_buffer.rtTimestamp == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimestamp);
+                ok(output_media_buffer->length == buffer_offset, "got %lu.\n", output_media_buffer->length);
+                ok(*(DWORD *)output_media_buffer->data == 0xcccccccc, "got %#lx.\n", *(DWORD *)output_media_buffer->data);
+                ok(*(DWORD *)(output_media_buffer->data + 4) == 0xcccccccc, "got %#lx.\n",
+                        *(DWORD *)(output_media_buffer->data + 4));
+            }
+            Sleep(1);
+            winetest_pop_context();
+        }
+        ok(hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM || frame_count == 3, "got %d.\n", frame_count);
+        winetest_pop_context();
+        if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            break;
+    }
+    timeEndPeriod(1);
+
+    hr = IMediaObject_FreeStreamingResources(dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    ref = IMediaBuffer_Release(&output_media_buffer->IMediaBuffer_iface);
+    ok(!ref, "Release returned %lu\n", ref);
+
+skip_dmo_process_output:
     V_VT(&val) = VT_I4;
     val.ulVal = 0x1;
     hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
@@ -12593,7 +12807,8 @@ static void test_aaec(void)
     check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 512);
 
     IPropertyStore_Release(store);
-    IMediaObject_Release(dmo);
+    ref = IMediaObject_Release(dmo);
+    ok(!ref, "got %ld.\n", ref);
 
     MFShutdown();
     CoUninitialize();
