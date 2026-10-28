@@ -3287,19 +3287,6 @@ void virtual_init(void)
         reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
     }
 
-    if (is_win64) /* top-down area */
-    {
-        void *start = (void *)0x7ff000000000;
-        void *end = (void *)0x7ff600000000;
-
-        if (start > host_addr_space_limit)
-        {
-            end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
-            start = (char *)end - limit_4g;
-        }
-        reserve_area( start, end );
-    }
-
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
     pages_vprot = calloc( pages_vprot_size, sizeof(*pages_vprot) );
@@ -3655,7 +3642,19 @@ static struct thread_data *init_thread_data( void *ptr )
 /* enable use of a large address space when allowed by the application */
 static void set_large_address_space(void)
 {
-    if (is_machine_64bit( main_image_info.Machine )) return;
+    if (is_machine_64bit( main_image_info.Machine ))
+    {
+        void *start = (void *)0x7ff000000000;
+        void *end = (void *)0x7ff600000000;
+
+        if (start > host_addr_space_limit)
+        {
+            end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
+            start = (char *)end - limit_4g;
+        }
+        reserve_area( start, end );
+        return;
+    }
 
     if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
     {
