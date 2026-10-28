@@ -4714,10 +4714,8 @@ static void test_cross_process_dpi_child( HWND parent, unsigned int mode )
 
     SetLastError( 0xdeadbeef );
     ret = SetParent( child, parent );
-    todo_wine_if( expected != mode )
     ok( ret == original, "SetParent returned %p, expected %p, error %lu\n", ret, original, GetLastError() );
     ret = GetParent( child );
-    todo_wine_if( expected != mode )
     ok( ret == parent, "Expected parent %p, got %p\n", parent, ret );
 
     /* Cross-process reparenting also resets the child's process DPI awareness. */
