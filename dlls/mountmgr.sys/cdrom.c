@@ -172,7 +172,9 @@ NTSTATUS cdrom_open( void *args )
     if (!(cdrom = malloc( sizeof( *cdrom ))))
         return STATUS_NO_MEMORY;
 
-    if ((cdrom->fd = open( params->unix_device, O_RDONLY )) < 0)
+    /* O_NONBLOCK does not provide non-blocking behaviour on I/O, nor do we
+     * want it; instead it allows opening a device with no medium */
+    if ((cdrom->fd = open( params->unix_device, O_RDONLY | O_NONBLOCK )) < 0)
     {
         WARN( "failed to open %s: %s\n", params->unix_device, strerror(errno) );
         return errno_to_status( errno );
