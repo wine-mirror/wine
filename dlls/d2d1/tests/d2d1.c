@@ -11829,7 +11829,6 @@ static void check_system_properties_(unsigned int line, ID2D1Effect *effect)
     value_size = ID2D1Effect_GetValueSize(effect, 0xdeadbeef);
     ok_(__FILE__, line)(value_size == 0, "Got unexpected value size %u for 0xdeadbeef.\n", value_size);
     count = ID2D1Effect_GetPropertyNameLength(effect, 0xdeadbeef);
-    todo_wine
     ok_(__FILE__, line)(!count, "Got unexpected property name length %u.\n", count);
 
     for (i = 0; i < ARRAY_SIZE(system_property_tests); ++i)
@@ -16787,7 +16786,6 @@ static void test_get_effect_properties(BOOL d3d11)
     count = ID2D1Properties_GetPropertyNameLength(properties, 1);
     ok(count == 10, "Unexpected name length %u.\n", count);
     count = ID2D1Properties_GetPropertyNameLength(properties, 2);
-    todo_wine
     ok(!count, "Unexpected name length %u.\n", count);
 
     type = ID2D1Properties_GetType(properties, 0);
