@@ -3698,6 +3698,8 @@ struct thread_data *virtual_alloc_first_thread_data(void)
     unsigned int status;
     struct thread_data *thread_data;
     struct file_view *view;
+    size_t size = signal_stack_mask + 1 + kernel_stack_size;
+    void *ptr;
 
     /* reserve space for shared user data */
     status = map_view( &view, user_shared_data, page_size, 0, VPROT_READ | VPROT_COMMITTED, 0, 0, 0 );
@@ -3707,9 +3709,12 @@ struct thread_data *virtual_alloc_first_thread_data(void)
         exit(1);
     }
 
-    status = map_view( &view, NULL, signal_stack_mask + 1 + kernel_stack_size, MEM_TOP_DOWN,
-                       VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, 4 * limit_4g, 0, 0 );
+    ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
+    assert( ptr != MAP_FAILED );
+    status = create_view( &view, ptr, size, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     assert( !status );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
+
     thread_data = init_thread_data( view->base );
     pthread_setspecific( thread_data_key, thread_data );
     return thread_data;
