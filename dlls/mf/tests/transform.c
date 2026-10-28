@@ -1016,6 +1016,20 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     return ret;
 }
 
+#define check_scalar_property(a,b,c,d) check_scalar_property_(__LINE__,a,b,c,d)
+static void check_scalar_property_( ULONG line, IPropertyStore *store, const PROPERTYKEY *key, VARTYPE vt, ULONG value)
+{
+    PROPVARIANT val;
+    HRESULT hr;
+
+    PropVariantInit(&val);
+    hr = IPropertyStore_GetValue(store, key, &val);
+    ok_(__FILE__, line)(hr == S_OK, "IPropertyStore_GetValue returned %#lx.\n", hr);
+    ok_(__FILE__, line)(V_VT(&val) == vt, "got VT %d, expected %d.\n", V_VT(&val), vt);
+    ok_(__FILE__, line)(val.ulVal == value, "got value %#lx, expected %#lx.\n", val.ulVal, value);
+    PropVariantClear(&val);
+}
+
 DWORD compare_nv12(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
     DWORD x, y, data_size, diff = 0, width = size->cx, height = size->cy;
@@ -12342,12 +12356,14 @@ static void test_aaec(void)
         ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
         {0},
     };
-
+    static const PROPERTYKEY null_key = { 0 };
     DWORD in_count, out_count, flags;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    IPropertyStore *store;
     DMO_MEDIA_TYPE type;
     IMediaObject *dmo;
+    PROPVARIANT val;
     unsigned int i;
     HRESULT hr;
     LONG ref;
@@ -12396,10 +12412,10 @@ static void test_aaec(void)
     hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
-    check_interface(transform, &IID_IMFTransform, TRUE);
-    check_interface(transform, &IID_IMediaObject, TRUE);
-    check_interface(transform, &IID_IPropertyStore, TRUE);
-    check_interface(transform, &IID_IPropertyBag, FALSE);
+    check_interface(dmo, &IID_IMFTransform, TRUE);
+    check_interface(dmo, &IID_IMediaObject, TRUE);
+    check_interface(dmo, &IID_IPropertyStore, TRUE);
+    check_interface(dmo, &IID_IPropertyBag, FALSE);
 
     in_count = out_count = 0xdeadbeef;
     hr = IMediaObject_GetStreamCount(dmo, &in_count, &out_count);
@@ -12427,6 +12443,41 @@ static void test_aaec(void)
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx.\n", hr);
     ok(flags == 0xdeadbeef, "got %#lx.\n", flags);
 
+    hr = IMediaObject_QueryInterface(dmo, &IID_IPropertyStore, (void **)&store);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_DMO_SOURCE_MODE, VT_BOOL, 0xffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_DEVICE_INDEXES, VT_I4, 0xffffffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, VT_I4, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_AGC, VT_BOOL, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_NS, VT_I4, 1);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_CENTER_CLIP, VT_BOOL, 0xffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATURE_MODE, VT_BOOL, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 0);
+
+    hr = IPropertyStore_GetValue(store, &null_key, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED, "got %#lx.\n", hr);
+
+    V_VT(&val) = VT_I4;
+    val.ulVal = 0x1;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_VARIANT_TYPE_WRONG, "got %#lx.\n", hr);
+    hr = IPropertyStore_SetValue(store, &null_key, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED, "got %#lx.\n", hr);
+    V_VT(&val) = VT_BOOL;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_VALUE_OUT_OF_RANGE, "got %#lx.\n", hr);
+    val.ulVal = 0xffff;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_AGC, VT_BOOL, 0xffff);
+
+    V_VT(&val) = VT_I4;
+    val.ulVal = 512;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 512);
+
+    IPropertyStore_Release(store);
     IMediaObject_Release(dmo);
 
     MFShutdown();

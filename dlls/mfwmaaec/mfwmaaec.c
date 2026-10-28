@@ -44,6 +44,32 @@ struct aaec
     IPropertyStore IPropertyStore_iface;
     IUnknown *outer;
     LONG refcount;
+    BOOL source_mode;
+    BOOL feature_mode;
+    BOOL feat_agc;
+    BOOL feat_center_clip;
+    unsigned int device_indexes;
+    unsigned int system_mode;
+    unsigned int feat_ns;
+    unsigned int feat_frame_size;
+};
+
+static const struct
+{
+    REFPROPERTYKEY key;
+    VARTYPE vt;
+    unsigned int offset;
+}
+property_def[] =
+{
+    { &MFPKEY_WMAAECMA_DMO_SOURCE_MODE, VT_BOOL, offsetof(struct aaec, source_mode) },
+    { &MFPKEY_WMAAECMA_DEVICE_INDEXES, VT_I4, offsetof(struct aaec, device_indexes) },
+    { &MFPKEY_WMAAECMA_SYSTEM_MODE, VT_I4, offsetof(struct aaec, system_mode) },
+    { &MFPKEY_WMAAECMA_FEATR_AGC, VT_BOOL, offsetof(struct aaec, feat_agc) },
+    { &MFPKEY_WMAAECMA_FEATR_NS, VT_I4, offsetof(struct aaec, feat_ns) },
+    { &MFPKEY_WMAAECMA_FEATR_CENTER_CLIP, VT_BOOL, offsetof(struct aaec, feat_center_clip) },
+    { &MFPKEY_WMAAECMA_FEATURE_MODE, VT_BOOL, offsetof(struct aaec, feature_mode) },
+    { &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, offsetof(struct aaec, feat_frame_size) },
 };
 
 static struct aaec *impl_from_IUnknown(IUnknown *iface)
@@ -578,14 +604,64 @@ static HRESULT WINAPI property_store_GetAt(IPropertyStore *iface, DWORD index, P
 
 static HRESULT WINAPI property_store_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *value)
 {
-    FIXME("iface %p, key %p, value %p stub.\n", iface, key, value);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("iface %p, key (%s,%lu), value %p.\n", iface, debugstr_guid(&key->fmtid), key->pid, value);
+
+    PropVariantInit(value);
+    for (i = 0; i < ARRAY_SIZE(property_def); ++i)
+    {
+        if (!IsEqualPropertyKey(*key, *property_def[i].key)) continue;
+        V_VT(value) = property_def[i].vt;
+        switch (property_def[i].vt)
+        {
+            case VT_BOOL:
+                value->boolVal = *(BOOL *)((char *)aaec + property_def[i].offset) ? VARIANT_TRUE : VARIANT_FALSE;
+                break;
+            case VT_I4:
+                value->lVal = *(unsigned int *)((char *)aaec + property_def[i].offset);
+                break;
+            default:
+                ERR("Unknown vt %d.\n", property_def[i].vt);
+                break;
+        }
+        return S_OK;
+    }
+
+    FIXME("key (%s,%lu) not recognized.\n", debugstr_guid(&key->fmtid), key->pid);
+    return MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED;
 }
 
 static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT value)
 {
-    FIXME("iface %p, key %p, value %p stub.\n", iface, key, value);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("iface %p, key (%s,%lu), value %p.\n", iface, debugstr_guid(&key->fmtid), key->pid, value);
+
+    for (i = 0; i < ARRAY_SIZE(property_def); ++i)
+    {
+        if (!IsEqualPropertyKey(*key, *property_def[i].key)) continue;
+        if (V_VT(value) != property_def[i].vt) return MF_E_TRANSFORM_PROPERTY_VARIANT_TYPE_WRONG;
+        switch (property_def[i].vt)
+        {
+            case VT_BOOL:
+                if (value->boolVal != VARIANT_TRUE && value->boolVal != VARIANT_FALSE)
+                    return MF_E_TRANSFORM_PROPERTY_VALUE_OUT_OF_RANGE;
+                *(BOOL *)((char *)aaec + property_def[i].offset) = (value->boolVal == VARIANT_TRUE);
+                break;
+            case VT_I4:
+                *(unsigned int *)((char *)aaec + property_def[i].offset) = value->lVal;
+                break;
+            default:
+                ERR("Unknown vt %d.\n", property_def[i].vt);
+                break;
+        }
+        return S_OK;
+    }
+
+    return MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED;
 }
 
 static HRESULT WINAPI property_store_Commit(IPropertyStore *iface)
@@ -625,6 +701,10 @@ static HRESULT WINAPI aaec_factory_CreateInstance(IClassFactory *iface, IUnknown
     impl->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
     impl->refcount = 1;
     impl->outer = outer ? outer : &impl->IUnknown_inner;
+    impl->source_mode = TRUE;
+    impl->device_indexes = 0xffffffff;
+    impl->feat_ns = 1;
+    impl->feat_center_clip = TRUE;
 
     TRACE("Created aaec %p\n", impl);
 
