@@ -16271,10 +16271,8 @@ msgid "&Save\tCtrl+S"
 msgstr "&Сохранить\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "Сохранить как..."
+msgstr "Сохранить &как..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -16306,8 +16304,6 @@ msgid "&Paste\tCtrl+V"
 msgstr "Вст&авить\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
 msgstr "&Удалить\tDel"
 
@@ -16317,8 +16313,6 @@ msgid "&Find...\tCtrl+F"
 msgstr "&Найти...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
 msgstr "На&йти далее\tF3"
 
@@ -16327,14 +16321,10 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:52
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "Созд&ать...\tCtrl+N"
+msgstr "&Перейти...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "Выделить в&сё\tCtrl+A"
 
@@ -16348,7 +16338,7 @@ msgstr "Фор&мат"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "&Перенос по словам"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -16363,7 +16353,7 @@ msgstr "&Содержание\tF1"
 
 #: programs/notepad/notepad.rc:68
 msgid "&About Notepad"
-msgstr "&О Notepad"
+msgstr "&О Блокноте"
 
 #: programs/notepad/notepad.rc:108
 msgid "Page Setup"
@@ -19540,10 +19530,8 @@ msgid "&Theme:"
 msgstr "&Тема:"
 
 #: programs/winecfg/winecfg.rc:298
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "&Тема:"
+msgstr "Т&ема WinRT:"
 
 #: programs/winecfg/winecfg.rc:300
 msgid "&Install theme..."
@@ -19562,10 +19550,8 @@ msgid "MIME types"
 msgstr "Типы MIME"
 
 #: programs/winecfg/winecfg.rc:314
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Управлять &ассоциациями файлов"
+msgstr "Управлять &ассоциациями файлов и протоколов"
 
 #: programs/winecfg/winecfg.rc:317
 msgid "Folders"
@@ -19652,10 +19638,8 @@ msgid "(System default)"
 msgstr "(по умолчанию)"
 
 #: programs/winecfg/winecfg.rc:90
-#, fuzzy
-#| msgid "5.1 Surround"
 msgid "7.1 Surround"
-msgstr "Объёмное звучание 5.1"
+msgstr "Объёмное звучание 7.1"
 
 #: programs/winecfg/winecfg.rc:91
 msgid "5.1 Surround"
