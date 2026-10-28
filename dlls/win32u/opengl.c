@@ -1007,9 +1007,10 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
+    GLenum ret, draw_buffer = GL_BACK;
+    GLuint fbo = 0, tex = 0;
     NTSTATUS status;
     UINT index = -1;
-    GLuint tex = 0;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
@@ -1018,13 +1019,23 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     else
     {
         D3DKMT_HANDLE image = d3dkmt_swapchain_get_image( surface->swapchain, index, &src );
+
+        funcs->p_glGenFramebuffers( 1, &fbo );
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo );
+
         funcs->p_glGenTextures( 1, &tex );
         driver_funcs->p_texture_import( tex, image, src );
+        funcs->p_glFramebufferTexture( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0 );
+
+        ret = funcs->p_glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER );
+        if (ret != GL_FRAMEBUFFER_COMPLETE) ERR( "glCheckFramebufferStatus returned %#x\n", ret );
+
+        draw_buffer = GL_COLOR_ATTACHMENT0;
     }
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
-    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
-    funcs->p_glDrawBuffer( GL_BACK );
+    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo );
+    funcs->p_glDrawBuffer( draw_buffer );
     if (drawable->srgb) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
 
     if (drawable->read_fbo == drawable->draw_fbo && use_default_gamma_ramp())
@@ -1073,10 +1084,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     }
 
     if (tex) funcs->p_glDeleteTextures( 1, &tex );
+    if (fbo) funcs->p_glDeleteFramebuffers( 1, &fbo );
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
 
     if (index != -1)
     {
+        funcs->p_glFlush();
         status = framebuffer_swapchain_queue_present( drawable, index );
         if (status) WARN( "Failed to present swapchain image, status %#x\n", status );
     }
@@ -1141,7 +1154,7 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
         {
             make_thread_context_current( surface->root_context, surface->target );
             blit_framebuffer_surface( drawable );
-            opengl_drawable_swap( surface->target );
+            if (!surface->swapchain) opengl_drawable_swap( surface->target );
         }
     }
 
@@ -1197,7 +1210,7 @@ static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
     {
         make_thread_context_current( surface->root_context, surface->target );
         blit_framebuffer_surface( drawable );
-        opengl_drawable_swap( surface->target );
+        if (!surface->swapchain) opengl_drawable_swap( surface->target );
     }
 
     make_client_context_current();
