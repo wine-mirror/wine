@@ -44,6 +44,10 @@ struct ldapoptions ldap_int_global_options =
 		LDAP_LDO_SASL_NULLARG
 		LDAP_LDO_MUTEX_NULLARG };
 
+#if defined(HAVE_WINSOCK) || defined(HAVE_WINSOCK2)
+static int ldap_int_winsock_initialized;
+#endif
+
 #define ATTR_NONE	0
 #define ATTR_BOOL	1
 #define ATTR_INT	2
@@ -529,7 +533,10 @@ ldap_int_destroy_global_options(void)
 	}
 
 #if defined(HAVE_WINSOCK) || defined(HAVE_WINSOCK2)
-	WSACleanup( );
+	if ( ldap_int_winsock_initialized ) {
+		WSACleanup( );
+		ldap_int_winsock_initialized = 0;
+	}
 #endif
 
 #if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
@@ -679,12 +686,14 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 	    WSACleanup( );
 	    goto done;
 	}
+	ldap_int_winsock_initialized = 1;
 }	/* The WinSock DLL is acceptable. Proceed. */
 #elif defined(HAVE_WINSOCK)
 {	WSADATA wsaData;
 	if ( WSAStartup( 0x0101, &wsaData ) != 0 ) {
 	    goto done;
 	}
+	ldap_int_winsock_initialized = 1;
 }
 #endif
 
