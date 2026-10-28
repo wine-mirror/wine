@@ -526,11 +526,11 @@ static void test_GetUserName(const char *username, HANDLE token)
     service_ok(ret, "GetUserNameA failed, error %lu.\n", GetLastError());
     if (!strcmpi(username, "System"))
     {
-        service_todo_wine_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
+        service_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
     }
     else if (!strcmpi(username, "LocalService"))
     {
-        service_todo_wine_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
+        service_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
     }
     else if (!strcmpi(username, "NetworkService"))
     {
@@ -539,7 +539,7 @@ static void test_GetUserName(const char *username, HANDLE token)
         service_ok(ret, "GetComputerNameA failed, error %lu.\n", GetLastError());
 
         strcat(buffer2, "$");
-        service_todo_wine_ok(!strcmp(buffer2, buffer), "Expected username %s, got %s.\n", buffer2, buffer);
+        service_ok(!strcmp(buffer2, buffer), "Expected username %s, got %s.\n", buffer2, buffer);
     }
 
     size = sizeof(token_buf);

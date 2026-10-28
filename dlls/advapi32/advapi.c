@@ -72,14 +72,50 @@ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
  */
 BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
 {
-    DWORD len = GetEnvironmentVariableW( L"WINEUSERNAME", name, *size );
-    BOOL ret;
+    static SID network_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_NETWORK_SERVICE_RID}};
+    char token_buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
+    TOKEN_USER *token_user = (TOKEN_USER *)token_buffer;
+    DWORD token_buffer_size = 0, domain_size = MAX_PATH;
+    WCHAR buffer[UNLEN + 2];
+    DWORD buffer_size = ARRAY_SIZE(buffer);
+    SID_NAME_USE name_use;
 
-    if (!len) return FALSE;
-    if ((ret = (len < *size))) len++;
-    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-    *size = len;
-    return ret;
+    TRACE("name %p, size %p.\n", name, size);
+
+    token_buffer_size = sizeof(token_buffer);
+    if (!GetTokenInformation( GetCurrentThreadEffectiveToken(), TokenUser, token_user,
+                              token_buffer_size, &token_buffer_size ))
+        return FALSE;
+
+    /* The NetworkService account returns "<HOSTNAME>$" */
+    if (EqualSid( token_user->User.Sid, &network_service ))
+    {
+        if (!GetComputerNameW( buffer, &buffer_size ))
+            return FALSE;
+
+        wcscat( buffer, L"$" );
+        buffer_size += 1;
+    }
+    else
+    {
+        if (!LookupAccountSidW( NULL, token_user->User.Sid, buffer, &buffer_size, NULL, &domain_size, &name_use ))
+            return FALSE;
+    }
+
+    /* buffer_size from GetComputerNameW()/LookupAccountSidW() doesn't include the terminating NUL
+     * character on success */
+    buffer_size += 1;
+
+    if (!name || *size < buffer_size)
+    {
+        *size = buffer_size;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    memcpy( name, buffer, buffer_size * sizeof(WCHAR) );
+    *size = buffer_size;
+    return TRUE;
 }
 
 /******************************************************************************
