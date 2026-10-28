@@ -597,13 +597,28 @@ static void test_Win32_Service( IWbemServices *services )
     out = NULL;
     hr = IWbemServices_ExecMethod( services, path, method, 0, NULL, in, &out, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
+
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( !V_I4(&retval) || V_I4(&retval) == 2, "got %ld\n", V_I4(&retval) );
+
+    V_VT( &var ) = VT_BSTR;
+    V_BSTR( &var ) = SysAllocString( L"Auto" );
+    hr = IWbemClassObject_Put( in, L"StartMode", 0, &var, 0 );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    VariantClear( &var );
+
+    out = NULL;
+    hr = IWbemServices_ExecMethod( services, path, method, 0, NULL, in, &out, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
     SysFreeString( method );
     SysFreeString( path );
 
     VariantInit( &retval );
     hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, NULL, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
-    ok( !V_I4(&retval) || V_I4(&retval) == 2, "got %ld\n", V_I4(&retval) );
+    ok( V_I4(&retval) == 21, "got %ld\n", V_I4(&retval) );
 
     IWbemClassObject_Release( out );
     IWbemClassObject_Release( sig_in );

@@ -314,11 +314,11 @@ done:
 
 static DWORD map_start_mode( const WCHAR *start_mode )
 {
-    if (!wcsicmp( start_mode, L"Boot" ))     return SERVICE_BOOT_START;
-    if (!wcsicmp( start_mode, L"System" ))   return SERVICE_SYSTEM_START;
-    if (!wcsicmp( start_mode, L"Auto" ))     return SERVICE_AUTO_START;
-    if (!wcsicmp( start_mode, L"Manual" ))   return SERVICE_DEMAND_START;
-    if (!wcsicmp( start_mode, L"Disabled" )) return SERVICE_DISABLED;
+    if (!wcsicmp( start_mode, L"Boot" ))      return SERVICE_BOOT_START;
+    if (!wcsicmp( start_mode, L"System" ))    return SERVICE_SYSTEM_START;
+    if (!wcsicmp( start_mode, L"Automatic" )) return SERVICE_AUTO_START;
+    if (!wcsicmp( start_mode, L"Manual" ))    return SERVICE_DEMAND_START;
+    if (!wcsicmp( start_mode, L"Disabled" ))  return SERVICE_DISABLED;
     WARN( "unknown mode %s\n", debugstr_w(start_mode) );
     return ~0u;
 }
