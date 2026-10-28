@@ -91,7 +91,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
-#if defined __i386__ || (defined __x86_64__ && !defined __APPLE__)
+#if (defined __i386__ || defined __x86_64__) && !defined __APPLE__
 #define SO_DLLS_SUPPORTED
 #endif
 
@@ -669,19 +669,8 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
 
     delta      = (const BYTE *)nt_descr - addr;
     data_start = delta & ~align_mask;
-#ifdef __APPLE__
-    {
-        Dl_info dli;
-        unsigned long data_size;
-        /* need the mach_header, not the PE header, to give to getsegmentdata(3) */
-        dladdr(addr, &dli);
-        code_end   = getsegmentdata(dli.dli_fbase, "__DATA", &data_size) - addr;
-        data_end   = (code_end + data_size + align_mask) & ~align_mask;
-    }
-#else
     code_end   = data_start;
     data_end   = (nt->OptionalHeader.SizeOfImage + delta + align_mask) & ~align_mask;
-#endif
 
     fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
 
@@ -881,18 +870,6 @@ static NTSTATUS load_so_dll( void *args )
 /* only returns false for a valid library of the wrong arch */
 static int check_library_arch( int fd )
 {
-#ifdef __APPLE__
-    struct  /* Mach-O header */
-    {
-        unsigned int magic;
-        unsigned int cputype;
-    } header;
-
-    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
-    if (header.magic != 0xfeedface) return 1;
-    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
-    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
-#else
     struct  /* ELF header */
     {
         unsigned char magic[4];
@@ -911,7 +888,6 @@ static int check_library_arch( int fd )
 #endif
     if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
     else return header.class == 2; /* ELFCLASS64 */
-#endif
 }
 
 /***********************************************************************
