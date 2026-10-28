@@ -227,6 +227,7 @@ UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, 
     android_driver_funcs.p_context_destroy = (*driver_funcs)->p_context_destroy;
     android_driver_funcs.p_context_activate = (*driver_funcs)->p_context_activate;
     android_driver_funcs.p_texture_export = (*driver_funcs)->p_texture_export;
+    android_driver_funcs.p_texture_import = (*driver_funcs)->p_texture_import;
 
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;

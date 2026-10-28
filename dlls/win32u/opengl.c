@@ -1009,13 +1009,17 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     float ramp_data[GAMMA_RAMP_SIZE * 4];
     NTSTATUS status;
     UINT index = -1;
+    GLuint tex = 0;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
     if ((status = framebuffer_swapchain_acquire_image( drawable, &index )))
-    {
         WARN( "Failed to acquire swapchain image, status %#x\n", status );
-        index = -1;
+    else
+    {
+        D3DKMT_HANDLE image = d3dkmt_swapchain_get_image( surface->swapchain, index, &src );
+        funcs->p_glGenTextures( 1, &tex );
+        driver_funcs->p_texture_import( tex, image, src );
     }
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
@@ -1068,6 +1072,7 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glDeleteBuffers( 1, &vbo );
     }
 
+    if (tex) funcs->p_glDeleteTextures( 1, &tex );
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
 
     if (index != -1)
@@ -1676,6 +1681,63 @@ failed:
     return 0;
 }
 
+static BOOL egldrv_texture_import( GLuint texture, D3DKMT_HANDLE local, SIZE size )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+    struct opengl_context *context = NtCurrentTeb()->glReserved2;
+    struct fd_desc desc = d3dkmt_object_get_fd_desc( local );
+    int fd = -1;
+
+    TRACE( "texture %u local %#x size %s\n", texture, local, debugstr_size(&size) );
+
+    switch (desc.type)
+    {
+    case FD_DMA_BUF:
+    {
+        EGLAttrib attribs[] =
+        {
+            EGL_DMA_BUF_PLANE0_FD_EXT, fd,
+            EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT, desc.dma_buf.modifier >> 32,
+            EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT, (UINT32)desc.dma_buf.modifier,
+            EGL_DMA_BUF_PLANE0_OFFSET_EXT, desc.dma_buf.offset,
+            EGL_DMA_BUF_PLANE0_PITCH_EXT, desc.dma_buf.stride,
+            EGL_LINUX_DRM_FOURCC_EXT, desc.format,
+            EGL_WIDTH, size.cx,
+            EGL_HEIGHT, size.cy,
+            EGL_NONE,
+        };
+        EGLImage *image;
+
+        if ((fd = attribs[1] = d3dkmt_object_get_fd( local )) == -1) break;
+
+        if (!egl->extensions[EGL_EXT_image_dma_buf_import] || !egl->extensions[EGL_EXT_image_dma_buf_import_modifiers] ||
+            !context->extensions[GL_EXT_EGL_image_storage])
+        {
+            static UINT once;
+            if (!once++) FIXME( "Missing EGL_EXT_image_dma_buf_import, EGL_EXT_image_dma_buf_import_modifiers, or GL_EXT_EGL_image_storage extensions\n" );
+            break;
+        }
+
+        if (!(image = funcs->p_eglCreateImage( egl->display, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, attribs ))) break;
+        funcs->p_glBindTexture( GL_TEXTURE_2D, texture );
+        funcs->p_glEGLImageTargetTexStorageEXT( GL_TEXTURE_2D, image, NULL );
+
+        TRACE( "Imported texture %u from image %p fd %d size %s stride %d offset %d fourcc %s modifier %#jx\n", texture, image, fd,
+               debugstr_size(&size), desc.dma_buf.stride, desc.dma_buf.offset, debugstr_fourcc(desc.format), (intmax_t)desc.dma_buf.modifier );
+        funcs->p_eglDestroyImage( egl->display, image );
+        close( fd );
+
+        return TRUE;
+    }
+    default: FIXME( "Unsupported fd type %#x\n", desc.type ); break;
+    }
+
+    WARN( "Failed to imported texture %u from fd %d\n", texture, fd );
+    close( fd );
+    return FALSE;
+}
+
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
 {
     .size = sizeof(struct opengl_drawable),
@@ -1695,6 +1757,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_destroy = egldrv_context_destroy,
     .p_context_activate = egldrv_context_activate,
     .p_texture_export = egldrv_texture_export,
+    .p_texture_import = egldrv_texture_import,
 };
 
 #define USE_GL_EXT(x) [x] = #x,
@@ -2160,6 +2223,11 @@ static D3DKMT_HANDLE nulldrv_texture_export( GLuint texture, D3DKMT_HANDLE *glob
     return 0;
 }
 
+static BOOL nulldrv_texture_import( GLuint texture, D3DKMT_HANDLE local, SIZE size )
+{
+    return FALSE;
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_get_proc_address = nulldrv_get_proc_address,
@@ -2172,6 +2240,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_destroy = nulldrv_context_destroy,
     .p_context_activate = nulldrv_context_activate,
     .p_texture_export = nulldrv_texture_export,
+    .p_texture_import = nulldrv_texture_import,
 };
 
 static int win32u_wglGetPixelFormat( HDC hdc )

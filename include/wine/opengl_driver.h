@@ -312,6 +312,7 @@ struct opengl_driver_funcs
     BOOL (*p_pbuffer_create)( HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
                               GLint max_level, struct opengl_drawable **drawable );
     D3DKMT_HANDLE (*p_texture_export)( GLuint texture, D3DKMT_HANDLE *global );
+    BOOL (*p_texture_import)( GLuint texture, D3DKMT_HANDLE local, SIZE size );
     BOOL (*p_cleanup_thread)(void);
     BOOL broken_sharing;
     BOOL context_format;

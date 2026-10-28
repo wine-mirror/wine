@@ -2319,3 +2319,12 @@ NTSTATUS d3dkmt_swapchain_destroy( D3DKMT_HANDLE local )
 
     return STATUS_SUCCESS;
 }
+
+D3DKMT_HANDLE d3dkmt_swapchain_get_image( D3DKMT_HANDLE local, UINT index, SIZE *size )
+{
+    struct d3dkmt_swapchain *swapchain;
+
+    if (!(swapchain = get_d3dkmt_swapchain( local ))) return 0;
+    *size = swapchain->desc.size;
+    return swapchain->resources[index]->obj.local;
+}

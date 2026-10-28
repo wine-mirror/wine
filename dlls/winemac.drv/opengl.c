@@ -2258,6 +2258,11 @@ static D3DKMT_HANDLE macdrv_texture_export(GLuint texture, D3DKMT_HANDLE *global
     return 0;
 }
 
+static BOOL macdrv_texture_import(GLuint texture, D3DKMT_HANDLE local, SIZE size)
+{
+    return FALSE;
+}
+
 static BOOL macdrv_cleanup_thread(void)
 {
     struct macdrv_context *context;
@@ -2280,6 +2285,7 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_context_activate = macdrv_context_activate,
     .p_pbuffer_create = macdrv_pbuffer_create,
     .p_texture_export = macdrv_texture_export,
+    .p_texture_import = macdrv_texture_import,
     .p_cleanup_thread = macdrv_cleanup_thread,
     .broken_sharing = TRUE,
 };
