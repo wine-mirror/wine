@@ -509,6 +509,59 @@ static void check_token_information(const char *username, HANDLE token)
     }
 }
 
+static void test_GetUserName(const char *username, HANDLE token)
+{
+    char token_buf[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
+    TOKEN_USER *token_user = (TOKEN_USER *)token_buf;
+    char buffer[512], buffer2[512];
+    SID_NAME_USE name_use;
+    DWORD size, size2;
+    BOOL ret;
+
+    ret = ImpersonateLoggedOnUser(token);
+    service_ok(ret, "ImpersonateLoggedOnUser failed, error %lu.\n", GetLastError());
+
+    size = ARRAY_SIZE(buffer);
+    ret = GetUserNameA(buffer, &size);
+    service_ok(ret, "GetUserNameA failed, error %lu.\n", GetLastError());
+    if (!strcmpi(username, "System"))
+    {
+        service_todo_wine_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
+    }
+    else if (!strcmpi(username, "LocalService"))
+    {
+        service_todo_wine_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
+    }
+    else if (!strcmpi(username, "NetworkService"))
+    {
+        size = ARRAY_SIZE(buffer2);
+        ret = GetComputerNameA(buffer2, &size);
+        service_ok(ret, "GetComputerNameA failed, error %lu.\n", GetLastError());
+
+        strcat(buffer2, "$");
+        service_todo_wine_ok(!strcmp(buffer2, buffer), "Expected username %s, got %s.\n", buffer2, buffer);
+    }
+
+    size = sizeof(token_buf);
+    ret = GetTokenInformation(token, TokenUser, token_user, size, &size);
+    service_ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+
+    size = ARRAY_SIZE(buffer);
+    size2 = ARRAY_SIZE(buffer2);
+    ret = LookupAccountSidA(NULL, token_user->User.Sid, buffer, &size, buffer2, &size2, &name_use);
+    service_ok(ret, "LookupAccountSidA failed, error %lu.\n", GetLastError());
+
+    if (!strcmpi(username, "System"))
+        service_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
+    else if (!strcmpi(username, "LocalService"))
+        service_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
+    else if (!strcmpi(username, "NetworkService"))
+        service_ok(!strcmp("NETWORK SERVICE", buffer), "Expected username NETWORK SERVICE, got %s.\n", buffer);
+
+    ret = RevertToSelf();
+    service_ok(ret, "RevertToSelf failed, error %lu.\n", GetLastError());
+}
+
 /* LogonUser() needs the current thread user to be System to log into the System account. So the
  * tests need to be in a service */
 static void test_LogonUser(void)
@@ -595,6 +648,7 @@ static void test_LogonUser(void)
         if (ret)
         {
             check_token_information(tests[i].username, token);
+            test_GetUserName(tests[i].username, token);
             CloseHandle(token);
         }
     }
