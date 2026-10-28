@@ -32,6 +32,7 @@
 #include "wincred.h"
 #include "wct.h"
 #include "perflib.h"
+#include "lmcons.h"
 
 #include "wine/debug.h"
 
@@ -44,14 +45,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
  */
 BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
 {
-    DWORD len = GetEnvironmentVariableA( "WINEUSERNAME", name, *size );
-    BOOL ret;
+    WCHAR nameW[UNLEN + 1];
+    DWORD length, sizeW;
 
-    if (!len) return FALSE;
-    if ((ret = (len < *size))) len++;
-    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-    *size = len;
-    return ret;
+    sizeW = ARRAY_SIZE(nameW);
+    if (!GetUserNameW( nameW, &sizeW ))
+        return FALSE;
+
+    length = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL );
+    if (name && length <= *size)
+    {
+        WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, *size, NULL, NULL );
+        *size = length;
+        return TRUE;
+    }
+    else
+    {
+        *size = length;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
 }
 
 /******************************************************************************
