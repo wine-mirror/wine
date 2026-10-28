@@ -2283,7 +2283,6 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     switch (prop->type)
     {
         case D2D1_PROPERTY_TYPE_BLOB:
-            memset(value, 0, size);
             break;
         case D2D1_PROPERTY_TYPE_STRING:
             return d2d_effect_return_string(prop->data.ptr, (WCHAR *)value, size / sizeof(WCHAR));
