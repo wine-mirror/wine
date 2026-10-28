@@ -29,12 +29,15 @@
 #include "mferror.h"
 #include "mftransform.h"
 #include "wmcodecdsp.h"
+#include "dmort.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aaec);
 
 static const WAVEFORMATEX default_output_format = { WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16, 0 };
+static const DWORD supported_rates[] = { 8000, 11025, 16000, 22050 };
+static const unsigned int max_frame_size_ms = 40;
 
 struct aaec
 {
@@ -52,6 +55,9 @@ struct aaec
     unsigned int system_mode;
     unsigned int feat_ns;
     unsigned int feat_frame_size;
+
+    DMO_MEDIA_TYPE output_type;
+    MFT_OUTPUT_STREAM_INFO output_info;
 };
 
 static const struct
@@ -120,7 +126,10 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
     TRACE("iface %p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
+    {
+        MoFreeMediaType(&impl->output_type);
         free(impl);
+    }
 
     return refcount;
 }
@@ -186,11 +195,13 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("iface %p, id %#lx, info %p stub.\n", iface, id, info);
+    struct aaec *aaec = impl_from_IMFTransform(iface);
 
-    memset(info, 0, sizeof(*info));
-    info->dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES;
-    return MF_E_TRANSFORM_TYPE_NOT_SET;
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    if (id) return MF_E_INVALIDSTREAMNUMBER;
+    *info = aaec->output_info;
+    return IsEqualGUID(&aaec->output_type.majortype, &GUID_NULL) ? MF_E_TRANSFORM_TYPE_NOT_SET : S_OK;
 }
 
 static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
@@ -276,8 +287,29 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("iface %p, id %#lx, type %p, flags %#lx stub.\n", iface, id, type, flags);
-    return E_NOTIMPL;
+    DWORD dmo_flags = flags & MFT_SET_TYPE_TEST_ONLY ? DMO_SET_TYPEF_TEST_ONLY : 0;
+    struct aaec *aaec = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE tmp = {0}, *mt = type ? &tmp : NULL;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (type && FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, FORMAT_WaveFormatEx, (AM_MEDIA_TYPE *)&tmp)))
+        return hr;
+
+    hr = IMediaObject_SetOutputType(&aaec->IMediaObject_iface, id, mt, dmo_flags);
+    MoFreeMediaType(&tmp);
+    switch (hr)
+    {
+        case DMO_E_INVALIDSTREAMINDEX:
+            return MF_E_INVALIDSTREAMNUMBER;
+
+        case S_FALSE:
+        case DMO_E_INVALIDTYPE:
+        case DMO_E_TYPE_NOT_ACCEPTED:
+            return MF_E_INVALIDMEDIATYPE;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
@@ -288,8 +320,13 @@ static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD i
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, type %p stub.\n", iface, id, type);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, id %#lx, type %p.\n", iface, id, type);
+
+    if (id) return MF_E_INVALIDSTREAMNUMBER;
+    if (IsEqualGUID(&aaec->output_type.majortype, &GUID_NULL)) return MF_E_TRANSFORM_TYPE_NOT_SET;
+    return MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &aaec->output_type, type);
 }
 
 static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
@@ -438,6 +475,29 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     return S_OK;
 }
 
+static HRESULT check_dmo_media_type(const DMO_MEDIA_TYPE *type)
+{
+    WAVEFORMATEX *wfx;
+    unsigned int i;
+
+    if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Audio)) return DMO_E_TYPE_NOT_ACCEPTED;
+    if (!IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx) || type->cbFormat < sizeof(*wfx)) return DMO_E_TYPE_NOT_ACCEPTED;
+    if (!IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM)) return DMO_E_TYPE_NOT_ACCEPTED;
+
+    wfx = (WAVEFORMATEX *)type->pbFormat;
+    if (!wfx->wBitsPerSample || !wfx->nAvgBytesPerSec || !wfx->nBlockAlign)
+        return DMO_E_INVALIDTYPE;
+    if (wfx->nChannels != 1) return DMO_E_TYPE_NOT_ACCEPTED;
+    if (wfx->wFormatTag != WAVE_FORMAT_PCM) return DMO_E_TYPE_NOT_ACCEPTED;
+
+    for (i = 0; i < ARRAY_SIZE(supported_rates); ++i)
+    {
+        if (wfx->nSamplesPerSec == supported_rates[i]) break;
+    }
+    if (i == ARRAY_SIZE(supported_rates)) return DMO_E_TYPE_NOT_ACCEPTED;
+    return S_OK;
+}
+
 static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
@@ -448,8 +508,38 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
 static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %#lx, type %p, flags %#lx stub.\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+    WAVEFORMATEX *wfx;
+    HRESULT hr;
+
+    TRACE("iface %p, index %#lx, type %p, flags %#lx.\n", iface, index, type, flags);
+
+    if (index) return DMO_E_INVALIDSTREAMINDEX;
+    if (!type)
+    {
+        FIXME("clearing media type is not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    if (FAILED(hr = check_dmo_media_type(type)))
+    {
+        WARN("format check failed.\n");
+        return flags & DMO_SET_TYPEF_TEST_ONLY ? S_FALSE : hr;
+    }
+    if (flags & DMO_SET_TYPEF_TEST_ONLY) return S_OK;
+
+    MoFreeMediaType(&aaec->output_type);
+    if (FAILED(hr = MoCopyMediaType(&aaec->output_type, type)))
+    {
+        memset(&aaec->output_type, 0, sizeof(aaec->output_type));
+        return hr;
+    }
+
+    wfx = (WAVEFORMATEX *)type->pbFormat;
+    aaec->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES;
+    aaec->output_info.cbSize = max_frame_size_ms * wfx->nSamplesPerSec * wfx->wBitsPerSample / (8 * 1000);
+    aaec->output_info.cbAlignment = wfx->nBlockAlign;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
@@ -460,8 +550,13 @@ static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWOR
 
 static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %#lx, type %p stub.\n", iface, index, type);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %#lx, type %p.\n", iface, index, type);
+
+    if (index) return DMO_E_INVALIDSTREAMINDEX;
+    if (IsEqualGUID(&aaec->output_type.majortype, &GUID_NULL)) return DMO_E_TYPE_NOT_SET;
+    return MoCopyMediaType(type, &aaec->output_type);
 }
 
 static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size,
@@ -474,8 +569,14 @@ static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD i
 
 static HRESULT WINAPI media_object_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
-    FIXME("iface %p, index %lu, size %p, alignment %p stub.\n", iface, index, size, alignment);
-    return E_NOTIMPL;
+    struct aaec *aaec = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, size %p, alignment %p.\n", iface, index, size, alignment);
+
+    if (IsEqualGUID(&aaec->output_type.majortype, &GUID_NULL)) return DMO_E_TYPE_NOT_SET;
+    *size = aaec->output_info.cbSize;
+    *alignment = aaec->output_info.cbAlignment;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
@@ -705,6 +806,7 @@ static HRESULT WINAPI aaec_factory_CreateInstance(IClassFactory *iface, IUnknown
     impl->device_indexes = 0xffffffff;
     impl->feat_ns = 1;
     impl->feat_center_clip = TRUE;
+    impl->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES;
 
     TRACE("Created aaec %p\n", impl);
 

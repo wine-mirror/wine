@@ -12334,7 +12334,7 @@ static void test_aaec(void)
     const WAVEFORMATEX expected_output_info =
     {
         WAVE_FORMAT_PCM, channel_count, rate, bits_per_sample * rate * channel_count / 8,
-        bits_per_sample * channel_count / 8, WMAUDIO_BITS_PER_SAMPLE, 0
+        bits_per_sample * channel_count / 8, bits_per_sample, 0
     };
     const DMO_MEDIA_TYPE expected_output_type =
     {
@@ -12356,16 +12356,37 @@ static void test_aaec(void)
         ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
         {0},
     };
+    static const struct
+    {
+        WAVEFORMATEX format;
+        BOOL supported;
+    }
+    format_tests[] =
+    {
+        { {WAVE_FORMAT_PCM, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_IEEE_FLOAT, 1, 8000, 32 * 8000 * 1 / 8, 32 * 1 / 8, 32, 0}, FALSE },
+        { {WAVE_FORMAT_IEEE_FLOAT, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE },
+        { {WAVE_FORMAT_PCM, 1, 44100, 16 * 44100 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 1, 48000, 16 * 48000 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 1, 11025, 16 * 11025 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 1, 16000, 16 * 16000 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 2 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+    };
+
     static const PROPERTYKEY null_key = { 0 };
-    DWORD in_count, out_count, flags;
+    DWORD in_count, out_count, flags, size, align;
+    MFT_OUTPUT_STREAM_INFO info;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    HRESULT hr, expected_hr;
     IPropertyStore *store;
     DMO_MEDIA_TYPE type;
+    WAVEFORMATEX format;
     IMediaObject *dmo;
     PROPVARIANT val;
     unsigned int i;
-    HRESULT hr;
     LONG ref;
 
     winetest_push_context("aaec");
@@ -12406,6 +12427,58 @@ static void test_aaec(void)
     hr = IMFTransform_GetOutputAvailableType(transform, 1, 0, &media_type);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx\n", hr);
 
+    hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "got %#lx\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 1, &info);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        format = format_tests[i].format;
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)&format;
+        switch (format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: type.subtype = MEDIASUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: type.subtype = MEDIASUBTYPE_IEEE_FLOAT; break;
+            default:
+                ok(0, "unexpected test format %#x.\n", format.wFormatTag);
+                break;
+        }
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        expected_hr = format_tests[i].supported ? S_OK : MF_E_INVALIDMEDIATYPE;
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+
+        expected_hr = format_tests[i].supported ? S_OK : MF_E_INVALIDMEDIATYPE;
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+        IMFMediaType_Release(media_type);
+
+        if (format_tests[i].supported)
+        {
+            hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            IMFMediaType_Release(media_type);
+            hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            out_count = 40 * format.nSamplesPerSec * format.wBitsPerSample / (8 * 1000);
+            ok(info.dwFlags == MFT_OUTPUT_STREAM_WHOLE_SAMPLES, "got %#lx.\n", info.dwFlags);
+            ok(info.cbSize == out_count, "got %lu.\n", info.cbSize);
+            ok(info.cbAlignment == format.nBlockAlign, "got %lu.\n", info.cbAlignment);
+            hr = IMFTransform_GetOutputStreamAttributes(transform, 0, NULL);
+            ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+        }
+        winetest_pop_context();
+    }
+
     IMFTransform_Release(transform);
 
     /* Test DMO */
@@ -12442,6 +12515,48 @@ static void test_aaec(void)
     hr = IMediaObject_GetOutputStreamInfo(dmo, 1, &flags);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx.\n", hr);
     ok(flags == 0xdeadbeef, "got %#lx.\n", flags);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &align);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        format = format_tests[i].format;
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)&format;
+        switch (format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: type.subtype = MEDIASUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: type.subtype = MEDIASUBTYPE_IEEE_FLOAT; break;
+            default:
+                ok(0, "unexpected test format %#x.\n", format.wFormatTag);
+                break;
+        }
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, DMO_SET_TYPEF_TEST_ONLY);
+        expected_hr = format_tests[i].supported ? S_OK : S_FALSE;
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, 0);
+        expected_hr = format_tests[i].supported ? S_OK : DMO_E_TYPE_NOT_ACCEPTED;
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+        if (format_tests[i].supported)
+        {
+            hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &align);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            out_count = 40 * format.nSamplesPerSec * format.wBitsPerSample / (8 * 1000);
+            ok(size == out_count, "got %lu, expected %lu.\n", size, out_count);
+            ok(align == format.nBlockAlign, "got %lu.\n", align);
+        }
+        winetest_pop_context();
+    }
 
     hr = IMediaObject_QueryInterface(dmo, &IID_IPropertyStore, (void **)&store);
     ok(hr == S_OK, "got %#lx.\n", hr);
