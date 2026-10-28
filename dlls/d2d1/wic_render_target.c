@@ -270,6 +270,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
         WARN("Failed to get DXGI device, hr %#lx.\n", hr);
+        ID3D10Texture2D_Release(render_target->readback_texture);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
@@ -279,6 +280,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     if (FAILED(hr))
     {
         WARN("Failed to create D2D device, hr %#lx.\n", hr);
+        ID3D10Texture2D_Release(render_target->readback_texture);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
