@@ -6625,16 +6625,6 @@ NTSTATUS WINAPI NtFlushInstructionCache( HANDLE handle, const void *addr, SIZE_T
 
 #ifdef __APPLE__
 
-static kern_return_t (*p_thread_get_register_pointer_values)( thread_t, uintptr_t*, size_t*, uintptr_t* );
-static pthread_once_t tgrpvs_init_once = PTHREAD_ONCE_INIT;
-
-static void tgrpvs_init(void)
-{
-    p_thread_get_register_pointer_values = dlsym( RTLD_DEFAULT, "thread_get_register_pointer_values" );
-    if (!p_thread_get_register_pointer_values)
-        FIXME( "thread_get_register_pointer_values not supported for NtFlushProcessWriteBuffers\n" );
-}
-
 /**********************************************************************
  *           NtFlushProcessWriteBuffers  (NTDLL.@)
  */
@@ -6643,9 +6633,6 @@ NTSTATUS WINAPI NtFlushProcessWriteBuffers(void)
     /* Taken from https://github.com/dotnet/runtime/blob/7be37908e5a1cbb83b1062768c1649827eeaceaa/src/coreclr/pal/src/thread/process.cpp#L2799 */
     mach_msg_type_number_t count, i;
     thread_act_array_t threads;
-
-    pthread_once( &tgrpvs_init_once, tgrpvs_init );
-    if (!p_thread_get_register_pointer_values) return STATUS_SUCCESS;
 
     /* Get references to all threads of this process */
     if (task_threads( mach_task_self(), &threads, &count )) return STATUS_SUCCESS;
@@ -6657,7 +6644,7 @@ NTSTATUS WINAPI NtFlushProcessWriteBuffers(void)
         uintptr_t sp;
 
         /* Request the thread's register pointer values to force the thread to go through a memory barrier */
-        p_thread_get_register_pointer_values( threads[i], &sp, &reg_count, reg_values );
+        thread_get_register_pointer_values( threads[i], &sp, &reg_count, reg_values );
         mach_port_deallocate( mach_task_self(), threads[i] );
     }
     vm_deallocate( mach_task_self(), (vm_address_t)threads, count * sizeof(threads[0]) );
