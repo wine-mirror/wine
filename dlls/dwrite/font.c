@@ -7441,7 +7441,7 @@ static IDWriteLocalizedStrings * fontset_entry_get_property(struct dwrite_fontse
         DWRITE_FONT_PROPERTY_ID property)
 {
     struct file_stream_desc stream_desc = { 0 };
-    IDWriteLocalizedStrings *value;
+    IDWriteLocalizedStrings *value = NULL;
 
     assert(property > DWRITE_FONT_PROPERTY_ID_NONE && property <= DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME);
 
