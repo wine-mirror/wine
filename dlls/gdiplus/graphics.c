@@ -3033,7 +3033,7 @@ GpStatus WINGDIPAPI GdipDrawCurve3(GpGraphics *graphics, GpPen *pen,
 {
     TRACE("(%p, %p, %p, %d, %d, %d, %.2f)\n", graphics, pen, points, count, offset, numberOfSegments, tension);
 
-    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+    if(offset < 0 || offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
         return InvalidParameter;
     }
 
@@ -3050,7 +3050,7 @@ GpStatus WINGDIPAPI GdipDrawCurve3I(GpGraphics *graphics, GpPen *pen,
         return OutOfMemory;
     }
 
-    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+    if(offset < 0 || offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
         return InvalidParameter;
     }
 

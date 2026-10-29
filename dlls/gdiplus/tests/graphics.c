@@ -904,6 +904,15 @@ static void test_GdipDrawCurve3(void)
     status = GdipDrawCurve3(graphics, pen, points, 3, 4, 2, 1);
     expect(InvalidParameter, status);
 
+    status = GdipDrawCurve3(graphics, pen, points, 3, -1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, NULL, 3, -1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, NULL, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
     /* InvalidParameter cases: invalid number of segments */
     status = GdipDrawCurve3(graphics, pen, points, 3, 0, -1, 1);
     expect(InvalidParameter, status);
@@ -982,6 +991,9 @@ static void test_GdipDrawCurve3I(void)
     expect(InvalidParameter, status);
 
     status = GdipDrawCurve3I(graphics, pen, points, 3, 4, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, -1, 2, 1);
     expect(InvalidParameter, status);
 
     /* InvalidParameter cases: invalid number of segments */
