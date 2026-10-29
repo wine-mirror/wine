@@ -2737,6 +2737,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11De
     ID3D11Device5_AddRef(object->device);
 
     TRACE("Created command list %p.\n", object);
+    if (!command_list)
+    {
+        ID3D11CommandList_Release(&object->ID3D11CommandList_iface);
+        return E_UNEXPECTED;
+    }
     *command_list = &object->ID3D11CommandList_iface;
 
     return S_OK;
