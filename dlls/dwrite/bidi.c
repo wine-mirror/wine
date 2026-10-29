@@ -1039,7 +1039,7 @@ search:
             else
             {
                 /* eos could be an BN */
-                if (chars[run_end].resolved == BN)
+                if (chars[run_end].bidi_class == BN)
                 {
                     real_end = get_prev_valid_char_index(chars, run_end, run_start - 1);
                     if (real_end < run_start)
