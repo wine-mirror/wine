@@ -407,26 +407,26 @@ static void test_GetMenuItemRect(void)
     invalidate_menu_bar(hwnd, popup_hmenu);
     ret = GetMenuItemRect(hwnd, hmenu, 0, &item_rect);
     ok(ret, "GetMenuItemRect failed\n");
-    todo_wine ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
-    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     invalidate_menu_bar(hwnd, popup_hmenu);
     ret = GetMenuItemRect(hwnd, hmenu, 1, &item_rect);
     ok(ret, "GetMenuItemRect failed\n");
-    todo_wine ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
-    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     /* MenuItemFromPoint recomputes the menu layout */
     invalidate_menu_bar(hwnd, popup_hmenu);
     item = MenuItemFromPoint(hwnd, hmenu, *(POINT *)&item_rect);
-    todo_wine ok(item == 1, "MenuItemFromPoint returned %d\n", item);
+    ok(item == 1, "MenuItemFromPoint returned %d\n", item);
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
-    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     /* HiliteMenuItem / MF_BYPOSITION recomputes the menu layout */
     invalidate_menu_bar(hwnd, popup_hmenu);
@@ -2335,7 +2335,7 @@ static struct menu_mouse_tests_s {
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
 
     /* rebuild the menu bar inside WM_INITMENU, like Reason does */
-    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, TRUE, TRUE },
+    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, FALSE, TRUE },
     { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE, FALSE },
     { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE, TRUE },
     { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
@@ -2518,7 +2518,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
             {
                 RECT rect;
                 BOOL success = GetMenuItemRect(hWnd, (HMENU)lParam, LOWORD(wParam), &rect);
-                todo_wine
                 ok(success && !IsRectEmpty(&rect), "selected menu bar item %u has empty rect\n", LOWORD(wParam));
                 ok(!nccalcsize_calls_after_rebuild, "Received %d WM_NCCALCSIZE messages after WM_INITMENU rebuilt the menu bar\n", nccalcsize_calls_after_rebuild);
             }

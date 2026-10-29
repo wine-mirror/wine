@@ -535,6 +535,18 @@ static void adjust_menu_item_rect( const struct menu *menu, RECT *rect )
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
 }
 
+/* Recompute the layout of a menu bar if its height has been invalidated */
+static void update_invalid_menu_bar_layout( struct menu *menu, HWND hwnd )
+{
+    RECT rect = menu->items_rect;
+    HDC hdc;
+
+    if ((menu->wFlags & MF_POPUP) || menu->Height) return;
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    NtUserDrawMenuBarTemp( hwnd, hdc, &rect, 0, 0 );
+    NtUserReleaseDC( hwnd, hdc );
+}
+
 /***********************************************************************
  *           find_item_by_coords
  *
@@ -548,7 +560,7 @@ static void adjust_menu_item_rect( const struct menu *menu, RECT *rect )
  * item that's just outside the items_rect - ie, the one that would
  * be scrolled completely into view.
  */
-static enum hittest find_item_by_coords( const struct menu *menu, POINT pt, UINT *pos )
+static enum hittest find_item_by_coords( struct menu *menu, POINT pt, UINT *pos )
 {
     enum hittest ht = ht_border;
     struct menu_item *item;
@@ -563,6 +575,8 @@ static enum hittest find_item_by_coords( const struct menu *menu, POINT pt, UINT
     if (get_window_long( menu->hWnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) pt.x = rect.right - 1 - pt.x;
     else pt.x -= rect.left;
     pt.y -= rect.top;
+
+    update_invalid_menu_bar_layout( menu, menu->hWnd );
 
     if (!PtInRect( &menu->items_rect, pt ))
     {
@@ -839,6 +853,8 @@ BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rec
         release_menu_ptr( menu );
         return FALSE;
     }
+
+    update_invalid_menu_bar_layout( menu, menu->hWnd );
 
     *rect = menu->items[pos].rect;
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top );
