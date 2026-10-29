@@ -55,6 +55,7 @@ struct aaec
     unsigned int system_mode;
     unsigned int feat_ns;
     unsigned int feat_frame_size;
+    unsigned int feat_vad;
 
     DMO_MEDIA_TYPE output_type;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -76,6 +77,7 @@ property_def[] =
     { &MFPKEY_WMAAECMA_FEATR_CENTER_CLIP, VT_BOOL, offsetof(struct aaec, feat_center_clip) },
     { &MFPKEY_WMAAECMA_FEATURE_MODE, VT_BOOL, offsetof(struct aaec, feature_mode) },
     { &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, offsetof(struct aaec, feat_frame_size) },
+    { &MFPKEY_WMAAECMA_FEATR_VAD, VT_I4, offsetof(struct aaec, feat_vad) },
 };
 
 static struct aaec *impl_from_IUnknown(IUnknown *iface)
@@ -745,6 +747,7 @@ static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTY
     {
         if (!IsEqualPropertyKey(*key, *property_def[i].key)) continue;
         if (V_VT(value) != property_def[i].vt) return MF_E_TRANSFORM_PROPERTY_VARIANT_TYPE_WRONG;
+        TRACE("value %#lx.\n", value->lVal);
         switch (property_def[i].vt)
         {
             case VT_BOOL:
@@ -762,6 +765,7 @@ static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTY
         return S_OK;
     }
 
+    FIXME("key (%s,%lu) not recognized.\n", debugstr_guid(&key->fmtid), key->pid);
     return MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED;
 }
 
