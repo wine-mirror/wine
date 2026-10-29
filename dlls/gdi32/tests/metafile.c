@@ -3899,6 +3899,44 @@ static void test_emf_attrs(void)
     DeleteEnhMetaFile(mf);
 }
 
+static int CALLBACK icm_mode_enum_proc(HDC hdc, HANDLETABLE *ht, const ENHMETARECORD *emr, int n, LPARAM param)
+{
+    DWORD *modes = (DWORD *)param;
+
+    if (emr->iType == EMR_SETICMMODE && modes[0] < 4)
+        modes[++modes[0]] = ((const EMRSETICMMODE *)emr)->iMode;
+    return 1;
+}
+
+static void test_emf_SetICMMode(void)
+{
+    DWORD modes[5] = { 0 };
+    HENHMETAFILE mf;
+    int ret;
+    HDC hdc;
+
+    hdc = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
+    ok(hdc != 0, "CreateEnhMetaFile failed\n");
+
+    ret = SetICMMode(hdc, ICM_QUERY);
+    ok(ret == ICM_OFF, "got %d\n", ret);
+    ret = SetICMMode(hdc, ICM_OFF);
+    ok(ret == 1, "got %d\n", ret);
+    SetICMMode(hdc, ICM_ON);
+    SetICMMode(hdc, ICM_OFF);
+    SetICMMode(hdc, 0);
+
+    mf = CloseEnhMetaFile(hdc);
+    ok(mf != 0, "CloseEnhMetaFile failed\n");
+    EnumEnhMetaFile(0, mf, icm_mode_enum_proc, modes, NULL);
+    todo_wine
+    ok(modes[0] == 3, "got %lu records\n", modes[0]);
+    todo_wine
+    ok(modes[1] == ICM_OFF && modes[2] == ICM_ON && modes[3] == ICM_OFF, "got modes %lu %lu %lu\n",
+       modes[1], modes[2], modes[3]);
+    DeleteEnhMetaFile(mf);
+}
+
 static void test_CopyMetaFile(void)
 {
     HDC hdcMetafile;
@@ -11428,6 +11466,7 @@ START_TEST(metafile)
     test_enhmetafile_file();
     test_emf_SetPixel();
     test_emf_attrs();
+    test_emf_SetICMMode();
     test_emf_select();
     test_emf_blit();
     test_emf_pattern_brush();
