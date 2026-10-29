@@ -214,18 +214,24 @@ static struct key *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE provid
         key->algid = ECDSA_P256;
         set_object_property(&key->obj, NCRYPT_ALGORITHM_PROPERTY, (BYTE *)BCRYPT_ECDSA_P256_ALGORITHM,
                             sizeof(BCRYPT_ECDSA_P256_ALGORITHM));
+        set_object_property(&key->obj, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_ECDSA_ALGORITHM,
+                            sizeof(BCRYPT_ECDSA_ALGORITHM));
         break;
 
     case ECDSA_P384:
         key->algid = ECDSA_P384;
         set_object_property(&key->obj, NCRYPT_ALGORITHM_PROPERTY, (BYTE *)BCRYPT_ECDSA_P384_ALGORITHM,
                             sizeof(BCRYPT_ECDSA_P384_ALGORITHM));
+        set_object_property(&key->obj, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_ECDSA_ALGORITHM,
+                            sizeof(BCRYPT_ECDSA_ALGORITHM));
         break;
 
     case ECDSA_P521:
         key->algid = ECDSA_P521;
         set_object_property(&key->obj, NCRYPT_ALGORITHM_PROPERTY, (BYTE *)BCRYPT_ECDSA_P521_ALGORITHM,
                             sizeof(BCRYPT_ECDSA_P521_ALGORITHM));
+        set_object_property(&key->obj, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_ECDSA_ALGORITHM,
+                            sizeof(BCRYPT_ECDSA_ALGORITHM));
         break;
 
     default:
