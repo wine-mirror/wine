@@ -632,11 +632,20 @@ static HRESULT WINAPI SAC_GetMaxFrameCount(ISpatialAudioClient *iface,
         const WAVEFORMATEX *format, UINT32 *count)
 {
     SpatialAudioImpl *This = impl_from_ISpatialAudioClient(iface);
-
-    /* FIXME: should get device period from the device */
-    static const REFERENCE_TIME period = 100000;
+    REFERENCE_TIME period = 100000;
+    IAudioClient *client;
+    HRESULT hr;
 
     TRACE("(%p)->(%p, %p)\n", This, format, count);
+
+    hr = IMMDevice_Activate(This->mmdev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void **)&client);
+    if (SUCCEEDED(hr))
+    {
+        hr = IAudioClient_GetDevicePeriod(client, &period, NULL);
+        IAudioClient_Release(client);
+    }
+    if (FAILED(hr))
+        WARN("Failed to retrieve device period: %08lx\n", hr);
 
     *count = MulDiv(period, format->nSamplesPerSec, 10000000);
 
