@@ -434,7 +434,7 @@ static void test_GetMenuItemRect(void)
     ok(ret, "HiliteMenuItem returned %d\n", ret);
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
-    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     /* HiliteMenuItem / MF_BYCOMMAND recomputes the menu layout */
     invalidate_menu_bar(hwnd, popup_hmenu);
@@ -2407,7 +2407,6 @@ static void check_popup_below_menu_bar( HWND hwnd )
     ret = GetMenuItemRect( hwnd, GetMenu( hwnd ), 0, &menu_bar_rect );
     ok( ret, "GetMenuItemRect failed, error %ld\n", GetLastError() );
     GetWindowRect( popup, &popup_rect );
-    todo_wine
     ok( popup_rect.top >= menu_bar_rect.bottom - 1, "popup %s overlaps the menu bar %s\n",
         wine_dbgstr_rect( &popup_rect ), wine_dbgstr_rect( &menu_bar_rect ) );
 }

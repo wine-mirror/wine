@@ -3213,6 +3213,13 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
 
     NtGdiSelectFont( hdc, get_menu_font( FALSE ));
 
+    if (!(menu->wFlags & MF_POPUP) && !menu->Height)
+    {
+        POINT pos = { menu->items_rect.left, menu->items_rect.top };
+        UINT width = menu->items_rect.right - menu->items_rect.left;
+        calc_menu_bar_size( hdc, pos, width, menu, menu->hWnd );
+    }
+
     /* Clear previous highlighted item */
     if (menu->FocusedItem != NO_SELECTED_ITEM)
     {
