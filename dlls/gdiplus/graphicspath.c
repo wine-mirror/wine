@@ -1178,6 +1178,10 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     if (!path || !string || !family || !emSize || !layoutRect)
         return InvalidParameter;
 
+    /* nothing is laid out in a layout rectangle with a negative width */
+    if (layoutRect->Width < 0.0f)
+        return Ok;
+
     if (!format)
         format = &default_drawstring_format;
 

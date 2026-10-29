@@ -8287,7 +8287,6 @@ static void test_negative_layout_rect(void)
         count = -1;
         status = GdipGetPointCount(path, &count);
         expect(Ok, status);
-        todo_wine_if(!tests[i].path)
         ok((count > 0) == tests[i].path, "got %d points\n", count);
         GdipDeletePath(path);
 
