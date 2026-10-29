@@ -1743,12 +1743,21 @@ static void reset_write_watches( void *base, SIZE_T size )
 
 
 /***********************************************************************
- *           unmap_extra_space
+ *           map_anon_area
  *
- * Release the extra memory while keeping the range starting on the alignment boundary.
+ * Try to map some space with an anon mmap.
+ * virtual_mutex must be held by caller.
  */
-static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t wanted_size, size_t align_mask )
+static void *map_anon_area( size_t size, int unix_prot, size_t align_mask )
 {
+    size_t total_size = size + align_mask + 1;
+    void *ptr = anon_mmap_alloc( total_size, unix_prot );
+
+    if (ptr == MAP_FAILED)
+    {
+        ERR( "anon mmap error %s, size %p, unix_prot %#x\n", strerror(errno), (void *)size, unix_prot );
+        return ptr;
+    }
     if ((ULONG_PTR)ptr & align_mask)
     {
         size_t extra = align_mask + 1 - ((ULONG_PTR)ptr & align_mask);
@@ -1756,8 +1765,7 @@ static inline void *unmap_extra_space( void *ptr, size_t total_size, size_t want
         ptr = (char *)ptr + extra;
         total_size -= extra;
     }
-    if (total_size > wanted_size)
-        munmap( (char *)ptr + wanted_size, total_size - wanted_size );
+    if (total_size > size) munmap( (char *)ptr + size, total_size - size );
     return ptr;
 }
 
@@ -1921,7 +1929,6 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         void *start = address_space_start;
         void *end = min( user_space_limit, host_addr_space_limit );
         size_t host_size = ROUND_SIZE( 0, size, host_page_mask );
-        size_t view_size = host_size + align_mask + 1;
 
         if (limit_low && (void *)limit_low > start) start = (void *)limit_low;
         if (limit_high && (void *)limit_high < end) end = (char *)limit_high + 1;
@@ -1938,14 +1945,8 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         }
         else
         {
-            if ((ptr = anon_mmap_alloc( view_size, unix_prot )) == MAP_FAILED)
-            {
-                status = (errno == ENOMEM) ? STATUS_NO_MEMORY : STATUS_INVALID_PARAMETER;
-                ERR( "anon mmap error %s, size %p, unix_prot %#x\n",
-                     strerror(errno), (void *)view_size, unix_prot );
-                return status;
-            }
-            ptr = unmap_extra_space( ptr, view_size, host_size, align_mask );
+            if ((ptr = map_anon_area( host_size, unix_prot, align_mask )) == MAP_FAILED)
+                return (errno == ENOMEM) ? STATUS_NO_MEMORY : STATUS_INVALID_PARAMETER;
             TRACE( "got mem with anon mmap %p-%p\n", ptr, (char *)ptr + size );
         }
     }
@@ -3708,7 +3709,7 @@ struct thread_data *virtual_alloc_first_thread_data(void)
         exit(1);
     }
 
-    ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
+    ptr = map_anon_area( size, PROT_READ | PROT_WRITE, granularity_mask );
     assert( ptr != MAP_FAILED );
     status = create_view( &view, ptr, size, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     assert( !status );
