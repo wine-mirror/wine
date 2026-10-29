@@ -690,9 +690,11 @@ static HRESULT open_module16_icon(LPCWSTR szFileName, int nIndex, IStream **ppSt
     }
 
     dosHeader = (IMAGE_DOS_HEADER*)fileBytes;
-    if (sizeof(IMAGE_DOS_HEADER) >= fileSize || dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+    if (sizeof(IMAGE_DOS_HEADER) >= fileSize ||
+        dosHeader->e_magic != IMAGE_DOS_SIGNATURE ||
+        (ULONG)dosHeader->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER)
     {
-        WINE_WARN("file too small for MZ header\n");
+        WINE_WARN("not a valid MZ file\n");
         goto end;
     }
 

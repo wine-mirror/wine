@@ -2855,7 +2855,7 @@ typedef struct _IMAGE_DOS_HEADER {
     WORD  e_oemid;      /* 24: OEM identifier (for e_oeminfo) */
     WORD  e_oeminfo;    /* 26: OEM information; e_oemid specific */
     WORD  e_res2[10];   /* 28: Reserved words */
-    DWORD e_lfanew;     /* 3c: Offset to extended header */
+    LONG  e_lfanew;     /* 3c: Offset to extended header */
 } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
 #pragma pack(pop)
 

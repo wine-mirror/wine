@@ -397,11 +397,9 @@ static IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
         return NULL;
 
     dos = base;
-    if (dos->e_magic != IMAGE_DOS_SIGNATURE)
-        return NULL;
-
-    if ((dos->e_lfanew + sizeof (*nt)) > mapping_size)
-        return NULL;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return NULL;
+    if ((ULONG)dos->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) return NULL;
+    if ((dos->e_lfanew + sizeof (*nt)) > mapping_size) return NULL;
 
     nt = (void*) ((BYTE*)base + dos->e_lfanew);
 

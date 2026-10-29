@@ -5659,6 +5659,8 @@ static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
 
 NTSYSAPI NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait );
 
+#define RTL_IMAGE_MAX_DOS_HEADER (256u * 1024 * 1024)
+
 /* The thread information for 16-bit threads */
 /* NtCurrentTeb()->SubSystemTib points to this */
 typedef struct

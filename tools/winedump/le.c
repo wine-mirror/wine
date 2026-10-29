@@ -297,7 +297,7 @@ void le_dump( void )
 
     dos = PRD(0, sizeof(*dos));
     if (!dos) return;
-    le = PRD(dos->e_lfanew, sizeof(*le));
+    le = PRD((ULONG)dos->e_lfanew, sizeof(*le));
 
     dump_le_header( le );
     dump_le_objects( le );

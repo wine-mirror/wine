@@ -1524,7 +1524,7 @@ static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     return 0;
 }
 
-static inline void *get_rva( void *module, ULONG_PTR addr )
+static inline void *get_rva( void *module, ULONG addr )
 {
     return (BYTE *)module + addr;
 }
