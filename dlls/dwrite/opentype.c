@@ -6775,7 +6775,7 @@ HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, s
         (*axis)[i].default_value = GET_BE_FIXED(records[i].default_value);
         (*axis)[i].min_value = GET_BE_FIXED(records[i].min_value);
         (*axis)[i].max_value = GET_BE_FIXED(records[i].max_value);
-        if (GET_BE_WORD(records[i].flags & 0x1))
+        if (GET_BE_WORD(records[i].flags) & 0x1)
             (*axis)[i].attributes |= DWRITE_FONT_AXIS_ATTRIBUTES_HIDDEN;
         /* FIXME: set DWRITE_FONT_AXIS_ATTRIBUTES_VARIABLE */
 
