@@ -926,6 +926,8 @@ static void compile( struct strarray files, const char *output_name, int compile
     }
 
     if (!is_pe) strarray_addall( &comp_args, get_compat_defines( gcc_defs ));
+    else if ((target.cpu == CPU_i386 || target.cpu == CPU_x86_64) && target.platform != PLATFORM_WINDOWS)
+        strarray_add(&comp_args, "-mlong-double-64");
 
     strarray_add(&comp_args, "-D__WINE__");
 
