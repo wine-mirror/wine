@@ -1498,7 +1498,6 @@ static void test_flatten_translated(void)
             expect(Ok, status);
             status = GdipGetPointCount(path, &count);
             expect(Ok, status);
-            todo_wine_if(offsets[j] >= 10000.0)
             ok(count == expected, "got %d points, expected %d\n", count, expected);
             GdipDeletePath(path);
 

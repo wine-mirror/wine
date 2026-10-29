@@ -246,10 +246,11 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          * formula for distance point from line for point (x0, y0) and line (x1, y1) (x2, y2)
          * is defined as (area_triangle / distance_start_end):
          *     | (x2 - x1) * (y1 - y0) - (x1 - x0) * (y2 - y1) / sqrt( (x2 - x1)^2 + (y2 - y1)^2 ) |
-         * Here rearranged to avoid division and simplified:
-         *     x0(y2 - y1) + y0(x1 - x2) + (x2*y1 - x1*y2)
+         * Here rearranged to avoid division and computed relative to (x1, y1),
+         * so that large coordinates don't cancel out:
+         *     (x0 - x1)(y2 - y1) - (y0 - y1)(x2 - x1)
          */
-        area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
+        area_triangle = (pt.Y - pt_st.Y)*(mp[2].X - pt_st.X) - (pt.X - pt_st.X)*(mp[2].Y - pt_st.Y);
         distance_start_end = hypotf(pt.Y - pt_st.Y, pt_st.X - pt.X);
         if(fabs(area_triangle) <= flatness * distance_start_end){
             continue;
