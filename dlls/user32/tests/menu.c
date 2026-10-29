@@ -442,7 +442,7 @@ static void test_GetMenuItemRect(void)
     ok(ret, "HiliteMenuItem returned %d\n", ret);
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
-    todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     /* misc other menu functions that don't recompute the menu layout */
     invalidate_menu_bar(hwnd, popup_hmenu);

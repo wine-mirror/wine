@@ -3202,7 +3202,6 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
     menu = unsafe_menu_ptr( hmenu );
     if (!menu || !menu->nItems || !menu->hWnd) return;
 
-    if (menu->FocusedItem == index) return;
     if (menu->wFlags & MF_POPUP) hdc = NtUserGetDC( menu->hWnd );
     else hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
     if (!top_popup)
@@ -4598,11 +4597,8 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
     focused_item = menu->FocusedItem;
     release_menu_ptr(menu);
 
-    if (focused_item != pos)
-    {
-        hide_sub_popups( hwnd, handle_menu, FALSE, 0 );
-        select_item( hwnd, handle_menu, pos, TRUE, 0 );
-    }
+    if (focused_item != pos) hide_sub_popups( hwnd, handle_menu, FALSE, 0 );
+    select_item( hwnd, handle_menu, pos, TRUE, 0 );
 
     return TRUE;
 }
