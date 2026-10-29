@@ -345,9 +345,10 @@ static void invalidate_menu_bar(HWND hwnd, HMENU popup_hmenu)
 
 static void test_GetMenuItemRect(void)
 {
+    MENUITEMINFOW infoW = { .cbSize = sizeof(MENUITEMINFOW) };
     MENUBARINFO info = { .cbSize = sizeof(MENUBARINFO) };
     HWND hwnd;
-    HMENU hmenu;
+    HMENU hmenu, tmp;
     HMENU popup_hmenu;
     RECT window_rect;
     RECT item_rect;
@@ -438,6 +439,46 @@ static void test_GetMenuItemRect(void)
     ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
     ok(ret, "GetMenuBarInfo failed\n");
     todo_wine ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* misc other menu functions that don't recompute the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+
+    item = CheckMenuItem(hmenu, 1, MF_CHECKED | MF_BYPOSITION);
+    ok(!item, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, 1, MF_UNCHECKED | MF_BYPOSITION);
+    ok(item & MF_CHECKED, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_CHECKED | MF_BYCOMMAND);
+    ok(!item, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_UNCHECKED | MF_BYCOMMAND);
+    ok(item & MF_CHECKED, "CheckMenuItem returned %d\n", item);
+    ret = EnableMenuItem(hmenu, 1, MF_DISABLED | MF_BYPOSITION);
+    ok(!ret, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, 1, MF_ENABLED | MF_BYPOSITION);
+    ok(ret & MF_DISABLED, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_DISABLED | MF_BYCOMMAND);
+    ok(!ret, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_ENABLED | MF_BYCOMMAND);
+    ok(ret & MF_DISABLED, "EnableMenuItem returned %d\n", ret);
+    item = GetMenuState(hmenu, 1, MF_BYPOSITION);
+    ok(item & MF_POPUP, "got %#x\n", item);
+    item = GetMenuState(hmenu, (UINT_PTR)popup_hmenu, MF_BYCOMMAND);
+    ok(item & MF_POPUP, "got %#x\n", item);
+    ret = GetMenuItemInfoW(hmenu, 1, MF_BYPOSITION, &infoW);
+    ok(ret, "GetMenuItemInfoW returned %d\n", ret);
+    ret = GetMenuItemInfoW(hmenu, (UINT_PTR)popup_hmenu, MF_BYCOMMAND, &infoW);
+    ok(ret, "GetMenuItemInfoW returned %d\n", ret);
+    ret = SetMenuItemInfoW(hmenu, 1, TRUE, &infoW);
+    ok(ret, "SetMenuItemInfoW returned %d\n", ret);
+    ret = SetMenuItemInfoW(hmenu, (UINT_PTR)popup_hmenu, FALSE, &infoW);
+    ok(ret, "SetMenuItemInfoW returned %d\n", ret);
+    tmp = GetSubMenu(hmenu, 1);
+    ok(tmp == popup_hmenu, "got %p\n", tmp);
+    item = GetMenuItemID(hmenu, 2);
+    ok(item == 0, "GetMenuItemID returned %d\n", item);
+
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
 
     ok(!nccalcsize_count, "got %u WM_NCCALCSIZE\n", nccalcsize_count);
     DestroyWindow(hwnd);
