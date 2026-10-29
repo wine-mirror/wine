@@ -469,7 +469,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     BCRYPT_KEY_BLOB *header = (BCRYPT_KEY_BLOB *)data;
     struct key *key;
     NTSTATUS status;
-    ULONG bitlen;
+    ULONG bitlen, i;
     BCRYPT_ALG_HANDLE alg;
 
     TRACE("(%#Ix, %#Ix, %s, %p, %p, %p, %lu, %#lx)\n", provider, decrypt_key, wine_dbgstr_w(type),
@@ -482,8 +482,8 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     }
     if (params)
     {
-        FIXME("Parameter information not implemented\n");
-        return NTE_NOT_SUPPORTED;
+        for (i = 0; i < params->cBuffers; i++)
+            FIXME("unsupported parameter %lu\n", params->pBuffers[i].BufferType);
     }
     if (flags == NCRYPT_SILENT_FLAG)
     {

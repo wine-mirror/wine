@@ -304,6 +304,8 @@ static void test_key_import_rsa(void)
 {
     NCRYPT_PROV_HANDLE prov;
     NCRYPT_KEY_HANDLE key;
+    NCryptBuffer buf;
+    NCryptBufferDesc desc;
     SECURITY_STATUS ret;
 
     prov = 0;
@@ -350,6 +352,15 @@ static void test_key_import_rsa(void)
     ret = NCryptImportKey(prov, 0, BCRYPT_PUBLIC_KEY_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob) + 1, 0);
     ok(ret == NTE_BAD_DATA, "got %#lx\n", ret);
 
+    buf.cbBuffer   = sizeof(L"winetestkey");
+    buf.BufferType = NCRYPTBUFFER_PKCS_KEY_NAME;
+    buf.pvBuffer   = (void *)L"winetestkey";
+    desc.ulVersion = NCRYPTBUFFER_VERSION;
+    desc.cBuffers  = 1;
+    desc.pBuffers  = &buf;
+    ret = NCryptImportKey(prov, 0, BCRYPT_PUBLIC_KEY_BLOB, &desc, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    NCryptDeleteKey(key, 0);
     NCryptFreeObject(prov);
 }
 

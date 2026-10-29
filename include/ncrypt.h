@@ -39,11 +39,32 @@ typedef struct _NCryptAlgorithmName {
     DWORD dwFlags;
 } NCryptAlgorithmName;
 
+#define NCRYPTBUFFER_EMPTY                          0
+#define NCRYPTBUFFER_DATA                           1
+#define NCRYPTBUFFER_PROTECTION_DESCRIPTOR_STRING   3
+#define NCRYPTBUFFER_PROTECTION_FLAGS               4
+#define NCRYPTBUFFER_SSL_CLIENT_RANDOM              20
+#define NCRYPTBUFFER_SSL_SERVER_RANDOM              21
+#define NCRYPTBUFFER_SSL_HIGHEST_VERSION            22
+#define NCRYPTBUFFER_SSL_CLEAR_KEY                  23
+#define NCRYPTBUFFER_SSL_KEY_ARG_DATA               24
+#define NCRYPTBUFFER_SSL_SESSION_HASH               25
+#define NCRYPTBUFFER_PKCS_OID                       40
+#define NCRYPTBUFFER_PKCS_ALG_OID                   41
+#define NCRYPTBUFFER_PKCS_ALG_PARAM                 42
+#define NCRYPTBUFFER_PKCS_ALG_ID                    43
+#define NCRYPTBUFFER_PKCS_ATTRS                     44
+#define NCRYPTBUFFER_PKCS_KEY_NAME                  45
+#define NCRYPTBUFFER_PKCS_SECRET                    46
+#define NCRYPTBUFFER_CERT_BLOB                      47
+
 typedef struct _NCryptBuffer {
     ULONG cbBuffer;
     ULONG BufferType;
     PVOID pvBuffer;
 } NCryptBuffer, *PNCryptBuffer;
+
+#define NCRYPTBUFFER_VERSION    0
 
 typedef struct _NCryptBufferDesc {
     ULONG ulVersion;
