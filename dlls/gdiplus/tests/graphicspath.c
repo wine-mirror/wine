@@ -1465,6 +1465,48 @@ static void test_flatten(void)
     GdipDeletePath(path);
 }
 
+static void test_flatten_degenerate(void)
+{
+    static const struct
+    {
+        GpPointF pt[4];
+        REAL flatness;
+        INT count;
+    }
+    tests[] =
+    {
+        {{{ 10.0, 10.0 }, { 13.0, 50.0 }, { 80.0, -20.0 }, { 110.0, 10.0 }}, 0.0, 2},
+        {{{ INFINITY, INFINITY }, { INFINITY, INFINITY }, { INFINITY, INFINITY }, { INFINITY, INFINITY }}, 0.25, 2},
+        {{{ NAN, NAN }, { NAN, NAN }, { NAN, NAN }, { NAN, NAN }}, 0.25, 2},
+        {{{ 1e7, 1e7 }, { 1e7 + 3.0, 1e7 + 40.0 }, { 1e7 + 70.0, 1e7 - 30.0 }, { 1e7 + 100.0, 1e7 }}, 0.25, 0},
+    };
+    GpStatus status;
+    GpPath *path;
+    INT count, i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%d", i);
+
+        status = GdipCreatePath(FillModeAlternate, &path);
+        expect(Ok, status);
+        status = GdipAddPathBezier(path, tests[i].pt[0].X, tests[i].pt[0].Y, tests[i].pt[1].X, tests[i].pt[1].Y,
+                                   tests[i].pt[2].X, tests[i].pt[2].Y, tests[i].pt[3].X, tests[i].pt[3].Y);
+        expect(Ok, status);
+        status = GdipFlattenPath(path, NULL, tests[i].flatness);
+        expect(Ok, status);
+        status = GdipGetPointCount(path, &count);
+        expect(Ok, status);
+        if (tests[i].count)
+            expect(tests[i].count, count);
+        else
+            ok(count >= 2, "got %d points\n", count);
+        GdipDeletePath(path);
+
+        winetest_pop_context();
+    }
+}
+
 static void test_flatten_translated(void)
 {
     static const REAL offsets[] = { 1000.0, 10000.0 };
@@ -2549,6 +2591,7 @@ START_TEST(graphicspath)
     test_addpie();
     test_flatten();
     test_flatten_translated();
+    test_flatten_degenerate();
     test_warp_path();
     test_widen();
     test_widen_cap();
