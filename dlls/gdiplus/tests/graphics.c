@@ -8300,7 +8300,6 @@ static void test_negative_layout_rect(void)
         expect(Ok, status);
         status = GdipIsInfiniteRegion(region, graphics, &infinite);
         expect(Ok, status);
-        todo_wine_if(tests[i].ranges != RANGES_FILLED && tests[i].rect.Width)
         if (tests[i].ranges == RANGES_UNCHANGED)
             ok(infinite, "expected the region to be unchanged\n");
         else
