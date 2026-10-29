@@ -1465,6 +1465,48 @@ static void test_flatten(void)
     GdipDeletePath(path);
 }
 
+static void test_flatten_translated(void)
+{
+    static const REAL offsets[] = { 1000.0, 10000.0 };
+    static const REAL flatness[] = { 1.0, 0.25 };
+    GpStatus status;
+    GpPath *path;
+    INT count, expected, i, j;
+
+    for (i = 0; i < ARRAY_SIZE(flatness); i++)
+    {
+        status = GdipCreatePath(FillModeAlternate, &path);
+        expect(Ok, status);
+        status = GdipAddPathBezier(path, 10.0, 10.0, 13.0, 50.0, 80.0, -20.0, 110.0, 10.0);
+        expect(Ok, status);
+        status = GdipFlattenPath(path, NULL, flatness[i]);
+        expect(Ok, status);
+        status = GdipGetPointCount(path, &expected);
+        expect(Ok, status);
+        GdipDeletePath(path);
+
+        for (j = 0; j < ARRAY_SIZE(offsets); j++)
+        {
+            winetest_push_context("flatness %.2f offset %.0f", flatness[i], offsets[j]);
+
+            status = GdipCreatePath(FillModeAlternate, &path);
+            expect(Ok, status);
+            status = GdipAddPathBezier(path, offsets[j] + 10.0, offsets[j] + 10.0, offsets[j] + 13.0, offsets[j] + 50.0,
+                                       offsets[j] + 80.0, offsets[j] - 20.0, offsets[j] + 110.0, offsets[j] + 10.0);
+            expect(Ok, status);
+            status = GdipFlattenPath(path, NULL, flatness[i]);
+            expect(Ok, status);
+            status = GdipGetPointCount(path, &count);
+            expect(Ok, status);
+            todo_wine_if(offsets[j] >= 10000.0)
+            ok(count == expected, "got %d points, expected %d\n", count, expected);
+            GdipDeletePath(path);
+
+            winetest_pop_context();
+        }
+    }
+}
+
 static path_test_t warp_path[] = {
     {7.53, 0.25, PathPointTypeStart, 0, 1}, /*0*/
     {21.5, 0.25, PathPointTypeLine,  0, 1}, /*1*/
@@ -2507,6 +2549,7 @@ START_TEST(graphicspath)
     test_reverse();
     test_addpie();
     test_flatten();
+    test_flatten_translated();
     test_warp_path();
     test_widen();
     test_widen_cap();
