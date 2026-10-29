@@ -2223,19 +2223,16 @@ static void calc_menu_bar_size( HDC hdc, POINT pos, UINT width, struct menu *men
 
 UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
 {
-    POINT pos = { org_x, org_y };
-    struct menu *menu;
+    RECT rect = { org_x, org_y, org_x + width, 0 };
+    UINT height;
     HDC hdc;
 
     TRACE( "hwnd %p, width %d, at (%d, %d).\n", hwnd, width, org_x, org_y );
 
-    if (!(menu = unsafe_menu_ptr( get_menu( hwnd )))) return 0;
-
     hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-    NtGdiSelectFont( hdc, get_menu_font(FALSE));
-    calc_menu_bar_size( hdc, pos, width, menu, hwnd );
+    height = NtUserDrawMenuBarTemp( hwnd, hdc, &rect, 0, 0 );
     NtUserReleaseDC( hwnd, hdc );
-    return menu->Height;
+    return height;
 }
 
 static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_width, UINT arrow_height )
