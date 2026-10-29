@@ -974,12 +974,13 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
         req->exit_code = exit_code;
         ret = wine_server_call( req );
         self = reply->self;
+        exit_code = reply->exit_code;
     }
     SERVER_END_REQ;
     if (self)
     {
-        if (!handle) process_exiting = TRUE;
-        else if (process_exiting) exit_process( exit_code );
+        if (process_exiting) exit_process( exit_code );
+        else if (!handle) process_exiting = TRUE;
         else abort_process( exit_code );
     }
     return ret;

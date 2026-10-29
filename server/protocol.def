@@ -1228,6 +1228,7 @@ typedef volatile struct
     int          exit_code;    /* process exit code */
 @REPLY
     int          self;         /* suicide? */
+    int          exit_code;    /* process exit code */
 @END
 
 

@@ -1458,6 +1458,7 @@ DECL_HANDLER(open_process)
 /* terminate a process */
 DECL_HANDLER(terminate_process)
 {
+    int exit_code = req->exit_code;
     struct process *process;
 
     if (req->handle)
@@ -1465,10 +1466,15 @@ DECL_HANDLER(terminate_process)
         process = get_process_from_handle( req->handle, PROCESS_TERMINATE );
         if (!process) return;
     }
-    else process = (struct process *)grab_object( current->process );
+    else
+    {
+        process = (struct process *)grab_object( current->process );
+        if (process->is_terminating) exit_code = 0; /* use stored exit code */
+    }
 
+    terminate_process( process, current, exit_code );
     reply->self = (current->process == process);
-    terminate_process( process, current, req->exit_code );
+    if (reply->self) reply->exit_code = current->exit_code;
     release_object( process );
 }
 

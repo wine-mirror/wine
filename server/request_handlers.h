@@ -751,6 +751,7 @@ C_ASSERT( offsetof(struct terminate_process_request, handle) == 12 );
 C_ASSERT( offsetof(struct terminate_process_request, exit_code) == 16 );
 C_ASSERT( sizeof(struct terminate_process_request) == 24 );
 C_ASSERT( offsetof(struct terminate_process_reply, self) == 8 );
+C_ASSERT( offsetof(struct terminate_process_reply, exit_code) == 12 );
 C_ASSERT( sizeof(struct terminate_process_reply) == 16 );
 C_ASSERT( offsetof(struct terminate_thread_request, handle) == 12 );
 C_ASSERT( offsetof(struct terminate_thread_request, exit_code) == 16 );

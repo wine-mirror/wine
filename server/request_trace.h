@@ -181,6 +181,7 @@ static void dump_terminate_process_request( const struct terminate_process_reque
 static void dump_terminate_process_reply( const struct terminate_process_reply *req )
 {
     fprintf( stderr, " self=%d", req->self );
+    fprintf( stderr, ", exit_code=%d", req->exit_code );
 }
 
 static void dump_terminate_thread_request( const struct terminate_thread_request *req )
