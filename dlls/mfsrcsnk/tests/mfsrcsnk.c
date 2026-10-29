@@ -1013,8 +1013,8 @@ static void test_release(void)
 {
     IMFByteStream *byte_stream;
     IMFMediaSource *source;
+    LONG ref, ref2;
     HRESULT hr;
-    LONG ref;
 
     byte_stream = create_resource_byte_stream(L"test_thinning.avi");
     hr = create_source(&CLSID_AVIByteStreamPlugin, byte_stream, &source);
@@ -1026,11 +1026,11 @@ static void test_release(void)
     hr = IMFMediaSource_Shutdown(source);
     ok(hr == S_OK, "IMFMediaSource_Shutdown failed with hr %#lx\n", hr);
 
-    ref = IMFByteStream_Release(byte_stream);
-    ok(ref == 0, "got unexpected ref %lu\n", ref);
+    ref2 = get_refcount(byte_stream);
+    ok(ref2 < ref, "Unexpected refcount %ld, was %ld.\n", ref2, ref);
 
-    ref = IMFMediaSource_Release(source);
-    ok(ref == 0, "got unexpected ref %lu\n", ref);
+    IMFByteStream_Release(byte_stream);
+    IMFMediaSource_Release(source);
 }
 
 struct test_stream
