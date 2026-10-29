@@ -2171,6 +2171,16 @@ BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
     return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
 }
 
+BOOL EMFDC_SetICMMode( DC_ATTR *dc_attr, INT mode )
+{
+    EMRSETICMMODE emr;
+
+    emr.emr.iType = EMR_SETICMMODE;
+    emr.emr.nSize = sizeof(emr);
+    emr.iMode = mode;
+    return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
+}
+
 BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color )
 {
     EMRSETBKCOLOR emr;

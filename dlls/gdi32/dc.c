@@ -2641,6 +2641,12 @@ INT WINAPI SetAbortProc( HDC hdc, ABORTPROC abrtprc )
  */
 INT WINAPI SetICMMode( HDC hdc, INT mode )
 {
+    DC_ATTR *dc_attr;
+
+    if ((mode == ICM_OFF || mode == ICM_ON) && (dc_attr = get_dc_attr( hdc )) &&
+        dc_attr->emf && !EMFDC_SetICMMode( dc_attr, mode ))
+        return 0;
+
     /* FIXME: Assume that ICM is always off, and cannot be turned on */
     switch (mode)
     {

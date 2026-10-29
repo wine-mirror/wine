@@ -3929,9 +3929,7 @@ static void test_emf_SetICMMode(void)
     mf = CloseEnhMetaFile(hdc);
     ok(mf != 0, "CloseEnhMetaFile failed\n");
     EnumEnhMetaFile(0, mf, icm_mode_enum_proc, modes, NULL);
-    todo_wine
     ok(modes[0] == 3, "got %lu records\n", modes[0]);
-    todo_wine
     ok(modes[1] == ICM_OFF && modes[2] == ICM_ON && modes[3] == ICM_OFF, "got modes %lu %lu %lu\n",
        modes[1], modes[2], modes[3]);
     DeleteEnhMetaFile(mf);

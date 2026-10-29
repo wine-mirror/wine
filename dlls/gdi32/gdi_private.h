@@ -239,6 +239,7 @@ BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color );
 INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD width, DWORD height,
                               INT x_src, INT y_src, UINT startscan, UINT lines, const void *bits,
                               const BITMAPINFO *info, UINT coloruse );
+BOOL EMFDC_SetICMMode( DC_ATTR *dc_attr, INT mode );
 BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout );
 BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode );
 BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags );
