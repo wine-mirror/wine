@@ -8278,7 +8278,6 @@ static void test_negative_layout_rect(void)
         expect(Ok, status);
         for (j = 0; j < ARRAY_SIZE(bits); j++)
             if (bits[j]) break;
-        todo_wine_if(!tests[i].drawn)
         ok((j < ARRAY_SIZE(bits)) == tests[i].drawn, "expected text %sdrawn\n", tests[i].drawn ? "" : "not ");
 
         status = GdipCreatePath(FillModeAlternate, &path);

@@ -6676,6 +6676,11 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(graphics->busy)
         return ObjectBusy;
 
+    /* a layout rectangle with a negative size clips the string away */
+    if ((!format || !(format->attr & StringFormatFlagsNoClip)) && rect->Width && rect->Height &&
+        (rect->Width < 0.0f || rect->Height < 0.0f))
+        return Ok;
+
     if(has_gdi_dc(graphics))
     {
         status = gdi_dc_acquire(graphics, &hdc);
