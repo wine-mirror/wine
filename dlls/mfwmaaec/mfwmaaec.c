@@ -866,6 +866,24 @@ static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flag
     if (aaec->held_frames + ac_rem_frames >= aaec->frame_length) output->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
     if (!initial_buffer_size) output->rtTimelength = 0;
     output->rtTimelength += (REFERENCE_TIME)frame_count * aaec->frame_length * 10000000 / aaec->samples_per_sec;
+    if (aaec->feature_mode && aaec->feat_vad && aaec->feat_vad <= AEC_VAD_FOR_SILENCE_SUPPRESSION)
+    {
+        int vad_result = 0;
+        USHORT *d = (USHORT *)buffer_data;
+
+        switch (aaec->feat_vad)
+        {
+            case AEC_VAD_NORMAL:
+                vad_result = 3;
+                break;
+            case AEC_VAD_FOR_SILENCE_SUPPRESSION:
+            case AEC_VAD_FOR_AGC:
+                vad_result = 1;
+                break;
+        }
+        d[0] = (d[0] & ~1u) | (vad_result & 1);
+        d[1] = (d[1] & ~1u) | ((vad_result >> 1) & 1);
+    }
     return IMediaBuffer_SetLength(output->pBuffer, initial_buffer_size + frame_count * aaec->frame_length * aaec->sample_size);
 }
 
