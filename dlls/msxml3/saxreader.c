@@ -3507,6 +3507,7 @@ static void saxreader_parse_encdecl(struct saxlocator *locator, const struct par
     if (wcscmp(name->qname, L"encoding"))
         return saxreader_set_error(locator, E_SAX_UNEXPECTED_ATTRIBUTE);
 
+    SysFreeString(locator->saxreader->xmldecl_encoding);
     locator->saxreader->xmldecl_encoding = saxreader_alloc_string(locator, value);
     TRACE("encoding name %s\n", debugstr_w(locator->saxreader->xmldecl_encoding));
 
@@ -3530,6 +3531,8 @@ static void saxreader_parse_sddecl(struct saxlocator *locator, const struct pars
     if (wcscmp(name->qname, L"standalone"))
         return saxreader_set_error(locator, E_SAX_UNEXPECTED_ATTRIBUTE);
 
+    SysFreeString(locator->saxreader->xmldecl_standalone);
+    locator->saxreader->xmldecl_standalone = NULL;
     if (!wcscmp(value, L"yes") || !wcscmp(value, L"no"))
         locator->saxreader->xmldecl_standalone = saxreader_alloc_string(locator, value);
     else
@@ -6667,6 +6670,8 @@ static ULONG WINAPI saxxmlreader_Release(IVBSAXXMLReader *iface)
         }
 
         SysFreeString(reader->xmldecl_version);
+        SysFreeString(reader->xmldecl_standalone);
+        SysFreeString(reader->xmldecl_encoding);
         SysFreeString(reader->empty_bstr);
 
         free(reader);
