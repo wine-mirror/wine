@@ -6015,7 +6015,7 @@ static void xpath_builtin_concat(struct xpath_parser_context *ctxt, int nargs)
     struct xpath_object *cur, *newobj;
     WCHAR *tmp;
 
-    if (ctxt)
+    if (!ctxt)
         return;
 
     if (nargs < 2)
