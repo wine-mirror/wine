@@ -56,7 +56,6 @@ static HRESULT WINAPI wb_QueryInterface( IWordBreaker *iface,
         IsEqualIID(riid, &IID_IWordBreaker))
     {
         *ppvObj = &This->IWordBreaker_iface;
-        return S_OK;
     }
     else
     {
