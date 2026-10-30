@@ -6027,6 +6027,7 @@ static void saxreader_parse_doctype(struct saxlocator *locator)
     saxlocator_extension_dtd(locator);
     saxlocator_enddtd(locator);
 
+    SysFreeString(name);
     SysFreeString(sysid);
     SysFreeString(pubid);
 }
