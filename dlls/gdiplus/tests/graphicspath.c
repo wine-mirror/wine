@@ -154,6 +154,8 @@ static void test_getpathdata(void)
     GpPath *path;
     GpPathData data;
     GpStatus status;
+    GpPointF points[4];
+    BYTE types[4];
     INT count;
 
     status = GdipCreatePath(FillModeAlternate, &path);
@@ -177,6 +179,37 @@ static void test_getpathdata(void)
 
     GdipFree(data.Points);
     GdipFree(data.Types);
+
+    for (count = 0; count < 2; count++)
+    {
+        data.Count = count;
+        data.Points = points;
+        data.Types = types;
+        status = GdipGetPathData(path, &data);
+        todo_wine expect(OutOfMemory, status);
+        expect(count, data.Count);
+    }
+
+    memset(points, 0, sizeof(points));
+    memset(types, 0, sizeof(types));
+    data.Count = 4;
+    status = GdipGetPathData(path, &data);
+    expect(Ok, status);
+    todo_wine expect(2, data.Count);
+    ok(points[1].X == 100.0 && points[1].Y == 50.0, "got %.2f,%.2f\n", points[1].X, points[1].Y);
+    expect(PathPointTypeLine, types[1]);
+
+    data.Count = 0;
+    data.Points = NULL;
+    data.Types = types;
+    status = GdipGetPathData(path, &data);
+    todo_wine expect(InvalidParameter, status);
+
+    data.Points = points;
+    data.Types = NULL;
+    status = GdipGetPathData(path, &data);
+    todo_wine expect(InvalidParameter, status);
+
     GdipDeletePath(path);
 }
 
