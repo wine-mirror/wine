@@ -6149,13 +6149,12 @@ static void xpath_builtin_id(struct xpath_parser_context *ctxt, int nargs)
         return;
     }
     obj = xpath_convert_string(ctxt, obj);
-    if (obj) return;
+    if (!obj) return;
 
     ret = xpath_get_elements_by_id(ctxt->context->root, obj->stringval);
     xpath_push_value(ctxt, xpath_wrap_nodeset(ctxt, ret));
 
     xpath_object_release(ctxt->context, obj);
-    return;
 }
 
 static void xpath_builtin_last(struct xpath_parser_context *ctxt, int nargs)
