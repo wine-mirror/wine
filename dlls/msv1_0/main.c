@@ -839,7 +839,7 @@ static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, 
 
     if (cred->token)
     {
-        DWORD username_len = sizeof(username_buf);
+        DWORD username_len = ARRAY_SIZE(username_buf);
         char tmp[256];
         TOKEN_USER *token_user = (TOKEN_USER *)tmp;
         DWORD size = sizeof(tmp);
@@ -860,7 +860,7 @@ static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, 
                 return SEC_E_INTERNAL_ERROR;
             }
         }
-        domain_len = sizeof(domain) - sizeof(WCHAR);
+        domain_len = ARRAY_SIZE(domain) - 1;
         r = LookupAccountSidW( NULL, token_user->User.Sid, username_buf, &username_len,
                 domain, &domain_len, &use);
         if (token_user != (TOKEN_USER *)tmp) free( token_user );
