@@ -1251,11 +1251,6 @@ static WCHAR *get_product_code( MSIDATABASE *db )
     return get_property( db, L"ProductCode" );
 }
 
-static WCHAR *get_product_version( MSIDATABASE *db )
-{
-    return get_property( db, L"ProductVersion" );
-}
-
 static UINT get_registered_local_package( const WCHAR *product, WCHAR *localfile )
 {
     MSIINSTALLCONTEXT context;
@@ -1364,7 +1359,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, DWORD dwOptions, MSIPACKAGE **pPackage)
     }
     else
     {
-        WCHAR *product_version = NULL;
+        WCHAR *package_code = NULL;
 
         if ( UrlIsW( szPackage, URLIS_URL ) )
         {
@@ -1419,29 +1414,28 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, DWORD dwOptions, MSIPACKAGE **pPackage)
             }
         }
         else
-            product_version = get_product_version( db );
+            package_code = msi_get_package_code( db );
         msiobj_release( &db->hdr );
         TRACE("opening package %s\n", debugstr_w( localfile ));
         r = MSI_OpenDatabaseW( localfile, MSIDBOPEN_TRANSACT, &db );
         if (r != ERROR_SUCCESS)
         {
-            free( product_version );
+            free( package_code );
             return r;
         }
 
-        if (product_version)
+        if (package_code)
         {
-            WCHAR *cache_version = get_product_version( db );
-            if (!product_version != !cache_version ||
-                    (product_version && wcscmp(product_version, cache_version)))
+            WCHAR *cache_code = msi_get_package_code( db );
+            if (!cache_code || wcsicmp( package_code, cache_code ))
             {
                 msiobj_release( &db->hdr );
-                free( product_version );
-                free( cache_version );
+                free( package_code );
+                free( cache_code );
                 return ERROR_PRODUCT_VERSION;
             }
-            free( product_version );
-            free( cache_version );
+            free( package_code );
+            free( cache_code );
         }
     }
     package = MSI_CreatePackage( db );

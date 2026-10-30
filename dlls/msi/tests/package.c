@@ -3672,7 +3672,7 @@ static void test_states(void)
     MsiCloseHandle(hdb);
 
     r = MsiInstallProductA(msifile2, "");
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiOpenProductA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", &hprod);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -3691,7 +3691,7 @@ static void test_states(void)
     MsiCloseHandle(hdb);
 
     r = MsiInstallProductA(msifile2, "");
-    todo_wine ok(r == ERROR_PRODUCT_VERSION, "Expected ERROR_PRODUCT_VERSION, got %d\n", r);
+    ok(r == ERROR_PRODUCT_VERSION, "Expected ERROR_PRODUCT_VERSION, got %d\n", r);
 
     r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
