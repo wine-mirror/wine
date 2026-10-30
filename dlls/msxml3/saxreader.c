@@ -4605,6 +4605,7 @@ static void saxreader_parse_pi(struct saxlocator *locator)
         ch = *saxreader_get_ptr_noread(locator);
     }
 
+    free(buffer.data);
     SysFreeString(target);
     saxreader_set_error(locator, E_SAX_UNCLOSEDPI);
 }
