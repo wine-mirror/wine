@@ -6474,7 +6474,7 @@ static void xpath_builtin_string_length(struct xpath_parser_context *ctxt, int n
 
         return;
     }
-    if (!xpath_builtin_check_stack(ctxt, nargs, 0))
+    if (!xpath_builtin_check_stack(ctxt, nargs, 1))
         return;
     xpath_arg_cast_to_number(ctxt);
     if (!xpath_check_type(ctxt, _XPATH_STRING))
