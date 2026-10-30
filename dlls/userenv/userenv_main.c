@@ -280,8 +280,8 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     {
         TOKEN_USER *token_user = NULL;
         SID_NAME_USE use;
-        WCHAR *sidW;
-        DWORD size, tmp=0;
+        WCHAR *sidW, domain[MAX_PATH];
+        DWORD size, domain_size = ARRAY_SIZE(domain);
 
         if (GetTokenInformation(hToken, TokenUser, NULL, 0, &len) ||
                 GetLastError()!=ERROR_INSUFFICIENT_BUFFER ||
@@ -299,7 +299,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
 
         size = UNICODE_STRING_MAX_CHARS-len;
         if (LookupAccountSidW(NULL, token_user->User.Sid,
-                    buf+len, &size, NULL, &tmp, &use))
+                    buf+len, &size, domain, &domain_size, &use))
         {
             set_env_var(&env, L"USERNAME", buf+len);
             if (len) set_env_var(&env, L"USERPROFILE", buf);
