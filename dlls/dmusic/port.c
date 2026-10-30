@@ -214,7 +214,7 @@ static HRESULT WINAPI synth_port_GetLatencyClock(IDirectMusicPort *iface, IRefer
 
     TRACE("(%p, %p)\n", iface, clock);
 
-    return IDirectMusicSynth8_GetLatencyClock(This->synth, clock);
+    return IDirectMusicSynth_GetLatencyClock(This->synth, clock);
 }
 
 static HRESULT WINAPI synth_port_GetRunningStats(IDirectMusicPort *iface, DMUS_SYNTHSTATS *stats)

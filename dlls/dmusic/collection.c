@@ -163,7 +163,7 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
         LIST_FOR_EACH_ENTRY_SAFE(wave_entry, next, &This->waves, struct wave_entry, entry)
         {
             list_remove(&wave_entry->entry);
-            IDirectMusicInstrument_Release(wave_entry->wave);
+            IDirectMusicObject_Release(wave_entry->wave);
             free(wave_entry);
         }
 
