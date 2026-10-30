@@ -75,6 +75,13 @@ static void string_buffer_init(struct string_buffer *buffer)
     buffer->status = &buffer->_status;
 }
 
+static void string_buffer_cleanup(struct string_buffer *buffer)
+{
+    free(buffer->data);
+    buffer->data = NULL;
+    buffer->count = buffer->capacity = 0;
+}
+
 static void string_append(struct string_buffer *buffer, const WCHAR *str, UINT len)
 {
     if (*buffer->status != S_OK)
@@ -83,19 +90,12 @@ static void string_append(struct string_buffer *buffer, const WCHAR *str, UINT l
     if (!array_reserve((void **)&buffer->data, &buffer->capacity, buffer->count + len, sizeof(*str)))
     {
         *buffer->status = E_OUTOFMEMORY;
-        free(buffer->data);
+        string_buffer_cleanup(buffer);
         return;
     }
 
     memcpy(buffer->data + buffer->count, str, len * sizeof(WCHAR));
     buffer->count += len;
-}
-
-static void string_buffer_cleanup(struct string_buffer *buffer)
-{
-    free(buffer->data);
-    buffer->data = NULL;
-    buffer->count = buffer->capacity = 0;
 }
 
 static HRESULT string_to_bstr_slice(struct string_buffer *buffer, size_t offset, size_t length, BSTR *str)
