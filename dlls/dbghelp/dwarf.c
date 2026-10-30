@@ -1481,7 +1481,11 @@ static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsig
 
     if (nr == 0) return NULL;
     ranges = malloc(nr * sizeof(ranges[0]));
-    if (!ranges || !dwarf2_fill_ranges(di, ranges, nr)) return NULL;
+    if (!ranges || !dwarf2_fill_ranges(di, ranges, nr))
+    {
+        free(ranges);
+        return NULL;
+    }
     *num_ranges = nr;
     return ranges;
 }

@@ -3122,7 +3122,11 @@ static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, sy
     symref_t symref;
 
     if ((result = pdb_reader_TPI_alloc_and_read_full_reftype(pdb, enumlist_cv_typeid, &cv_reftype, &tpi_offset))) return result;
-    if (cv_reftype->generic.id != LF_FIELDLIST_V2) return PDB_REPORT_UNEXPECTED("enum list", cv_reftype->generic.id);
+    if (cv_reftype->generic.id != LF_FIELDLIST_V2)
+    {
+        pdb_reader_free(pdb, cv_reftype);
+        return PDB_REPORT_UNEXPECTED("enum list", cv_reftype->generic.id);
+    }
     start = ptr = (const unsigned char *)cv_reftype->fieldlist.list;
     last = (const unsigned char *)cv_reftype + sizeof(cv_reftype->generic.id) + cv_reftype->generic.len;
 
@@ -3162,7 +3166,11 @@ static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, sy
 
         case LF_INDEX_V2:
             if ((result = pdb_reader_TPI_fillin_enumlist(pdb, container_symref, cv_field->index_v2.ref,
-                                                         where, tfp))) return result;
+                                                         where, tfp)))
+            {
+                pdb_reader_free(pdb, cv_reftype);
+                return result;
+            }
             ptr += sizeof(cv_field->index_v2);
             break;
 
@@ -3236,7 +3244,11 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
     VARIANT v;
 
     if ((result = pdb_reader_TPI_alloc_and_read_full_reftype(pdb, udtlist_cv_typeid, &cv_reftype, &tpi_offset))) return result;
-    if (cv_reftype->generic.id != LF_FIELDLIST_V2) return PDB_REPORT_UNEXPECTED("list", cv_reftype->generic.id);
+    if (cv_reftype->generic.id != LF_FIELDLIST_V2)
+    {
+        pdb_reader_free(pdb, cv_reftype);
+        return PDB_REPORT_UNEXPECTED("list", cv_reftype->generic.id);
+    }
     start = ptr = (const unsigned char *)cv_reftype->fieldlist.list;
     last = (const unsigned char *)cv_reftype + sizeof(cv_reftype->generic.id) + cv_reftype->generic.len;
 
@@ -3309,7 +3321,11 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
             break;
 
         case LF_INDEX_V2:
-            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, where, tfp))) return result;
+            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, where, tfp)))
+            {
+                pdb_reader_free(pdb, cv_reftype);
+                return result;
+            }
             length = sizeof(cv_field->index_v2);
             break;
 
@@ -3568,7 +3584,11 @@ static enum method_result pdb_reader_TPI_field_request(struct pdb_reader *pdb, s
     walker.offset = entry->stream_offset;
 
     if ((result = pdb_reader_alloc(pdb, entry->action_length, (void**)&cv_field))) return MR_FAILURE;
-    if ((result = pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read))) return MR_FAILURE;
+    if ((result = pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read)))
+    {
+        pdb_reader_free(pdb, cv_field);
+        return MR_FAILURE;
+    }
     if (num_read == entry->action_length)
     {
         switch (cv_field->generic.id)
