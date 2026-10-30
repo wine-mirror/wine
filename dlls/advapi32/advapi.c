@@ -76,7 +76,7 @@ BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
     char token_buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
     TOKEN_USER *token_user = (TOKEN_USER *)token_buffer;
     DWORD token_buffer_size = 0, domain_size = MAX_PATH;
-    WCHAR buffer[UNLEN + 2];
+    WCHAR buffer[UNLEN + 2], domain[MAX_PATH];
     DWORD buffer_size = ARRAY_SIZE(buffer);
     SID_NAME_USE name_use;
 
@@ -98,7 +98,8 @@ BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
     }
     else
     {
-        if (!LookupAccountSidW( NULL, token_user->User.Sid, buffer, &buffer_size, NULL, &domain_size, &name_use ))
+        if (!LookupAccountSidW( NULL, token_user->User.Sid, buffer, &buffer_size, domain,
+                                &domain_size, &name_use ))
             return FALSE;
     }
 
