@@ -375,7 +375,7 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
         .guidClass = CLSID_DirectMusicCollection,
         .guidObject = GUID_DefaultGMCollection,
     };
-    IDirectMusicObject *collection = NULL;
+    IDirectMusicCollection *collection = NULL;
 
     TRACE("(%p, %p): semi-stub\n", parser, segment);
     if (FAILED(hr = stream_get_object(parser->stream, &default_desc, &IID_IDirectMusicCollection,
@@ -516,7 +516,7 @@ static void midi_parser_destroy(struct midi_parser *parser)
     if (parser->bandtrack) IDirectMusicTrack_Release(parser->bandtrack);
     if (parser->chordtrack) IDirectMusicTrack_Release(parser->chordtrack);
     if (parser->tempotrack) IDirectMusicTrack_Release(parser->tempotrack);
-    if (parser->seqtrack) IDirectMusicTrack_Release(parser->seqtrack);
+    if (parser->seqtrack) IDirectMusicTrack8_Release(parser->seqtrack);
     LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &parser->seqtrack_items, struct midi_seqtrack_item, entry)
     {
         list_remove(&item->entry);

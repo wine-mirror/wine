@@ -1500,7 +1500,7 @@ static void test_graph(void)
     ok(msg.pTool == tool1, "got %p\n", msg.pTool);
     IDirectMusicGraph_Release(msg.pGraph);
     msg.pGraph = NULL;
-    IDirectMusicGraph_Release(msg.pTool);
+    IDirectMusicTool_Release(msg.pTool);
     msg.pTool = NULL;
 
 
@@ -1774,7 +1774,7 @@ static void test_midi(void)
             &IID_IDirectMusicSegment, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicSegment8_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1797,7 +1797,7 @@ static void test_midi(void)
     expect_track(segment, BandTrack, -1, 0);
     expect_track(segment, ChordTrack, -1, 1);
     expect_track(segment, SeqTrack, -1, 2);
-    IDirectMusicSegment_Release(segment);
+    IDirectMusicSegment8_Release(segment);
 
     /* parse MIDI file with 1 track that has 1 event. */
 
@@ -1805,7 +1805,7 @@ static void test_midi(void)
             &IID_IDirectMusicSegment, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicSegment8_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1835,18 +1835,18 @@ static void test_midi(void)
     expect_track(segment, TempoTrack, -1, 2);
     expect_track(segment, SeqTrack, -1, 3);
 
-    hr = IDirectMusicSegment_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 0, &next, &tempo_param);
+    hr = IDirectMusicSegment8_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 0, &next, &tempo_param);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(next == 24, "got %ld, expected 24\n", next);
     ok(tempo_param.mtTime == 24, "got %ld, expected 24\n", tempo_param.mtTime);
     ok(tempo_param.dblTempo == 300.0, "got %f, expected 300.0\n", tempo_param.dblTempo);
 
-    hr = IDirectMusicSegment_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 26, &next, &tempo_param);
+    hr = IDirectMusicSegment8_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 26, &next, &tempo_param);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(next == 0, "got %ld, expected 24\n", next);
     ok(tempo_param.mtTime == -2, "got %ld, expected -6\n", tempo_param.mtTime);
     ok(tempo_param.dblTempo == 300.0, "got %f, expected 300.0\n", tempo_param.dblTempo);
-    IDirectMusicSegment_Release(segment);
+    IDirectMusicSegment8_Release(segment);
 
     /* parse MIDI file with a track with 0 length, but has an event. */
 
@@ -1854,7 +1854,7 @@ static void test_midi(void)
             &IID_IDirectMusicSegment, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicSegment8_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1883,7 +1883,7 @@ static void test_midi(void)
     expect_track(segment, ChordTrack, -1, 1);
     /* there is no tempo track. */
     expect_track(segment, SeqTrack, -1, 2);
-    IDirectMusicSegment_Release(segment);
+    IDirectMusicSegment8_Release(segment);
 
     /* parse MIDI file with program change event. */
 
@@ -1891,7 +1891,7 @@ static void test_midi(void)
             &IID_IDirectMusicSegment, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicSegment8_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -2064,28 +2064,28 @@ static void test_midi(void)
     hr = IDirectMusicPerformance_AddPort(performance, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, FALSE);
     check_downloaded_instrument(performance, collection, 0, FALSE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, TRUE);
     check_downloaded_instrument(performance, collection, 0, FALSE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, FALSE);
     check_downloaded_instrument(performance, collection, 0, FALSE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -2099,7 +2099,7 @@ static void test_midi(void)
 
     hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_CloseDown(performance);
@@ -2245,28 +2245,28 @@ static void test_midi(void)
     hr = IDirectMusicPerformance_AddPort(performance, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, FALSE);
     check_downloaded_instrument(performance, collection, 0, FALSE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, TRUE);
     check_downloaded_instrument(performance, collection, 0, TRUE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, TRUE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Unload, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_downloaded_instrument(performance, collection, 48, FALSE);
     check_downloaded_instrument(performance, collection, 0, FALSE);
     check_downloaded_instrument(performance, collection, F_INSTRUMENT_DRUMS, FALSE);
 
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Enable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_GetTime(performance, NULL, &start_time);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -2280,14 +2280,14 @@ static void test_midi(void)
 
     hr = IDirectMusicPerformance_Stop(performance, (IDirectMusicSegment *)segment, NULL, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicSegment_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
+    hr = IDirectMusicSegment8_SetParam(segment, &GUID_Disable_Auto_Download, -1, DMUS_SEG_ALLTRACKS, 0, performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_CloseDown(performance);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicPerformance_Release(performance);
     IDirectMusicTool_Release(tool);
-    IDirectMusicSegment_Release(segment);
+    IDirectMusicSegment8_Release(segment);
     IDirectMusicLoader8_Release(loader);
     ref = IDirectMusicCollection_Release(collection);
     ok(!ref, "collection ref count got %ld expected 0\n", ref);
@@ -4343,7 +4343,7 @@ static void test_wave_pmsg(unsigned num_repeats)
     ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
     ok(!msg, "got %p\n", msg);
 
-    hr = IDirectMusicPerformance8_Stop(performance, segment, NULL, 0, 0);
+    hr = IDirectMusicPerformance_Stop(performance, segment, NULL, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
 
@@ -4693,7 +4693,7 @@ static void test_band_track_play(void)
             &IID_IDirectMusicTrack, (void **)&track);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -4782,7 +4782,7 @@ static void test_band_track_play(void)
 
     hr = test_loader_stream_create(stream, loader, &loader_stream);
     ok(hr == S_OK, "got %#lx\n", hr);
-    IDirectMusicLoader8_Release(loader);
+    IDirectMusicLoader_Release(loader);
 
     hr = IPersistStream_Load(persist, loader_stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -5004,7 +5004,7 @@ static void test_tempo_track_play(void)
             &IID_IDirectMusicTrack, (void **)&track);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -5587,7 +5587,7 @@ static void check_loop(const char *label, IDirectMusicSegment *segment, const WO
     IDirectMusicPerformance_Release(performance);
     IDirectMusicTool_Release(tool);
 
-    hr = IDirectMusicSegment8_RemoveTrack(segment, track);
+    hr = IDirectMusicSegment_RemoveTrack(segment, track);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicTrack_Release(track);
 
