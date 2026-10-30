@@ -90,6 +90,8 @@ AC_ARG_WITH(system-dllpath,AS_HELP_STRING([--with-system-dllpath=PATH],[load ext
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
 AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
 
+AC_ARG_VAR(PROVISIONING_PROFILE,[Path to a provisioning profile to use on ARM64 macOS])
+
 AC_CANONICAL_HOST
 AC_SUBST(srcdir)
 
@@ -995,6 +997,7 @@ case $host_os in
       aarch64)
         wine_use_preloader=no
         WINELOADER_PROGRAMS="wine.app"
+        AS_VAR_IF([PROVISIONING_PROFILE],[],[WINE_WARNING([No provisioning profile supplied; Wine will crash on launch on an unmodified macOS system.])])
         ;;
       x86_64)
         WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"

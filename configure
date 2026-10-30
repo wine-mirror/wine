@@ -884,6 +884,7 @@ build_os
 build_vendor
 build_cpu
 build
+PROVISIONING_PROFILE
 system_dllpath
 ECHO_T
 ECHO_N
@@ -1905,6 +1906,7 @@ enable_year2038
       ac_precious_vars='build_alias
 host_alias
 target_alias
+PROVISIONING_PROFILE
 CC
 CFLAGS
 LDFLAGS
@@ -2722,6 +2724,8 @@ Optional Packages:
   --with-x                use the X Window System
 
 Some influential environment variables:
+  PROVISIONING_PROFILE
+              Path to a provisioning profile to use on ARM64 macOS
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -4676,6 +4680,8 @@ if test ${with_wine64+y}
 then :
   withval=$with_wine64;
 fi
+
+
 
 
 
@@ -12415,6 +12421,10 @@ case $host_os in
       aarch64)
         wine_use_preloader=no
         WINELOADER_PROGRAMS="wine.app"
+        if ${PROVISIONING_PROFILE:+false} :
+then :
+  as_fn_append wine_warnings "|No provisioning profile supplied; Wine will crash on launch on an unmodified macOS system."
+fi
         ;;
       x86_64)
         WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
@@ -23997,6 +24007,7 @@ ECHO_C = $ECHO_C
 ECHO_N = $ECHO_N
 ECHO_T = $ECHO_T
 system_dllpath = $system_dllpath
+PROVISIONING_PROFILE = $PROVISIONING_PROFILE
 build = $build
 build_cpu = $build_cpu
 build_vendor = $build_vendor

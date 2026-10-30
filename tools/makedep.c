@@ -160,6 +160,7 @@ static const char *ln_s;
 static const char *sed_cmd;
 static const char *wayland_scanner;
 static const char *sarif_converter;
+static const char *provisioning_profile;
 static const char *buildimage;
 static const char *runtest;
 static const char *install;
@@ -4246,6 +4247,12 @@ static void output_programs( struct makefile *make )
                 output( "\t%scp %s $@\n", cmd_prefix( "GEN" ), obj_dir_path( make, info_plist ) );
                 strarray_add( &bundle_files, strmake( "%s/Info.plist", appdir ) );
             }
+            if (provisioning_profile)
+            {
+                output( "%s/embedded.provisionprofile: %s\n", obj_dir_path( make, appdir ), provisioning_profile );
+                output( "\t%scp %s $@\n", cmd_prefix( "GEN" ), provisioning_profile );
+                strarray_add( &bundle_files, strmake( "%s/embedded.provisionprofile", appdir ) );
+            }
             output( "%s/PkgInfo:\n", obj_dir_path( make, appdir ) );
             output( "\t%secho -n \"APPL????\" >$@ || (rm -f $@ && false)\n", cmd_prefix( "GEN" ));
             strarray_add( &bundle_files, strmake( "%s/PkgInfo", appdir ) );
@@ -5187,6 +5194,7 @@ int main( int argc, char *argv[] )
     ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
     wayland_scanner    = get_expanded_make_variable( top_makefile, "WAYLAND_SCANNER" );
     sarif_converter    = get_expanded_make_variable( top_makefile, "SARIF_CONVERTER" );
+    provisioning_profile = get_expanded_make_variable( top_makefile, "PROVISIONING_PROFILE" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
