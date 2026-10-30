@@ -1613,10 +1613,13 @@ static void test_GdipFillClosedCurveI(void)
 
 static void test_GdipFillPath(void)
 {
+    static const GpPoint triangle[] = { { 2, 2 }, { 10, 2 }, { 2, 10 } };
     GpStatus status;
     GpGraphics *graphics;
     GpSolidFill *brush;
+    GpBitmap *bitmap;
     GpPath *path;
+    ARGB color;
     HDC hdc = GetDC(hwnd);
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -1651,9 +1654,36 @@ static void test_GdipFillPath(void)
     status = GdipFillPath(graphics, (GpBrush *)brush, path);
     expect(Ok, status);
 
+    GdipDeleteGraphics(graphics);
+
+    /* Not closed figure followed by another figure */
+    status = GdipCreateBitmapFromScan0(20, 20, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics);
+    expect(Ok, status);
+    GdipResetPath(path);
+    status = GdipAddPathLine2I(path, triangle, ARRAY_SIZE(triangle));
+    expect(Ok, status);
+    status = GdipStartPathFigure(path);
+    expect(Ok, status);
+    status = GdipAddPathRectangleI(path, 12, 12, 4, 4);
+    expect(Ok, status);
+    status = GdipFillPath(graphics, (GpBrush *)brush, path);
+    expect(Ok, status);
+    status = GdipBitmapGetPixel(bitmap, 4, 4, &color);
+    expect(Ok, status);
+    expect(0xffffffff, color);
+    status = GdipBitmapGetPixel(bitmap, 14, 14, &color);
+    expect(Ok, status);
+    expect(0xffffffff, color);
+    status = GdipBitmapGetPixel(bitmap, 8, 8, &color);
+    expect(Ok, status);
+    expect(0, color);
+
     GdipDeletePath(path);
     GdipDeleteBrush((GpBrush *)brush);
     GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage *)bitmap);
     ReleaseDC(hwnd, hdc);
 }
 

@@ -1113,7 +1113,12 @@ static GpStatus flat_path_to_edge_list(GpPath *path, const RECT *bounds, struct 
         BYTE type = path->pathdata.Types[i];
 
         if ((type&PathPointTypePathTypeMask) == PathPointTypeStart)
+        {
+            /* Figures are implicitly closed when filled. */
+            if (!(path->pathdata.Types[i-1] & PathPointTypeCloseSubpath))
+                stat = line_to_edge_list(path->pathdata.Points[i-1], path->pathdata.Points[subpath_start], bounds, edges);
             subpath_start = i;
+        }
 
         if ((type&PathPointTypePathTypeMask) == PathPointTypeLine)
         {
