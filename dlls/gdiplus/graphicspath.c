@@ -1564,13 +1564,15 @@ GpStatus WINGDIPAPI GdipGetPathData(GpPath *path, GpPathData* pathData)
 {
     TRACE("(%p, %p)\n", path, pathData);
 
-    if(!path || !pathData)
+    if(!path || !pathData || !pathData->Points || !pathData->Types)
         return InvalidParameter;
 
-    /* Only copy data. pathData allocation/freeing controlled by wrapper class.
-       Assumed that pathData is enough wide to get all data - controlled by wrapper too. */
-    memcpy(pathData->Points, path->pathdata.Points, sizeof(PointF) * pathData->Count);
-    memcpy(pathData->Types , path->pathdata.Types , pathData->Count);
+    if(pathData->Count < path->pathdata.Count)
+        return OutOfMemory;
+
+    memcpy(pathData->Points, path->pathdata.Points, sizeof(PointF) * path->pathdata.Count);
+    memcpy(pathData->Types, path->pathdata.Types, path->pathdata.Count);
+    pathData->Count = path->pathdata.Count;
 
     return Ok;
 }
