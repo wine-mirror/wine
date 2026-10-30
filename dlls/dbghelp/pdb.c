@@ -1238,7 +1238,7 @@ static enum pdb_result pdb_reader_enum_lines_linetab2(struct pdb_reader *pdb, co
             struct CV_Line_t *lines;
             char *string;
             unsigned i;
-            BOOL match = TRUE;
+            BOOL match;
 
             if ((result = pdb_reader_alloc_and_read(pdb, &sub_walker, files_hdr.nLines * sizeof(lines[0]),
                                                     (void**)&lines))) return result;
@@ -1246,32 +1246,35 @@ static enum pdb_result pdb_reader_enum_lines_linetab2(struct pdb_reader *pdb, co
             /* should filter on filename */
             current_stream_offset = checksum_walker.offset;
             checksum_walker.offset += files_hdr.offFile;
-            if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum))) return result;
-            if ((result = pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, &string))) return result;
+            if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum)) ||
+                (result = pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, &string)))
+            {
+                pdb_reader_free(pdb, lines);
+                return result;
+            }
             checksum_walker.offset = current_stream_offset;
 
-            if (source_file_regex)
-                match = symt_match_stringAW(string, source_file_regex, FALSE);
-            if (!match)
+            match = !source_file_regex || symt_match_stringAW(string, source_file_regex, FALSE);
+            if (match)
             {
-                sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Line_t);
-                if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
-                    sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
-                continue;
+                if (strlen(string) < ARRAY_SIZE(source_code_info->FileName))
+                    strcpy(source_code_info->FileName, string);
+                else
+                    source_code_info->FileName[0] = '\0';
             }
-            if (strlen(string) < ARRAY_SIZE(source_code_info->FileName))
-                strcpy(source_code_info->FileName, string);
-            else
-                source_code_info->FileName[0] = '\0';
             pdb_reader_free(pdb, string);
 
-            for (i = 0; i < files_hdr.nLines; i++)
+            if (match)
             {
-                source_code_info->Address = lineblk_base + lines[i].offset;
-                source_code_info->LineNumber = lines[i].linenumStart;
-                if (!cb(source_code_info, user)) return R_PDB_NOT_FOUND;
+                for (i = 0; i < files_hdr.nLines; i++)
+                {
+                    source_code_info->Address = lineblk_base + lines[i].offset;
+                    source_code_info->LineNumber = lines[i].linenumStart;
+                    if (!cb(source_code_info, user)) break;
+                }
             }
             pdb_reader_free(pdb, lines);
+            if (match && i < files_hdr.nLines) return R_PDB_NOT_FOUND;
             if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
                 sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
         }
