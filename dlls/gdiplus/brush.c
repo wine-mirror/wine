@@ -472,6 +472,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
     TRACE("(%p, %lx, %lx, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
           wrap, line);
 
+    if(!rect)
+        return InvalidParameter;
+
     set_rect(&rectF, rect->X, rect->Y, rect->Width, rect->Height);
     return GdipCreateLineBrushFromRect(&rectF, startcolor, endcolor, mode, wrap, line);
 }

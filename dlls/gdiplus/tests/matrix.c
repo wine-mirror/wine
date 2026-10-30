@@ -345,6 +345,8 @@ static void test_constructor3(void)
     REAL values[6];
     GpRectF rc;
     GpPointF pt[3];
+    GpRect rci = { 10, 10, 10, 10 };
+    GpPoint pti[3] = { { 10, 10 }, { 20, 10 }, { 10, 20 } };
     GpStatus stat;
 
     rc.X = 10;
@@ -417,6 +419,15 @@ static void test_constructor3(void)
     expectf(0.0, values[5]);
 
     GdipDeleteMatrix(matrix);
+
+    stat = GdipCreateMatrix3(NULL, pt, &matrix);
+    expect(InvalidParameter, stat);
+    stat = GdipCreateMatrix3I(NULL, pti, &matrix);
+    expect(InvalidParameter, stat);
+    stat = GdipCreateMatrix3I(&rci, NULL, &matrix);
+    expect(InvalidParameter, stat);
+    stat = GdipCreateMatrix3I(&rci, pti, NULL);
+    expect(InvalidParameter, stat);
 }
 
 static void test_isidentity(void)

@@ -87,7 +87,7 @@ GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *rect,
 
     TRACE("(%s, %p, %p)\n", debugstr_rectf(rect), pt, matrix);
 
-    if(!matrix || !pt)
+    if(!matrix || !pt || !rect)
         return InvalidParameter;
 
     m11 = (pt[1].X - pt[0].X) / rect->Width;
@@ -108,6 +108,9 @@ GpStatus WINGDIPAPI GdipCreateMatrix3I(GDIPCONST GpRect *rect, GDIPCONST GpPoint
     int i;
 
     TRACE("(%p, %p, %p)\n", rect, pt, matrix);
+
+    if(!rect || !pt)
+        return InvalidParameter;
 
     set_rect(&rectF, rect->X, rect->Y, rect->Width, rect->Height);
 

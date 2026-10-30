@@ -5486,6 +5486,9 @@ GpStatus WINGDIPAPI GdipGetEncoderParameterListSize(GpImage *image,
 
     TRACE("(%p,%s,%p)\n", image, debugstr_guid(clsidEncoder), size);
 
+    if(!image || !clsidEncoder || !size)
+        return InvalidParameter;
+
     if(!(calls++))
         FIXME("not implemented\n");
 

@@ -804,6 +804,13 @@ static void test_gradientgetrect(void)
         WrapModeTile, &brush);
     expect(OutOfMemory, status);
 
+    status = GdipCreateLineBrushFromRect(NULL, 0, 0, LinearGradientModeHorizontal,
+        WrapModeTile, &brush);
+    expect(InvalidParameter, status);
+    status = GdipCreateLineBrushFromRectI(NULL, 0, 0, LinearGradientModeHorizontal,
+        WrapModeTile, &brush);
+    expect(InvalidParameter, status);
+
     for (i = 0; i < ARRAY_SIZE(create_from_rect); ++i)
     {
         ARGB colors[2];

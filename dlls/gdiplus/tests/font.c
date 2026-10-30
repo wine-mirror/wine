@@ -293,6 +293,8 @@ static void test_logfont(void)
     expect(Ok, stat);
     stat = GdipGetLogFontA(font, graphics, &lfa2);
     expect(Ok, stat);
+    stat = GdipGetLogFontA(font, graphics, NULL);
+    expect(InvalidParameter, stat);
 
     ok(lfa2.lfHeight < 0, "Expected negative height\n");
     expect(0, lfa2.lfWidth);
