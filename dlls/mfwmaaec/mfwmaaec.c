@@ -503,7 +503,13 @@ static HRESULT WINAPI transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFM
 
 static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("iface %p, message %#x, param %p stub.\n", iface, message, (void *)param);
+    struct aaec *aaec = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, message %#x, param %p.\n", iface, message, (void *)param);
+
+    if (message == MFT_MESSAGE_NOTIFY_BEGIN_STREAMING) return start_audio_capture(aaec);
+    if (message == MFT_MESSAGE_NOTIFY_END_STREAMING)
+        stop_audio_capture(aaec);
     return S_OK;
 }
 
@@ -516,9 +522,52 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *output, DWORD *output_status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, output %p, output_status %p stub.\n", iface, flags, count,
+    struct aaec *aaec = impl_from_IMFTransform(iface);
+    DMO_OUTPUT_DATA_BUFFER dmo_output = { 0 };
+    IMFMediaBuffer *buffer;
+    HRESULT hr;
+
+    TRACE("iface %p, flags %#lx, count %lu, output %p, output_status %p.\n", iface, flags, count,
             output, output_status);
-    return E_NOTIMPL;
+
+    if (count != 1) return E_INVALIDARG;
+    if (FAILED(hr = start_audio_capture(aaec))) goto done;
+    if (!output->pSample) return MF_E_TRANSFORM_NEED_MORE_INPUT;
+
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(output->pSample, &buffer))) goto done;
+    hr = MFCreateLegacyMediaBufferOnMFMediaBuffer(output->pSample, buffer, 0, &dmo_output.pBuffer);
+    IMFMediaBuffer_Release(buffer);
+    if (FAILED(hr)) goto done;
+    if (FAILED(hr = IMediaBuffer_SetLength(dmo_output.pBuffer, 0))) goto done;
+
+    hr = IMediaObject_ProcessOutput(&aaec->IMediaObject_iface, flags, count, &dmo_output, output_status);
+    if (hr != S_OK) goto done;
+
+    output->dwStatus = 0;
+
+    if (dmo_output.dwStatus & DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT)
+        IMFSample_SetUINT32(output->pSample, &MFSampleExtension_CleanPoint, 1);
+
+    if (dmo_output.dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH)
+        IMFSample_SetSampleDuration(output->pSample, dmo_output.rtTimelength);
+    else
+        IMFSample_SetSampleDuration(output->pSample, 0);
+
+    if (dmo_output.dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIME)
+        IMFSample_SetSampleTime(output->pSample, dmo_output.rtTimestamp);
+
+    if (dmo_output.dwStatus & DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE)
+        output->dwStatus |= MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
+
+done:
+    if (dmo_output.pBuffer) IMediaBuffer_Release(dmo_output.pBuffer);
+    switch(hr)
+    {
+        case S_FALSE: return MF_E_TRANSFORM_NEED_MORE_INPUT;
+        case DMO_E_INVALIDSTREAMINDEX: return MF_E_INVALIDSTREAMNUMBER;
+        case DMO_E_TYPE_NOT_SET: return MF_E_TRANSFORM_TYPE_NOT_SET;
+    }
+    return hr;
 }
 
 static const IMFTransformVtbl transform_vtbl =

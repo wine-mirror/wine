@@ -12391,6 +12391,7 @@ static void test_aaec(void)
     DWORD in_count, out_count, flags, size, align, status, start_tick, tick, curr_rate;
     unsigned int i, frame_count, frame_size, sample_size;
     struct media_buffer *output_media_buffer = NULL;
+    MFT_OUTPUT_DATA_BUFFER mft_buffer;
     DMO_OUTPUT_DATA_BUFFER dmo_buffer;
     MFT_OUTPUT_STREAM_INFO info;
     IMFMediaType *media_type;
@@ -12399,6 +12400,7 @@ static void test_aaec(void)
     IPropertyStore *store;
     DMO_MEDIA_TYPE type;
     WAVEFORMATEX format;
+    IMFSample *sample;
     IMediaObject *dmo;
     LARGE_INTEGER qpc;
     PROPVARIANT val;
@@ -12422,7 +12424,11 @@ static void test_aaec(void)
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
     check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IMFMediaSource, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IPropertyStore, (void **)&store);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     check_mft_optional_methods(transform, 0, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
@@ -12450,6 +12456,13 @@ static void test_aaec(void)
 
     hr = IMFTransform_GetOutputStreamInfo(transform, 1, &info);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx.\n", hr);
+
+    memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+    mft_buffer.pSample = NULL;
+    hr = IMFTransform_ProcessOutput(transform, 0, 0, &mft_buffer, &status);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "got %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
     {
@@ -12498,6 +12511,195 @@ static void test_aaec(void)
     hr = IMFTransform_GetOutputStatus(transform, &status);
     ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
 
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    type = expected_output_type;
+    type.pbFormat = (BYTE *)&expected_output_info;
+    hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    /* Disable echo cancellation. That doesn't affect test results for _ProcessOutput frame size and timestamp tests
+     * below except for with echo cancellation enabled _ProcessOutput doesn't work on Testbot VMs: results in
+     * WMAAECMA_E_NO_ACTIVE_RENDER_STREAM after spinning for 4sec returning S_FALSE. */
+    V_VT(&val) = VT_I4;
+    val.ulVal = SINGLE_CHANNEL_NSAGC;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+    mft_buffer.pSample = NULL;
+    mft_buffer.pEvents = NULL;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT || hr == E_PROP_ID_UNSUPPORTED, "got %#lx.\n", hr);
+    if (hr == E_PROP_ID_UNSUPPORTED)
+    {
+        skip("No audio input available, skipping tests.\n");
+        goto skip_mft_process_output;
+    }
+
+    sample = create_sample(NULL, 80);
+    mft_buffer.pSample = sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == E_FAIL, "got %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    /* Based on tests which add sufficient delay before first _ProcessOutput call (omitted here),
+     * MFT_MESSAGE_NOTIFY_BEGIN_STREAMING initializes capture and MFT_MESSAGE_NOTIFY_END_STREAMING stops it
+     * (while the capture will be also initialized implicitly in _ProcessMssage). */
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    timeBeginPeriod(1);
+
+    for (i = 0; i < ARRAY_SIZE(process_output_tests); ++i)
+    {
+        const WAVEFORMATEX *format = &process_output_tests[i].format;
+
+        winetest_push_context("test %u", i);
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)format;
+
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+
+        sample_size = format->nChannels * format->wBitsPerSample / 8;
+        curr_rate = format->nSamplesPerSec;
+        if (process_output_tests[i].frame_len)
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0xffff;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            V_VT(&val) = VT_I4;
+            val.ulVal = process_output_tests[i].frame_len;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+
+            frame_size = process_output_tests[i].frame_len * sample_size;
+        }
+        else
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            switch (curr_rate)
+            {
+                case 8000: frame_size = 80 * sample_size; break;
+                case 11025: frame_size = 128 * sample_size; break;
+                case 16000: frame_size = 160 * sample_size; break;
+                case 22050: frame_size = 256 * sample_size; break;
+                default:
+                    ok(0, "unexpected frame rate.\n");
+                    frame_size = 0;
+                    break;
+            }
+        }
+
+        start_tick = GetTickCount();
+        frame_count = 0;
+        while ((tick = GetTickCount()) - start_tick < 5000 && frame_count < 3)
+        {
+            IMFMediaBuffer *buffer;
+            unsigned int buffer_offset;
+            LONGLONG duration, timestamp;
+            DWORD max_size, length;
+            BOOL have_sample;
+            BYTE *data;
+
+            winetest_push_context("frame %d", frame_count);
+
+            sample = create_sample(NULL, 1024 * 1024);
+
+            hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            buffer_offset = frame_count ? 0 : 4;
+            hr = IMFMediaBuffer_SetCurrentLength(buffer, buffer_offset);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            hr = IMFMediaBuffer_Lock(buffer, &data, &max_size, &length);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            memset(data, 0xcc, max_size);
+            hr = IMFMediaBuffer_Unlock(buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+            mft_buffer.dwStreamID = 0;
+            mft_buffer.pSample = sample;
+            mft_buffer.pEvents = NULL;
+            status = 0xdeadbeef;
+            hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+            ok(hr == S_OK || hr == MF_E_TRANSFORM_NEED_MORE_INPUT || hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, "got %#lx.\n", hr);
+            if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            {
+                skip("Got WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, skipping tests, elapsed %lums.\n", tick - start_tick);
+                break;
+            }
+            have_sample = (hr == S_OK);
+            ok(!status, "got %#lx.\n", status);
+            ok(mft_buffer.pSample == sample, "got %p.\n", mft_buffer.pSample);
+            ok(!mft_buffer.pEvents, "got %p.\n", mft_buffer.pEvents);
+
+            hr = IMFSample_GetSampleTime(sample, &timestamp);
+            ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "got %#lx\n", hr);
+
+            hr = IMFMediaBuffer_Lock(buffer, &data, &max_size, &length);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            if (have_sample)
+            {
+                ok(!mft_buffer.dwStatus, "got %#lx.\n", mft_buffer.dwStatus);
+                ok(*(DWORD *)data != 0xcccccccc, "got %#lx.\n", *(DWORD *)data);
+                ok(*(DWORD *)(data + buffer_offset) != 0xcccccccc, "got %#lx.\n", *(DWORD *)(data + 4));
+                ok(length > buffer_offset, "got %ld.\n", length);
+                ok((length % frame_size) == 0, "got length %ld, frame_size %d.\n", length, frame_size);
+
+                hr = IMFSample_GetSampleDuration(sample, &duration);
+                ok(hr == S_OK, "got %#lx\n", hr);
+                ok(!duration, "got %I64u.\n", duration);
+                ++frame_count;
+            }
+            else
+            {
+                ok(mft_buffer.dwStatus == 0xcccccccc, "got %#lx.\n", mft_buffer.dwStatus);
+                hr = IMFSample_GetSampleDuration(sample, &duration);
+                ok(hr == MF_E_NO_SAMPLE_DURATION, "got %#lx\n", hr);
+                ok(!length, "got %lu.\n", length);
+                ok(*(DWORD *)data == 0xcccccccc, "got %#lx.\n", *(DWORD *)data);
+                ok(*(DWORD *)(data + 4) == 0xcccccccc, "got %#lx.\n", *(DWORD *)(data + 4));
+            }
+            hr = IMFMediaBuffer_Unlock(buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            IMFMediaBuffer_Release(buffer);
+            IMFSample_Release(sample);
+            Sleep(1);
+            winetest_pop_context();
+        }
+        ok(hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM || frame_count == 3, "got %d.\n", frame_count);
+        winetest_pop_context();
+        if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            break;
+    }
+    timeEndPeriod(1);
+
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+skip_mft_process_output:
+    IPropertyStore_Release(store);
     IMFTransform_Release(transform);
 
     /* Test DMO */
