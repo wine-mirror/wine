@@ -556,6 +556,7 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
 
             HeapFree(GetProcessHeap(), 0, (*ppcs)->search_path);
             free((*ppcs)->environment);
+            HeapFree(GetProcessHeap(), 0, (*ppcs)->buffer);
             next = (*ppcs)->next;
             HeapFree(GetProcessHeap(), 0, *ppcs);
             *ppcs = next;

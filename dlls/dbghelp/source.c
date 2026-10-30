@@ -122,6 +122,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         }
     }
 done:
+    if (full != name) HeapFree(GetProcessHeap(), 0, (char*)full);
     HeapFree(GetProcessHeap(), 0, tmp);
     return ret;
 }
