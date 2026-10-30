@@ -3667,7 +3667,35 @@ static void test_states(void)
     r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
     update_ProductVersion_property( hdb, "1.1.2" );
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    MsiCloseHandle(hdb);
+
+    r = MsiInstallProductA(msifile2, "");
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiOpenProductA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    size = MAX_PATH;
+    r = MsiGetProductPropertyA(hprod, "ProductVersion", value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!strcmp(value, "1.1.1"), "ProductVersion = %s\n", value);
+    MsiCloseHandle(hprod);
+
+    r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
+    update_ProductVersion_property( hdb, "1.1.1" );
     set_summary_str(hdb, PID_REVNUMBER, "{A219A62A-D931-4F1B-89DB-FF1C300A8D43}");
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    MsiCloseHandle(hdb);
+
+    r = MsiInstallProductA(msifile2, "");
+    todo_wine ok(r == ERROR_PRODUCT_VERSION, "Expected ERROR_PRODUCT_VERSION, got %d\n", r);
+
+    r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
+    update_ProductVersion_property( hdb, "1.1.2" );
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
     MsiCloseHandle(hdb);
