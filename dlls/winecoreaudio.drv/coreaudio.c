@@ -1905,7 +1905,7 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     struct get_capture_buffer_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     UINT32 chunk_bytes, chunk_frames;
-    LARGE_INTEGER stamp, freq;
+    LARGE_INTEGER stamp;
     SIZE_T size;
 
     os_unfair_lock_lock(&stream->lock);
@@ -1946,8 +1946,8 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     if(params->devpos)
         *params->devpos = stream->written_frames;
     if(params->qpcpos){ /* fixme: qpc of recording time */
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *params->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *params->qpcpos = stamp.QuadPart;
     }
     params->result = S_OK;
 
@@ -2008,7 +2008,7 @@ static NTSTATUS unix_get_position(void *args)
 {
     struct get_position_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
-    LARGE_INTEGER stamp, freq;
+    LARGE_INTEGER stamp;
 
     if (params->device) {
         FIXME("Device position reporting not implemented\n");
@@ -2024,8 +2024,8 @@ static NTSTATUS unix_get_position(void *args)
         *params->pos *= stream->fmt->nBlockAlign;
 
     if(params->qpctime){
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *params->qpctime = stamp.QuadPart;
     }
 
     os_unfair_lock_unlock(&stream->lock);
