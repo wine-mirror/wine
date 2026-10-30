@@ -6664,7 +6664,7 @@ static void xpath_builtin_sum(struct xpath_parser_context *ctxt, int nargs)
     struct xpath_object *cur;
     double res = 0.0;
 
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
+    if (!xpath_builtin_check_stack(ctxt, nargs, 1))
         return;
     if (!ctxt->value || (ctxt->value->type != _XPATH_NODESET))
     {
