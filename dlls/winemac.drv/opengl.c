@@ -2140,6 +2140,7 @@ static BOOL macdrv_describe_pixel_format(int format, struct wgl_pixel_format *de
     if (pf->double_buffer)  descr->pfd.dwFlags |= PFD_DOUBLEBUFFER;
     if (pf->stereo)         descr->pfd.dwFlags |= PFD_STEREO;
     if (pf->backing_store)  descr->pfd.dwFlags |= PFD_SWAP_COPY;
+    if (!pf->double_buffer) descr->pfd.dwFlags |= PFD_SUPPORT_GDI;
 
     descr->pfd.iPixelType   = PFD_TYPE_RGBA;
 
