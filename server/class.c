@@ -76,6 +76,7 @@ static struct window_class *create_class( struct process *process, int local, in
     return class;
 
 failed:
+    release_object( class->process );
     free( class );
     return NULL;
 }
