@@ -4369,6 +4369,12 @@ static void test_dpi_context(void)
     ok( context == (DPI_AWARENESS_CONTEXT)0x6010, "wrong context %p\n", context );
     awareness = pGetAwarenessFromDpiAwarenessContext( context );
     ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
+    if (pGetWindowDpiAwarenessContext)
+    {
+        context = pGetWindowDpiAwarenessContext( ghTestWnd );
+        awareness = pGetAwarenessFromDpiAwarenessContext( context );
+        ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
+    }
     ok( !pIsProcessDPIAware(), "already aware\n" );
     dpi = pGetDpiForSystem();
     todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
@@ -4386,6 +4392,12 @@ static void test_dpi_context(void)
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     ret = pSetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
     ok( ret, "got %d\n", ret );
+    if (pGetWindowDpiAwarenessContext)
+    {
+        context = pGetWindowDpiAwarenessContext( ghTestWnd );
+        awareness = pGetAwarenessFromDpiAwarenessContext( context );
+        ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong awareness %u\n", awareness );
+    }
     ok( pIsProcessDPIAware(), "not aware\n" );
     real_dpi = pGetDpiForSystem();
     SetLastError( 0xdeadbeef );

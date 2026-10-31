@@ -1232,6 +1232,13 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
         return 0;
     }
 
+    if ((NTUSER_DPI_CONTEXT_GET_FLAGS( ctx ) & NTUSER_DPI_CONTEXT_FLAG_PROCESS) &&
+        is_current_process_window( hwnd ))
+    {
+        ctx = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & ~NTUSER_DPI_CONTEXT_FLAG_PROCESS;
+        if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( ctx )) ctx = NTUSER_DPI_PER_MONITOR_AWARE;
+    }
+
     return ctx;
 }
 

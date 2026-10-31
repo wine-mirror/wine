@@ -3254,7 +3254,7 @@ UINT get_thread_dpi_awareness_context(void)
 
     if (!info->client_info || !(context = info->client_info->dpi_context))
         context = ReadNoFence( &dpi_context );
-    return context ? context : NTUSER_DPI_UNAWARE;
+    return context ? context : (NTUSER_DPI_UNAWARE | NTUSER_DPI_CONTEXT_FLAG_PROCESS);
 }
 
 DWORD get_process_layout(void)
