@@ -576,7 +576,13 @@ struct window_surface *window_surface_create( const struct window_surface_funcs 
 
     pthread_mutex_init( &surface->mutex, NULL );
 
-    memset( window_surface_get_color( surface, info ), 0xff, info->bmiHeader.biSizeImage );
+    if (hwnd && get_class_long_ptr( hwnd, GCLP_HBRBACKGROUND, FALSE ))
+    {
+        struct window_rects win_rects;
+        if (!get_window_rects( hwnd, COORDS_WINDOW, &win_rects, get_thread_dpi() ) ||
+            !EqualRect( &win_rects.window, &win_rects.client ))
+            memset( window_surface_get_color( surface, info ), 0xff, info->bmiHeader.biSizeImage );
+    }
 
     TRACE( "created surface %p for hwnd %p rect %s\n", surface, hwnd, wine_dbgstr_rect( &surface->rect ) );
     return surface;

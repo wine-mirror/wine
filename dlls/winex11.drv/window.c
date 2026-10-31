@@ -2383,6 +2383,7 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
     attr.win_gravity = NorthWestGravity;
     attr.backing_store = NotUseful;
     attr.border_pixel = 0;
+    attr.background_pixel = 0;
 
     x = client_rect.left;
     y = client_rect.top;
@@ -2394,7 +2395,7 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
                                                data->whole_window ? data->whole_window : get_dummy_parent(),
                                                x, y, cx, cy, 0, visual->depth, InputOutput,
                                                visual->visual, CWBitGravity | CWWinGravity |
-                                               CWBackingStore | CWColormap | CWBorderPixel, &attr );
+                                               CWBackingStore | CWColormap | CWBorderPixel | CWBackPixel, &attr );
     if (data->client_window)
     {
         XMapWindow( gdi_display, data->client_window );
