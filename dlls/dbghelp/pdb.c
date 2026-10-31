@@ -542,6 +542,11 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
         ERR("PDB reader doesn't recognize format (%s)\n", wine_dbgstr_a((char*)&hdr));
         return R_PDB_INVALID_PDB_FILE;
     }
+    if (!hdr.block_size)
+    {
+        ERR("Unexpected header.block_size %u\n", hdr.block_size);
+        return R_PDB_INVALID_PDB_FILE;
+    }
     pdb->block_size = hdr.block_size;
     if ((result = pdb_reader_alloc(pdb, pdb->block_size * ARRAY_SIZE(pdb->cache), (void **)&pdb->fetch_cache_blocks))) goto failure;
     for (i = 0; i < ARRAY_SIZE(pdb->cache); i++)
@@ -563,8 +568,11 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
     blocks = &toc->stream_size[toc->num_streams];
     for (i = 0; i < pdb->toc->num_streams; i++)
     {
-        if (toc->stream_size[i] == 0 || toc->stream_size[i] == ~0u)
+        /* we expect a stream size rounded up to block size, to fit in 32bit int */
+        if (!toc->stream_size[i] || toc->stream_size[i] > ~0u - pdb->block_size)
         {
+            if (toc->stream_size[i])
+                WARN("Disabling too large stream %u (%x)\n", i, toc->stream_size[i]);
             pdb->streams[i].blocks = NULL;
             pdb->toc->stream_size[i] = 0;
         }
@@ -692,6 +700,13 @@ static enum pdb_result pdb_reader_load_stream_name_table(struct pdb_reader *pdb)
             if ((result = pdb_reader_READ(pdb, &walker, &str_offset)) ||
                 (result = pdb_reader_READ(pdb, &walker, &stream_id)))
                 goto failure;
+            if (stream_id >= pdb->toc->num_streams ||
+                str_offset >= ds_root.cbNames ||
+                !memchr(pdb->stream_names + str_offset, '\0', ds_root.cbNames - str_offset))
+            {
+                result = R_PDB_INVALID_PDB_FILE;
+                goto failure;
+            }
             pdb->streams[stream_id].name = pdb->stream_names + str_offset;
         }
     }
@@ -1727,9 +1742,13 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
             else
                 end_index = num_hash_records;
             index++;
-
+            if (end_index < start_index)
+            {
+                result = R_PDB_INVALID_PDB_FILE;
+                goto on_error;
+            }
             bucket->num_entries = end_index - start_index;
-            if (end_index > start_index && (result = pdb_reader_alloc(pdb, sizeof(*bucket->entries) * bucket->num_entries, (void **)&bucket->entries))) goto on_error;
+            if ((result = pdb_reader_alloc(pdb, sizeof(*bucket->entries) * bucket->num_entries, (void **)&bucket->entries))) goto on_error;
             for (j = start_index; j < end_index; j++)
             {
                 walker.offset = sizeof(DBI_HASH_HEADER) + j * sizeof(DBI_HASH_RECORD);
@@ -1909,10 +1928,10 @@ static enum pdb_result pdb_reader_alloc_and_load_whole_stream(struct pdb_reader 
 
     memset(whole, 0, sizeof(*whole));
     if (stream_id >= pdb->toc->num_streams) return R_PDB_INVALID_ARGUMENT;
-    if (pdb->toc->stream_size[stream_id] == 0 || pdb->toc->stream_size[stream_id] == 0xFFFFFFFF) return R_PDB_NOT_FOUND;
+    if (pdb->toc->stream_size[stream_id] == 0) return R_PDB_NOT_FOUND;
 
     blocks = pdb->streams[stream_id].blocks;
-    num_blocks = ((pdboff_t)pdb->toc->stream_size[stream_id] + pdb->block_size - 1) / pdb->block_size;
+    num_blocks = pdb_reader_num_blocks(pdb, pdb->toc->stream_size[stream_id]);
     buffer = HeapAlloc(GetProcessHeap(), 0, num_blocks * pdb->block_size);
     if (!buffer) return R_PDB_OUT_OF_MEMORY;
 
@@ -5244,7 +5263,7 @@ static enum pdb_result pdb_reader_ensure_compiland_symbol_present(struct pdb_rea
     symref_t type_symref, compiland_symref;
     struct symref_code code;
 
-    if (compiland_index > pdb->num_compilands) return R_PDB_INVALID_PDB_FILE;
+    if (compiland_index >= pdb->num_compilands) return R_PDB_INVALID_PDB_FILE;
     compiland = &pdb->compilands[compiland_index];
 
     if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_compiland(&code, compiland_index), &compiland_symref)))
