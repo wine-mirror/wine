@@ -5328,37 +5328,18 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    wine_rb_destroy(&device->samplers, device_free_sampler, NULL);
-    wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
-    wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
-    wine_rb_destroy(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
-
     if (reset_state)
     {
         TRACE("Resetting state.\n");
         if (device->inScene)
             wined3d_device_end_scene(device);
-        wined3d_device_context_emit_reset_state(&device->cs->c, false);
+        wined3d_device_context_emit_reset_state(&device->cs->c, true);
         state_cleanup(state);
-
-        LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-        {
-            TRACE("Unloading resource %p.\n", resource);
-            wined3d_cs_emit_unload_resource(device->cs, resource);
-
-            if (resource->usage & WINED3DUSAGE_MANAGED)
-                mark_managed_resource_dirty(resource);
-        }
-
-        device->adapter->adapter_ops->adapter_uninit_3d(device);
-
         wined3d_state_reset(state, &device->adapter->d3d_info);
 
         device_init_swapchain_state(device, swapchain);
         if (wined3d_settings.logo)
             device_load_logo(device, wined3d_settings.logo);
-
-        hr = device->adapter->adapter_ops->adapter_init_3d(device);
     }
     else
     {
