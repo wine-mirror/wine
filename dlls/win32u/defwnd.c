@@ -1737,6 +1737,14 @@ static void nc_paint( HWND hwnd, HRGN clip )
 
     TRACE( "%p %d\n", hwnd, active );
 
+    if (!(style & WS_MINIMIZE))
+    {
+        struct window_rects win_rects;
+        if (get_window_rects( hwnd, COORDS_SCREEN, &win_rects, get_thread_dpi() ) &&
+            EqualRect( &win_rects.window, &win_rects.client ))
+            return;
+    }
+
     get_client_rect_rel( hwnd, COORDS_SCREEN, &rectClient, get_thread_dpi() );
     hrgn = NtGdiCreateRectRgn( rectClient.left, rectClient.top,
                                rectClient.right, rectClient.bottom );

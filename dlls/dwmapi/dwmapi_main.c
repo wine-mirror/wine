@@ -68,7 +68,7 @@ HRESULT WINAPI DwmEnableComposition(UINT uCompositionAction)
  */
 HRESULT WINAPI DwmExtendFrameIntoClientArea(HWND hwnd, const MARGINS* margins)
 {
-    FIXME("(%p, %p) stub\n", hwnd, margins);
+    TRACE("(%p, %p)\n", hwnd, margins);
 
     return S_OK;
 }
@@ -172,9 +172,26 @@ HRESULT WINAPI DwmEnableBlurBehindWindow(HWND hWnd, const DWM_BLURBEHIND *pBlurB
  */
 BOOL WINAPI DwmDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult)
 {
-    static int i;
+    BOOL enabled = FALSE;
 
-    if (!i++) FIXME("stub\n");
+    TRACE("(%p, %#x, %Ix, %Ix, %p)\n", hWnd, Msg, wParam, lParam, plResult);
+
+    if (DwmIsCompositionEnabled(&enabled) == S_OK && !enabled)
+        return FALSE;
+
+    switch (Msg)
+    {
+    case WM_NCACTIVATE:
+        if (plResult) *plResult = DefWindowProcW(hWnd, Msg, wParam, -1);
+        return TRUE;
+
+    case WM_NCPAINT:
+        if (plResult) *plResult = 0;
+        return TRUE;
+
+    default:
+        break;
+    }
 
     return FALSE;
 }
