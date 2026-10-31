@@ -2314,8 +2314,10 @@ DECL_HANDLER(set_parent)
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
-    /* reparenting to a window with a different DPI awareness isn't allowed */
-    if (parent && !is_desktop_window( parent ) && !is_dpi_awareness_compatible( win, parent ))
+    /* Reparenting between different DPI awareness modes fails within a process. */
+    if (!is_desktop_window( win ) && parent && !is_desktop_window( parent ) &&
+        win->thread->process == parent->thread->process &&
+        !is_dpi_awareness_compatible( win, parent ))
         return set_error( STATUS_INVALID_STATE_TRANSITION );
 
     if (is_desktop_window(win) || is_orphan_window( win ) || (parent && is_orphan_window( parent )))
