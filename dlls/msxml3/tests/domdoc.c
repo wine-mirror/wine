@@ -19149,6 +19149,132 @@ static void test_document_stream(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_nodeFromID(void)
+{
+    static const char id_xml[] =
+        "<?xml version=\"1.0\"?>"
+        "<!DOCTYPE root ["
+        "   <!ELEMENT root ANY>"
+        "   <!ELEMENT e1 ANY>"
+        "   <!ATTLIST e1 attr1 ID #REQUIRED >"
+        "   <!ELEMENT e2 ANY>"
+        "   <!ATTLIST e2 attr2 IDREF #REQUIRED >"
+        "   <!ELEMENT e3 ANY>"
+        "   <!ATTLIST e3 attr3 IDREFS #REQUIRED >"
+        "   <!ELEMENT e4 ANY>"
+        "   <!ATTLIST e4 attr4 ID #REQUIRED >"
+        "]>"
+        "<root>"
+        "   <e1 attr1=\"attr1-value1\" />"
+        "   <e1 attr1=\"attr1-value2\" />"
+        "   <e2 attr2=\"attr1-value1\" />"
+        "   <e2 attr2=\"attr1-value2\" />"
+        "   <e3 attr3=\"attr1-value1 attr1-value2\" />"
+        "   <e3 attr3=\"attr1-value2 attr1-value1\" />"
+        "   <e4 attr4=\"attr4-value1\" />"
+        "</root>";
+
+    IXMLDOMElement *root, *elem;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(id_xml), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_nodeFromID(doc, NULL, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    node = (void *)0x1;
+    hr = IXMLDOMDocument_nodeFromID(doc, NULL, &node);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(node == (void *)0x1, "Unexpected node %p.\n", node);
+
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr1"), NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (void *)0x1;
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr1"), &node);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!node, "Unexpected node %p.\n", node);
+
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr1-value1"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<e1 attr1=\"attr1-value1\"/>"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr1-value2"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<e1 attr1=\"attr1-value2\"/>"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr4-value1"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<e4 attr4=\"attr4-value1\"/>"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr1-value1 attr1-value2"), &node);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &root);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("e4"), &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("attr4-value2");
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("attr4"), v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr4-value2"), &node);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode *)elem, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_nodeFromID(doc, _bstr_("attr4-value2"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<e4 attr4=\"attr4-value2\"/>"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    IXMLDOMElement_Release(root);
+    IXMLDOMElement_Release(elem);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -19264,6 +19390,7 @@ START_TEST(domdoc)
     test_dtd_entity();
     test_element_setNamedItem();
     test_document_stream();
+    test_nodeFromID();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
