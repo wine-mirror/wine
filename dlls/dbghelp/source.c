@@ -165,7 +165,7 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
     }
     else
     {
-        WCHAR *bang = wcschr(Mask, '!');
+        WCHAR *bang = Mask ? wcschr(Mask, L'!') : NULL;
         if (bang)
         {
             WCHAR    *module_name;
