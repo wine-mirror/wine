@@ -27512,6 +27512,44 @@ static void test_managed_reset(void)
     release_test_context(&context);
 }
 
+static void test_managed_evict(void)
+{
+    IDirect3DTexture9 *texture, *texture2;
+    struct d3d9_test_context context;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    fill_texture(texture, 0x0000ff00, 0);
+
+    draw_textured_quad(&context, texture);
+    check_rt_color(context.backbuffer, 0x0000ff00);
+
+    /* The second texture may reuse the evicted texture's memory, which
+     * catches views that still refer to the evicted image. */
+    hr = IDirect3DDevice9_EvictManagedResources(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    fill_texture(texture2, 0x00ff0000, 0);
+    draw_textured_quad(&context, texture2);
+    check_rt_color(context.backbuffer, 0x00ff0000);
+
+    fill_texture(texture, 0x000000ff, 0);
+    draw_textured_quad(&context, texture);
+    check_rt_color(context.backbuffer, 0x000000ff);
+
+    IDirect3DTexture9_Release(texture2);
+    IDirect3DTexture9_Release(texture);
+    release_test_context(&context);
+}
+
 static void test_managed_generate_mipmap(void)
 {
     struct d3d9_test_context context;
@@ -29398,6 +29436,7 @@ START_TEST(visual)
     test_dynamic_map_synchronization();
     test_filling_convention();
     test_managed_reset();
+    test_managed_evict();
     test_managed_generate_mipmap();
     test_mipmap_upload();
     test_default_diffuse();
