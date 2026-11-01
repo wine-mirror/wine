@@ -4088,6 +4088,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         VkFormat vk_format;
         const char *fixup;
         bool legacy_fixup;
+        VkFormat vk_scaled_format;
     }
     vulkan_formats[] =
     {
@@ -4101,7 +4102,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         {WINED3DFMT_R16G16B16A16_UNORM,         VK_FORMAT_R16G16B16A16_UNORM,      },
         {WINED3DFMT_R16G16B16A16_UINT,          VK_FORMAT_R16G16B16A16_UINT,       },
         {WINED3DFMT_R16G16B16A16_SNORM,         VK_FORMAT_R16G16B16A16_SNORM,      },
-        {WINED3DFMT_R16G16B16A16_SINT,          VK_FORMAT_R16G16B16A16_SINT,       },
+        {WINED3DFMT_R16G16B16A16_SINT,          VK_FORMAT_R16G16B16A16_SINT,       .vk_scaled_format = VK_FORMAT_R16G16B16A16_SSCALED},
         {WINED3DFMT_R32G32_FLOAT,               VK_FORMAT_R32G32_SFLOAT,           },
         {WINED3DFMT_R32G32_UINT,                VK_FORMAT_R32G32_UINT,             },
         {WINED3DFMT_R32G32_SINT,                VK_FORMAT_R32G32_SINT,             },
@@ -4113,14 +4114,14 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         {WINED3DFMT_R8G8_SINT,                  VK_FORMAT_R8G8_SINT,               },
         {WINED3DFMT_R8G8B8A8_UNORM,             VK_FORMAT_R8G8B8A8_UNORM,          },
         {WINED3DFMT_R8G8B8A8_UNORM_SRGB,        VK_FORMAT_R8G8B8A8_SRGB,           },
-        {WINED3DFMT_R8G8B8A8_UINT,              VK_FORMAT_R8G8B8A8_UINT,           },
+        {WINED3DFMT_R8G8B8A8_UINT,              VK_FORMAT_R8G8B8A8_UINT,           .vk_scaled_format = VK_FORMAT_R8G8B8A8_USCALED},
         {WINED3DFMT_R8G8B8A8_SNORM,             VK_FORMAT_R8G8B8A8_SNORM,          },
         {WINED3DFMT_R8G8B8A8_SINT,              VK_FORMAT_R8G8B8A8_SINT,           },
         {WINED3DFMT_R16G16_FLOAT,               VK_FORMAT_R16G16_SFLOAT,           },
         {WINED3DFMT_R16G16_UNORM,               VK_FORMAT_R16G16_UNORM,            },
         {WINED3DFMT_R16G16_UINT,                VK_FORMAT_R16G16_UINT,             },
         {WINED3DFMT_R16G16_SNORM,               VK_FORMAT_R16G16_SNORM,            "XY11", true},
-        {WINED3DFMT_R16G16_SINT,                VK_FORMAT_R16G16_SINT,             },
+        {WINED3DFMT_R16G16_SINT,                VK_FORMAT_R16G16_SINT,             .vk_scaled_format = VK_FORMAT_R16G16_SSCALED},
         {WINED3DFMT_D32_FLOAT,                  VK_FORMAT_D32_SFLOAT,              },
         {WINED3DFMT_R32_FLOAT,                  VK_FORMAT_R32_SFLOAT,              },
         {WINED3DFMT_R32_UINT,                   VK_FORMAT_R32_UINT,                },
@@ -4189,6 +4190,8 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         if (vulkan_formats[i].id == format->f.id)
         {
             vk_format = vulkan_formats[i].vk_format;
+            if (vulkan_formats[i].vk_scaled_format && (d3d_info->wined3d_creation_flags & WINED3D_LEGACY))
+                vk_format = vulkan_formats[i].vk_scaled_format;
             if (!vulkan_formats[i].legacy_fixup || (d3d_info->wined3d_creation_flags & WINED3D_LEGACY))
                 fixup = vulkan_formats[i].fixup;
             break;
