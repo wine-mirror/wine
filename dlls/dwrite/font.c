@@ -4690,13 +4690,19 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             continue;
         }
 
-        /* add to scanned list */
-        fileenum = malloc(sizeof(*fileenum));
-        fileenum->file = file;
-        list_add_tail(&scannedfiles, &fileenum->entry);
-
-        if (FAILED(hr = IDWriteFontSetBuilder1_AddFontFile(builder, file)))
-            break;
+        if ((hr = IDWriteFontSetBuilder1_AddFontFile(builder, file)) == S_OK)
+        {
+            /* add to scanned list */
+            fileenum = malloc(sizeof(*fileenum));
+            fileenum->file = file;
+            list_add_tail(&scannedfiles, &fileenum->entry);
+        }
+        else
+        {
+            WARN("Set builder failed to add a file.\n");
+            IDWriteFontFile_Release(file);
+            hr = S_OK;
+        }
     }
 
     if (SUCCEEDED(hr))
