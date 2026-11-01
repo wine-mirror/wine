@@ -1613,7 +1613,7 @@ then
     WINE_PACKAGE_FLAGS(VA,[libva libva-drm],[-lva-drm -lva],,,
         [AC_CHECK_HEADER([va/va_drm.h],
             [WINE_CHECK_SONAME(va-drm, vaGetDisplayDRM,,[VA_CFLAGS=""])
-             WINE_CHECK_SONAME(va, vaInitialize,,[VA_CFLAGS=""])],
+             WINE_CHECK_SONAME(va, vaExportSurfaceHandle,,[VA_CFLAGS=""])],
             [VA_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(va,[test "x$ac_cv_lib_soname_va_drm" = x -o "x$ac_cv_lib_soname_va" = x],

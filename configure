@@ -17778,11 +17778,11 @@ LIBS="-lva  $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char vaInitialize (void);
+char vaExportSurfaceHandle (void);
 int
 main (void)
 {
-return vaInitialize ();
+return vaExportSurfaceHandle ();
   ;
   return 0;
 }
