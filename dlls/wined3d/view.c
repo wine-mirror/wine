@@ -1203,6 +1203,35 @@ void wined3d_shader_resource_view_vk_update_layout(struct wined3d_shader_resourc
     srv_vk->view_vk.u.vk_image_info.imageLayout = layout;
 }
 
+static void wined3d_shader_resource_view_vk_create_image_view(struct wined3d_shader_resource_view_vk *srv_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_view_vk *view_vk = &srv_vk->view_vk;
+    const struct wined3d_view_desc *desc = &srv_vk->v.desc;
+    struct wined3d_texture_vk *texture_vk;
+    const struct wined3d_format *format;
+    VkImageView vk_image_view;
+
+    texture_vk = wined3d_texture_vk(texture_from_resource(srv_vk->v.resource));
+    format = srv_vk->v.format;
+
+    vk_image_view = wined3d_view_vk_create_vk_image_view(context_vk,
+            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false, VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    if (!vk_image_view)
+        return;
+
+    view_vk->image_generation = texture_vk->image_generation;
+    view_vk->u.vk_image_info.imageView = vk_image_view;
+    view_vk->u.vk_image_info.sampler = VK_NULL_HANDLE;
+    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        view_vk->u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    else
+        view_vk->u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(vk_image_view));
+}
+
 static void wined3d_shader_resource_view_vk_cs_init(void *object)
 {
     struct wined3d_shader_resource_view_vk *srv_vk = object;
@@ -1214,7 +1243,6 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
     struct wined3d_context *context;
     VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
-    VkImageView vk_image_view;
     struct wined3d_bo_vk *bo;
 
     TRACE("srv_vk %p.\n", srv_vk);
@@ -1262,21 +1290,41 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
         FIXME("Swapchain shader resource views not supported.\n");
 
     context = context_acquire(resource->device, NULL, 0);
-    vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
-            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false, VK_IMAGE_USAGE_SAMPLED_BIT);
+    wined3d_shader_resource_view_vk_create_image_view(srv_vk, wined3d_context_vk(context));
     context_release(context);
+}
 
-    if (!vk_image_view)
-        return;
+const VkDescriptorImageInfo *wined3d_shader_resource_view_vk_get_image_info(
+        struct wined3d_shader_resource_view_vk *srv_vk, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_view_vk *view_vk = &srv_vk->view_vk;
+    struct wined3d_texture_vk *texture_vk;
 
-    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(vk_image_view));
+    texture_vk = wined3d_texture_vk(texture_from_resource(srv_vk->v.resource));
 
-    srv_vk->view_vk.u.vk_image_info.imageView = vk_image_view;
-    srv_vk->view_vk.u.vk_image_info.sampler = VK_NULL_HANDLE;
-    if (texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
-        srv_vk->view_vk.u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    else
-        srv_vk->view_vk.u.vk_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    if (view_vk->u.vk_image_info.imageView)
+    {
+        wined3d_texture_vk_prepare_texture(texture_vk, context_vk);
+
+        if (view_vk->image_generation != texture_vk->image_generation)
+        {
+            TRACE("Image view 0x%s for srv_vk %p is stale, recreating.\n",
+                    wine_dbgstr_longlong(view_vk->u.vk_image_info.imageView), srv_vk);
+            wined3d_context_vk_destroy_vk_image_view(context_vk,
+                    view_vk->u.vk_image_info.imageView, view_vk->command_buffer_id);
+            view_vk->u.vk_image_info.imageView = VK_NULL_HANDLE;
+            wined3d_shader_resource_view_vk_create_image_view(srv_vk, context_vk);
+        }
+    }
+
+    if (view_vk->u.vk_image_info.imageView)
+    {
+        if (view_vk->u.vk_image_info.imageLayout != texture_vk->layout)
+            wined3d_shader_resource_view_vk_update_layout(srv_vk, texture_vk->layout);
+        return &view_vk->u.vk_image_info;
+    }
+
+    return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
 }
 
 HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,

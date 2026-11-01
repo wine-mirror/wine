@@ -3463,16 +3463,7 @@ static bool wined3d_shader_descriptor_writes_vk_add_srv_write(struct wined3d_sha
     }
     else
     {
-        struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
-
-        if (view_vk->u.vk_image_info.imageView)
-        {
-            image_info = &view_vk->u.vk_image_info;
-            if (image_info->imageLayout != texture_vk->layout)
-                wined3d_shader_resource_view_vk_update_layout(srv_vk, texture_vk->layout);
-        }
-        else
-            image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
+        image_info = wined3d_shader_resource_view_vk_get_image_info(srv_vk, context_vk);
         buffer_view = NULL;
         type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     }
