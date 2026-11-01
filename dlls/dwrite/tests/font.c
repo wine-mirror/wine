@@ -9787,16 +9787,21 @@ static void test_AnalyzeContainerType(void)
 
 static void test_fontsetbuilder(void)
 {
+    IDWriteFontFileLoader file_loader = { &dwritefontfileloadervtbl };
     IDWriteFontFaceReference *ref, *ref2, *ref3;
+    DWRITE_FONT_AXIS_VALUE axis_values[4];
     IDWriteFontCollection1 *collection;
     IDWriteFontFaceReference1 *ref1;
     IDWriteFontSetBuilder1 *builder1;
+    DWRITE_FONT_FILE_TYPE file_type;
+    DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontSetBuilder *builder;
-    DWRITE_FONT_AXIS_VALUE axis_values[4];
     IDWriteFactory3 *factory;
     UINT32 count, i, refcount;
     IDWriteFontSet *fontset;
     IDWriteFontFile *file;
+    FILETIME timestamp;
+    BOOL supported;
     WCHAR *path;
     HRESULT hr;
 
@@ -10021,6 +10026,46 @@ static void test_fontsetbuilder(void)
     }
 
     IDWriteFontCollection1_Release(collection);
+
+    /* Some failure cases. */
+    hr = IDWriteFactory3_CreateFontSetBuilder(factory, &builder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteFontSetBuilder_QueryInterface(builder, &IID_IDWriteFontSetBuilder1, (void **)&builder1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* File doesn't exist on disk. */
+    GetSystemTimeAsFileTime(&timestamp);
+    hr = IDWriteFactory3_CreateFontFileReference(factory, L"some-path", &timestamp, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
+
+    hr = IDWriteFontSetBuilder1_AddFontFile(builder1, file);
+    ok(FAILED(hr), "Unexpected hr %#lx.\n",hr);
+    IDWriteFontFile_Release(file);
+
+    /* Valid file object from custom loader, that's unsupported according to Analyze(). */
+    hr = IDWriteFactory3_RegisterFontFileLoader(factory, &file_loader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    file = NULL;
+    hr = IDWriteFactory3_CreateCustomFontFileReference(factory, "test", 4, &file_loader, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    supported = TRUE;
+    hr = IDWriteFontFile_Analyze(file, &supported, &file_type, &face_type, &count);
+    ok(hr == 0x8faecafe, "Unexpected hr %#lx.\n", hr);
+    ok(!supported, "Unexpected value %d.\n", supported);
+    ok(!count, "Unexpected face count %u.\n", count);
+
+    hr = IDWriteFontSetBuilder1_AddFontFile(builder1, file);
+    ok(hr == 0x8faecafe, "Unexpected hr %#lx.\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFactory3_UnregisterFontFileLoader(factory, &file_loader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDWriteFontSetBuilder1_Release(builder1);
+    IDWriteFontSetBuilder_Release(builder);
 
     refcount = IDWriteFactory3_Release(factory);
     ok(!refcount, "Factory not released, %u.\n", refcount);
@@ -10536,7 +10581,7 @@ static void test_CreateFontCollectionFromFontSet(void)
 
     if (!(factory = create_factory_iid(&IID_IDWriteFactory5)))
     {
-        win_skip("_CreateFontCollectionFromFontSet() is not available.\n");
+        win_skip("CreateFontCollectionFromFontSet() is not available.\n");
         return;
     }
 
