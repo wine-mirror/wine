@@ -1970,7 +1970,7 @@ static BOOL search_in_pathext(WCHAR *path)
                     !last[cached_pathext[i].length])
                     efound = i;
         } while (FindNextFileW(h, &find));
-        CloseHandle(h);
+        FindClose(h);
     }
     if (efound == cached_count) return FALSE;
 
