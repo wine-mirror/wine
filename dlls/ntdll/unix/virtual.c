@@ -1328,7 +1328,8 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
         {
             struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
             if ((start = try_map_free_area( max( (char *)base, (char *)view->base + view->size ),
-                                            (char *)start + size, step, start, size, unix_prot ))) break;
+                                            (char *)start + size, step, start, size, unix_prot )))
+                return start;
             start = ROUND_ADDR( (char *)view->base - size, align_mask );
             /* stop if remaining space is not large enough */
             if (!start || start >= end || start < base) return NULL;
@@ -1343,22 +1344,57 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
         while (first)
         {
             struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
-            if ((start = try_map_free_area( start, min( end, view->base ), step,
-                                            start, size, unix_prot ))) break;
+            if ((start = try_map_free_area( start, min( end, view->base ), step, start, size, unix_prot )))
+                return start;
             start = ROUND_ADDR( (char *)view->base + view->size + align_mask, align_mask );
             /* stop if remaining space is not large enough */
             if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
             first = rb_next( first );
         }
     }
+    return try_map_free_area( base, end, step, start, size, unix_prot );
+}
 
-    if (!first)
-        start = try_map_free_area( base, end, step, start, size, unix_prot );
 
-    if (!start)
-        ERR( "couldn't map free area in range %p-%p, size %p\n", base, end, (void *)size );
+/***********************************************************************
+ *           alloc_free_area
+ *
+ * Alloc memory from a free area inside the specified range.
+ * virtual_mutex must be held by caller.
+ */
+static void *alloc_free_area( void *limit_low, void *limit_high, size_t size, int top_down,
+                              int unix_prot, size_t align_mask )
+{
+    void *start, *end, *ptr = NULL;
+    unsigned int area;
 
-    return start;
+    limit_low = (void *)ROUND_SIZE( 0, limit_low, align_mask );
+    limit_high = ROUND_ADDR( limit_high, host_page_mask );
+
+    if (top_down)
+    {
+        end = limit_high;
+        for (area = find_mem_area( end ); end > limit_low; end = mem_area_end( --area ))
+        {
+            if (mem_area_state( area ) != AREA_FREE) continue;
+            start = ROUND_ADDR( (char *)mem_area_base( area ) + align_mask, align_mask );
+            if (start >= end || (char *)end - (char *)start < size) continue;
+            if ((ptr = map_free_area( start, end, size, top_down, unix_prot, align_mask ))) return ptr;
+        }
+    }
+    else
+    {
+        start = limit_low;
+        for (area = find_mem_area( start ); start < limit_high; start = mem_area_base( ++area ))
+        {
+            if (mem_area_state( area ) != AREA_FREE) continue;
+            start = ROUND_ADDR( (char *)start + align_mask, align_mask );
+            end = min( limit_high, mem_area_end( area ));
+            if (start >= end || (char *)end - (char *)start < size) continue;
+            if ((ptr = map_free_area( start, end, size, top_down, unix_prot, align_mask ))) return ptr;
+        }
+    }
+    return NULL;
 }
 
 #ifndef _WIN64
@@ -2026,9 +2062,9 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         }
         else if (start > address_space_start || end < host_addr_space_limit || top_down)
         {
-            if (!(ptr = map_free_area( start, end, host_size, top_down, unix_prot, align_mask )))
+            if (!(ptr = alloc_free_area( start, end, host_size, top_down, unix_prot, align_mask )))
                 return STATUS_NO_MEMORY;
-            TRACE( "got mem with map_free_area %p-%p\n", ptr, (char *)ptr + size );
+            TRACE( "got mem in free area %p-%p\n", ptr, (char *)ptr + size );
         }
         else
         {
