@@ -2494,7 +2494,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
         process_header( request, L"Upgrade", L"websocket", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Connection", L"Upgrade", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Sec-WebSocket-Version", L"13", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
-        if ((ret = add_websocket_key_header( request ))) return ret;
+        if ((ret = add_websocket_key_header( request ))) goto end;
     }
     else if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
     {
@@ -2509,7 +2509,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
                                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE )))
     {
         TRACE( "failed to add request headers: %lu\n", ret );
-        return ret;
+        goto end;
     }
     if (request->hdr.decompression)
     {
@@ -2522,7 +2522,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES) && (ret = add_cookie_headers( request )))
     {
         WARN( "failed to add cookie headers: %lu\n", ret );
-        return ret;
+        goto end;
     }
 
     if (context) request->hdr.context = context;
