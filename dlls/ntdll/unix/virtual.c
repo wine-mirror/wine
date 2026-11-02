@@ -251,6 +251,21 @@ enum area_state
     AREA_ALLOCATED, /* reserved and allocated to a view */
 };
 
+/* reserved area allocation ranges */
+struct alloc_range
+{
+    void *start;
+    void *end;
+};
+
+#ifdef _WIN64
+static struct alloc_range low_range  = { (void *)0x10000, (void *)0x200000000 };
+static struct alloc_range high_range = { (void *)0x7ff600000000, (void *)0x7ff600000000 };
+#else
+static struct alloc_range low_range  = { (void *)0x10000, (void *)0x40000000 };
+static struct alloc_range high_range = { (void *)0x7f000000, (void *)0x7fff0000 };
+#endif
+
 
 static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *limit )
 {
@@ -1380,7 +1395,8 @@ static void free_reserved_memory( void *start, void *end )
  */
 static void virtual_release_address_space(void)
 {
-    free_reserved_memory( (char *)0x20000000, (char *)0x7f000000 );
+    low_range.end = (void *)0x20000000;
+    free_reserved_memory( low_range.end, high_range.start );
 }
 
 #endif  /* _WIN64 */
@@ -1815,6 +1831,77 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
 }
 
 /***********************************************************************
+ *           alloc_reserved_area
+ *
+ * Allocate memory from a reserved area.
+ * virtual_mutex must be held by caller.
+ */
+static void *alloc_reserved_area( void *limit_low, void *limit_high, size_t size, int top_down,
+                                  int unix_prot, size_t align_mask )
+{
+#ifdef _WIN64
+    const size_t reserve_size = limit_4g;
+    void *ret;
+    unsigned int area;
+
+    if (size >= reserve_size) return NULL;
+
+    if (top_down) for (;;)
+    {
+        static void *hint = (void *)~0ul;
+        void *low = max( limit_low, high_range.start );
+        void *high = min( limit_high, high_range.end );
+
+        if (high <= low_range.end) break;
+        if (high <= limit_low) break;
+
+        if ((ret = map_reserved_area( low, min( high, hint ), size, top_down, unix_prot, align_mask )))
+            return ret;
+        if (high_range.end > hint &&
+            (ret = map_reserved_area( low, high, size, top_down, unix_prot, align_mask )))
+            return ret;
+
+        if (limit_high < high_range.start) return NULL;
+        if (limit_low >= high_range.start) return NULL;
+        if ((UINT_PTR)high_range.start <= (UINT_PTR)host_addr_space_limit / 2) return NULL;
+
+        TRACE( "reserving %p-%p\n", (char *)high_range.start - reserve_size, high_range.start );
+        reserve_area( (char *)high_range.start - reserve_size, high_range.start );
+        area = find_mem_area( high_range.start );
+        hint = mem_area_end( area );
+        high_range.start = (char *)high_range.start - reserve_size;
+    }
+    else for (;;)
+    {
+        static void *hint;
+        void *low = max( limit_low, low_range.start );
+        void *high = min( limit_high, low_range.end );
+
+        if (low >= high_range.start) break;
+        if (low >= limit_high) break;
+
+        if ((ret = map_reserved_area( max( low, hint), high, size, top_down, unix_prot, align_mask )))
+            return ret;
+        if (low_range.start < hint &&
+            (ret = map_reserved_area( low, high, size, top_down, unix_prot, align_mask )))
+            return ret;
+
+        if (limit_low > low_range.end) return NULL;
+        if (limit_high <= low_range.end) return NULL;
+        if ((UINT_PTR)low_range.end >= (UINT_PTR)host_addr_space_limit / 2) return NULL;
+
+        TRACE( "reserving %p-%p\n", low_range.end, (char *)low_range.end + reserve_size );
+        reserve_area( low_range.end, (char *)low_range.end + reserve_size );
+        area = find_mem_area( low_range.end );
+        hint = mem_area_base( area );
+        low_range.end = (char *)low_range.end + reserve_size;
+    }
+#endif
+    return map_reserved_area( limit_low, limit_high, size, top_down, unix_prot, align_mask );
+}
+
+
+/***********************************************************************
  *           map_fixed_area
  *
  * Map a memory area at a fixed address.
@@ -1933,7 +2020,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         if (limit_low && (void *)limit_low > start) start = (void *)limit_low;
         if (limit_high && (void *)limit_high < end) end = (char *)limit_high + 1;
 
-        if ((ptr = map_reserved_area( start, end, host_size, top_down, unix_prot, align_mask )))
+        if ((ptr = alloc_reserved_area( start, end, host_size, top_down, unix_prot, align_mask )))
         {
             TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
         }
@@ -3277,16 +3364,17 @@ void virtual_init(void)
             addr = low_64k;
         }
         set_mem_area_state( addr, size, AREA_RESERVED );
-    }
-    else if (is_win64)
-    {
-        reserve_area( (void *)0x00010000, (void *)0x200000000 );
+
+        if (addr < high_range.start) low_range.end = max( (char *)low_range.end, (char *)addr + size );
     }
     else
     {
-        reserve_area( (void *)0x00010000, (void *)0x40000000 );
-        reserve_area( (void *)0x7f000000, (void *)0x7fff0000 );
+        reserve_area( low_range.start, low_range.end );
+        if (!is_win64) reserve_area( high_range.start, high_range.end );
     }
+
+    if (high_range.start > host_addr_space_limit)
+        high_range.start = high_range.end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
 
 #ifdef _WIN64
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
@@ -3634,19 +3722,7 @@ static struct thread_data *init_thread_data( void *ptr )
 /* enable use of a large address space when allowed by the application */
 static void set_large_address_space(void)
 {
-    if (is_machine_64bit( main_image_info.Machine ))
-    {
-        void *start = (void *)0x7ff000000000;
-        void *end = (void *)0x7ff600000000;
-
-        if (start > host_addr_space_limit)
-        {
-            end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
-            start = (char *)end - limit_4g;
-        }
-        reserve_area( start, end );
-        return;
-    }
+    if (is_machine_64bit( main_image_info.Machine )) return;
 
     if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
     {
