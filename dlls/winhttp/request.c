@@ -398,12 +398,7 @@ static DWORD gzip_fill_buffer( struct data_stream *stream, struct request *reque
     {
         if (!gzip_stream->buf.size)
         {
-            if (gzip_stream->buf.pos)
-            {
-                if (gzip_stream->buf.size)
-                    memmove( gzip_stream->buf.buf, gzip_stream->buf.buf + gzip_stream->buf.pos, gzip_stream->buf.size );
-                gzip_stream->buf.pos = 0;
-            }
+            gzip_stream->buf.pos = 0;
             if ((ret = gzip_stream->parent->vtbl->fill_buffer( gzip_stream->parent, request, &gzip_stream->buf )))
                 return ret;
             if (!gzip_stream->buf.size)
@@ -1978,31 +1973,26 @@ static DWORD map_secure_protocols( DWORD mask )
 static DWORD ensure_cred_handle( struct request *request )
 {
     SECURITY_STATUS status = SEC_E_OK;
+    SCHANNEL_CRED cred;
 
     if (request->cred_handle_initialized) return ERROR_SUCCESS;
 
-    if (!request->cred_handle_initialized)
+    memset( &cred, 0, sizeof(cred) );
+    cred.dwVersion             = SCHANNEL_CRED_VERSION;
+    cred.grbitEnabledProtocols = map_secure_protocols( request->connect->session->secure_protocols );
+    if (request->client_cert)
     {
-        SCHANNEL_CRED cred;
-        memset( &cred, 0, sizeof(cred) );
-        cred.dwVersion             = SCHANNEL_CRED_VERSION;
-        cred.grbitEnabledProtocols = map_secure_protocols( request->connect->session->secure_protocols );
-        if (request->client_cert)
-        {
-            cred.paCred = &request->client_cert;
-            cred.cCreds = 1;
-        }
-        status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL,
-                                            &cred, NULL, NULL, &request->cred_handle, NULL );
-        if (status == SEC_E_OK)
-            request->cred_handle_initialized = TRUE;
+        cred.paCred = &request->client_cert;
+        cred.cCreds = 1;
     }
-
+    status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL,
+                                        &request->cred_handle, NULL );
     if (status != SEC_E_OK)
     {
         WARN( "AcquireCredentialsHandleW failed: %#lx\n", status );
         return status;
     }
+    request->cred_handle_initialized = TRUE;
     return ERROR_SUCCESS;
 }
 
