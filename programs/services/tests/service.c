@@ -684,18 +684,18 @@ static void test_SHGetFolderPathW(const char *username, HANDLE token)
     service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
 
     if (!strcmpi(username, "System"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
     else if (!strcmpi(username, "LocalService"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
     else if (!strcmpi(username, "NetworkService"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
 
     hr = SHGetFolderPathW(NULL, CSIDL_PROFILE | CSIDL_FLAG_DONT_VERIFY, (HANDLE)-1, SHGFP_TYPE_CURRENT, buffer);
     service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
-    service_todo_wine_ok(!wcsicmp(buffer, L"C:\\Users\\Default"), "Got unexpected %s.\n", wine_dbgstr_w(buffer));
+    service_ok(!wcsicmp(buffer, L"C:\\Users\\Default"), "Got unexpected %s.\n", wine_dbgstr_w(buffer));
 
     ret = RevertToSelf();
     service_ok(ret, "RevertToSelf failed, error %lu.\n", GetLastError());
@@ -705,13 +705,13 @@ static void test_SHGetFolderPathW(const char *username, HANDLE token)
     service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
 
     if (!strcmpi(username, "System"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
     else if (!strcmpi(username, "LocalService"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
     else if (!strcmpi(username, "NetworkService"))
-        service_todo_wine_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
                              "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
 }
 

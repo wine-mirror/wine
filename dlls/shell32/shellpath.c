@@ -2113,7 +2113,7 @@ static int csidl_from_id( const KNOWNFOLDERID *id )
     return -1;
 }
 
-static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest);
+static HRESULT _SHExpandEnvironmentStrings(HANDLE hToken, LPCWSTR szSrc, LPWSTR szDest);
 
 /* Gets the value named value from the registry key
  * rootKey\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
@@ -2124,7 +2124,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest);
  * Returns successful error code if the value was retrieved from the registry,
  * and a failure otherwise.
  */
-static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
+static HRESULT _SHGetUserShellFolderPath(HANDLE hToken, HKEY rootKey, LPCWSTR userPrefix,
  LPCWSTR value, LPWSTR path)
 {
     HRESULT hr;
@@ -2133,7 +2133,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
     HKEY userShellFolderKey, shellFolderKey;
     DWORD dwType, dwPathLen;
 
-    TRACE("%p,%s,%s,%p\n",rootKey, debugstr_w(userPrefix), debugstr_w(value),
+    TRACE("%p,%p,%s,%s,%p\n",hToken,rootKey, debugstr_w(userPrefix), debugstr_w(value),
      path);
 
     if (userPrefix)
@@ -2177,7 +2177,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
         {
             WCHAR szTemp[MAX_PATH];
 
-            _SHExpandEnvironmentStrings(path, szTemp);
+            _SHExpandEnvironmentStrings(hToken, path, szTemp);
             lstrcpynW(path, szTemp, MAX_PATH);
         }
         ret = RegSetValueExW(shellFolderKey, value, 0, REG_SZ, (LPBYTE)path,
@@ -2449,9 +2449,9 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
             szValueName = &buffer[0];
         }
 
-        hr = _SHGetUserShellFolderPath(hRootKey, userPrefix, szValueName, pszPath);
+        hr = _SHGetUserShellFolderPath(hToken, hRootKey, userPrefix, szValueName, pszPath);
         if (FAILED(hr) && hRootKey != HKEY_LOCAL_MACHINE)
-            hr = _SHGetUserShellFolderPath(HKEY_LOCAL_MACHINE, NULL, szValueName, pszPath);
+            hr = _SHGetUserShellFolderPath(NULL, HKEY_LOCAL_MACHINE, NULL, szValueName, pszPath);
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
         if (userPrefix != NULL && userPrefix != DefaultW)
@@ -2485,7 +2485,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
         hr = _SHGetDefaultValue(folder, pszPath);
     else
     {
-        hr = _SHGetUserShellFolderPath(HKEY_LOCAL_MACHINE, NULL,
+        hr = _SHGetUserShellFolderPath(NULL, HKEY_LOCAL_MACHINE, NULL,
          CSIDL_Data[folder].value, pszPath);
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
@@ -2557,13 +2557,13 @@ static HRESULT _SHGetProfilesValue(HKEY profilesKey, LPCWSTR szValueName,
  * If one of the directly handled environment variables is expanded, only
  * expands a single variable, and only in the beginning of szSrc.
  */
-static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
+static HRESULT _SHExpandEnvironmentStrings(HANDLE hToken, LPCWSTR szSrc, LPWSTR szDest)
 {
     HRESULT hr;
     WCHAR szTemp[MAX_PATH], szProfilesPrefix[MAX_PATH] = { 0 };
     HKEY key = NULL;
 
-    TRACE("%s, %p\n", debugstr_w(szSrc), szDest);
+    TRACE("%p, %s, %p\n", hToken, debugstr_w(szSrc), szDest);
 
     if (!szSrc || !szDest) return E_INVALIDARG;
 
@@ -2641,12 +2641,56 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
         }
         else if (!wcsnicmp(szTemp, L"%USERPROFILE%", lstrlenW(L"%USERPROFILE%")))
         {
-            WCHAR userName[MAX_PATH];
-            DWORD userLen = MAX_PATH;
+            DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+            DWORD size = sizeof(sid_data), user_length = MAX_PATH, domain_length = MAX_PATH;
+            TOKEN_USER *token_user = (TOKEN_USER *)sid_data;
+            WCHAR user_name[MAX_PATH], domain[MAX_PATH];
+            SID_NAME_USE name_use;
 
-            lstrcpyW(szDest, szProfilesPrefix);
-            GetUserNameW(userName, &userLen);
-            PathAppendW(szDest, userName);
+            if (hToken == (HANDLE)-1)
+            {
+                lstrcpyW(szDest, szProfilesPrefix);
+                PathAppendW(szDest, L"Default");
+            }
+            else
+            {
+                if (hToken == NULL)
+                    hToken = GetCurrentThreadEffectiveToken();
+
+                if (!GetTokenInformation(hToken, TokenUser, token_user, size, &size))
+                {
+                    hr = E_FAIL;
+                    goto end;
+                }
+
+                if (IsWellKnownSid(token_user->User.Sid, WinLocalSystemSid))
+                {
+                    GetSystemDirectoryW(szDest, MAX_PATH);
+                    PathAppendW(szDest, L"config\\systemprofile");
+                }
+                else if (IsWellKnownSid(token_user->User.Sid, WinLocalServiceSid))
+                {
+                    GetWindowsDirectoryW(szDest, MAX_PATH);
+                    PathAppendW(szDest, L"ServiceProfiles\\LocalService");
+                }
+                else if (IsWellKnownSid(token_user->User.Sid, WinNetworkServiceSid))
+                {
+                    GetWindowsDirectoryW(szDest, MAX_PATH);
+                    PathAppendW(szDest, L"ServiceProfiles\\NetworkService");
+                }
+                else
+                {
+                    lstrcpyW(szDest, szProfilesPrefix);
+                    if (!LookupAccountSidW(NULL, token_user->User.Sid, user_name, &user_length,
+                                           domain, &domain_length, &name_use))
+                    {
+                        hr = E_FAIL;
+                        goto end;
+                    }
+                    PathAppendW(szDest, user_name);
+                }
+            }
+
             PathAppendW(szDest, szTemp + lstrlenW(L"%USERPROFILE%"));
         }
         else if (!wcsnicmp(szTemp, L"%SystemDrive%", lstrlenW(L"%SystemDrive%")))
@@ -3002,7 +3046,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
 
     /* Expand environment strings if necessary */
     if (*szTemp == '%')
-        hr = _SHExpandEnvironmentStrings(szTemp, szBuildPath);
+        hr = _SHExpandEnvironmentStrings(hToken, szTemp, szBuildPath);
     else
         lstrcpyW(szBuildPath, szTemp);
 
