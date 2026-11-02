@@ -195,6 +195,12 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
         }
         if (buffer->d3d12_surface.resource)
         {
+            if (buffer->d3d12_surface.queue && buffer->d3d12_surface.fence)
+            {
+                ID3D12CommandQueue_Signal(buffer->d3d12_surface.queue, buffer->d3d12_surface.fence,
+                        ++buffer->d3d12_surface.fence_value);
+                ID3D12Fence_SetEventOnCompletion(buffer->d3d12_surface.fence, buffer->d3d12_surface.fence_value, NULL);
+            }
             ID3D12Device_Release(buffer->d3d12_surface.device);
             ID3D12Resource_Release(buffer->d3d12_surface.resource);
             if (buffer->d3d12_surface.sync_obj) IMFD3D12SynchronizationObject_Release(buffer->d3d12_surface.sync_obj);
