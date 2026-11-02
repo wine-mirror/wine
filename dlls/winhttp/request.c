@@ -4893,14 +4893,14 @@ static HRESULT WINAPI stream_Read( IStream *iface, void *buf, ULONG len, ULONG *
 
     if (stream->pos.QuadPart >= stream->size.QuadPart)
     {
-        *read = 0;
+        if (read) *read = 0;
         return S_FALSE;
     }
 
     size = min( stream->size.QuadPart - stream->pos.QuadPart, len );
     memcpy( buf, stream->data + stream->pos.QuadPart, size );
     stream->pos.QuadPart += size;
-    *read = size;
+    if (read) *read = size;
 
     return S_OK;
 }
