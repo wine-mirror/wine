@@ -689,7 +689,6 @@ static void test_FileTimeToDosDateTime(void)
     ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
     ok(ret, "Unexpected return value %d.\n", ret);
     sec = fattime & 0x1f;
-    todo_wine
     ok(sec == 12, "Unexpected seconds field %d.\n", sec);
     min = (fattime >> 5) & 0x3f;
     ok(min == 20, "Unexpected minutes field %d.\n", min);
@@ -701,10 +700,8 @@ static void test_FileTimeToDosDateTime(void)
     ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
     ok(ret, "Unexpected return value %d.\n", ret);
     sec = fattime & 0x1f;
-    todo_wine
     ok(!sec, "Unexpected seconds field %d.\n", sec);
     min = (fattime >> 5) & 0x3f;
-    todo_wine
     ok(min == 21, "Unexpected minutes field %d.\n", min);
 
     systime.wSecond = 59;
@@ -714,10 +711,8 @@ static void test_FileTimeToDosDateTime(void)
     ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
     ok(ret, "Unexpected return value %d.\n", ret);
     sec = fattime & 0x1f;
-    todo_wine
     ok(!sec, "Unexpected seconds field %d.\n", sec);
     min = (fattime >> 5) & 0x3f;
-    todo_wine
     ok(min == 21, "Unexpected minutes field %d.\n", min);
 
     systime.wSecond = 22;
@@ -738,7 +733,6 @@ static void test_FileTimeToDosDateTime(void)
     ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
     ok(ret, "Unexpected return value %d.\n", ret);
     sec = fattime & 0x1f;
-    todo_wine
     ok(sec == 1, "Unexpected seconds field %d.\n", sec);
     min = (fattime >> 5) & 0x3f;
     ok(min == 20, "Unexpected minutes field %d.\n", min);
