@@ -1336,6 +1336,33 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	return 0;
 }
 
+static void ShellView_InvokeClipboardVerb(IShellViewImpl *view, const char *verb)
+{
+    IContextMenu *menu = NULL;
+    CMINVOKECOMMANDINFO cmi;
+    HRESULT hr;
+
+    TRACE("%p, %s.\n", view, debugstr_a(verb));
+
+    if (!strcmp(verb, "paste"))
+        BackgroundMenu_Constructor(view->pSFParent, FALSE, &IID_IContextMenu, (void **)&menu);
+    else if (ShellView_GetSelections(view))
+        IShellFolder_GetUIObjectOf(view->pSFParent, view->hWndParent, view->cidl,
+                (LPCITEMIDLIST *)view->apidl, &IID_IContextMenu, NULL, (void **)&menu);
+
+    if (!menu)
+        return;
+
+    ZeroMemory(&cmi, sizeof(cmi));
+    cmi.cbSize = sizeof(cmi);
+    cmi.hwnd = view->hWndParent;
+    cmi.lpVerb = verb;
+    cmi.nShow = SW_SHOWNORMAL;
+    if (FAILED(hr = IContextMenu_InvokeCommand(menu, &cmi)))
+        WARN("Failed to invoke %s command, hr %#lx.\n", debugstr_a(verb), hr);
+    IContextMenu_Release(menu);
+}
+
 /**********************************************************
 * ShellView_OnNotify()
 */
@@ -1565,9 +1592,21 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    {
 	      LPNMLVKEYDOWN plvKeyDown = (LPNMLVKEYDOWN) lpnmh;
 
-              /* initiate a rename of the selected file or directory */
               switch (plvKeyDown->wVKey)
               {
+              case 'C':
+              case 'X':
+              case 'V':
+                if (GetKeyState(VK_CONTROL) & 0x8000)
+                {
+                  if (plvKeyDown->wVKey == 'C')
+                    ShellView_InvokeClipboardVerb(This, "copy");
+                  else if (plvKeyDown->wVKey == 'X')
+                    ShellView_InvokeClipboardVerb(This, "cut");
+                  else
+                    ShellView_InvokeClipboardVerb(This, "paste");
+                }
+                break;
               case VK_F2:
                 {
                   INT i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0);
