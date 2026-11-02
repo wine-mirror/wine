@@ -3110,6 +3110,10 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
         WARN( "Using default core profile for context version %d.%d\n", attrs.major, attrs.minor );
         attrs.profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     }
+    else if (!attrs.profile)
+    {
+        attrs.profile = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+    }
 
     if (!(root = get_root_context( attrs )) || (share && share->root_context != root))
     {
