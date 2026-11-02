@@ -4174,6 +4174,52 @@ static void merge_typedefs( void )
     }
 }
 
+static void merge_interface_impls( void )
+{
+    UINT i;
+
+    for (i = 0; i < winmd_count - 1; i++)
+    {
+        const struct winmd *winmd = winmd_list[i];
+
+        FOR_EACH_TABLE_ROW( winmd, TABLE_INTERFACEIMPL, struct interfaceimpl_row, impl )
+        {
+            const struct typedef_row *class_def = &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[impl->class - 1];
+            UINT iface_row = typedef_or_ref_to_row( impl->interface ), new_iface_row, new_class_row;
+            enum table iface_table = typedef_or_ref_to_table( impl->interface );
+
+            new_class_row = winmd_find_typedef_row( current_winmd, winmd_get_string( winmd, class_def->name ),
+                                                    winmd_get_string( winmd, class_def->namespace ) );
+            assert( new_class_row );
+            switch (iface_table)
+            {
+            case TABLE_TYPEDEF:
+            {
+                const struct typedef_row *iface_def =
+                    &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[iface_row - 1];
+                new_iface_row = winmd_find_typedef_row( current_winmd, winmd_get_string( winmd, iface_def->name ),
+                                                        winmd_get_string( winmd, iface_def->namespace ) );
+                break;
+            }
+            case TABLE_TYPEREF:
+            {
+                const struct typeref_row *iface_ref =
+                    &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[iface_row - 1];
+                new_iface_row = winmd_find_typeref_row( current_winmd, winmd_get_string( winmd, iface_ref->name ),
+                                                        winmd_get_string( winmd, iface_ref->namespace ) );
+                break;
+            }
+            default:
+                fprintf( stderr, "%s: unknown TypeDefOrRef table: %#x\n", winmd->name, iface_table );
+                exit( 1 );
+            }
+            assert( new_iface_row );
+
+            add_interfaceimpl_row( new_class_row, typedef_or_ref( iface_table, new_iface_row ) );
+        }
+    }
+}
+
 static void merge_tables( void )
 {
     if (winmd_count <= 1) return;
@@ -4182,4 +4228,5 @@ static void merge_tables( void )
 
     merge_typerefs();
     merge_typedefs();
+    merge_interface_impls();
 }
