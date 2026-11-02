@@ -9572,6 +9572,37 @@ static void test_top_level_action(void)
     DeleteFileA("forcecodepage.idt");
 }
 
+static void test_desktopfolder(void)
+{
+    MSIHANDLE db, package = 0;
+    char expected_path[MAX_PATH], actual_path[MAX_PATH] = "";
+    DWORD size = sizeof(actual_path);
+    HRESULT hr;
+    UINT r;
+
+    hr = SHGetFolderPathA(NULL, CSIDL_COMMON_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, expected_path);
+    if (FAILED(hr))
+    {
+        skip("Failed to get common desktop path: %#lx\n", hr);
+        return;
+    }
+    lstrcatA(expected_path, "\\");
+
+    db = create_package_db();
+    ok(db, "Failed to create package database\n");
+    create_property_table(db);
+    add_property_entry(db, "'ALLUSERS', '1'");
+
+    r = package_from_db(db, &package);
+    ok(r == ERROR_SUCCESS, "Failed to open package: %u\n", r);
+    r = MsiGetPropertyA(package, "DesktopFolder", actual_path, &size);
+    ok(r == ERROR_SUCCESS, "Failed to get DesktopFolder: %u\n", r);
+    todo_wine
+    ok(!lstrcmpiA(actual_path, expected_path), "Expected %s, got %s\n", expected_path, actual_path);
+    MsiCloseHandle(package);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     char temp_path[MAX_PATH], prev_path[MAX_PATH];
@@ -9629,6 +9660,7 @@ START_TEST(package)
     test_externalui_message();
     test_controlevent();
     test_top_level_action();
+    test_desktopfolder();
 
     SetCurrentDirectoryA(prev_path);
 }
