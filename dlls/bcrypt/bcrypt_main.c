@@ -3001,14 +3001,11 @@ static NTSTATUS import_legacy_rsa_key( enum alg_id alg, const UCHAR *input, ULON
     return STATUS_SUCCESS;
 }
 
-static enum ecc_curve_id get_ecc_blob_curve( enum alg_id alg, const BCRYPT_ECCKEY_BLOB *blob, ULONG *size,
-                                             ULONG *flags )
+static enum ecc_curve_id get_ecc_blob_curve( enum alg_id alg, const BCRYPT_ECCKEY_BLOB *blob, ULONG *flags )
 {
     enum ecc_curve_id curve_id = 0;
 
     *flags = 0;
-    *size = blob->cbKey;
-
     switch (alg)
     {
     case ALG_ID_ECDH:
@@ -3020,21 +3017,18 @@ static enum ecc_curve_id get_ecc_blob_curve( enum alg_id alg, const BCRYPT_ECCKE
         if (blob->dwMagic == BCRYPT_ECDH_PRIVATE_P256_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDH_PUBLIC_P256_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P256R1;
-        *size = 32;
         break;
 
     case ALG_ID_ECDH_P384:
         if (blob->dwMagic == BCRYPT_ECDH_PRIVATE_P384_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDH_PUBLIC_P384_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P384R1;
-        *size = 48;
         break;
 
     case ALG_ID_ECDH_P521:
         if (blob->dwMagic == BCRYPT_ECDH_PRIVATE_P521_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDH_PUBLIC_P521_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P521R1;
-        *size = 66;
         break;
 
     case ALG_ID_ECDSA:
@@ -3046,21 +3040,18 @@ static enum ecc_curve_id get_ecc_blob_curve( enum alg_id alg, const BCRYPT_ECCKE
         if (blob->dwMagic == BCRYPT_ECDSA_PRIVATE_P256_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDSA_PUBLIC_P256_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P256R1;
-        *size = 32;
         break;
 
     case ALG_ID_ECDSA_P384:
         if (blob->dwMagic == BCRYPT_ECDSA_PRIVATE_P384_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDSA_PUBLIC_P384_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P384R1;
-        *size = 48;
         break;
 
     case ALG_ID_ECDSA_P521:
         if (blob->dwMagic == BCRYPT_ECDSA_PRIVATE_P521_MAGIC) *flags = KEY_FLAG_PRIVATE;
         else if (blob->dwMagic != BCRYPT_ECDSA_PUBLIC_P521_MAGIC) return ECC_CURVE_INVALID;
         curve_id = ECC_CURVE_P521R1;
-        *size = 66;
         break;
 
     default:
@@ -3258,6 +3249,22 @@ static ULONG curve_strength( enum ecc_curve_id curve_id )
     }
 }
 
+static ULONG curve_size( enum ecc_curve_id curve_id )
+{
+    switch (curve_id)
+    {
+    case ECC_CURVE_25519:           return 255;
+    case ECC_CURVE_BRAINPOOLP256R1:
+    case ECC_CURVE_P256R1:          return 256;
+    case ECC_CURVE_BRAINPOOLP384R1:
+    case ECC_CURVE_P384R1:          return 384;
+    case ECC_CURVE_P521R1:          return 521;
+    default:
+        FIXME( "unsupported curve %u\n", curve_id );
+        return 0;
+    }
+}
+
 static NTSTATUS alloc_ecc_key( struct key *key, enum ecc_curve_id curve_id )
 {
     if (!(key->a.ecc.curve = alloc_ecc_curve( curve_id ))) return STATUS_NO_MEMORY;
@@ -3272,14 +3279,14 @@ static NTSTATUS import_ecc_key( enum alg_id alg, enum ecc_curve_id curve, const 
 {
     const BCRYPT_ECCKEY_BLOB *blob = (const BCRYPT_ECCKEY_BLOB *)input;
     UINT32 pub_size, priv_size = 0, set_flags = get_ecc_import_flags( alg );
-    ULONG size, key_size, key_flags = 0;
+    ULONG size, key_flags = 0, key_size = len_from_bitlen( curve_size(curve) );
     const UCHAR *pub = (UCHAR *)(blob + 1), *priv = NULL;
     enum ecc_curve_id blob_curve;
     NTSTATUS status;
     struct key *key = NULL;
 
     if (input_len < sizeof(*blob)) return STATUS_INVALID_PARAMETER;
-    if (!(blob_curve = get_ecc_blob_curve( alg, blob, &key_size, &key_flags ))) blob_curve = curve;
+    if (!(blob_curve = get_ecc_blob_curve( alg, blob, &key_flags ))) blob_curve = curve;
     if (blob_curve == ECC_CURVE_INVALID) return STATUS_INVALID_PARAMETER;
 
     size = sizeof(*blob) + blob->cbKey * 2;
@@ -3597,22 +3604,6 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE
 
     TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
-}
-
-static ULONG curve_size( enum ecc_curve_id curve_id )
-{
-    switch (curve_id)
-    {
-    case ECC_CURVE_25519:           return 255;
-    case ECC_CURVE_BRAINPOOLP256R1:
-    case ECC_CURVE_P256R1:          return 256;
-    case ECC_CURVE_BRAINPOOLP384R1:
-    case ECC_CURVE_P384R1:          return 384;
-    case ECC_CURVE_P521R1:          return 521;
-    default:
-        FIXME( "unsupported curve %u\n", curve_id );
-        return 0;
-    }
 }
 
 static NTSTATUS generate_key_pair( const struct algorithm *alg, ULONG bitlen, ULONG flags, struct key **ret_key )
