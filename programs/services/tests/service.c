@@ -23,6 +23,9 @@
 #include <stdio.h>
 #include <winbase.h>
 #include <winuser.h>
+#include <winreg.h>
+#include <userenv.h>
+#include <sddl.h>
 
 #include "wine/test.h"
 
@@ -562,6 +565,111 @@ static void test_GetUserName(const char *username, HANDLE token)
     service_ok(ret, "RevertToSelf failed, error %lu.\n", GetLastError());
 }
 
+static const WCHAR *get_env_from_block(const WCHAR *env_block, const WCHAR *name)
+{
+    const WCHAR *var = env_block;
+    int name_length = wcslen(name);
+
+    while (*var)
+    {
+        if (!_wcsnicmp(var, name, name_length) && var[name_length] == '=')
+            return var + name_length + 1;
+
+        var += wcslen(var) + 1;
+    }
+
+    return NULL;
+}
+
+static void check_environment_block(const void *env_block, const char *username, HANDLE token)
+{
+    static const struct env_var_test
+    {
+        const WCHAR *name;
+        const WCHAR *value;
+    }
+    tests[][3] =
+    {
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\system32\\config\\systemprofile"}
+        },
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\ServiceProfiles\\LocalService\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\ServiceProfiles\\LocalService\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\ServiceProfiles\\LocalService"}
+        },
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"}
+        },
+    };
+    const struct env_var_test *test = NULL;
+    const WCHAR *value;
+    DWORD attr;
+    int i;
+
+    if (!strcmpi(username, "System"))
+        test = tests[0];
+    else if (!strcmpi(username, "LocalService"))
+        test = tests[1];
+    else
+        test = tests[2];
+
+    for (i = 0; i < 3; i++)
+    {
+        value = get_env_from_block(env_block, test[i].name);
+        service_todo_wine_ok(value && !wcsicmp(value, test[i].value),
+                             "%s: Got unexpected value %s for key %s.\n", username,
+                             wine_dbgstr_w(value), wine_dbgstr_w(test[i].name));
+
+        /* Check that these folders actually exist */
+        attr = GetFileAttributesW(test[i].value);
+        service_todo_wine_ok(attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_DIRECTORY,
+                             "Directory %s not found.\n", wine_dbgstr_w(test[i].value));
+
+        /* Check that %USERPROFILE% is equal to the value of ProfileImagePath at
+         * HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\ProfileList */
+        if (!wcsicmp(test[i].name, L"USERPROFILE"))
+        {
+            DWORD_PTR token_buf[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+            WCHAR key[256], profile_path[256] = {0}, *sid;
+            DWORD size;
+            LSTATUS ls;
+
+            size = sizeof(token_buf);
+            GetTokenInformation(token, TokenUser, token_buf, size, &size);
+            ConvertSidToStringSidW(((TOKEN_USER *)token_buf)->User.Sid, &sid);
+
+            wcscpy(key, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\");
+            wcscat(key, sid);
+            size = sizeof(profile_path);
+            ls = RegGetValueW(HKEY_LOCAL_MACHINE, key, L"ProfileImagePath", RRF_RT_REG_SZ, NULL, profile_path, &size);
+            service_todo_wine_ok(ls == ERROR_SUCCESS, "RegGetValueW ProfileImagePath failed, error %lu.\n", ls);
+            service_todo_wine_ok(!wcsicmp(profile_path, test[i].value), "Expected %s, got %s.\n",
+                                 wine_dbgstr_w(test[i].value), wine_dbgstr_w(profile_path));
+
+            LocalFree(sid);
+        }
+    }
+}
+
+static void test_CreateEnvironmentBlock(const char *username, HANDLE token)
+{
+    void *env_block;
+    DWORD ret;
+
+    ret = CreateEnvironmentBlock(&env_block, token, FALSE);
+    service_ok(ret, "CreateEnvironmentBlock failed, error %lu.\n", GetLastError());
+
+    check_environment_block(env_block, username, token);
+
+    ret = DestroyEnvironmentBlock(env_block);
+    service_ok(ret, "DestroyEnvironmentBlock failed, error %lu.\n", GetLastError());
+}
+
 /* LogonUser() needs the current thread user to be System to log into the System account. So the
  * tests need to be in a service */
 static void test_LogonUser(void)
@@ -649,6 +757,7 @@ static void test_LogonUser(void)
         {
             check_token_information(tests[i].username, token);
             test_GetUserName(tests[i].username, token);
+            test_CreateEnvironmentBlock(tests[i].username, token);
             CloseHandle(token);
         }
     }
