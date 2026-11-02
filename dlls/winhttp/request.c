@@ -2329,7 +2329,7 @@ static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_
     len = WideCharToMultiByte( CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL );
     if (!(utf8 = malloc( len ))) return 0;
 
-    WideCharToMultiByte( CP_UTF8, 0, src, -1, utf8, len, NULL, NULL );
+    WideCharToMultiByte( CP_UTF8, 0, src, src_len, utf8, len, NULL, NULL );
     len = escape_string( utf8, len, dst, flags );
     free( utf8 );
 
