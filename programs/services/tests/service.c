@@ -621,9 +621,8 @@ static void check_environment_block(const void *env_block, const char *username,
     for (i = 0; i < 3; i++)
     {
         value = get_env_from_block(env_block, test[i].name);
-        service_todo_wine_ok(value && !wcsicmp(value, test[i].value),
-                             "%s: Got unexpected value %s for key %s.\n", username,
-                             wine_dbgstr_w(value), wine_dbgstr_w(test[i].name));
+        service_ok(value && !wcsicmp(value, test[i].value), "%s: Got unexpected value %s for key %s.\n",
+                   username, wine_dbgstr_w(value), wine_dbgstr_w(test[i].name));
 
         /* Check that these folders actually exist */
         attr = GetFileAttributesW(test[i].value);

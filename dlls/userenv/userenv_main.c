@@ -29,6 +29,7 @@
 #include "sddl.h"
 #include "objbase.h"
 #include "userenv.h"
+#include "lmcons.h"
 
 #include "wine/debug.h"
 
@@ -174,7 +175,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     static const WCHAR env_keyW[] = L"System\\CurrentControlSet\\Control\\Session Manager\\Environment";
     static const WCHAR profile_keyW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList";
 
-    WCHAR *env, buf[UNICODE_STRING_MAX_CHARS], profiles_dir[MAX_PATH];
+    WCHAR *env, buf[UNICODE_STRING_MAX_CHARS], profiles_dir[MAX_PATH], username[UNLEN + 1];
     DWORD len;
     HKEY hkey, hsubkey;
 
@@ -294,15 +295,41 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             return FALSE;
         }
 
-        len = lstrlenW(profiles_dir);
-        memcpy(buf, profiles_dir, len*sizeof(WCHAR));
-
-        size = UNICODE_STRING_MAX_CHARS-len;
-        if (LookupAccountSidW(NULL, token_user->User.Sid,
-                    buf+len, &size, domain, &domain_size, &use))
+        size = ARRAY_SIZE(username);
+        if (LookupAccountSidW(NULL, token_user->User.Sid, username, &size, domain, &domain_size, &use))
         {
-            set_env_var(&env, L"USERNAME", buf+len);
-            if (len) set_env_var(&env, L"USERPROFILE", buf);
+            BOOL is_local_system, is_local_service, is_network_service;
+
+            set_env_var(&env, L"USERNAME", username);
+
+            is_local_system = IsWellKnownSid(token_user->User.Sid, WinLocalSystemSid);
+            is_local_service = IsWellKnownSid(token_user->User.Sid, WinLocalServiceSid);
+            is_network_service = IsWellKnownSid(token_user->User.Sid, WinNetworkServiceSid);
+            if (is_local_system || is_local_service || is_network_service)
+            {
+                GetWindowsDirectoryW(profiles_dir, ARRAY_SIZE(profiles_dir));
+                if (is_local_system)
+                    wcscat(profiles_dir, L"\\system32\\config\\systemprofile");
+                else if (is_local_service)
+                    wcscat(profiles_dir, L"\\ServiceProfiles\\LocalService");
+                else
+                    wcscat(profiles_dir, L"\\ServiceProfiles\\NetworkService");
+                set_env_var(&env, L"USERPROFILE", profiles_dir);
+
+                wcscpy(buf, profiles_dir);
+                wcscat(buf, L"\\AppData\\Roaming");
+                set_env_var(&env, L"APPDATA", buf);
+
+                wcscpy(buf, profiles_dir);
+                wcscat(buf, L"\\AppData\\Local");
+                set_env_var(&env, L"LOCALAPPDATA", buf);
+            }
+            else if (profiles_dir[0])
+            {
+                wcscpy(buf, profiles_dir);
+                wcscat(buf, username);
+                set_env_var(&env, L"USERPROFILE", buf);
+            }
         }
 
         HeapFree(GetProcessHeap(), 0, token_user);
