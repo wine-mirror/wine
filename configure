@@ -1021,6 +1021,7 @@ enable_bluetoothapis
 enable_browseui
 enable_bthprops_cpl
 enable_cabinet
+enable_capabilityaccessmanagerclient
 enable_capi2032
 enable_cards
 enable_cdosys
@@ -22008,6 +22009,8 @@ wine_fn_config_makefile dlls/browseui/tests enable_tests
 wine_fn_config_makefile dlls/bthprops.cpl enable_bthprops_cpl
 wine_fn_config_makefile dlls/cabinet enable_cabinet
 wine_fn_config_makefile dlls/cabinet/tests enable_tests
+wine_fn_config_makefile dlls/capabilityaccessmanagerclient enable_capabilityaccessmanagerclient
+wine_fn_config_makefile dlls/capabilityaccessmanagerclient/tests enable_tests
 wine_fn_config_makefile dlls/capi2032 enable_capi2032
 wine_fn_config_makefile dlls/cards enable_cards
 wine_fn_config_makefile dlls/cdosys enable_cdosys
