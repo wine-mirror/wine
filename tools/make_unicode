@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "18.0.0";
-my $CLDRVERSION = "48";
+my $CLDRVERSION = "49";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2026f";
 my $ICUVERSION = "v72.1.0.3";
@@ -40,7 +40,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/$UNIVERSION/idna/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "a03b1eb38032268c696406a83f0972d6a815acd2c8d4151d42ec0fda70ffced1" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "fa6d331e52d59771009c424bd1c9df311b6b2bf0bf2f6c1ddf6c952c32da4702" },
+                sha  => "7562cb05df690abed261df916785b6036fb4632117c477161d2294d4539be101" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 11 Sorting Weight Table.txt",
@@ -4903,10 +4903,10 @@ sub build_locale_data()
         my (@smonthname, @sabbrevmonthname, @sgenitivemonth, @sabbrevgenitivemonth);
         foreach my $n (1..13)
         {
-            my $name = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='wide']/month[\@type='$n']" );
-            my $abbrev = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='abbreviated']/month[\@type='$n']" );
-            my $genitive = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='wide']/month[\@type='$n']" );
-            my $abbrevgen = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='abbreviated']/month[\@type='$n']" );
+            my $name = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='wide']/month[\@type='$n' and not (\@alt)]" );
+            my $abbrev = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='abbreviated']/month[\@type='$n' and not (\@alt)]" );
+            my $genitive = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='wide']/month[\@type='$n' and not (\@alt)]" );
+            my $abbrevgen = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='abbreviated']/month[\@type='$n' and not (\@alt)]" );
             push @smonthname, $name || $genitive || "";
             push @sabbrevmonthname, $abbrev || $abbrevgen || $name || $genitive || "";
             push @sgenitivemonth, $genitive || "";
