@@ -1,10 +1,17 @@
-sudo apt install llvm strace libc6-dev-riscv64-cross gh
+sudo apt install lld llvm strace libc6-dev-riscv64-cross gh xxd tree
 apt-cache policy clang lld llvm
 
 make -B dlls/ntdll/actctx.o \
     CFLAGS="-g -O2 -fshort-wchar" --verbose
 
+autoreconf -fi
+
 CFLAGS="-g -O2 -fshort-wchar" ./configure --without-mingw && make clean && make -j3 && make install
+
+./configure \
+    --enable-archs=riscv64 \
+    --without-mingw \
+    CFLAGS="-g -O2 -fshort-wchar" && make clean && make -j3
 
 ln -s ../winebuild/winebuild tools/winegcc/winebuild
 

@@ -16,7 +16,7 @@ AC_PREREQ([2.69d],[AC_CONFIG_AUX_DIR(tools)],
 
 dnl **** Command-line arguments ****
 
-AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64,arm64ec,none}],[enable multiple architectures for PE compilation]))
+AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64,arm64ec,riscv64,none}],[enable multiple architectures for PE compilation]))
 AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--disable-tests],[do not build the regression tests]))
@@ -577,15 +577,21 @@ Please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw.])
     esac
     WINE_NO_PE_ERROR([test "x$res" = xno],[The $wine_arch PE compiler doesn't support C99.])
 
+    dnl RISC-V64 does not yet have Windows SEH assembler support.
+    dnl Its exception handling will initially use the native RISC-V
+    dnl signal and unwind implementation.
     AS_VAR_IF([wine_arch],[i386],[],
-              [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
-               AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
-                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
-                                     [AS_VAR_SET([wine_cv_seh_support],[yes])],[AS_VAR_SET([wine_cv_seh_support],[no])]))
-               AS_VAR_COPY([res],[wine_cv_seh_support])
-               AS_VAR_POPDEF([wine_cv_seh_support])
-               WINE_NO_PE_ERROR([test "x$res" != xyes],
-                                [The $wine_arch PE compiler doesn't support SEH directives.])])
+        [AS_VAR_IF([wine_arch],[riscv64],[],
+            [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
+             AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
+                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
+                                   [AS_VAR_SET([wine_cv_seh_support],[yes])],
+                                   [AS_VAR_SET([wine_cv_seh_support],[no])]))
+             AS_VAR_COPY([res],[wine_cv_seh_support])
+             AS_VAR_POPDEF([wine_cv_seh_support])
+             WINE_NO_PE_ERROR([test "x$res" != xyes],
+                              [The $wine_arch PE compiler doesn't support SEH directives.])])
+        ])
 
     AS_VAR_IF([wine_arch],[$extra_arch],[],[AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])])
 

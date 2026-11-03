@@ -2670,7 +2670,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-archs={i386,x86_64,arm,aarch64,arm64ec,none}
+  --enable-archs={i386,x86_64,arm,aarch64,arm64ec,riscv64,none}
                           enable multiple architectures for PE compilation
   --disable-win16         do not include Win16 support
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
@@ -8045,13 +8045,17 @@ fi
      continue
 fi
 
-    if test "x$wine_arch" = xi386
+                if test "x$wine_arch" = xi386
+then :
+
+else $as_nop
+  if test "x$wine_arch" = xriscv64
 then :
 
 else $as_nop
   as_wine_cv_seh_support=`printf "%s\n" "ac_cv_${wine_arch}_seh_support" | $as_tr_sh`
 
-               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports SEH directives" >&5
+             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports SEH directives" >&5
 printf %s "checking whether $CC supports SEH directives... " >&6; }
 if eval test \${$as_wine_cv_seh_support+y}
 then :
@@ -8079,9 +8083,9 @@ fi
 eval ac_res=\$$as_wine_cv_seh_support
 	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 printf "%s\n" "$ac_res" >&6; }
-               eval res=\$$as_wine_cv_seh_support
+             eval res=\$$as_wine_cv_seh_support
 
-               if test "x$res" != xyes
+             if test "x$res" != xyes
 then :
   if test ${enable_archs+y}
 then :
@@ -8092,6 +8096,8 @@ else $as_nop
 fi
      continue
 fi
+fi
+
 fi
 
     if test "x$wine_arch" = x$extra_arch
