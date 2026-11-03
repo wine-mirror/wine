@@ -210,6 +210,7 @@ static NTSTATUS get_non_pe_file_info( int fd, struct pe_image_info *info )
         case 40:  info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
         case 62:  info->machine = IMAGE_FILE_MACHINE_AMD64; break;
         case 183: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
+        case 243: info->machine = IMAGE_FILE_MACHINE_RISCV64; break;
         }
         if (header.elf.type != 3 /* ET_DYN */) return STATUS_INVALID_IMAGE_NOT_MZ;
         if (header.elf.class == 2 /* ELFCLASS64 */)

@@ -91,7 +91,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
-#if defined __i386__ || (defined __x86_64__ && !defined __APPLE__)
+#if defined __i386__ || (defined __x86_64__ && !defined __APPLE__) || \
+    (defined __riscv && (__riscv_xlen == 64))
 #define SO_DLLS_SUPPORTED
 #endif
 
@@ -928,11 +929,23 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
     int fd;
     char *end = name + strlen( name );
 
-    if (search_machine != current_machine) return status;
-    if (load_machine && load_machine != current_machine) return status;
+    TRACE( "DEBUG SO lookup: %s search_machine=%04x current_machine=%04x load_machine=%04x\n",
+           name, search_machine, current_machine, load_machine );
+
+    if (search_machine != current_machine)
+    {
+        TRACE( "DEBUG SO rejected: search machine mismatch\n" );
+        return status;
+    }
+    if (load_machine && load_machine != current_machine)
+    {
+        TRACE( "DEBUG SO rejected: load machine mismatch\n" );
+        return status;
+    }
 
     *module = NULL;
     strcpy( end, ".so" );
+    TRACE( "DEBUG SO opening: %s\n", name );
     if ((fd = open( name, O_RDONLY )) == -1) goto done;
 
     if (check_library_arch( fd ))
@@ -940,6 +953,7 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
         struct pe_image_info info;
 
         status = dlopen_dll( name, attr->ObjectName, module, &info, prefer_native );
+        TRACE( "DEBUG SO dlopen_dll status: %#x\n", status );
         if (!status) virtual_fill_image_information( &info, image_info );
         else if (status != STATUS_IMAGE_ALREADY_LOADED)
         {
@@ -947,7 +961,11 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
             status = STATUS_PROCEDURE_NOT_FOUND;
         }
     }
-    else status = STATUS_NOT_SUPPORTED;
+    else
+    {
+        TRACE( "DEBUG SO rejected: ELF architecture check failed\n" );
+        status = STATUS_NOT_SUPPORTED;
+    }
 
     close( fd );
  done:
@@ -1195,12 +1213,16 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, ANSI_STRING *exp_name
 
         /* now as a program */
         ptr = prepend_build_dir_path( file + pos, ".exe", pe_dir, "/programs", pe_build_dir );
+        TRACE( "DEBUG PROGRAM PE candidate: %s\n", ptr );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info,
                                        limit_low, limit_high, load_machine, prefer_native, offset );
+        TRACE( "DEBUG PROGRAM PE status: %#x\n", status );
         ptr = prepend_build_dir_path( file + pos, ".exe", "", "/programs", build_dir );
+        TRACE( "DEBUG PROGRAM Unix candidate: %s\n", ptr );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         status = open_builtin_so_file( ptr, &attr, module, image_info,
                                        search_machine, load_machine, prefer_native );
+        TRACE( "DEBUG PROGRAM Unix status: %#x\n", status );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 

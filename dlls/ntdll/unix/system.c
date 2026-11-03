@@ -1775,6 +1775,8 @@ static SYSTEM_CPU_INFORMATION get_cpuinfo(void)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL,
 #elif defined(__x86_64__)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64,
+#elif defined(__riscv) && (__riscv_xlen == 64)
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_UNKNOWN,
 #endif
     };
 

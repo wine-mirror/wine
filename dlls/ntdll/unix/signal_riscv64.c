@@ -328,6 +328,15 @@ void __wine_unix_call_dispatcher(void)
     abort();
 }
 
+/***********************************************************************
+ *           unwind_builtin_dll
+ *
+ * RISC-V ELF unwinding is not implemented yet.
+ */
+NTSTATUS unwind_builtin_dll( void *args )
+{
+    return STATUS_UNSUCCESSFUL;
+}
 
 void *get_native_context( CONTEXT *context )
 {
