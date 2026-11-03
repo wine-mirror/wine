@@ -1175,12 +1175,44 @@ static void *x11drv_get_proc_address( const char *name )
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
+static struct opengl_drawable *get_null_drawable( int format )
+{
+    const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
+    int glx_attribs[7], count = 0;
+    struct gl_drawable *gl;
+    SIZE size = {1, 1};
+
+    if (data->null_drawable && data->null_drawable->format == format) return data->null_drawable;
+    if (data->null_drawable) opengl_drawable_release( data->null_drawable );
+
+    glx_attribs[count++] = GLX_PBUFFER_WIDTH;
+    glx_attribs[count++] = size.cx;
+    glx_attribs[count++] = GLX_PBUFFER_HEIGHT;
+    glx_attribs[count++] = size.cy;
+    glx_attribs[count++] = 0;
+
+    if (!(gl = opengl_drawable_create( &x11drv_pbuffer_funcs, format, NULL, &size ))) return NULL;
+    if (!(gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs )))
+    {
+        opengl_drawable_release( &gl->base );
+        return NULL;
+    }
+
+    return data->null_drawable = &gl->base;
+}
+
 static BOOL x11drv_context_activate( struct opengl_context *context, struct opengl_drawable *draw_base, struct opengl_drawable *read_base )
 {
-    struct gl_drawable *draw = impl_from_opengl_drawable( draw_base ), *read = impl_from_opengl_drawable( read_base );
+    struct gl_drawable *draw, *read;
     BOOL ret;
 
     TRACE( "context %p, draw %s, read %s\n", context, debugstr_opengl_drawable( draw_base ), debugstr_opengl_drawable( read_base ) );
+
+    if (!draw_base) draw_base = get_null_drawable( context->attrs.format );
+    if (!read_base) read_base = get_null_drawable( context->attrs.format );
+    draw = impl_from_opengl_drawable( draw_base );
+    read = impl_from_opengl_drawable( read_base );
 
     if (!pglXMakeContextCurrent) ret = pglXMakeCurrent( gdi_display, draw->drawable, context->host_context );
     else ret = pglXMakeContextCurrent( gdi_display, draw->drawable, read->drawable, context->host_context );
@@ -1309,30 +1341,6 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
     if (gl->drawable) pglXDestroyPbuffer( gdi_display, gl->drawable );
-}
-
-static BOOL x11drv_null_surface_create( int format, struct opengl_drawable **drawable )
-{
-    const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
-    int glx_attribs[7], count = 0;
-    struct gl_drawable *gl;
-    SIZE size = {1, 1};
-
-    glx_attribs[count++] = GLX_PBUFFER_WIDTH;
-    glx_attribs[count++] = size.cx;
-    glx_attribs[count++] = GLX_PBUFFER_HEIGHT;
-    glx_attribs[count++] = size.cy;
-    glx_attribs[count++] = 0;
-
-    if (!(gl = opengl_drawable_create( &x11drv_pbuffer_funcs, format, NULL, &size ))) return FALSE;
-    if (!(gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs )))
-    {
-        opengl_drawable_release( &gl->base );
-        return FALSE;
-    }
-
-    *drawable = &gl->base;
-    return TRUE;
 }
 
 static BOOL X11DRV_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
@@ -1499,7 +1507,13 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
 
 static BOOL x11drv_cleanup_thread(void)
 {
-    return pglXMakeCurrent( gdi_display, None, None );
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    BOOL ret;
+
+    ret = pglXMakeCurrent( gdi_display, None, None );
+    if (data && data->null_drawable) opengl_drawable_release( data->null_drawable );
+
+    return ret;
 }
 
 static struct opengl_driver_funcs x11drv_driver_funcs =
@@ -1513,7 +1527,6 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
     .p_context_destroy = x11drv_context_destroy,
     .p_context_activate = x11drv_context_activate,
     .p_pbuffer_create = x11drv_pbuffer_create,
-    .p_null_surface_create = x11drv_null_surface_create,
     .p_cleanup_thread = x11drv_cleanup_thread,
 };
 

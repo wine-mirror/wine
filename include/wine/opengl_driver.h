@@ -311,7 +311,6 @@ struct opengl_driver_funcs
     BOOL (*p_context_activate)( struct opengl_context *context, struct opengl_drawable *draw, struct opengl_drawable *read );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format, GLenum texture_target,
                               GLint max_level, struct opengl_drawable **drawable );
-    BOOL (*p_null_surface_create)( int format, struct opengl_drawable **drawable );
     BOOL (*p_cleanup_thread)(void);
     BOOL broken_sharing;
 };

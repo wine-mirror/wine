@@ -44,8 +44,6 @@ struct opengl_thread_data
     struct opengl_context  *core_context;    /* dummy core context when no client context is active */
     struct opengl_context  *compat_context;  /* dummy COMPATIBILITY context when no client context is active */
     struct opengl_context  *noerror_context; /* dummy NO_ERROR context when no client context is active */
-
-    struct opengl_drawable *null_surface;  /* dummy surface when no client context is active */
     BOOL                    client_current; /* whether the client context is current */
 };
 
@@ -453,21 +451,6 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
-static struct opengl_drawable *get_null_surface( struct opengl_context *context )
-{
-    struct opengl_thread_data *data = get_opengl_thread_data();
-
-    if (!driver_funcs->p_null_surface_create) return NULL;
-    if (!data->null_surface || data->null_surface->format != context->attrs.format)
-    {
-        if (data->null_surface) opengl_drawable_release( data->null_surface );
-        driver_funcs->p_null_surface_create( context->attrs.format, &data->null_surface );
-        TRACE( "created null surface %p with format %d\n", data->null_surface, context->attrs.format );
-    }
-
-    return data->null_surface;
-}
-
 static struct opengl_context *get_thread_context( struct opengl_context_attrs attrs )
 {
     struct opengl_thread_data *data = get_opengl_thread_data();
@@ -493,8 +476,6 @@ static void context_exchange_drawables( struct opengl_context *context, struct o
 static BOOL make_internal_context_current( struct opengl_context *context, struct opengl_drawable *drawable )
 {
     struct opengl_drawable *old_draw, *old_read;
-
-    if (!drawable) drawable = get_null_surface( context );
 
     if (!driver_funcs->p_context_activate( context, drawable, drawable )) return FALSE;
     if (!context->initialized) opengl_context_init( context );
@@ -687,7 +668,7 @@ static struct opengl_drawable *get_target( struct opengl_drawable *drawable, str
     if (drawable->funcs == &framebuffer_surface_funcs)
     {
         struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
-        return surface->target ? surface->target : get_null_surface( context );
+        return surface->target;
     }
     return drawable;
 }
@@ -3681,7 +3662,6 @@ void cleanup_opengl_thread(void)
     if (data->core_context) win32u_context_destroy( data->core_context );
     if (data->compat_context) win32u_context_destroy( data->compat_context );
     if (data->noerror_context) win32u_context_destroy( data->noerror_context );
-    if (data->null_surface) opengl_drawable_release( data->null_surface );
     free( data );
 }
 

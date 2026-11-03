@@ -435,6 +435,7 @@ struct x11drv_thread_data
     int      xinput2_pointer;      /* XInput2 master pointer device id */
 #endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
     int      root_window_users;    /* counter for root window XISelectEvents */
+    struct opengl_drawable *null_drawable; /* dummy drawable for OpenGL */
 
     struct display_state desired_state;       /* display state tracking the desired / win32 state */
     struct display_state pending_state;       /* display state tracking the pending / requested state */
