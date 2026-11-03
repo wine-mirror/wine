@@ -368,14 +368,14 @@ SOURCES = \
 	blue_toolbar_dropdown_button_glyph_9px.svg \
 	blue_toolbar_separator_horizontal.svg \
 	blue_toolbar_separator_vertical.svg \
-	blue_tooltip_ballon.svg \
-	blue_tooltip_ballon_stem_21px.svg \
-	blue_tooltip_ballon_stem_26px.svg \
-	blue_tooltip_ballon_stem_32px.svg \
-	blue_tooltip_ballon_stem_42px.svg \
-	blue_tooltip_ballon_stem_53px.svg \
-	blue_tooltip_ballon_stem_63px.svg \
-	blue_tooltip_ballon_stem_84px.svg \
+	blue_tooltip_balloon.svg \
+	blue_tooltip_balloon_stem_21px.svg \
+	blue_tooltip_balloon_stem_26px.svg \
+	blue_tooltip_balloon_stem_32px.svg \
+	blue_tooltip_balloon_stem_42px.svg \
+	blue_tooltip_balloon_stem_53px.svg \
+	blue_tooltip_balloon_stem_63px.svg \
+	blue_tooltip_balloon_stem_84px.svg \
 	blue_tooltip_close_16px.svg \
 	blue_tooltip_close_20px.svg \
 	blue_tooltip_close_24px.svg \
