@@ -2654,15 +2654,71 @@ static void test_GetThemeBackgroundRegion(void)
     DestroyWindow(hwnd);
 }
 
+struct font_test
+{
+    int part;
+    int point_size;
+};
+
 static void test_theme(BOOL v6)
 {
     static const int scrollbar_width = 200, scrollbar_height = 50;
-    int x, y, white_count = 0, white_percent;
+    int i, j, x, y, white_count = 0, white_percent, em_height;
+    const struct font_test *font_test;
+    LOGFONTW logfont;
     BOOL transparent;
     HTHEME htheme;
     HRESULT hr;
     HWND hwnd;
     HDC hdc;
+
+    static const struct font_test taskdialog_font_tests[] =
+    {
+        {TDLG_MAININSTRUCTIONPANE, 12},
+        {TDLG_CONTENTPANE, 9},
+        {TDLG_EXPANDEDCONTENT, 9},
+        {TDLG_BUTTONSECTION, 9},
+        {TDLG_EXPANDOTEXT, 9},
+        {TDLG_VERIFICATIONTEXT, 9},
+        {TDLG_FOOTNOTEPANE, 9},
+        {TDLG_EXPANDEDFOOTERAREA, 9},
+        {TDLG_RADIOBUTTONPANE, 9},
+    };
+
+    static const struct font_test tooltips_font_tests[] =
+    {
+        {TTP_STANDARD, 9},
+        {TTP_STANDARDTITLE, 9},
+        {TTP_BALLOON, 9},
+        {TTP_BALLOONTITLE, 12},
+    };
+
+    static const struct
+    {
+        const WCHAR *class_name;
+        const struct font_test *tests;
+        int test_count;
+    }
+    font_tests[] =
+    {
+        {L"Taskdialog", taskdialog_font_tests, ARRAY_SIZE(taskdialog_font_tests)},
+        {L"Tooltip", tooltips_font_tests, ARRAY_SIZE(tooltips_font_tests)},
+    };
+
+    static const struct
+    {
+        int font_id;
+        int point_size;
+    }
+    sys_font_tests[] =
+    {
+        {TMT_CAPTIONFONT, 9},
+        {TMT_SMALLCAPTIONFONT, 9},
+        {TMT_MENUFONT, 9},
+        {TMT_STATUSFONT, 9},
+        {TMT_MSGBOXFONT, 9},
+        {TMT_ICONTITLEFONT, 9},
+    };
 
     if (!IsThemeActive())
     {
@@ -2724,6 +2780,65 @@ static void test_theme(BOOL v6)
     else
         ok(white_percent < 50, "Expected #ffffff pixels less than 50%%.\n");
 
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
+    /* Test theme part font */
+    for (i = 0; i < ARRAY_SIZE(font_tests); i++)
+    {
+        winetest_push_context("class %s", wine_dbgstr_w(font_tests[i].class_name));
+
+        hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+        ok(!!hwnd, "CreateWindowA failed, error %#lx.\n", GetLastError());
+        hdc = GetDC(hwnd);
+
+        htheme = OpenThemeData(hwnd, font_tests[i].class_name);
+        ok(!!htheme, "OpenThemeData failed.\n");
+
+        for (j = 0; j < font_tests[i].test_count; j++)
+        {
+            font_test = &font_tests[i].tests[j];
+
+            winetest_push_context("part %d", font_test->part);
+
+            hr = GetThemeFont(htheme, hdc, font_test->part, 0, TMT_FONT, &logfont);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            em_height = -MulDiv(font_test->point_size, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+            todo_wine
+            ok(logfont.lfHeight == em_height, "Expected lfHeight %d, got %ld.\n", em_height, logfont.lfHeight);
+
+            winetest_pop_context();
+        }
+
+        CloseThemeData(htheme);
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        winetest_pop_context();
+    }
+
+    /* Test system font */
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(!!hwnd, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    hdc = GetDC(hwnd);
+
+    htheme = OpenThemeData(hwnd, L"Button");
+    ok(!!htheme, "OpenThemeData failed.\n");
+
+    for (i = 0; i < ARRAY_SIZE(sys_font_tests); i++)
+    {
+        winetest_push_context("font_id %d", sys_font_tests[i].font_id);
+
+        hr = GetThemeSysFont(htheme, sys_font_tests[i].font_id, &logfont);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        em_height = -MulDiv(sys_font_tests[i].point_size, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        todo_wine
+        ok(logfont.lfHeight == em_height, "Expected lfHeight %d, got %ld.\n", em_height, logfont.lfHeight);
+
+        winetest_pop_context();
+    }
+
+    CloseThemeData(htheme);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 }
