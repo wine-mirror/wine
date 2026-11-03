@@ -255,7 +255,7 @@ static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION
 
 static struct opengl_context *internal_context_create( struct opengl_context_attrs attrs, struct opengl_context *root )
 {
-    struct opengl_context *context;
+    struct opengl_context *context = NULL;
 
     for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
@@ -264,16 +264,19 @@ static struct opengl_context *internal_context_create( struct opengl_context_att
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
 
-        if (!(context = driver_funcs->p_context_create( &attrs, root ))) continue;
-        context->root_context = root ? root : context;
-        context->attrs = attrs;
-
-        TRACE( "Created internal %s context %p with attrs %s\n", root ? "thread" : "root", context, debugstr_opengl_context_attrs( &attrs ) );
-        return context;
+        if ((context = driver_funcs->p_context_create( &attrs, root ))) break;
     }
 
-    ERR( "Failed to create internal %s context with attrs %s\n", root ? "thread" : "root", debugstr_opengl_context_attrs( &attrs ) );
-    return calloc( 1, sizeof(*context) ); /* return a valid pointer nonetheless */
+    if (!context)
+    {
+        ERR( "Failed to create internal %s context with attrs %s\n", root ? "thread" : "root", debugstr_opengl_context_attrs( &attrs ) );
+        if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+    }
+    context->root_context = root ? root : context;
+    context->attrs = attrs;
+
+    TRACE( "Created internal %s context %p with attrs %s\n", root ? "thread" : "root", context, debugstr_opengl_context_attrs( &attrs ) );
+    return context;
 }
 
 static struct opengl_context *get_root_context( struct opengl_context_attrs attrs )
