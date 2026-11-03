@@ -28,7 +28,7 @@
 #include "ole2.h"
 #include "msxml6.h"
 
-#include "msxml_dispex.h"
+#include "msxml_private.h"
 
 #include "wine/debug.h"
 
@@ -45,11 +45,9 @@ struct nscontext
     struct list entry;
 
     struct ns *ns;
-    int   count;
-    int   max_alloc;
+    size_t count;
+    size_t capacity;
 };
-
-#define DEFAULT_PREFIX_ALLOC_COUNT 16
 
 typedef struct
 {
@@ -80,11 +78,8 @@ static HRESULT declare_prefix(namespacemanager *This, const WCHAR *prefix, const
     struct ns *ns;
     int i;
 
-    if (ctxt->count == ctxt->max_alloc)
-    {
-        ctxt->max_alloc *= 2;
-        ctxt->ns = realloc(ctxt->ns, ctxt->max_alloc * sizeof(*ctxt->ns));
-    }
+    if (!array_reserve((void **)&ctxt->ns, &ctxt->capacity, ctxt->count + 1, sizeof(*ctxt->ns)))
+        return E_OUTOFMEMORY;
 
     if (!prefix) prefix = emptyW;
 
@@ -169,13 +164,10 @@ static struct nscontext* alloc_ns_context(void)
 {
     struct nscontext *ctxt;
 
-    ctxt = malloc(sizeof(*ctxt));
-    if (!ctxt) return NULL;
+    if (!(ctxt = calloc(1, sizeof(*ctxt))))
+        return NULL;
 
-    ctxt->count = 0;
-    ctxt->max_alloc = DEFAULT_PREFIX_ALLOC_COUNT;
-    ctxt->ns = malloc(ctxt->max_alloc * sizeof(*ctxt->ns));
-    if (!ctxt->ns)
+    if (!array_reserve((void **)&ctxt->ns, &ctxt->capacity, 1, sizeof(*ctxt->ns)))
     {
         free(ctxt);
         return NULL;
