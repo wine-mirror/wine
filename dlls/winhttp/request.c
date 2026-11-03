@@ -4290,6 +4290,7 @@ static HRESULT WINAPI winhttp_request_GetResponseHeader(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD size, err = ERROR_SUCCESS;
+    BSTR str;
 
     TRACE("%p, %p\n", request, header);
 
@@ -4310,16 +4311,17 @@ static HRESULT WINAPI winhttp_request_GetResponseHeader(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*value = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CUSTOM, header, *value, &size, NULL ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CUSTOM, header, str, &size, NULL )) *value = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *value );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4332,6 +4334,7 @@ static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD size, err = ERROR_SUCCESS;
+    BSTR str;
 
     TRACE("%p, %p\n", request, headers);
 
@@ -4349,16 +4352,17 @@ static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*headers = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, *headers, &size, NULL ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, str, &size, NULL )) *headers = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *headers );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4691,6 +4695,7 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD err = ERROR_SUCCESS, len = 0, index = 0;
+    BSTR str;
 
     TRACE("%p, %p\n", request, status);
 
@@ -4707,17 +4712,18 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*status = SysAllocStringLen( NULL, len / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, len / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     index = 0;
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, *status, &len, &index ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, str, &len, &index )) *status = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *status );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4761,6 +4767,7 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     UINT codepage;
     DWORD err = ERROR_SUCCESS;
+    BSTR str;
     int len;
 
     TRACE("%p, %p\n", request, body);
@@ -4775,13 +4782,14 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
     }
     if ((err = request_get_codepage( request, &codepage ))) goto done;
     len = MultiByteToWideChar( codepage, 0, request->buffer, request->offset, NULL, 0 );
-    if (!(*body = SysAllocStringLen( NULL, len )))
+    if (!(str = SysAllocStringLen( NULL, len )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
-    MultiByteToWideChar( codepage, 0, request->buffer, request->offset, *body, len );
-    (*body)[len] = 0;
+    MultiByteToWideChar( codepage, 0, request->buffer, request->offset, str, len );
+    str[len] = 0;
+    *body = str;
 
 done:
     LeaveCriticalSection( &request->cs );
