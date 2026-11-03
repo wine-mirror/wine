@@ -1533,7 +1533,7 @@ static UINT dialog_combobox_handler( msi_dialog *dialog, struct control *control
 static void dialog_combobox_update( msi_dialog *dialog, struct control *control )
 {
     struct msi_combobox_info *info;
-    LPWSTR value, tmp, text = NULL;
+    LPWSTR value, tmp, text;
     INT len;
     DWORD j;
 
@@ -1548,6 +1548,8 @@ static void dialog_combobox_update( msi_dialog *dialog, struct control *control 
 
     for (j = 0; j < info->num_items; j++)
     {
+        text = NULL;
+
         tmp = (LPWSTR)SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
         if (!tmp)
         {
@@ -1556,7 +1558,7 @@ static void dialog_combobox_update( msi_dialog *dialog, struct control *control 
             {
                 text = (LPWSTR)malloc( (len + 1) * sizeof(WCHAR) );
                 if (text)
-                SendMessageW( control->hwnd, CB_GETLBTEXT, j, (LPARAM)text );
+                    SendMessageW( control->hwnd, CB_GETLBTEXT, j, (LPARAM)text );
             }
         }
 
@@ -1565,10 +1567,10 @@ static void dialog_combobox_update( msi_dialog *dialog, struct control *control 
             SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
             SetWindowTextW( control->hwnd, tmp ? tmp : text );
             free( value );
-            if (text) free( text );
+            free( text );
             return;
         }
-        if (text) free( text );
+        free( text );
     }
 
     SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
