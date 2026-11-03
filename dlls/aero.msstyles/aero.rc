@@ -2599,14 +2599,14 @@ BLUE_INI TEXTFILE
 "ImageCount = 1\r\n"
 "AlphaThreshold = 128\r\n"
 "Transparent = True\r\n"
-"TextColor = 166 166 166\r\n"
+"TextColor = 85 85 85\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 4, 4, 1, 1\r\n"
 "Font = Tahoma, 9\r\n"
 "ImageFile = blue_tooltip_standard.bmp\r\n"
 
 "[Tooltip.StandardTitle]\r\n"
-"TextColor = 166 166 166\r\n"
+"TextColor = 85 85 85\r\n"
 "Font = Tahoma, 9, bold\r\n"
 
 "[Tooltip.Balloon]\r\n"
