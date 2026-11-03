@@ -814,8 +814,12 @@ static DWORD insert_header( struct request *request, struct header *header )
     if (!hdrs) return ERROR_OUTOFMEMORY;
 
     request->headers = hdrs;
-    request->headers[count - 1].field = wcsdup( header->field );
-    request->headers[count - 1].value = wcsdup( header->value );
+    if (!(request->headers[count - 1].field = wcsdup( header->field ))) return ERROR_OUTOFMEMORY;
+    if (!(request->headers[count - 1].value = wcsdup( header->value )))
+    {
+        free( request->headers[count - 1].field );
+        return ERROR_OUTOFMEMORY;
+    }
     request->headers[count - 1].is_request = header->is_request;
     request->num_headers = count;
     return ERROR_SUCCESS;
