@@ -2805,7 +2805,6 @@ static void test_theme(BOOL v6)
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             em_height = -MulDiv(font_test->point_size, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-            todo_wine
             ok(logfont.lfHeight == em_height, "Expected lfHeight %d, got %ld.\n", em_height, logfont.lfHeight);
 
             winetest_pop_context();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2021-2026 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2050,7 +2050,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.MainInstructionPane]\r\n"
 "TextColor = 41 121 255\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"Font = Tahoma, -16\r\n"
+"Font = Tahoma, 12\r\n"
 
 "[TaskDialog.MainIcon]\r\n"
 "ContentMargins = 0, 10, 0, 0\r\n"
@@ -2058,7 +2058,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ContentPane]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ContentPane(Standalone)]\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
@@ -2066,7 +2066,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ExpandedContent]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.CommandLinkPane]\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
@@ -2087,7 +2087,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ButtonSection]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 22, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ButtonWrapper]\r\n"
 "Width = 200\r\n"
@@ -2096,7 +2096,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ExpandoText]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 2, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ExpandoButton]\r\n"
 "Width = 19\r\n"
@@ -2219,7 +2219,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.VerificationText]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.FootnotePane]\r\n"
 "BgType = BorderFill\r\n"
@@ -2227,7 +2227,7 @@ BLUE_INI TEXTFILE
 "FillColor = 245 245 245\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.FootnoteSeparator]\r\n"
 "BgType = ImageFile\r\n"
@@ -2239,7 +2239,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ExpandedFooterArea]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ProgressBar]\r\n"
 "Height = 15\r\n"
@@ -2252,7 +2252,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.RadioButtonPane]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
@@ -2602,12 +2602,12 @@ BLUE_INI TEXTFILE
 "TextColor = 166 166 166\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 4, 4, 1, 1\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 "ImageFile = blue_tooltip_standard.bmp\r\n"
 
 "[Tooltip.StandardTitle]\r\n"
 "TextColor = 166 166 166\r\n"
-"Font = Tahoma, -12, bold\r\n"
+"Font = Tahoma, 9, bold\r\n"
 
 "[Tooltip.Balloon]\r\n"
 "BgType = ImageFile\r\n"
@@ -2619,12 +2619,12 @@ BLUE_INI TEXTFILE
 "TextColor = 0 0 0\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 "ImageFile = blue_tooltip_balloon.bmp\r\n"
 
 "[Tooltip.BalloonTitle]\r\n"
 "TextColor = 41 121 255\r\n"
-"Font = Tahoma, -16\r\n"
+"Font = Tahoma, 12\r\n"
 
 "[Tooltip.Close]\r\n"
 "BgType = ImageFile\r\n"
