@@ -4423,22 +4423,20 @@ static DWORD wait_for_completion( struct winhttp_request *request )
     return ret;
 }
 
-static HRESULT request_receive( struct winhttp_request *request )
+static DWORD request_receive( struct winhttp_request *request )
 {
     DWORD err, size, buflen = 4096;
 
     wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
-    if (!WinHttpReceiveResponse( request->hrequest, NULL ))
-    {
-        return HRESULT_FROM_WIN32( GetLastError() );
-    }
-    if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
+    if (!WinHttpReceiveResponse( request->hrequest, NULL )) return GetLastError();
+
+    if ((err = wait_for_completion( request ))) return err;
     if (!wcscmp( request->verb, L"HEAD" ))
     {
         request->state = WINHTTP_REQUEST_STATE_RESPONSE_RECEIVED;
-        return S_OK;
+        return ERROR_SUCCESS;
     }
-    if (!(request->buffer = malloc( buflen ))) return E_OUTOFMEMORY;
+    if (!(request->buffer = malloc( buflen ))) return ERROR_OUTOFMEMORY;
     request->buffer[0] = 0;
     size = 0;
     do
@@ -4480,7 +4478,7 @@ static HRESULT request_receive( struct winhttp_request *request )
 error:
     free( request->buffer );
     request->buffer = NULL;
-    return HRESULT_FROM_WIN32( err );
+    return err;
 }
 
 static DWORD request_set_parameters( struct winhttp_request *request )
@@ -4517,7 +4515,7 @@ static void request_set_utf8_content_type( struct winhttp_request *request )
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
 }
 
-static HRESULT request_send( struct winhttp_request *request )
+static DWORD request_send( struct winhttp_request *request )
 {
     SAFEARRAY *sa = NULL;
     VARIANT data;
@@ -4526,7 +4524,7 @@ static HRESULT request_send( struct winhttp_request *request )
     HRESULT hr;
     DWORD err;
 
-    if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
+    if ((err = request_set_parameters( request ))) return err;
     if (wcscmp( request->verb, L"GET" ))
     {
         VariantInit( &data );
@@ -4545,7 +4543,7 @@ static HRESULT request_send( struct winhttp_request *request )
                 }
             }
             size = WideCharToMultiByte( cp, 0, str, len, NULL, 0, NULL, NULL );
-            if (!(ptr = malloc( size ))) return E_OUTOFMEMORY;
+            if (!(ptr = malloc( size ))) return ERROR_OUTOFMEMORY;
             WideCharToMultiByte( cp, 0, str, len, ptr, size, NULL, NULL );
             if (cp == CP_UTF8) request_set_utf8_content_type( request );
         }
@@ -4571,18 +4569,18 @@ static HRESULT request_send( struct winhttp_request *request )
     if (sa) SafeArrayUnaccessData( sa );
     else free( ptr );
     request->state = WINHTTP_REQUEST_STATE_SENT;
-    return S_OK;
+    return ERROR_SUCCESS;
 
 error:
     if (sa) SafeArrayUnaccessData( sa );
     else free( ptr );
-    return HRESULT_FROM_WIN32( err );
+    return err;
 }
 
 static void CALLBACK send_and_receive_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
     struct winhttp_request *request = (struct winhttp_request *)ctx;
-    if (request_send( request ) == S_OK) request_receive( request );
+    if ((request->error = request_send( request )) == S_OK) request->error = request_receive( request );
     SetEvent( request->done );
 }
 
