@@ -2832,7 +2832,6 @@ static void test_theme(BOOL v6)
         hr = GetThemeSysFont(htheme, sys_font_tests[i].font_id, &logfont);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         em_height = -MulDiv(sys_font_tests[i].point_size, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-        todo_wine
         ok(logfont.lfHeight == em_height, "Expected lfHeight %d, got %ld.\n", em_height, logfont.lfHeight);
 
         winetest_pop_context();
