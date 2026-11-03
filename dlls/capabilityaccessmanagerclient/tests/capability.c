@@ -47,8 +47,11 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_AppCapabilityStatics(void)
 {
     static const WCHAR *statics_name = L"Windows.Security.Authorization.AppCapabilityAccess.AppCapability";
+    static const WCHAR *nonexistent_cap = L"nonexistent";
+    AppCapabilityAccessStatus access_status;
     IAppCapabilityStatics *statics;
     IActivationFactory *factory;
+    IAppCapability *cap;
     HSTRING str;
     HRESULT hr;
 
@@ -70,6 +73,28 @@ static void test_AppCapabilityStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IAppCapabilityStatics, (void **)&statics );
     ok( hr == S_OK, "got %#lx.\n", hr );
+
+    cap = (void *)0xdeadbeef;
+    hr = WindowsCreateString( nonexistent_cap, wcslen( nonexistent_cap ), &str );
+    hr = IAppCapabilityStatics_Create( statics, str, &cap );
+    ok( hr == S_OK, "got %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    check_interface( cap, &IID_IUnknown );
+    check_interface( cap, &IID_IInspectable );
+    check_interface( cap, &IID_IAgileObject );
+    check_interface( cap, &IID_IAppCapability );
+
+    access_status = 0xdeadbeef;
+    hr = IAppCapability_get_CapabilityName( cap, &str );
+    ok( hr == S_OK, "got %#lx.\n", hr );
+    ok( !wcscmp( WindowsGetStringRawBuffer( str, NULL ), nonexistent_cap ), "got %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    hr = IAppCapability_CheckAccess( cap, &access_status );
+    ok( hr == S_OK, "got %#lx.\n", hr );
+    ok( access_status == AppCapabilityAccessStatus_Allowed, "got %d.\n", access_status );
+    IAppCapability_Release( cap );
+
     IAppCapabilityStatics_Release( statics );
 }
 
