@@ -279,7 +279,6 @@ static XVisualInfo *(*pglXGetVisualFromFBConfig)( Display *dpy, GLXFBConfig conf
 static GLXPbuffer (*pglXCreatePbuffer)( Display *dpy, GLXFBConfig config, const int *attribList );
 static void (*pglXDestroyPbuffer)( Display *dpy, GLXPbuffer pbuf );
 static void (*pglXQueryDrawable)( Display *dpy, GLXDrawable draw, int attribute, unsigned int *value );
-static GLXContext (*pglXCreateNewContext)( Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct );
 static Bool (*pglXMakeContextCurrent)( Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx );
 static GLXPixmap (*pglXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list );
 static void (*pglXDestroyPixmap)( Display *dpy, GLXPixmap pixmap );
@@ -631,7 +630,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
 
     /* GLX 1.3 */
     LOAD_FUNCPTR(glXCreatePbuffer);
-    LOAD_FUNCPTR(glXCreateNewContext);
     LOAD_FUNCPTR(glXDestroyPbuffer);
     LOAD_FUNCPTR(glXMakeContextCurrent);
     LOAD_FUNCPTR(glXGetFBConfigs);
@@ -639,14 +637,15 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
     LOAD_FUNCPTR(glXDestroyPixmap);
     LOAD_FUNCPTR(glXCreateWindow);
     LOAD_FUNCPTR(glXDestroyWindow);
+
+    /* ARB GLX Extension */
+    LOAD_FUNCPTR(glXCreateContextAttribsARB);
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
    the associated extension is available (and if a driver reports the extension
    is available but fails to provide the functions, it's quite broken) */
 #define LOAD_FUNCPTR(f) p##f = pglXGetProcAddressARB((const GLubyte *)#f)
-    /* ARB GLX Extension */
-    LOAD_FUNCPTR(glXCreateContextAttribsARB);
     /* EXT GLX Extension */
     LOAD_FUNCPTR(glXSwapIntervalEXT);
     /* MESA GLX Extension */
@@ -934,18 +933,6 @@ static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
     }
 
     return ret;
-}
-
-static GLXContext create_glxcontext( int format, GLXContext share, const int *attribs )
-{
-    struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
-    GLXContext ctx;
-
-    if (attribs) ctx = pglXCreateContextAttribsARB( gdi_display, fmt->fbconfig, share, TRUE, attribs );
-    else if (fmt->visual) ctx = pglXCreateContext( gdi_display, fmt->visual, share, TRUE );
-    else ctx = pglXCreateNewContext( gdi_display, fmt->fbconfig, fmt->render_type, share, TRUE );
-
-    return ctx;
 }
 
 static BOOL x11drv_surface_create( struct client_surface *client, int format, struct opengl_drawable **drawable )
@@ -1245,6 +1232,7 @@ static struct opengl_context *x11drv_context_create( const struct opengl_context
     GLXContext host_share = share ? share->host_context : NULL;
     int attribs[16], *attr = attribs;
     struct opengl_context *context;
+    struct glx_pixel_format *fmt;
     int err = 0;
 
     TRACE( "attrs %s, share %p\n", debugstr_opengl_context_attrs( attrs ), share );
@@ -1276,10 +1264,11 @@ static struct opengl_context *x11drv_context_create( const struct opengl_context
     }
     *attr++ = 0;
 
+    if (!(fmt = glx_pixel_format_from_format( attrs->format ))) return NULL;
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
 
     X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-    context->host_context = create_glxcontext( attrs->format, host_share, attribs );
+    context->host_context = pglXCreateContextAttribsARB( gdi_display, fmt->fbconfig, host_share, TRUE, attribs );
     XSync(gdi_display, False);
     if ((err = X11DRV_check_error()) || !context->host_context)
     {
