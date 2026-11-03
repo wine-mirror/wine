@@ -1357,13 +1357,14 @@ static BOOL MSSTYLES_GetNextLong(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPC
     LONG total = 0;
     BOOL gotNeg = FALSE;
 
-    while(cur < lpStringEnd && (*cur < '0' || *cur > '9' || *cur == '-')) cur++;
+    while(cur < lpStringEnd && !(*cur >= '0' && *cur <= '9'))
+    {
+        if (*cur == '-')
+            gotNeg = TRUE;
+        cur++;
+    }
     if(cur >= lpStringEnd) {
         return FALSE;
-    }
-    if(*cur == '-') {
-        cur++;
-        gotNeg = TRUE;
     }
     while(cur < lpStringEnd && (*cur >= '0' && *cur <= '9')) {
         total = total * 10 + (*cur - '0');
