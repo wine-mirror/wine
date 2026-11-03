@@ -59,13 +59,9 @@ struct ConnectionPoint
     IConnectionPointContainer *container;
     domdoc *doc;
 
-    union
-    {
-        IUnknown *unk;
-        IDispatch *disp;
-        IPropertyNotifySink *propnotif;
-    } *sinks;
-    DWORD sinks_size;
+    IUnknown **sinks;
+    size_t count;
+    size_t capacity;
 };
 
 typedef enum {
@@ -2181,36 +2177,33 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *unk_sink,
                                              DWORD *cookie)
 {
-    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    ConnectionPoint *cp = impl_from_IConnectionPoint(iface);
     IUnknown *sink;
     HRESULT hr;
-    DWORD i;
+    size_t i;
 
-    TRACE("(%p)->(%p %p)\n", This, unk_sink, cookie);
+    TRACE("%p, %p, %p.\n", iface, unk_sink, cookie);
 
-    hr = IUnknown_QueryInterface(unk_sink, This->iid, (void**)&sink);
-    if(FAILED(hr) && !IsEqualGUID(&IID_IPropertyNotifySink, This->iid))
+    hr = IUnknown_QueryInterface(unk_sink, cp->iid, (void **)&sink);
+    if(FAILED(hr) && !IsEqualGUID(&IID_IPropertyNotifySink, cp->iid))
         hr = IUnknown_QueryInterface(unk_sink, &IID_IDispatch, (void**)&sink);
     if(FAILED(hr))
         return CONNECT_E_CANNOTCONNECT;
 
-    if(This->sinks)
+    for (i = 0; i < cp->count; ++i)
     {
-        for (i = 0; i < This->sinks_size; i++)
-            if (!This->sinks[i].unk)
-                break;
-
-        if (i == This->sinks_size)
-            This->sinks = realloc(This->sinks, (++This->sinks_size) * sizeof(*This->sinks));
-    }
-    else
-    {
-        This->sinks = malloc(sizeof(*This->sinks));
-        This->sinks_size = 1;
-        i = 0;
+        if (!cp->sinks[i])
+            break;
     }
 
-    This->sinks[i].unk = sink;
+    if (i == cp->count)
+    {
+        if (!array_reserve((void **)&cp->sinks, &cp->capacity, cp->count + 1, sizeof(*cp->sinks)))
+            return E_OUTOFMEMORY;
+    }
+
+    cp->sinks[i] = sink;
+    cp->count++;
     if (cookie)
         *cookie = i+1;
 
@@ -2219,15 +2212,15 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 
 static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
 {
-    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    ConnectionPoint *cp = impl_from_IConnectionPoint(iface);
 
     TRACE("%p, %ld.\n", iface, cookie);
 
-    if (cookie == 0 || cookie > This->sinks_size || !This->sinks[cookie-1].unk)
+    if (cookie == 0 || cookie > cp->count || !cp->sinks[cookie-1])
         return CONNECT_E_NOCONNECTION;
 
-    IUnknown_Release(This->sinks[cookie-1].unk);
-    This->sinks[cookie-1].unk = NULL;
+    IUnknown_Release(cp->sinks[cookie-1]);
+    cp->sinks[cookie-1] = NULL;
 
     return S_OK;
 }
@@ -2258,7 +2251,7 @@ static void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID
     cp->doc = doc;
     cp->iid = riid;
     cp->sinks = NULL;
-    cp->sinks_size = 0;
+    cp->count = cp->capacity = 0;
 
     cp->next = doc->cp_list;
     doc->cp_list = cp;
