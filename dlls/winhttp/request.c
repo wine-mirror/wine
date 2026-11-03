@@ -3085,7 +3085,7 @@ static DWORD handle_redirect( struct request *request, DWORD status )
             lstrcpyW( path, request->path );
             lstrcatW( path, L"/" );
             memcpy( path + lstrlenW(path), location, len_loc * sizeof(WCHAR) );
-            path[len_loc] = 0;
+            path[len] = 0;
         }
         free( request->path );
         request->path = path;
