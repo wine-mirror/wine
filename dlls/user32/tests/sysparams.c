@@ -4683,6 +4683,122 @@ static void test_LOGFONT_charset(void)
     ok(ncm.lfSmCaptionFont.lfCharSet == DEFAULT_CHARSET, "got %d\n", ncm.lfSmCaptionFont.lfCharSet);
 }
 
+static void test_cross_process_dpi_child( HWND parent, unsigned int mode )
+{
+    DPI_AWARENESS_CONTEXT context;
+    DPI_AWARENESS expected, awareness;
+    HWND original, child, fresh, ret;
+    BOOL result;
+
+    result = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)mode );
+    ok( result, "SetProcessDpiAwarenessContext failed, error %lu\n", GetLastError() );
+    if (!result) return;
+
+    original = CreateWindowA( "static", "original", WS_OVERLAPPED, 0, 0, 100, 100,
+                              NULL, NULL, NULL, NULL );
+    ok( !!original, "CreateWindow failed, error %lu\n", GetLastError() );
+    if (!original) return;
+    child = CreateWindowA( "static", "child", WS_CHILD, 0, 0, 80, 80,
+                           original, NULL, NULL, NULL );
+    ok( !!child, "CreateWindow failed, error %lu\n", GetLastError() );
+    if (!child)
+    {
+        DestroyWindow( original );
+        return;
+    }
+    context = pGetWindowDpiAwarenessContext( parent );
+    expected = pGetAwarenessFromDpiAwarenessContext( context );
+    context = pGetWindowDpiAwarenessContext( child );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == mode, "Expected awareness %u, got %u\n", mode, awareness );
+
+    SetLastError( 0xdeadbeef );
+    ret = SetParent( child, parent );
+    ok( ret == original, "SetParent returned %p, expected %p, error %lu\n", ret, original, GetLastError() );
+    ret = GetParent( child );
+    ok( ret == parent, "Expected parent %p, got %p\n", parent, ret );
+
+    /* Cross-process reparenting also resets the child's process DPI awareness. */
+    result = pGetProcessDpiAwarenessInternal( GetCurrentProcess(), &awareness );
+    ok( result, "GetProcessDpiAwarenessInternal failed, error %lu\n", GetLastError() );
+    todo_wine_if( expected != mode )
+    ok( awareness == expected, "Expected process awareness %u, got %u\n", expected, awareness );
+    context = pGetThreadDpiAwarenessContext();
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    ok( awareness == mode, "Expected thread awareness %u, got %u\n", mode, awareness );
+    context = pGetWindowDpiAwarenessContext( child );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    todo_wine_if( expected != mode )
+    ok( awareness == expected, "Expected child awareness %u, got %u\n", expected, awareness );
+    context = pGetWindowDpiAwarenessContext( original );
+    awareness = pGetAwarenessFromDpiAwarenessContext( context );
+    todo_wine_if( expected != mode )
+    ok( awareness == expected, "Expected original window awareness %u, got %u\n", expected, awareness );
+    fresh = CreateWindowA( "static", "fresh", WS_OVERLAPPED, 0, 0, 100, 100,
+                           NULL, NULL, NULL, NULL );
+    ok( !!fresh, "CreateWindow failed, error %lu\n", GetLastError() );
+    if (fresh)
+    {
+        context = pGetWindowDpiAwarenessContext( fresh );
+        awareness = pGetAwarenessFromDpiAwarenessContext( context );
+        todo_wine_if( expected != mode )
+        ok( awareness == expected, "Expected fresh window awareness %u, got %u\n", expected, awareness );
+        DestroyWindow( fresh );
+    }
+    DestroyWindow( child );
+    DestroyWindow( original );
+}
+
+static void test_cross_process_dpi( char **argv )
+{
+    STARTUPINFOA startup = { .cb = sizeof(startup) };
+    PROCESS_INFORMATION info;
+    DPI_AWARENESS_CONTEXT previous;
+    unsigned int i, j;
+    char cmdline[2 * MAX_PATH];
+    DWORD ret, start;
+    HWND parent;
+    MSG msg;
+    BOOL result;
+
+    previous = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; ++i)
+    {
+        pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)i );
+        parent = CreateWindowA( "static", "parent", WS_OVERLAPPED, 0, 0, 100, 100,
+                                NULL, NULL, NULL, NULL );
+        ok( !!parent, "CreateWindow failed, error %lu\n", GetLastError() );
+        if (!parent) continue;
+        for (j = DPI_AWARENESS_UNAWARE; j <= DPI_AWARENESS_PER_MONITOR_AWARE; ++j)
+        {
+            winetest_push_context( "parent %u, child %u", i, j );
+            snprintf( cmdline, sizeof(cmdline), "\"%s\" %s dpi_reparent %p %u",
+                      argv[0], argv[1], parent, j );
+            result = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+            ok( result, "CreateProcess failed, error %lu\n", GetLastError() );
+            if (result)
+            {
+                start = GetTickCount();
+                do
+                {
+                    ret = MsgWaitForMultipleObjects( 1, &info.hProcess, FALSE, 1000, QS_ALLINPUT );
+                    while (PeekMessageA( &msg, NULL, 0, 0, PM_REMOVE ))
+                    {
+                        TranslateMessage( &msg );
+                        DispatchMessageA( &msg );
+                    }
+                } while (ret != WAIT_OBJECT_0 && ret != WAIT_FAILED && GetTickCount() - start < 10000);
+                ok( ret == WAIT_OBJECT_0, "Child process wait returned %lu\n", ret );
+                if (ret != WAIT_OBJECT_0) TerminateProcess( info.hProcess, 1 );
+                wait_child_process( &info );
+            }
+            winetest_pop_context();
+        }
+        DestroyWindow( parent );
+    }
+    pSetThreadDpiAwarenessContext( previous );
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -4733,6 +4849,21 @@ START_TEST(sysparams)
     if (argc > 3 && !strcmp( argv[2], "SetProcessDpiAwarenessContext" ))
     {
         test_SetProcessDpiAwarenessContext( strtoul( argv[3], NULL, 16 ) );
+        return;
+    }
+
+    if (argc >= 3 && (!strcmp( argv[2], "dpi_reparent" ) || !strcmp( argv[2], "dpi_reparent_only" )))
+    {
+        if (!pSetProcessDpiAwarenessContext || !pSetThreadDpiAwarenessContext ||
+            !pGetThreadDpiAwarenessContext || !pGetWindowDpiAwarenessContext ||
+            !pGetAwarenessFromDpiAwarenessContext || !pGetProcessDpiAwarenessInternal)
+        {
+            win_skip( "DPI awareness functions not supported\n" );
+            return;
+        }
+        if (argc == 5 && !strcmp( argv[2], "dpi_reparent" ))
+            test_cross_process_dpi_child( (HWND)(UINT_PTR)strtoull( argv[3], NULL, 16 ), strtoul( argv[4], NULL, 10 ) );
+        else if (!strcmp( argv[2], "dpi_reparent_only" )) test_cross_process_dpi( argv );
         return;
     }
 
@@ -4787,6 +4918,9 @@ START_TEST(sysparams)
         test_dpi_context();
         test_dpi_mapping();
         test_dpi_window();
+        if (pSetProcessDpiAwarenessContext && pGetWindowDpiAwarenessContext &&
+            pGetAwarenessFromDpiAwarenessContext && pGetProcessDpiAwarenessInternal)
+            test_cross_process_dpi( argv );
     }
     else win_skip( "SetThreadDpiAwarenessContext not supported\n" );
 
