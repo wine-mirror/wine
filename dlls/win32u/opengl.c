@@ -3502,7 +3502,8 @@ static void display_funcs_init(void)
 
     init_enabled_extensions();
 
-    if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
+    if (!use_egl) WARN( "EGL is disabled, skipping initialization\n" );
+    else if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
