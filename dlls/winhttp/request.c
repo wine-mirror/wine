@@ -3148,7 +3148,11 @@ static DWORD handle_redirect( struct request *request, DWORD status )
         if (uc.dwUrlPathLength)
         {
             len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
-            if (!(request->path = malloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            if (!(request->path = malloc( (len + 1) * sizeof(WCHAR) )))
+            {
+                ret = ERROR_OUTOFMEMORY;
+                goto end;
+            }
             memcpy( request->path, uc.lpszUrlPath, (len + 1) * sizeof(WCHAR) );
             request->path[len] = 0;
         }
