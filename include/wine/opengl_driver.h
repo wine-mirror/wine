@@ -313,6 +313,7 @@ struct opengl_driver_funcs
                               GLint max_level, struct opengl_drawable **drawable );
     BOOL (*p_cleanup_thread)(void);
     BOOL broken_sharing;
+    BOOL context_format;
 };
 
 #endif /* WINE_UNIX_LIB */

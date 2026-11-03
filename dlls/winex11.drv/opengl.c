@@ -736,6 +736,8 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         pglXSwapBuffersMscOML = pglXGetProcAddressARB( (const GLubyte *)"glXSwapBuffersMscOML" );
     }
 
+    x11drv_driver_funcs.context_format = !has_extension( glxExtensions, "GLX_EXT_no_config_context" );
+
     *driver_funcs = &x11drv_driver_funcs;
     return STATUS_SUCCESS;
 
@@ -1232,7 +1234,7 @@ static struct opengl_context *x11drv_context_create( const struct opengl_context
     GLXContext host_share = share ? share->host_context : NULL;
     int attribs[16], *attr = attribs;
     struct opengl_context *context;
-    struct glx_pixel_format *fmt;
+    struct glx_pixel_format *fmt = NULL;
     int err = 0;
 
     TRACE( "attrs %s, share %p\n", debugstr_opengl_context_attrs( attrs ), share );
@@ -1262,13 +1264,18 @@ static struct opengl_context *x11drv_context_create( const struct opengl_context
         *attr++ = GLX_CONTEXT_OPENGL_NO_ERROR_ARB;
         *attr++ = attrs->no_error;
     }
+    if (!x11drv_driver_funcs.context_format)
+    {
+        *attr++ = GLX_SCREEN;
+        *attr++ = DefaultScreen( gdi_display );
+    }
     *attr++ = 0;
 
-    if (!(fmt = glx_pixel_format_from_format( attrs->format ))) return NULL;
+    if (x11drv_driver_funcs.context_format && !(fmt = glx_pixel_format_from_format( attrs->format ))) return NULL;
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
 
     X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-    context->host_context = pglXCreateContextAttribsARB( gdi_display, fmt->fbconfig, host_share, TRUE, attribs );
+    context->host_context = pglXCreateContextAttribsARB( gdi_display, fmt ? fmt->fbconfig : NULL, host_share, TRUE, attribs );
     XSync(gdi_display, False);
     if ((err = X11DRV_check_error()) || !context->host_context)
     {
