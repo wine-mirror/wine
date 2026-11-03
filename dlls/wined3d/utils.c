@@ -3433,7 +3433,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         {WINED3DFMT_L8_UNORM,              "XXX1", FALSE, ARB_TEXTURE_RG},
     };
 
-    use_legacy_fixups = d3d_info->wined3d_creation_flags & WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR;
+    use_legacy_fixups = (d3d_info->wined3d_creation_flags & WINED3D_LEGACY);
     for (i = 0; i < ARRAY_SIZE(fixups); ++i)
     {
         if (fixups[i].legacy && !use_legacy_fixups)
@@ -4189,8 +4189,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
         if (vulkan_formats[i].id == format->f.id)
         {
             vk_format = vulkan_formats[i].vk_format;
-            if (!vulkan_formats[i].legacy_fixup
-                    || (d3d_info->wined3d_creation_flags & WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR))
+            if (!vulkan_formats[i].legacy_fixup || (d3d_info->wined3d_creation_flags & WINED3D_LEGACY))
                 fixup = vulkan_formats[i].fixup;
             break;
         }

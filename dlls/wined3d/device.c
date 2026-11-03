@@ -581,7 +581,7 @@ static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *de
     unsigned int i;
     DWORD color;
 
-    if (d3d_info->wined3d_creation_flags & WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR)
+    if (d3d_info->wined3d_creation_flags & WINED3D_LEGACY)
         color = 0x000000ff;
     else
         color = 0x00000000;
@@ -1340,8 +1340,7 @@ static bool use_buffer_chunk_suballocation(struct wined3d_device_gl *device_gl,
         case GL_ELEMENT_ARRAY_BUFFER:
             /* There is no way to specify an element array buffer offset for
              * indirect draws in OpenGL. */
-            return device_gl->d.wined3d->flags & WINED3D_NO_DRAW_INDIRECT
-                    || !gl_info->supported[ARB_DRAW_INDIRECT];
+            return (device_gl->d.wined3d->flags & WINED3D_LEGACY) || !gl_info->supported[ARB_DRAW_INDIRECT];
 
         case GL_TEXTURE_BUFFER:
             return gl_info->supported[ARB_TEXTURE_BUFFER_RANGE];

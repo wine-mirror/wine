@@ -4452,7 +4452,7 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     /* See get_projection_matrix() in glsl_shader.c for a discussion of the position fixup.
      * This function here also applies to d3d10+ which does not need adjustment for
      * integer pixel centers, but it may need the filling convention offset. */
-    if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY)
         center_offset = 1.0f;
     else
         center_offset = 0.0f;
