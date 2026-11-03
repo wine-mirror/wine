@@ -257,7 +257,9 @@ static struct opengl_context *internal_context_create( struct opengl_context_att
 {
     struct opengl_context *context = NULL;
 
-    for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
+    /* create a context with the requested format or try to use a standard RGB format */
+    if (attrs.format) context = driver_funcs->p_context_create( &attrs, root );
+    if (!context) for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
         struct wgl_pixel_format *desc = pixel_formats + attrs.format - 1;
         if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
@@ -454,16 +456,27 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
-static struct opengl_context *get_thread_context( struct opengl_context_attrs attrs )
+static struct opengl_context *get_thread_context( struct opengl_context *root, struct opengl_drawable *drawable )
 {
+    struct opengl_context_attrs attrs = root ? root->attrs : core_attrs;
     struct opengl_thread_data *data = get_opengl_thread_data();
     struct opengl_context **context;
+
+    if (!root && !(root = get_root_context( attrs ))) return NULL;
 
     if (attrs.profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB && driver_funcs->broken_sharing) context = &data->compat_context;
     else if (attrs.no_error) context = &data->noerror_context;
     else context = &data->core_context;
 
-    if (!*context) *context = internal_context_create( attrs, get_root_context( attrs ) );
+    /* re-create the context if the drawable we want to activate uses a different format */
+    if (drawable && driver_funcs->context_format) attrs.format = drawable->format;
+    if (*context && (*context)->attrs.format != attrs.format)
+    {
+        driver_funcs->p_context_destroy( *context );
+        *context = NULL;
+    }
+
+    if (!*context) *context = internal_context_create( attrs, root );
     return *context;
 }
 
@@ -497,7 +510,7 @@ static BOOL make_internal_context_current( struct opengl_context *context, struc
 
 static BOOL make_thread_context_current( struct opengl_context *root, struct opengl_drawable *drawable )
 {
-    return make_internal_context_current( get_thread_context( root ? root->attrs : core_attrs ), drawable );
+    return make_internal_context_current( get_thread_context( root, drawable ), drawable );
 }
 
 struct vertex
