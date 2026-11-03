@@ -1549,14 +1549,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
     return STATUS_NOT_IMPLEMENTED;
 }
 
-void sync_gl_drawable( HWND hwnd )
-{
-}
-
-void destroy_gl_drawable( HWND hwnd )
-{
-}
-
 BOOL visual_from_pixel_format( int format, XVisualInfo *visual )
 {
     return FALSE;
