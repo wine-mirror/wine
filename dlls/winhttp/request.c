@@ -509,7 +509,7 @@ static const WCHAR *attribute_table[] =
     L"Referer",                     /* WINHTTP_QUERY_REFERER                    = 35 */
     L"Retry-After",                 /* WINHTTP_QUERY_RETRY_AFTER                = 36 */
     L"Server",                      /* WINHTTP_QUERY_SERVER                     = 37 */
-    NULL,                           /* WINHTTP_TITLE                            = 38 */
+    NULL,                           /* WINHTTP_QUERY_TITLE                      = 38 */
     L"User-Agent",                  /* WINHTTP_QUERY_USER_AGENT                 = 39 */
     L"WWW-Authenticate",            /* WINHTTP_QUERY_WWW_AUTHENTICATE           = 40 */
     L"Proxy-Authenticate",          /* WINHTTP_QUERY_PROXY_AUTHENTICATE         = 41 */
@@ -542,10 +542,6 @@ static const WCHAR *attribute_table[] =
     L"Expect",                      /* WINHTTP_QUERY_EXPECT                     = 68 */
     L"Proxy-Connection",            /* WINHTTP_QUERY_PROXY_CONNECTION           = 69 */
     L"Unless-Modified-Since",       /* WINHTTP_QUERY_UNLESS_MODIFIED_SINCE      = 70 */
-    NULL,                           /* WINHTTP_QUERY_PROXY_SUPPORT              = 75 */
-    NULL,                           /* WINHTTP_QUERY_AUTHENTICATION_INFO        = 76 */
-    NULL,                           /* WINHTTP_QUERY_PASSPORT_URLS              = 77 */
-    NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
 void init_queue( struct queue *queue )
