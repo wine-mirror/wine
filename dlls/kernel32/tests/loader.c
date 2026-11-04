@@ -2525,7 +2525,6 @@ static void test_import_resolution(void)
             offset.QuadPart = 0;
             status = pNtMapViewOfSection( mapping, GetCurrentProcess(), (void **)&mod, 0, 0, &offset,
                                           &size, ViewShare, 0, PAGE_READONLY );
-            todo_wine_if (test == 5)
             ok( status == (test == 6 ? STATUS_IMAGE_NOT_AT_BASE : STATUS_SUCCESS),
                 "NtMapViewOfSection failed %lx\n", status );
             ok( mod != (void *)nt.OptionalHeader.ImageBase,  "loaded at image base %p\n", mod );
@@ -2538,7 +2537,7 @@ static void test_import_resolution(void)
                     "tls relocated %p / %p\n", (void *)ptr->tls.StartAddressOfRawData,
                     (char *)nt.OptionalHeader.ImageBase + DATA_RVA( data.tls_data ));
             }
-            else todo_wine_if (test == 5)
+            else
             {
                 ok( (void *)pnt->OptionalHeader.ImageBase == mod, "not at base %p / %p\n",
                     (void *)pnt->OptionalHeader.ImageBase, mod );
