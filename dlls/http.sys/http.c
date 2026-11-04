@@ -250,7 +250,7 @@ static HTTP_HEADER_ID parse_header_name(const char *header, int len)
 
     for (i = 0; i < ARRAY_SIZE(headers); ++i)
     {
-        if (!strncmp(header, headers[i], len))
+        if (!strnicmp(header, headers[i], len))
             return i;
     }
     return HttpHeaderRequestMaximum;
@@ -520,15 +520,15 @@ static int parse_request(struct connection *conn)
 
         TRACE("Got %s header.\n", debugstr_an(name, len));
 
-        if (!strncmp(name, "Host", len))
+        if (!strnicmp(name, "Host", len))
             conn->host = p;
-        else if (!strncmp(name, "Content-Length", len))
+        else if (!strnicmp(name, "Content-Length", len))
         {
             conn->content_len = parse_number(p, &q, end);
             if (q >= end) return 0;
             if (q == p) return -1;
         }
-        else if (!strncmp(name, "Transfer-Encoding", len))
+        else if (!strnicmp(name, "Transfer-Encoding", len))
             FIXME("Unhandled Transfer-Encoding header.\n");
         while (p < end && (isprint(*p) || *p == '\t')) ++p;
         if ((ret = compare_exact(p, "\r\n", end)) <= 0) return ret;
