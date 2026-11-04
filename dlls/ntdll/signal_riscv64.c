@@ -59,7 +59,15 @@ __ASM_GLOBAL_FUNC( __C_specific_handler, "li a0, 1\n\tret" )
 
 /* Thread startup. */
 __ASM_GLOBAL_FUNC( LdrInitializeThunk, "ret" )
-__ASM_GLOBAL_FUNC( RtlUserThreadStart, "ret" )
+
+void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
+{
+    pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
+
+    /* BaseThreadInitThunk should terminate the thread, not return. */
+    RtlExitUserThread( STATUS_UNSUCCESSFUL );
+    __builtin_unreachable();
+}
 
 /* Debugger entry points. */
 __ASM_GLOBAL_FUNC( DbgBreakPoint, "ebreak\n\tret" )
