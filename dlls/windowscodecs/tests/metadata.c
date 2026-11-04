@@ -113,7 +113,7 @@ static void check_persist_classid_(unsigned int line, void *iface_ptr, const CLS
     IWICPersistStream_Release(persist_stream);
 }
 
-static IStream *create_stream(const char *data, int data_size)
+static IStream *create_stream(const void *data, int data_size)
 {
     HRESULT hr;
     IStream *stream;
@@ -168,7 +168,7 @@ static HRESULT create_query_reader_from_metadata_reader(IWICComponentFactory *fa
         const GUID *container_format, IWICMetadataQueryReader **query_reader);
 
 #define compare_blob(a,b,c) compare_blob_(__LINE__,a,b,c)
-static void compare_blob_(unsigned int line, const PROPVARIANT *propvar, const char *data, ULONG length)
+static void compare_blob_(unsigned int line, const PROPVARIANT *propvar, const void *data, ULONG length)
 {
     ok_(__FILE__, line)(propvar->vt == VT_BLOB, "Unexpected vt: %i\n", propvar->vt);
     if (propvar->vt == VT_BLOB)
@@ -369,9 +369,9 @@ static const struct ifd_data
 };
 #pragma pack(pop)
 
-static const char metadata_unknown[] = "lalala";
+static const unsigned char metadata_unknown[] = "lalala";
 
-static const char metadata_tEXt[] = {
+static const unsigned char metadata_tEXt[] = {
     0,0,0,14, /* chunk length */
     't','E','X','t', /* chunk type */
     'w','i','n','e','t','e','s','t',0, /* keyword */
@@ -379,14 +379,14 @@ static const char metadata_tEXt[] = {
     0x3f,0x64,0x19,0xf3 /* chunk CRC */
 };
 
-static const char metadata_gAMA[] = {
+static const unsigned char metadata_gAMA[] = {
     0,0,0,4, /* chunk length */
     'g','A','M','A', /* chunk type */
     0,0,130,53, /* gamma */
     0xff,0xff,0xff,0xff /* chunk CRC */
 };
 
-static const char metadata_cHRM[] = {
+static const unsigned char metadata_cHRM[] = {
     0,0,0,32, /* chunk length */
     'c','H','R','M', /* chunk type */
     0,0,122,40, 0,0,120,132, /* white point */
@@ -396,7 +396,7 @@ static const char metadata_cHRM[] = {
     0xff,0xff,0xff,0xff /* chunk CRC */
 };
 
-static const char metadata_hIST[] = {
+static const unsigned char metadata_hIST[] = {
     0,0,0,40, /* chunk length */
     'h','I','S','T', /* chunk type */
     0,1,  0,2,  0,3,  0,4,
@@ -407,7 +407,7 @@ static const char metadata_hIST[] = {
     0xff,0xff,0xff,0xff
 };
 
-static const char metadata_tIME[] = {
+static const unsigned char metadata_tIME[] = {
     0,0,0,7, /* chunk length */
     't','I','M','E', /* chunk type */
     0x07,0xd0,0x01,0x02, /* year (2 bytes), month, day */
@@ -415,28 +415,28 @@ static const char metadata_tIME[] = {
     0xff,0xff,0xff,0xff
 };
 
-static const char metadata_bKGD_palette[] = {
+static const unsigned char metadata_bKGD_palette[] = {
     0,0,0,1, /* chunk length */
     'b','K','G','D', /* chunk type */
     0x12,
     0xff,0xff,0xff,0xff
 };
 
-static const char metadata_bKGD_gray[] = {
+static const unsigned char metadata_bKGD_gray[] = {
     0,0,0,2, /* chunk length */
     'b','K','G','D', /* chunk type */
     0x12,0x34,
     0xff,0xff,0xff,0xff
 };
 
-static const char metadata_bKGD_rgb[] = {
+static const unsigned char metadata_bKGD_rgb[] = {
     0,0,0,6, /* chunk length */
     'b','K','G','D', /* chunk type */
     0x12,0x34,0x56,0x78,0x99,01,
     0xff,0xff,0xff,0xff
 };
 
-static const char pngimage[285] = {
+static const unsigned char pngimage[285] = {
 0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
 0xde,0x00,0x00,0x00,0x09,0x70,0x48,0x59,0x73,0x00,0x00,0x0b,0x13,0x00,0x00,0x0b,
@@ -454,7 +454,7 @@ static const char gifimage[35] = {
 };
 
 /* 1x1 pixel gif, 2 frames; first frame is white, second is black */
-static const char animatedgif[] = {
+static const unsigned char animatedgif[] = {
 'G','I','F','8','9','a',0x01,0x00,0x01,0x00,0xA1,0x00,0x00,
 0x6F,0x6F,0x6F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /*0x21,0xFF,0x0B,'N','E','T','S','C','A','P','E','2','.','0',*/
@@ -477,7 +477,7 @@ static const char animatedgif[] = {
 };
 
 /* convert -size 4x8 canvas:white white.jpeg */
-static const char jpeg[] =
+static const unsigned char jpeg[] =
 {
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
     0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43,
@@ -502,7 +502,7 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
-static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD persist_options)
+static void load_stream(void *iface_ptr, const void *data, int data_size, DWORD persist_options)
 {
     IWICStreamProvider *stream_provider;
     IUnknown *iface = iface_ptr;
