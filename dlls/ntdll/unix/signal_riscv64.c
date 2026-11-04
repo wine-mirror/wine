@@ -256,23 +256,14 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     __builtin_unreachable();
 }
 
-
 void __wine_syscall_dispatcher_return( void )
 {
     /*
-     * The actual RV64 dispatcher-return sequence is embedded below.
-     *
      * a0 = struct syscall_frame *
      *
-     * syscall_frame layout:
-     *
-     *   0..255   x[0..31]
-     *   256      pc
-     *   264      sp
-     *   272      ra
-     *
-     * t6 (x31) is used as the temporary branch target, so x31
-     * is intentionally not restored by this first POC path.
+     * Preserve the frame pointer in t0 while restoring registers.
+     * Since t0 is x5, restore it last.
+     * t6 holds the destination PC and is not restored in this POC.
      */
     __asm__ volatile (
         "mv t0, a0\n"
@@ -282,41 +273,40 @@ void __wine_syscall_dispatcher_return( void )
         "ld x2,   16(t0)\n"
         "ld x3,   24(t0)\n"
         "ld x4,   32(t0)\n"
-        "ld x5,   40(t0)\n"
         "ld x6,   48(t0)\n"
         "ld x7,   56(t0)\n"
         "ld x8,   64(t0)\n"
         "ld x9,   72(t0)\n"
         "ld x10,  80(t0)\n"
         "ld x11,  88(t0)\n"
-        "ld x12,  96(a0)\n"
-        "ld x13, 104(a0)\n"
-        "ld x14, 112(a0)\n"
-        "ld x15, 120(a0)\n"
-        "ld x16, 128(a0)\n"
-        "ld x17, 136(a0)\n"
-        "ld x18, 144(a0)\n"
-        "ld x19, 152(a0)\n"
-        "ld x20, 160(a0)\n"
-        "ld x21, 168(a0)\n"
-        "ld x22, 176(a0)\n"
-        "ld x23, 184(a0)\n"
-        "ld x24, 192(a0)\n"
-        "ld x25, 200(a0)\n"
-        "ld x26, 208(a0)\n"
-        "ld x27, 216(a0)\n"
-        "ld x28, 224(a0)\n"
-        "ld x29, 232(a0)\n"
-        "ld x30, 240(a0)\n"
+        "ld x12,  96(t0)\n"
+        "ld x13, 104(t0)\n"
+        "ld x14, 112(t0)\n"
+        "ld x15, 120(t0)\n"
+        "ld x16, 128(t0)\n"
+        "ld x17, 136(t0)\n"
+        "ld x18, 144(t0)\n"
+        "ld x19, 152(t0)\n"
+        "ld x20, 160(t0)\n"
+        "ld x21, 168(t0)\n"
+        "ld x22, 176(t0)\n"
+        "ld x23, 184(t0)\n"
+        "ld x24, 192(t0)\n"
+        "ld x25, 200(t0)\n"
+        "ld x26, 208(t0)\n"
+        "ld x27, 216(t0)\n"
+        "ld x28, 224(t0)\n"
+        "ld x29, 232(t0)\n"
+        "ld x30, 240(t0)\n"
 
-        "ld sp, 264(a0)\n"
+        "ld sp, 264(t0)\n"
+        "ld x5,  40(t0)\n"
 
         "jr t6\n"
     );
 
     __builtin_unreachable();
 }
-
 
 void __wine_syscall_dispatcher(void)
 {
