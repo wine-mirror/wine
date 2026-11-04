@@ -74,22 +74,32 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
+    CONTEXT context = { CONTEXT_ALL };
+    CONTEXT *ctx;
+    ULONG_PTR stack_top;
 
     memset( frame, 0, sizeof(*frame) );
 
-    /*
-     * Minimal native RV64 thread startup.
-     *
-     * a0 = thread entry point
-     * a1 = thread argument
-     * tp = TEB
-     */
-    frame->pc = (ULONG64)pRtlUserThreadStart;
-    frame->sp = (ULONG64)teb->Tib.StackBase;
+    stack_top = (ULONG_PTR)teb->Tib.StackBase & ~(ULONG_PTR)15;
 
-    frame->x[10] = (ULONG64)entry;
-    frame->x[11] = (ULONG64)arg;
-    frame->x[4]  = (ULONG64)teb;
+    context.Gpr.X[10] = (ULONG64)entry;
+    context.Gpr.X[11] = (ULONG64)arg;
+    context.Gpr.X[4]  = (ULONG64)teb;
+    context.Gpr.X[2]  = stack_top;
+    context.Pc        = (ULONG64)pRtlUserThreadStart;
+
+    ctx = (CONTEXT *)(stack_top - sizeof(*ctx));
+    *ctx = context;
+    ctx->ContextFlags = CONTEXT_FULL;
+
+    /*
+     * First enter LdrInitializeThunk with the initial CONTEXT.
+     * It will initialize the loader and continue at RtlUserThreadStart.
+     */
+    frame->pc = (ULONG64)pLdrInitializeThunk;
+    frame->sp = (ULONG64)ctx;
+    frame->x[10] = (ULONG64)ctx;
+    frame->x[4] = (ULONG64)teb;
 
     frame->restore_flags = CONTEXT_CONTROL | CONTEXT_INTEGER;
 

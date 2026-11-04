@@ -58,7 +58,12 @@ __ASM_GLOBAL_FUNC( RtlWalkFrameChain, "li a0, 0\n\tret" )
 __ASM_GLOBAL_FUNC( __C_specific_handler, "li a0, 1\n\tret" )
 
 /* Thread startup. */
-__ASM_GLOBAL_FUNC( LdrInitializeThunk, "ret" )
+void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2,
+                                ULONG_PTR unk3, ULONG_PTR unk4 )
+{
+    loader_init( context, (void **)&context->Gpr.X[10] );
+    NtContinue( context, TRUE );
+}
 
 void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
