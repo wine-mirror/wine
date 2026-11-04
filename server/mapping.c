@@ -860,8 +860,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         IMAGE_LOAD_CONFIG_DIRECTORY64 cfg64;
     } cfg;
     off_t pos;
-    int size, has_relocs;
-    IMAGE_DATA_DIRECTORY *data_dirs, *exp_dir, *res_dir, *cfg_dir, *clr_dir;
+    int size;
+    IMAGE_DATA_DIRECTORY *data_dirs, *exp_dir, *res_dir, *cfg_dir, *clr_dir, *rel_dir;
     size_t mz_size, align_mask;
     unsigned int i, ret, nb_data_dirs;
 
@@ -969,8 +969,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     res_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_RESOURCE );
     cfg_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG );
     clr_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR );
-    has_relocs = (GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_BASERELOC ) &&
-                  !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
+    rel_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_BASERELOC );
 #undef GET_DATA_DIR
 
     mapping->image.is_hybrid     = 0;
@@ -992,7 +991,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     if (mapping->image.alignment & page_mask)
         mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
     else if ((mapping->image.dll_charact & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
-             (has_relocs || mapping->image.contains_code) && !clr_dir)
+             !(mapping->image.image_charact & IMAGE_FILE_RELOCS_STRIPPED) &&
+             (rel_dir || mapping->image.contains_code) && !clr_dir)
         mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
 
     align_mask = max( mapping->image.alignment - 1, page_mask );
@@ -1289,6 +1289,35 @@ static enum server_fd_type mapping_get_fd_type( struct fd *fd )
     return FD_TYPE_FILE;
 }
 
+/* assign a mapping address to an exe image mapping */
+static client_ptr_t assign_exe_map_address( struct mapping *mapping )
+{
+    client_ptr_t start, end;
+    mem_size_t size = round_size( mapping->size, granularity_mask );
+
+    if (mapping->image.base >> 32)
+    {
+        start = 0x7ff600000000;
+        end   = 0x7ff800000000;
+        if (size >= end - start) return 0;
+        end -= size;
+    }
+    else if (mapping->image.base >> 28)
+    {
+        start = 0x10000000;
+        end   = 0x20000000;
+    }
+    else
+    {
+        start = is_machine_64bit( mapping->image.machine ) ? 0x10000 : 0x110000;
+        end   = 0x01000000;
+    }
+    start += ((client_ptr_t)map_random() << 16) % (end - start);
+    start &= ~granularity_mask;
+    set_fd_map_address( mapping->fd, start, 0 );
+    return start;
+}
+
 /* assign a mapping address to a PE image mapping */
 static client_ptr_t assign_map_address( struct mapping *mapping )
 {
@@ -1297,9 +1326,9 @@ static client_ptr_t assign_map_address( struct mapping *mapping )
     struct addr_range *range = (mapping->image.base >> 32) ? &ranges64 : &ranges32;
     mem_size_t size = round_size( mapping->size, granularity_mask );
 
-    if (!(mapping->image.image_charact & IMAGE_FILE_DLL)) return 0;
-
     if ((ret = get_fd_map_address( mapping->fd ))) return ret;
+
+    if (!(mapping->image.image_charact & IMAGE_FILE_DLL)) return assign_exe_map_address( mapping );
 
     for (i = 0; i < range->count; i++)
     {
@@ -1318,6 +1347,8 @@ void free_map_addr( client_ptr_t base, mem_size_t size )
     unsigned int i;
     client_ptr_t end = base + size;
     struct addr_range *range = (base >> 32) ? &ranges64 : &ranges32;
+
+    if (!size) return;  /* exe mapping */
 
     for (i = 0; i < range->count; i++)
     {
