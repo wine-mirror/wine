@@ -27,6 +27,7 @@
 #include "mshtml.h"
 #include "initguid.h"
 #include "optary.h"
+#include "urlmon.h"
 
 static void test_HTMLLoadOptions(void)
 {
@@ -628,12 +629,78 @@ static void test_HTMLStorage(void)
     SysFreeString(key);
 }
 
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    return E_FAIL;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory failing_protocol_cf = { &ClassFactoryVtbl };
+
+static void test_failing_about_protocol(void)
+{
+    IInternetSession *session;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    hres = CoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &failing_protocol_cf, &IID_NULL, L"about", 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+    IHTMLDocument2_Release(doc);
+
+    hres = IInternetSession_UnregisterNameSpace(session, &failing_protocol_cf, L"about");
+    ok(hres == S_OK, "UnregisterNameSpace failed: %08lx\n", hres);
+    IInternetSession_Release(session);
+}
+
 START_TEST(misc)
 {
     CoInitialize(NULL);
 
     test_HTMLLoadOptions();
     test_HTMLStorage();
+    test_failing_about_protocol();
 
     CoUninitialize();
 }

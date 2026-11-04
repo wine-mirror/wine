@@ -441,7 +441,7 @@ static void notif_readystate(HTMLOuterWindow *window)
     if(frame_element)
         IHTMLDOMNode_AddRef(&frame_element->element.node.IHTMLDOMNode_iface);
 
-    if(is_main_content_window(window))
+    if(is_main_content_window(window) && window->browser->doc)
         call_property_onchanged(&window->browser->doc->cp_container, DISPID_READYSTATE);
 
     hres = create_document_event(inner_window->doc, EVENTID_READYSTATECHANGE, &event);
