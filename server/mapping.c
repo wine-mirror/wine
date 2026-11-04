@@ -29,6 +29,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_RANDOM_H
+# include <sys/random.h>
+#endif
 #ifdef HAVE_LINUX_MEMFD_H
 # include <linux/memfd.h>
 #endif
@@ -221,11 +224,36 @@ static inline mem_size_t round_size( mem_size_t size, mem_size_t mask )
     return (size + mask) & ~mask;
 }
 
+#ifndef HAVE_GETRANDOM
+static ssize_t getrandom( void *buffer, size_t size, unsigned int flags )
+{
+    static int urandom_fd = -2;
+
+    if (urandom_fd == -2) urandom_fd = open( "/dev/urandom", O_RDONLY );
+    if (urandom_fd == -1) return 0;
+    return read( urandom_fd, buffer, size );
+}
+#endif
+
+static unsigned int map_random(void)
+{
+    static unsigned int pos, data[32];
+
+    if (!pos)
+    {
+        if (getrandom( data, sizeof(data), 0 ) == -1) return 0;
+        pos = ARRAY_SIZE( data );
+    }
+    return data[--pos];
+}
+
 void init_memory(void)
 {
+    unsigned int random = map_random();
+
     host_page_mask = sysconf( _SC_PAGESIZE ) - 1;
-    free_map_addr( 0x60000000, 0x1c000000 );
-    free_map_addr( 0x600000000000, 0x100000000000 );
+    free_map_addr( 0x60000000, 0x1c000000 - ((random & 0xff) << 16) );
+    free_map_addr( 0x600000000000, (0x100000000000 - ((mem_size_t)random << 8)) & ~granularity_mask );
 }
 
 static void ranges_dump( struct object *obj, int verbose )
