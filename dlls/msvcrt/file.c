@@ -2221,10 +2221,10 @@ wchar_t * CDECL _wmktemp(wchar_t *pattern)
   pattern++;
   do
   {
+    *pattern = letter++;
     if (GetFileAttributesW(retVal) == INVALID_FILE_ATTRIBUTES)
       return retVal;
-    *pattern = letter++;
-  } while(letter != '|');
+  } while(letter <= 'z');
   return NULL;
 }
 

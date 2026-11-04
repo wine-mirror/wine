@@ -17,6 +17,7 @@ SOURCES = \
 	image/encode/strenc.c \
 	image/sys/adapthuff.c \
 	image/sys/image.c \
+	image/sys/memory_lim.c \
 	image/sys/strPredQuant.c \
 	image/sys/strTransform.c \
 	image/sys/strcodec.c \

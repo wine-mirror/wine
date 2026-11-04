@@ -4137,9 +4137,9 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
                         infoPtr->marqueeOrigin.y = infoPtr->ptClickPos.y - offset.y;
 
                         /* Begin selection and capture mouse */
+                        SetCapture(infoPtr->hwndSelf);
                         infoPtr->bMarqueeSelect = TRUE;
                         infoPtr->marqueeRect = rect;
-                        SetCapture(infoPtr->hwndSelf);
                     }
                 }
                 else

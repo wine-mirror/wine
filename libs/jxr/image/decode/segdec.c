@@ -2,16 +2,16 @@
 //
 // Copyright © Microsoft Corp.
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // • Redistributions of source code must retain the above copyright notice,
 //   this list of conditions and the following disclaimer.
 // • Redistributions in binary form must reproduce the above copyright notice,
 //   this list of conditions and the following disclaimer in the documentation
 //   and/or other materials provided with the distribution.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -98,12 +98,12 @@ Int getHuff(const short *pDecodeTable, BitIOInfo* pIO)
     iSymbol = pDecodeTable[peekBit16(pIO, HUFFMAN_DECODE_ROOT_BITS)];
 
     flushBit16(pIO, iSymbol < 0 ? HUFFMAN_DECODE_ROOT_BITS : iSymbol & ((1 << HUFFMAN_DECODE_ROOT_BITS_LOG) - 1));
-	iSymbolHuff = iSymbol >> HUFFMAN_DECODE_ROOT_BITS_LOG;
+    iSymbolHuff = iSymbol >> HUFFMAN_DECODE_ROOT_BITS_LOG;
 
-	if (iSymbolHuff < 0) {
-		iSymbolHuff = iSymbol;
+    if (iSymbolHuff < 0) {
+        iSymbolHuff = iSymbol;
         while ((iSymbolHuff = pDecodeTable[iSymbolHuff + SIGN_BIT (pDecodeTable[0]) + getBit16(pIO, 1)]) < 0);
-	}
+    }
     return (iSymbolHuff);
 }
 
@@ -190,7 +190,7 @@ static Void DecodeCBP(CWMImageStrCodec * pSC, CCodingContext *pContext)
     CAdaptiveHuffman *pAHCBP = pContext->m_pAdaptHuffCBPCY;
     CAdaptiveHuffman *pAHCBP1 = pContext->m_pAdaptHuffCBPCY1;
     CAdaptiveHuffman *pAHex1 = pContext->m_pAHexpt[1];
-        
+
     readIS_L1(pSC, pIO);
 
     for (i = 0; i < iChannel; i++) {
@@ -268,7 +268,7 @@ static Void DecodeCBP(CWMImageStrCodec * pSC, CCodingContext *pContext)
                             bIsChroma = ((iNumBlockCBP>>(k+4)) & 0x01);
                             if (bIsChroma) { // U is present in block
                                 Int iCode = _getHuffShort(pAHex1->m_hufDecTable, pIO);
-                                switch (iCode) { 
+                                switch (iCode) {
                             case 1:
                                 iCode = _getBit16(pIO, 2);
                                 if (iCode == 0)
@@ -291,7 +291,7 @@ static Void DecodeCBP(CWMImageStrCodec * pSC, CCodingContext *pContext)
                                 }
                                 if (k == 0)
                                     iCBPCU |= (iCode << (iBlock * 4));
-                                else 
+                                else
                                     iCBPCV |= (iCode << (iBlock * 4));
                             }
                         }
@@ -355,6 +355,9 @@ static Void DecodeCBP(CWMImageStrCodec * pSC, CCodingContext *pContext)
 
 Int _FORCEINLINE DecodeSignificantRun (Int iMaxRun, struct CAdaptiveHuffman *pAHexpt, BitIOInfo* pIO)
 {
+    if (iMaxRun < 0 || iMaxRun > 14) { // sanity check!
+        return 0;
+    }
     Int iIndex;
     static const Int aRemap[] = {1,2,3,5,7,   1,2,3,5,7,   /*1,2,3,4,6,  */1,2,3,4,5 };
     Int iBin = gSignificantRunBin[iMaxRun];
@@ -386,10 +389,10 @@ Int _FORCEINLINE DecodeSignificantRun (Int iMaxRun, struct CAdaptiveHuffman *pAH
 }
 
 #ifndef X86OPT_INLINE
-static Void DecodeFirstIndex (Int *pIndex, struct CAdaptiveHuffman *pAHexpt, 
+static Void DecodeFirstIndex (Int *pIndex, struct CAdaptiveHuffman *pAHexpt,
                       BitIOInfo* pIO)
 #else
-static __forceinline Void DecodeFirstIndex (Int *pIndex, struct CAdaptiveHuffman *pAHexpt, 
+static __forceinline Void DecodeFirstIndex (Int *pIndex, struct CAdaptiveHuffman *pAHexpt,
                       BitIOInfo* pIO)
 #endif
 {
@@ -401,7 +404,7 @@ static __forceinline Void DecodeFirstIndex (Int *pIndex, struct CAdaptiveHuffman
 }
 
 #ifndef X86OPT_INLINE
-static Void DecodeIndex (Int *pIndex, Int iLoc, struct CAdaptiveHuffman *pAHexpt, 
+static Void DecodeIndex (Int *pIndex, Int iLoc, struct CAdaptiveHuffman *pAHexpt,
                  BitIOInfo* pIO)
 #else
 static __forceinline Void DecodeIndex (Int *pIndex, Int iLoc,
@@ -474,7 +477,7 @@ static _FORCEINLINE Int DecodeBlock (Bool bChroma, Int *aLocalCoef, struct CAdap
         iSign = _getSign(pIO);
 
         if (iIndex & 1 /* iSL */) {
-            aLocalCoef[iNumNonzero * 2 + 1] = 
+            aLocalCoef[iNumNonzero * 2 + 1] =
                 (DecodeSignificantAbsLevel (pAHexpt[6 + iContextOffset + iCont], pIO) ^ iSign) - iSign;
         }
         else {
@@ -486,7 +489,7 @@ static _FORCEINLINE Int DecodeBlock (Bool bChroma, Int *aLocalCoef, struct CAdap
 }
 
 /*************************************************************************
-    DecodeBlockHighpass : 
+    DecodeBlockHighpass :
 *************************************************************************/
 static _FORCEINLINE Int DecodeBlockHighpass (const Bool bChroma, struct CAdaptiveHuffman **pAHexpt,
                        BitIOInfo* pIO, const Int iQP, Int *pCoef, CAdaptiveScan *pScan)
@@ -516,12 +519,12 @@ static _FORCEINLINE Int DecodeBlockHighpass (const Bool bChroma, struct CAdaptiv
        iLoc += DecodeSignificantRun (15 - iLoc, pAHexpt[0], pIO);
     }
     iLoc &= 0xf;
-	pCoef[pConstScan[iLoc].uScan] = (PixelI) iLevel;//(PixelI)(iQP * iLevel);
+    pCoef[pConstScan[iLoc].uScan] = (PixelI) iLevel;//(PixelI)(iQP * iLevel);
     pScan[iLoc].uTotal++;
-	if (iLoc && pScan[iLoc].uTotal > pScan[iLoc - 1].uTotal) {
-		CAdaptiveScan cTemp = pScan[iLoc];
-		pScan[iLoc] = pScan[iLoc - 1];
-		pScan[iLoc - 1] = cTemp;
+    if (iLoc && pScan[iLoc].uTotal > pScan[iLoc - 1].uTotal) {
+        CAdaptiveScan cTemp = pScan[iLoc];
+        pScan[iLoc] = pScan[iLoc - 1];
+        pScan[iLoc - 1] = cTemp;
     }
     iLoc = (iLoc + 1) & 0xf;
     //iLoc++;
@@ -548,13 +551,13 @@ static _FORCEINLINE Int DecodeBlockHighpass (const Bool bChroma, struct CAdaptiv
         //else {
         //    iLevel = (1 | iSign); // 0 -> 1; -1 -> -1 (was 1 + (iSign * 2))
         //}
-       
-	    pCoef[pConstScan[iLoc].uScan] = (PixelI) iLevel;//(PixelI)(iQP * iLevel);
+
+        pCoef[pConstScan[iLoc].uScan] = (PixelI) iLevel;//(PixelI)(iQP * iLevel);
         pScan[iLoc].uTotal++;
-	    if (iLoc && pScan[iLoc].uTotal > pScan[iLoc - 1].uTotal) {
-		    CAdaptiveScan cTemp = pScan[iLoc];
-		    pScan[iLoc] = pScan[iLoc - 1];
-		    pScan[iLoc - 1] = cTemp;
+        if (iLoc && pScan[iLoc].uTotal > pScan[iLoc - 1].uTotal) {
+            CAdaptiveScan cTemp = pScan[iLoc];
+            pScan[iLoc] = pScan[iLoc - 1];
+            pScan[iLoc - 1] = cTemp;
         }
 
         iLoc = (iLoc + 1) & 0xf;
@@ -684,7 +687,18 @@ static _FORCEINLINE Int DecodeCoeffs (CWMImageStrCodec * pSC, CCodingContext *pC
             if (pIO != pIOFL)
                 readIS_L2(pSC, pIOFL);
 
-            iQP = (pSC->m_param.bTranscode ? 1 : pTile->pQuantizerHP[iPlanes > 1 ? i : (iBlock > 3 ? (cf == YUV_420 ? iBlock - 3 : iBlock / 2 - 1) : 0)][pSC->MBInfo.iQIndexHP].iQP);
+            // sanity check
+            int idx0 = iPlanes > 1 ? i : (iBlock > 3
+                                              ? (cf == YUV_420
+                                                     ? iBlock - 3
+                                                     : iBlock / 2 - 1)
+                                              : 0);
+            if (pSC->m_param.bTranscode)
+                iQP = 1;
+            else if (pTile->pQuantizerHP[idx0])
+                iQP = pTile->pQuantizerHP[idx0][pSC->MBInfo.iQIndexHP].iQP;
+            else
+                return ICERR_ERROR;
 
             for (iSubblock = 0; iSubblock < 4; iSubblock++, iIndex++, iCBPCY >>= 1) {
                 pCoeffs = pSC->p1MBbuffer[i] + blkOffset[iIndex & 0xf];
@@ -785,7 +799,7 @@ Int DecodeMacroblockLowpass (CWMImageStrCodec * pSC, CCodingContext *pContext,
     const Int iChannels = (Int) pSC->m_param.cNumChannels;
     const Int iFullPlanes = (cf == YUV_420 || cf == YUV_422) ? 2 : iChannels;
     Int k;
-	CAdaptiveScan *pScan = pContext->m_aScanLowpass;
+    CAdaptiveScan *pScan = pContext->m_aScanLowpass;
     BitIOInfo* pIO = pContext->m_pIOLP;
     Int iModelBits = pContext->m_aModelLP.m_iFlcBits[0];
     Int aRLCoeffs[32], iNumNonzero = 0, iIndex = 0;
@@ -803,7 +817,7 @@ Int DecodeMacroblockLowpass (CWMImageStrCodec * pSC, CCodingContext *pContext,
     readIS_L1(pSC, pIO);
     if((pSC->WMISCP.bfBitstreamFormat != SPATIAL) && (pSC->pTile[pSC->cTileColumn].cBitsLP > 0))  // MB-based LP QP index
         pMBInfo->iQIndexLP = decodeQPIndex(pIO, pSC->pTile[pSC->cTileColumn].cBitsLP);
-    
+
     // set arrays
     for (k = 0; k < (Int) pSC->m_param.cNumChannels; k++) {
         aDC[k & 15] = pMBInfo->iBlockDC[k];
@@ -813,9 +827,9 @@ Int DecodeMacroblockLowpass (CWMImageStrCodec * pSC, CCodingContext *pContext,
     if (pSC->m_bResetRGITotals) {
         int iScale = 2;
         int iWeight = iScale * 16;
-		pScan[0].uTotal = MAXTOTAL;
+        pScan[0].uTotal = MAXTOTAL;
         for (k = 1; k < 16; k++) {
-			pScan[k].uTotal = iWeight;
+            pScan[k].uTotal = iWeight;
             iWeight -= iScale;
         }
     }
@@ -899,13 +913,13 @@ Int DecodeMacroblockLowpass (CWMImageStrCodec * pSC, CCodingContext *pContext,
 
                 for (k = 0; k < iNumNonzero; k++) {
                     iIndex += aRLCoeffs[k * 2];
-					pCoeffs[pScan[iIndex].uScan] = aRLCoeffs[k * 2 + 1];
-					pScan[iIndex].uTotal++;
-					if (pScan[iIndex].uTotal > pScan[iIndex - 1].uTotal) {
-						CAdaptiveScan cTemp = pScan[iIndex];
-						pScan[iIndex] = pScan[iIndex - 1];
-						pScan[iIndex - 1] = cTemp;
-					}
+                    pCoeffs[pScan[iIndex].uScan] = aRLCoeffs[k * 2 + 1];
+                    pScan[iIndex].uTotal++;
+                    if (pScan[iIndex].uTotal > pScan[iIndex - 1].uTotal) {
+                        CAdaptiveScan cTemp = pScan[iIndex];
+                        pScan[iIndex] = pScan[iIndex - 1];
+                        pScan[iIndex - 1] = cTemp;
+                    }
                     iIndex++;
                 }
             }
@@ -1083,7 +1097,7 @@ Int DecodeMacroblockDC(CWMImageStrCodec * pSC, CCodingContext *pContext, Int iMB
             iQDCY = -iQDCY;
         pMBInfo->iBlockDC[0][0] = iQDCY;
 
-        /** get chrominance DC **/        
+        /** get chrominance DC **/
         pLM = aLaplacianMean + 1;
         iModelBits = pContext->m_aModelDC.m_iFlcBits[1];
 
@@ -1111,7 +1125,7 @@ Int DecodeMacroblockDC(CWMImageStrCodec * pSC, CCodingContext *pContext, Int iMB
     }
 
     UpdateModelMB (cf, iChannels, aLaplacianMean, &(pContext->m_aModelDC));
-    
+
     if(((!(pSC->WMISCP.bfBitstreamFormat != FREQUENCY || pSC->m_Dparam->cThumbnailScale < 16)) || pSC->WMISCP.sbSubband == SB_DC_ONLY) && pSC->m_bResetContext){
         Int kk;
         for (kk = 2; kk < 5; kk++) {
@@ -1127,9 +1141,9 @@ Int DecodeMacroblockDC(CWMImageStrCodec * pSC, CCodingContext *pContext, Int iMB
 /*************************************************************************
     DecodeMacroblockHighpass
 *************************************************************************/
-Int DecodeMacroblockHighpass (CWMImageStrCodec *pSC, CCodingContext *pContext, 
+Int DecodeMacroblockHighpass (CWMImageStrCodec *pSC, CCodingContext *pContext,
                       Int iMBX, Int iMBY)
-{   
+{
     /** reset adaptive scan totals **/
     if (pSC->m_bResetRGITotals) {
         int iScale = 2, k;
@@ -1152,7 +1166,7 @@ Int DecodeMacroblockHighpass (CWMImageStrCodec *pSC, CCodingContext *pContext,
     DecodeCBP (pSC, pContext);
     predCBPDec(pSC, pContext);
 
-    if (DecodeCoeffs (pSC, pContext, iMBX, iMBY, 
+    if (DecodeCoeffs (pSC, pContext, iMBX, iMBY,
         pContext->m_pIOAC, pContext->m_pIOFL) != ICERR_OK)
         goto ErrorExit;
 
@@ -1199,7 +1213,7 @@ Int AdaptHighpassDec(CCodingContext * pSC)
     }
 
     return ICERR_OK;
-    
+
 ErrorExit:
     return ICERR_ERROR;
 }

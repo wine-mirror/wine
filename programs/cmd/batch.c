@@ -243,7 +243,15 @@ BOOL WCMD_word_iterator_advance(struct word_iterator *iterator)
     return iterator->length != 0;
 }
 
-BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, WCHAR **arg)
+BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator)
+{
+    WCHAR *start;
+    size_t length;
+
+    return WCMD_next_word(&iterator->from[iterator->position + iterator->length], iterator->delimiters, &start, &length);
+}
+
+BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, BOOL optsep, WCHAR **arg)
 {
     size_t option_len;
     BOOL ret;
@@ -258,9 +266,10 @@ BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, co
     }
     /* case /OPT:ARG */
     else if (!wcsnicmp(iterator->unquoted_argument, option, option_len) &&
-             iterator->unquoted_argument[option_len] == L':')
+             (optsep || iterator->unquoted_argument[option_len] == L':'))
     {
-        *arg = &iterator->unquoted_argument[option_len + 1];
+        *arg = &iterator->unquoted_argument[option_len];
+        if (**arg == L':') (*arg)++;
         ret = TRUE;
     }
     else
@@ -794,21 +803,14 @@ RETURN_CODE WCMD_call(WCHAR *command)
     }
     else if (WCMD_is_in_context(NULL))
     {
-        WCHAR gotoLabel[MAX_PATH];
-
-        lstrcpyW(gotoLabel, param1);
-
         /* Save the for variable context, then start with an empty context
            as for loop variables do not survive a call                    */
         WCMD_save_for_loop_context(TRUE);
 
         context = push_batch_context(buffer, context->batch_file, context->file_position.QuadPart);
 
-        /* FIXME as commands here can temper with param1 global variable (ugly) */
-        lstrcpyW(param1, gotoLabel);
-        WCMD_goto();
-
-        WCMD_batch_main_loop();
+        if (WCMD_jump_to_label(param1) == RETURN_CODE_GOTO)
+            WCMD_batch_main_loop();
 
         context = pop_batch_context(context);
         return_code = errorlevel;
@@ -824,7 +826,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
     return return_code;
 }
 
-void WCMD_set_label_end(WCHAR *string)
+static void WCMD_set_label_end(WCHAR *string)
 {
     static const WCHAR labelEndsW[] = L"><|& :\t";
     WCHAR *p;
@@ -945,7 +947,7 @@ static void check_if_valid_label_cache(HANDLE h)
     }
 }
 
-BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
+static BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
 {
     LARGE_INTEGER where = *pos, zeroli = {.QuadPart = 0};
     WCHAR candidate[MAXSTRING];
@@ -998,4 +1000,38 @@ BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
     }
     TRACE("Reached wrap point, label not found\n");
     return FALSE;
+}
+
+RETURN_CODE WCMD_jump_to_label(WCHAR *label)
+{
+    HANDLE h;
+    BOOL ret;
+
+    if (!context->batch_file) return ERROR_INVALID_FUNCTION;
+    /* Handle special :EOF label */
+    if (wcsicmp(L":eof", label) == 0)
+    {
+        context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+        return RETURN_CODE_GOTO;
+    }
+    h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        WCMD_print_error();
+        return ERROR_INVALID_FUNCTION;
+    }
+
+    /* Support goto :label as well as goto label plus remove trailing chars */
+    if (*label == L':') label++;
+    WCMD_set_label_end(label);
+    TRACE("goto label: '%s'\n", wine_dbgstr_w(label));
+
+    ret = WCMD_find_label(h, label, &context->file_position);
+    CloseHandle(h);
+    if (ret) return RETURN_CODE_GOTO;
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
+    context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+    return ERROR_INVALID_FUNCTION;
 }

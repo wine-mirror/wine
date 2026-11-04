@@ -534,7 +534,6 @@ static BOOL load_tablet_info( HWND hwnd )
     gSysContext.lcBtnUpMask = 0xffffffff;
     gSysContext.lcSensX = 65536;
     gSysContext.lcSensY = 65536;
-    gSysContext.lcSensX = 65536;
     gSysContext.lcSensZ = 65536;
     gSysContext.lcSysSensX= 65536;
     gSysContext.lcSysSensY= 65536;
@@ -1365,8 +1364,7 @@ static UINT get_tablet_info( UINT wCategory, UINT nIndex, void *lpOutput )
                                             sizeof(BYTE));
                         break;
                     case CSR_BTNNAMES:
-                        FIXME("Button Names not returned correctly\n");
-                        rc = CopyTabletData(lpOutput,&tgtcursor->BTNNAMES,
+                        rc = CopyTabletData(lpOutput,tgtcursor->BTNNAMES,
                                             tgtcursor->cchBTNNAMES*sizeof(WCHAR));
                         break;
                     case CSR_BUTTONMAP:

@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <winbase.h>
 #include <winuser.h>
+#include <winreg.h>
+#include <userenv.h>
+#include <sddl.h>
+#include <shlobj.h>
 
 #include "wine/test.h"
 
@@ -67,6 +71,19 @@ static void WINAPIV service_ok(int cnd, const char *msg, ...)
     va_end(valist);
 
     send_msg(cnd ? "OK" : "FAIL", buf);
+}
+
+static void WINAPIV service_todo_wine_ok(int cnd, const char *msg, ...) __WINE_PRINTF_ATTR(2,3);
+static void WINAPIV service_todo_wine_ok(int cnd, const char *msg, ...)
+{
+    va_list valist;
+    char buf[512];
+
+    va_start(valist, msg);
+    vsprintf(buf, msg, valist);
+    va_end(valist);
+
+    send_msg(cnd ? "TODO_WINE OK" : "TODO_WINE FAIL", buf);
 }
 
 static void test_winstation(void)
@@ -172,6 +189,626 @@ static void test_monitors(void)
     service_ok(monitor_count == 1, "Callback got called less or more than once. %d\n", monitor_count);
 }
 
+struct max_sid
+{
+    /* same fields as struct _SID */
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[SID_MAX_SUB_AUTHORITIES];
+};
+
+static BOOL is_in_groups(const TOKEN_GROUPS *groups, const PSID sid, DWORD attributes)
+{
+    int i;
+
+    for (i = 0; i < groups->GroupCount; i++)
+    {
+        if (EqualSid(groups->Groups[i].Sid, sid))
+        {
+            service_ok(groups->Groups[i].Attributes == attributes,
+                       "Expected attribute %d %#lx, got %#lx.\n", i, attributes,
+                       groups->Groups[i].Attributes);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static BOOL is_in_privileges(const TOKEN_PRIVILEGES *privileges, const char *privilege, DWORD attributes)
+{
+    LUID luid;
+    BOOL ret;
+    int i;
+
+    ret = LookupPrivilegeValueA(NULL, privilege, &luid);
+    service_ok(ret, "LookupPrivilegeValueA %s failed, error %lu.\n", privilege, GetLastError());
+
+    for (i = 0; i < privileges->PrivilegeCount; i++)
+    {
+        if (privileges->Privileges[i].Luid.LowPart == luid.LowPart
+            && privileges->Privileges[i].Luid.HighPart == luid.HighPart)
+        {
+            service_ok(privileges->Privileges[i].Attributes == attributes,
+                       "Expected attribute %#lx for %s, got %#lx.\n", attributes, privilege,
+                       privileges->Privileges[i].Attributes);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static void check_token_information(const char *username, HANDLE token)
+{
+    struct max_sid system = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_LOCAL_SYSTEM_RID}};
+    struct max_sid local_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_LOCAL_SERVICE_RID}};
+    struct max_sid network_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_NETWORK_SERVICE_RID}};
+    struct max_sid administrators = {SID_REVISION, 2, {SECURITY_NT_AUTHORITY}, {SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS}};
+    struct max_sid everyone = {SID_REVISION, 1, {SECURITY_WORLD_SID_AUTHORITY}, {SECURITY_WORLD_RID}};
+    struct max_sid authenticated_users = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_AUTHENTICATED_USER_RID}};
+    struct max_sid users = {SID_REVISION, 2, {SECURITY_NT_AUTHORITY}, {SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS}};
+    struct max_sid local = {SID_REVISION, 1, {SECURITY_LOCAL_SID_AUTHORITY}, {SECURITY_LOCAL_RID}};
+    struct max_sid console_logon = {SID_REVISION, 1, {SECURITY_LOCAL_SID_AUTHORITY}, {SECURITY_LOCAL_LOGON_RID}};
+    struct max_sid system_label = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY}, {SECURITY_MANDATORY_SYSTEM_RID}};
+    unsigned char buffer[1024];
+    DWORD size;
+    BOOL ret;
+    int i;
+
+    static const TOKEN_INFORMATION_CLASS classes[] =
+    {
+        TokenUser,
+        TokenGroups,
+        TokenPrivileges,
+        TokenOwner,
+        TokenPrimaryGroup,
+        TokenSource,
+        TokenType,
+        TokenSessionId,
+        TokenElevationType,
+        TokenIntegrityLevel,
+        TokenUIAccess,
+    };
+
+    for (i = 0 ; i < ARRAY_SIZE(classes); i++)
+    {
+        memset(buffer, 0, sizeof(buffer));
+        ret = GetTokenInformation(token, classes[i], buffer, sizeof(buffer), &size);
+        if (classes[i] == TokenSource)
+        {
+            service_todo_wine_ok(ret, "GetTokenInformation %d failed, error %lu.\n", classes[i], GetLastError());
+            continue;
+        }
+        else
+        {
+            service_ok(ret, "GetTokenInformation %d failed, error %lu.\n", classes[i], GetLastError());
+        }
+
+        switch (classes[i])
+        {
+        case TokenUser:
+        {
+            TOKEN_USER *user = (TOKEN_USER *)buffer;
+
+            if (!strcmpi(username, "System"))
+                service_ok(EqualSid(user->User.Sid, &system), "Got unexpected user.\n");
+            else if (!strcmpi(username, "LocalService"))
+                service_ok(EqualSid(user->User.Sid, &local_service), "Got unexpected user.\n");
+            else if (!strcmpi(username, "NetworkService"))
+                service_ok(EqualSid(user->User.Sid, &network_service), "Got unexpected user.\n");
+            break;
+        }
+        case TokenGroups:
+        {
+            TOKEN_GROUPS *groups = (TOKEN_GROUPS *)buffer;
+
+            if (!strcmpi(username, "System"))
+            {
+                service_ok(is_in_groups(groups, (PSID)&administrators, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_OWNER), "Not in Administrators group.\n");
+                service_ok(is_in_groups(groups, (PSID)&everyone, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Everyone group.\n");
+                service_ok(is_in_groups(groups, (PSID)&authenticated_users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Authenticated users group.\n");
+            }
+            else if (!strcmpi(username, "LocalService") || !strcmpi(username, "NetworkService"))
+            {
+                service_ok(is_in_groups(groups, (PSID)&everyone, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Everyone group.\n");
+                service_ok(is_in_groups(groups, (PSID)&users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Users group.\n");
+                service_ok(is_in_groups(groups, (PSID)&authenticated_users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Authenticated users group.\n");
+                service_ok(is_in_groups(groups, (PSID)&local, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Local group.\n");
+                service_ok(is_in_groups(groups, (PSID)&console_logon, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY), "Not in Console logon group.\n");
+            }
+
+            break;
+        }
+        case TokenPrivileges:
+        {
+            TOKEN_PRIVILEGES *privileges = (TOKEN_PRIVILEGES *)buffer;
+
+            if (!strcmpi(username, "System"))
+            {
+                service_ok(!is_in_privileges(privileges, "SeCreateTokenPrivilege", 0), "Got SeCreateTokenPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAssignPrimaryTokenPrivilege", 0), "No SeAssignPrimaryTokenPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeLockMemoryPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeLockMemoryPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseQuotaPrivilege", 0), "No SeIncreaseQuotaPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeMachineAccountPrivilege", 0), "Got SeMachineAccountPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeTcbPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeTcbPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeSecurityPrivilege", 0), "No SeSecurityPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeTakeOwnershipPrivilege", 0), "No SeTakeOwnershipPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeLoadDriverPrivilege", 0), "No SeLoadDriverPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeSystemProfilePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeSystemProfilePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeSystemtimePrivilege", 0), "No SeSystemtimePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeProfileSingleProcessPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeProfileSingleProcessPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseBasePriorityPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeIncreaseBasePriorityPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreatePagefilePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreatePagefilePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreatePermanentPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreatePermanentPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeBackupPrivilege", 0), "No SeBackupPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeRestorePrivilege", 0), "No SeRestorePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeShutdownPrivilege", 0), "No SeShutdownPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeDebugPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeDebugPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAuditPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeAuditPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeSystemEnvironmentPrivilege", 0), "No SeSystemEnvironmentPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeChangeNotifyPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeChangeNotifyPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRemoteShutdownPrivilege", 0), "Got SeRemoteShutdownPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeUndockPrivilege", 0), "No SeUndockPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeEnableDelegationPrivilege", 0), "Got SeEnableDelegationPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeManageVolumePrivilege", 0), "No SeManageVolumePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeImpersonatePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeImpersonatePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreateGlobalPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreateGlobalPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTrustedCredManAccessPrivilege", 0), "Got SeTrustedCredManAccessPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRelabelPrivilege", 0), "Got SeRelabelPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseWorkingSetPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeIncreaseWorkingSetPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeTimeZonePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeTimeZonePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreateSymbolicLinkPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreateSymbolicLinkPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeDelegateSessionUserImpersonatePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeDelegateSessionUserImpersonatePrivilege.\n");
+            }
+            else if (!strcmpi(username, "LocalService"))
+            {
+                service_ok(!is_in_privileges(privileges, "SeCreateTokenPrivilege", 0), "Got SeCreateTokenPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAssignPrimaryTokenPrivilege", 0), "No SeAssignPrimaryTokenPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeLockMemoryPrivilege", 0), "Got SeLockMemoryPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseQuotaPrivilege", 0), "No SeIncreaseQuotaPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeMachineAccountPrivilege", 0), "Got SeMachineAccountPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTcbPrivilege", 0), "Got SeTcbPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSecurityPrivilege", 0), "Got SeSecurityPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTakeOwnershipPrivilege", 0), "Got SeTakeOwnershipPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeLoadDriverPrivilege", 0), "Got SeLoadDriverPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSystemProfilePrivilege", 0), "Got SeSystemProfilePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeSystemtimePrivilege", 0), "No SeSystemtimePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeProfileSingleProcessPrivilege", 0), "Got SeProfileSingleProcessPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeIncreaseBasePriorityPrivilege", 0), "Got SeIncreaseBasePriorityPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreatePagefilePrivilege", 0), "Got SeCreatePagefilePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreatePermanentPrivilege", 0), "Got SeCreatePermanentPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeBackupPrivilege", 0), "Got SeBackupPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRestorePrivilege", 0), "Got SeRestorePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeShutdownPrivilege", 0), "No SeShutdownPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeDebugPrivilege", 0), "Got SeDebugPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAuditPrivilege", 0), "No SeAuditPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSystemEnvironmentPrivilege", 0), "Got SeSystemEnvironmentPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeChangeNotifyPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeChangeNotifyPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRemoteShutdownPrivilege", 0), "Got SeRemoteShutdownPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeUndockPrivilege", 0), "No SeUndockPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeEnableDelegationPrivilege", 0), "Got SeEnableDelegationPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeManageVolumePrivilege", 0), "Got SeManageVolumePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeImpersonatePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeImpersonatePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreateGlobalPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreateGlobalPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTrustedCredManAccessPrivilege", 0), "Got SeTrustedCredManAccessPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRelabelPrivilege", 0), "Got SeRelabelPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseWorkingSetPrivilege", 0), "No SeIncreaseWorkingSetPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeTimeZonePrivilege", 0), "No SeTimeZonePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreateSymbolicLinkPrivilege", 0), "Got SeCreateSymbolicLinkPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeDelegateSessionUserImpersonatePrivilege", 0), "Got SeDelegateSessionUserImpersonatePrivilege.\n");
+            }
+            else if (!strcmpi(username, "NetworkService"))
+            {
+                service_ok(!is_in_privileges(privileges, "SeCreateTokenPrivilege", 0), "Got SeCreateTokenPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAssignPrimaryTokenPrivilege", 0), "No SeAssignPrimaryTokenPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeLockMemoryPrivilege", 0), "Got SeLockMemoryPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseQuotaPrivilege", 0), "No SeIncreaseQuotaPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeMachineAccountPrivilege", 0), "Got SeMachineAccountPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTcbPrivilege", 0), "Got SeTcbPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSecurityPrivilege", 0), "Got SeSecurityPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTakeOwnershipPrivilege", 0), "Got SeTakeOwnershipPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeLoadDriverPrivilege", 0), "Got SeLoadDriverPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSystemProfilePrivilege", 0), "Got SeSystemProfilePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSystemtimePrivilege", 0), "Got SeSystemtimePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeProfileSingleProcessPrivilege", 0), "Got SeProfileSingleProcessPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeIncreaseBasePriorityPrivilege", 0), "Got SeIncreaseBasePriorityPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreatePagefilePrivilege", 0), "Got SeCreatePagefilePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreatePermanentPrivilege", 0), "Got SeCreatePermanentPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeBackupPrivilege", 0), "Got SeBackupPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRestorePrivilege", 0), "Got SeRestorePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeShutdownPrivilege", 0), "No SeShutdownPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeDebugPrivilege", 0), "Got SeDebugPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeAuditPrivilege", 0), "No SeAuditPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeSystemEnvironmentPrivilege", 0), "Got SeSystemEnvironmentPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeChangeNotifyPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeChangeNotifyPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRemoteShutdownPrivilege", 0), "Got SeRemoteShutdownPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeUndockPrivilege", 0), "No SeUndockPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeEnableDelegationPrivilege", 0), "Got SeEnableDelegationPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeManageVolumePrivilege", 0), "Got SeManageVolumePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeImpersonatePrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeImpersonatePrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeCreateGlobalPrivilege", SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED), "No SeCreateGlobalPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeTrustedCredManAccessPrivilege", 0), "Got SeTrustedCredManAccessPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeRelabelPrivilege", 0), "Got SeRelabelPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeIncreaseWorkingSetPrivilege", 0), "No SeIncreaseWorkingSetPrivilege.\n");
+                service_ok(is_in_privileges(privileges, "SeTimeZonePrivilege", 0), "No SeTimeZonePrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeCreateSymbolicLinkPrivilege", 0), "Got SeCreateSymbolicLinkPrivilege.\n");
+                service_ok(!is_in_privileges(privileges, "SeDelegateSessionUserImpersonatePrivilege", 0), "Got SeDelegateSessionUserImpersonatePrivilege.\n");
+            }
+            break;
+        }
+        case TokenOwner:
+        {
+            TOKEN_OWNER *owner = (TOKEN_OWNER *)buffer;
+
+            if (!strcmpi(username, "System"))
+                service_ok(EqualSid(owner->Owner, (PSID)&system), "Got unexpected owner.\n");
+            else if (!strcmpi(username, "LocalService"))
+                service_ok(EqualSid(owner->Owner, (PSID)&local_service), "Got unexpected owner.\n");
+            else if (!strcmpi(username, "NetworkService"))
+                service_ok(EqualSid(owner->Owner, (PSID)&network_service), "Got unexpected owner.\n");
+            break;
+        }
+        case TokenPrimaryGroup:
+        {
+            TOKEN_PRIMARY_GROUP *group = (TOKEN_PRIMARY_GROUP *)buffer;
+
+            if (!strcmpi(username, "System"))
+                service_ok(EqualSid(group->PrimaryGroup, (PSID)&system), "Got unexpected primary group.\n");
+            else if (!strcmpi(username, "LocalService"))
+                service_ok(EqualSid(group->PrimaryGroup, (PSID)&local_service), "Got unexpected primary group.\n");
+            else if (!strcmpi(username, "NetworkService"))
+                service_ok(EqualSid(group->PrimaryGroup, (PSID)&network_service), "Got unexpected primary group.\n");
+            break;
+        }
+        case TokenSource:
+        {
+            TOKEN_SOURCE *source = (TOKEN_SOURCE *)buffer;
+
+            service_ok(!memcmp(source->SourceName, "Advapi  ", sizeof(source->SourceName)),
+                       "Got unexpected source name %s.\n", wine_dbgstr_an(source->SourceName, sizeof(source->SourceName)));
+            service_ok(source->SourceIdentifier.LowPart || source->SourceIdentifier.HighPart,
+                       "Got unexpected luid.\n");
+            break;
+        }
+        case TokenType:
+        {
+            TOKEN_TYPE *type = (TOKEN_TYPE *)buffer;
+
+            service_ok(*type == TokenPrimary, "Got unexpected type %d.\n", *type);
+            break;
+        }
+        case TokenSessionId:
+        {
+            DWORD *id = (DWORD *)buffer;
+
+            service_todo_wine_ok(*id == 0, "Got unexpected id %#lx.\n", *id);
+            break;
+        }
+        case TokenElevationType:
+        {
+            TOKEN_ELEVATION_TYPE *type = (TOKEN_ELEVATION_TYPE *)buffer;
+
+            service_todo_wine_ok(*type == TokenElevationTypeDefault, "Got unexpected type %d.\n", *type);
+            break;
+        }
+        case TokenIntegrityLevel:
+        {
+            TOKEN_MANDATORY_LABEL *label = (TOKEN_MANDATORY_LABEL *)buffer;
+
+            service_todo_wine_ok(EqualSid(label->Label.Sid, (PSID)&system_label), "Got unexpected label.\n");
+            break;
+        }
+        case TokenUIAccess:
+        {
+            DWORD *access = (DWORD *)buffer;
+
+            service_todo_wine_ok(*access == 0, "Got unexpected access %#lx.\n", *access);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
+static void test_GetUserName(const char *username, HANDLE token)
+{
+    char token_buf[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
+    TOKEN_USER *token_user = (TOKEN_USER *)token_buf;
+    char buffer[512], buffer2[512];
+    SID_NAME_USE name_use;
+    DWORD size, size2;
+    BOOL ret;
+
+    ret = ImpersonateLoggedOnUser(token);
+    service_ok(ret, "ImpersonateLoggedOnUser failed, error %lu.\n", GetLastError());
+
+    size = ARRAY_SIZE(buffer);
+    ret = GetUserNameA(buffer, &size);
+    service_ok(ret, "GetUserNameA failed, error %lu.\n", GetLastError());
+    if (!strcmpi(username, "System"))
+    {
+        service_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
+    }
+    else if (!strcmpi(username, "LocalService"))
+    {
+        service_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
+    }
+    else if (!strcmpi(username, "NetworkService"))
+    {
+        size = ARRAY_SIZE(buffer2);
+        ret = GetComputerNameA(buffer2, &size);
+        service_ok(ret, "GetComputerNameA failed, error %lu.\n", GetLastError());
+
+        strcat(buffer2, "$");
+        service_ok(!strcmp(buffer2, buffer), "Expected username %s, got %s.\n", buffer2, buffer);
+    }
+
+    size = sizeof(token_buf);
+    ret = GetTokenInformation(token, TokenUser, token_user, size, &size);
+    service_ok(ret, "GetTokenInformation failed, error %lu.\n", GetLastError());
+
+    size = ARRAY_SIZE(buffer);
+    size2 = ARRAY_SIZE(buffer2);
+    ret = LookupAccountSidA(NULL, token_user->User.Sid, buffer, &size, buffer2, &size2, &name_use);
+    service_ok(ret, "LookupAccountSidA failed, error %lu.\n", GetLastError());
+
+    if (!strcmpi(username, "System"))
+        service_ok(!strcmp("SYSTEM", buffer), "Expected username SYSTEM, got %s.\n", buffer);
+    else if (!strcmpi(username, "LocalService"))
+        service_ok(!strcmp("LOCAL SERVICE", buffer), "Expected username LOCAL SERVICE, got %s.\n", buffer);
+    else if (!strcmpi(username, "NetworkService"))
+        service_ok(!strcmp("NETWORK SERVICE", buffer), "Expected username NETWORK SERVICE, got %s.\n", buffer);
+
+    ret = RevertToSelf();
+    service_ok(ret, "RevertToSelf failed, error %lu.\n", GetLastError());
+}
+
+static const WCHAR *get_env_from_block(const WCHAR *env_block, const WCHAR *name)
+{
+    const WCHAR *var = env_block;
+    int name_length = wcslen(name);
+
+    while (*var)
+    {
+        if (!_wcsnicmp(var, name, name_length) && var[name_length] == '=')
+            return var + name_length + 1;
+
+        var += wcslen(var) + 1;
+    }
+
+    return NULL;
+}
+
+static void check_environment_block(const void *env_block, const char *username, HANDLE token)
+{
+    static const struct env_var_test
+    {
+        const WCHAR *name;
+        const WCHAR *value;
+    }
+    tests[][3] =
+    {
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\system32\\config\\systemprofile"}
+        },
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\ServiceProfiles\\LocalService\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\ServiceProfiles\\LocalService\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\ServiceProfiles\\LocalService"}
+        },
+        {
+            {L"APPDATA", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService\\AppData\\Roaming"},
+            {L"LOCALAPPDATA", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService\\AppData\\Local"},
+            {L"USERPROFILE", L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"}
+        },
+    };
+    const struct env_var_test *test = NULL;
+    const WCHAR *value;
+    DWORD attr;
+    int i;
+
+    if (!strcmpi(username, "System"))
+        test = tests[0];
+    else if (!strcmpi(username, "LocalService"))
+        test = tests[1];
+    else
+        test = tests[2];
+
+    for (i = 0; i < 3; i++)
+    {
+        value = get_env_from_block(env_block, test[i].name);
+        service_ok(value && !wcsicmp(value, test[i].value), "%s: Got unexpected value %s for key %s.\n",
+                   username, wine_dbgstr_w(value), wine_dbgstr_w(test[i].name));
+
+        /* Check that these folders actually exist */
+        attr = GetFileAttributesW(test[i].value);
+        service_todo_wine_ok(attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_DIRECTORY,
+                             "Directory %s not found.\n", wine_dbgstr_w(test[i].value));
+
+        /* Check that %USERPROFILE% is equal to the value of ProfileImagePath at
+         * HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\ProfileList */
+        if (!wcsicmp(test[i].name, L"USERPROFILE"))
+        {
+            DWORD_PTR token_buf[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+            WCHAR key[256], profile_path[256] = {0}, *sid;
+            DWORD size;
+            LSTATUS ls;
+
+            size = sizeof(token_buf);
+            GetTokenInformation(token, TokenUser, token_buf, size, &size);
+            ConvertSidToStringSidW(((TOKEN_USER *)token_buf)->User.Sid, &sid);
+
+            wcscpy(key, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\");
+            wcscat(key, sid);
+            size = sizeof(profile_path);
+            ls = RegGetValueW(HKEY_LOCAL_MACHINE, key, L"ProfileImagePath", RRF_RT_REG_SZ, NULL, profile_path, &size);
+            service_todo_wine_ok(ls == ERROR_SUCCESS, "RegGetValueW ProfileImagePath failed, error %lu.\n", ls);
+            service_todo_wine_ok(!wcsicmp(profile_path, test[i].value), "Expected %s, got %s.\n",
+                                 wine_dbgstr_w(test[i].value), wine_dbgstr_w(profile_path));
+
+            LocalFree(sid);
+        }
+    }
+}
+
+static void test_CreateEnvironmentBlock(const char *username, HANDLE token)
+{
+    void *env_block;
+    DWORD ret;
+
+    ret = CreateEnvironmentBlock(&env_block, token, FALSE);
+    service_ok(ret, "CreateEnvironmentBlock failed, error %lu.\n", GetLastError());
+
+    check_environment_block(env_block, username, token);
+
+    ret = DestroyEnvironmentBlock(env_block);
+    service_ok(ret, "DestroyEnvironmentBlock failed, error %lu.\n", GetLastError());
+}
+
+static void test_SHGetFolderPathW(const char *username, HANDLE token)
+{
+    WCHAR buffer[MAX_PATH];
+    HRESULT hr;
+    BOOL ret;
+
+    /* SHGetFolderPathW() with an impersonation token */
+    ret = ImpersonateLoggedOnUser(token);
+    service_ok(ret, "ImpersonateLoggedOnUser failed, error %lu.\n", GetLastError());
+
+    hr = SHGetFolderPathW(NULL, CSIDL_PROFILE | CSIDL_FLAG_DONT_VERIFY, NULL, SHGFP_TYPE_CURRENT, buffer);
+    service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
+
+    if (!strcmpi(username, "System"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+    else if (!strcmpi(username, "LocalService"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+    else if (!strcmpi(username, "NetworkService"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+
+    hr = SHGetFolderPathW(NULL, CSIDL_PROFILE | CSIDL_FLAG_DONT_VERIFY, (HANDLE)-1, SHGFP_TYPE_CURRENT, buffer);
+    service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
+    service_ok(!wcsicmp(buffer, L"C:\\Users\\Default"), "Got unexpected %s.\n", wine_dbgstr_w(buffer));
+
+    ret = RevertToSelf();
+    service_ok(ret, "RevertToSelf failed, error %lu.\n", GetLastError());
+
+    /* SHGetFolderPathW() with a token parameter */
+    hr = SHGetFolderPathW(NULL, CSIDL_PROFILE | CSIDL_FLAG_DONT_VERIFY, token, SHGFP_TYPE_CURRENT, buffer);
+    service_ok(hr == S_OK, "SHGetFolderPathW failed, hr %#lx.\n", hr);
+
+    if (!strcmpi(username, "System"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\system32\\config\\systemprofile"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+    else if (!strcmpi(username, "LocalService"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\LocalService"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+    else if (!strcmpi(username, "NetworkService"))
+        service_ok(!wcsicmp(buffer, L"C:\\WINDOWS\\ServiceProfiles\\NetworkService"),
+                             "%s: Got unexpected %s.\n", username, wine_dbgstr_w(buffer));
+}
+
+/* LogonUser() needs the current thread user to be System to log into the System account. So the
+ * tests need to be in a service */
+static void test_LogonUser(void)
+{
+    HANDLE token;
+    DWORD error;
+    BOOL ret;
+    int i;
+
+    static struct
+    {
+        const char *username;
+        const char *domain;
+        const char *password;
+        DWORD type;
+        DWORD provider;
+        BOOL expected_ret;
+        DWORD expected_error;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+        {"LocalService", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+        {"NetworkService", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+
+        /* "LocalSystem" and "Service" are not accepted */
+        {"LocalSystem", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+        {"Service", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+
+        /* Domain must be specified */
+        {"System", NULL, NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+        {"System", ".", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+
+        /* User principal name formats are not accepted */
+        {"System@NT AUTHORITY", NULL, NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+        {"LocalService@NT AUTHORITY", NULL, NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+        {"NetworkService@NT AUTHORITY", NULL, NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE},
+
+        /* Passwords are ignored */
+        {"System", "NT AUTHORITY", "123456", LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+        {"LocalService", "NT AUTHORITY", "", LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+        {"NetworkService", "NT AUTHORITY", "deadbeef", LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, TRUE, 0},
+
+        /* Logon type should be LOGON32_LOGON_SERVICE. Using LOGON32_LOGON_NEW_CREDENTIALS can
+         * succeed but it breaks the named pipe used by the tests. Exclude it for now */
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_BATCH, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_UNLOCK, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_NETWORK_CLEARTEXT, LOGON32_PROVIDER_DEFAULT, FALSE, ERROR_LOGON_FAILURE, TRUE},
+
+        /* Provider type should be LOGON32_PROVIDER_DEFAULT. Using LOGON32_PROVIDER_WINNT50 can
+         * succeed but it breaks the named pipe used by the tests. Exclude it for now */
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT35, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_WINNT40, FALSE, ERROR_LOGON_FAILURE, TRUE},
+        {"System", "NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_VIRTUAL, FALSE, ERROR_ACCESS_DENIED, TRUE},
+    };
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        SetLastError(0xdeadbeef);
+        token = NULL;
+        ret = LogonUserA(tests[i].username, tests[i].domain, tests[i].password, tests[i].type,
+                         tests[i].provider, &token);
+        error = GetLastError();
+
+        if (tests[i].todo)
+        {
+            service_todo_wine_ok(ret == tests[i].expected_ret, "test %d: got unexpected return value %d.\n", i, ret);
+            service_todo_wine_ok(error == tests[i].expected_error, "test %d: expected error %lu, got %lu.\n",
+                                 i, tests[i].expected_error, error);
+            if (ret && token && token != (HANDLE)0xdeadbeef /* Wine */)
+                CloseHandle(token);
+            continue;
+        }
+        else
+        {
+            service_ok(ret == tests[i].expected_ret, "test %d: got unexpected return value %d.\n", i, ret);
+            service_ok(error == tests[i].expected_error, "test %d: expected error %lu, got %lu.\n",
+                       i, tests[i].expected_error, error);
+        }
+
+        if (ret)
+        {
+            check_token_information(tests[i].username, token);
+            test_GetUserName(tests[i].username, token);
+            test_CreateEnvironmentBlock(tests[i].username, token);
+            test_SHGetFolderPathW(tests[i].username, token);
+            CloseHandle(token);
+        }
+    }
+}
+
 static DWORD WINAPI service_handler(DWORD ctrl, DWORD event_type, void *event_data, void *context)
 {
     SERVICE_STATUS status;
@@ -197,6 +834,7 @@ static DWORD WINAPI service_handler(DWORD ctrl, DWORD event_type, void *event_da
         test_winstation();
         test_create_window();
         test_monitors();
+        test_LogonUser();
         service_event("CUSTOM");
         return 0xdeadbeef;
     default:
@@ -418,6 +1056,10 @@ static DWORD WINAPI pipe_thread(void *arg)
                 ok(1, "service: %s", ptr+3);
             }else if(!strncmp(ptr, "FAIL:", 5)) {
                 ok(0, "service: %s", ptr+5);
+            }else if(!strncmp(ptr, "TODO_WINE OK:", 13)) {
+                todo_wine ok(1, "service: %s", ptr+13);
+            }else if(!strncmp(ptr, "TODO_WINE FAIL:", 15)) {
+                todo_wine ok(0, "service: %s", ptr+15);
             }else if(!strncmp(ptr, "EVENT:", 6)) {
                 trace("service event: %s\n", ptr+6);
                 EnterCriticalSection(&event_cs);

@@ -304,6 +304,8 @@ static void test_key_import_rsa(void)
 {
     NCRYPT_PROV_HANDLE prov;
     NCRYPT_KEY_HANDLE key;
+    NCryptBuffer buf;
+    NCryptBufferDesc desc;
     SECURITY_STATUS ret;
 
     prov = 0;
@@ -350,6 +352,15 @@ static void test_key_import_rsa(void)
     ret = NCryptImportKey(prov, 0, BCRYPT_PUBLIC_KEY_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob) + 1, 0);
     ok(ret == NTE_BAD_DATA, "got %#lx\n", ret);
 
+    buf.cbBuffer   = sizeof(L"winetestkey");
+    buf.BufferType = NCRYPTBUFFER_PKCS_KEY_NAME;
+    buf.pvBuffer   = (void *)L"winetestkey";
+    desc.ulVersion = NCRYPTBUFFER_VERSION;
+    desc.cBuffers  = 1;
+    desc.pBuffers  = &buf;
+    ret = NCryptImportKey(prov, 0, BCRYPT_PUBLIC_KEY_BLOB, &desc, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    NCryptDeleteKey(key, 0);
     NCryptFreeObject(prov);
 }
 
@@ -859,14 +870,48 @@ static void test_NCryptExportKey(void)
     size = 0;
     ret = NCryptExportKey(key, 0, BCRYPT_RSAPRIVATE_BLOB, NULL, buffer, sizeof(buffer), &size, 0);
     ok(ret == ERROR_SUCCESS, "got unexpected return value %lx\n", ret);
-    ok(size == 283, "got unexpected size %#lx\n", size);
+    ok(size == 283, "got %lu\n", size);
 
     size = 0;
     ret = NCryptExportKey(key, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL, buffer, sizeof(buffer), &size, 0);
     ok(ret == ERROR_SUCCESS, "got unexpected return value %lx\n", ret);
-    ok(size == 603, "got unexpected size %#lx\n", size);
+    ok(size == 603, "got %lu\n", size);
 
-    NCryptFreeObject(key);
+    NCryptDeleteKey(key, 0);
+    NCryptFreeObject(prov);
+}
+
+static void test_NCryptImportKey(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key, key2;
+    SECURITY_STATUS ret;
+    DWORD size;
+    BYTE buffer[256];
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ret = NCryptFinalizeKey(key, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    ret = NCryptExportKey(key, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, buffer, sizeof(buffer), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == 72, "got %lu\n", size);
+
+    ret = NCryptImportKey(prov, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, &key2, buffer, size, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    memset(buffer, 0, sizeof(buffer));
+    ret = NCryptGetProperty(key2, NCRYPT_ALGORITHM_GROUP_PROPERTY, buffer, sizeof(buffer), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(!wcscmp((const WCHAR *)buffer, L"ECDSA"), "got %s\n", wine_dbgstr_w((const WCHAR *)buffer));
+
+    NCryptDeleteKey(key, 0);
+    NCryptDeleteKey(key2, 0);
     NCryptFreeObject(prov);
 }
 
@@ -883,4 +928,5 @@ START_TEST(ncrypt)
     test_NCryptEncrypt();
     test_NCryptDecrypt();
     test_NCryptExportKey();
+    test_NCryptImportKey();
 }

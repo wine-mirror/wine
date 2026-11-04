@@ -986,22 +986,10 @@ static BOOLEAN get_dir_case_sensitivity_stat( int root_fd, const char *dir )
         !strcmp( stfs.f_fstypename, "udf" ) ||
         !strcmp( stfs.f_fstypename, "ntfs" ))
         return FALSE;
-#ifdef _DARWIN_FEATURE_64_BIT_INODE
      if (!strcmp( stfs.f_fstypename, "hfs" ) && (stfs.f_fssubtype == 0 ||
                                                  stfs.f_fssubtype == 1 ||
                                                  stfs.f_fssubtype == 128))
         return FALSE;
-#else
-     /* The field says "reserved", but a quick look at the kernel source
-      * tells us that this "reserved" field is really the same as the
-      * "fssubtype" field from the inode64 structure (see munge_statfs()
-      * in <xnu-source>/bsd/vfs/vfs_syscalls.c).
-      */
-     if (!strcmp( stfs.f_fstypename, "hfs" ) && (stfs.f_reserved1 == 0 ||
-                                                 stfs.f_reserved1 == 1 ||
-                                                 stfs.f_reserved1 == 128))
-        return FALSE;
-#endif
 #endif
     return TRUE;
 

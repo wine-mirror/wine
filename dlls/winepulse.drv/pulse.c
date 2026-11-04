@@ -1492,7 +1492,7 @@ static void pulse_read(struct pulse_stream *stream)
 
         if (stream->started)
         {
-            LARGE_INTEGER stamp, freq;
+            LARGE_INTEGER stamp;
             ACPacket *p, *next;
 
             if (!(p = (ACPacket*)list_head(&stream->packet_free_head)))
@@ -1509,8 +1509,8 @@ static void pulse_read(struct pulse_stream *stream)
             {
                 stream->held_bytes += stream->period_bytes;
             }
-            NtQueryPerformanceCounter(&stamp, &freq);
-            p->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+            NtQueryPerformanceCounter(&stamp, NULL);
+            p->qpcpos = stamp.QuadPart;
             p->discont = 0;
             list_remove(&p->entry);
             list_add_tail(&stream->packet_filled_head, &p->entry);
@@ -2334,9 +2334,9 @@ static NTSTATUS pulse_get_position(void *args)
 
     if (params->qpctime)
     {
-        LARGE_INTEGER stamp, freq;
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        LARGE_INTEGER stamp;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *params->qpctime = stamp.QuadPart;
     }
 
     params->result = S_OK;

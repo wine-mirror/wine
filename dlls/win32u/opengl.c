@@ -44,8 +44,6 @@ struct opengl_thread_data
     struct opengl_context  *core_context;    /* dummy core context when no client context is active */
     struct opengl_context  *compat_context;  /* dummy COMPATIBILITY context when no client context is active */
     struct opengl_context  *noerror_context; /* dummy NO_ERROR context when no client context is active */
-
-    struct opengl_drawable *null_surface;  /* dummy surface when no client context is active */
     BOOL                    client_current; /* whether the client context is current */
 };
 
@@ -257,25 +255,30 @@ static void parse_current_extensions( int major, BOOLEAN extensions[GL_EXTENSION
 
 static struct opengl_context *internal_context_create( struct opengl_context_attrs attrs, struct opengl_context *root )
 {
-    struct opengl_context *context;
+    struct opengl_context *context = NULL;
 
-    for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
+    /* create a context with the requested format or try to use a standard RGB format */
+    if (attrs.format) context = driver_funcs->p_context_create( &attrs, root );
+    if (!context) for (attrs.format = 1; attrs.format <= formats_count; attrs.format++)
     {
         struct wgl_pixel_format *desc = pixel_formats + attrs.format - 1;
         if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
 
-        if (!(context = driver_funcs->p_context_create( &attrs, root ))) continue;
-        context->root_context = root ? root : context;
-        context->attrs = attrs;
-
-        TRACE( "Created internal %s context %p with attrs %s\n", root ? "thread" : "root", context, debugstr_opengl_context_attrs( &attrs ) );
-        return context;
+        if ((context = driver_funcs->p_context_create( &attrs, root ))) break;
     }
 
-    ERR( "Failed to create internal %s context with attrs %s\n", root ? "thread" : "root", debugstr_opengl_context_attrs( &attrs ) );
-    return calloc( 1, sizeof(*context) ); /* return a valid pointer nonetheless */
+    if (!context)
+    {
+        ERR( "Failed to create internal %s context with attrs %s\n", root ? "thread" : "root", debugstr_opengl_context_attrs( &attrs ) );
+        if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+    }
+    context->root_context = root ? root : context;
+    context->attrs = attrs;
+
+    TRACE( "Created internal %s context %p with attrs %s\n", root ? "thread" : "root", context, debugstr_opengl_context_attrs( &attrs ) );
+    return context;
 }
 
 static struct opengl_context *get_root_context( struct opengl_context_attrs attrs )
@@ -453,31 +456,27 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
-static struct opengl_drawable *get_null_surface( struct opengl_context *context )
+static struct opengl_context *get_thread_context( struct opengl_context *root, struct opengl_drawable *drawable )
 {
-    struct opengl_thread_data *data = get_opengl_thread_data();
-
-    if (!driver_funcs->p_null_surface_create) return NULL;
-    if (!data->null_surface || data->null_surface->format != context->attrs.format)
-    {
-        if (data->null_surface) opengl_drawable_release( data->null_surface );
-        driver_funcs->p_null_surface_create( context->attrs.format, &data->null_surface );
-        TRACE( "created null surface %p with format %d\n", data->null_surface, context->attrs.format );
-    }
-
-    return data->null_surface;
-}
-
-static struct opengl_context *get_thread_context( struct opengl_context_attrs attrs )
-{
+    struct opengl_context_attrs attrs = root ? root->attrs : core_attrs;
     struct opengl_thread_data *data = get_opengl_thread_data();
     struct opengl_context **context;
+
+    if (!root && !(root = get_root_context( attrs ))) return NULL;
 
     if (attrs.profile & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB && driver_funcs->broken_sharing) context = &data->compat_context;
     else if (attrs.no_error) context = &data->noerror_context;
     else context = &data->core_context;
 
-    if (!*context) *context = internal_context_create( attrs, get_root_context( attrs ) );
+    /* re-create the context if the drawable we want to activate uses a different format */
+    if (drawable && driver_funcs->context_format) attrs.format = drawable->format;
+    if (*context && (*context)->attrs.format != attrs.format)
+    {
+        driver_funcs->p_context_destroy( *context );
+        *context = NULL;
+    }
+
+    if (!*context) *context = internal_context_create( attrs, root );
     return *context;
 }
 
@@ -493,8 +492,6 @@ static void context_exchange_drawables( struct opengl_context *context, struct o
 static BOOL make_internal_context_current( struct opengl_context *context, struct opengl_drawable *drawable )
 {
     struct opengl_drawable *old_draw, *old_read;
-
-    if (!drawable) drawable = get_null_surface( context );
 
     if (!driver_funcs->p_context_activate( context, drawable, drawable )) return FALSE;
     if (!context->initialized) opengl_context_init( context );
@@ -513,7 +510,7 @@ static BOOL make_internal_context_current( struct opengl_context *context, struc
 
 static BOOL make_thread_context_current( struct opengl_context *root, struct opengl_drawable *drawable )
 {
-    return make_internal_context_current( get_thread_context( root ? root->attrs : core_attrs ), drawable );
+    return make_internal_context_current( get_thread_context( root, drawable ), drawable );
 }
 
 struct vertex
@@ -670,9 +667,9 @@ struct framebuffer_surface
     struct opengl_drawable  base;
     struct opengl_context  *root_context;
     struct opengl_drawable *target;         /* driver drawable to present to */
-
-    LONG gamma_serial;
-    GLuint program;
+    LONG                    gamma_serial;   /* serial of the last gamma ramp update */
+    GLuint                  program;        /* shader program for gamma or multisampled blits */
+    D3DKMT_HANDLE           swapchain;      /* target swapchain for cross-process rendering */
 };
 
 static const struct opengl_drawable_funcs framebuffer_surface_funcs;
@@ -687,7 +684,7 @@ static struct opengl_drawable *get_target( struct opengl_drawable *drawable, str
     if (drawable->funcs == &framebuffer_surface_funcs)
     {
         struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
-        return surface->target ? surface->target : get_null_surface( context );
+        return surface->target;
     }
     return drawable;
 }
@@ -961,7 +958,46 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
         make_thread_context_current( surface->root_context, NULL );
         framebuffer_surface_reset( drawable );
     }
+    if (surface->swapchain) d3dkmt_swapchain_destroy_remote( surface->swapchain );
     if (surface->target) opengl_drawable_release( surface->target );
+}
+
+static NTSTATUS framebuffer_swapchain_acquire_image( struct opengl_drawable *drawable, UINT *index )
+{
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+    NTSTATUS status;
+    SIZE size;
+
+    if (!drawable->hwnd) return STATUS_NOT_IMPLEMENTED;
+
+    for (;;)
+    {
+        if (surface->swapchain)
+        {
+            if (!(status = d3dkmt_swapchain_acquire_image( surface->swapchain, index ))) return status;
+            d3dkmt_swapchain_destroy_remote( surface->swapchain );
+            surface->swapchain = 0;
+            if (status != STATUS_GRAPHICS_ALLOCATION_CONTENT_LOST) return status;
+        }
+
+        if ((status = d3dkmt_swapchain_create_remote( drawable->hwnd, &size, &surface->swapchain ))) return status;
+        if (memcmp( &size, &drawable->virtual_size, sizeof(size) ))
+        {
+            drawable->virtual_size = drawable->monitor_size = size;
+            opengl_drawable_flush( drawable, drawable->interval, GL_FLUSH_UPDATED );
+        }
+    }
+}
+
+static NTSTATUS framebuffer_swapchain_queue_present( struct opengl_drawable *drawable, UINT index )
+{
+    struct framebuffer_surface *surface = framebuffer_from_opengl_drawable( drawable );
+    struct client_surface *client;
+
+    if (!(client = drawable->client)) return STATUS_NOT_IMPLEMENTED;
+    if (!surface->swapchain) return STATUS_NOT_IMPLEMENTED;
+
+    return d3dkmt_swapchain_queue_present( surface->swapchain, index );
 }
 
 static void blit_framebuffer_surface( struct opengl_drawable *drawable )
@@ -971,8 +1007,16 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
+    NTSTATUS status;
+    UINT index = -1;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
+
+    if ((status = framebuffer_swapchain_acquire_image( drawable, &index )))
+    {
+        WARN( "Failed to acquire swapchain image, status %#x\n", status );
+        index = -1;
+    }
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
@@ -1025,6 +1069,12 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     }
 
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+
+    if (index != -1)
+    {
+        status = framebuffer_swapchain_queue_present( drawable, index );
+        if (status) WARN( "Failed to present swapchain image, status %#x\n", status );
+    }
 }
 
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
@@ -2132,7 +2182,7 @@ static struct opengl_drawable *get_window_current_drawable( HWND hwnd )
     return drawable;
 }
 
-static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format )
+static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format, BOOL raw )
 {
     struct opengl_drawable *drawable = NULL;
     WND *win;
@@ -2159,13 +2209,13 @@ static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format
     {
         struct client_surface *client;
 
-        if (!(client = get_unused_client_surface( hwnd, format, emulate_modeset )))
+        if (!(client = get_unused_client_surface( hwnd, format, raw || emulate_modeset )))
             WARN( "Failed to create a surface for window %p, format %d\n", hwnd, format );
         else
         {
             if (!(driver_funcs->p_surface_create( client, format, &drawable )))
                 WARN( "Failed to create a drawable for window %p, format %d\n", hwnd, format );
-            else if (emulate_modeset && drawable->funcs != &framebuffer_surface_funcs)
+            else if (!raw && emulate_modeset && drawable->funcs != &framebuffer_surface_funcs)
             {
                 struct opengl_drawable *framebuffer = framebuffer_surface_create( format, client, NULL, drawable );
                 opengl_drawable_release( drawable );
@@ -2470,7 +2520,7 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
 
         if ((old_format = get_window_pixel_format( hwnd ))) return old_format == new_format;
 
-        if (!(drawable = get_window_unused_drawable( hwnd, new_format ))) return FALSE;
+        if (!(drawable = get_window_unused_drawable( hwnd, new_format, FALSE ))) return FALSE;
         set_window_opengl_drawable( hwnd, drawable, TRUE );
         set_window_opengl_drawable( hwnd, drawable, FALSE );
         opengl_drawable_release( drawable );
@@ -2532,7 +2582,7 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
         opengl_drawable_release( drawable );
         drawable = NULL;
     }
-    if (format && (drawable || (drawable = get_window_unused_drawable( hwnd, format ))))
+    if (format && (drawable || (drawable = get_window_unused_drawable( hwnd, format, FALSE ))))
     {
         set_window_opengl_drawable( hwnd, drawable, TRUE );
         set_dc_opengl_drawable( hdc, drawable );
@@ -2583,7 +2633,7 @@ static struct opengl_drawable *get_updated_drawable( HDC hdc, int format, struct
     if (hdc && (drawable = get_dc_opengl_drawable( hdc ))) return drawable;
 
     /* get an updated drawable with the desired format */
-    return get_window_unused_drawable( hwnd, format );
+    return get_window_unused_drawable( hwnd, format, FALSE );
 }
 
 static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc, HDC read_hdc )
@@ -3056,6 +3106,10 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
     {
         WARN( "Using default core profile for context version %d.%d\n", attrs.major, attrs.minor );
         attrs.profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+    }
+    else if (!attrs.profile)
+    {
+        attrs.profile = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
     }
 
     if (!(root = get_root_context( attrs )) || (share && share->root_context != root))
@@ -3624,6 +3678,116 @@ void cleanup_opengl_thread(void)
     if (data->core_context) win32u_context_destroy( data->core_context );
     if (data->compat_context) win32u_context_destroy( data->compat_context );
     if (data->noerror_context) win32u_context_destroy( data->noerror_context );
-    if (data->null_surface) opengl_drawable_release( data->null_surface );
     free( data );
+}
+
+struct opengl_swapchain
+{
+    struct list entry;
+    struct opengl_drawable *drawable;
+    D3DKMT_HANDLE global;
+    D3DKMT_HANDLE local;
+};
+
+static struct opengl_swapchain *get_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, BOOL remove )
+{
+    struct opengl_swapchain *swapchain;
+    WND *win;
+
+    if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return NULL;
+    LIST_FOR_EACH_ENTRY( swapchain, &win->opengl_swapchains, struct opengl_swapchain, entry )
+        if (swapchain->global == global) break;
+    if (&swapchain->entry == &win->opengl_swapchains) swapchain = NULL;
+    else if (remove) list_remove( &swapchain->entry );
+    release_win_ptr( win );
+
+    return swapchain;
+}
+
+static void free_opengl_swapchain( struct opengl_swapchain *swapchain )
+{
+    TRACE( "swapchain %p/%#x local %#x\n", swapchain, swapchain->global, swapchain->local );
+
+    if (swapchain->local) d3dkmt_swapchain_destroy( swapchain->local );
+    if (swapchain->drawable) opengl_drawable_release( swapchain->drawable );
+    free( swapchain );
+}
+
+D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
+{
+    struct opengl_swapchain *swapchain;
+    D3DKMT_HANDLE resources[3], global;
+    const struct opengl_funcs *funcs;
+    int format;
+    SIZE size;
+    WND *win;
+
+    TRACE( "toplevel %p hwnd %p\n", toplevel, hwnd );
+
+    if (!(funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION ))) return 0;
+
+    for (format = 1; format <= formats_count; format++)
+    {
+        struct wgl_pixel_format *desc = pixel_formats + format - 1;
+        if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
+        if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
+        if (desc->pfd.cColorBits == 24) break;
+    }
+
+    if (!(swapchain = calloc( 1, sizeof(*swapchain) ))) return 0;
+    if (!(swapchain->drawable = get_window_unused_drawable( hwnd, format, TRUE ))) goto failed;
+    size = swapchain->drawable->virtual_size;
+
+    for (UINT i = 0; i < ARRAY_SIZE(resources); i++)
+    {
+        resources[i] = d3dkmt_create_resource( -1, &global );
+        if (!resources[i]) goto failed;
+    }
+
+    if (d3dkmt_swapchain_create( toplevel, hwnd, size, resources, &swapchain->local, &swapchain->global )) goto failed;
+
+    if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) goto failed;
+    list_add_tail( &win->opengl_swapchains, &swapchain->entry );
+    release_win_ptr( win );
+
+    TRACE( "Created external swapchain %p/%#x\n", swapchain, swapchain->global );
+    return swapchain->global;
+
+failed:
+    WARN( "Failed to create external swapchain\n" );
+    free_opengl_swapchain( swapchain );
+    return 0;
+}
+
+BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global )
+{
+    struct opengl_swapchain *swapchain;
+
+    TRACE( "toplevel %p global %#x\n", toplevel, global );
+
+    if (!(swapchain = get_opengl_swapchain( toplevel, global, TRUE ))) return FALSE;
+    free_opengl_swapchain( swapchain );
+    return TRUE;
+}
+
+BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index )
+{
+    struct opengl_swapchain *swapchain;
+
+    TRACE( "toplevel %p global %#x index %#x\n", toplevel, global, index );
+
+    if (!(swapchain = get_opengl_swapchain( toplevel, global, FALSE ))) return FALSE;
+    return TRUE;
+}
+
+void free_opengl_swapchains( struct list *swapchains )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( swapchains )))
+    {
+        struct opengl_swapchain *swapchain = LIST_ENTRY( ptr, struct opengl_swapchain, entry );
+        list_remove( &swapchain->entry );
+        free_opengl_swapchain( swapchain );
+    }
 }

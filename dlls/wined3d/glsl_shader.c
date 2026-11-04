@@ -1503,9 +1503,9 @@ static void get_projection_matrix(const struct wined3d_context *context,
      * If we have GL_ARB_clip_control we take care of all this through
      * viewport properties and don't have to translate geometry. */
 
-    /* Projection matrices are <= d3d9, which all have integer pixel centers. */
-    if (!(d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
-        ERR("Did not expect to enter this codepath without WINED3D_PIXEL_CENTER_INTEGER.\n");
+    /* Projection matrices are <= d3d9. */
+    if (!(d3d_info->wined3d_creation_flags & WINED3D_LEGACY))
+        ERR("Did not expect to enter this codepath without WINED3D_LEGACY.\n");
 
     clip_control = d3d_info->clip_control;
     flip = !clip_control;
@@ -7970,7 +7970,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     {
         if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         {
-            if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
+            if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY)
                 shader_addline(buffer, "layout(pixel_center_integer) in vec4 gl_FragCoord;\n");
         }
         shader_addline(buffer, "vec4 vpos;\n");
@@ -8063,7 +8063,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     if (reg_maps->vpos)
     {
         if (!gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]
-                && (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
+                && (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY))
             shader_addline(buffer, "vpos = floor(gl_FragCoord);\n");
         else
             shader_addline(buffer, "vpos = gl_FragCoord;\n");

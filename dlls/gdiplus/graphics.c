@@ -3033,7 +3033,7 @@ GpStatus WINGDIPAPI GdipDrawCurve3(GpGraphics *graphics, GpPen *pen,
 {
     TRACE("(%p, %p, %p, %d, %d, %d, %.2f)\n", graphics, pen, points, count, offset, numberOfSegments, tension);
 
-    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+    if(offset < 0 || offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
         return InvalidParameter;
     }
 
@@ -3050,7 +3050,7 @@ GpStatus WINGDIPAPI GdipDrawCurve3I(GpGraphics *graphics, GpPen *pen,
         return OutOfMemory;
     }
 
-    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+    if(offset < 0 || offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
         return InvalidParameter;
     }
 
@@ -3824,7 +3824,7 @@ end:
 static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
-    GpPath *flat_path, *anchor_path;
+    GpPath *flat_path, *anchor_path = NULL;
     GpRegion *anchor_region;
     GpMatrix* transform;
     GpRectF gp_bound_rect;
@@ -6245,6 +6245,17 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (regionCount < stringFormat->range_count)
         return InvalidParameter;
 
+    /* nothing is laid out in a layout rectangle with a negative width */
+    if (layoutRect->Width < 0.0f)
+        return Ok;
+
+    if (layoutRect->Height < 0.0f && !(stringFormat->attr & StringFormatFlagsNoClip))
+    {
+        for (i = 0; i < stringFormat->range_count; i++)
+            GdipSetEmpty(regions[i]);
+        return Ok;
+    }
+
     if(!has_gdi_dc(graphics))
     {
         hdc = temp_hdc = CreateCompatibleDC(0);
@@ -6676,6 +6687,11 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(graphics->busy)
         return ObjectBusy;
 
+    /* a layout rectangle with a negative size clips the string away */
+    if ((!format || !(format->attr & StringFormatFlagsNoClip)) && rect->Width && rect->Height &&
+        (rect->Width < 0.0f || rect->Height < 0.0f))
+        return Ok;
+
     if(has_gdi_dc(graphics))
     {
         status = gdi_dc_acquire(graphics, &hdc);
@@ -6746,7 +6762,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         if (scaled_rect.Height >= 0.5)
         {
             scaled_rect.Height -= margin_x * 2.0 * rel_height;
-            if (scaled_rect.Width < 0.5) /* doesn't fit */
+            if (scaled_rect.Height < 0.5) /* doesn't fit */
                 goto end;
         }
     }
@@ -8611,6 +8627,9 @@ GpStatus WINGDIPAPI GdipIsVisibleClipEmpty(GpGraphics *graphics, BOOL *res)
     GpRegion* rgn;
 
     TRACE("(%p, %p)\n", graphics, res);
+
+    if(!graphics || !res)
+        return InvalidParameter;
 
     if((stat = GdipCreateRegion(&rgn)) != Ok)
         return stat;

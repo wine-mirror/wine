@@ -1807,7 +1807,7 @@ static NTSTATUS get_image_machine( HANDLE handle, USHORT *machine )
                          &iosb, &dos_hdr, sizeof(dos_hdr), &offset, NULL );
     if (!status)
     {
-        offset.QuadPart = dos_hdr.e_lfanew;
+        offset.QuadPart = (ULONG)dos_hdr.e_lfanew;
         status = NtReadFile( handle, NULL, NULL, NULL, &iosb,
                              &nt_hdr, FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader), &offset, NULL );
         if (!status)

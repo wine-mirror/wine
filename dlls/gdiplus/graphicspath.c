@@ -153,10 +153,12 @@ struct flatten_bezier_job
     REAL x3;
     REAL y3;
     path_list_node_t *end;
+    unsigned int depth;
     struct list entry;
 };
 
-static BOOL flatten_bezier_add(struct list *jobs, path_list_node_t *start, REAL x2, REAL y2, REAL x3, REAL y3, path_list_node_t *end)
+static BOOL flatten_bezier_add(struct list *jobs, path_list_node_t *start, REAL x2, REAL y2, REAL x3, REAL y3,
+                               path_list_node_t *end, unsigned int depth)
 {
     struct flatten_bezier_job *job = malloc(sizeof(struct flatten_bezier_job));
     if (!job)
@@ -168,6 +170,7 @@ static BOOL flatten_bezier_add(struct list *jobs, path_list_node_t *start, REAL 
     job->x3 = x3;
     job->y3 = y3;
     job->end = end;
+    job->depth = depth;
 
     list_add_after(jobs, &job->entry);
     return TRUE;
@@ -202,9 +205,14 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     struct list jobs;
     struct flatten_bezier_job *current, *next;
 
+    /* such curves never become flat, replace them with a line */
+    if (!(flatness > 0.0f) || !isfinite(start->pt.X) || !isfinite(start->pt.Y) || !isfinite(x2) || !isfinite(y2) ||
+        !isfinite(x3) || !isfinite(y3) || !isfinite(end->pt.X) || !isfinite(end->pt.Y))
+        return TRUE;
+
     flatness = 0.62f * flatness;
     list_init( &jobs );
-    flatten_bezier_add(&jobs, start, x2, y2, x3, y3, end);
+    flatten_bezier_add(&jobs, start, x2, y2, x3, y3, end, 0);
     LIST_FOR_EACH_ENTRY( current, &jobs, struct flatten_bezier_job, entry )
     {
         start = current->start;
@@ -235,6 +243,11 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
         pt = end->pt;
         pt_st = start->pt;
 
+        /* the curve can't be split any further within float precision */
+        if (current->depth >= 16 || (mp[2].X == pt_st.X && mp[2].Y == pt_st.Y) ||
+            (mp[2].X == pt.X && mp[2].Y == pt.Y))
+            continue;
+
         /* Test for closely spaced points that don't need to be flattened
          * Also avoids limited-precision errors in flatness check
          */
@@ -246,10 +259,11 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          * formula for distance point from line for point (x0, y0) and line (x1, y1) (x2, y2)
          * is defined as (area_triangle / distance_start_end):
          *     | (x2 - x1) * (y1 - y0) - (x1 - x0) * (y2 - y1) / sqrt( (x2 - x1)^2 + (y2 - y1)^2 ) |
-         * Here rearranged to avoid division and simplified:
-         *     x0(y2 - y1) + y0(x1 - x2) + (x2*y1 - x1*y2)
+         * Here rearranged to avoid division and computed relative to (x1, y1),
+         * so that large coordinates don't cancel out:
+         *     (x0 - x1)(y2 - y1) - (y0 - y1)(x2 - x1)
          */
-        area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
+        area_triangle = (pt.Y - pt_st.Y)*(mp[2].X - pt_st.X) - (pt.X - pt_st.X)*(mp[2].Y - pt_st.Y);
         distance_start_end = hypotf(pt.Y - pt_st.Y, pt_st.X - pt.X);
         if(fabs(area_triangle) <= flatness * distance_start_end){
             continue;
@@ -263,9 +277,9 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
             };
 
         /* do the same with halves */
-        if (!flatten_bezier_add(&current->entry, node,  mp[3].X, mp[3].Y, mp[4].X, mp[4].Y, end))
+        if (!flatten_bezier_add(&current->entry, node,  mp[3].X, mp[3].Y, mp[4].X, mp[4].Y, end, current->depth + 1))
             break;
-        if (!flatten_bezier_add(&current->entry, start, mp[0].X, mp[0].Y, mp[1].X, mp[1].Y, node))
+        if (!flatten_bezier_add(&current->entry, start, mp[0].X, mp[0].Y, mp[1].X, mp[1].Y, node, current->depth + 1))
             break;
     }
 
@@ -1164,6 +1178,10 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     if (!path || !string || !family || !emSize || !layoutRect)
         return InvalidParameter;
 
+    /* nothing is laid out in a layout rectangle with a negative width */
+    if (layoutRect->Width < 0.0f)
+        return Ok;
+
     if (!format)
         format = &default_drawstring_format;
 
@@ -1546,13 +1564,15 @@ GpStatus WINGDIPAPI GdipGetPathData(GpPath *path, GpPathData* pathData)
 {
     TRACE("(%p, %p)\n", path, pathData);
 
-    if(!path || !pathData)
+    if(!path || !pathData || !pathData->Points || !pathData->Types)
         return InvalidParameter;
 
-    /* Only copy data. pathData allocation/freeing controlled by wrapper class.
-       Assumed that pathData is enough wide to get all data - controlled by wrapper too. */
-    memcpy(pathData->Points, path->pathdata.Points, sizeof(PointF) * pathData->Count);
-    memcpy(pathData->Types , path->pathdata.Types , pathData->Count);
+    if(pathData->Count < path->pathdata.Count)
+        return OutOfMemory;
+
+    memcpy(pathData->Points, path->pathdata.Points, sizeof(PointF) * path->pathdata.Count);
+    memcpy(pathData->Types, path->pathdata.Types, path->pathdata.Count);
+    pathData->Count = path->pathdata.Count;
 
     return Ok;
 }
@@ -2526,6 +2546,8 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
                 if ((dash_index % 2) == 0)
                 {
                     /* start dash */
+                    if (segment_pos == segment_length)
+                        break;
                     num_tmp_points = 1;
                     tmp_points[0].X = path->pathdata.Points[i].X + segment_dx * segment_pos / segment_length;
                     tmp_points[0].Y = path->pathdata.Points[i].Y + segment_dy * segment_pos / segment_length;

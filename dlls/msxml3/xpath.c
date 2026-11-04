@@ -6015,7 +6015,7 @@ static void xpath_builtin_concat(struct xpath_parser_context *ctxt, int nargs)
     struct xpath_object *cur, *newobj;
     WCHAR *tmp;
 
-    if (ctxt)
+    if (!ctxt)
         return;
 
     if (nargs < 2)
@@ -6149,13 +6149,12 @@ static void xpath_builtin_id(struct xpath_parser_context *ctxt, int nargs)
         return;
     }
     obj = xpath_convert_string(ctxt, obj);
-    if (obj) return;
+    if (!obj) return;
 
     ret = xpath_get_elements_by_id(ctxt->context->root, obj->stringval);
     xpath_push_value(ctxt, xpath_wrap_nodeset(ctxt, ret));
 
     xpath_object_release(ctxt->context, obj);
-    return;
 }
 
 static void xpath_builtin_last(struct xpath_parser_context *ctxt, int nargs)
@@ -6475,7 +6474,7 @@ static void xpath_builtin_string_length(struct xpath_parser_context *ctxt, int n
 
         return;
     }
-    if (!xpath_builtin_check_stack(ctxt, nargs, 0))
+    if (!xpath_builtin_check_stack(ctxt, nargs, 1))
         return;
     xpath_arg_cast_to_number(ctxt);
     if (!xpath_check_type(ctxt, _XPATH_STRING))
@@ -6665,7 +6664,7 @@ static void xpath_builtin_sum(struct xpath_parser_context *ctxt, int nargs)
     struct xpath_object *cur;
     double res = 0.0;
 
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
+    if (!xpath_builtin_check_stack(ctxt, nargs, 1))
         return;
     if (!ctxt->value || (ctxt->value->type != _XPATH_NODESET))
     {

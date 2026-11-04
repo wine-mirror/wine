@@ -187,14 +187,14 @@ RETURN_CODE WCMD_color(void);
 RETURN_CODE WCMD_copy(WCHAR *);
 RETURN_CODE WCMD_create_dir(struct word_iterator *);
 RETURN_CODE WCMD_delete(struct word_iterator *);
-RETURN_CODE WCMD_directory(WCHAR *);
+RETURN_CODE WCMD_directory(struct word_iterator *);
 RETURN_CODE WCMD_echo(const WCHAR *);
 RETURN_CODE WCMD_endlocal(void);
 void WCMD_enter_paged_mode(const WCHAR *);
 RETURN_CODE WCMD_exit(void);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 RETURN_CODE WCMD_give_help(struct word_iterator *);
-RETURN_CODE WCMD_goto(void);
+RETURN_CODE WCMD_goto(struct word_iterator *);
 RETURN_CODE WCMD_label(void);
 void WCMD_leave_paged_mode(void);
 RETURN_CODE WCMD_more(struct word_iterator *);
@@ -250,7 +250,8 @@ struct word_iterator
 
 struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags);
 BOOL WCMD_word_iterator_advance(struct word_iterator *iterator);
-BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *opt, WCHAR **arg);
+BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator);
+BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *opt, BOOL optsep, WCHAR **arg);
 static inline void WCMD_word_iterator_dispose(struct word_iterator *iterator)
 {
     free(iterator->raw_argument);
@@ -289,8 +290,7 @@ RETURN_CODE WCMD_call_command(WCHAR *command);
 RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd);
 RETURN_CODE WCMD_run_external_full_path(const WCHAR *file, WCHAR *full_cmdline);
 
-BOOL WCMD_find_label(HANDLE h, const WCHAR*, LARGE_INTEGER *pos);
-void WCMD_set_label_end(WCHAR *string);
+RETURN_CODE WCMD_jump_to_label(WCHAR *label);
 
 RETURN_CODE WCMD_ctrlc_status(void);
 

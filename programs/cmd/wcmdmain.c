@@ -2384,13 +2384,13 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_delete(&iterator);
         break;
     case WCMD_DIR:
-        return_code = WCMD_directory(parms_start);
+        return_code = WCMD_directory(&iterator);
         break;
     case WCMD_ECHO:
         return_code = WCMD_echo(&cmd[count]);
         break;
     case WCMD_GOTO:
-        return_code = WCMD_goto();
+        return_code = WCMD_goto(&iterator);
         break;
     case WCMD_HELP:
         return_code = WCMD_give_help(&iterator);

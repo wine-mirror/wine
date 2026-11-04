@@ -160,7 +160,7 @@ static inline const char *mf_debugstr_fourcc(DWORD format)
         { D3DFMT_A8R8G8B8,      "A8R8G8B8" },
         { D3DFMT_X8R8G8B8,      "X8R8G8B8" },
         { D3DFMT_R5G6B5,        "R5G6B5" },
-        { D3DFMT_X1R5G5B5,      "X1R5G6B5" },
+        { D3DFMT_X1R5G5B5,      "X1R5G5B5" },
         { D3DFMT_A2B10G10R10,   "A2B10G10R10" },
         { D3DFMT_P8,            "P8" },
         { D3DFMT_L8,            "L8" },

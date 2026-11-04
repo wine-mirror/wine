@@ -293,32 +293,6 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define FPUX_sig(context)    NULL  /* FIXME */
 #define XState_sig(context)  NULL  /* FIXME */
 
-#elif defined (__APPLE__)
-
-#include <i386/user_ldt.h>
-
-#define EAX_sig(context)     ((context)->uc_mcontext->__ss.__eax)
-#define EBX_sig(context)     ((context)->uc_mcontext->__ss.__ebx)
-#define ECX_sig(context)     ((context)->uc_mcontext->__ss.__ecx)
-#define EDX_sig(context)     ((context)->uc_mcontext->__ss.__edx)
-#define ESI_sig(context)     ((context)->uc_mcontext->__ss.__esi)
-#define EDI_sig(context)     ((context)->uc_mcontext->__ss.__edi)
-#define EBP_sig(context)     ((context)->uc_mcontext->__ss.__ebp)
-#define CS_sig(context)      ((context)->uc_mcontext->__ss.__cs)
-#define DS_sig(context)      ((context)->uc_mcontext->__ss.__ds)
-#define ES_sig(context)      ((context)->uc_mcontext->__ss.__es)
-#define FS_sig(context)      ((context)->uc_mcontext->__ss.__fs)
-#define GS_sig(context)      ((context)->uc_mcontext->__ss.__gs)
-#define SS_sig(context)      ((context)->uc_mcontext->__ss.__ss)
-#define EFL_sig(context)     ((context)->uc_mcontext->__ss.__eflags)
-#define EIP_sig(context)     ((context)->uc_mcontext->__ss.__eip)
-#define ESP_sig(context)     ((context)->uc_mcontext->__ss.__esp)
-#define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
-#define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
-#define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((void *)&(context)->uc_mcontext->__fs.__fpu_fcw)
-#define XState_sig(context)  NULL  /* FIXME */
-
 #elif defined(__NetBSD__)
 
 #include <machine/segments.h>
@@ -2291,8 +2265,6 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     ldt_mod.acc1 = entry.HighWord.Bytes.Flags1;
     ldt_mod.acc2 = entry.HighWord.Bytes.Flags2 >> 4;
     if (sysi86(SI86DSCR, &ldt_mod) == -1) perror("sysi86");
-#elif defined(__APPLE__)
-    if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
 #elif defined(__GNU__)
     if (i386_set_ldt(mach_thread_self(), sel, (descriptor_list_t)&entry, 1) != KERN_SUCCESS)
         perror("i386_set_ldt");

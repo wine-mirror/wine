@@ -1,6 +1,6 @@
 MODULE    = mferror.dll
 
-EXTRADLLFLAGS = -Wb,--data-only
+EXTRADLLFLAGS = -Wl,-noentry
 
 SOURCES = \
 	mferror.mc

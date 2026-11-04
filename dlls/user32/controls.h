@@ -65,7 +65,7 @@ struct wow_handlers32
     HWND    (*get_win_handle)(HWND);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
     struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
-    INT     (*dialog_box_loop)(HWND,HWND);
+    INT_PTR (*dialog_box_loop)(HWND,HWND);
 };
 
 extern struct wow_handlers16 wow_handlers;
@@ -143,14 +143,14 @@ typedef struct tagDIALOGINFO
     HMENU     hMenu;       /* Dialog menu */
     UINT      xBaseUnit;   /* Dialog units (depends on the font) */
     UINT      yBaseUnit;
-    INT       idResult;    /* EndDialog() result / default pushbutton ID */
+    INT_PTR   idResult;    /* EndDialog() result / default pushbutton ID */
     UINT      flags;       /* EndDialog() called for this dialog */
 } DIALOGINFO;
 
 #define DF_END  0x0001
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
-extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );
+extern INT_PTR DIALOG_DoDialogBox( HWND hwnd, HWND owner );
 
 HRGN set_control_clipping( HDC hdc, const RECT *rect );
 

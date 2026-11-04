@@ -14960,6 +14960,48 @@ static void test_cursor_clipping(void)
     DestroyWindow(window);
 }
 
+static void test_present_destroyed_window(void)
+{
+    IDirect3DDevice9 *device;
+    unsigned int i;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    SetWindowPos(window, NULL, 0, 0, 800, 600, SWP_NOMOVE | SWP_NOZORDER);
+    DestroyWindow(window);
+
+    for (i = 0; i < 3; ++i)
+    {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+        ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        /* Windows 10 1809+ returns S_PRESENT_OCCLUDED, earlier versions return D3D_OK. */
+        ok(hr == D3D_OK || hr == S_PRESENT_OCCLUDED, "Present %u: got hr %#lx.\n", i, hr);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+}
+
 static void test_window_position(void)
 {
     unsigned int adapter_idx, adapter_count;
@@ -15507,6 +15549,7 @@ START_TEST(device)
     test_creation_parameters();
     test_cursor_clipping();
     test_window_position();
+    test_present_destroyed_window();
     test_d3d9on12();
     test_device_vtbl_initialization_assembly_hook();
 

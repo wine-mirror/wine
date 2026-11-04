@@ -904,6 +904,15 @@ static void test_GdipDrawCurve3(void)
     status = GdipDrawCurve3(graphics, pen, points, 3, 4, 2, 1);
     expect(InvalidParameter, status);
 
+    status = GdipDrawCurve3(graphics, pen, points, 3, -1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, NULL, 3, -1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, NULL, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
     /* InvalidParameter cases: invalid number of segments */
     status = GdipDrawCurve3(graphics, pen, points, 3, 0, -1, 1);
     expect(InvalidParameter, status);
@@ -982,6 +991,9 @@ static void test_GdipDrawCurve3I(void)
     expect(InvalidParameter, status);
 
     status = GdipDrawCurve3I(graphics, pen, points, 3, 4, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, -1, 2, 1);
     expect(InvalidParameter, status);
 
     /* InvalidParameter cases: invalid number of segments */
@@ -1601,10 +1613,13 @@ static void test_GdipFillClosedCurveI(void)
 
 static void test_GdipFillPath(void)
 {
+    static const GpPoint triangle[] = { { 2, 2 }, { 10, 2 }, { 2, 10 } };
     GpStatus status;
     GpGraphics *graphics;
     GpSolidFill *brush;
+    GpBitmap *bitmap;
     GpPath *path;
+    ARGB color;
     HDC hdc = GetDC(hwnd);
 
     ok(hdc != NULL, "Expected HDC to be initialized\n");
@@ -1639,9 +1654,36 @@ static void test_GdipFillPath(void)
     status = GdipFillPath(graphics, (GpBrush *)brush, path);
     expect(Ok, status);
 
+    GdipDeleteGraphics(graphics);
+
+    /* Not closed figure followed by another figure */
+    status = GdipCreateBitmapFromScan0(20, 20, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics);
+    expect(Ok, status);
+    GdipResetPath(path);
+    status = GdipAddPathLine2I(path, triangle, ARRAY_SIZE(triangle));
+    expect(Ok, status);
+    status = GdipStartPathFigure(path);
+    expect(Ok, status);
+    status = GdipAddPathRectangleI(path, 12, 12, 4, 4);
+    expect(Ok, status);
+    status = GdipFillPath(graphics, (GpBrush *)brush, path);
+    expect(Ok, status);
+    status = GdipBitmapGetPixel(bitmap, 4, 4, &color);
+    expect(Ok, status);
+    expect(0xffffffff, color);
+    status = GdipBitmapGetPixel(bitmap, 14, 14, &color);
+    expect(Ok, status);
+    expect(0xffffffff, color);
+    status = GdipBitmapGetPixel(bitmap, 8, 8, &color);
+    expect(Ok, status);
+    expect(0, color);
+
     GdipDeletePath(path);
     GdipDeleteBrush((GpBrush *)brush);
     GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage *)bitmap);
     ReleaseDC(hwnd, hdc);
 }
 
@@ -2282,6 +2324,12 @@ static void test_isempty(void)
     status = GdipIsClipEmpty(graphics, NULL);
     expect(InvalidParameter, status);
     status = GdipIsClipEmpty(NULL, &res);
+    expect(InvalidParameter, status);
+    status = GdipIsVisibleClipEmpty(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsVisibleClipEmpty(graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsVisibleClipEmpty(NULL, &res);
     expect(InvalidParameter, status);
 
     /* default is infinite */
@@ -8159,6 +8207,14 @@ static void test_antialiasing(void)
     expect(Ok, status);
     ok(!color, "got %08lx below the join\n", color);
 
+    /* Ending at a dot boundary raised EXCEPTION_FLT_INVALID_OPERATION. */
+    status = GdipSetPenDashStyle(pen, DashStyleDot);
+    expect(Ok, status);
+    status = GdipSetPenLineCap197819(pen, LineCapRound, LineCapRound, DashCapRound);
+    expect(Ok, status);
+    status = GdipDrawLine(graphics, pen, 2.0, 2.0, 2.0, 4.0);
+    expect(Ok, status);
+
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage *)bitmap);
@@ -8208,6 +8264,107 @@ static void test_antialiasing(void)
     GdipDeleteBrush((GpBrush *)brush);
 }
 
+static void test_negative_layout_rect(void)
+{
+    enum { RANGES_FILLED, RANGES_EMPTY, RANGES_UNCHANGED };
+    static const struct
+    {
+        RectF rect;
+        INT flags;
+        BOOL drawn;
+        BOOL path;
+        int ranges;
+    }
+    tests[] =
+    {
+        {{ 2.0, 2.0, -2.0, 16.0 }, 0, FALSE, FALSE, RANGES_UNCHANGED},
+        {{ 2.0, 2.0, -2.0, 16.0 }, StringFormatFlagsNoWrap, FALSE, FALSE, RANGES_UNCHANGED},
+        {{ 2.0, 2.0, 60.0, -2.0 }, 0, FALSE, TRUE, RANGES_EMPTY},
+        {{ 2.0, 2.0, 60.0, -2.0 }, StringFormatFlagsNoClip, TRUE, TRUE, RANGES_FILLED},
+        {{ 2.0, 2.0, -2.0, -2.0 }, 0, FALSE, FALSE, RANGES_UNCHANGED},
+        {{ 2.0, 2.0, -2.0, 16.0 }, StringFormatFlagsNoClip, TRUE, FALSE, RANGES_UNCHANGED},
+        {{ 2.0, 2.0, -2.0, 0.0 }, 0, TRUE, FALSE, RANGES_UNCHANGED},
+        {{ 2.0, 2.0, 0.0, -2.0 }, 0, TRUE, TRUE, RANGES_EMPTY},
+        {{ 2.0, 2.0, 0.0, 0.0 }, 0, TRUE, TRUE, RANGES_EMPTY},
+    };
+    CharacterRange range = { 0, 4 };
+    DWORD bits[64 * 32];
+    GpStringFormat *format;
+    GpGraphics *graphics;
+    GpFontFamily *family;
+    GpRegion *region;
+    GpBitmap *bitmap;
+    GpBrush *brush;
+    GpPath *path;
+    GpFont *font;
+    GpStatus status;
+    BOOL empty, infinite;
+    INT i, j, count;
+
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
+    expect(Ok, status);
+    status = GdipCreateFont(family, 12, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, status);
+    status = GdipCreateSolidFill(0xff000000, (GpSolidFill **)&brush);
+    expect(Ok, status);
+    status = GdipCreateBitmapFromScan0(64, 32, 64 * 4, PixelFormat32bppARGB, (BYTE *)bits, &bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics);
+    expect(Ok, status);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%d", i);
+
+        status = GdipCreateStringFormat(tests[i].flags, LANG_NEUTRAL, &format);
+        expect(Ok, status);
+
+        memset(bits, 0, sizeof(bits));
+        status = GdipDrawString(graphics, L"Test", -1, font, &tests[i].rect, format, brush);
+        expect(Ok, status);
+        status = GdipFlush(graphics, FlushIntentionSync);
+        expect(Ok, status);
+        for (j = 0; j < ARRAY_SIZE(bits); j++)
+            if (bits[j]) break;
+        ok((j < ARRAY_SIZE(bits)) == tests[i].drawn, "expected text %sdrawn\n", tests[i].drawn ? "" : "not ");
+
+        status = GdipCreatePath(FillModeAlternate, &path);
+        expect(Ok, status);
+        status = GdipAddPathString(path, L"Test", -1, family, FontStyleRegular, 12.0, &tests[i].rect, format);
+        expect(Ok, status);
+        count = -1;
+        status = GdipGetPointCount(path, &count);
+        expect(Ok, status);
+        ok((count > 0) == tests[i].path, "got %d points\n", count);
+        GdipDeletePath(path);
+
+        status = GdipSetStringFormatMeasurableCharacterRanges(format, 1, &range);
+        expect(Ok, status);
+        status = GdipCreateRegion(&region);
+        expect(Ok, status);
+        status = GdipMeasureCharacterRanges(graphics, L"Test", -1, font, &tests[i].rect, format, 1, &region);
+        expect(Ok, status);
+        status = GdipIsEmptyRegion(region, graphics, &empty);
+        expect(Ok, status);
+        status = GdipIsInfiniteRegion(region, graphics, &infinite);
+        expect(Ok, status);
+        if (tests[i].ranges == RANGES_UNCHANGED)
+            ok(infinite, "expected the region to be unchanged\n");
+        else
+            ok(!infinite && empty == (tests[i].ranges == RANGES_EMPTY), "got empty %d, infinite %d\n", empty, infinite);
+        GdipDeleteRegion(region);
+
+        GdipDeleteStringFormat(format);
+        winetest_pop_context();
+    }
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage *)bitmap);
+    GdipDeleteBrush(brush);
+    GdipDeleteFont(font);
+    GdipDeleteFontFamily(family);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -8247,6 +8404,7 @@ START_TEST(graphics)
     test_clipping();
     test_clipping_2();
     test_measured_extra_space();
+    test_negative_layout_rect();
     test_measure_string();
     test_measure_string_vertical();
     test_font_height_scaling();

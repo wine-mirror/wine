@@ -924,6 +924,28 @@ static void test_SavingMultiPageTiff(void)
     }
 }
 
+static void test_encoder_parameter_list_size(void)
+{
+    static const CLSID CLSID_PngEncoder =
+        { 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e } };
+    GpBitmap *bitmap;
+    GpStatus stat;
+    UINT size;
+
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat24bppRGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    size = 0xdeadbeef;
+    stat = GdipGetEncoderParameterListSize(NULL, &CLSID_PngEncoder, &size);
+    expect(InvalidParameter, stat);
+    stat = GdipGetEncoderParameterListSize((GpImage *)bitmap, NULL, &size);
+    expect(InvalidParameter, stat);
+    stat = GdipGetEncoderParameterListSize((GpImage *)bitmap, &CLSID_PngEncoder, NULL);
+    expect(InvalidParameter, stat);
+
+    GdipDisposeImage((GpImage *)bitmap);
+}
+
 static void test_encoders(void)
 {
     GpStatus stat;
@@ -7462,6 +7484,7 @@ START_TEST(image)
     test_SavingImages();
     test_SavingMultiPageTiff();
     test_encoders();
+    test_encoder_parameter_list_size();
     test_LockBits();
     test_LockBits_UserBuf();
     test_GdipCreateBitmapFromHBITMAP();

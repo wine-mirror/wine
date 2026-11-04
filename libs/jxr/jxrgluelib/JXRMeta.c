@@ -2,16 +2,16 @@
 //
 // Copyright © Microsoft Corp.
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // • Redistributions of source code must retain the above copyright notice,
 //   this list of conditions and the following disclaimer.
 // • Redistributions in binary form must reproduce the above copyright notice,
 //   this list of conditions and the following disclaimer in the documentation
 //   and/or other materials provided with the distribution.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -246,7 +246,7 @@ Cleanup:
 }
 
 
-ERR StreamCalcIFDSize(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd)
+ERR StreamCalcIFDSizePrivate(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd, U32 rcnt)
 {
     ERR err = WMP_errSuccess;
     size_t offCurPos = 0;
@@ -258,6 +258,12 @@ ERR StreamCalcIFDSize(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd)
     U32 cbEXIFIFD = 0;
     U32 cbGPSInfoIFD = 0;
     U32 cbInteroperabilityIFD = 0;
+
+    // sanity check: avoid infinite recursion
+    if (rcnt > 10)
+    {
+        Call(WMP_errFail);
+    }
 
     *pcbifd = 0;
     Call(pWS->GetPos(pWS, &offCurPos));
@@ -281,15 +287,15 @@ ERR StreamCalcIFDSize(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd)
         FailIf(type == 0 || type >= sizeof(IFDEntryTypeSizes) / sizeof(IFDEntryTypeSizes[0]), WMP_errUnsupportedFormat);
         if ( tag == WMP_tagEXIFMetadata )
         {
-            Call(StreamCalcIFDSize(pWS, value, &cbEXIFIFD));
+            Call(StreamCalcIFDSizePrivate(pWS, value, &cbEXIFIFD, rcnt + 1));
         }
         else if ( tag == WMP_tagGPSInfoMetadata )
         {
-            Call(StreamCalcIFDSize(pWS, value, &cbGPSInfoIFD));
+            Call(StreamCalcIFDSizePrivate(pWS, value, &cbGPSInfoIFD, rcnt + 1));
         }
         else if ( tag == WMP_tagInteroperabilityIFD )
         {
-            Call(StreamCalcIFDSize(pWS, value, &cbInteroperabilityIFD));
+            Call(StreamCalcIFDSizePrivate(pWS, value, &cbInteroperabilityIFD, rcnt + 1));
         }
         else
         {
@@ -308,12 +314,19 @@ ERR StreamCalcIFDSize(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd)
     *pcbifd = cbifd;
 
 Cleanup:
-    if ( GetPosOK )
-        Call(pWS->SetPos(pWS, offCurPos));
+    if ( GetPosOK && err == WMP_errSuccess )
+    {
+        err = pWS->SetPos(pWS, offCurPos);
+    }
     return ( err );
 }
 
 
+ERR StreamCalcIFDSize(struct WMPStream* pWS, U32 uIFDOfs, U32 *pcbifd)
+{
+    U32 rcnt = 0;
+    return StreamCalcIFDSizePrivate(pWS, uIFDOfs, pcbifd, rcnt);
+}
 
 // src IFD copied to dst IFD with any nested IFD's
 // src IFD is arbitrary endian, arbitrary data arrangement
@@ -404,7 +417,7 @@ ERR BufferCopyIFD(const U8* pbsrc, U32 cbsrc, U32 ofssrc, U8 endian, U8* pbdst, 
                 case 2:
                     for ( j = 0; j < count; j++ )
                     {
-                        U16 w;
+                        U16 w = 0;
                         getbfwbig(pbsrc, cbsrc, ofssrcdata + j * sizeof(U16), &w);
                         setbfw(pbdst, cbdst, ofsdstdata + j * sizeof(U16), w);
                     }
@@ -414,8 +427,8 @@ ERR BufferCopyIFD(const U8* pbsrc, U32 cbsrc, U32 ofssrc, U8 endian, U8* pbdst, 
                     {
                         for ( j = 0; j < count; j++ )
                         {
-                            U32 dwlo;
-                            U32 dwhi;
+                            U32 dwlo = 0;
+                            U32 dwhi = 0;
                             getbfdwbig(pbsrc, cbsrc, ofssrcdata + j * 8, &dwhi);
                             getbfdwbig(pbsrc, cbsrc, ofssrcdata + j * 8 + sizeof(U32), &dwlo);
                             setbfdw(pbdst, cbdst, ofsdstdata + j * 8, dwlo);
@@ -428,7 +441,7 @@ ERR BufferCopyIFD(const U8* pbsrc, U32 cbsrc, U32 ofssrc, U8 endian, U8* pbdst, 
                 case 4:
                     for ( j = 0; j < count; j++ )
                     {
-                        U32 dw;
+                        U32 dw = 0;
                         getbfdwbig(pbsrc, cbsrc, ofssrcdata + j * sizeof(U32), &dw);
                         setbfdw(pbdst, cbdst, ofsdstdata + j * sizeof(U32), dw);
                     }
@@ -639,7 +652,7 @@ ERR GetULong(
     puValue[0] += ((U32) cVal) << 16;
     Call(pWS->Read(pWS, &cVal, sizeof(cVal)));
     puValue[0] += ((U32) cVal) << 24;
- 
+
 Cleanup:
     return err;
 }
@@ -674,7 +687,8 @@ ERR ReadBinaryData(__in_ecount(1) struct WMPStream* pWS,
     ERR err = WMP_errSuccess;
     U8 *pbData = NULL;
 
-    Call(PKAlloc((void **) &pbData, uCount + 2)); // Allocate buffer to store data with space for an added ascii or unicode null
+    Call(uCount > ((U32)-1) - 2 ? WMP_errFail : WMP_errSuccess);
+    Call(PKAlloc((void **) &pbData, (size_t)uCount + 2)); // Allocate buffer to store data with space for an added ascii or unicode null
     if (uCount <= 4)
     {
         unsigned int i;
@@ -710,18 +724,33 @@ ERR ReadPropvar(__in_ecount(1) struct WMPStream* pWS,
                 __out_win DPKPROPVARIANT *pvar)
 {
     ERR err = WMP_errSuccess;
-    // U8 *pbData = NULL;
 
-    memset(pvar, 0, sizeof(*pvar));
     if (uCount == 0)
         goto Cleanup; // Nothing to read in here
+
+    // Fix memory leak
+    //
+    // Setting the data here to zero doesn't make much sense:
+    // - all data is allocated with calloc (so it's already zero)
+    // - a corrupt file with duplicate tags causes a memory leak (sets to zero any pointers already allocated without checking)
+    //
+    // memset(pvar, 0, sizeof(*pvar));
+
+    // If already allocated, then the file is definitely corrupt (tags present multiple times):
+    // avoids memory leak returning error.
+    if(pvar->VT.pszVal || pvar->VT.pwszVal || pvar->VT.pbVal) {
+        err = WMP_errFail;
+        goto Cleanup;
+    }
 
     switch (uType)
     {
         case WMP_typASCII:
             pvar->vt = DPKVT_LPSTR;
             Call(ReadBinaryData(pWS, uCount, uValue, (U8 **) &pvar->VT.pszVal));
-            assert(0 == pvar->VT.pszVal[uCount - 1]); // Check that it's null-terminated
+            if(pvar->VT.pszVal[uCount - 1] != 0)
+                pvar->VT.pszVal[uCount - 1] = 0;
+            // assert(0 == pvar->VT.pszVal[uCount - 1]); // Check that it's null-terminated
             // make sure (ReadBinaryData allocated uCount + 2 so this and unicode can have forced nulls)
             pvar->VT.pszVal[uCount] = 0;
             break;
@@ -814,7 +843,8 @@ ERR WriteWmpDE(
                     Call(pWS->SetPos(pWS, pDE->uValueOrOffset));
                     Call(pWS->Write(pWS, pbData, pDE->uCount));
                     Call(pWS->SetPos(pWS, offPos));
-                    *pcbDataWrittenToOffset = pDE->uCount;
+                    if (pcbDataWrittenToOffset) // sanity check
+                        *pcbDataWrittenToOffset = pDE->uCount;
                 }
             }
             break;
@@ -856,7 +886,8 @@ ERR WriteWmpDE(
                         Call(PutUShort(pWS, offPos, uiShort)); // Write one at a time for endian purposes - but inefficient
                     }
                     Call(pWS->SetPos(pWS, offPos));
-                    *pcbDataWrittenToOffset = pDE->uCount * sizeof(U16);
+                    if (pcbDataWrittenToOffset) // sanity check
+                        *pcbDataWrittenToOffset = pDE->uCount * sizeof(U16);
                 }
 
             }
@@ -887,7 +918,8 @@ ERR WriteWmpDE(
                         Call(PutULong(pWS, offPos, uLong)); // Write one at a time for endian purposes - but inefficient
                     }
                     Call(pWS->SetPos(pWS, offPos));
-                    *pcbDataWrittenToOffset = pDE->uCount * sizeof(U32);
+                    if (pcbDataWrittenToOffset)  // sanity check
+                        *pcbDataWrittenToOffset = pDE->uCount * sizeof(U32);
                 }
             }
             break;
@@ -902,4 +934,3 @@ Cleanup:
     *pOffPos = offPos;
     return err;
 }
-

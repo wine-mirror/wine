@@ -299,7 +299,7 @@ typedef enum tagXMLEMEM_TYPE {
 typedef struct _xml_error {
 	UINT _nLine;
 	BSTR _pchBuf;
-	BSTR _cchBuf;
+	UINT _cchBuf;
 	UINT _ich;
 	BSTR _pszFound;
 	BSTR _pszExpected;

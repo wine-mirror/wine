@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Santino Mazza
+ * Copyright 2026 Vibhav Pant for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,53 +14,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- */
+*/
 
-#include <bcrypt.h>
+#pragma makedep register
+#pragma winrt ns_prefix
 
-enum algid
+import "windows.ui.notifications.idl";
+
+namespace Windows.UI.Notifications
 {
-    /* symmetric */
-    AES,
-    /* asymmetric */
-    RSA,
-    DSA,
-    ECDSA,
-    ECDSA_P256,
-};
-
-struct key
-{
-    enum algid algid;
-    BCRYPT_KEY_HANDLE bcrypt_key;
-};
-
-struct storage_provider
-{
-};
-
-enum object_type
-{
-    KEY,
-    STORAGE_PROVIDER,
-};
-
-struct object_property
-{
-    WCHAR *key;
-    DWORD value_size;
-    void *value;
-};
-
-struct object
-{
-    enum object_type type;
-    LONG refs;
-    DWORD num_properties;
-    struct object_property *properties;
-    union
-    {
-        struct key key;
-        struct storage_provider storage_provider;
-    };
-};
+    runtimeclass ToastNotificationManager;
+    runtimeclass ToastNotification;
+}

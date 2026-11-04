@@ -245,9 +245,9 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     case WM_KEYDOWN:
 	if (wParam == VK_SPACE)
 	{
+            NtUserSetCapture( hWnd );
 	    SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
             set_button_state( hWnd, get_button_state( hWnd ) | BUTTON_BTNPRESSED );
-            NtUserSetCapture( hWnd );
 	}
 	break;
 

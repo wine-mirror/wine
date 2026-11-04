@@ -554,7 +554,7 @@ static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, jsval_t vthi
 static HRESULT JSGlobal_CollectGarbage(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    return gc_run(ctx);
+    return gc_run(ctx->thread_data);
 }
 
 static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

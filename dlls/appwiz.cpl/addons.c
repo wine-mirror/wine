@@ -463,32 +463,36 @@ static HRESULT WINAPI InstallCallback_OnProgress(IBindStatusCallback *iface, ULO
     return S_OK;
 }
 
-static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
-        HRESULT hresult, LPCWSTR szError)
+static void report_download_failure(void)
 {
     WCHAR message[256];
 
+    if(LoadStringW(hInst, IDS_DOWNLOAD_FAILED, message, ARRAY_SIZE(message)))
+        MessageBoxW(install_dialog, message, NULL, MB_ICONERROR);
+    EndDialog(install_dialog, IDCANCEL);
+}
+
+static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
+        HRESULT hresult, LPCWSTR szError)
+{
     if(dwl_binding) {
         IBinding_Release(dwl_binding);
         dwl_binding = NULL;
     }
 
     if(FAILED(hresult)) {
-        if(hresult == E_ABORT)
+        if(hresult == E_ABORT) {
             TRACE("Binding aborted\n");
-        else if (hresult == INET_E_DOWNLOAD_FAILURE)
-        {
-            if(LoadStringW(hInst, IDS_DOWNLOAD_FAILED, message, ARRAY_SIZE(message)))
-                MessageBoxW(install_dialog, message, NULL, MB_ICONERROR);
-            EndDialog(install_dialog, IDCANCEL);
+            return S_OK;
         }
-        else
-            ERR("Binding failed %08lx\n", hresult);
+        ERR("Binding failed %08lx\n", hresult);
+        report_download_failure();
         return S_OK;
     }
 
     if(!msi_file) {
         ERR("No MSI file\n");
+        report_download_failure();
         return E_FAIL;
     }
 
@@ -506,13 +510,11 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
             free(cache_file_name);
         }
     }else {
+        WCHAR message[256];
+
         if(LoadStringW(hInst, IDS_INVALID_SHA, message, ARRAY_SIZE(message)))
             MessageBoxW(NULL, message, NULL, MB_ICONERROR);
     }
-
-    DeleteFileW(msi_file);
-    free(msi_file);
-    msi_file = NULL;
 
     EndDialog(install_dialog, 0);
     return S_OK;
@@ -778,7 +780,16 @@ BOOL install_addon(addon_t addon_type)
         && install_from_default_dir() == INSTALL_NEXT
         && install_from_cache() == INSTALL_NEXT
         && (url = get_url()))
+    {
         DialogBoxW(hInst, addon->dialog_template, 0, installer_proc);
+
+        if (msi_file)
+        {
+            DeleteFileW(msi_file);
+            free(msi_file);
+            msi_file = NULL;
+        }
+    }
 
     free(url);
     url = NULL;

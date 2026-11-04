@@ -530,27 +530,27 @@ static HRESULT WINAPI performance_Init(IDirectMusicPerformance8 *iface, IDirectM
 
     if (This->dmusic) return DMUS_E_ALREADY_INITED;
 
-    if ((This->dsound = dsound)) IDirectMusic8_AddRef(This->dsound);
+    if ((This->dsound = dsound)) IDirectSound_AddRef(This->dsound);
     else if (FAILED(hr = performance_init_dsound(This, hwnd))) return hr;
 
     if (dmusic && (This->dmusic = *dmusic)) IDirectMusic_AddRef(This->dmusic);
     else if (FAILED(hr = performance_init_dmusic(This, This->dsound)))
     {
-        IDirectMusicPerformance_CloseDown(iface);
+        IDirectMusicPerformance8_CloseDown(iface);
         return hr;
     }
 
     if (FAILED(hr = IDirectMusic_GetMasterClock(This->dmusic, NULL, &This->master_clock))
             || FAILED(hr = IDirectMusicPerformance8_GetTime(iface, &This->init_time, NULL)))
     {
-        IDirectMusicPerformance_CloseDown(iface);
+        IDirectMusicPerformance8_CloseDown(iface);
         return hr;
     }
 
     if (!(This->message_thread = CreateThread(NULL, 0, message_thread_proc, This, 0, NULL)))
     {
         ERR("Failed to start performance message thread, error %lu\n", GetLastError());
-        IDirectMusicPerformance_CloseDown(iface);
+        IDirectMusicPerformance8_CloseDown(iface);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -646,7 +646,7 @@ static BOOL message_needs_flushing(struct message *message, IDirectMusicSegmentS
 
 static void performance_flush_messages(struct performance *This, IDirectMusicSegmentState *state)
 {
-    IDirectMusicPerformance *iface = (IDirectMusicPerformance *)&This->IDirectMusicPerformance8_iface;
+    IDirectMusicPerformance8 *iface = (IDirectMusicPerformance8 *)&This->IDirectMusicPerformance8_iface;
     struct message *message, *next;
     HRESULT hr;
 
@@ -871,7 +871,7 @@ static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 
 
     for (tempo = 120.0, duration = tempo_time = 0; music_time > 0; tempo_time += next)
     {
-        if (FAILED(hr = IDirectMusicPerformance_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
+        if (FAILED(hr = IDirectMusicPerformance8_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
                 tempo_time, &next, &param)))
             break;
 
@@ -913,7 +913,7 @@ static HRESULT WINAPI performance_ReferenceToMusicTime(IDirectMusicPerformance8 
 
     for (tempo = 120.0, tempo_time = 0; duration > 0; tempo_time += next, duration -= step)
     {
-        if (FAILED(hr = IDirectMusicPerformance_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
+        if (FAILED(hr = IDirectMusicPerformance8_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
                 tempo_time, &next, &param)))
             break;
 
@@ -1165,10 +1165,10 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     unsigned int i;
     HRESULT hr;
 
-    if (FAILED(hr = IDirectMusic8_GetDefaultPort(perf->dmusic, &guid)))
+    if (FAILED(hr = IDirectMusic_GetDefaultPort(perf->dmusic, &guid)))
         return hr;
 
-    if (FAILED(hr = IDirectMusic8_CreatePort(perf->dmusic, &guid, params, &port, NULL)))
+    if (FAILED(hr = IDirectMusic_CreatePort(perf->dmusic, &guid, params, &port, NULL)))
         return hr;
 
     if (FAILED(hr = IDirectMusicPort_SetDirectSound(port, perf->dsound, NULL))
@@ -1309,7 +1309,7 @@ static HRESULT WINAPI performance_DownloadInstrument(IDirectMusicPerformance8 *i
             note_ranges, note_range_count, port, group, music_channel);
 
     if (!port) port = &tmp_port;
-    if (FAILED(hr = IDirectMusicPerformance_PChannelInfo(iface, port_channel, port, group, music_channel)))
+    if (FAILED(hr = IDirectMusicPerformance8_PChannelInfo(iface, port_channel, port, group, music_channel)))
         return hr;
 
     hr = IDirectMusicPort_DownloadInstrument(*port, instrument, downloaded, note_ranges, note_range_count);
@@ -1496,8 +1496,8 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         This->dsound = NULL;
     }
     if (This->dmusic) {
-        IDirectMusic8_SetDirectSound(This->dmusic, NULL, NULL);
-        IDirectMusic8_Release(This->dmusic);
+        IDirectMusic_SetDirectSound(This->dmusic, NULL, NULL);
+        IDirectMusic_Release(This->dmusic);
         This->dmusic = NULL;
     }
     This->audio_paths_enabled = FALSE;
@@ -1576,7 +1576,7 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
                 num_channels, FALSE, &This->pDefaultPath);
         if (FAILED(hr))
         {
-            IDirectMusicPerformance_CloseDown(iface);
+            IDirectMusicPerformance8_CloseDown(iface);
             return hr;
         }
     }
@@ -1974,7 +1974,7 @@ static HRESULT WINAPI performance_graph_StampPMsg(IDirectMusicGraph *iface, DMUS
 
     if (msg->pGraph)
     {
-        IDirectMusicTool_Release(msg->pGraph);
+        IDirectMusicGraph_Release(msg->pGraph);
         msg->pGraph = NULL;
     }
 
@@ -1993,7 +1993,7 @@ static HRESULT WINAPI performance_graph_StampPMsg(IDirectMusicGraph *iface, DMUS
     if (SUCCEEDED(hr))
     {
         msg->pGraph = &This->IDirectMusicGraph_iface;
-        IDirectMusicTool_AddRef(msg->pGraph);
+        IDirectMusicGraph_AddRef(msg->pGraph);
     }
 
     return hr;
@@ -2148,7 +2148,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             {
                 msg->mtTime -= note->nOffset;
                 msg->mtTime += max(1, note->mtDuration - 1);
-                if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance, msg->mtTime, &msg->rtTime)))
+                if (FAILED(hr = IDirectMusicPerformance_MusicToReferenceTime(performance, msg->mtTime, &msg->rtTime)))
                     return hr;
                 note->bFlags &= ~DMUS_NOTEF_NOTEON;
                 return DMUS_S_REQUEUE;
@@ -2226,7 +2226,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             msg->dwFlags &= ~DMUS_PMSGF_TOOL_IMMEDIATE;
             msg->dwFlags |= DMUS_PMSGF_TOOL_ATTIME;
 
-            if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, msg)))
+            if (FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, msg)))
             {
                 ERR("Failed to send notification message, hr %#lx\n", hr);
                 return DMUS_S_FREE;
@@ -2334,7 +2334,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     obj->dwPrepareTime  = 1000; /* 1000 ms default */
 
     hr = IDirectMusicPerformance8_QueryInterface(&obj->IDirectMusicPerformance8_iface, iid, ret_iface);
-    IDirectMusicPerformance_Release(&obj->IDirectMusicPerformance8_iface);
+    IDirectMusicPerformance8_Release(&obj->IDirectMusicPerformance8_iface);
     return hr;
 }
 

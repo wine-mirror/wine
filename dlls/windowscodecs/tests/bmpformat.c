@@ -27,7 +27,7 @@
 #include "wincodecsdk.h"
 #include "wine/test.h"
 
-static const char testbmp_24bpp[] = {
+static const unsigned char testbmp_24bpp[] = {
     /* BITMAPFILEHEADER */
     66,77, /* "BM" */
     78,0,0,0, /* file size */
@@ -255,7 +255,7 @@ static void test_decode_24bpp(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-static const char testbmp_1bpp[] = {
+static const unsigned char testbmp_1bpp[] = {
     /* BITMAPFILEHEADER */
     66,77, /* "BM" */
     40,0,0,0, /* file size */
@@ -404,7 +404,7 @@ static void test_decode_1bpp(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-static const char testbmp_4bpp[] = {
+static const unsigned char testbmp_4bpp[] = {
     /* BITMAPFILEHEADER */
     66,77, /* "BM" */
     82,0,0,0, /* file size */
@@ -563,7 +563,7 @@ static void test_decode_4bpp(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-static const char testbmp_rle8[] = {
+static const unsigned char testbmp_rle8[] = {
     /* BITMAPFILEHEADER */
     66,77, /* "BM" */
     202,0,0,0, /* file size */
@@ -743,7 +743,7 @@ static void test_decode_rle8(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-static const char testbmp_rle4[] = {
+static const unsigned char testbmp_rle4[] = {
     /* BITMAPFILEHEADER */
     66,77, /* "BM" */
     142,0,0,0, /* file size */
@@ -910,7 +910,7 @@ static void test_decode_rle4(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-static const char testbmp_bitfields_abgr[] = {
+static const unsigned char testbmp_bitfields_abgr[] = {
     /* BITMAPFILEHEADER */
     'B','M', /* "BM" */
     sizeof(BITMAPFILEHEADER)+sizeof(BITMAPV5HEADER)+8,0,0,0, /* file size */

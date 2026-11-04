@@ -30,6 +30,7 @@
 #include "widl.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "utils.h"
 #include "wpp_private.h"
 #include "parser.h"
@@ -309,6 +310,7 @@ static void read_pe_importlib(importlib_t *importlib, void *data, unsigned int s
     void *ptr;
     unsigned int i, va;
 
+    if ((ULONG)dos->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) error( "not a PE file\n" );
     if (dos->e_lfanew < sizeof(*dos) || dos->e_lfanew >= size) error( "not a PE file\n" );
     nt = (IMAGE_NT_HEADERS32 *)((char *)data + dos->e_lfanew);
     if (nt->Signature != IMAGE_NT_SIGNATURE) error( "not a PE file\n" );

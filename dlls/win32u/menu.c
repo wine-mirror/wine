@@ -535,6 +535,18 @@ static void adjust_menu_item_rect( const struct menu *menu, RECT *rect )
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
 }
 
+/* Recompute the layout of a menu bar if its height has been invalidated */
+static void update_invalid_menu_bar_layout( struct menu *menu, HWND hwnd )
+{
+    RECT rect = menu->items_rect;
+    HDC hdc;
+
+    if ((menu->wFlags & MF_POPUP) || menu->Height) return;
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    NtUserDrawMenuBarTemp( hwnd, hdc, &rect, 0, 0 );
+    NtUserReleaseDC( hwnd, hdc );
+}
+
 /***********************************************************************
  *           find_item_by_coords
  *
@@ -548,7 +560,7 @@ static void adjust_menu_item_rect( const struct menu *menu, RECT *rect )
  * item that's just outside the items_rect - ie, the one that would
  * be scrolled completely into view.
  */
-static enum hittest find_item_by_coords( const struct menu *menu, POINT pt, UINT *pos )
+static enum hittest find_item_by_coords( struct menu *menu, POINT pt, UINT *pos )
 {
     enum hittest ht = ht_border;
     struct menu_item *item;
@@ -563,6 +575,8 @@ static enum hittest find_item_by_coords( const struct menu *menu, POINT pt, UINT
     if (get_window_long( menu->hWnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) pt.x = rect.right - 1 - pt.x;
     else pt.x -= rect.left;
     pt.y -= rect.top;
+
+    update_invalid_menu_bar_layout( menu, menu->hWnd );
 
     if (!PtInRect( &menu->items_rect, pt ))
     {
@@ -839,6 +853,8 @@ BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rec
         release_menu_ptr( menu );
         return FALSE;
     }
+
+    update_invalid_menu_bar_layout( menu, menu->hWnd );
 
     *rect = menu->items[pos].rect;
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top );
@@ -2157,18 +2173,19 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
 }
 
 /* Calculate the size of the menu bar */
-static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND owner )
+static void calc_menu_bar_size( HDC hdc, POINT pos, UINT width, struct menu *menu, HWND owner )
 {
     UINT start, i, help_pos;
     int org_x, org_y;
     struct menu_item *item;
 
-    if (!rect || !menu || !menu->nItems) return;
+    if (!menu || !menu->nItems) return;
 
-    TRACE( "rect %p %s\n", rect, wine_dbgstr_rect( rect ));
+    TRACE( "pos %s width %u\n", wine_dbgstr_point(&pos), width );
+
     /* Start with a 1 pixel top border.
        This corresponds to the difference between SM_CYMENU and SM_CYMENUSIZE. */
-    SetRect( &menu->items_rect, 0, 0, rect->right - rect->left, 1 );
+    SetRect( &menu->items_rect, 0, 0, width, 1 );
     start = 0;
     help_pos = ~0u;
     menu->textOffset = 0;
@@ -2200,17 +2217,16 @@ static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND own
         while (start < i) menu->items[start++].rect.bottom = menu->items_rect.bottom;
     }
 
-    OffsetRect( &menu->items_rect, rect->left, rect->top );
+    OffsetRect( &menu->items_rect, pos.x, pos.y );
     menu->Width = menu->items_rect.right - menu->items_rect.left;
     menu->Height = menu->items_rect.bottom - menu->items_rect.top;
-    rect->bottom = menu->items_rect.bottom;
 
     /* Flush right all items between the MF_RIGHTJUSTIFY and */
     /* the last item (if several lines, only move the last line) */
     if (help_pos == ~0u) return;
     item = &menu->items[menu->nItems-1];
     org_y = item->rect.top;
-    org_x = rect->right - rect->left;
+    org_x = width;
     for (i = menu->nItems - 1; i >= help_pos; i--, item--)
     {
         if (item->rect.top != org_y) break;    /* other line */
@@ -2223,20 +2239,19 @@ static void calc_menu_bar_size( HDC hdc, RECT *rect, struct menu *menu, HWND own
 
 UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
 {
+    RECT rect = { org_x, org_y, org_x + width, 0 };
     struct menu *menu;
-    RECT rect_bar;
+    UINT height;
     HDC hdc;
 
     TRACE( "hwnd %p, width %d, at (%d, %d).\n", hwnd, width, org_x, org_y );
 
-    if (!(menu = unsafe_menu_ptr( get_menu( hwnd )))) return 0;
+    if ((menu = unsafe_menu_ptr( get_menu( hwnd )))) menu->Height = 0; /* force size recalculate */
 
     hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-    NtGdiSelectFont( hdc, get_menu_font(FALSE));
-    SetRect( &rect_bar, org_x, org_y, org_x + width, org_y + get_system_metrics( SM_CYMENU ));
-    calc_menu_bar_size( hdc, &rect_bar, menu, hwnd );
+    height = NtUserDrawMenuBarTemp( hwnd, hdc, &rect, 0, 0 );
     NtUserReleaseDC( hwnd, hdc );
-    return menu->Height;
+    return height;
 }
 
 static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_width, UINT arrow_height )
@@ -2760,7 +2775,11 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
 
     prev_font = NtGdiSelectFont( hdc, font );
 
-    if (!menu->Height) calc_menu_bar_size( hdc, rect, menu, hwnd );
+    if (!menu->Height)
+    {
+        POINT pos = { rect->left, rect->top };
+        calc_menu_bar_size( hdc, pos, rect->right - rect->left, menu, hwnd );
+    }
 
     rect->bottom = rect->top + menu->Height;
 
@@ -3186,7 +3205,6 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
     menu = unsafe_menu_ptr( hmenu );
     if (!menu || !menu->nItems || !menu->hWnd) return;
 
-    if (menu->FocusedItem == index) return;
     if (menu->wFlags & MF_POPUP) hdc = NtUserGetDC( menu->hWnd );
     else hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
     if (!top_popup)
@@ -3196,6 +3214,13 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
     }
 
     NtGdiSelectFont( hdc, get_menu_font( FALSE ));
+
+    if (!(menu->wFlags & MF_POPUP) && !menu->Height)
+    {
+        POINT pos = { menu->items_rect.left, menu->items_rect.top };
+        UINT width = menu->items_rect.right - menu->items_rect.left;
+        calc_menu_bar_size( hdc, pos, width, menu, menu->hWnd );
+    }
 
     /* Clear previous highlighted item */
     if (menu->FocusedItem != NO_SELECTED_ITEM)
@@ -4575,11 +4600,8 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
     focused_item = menu->FocusedItem;
     release_menu_ptr(menu);
 
-    if (focused_item != pos)
-    {
-        hide_sub_popups( hwnd, handle_menu, FALSE, 0 );
-        select_item( hwnd, handle_menu, pos, TRUE, 0 );
-    }
+    if (focused_item != pos) hide_sub_popups( hwnd, handle_menu, FALSE, 0 );
+    select_item( hwnd, handle_menu, pos, TRUE, 0 );
 
     return TRUE;
 }

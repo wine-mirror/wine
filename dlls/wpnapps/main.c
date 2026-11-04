@@ -16,8 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#include <initguid.h>
+#define COBJMACROS
 #include <roapi.h>
 #include <winstring.h>
+
+#include "private.h"
 
 #include <wine/debug.h>
 
@@ -31,7 +35,15 @@ HRESULT WINAPI DllGetClassObject( const CLSID *clsid, const IID *riid, void **ou
 
 HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
 {
-    FIXME( "(%s, %p): stub!\n", debugstr_hstring( classid ), factory );
+    const WCHAR *nameW = WindowsGetStringRawBuffer( classid, NULL );
+
+    FIXME( "(%s, %p): semi-stub!\n", debugstr_hstring( classid ), factory );
+
+    if (!wcscmp( nameW, RuntimeClass_Windows_UI_Notifications_ToastNotificationManager ))
+        return IActivationFactory_QueryInterface( toast_manager_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( nameW, RuntimeClass_Windows_UI_Notifications_ToastNotification ))
+        return IActivationFactory_QueryInterface( toast_notification_factory, &IID_IActivationFactory, (void **)factory );
+
     *factory = NULL;
     return CLASS_E_CLASSNOTAVAILABLE;
 }

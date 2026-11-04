@@ -643,6 +643,8 @@ static void test_FileTimeToDosDateTime(void)
 {
     FILETIME ft = { 0 };
     WORD fatdate, fattime;
+    SYSTEMTIME systime;
+    int min, sec;
     BOOL ret;
 
     if (0)
@@ -674,6 +676,66 @@ static void test_FileTimeToDosDateTime(void)
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    systime.wYear = 2000;
+    systime.wMonth = 1;
+    systime.wDay = 1;
+    systime.wHour = 10;
+    systime.wMinute = 20;
+    systime.wSecond = 22;
+    systime.wMilliseconds = 1;
+    ret = SystemTimeToFileTime(&systime, &ft);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    sec = fattime & 0x1f;
+    ok(sec == 12, "Unexpected seconds field %d.\n", sec);
+    min = (fattime >> 5) & 0x3f;
+    ok(min == 20, "Unexpected minutes field %d.\n", min);
+
+    systime.wSecond = 59;
+    systime.wMilliseconds = 0;
+    ret = SystemTimeToFileTime(&systime, &ft);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    sec = fattime & 0x1f;
+    ok(!sec, "Unexpected seconds field %d.\n", sec);
+    min = (fattime >> 5) & 0x3f;
+    ok(min == 21, "Unexpected minutes field %d.\n", min);
+
+    systime.wSecond = 59;
+    systime.wMilliseconds = 1;
+    ret = SystemTimeToFileTime(&systime, &ft);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    sec = fattime & 0x1f;
+    ok(!sec, "Unexpected seconds field %d.\n", sec);
+    min = (fattime >> 5) & 0x3f;
+    ok(min == 21, "Unexpected minutes field %d.\n", min);
+
+    systime.wSecond = 22;
+    systime.wMilliseconds = 0;
+    ret = SystemTimeToFileTime(&systime, &ft);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    sec = fattime & 0x1f;
+    ok(sec == 11, "Unexpected seconds field %d.\n", sec);
+    min = (fattime >> 5) & 0x3f;
+    ok(min == 20, "Unexpected minutes field %d.\n", min);
+
+    systime.wSecond = 1;
+    systime.wMilliseconds = 0;
+    ret = SystemTimeToFileTime(&systime, &ft);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    sec = fattime & 0x1f;
+    ok(sec == 1, "Unexpected seconds field %d.\n", sec);
+    min = (fattime >> 5) & 0x3f;
+    ok(min == 20, "Unexpected minutes field %d.\n", min);
 }
 
 static void test_GetCalendarInfo(void)

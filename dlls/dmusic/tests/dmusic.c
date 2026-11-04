@@ -581,7 +581,7 @@ static BOOL missing_dmusic(void)
 
     if (hr == S_OK && dm)
     {
-        IDirectMusic_Release(dm);
+        IDirectMusic8_Release(dm);
         return FALSE;
     }
     return TRUE;

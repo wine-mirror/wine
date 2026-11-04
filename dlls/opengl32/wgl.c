@@ -3312,6 +3312,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         UNIX_CALL( process_detach, NULL );
         /* fallthrough */
     case DLL_THREAD_DETACH:
+        UNIX_CALL( thread_detach, NtCurrentTeb() );
         if ((context = get_current_context())) context->base.current_tid = 0;
         free( NtCurrentTeb()->glReserved1[WINE_GL_RESERVED_FORMATS_PTR] );
         return TRUE;

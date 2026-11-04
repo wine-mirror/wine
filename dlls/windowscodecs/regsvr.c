@@ -1529,7 +1529,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	&GUID_VendorMicrosoft,
 	&GUID_ContainerFormatWmp,
 	"image/jxr",
-	".jxr;.hdp;.wdp",
+	".jxr,.hdp,.wdp",
 	wmp_formats,
 	wmp_patterns
     },

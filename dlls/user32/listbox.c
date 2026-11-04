@@ -2140,8 +2140,8 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
                             MAKELPARAM( x, y ) );
     }
 
-    descr->captured = TRUE;
     NtUserSetCapture( descr->self );
+    descr->captured = TRUE;
 
     if (descr->style & (LBS_EXTENDEDSEL | LBS_MULTIPLESEL))
     {

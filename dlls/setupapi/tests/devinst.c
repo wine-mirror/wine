@@ -4900,10 +4900,15 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
 
     /* try a relative nonexistent SourceInfFileName, with dest parameter */
     memset(dest, 0xcc, sizeof(dest));
+    size = 0xdeadbeef;
+    filepart = (char *)0xdeadbeef;
     SetLastError(0xdeadbeef);
-    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, NULL);
+    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), &size, &filepart);
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+    ok(dest[0] == (char)0xcc, "Got dest %s.\n", debugstr_a(dest));
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
+    ok(filepart == (char *)0xdeadbeef, "Got filepart %p.\n", filepart);
 
     /* try an absolute nonexistent SourceInfFileName */
     GetCurrentDirectoryA(sizeof(path), path);
@@ -5179,10 +5184,10 @@ static void create_driver_store_test_device(HDEVINFO set, const char *name, SP_D
 static void test_driver_store(struct testsign_context *ctx)
 {
     static const char repository_dir[] = "C:\\windows\\system32\\DriverStore\\FileRepository\\";
-    SP_DEVINFO_DATA device = {sizeof(device)}, device2 = {sizeof(device2)};
     char dest[MAX_PATH], orig_dest[MAX_PATH], inf_path[MAX_PATH];
+    SP_DEVINFO_DATA device = {sizeof(device)};
     SP_DRVINFO_DATA_A driver = {sizeof(driver)};
-    char orig_cwd[MAX_PATH], *cwd;
+    char orig_cwd[MAX_PATH], *cwd, *filepart;
     char driver_path[MAX_PATH];
     SYSTEM_INFO system_info;
     HANDLE catalog;
@@ -5481,13 +5486,28 @@ static void test_driver_store(struct testsign_context *ctx)
      * ERROR_SHARING_VIOLATION, even though FindFirstFile() confirms that it's
      * empty. */
 
+    delete_file("winetest.cat");
+
+    memset(dest, 0xcc, sizeof(dest));
+    size = 0xdeadbeef;
+    filepart = (char *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(inf_path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE,
+            dest, sizeof(dest), &size, &filepart);
+    ok(!ret, "Got %d.\n", ret);
+    todo_wine ok(GetLastError() == ERROR_NO_CATALOG_FOR_OEM_INF, "Got error %#lx.\n", GetLastError());
+    ok(file_exists(inf_path), "Expected source inf to exist.\n");
+    ok(!file_exists(orig_dest), "Expected driver store inf not to exist.\n");
+    ok(dest[0] == (char)0xcc, "Got dest %s.\n", debugstr_a(dest));
+    ok(size == 0xdeadbeef, "Got size %lu.\n", size);
+    ok(filepart == (char *)0xdeadbeef, "Got filepart %p.\n", filepart);
+
     delete_file("subdir\\winetest_child.txt");
     delete_file("sister\\winetest_niece.txt");
     delete_file("winetest_cab.cab");
     delete_file("winetest_coinst.txt");
     delete_file("winetest_ignored2.txt");
     delete_file("winetest_src.txt");
-    delete_file("winetest.cat");
     delete_file("winetest.inf");
     delete_directory("subdir");
     delete_directory("sister");
@@ -5498,6 +5518,96 @@ static void test_driver_store(struct testsign_context *ctx)
 
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "Failed to destroy device list.\n");
+}
+
+static UINT WINAPI install_device_callback(void *context, UINT notification, UINT_PTR param1, UINT_PTR param2)
+{
+    /* Prevent UI prompt on Windows. */
+    if (notification == SPFILENOTIFY_NEEDMEDIA || notification == SPFILENOTIFY_COPYERROR)
+        return FILEOP_ABORT;
+    return SetupDefaultQueueCallbackA(context, notification, param1, param2);
+}
+
+static void test_install_device(void)
+{
+    SP_DEVINSTALL_PARAMS_A params = {sizeof(params)};
+    char inf_path[MAX_PATH], cat_path[MAX_PATH];
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    HANDLE file;
+    HDEVINFO set;
+    BOOL ret;
+
+    static const char inf_data[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "CatalogFile=winetest.cat\n"
+        "Class=System\n"
+        "ClassGUID={4d36e97d-e325-11ce-bfc1-08002be10318}\n"
+        "[Manufacturer]\n"
+        "mfg1=mfg_section,NT" MYEXT "\n"
+        "[mfg_section.nt" MYEXT "]\n"
+        "desc1=device_section,winetest_store_hardware_id\n"
+        "[device_section.nt" MYEXT "]\n"
+        "CopyFiles=file_section\n"
+        "[device_section.nt" MYEXT ".Services]\n"
+        "AddService=,2\n"
+        "[file_section]\n"
+        "winetest.cat\n"
+        "[SourceDisksFiles]\n"
+        "winetest.cat=1\n"
+        "[SourceDisksNames]\n"
+        "1=\n"
+        "[DestinationDirs]\n"
+        "DefaultDestDir=11\n";
+
+    if (wow64)
+        return;
+
+    GetTempPathA(sizeof(inf_path), inf_path);
+    strcpy(cat_path, inf_path);
+    strcat(inf_path, "winetest.inf");
+    strcat(cat_path, "winetest.cat");
+    create_file(inf_path, inf_data);
+
+    file = CreateFileA(cat_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file, error %#lx.\n", GetLastError());
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+    ret = SetupDiCreateDeviceInfoA(set, "Root\\winetest_store\\1", &GUID_DEVCLASS_SYSTEM, NULL, NULL, 0, &device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
+            (const BYTE *)driver_store_hardware_id, sizeof(driver_store_hardware_id));
+    ok(ret, "Failed to set hardware ID, error %#lx.\n", GetLastError());
+    ret = SetupDiRegisterDeviceInfo(set, &device, 0, NULL, NULL, NULL);
+    ok(ret, "Failed to register device, error %#lx.\n", GetLastError());
+
+    ret = SetupDiGetDeviceInstallParamsA(set, &device, &params);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    params.Flags |= DI_ENUMSINGLEINF | DI_QUIETINSTALL;
+    params.InstallMsgHandler = install_device_callback;
+    params.InstallMsgHandlerContext = SetupInitDefaultQueueCallback(NULL);
+    strcpy(params.DriverPath, inf_path);
+    ret = SetupDiSetDeviceInstallParamsA(set, &device, &params);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = SetupDiBuildDriverInfoList(set, &device, SPDIT_COMPATDRIVER);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = SetupDiSelectBestCompatDrv(set, &device);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    /* Holding an exclusive lock on winetest.cat causes installation to fail. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiInstallDevice(set, &device);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == ERROR_OPERATION_ABORTED, "Got error %#lx.\n", GetLastError());
+
+    CloseHandle(file);
+    SetupTermDefaultQueueCallback(params.InstallMsgHandlerContext);
+    ret = SetupDiRemoveDevice(set, &device);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+    delete_file(cat_path);
+    delete_file(inf_path);
 }
 
 static void test_device_enum(void)
@@ -5818,6 +5928,7 @@ START_TEST(devinst)
 
     test_copy_oem_inf(&ctx);
     test_driver_store(&ctx);
+    test_install_device();
 
     testsign_cleanup(&ctx);
 }

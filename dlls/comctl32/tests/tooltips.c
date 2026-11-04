@@ -1233,6 +1233,223 @@ static void test_TTN_SHOW(void)
     DestroyWindow(hwnd);
 }
 
+static void test_TTM_ADJUSTRECT(BOOL is_v6)
+{
+    RECT rect, rect2, virtual_rect, intersect_rect, margin_rect;
+    HWND hwnd, hwnd2;
+    BOOL ret;
+
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, WS_VISIBLE, 10, 10, 300, 300, NULL, NULL, NULL, 0);
+    ok(hwnd != NULL, "CreateWindowExA failed, error %lu.\n", GetLastError());
+
+    /* Test NULL rect */
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)NULL);
+    ok(!ret, "Got unexpected ret.\n");
+
+    /* Test adjusting an empty text rect */
+    SetRectEmpty(&rect);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ok(!IsRectEmpty(&rect), "Got an empty rect.\n");
+
+    /* Test adjusting a window rect */
+    SetRect(&rect2, 0, 0, 100, 100);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok((100 - (rect2.right - rect2.left)) == (rect.right - rect.left)
+       && (100 - (rect2.bottom - rect2.top)) == (rect.bottom - rect.top),
+       "Got an unexpected rect %s.\n", wine_dbgstr_rect(&rect2));
+
+    /* Test adjusting a window rect with an empty rect  */
+    SetRect(&rect, 0, 0, 0, 0);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ok(rect.right < rect.left && rect.bottom < rect.top,
+       "Got an unexpected rect %s.\n", wine_dbgstr_rect(&rect));
+
+    /* Test adjusting a text rect outside of the virtual desktop rect. Expect that no offset is
+     * added to make sure that the result window rect is visible on the virtual screen */
+    SetRect(&virtual_rect, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
+    OffsetRect(&virtual_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
+
+    SetRect(&rect, GetSystemMetrics(SM_XVIRTUALSCREEN) - 200, GetSystemMetrics(SM_YVIRTUALSCREEN) - 200,
+            GetSystemMetrics(SM_XVIRTUALSCREEN) - 100, GetSystemMetrics(SM_YVIRTUALSCREEN) - 100);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ok(!IntersectRect(&intersect_rect, &virtual_rect, &rect), "Got an unexpected rect %s.\n",
+       wine_dbgstr_rect(&rect));
+
+    /* Test adjusting a window rect outside of the virtual desktop rect. Expect that no offset is
+     * added to make sure that the result text rect is visible on the virtual screen */
+    SetRect(&rect, GetSystemMetrics(SM_XVIRTUALSCREEN) - 200, GetSystemMetrics(SM_YVIRTUALSCREEN) - 200,
+            GetSystemMetrics(SM_XVIRTUALSCREEN) - 100, GetSystemMetrics(SM_YVIRTUALSCREEN) - 100);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ok(!IntersectRect(&intersect_rect, &virtual_rect, &rect), "Got an unexpected rect %s.\n",
+       wine_dbgstr_rect(&rect));
+
+    /* Compare adjusting text rects for tooltips with different styles. Expect that no adjustment is
+     * made for the style difference */
+    hwnd2 = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, WS_POPUP | WS_VISIBLE, 10, 10, 300, 300, NULL,
+                            NULL, NULL, 0);
+    ok(hwnd2 != NULL, "CreateWindowExA failed, error %lu.\n", GetLastError());
+
+    SetRect(&rect, 0, 0, 100, 100);
+    rect2 = rect;
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok(EqualRect(&rect, &rect2), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+       wine_dbgstr_rect(&rect2));
+    DestroyWindow(hwnd2);
+
+    /* Test that comctl32 v5 uses the margins set to adjust the window rect but v6 doesn't */
+    SetRect(&margin_rect, 1, 2, 3, 4);
+    SendMessageA(hwnd, TTM_GETMARGIN, 0, (LPARAM)&margin_rect);
+    ok(IsRectEmpty(&margin_rect), "Got unexpected margin %s.\n", wine_dbgstr_rect(&margin_rect));
+
+    SetRectEmpty(&rect);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+
+    SetRect(&margin_rect, 100, 100, 100, 100);
+    SendMessageA(hwnd, TTM_SETMARGIN, 0, (LPARAM)&margin_rect);
+
+    SetRectEmpty(&rect2);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    if (is_v6)
+        todo_wine
+        ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+           wine_dbgstr_rect(&rect));
+    else
+        ok(((rect2.right - rect2.left) - (rect.right - rect.left)) == 200
+           && ((rect2.bottom - rect2.top) - (rect.bottom - rect.top)) == 200,
+           "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect2));
+
+    SetRect(&margin_rect, 0, 0, 0, 0);
+    SendMessageA(hwnd, TTM_SETMARGIN, 0, (LPARAM)&margin_rect);
+
+    /* Test that comctl32 v5 uses the margins set to adjust the text rect but v6 doesn't */
+    SetRect(&rect, 0, 0, 500, 500);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+
+    SetRect(&margin_rect, 100, 100, 100, 100);
+    SendMessageA(hwnd, TTM_SETMARGIN, 0, (LPARAM)&margin_rect);
+
+    SetRect(&rect2, 0, 0, 500, 500);
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    if (is_v6)
+        todo_wine
+        ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+           wine_dbgstr_rect(&rect));
+    else
+        ok(((rect.right - rect.left) - (rect2.right - rect2.left)) == 200
+           && ((rect.bottom - rect.top) - (rect2.bottom - rect2.top)) == 200,
+           "Got unexpected rect %s.\n", wine_dbgstr_rect(&rect2));
+
+    SetRect(&margin_rect, 0, 0, 0, 0);
+    SendMessageA(hwnd, TTM_SETMARGIN, 0, (LPARAM)&margin_rect);
+
+    /* Test TTS_BALLOON */
+    hwnd2 = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, TTS_BALLOON | WS_VISIBLE, 10, 10, 300, 300,
+                            NULL, NULL, NULL, 0);
+    ok(hwnd2 != NULL, "CreateWindowExA failed, error %lu.\n", GetLastError());
+
+    SetRect(&rect, 0, 0, 100, 100);
+    rect2 = rect;
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok((rect2.right - rect2.left) > (rect.right - rect.left)
+       && (rect2.bottom - rect2.top) > (rect.bottom - rect.top),
+       "Expected rect %s larger than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
+
+    SetRect(&rect, 0, 0, 100, 100);
+    rect2 = rect;
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok((rect2.right - rect2.left) < (rect.right - rect.left)
+       && (rect2.bottom - rect2.top) < (rect.bottom - rect.top),
+       "Expected rect %s smaller than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
+
+    DestroyWindow(hwnd2);
+
+    /* Test tooltips title. comctl32 v5 considers the presence of the title text when adjusting the
+     * window rect but v6 doesn't */
+    hwnd2 = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, WS_VISIBLE, 10, 10, 300, 300, NULL, NULL, NULL, 0);
+    ok(hwnd2 != NULL, "CreateWindowExA failed, error %lu.\n", GetLastError());
+
+    SetRect(&rect, 0, 0, 100, 100);
+    rect2 = rect;
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+
+    ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM)"A very long title ...............");
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    if (is_v6)
+        todo_wine
+        ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+           wine_dbgstr_rect(&rect));
+    else
+        ok((rect2.right - rect2.left) > (rect.right - rect.left)
+           && (rect2.bottom - rect2.top) > (rect.bottom - rect.top),
+           "Expected rect %s larger than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
+
+    /* Title text length doesn't change the result window rect */
+    rect = rect2;
+    ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM) "Short title");
+    ok(ret, "Got unexpected ret.\n");
+
+    SetRect(&rect2, 0, 0, 100, 100);
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, TRUE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+       wine_dbgstr_rect(&rect));
+
+    /* Test tooltips title. comctl32 v5 considers the presence of the title text when adjusting the
+     * text rect but v6 doesn't */
+    SetRect(&rect, 0, 0, 500, 500);
+    rect2 = rect;
+    ret = SendMessageA(hwnd, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect);
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM)"A very long title ...............");
+    ok(ret, "Got unexpected ret.\n");
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    if (is_v6)
+        todo_wine
+        ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+           wine_dbgstr_rect(&rect));
+    else
+        ok((rect2.right - rect2.left) < (rect.right - rect.left)
+           && (rect2.bottom - rect2.top) < (rect.bottom - rect.top),
+           "Expected rect %s smaller than %s.\n", wine_dbgstr_rect(&rect2), wine_dbgstr_rect(&rect));
+
+    /* Title text length doesn't change the result text rect */
+    rect = rect2;
+    ret = SendMessageA(hwnd2, TTM_SETTITLEA, TTI_INFO, (LPARAM) "Short title");
+    ok(ret, "Got unexpected ret.\n");
+
+    SetRect(&rect2, 0, 0, 500, 500);
+    ret = SendMessageA(hwnd2, TTM_ADJUSTRECT, FALSE, (LPARAM)&rect2);
+    ok(ret, "Got unexpected ret.\n");
+    ok(EqualRect(&rect2, &rect), "Expected rect %s, got %s.\n", wine_dbgstr_rect(&rect2),
+       wine_dbgstr_rect(&rect));
+
+    DestroyWindow(hwnd2);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(tooltips)
 {
     ULONG_PTR ctx_cookie;
@@ -1255,6 +1472,7 @@ START_TEST(tooltips)
     test_margin();
     test_TTM_ADDTOOL(FALSE);
     test_TTN_SHOW();
+    test_TTM_ADJUSTRECT(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
@@ -1267,6 +1485,7 @@ START_TEST(tooltips)
     test_margin();
     test_TTM_ADDTOOL(TRUE);
     test_TTN_SHOW();
+    test_TTM_ADJUSTRECT(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
 }

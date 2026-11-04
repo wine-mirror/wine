@@ -871,6 +871,8 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     if (!wined3d_context_vk_create_image(context_vk, &desc, &texture_vk->image))
         return FALSE;
 
+    ++texture_vk->image_generation;
+
     /* We can't use a zero src access mask without synchronization2. Set the last-used bind mask to something
      * non-zero to avoid this. */
     texture_vk->bind_mask = resource->bind_flags;

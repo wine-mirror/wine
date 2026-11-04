@@ -389,7 +389,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
 
     WindowsCreateStringReference( class_name_manager, wcslen( class_name_manager ), &str_hdr, &str );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    todo_wine ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
         todo_wine win_skip( "%s runtimeclass not registered\n", debugstr_w( class_name_manager ) );
@@ -400,28 +400,34 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     check_interface( factory, &IID_IInspectable, TRUE );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IToastNotificationManagerStatics, (void **)&statics );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     IActivationFactory_Release( factory );
 
     WindowsCreateStringReference( class_name_notif, wcslen( class_name_notif ), &str_hdr, &str );
     hr = RoGetActivationFactory( str, &IID_IToastNotificationFactory, (void **)&notif_factory );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
-        skip( "%s runtimeclass not registered\n", debugstr_w( class_name_manager ) );
+        skip( "%s runtimeclass not registered\n", debugstr_w( class_name_notif ) );
         return;
     }
 
     WindowsCreateStringReference( aumid, wcslen( aumid ), &str_hdr, &str );
     hr = IToastNotificationManagerStatics_CreateToastNotifierWithId( statics, str, &notifier );
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr );
+    ok(hr == S_OK, "got hr %#lx\n", hr );
 
-    todo_wine check_interface( notifier, &IID_IUnknown, TRUE );
-    todo_wine check_interface( notifier, &IID_IInspectable, TRUE );
+    check_interface( notifier, &IID_IUnknown, TRUE );
+    check_interface( notifier, &IID_IInspectable, TRUE );
     check_interface( notifier, &IID_IAgileObject, FALSE );
 
     hr = IToastNotificationManagerStatics_GetTemplateContent( statics, ToastTemplateType_ToastText01, &notif_xml );
     todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    if (FAILED(hr))
+    {
+        skip( "GetTemplateContent failed\n" );
+        IToastNotifier_Release( notifier );
+        goto done;
+    }
 
     todo_wine check_interface( notif_xml, &IID_IUnknown, TRUE );
     todo_wine check_interface( notif_xml, &IID_IInspectable, TRUE );
@@ -456,6 +462,7 @@ static void test_ToastNotificationManager( const WCHAR *aumid )
     IToastNotification_Release( notif );
     IToastNotifier_Release( notifier );
 
+done:
     IToastNotificationFactory_Release( notif_factory );
     IToastNotificationManagerStatics_Release( statics );
 }

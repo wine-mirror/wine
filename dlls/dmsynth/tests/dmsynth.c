@@ -545,9 +545,9 @@ static void test_dmsynth(void)
     IDirectMusicSynth_Close(dmsynth);
 
     if (control_synth)
-        IDirectMusicSynth_Release(control_synth);
+        IKsControl_Release(control_synth);
     if (control_sink)
-        IDirectMusicSynth_Release(control_sink);
+        IKsControl_Release(control_sink);
     if (clock_synth)
         IReferenceClock_Release(clock_synth);
     if (clock_sink)

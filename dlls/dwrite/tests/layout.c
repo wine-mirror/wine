@@ -7981,17 +7981,14 @@ static void test_HitTestPoint(void)
     /* Outside of layout rectangle, to the left. */
     memset(&metrics, 0xaa, sizeof(metrics));
     hr = IDWriteTextLayout_HitTestPoint(layout, -20.0f, -20.0f, &is_trailing, &is_inside, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!is_trailing, "Unexpected trailing flag %d.\n", is_trailing);
     ok(!is_inside, "Unexpected inside flag %d.\n", is_inside);
     ok(metrics.textPosition == 0, "Unexpected position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
-    ok(metrics.width == clusters[0].width, "Unexpected width %.8e.\n", metrics.width);
+    ok(metrics.width == clusters[0].width, "Unexpected width %.8e %.8e.\n", metrics.width, clusters[0].width);
     ok(metrics.height == line_metrics[0].height, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
@@ -8071,6 +8068,7 @@ if (hr == S_OK)
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.width == clusters[0].width, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height == inline_metrics.height, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
@@ -8110,28 +8108,36 @@ if (hr == S_OK)
     ok(!is_trailing, "Unexpected trailing flag %d.\n", is_trailing);
     ok(!is_inside, "Unexpected inside flag %d.\n", is_inside);
     ok(metrics.textPosition == 0, "Unexpected position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.width == clusters[0].width, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == line_metrics[0].height, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
+    todo_wine
     ok(!!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
+    todo_wine
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
 
     /* Outside of layout rectangle, to the right. */
     memset(&metrics, 0xaa, sizeof(metrics));
+
     hr = IDWriteTextLayout_HitTestPoint(layout, layout_metrics.width * 2, -20.0f, &is_trailing, &is_inside, &metrics);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!is_trailing, "Unexpected trailing flag %d.\n", is_trailing);
     ok(!is_inside, "Unexpected inside flag %d.\n", is_inside);
+    todo_wine
     ok(metrics.textPosition == 1, "Unexpected position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
+    todo_wine
     ok(metrics.left == clusters[0].width, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.width == inline_metrics.width, "Unexpected width %.8e.\n", metrics.width);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimming_sign);

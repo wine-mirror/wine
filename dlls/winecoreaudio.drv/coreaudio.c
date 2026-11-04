@@ -80,6 +80,7 @@ struct coreaudio_stream
 {
     os_unfair_lock lock;
     AudioComponentInstance unit;
+    AudioComponentInstance mixer_unit;
     AudioConverterRef converter;
     AudioStreamBasicDescription dev_desc; /* audio unit format, not necessarily the same as fmt */
     AudioDeviceID dev_id;
@@ -365,13 +366,84 @@ static void silence_buffer(struct coreaudio_stream *stream, BYTE *buffer, UINT32
         memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
+/* Silence the data in an AudioBufferList */
+static void ca_silence_buffer(AudioBufferList *data, struct coreaudio_stream *stream,
+                              UINT32 start_frame, UINT32 n_frames)
+{
+    UINT32 ch;
+
+    if(stream->mixer_unit){
+        for(ch = 0; ch < data->mNumberBuffers; ++ch)
+            memset((float *)data->mBuffers[ch].mData + start_frame, 0, n_frames * sizeof(float));
+    }else
+        silence_buffer(stream, (BYTE *)data->mBuffers[0].mData + start_frame * stream->fmt->nBlockAlign, n_frames);
+}
+
+/* Mixer units need canonical non-interleaved Float32 format */
+static void convert_to_canonical(const struct coreaudio_stream *stream, const BYTE *src,
+                                 AudioBufferList *data, UINT32 src_frames, UINT32 dst_offset_frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE *)stream->fmt;
+    UINT32 ch, i, n_channels = stream->fmt->nChannels;
+    WORD bits = stream->fmt->wBitsPerSample;
+    BOOL is_float;
+
+    is_float = stream->fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+               (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+               IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT));
+
+    for(ch = 0; ch < n_channels; ++ch){
+        float *dst = (float *)data->mBuffers[ch].mData + dst_offset_frames;
+
+        if(is_float){
+            if(bits == 32){
+                const float *src_float = (const float *)src + ch;
+                for(i = 0; i < src_frames; ++i){
+                    dst[i] = *src_float;
+                    src_float += n_channels;
+                }
+            }else if(bits == 64){
+                const double *src_double = (const double *)src + ch;
+                for(i = 0; i < src_frames; ++i){
+                    dst[i] = *src_double;
+                    src_double += n_channels;
+                }
+            }
+        }else if (bits == 8){
+            const UINT8 *src_u8 = (const UINT8 *)src + ch;
+            for(i = 0; i < src_frames; ++i){
+                dst[i] = (*src_u8 - 128) / 128.0f;
+                src_u8 += n_channels;
+            }
+        }else if (bits == 16){
+            const INT16 *src_i16 = (const INT16 *)src + ch;
+            for(i = 0; i < src_frames; ++i){
+                dst[i] = *src_i16 / 32768.0f;
+                src_i16 += n_channels;
+            }
+        }else if (bits == 24){
+            for(i = 0; i < src_frames; ++i){
+                const BYTE *p = src + (i * n_channels + ch) * 3;
+                INT32 val = (INT32)(((UINT32)p[0] << 8) | ((UINT32)p[1] << 16) | ((UINT32)p[2] << 24));
+                dst[i] = val / 2147483648.0f;
+            }
+        }else if (bits == 32){
+            const INT32 *src_i32 = (const INT32 *)src + ch;
+            for(i = 0; i < src_frames; ++i){
+                dst[i] = *src_i32 / 2147483648.0f;
+                src_i32 += n_channels;
+            }
+        }
+    }
+}
+
 /* CA is pulling data from us */
 static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
         const AudioTimeStamp *ts, UInt32 bus, UInt32 nframes,
         AudioBufferList *data)
 {
     struct coreaudio_stream *stream = user;
-    UINT32 to_copy_bytes, to_copy_frames, chunk_bytes, lcl_offs_bytes;
+    UINT32 to_copy_bytes, to_copy_frames, chunk_bytes, chunk_frames, lcl_offs_bytes;
 
     os_unfair_lock_lock(&stream->lock);
 
@@ -380,13 +452,22 @@ static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
         to_copy_frames = min(nframes, stream->held_frames);
         to_copy_bytes = to_copy_frames * stream->fmt->nBlockAlign;
 
-        chunk_bytes = (stream->bufsize_frames - stream->lcl_offs_frames) * stream->fmt->nBlockAlign;
+        chunk_frames = stream->bufsize_frames - stream->lcl_offs_frames;
+        chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
 
-        if(to_copy_bytes > chunk_bytes){
-            memcpy(data->mBuffers[0].mData, stream->local_buffer + lcl_offs_bytes, chunk_bytes);
-            memcpy(((BYTE *)data->mBuffers[0].mData) + chunk_bytes, stream->local_buffer, to_copy_bytes - chunk_bytes);
-        }else
-            memcpy(data->mBuffers[0].mData, stream->local_buffer + lcl_offs_bytes, to_copy_bytes);
+        if(stream->mixer_unit){
+            if(to_copy_bytes > chunk_bytes){
+                convert_to_canonical(stream, stream->local_buffer + lcl_offs_bytes, data, chunk_frames, 0);
+                convert_to_canonical(stream, stream->local_buffer, data, to_copy_frames - chunk_frames, chunk_frames);
+            }else
+                convert_to_canonical(stream, stream->local_buffer + lcl_offs_bytes, data, to_copy_frames, 0);
+        }else{
+            if(to_copy_bytes > chunk_bytes){
+                memcpy(data->mBuffers[0].mData, stream->local_buffer + lcl_offs_bytes, chunk_bytes);
+                memcpy(((BYTE *)data->mBuffers[0].mData) + chunk_bytes, stream->local_buffer, to_copy_bytes - chunk_bytes);
+            }else
+                memcpy(data->mBuffers[0].mData, stream->local_buffer + lcl_offs_bytes, to_copy_bytes);
+        }
 
         stream->lcl_offs_frames += to_copy_frames;
         stream->lcl_offs_frames %= stream->bufsize_frames;
@@ -395,7 +476,7 @@ static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
         to_copy_bytes = to_copy_frames = 0;
 
     if(nframes > to_copy_frames)
-        silence_buffer(stream, ((BYTE *)data->mBuffers[0].mData) + to_copy_bytes, nframes - to_copy_frames);
+        ca_silence_buffer(data, stream, to_copy_frames, nframes - to_copy_frames);
 
     os_unfair_lock_unlock(&stream->lock);
 
@@ -581,23 +662,306 @@ static HRESULT ca_get_audiodesc(AudioStreamBasicDescription *desc,
     return S_OK;
 }
 
-static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance unit,
-                                  const WAVEFORMATEX *fmt, AudioStreamBasicDescription *dev_desc,
-                                  AudioConverterRef *converter)
+static AudioDeviceID dev_id_from_device(const char *device)
 {
+    AudioDeviceID id;
+    CFStringRef uid;
+    UInt32 size;
+    OSStatus sc;
+    const AudioObjectPropertyAddress addr =
+    {
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain,
+        .mSelector = kAudioHardwarePropertyTranslateUIDToDevice,
+    };
+
+    uid = CFStringCreateWithCStringNoCopy(NULL, device, kCFStringEncodingUTF8, kCFAllocatorNull);
+
+    size = sizeof(id);
+    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, sizeof(uid), &uid, &size, &id);
+    CFRelease(uid);
+    if(sc != noErr){
+        WARN("Failed to get device ID for UID %s: %x\n", device, (int)sc);
+        return kAudioObjectUnknown;
+    }
+
+    if (id == kAudioObjectUnknown)
+        WARN("Failed to get device ID for UID %s\n", device);
+
+    return id;
+}
+
+static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
+{
+    int i;
+    UINT mask = 0;
+
+    for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
+        switch (layout->mChannelDescriptions[i].mChannelLabel) {
+            default: FIXME("Unhandled channel 0x%x\n",
+                           (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
+            case kAudioChannelLabel_Unknown: break;
+            case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
+            case kAudioChannelLabel_Mono:
+            case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
+            case kAudioChannelLabel_Right: mask |= SPEAKER_FRONT_RIGHT; break;
+            case kAudioChannelLabel_LeftSurround: mask |= SPEAKER_BACK_LEFT; break;
+            case kAudioChannelLabel_CenterSurround: mask |= SPEAKER_BACK_CENTER; break;
+            case kAudioChannelLabel_RightSurround: mask |= SPEAKER_BACK_RIGHT; break;
+            case kAudioChannelLabel_LFEScreen: mask |= SPEAKER_LOW_FREQUENCY; break;
+            case kAudioChannelLabel_LeftSurroundDirect: mask |= SPEAKER_SIDE_LEFT; break;
+            case kAudioChannelLabel_RightSurroundDirect: mask |= SPEAKER_SIDE_RIGHT; break;
+            case kAudioChannelLabel_TopCenterSurround: mask |= SPEAKER_TOP_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightLeft: mask |= SPEAKER_TOP_FRONT_LEFT; break;
+            case kAudioChannelLabel_VerticalHeightCenter: mask |= SPEAKER_TOP_FRONT_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightRight: mask |= SPEAKER_TOP_FRONT_RIGHT; break;
+            case kAudioChannelLabel_TopBackLeft: mask |= SPEAKER_TOP_BACK_LEFT; break;
+            case kAudioChannelLabel_TopBackCenter: mask |= SPEAKER_TOP_BACK_CENTER; break;
+            case kAudioChannelLabel_TopBackRight: mask |= SPEAKER_TOP_BACK_RIGHT; break;
+            case kAudioChannelLabel_LeftCenter: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
+            case kAudioChannelLabel_RightCenter: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
+        }
+    }
+
+    return mask;
+}
+
+/* For most hardware on Windows, users must choose a configuration with an even
+ * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+ * channels, but those channels are still reported to applications from
+ * GetMixFormat! Some applications behave badly if given an odd number of
+ * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
+ * would report for a given channel layout. */
+static void ca_get_layout_channel_mask(const AudioChannelLayout *ca_layout, WORD *n_channels,
+                                       DWORD *channel_mask)
+{
+    UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
+
+    TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
+
+    if (ca_layout->mNumberChannelDescriptions == 1)
+    {
+        *n_channels = 1;
+        *channel_mask = ca_mask;
+        return;
+    }
+
+    /* compare against known configurations and find smallest configuration
+     * which is a superset of the given speakers */
+
+    if (ca_layout->mNumberChannelDescriptions <= 2 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
+    {
+        *n_channels = 2;
+        *channel_mask = KSAUDIO_SPEAKER_STEREO;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
+    {
+        *n_channels = 4;
+        *channel_mask = KSAUDIO_SPEAKER_QUAD;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
+    {
+        *n_channels = 4;
+        *channel_mask = KSAUDIO_SPEAKER_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
+    {
+        *n_channels = 6;
+        *channel_mask = KSAUDIO_SPEAKER_5POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
+    {
+        *n_channels = 6;
+        *channel_mask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
+    {
+        *n_channels = 8;
+        *channel_mask = KSAUDIO_SPEAKER_7POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
+    {
+        *n_channels = 8;
+        *channel_mask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
+        return;
+    }
+
+    /* oddball format, report truthfully */
+    *n_channels = ca_layout->mNumberChannelDescriptions;
+    *channel_mask = ca_mask;
+}
+
+static DWORD get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
+}
+
+static DWORD get_format_channel_mask(const WAVEFORMATEX *fmt)
+{
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE && fmtex->dwChannelMask != 0)
+        return fmtex->dwChannelMask;
+
+    return get_channel_mask(fmt->nChannels);
+}
+
+static HRESULT get_device_channel_mask(AudioDeviceID dev_id, EDataFlow flow, WORD *n_channels,
+                                       DWORD *channel_mask)
+{
+    AudioObjectPropertyAddress addr;
+    UInt32 size;
+    OSStatus sc;
+    int i;
+
+    addr.mScope = get_scope(flow);
+    addr.mElement = 0;
+    addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
+    sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
+    if(sc == noErr){
+        AudioChannelLayout *layout = malloc(size);
+        if(!layout)
+            return E_OUTOFMEMORY;
+
+        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, layout);
+        if(sc == noErr){
+            TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
+                  (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
+                  (unsigned int)layout->mNumberChannelDescriptions);
+
+            if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
+                ca_get_layout_channel_mask(layout, n_channels, channel_mask);
+            }else{
+                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n",
+                     (unsigned int)layout->mChannelLayoutTag);
+                *n_channels = 0;
+            }
+        }else{
+            TRACE("Unable to get _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+            *n_channels = 0;
+        }
+
+        free(layout);
+    }else{
+        TRACE("Unable to get size for _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+        *n_channels = 0;
+    }
+
+    if(*n_channels == 0){
+        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
+        sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
+        if(sc == noErr){
+            AudioBufferList *buffers = malloc(size);
+            if(!buffers)
+                return E_OUTOFMEMORY;
+
+            sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, buffers);
+            if(sc == noErr){
+                for(i = 0; i < buffers->mNumberBuffers; ++i)
+                    *n_channels += buffers->mBuffers[i].mNumberChannels;
+
+                *channel_mask = get_channel_mask(*n_channels);
+            }
+            else
+                WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
+
+            free(buffers);
+        } else
+            WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
+    }
+
+    if(*n_channels == 0){
+        *n_channels = 2;
+        *channel_mask = KSAUDIO_SPEAKER_STEREO;
+    }
+
+    return S_OK;
+}
+
+static BOOL use_mixer(AUDCLNT_SHAREMODE share, const WAVEFORMATEX *fmt, DWORD dev_channel_mask)
+{
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+
+    if(share != AUDCLNT_SHAREMODE_SHARED)
+        return FALSE;
+
+    if(get_format_channel_mask(fmt) == dev_channel_mask || fmt->nChannels <= 2)
+        return FALSE;
+
+    /* Other formats are not supported in convert_to_canonical() */
+    if(fmt->wFormatTag == WAVE_FORMAT_PCM || (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+       IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        if(fmt->wBitsPerSample != 8 && fmt->wBitsPerSample != 16 && fmt->wBitsPerSample != 24 &&
+           fmt->wBitsPerSample != 32)
+           return FALSE;
+    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT || (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(fmt->wBitsPerSample != 32 && fmt->wBitsPerSample != 64)
+           return FALSE;
+    }
+
+    return TRUE;
+}
+
+static HRESULT ca_setup_audiounit(AudioDeviceID dev_id, EDataFlow dataflow, AUDCLNT_SHAREMODE share,
+                                  AudioComponentInstance unit, const WAVEFORMATEX *fmt,
+                                  AudioStreamBasicDescription *dev_desc,
+                                  AudioComponentInstance *mixer_unit, AudioConverterRef *converter)
+{
+    AudioStreamBasicDescription desc;
     OSStatus sc;
     HRESULT hr;
 
+    hr = ca_get_audiodesc(&desc, fmt);
+    if(FAILED(hr))
+        return hr;
+
     if(dataflow == eCapture){
-        AudioStreamBasicDescription desc;
         UInt32 size;
         Float64 rate;
         fenv_t fenv;
         BOOL fenv_stored = TRUE;
 
-        hr = ca_get_audiodesc(&desc, fmt);
-        if(FAILED(hr))
-            return hr;
         dump_adesc("requested", &desc);
 
         /* input-only units can't perform sample rate conversion, so we have to
@@ -639,61 +1003,150 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             return osstatus_to_hresult(sc);
         }
     }else{
-        AudioChannelLayout layout;
+        DWORD dev_channel_mask;
+        WORD dev_channels;
 
-        hr = ca_get_audiodesc(dev_desc, fmt);
+        hr = get_device_channel_mask(dev_id, dataflow, &dev_channels, &dev_channel_mask);
         if(FAILED(hr))
             return hr;
 
-        dump_adesc("final", dev_desc);
-        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Input, 0, dev_desc, sizeof(*dev_desc));
-        if(sc != noErr){
-            WARN("Couldn't set format: %x\n", (int)sc);
+        /* HALOutput doesn't support downmixing, for example, from 5.1 to 2.0. So we need to add a
+         * mixer so that the audio sounds correctly */
+        if(use_mixer(share, fmt, dev_channel_mask)){
+            AudioComponentDescription comp_desc;
+            AudioComponent comp;
+            AudioStreamBasicDescription mixer_in_asbd, mixer_out_asbd;
+            AudioChannelLayout mixer_in_layout, mixer_out_layout;
+            AudioUnitConnection connection;
+            UInt32 algorithm;
+
+            memset(&desc, 0, sizeof(comp_desc));
+            comp_desc.componentType = kAudioUnitType_Mixer;
+            comp_desc.componentSubType = kAudioUnitSubType_SpatialMixer;
+            comp_desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+            if(!(comp = AudioComponentFindNext(NULL, &comp_desc))){
+                WARN("Couldn't find SpatialMixer component\n");
+                return AUDCLNT_E_DEVICE_INVALIDATED;
+            }
+
+            sc = AudioComponentInstanceNew(comp, mixer_unit);
+            if(sc != noErr){
+                WARN("Couldn't create a SpatialMixer: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            memset(&mixer_in_asbd, 0, sizeof(mixer_in_asbd));
+            mixer_in_asbd.mFormatID = kAudioFormatLinearPCM;
+            mixer_in_asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
+            mixer_in_asbd.mSampleRate = fmt->nSamplesPerSec;
+            mixer_in_asbd.mBytesPerPacket = sizeof(float);
+            mixer_in_asbd.mFramesPerPacket = 1;
+            mixer_in_asbd.mBytesPerFrame = sizeof(float);
+            mixer_in_asbd.mChannelsPerFrame = fmt->nChannels;
+            mixer_in_asbd.mBitsPerChannel = 32;
+            dump_adesc("mixer", &mixer_in_asbd);
+            sc = AudioUnitSetProperty(*mixer_unit, kAudioUnitProperty_StreamFormat,
+                                      kAudioUnitScope_Input, 0, &mixer_in_asbd, sizeof(mixer_in_asbd));
+            if(sc != noErr){
+                WARN("Couldn't set mixer input format: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            memset(&mixer_in_layout, 0, sizeof(mixer_in_layout));
+            mixer_in_layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+            mixer_in_layout.mChannelBitmap = get_format_channel_mask(fmt);
+            sc = AudioUnitSetProperty(*mixer_unit, kAudioUnitProperty_AudioChannelLayout,
+                                      kAudioUnitScope_Input, 0, &mixer_in_layout, sizeof(mixer_in_layout));
+            if(sc != noErr){
+                WARN("Couldn't set mixer input layout: %d\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            mixer_out_asbd = mixer_in_asbd;
+            mixer_out_asbd.mChannelsPerFrame = dev_channels;
+            sc = AudioUnitSetProperty(*mixer_unit, kAudioUnitProperty_StreamFormat,
+                                      kAudioUnitScope_Output, 0, &mixer_out_asbd, sizeof(mixer_out_asbd));
+            if(sc != noErr){
+                WARN("Couldn't set mixer output format: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            memset(&mixer_out_layout, 0, sizeof(mixer_out_layout));
+            mixer_out_layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+            mixer_out_layout.mChannelBitmap = dev_channel_mask;
+            sc = AudioUnitSetProperty(*mixer_unit, kAudioUnitProperty_AudioChannelLayout,
+                                      kAudioUnitScope_Output, 0, &mixer_out_layout, sizeof(mixer_out_layout));
+            if(sc != noErr){
+                WARN("Couldn't set mixer output layout: %d\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            algorithm = kSpatializationAlgorithm_EqualPowerPanning;
+            sc = AudioUnitSetProperty(*mixer_unit, kAudioUnitProperty_SpatializationAlgorithm,
+                                      kAudioUnitScope_Input, 0, &algorithm, sizeof(algorithm));
+            if(sc != noErr)
+                WARN("Couldn't set mixer algorithm: %d\n", (int)sc);
+
+            /* Connect the mixer to HALOutput */
+            *dev_desc = mixer_out_asbd;
+            dump_adesc("final", dev_desc);
+            sc = AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat,
+                                      kAudioUnitScope_Input, 0, dev_desc, sizeof(*dev_desc));
+            if(sc != noErr){
+                WARN("Couldn't set HALOutput format: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
+                                      kAudioUnitScope_Input, 0, &mixer_out_layout, sizeof(mixer_out_layout));
+            if(sc != noErr)
+                WARN("Couldn't set HALOutput layout: %d\n", (int)sc);
+
+            memset(&connection, 0, sizeof(connection));
+            connection.sourceAudioUnit = *mixer_unit;
+            sc = AudioUnitSetProperty(unit, kAudioUnitProperty_MakeConnection,
+                                      kAudioUnitScope_Input, 0, &connection, sizeof(connection));
+            if(sc != noErr){
+                WARN("Couldn't connect mixer to HALOutput: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            sc = AudioUnitInitialize(*mixer_unit);
+            if(sc != noErr){
+                WARN("Couldn't initialize mixer unit: %x\n", (int)sc);
+                goto mixer_failed;
+            }
+
+            return S_OK;
+mixer_failed:
+            if(*mixer_unit) AudioComponentInstanceDispose(*mixer_unit);
+            *mixer_unit = NULL;
             return osstatus_to_hresult(sc);
+        }else{
+            AudioChannelLayout layout;
+
+            *dev_desc = desc;
+            dump_adesc("final", dev_desc);
+            sc = AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat,
+                                      kAudioUnitScope_Input, 0, dev_desc, sizeof(*dev_desc));
+            if(sc != noErr){
+                WARN("Couldn't set format: %x\n", (int)sc);
+                return osstatus_to_hresult(sc);
+            }
+
+            /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
+            layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+            layout.mChannelBitmap = get_format_channel_mask(fmt);
+            layout.mNumberChannelDescriptions = 0;
+
+            sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
+                                      kAudioUnitScope_Input, 0, &layout, sizeof(layout));
+            if(sc != noErr)
+                WARN("Couldn't set channel layout: %d\n", (int)sc);
         }
-
-        /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
-        layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
-        layout.mChannelBitmap    = (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? ((WAVEFORMATEXTENSIBLE *)fmt)->dwChannelMask : 0x3;
-        layout.mNumberChannelDescriptions = 0;
-
-        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
-                                  kAudioUnitScope_Input, 0, &layout, sizeof(layout));
-        if (sc != noErr)
-            WARN("Couldn't set channel layout: %d\n", (int)sc);
     }
 
     return S_OK;
-}
-
-static AudioDeviceID dev_id_from_device(const char *device)
-{
-    AudioDeviceID id;
-    CFStringRef uid;
-    UInt32 size;
-    OSStatus sc;
-    const AudioObjectPropertyAddress addr =
-    {
-        .mScope = kAudioObjectPropertyScopeGlobal,
-        .mElement = kAudioObjectPropertyElementMain,
-        .mSelector = kAudioHardwarePropertyTranslateUIDToDevice,
-    };
-
-    uid = CFStringCreateWithCStringNoCopy(NULL, device, kCFStringEncodingUTF8, kCFAllocatorNull);
-
-    size = sizeof(id);
-    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, sizeof(uid), &uid, &size, &id);
-    CFRelease(uid);
-    if(sc != noErr){
-        WARN("Failed to get device ID for UID %s: %x\n", device, (int)sc);
-        return kAudioObjectUnknown;
-    }
-
-    if (id == kAudioObjectUnknown)
-        WARN("Failed to get device ID for UID %s\n", device);
-
-    return id;
 }
 
 static HRESULT get_device_period_frame_range(AudioDeviceID dev_id, EDataFlow flow,
@@ -839,7 +1292,9 @@ static NTSTATUS unix_create_stream(void *args)
         goto end;
     }
 
-    params->result = ca_setup_audiounit(stream->flow, stream->unit, stream->fmt, &stream->dev_desc, &stream->converter);
+    params->result = ca_setup_audiounit(stream->dev_id, stream->flow, stream->share, stream->unit,
+                                        stream->fmt, &stream->dev_desc, &stream->mixer_unit,
+                                        &stream->converter);
     if(FAILED(params->result)) goto end;
 
     input.inputProcRefCon = stream;
@@ -848,8 +1303,9 @@ static NTSTATUS unix_create_stream(void *args)
         sc = AudioUnitSetProperty(stream->unit, kAudioOutputUnitProperty_SetInputCallback,
                                   kAudioUnitScope_Output, 1, &input, sizeof(input));
     }else{
+        AudioComponentInstance input_unit = stream->mixer_unit ? stream->mixer_unit : stream->unit;
         input.inputProc = ca_render_cb;
-        sc = AudioUnitSetProperty(stream->unit, kAudioUnitProperty_SetRenderCallback,
+        sc = AudioUnitSetProperty(input_unit, kAudioUnitProperty_SetRenderCallback,
                                   kAudioUnitScope_Input, 0, &input, sizeof(input));
     }
     if(sc != noErr){
@@ -892,6 +1348,7 @@ end:
     if(FAILED(params->result)){
         if(stream->converter) AudioConverterDispose(stream->converter);
         if(stream->unit) AudioComponentInstanceDispose(stream->unit);
+        if(stream->mixer_unit) AudioComponentInstanceDispose(stream->mixer_unit);
         free(stream->fmt);
         free(stream);
     } else {
@@ -919,6 +1376,7 @@ static NTSTATUS unix_release_stream( void *args )
         AudioComponentInstanceDispose(stream->unit);
     }
 
+    if(stream->mixer_unit) AudioComponentInstanceDispose(stream->mixer_unit);
     if(stream->converter) AudioConverterDispose(stream->converter);
     free(stream->resamp_buffer);
     free(stream->wrap_buffer);
@@ -939,227 +1397,17 @@ static NTSTATUS unix_release_stream( void *args )
     return STATUS_SUCCESS;
 }
 
-static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
-{
-    int i;
-    UINT mask = 0;
-
-    for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
-        switch (layout->mChannelDescriptions[i].mChannelLabel) {
-            default: FIXME("Unhandled channel 0x%x\n",
-                           (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
-            case kAudioChannelLabel_Unknown: break;
-            case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
-            case kAudioChannelLabel_Mono:
-            case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
-            case kAudioChannelLabel_Right: mask |= SPEAKER_FRONT_RIGHT; break;
-            case kAudioChannelLabel_LeftSurround: mask |= SPEAKER_BACK_LEFT; break;
-            case kAudioChannelLabel_CenterSurround: mask |= SPEAKER_BACK_CENTER; break;
-            case kAudioChannelLabel_RightSurround: mask |= SPEAKER_BACK_RIGHT; break;
-            case kAudioChannelLabel_LFEScreen: mask |= SPEAKER_LOW_FREQUENCY; break;
-            case kAudioChannelLabel_LeftSurroundDirect: mask |= SPEAKER_SIDE_LEFT; break;
-            case kAudioChannelLabel_RightSurroundDirect: mask |= SPEAKER_SIDE_RIGHT; break;
-            case kAudioChannelLabel_TopCenterSurround: mask |= SPEAKER_TOP_CENTER; break;
-            case kAudioChannelLabel_VerticalHeightLeft: mask |= SPEAKER_TOP_FRONT_LEFT; break;
-            case kAudioChannelLabel_VerticalHeightCenter: mask |= SPEAKER_TOP_FRONT_CENTER; break;
-            case kAudioChannelLabel_VerticalHeightRight: mask |= SPEAKER_TOP_FRONT_RIGHT; break;
-            case kAudioChannelLabel_TopBackLeft: mask |= SPEAKER_TOP_BACK_LEFT; break;
-            case kAudioChannelLabel_TopBackCenter: mask |= SPEAKER_TOP_BACK_CENTER; break;
-            case kAudioChannelLabel_TopBackRight: mask |= SPEAKER_TOP_BACK_RIGHT; break;
-            case kAudioChannelLabel_LeftCenter: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
-            case kAudioChannelLabel_RightCenter: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
-        }
-    }
-
-    return mask;
-}
-
-/* For most hardware on Windows, users must choose a configuration with an even
- * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
- * channels, but those channels are still reported to applications from
- * GetMixFormat! Some applications behave badly if given an odd number of
- * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
- * would report for a given channel layout. */
-static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
-{
-    UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
-
-    TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
-
-    if (ca_layout->mNumberChannelDescriptions == 1)
-    {
-        fmt->Format.nChannels = 1;
-        fmt->dwChannelMask = ca_mask;
-        return;
-    }
-
-    /* compare against known configurations and find smallest configuration
-     * which is a superset of the given speakers */
-
-    if (ca_layout->mNumberChannelDescriptions <= 2 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
-    {
-        fmt->Format.nChannels = 2;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 4 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
-    {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 4 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 4;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 6 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
-    {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 6 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 6;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 8 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
-    {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
-        return;
-    }
-
-    if (ca_layout->mNumberChannelDescriptions <= 8 &&
-            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
-    {
-        fmt->Format.nChannels = 8;
-        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
-        return;
-    }
-
-    /* oddball format, report truthfully */
-    fmt->Format.nChannels = ca_layout->mNumberChannelDescriptions;
-    fmt->dwChannelMask = ca_mask;
-}
-
-static DWORD get_channel_mask(unsigned int channels)
-{
-    switch(channels){
-    case 0:
-        return 0;
-    case 1:
-        return KSAUDIO_SPEAKER_MONO;
-    case 2:
-        return KSAUDIO_SPEAKER_STEREO;
-    case 3:
-        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
-    case 4:
-        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
-    case 5:
-        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
-    case 6:
-        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
-    case 7:
-        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
-    case 8:
-        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
-    }
-    FIXME("Unknown speaker configuration: %u\n", channels);
-    return 0;
-}
-
 static NTSTATUS unix_get_mix_format(void *args)
 {
     struct get_mix_format_params *params = args;
-    AudioObjectPropertyAddress addr;
-    AudioChannelLayout *layout;
-    AudioBufferList *buffers;
-    UInt32 size;
-    OSStatus sc;
-    int i;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
     params->fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
-    addr.mScope = get_scope(params->flow);
-    addr.mElement = 0;
-    addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
-
-    sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
-    if(sc == noErr){
-        layout = malloc(size);
-        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, layout);
-        if(sc == noErr){
-            TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
-                  (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
-                  (unsigned int)layout->mNumberChannelDescriptions);
-
-            if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
-                convert_channel_layout(layout, params->fmt);
-            }else{
-                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n",
-                     (unsigned int)layout->mChannelLayoutTag);
-                params->fmt->Format.nChannels = 0;
-            }
-        }else{
-            TRACE("Unable to get _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
-            params->fmt->Format.nChannels = 0;
-        }
-
-        free(layout);
-    }else{
-        TRACE("Unable to get size for _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
-        params->fmt->Format.nChannels = 0;
-    }
-
-    if(params->fmt->Format.nChannels == 0){
-        addr.mScope = get_scope(params->flow);
-        addr.mElement = 0;
-        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
-
-        sc = AudioObjectGetPropertyDataSize(dev_id, &addr, 0, NULL, &size);
-        if(sc != noErr){
-            WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
-            params->result = osstatus_to_hresult(sc);
-            return STATUS_SUCCESS;
-        }
-
-        buffers = malloc(size);
-        if(!buffers){
-            params->result = E_OUTOFMEMORY;
-            return STATUS_SUCCESS;
-        }
-
-        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, buffers);
-        if(sc != noErr){
-            free(buffers);
-            WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
-            params->result = osstatus_to_hresult(sc);
-            return STATUS_SUCCESS;
-        }
-
-        for(i = 0; i < buffers->mNumberBuffers; ++i)
-            params->fmt->Format.nChannels += buffers->mBuffers[i].mNumberChannels;
-
-        free(buffers);
-
-        params->fmt->dwChannelMask = get_channel_mask(params->fmt->Format.nChannels);
-    }
+    if(FAILED(params->result = get_device_channel_mask(dev_id, params->flow,
+                                                       &params->fmt->Format.nChannels,
+                                                       &params->fmt->dwChannelMask)))
+        return STATUS_SUCCESS;
 
     if(FAILED(params->result = get_device_sample_rate(dev_id, params->flow, &params->fmt->Format.nSamplesPerSec)))
         return STATUS_SUCCESS;
@@ -1183,14 +1431,16 @@ static NTSTATUS unix_is_format_supported(void *args)
     struct is_format_supported_params *params = args;
     AudioStreamBasicDescription dev_desc;
     AudioConverterRef converter;
-    AudioComponentInstance unit;
+    AudioComponentInstance unit, mixer_unit = NULL;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
     unit = get_audiounit(params->flow, dev_id);
 
     converter = NULL;
-    params->result = ca_setup_audiounit(params->flow, unit, params->fmt_in, &dev_desc, &converter);
+    params->result = ca_setup_audiounit(dev_id, params->flow, params->share, unit, params->fmt_in,
+                                        &dev_desc, &mixer_unit, &converter);
     AudioComponentInstanceDispose(unit);
+    if(mixer_unit) AudioComponentInstanceDispose(mixer_unit);
     if(converter) AudioConverterDispose(converter);
 
     return STATUS_SUCCESS;
@@ -1655,7 +1905,7 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     struct get_capture_buffer_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     UINT32 chunk_bytes, chunk_frames;
-    LARGE_INTEGER stamp, freq;
+    LARGE_INTEGER stamp;
     SIZE_T size;
 
     os_unfair_lock_lock(&stream->lock);
@@ -1696,8 +1946,8 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     if(params->devpos)
         *params->devpos = stream->written_frames;
     if(params->qpcpos){ /* fixme: qpc of recording time */
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *params->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *params->qpcpos = stamp.QuadPart;
     }
     params->result = S_OK;
 
@@ -1758,7 +2008,7 @@ static NTSTATUS unix_get_position(void *args)
 {
     struct get_position_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
-    LARGE_INTEGER stamp, freq;
+    LARGE_INTEGER stamp;
 
     if (params->device) {
         FIXME("Device position reporting not implemented\n");
@@ -1774,8 +2024,8 @@ static NTSTATUS unix_get_position(void *args)
         *params->pos *= stream->fmt->nBlockAlign;
 
     if(params->qpctime){
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *params->qpctime = stamp.QuadPart;
     }
 
     os_unfair_lock_unlock(&stream->lock);

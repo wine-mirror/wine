@@ -918,6 +918,9 @@ static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, INT x, INT 
             	/* Update the CurVal if necessary */
             	UPDOWN_GetBuddyInt (infoPtr);
 
+                /* Capture mouse before setting the pressed state. */
+                SetCapture (infoPtr->Self);
+
             	/* Set up the correct flags */
             	infoPtr->Flags |= FLAG_PRESSED;
 
@@ -927,9 +930,6 @@ static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, INT x, INT 
             	/* process the click */
 		temp = (infoPtr->AccelCount && infoPtr->AccelVect) ? infoPtr->AccelVect[0].nInc : 1;
             	UPDOWN_DoAction (infoPtr, temp, infoPtr->Flags & FLAG_ARROW);
-
-            	/* now capture all mouse messages */
-            	SetCapture (infoPtr->Self);
 
             	/* and startup the first timer */
             	SetTimer(infoPtr->Self, TIMER_AUTOREPEAT, INITIAL_DELAY, 0);

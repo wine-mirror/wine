@@ -542,6 +542,11 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
         ERR("PDB reader doesn't recognize format (%s)\n", wine_dbgstr_a((char*)&hdr));
         return R_PDB_INVALID_PDB_FILE;
     }
+    if (!hdr.block_size)
+    {
+        ERR("Unexpected header.block_size %u\n", hdr.block_size);
+        return R_PDB_INVALID_PDB_FILE;
+    }
     pdb->block_size = hdr.block_size;
     if ((result = pdb_reader_alloc(pdb, pdb->block_size * ARRAY_SIZE(pdb->cache), (void **)&pdb->fetch_cache_blocks))) goto failure;
     for (i = 0; i < ARRAY_SIZE(pdb->cache); i++)
@@ -563,8 +568,11 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
     blocks = &toc->stream_size[toc->num_streams];
     for (i = 0; i < pdb->toc->num_streams; i++)
     {
-        if (toc->stream_size[i] == 0 || toc->stream_size[i] == ~0u)
+        /* we expect a stream size rounded up to block size, to fit in 32bit int */
+        if (!toc->stream_size[i] || toc->stream_size[i] > ~0u - pdb->block_size)
         {
+            if (toc->stream_size[i])
+                WARN("Disabling too large stream %u (%x)\n", i, toc->stream_size[i]);
             pdb->streams[i].blocks = NULL;
             pdb->toc->stream_size[i] = 0;
         }
@@ -692,6 +700,13 @@ static enum pdb_result pdb_reader_load_stream_name_table(struct pdb_reader *pdb)
             if ((result = pdb_reader_READ(pdb, &walker, &str_offset)) ||
                 (result = pdb_reader_READ(pdb, &walker, &stream_id)))
                 goto failure;
+            if (stream_id >= pdb->toc->num_streams ||
+                str_offset >= ds_root.cbNames ||
+                !memchr(pdb->stream_names + str_offset, '\0', ds_root.cbNames - str_offset))
+            {
+                result = R_PDB_INVALID_PDB_FILE;
+                goto failure;
+            }
             pdb->streams[stream_id].name = pdb->stream_names + str_offset;
         }
     }
@@ -1238,7 +1253,7 @@ static enum pdb_result pdb_reader_enum_lines_linetab2(struct pdb_reader *pdb, co
             struct CV_Line_t *lines;
             char *string;
             unsigned i;
-            BOOL match = TRUE;
+            BOOL match;
 
             if ((result = pdb_reader_alloc_and_read(pdb, &sub_walker, files_hdr.nLines * sizeof(lines[0]),
                                                     (void**)&lines))) return result;
@@ -1246,32 +1261,35 @@ static enum pdb_result pdb_reader_enum_lines_linetab2(struct pdb_reader *pdb, co
             /* should filter on filename */
             current_stream_offset = checksum_walker.offset;
             checksum_walker.offset += files_hdr.offFile;
-            if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum))) return result;
-            if ((result = pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, &string))) return result;
+            if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum)) ||
+                (result = pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, &string)))
+            {
+                pdb_reader_free(pdb, lines);
+                return result;
+            }
             checksum_walker.offset = current_stream_offset;
 
-            if (source_file_regex)
-                match = symt_match_stringAW(string, source_file_regex, FALSE);
-            if (!match)
+            match = !source_file_regex || symt_match_stringAW(string, source_file_regex, FALSE);
+            if (match)
             {
-                sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Line_t);
-                if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
-                    sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
-                continue;
+                if (strlen(string) < ARRAY_SIZE(source_code_info->FileName))
+                    strcpy(source_code_info->FileName, string);
+                else
+                    source_code_info->FileName[0] = '\0';
             }
-            if (strlen(string) < ARRAY_SIZE(source_code_info->FileName))
-                strcpy(source_code_info->FileName, string);
-            else
-                source_code_info->FileName[0] = '\0';
             pdb_reader_free(pdb, string);
 
-            for (i = 0; i < files_hdr.nLines; i++)
+            if (match)
             {
-                source_code_info->Address = lineblk_base + lines[i].offset;
-                source_code_info->LineNumber = lines[i].linenumStart;
-                if (!cb(source_code_info, user)) return R_PDB_NOT_FOUND;
+                for (i = 0; i < files_hdr.nLines; i++)
+                {
+                    source_code_info->Address = lineblk_base + lines[i].offset;
+                    source_code_info->LineNumber = lines[i].linenumStart;
+                    if (!cb(source_code_info, user)) break;
+                }
             }
             pdb_reader_free(pdb, lines);
+            if (match && i < files_hdr.nLines) return R_PDB_NOT_FOUND;
             if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
                 sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
         }
@@ -1724,9 +1742,13 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
             else
                 end_index = num_hash_records;
             index++;
-
+            if (end_index < start_index)
+            {
+                result = R_PDB_INVALID_PDB_FILE;
+                goto on_error;
+            }
             bucket->num_entries = end_index - start_index;
-            if (end_index > start_index && (result = pdb_reader_alloc(pdb, sizeof(*bucket->entries) * bucket->num_entries, (void **)&bucket->entries))) goto on_error;
+            if ((result = pdb_reader_alloc(pdb, sizeof(*bucket->entries) * bucket->num_entries, (void **)&bucket->entries))) goto on_error;
             for (j = start_index; j < end_index; j++)
             {
                 walker.offset = sizeof(DBI_HASH_HEADER) + j * sizeof(DBI_HASH_RECORD);
@@ -1906,10 +1928,10 @@ static enum pdb_result pdb_reader_alloc_and_load_whole_stream(struct pdb_reader 
 
     memset(whole, 0, sizeof(*whole));
     if (stream_id >= pdb->toc->num_streams) return R_PDB_INVALID_ARGUMENT;
-    if (pdb->toc->stream_size[stream_id] == 0 || pdb->toc->stream_size[stream_id] == 0xFFFFFFFF) return R_PDB_NOT_FOUND;
+    if (pdb->toc->stream_size[stream_id] == 0) return R_PDB_NOT_FOUND;
 
     blocks = pdb->streams[stream_id].blocks;
-    num_blocks = ((pdboff_t)pdb->toc->stream_size[stream_id] + pdb->block_size - 1) / pdb->block_size;
+    num_blocks = pdb_reader_num_blocks(pdb, pdb->toc->stream_size[stream_id]);
     buffer = HeapAlloc(GetProcessHeap(), 0, num_blocks * pdb->block_size);
     if (!buffer) return R_PDB_OUT_OF_MEMORY;
 
@@ -3122,7 +3144,11 @@ static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, sy
     symref_t symref;
 
     if ((result = pdb_reader_TPI_alloc_and_read_full_reftype(pdb, enumlist_cv_typeid, &cv_reftype, &tpi_offset))) return result;
-    if (cv_reftype->generic.id != LF_FIELDLIST_V2) return PDB_REPORT_UNEXPECTED("enum list", cv_reftype->generic.id);
+    if (cv_reftype->generic.id != LF_FIELDLIST_V2)
+    {
+        pdb_reader_free(pdb, cv_reftype);
+        return PDB_REPORT_UNEXPECTED("enum list", cv_reftype->generic.id);
+    }
     start = ptr = (const unsigned char *)cv_reftype->fieldlist.list;
     last = (const unsigned char *)cv_reftype + sizeof(cv_reftype->generic.id) + cv_reftype->generic.len;
 
@@ -3162,7 +3188,11 @@ static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, sy
 
         case LF_INDEX_V2:
             if ((result = pdb_reader_TPI_fillin_enumlist(pdb, container_symref, cv_field->index_v2.ref,
-                                                         where, tfp))) return result;
+                                                         where, tfp)))
+            {
+                pdb_reader_free(pdb, cv_reftype);
+                return result;
+            }
             ptr += sizeof(cv_field->index_v2);
             break;
 
@@ -3236,7 +3266,11 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
     VARIANT v;
 
     if ((result = pdb_reader_TPI_alloc_and_read_full_reftype(pdb, udtlist_cv_typeid, &cv_reftype, &tpi_offset))) return result;
-    if (cv_reftype->generic.id != LF_FIELDLIST_V2) return PDB_REPORT_UNEXPECTED("list", cv_reftype->generic.id);
+    if (cv_reftype->generic.id != LF_FIELDLIST_V2)
+    {
+        pdb_reader_free(pdb, cv_reftype);
+        return PDB_REPORT_UNEXPECTED("list", cv_reftype->generic.id);
+    }
     start = ptr = (const unsigned char *)cv_reftype->fieldlist.list;
     last = (const unsigned char *)cv_reftype + sizeof(cv_reftype->generic.id) + cv_reftype->generic.len;
 
@@ -3309,7 +3343,11 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
             break;
 
         case LF_INDEX_V2:
-            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, where, tfp))) return result;
+            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, where, tfp)))
+            {
+                pdb_reader_free(pdb, cv_reftype);
+                return result;
+            }
             length = sizeof(cv_field->index_v2);
             break;
 
@@ -3568,7 +3606,11 @@ static enum method_result pdb_reader_TPI_field_request(struct pdb_reader *pdb, s
     walker.offset = entry->stream_offset;
 
     if ((result = pdb_reader_alloc(pdb, entry->action_length, (void**)&cv_field))) return MR_FAILURE;
-    if ((result = pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read))) return MR_FAILURE;
+    if ((result = pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read)))
+    {
+        pdb_reader_free(pdb, cv_field);
+        return MR_FAILURE;
+    }
     if (num_read == entry->action_length)
     {
         switch (cv_field->generic.id)
@@ -5221,7 +5263,7 @@ static enum pdb_result pdb_reader_ensure_compiland_symbol_present(struct pdb_rea
     symref_t type_symref, compiland_symref;
     struct symref_code code;
 
-    if (compiland_index > pdb->num_compilands) return R_PDB_INVALID_PDB_FILE;
+    if (compiland_index >= pdb->num_compilands) return R_PDB_INVALID_PDB_FILE;
     compiland = &pdb->compilands[compiland_index];
 
     if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_compiland(&code, compiland_index), &compiland_symref)))

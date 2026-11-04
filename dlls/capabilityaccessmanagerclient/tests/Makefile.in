@@ -1,0 +1,5 @@
+TESTDLL = capabilityaccessmanagerclient.dll
+IMPORTS = combase
+
+SOURCES = \
+	capability.c

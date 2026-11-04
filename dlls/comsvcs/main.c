@@ -387,6 +387,7 @@ static HRESULT create_holder(IDispenserManager *manager, IDispenserDriver *drive
     (*hold)->manager = manager;
     IDispenserManager_AddRef(manager);
     (*hold)->driver = driver;
+    IDispenserDriver_AddRef(driver);
     list_init(&(*hold)->pool);
     return S_OK;
 }
@@ -1038,7 +1039,7 @@ static HRESULT guid_from_string(const WCHAR *s, GUID *ret)
 
     for (i = 0; i < 4; i++)
     {
-        if (!is_valid_hex(s[0])) return FALSE;
+        if (!is_valid_hex(s[i])) return FALSE;
         guid.Data2 = (guid.Data2 << 4) | guid_conv_table[s[i]];
     }
     s += 4;

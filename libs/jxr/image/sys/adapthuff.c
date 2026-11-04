@@ -134,7 +134,7 @@ Void Clean (CAdaptiveHuffman *pAdHuff)
 
 CAdaptiveHuffman *Allocate (Int iNSymbols, CODINGMODE cm)
 {
-    CAdaptiveHuffman *pAdHuff = (CAdaptiveHuffman *) malloc (sizeof (CAdaptiveHuffman));
+    CAdaptiveHuffman *pAdHuff = (CAdaptiveHuffman *) calloc (1, sizeof (CAdaptiveHuffman));
 
     UNREFERENCED_PARAMETER(cm);
 
@@ -143,7 +143,6 @@ CAdaptiveHuffman *Allocate (Int iNSymbols, CODINGMODE cm)
     if (iNSymbols > 255 || iNSymbols <= 0)
         goto ErrorExit;
 
-    memset (pAdHuff, 0, sizeof (CAdaptiveHuffman));
     pAdHuff->m_iNSymbols = iNSymbols;
 
     pAdHuff->m_pDelta = NULL;
@@ -459,7 +458,7 @@ Void AdaptDiscriminant (CAdaptiveHuffman *pAdHuff)
     assert (t < gMaxTables[iSym]);
 
     //pAdHuff->m_iDiscriminant >>= 1;
-    pAdHuff->m_iLowerBound = (t == 0) ? (1u << 31) : -THRESHOLD;
+    pAdHuff->m_iLowerBound = (t == 0) ? (Int)(1u << 31) : -THRESHOLD;
     pAdHuff->m_iUpperBound = (t == gMaxTables[iSym] - 1) ? (1 << 30) : THRESHOLD;
 
     switch (iSym) {

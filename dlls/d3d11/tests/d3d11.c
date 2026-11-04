@@ -33675,6 +33675,27 @@ static void test_deferred_context_rendering(void)
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
 
+    /* A NULL command list returns E_UNEXPECTED, but still drops the recorded commands. */
+
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
+    ID3D11DeviceContext_ClearRenderTargetView(deferred, test_context.backbuffer_rtv, green);
+
+    hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, NULL);
+    ok(hr == E_UNEXPECTED, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
+
+    ID3D11CommandList_Release(list1);
+    ID3D11DeviceContext_Release(deferred);
+
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

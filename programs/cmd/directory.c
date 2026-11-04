@@ -727,15 +727,13 @@ static void init_time_format(void)
  *
  */
 
-RETURN_CODE WCMD_directory(WCHAR *args)
+RETURN_CODE WCMD_directory(struct word_iterator *iterator)
 {
-  WCHAR path[MAX_PATH], cwd[MAX_PATH];
+  WCHAR path[MAX_PATH];
   DWORD status;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   WCHAR *p;
   WCHAR string[MAXSTRING];
-  int   argno         = 0;
-  WCHAR *argN          = args;
   WCHAR  lastDrive;
   BOOL  trailerReqd = FALSE;
   DIRECTORY_STACK *fullParms = NULL;
@@ -776,119 +774,98 @@ RETURN_CODE WCMD_directory(WCHAR *args)
   showattrs  = 0;
   attrsbits  = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
 
-  /* Handle args - Loop through so right most is the effective one */
-  /* Note: /- appears to be a negate rather than an off, eg. dir
-           /-W is wide, or dir /w /-w /-w is also wide             */
-  p = quals;
-  while (*p && (*p=='/' || *p==' ')) {
-    BOOL negate = FALSE;
-    if (*p++==' ') continue;  /* Skip / and blanks introduced through DIRCMD */
+    /* Handle args - Loop through so right most is the effective one
+     * Note: /- appears to be a negate rather than an off, eg. dir
+     * /-W is wide, or dir /w /-w /-w is also wide
+     */
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (!iterator->is_an_option) continue;
 
-    if (*p=='-') {
-      negate = TRUE;
-      p++;
-    }
-
-    WINE_TRACE("Processing arg '%c' (in %s)\n", *p, wine_dbgstr_w(quals));
-    switch (*p) {
-    case 'P': if (negate) paged_mode = !paged_mode;
-              else paged_mode = TRUE;
-              break;
-    case 'S': if (negate) recurse = !recurse;
-              else recurse = TRUE;
-              break;
-    case 'W': if (negate) wide = !wide;
-              else wide = TRUE;
-              break;
-    case 'B': if (negate) bare = !bare;
-              else bare = TRUE;
-              break;
-    case 'L': if (negate) lower = !lower;
-              else lower = TRUE;
-              break;
-    case 'X': if (negate) shortname = !shortname;
-              else shortname = TRUE;
-              break;
-    case 'Q': if (negate) usernames = !usernames;
-              else usernames = TRUE;
-              break;
-    case 'D': if (negate) orderByCol = !orderByCol;
-              else orderByCol = TRUE;
-              break;
-    case 'C': if (negate) separator = !separator;
-              else separator = TRUE;
-              break;
-    case 'T': p = p + 1;
-              if (*p==':') p++;  /* Skip optional : */
-
-              if (*p == 'A') dirTime = Access;
-              else if (*p == 'C') dirTime = Creation;
-              else if (*p == 'W') dirTime = Written;
-
-              /* Support /T and /T: with no parms, default to written */
-              else if (*p == 0x00 || *p == '/') {
-                dirTime = Written;
-                p = p - 1; /* So when step on, move to '/' */
-              } else {
+        WINE_TRACE("Processing option '%s'\n", wine_dbgstr_w(iterator->raw_argument));
+        if (!wcsicmp(iterator->raw_argument, L"/P"))       paged_mode = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-P")) paged_mode = !paged_mode;
+        else if (!wcsicmp(iterator->raw_argument, L"/S"))  recurse = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-S")) recurse = !recurse;
+        else if (!wcsicmp(iterator->raw_argument, L"/W"))  wide = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-W")) wide = !wide;
+        else if (!wcsicmp(iterator->raw_argument, L"/B"))  bare = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-B")) bare = !bare;
+        else if (!wcsicmp(iterator->raw_argument, L"/L"))  lower = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-L")) lower = !lower;
+        else if (!wcsicmp(iterator->raw_argument, L"/X"))  shortname = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-X")) shortname = !shortname;
+        else if (!wcsicmp(iterator->raw_argument, L"/Q"))  usernames = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-Q")) usernames = !usernames;
+        else if (!wcsicmp(iterator->raw_argument, L"/D"))  orderByCol = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-D")) orderByCol = !orderByCol;
+        else if (!wcsicmp(iterator->raw_argument, L"/C"))  separator = TRUE;
+        else if (!wcsicmp(iterator->raw_argument, L"/-C")) separator = !separator;
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", TRUE, &p))
+        {
+            if (towupper(*p) == L'A') dirTime = Access;
+            else if (towupper(*p) == L'C') dirTime = Creation;
+            else if (towupper(*p) == L'W' || !*p) dirTime = Written;
+            else
+            {
                 SetLastError(return_code = ERROR_INVALID_PARAMETER);
                 WCMD_print_error();
                 goto exit;
-              }
-              break;
-    case 'O': /* Reset order state for each occurrence of /O, i.e. if DIRCMD contains /O and user
-                 also specified /O on the command line. */
-              dirOrder = Unspecified;
-              orderGroupDirs = FALSE;
-              orderReverse = FALSE;
-              orderGroupDirsReverse = FALSE;
-              p = p + 1;
-              if (*p==':') p++;  /* Skip optional : */
-              while (*p && *p != '/') {
-                WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, wine_dbgstr_w(quals));
+            }
+        }
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/O", TRUE, &p))
+        {
+            /* Reset order state for each occurrence of /O, i.e. if DIRCMD contains /O and user
+               also specified /O on the command line. */
+            dirOrder = Unspecified;
+            orderGroupDirs = FALSE;
+            orderReverse = FALSE;
+            orderGroupDirsReverse = FALSE;
+            for (; *p; p++)
+            {
+                WINE_TRACE("Processing subparm '%lc' (in /O)\n", *p);
                 /* Options N,E,S,D are mutually-exclusive, first encountered takes precedence. */
-                switch (*p) {
+                switch (towupper(*p)) {
                 case 'N': if (dirOrder == Unspecified) dirOrder = Name;       break;
                 case 'E': if (dirOrder == Unspecified) dirOrder = Extension;  break;
                 case 'S': if (dirOrder == Unspecified) dirOrder = Size;       break;
                 case 'D': if (dirOrder == Unspecified) dirOrder = Date;       break;
-                case '-': if (dirOrder == Unspecified) {
-                            if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
-                            else if (*(p+1)=='N'||*(p+1)=='E'||*(p+1)=='S'||*(p+1)=='D') orderReverse = TRUE;
-                          }
-                          break;
+                case '-': if (dirOrder == Unspecified)
+                    {
+                        if (towupper(p[1]) == L'G') orderGroupDirsReverse = TRUE;
+                        else if (wcschr(L"NEDS", towupper(p[1]))) orderReverse = TRUE;
+                    }
+                    break;
                 case 'G': orderGroupDirs = TRUE; break;
                 default:
                     SetLastError(return_code = ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
                     goto exit;
                 }
-                p++;
-              }
-              /* Handle default case of /O specified by itself, with no specific options.
-                 This is equivalent to /O:GN. */
-              if (dirOrder == Unspecified && !orderGroupDirs) {
+            }
+            /* Handle default case of /O specified by itself, with no specific options.
+               This is equivalent to /O:GN. */
+            if (dirOrder == Unspecified && !orderGroupDirs) {
                 orderGroupDirs = TRUE;
                 orderGroupDirsReverse = FALSE;
                 dirOrder = Name;
-              }
-              p = p - 1; /* So when step on, move to '/' */
-              break;
-    case 'A': p = p + 1;
-              showattrs = 0;
-              attrsbits = 0;
-              if (*p==':') p++;  /* Skip optional : */
-              while (*p && *p != '/') {
-                BOOL anegate = FALSE;
+            }
+        }
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/A", TRUE, &p))
+        {
+            showattrs = 0;
+            attrsbits = 0;
+            for (; *p; p++)
+            {
+                BOOL anegate;
                 ULONG mask;
 
                 /* Note /A: - options are 'offs' not toggles */
-                if (*p=='-') {
-                  anegate = TRUE;
-                  p++;
-                }
+                if ((anegate = *p == L'-')) p++;
 
-                WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, wine_dbgstr_w(quals));
-                switch (*p) {
+                WINE_TRACE("Processing subparm '%c' (in /A)\n", *p);
+                switch (towupper(*p))
+                {
                 case 'D': mask = FILE_ATTRIBUTE_DIRECTORY; break;
                 case 'H': mask = FILE_ATTRIBUTE_HIDDEN;    break;
                 case 'S': mask = FILE_ATTRIBUTE_SYSTEM;    break;
@@ -906,19 +883,16 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                 /* Mask shows what MUST be in the bits we care about */
                 if (anegate) showattrs = showattrs & ~mask;
                 else showattrs |= mask;
-
-                p++;
-              }
-              p = p - 1; /* So when step on, move to '/' */
-              WINE_TRACE("Result: showattrs %lx, bits %lx\n", showattrs, attrsbits);
-              break;
-    default:
-              SetLastError(return_code = ERROR_INVALID_PARAMETER);
-              WCMD_print_error();
-              goto exit;
+            }
+            WINE_TRACE("Result: showattrs %lx, bits %lx\n", showattrs, attrsbits);
+        }
+        else
+        {
+            SetLastError(return_code = ERROR_INVALID_PARAMETER);
+            WCMD_print_error();
+            goto exit;
+        }
     }
-    p = p + 1;
-  }
 
   /* Handle conflicting args and initialization */
   if (bare || shortname) wide = FALSE;
@@ -939,40 +913,17 @@ RETURN_CODE WCMD_directory(WCHAR *args)
   init_date_format();
   init_time_format();
 
-  argno         = 0;
-  argN          = args;
-  GetCurrentDirectoryW(MAX_PATH, cwd);
-  lstrcatW(cwd, L"\\");
-
   /* Loop through all args, calculating full effective directory */
   fullParms = NULL;
   prevEntry = NULL;
-  while (argN) {
-    WCHAR fullname[MAXSTRING];
-    WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE);
-    if (argN && argN[0] != '/') {
 
-      WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(thisArg));
-      if (thisArg[1] == ':' && thisArg[2] == '\\') {
-        lstrcpyW(fullname, thisArg);
-      } else if (thisArg[1] == ':' && thisArg[2] != '\\') {
-        WCHAR envvar[4];
-        wsprintfW(envvar, L"=%c:", thisArg[0]);
-        if (!GetEnvironmentVariableW(envvar, fullname, MAX_PATH)) {
-          wsprintfW(fullname, L"%c:", thisArg[0]);
-        }
-        lstrcatW(fullname, L"\\");
-        lstrcatW(fullname, &thisArg[2]);
-      } else if (thisArg[0] == '\\') {
-        memcpy(fullname, cwd, 2 * sizeof(WCHAR));
-        lstrcpyW(fullname+2, thisArg);
-      } else {
-        lstrcpyW(fullname, cwd);
-        lstrcatW(fullname, thisArg);
-      }
-      WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
+  WCMD_word_iterator_reset(iterator);
+  while (WCMD_word_iterator_advance(iterator))
+  {
+      if (iterator->is_an_option) continue;
+      WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(iterator->unquoted_argument));
 
-      if (!WCMD_get_fullpath(fullname, ARRAY_SIZE(path), path, NULL)) continue;
+      if (!WCMD_get_fullpath(iterator->unquoted_argument, ARRAY_SIZE(path), path, NULL)) continue;
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the
@@ -988,7 +939,8 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as
            GetFullPathName strips off the additional '.'                                  */
-        if (fullname[0] && fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, L".");
+        if (iterator->unquoted_argument[0] && iterator->unquoted_argument[wcslen(iterator->unquoted_argument) - 1] == L'.')
+            lstrcatW(path, L".");
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
@@ -1012,11 +964,14 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       lstrcpyW(thisEntry->fileName, fname);
       lstrcatW(thisEntry->fileName, ext);
 
-    }
   }
 
   /* If just 'dir' entered, a '*' parameter is assumed */
   if (fullParms == NULL) {
+    WCHAR cwd[MAX_PATH];
+    GetCurrentDirectoryW(MAX_PATH, cwd);
+    lstrcatW(cwd, L"\\");
+
     WINE_TRACE("Inserting default '*'\n");
     fullParms = xalloc(sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;

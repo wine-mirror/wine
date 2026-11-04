@@ -162,6 +162,7 @@ struct layout_effective_run
 
     /* Common fields */
     UINT32 first_cluster;         /* First cluster of this run, in logical order. */
+    UINT32 cluster_count;         /* Number of clusters this run is built on. */
     UINT32 start_position;        /* Absolute text position. */
     UINT32 length;                /* length in codepoints that this run covers */
     IUnknown *effect;             /* original reference is kept only at range level */
@@ -1529,6 +1530,11 @@ static void layout_line_update_bidi(struct layout_line *line, UINT8 level)
     line->bidi.mask_and &= level;
 }
 
+static unsigned int layout_get_cluster_start_position(const struct dwrite_textlayout *layout, unsigned int cluster)
+{
+    return layout->clusters[cluster].position + layout->clusters[cluster].run->start_position;
+}
+
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
@@ -1543,10 +1549,11 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     /* No need to iterate for that, use simple fact that:
        <last cluster position> = <first cluster position> + <sum of cluster lengths not including last one> */
     last_cluster = first_cluster + cluster_count - 1;
-    run->start_position = layout->clusters[first_cluster].position + layout->clusters[first_cluster].run->start_position;
+    run->start_position = layout_get_cluster_start_position(layout, first_cluster);
     run->length = layout->clusters[last_cluster].position - layout->clusters[first_cluster].position +
         layout->clustermetrics[last_cluster].length;
     run->first_cluster = first_cluster;
+    run->cluster_count = cluster_count;
 
     run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
 
@@ -4375,12 +4382,143 @@ width_done:
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextlayout_HitTestPoint(IDWriteTextLayout4 *iface,
-    FLOAT pointX, FLOAT pointY, BOOL* is_trailinghit, BOOL* is_inside, DWRITE_HIT_TEST_METRICS *metrics)
+/* Returns a box within the line, using overall line metrics */
+static void layout_get_run_line_box(struct layout_effective_run *run, D2D1_RECT_F *box)
 {
-    FIXME("%p, %.8e, %.8e, %p, %p, %p): stub\n", iface, pointX, pointY, is_trailinghit, is_inside, metrics);
+    memset(box, 0, sizeof(*box));
 
-    return E_NOTIMPL;
+    box->right = run->width;
+    box->bottom = run->line->metrics.height;
+
+    d2d_rect_offset(box, run->origin.x + run->align_dx, run->origin.y - run->line->baseline);
+}
+
+static bool point_in_rect(float x, float y, const D2D1_RECT_F *rect)
+{
+    return ((x >= rect->left) && (x < rect->right) && (y >= rect->top) && (y < rect->bottom));
+}
+
+static float point_to_point(float x1, float y1, float x2, float y2)
+{
+    return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+}
+
+static float point_to_rect(float x, float y, const D2D1_RECT_F *rect)
+{
+    float ret;
+
+    ret = point_to_point(x, y, rect->left, rect->top);
+    ret = min(ret, point_to_point(x, y, rect->right, rect->top));
+    ret = min(ret, point_to_point(x, y, rect->left, rect->bottom));
+    ret = min(ret, point_to_point(x, y, rect->right, rect->bottom));
+
+    return ret;
+}
+
+static HRESULT WINAPI dwritetextlayout_HitTestPoint(IDWriteTextLayout4 *iface,
+    FLOAT x, FLOAT y, BOOL* is_trailinghit, BOOL* is_inside, DWRITE_HIT_TEST_METRICS *metrics)
+{
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
+    struct layout_effective_run *run, *hit = NULL;
+    float distance = INFINITY, d;
+    D2D1_RECT_F box, hit_box = { 0 };
+    HRESULT hr;
+
+    TRACE("%p, %.8e, %.8e, %p, %p, %p.\n", iface, x, y, is_trailinghit, is_inside, metrics);
+
+    if (FAILED(hr = layout_compute_effective_runs(layout)))
+        return hr;
+
+    LIST_FOR_EACH_ENTRY(run, &layout->effective_runs, struct layout_effective_run, entry)
+    {
+        layout_get_run_line_box(run, &box);
+        if (point_in_rect(x, y, &box))
+        {
+            hit = run;
+            hit_box = box;
+            break;
+        }
+        else
+        {
+            d = point_to_rect(x, y, &box);
+            if (d < distance)
+            {
+                distance = d;
+                hit = run;
+                hit_box = box;
+            }
+        }
+    }
+
+    if (!hit)
+    {
+        WARN("Failed to locate closest run.\n");
+        return E_UNEXPECTED;
+    }
+
+    if (hit->object)
+    {
+        metrics->textPosition = hit->start_position;
+        metrics->length = hit->length;
+        metrics->isText = FALSE;
+    }
+    else
+    {
+        float left = hit_box.left;
+        unsigned int c = 0, i;
+
+        /* Locate closest cluster. */
+
+        box = hit_box;
+        distance = INFINITY;
+        for (i = hit->first_cluster; i < (hit->cluster_count + hit->first_cluster); ++i)
+        {
+            hit_box.left = left;
+            left += layout->clustermetrics[i].width;
+            hit_box.right = left;
+
+            if (point_in_rect(x, y, &hit_box))
+            {
+                c = i;
+                box = hit_box;
+                break;
+            }
+            else
+            {
+                d = point_to_rect(x, y, &hit_box);
+                if (d < distance)
+                {
+                    distance = d;
+                    c = i;
+                    box = hit_box;
+                }
+            }
+        }
+        hit_box = box;
+
+        metrics->textPosition = layout_get_cluster_start_position(layout, c);
+        metrics->length = layout->clustermetrics[c].length;
+        metrics->isText = TRUE;
+    }
+
+    metrics->left = hit_box.left;
+    metrics->top = hit_box.top;
+    metrics->width = hit_box.right - hit_box.left;
+    metrics->height = hit_box.bottom - hit_box.top;
+    metrics->bidiLevel = hit->bidi_level;
+    metrics->isTrimmed = hit->trimming;
+
+    /* TODO: likely incorrect for RTL */
+    *is_trailinghit = point_to_point(x, y, hit_box.right, hit_box.top) <= point_to_point(x, y, hit_box.left, hit_box.top);
+
+    hit_box.left = layout->metrics.left;
+    hit_box.top = layout->metrics.top;
+    hit_box.right = hit_box.left + layout->metrics.width;
+    hit_box.bottom = hit_box.top + layout->metrics.height;
+
+    *is_inside = point_in_rect(x, y, &hit_box);
+
+    return S_OK;
 }
 
 static struct layout_effective_run *layout_get_effective_run_for_position(struct dwrite_textlayout *layout,

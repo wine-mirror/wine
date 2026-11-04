@@ -2492,6 +2492,7 @@ static WCHAR *get_scalable_filename( const WCHAR *res, BOOL *hidden )
     if (size.u.LowPart < sizeof( *dos )) goto fail;
     dos = (const IMAGE_DOS_HEADER *)ptr;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto fail;
+    if ((ULONG)dos->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) goto fail;
     if (size.u.LowPart < dos->e_lfanew + sizeof( *ne )) goto fail;
     ne = (const IMAGE_OS2_HEADER *)(ptr + dos->e_lfanew);
 

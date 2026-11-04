@@ -34,11 +34,13 @@
 #include "wine/test.h"
 
 static ATOM atomMenuCheckClass;
+static UINT nccalcsize_count;
 
 static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
+    case WM_NCCALCSIZE: nccalcsize_count++; break;
     case WM_ENTERMENULOOP:
         /* mark window as having entered menu loop */
         SetWindowLongPtrA(hwnd, GWLP_USERDATA, TRUE);
@@ -54,6 +56,10 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 static BOOL bMenuVisible;
 static INT popmenu;
 static BOOL got_input;
+static BOOL rebuild_menu_bar;
+static BOOL check_popup_pos;
+static BOOL initmenu_rebuilt;
+static INT nccalcsize_calls_after_rebuild;
 static HMENU hMenus[4];
 
 #define MOD_SIZE 10
@@ -326,15 +332,32 @@ static void test_getmenubarinfo(void)
     DestroyWindow(hwnd);
 }
 
+static void invalidate_menu_bar(HWND hwnd, HMENU popup_hmenu)
+{
+    MENUBARINFO info = { .cbSize = sizeof(MENUBARINFO) };
+    HMENU hmenu = GetMenu(hwnd);
+    BOOL ret;
+
+    while (GetMenuItemCount(hmenu) > 0) RemoveMenu(hmenu, 0, MF_BYPOSITION);
+    AppendMenuA(hmenu, MF_STRING, 0, "&Enabled");
+    AppendMenuA(hmenu, MF_STRING | MF_POPUP, (UINT_PTR)popup_hmenu, "Menu");
+    AppendMenuA(hmenu, MF_STRING|MF_DISABLED, 0, "&Disabled");
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+}
+
 static void test_GetMenuItemRect(void)
 {
+    MENUITEMINFOW infoW = { .cbSize = sizeof(MENUITEMINFOW) };
+    MENUBARINFO info = { .cbSize = sizeof(MENUBARINFO) };
     HWND hwnd;
-    HMENU hmenu;
+    HMENU hmenu, tmp;
     HMENU popup_hmenu;
     RECT window_rect;
     RECT item_rect;
     POINT client_top_left;
-    INT caption_height;
+    INT caption_height, item;
     BOOL ret;
 
     hwnd = CreateWindowW((LPCWSTR)MAKEINTATOM(atomMenuCheckClass), NULL, WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL,
@@ -379,6 +402,89 @@ static void test_GetMenuItemRect(void)
     ok(item_rect.bottom == client_top_left.y, "Expect item_rect.bottom %ld == %ld\n", item_rect.bottom,
        client_top_left.y);
 
+    nccalcsize_count = 0;
+    /* GetMenuItemRect recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = GetMenuItemRect(hwnd, hmenu, 0, &item_rect);
+    ok(ret, "GetMenuItemRect failed\n");
+    ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = GetMenuItemRect(hwnd, hmenu, 1, &item_rect);
+    ok(ret, "GetMenuItemRect failed\n");
+    ok(!IsRectEmpty(&item_rect), "got %s\n", wine_dbgstr_rect(&item_rect));
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* MenuItemFromPoint recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    item = MenuItemFromPoint(hwnd, hmenu, *(POINT *)&item_rect);
+    ok(item == 1, "MenuItemFromPoint returned %d\n", item);
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* HiliteMenuItem / MF_BYPOSITION recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = HiliteMenuItem(hwnd, hmenu, 1, MF_HILITE | MF_BYPOSITION);
+    ok(ret, "HiliteMenuItem returned %d\n", ret);
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* HiliteMenuItem / MF_BYCOMMAND recomputes the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+    ret = HiliteMenuItem(hwnd, hmenu, (UINT_PTR)popup_hmenu, MF_HILITE | MF_BYCOMMAND);
+    ok(ret, "HiliteMenuItem returned %d\n", ret);
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(!IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    /* misc other menu functions that don't recompute the menu layout */
+    invalidate_menu_bar(hwnd, popup_hmenu);
+
+    item = CheckMenuItem(hmenu, 1, MF_CHECKED | MF_BYPOSITION);
+    ok(!item, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, 1, MF_UNCHECKED | MF_BYPOSITION);
+    ok(item & MF_CHECKED, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_CHECKED | MF_BYCOMMAND);
+    ok(!item, "CheckMenuItem returned %d\n", item);
+    item = CheckMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_UNCHECKED | MF_BYCOMMAND);
+    ok(item & MF_CHECKED, "CheckMenuItem returned %d\n", item);
+    ret = EnableMenuItem(hmenu, 1, MF_DISABLED | MF_BYPOSITION);
+    ok(!ret, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, 1, MF_ENABLED | MF_BYPOSITION);
+    ok(ret & MF_DISABLED, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_DISABLED | MF_BYCOMMAND);
+    ok(!ret, "EnableMenuItem returned %d\n", ret);
+    ret = EnableMenuItem(hmenu, (UINT_PTR)popup_hmenu, MF_ENABLED | MF_BYCOMMAND);
+    ok(ret & MF_DISABLED, "EnableMenuItem returned %d\n", ret);
+    item = GetMenuState(hmenu, 1, MF_BYPOSITION);
+    ok(item & MF_POPUP, "got %#x\n", item);
+    item = GetMenuState(hmenu, (UINT_PTR)popup_hmenu, MF_BYCOMMAND);
+    ok(item & MF_POPUP, "got %#x\n", item);
+    ret = GetMenuItemInfoW(hmenu, 1, MF_BYPOSITION, &infoW);
+    ok(ret, "GetMenuItemInfoW returned %d\n", ret);
+    ret = GetMenuItemInfoW(hmenu, (UINT_PTR)popup_hmenu, MF_BYCOMMAND, &infoW);
+    ok(ret, "GetMenuItemInfoW returned %d\n", ret);
+    ret = SetMenuItemInfoW(hmenu, 1, TRUE, &infoW);
+    ok(ret, "SetMenuItemInfoW returned %d\n", ret);
+    ret = SetMenuItemInfoW(hmenu, (UINT_PTR)popup_hmenu, FALSE, &infoW);
+    ok(ret, "SetMenuItemInfoW returned %d\n", ret);
+    tmp = GetSubMenu(hmenu, 1);
+    ok(tmp == popup_hmenu, "got %p\n", tmp);
+    item = GetMenuItemID(hmenu, 2);
+    ok(item == 0, "GetMenuItemID returned %d\n", item);
+
+    ret = GetMenuBarInfo(hwnd, OBJID_MENU, 1, &info);
+    ok(ret, "GetMenuBarInfo failed\n");
+    ok(IsRectEmpty(&info.rcBar), "got %s\n", wine_dbgstr_rect(&info.rcBar));
+
+    ok(!nccalcsize_count, "got %u WM_NCCALCSIZE\n", nccalcsize_count);
     DestroyWindow(hwnd);
 }
 
@@ -2191,6 +2297,8 @@ static struct menu_mouse_tests_s {
     WORD wVk[5]; /* keys */
     BOOL bMenuVisible;
     BOOL _todo_wine;
+    BOOL rebuild_menu_bar; /* during WM_INITMENU */
+    BOOL check_popup_pos; /* check that the popup menu is not covering the menu bar */
 } menu_tests[] = {
     /* for each test, send keys or clicks and check for menu visibility */
     { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE }, /* test 0 */
@@ -2225,6 +2333,14 @@ static struct menu_mouse_tests_s {
     { INPUT_MOUSE, {{1, 0}, {2, 0}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{3, 1}, {0}}, {0}, TRUE, FALSE },
     { INPUT_MOUSE, {{1, 1}, {0}}, {0}, FALSE, FALSE },
+
+    /* rebuild the menu bar inside WM_INITMENU, like Reason does */
+    { INPUT_MOUSE, {{1, 0}, {0}}, {0}, TRUE, FALSE, TRUE },
+    { INPUT_MOUSE, {{2, 1}, {0}}, {0}, FALSE, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 0}, TRUE, FALSE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
+    { INPUT_KEYBOARD, {{0}}, {VK_MENU, 'M', 0}, TRUE, FALSE, TRUE, TRUE },
+    { INPUT_KEYBOARD, {{0}}, {VK_ESCAPE, VK_ESCAPE, 0}, FALSE, FALSE, FALSE },
     { -1 }
 };
 
@@ -2267,6 +2383,34 @@ static BOOL click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     return ret;
 }
 
+static void check_popup_below_menu_bar( HWND hwnd )
+{
+    RECT menu_bar_rect, popup_rect;
+    HWND popup;
+    int elapsed;
+    BOOL ret;
+    static char popup_menu_class[] = "#32768";
+
+    for (elapsed = 0; elapsed <= 200; elapsed += 20)
+    {
+        popup = NULL;
+        while ((popup = FindWindowExA( NULL, popup, popup_menu_class, NULL )) && !IsWindowVisible( popup ))
+            ;
+
+        if (popup) break;
+        Sleep( 20 );
+    }
+
+    ok( popup != NULL, "popup menu window not found\n" );
+    if (!popup) return;
+
+    ret = GetMenuItemRect( hwnd, GetMenu( hwnd ), 0, &menu_bar_rect );
+    ok( ret, "GetMenuItemRect failed, error %ld\n", GetLastError() );
+    GetWindowRect( popup, &popup_rect );
+    ok( popup_rect.top >= menu_bar_rect.bottom - 1, "popup %s overlaps the menu bar %s\n",
+        wine_dbgstr_rect( &popup_rect ), wine_dbgstr_rect( &menu_bar_rect ) );
+}
+
 static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
 {
     int i, j;
@@ -2280,6 +2424,10 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
         int elapsed;
 
         got_input = i && menu_tests[i-1].bMenuVisible;
+        rebuild_menu_bar = menu_tests[i].rebuild_menu_bar;
+        check_popup_pos = menu_tests[i].check_popup_pos;
+        initmenu_rebuilt = FALSE;
+        nccalcsize_calls_after_rebuild = 0;
 
         if (menu_tests[i].type == INPUT_KEYBOARD)
             for (j = 0; menu_tests[i].wVk[j] != 0; j++)
@@ -2322,6 +2470,8 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
 
         todo_wine_if (menu_tests[i]._todo_wine)
             ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
+
+        if (menu_tests[i].check_popup_pos) check_popup_below_menu_bar( hWnd );
     }
     return 0;
 }
@@ -2338,10 +2488,38 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         case WM_ENTERMENULOOP:
             bMenuVisible = TRUE;
             break;
+        case WM_INITMENU:
+            if (rebuild_menu_bar)
+            {
+                hmenu = GetMenu(hWnd);
+                while (GetMenuItemCount(hmenu) > 0)
+                    RemoveMenu(hmenu, 0, MF_BYPOSITION);
+
+                AppendMenuA(hmenu, MF_STRING|MF_POPUP, (UINT_PTR)hMenus[2], "&Menu");
+                AppendMenuA(hmenu, MF_STRING, 0, "&Enabled");
+                AppendMenuA(hmenu, MF_STRING|MF_DISABLED, 0, "&Disabled");
+                initmenu_rebuilt = TRUE;
+            }
+            break;
+        case WM_NCCALCSIZE:
+            if (initmenu_rebuilt)
+                nccalcsize_calls_after_rebuild++;
+
+            return DefWindowProcA( hWnd, msg, wParam, lParam );
         case WM_INITMENUPOPUP:
         case WM_UNINITMENUPOPUP:
         case WM_EXITMENULOOP:
+            break;
         case WM_MENUSELECT:
+            /* the selected bar item must have a valid (non-empty) rect, esp. after a rebuild via WM_INITMENU */
+            /* skip when checking the popup position because GetMenuItemRect will recompute the layout */
+            if (rebuild_menu_bar && !check_popup_pos && (HMENU)lParam == GetMenu(hWnd) && LOWORD(wParam) != 0xffff)
+            {
+                RECT rect;
+                BOOL success = GetMenuItemRect(hWnd, (HMENU)lParam, LOWORD(wParam), &rect);
+                ok(success && !IsRectEmpty(&rect), "selected menu bar item %u has empty rect\n", LOWORD(wParam));
+                ok(!nccalcsize_calls_after_rebuild, "Received %d WM_NCCALCSIZE messages after WM_INITMENU rebuilt the menu bar\n", nccalcsize_calls_after_rebuild);
+            }
             break;
 
         case WM_KEYDOWN:

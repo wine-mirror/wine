@@ -75,6 +75,13 @@ static void string_buffer_init(struct string_buffer *buffer)
     buffer->status = &buffer->_status;
 }
 
+static void string_buffer_cleanup(struct string_buffer *buffer)
+{
+    free(buffer->data);
+    buffer->data = NULL;
+    buffer->count = buffer->capacity = 0;
+}
+
 static void string_append(struct string_buffer *buffer, const WCHAR *str, UINT len)
 {
     if (*buffer->status != S_OK)
@@ -83,19 +90,12 @@ static void string_append(struct string_buffer *buffer, const WCHAR *str, UINT l
     if (!array_reserve((void **)&buffer->data, &buffer->capacity, buffer->count + len, sizeof(*str)))
     {
         *buffer->status = E_OUTOFMEMORY;
-        free(buffer->data);
+        string_buffer_cleanup(buffer);
         return;
     }
 
     memcpy(buffer->data + buffer->count, str, len * sizeof(WCHAR));
     buffer->count += len;
-}
-
-static void string_buffer_cleanup(struct string_buffer *buffer)
-{
-    free(buffer->data);
-    buffer->data = NULL;
-    buffer->count = buffer->capacity = 0;
 }
 
 static HRESULT string_to_bstr_slice(struct string_buffer *buffer, size_t offset, size_t length, BSTR *str)
@@ -2027,6 +2027,16 @@ static void node_dump_element_attributes(struct node_dump_context *context, stru
     }
 }
 
+static void node_dump_attribute_value(struct node_dump_context *context, struct domnode *node)
+{
+    struct domnode *n;
+
+    LIST_FOR_EACH_ENTRY(n, &node->children, struct domnode, entry)
+    {
+        node_dump_xml_attr(n, context);
+    }
+}
+
 static void node_dump(struct domnode *node, struct node_dump_context *context)
 {
     struct domnode *n;
@@ -2111,10 +2121,7 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
         case NODE_ATTRIBUTE:
             node_dump_qualified_name(context, node);
             node_dump_append(context, L"=\"", 2);
-            LIST_FOR_EACH_ENTRY(n, &node->children, struct domnode, entry)
-            {
-                node_dump_xml_attr(n, context);
-            }
+            node_dump_attribute_value(context, node);
             node_dump_append(context, L"\"", 1);
             break;
 
@@ -2126,6 +2133,28 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
 
         case NODE_DOCUMENT_TYPE:
             node_dump_append(context, node->data, SysStringLen(node->data));
+            break;
+
+        case NODE_NOTATION:
+            node_dump_append(context, L"<!NOTATION ", 11);
+            node_dump_append(context, node->name, SysStringLen(node->name));
+            node_dump_append(context, L" ", 1);
+
+            if ((n = domnode_get_first_attribute(node)))
+            {
+                node_dump_append(context, n->name, SysStringLen(n->name));
+                node_dump_append(context, L" \"", 2);
+                node_dump_attribute_value(context, n);
+                node_dump_append(context, L"\"", 1);
+
+                if ((n = domnode_get_next_attribute_sibling(n)))
+                {
+                    node_dump_append(context, L" \"", 2);
+                    node_dump_attribute_value(context, n);
+                    node_dump_append(context, L"\"", 1);
+                }
+            }
+            node_dump_append(context, L">", 1);
             break;
 
         default:
@@ -3518,6 +3547,27 @@ HRESULT node_get_attribute_count(const struct domnode *node, LONG *count)
 
     *count = list_count(&node->attributes);
     return S_OK;
+}
+
+HRESULT node_get_next_attribute(const struct domnode *node, LONG *iter, IXMLDOMNode **attr)
+{
+    struct domnode *curr = NULL, *n;
+    LONG count = *iter;
+
+    *attr = NULL;
+
+    LIST_FOR_EACH_ENTRY(n, &node->attributes, struct domnode, entry)
+    {
+        curr = n;
+        if (!count--) break;
+        curr = NULL;
+    }
+
+    if (!curr)
+        return S_FALSE;
+
+    (*iter)++;
+    return create_node(curr, attr);
 }
 
 HRESULT node_get_attribute_value(struct domnode *node, const WCHAR *name, VARIANT *value)
@@ -5066,6 +5116,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         {
             case NODE_DOCUMENT:
             case NODE_DOCUMENT_TYPE:
+            case NODE_DOCUMENT_FRAGMENT:
                 return return_validation_error(E_DOM_INVALIDTYPE, err);
             default:
                 ;

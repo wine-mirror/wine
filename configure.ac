@@ -1129,7 +1129,8 @@ case $host_os in
         AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -pie"])
         case $HOST_ARCH in
           i386|arm)
-            AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d400000"]) ;;
+            AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d400000"])
+            WINE_TRY_CFLAGS([-Wl,--no-rosegment],[AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -Wl,--no-rosegment"])]) ;;
           *)
             WINE_TRY_CFLAGS([-static-pie],
                             [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static-pie"])],
@@ -1144,8 +1145,7 @@ case $host_os in
                   *)
                     AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x200100000"]) ;;
                 esac
-            ])
-            ;;
+                WINE_TRY_CFLAGS([-Wl,--no-rosegment],[AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -Wl,--no-rosegment"])])]) ;;
         esac
         ;;
       *)
@@ -1489,10 +1489,10 @@ if test "x$with_wayland" != "xno"
 then
     WINE_PACKAGE_FLAGS(WAYLAND_CLIENT,[wayland-client],,,,
         [AC_CHECK_HEADER([wayland-client.h],
-           [AC_CHECK_FUNC(wl_display_connect,
-              [AC_PATH_PROG(WAYLAND_SCANNER,wayland-scanner,
-                            [`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`])],
-              [WAYLAND_CLIENT_LIBS=""])])])
+           [AC_CHECK_FUNC(wl_display_connect,[:],[WAYLAND_CLIENT_LIBS=""])],
+           [WAYLAND_CLIENT_LIBS=""])])
+    AC_PATH_PROG(WAYLAND_SCANNER,wayland-scanner,
+                 [`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`])
     WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
         [AC_CHECK_FUNC(xkb_context_new,[:],[XKBCOMMON_LIBS=""])])
     if test "x$with_opengl" != "xno"
@@ -1509,8 +1509,20 @@ then
         fi
     fi
 fi
-WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
-                 [Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.],
+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS"],
+                 [wayland-client ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_SCANNER"],
+                 [wayland-scanner not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$XKBCOMMON_LIBS"],
+                 [libxkbcommon ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test -z "$XKBREGISTRY_LIBS"],
+                 [libxkbregistry ${notice_platform}development files not found, the Wayland driver won't be supported.],
+                 [enable_winewayland_drv])
+WINE_NOTICE_WITH(wayland, [test "$ac_cv_header_linux_input_h" = "no"],
+                 [linux/input.h not found, the Wayland driver won't be supported.],
                  [enable_winewayland_drv])
 
 if test "$enable_wineandroid_drv$enable_winemac_drv$enable_winewayland_drv" = "nonono"
@@ -1650,7 +1662,7 @@ then
     WINE_PACKAGE_FLAGS(VA,[libva libva-drm],[-lva-drm -lva],,,
         [AC_CHECK_HEADER([va/va_drm.h],
             [WINE_CHECK_SONAME(va-drm, vaGetDisplayDRM,,[VA_CFLAGS=""])
-             WINE_CHECK_SONAME(va, vaInitialize,,[VA_CFLAGS=""])],
+             WINE_CHECK_SONAME(va, vaExportSurfaceHandle,,[VA_CFLAGS=""])],
             [VA_CFLAGS=""])])
 fi
 WINE_NOTICE_WITH(va,[test "x$ac_cv_lib_soname_va_drm" = x -o "x$ac_cv_lib_soname_va" = x],
@@ -2492,6 +2504,8 @@ WINE_CONFIG_MAKEFILE(dlls/browseui/tests)
 WINE_CONFIG_MAKEFILE(dlls/bthprops.cpl)
 WINE_CONFIG_MAKEFILE(dlls/cabinet)
 WINE_CONFIG_MAKEFILE(dlls/cabinet/tests)
+WINE_CONFIG_MAKEFILE(dlls/capabilityaccessmanagerclient)
+WINE_CONFIG_MAKEFILE(dlls/capabilityaccessmanagerclient/tests)
 WINE_CONFIG_MAKEFILE(dlls/capi2032)
 WINE_CONFIG_MAKEFILE(dlls/cards)
 WINE_CONFIG_MAKEFILE(dlls/cdosys)
@@ -2870,6 +2884,7 @@ WINE_CONFIG_MAKEFILE(dlls/mfreadwrite)
 WINE_CONFIG_MAKEFILE(dlls/mfreadwrite/tests)
 WINE_CONFIG_MAKEFILE(dlls/mfsrcsnk)
 WINE_CONFIG_MAKEFILE(dlls/mfsrcsnk/tests)
+WINE_CONFIG_MAKEFILE(dlls/mfwmaaec)
 WINE_CONFIG_MAKEFILE(dlls/mgmtapi)
 WINE_CONFIG_MAKEFILE(dlls/midimap)
 WINE_CONFIG_MAKEFILE(dlls/mlang)

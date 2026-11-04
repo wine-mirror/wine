@@ -576,11 +576,13 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
     count = ++resource->map_count;
 
-    /* DISCARD invalidates the entire buffer, regardless of the specified
-     * offset and size. Some applications also depend on the entire buffer
-     * being uploaded in that case. Two such applications are Port Royale
-     * and Darkstar One. */
-    if (flags & WINED3D_MAP_DISCARD)
+    /* Native uploads the entire buffer for write maps, regardless of the
+     * specified offset and size, and applications depend on it. Port Royale
+     * and Darkstar One write outside the range they map with DISCARD, and
+     * Pure Pinball maps four bytes of a vertex buffer without flags and
+     * writes all of it. Managed buffers are the exception; native only
+     * uploads the mapped range for those. */
+    if ((flags & WINED3D_MAP_WRITE) && !wined3d_resource_access_is_managed(resource->access))
     {
         dirty_offset = 0;
         dirty_size = 0;

@@ -1068,9 +1068,9 @@ static NTSTATUS oss_get_capture_buffer(void *args)
     if(devpos)
        *devpos = stream->written_frames;
     if(qpcpos){
-        LARGE_INTEGER stamp, freq;
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        LARGE_INTEGER stamp;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *qpcpos = stamp.QuadPart;
     }
 
     return oss_unlock_result(stream, &params->result, *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY);
@@ -1344,9 +1344,9 @@ static NTSTATUS oss_get_position(void *args)
         *pos *= stream->fmt->nBlockAlign;
 
     if(qpctime){
-        LARGE_INTEGER stamp, freq;
-        NtQueryPerformanceCounter(&stamp, &freq);
-        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+        LARGE_INTEGER stamp;
+        NtQueryPerformanceCounter(&stamp, NULL);
+        *qpctime = stamp.QuadPart;
     }
 
     return oss_unlock_result(stream, &params->result, S_OK);

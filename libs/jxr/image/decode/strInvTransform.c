@@ -703,13 +703,16 @@ Int  invTransformMacroblock(CWMImageStrCodec * pSC)
     Int j = 0;
 
     Int qp[MAX_CHANNELS], dcqp[MAX_CHANNELS], iStrength = (1 << pSC->WMII.cPostProcStrength);
-    // ERR_CODE result = ICERR_OK;
 
     Bool bHPAbsent = (pSC->WMISCP.sbSubband == SB_NO_HIGHPASS || pSC->WMISCP.sbSubband == SB_DC_ONLY);
 
     if(pSC->WMII.cPostProcStrength > 0){
         // threshold for post processing
         for(i = 0; i < iChannels; i ++){
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerLP[i]))
+                return ICERR_ERROR;
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerDC[i]))
+                return ICERR_ERROR;
             qp[i] = pSC->pTile[pSC->cTileColumn].pQuantizerLP[i][pSC->MBInfo.iQIndexLP].iQP * iStrength * (olOverlap == OL_NONE ? 2 : 1);
             dcqp[i] = pSC->pTile[pSC->cTileColumn].pQuantizerDC[i][0].iQP * iStrength;
         }
@@ -726,8 +729,11 @@ Int  invTransformMacroblock(CWMImageStrCodec * pSC)
         PixelI* const p1 = pSC->p1MBbuffer[i];
 
         Int iHPQP = 255;
-        if (!bHPAbsent)
+        if (!bHPAbsent) {
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerHP[i]))
+                return ICERR_ERROR;
             iHPQP = pSC->pTile[pSC->cTileColumn].pQuantizerHP[i][pSC->MBInfo.iQIndexHP].iQP;
+        }
 
         //================================
         // second level inverse transform
@@ -874,8 +880,11 @@ Int  invTransformMacroblock(CWMImageStrCodec * pSC)
         PixelI* const p1 = pSC->p1MBbuffer[1 + i];//(0 == i ? pSC->pU1 : pSC->pV1);
 
         Int iHPQP = 255;
-        if (!bHPAbsent)
+        if (!bHPAbsent) {
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerHP[i]))
+                return ICERR_ERROR;
             iHPQP = pSC->pTile[pSC->cTileColumn].pQuantizerHP[i][pSC->MBInfo.iQIndexHP].iQP;
+        }
 
         //========================================
         // second level inverse transform (420_UV)
@@ -1008,9 +1017,11 @@ Int  invTransformMacroblock(CWMImageStrCodec * pSC)
         PixelI* const p1 = pSC->p1MBbuffer[1 + i];//(0 == i ? pSC->pU1 : pSC->pV1);
 
         Int iHPQP = 255;
-        if (!bHPAbsent)
+        if (!bHPAbsent) {
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerHP[i]))
+                return ICERR_ERROR;
             iHPQP = pSC->pTile[pSC->cTileColumn].pQuantizerHP[i][pSC->MBInfo.iQIndexHP].iQP;
-
+        }
         //========================================
         // second level inverse transform (422_UV)
         if ((!bottomORright) && pSC->m_Dparam->cThumbnailScale < 16)
@@ -1238,6 +1249,10 @@ Int  invTransformMacroblock_alteredOperators_hard(CWMImageStrCodec * pSC)
     if(pSC->WMII.cPostProcStrength > 0){
         // threshold for post processing
         for(i = 0; i < iChannels; i ++){
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerLP[i]))
+                return ICERR_ERROR;
+            if(!(pSC->pTile && i < MAX_CHANNELS && pSC->pTile[pSC->cTileColumn].pQuantizerDC[i]))
+                return ICERR_ERROR;
             qp[i] = pSC->pTile[pSC->cTileColumn].pQuantizerLP[i][pSC->MBInfo.iQIndexLP].iQP * iStrength * (olOverlap == OL_NONE ? 2 : 1);
             dcqp[i] = pSC->pTile[pSC->cTileColumn].pQuantizerDC[i][0].iQP * iStrength;
         }

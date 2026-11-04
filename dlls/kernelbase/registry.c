@@ -4047,10 +4047,11 @@ LONG WINAPI SHRegGetUSValueW(const WCHAR *subkey, const WCHAR *value, DWORD *typ
     HUSKEY myhuskey;
     LONG ret;
 
-    if (!data || !data_len)
-        return ERROR_INVALID_FUNCTION; /* FIXME:wrong*/
+    TRACE("%s, %s, %p, %p, %p, %d %p, %ld\n", debugstr_w(subkey), debugstr_w(value), type, data,
+           data_len, ignore_hkcu, default_data, default_data_len);
 
-    TRACE("%s, %s, %ld\n", debugstr_w(subkey), debugstr_w(value), *data_len);
+    if (!data && !data_len && !type)
+        return ERROR_SUCCESS;
 
     ret = SHRegOpenUSKeyW(subkey, KEY_QUERY_VALUE, 0, &myhuskey, ignore_hkcu);
     if (!ret)

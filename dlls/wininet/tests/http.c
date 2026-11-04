@@ -6963,6 +6963,155 @@ static void test_af_priority(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_uncommitted_cache_file(int port)
+{
+    char initial_file[MAX_PATH], url[256];
+    HINTERNET ses, con, req;
+    DWORD size, attrs;
+    BOOL ret;
+
+    sprintf(url, "http://localhost:%d/async_read", port);
+    DeleteUrlCacheEntryA(url);
+    ResetEvent(conn_wait_event);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpenA failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnectA failed: %lu\n", GetLastError());
+
+    req = HttpOpenRequestA(con, "GET", "/async_read", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0);
+    ok(req != NULL, "HttpOpenRequestA failed: %lu\n", GetLastError());
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequestA failed: %lu\n", GetLastError());
+
+    initial_file[0] = 0;
+    size = sizeof(initial_file);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_DATAFILE_NAME, initial_file, &size);
+    ok(ret, "InternetQueryOptionA(DATAFILE_NAME) failed: %lu\n", GetLastError());
+
+    attrs = GetFileAttributesA(initial_file);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "expected cache file to exist\n");
+
+    SetEvent(conn_wait_event);
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
+    SetLastError(0xdeadbeef);
+    attrs = GetFileAttributesA(initial_file);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected uncommitted cache file to be deleted, got %#lx\n", attrs);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+    DeleteFileA(initial_file);
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteUrlCacheEntryA(url);
+    ok(!ret, "DeleteUrlCacheEntryA succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+}
+
+static void test_cache_write_error(int port)
+{
+    static const char * const flag_names[] = { "0", "INTERNET_FLAG_NEED_FILE" };
+    static const DWORD test_flags[] = { 0, INTERNET_FLAG_NEED_FILE };
+    char file_name[MAX_PATH], initial_file[MAX_PATH], url[256], buf[256];
+    DWORD size, read_size, total, attrs;
+    HINTERNET ses, con, req;
+    HANDLE file, lock;
+    unsigned int i;
+    BOOL ret;
+
+    sprintf(url, "http://localhost:%d/async_read", port);
+    ResetEvent(conn_wait_event);
+
+    for (i = 0; i < ARRAY_SIZE(test_flags); i++)
+    {
+        DeleteUrlCacheEntryA(url);
+
+        ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+        ok(ses != NULL, "InternetOpenA failed\n");
+
+        con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+        ok(con != NULL, "InternetConnectA failed: %lu\n", GetLastError());
+
+        req = HttpOpenRequestA(con, "GET", "/async_read", NULL, NULL, NULL,
+                               INTERNET_FLAG_RELOAD | test_flags[i], 0);
+        ok(req != NULL, "HttpOpenRequestA failed: %lu\n", GetLastError());
+
+        ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+        ok(ret, "[%s] HttpSendRequestA failed: %lu\n", flag_names[i], GetLastError());
+
+        initial_file[0] = 0;
+        size = sizeof(initial_file);
+        ret = InternetQueryOptionA(req, INTERNET_OPTION_DATAFILE_NAME, initial_file, &size);
+        ok(ret, "[%s] InternetQueryOptionA(DATAFILE_NAME) failed: %lu\n", flag_names[i], GetLastError());
+
+        file = CreateFileA(initial_file, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           NULL, OPEN_EXISTING, 0, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "[%s] CreateFileA failed: %lu\n", flag_names[i], GetLastError());
+
+        ret = LockFile(file, 0, 0, 0x10000, 0);
+        ok(ret, "[%s] LockFile failed: %lu\n", flag_names[i], GetLastError());
+
+        SetEvent(conn_wait_event);
+
+        total = 0;
+        memset(buf, 0, sizeof(buf));
+        for (;;)
+        {
+            read_size = 0xdeadbeef;
+            ret = InternetReadFile(req, buf + total, 32, &read_size);
+            ok(ret, "[%s] InternetReadFile failed: %lu\n", flag_names[i], GetLastError());
+            if (!ret || !read_size)
+                break;
+            total += read_size;
+        }
+        ok(total == sizeof(page1) - 1, "[%s] got total %lu\n", flag_names[i], total);
+        ok(!memcmp(buf, page1, sizeof(page1) - 1), "[%s] unexpected data\n", flag_names[i]);
+
+        UnlockFile(file, 0, 0, 0x10000, 0);
+        CloseHandle(file);
+
+        file_name[0] = 0;
+        size = sizeof(file_name);
+        ret = InternetQueryOptionA(req, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+        ok(ret, "[%s] InternetQueryOptionA(DATAFILE_NAME) failed: %lu\n", flag_names[i], GetLastError());
+        ok(!strcmp(file_name, initial_file), "[%s] got %s, expected %s\n", flag_names[i], file_name, initial_file);
+
+        lock = NULL;
+        ret = InternetLockRequestFile(req, &lock);
+        ok(ret, "[%s] InternetLockRequestFile failed: %lu\n", flag_names[i], GetLastError());
+        ret = InternetUnlockRequestFile(lock);
+        ok(ret, "[%s] InternetUnlockRequestFile failed: %lu\n", flag_names[i], GetLastError());
+
+        attrs = GetFileAttributesA(initial_file);
+        ok(attrs != INVALID_FILE_ATTRIBUTES, "[%s] expected cache file to exist before close\n", flag_names[i]);
+
+        InternetCloseHandle(req);
+        InternetCloseHandle(con);
+        InternetCloseHandle(ses);
+
+        SetLastError(0xdeadbeef);
+        attrs = GetFileAttributesA(initial_file);
+        todo_wine ok(attrs == INVALID_FILE_ATTRIBUTES, "[%s] expected cache file to be deleted, got %#lx\n",
+                     flag_names[i], attrs);
+        todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "[%s] got error %lu\n", flag_names[i], GetLastError());
+
+        size = 0;
+        SetLastError(0xdeadbeef);
+        ret = GetUrlCacheEntryInfoA(url, NULL, &size);
+        ok(!ret, "[%s] GetUrlCacheEntryInfoA succeeded\n", flag_names[i]);
+        todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "[%s] got error %lu\n", flag_names[i], GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = DeleteUrlCacheEntryA(url);
+        todo_wine ok(!ret, "[%s] DeleteUrlCacheEntryA succeeded\n", flag_names[i]);
+        todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "[%s] got error %lu\n", flag_names[i], GetLastError());
+        DeleteFileA(initial_file);
+    }
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -7022,6 +7171,8 @@ static void test_http_connection(void)
     test_basic_auth_credentials_manual(si.port);
     test_basic_auth_credentials_cached_manual(si.port);
     test_async_read(si.port);
+    test_uncommitted_cache_file(si.port);
+    test_cache_write_error(si.port);
     test_http_read(si.port);
     test_file_pointer(si.port);
     test_connection_break(si.port);

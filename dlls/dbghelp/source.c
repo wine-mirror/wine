@@ -122,6 +122,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         }
     }
 done:
+    if (full != name) HeapFree(GetProcessHeap(), 0, (char*)full);
     HeapFree(GetProcessHeap(), 0, tmp);
     return ret;
 }
@@ -164,7 +165,7 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
     }
     else
     {
-        WCHAR *bang = wcschr(Mask, '!');
+        WCHAR *bang = Mask ? wcschr(Mask, L'!') : NULL;
         if (bang)
         {
             WCHAR    *module_name;

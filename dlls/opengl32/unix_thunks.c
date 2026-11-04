@@ -9429,7 +9429,7 @@ static NTSTATUS ext_glGetFixedv( void *args )
     struct glGetFixedv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glGetFixedv) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetFixedv( params->pname, params->params );
+    funcs->p_glGetFixedv( params->pname, params->data );
     return STATUS_SUCCESS;
 }
 
@@ -27930,6 +27930,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     process_attach,
     thread_attach,
     process_detach,
+    thread_detach,
     set_root_context,
     get_pixel_formats,
     wgl_wglDeleteContext,
@@ -31030,6 +31031,7 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 extern NTSTATUS wow64_thread_attach( void *args );
 extern NTSTATUS wow64_process_detach( void *args );
+extern NTSTATUS wow64_thread_detach( void *args );
 extern NTSTATUS wow64_set_root_context( void *args );
 
 extern NTSTATUS wow64_get_pixel_formats( void *args );
@@ -47873,12 +47875,12 @@ static NTSTATUS wow64_ext_glGetFixedv( void *args )
     {
         PTR32 teb;
         GLenum pname;
-        PTR32 params;
+        PTR32 data;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glGetFixedv) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetFixedv( params->pname, ULongToPtr(params->params) );
+    funcs->p_glGetFixedv( params->pname, ULongToPtr(params->data) );
     return STATUS_SUCCESS;
 }
 
@@ -81580,6 +81582,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     process_attach,
     wow64_thread_attach,
     wow64_process_detach,
+    wow64_thread_detach,
     wow64_set_root_context,
     wow64_get_pixel_formats,
     wow64_wgl_wglDeleteContext,

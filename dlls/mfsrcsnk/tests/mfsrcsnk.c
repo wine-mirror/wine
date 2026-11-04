@@ -1013,8 +1013,8 @@ static void test_release(void)
 {
     IMFByteStream *byte_stream;
     IMFMediaSource *source;
+    LONG ref, ref2;
     HRESULT hr;
-    LONG ref;
 
     byte_stream = create_resource_byte_stream(L"test_thinning.avi");
     hr = create_source(&CLSID_AVIByteStreamPlugin, byte_stream, &source);
@@ -1026,11 +1026,11 @@ static void test_release(void)
     hr = IMFMediaSource_Shutdown(source);
     ok(hr == S_OK, "IMFMediaSource_Shutdown failed with hr %#lx\n", hr);
 
-    ref = IMFByteStream_Release(byte_stream);
-    ok(ref == 0, "got unexpected ref %lu\n", ref);
+    ref2 = get_refcount(byte_stream);
+    ok(ref2 < ref, "Unexpected refcount %ld, was %ld.\n", ref2, ref);
 
-    ref = IMFMediaSource_Release(source);
-    ok(ref == 0, "got unexpected ref %lu\n", ref);
+    IMFByteStream_Release(byte_stream);
+    IMFMediaSource_Release(source);
 }
 
 struct test_stream
@@ -1326,6 +1326,108 @@ static void test_source_buffer_size(void)
     }
 }
 
+static void test_stream_selection(void)
+{
+    IMFPresentationDescriptor *pd;
+    IMFAsyncCallback *callback;
+    IMFByteStream *byte_stream;
+    IMFMediaSource *source;
+    PROPVARIANT value;
+    HRESULT hr;
+    DWORD count;
+    UINT i;
+
+    byte_stream = create_resource_byte_stream(L"i420-64x64.avi");
+    hr = create_source(&CLSID_AVIByteStreamPlugin, byte_stream, &source);
+    IMFByteStream_Release(byte_stream);
+
+    if (FAILED(hr))
+    {
+        win_skip("Failed to create AVI media source: %#lx.\n", hr);
+        return;
+    }
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorCount(pd, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < count; ++i)
+    {
+        IMFMediaTypeHandler *mt_handler;
+        IMFStreamDescriptor *sd;
+        BOOL selected;
+        GUID type;
+
+        hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, i, &selected, &sd);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
+
+        hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &mt_handler);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaTypeHandler_GetMajorType(mt_handler, &type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        if (!IsEqualGUID(&type, &MFMediaType_Video))
+        {
+            hr = IMFPresentationDescriptor_DeselectStream(pd, i);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        }
+
+        IMFMediaTypeHandler_Release(mt_handler);
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    PropVariantInit(&value);
+    hr = IMFMediaSource_Start(source, pd, &GUID_NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFPresentationDescriptor_Release(pd);
+
+    callback = create_test_callback(TRUE);
+
+    hr = wait_media_event(source, callback, MENewStream, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    hr = wait_media_event(source, callback, MESourceStarted, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPresentationDescriptor_GetStreamDescriptorCount(pd, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < count; ++i)
+    {
+        IMFMediaTypeHandler *mt_handler;
+        IMFStreamDescriptor *sd;
+        BOOL selected;
+        GUID type;
+
+        hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, i, &selected, &sd);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &mt_handler);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaTypeHandler_GetMajorType(mt_handler, &type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        if (IsEqualGUID(&type, &MFMediaType_Video))
+            ok(selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
+        else ok(!selected, "Unexpected stream descriptor selection, index %i selected %u\n", i, selected);
+
+        IMFMediaTypeHandler_Release(mt_handler);
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    IMFMediaSource_Shutdown(source);
+    IMFMediaSource_Release(source);
+    IMFAsyncCallback_Release(callback);
+}
+
 START_TEST(mfsrcsnk)
 {
     HRESULT hr;
@@ -1339,6 +1441,7 @@ START_TEST(mfsrcsnk)
     test_end_of_presentation();
     test_release();
     test_source_buffer_size();
+    test_stream_selection();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

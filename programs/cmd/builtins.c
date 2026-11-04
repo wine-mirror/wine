@@ -313,24 +313,24 @@ RETURN_CODE WCMD_choice(struct word_iterator *iterator)
         if (!iterator->is_an_option) continue;
         if (!wcsicmp(iterator->unquoted_argument, L"/N")) opt_n = TRUE;
         else if (!wcsicmp(iterator->unquoted_argument, L"/CS")) opt_cs = TRUE;
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/C", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/C", FALSE, &arg))
         {
             if (opt_c)
                 return_code = ERROR_INVALID_FUNCTION;
             else
                 opt_c = xstrdupW(arg);
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/D", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/D", FALSE, &arg))
         {
             opt_default = *arg;
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", FALSE, &arg))
         {
             opt_timeout = wcstol(arg, &end, 10);
             if (end == arg || *end)
                 opt_timeout = 10000;
         }
-        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/M", &arg))
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/M", FALSE, &arg))
         {
             if (opt_m)
                 return_code = ERROR_INVALID_FUNCTION;
@@ -1682,7 +1682,7 @@ RETURN_CODE WCMD_give_help(struct word_iterator *iterator)
     int i;
 
     /* yes, return code / errorlevel look inverted, but native does it this way */
-    while (WCMD_word_iterator_advance(iterator))
+    while (WCMD_word_iterator_can_advance(iterator) && WCMD_word_iterator_advance(iterator))
     {
         if (iterator->is_an_option || help_on)
         {
@@ -1725,46 +1725,17 @@ RETURN_CODE WCMD_give_help(struct word_iterator *iterator)
  * FIXME: DOS is supposed to allow labels with spaces - we don't.
  */
 
-RETURN_CODE WCMD_goto(void)
+RETURN_CODE WCMD_goto(struct word_iterator *iterator)
 {
     if (context != NULL)
     {
-        WCHAR *paramStart = param1;
-        HANDLE h;
-        BOOL ret;
-
-        if (!param1[0])
+        while (WCMD_word_iterator_advance(iterator))
         {
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-            return ERROR_INVALID_FUNCTION;
+            /* native doesn't care about options, nor extra args, just use first arg */
+            if (iterator->is_an_option) continue;
+            return WCMD_jump_to_label(iterator->raw_argument);
         }
-
-        if (!context->batch_file) return ERROR_INVALID_FUNCTION;
-        /* Handle special :EOF label */
-        if (lstrcmpiW(L":eof", param1) == 0)
-        {
-            context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
-            return RETURN_CODE_GOTO;
-        }
-        h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (h == INVALID_HANDLE_VALUE)
-        {
-            SetLastError(ERROR_FILE_NOT_FOUND);
-            WCMD_print_error();
-            return ERROR_INVALID_FUNCTION;
-        }
-
-        /* Support goto :label as well as goto label plus remove trailing chars */
-        if (*paramStart == ':') paramStart++;
-        WCMD_set_label_end(paramStart);
-        TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
-
-        ret = WCMD_find_label(h, paramStart, &context->file_position);
-        CloseHandle(h);
-        if (ret) return RETURN_CODE_GOTO;
-        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
-        context->file_position.QuadPart = WCMD_FILE_POSITION_EOF;
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
     }
     return ERROR_INVALID_FUNCTION;
 }

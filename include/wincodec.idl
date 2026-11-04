@@ -433,7 +433,7 @@ interface IWICBitmapSource : IUnknown
         [in] IWICPalette *pIPalette);
 
     HRESULT CopyPixels(
-        [in] const WICRect *prc,
+        [in, unique] const WICRect *prc,
         [in] UINT cbStride,
         [in] UINT cbBufferSize,
         [out, size_is(cbBufferSize)] BYTE *pbBuffer);
@@ -478,7 +478,7 @@ interface IWICBitmapFlipRotator : IWICBitmapSource
 interface IWICBitmap : IWICBitmapSource
 {
     HRESULT Lock(
-        [in] const WICRect *prcLock,
+        [in, unique] const WICRect *prcLock,
         [in] DWORD flags,
         [out] IWICBitmapLock **ppILock);
 
@@ -895,7 +895,7 @@ interface IWICFormatConverter : IWICBitmapSource
         [in] IWICBitmapSource *pISource,
         [in] REFWICPixelFormatGUID dstFormat,
         [in] WICBitmapDitherType dither,
-        [in] IWICPalette *pIPalette,
+        [in, unique] IWICPalette *pIPalette,
         [in] double alphaThresholdPercent,
         [in] WICBitmapPaletteType paletteTranslate);
 
@@ -913,7 +913,7 @@ interface IWICFormatConverterInfo : IWICComponentInfo
 {
     HRESULT GetPixelFormats(
         [in] UINT cFormats,
-        [in, out, size_is(cFormats)] WICPixelFormatGUID *pPixelFormatGUIDs,
+        [in, out, unique, size_is(cFormats)] WICPixelFormatGUID *pPixelFormatGUIDs,
         [out] UINT *pcActual);
 
     HRESULT CreateInstance(

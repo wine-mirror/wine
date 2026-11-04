@@ -249,12 +249,33 @@ sub read_spec_file($)
     close SPEC;
 }
 
+sub is_single_arch($)
+{
+    my $name = shift;
+    my $file = "dlls/$name/Makefile.in";
+    my $ret = 0;
+
+    open MAKE, "<$file" or die "cannot open $file";
+    while (<MAKE>)
+    {
+        if (/ENABLE_ARCHS\s*=\s*(.*)/)
+        {
+            my @archs = split /\s+/, $1;
+            $ret = (scalar @archs == 1) && $archs[0] !~ /^\$/;
+            last;
+        }
+    }
+    close MAKE;
+    return $ret;
+}
+
 sub update_spec_file($)
 {
     my $name = shift;
     my $file = "dlls/$name/$name.spec";
     my %stubs;
     my ($old, $new);
+    my $single_arch = is_single_arch( $name );
 
     open SPEC, "<$file" or die "cannot open $file";
     while (<SPEC>)
@@ -297,6 +318,7 @@ sub update_spec_file($)
             $flags = $parent{flags};
             $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
             $flags =~ s/-noname\s*// if $descr{ordinal} eq "@";
+            $flags =~ s/-arch=\S+\s*// if $single_arch;
             $flags =~ s/-import\s*//;
             if ($descr{flags} =~ /-private/)  # preserve -private flag
             {

@@ -1084,8 +1084,7 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     /* See get_projection_matrix() in glsl_shader.c for a discussion about those values. */
-    float pixel_center_offset = context->d3d_info->wined3d_creation_flags
-            & WINED3D_PIXEL_CENTER_INTEGER ? 0.5f : 0.0f;
+    float pixel_center_offset = ((context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY) ? 0.5f : 0.0f);
     GLdouble depth_ranges[2 * WINED3D_MAX_VIEWPORTS];
     GLfloat viewports[4 * WINED3D_MAX_VIEWPORTS];
     unsigned int i, reset_count = 0;

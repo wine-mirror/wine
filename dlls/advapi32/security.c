@@ -146,8 +146,8 @@ const char * debugstr_sid(PSID sid)
             psid->SubAuthority[3], psid->SubAuthority[4]);
     case 6:
         return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
-            psid->SubAuthority[3], psid->SubAuthority[1], psid->SubAuthority[2],
-            psid->SubAuthority[0], psid->SubAuthority[4], psid->SubAuthority[5]);
+            psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
+            psid->SubAuthority[3], psid->SubAuthority[4], psid->SubAuthority[5]);
     case 7:
         return wine_dbg_sprintf("S-%d-%d-%lu-%lu-%lu-%lu-%lu-%lu-%lu", psid->Revision, auth,
             psid->SubAuthority[0], psid->SubAuthority[1], psid->SubAuthority[2],
@@ -485,6 +485,12 @@ static const WCHAR * const WellKnownPrivNames[SE_MAX_WELL_KNOWN_PRIVILEGE + 1] =
     L"SeManageVolumePrivilege",
     L"SeImpersonatePrivilege",
     L"SeCreateGlobalPrivilege",
+    L"SeTrustedCredManAccessPrivilege",
+    L"SeRelabelPrivilege",
+    L"SeIncreaseWorkingSetPrivilege",
+    L"SeTimeZonePrivilege",
+    L"SeCreateSymbolicLinkPrivilege",
+    L"SeDelegateSessionUserImpersonatePrivilege",
 };
 
 const WCHAR *get_wellknown_privilege_name(const LUID *luid)
@@ -921,14 +927,19 @@ LookupAccountSidW(
                             ac = L"RAS and IAS Servers";
                             break;
                         case 1000:	/* first user account */
+                        {
+                            DWORD length;
+
                             size = UNLEN + 1;
                             account_name = malloc(size * sizeof(WCHAR));
-                            if (GetUserNameW(account_name, &size))
+                            length = GetEnvironmentVariableW( L"WINEUSERNAME", account_name, size );
+                            if (length && length < size)
                                 ac = account_name;
                             else
                                 dm = NULL;
 
                             break;
+                        }
                         default:
                             dm = NULL;
                             break;

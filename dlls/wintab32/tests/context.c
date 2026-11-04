@@ -217,6 +217,9 @@ static void test_WTInfoA(void)
     ret = pWTInfoA( WTI_DEVICES, DVC_NAME, name );
     trace("DVC_NAME %s\n", name);
 
+    ret = pWTInfoA( WTI_CURSORS, CSR_BTNNAMES, name );
+    trace("CSR_BTNNAMES %s\n", name);
+
     ret = pWTInfoA( WTI_DEVICES, DVC_HARDWARE, name );
     trace("DVC_HARDWARE %s\n", name);
 

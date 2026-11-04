@@ -56,11 +56,15 @@ static HRESULT WINAPI wb_QueryInterface( IWordBreaker *iface,
         IsEqualIID(riid, &IID_IWordBreaker))
     {
         *ppvObj = &This->IWordBreaker_iface;
-        return S_OK;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
     }
 
-    TRACE("-- E_NOINTERFACE\n");
-    return E_NOINTERFACE;
+    IWordBreaker_AddRef( iface );
+    return S_OK;
 }
 
 static ULONG WINAPI wb_AddRef( IWordBreaker *iface )
@@ -184,7 +188,7 @@ static const IWordBreakerVtbl wordbreaker_vtbl =
 HRESULT WINAPI wb_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
     wordbreaker_impl *This;
-    IWordBreaker *wb;
+    HRESULT hr;
 
     TRACE("%p %s %p\n", pUnkOuter, debugstr_guid(riid), ppvObject);
 
@@ -195,7 +199,8 @@ HRESULT WINAPI wb_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOID *ppvObjec
     This->ref = 1;
     This->IWordBreaker_iface.lpVtbl = &wordbreaker_vtbl;
 
-    wb = &This->IWordBreaker_iface;
+    hr = IWordBreaker_QueryInterface(&This->IWordBreaker_iface, riid, ppvObject);
+    IWordBreaker_Release(&This->IWordBreaker_iface);
 
-    return IWordBreaker_QueryInterface(wb, riid, ppvObject);
+    return hr;
 }

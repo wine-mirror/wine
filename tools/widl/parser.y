@@ -3240,3 +3240,14 @@ type_t *find_parameterized_type(type_t *type, typeref_list_t *params)
     free(name);
     return type;
 }
+
+void parser_reset( void )
+{
+    memset( &global_namespace, 0, sizeof(global_namespace) );
+    list_init( &global_namespace.entry );
+    list_init( &global_namespace.children );
+    current_namespace = &global_namespace;
+    parameters_namespace = NULL;
+    parameterized_type_stmts = NULL;
+    memset( const_hash, 0, sizeof(const_hash) );
+}

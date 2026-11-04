@@ -1066,9 +1066,9 @@ static const IWMPSettingsVtbl WMPSettingsVtbl = {
 
 static HRESULT WINAPI WMPNetwork_QueryInterface(IWMPNetwork *iface, REFIID riid, void **ppv)
 {
-    if(IsEqualGUID(riid, &IID_IDispatch)) {
-        *ppv = iface;
-    }else if(IsEqualGUID(riid, &IID_IWMPNetwork)) {
+    if( IsEqualGUID(riid, &IID_IUnknown)  ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IWMPNetwork) ) {
         *ppv = iface;
     }else {
         WARN("Unsupported interface (%s)\n", wine_dbgstr_guid(riid));

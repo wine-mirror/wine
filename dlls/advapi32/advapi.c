@@ -32,6 +32,7 @@
 #include "wincred.h"
 #include "wct.h"
 #include "perflib.h"
+#include "lmcons.h"
 
 #include "wine/debug.h"
 
@@ -44,14 +45,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
  */
 BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
 {
-    DWORD len = GetEnvironmentVariableA( "WINEUSERNAME", name, *size );
-    BOOL ret;
+    WCHAR nameW[UNLEN + 1];
+    DWORD length, sizeW;
 
-    if (!len) return FALSE;
-    if ((ret = (len < *size))) len++;
-    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-    *size = len;
-    return ret;
+    sizeW = ARRAY_SIZE(nameW);
+    if (!GetUserNameW( nameW, &sizeW ))
+        return FALSE;
+
+    length = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL );
+    if (name && length <= *size)
+    {
+        WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, *size, NULL, NULL );
+        *size = length;
+        return TRUE;
+    }
+    else
+    {
+        *size = length;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
 }
 
 /******************************************************************************
@@ -59,14 +72,51 @@ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
  */
 BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
 {
-    DWORD len = GetEnvironmentVariableW( L"WINEUSERNAME", name, *size );
-    BOOL ret;
+    static SID network_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_NETWORK_SERVICE_RID}};
+    char token_buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
+    TOKEN_USER *token_user = (TOKEN_USER *)token_buffer;
+    DWORD token_buffer_size = 0, domain_size = MAX_PATH;
+    WCHAR buffer[UNLEN + 2], domain[MAX_PATH];
+    DWORD buffer_size = ARRAY_SIZE(buffer);
+    SID_NAME_USE name_use;
 
-    if (!len) return FALSE;
-    if ((ret = (len < *size))) len++;
-    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-    *size = len;
-    return ret;
+    TRACE("name %p, size %p.\n", name, size);
+
+    token_buffer_size = sizeof(token_buffer);
+    if (!GetTokenInformation( GetCurrentThreadEffectiveToken(), TokenUser, token_user,
+                              token_buffer_size, &token_buffer_size ))
+        return FALSE;
+
+    /* The NetworkService account returns "<HOSTNAME>$" */
+    if (EqualSid( token_user->User.Sid, &network_service ))
+    {
+        if (!GetComputerNameW( buffer, &buffer_size ))
+            return FALSE;
+
+        wcscat( buffer, L"$" );
+        buffer_size += 1;
+    }
+    else
+    {
+        if (!LookupAccountSidW( NULL, token_user->User.Sid, buffer, &buffer_size, domain,
+                                &domain_size, &name_use ))
+            return FALSE;
+    }
+
+    /* buffer_size from GetComputerNameW()/LookupAccountSidW() doesn't include the terminating NUL
+     * character on success */
+    buffer_size += 1;
+
+    if (!name || *size < buffer_size)
+    {
+        *size = buffer_size;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    memcpy( name, buffer, buffer_size * sizeof(WCHAR) );
+    *size = buffer_size;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -258,11 +308,177 @@ done:
     return ret;
 }
 
+struct max_sid
+{
+    /* same fields as struct _SID */
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[SID_MAX_SUB_AUTHORITIES];
+};
+
+static void init_sid_and_attributes( SID_AND_ATTRIBUTES *sid_attr, PSID sid, DWORD attr )
+{
+    sid_attr->Sid = sid;
+    sid_attr->Attributes = attr;
+}
+
+static void init_privilege( LUID_AND_ATTRIBUTES *luid_attr, DWORD luid_low, DWORD attr )
+{
+    luid_attr->Luid.LowPart = luid_low;
+    luid_attr->Luid.HighPart = 0;
+    luid_attr->Attributes = attr;
+}
+
 BOOL WINAPI LogonUserW( LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
                         DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken )
 {
-    FIXME("%s %s %p 0x%08lx 0x%08lx %p - stub\n", debugstr_w(lpszUsername),
-          debugstr_w(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
+    if (dwLogonType == LOGON32_LOGON_SERVICE)
+    {
+        struct max_sid system = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_LOCAL_SYSTEM_RID}};
+        struct max_sid local_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_LOCAL_SERVICE_RID}};
+        struct max_sid network_service = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_NETWORK_SERVICE_RID}};
+        struct max_sid administrators = {SID_REVISION, 2, {SECURITY_NT_AUTHORITY}, {SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS}};
+        struct max_sid everyone = {SID_REVISION, 1, {SECURITY_WORLD_SID_AUTHORITY}, {SECURITY_WORLD_RID}};
+        struct max_sid authenticated_users = {SID_REVISION, 1, {SECURITY_NT_AUTHORITY}, {SECURITY_AUTHENTICATED_USER_RID}};
+        struct max_sid users = {SID_REVISION, 2, {SECURITY_NT_AUTHORITY}, {SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS}};
+        struct max_sid local = {SID_REVISION, 1, {SECURITY_LOCAL_SID_AUTHORITY}, {SECURITY_LOCAL_RID}};
+        struct max_sid console_logon = {SID_REVISION, 1, {SECURITY_LOCAL_SID_AUTHORITY}, {SECURITY_LOCAL_LOGON_RID}};
+        DWORD_PTR privileges_buffer[(offsetof(TOKEN_PRIVILEGES, Privileges[28]) + sizeof(DWORD_PTR) - 1) / sizeof(DWORD_PTR)];
+        DWORD_PTR groups_buffer[(offsetof(TOKEN_GROUPS, Groups[5]) + sizeof(DWORD_PTR) - 1) / sizeof(DWORD_PTR)];
+        TOKEN_PRIVILEGES *privileges = (TOKEN_PRIVILEGES *)privileges_buffer;
+        TOKEN_GROUPS *groups = (TOKEN_GROUPS *)groups_buffer;
+        TOKEN_PRIMARY_GROUP primary_group;
+        LUID_AND_ATTRIBUTES *luid_attr;
+        SID_AND_ATTRIBUTES *sid_attr;
+        LARGE_INTEGER expire = {0};
+        TOKEN_SOURCE source = {0};
+        OBJECT_ATTRIBUTES attr;
+        TOKEN_USER user = {0};
+        LUID auth_id = {0};
+        TOKEN_OWNER owner;
+        NTSTATUS status;
+
+        TRACE("%s %s %p 0x%08lx 0x%08lx %p\n", debugstr_w( lpszUsername ), debugstr_w( lpszDomain ),
+              lpszPassword, dwLogonType, dwLogonProvider, phToken);
+
+        if (!(lpszDomain && lpszUsername && !lstrcmpiW( lpszDomain, L"NT AUTHORITY" )
+             && (!lstrcmpiW( lpszUsername, L"System" )
+             || !lstrcmpiW( lpszUsername, L"LocalService" )
+             || !lstrcmpiW( lpszUsername, L"NetworkService" ))))
+        {
+            SetLastError( ERROR_LOGON_FAILURE );
+            return FALSE;
+        }
+
+        if (!lstrcmpiW( lpszUsername, L"System" ))
+        {
+            user.User.Sid = (PSID)&system;
+            owner.Owner = (PSID)&system;
+            primary_group.PrimaryGroup = (PSID)&system;
+
+            groups->GroupCount = 3;
+            sid_attr = groups->Groups;
+            init_sid_and_attributes( &sid_attr[0], (PSID)&administrators, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_OWNER );
+            init_sid_and_attributes( &sid_attr[1], (PSID)&everyone, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[2], (PSID)&authenticated_users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+
+            privileges->PrivilegeCount = 28;
+            luid_attr = privileges->Privileges;
+            init_privilege( &luid_attr[0], SE_ASSIGNPRIMARYTOKEN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[1], SE_LOCK_MEMORY_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[2], SE_INCREASE_QUOTA_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[3], SE_TCB_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[4], SE_SECURITY_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[5], SE_TAKE_OWNERSHIP_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[6], SE_LOAD_DRIVER_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[7], SE_SYSTEM_PROFILE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[8], SE_SYSTEMTIME_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[9], SE_PROF_SINGLE_PROCESS_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[10], SE_INC_BASE_PRIORITY_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[11], SE_CREATE_PAGEFILE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[12], SE_CREATE_PERMANENT_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[13], SE_BACKUP_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[14], SE_RESTORE_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[15], SE_SHUTDOWN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[16], SE_DEBUG_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[17], SE_AUDIT_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[18], SE_SYSTEM_ENVIRONMENT_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[19], SE_CHANGE_NOTIFY_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[20], SE_UNDOCK_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[21], SE_MANAGE_VOLUME_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[22], SE_IMPERSONATE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[23], SE_CREATE_GLOBAL_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[24], SE_INC_WORKING_SET_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[25], SE_TIME_ZONE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[26], SE_CREATE_SYMBOLIC_LINK_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[27], SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+        }
+        else if (!lstrcmpiW(lpszUsername, L"LocalService"))
+        {
+            user.User.Sid = (PSID)&local_service;
+            owner.Owner = (PSID)&local_service;
+            primary_group.PrimaryGroup = (PSID)&local_service;
+
+            groups->GroupCount = 5;
+            sid_attr = groups->Groups;
+            init_sid_and_attributes( &sid_attr[0], (PSID)&everyone, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[1], (PSID)&users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[2], (PSID)&authenticated_users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[3], (PSID)&local, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[4], (PSID)&console_logon, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+
+            privileges->PrivilegeCount = 11;
+            luid_attr = privileges->Privileges;
+            init_privilege( &luid_attr[0], SE_ASSIGNPRIMARYTOKEN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[1], SE_INCREASE_QUOTA_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[2], SE_SYSTEMTIME_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[3], SE_SHUTDOWN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[4], SE_AUDIT_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[5], SE_CHANGE_NOTIFY_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[6], SE_UNDOCK_PRIVILEGE, 0);
+            init_privilege( &luid_attr[7], SE_IMPERSONATE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[8], SE_CREATE_GLOBAL_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[9], SE_INC_WORKING_SET_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[10], SE_TIME_ZONE_PRIVILEGE, 0 );
+        }
+        else
+        {
+            user.User.Sid = (PSID)&network_service;
+            owner.Owner = (PSID)&network_service;
+            primary_group.PrimaryGroup = (PSID)&network_service;
+
+            groups->GroupCount = 5;
+            sid_attr = groups->Groups;
+            init_sid_and_attributes( &sid_attr[0], (PSID)&everyone, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[1], (PSID)&users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[2], (PSID)&authenticated_users, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[3], (PSID)&local, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+            init_sid_and_attributes( &sid_attr[4], (PSID)&console_logon, SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY );
+
+            privileges->PrivilegeCount = 10;
+            luid_attr = privileges->Privileges;
+            init_privilege( &luid_attr[0], SE_ASSIGNPRIMARYTOKEN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[1], SE_INCREASE_QUOTA_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[2], SE_SHUTDOWN_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[3], SE_AUDIT_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[4], SE_CHANGE_NOTIFY_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[5], SE_UNDOCK_PRIVILEGE, 0);
+            init_privilege( &luid_attr[6], SE_IMPERSONATE_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[7], SE_CREATE_GLOBAL_PRIVILEGE, SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED );
+            init_privilege( &luid_attr[8], SE_INC_WORKING_SET_PRIVILEGE, 0 );
+            init_privilege( &luid_attr[9], SE_TIME_ZONE_PRIVILEGE, 0 );
+        }
+
+        InitializeObjectAttributes( &attr, NULL, 0, 0, NULL );
+        status = NtCreateToken( phToken, TOKEN_ALL_ACCESS, &attr, TokenPrimary, &auth_id, &expire,
+                                &user, groups, privileges, &owner, &primary_group, NULL, &source );
+        RtlSetLastWin32Error( RtlNtStatusToDosError( status ) );
+        return !status;
+    }
+
+    FIXME("%s %s %p 0x%08lx 0x%08lx %p - stub\n", debugstr_w( lpszUsername ),
+          debugstr_w( lpszDomain ), lpszPassword, dwLogonType, dwLogonProvider, phToken);
 
     *phToken = (HANDLE *)0xdeadbeef;
     return TRUE;

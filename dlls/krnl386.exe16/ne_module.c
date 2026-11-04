@@ -399,6 +399,7 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
     if (mapping_size < sizeof(*mz_header)) return ERROR_BAD_FORMAT;
     if (mz_header->e_magic != IMAGE_DOS_SIGNATURE) return ERROR_BAD_FORMAT;
     ne_header = (const IMAGE_OS2_HEADER *)((const char *)mapping + mz_header->e_lfanew);
+    if ((ULONG)mz_header->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) return ERROR_BAD_FORMAT;
     if (mz_header->e_lfanew + sizeof(*ne_header) > mapping_size) return ERROR_BAD_FORMAT;
     if (ne_header->ne_magic == IMAGE_NT_SIGNATURE) return 21;  /* win32 exe */
     if (ne_header->ne_magic == IMAGE_OS2_SIGNATURE_LX)

@@ -149,6 +149,7 @@ static DWORD USER32_GetResourceTable(LPBYTE peimage,DWORD pesize,LPBYTE *retptr)
 	  else
 	    return 0; /* failed */
 	}
+	if ((ULONG)mz_header->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) return 0;
 	if (mz_header->e_lfanew >= pesize) {
 	    return 0; /* failed, happens with PKZIP DOS Exes for instance. */
 	}

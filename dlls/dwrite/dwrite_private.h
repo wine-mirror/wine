@@ -543,6 +543,7 @@ extern BOOL opentype_has_kerning_pairs(struct dwrite_fontface *fontface);
 extern HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, struct dwrite_var_axis **axis,
         unsigned int *axis_count);
 extern bool opentype_is_whitespace(unsigned int codepoint);
+extern float opentype_get_width_axis_value(DWRITE_FONT_STRETCH stretch);
 
 struct dwrite_colorglyph {
     USHORT layer; /* [0, num_layers) index indicating current layer */

@@ -47,6 +47,7 @@
 
 #include "codecapi.h"
 #include "icodecapi.h"
+#include "vfwmsgs.h"
 
 #include "d3d11_4.h"
 
@@ -494,7 +495,7 @@ static void check_mft_get_info(const GUID *class_id, const struct transform_info
         ok(IsEqualGUID(&output_types[i].guidMajorType, expect->major_type),
                 "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
         ok(IsEqualGUID(&output_types[i].guidSubtype, expect->outputs[i].subtype),
-                "got output[%u] subtype %s wanted %s\n", i, debugstr_guid(&output_types[i].guidSubtype), debugstr_guid(expect->inputs[i].subtype));
+                "got output[%u] subtype %s wanted %s\n", i, debugstr_guid(&output_types[i].guidSubtype), debugstr_guid(expect->outputs[i].subtype));
     }
     for (; expect->outputs[i].subtype; ++i)
         ok(0, "missing output[%u] subtype %s\n", i, debugstr_guid(expect->outputs[i].subtype));
@@ -633,7 +634,7 @@ static void init_dmo_media_type_audio(DMO_MEDIA_TYPE *media_type,
     format->cbSize = extra_bytes;
 }
 
-static void check_mft_optional_methods(IMFTransform *transform, DWORD output_count)
+static void check_mft_optional_methods(IMFTransform *transform, DWORD input_count, DWORD output_count)
 {
     DWORD in_id, out_id, in_count, out_count, in_min, in_max, out_min, out_max;
     PROPVARIANT propvar = {.vt = VT_EMPTY};
@@ -643,15 +644,15 @@ static void check_mft_optional_methods(IMFTransform *transform, DWORD output_cou
     in_min = in_max = out_min = out_max = 0xdeadbeef;
     hr = IMFTransform_GetStreamLimits(transform, &in_min, &in_max, &out_min, &out_max);
     ok(hr == S_OK, "GetStreamLimits returned %#lx\n", hr);
-    ok(in_min == 1, "got input_min %lu\n", in_min);
-    ok(in_max == 1, "got input_max %lu\n", in_max);
+    ok(in_min == input_count, "got input_min %lu\n", in_min);
+    ok(in_max == input_count, "got input_max %lu\n", in_max);
     ok(out_min == output_count, "got output_min %lu\n", out_min);
     ok(out_max == output_count, "got output_max %lu\n", out_max);
 
     in_count = out_count = 0xdeadbeef;
     hr = IMFTransform_GetStreamCount(transform, &in_count, &out_count);
     ok(hr == S_OK, "GetStreamCount returned %#lx\n", hr);
-    ok(in_count == 1, "got input_count %lu\n", in_count);
+    ok(in_count == input_count, "got input_count %lu\n", in_count);
     ok(out_count == output_count, "got output_count %lu\n", out_count);
 
     in_count = out_count = 1;
@@ -1014,6 +1015,20 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     }
 
     return ret;
+}
+
+#define check_scalar_property(a,b,c,d) check_scalar_property_(__LINE__,a,b,c,d)
+static void check_scalar_property_( ULONG line, IPropertyStore *store, const PROPERTYKEY *key, VARTYPE vt, ULONG value)
+{
+    PROPVARIANT val;
+    HRESULT hr;
+
+    PropVariantInit(&val);
+    hr = IPropertyStore_GetValue(store, key, &val);
+    ok_(__FILE__, line)(hr == S_OK, "IPropertyStore_GetValue returned %#lx.\n", hr);
+    ok_(__FILE__, line)(V_VT(&val) == vt, "got VT %d, expected %d.\n", V_VT(&val), vt);
+    ok_(__FILE__, line)(val.ulVal == value, "got value %#lx, expected %#lx.\n", val.ulVal, value);
+    PropVariantClear(&val);
 }
 
 DWORD compare_nv12(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
@@ -1907,7 +1922,7 @@ static void test_sample_copier(BOOL use_2d_buffer)
     check_interface(copier, &IID_IPropertyStore, FALSE);
     check_interface(copier, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(copier, 1);
+    check_mft_optional_methods(copier, 1, 1);
     check_mft_get_attributes(copier, expect_transform_attributes, FALSE);
 
     /* Available types. */
@@ -2441,7 +2456,7 @@ static void test_aac_encoder(void)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -2680,7 +2695,7 @@ static void test_aac_decoder_subtype(const struct attribute_desc *input_type_des
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, FALSE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &output_info);
@@ -3326,7 +3341,7 @@ static void test_wma_encoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -3633,7 +3648,7 @@ static void test_wma_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -5018,7 +5033,7 @@ static void test_h264_decoder(BOOL use_2d_buffer)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -6301,7 +6316,7 @@ static void test_audio_convert(void)
     check_interface(transform, &IID_IPropertyBag, TRUE);
     /* check_interface(transform, &IID_IWMResamplerProps, TRUE); */
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -6838,7 +6853,7 @@ static void test_wmv_encoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform, 2);
+    check_mft_optional_methods(transform, 1, 2);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_input_info);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_output_info);
@@ -7488,7 +7503,7 @@ static void test_wmv_decoder(BOOL use_2d_buffer)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, TRUE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, expect_attributes, TRUE);
 
     memset(&input_info, 0xcd, sizeof(input_info));
@@ -9115,7 +9130,7 @@ static void test_color_convert(BOOL use_2d_buffer)
     check_interface(transform, &IID_IMFRealTimeClient, TRUE);
     /* check_interface(transform, &IID_IWMColorConvProps, TRUE); */
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -9609,7 +9624,7 @@ static void test_resizer(BOOL use_2d_buffer)
     check_interface(transform, &IID_IMFRealTimeClient, TRUE);
     /* check_interface(transform, &IID_IWMColorConvProps, TRUE); */
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -10699,7 +10714,7 @@ static void test_video_processor(BOOL use_2d_buffer)
     check_interface(transform, &IID_IPropertyStore, FALSE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, expect_transform_attributes, TRUE);
     check_mft_get_input_stream_info(transform, S_OK, &initial_input_info);
     check_mft_get_output_stream_info(transform, S_OK, &initial_output_info);
@@ -11235,7 +11250,7 @@ static void test_mp3_decoder(void)
     check_interface(transform, &IID_IPropertyStore, TRUE);
     check_interface(transform, &IID_IPropertyBag, FALSE);
 
-    check_mft_optional_methods(transform, 1);
+    check_mft_optional_methods(transform, 1, 1);
     check_mft_get_attributes(transform, NULL, FALSE);
     check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
     check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
@@ -12279,6 +12294,729 @@ failed:
     CoUninitialize();
 }
 
+static void test_aaec(void)
+{
+    const GUID *const class_id = &CLSID_CWMAudioAEC;
+    const struct transform_info expect_mft_info =
+    {
+        .name = L"AEC",
+        .major_type = &MFMediaType_Audio,
+        .inputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+        .outputs =
+        {
+            {.subtype = &MFAudioFormat_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+    };
+    const struct transform_info expect_dmo_info =
+    {
+        .name = L"AEC",
+        .major_type = &MEDIATYPE_Audio,
+        .inputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+        .outputs =
+        {
+            {.subtype = &MEDIASUBTYPE_PCM},
+            {.subtype = &MEDIASUBTYPE_IEEE_FLOAT},
+        },
+    };
+
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+
+    const UINT channel_count = 1, rate = 8000, bits_per_sample = WMAUDIO_BITS_PER_SAMPLE;
+    const WAVEFORMATEX expected_output_info =
+    {
+        WAVE_FORMAT_PCM, channel_count, rate, bits_per_sample * rate * channel_count / 8,
+        bits_per_sample * channel_count / 8, bits_per_sample, 0
+    };
+    const DMO_MEDIA_TYPE expected_output_type =
+    {
+        MEDIATYPE_Audio, MEDIASUBTYPE_PCM, TRUE, FALSE, 0, FORMAT_WaveFormatEx, NULL,
+        sizeof(expected_output_info), (BYTE *)&expected_output_info
+    };
+
+    const MFT_OUTPUT_STREAM_INFO initial_output_info = {.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES};
+    static const struct attribute_desc expect_output_attributes[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MEDIASUBTYPE_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, rate),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, bits_per_sample * rate * channel_count / 8),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, channel_count),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, bits_per_sample),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 2),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        {0},
+    };
+    static const struct
+    {
+        WAVEFORMATEX format;
+        BOOL supported;
+    }
+    format_tests[] =
+    {
+        { {WAVE_FORMAT_PCM, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_IEEE_FLOAT, 1, 8000, 32 * 8000 * 1 / 8, 32 * 1 / 8, 32, 0}, FALSE },
+        { {WAVE_FORMAT_IEEE_FLOAT, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE },
+        { {WAVE_FORMAT_PCM, 1, 44100, 16 * 44100 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 1, 48000, 16 * 48000 * 1 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 1, 11025, 16 * 11025 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 1, 16000, 16 * 16000 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, TRUE, },
+        { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 2 / 8, 16, 0}, FALSE, },
+        { {WAVE_FORMAT_PCM, 2, 8000, 16 * 8000 * 2 / 8, 16 * 1 / 8, 16, 0}, FALSE, },
+    };
+    static const struct
+    {
+        WAVEFORMATEX format;
+        unsigned int frame_len;
+    }
+    process_output_tests[] =
+    {
+        { {WAVE_FORMAT_PCM, 1, 8000, 16 * 8000 * 1 / 8, 16 * 1 / 8, 16, 0}, 0 },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, 0 },
+        { {WAVE_FORMAT_PCM, 1, 22050, 16 * 22050 * 1 / 8, 16 * 1 / 8, 16, 0}, 240 },
+    };
+
+    static const PROPERTYKEY null_key = { 0 };
+    DWORD in_count, out_count, flags, size, align, status, start_tick, tick, curr_rate;
+    unsigned int i, frame_count, frame_size, sample_size;
+    struct media_buffer *output_media_buffer = NULL;
+    MFT_OUTPUT_DATA_BUFFER mft_buffer;
+    DMO_OUTPUT_DATA_BUFFER dmo_buffer;
+    MFT_OUTPUT_STREAM_INFO info;
+    IMFMediaType *media_type;
+    IMFTransform *transform;
+    HRESULT hr, expected_hr;
+    IPropertyStore *store;
+    DMO_MEDIA_TYPE type;
+    WAVEFORMATEX format;
+    IMFSample *sample;
+    IMediaObject *dmo;
+    LARGE_INTEGER qpc;
+    PROPVARIANT val;
+    UINT64 timeval;
+    LONG ref;
+
+    winetest_push_context("aaec");
+    check_mft_enum(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, class_id);
+    check_mft_get_info(class_id, &expect_mft_info);
+    check_dmo_get_info(class_id, &expect_dmo_info);
+
+    hr = MFStartup(MF_VERSION, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* Test MFT */
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IMFMediaSource, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IPropertyStore, (void **)&store);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_mft_optional_methods(transform, 0, 1);
+    check_mft_get_attributes(transform, NULL, FALSE);
+    check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &initial_output_info);
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %u", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_output_attributes, -1);
+        ref = IMFMediaType_Release(media_type);
+        ok(ref <= 1, "got %lu\n", ref);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "got %#lx\n", hr);
+    ok(i == 1, "got %u.\n", i);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 1, 0, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "got %#lx\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 1, &info);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "got %#lx.\n", hr);
+
+    memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+    mft_buffer.pSample = NULL;
+    hr = IMFTransform_ProcessOutput(transform, 0, 0, &mft_buffer, &status);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        format = format_tests[i].format;
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)&format;
+        switch (format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: type.subtype = MEDIASUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: type.subtype = MEDIASUBTYPE_IEEE_FLOAT; break;
+            default:
+                ok(0, "unexpected test format %#x.\n", format.wFormatTag);
+                break;
+        }
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        expected_hr = format_tests[i].supported ? S_OK : MF_E_INVALIDMEDIATYPE;
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+
+        expected_hr = format_tests[i].supported ? S_OK : MF_E_INVALIDMEDIATYPE;
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+        IMFMediaType_Release(media_type);
+
+        if (format_tests[i].supported)
+        {
+            hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            IMFMediaType_Release(media_type);
+            hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            out_count = 40 * format.nSamplesPerSec * format.wBitsPerSample / (8 * 1000);
+            ok(info.dwFlags == MFT_OUTPUT_STREAM_WHOLE_SAMPLES, "got %#lx.\n", info.dwFlags);
+            ok(info.cbSize == out_count, "got %lu.\n", info.cbSize);
+            ok(info.cbAlignment == format.nBlockAlign, "got %lu.\n", info.cbAlignment);
+            hr = IMFTransform_GetOutputStreamAttributes(transform, 0, NULL);
+            ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+        }
+        winetest_pop_context();
+    }
+
+    hr = IMFTransform_GetOutputStatus(transform, &status);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    type = expected_output_type;
+    type.pbFormat = (BYTE *)&expected_output_info;
+    hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    /* Disable echo cancellation. That doesn't affect test results for _ProcessOutput frame size and timestamp tests
+     * below except for with echo cancellation enabled _ProcessOutput doesn't work on Testbot VMs: results in
+     * WMAAECMA_E_NO_ACTIVE_RENDER_STREAM after spinning for 4sec returning S_FALSE. */
+    V_VT(&val) = VT_I4;
+    val.ulVal = SINGLE_CHANNEL_NSAGC;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+    mft_buffer.pSample = NULL;
+    mft_buffer.pEvents = NULL;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT || hr == E_PROP_ID_UNSUPPORTED, "got %#lx.\n", hr);
+    if (hr == E_PROP_ID_UNSUPPORTED)
+    {
+        skip("No audio input available, skipping tests.\n");
+        goto skip_mft_process_output;
+    }
+
+    sample = create_sample(NULL, 80);
+    mft_buffer.pSample = sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+    ok(hr == E_FAIL, "got %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    /* Based on tests which add sufficient delay before first _ProcessOutput call (omitted here),
+     * MFT_MESSAGE_NOTIFY_BEGIN_STREAMING initializes capture and MFT_MESSAGE_NOTIFY_END_STREAMING stops it
+     * (while the capture will be also initialized implicitly in _ProcessMssage). */
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    timeBeginPeriod(1);
+
+    for (i = 0; i < ARRAY_SIZE(process_output_tests); ++i)
+    {
+        const WAVEFORMATEX *format = &process_output_tests[i].format;
+
+        winetest_push_context("test %u", i);
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)format;
+
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = MFInitMediaTypeFromAMMediaType(media_type, (AM_MEDIA_TYPE *)&type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+
+        sample_size = format->nChannels * format->wBitsPerSample / 8;
+        curr_rate = format->nSamplesPerSec;
+        if (process_output_tests[i].frame_len)
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0xffff;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            V_VT(&val) = VT_I4;
+            val.ulVal = process_output_tests[i].frame_len;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+
+            frame_size = process_output_tests[i].frame_len * sample_size;
+        }
+        else
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            switch (curr_rate)
+            {
+                case 8000: frame_size = 80 * sample_size; break;
+                case 11025: frame_size = 128 * sample_size; break;
+                case 16000: frame_size = 160 * sample_size; break;
+                case 22050: frame_size = 256 * sample_size; break;
+                default:
+                    ok(0, "unexpected frame rate.\n");
+                    frame_size = 0;
+                    break;
+            }
+        }
+
+        start_tick = GetTickCount();
+        frame_count = 0;
+        while ((tick = GetTickCount()) - start_tick < 5000 && frame_count < 3)
+        {
+            IMFMediaBuffer *buffer;
+            unsigned int buffer_offset;
+            LONGLONG duration, timestamp;
+            DWORD max_size, length;
+            BOOL have_sample;
+            BYTE *data;
+
+            winetest_push_context("frame %d", frame_count);
+
+            sample = create_sample(NULL, 1024 * 1024);
+
+            hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            buffer_offset = frame_count ? 0 : 4;
+            hr = IMFMediaBuffer_SetCurrentLength(buffer, buffer_offset);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            hr = IMFMediaBuffer_Lock(buffer, &data, &max_size, &length);
+            ok(hr == S_OK, "got %#lx\n", hr);
+            memset(data, 0xcc, max_size);
+            hr = IMFMediaBuffer_Unlock(buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            memset(&mft_buffer, 0xcc, sizeof(mft_buffer));
+            mft_buffer.dwStreamID = 0;
+            mft_buffer.pSample = sample;
+            mft_buffer.pEvents = NULL;
+            status = 0xdeadbeef;
+            hr = IMFTransform_ProcessOutput(transform, 0, 1, &mft_buffer, &status);
+            ok(hr == S_OK || hr == MF_E_TRANSFORM_NEED_MORE_INPUT || hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, "got %#lx.\n", hr);
+            if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            {
+                skip("Got WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, skipping tests, elapsed %lums.\n", tick - start_tick);
+                break;
+            }
+            have_sample = (hr == S_OK);
+            ok(!status, "got %#lx.\n", status);
+            ok(mft_buffer.pSample == sample, "got %p.\n", mft_buffer.pSample);
+            ok(!mft_buffer.pEvents, "got %p.\n", mft_buffer.pEvents);
+
+            hr = IMFSample_GetSampleTime(sample, &timestamp);
+            ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "got %#lx\n", hr);
+
+            hr = IMFMediaBuffer_Lock(buffer, &data, &max_size, &length);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            if (have_sample)
+            {
+                ok(!mft_buffer.dwStatus, "got %#lx.\n", mft_buffer.dwStatus);
+                ok(*(DWORD *)data != 0xcccccccc, "got %#lx.\n", *(DWORD *)data);
+                ok(*(DWORD *)(data + buffer_offset) != 0xcccccccc, "got %#lx.\n", *(DWORD *)(data + 4));
+                ok(length > buffer_offset, "got %ld.\n", length);
+                ok((length % frame_size) == 0, "got length %ld, frame_size %d.\n", length, frame_size);
+
+                hr = IMFSample_GetSampleDuration(sample, &duration);
+                ok(hr == S_OK, "got %#lx\n", hr);
+                ok(!duration, "got %I64u.\n", duration);
+                ++frame_count;
+            }
+            else
+            {
+                ok(mft_buffer.dwStatus == 0xcccccccc, "got %#lx.\n", mft_buffer.dwStatus);
+                hr = IMFSample_GetSampleDuration(sample, &duration);
+                ok(hr == MF_E_NO_SAMPLE_DURATION, "got %#lx\n", hr);
+                ok(!length, "got %lu.\n", length);
+                ok(*(DWORD *)data == 0xcccccccc, "got %#lx.\n", *(DWORD *)data);
+                ok(*(DWORD *)(data + 4) == 0xcccccccc, "got %#lx.\n", *(DWORD *)(data + 4));
+            }
+            hr = IMFMediaBuffer_Unlock(buffer);
+            ok(hr == S_OK, "got %#lx\n", hr);
+
+            IMFMediaBuffer_Release(buffer);
+            IMFSample_Release(sample);
+            Sleep(1);
+            winetest_pop_context();
+        }
+        ok(hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM || frame_count == 3, "got %d.\n", frame_count);
+        winetest_pop_context();
+        if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            break;
+    }
+    timeEndPeriod(1);
+
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+skip_mft_process_output:
+    IPropertyStore_Release(store);
+    IMFTransform_Release(transform);
+
+    /* Test DMO */
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_interface(dmo, &IID_IMFTransform, TRUE);
+    check_interface(dmo, &IID_IMediaObject, TRUE);
+    check_interface(dmo, &IID_IPropertyStore, TRUE);
+    check_interface(dmo, &IID_IPropertyBag, FALSE);
+
+    in_count = out_count = 0xdeadbeef;
+    hr = IMediaObject_GetStreamCount(dmo, &in_count, &out_count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!in_count, "got %lu.\n", in_count);
+    ok(out_count == 1, "got %lu.\n", out_count);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMediaObject_GetOutputType(dmo, 0, ++i, &type)))
+    {
+        winetest_push_context("type %u", i);
+        check_dmo_media_type(&type, &expected_output_type);
+        MoFreeMediaType(&type);
+        winetest_pop_context();
+    }
+    ok(hr == DMO_E_NO_MORE_ITEMS, "got %#lx.\n", hr);
+    ok(i == 1, "got %u.\n", i);
+
+    flags = 0xdeadbeef;
+    hr = IMediaObject_GetOutputStreamInfo(dmo, 0, &flags);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(flags == DMO_OUTPUT_STREAMF_WHOLE_SAMPLES, "got %#lx.\n", flags);
+    flags = 0xdeadbeef;
+    hr = IMediaObject_GetOutputStreamInfo(dmo, 1, &flags);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx.\n", hr);
+    ok(flags == 0xdeadbeef, "got %#lx.\n", flags);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx.\n", hr);
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &align);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    hr = IMediaObject_FreeStreamingResources(dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IMediaObject_AllocateStreamingResources(dmo);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+    dmo_buffer.pBuffer = NULL;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+    ok(hr == DMO_E_TYPE_NOT_SET, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        format = format_tests[i].format;
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)&format;
+        switch (format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: type.subtype = MEDIASUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: type.subtype = MEDIASUBTYPE_IEEE_FLOAT; break;
+            default:
+                ok(0, "unexpected test format %#x.\n", format.wFormatTag);
+                break;
+        }
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, DMO_SET_TYPEF_TEST_ONLY);
+        expected_hr = format_tests[i].supported ? S_OK : S_FALSE;
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, 0);
+        expected_hr = format_tests[i].supported ? S_OK : DMO_E_TYPE_NOT_ACCEPTED;
+        ok(hr == expected_hr, "got %#lx, expected %#lx.\n", hr, expected_hr);
+        if (format_tests[i].supported)
+        {
+            hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &align);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            out_count = 40 * format.nSamplesPerSec * format.wBitsPerSample / (8 * 1000);
+            ok(size == out_count, "got %lu, expected %lu.\n", size, out_count);
+            ok(align == format.nBlockAlign, "got %lu.\n", align);
+        }
+        winetest_pop_context();
+    }
+
+    hr = IMediaObject_QueryInterface(dmo, &IID_IPropertyStore, (void **)&store);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_DMO_SOURCE_MODE, VT_BOOL, 0xffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_DEVICE_INDEXES, VT_I4, 0xffffffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, VT_I4, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_AGC, VT_BOOL, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_NS, VT_I4, 1);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_CENTER_CLIP, VT_BOOL, 0xffff);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATURE_MODE, VT_BOOL, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 0);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_VAD, VT_I4, 0);
+
+    hr = IPropertyStore_GetValue(store, &null_key, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED, "got %#lx.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, &expected_output_type, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+    dmo_buffer.pBuffer = NULL;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+    ok(hr == S_FALSE || hr == E_PROP_ID_UNSUPPORTED, "got %#lx.\n", hr);
+    if (hr == E_PROP_ID_UNSUPPORTED)
+    {
+        skip("No audio input available, skipping tests.\n");
+        goto skip_dmo_process_output;
+    }
+
+    hr = IMediaObject_ProcessOutput(dmo, 0, 0, &dmo_buffer, &status);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = media_buffer_create(1024 * 1024, &output_media_buffer);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    V_VT(&val) = VT_I4;
+    /* Disable echo cancellation. That doesn't affect test results for _ProcessOutput frame size and timestamp tests
+     * below except for with echo cancellation enabled _ProcessOutput doesn't work on Testbot VMs: results in
+     * WMAAECMA_E_NO_ACTIVE_RENDER_STREAM after spinning for 4sec returning S_FALSE. */
+    val.ulVal = SINGLE_CHANNEL_NSAGC;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_SYSTEM_MODE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    timeBeginPeriod(1);
+
+    for (i = 0; i < ARRAY_SIZE(process_output_tests); ++i)
+    {
+        const WAVEFORMATEX *format = &process_output_tests[i].format;
+
+        winetest_push_context("test %u", i);
+        type = expected_output_type;
+        type.pbFormat = (BYTE *)format;
+
+        hr = IMediaObject_SetOutputType(dmo, 0, &type, 0);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        sample_size = format->nChannels * format->wBitsPerSample / 8;
+        curr_rate = format->nSamplesPerSec;
+        if (process_output_tests[i].frame_len)
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0xffff;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            V_VT(&val) = VT_I4;
+            val.ulVal = process_output_tests[i].frame_len;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+
+            frame_size = process_output_tests[i].frame_len * sample_size;
+        }
+        else
+        {
+            V_VT(&val) = VT_BOOL;
+            val.ulVal = 0;
+            hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATURE_MODE, &val);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            switch (curr_rate)
+            {
+                case 8000: frame_size = 80 * sample_size; break;
+                case 11025: frame_size = 128 * sample_size; break;
+                case 16000: frame_size = 160 * sample_size; break;
+                case 22050: frame_size = 256 * sample_size; break;
+                default:
+                    ok(0, "unexpected frame rate.\n");
+                    frame_size = 0;
+                    break;
+            }
+        }
+
+        /* New output type won't be picked up otherwise once _ProcessOutput was called. */
+        hr = IMediaObject_FreeStreamingResources(dmo);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+        dmo_buffer.pBuffer = NULL;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == S_FALSE, "got %#lx.\n", hr);
+
+        dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+        output_media_buffer->length = 0;
+        output_media_buffer->max_length = frame_size / 2;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_FAIL, "got %#lx.\n", hr);
+
+        dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+        output_media_buffer->length = 0;
+        output_media_buffer->max_length = frame_size;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == S_OK || hr == S_FALSE, "got %#lx.\n", hr);
+
+        output_media_buffer->length = 4;
+        output_media_buffer->max_length = frame_size;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_FAIL, "got %#lx.\n", hr);
+
+        output_media_buffer->max_length = 1048576;
+
+        output_media_buffer->length = 0xcccccccc;
+        hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+        ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+        start_tick = GetTickCount();
+        frame_count = 0;
+        while ((tick = GetTickCount()) - start_tick < 5000 && frame_count < 3)
+        {
+            unsigned int buffer_offset;
+
+            winetest_push_context("frame %d", frame_count);
+            memset(output_media_buffer->data, 0xcc, output_media_buffer->max_length);
+            memset(&dmo_buffer, 0xcc, sizeof(dmo_buffer));
+            dmo_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+            dmo_buffer.rtTimelength = 0xcccccccccccccccc;
+            status = 0xdeadbeef;
+            buffer_offset = frame_count ? 0 : 4;
+            output_media_buffer->length = buffer_offset;
+            hr = IMediaObject_ProcessOutput(dmo, 0, 1, &dmo_buffer, &status);
+            ok(hr == S_OK || hr == S_FALSE || hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, "got %#lx.\n", hr);
+            if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            {
+                skip("Got WMAAECMA_E_NO_ACTIVE_RENDER_STREAM, skipping tests, elapsed %lums.\n", tick - start_tick);
+                break;
+            }
+            ok(!status, "got %#lx.\n", status);
+            ok(dmo_buffer.pBuffer == &output_media_buffer->IMediaBuffer_iface, "got %p.\n", dmo_buffer.pBuffer);
+            ok(!dmo_buffer.dwStatus, "got %#lx.\n", dmo_buffer.dwStatus);
+            if (hr == S_OK)
+            {
+                QueryPerformanceCounter(&qpc);
+                if (buffer_offset)
+                    ok(*(DWORD *)output_media_buffer->data == 0xcccccccc, "got %#lx.\n", *(DWORD *)output_media_buffer->data);
+                ok(*(DWORD *)(output_media_buffer->data + buffer_offset) != 0xcccccccc, "got %#lx.\n",
+                        *(DWORD *)(output_media_buffer->data + 4));
+                ok(output_media_buffer->length > buffer_offset, "got %ld.\n", output_media_buffer->length);
+                output_media_buffer->length -= buffer_offset;
+                ok((output_media_buffer->length % frame_size) == 0, "got length %ld, frame_size %d.\n",
+                        output_media_buffer->length, frame_size);
+                timeval = (UINT64)output_media_buffer->length / sample_size * 10000000 / curr_rate;
+                if (buffer_offset)
+                    timeval += 0xcccccccccccccccc;
+                ok(timeval - dmo_buffer.rtTimelength <= 1, "got %I64u, expected %I64u.\n", dmo_buffer.rtTimelength, timeval);
+                if (buffer_offset)
+                {
+                    ok(dmo_buffer.rtTimestamp == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimestamp);
+                }
+                else
+                {
+                    ok(dmo_buffer.rtTimestamp < qpc.QuadPart, "timestamp is in the future (%I64u, %I64u).\n",
+                            dmo_buffer.rtTimestamp, qpc.QuadPart);
+                    ok(dmo_buffer.rtTimestamp > qpc.QuadPart - 50 * 10000, "timestamp is too old %I64ums (%I64u, %I64u).\n",
+                            (qpc.QuadPart - dmo_buffer.rtTimestamp) / 10000, dmo_buffer.rtTimestamp, qpc.QuadPart);
+                }
+                ++frame_count;
+            }
+            else
+            {
+                ok(dmo_buffer.rtTimelength == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimelength);
+                ok(dmo_buffer.rtTimestamp == 0xcccccccccccccccc, "got %#I64x.\n", dmo_buffer.rtTimestamp);
+                ok(output_media_buffer->length == buffer_offset, "got %lu.\n", output_media_buffer->length);
+                ok(*(DWORD *)output_media_buffer->data == 0xcccccccc, "got %#lx.\n", *(DWORD *)output_media_buffer->data);
+                ok(*(DWORD *)(output_media_buffer->data + 4) == 0xcccccccc, "got %#lx.\n",
+                        *(DWORD *)(output_media_buffer->data + 4));
+            }
+            Sleep(1);
+            winetest_pop_context();
+        }
+        ok(hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM || frame_count == 3, "got %d.\n", frame_count);
+        winetest_pop_context();
+        if (hr == WMAAECMA_E_NO_ACTIVE_RENDER_STREAM)
+            break;
+    }
+    timeEndPeriod(1);
+
+    hr = IMediaObject_FreeStreamingResources(dmo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    ref = IMediaBuffer_Release(&output_media_buffer->IMediaBuffer_iface);
+    ok(!ref, "Release returned %lu\n", ref);
+
+skip_dmo_process_output:
+    V_VT(&val) = VT_I4;
+    val.ulVal = 0x1;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_VARIANT_TYPE_WRONG, "got %#lx.\n", hr);
+    hr = IPropertyStore_SetValue(store, &null_key, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_PID_NOT_RECOGNIZED, "got %#lx.\n", hr);
+    V_VT(&val) = VT_BOOL;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == MF_E_TRANSFORM_PROPERTY_VALUE_OUT_OF_RANGE, "got %#lx.\n", hr);
+    val.ulVal = 0xffff;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_AGC, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_AGC, VT_BOOL, 0xffff);
+
+    V_VT(&val) = VT_I4;
+    val.ulVal = 512;
+    hr = IPropertyStore_SetValue(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, &val);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_scalar_property(store, &MFPKEY_WMAAECMA_FEATR_FRAME_SIZE, VT_I4, 512);
+
+    IPropertyStore_Release(store);
+    ref = IMediaObject_Release(dmo);
+    ok(!ref, "got %ld.\n", ref);
+
+    MFShutdown();
+    CoUninitialize();
+    winetest_pop_context();
+}
+
 START_TEST(transform)
 {
     winetest_mute_threshold = 1;
@@ -12321,4 +13059,5 @@ START_TEST(transform)
     test_h264_decoder_concat_streams();
 
     test_video_processor_with_dxgi_manager();
+    test_aaec();
 }

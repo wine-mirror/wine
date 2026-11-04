@@ -501,7 +501,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
             }
 
             script_globals_release(This->ctx);
-            gc_run(This->ctx);
+            gc_run(This->thread_data);
 
             /* FALLTHROUGH */
         case SCRIPTSTATE_UNINITIALIZED:

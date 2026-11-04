@@ -230,8 +230,8 @@ static HRESULT download_to_audio_path(struct wave_track *This, IUnknown *object)
     IDirectSound *dsound;
     HRESULT hr;
 
-    if (FAILED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
-            && SUCCEEDED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
+    if (FAILED(hr = IUnknown_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
+            && SUCCEEDED(hr = IUnknown_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
     {
         hr = IDirectMusicAudioPath_GetObjectInPath(audio_path, DMUS_PCHANNEL_ALL, DMUS_PATH_PERFORMANCE, 0,
                 &GUID_All_Objects, 0, &IID_IDirectMusicPerformance8, (void **)&performance);
@@ -240,7 +240,7 @@ static HRESULT download_to_audio_path(struct wave_track *This, IUnknown *object)
 
     if (SUCCEEDED(hr))
         hr = performance_get_dsound(performance, &dsound);
-    IDirectMusicPerformance_Release(performance);
+    IDirectMusicPerformance8_Release(performance);
 
     if (FAILED(hr))
     {
@@ -262,7 +262,7 @@ static HRESULT download_to_audio_path(struct wave_track *This, IUnknown *object)
     }
 
 done:
-    IDirectMusic_Release(dsound);
+    IDirectSound_Release(dsound);
     return hr;
 }
 
@@ -458,7 +458,8 @@ static HRESULT parse_wave_item(struct wave_part *part, IStream *stream, struct c
         goto error;
     }
 
-    if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &item->header, sizeof(item->header)))) {
+    if (FAILED(hr = stream_chunk_get_data_alt(stream, &chunk, &item->header, sizeof(item->header),
+                offsetof(DMUS_IO_WAVE_ITEM_HEADER, wVolumeRange)))) {
         WARN("Failed to read data of %s\n", debugstr_chunk(&chunk));
         goto error;
     }

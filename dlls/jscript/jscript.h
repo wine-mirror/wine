@@ -164,9 +164,10 @@ enum gc_traverse_op {
 HRESULT create_named_item_script_obj(script_ctx_t*,named_item_t*);
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
 void release_named_item(named_item_t*);
-HRESULT gc_run(script_ctx_t*);
+HRESULT gc_run(struct thread_data*);
 HRESULT gc_process_linked_obj(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*,void**);
 HRESULT gc_process_linked_val(struct gc_ctx*,enum gc_traverse_op,jsval_t*);
+HRESULT gc_process_linked_raw_obj(struct gc_ctx*,enum gc_traverse_op,IUnknown**);
 HRESULT host_dispatch_gc_traverse(struct gc_ctx*, enum gc_traverse_op, IWineJSDispatchHost*);
 
 typedef struct {

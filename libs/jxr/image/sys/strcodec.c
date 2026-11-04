@@ -27,6 +27,7 @@
 //*@@@---@@@@******************************************************************
 #include "strcodec.h"
 #include "perfTimer.h"
+#include "memory_lim.h"
 
 #ifdef MEM_TRACE
 #define TRACE_MALLOC    1
@@ -245,12 +246,20 @@ Int IDPEmpty(CWMImageStrCodec* pSC)
 
 ERR WMPAlloc(void** ppv, size_t cb)
 {
-    *ppv = calloc(1, cb);
+    if (ppv == NULL)
+    {
+        return WMP_errInvalidArgument;
+    }
+    *ppv = calloc_lim(1, cb);
     return *ppv ? WMP_errSuccess : WMP_errOutOfMemory;
 }
 
 ERR WMPFree(void** ppv)
 {
+    if (ppv == NULL)
+    {
+        return WMP_errInvalidArgument;
+    }
     if (*ppv)
     {
         free(*ppv);
@@ -668,9 +677,7 @@ ERR detach_SB(SimpleBitIO* pSB)
 // WinCE ARM and Desktop x86
 #else
 // other platform
-#ifdef _BIG__ENDIAN_
-#define _byteswap_ulong(x)  (x)
-#else // _BIG__ENDIAN_
+#ifndef _BIG__ENDIAN_
 U32 _byteswap_ulong(U32 bits)
 {
     U32 r = (bits & 0xffu) << 24;
@@ -734,10 +741,10 @@ Int allocateBitIOInfo(CWMImageStrCodec* pSC)
     if(cNumBitIO > 0){
         U32 i = 0;
         size_t cb = sizeof(BitIOInfo) * cNumBitIO + (PACKETLENGTH * 4 - 1) + PACKETLENGTH * 4 * cNumBitIO;
-        U8* pb = (U8*)malloc(cb);
+        U8* pb = (U8*)calloc_lim(1, cb);
 
-        if (NULL == pb) return ICERR_ERROR;
-        memset(pb, 0, cb);
+        if (NULL == pb)
+            return ICERR_ERROR;
 
         pSC->m_ppBitIO = (BitIOInfo**)pb;
         pb += sizeof(BitIOInfo) * cNumBitIO;
@@ -751,7 +758,7 @@ Int allocateBitIOInfo(CWMImageStrCodec* pSC)
         // allocate index table
         if(cNumBitIO > MAX_TILES * 4 || pSC->WMISCP.cNumOfSliceMinus1H >= MAX_TILES)
             return ICERR_ERROR;
-        pSC->pIndexTable = malloc(cNumBitIO * (pSC->WMISCP.cNumOfSliceMinus1H + 1) * sizeof(size_t));
+        pSC->pIndexTable = malloc_lim(sizeof(size_t) * cNumBitIO * (pSC->WMISCP.cNumOfSliceMinus1H + 1));
         if(NULL == pSC->pIndexTable) return ICERR_ERROR;
     }
 
@@ -797,10 +804,9 @@ Int allocateTileInfo(CWMImageStrCodec * pSC)
 
     if(pSC->WMISCP.cNumOfSliceMinus1V >= MAX_TILES)
         return ICERR_ERROR;
-    pSC->pTile = (CWMITile *)malloc((pSC->WMISCP.cNumOfSliceMinus1V + 1) * sizeof(CWMITile));
+    pSC->pTile = (CWMITile *)calloc_lim((pSC->WMISCP.cNumOfSliceMinus1V + 1), sizeof(CWMITile));
     if(pSC->pTile == NULL)
         return ICERR_ERROR;
-    memset(pSC->pTile, 0, (pSC->WMISCP.cNumOfSliceMinus1V + 1) * sizeof(CWMITile));
 
     for(i = 0; i <= pSC->WMISCP.cNumOfSliceMinus1V; i ++)
         pSC->pTile[i].cNumQPHP = pSC->pTile[i].cNumQPLP = 1, pSC->pTile[i].cBitsHP = pSC->pTile[i].cBitsLP = 0;
@@ -825,6 +831,7 @@ Void freeTileInfo(CWMImageStrCodec * pSC)
         else
             freeQuantizer(pSC->pTile[0].pQuantizerLP);
     }
+
     if(pSC->WMISCP.sbSubband != SB_DC_ONLY && pSC->WMISCP.sbSubband != SB_NO_HIGHPASS) {
         if((pSC->m_param.uQPMode & 4) != 0) // not HP uniform
             for(iTile = 0; iTile <= pSC->WMISCP.cNumOfSliceMinus1V; iTile ++)
@@ -832,8 +839,11 @@ Void freeTileInfo(CWMImageStrCodec * pSC)
         else
             freeQuantizer(pSC->pTile[0].pQuantizerHP);
     }
-    if(pSC->pTile != NULL)
+
+    if(pSC->pTile != NULL) {
         free(pSC->pTile);
+        pSC->pTile = NULL;
+    }
 }
 
 Int allocateQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS], size_t cChannel, size_t cQP)
@@ -842,7 +852,7 @@ Int allocateQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS], size_t cChannel,
     
     if(cQP > 16 || cChannel > MAX_CHANNELS)
         return ICERR_ERROR;
-    pQuantizer[0] = (CWMIQuantizer *)malloc(cQP * sizeof(CWMIQuantizer) * cChannel);
+    pQuantizer[0] = (CWMIQuantizer *)malloc_lim(cQP * sizeof(CWMIQuantizer) * cChannel);
     if(pQuantizer[0] == NULL)
         return ICERR_ERROR;
 
@@ -854,8 +864,10 @@ Int allocateQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS], size_t cChannel,
 
 Void freeQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS])
 {
-    if(pQuantizer[0] != NULL)
+    if(pQuantizer[0] != NULL) {
         free(pQuantizer[0]);
+        pQuantizer[0] = NULL;
+    }
 }
 
 Void formatQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS], U8 cChMode, size_t cCh, size_t iPos, Bool bShiftedUV,

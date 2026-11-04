@@ -591,7 +591,7 @@ static void test_MetaDataDispenser_OpenScope(void)
 
     hr = IMetaDataTables_GetStringHeapSize(md_tables, &val);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    ok(val == 329, "got val %lu\n", val);
+    ok(val == 285, "got val %lu\n", val);
 
     val = 0;
     hr = IMetaDataTables_GetBlobHeapSize(md_tables, &val);
@@ -660,7 +660,7 @@ static void test_MetaDataDispenser_OpenScope(void)
     str = NULL;
     hr = IMetaDataTables_GetString(md_tables, module->Name, &str);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    ok(str &&!strcmp(str, "dlls/rometadata/tests/test-simple.winmd"), "got str %s\n", debugstr_a(str));
+    ok(str &&!strcmp(str, "test-simple.winmd"), "got str %s\n", debugstr_a(str));
 
     hr = IMetaDataTables_GetGuid(md_tables, module->Mvid, &guid);
     ok(hr == S_OK, "got hr %#lx\n", hr);

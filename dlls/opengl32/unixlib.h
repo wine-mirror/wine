@@ -8480,7 +8480,7 @@ struct glGetFixedv_params
 {
     TEB *teb;
     GLenum pname;
-    GLfixed *params;
+    GLfixed *data;
 };
 
 struct glGetFixedvOES_params
@@ -25787,6 +25787,7 @@ enum unix_funcs
     unix_process_attach,
     unix_thread_attach,
     unix_process_detach,
+    unix_thread_detach,
     unix_set_root_context,
     unix_get_pixel_formats,
     unix_wglDeleteContext,

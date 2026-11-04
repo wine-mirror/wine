@@ -4312,20 +4312,6 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
 static HRESULT init_font_data(const struct fontface_desc *desc, DWRITE_FONT_FAMILY_MODEL family_model,
         struct dwrite_font_data **ret)
 {
-    static const float width_axis_values[] =
-    {
-        0.0f, /* DWRITE_FONT_STRETCH_UNDEFINED */
-        50.0f, /* DWRITE_FONT_STRETCH_ULTRA_CONDENSED */
-        62.5f, /* DWRITE_FONT_STRETCH_EXTRA_CONDENSED */
-        75.0f, /* DWRITE_FONT_STRETCH_CONDENSED */
-        87.5f, /* DWRITE_FONT_STRETCH_SEMI_CONDENSED */
-        100.0f, /* DWRITE_FONT_STRETCH_NORMAL */
-        112.5f, /* DWRITE_FONT_STRETCH_SEMI_EXPANDED */
-        125.0f, /* DWRITE_FONT_STRETCH_EXPANDED */
-        150.0f, /* DWRITE_FONT_STRETCH_EXTRA_EXPANDED */
-        200.0f, /* DWRITE_FONT_STRETCH_ULTRA_EXPANDED */
-    };
-
     struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
     struct dwrite_font_data *data;
@@ -4380,7 +4366,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, DWRITE_FONT_FAMI
     data->axis[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
     data->axis[0].value = props.weight;
     data->axis[1].axisTag = DWRITE_FONT_AXIS_TAG_WIDTH;
-    data->axis[1].value = width_axis_values[props.stretch];
+    data->axis[1].value = opentype_get_width_axis_value(props.stretch);
     data->axis[2].axisTag = DWRITE_FONT_AXIS_TAG_ITALIC;
     data->axis[2].value = data->style == DWRITE_FONT_STYLE_ITALIC ? 1.0f : 0.0f;
 
@@ -4704,13 +4690,19 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             continue;
         }
 
-        /* add to scanned list */
-        fileenum = malloc(sizeof(*fileenum));
-        fileenum->file = file;
-        list_add_tail(&scannedfiles, &fileenum->entry);
-
-        if (FAILED(hr = IDWriteFontSetBuilder1_AddFontFile(builder, file)))
-            break;
+        if ((hr = IDWriteFontSetBuilder1_AddFontFile(builder, file)) == S_OK)
+        {
+            /* add to scanned list */
+            fileenum = malloc(sizeof(*fileenum));
+            fileenum->file = file;
+            list_add_tail(&scannedfiles, &fileenum->entry);
+        }
+        else
+        {
+            WARN("Set builder failed to add a file.\n");
+            IDWriteFontFile_Release(file);
+            hr = S_OK;
+        }
     }
 
     if (SUCCEEDED(hr))
@@ -7441,7 +7433,7 @@ static IDWriteLocalizedStrings * fontset_entry_get_property(struct dwrite_fontse
         DWRITE_FONT_PROPERTY_ID property)
 {
     struct file_stream_desc stream_desc = { 0 };
-    IDWriteLocalizedStrings *value;
+    IDWriteLocalizedStrings *value = NULL;
 
     assert(property > DWRITE_FONT_PROPERTY_ID_NONE && property <= DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME);
 

@@ -233,6 +233,7 @@ static int read_file( const WCHAR *name, void **data, SIZE_T *size )
     if (read( fd, file_buffer, header_size ) != header_size) goto done;
     dos = file_buffer;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto done;
+    if ((ULONG)dos->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) goto done;
     if (dos->e_lfanew < sizeof(*dos) + 32) goto done;
     if (memcmp( dos + 1, builtin_signature, strlen(builtin_signature) + 1 ) &&
         memcmp( dos + 1, fakedll_signature, strlen(fakedll_signature) + 1 )) goto done;
@@ -374,6 +375,7 @@ static BOOL is_fake_dll( HANDLE h )
         return FALSE;
     dos = (IMAGE_DOS_HEADER *)buffer;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
+    if ((ULONG)dos->e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER) return FALSE;
     if (dos->e_lfanew < size) return FALSE;
     return (!memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ) ||
             !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) ));

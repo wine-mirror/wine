@@ -6721,22 +6721,27 @@ static void opentype_font_var_add_static_axis(struct dwrite_var_axis **axis, uns
     entry->attributes = 0;
 }
 
+float opentype_get_width_axis_value(DWRITE_FONT_STRETCH stretch)
+{
+    static const float values[] =
+    {
+        [DWRITE_FONT_STRETCH_ULTRA_CONDENSED] = 50.0f,
+        [DWRITE_FONT_STRETCH_EXTRA_CONDENSED] = 62.5f,
+        [DWRITE_FONT_STRETCH_CONDENSED] = 75.0f,
+        [DWRITE_FONT_STRETCH_SEMI_CONDENSED] = 87.5f,
+        [DWRITE_FONT_STRETCH_NORMAL] = 100.0f,
+        [DWRITE_FONT_STRETCH_SEMI_EXPANDED] = 112.5f,
+        [DWRITE_FONT_STRETCH_EXPANDED] = 125.0f,
+        [DWRITE_FONT_STRETCH_EXTRA_EXPANDED] = 150.0f,
+        [DWRITE_FONT_STRETCH_ULTRA_EXPANDED] = 200.0f,
+    };
+
+    return values[stretch];
+}
+
 HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, struct dwrite_var_axis **axis,
         unsigned int *axis_count)
 {
-    static const float width_axis_values[] =
-    {
-        0.0f, /* DWRITE_FONT_STRETCH_UNDEFINED */
-        50.0f, /* DWRITE_FONT_STRETCH_ULTRA_CONDENSED */
-        62.5f, /* DWRITE_FONT_STRETCH_EXTRA_CONDENSED */
-        75.0f, /* DWRITE_FONT_STRETCH_CONDENSED */
-        87.5f, /* DWRITE_FONT_STRETCH_SEMI_CONDENSED */
-        100.0f, /* DWRITE_FONT_STRETCH_NORMAL */
-        112.5f, /* DWRITE_FONT_STRETCH_SEMI_EXPANDED */
-        125.0f, /* DWRITE_FONT_STRETCH_EXPANDED */
-        150.0f, /* DWRITE_FONT_STRETCH_EXTRA_EXPANDED */
-        200.0f, /* DWRITE_FONT_STRETCH_ULTRA_EXPANDED */
-    };
     BOOL has_wght = FALSE, has_wdth = FALSE, has_slnt = FALSE, has_ital = FALSE;
     const struct var_axis_record *records;
     const struct fvar_header *header;
@@ -6775,7 +6780,7 @@ HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, s
         (*axis)[i].default_value = GET_BE_FIXED(records[i].default_value);
         (*axis)[i].min_value = GET_BE_FIXED(records[i].min_value);
         (*axis)[i].max_value = GET_BE_FIXED(records[i].max_value);
-        if (GET_BE_WORD(records[i].flags & 0x1))
+        if (GET_BE_WORD(records[i].flags) & 0x1)
             (*axis)[i].attributes |= DWRITE_FONT_AXIS_ATTRIBUTES_HIDDEN;
         /* FIXME: set DWRITE_FONT_AXIS_ATTRIBUTES_VARIABLE */
 
@@ -6792,7 +6797,7 @@ HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, s
         if (!has_ital) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_ITALIC,
                 props.style == DWRITE_FONT_STYLE_ITALIC ? 1.0f : 0.0f);
         if (!has_wdth) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_WIDTH,
-                width_axis_values[props.stretch]);
+                opentype_get_width_axis_value(props.stretch));
         if (!has_slnt) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_SLANT, props.slant_angle);
     }
 

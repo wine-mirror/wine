@@ -2445,7 +2445,7 @@ static ULONG read_image_directory( HANDLE file, const SECTION_IMAGE_INFORMATION 
     if (NtReadFile( file, 0, NULL, NULL, &io, &mz, sizeof(mz), &offset, NULL )) return 0;
     if (io.Information != sizeof(mz)) return 0;
     if (mz.e_magic != IMAGE_DOS_SIGNATURE) return 0;
-    offset.QuadPart = mz.e_lfanew;
+    offset.QuadPart = (ULONG)mz.e_lfanew;
     if (NtReadFile( file, 0, NULL, NULL, &io, &nt, sizeof(nt), &offset, NULL )) return 0;
     if (io.Information != sizeof(nt)) return 0;
     if (nt.nt32.Signature != IMAGE_NT_SIGNATURE) return 0;
@@ -4186,7 +4186,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
         ret = NULL;
         if (dos->e_magic == IMAGE_DOS_SIGNATURE)
         {
-            ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
+            ret = (IMAGE_NT_HEADERS *)((char *)dos + (ULONG)dos->e_lfanew);
             if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
         }
     }

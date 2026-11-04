@@ -76,6 +76,7 @@ static struct window_class *create_class( struct process *process, int local, in
     return class;
 
 failed:
+    release_object( class->process );
     free( class );
     return NULL;
 }
@@ -331,10 +332,12 @@ DECL_HANDLER(set_class_info)
             if (req->new_info > 4096)
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return;
             }
-            reply->old_info = shared->info.win_extra;
-            shared->info.win_extra = req->new_info;
+            else
+            {
+                reply->old_info = shared->info.win_extra;
+                shared->info.win_extra = req->new_info;
+            }
             break;
         case GCL_CBCLSEXTRA:
             set_win32_error( ERROR_INVALID_INDEX );
@@ -373,10 +376,12 @@ DECL_HANDLER(set_class_info)
                 req->offset > (int)(class->shared->info.cls_extra - req->size))
             {
                 set_win32_error( ERROR_INVALID_INDEX );
-                return;
             }
-            memcpy( &reply->old_info, (char *)shared->extra + req->offset, req->size );
-            memcpy( (char *)shared->extra + req->offset, &req->new_info, req->size );
+            else
+            {
+                memcpy( &reply->old_info, (char *)shared->extra + req->offset, req->size );
+                memcpy( (char *)shared->extra + req->offset, &req->new_info, req->size );
+            }
             break;
         }
     }

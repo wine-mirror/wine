@@ -255,7 +255,7 @@ static BOOL SOFTPUB_HashPEFile(HANDLE file, HCRYPTHASH hash)
 
     if (dos_header.e_magic != IMAGE_DOS_SIGNATURE)
         return FALSE;
-    if (dos_header.e_lfanew >= 256 * 1024 * 1024) /* see RtlImageNtHeaderEx */
+    if ((ULONG)dos_header.e_lfanew >= RTL_IMAGE_MAX_DOS_HEADER)
         return FALSE;
     if (dos_header.e_lfanew + FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader.MajorLinkerVersion) > file_size.QuadPart)
         return FALSE;

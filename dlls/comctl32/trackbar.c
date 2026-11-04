@@ -1625,17 +1625,17 @@ TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, INT x, INT y)
     SetFocus(infoPtr->hwndSelf);
 
     if (PtInRect(&infoPtr->rcThumb, clickPoint)) {
-        infoPtr->flags |= TB_DRAG_MODE;
         SetCapture (infoPtr->hwndSelf);
+        infoPtr->flags |= TB_DRAG_MODE;
 	TRACKBAR_UpdateToolTip (infoPtr);
 	TRACKBAR_ActivateToolTip (infoPtr, TRUE);
 	TRACKBAR_InvalidateThumb(infoPtr, infoPtr->lPos);
     } else {
 	LONG dir = TRACKBAR_GetAutoPageDirection(infoPtr, clickPoint);
 	if (dir == 0) return 0;
+        SetCapture (infoPtr->hwndSelf);
 	infoPtr->flags |= (dir < 0) ? TB_AUTO_PAGE_LEFT : TB_AUTO_PAGE_RIGHT;
 	TRACKBAR_AutoPage (infoPtr, clickPoint);
-        SetCapture (infoPtr->hwndSelf);
         SetTimer(infoPtr->hwndSelf, TB_REFRESH_TIMER, TB_REFRESH_DELAY, 0);
     }
 

@@ -9624,14 +9624,14 @@ static void WINAPI glGetFirstPerfQueryIdINTEL( GLuint *queryId )
     if ((status = UNIX_CALL( glGetFirstPerfQueryIdINTEL, &args ))) WARN( "glGetFirstPerfQueryIdINTEL returned %#lx\n", status );
 }
 
-static void WINAPI glGetFixedv( GLenum pname, GLfixed *params )
+static void WINAPI glGetFixedv( GLenum pname, GLfixed *data )
 {
-    struct glGetFixedv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
+    struct glGetFixedv_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
     NTSTATUS status;
     int integer;
-    TRACE( "pname %d, params %p\n", pname, params );
+    TRACE( "pname %d, data %p\n", pname, data );
     if ((status = UNIX_CALL( glGetFixedv, &args ))) WARN( "glGetFixedv returned %#lx\n", status );
-    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
+    else if (get_integer( pname, 0, *data, &integer )) *data = integer;
 }
 
 static void WINAPI glGetFixedvOES( GLenum pname, GLfixed *params )

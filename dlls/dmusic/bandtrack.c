@@ -31,7 +31,7 @@ struct band_entry
 
 static void band_entry_destroy(struct band_entry *entry)
 {
-    IDirectMusicTrack_Release(entry->band);
+    IDirectMusicBand_Release(entry->band);
     free(entry);
 }
 
@@ -278,9 +278,9 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         struct band_entry *entry;
         HRESULT hr;
 
-        if (FAILED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
+        if (FAILED(hr = IUnknown_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
                 && IsEqualGUID(type, &GUID_DownloadToAudioPath)
-                && SUCCEEDED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
+                && SUCCEEDED(hr = IUnknown_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
         {
             hr = IDirectMusicAudioPath_GetObjectInPath(audio_path, DMUS_PCHANNEL_ALL, DMUS_PATH_PERFORMANCE, 0,
                     &GUID_All_Objects, 0, &IID_IDirectMusicPerformance8, (void **)&performance);

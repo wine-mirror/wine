@@ -27,6 +27,7 @@
 //*@@@---@@@@******************************************************************
 
 #include "strcodec.h"
+#include "memory_lim.h"
 
 #define ORIENT_WEIGHT 4
 
@@ -134,7 +135,7 @@ Int allocatePredInfo(CWMImageStrCodec *pSC)
     if(b32Bit) // integer overlow/underflow check for 32-bit system
         if(((mbWidth >> 16) * iChannels * 2 * sizeof(CWMIPredInfo)) & 0xffff0000)
             return ICERR_ERROR;    
-    pMemory = (CWMIPredInfo *)malloc(mbWidth * iChannels * 2 * sizeof(CWMIPredInfo));
+    pMemory = (CWMIPredInfo *)malloc_lim(mbWidth * iChannels * 2 * sizeof(CWMIPredInfo));
     if (pMemory == NULL)
         return ICERR_ERROR;
 
@@ -268,7 +269,7 @@ Void updatePredInfo(CWMImageStrCodec *pSC, CWMIMBInfo * pMBInfo, size_t mbX, COL
     }
 
     if(cf == YUV_420){ // 420 UV channels
-        for(i = 1U; i < 3U; i ++){
+        for(i = 1; i < 3; i ++){
             pPredInfo = pSC->PredInfo[i] + mbX;
             p = pMBInfo->iBlockDC[i];//[dcBlkIdx + i];
             
@@ -283,7 +284,7 @@ Void updatePredInfo(CWMImageStrCodec *pSC, CWMIMBInfo * pMBInfo, size_t mbX, COL
         }
     }
     else if(cf == YUV_422){ // 420 UV channels
-        for(i = 1U; i < 3U; i ++){
+        for(i = 1; i < 3; i ++){
             pPredInfo = pSC->PredInfo[i] + mbX;
 
             /* QP Index */

@@ -991,6 +991,7 @@ enum d3dkmt_type
     D3DKMT_SYNC         = 5,
     D3DKMT_RESOURCE     = 6,
     D3DKMT_ALLOCATION   = 7,
+    D3DKMT_SWAPCHAIN    = 8,
 };
 
 /****************************************************************/
@@ -1227,6 +1228,7 @@ typedef volatile struct
     int          exit_code;    /* process exit code */
 @REPLY
     int          self;         /* suicide? */
+    int          exit_code;    /* process exit code */
 @END
 
 
@@ -3478,16 +3480,17 @@ enum caret_state
 
 /* Create a security token */
 @REQ(create_token)
-    struct luid    token_id;
+    struct luid    auth_id;        /* authentication id */
     unsigned int   access;         /* access rights to the new token */
     int            primary;        /* is the new token to be a primary one? */
     int            impersonation_level; /* impersonation level of the new token */
     abstime_t      expire;         /* expiration time */
     int            group_count;
-    int            primary_group;
     int            priv_count;
     /* VARARG(objattr,object_attributes);  */
     /* VARARG(user,sid); */
+    /* VARARG(owner,sid); */
+    /* VARARG(primary_group,sid); */
     /* VARARG(groups,sid); */
     /* VARARG(privs,luid_attr); */
     /* VARARG(dacl,acl); */
@@ -4252,7 +4255,7 @@ enum inproc_sync_type
 @REQ(d3dkmt_object_create)
     unsigned int        type;           /* d3dkmt object type */
     int                 fd;             /* host specific fd */
-    unsigned int        value;          /* initial value for keyed mutex */
+    unsigned __int64    value;          /* initial value for keyed mutex */
     VARARG(runtime,bytes);              /* client runtime data */
 @REPLY
     d3dkmt_handle_t     global;         /* global d3dkmt handle */
@@ -4337,6 +4340,24 @@ enum inproc_sync_type
     unsigned __int64    fence_value;    /* semaphore fence value */
     data_size_t         runtime_size;   /* size of client runtime data */
     VARARG(runtime,bytes);              /* client runtime data */
+@END
+
+
+/* Wait on a global d3dkmt sync fence value */
+@REQ(d3dkmt_sync_wait)
+    d3dkmt_handle_t     sync;           /* sync global handle */
+    unsigned int        fence_value;    /* fence value to wait for */
+    obj_handle_t        wait_handle;    /* previously returned wait handle */
+    unsigned int        wait_status;    /* status returned from previous wait */
+@REPLY
+    obj_handle_t        wait_handle;    /* wait handle for pending acquire */
+@END
+
+
+/* Signal a global d3dkmt sync fence value */
+@REQ(d3dkmt_sync_signal)
+    d3dkmt_handle_t     sync;           /* sync global handle */
+    unsigned __int64    fence_value;    /* signaled fence value */
 @END
 
 

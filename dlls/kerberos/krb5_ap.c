@@ -633,7 +633,11 @@ static NTSTATUS map_auth_data( void *auth_data, SEC_WINNT_AUTH_IDENTITY_W **ret 
     }
     memcpy( *ret, &id, sizeof(id) );
 
-    if (status) free( *ret );
+    if (status)
+    {
+        free( *ret );
+        *ret = NULL;
+    }
     return status;
 }
 

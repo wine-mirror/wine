@@ -1900,6 +1900,12 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc3(HWND hdlg, UINT msg, WPARAM 
     return FALSE;
 }
 
+static INT_PTR CALLBACK TestLargeReturnValueDlgProc(HWND hDlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uiMsg == WM_INITDIALOG) EndDialog(hDlg, (INT_PTR)0xdeadbeefdeadbeef);
+    return FALSE;
+}
+
 static void test_DialogBoxParam(void)
 {
     static const WCHAR nameW[] = {'T','E','S','T','_','E','M','P','T','Y','_','D','I','A','L','O','G',0};
@@ -1972,6 +1978,9 @@ static void test_DialogBoxParam(void)
 
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, test_aw_conversion_dlgproc3, 0);
     ok(ret == -123, "Unexpected ret value %Id.\n", ret);
+
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestLargeReturnValueDlgProc, 0);
+    ok(ret == (INT_PTR)0xdeadbeefdeadbeef, "Unexpected ret value %Ix\n", ret);
 }
 
 static void test_DisabledDialogTest(void)

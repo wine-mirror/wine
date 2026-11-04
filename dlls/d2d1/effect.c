@@ -2283,7 +2283,6 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     switch (prop->type)
     {
         case D2D1_PROPERTY_TYPE_BLOB:
-            memset(value, 0, size);
             break;
         case D2D1_PROPERTY_TYPE_STRING:
             return d2d_effect_return_string(prop->data.ptr, (WCHAR *)value, size / sizeof(WCHAR));
@@ -3176,10 +3175,8 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyNameLength(ID2D
 
     TRACE("iface %p, index %u.\n", iface, index);
 
-    if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
-        return D2DERR_INVALID_PROPERTY;
-
-    return wcslen(prop->name);
+    prop = d2d_effect_properties_get_property_by_index(properties, index);
+    return prop ? wcslen(prop->name) : 0;
 }
 
 static D2D1_PROPERTY_TYPE STDMETHODCALLTYPE d2d_effect_properties_GetType(ID2D1Properties *iface,
@@ -3579,7 +3576,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
 
     if (FAILED(hr = d2d_transform_graph_create(input_count, &object->graph)))
     {
-        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+        ID2D1Effect_Release(&object->ID2D1Effect_iface);
         return hr;
     }
 

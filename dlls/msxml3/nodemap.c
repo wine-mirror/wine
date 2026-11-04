@@ -238,6 +238,9 @@ static HRESULT WINAPI xmlnodemap_nextNode(IXMLDOMNamedNodeMap *iface, IXMLDOMNod
 
     TRACE("%p, %p, %ld.\n", iface, nextItem, map->iterator);
 
+    if (!nextItem)
+        return E_INVALIDARG;
+
     return map->funcs->next_node(map->node, &map->iterator, nextItem);
 }
 

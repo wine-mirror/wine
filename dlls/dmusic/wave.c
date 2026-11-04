@@ -162,8 +162,18 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
             break;
 
         case mmioFOURCC('f','m','t',' '):
-            if (!(This->format = malloc(chunk.size))) return E_OUTOFMEMORY;
+            free(This->format);
+            if (!(This->format = calloc(1, max(sizeof(WAVEFORMATEX), chunk.size)))) return E_OUTOFMEMORY;
             hr = stream_chunk_get_data(stream, &chunk, This->format, chunk.size);
+            if (This->format->wFormatTag == WAVE_FORMAT_PCM)
+            {
+                if (chunk.size < sizeof(PCMWAVEFORMAT)) return E_FAIL;
+            }
+            else
+            {
+                if (chunk.size < sizeof(WAVEFORMATEX)) return E_FAIL;
+                if (chunk.size < sizeof(WAVEFORMATEX) + This->format->cbSize) return E_FAIL;
+            }
             break;
 
         case mmioFOURCC('d','a','t','a'):

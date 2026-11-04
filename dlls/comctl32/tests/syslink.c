@@ -315,24 +315,63 @@ static void test_LM_GETIDEALHEIGHT(void)
 static void test_LM_GETIDEALSIZE(void)
 {
     HWND hwnd;
+    HDC hdc;
     LONG ret;
-    SIZE sz;
+    SIZE sz, sz2;
+    TEXTMETRICA tm;
 
     hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
     ok(hwnd != NULL, "Failed to create SysLink window.\n");
+
+    SendMessageA(hwnd, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
+
+    hdc = GetDC(hwnd);
+    ok(hdc != NULL, "GetDC failed.\n");
+    ret = GetTextMetricsA(hdc, &tm);
+    ok(ret != 0, "GetTextMetricsA failed!\n");
+    ok(tm.tmBreakChar == ' ', "Unexpected tmBreakChar 0x%x\n", tm.tmBreakChar);
+    ReleaseDC(hwnd, hdc);
 
     memset(&sz, 0, sizeof(sz));
     ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
     ok(ret > 0, "Unexpected return value, %ld.\n", ret);
     if (sz.cy == 0)
-        win_skip("LM_GETIDEALSIZE is not supported.\n");
-    else
     {
-        ok(sz.cx > 5, "Unexpected ideal width, %ld.\n", sz.cx);
-        ok(sz.cy == ret, "Unexpected ideal height, %ld.\n", sz.cy);
-        ok(sz.cx > sz.cy, "Expected sz.cx > sz.cy (%ld > %ld).\n", sz.cx, sz.cy);
+        win_skip("LM_GETIDEALSIZE is not supported.\n");
+        goto cleanup;
     }
+    ok(sz.cx > 5 && sz.cx > sz.cy, "Unexpected ideal width, sz.cx=%ld, sz.cy=%ld.\n", sz.cx, sz.cy);
+    ok(ret == sz.cy, "Unexpected return value, ret=%ld, sz.cy=%ld .\n", ret, sz.cy);
 
+    /* empty text */
+    ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+    ok(ret, "Unexpected return value, %ld.\n", ret);
+    sz.cx = sz.cy = -1;
+    ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
+    ok(sz.cx == 0, "Unexpected ideal width, sz.cx=%ld.\n", sz.cx);
+    ok(sz.cy == 0, "Unexpected ideal height, sz.cy=%ld.\n", sz.cy);
+    todo_wine
+    ok(ret == -1, "Unexpected return value, ret=%ld.\n", ret);
+
+    /* one space */
+    ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)" ");
+    ok(ret, "Unexpected return value, %ld.\n", ret);
+    sz.cx = sz.cy = -1;
+    ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
+    ok(sz.cx >= 1 && sz.cx < 100, "Unexpected ideal width, sz.cx=%ld.\n", sz.cx);
+    ok(sz.cy >= 1 && sz.cy < 100, "Unexpected ideal height, sz.cy=%ld.\n", sz.cy);
+    ok(ret == sz.cy, "Unexpected return value, ret=%ld, sz.cy=%ld.\n", ret, sz.cy);
+
+    /* two spaces */
+    ret = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"  ");
+    ok(ret, "Unexpected return value, %ld.\n", ret);
+    sz2.cx = sz2.cy = -1;
+    ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz2);
+    ok(sz.cx < sz2.cx && sz2.cx < 100, "Unexpected ideal width, sz.cx=%ld, sz2.cx=%ld.\n", sz.cx, sz2.cx);
+    ok(sz.cy == sz2.cy, "Unexpected ideal height, sz.cy=%ld, sz2.cy=%ld, ret=%ld.\n", sz.cy, sz2.cy, ret);
+    ok(ret == sz2.cy, "Unexpected return value, ret=%ld, sz2.cy=%ld.\n", ret, sz2.cy);
+
+cleanup:
     DestroyWindow(hwnd);
 }
 

@@ -75,6 +75,15 @@ HRESULT WINAPI D3D12EnableExperimentalFeatures(UINT feature_count,
     return E_NOINTERFACE;
 }
 
+HRESULT WINAPI D3D12GetInterface(REFCLSID clsid, REFIID iid, void **out)
+{
+    FIXME("clsid %s, iid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(iid), out);
+
+    if (out)
+        *out = NULL;
+    return E_NOINTERFACE;
+}
+
 static HRESULT d3d12_signal_event(HANDLE event)
 {
     return SetEvent(event) ? S_OK : E_FAIL;

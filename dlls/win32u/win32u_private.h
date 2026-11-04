@@ -237,10 +237,24 @@ extern D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared );
 extern NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local );
 
+extern NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE resources[3],
+                                         D3DKMT_HANDLE *local, D3DKMT_HANDLE *global );
+extern NTSTATUS d3dkmt_swapchain_destroy( D3DKMT_HANDLE local );
+
+extern NTSTATUS d3dkmt_swapchain_create_remote( HWND hwnd, SIZE *size, D3DKMT_HANDLE *local );
+extern NTSTATUS d3dkmt_swapchain_destroy_remote( D3DKMT_HANDLE local );
+extern NTSTATUS d3dkmt_swapchain_acquire_image( D3DKMT_HANDLE local, UINT *index );
+extern NTSTATUS d3dkmt_swapchain_queue_present( D3DKMT_HANDLE local, UINT index );
+
 /* opengl.c */
 
 extern BOOL get_opengl_gpus( struct list *gpus );
 extern void cleanup_opengl_thread(void);
+
+extern D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd );
+extern BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index );
+extern BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global );
+extern void free_opengl_swapchains( struct list *swapchains );
 
 /* winstation.c */
 
@@ -334,6 +348,7 @@ extern BOOL client_surface_set_color_space( struct client_surface *surface, VkCo
 extern BOOL client_surface_get_size( struct client_surface *surface, SIZE *virtual_size, SIZE *monitor_size );
 extern void use_window_client_surface( struct client_surface *surface, BOOL use );
 extern struct client_surface *get_unused_client_surface( HWND hwnd, int format, BOOL raw );
+extern SIZE get_client_swapchain_size( HWND toplevel, HWND hwnd );
 extern HICON get_window_icon_info( HWND hwnd, UINT type, HICON icon, ICONINFO *ret );
 extern void init_startup_info(void);
 

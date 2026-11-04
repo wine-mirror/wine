@@ -1,7 +1,7 @@
 MODULE    = sfc.dll
 IMPORTLIB = sfc
 
-EXTRADLLFLAGS = -Wb,--data-only
+EXTRADLLFLAGS = -Wl,-noentry
 
 SOURCES = \
 	sfc.spec

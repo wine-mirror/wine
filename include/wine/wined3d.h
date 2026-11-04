@@ -1354,14 +1354,10 @@ enum wined3d_memory_segment_group
 #define WINED3D_RESTORE_MODE_ON_ACTIVATE                        0x00000010
 #define WINED3D_FOCUS_MESSAGES                                  0x00000020
 #define WINED3D_HANDLE_RESTORE                                  0x00000040
-#define WINED3D_PIXEL_CENTER_INTEGER                            0x00000080
+#define WINED3D_LEGACY                                          0x00000080
 #define WINED3D_LEGACY_FFP_LIGHTING                             0x00000100
 #define WINED3D_SRGB_READ_WRITE_CONTROL                         0x00000200
-#define WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR                   0x00000400
-#define WINED3D_NO_PRIMITIVE_RESTART                            0x00000800
-#define WINED3D_LEGACY_CUBEMAP_FILTERING                        0x00001000
 #define WINED3D_NORMALIZED_DEPTH_BIAS                           0x00002000
-#define WINED3D_NO_DRAW_INDIRECT                                0x00004000
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 

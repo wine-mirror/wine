@@ -439,6 +439,9 @@ GpStatus WINGDIPAPI GdipGetLogFontA(GpFont *font, GpGraphics *graphics,
 
     TRACE("(%p, %p, %p)\n", font, graphics, lfa);
 
+    if(!lfa)
+        return InvalidParameter;
+
     status = GdipGetLogFontW(font, graphics, &lfw);
     if(status != Ok)
         return status;

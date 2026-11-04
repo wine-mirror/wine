@@ -144,10 +144,15 @@ static HRESULT activate_inplace(WindowsMediaPlayer *This)
     hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSiteWindowless, (void**)&ipsite_windowless);
     if(SUCCEEDED(hres)) {
         hres = IOleInPlaceSiteWindowless_CanWindowlessActivate(ipsite_windowless);
-        IOleInPlaceSiteWindowless_Release(ipsite_windowless);
         if(hres == S_OK)
             FIXME("Windowless activation not supported\n");
-        ipsiteex = (IOleInPlaceSiteEx*)ipsite_windowless;
+
+        hres = IOleInPlaceSiteWindowless_QueryInterface(ipsite_windowless, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+        IOleInPlaceSiteWindowless_Release(ipsite_windowless);
+        if(FAILED(hres)) {
+            FIXME("No IOleInPlaceSiteEx instance\n");
+            return hres;
+        }
     }else {
         IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
     }
@@ -155,7 +160,13 @@ static HRESULT activate_inplace(WindowsMediaPlayer *This)
     if(ipsiteex) {
         BOOL redraw = FALSE; /* Not really used. */
         IOleInPlaceSiteEx_OnInPlaceActivateEx(ipsiteex, &redraw, 0);
-        ipsite = (IOleInPlaceSite*)ipsiteex;
+
+        hres = IOleInPlaceSiteEx_QueryInterface(ipsiteex, &IID_IOleInPlaceSite, (void**)&ipsite);
+        IOleInPlaceSiteEx_Release(ipsiteex);
+        if(FAILED(hres)) {
+            FIXME("No IOleInPlaceSite instance\n");
+            return hres;
+        }
     }else {
         hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ipsite);
         if(FAILED(hres)) {
@@ -350,7 +361,10 @@ static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite 
     TRACE("(%p)->(%p)\n", This, ppClientSite);
 
     *ppClientSite = This->client_site;
-    return This->client_site ? S_OK : E_FAIL;
+    if (!This->client_site)
+        return E_FAIL;
+    IOleClientSite_AddRef(This->client_site);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp, LPCOLESTR szContainerObj)

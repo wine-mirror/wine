@@ -276,6 +276,59 @@ static void test_NtCreateUserProcess(void)
     CloseHandle( thread );
 }
 
+static void terminate_subprocess( int phase )
+{
+    NTSTATUS status;
+
+    switch (phase)
+    {
+    case 1:
+        status = NtTerminateProcess( NULL, 0xdead );
+        ok( !status, "NtTerminateProcess failed: %#lx\n", status );
+        NtTerminateProcess( NULL, 2 );
+        break;
+    case 2:
+        status = NtTerminateProcess( NULL, 2 );
+        ok( !status, "NtTerminateProcess failed: %#lx\n", status );
+        NtTerminateProcess( GetCurrentProcess(), 0xdead );
+        break;
+    default:
+        NtTerminateProcess( GetCurrentProcess(), 0xdead );
+        break;
+    }
+
+    ok( 0, "NtTerminateProcess should not return\n" );
+}
+
+static void test_NtTerminateProcess(void)
+{
+    char **argv;
+    BOOL res;
+    int i;
+
+    winetest_get_mainargs( &argv );
+
+    for (i = 0; i < 3; i++)
+    {
+        STARTUPINFOA si = { sizeof(si) };
+        PROCESS_INFORMATION pi;
+        char cmdline[MAX_PATH];
+        DWORD exit_code, ret;
+
+        sprintf( cmdline, "%s %s terminate %d", argv[0], argv[1], i );
+
+        res = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+        ok( res, "CreateProcessA failed: %lu\n", GetLastError() );
+
+        ret = WaitForSingleObject( pi.hProcess, 10000 );
+        ok( ret == 0, "wait failed %lx\n", ret );
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        ok( exit_code == 0xdead, "wrong exit code %lx\n", exit_code );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+}
+
 static void CALLBACK test_thread_bypass_process_freeze_proc(void *param)
 {
     pNtSuspendProcess(NtCurrentProcess());
@@ -519,6 +572,9 @@ static void test_arm64_skip_loader_init(void)
 
 START_TEST(thread)
 {
+    char **argv;
+    int argc;
+
     init_function_pointers();
 
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -541,10 +597,18 @@ START_TEST(thread)
         if (is_arm64_native_machine) test_arm64_skip_loader_init();
     }
 
+    argc = winetest_get_mainargs( &argv );
+    if (argc > 3 && !strcmp( argv[2], "terminate" ))
+    {
+        terminate_subprocess( atoi( argv[3] ));
+        return;
+    }
+
     test_dbg_hidden_thread_creation();
     test_unique_teb();
     test_errno();
     test_NtCreateUserProcess();
+    test_NtTerminateProcess();
     test_thread_bypass_process_freeze();
     test_NtQueueApcThreadEx();
     test_skip_thread_attach();

@@ -95,7 +95,7 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     if (!dos) return NULL;
     is_builtin = (dos->e_lfanew >= sizeof(*dos) + 32 &&
                   !memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ));
-    return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
+    return PRD((ULONG)dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
 void print_fake_dll( void )
@@ -5137,7 +5137,7 @@ enum FileSig get_kind_exec(void)
     if ((dh = PRD(0, sizeof(IMAGE_DOS_HEADER))))
     {
         /* the signature is the first DWORD */
-        pdw = PRD(dh->e_lfanew, sizeof(DWORD));
+        pdw = PRD((ULONG)dh->e_lfanew, sizeof(DWORD));
         if (pdw)
         {
             if (*pdw == IMAGE_NT_SIGNATURE)                     return SIG_PE;

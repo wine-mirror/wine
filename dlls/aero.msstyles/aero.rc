@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2021-2026 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -129,15 +129,15 @@ BLUE_INI TEXTFILE
 "MenuBar = 255 255 255\r\n"
 
 "\r\n; Nonclient metrics\r\n"
-"CaptionFont = Tahoma, 10, bold\r\n"
+"CaptionFont = Tahoma, 9, bold\r\n"
 "CaptionBarHeight = 25\r\n"
-"SmallCaptionFont = Tahoma, 8, bold\r\n"
+"SmallCaptionFont = Tahoma, 9, bold\r\n"
 "SMCaptionBarHeight = 17\r\n"
 "SMCaptionBarWidth = 17\r\n"
-"MenuFont = Tahoma, 8\r\n"
-"StatusFont = Tahoma, 8\r\n"
-"MsgBoxFont = Tahoma, 8\r\n"
-"IconTitleFont = Tahoma, 8\r\n"
+"MenuFont = Tahoma, 9\r\n"
+"StatusFont = Tahoma, 9\r\n"
+"MsgBoxFont = Tahoma, 9\r\n"
+"IconTitleFont = Tahoma, 9\r\n"
 
 "\r\n; Flat menus\r\n"
 "FlatMenus = true\r\n"
@@ -2050,7 +2050,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.MainInstructionPane]\r\n"
 "TextColor = 41 121 255\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"Font = Tahoma, -16\r\n"
+"Font = Tahoma, 12\r\n"
 
 "[TaskDialog.MainIcon]\r\n"
 "ContentMargins = 0, 10, 0, 0\r\n"
@@ -2058,7 +2058,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ContentPane]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ContentPane(Standalone)]\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
@@ -2066,7 +2066,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ExpandedContent]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.CommandLinkPane]\r\n"
 "ContentMargins = 0, 0, 10, 0\r\n"
@@ -2087,7 +2087,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ButtonSection]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 22, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ButtonWrapper]\r\n"
 "Width = 200\r\n"
@@ -2096,7 +2096,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.ExpandoText]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 0, 0, 2, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ExpandoButton]\r\n"
 "Width = 19\r\n"
@@ -2219,7 +2219,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.VerificationText]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.FootnotePane]\r\n"
 "BgType = BorderFill\r\n"
@@ -2227,7 +2227,7 @@ BLUE_INI TEXTFILE
 "FillColor = 245 245 245\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.FootnoteSeparator]\r\n"
 "BgType = ImageFile\r\n"
@@ -2236,10 +2236,10 @@ BLUE_INI TEXTFILE
 "ContentMargins = 0, 0, 9, 9\r\n"
 "ImageFile = blue_taskdialog_footnote_separator.bmp\r\n"
 
-"[TaskDialog.ExpandedFootArea]\r\n"
+"[TaskDialog.ExpandedFooterArea]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "[TaskDialog.ProgressBar]\r\n"
 "Height = 15\r\n"
@@ -2252,7 +2252,7 @@ BLUE_INI TEXTFILE
 "[TaskDialog.RadioButtonPane]\r\n"
 "TextColor = 0 0 0\r\n"
 "ContentMargins = 10, 10, 10, 0\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
@@ -2599,17 +2599,17 @@ BLUE_INI TEXTFILE
 "ImageCount = 1\r\n"
 "AlphaThreshold = 128\r\n"
 "Transparent = True\r\n"
-"TextColor = 166 166 166\r\n"
+"TextColor = 85 85 85\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 4, 4, 1, 1\r\n"
-"Font = Tahoma, -12\r\n"
+"Font = Tahoma, 9\r\n"
 "ImageFile = blue_tooltip_standard.bmp\r\n"
 
 "[Tooltip.StandardTitle]\r\n"
-"TextColor = 166 166 166\r\n"
-"Font = Tahoma, -12, bold\r\n"
+"TextColor = 85 85 85\r\n"
+"Font = Tahoma, 9, bold\r\n"
 
-"[Tooltip.Ballon]\r\n"
+"[Tooltip.Balloon]\r\n"
 "BgType = ImageFile\r\n"
 "SizingType = Stretch\r\n"
 "ImageLayout = Vertical\r\n"
@@ -2619,12 +2619,12 @@ BLUE_INI TEXTFILE
 "TextColor = 0 0 0\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"Font = Tahoma, -12\r\n"
-"ImageFile = blue_tooltip_ballon.bmp\r\n"
+"Font = Tahoma, 9\r\n"
+"ImageFile = blue_tooltip_balloon.bmp\r\n"
 
-"[Tooltip.BallonTitle]\r\n"
+"[Tooltip.BalloonTitle]\r\n"
 "TextColor = 41 121 255\r\n"
-"Font = Tahoma, -16\r\n"
+"Font = Tahoma, 12\r\n"
 
 "[Tooltip.Close]\r\n"
 "BgType = ImageFile\r\n"
@@ -2648,7 +2648,7 @@ BLUE_INI TEXTFILE
 "MinDpi6 = 216\r\n"
 "MinDpi7 = 240\r\n"
 
-"[Tooltip.BallonStem]\r\n"
+"[Tooltip.BalloonStem]\r\n"
 "BgType = ImageFile\r\n"
 "SizingType = TrueSize\r\n"
 "ImageLayout = Vertical\r\n"
@@ -2656,13 +2656,13 @@ BLUE_INI TEXTFILE
 "ImageCount = 6\r\n"
 "AlphaThreshold = 128\r\n"
 "Transparent = True\r\n"
-"ImageFile1 = blue_tooltip_ballon_stem_21px.bmp\r\n"
-"ImageFile2 = blue_tooltip_ballon_stem_26px.bmp\r\n"
-"ImageFile3 = blue_tooltip_ballon_stem_32px.bmp\r\n"
-"ImageFile4 = blue_tooltip_ballon_stem_42px.bmp\r\n"
-"ImageFile5 = blue_tooltip_ballon_stem_53px.bmp\r\n"
-"ImageFile6 = blue_tooltip_ballon_stem_63px.bmp\r\n"
-"ImageFile7 = blue_tooltip_ballon_stem_84px.bmp\r\n"
+"ImageFile1 = blue_tooltip_balloon_stem_21px.bmp\r\n"
+"ImageFile2 = blue_tooltip_balloon_stem_26px.bmp\r\n"
+"ImageFile3 = blue_tooltip_balloon_stem_32px.bmp\r\n"
+"ImageFile4 = blue_tooltip_balloon_stem_42px.bmp\r\n"
+"ImageFile5 = blue_tooltip_balloon_stem_53px.bmp\r\n"
+"ImageFile6 = blue_tooltip_balloon_stem_63px.bmp\r\n"
+"ImageFile7 = blue_tooltip_balloon_stem_84px.bmp\r\n"
 "MinDpi1 = 96\r\n"
 "MinDpi2 = 120\r\n"
 "MinDpi3 = 144\r\n"
@@ -4191,29 +4191,29 @@ BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_14PX_BMP BITMAP "blue_toolbar_dropdown_button
 BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_17PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_17px.bmp"
 
 /* Tooltip */
-/* @makedep: blue_tooltip_ballon.bmp */
-BLUE_TOOLTIP_BALLON_BMP BITMAP "blue_tooltip_ballon.bmp"
+/* @makedep: blue_tooltip_balloon.bmp */
+BLUE_TOOLTIP_BALLOON_BMP BITMAP "blue_tooltip_balloon.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_21px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_21PX_BMP BITMAP "blue_tooltip_ballon_stem_21px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_21px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_21PX_BMP BITMAP "blue_tooltip_balloon_stem_21px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_26px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_26PX_BMP BITMAP "blue_tooltip_ballon_stem_26px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_26px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_26PX_BMP BITMAP "blue_tooltip_balloon_stem_26px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_32px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_32PX_BMP BITMAP "blue_tooltip_ballon_stem_32px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_32px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_32PX_BMP BITMAP "blue_tooltip_balloon_stem_32px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_42px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_42PX_BMP BITMAP "blue_tooltip_ballon_stem_42px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_42px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_42PX_BMP BITMAP "blue_tooltip_balloon_stem_42px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_53px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_53PX_BMP BITMAP "blue_tooltip_ballon_stem_53px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_53px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_53PX_BMP BITMAP "blue_tooltip_balloon_stem_53px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_63px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_63PX_BMP BITMAP "blue_tooltip_ballon_stem_63px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_63px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_63PX_BMP BITMAP "blue_tooltip_balloon_stem_63px.bmp"
 
-/* @makedep: blue_tooltip_ballon_stem_84px.bmp */
-BLUE_TOOLTIP_BALLON_STEM_84PX_BMP BITMAP "blue_tooltip_ballon_stem_84px.bmp"
+/* @makedep: blue_tooltip_balloon_stem_84px.bmp */
+BLUE_TOOLTIP_BALLOON_STEM_84PX_BMP BITMAP "blue_tooltip_balloon_stem_84px.bmp"
 
 /* @makedep: blue_tooltip_close_16px.bmp */
 BLUE_TOOLTIP_CLOSE_16PX_BMP BITMAP "blue_tooltip_close_16px.bmp"

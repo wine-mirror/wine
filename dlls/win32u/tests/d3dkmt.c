@@ -1966,9 +1966,9 @@ static void test_D3DKMTSignalSynchronizationObject(void)
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hSyncObject, &next_local );
     status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -1979,9 +1979,9 @@ static void test_D3DKMTSignalSynchronizationObject(void)
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hSyncObject, &next_local );
     status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -1992,9 +1992,9 @@ static void test_D3DKMTSignalSynchronizationObject(void)
     ok_nt( STATUS_SUCCESS, status );
     check_d3dkmt_local( create2.hSyncObject, &next_local );
     status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     destroy.hSyncObject = create2.hSyncObject;
     status = D3DKMTDestroySynchronizationObject( &destroy );
     ok_nt( STATUS_SUCCESS, status );
@@ -2030,7 +2030,7 @@ static void test_D3DKMTSignalSynchronizationObject(void)
 
     signal_value = 1;
     status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
-    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    ok_nt( STATUS_INVALID_PARAMETER, status );
     signal.Flags.AllowFenceRewind = 1;
     status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
     todo_wine ok_nt( STATUS_SUCCESS, status );

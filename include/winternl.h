@@ -2837,6 +2837,31 @@ typedef struct _PROCESS_STACK_ALLOCATION_INFORMATION_EX
     PROCESS_STACK_ALLOCATION_INFORMATION AllocInfo;
 } PROCESS_STACK_ALLOCATION_INFORMATION_EX, *PPROCESS_STACK_ALLOCATION_INFORMATION_EX;
 
+typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION
+{
+    PROCESS_MITIGATION_POLICY Policy;
+    union
+    {
+        PROCESS_MITIGATION_ASLR_POLICY ASLRPolicy;
+        PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY StrictHandleCheckPolicy;
+        PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY SystemCallDisablePolicy;
+        PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ExtensionPointDisablePolicy;
+        PROCESS_MITIGATION_DYNAMIC_CODE_POLICY DynamicCodePolicy;
+        PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY ControlFlowGuardPolicy;
+        PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY SignaturePolicy;
+        PROCESS_MITIGATION_FONT_DISABLE_POLICY FontDisablePolicy;
+        PROCESS_MITIGATION_IMAGE_LOAD_POLICY ImageLoadPolicy;
+        PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY SystemCallFilterPolicy;
+        PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY PayloadRestrictionPolicy;
+        PROCESS_MITIGATION_CHILD_PROCESS_POLICY ChildProcessPolicy;
+        PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY SideChannelIsolationPolicy;
+        PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY UserShadowStackPolicy;
+        PROCESS_MITIGATION_REDIRECTION_TRUST_POLICY RedirectionTrustPolicy;
+        PROCESS_MITIGATION_USER_POINTER_AUTH_POLICY UserPointerAuthPolicy;
+        PROCESS_MITIGATION_SEHOP_POLICY SEHOPPolicy;
+    };
+} PROCESS_MITIGATION_POLICY_INFORMATION, *PPROCESS_MITIGATION_POLICY_INFORMATION;
+
 typedef NTSTATUS (NTAPI RTL_HEAP_COMMIT_ROUTINE)(PVOID base, PVOID *address, PSIZE_T size);
 typedef RTL_HEAP_COMMIT_ROUTINE *PRTL_HEAP_COMMIT_ROUTINE;
 
@@ -3518,38 +3543,44 @@ typedef void (NTAPI *RTL_WAITORTIMERCALLBACKFUNC)(PVOID,BOOLEAN); /* FIXME: not 
 #define DPFLTR_MASK    0x8000000
 
 /* Well-known LUID values */
-#define SE_MIN_WELL_KNOWN_PRIVILEGE       2
-#define SE_CREATE_TOKEN_PRIVILEGE         2
-#define SE_ASSIGNPRIMARYTOKEN_PRIVILEGE   3
-#define SE_LOCK_MEMORY_PRIVILEGE          4
-#define SE_INCREASE_QUOTA_PRIVILEGE       5
-#define SE_UNSOLICITED_INPUT_PRIVILEGE    6 /* obsolete */
-#define SE_MACHINE_ACCOUNT_PRIVILEGE      6
-#define SE_TCB_PRIVILEGE                  7
-#define SE_SECURITY_PRIVILEGE             8
-#define SE_TAKE_OWNERSHIP_PRIVILEGE       9
-#define SE_LOAD_DRIVER_PRIVILEGE         10
-#define SE_SYSTEM_PROFILE_PRIVILEGE      11
-#define SE_SYSTEMTIME_PRIVILEGE          12
-#define SE_PROF_SINGLE_PROCESS_PRIVILEGE 13
-#define SE_INC_BASE_PRIORITY_PRIVILEGE   14
-#define SE_CREATE_PAGEFILE_PRIVILEGE     15
-#define SE_CREATE_PERMANENT_PRIVILEGE    16
-#define SE_BACKUP_PRIVILEGE              17
-#define SE_RESTORE_PRIVILEGE             18
-#define SE_SHUTDOWN_PRIVILEGE            19
-#define SE_DEBUG_PRIVILEGE               20
-#define SE_AUDIT_PRIVILEGE               21
-#define SE_SYSTEM_ENVIRONMENT_PRIVILEGE  22
-#define SE_CHANGE_NOTIFY_PRIVILEGE       23
-#define SE_REMOTE_SHUTDOWN_PRIVILEGE     24
-#define SE_UNDOCK_PRIVILEGE              25
-#define SE_SYNC_AGENT_PRIVILEGE          26
-#define SE_ENABLE_DELEGATION_PRIVILEGE   27
-#define SE_MANAGE_VOLUME_PRIVILEGE       28
-#define SE_IMPERSONATE_PRIVILEGE         29
-#define SE_CREATE_GLOBAL_PRIVILEGE       30
-#define SE_MAX_WELL_KNOWN_PRIVILEGE      SE_CREATE_GLOBAL_PRIVILEGE
+#define SE_MIN_WELL_KNOWN_PRIVILEGE                     2
+#define SE_CREATE_TOKEN_PRIVILEGE                       2
+#define SE_ASSIGNPRIMARYTOKEN_PRIVILEGE                 3
+#define SE_LOCK_MEMORY_PRIVILEGE                        4
+#define SE_INCREASE_QUOTA_PRIVILEGE                     5
+#define SE_UNSOLICITED_INPUT_PRIVILEGE                  6 /* obsolete */
+#define SE_MACHINE_ACCOUNT_PRIVILEGE                    6
+#define SE_TCB_PRIVILEGE                                7
+#define SE_SECURITY_PRIVILEGE                           8
+#define SE_TAKE_OWNERSHIP_PRIVILEGE                     9
+#define SE_LOAD_DRIVER_PRIVILEGE                        10
+#define SE_SYSTEM_PROFILE_PRIVILEGE                     11
+#define SE_SYSTEMTIME_PRIVILEGE                         12
+#define SE_PROF_SINGLE_PROCESS_PRIVILEGE                13
+#define SE_INC_BASE_PRIORITY_PRIVILEGE                  14
+#define SE_CREATE_PAGEFILE_PRIVILEGE                    15
+#define SE_CREATE_PERMANENT_PRIVILEGE                   16
+#define SE_BACKUP_PRIVILEGE                             17
+#define SE_RESTORE_PRIVILEGE                            18
+#define SE_SHUTDOWN_PRIVILEGE                           19
+#define SE_DEBUG_PRIVILEGE                              20
+#define SE_AUDIT_PRIVILEGE                              21
+#define SE_SYSTEM_ENVIRONMENT_PRIVILEGE                 22
+#define SE_CHANGE_NOTIFY_PRIVILEGE                      23
+#define SE_REMOTE_SHUTDOWN_PRIVILEGE                    24
+#define SE_UNDOCK_PRIVILEGE                             25
+#define SE_SYNC_AGENT_PRIVILEGE                         26
+#define SE_ENABLE_DELEGATION_PRIVILEGE                  27
+#define SE_MANAGE_VOLUME_PRIVILEGE                      28
+#define SE_IMPERSONATE_PRIVILEGE                        29
+#define SE_CREATE_GLOBAL_PRIVILEGE                      30
+#define SE_TRUSTED_CREDMAN_ACCESS_PRIVILEGE             31
+#define SE_RELABEL_PRIVILEGE                            32
+#define SE_INC_WORKING_SET_PRIVILEGE                    33
+#define SE_TIME_ZONE_PRIVILEGE                          34
+#define SE_CREATE_SYMBOLIC_LINK_PRIVILEGE               35
+#define SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE  36
+#define SE_MAX_WELL_KNOWN_PRIVILEGE                     SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE
 
 /* NtGlobalFlag bits */
 #define FLG_STOP_ON_EXCEPTION            0x00000001
@@ -5627,6 +5658,8 @@ static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
 /* Wine internal functions */
 
 NTSYSAPI NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait );
+
+#define RTL_IMAGE_MAX_DOS_HEADER (256u * 1024 * 1024)
 
 /* The thread information for 16-bit threads */
 /* NtCurrentTeb()->SubSystemTib points to this */

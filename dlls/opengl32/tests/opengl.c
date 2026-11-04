@@ -3367,6 +3367,7 @@ static void test_wglCreateContextAttribsARB( HDC hdc )
     static const int gl32_fwd_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 2, WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, 0 };
     static const int gl32_comp_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 2, WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0 };
 
+    static const int debug_attribs[] = { WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB, 0 };
     static const int gl10_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 1, 0 };
     static const int gl21_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 2, WGL_CONTEXT_MINOR_VERSION_ARB, 1, 0 };
     static const int gl30_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0 };
@@ -3444,6 +3445,26 @@ static void test_wglCreateContextAttribsARB( HDC hdc )
     ok_ret( 0, glGetError() );
     ok_x4( flags, ==, 0 );
     ok( profile == GL_CONTEXT_COMPATIBILITY_PROFILE_BIT || profile == 0 /* NVIDIA */, "got profile %#x\n", profile );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* not specifying any version is the same as the default / wglCreateContext */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, debug_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok( major == 3 /* AMD */ || major == expect_major /* NVIDIA */, "got major %u\n", major );
+    ok( minor == 2 /* AMD */ || minor == expect_minor /* NVIDIA */, "got minor %u\n", minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    todo_wine ok_x4( flags, ==, GL_CONTEXT_FLAG_DEBUG_BIT );
+    ok( profile == 0 /* AMD */ || profile == GL_CONTEXT_COMPATIBILITY_PROFILE_BIT /* NVIDIA */, "got profile %u\n", profile );
 
     ok_ret( TRUE, wglDeleteContext( ctx ) );
 

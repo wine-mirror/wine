@@ -69,16 +69,16 @@ static const struct fd_ops d3dkmt_fd_ops =
 
 struct keyed_wait
 {
-    struct list     entry;
-    int             key;
-    int             waiters;
-    struct object  *sync;
+    struct list      entry;
+    unsigned __int64 key;
+    int              waiters;
+    struct object   *sync;
 };
 
 struct d3dkmt_mutex
 {
     struct d3dkmt_object base;
-    unsigned int         key_value;      /* last released key value */
+    unsigned __int64     key_value;      /* last released key value */
     unsigned __int64     fence_value;    /* last released fence value */
     bool                 abandoned;      /* mutex has been abandonned */
     struct thread       *owner;          /* current owner thread */
@@ -95,6 +95,24 @@ static const struct object_ops d3dkmt_mutex_ops =
     .type    = &no_type,
     .dump    = d3dkmt_mutex_dump,
     .destroy = d3dkmt_mutex_destroy,
+};
+
+struct d3dkmt_sync
+{
+    struct d3dkmt_object base;
+    unsigned __int64     fence_value;    /* last signaled fence value */
+    struct list          waits;          /* list of pending keyed_waits */
+};
+
+static void d3dkmt_sync_dump( struct object *obj, int verbose );
+static void d3dkmt_sync_destroy( struct object *obj );
+
+static const struct object_ops d3dkmt_sync_ops =
+{
+    .size    = sizeof(struct d3dkmt_sync),
+    .type    = &no_type,
+    .dump    = d3dkmt_sync_dump,
+    .destroy = d3dkmt_sync_destroy,
 };
 
 #define DXGK_SHARED_SYNC_QUERY_STATE  0x0001
@@ -364,7 +382,7 @@ static void d3dkmt_mutex_destroy( struct object *obj )
     free( mutex->base.runtime );
 }
 
-static struct d3dkmt_object *d3dkmt_mutex_create( unsigned int key_value, data_size_t runtime_size, const void *runtime )
+static struct d3dkmt_object *d3dkmt_mutex_create( unsigned __int64 key_value, data_size_t runtime_size, const void *runtime )
 {
     struct d3dkmt_mutex *object;
 
@@ -389,11 +407,11 @@ static struct d3dkmt_object *d3dkmt_mutex_create( unsigned int key_value, data_s
     return &object->base;
 }
 
-static struct object *keyed_wait_grab( struct d3dkmt_mutex *mutex, int key )
+static struct object *keyed_wait_grab( struct list *waits, unsigned __int64 key )
 {
     struct keyed_wait *wait;
 
-    LIST_FOR_EACH_ENTRY( wait, &mutex->waits, struct keyed_wait, entry )
+    LIST_FOR_EACH_ENTRY( wait, waits, struct keyed_wait, entry )
     {
         if (wait->key != key) continue;
         wait->waiters++;
@@ -409,15 +427,15 @@ static struct object *keyed_wait_grab( struct d3dkmt_mutex *mutex, int key )
         return NULL;
     }
 
-    list_add_tail( &mutex->waits, &wait->entry );
+    list_add_tail( waits, &wait->entry );
     return grab_object( wait->sync );
 }
 
-static void keyed_wait_release( struct d3dkmt_mutex *mutex, int key )
+static void keyed_wait_release( struct list *waits, unsigned __int64 key )
 {
     struct keyed_wait *wait;
 
-    LIST_FOR_EACH_ENTRY( wait, &mutex->waits, struct keyed_wait, entry )
+    LIST_FOR_EACH_ENTRY( wait, waits, struct keyed_wait, entry )
     {
         if (wait->key == key && !--wait->waiters)
         {
@@ -461,6 +479,54 @@ void abandon_d3dkmt_mutexes( struct thread *thread )
 
     LIST_FOR_EACH_ENTRY_SAFE( mutex, next, &thread->d3dkmt_mutexes, struct d3dkmt_mutex, entry )
         mutex_release( mutex, true );
+}
+
+static void d3dkmt_sync_dump( struct object *obj, int verbose )
+{
+    struct d3dkmt_sync *sync = (struct d3dkmt_sync *)obj;
+    assert( obj->ops == &d3dkmt_sync_ops );
+
+    fprintf( stderr, "d3dkmt sync global=%#x\n", sync->base.global );
+}
+
+static void d3dkmt_sync_destroy( struct object *obj )
+{
+    struct d3dkmt_sync *sync = (struct d3dkmt_sync *)obj;
+    struct keyed_wait *wait, *next;
+
+    assert( obj->ops == &d3dkmt_sync_ops );
+
+    LIST_FOR_EACH_ENTRY_SAFE( wait, next, &sync->waits, struct keyed_wait, entry )
+    {
+        release_object( wait->sync );
+        list_remove( &wait->entry );
+        free( wait );
+    }
+
+    if (sync->base.global) free_object_handle( sync->base.global );
+    free( sync->base.runtime );
+}
+
+static struct d3dkmt_object *d3dkmt_sync_create( data_size_t runtime_size, const void *runtime )
+{
+    struct d3dkmt_sync *object;
+
+    if (!(object = alloc_object( &d3dkmt_sync_ops ))) return NULL;
+    object->base.type            = D3DKMT_SYNC;
+    object->base.global          = 0;
+    object->base.runtime_size    = runtime_size;
+    object->base.fd              = NULL;
+    object->fence_value          = 0;
+    list_init( &object->waits );
+
+    if (!(object->base.runtime = memdup( runtime, runtime_size )) ||
+        !(object->base.global = alloc_object_handle( &object->base )))
+    {
+        release_object( object );
+        return NULL;
+    }
+
+    return &object->base;
 }
 
 /* return a pointer to a d3dkmt object from its global handle */
@@ -523,6 +589,9 @@ DECL_HANDLER(d3dkmt_object_create)
     {
     case D3DKMT_MUTEX:
         if (!(object = d3dkmt_mutex_create( req->value, get_req_data_size(), get_req_data() ))) goto done;
+        break;
+    case D3DKMT_SYNC:
+        if (!(object = d3dkmt_sync_create( get_req_data_size(), get_req_data() ))) goto done;
         break;
     default:
         if (!(object = d3dkmt_object_create( req->type, get_req_data_size(), get_req_data() ))) goto done;
@@ -674,7 +743,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 {
     data_size_t runtime_size = get_reply_max_size();
     struct d3dkmt_mutex *mutex;
-    struct object *sync;
+    struct object *wait;
 
     if (!(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) return;
 
@@ -686,10 +755,10 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
         mutex_grab( mutex );
     }
     else if ((reply->wait_handle = req->wait_handle)) set_error( STATUS_PENDING );
-    else if ((sync = keyed_wait_grab( mutex, req->key_value )))
+    else if ((wait = keyed_wait_grab( &mutex->waits, req->key_value )))
     {
-        if ((reply->wait_handle = alloc_handle( current->process, sync, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
-        release_object( sync );
+        if ((reply->wait_handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
+        release_object( wait );
     }
 
     if (runtime_size >= mutex->base.runtime_size) set_reply_data( mutex->base.runtime, mutex->base.runtime_size );
@@ -697,7 +766,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 
     release_object( mutex );
 
-    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( mutex, req->key_value );
+    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( &mutex->waits, req->key_value );
 }
 
 /* Release a global d3dkmt keyed mutex */
@@ -720,4 +789,40 @@ DECL_HANDLER(d3dkmt_mutex_release)
     }
 
     release_object( mutex );
+}
+
+/* Wait on a global d3dkmt sync fence value */
+DECL_HANDLER(d3dkmt_sync_wait)
+{
+    struct d3dkmt_sync *sync;
+    struct object *wait;
+
+    if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+
+    if (req->wait_status) set_error( req->wait_status );
+    else if (sync->fence_value >= req->fence_value) set_error( STATUS_SUCCESS );
+    else if ((reply->wait_handle = req->wait_handle)) set_error( STATUS_PENDING );
+    else if ((wait = keyed_wait_grab( &sync->waits, req->fence_value )))
+    {
+        if ((reply->wait_handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 ))) set_error( STATUS_PENDING );
+        release_object( wait );
+    }
+
+    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( &sync->waits, req->fence_value );
+    release_object( sync );
+}
+
+/* Signal a global d3dkmt sync fence value */
+DECL_HANDLER(d3dkmt_sync_signal)
+{
+    struct d3dkmt_sync *sync;
+    struct keyed_wait *wait;
+
+    if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+    sync->fence_value = req->fence_value;
+
+    LIST_FOR_EACH_ENTRY( wait, &sync->waits, struct keyed_wait, entry )
+        if (wait->key <= sync->fence_value) signal_sync( wait->sync );
+
+    release_object( sync );
 }

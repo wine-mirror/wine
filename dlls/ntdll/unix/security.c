@@ -35,18 +35,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static BOOL is_equal_sid( const SID *sid1, const SID *sid2 )
-{
-    size_t size1 = offsetof( SID, SubAuthority[sid1->SubAuthorityCount] );
-    size_t size2 = offsetof( SID, SubAuthority[sid2->SubAuthorityCount] );
-    return size1 == size2 && !memcmp( sid1, sid2, size1 );
-}
-
 /***********************************************************************
  *             NtCreateToken  (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                               TOKEN_TYPE type, LUID *token_id, LARGE_INTEGER *expire, TOKEN_USER *user,
+                               TOKEN_TYPE type, LUID *auth_id, LARGE_INTEGER *expire, TOKEN_USER *user,
                                TOKEN_GROUPS *groups, TOKEN_PRIVILEGES *privs, TOKEN_OWNER *owner,
                                TOKEN_PRIMARY_GROUP *group, TOKEN_DEFAULT_DACL *dacl, TOKEN_SOURCE *source)
 {
@@ -57,10 +50,9 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     void *groups_info;
     BYTE *p;
     SID *sid;
-    int primary_group = -1;
 
     TRACE( "(%p,0x%08x,%p,%d,%p,%p,%p,%p,%p,%p,%p,%p,%p)\n", handle, access, attr,
-            type, token_id, expire, user, groups, privs, owner, group, dacl, source );
+            type, auth_id, expire, user, groups, privs, owner, group, dacl, source );
 
     *handle = 0;
     if ((status = wine_server_alloc_object_attributes( attr, &objattr, &objattr_size ))) return status;
@@ -78,17 +70,8 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
 
     for (i = 0; i < groups->GroupCount; i++)
     {
-        SID *group_sid = group->PrimaryGroup;
         sid = groups->Groups[i].Sid;
         groups_size += offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
-        if (is_equal_sid( sid, group_sid ))
-            primary_group = i;
-    }
-
-    if (primary_group == -1)
-    {
-        free( objattr );
-        return STATUS_INVALID_PRIMARY_GROUP;
     }
 
     groups_info = malloc( groups_size );
@@ -111,8 +94,8 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
 
     SERVER_START_REQ( create_token )
     {
-        req->token_id.low_part = token_id->LowPart;
-        req->token_id.high_part = token_id->HighPart;
+        req->auth_id.low_part = auth_id->LowPart;
+        req->auth_id.high_part = auth_id->HighPart;
         req->access = access;
         req->primary = (type == TokenPrimary);
         req->impersonation_level = level;
@@ -123,10 +106,14 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
         sid = user->User.Sid;
         wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
 
+        sid = owner->Owner;
+        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
+
+        sid = group->PrimaryGroup;
+        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
+
         req->group_count = groups->GroupCount;
         wine_server_add_data( req, groups_info, groups_size );
-
-        req->primary_group = primary_group;
 
         req->priv_count = privs->PrivilegeCount;
         wine_server_add_data( req, privs->Privileges, privs->PrivilegeCount * sizeof(privs->Privileges[0]) );
