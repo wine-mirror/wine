@@ -187,8 +187,8 @@ struct context_data
     } exec_space;                /* selected by SERVER_CTX_EXEC_SPACE */
     union
     {
-        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } regs;
-    } ymm;                       /* selected by SERVER_CTX_YMM_REGISTERS */
+        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } ymm_regs;
+    } vector;                    /* selected by SERVER_CTX_VECTOR_REGISTERS */
     union
     {
         unsigned __int64 arm64_x18;
@@ -201,7 +201,7 @@ struct context_data
 #define SERVER_CTX_FLOATING_POINT     0x0008
 #define SERVER_CTX_DEBUG_REGISTERS    0x0010
 #define SERVER_CTX_EXTENDED_REGISTERS 0x0020
-#define SERVER_CTX_YMM_REGISTERS      0x0040
+#define SERVER_CTX_VECTOR_REGISTERS   0x0040
 #define SERVER_CTX_EXEC_SPACE         0x0080
 #define SERVER_CTX_TLS                0x0100
 

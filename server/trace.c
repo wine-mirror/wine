@@ -751,11 +751,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         if (ctx.flags & SERVER_CTX_EXTENDED_REGISTERS)
             dump_uints( ",extended=", (const unsigned int *)ctx.ext.i386_regs,
                         sizeof(ctx.ext.i386_regs) / sizeof(int) );
-        if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
+        if (ctx.flags & SERVER_CTX_VECTOR_REGISTERS)
             for (i = 0; i < 16; i++)
             {
                 fprintf( stderr, ",ymm%u=", i );
-                dump_uint128( "", (const unsigned __int64 *)&ctx.ymm.regs.ymm_high[i] );
+                dump_uint128( "", (const unsigned __int64 *)&ctx.vector.ymm_regs.ymm_high[i] );
             }
         break;
     case IMAGE_FILE_MACHINE_AMD64:
@@ -804,11 +804,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                 fprintf( stderr, ",fp%u=", i );
                 dump_uint128( "", (const unsigned __int64 *)&ctx.fp.x86_64_regs.fpregs[i] );
             }
-        if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
+        if (ctx.flags & SERVER_CTX_VECTOR_REGISTERS)
             for (i = 0; i < 16; i++)
             {
                 fprintf( stderr, ",ymm%u=", i );
-                dump_uint128( "", (const unsigned __int64 *)&ctx.ymm.regs.ymm_high[i] );
+                dump_uint128( "", (const unsigned __int64 *)&ctx.vector.ymm_regs.ymm_high[i] );
             }
         break;
     case IMAGE_FILE_MACHINE_ARMNT:

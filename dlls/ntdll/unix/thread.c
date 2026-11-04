@@ -179,7 +179,7 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_I386_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_I386_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
         if (flags & CONTEXT_I386_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS | SERVER_CTX_FLOATING_POINT;
-        if (flags & CONTEXT_I386_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
+        if (flags & CONTEXT_I386_XSTATE) ret |= SERVER_CTX_VECTOR_REGISTERS;
         break;
     case IMAGE_FILE_MACHINE_AMD64:
         flags = ((const AMD64_CONTEXT *)context)->ContextFlags & ~CONTEXT_AMD64;
@@ -188,7 +188,7 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_AMD64_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
         if (flags & CONTEXT_AMD64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_AMD64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-        if (flags & CONTEXT_AMD64_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
+        if (flags & CONTEXT_AMD64_XSTATE) ret |= SERVER_CTX_VECTOR_REGISTERS;
         break;
     case IMAGE_FILE_MACHINE_ARMNT:
         flags = ((const ARM_CONTEXT *)context)->ContextFlags & ~CONTEXT_ARM;
@@ -221,7 +221,7 @@ static unsigned int get_native_context_flags( USHORT native_machine, USHORT wow_
     switch (MAKELONG( native_machine, wow_machine ))
     {
     case MAKELONG( IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386 ):
-        return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_YMM_REGISTERS | SERVER_CTX_EXEC_SPACE;
+        return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_VECTOR_REGISTERS | SERVER_CTX_EXEC_SPACE;
     case MAKELONG( IMAGE_FILE_MACHINE_ARM64, IMAGE_FILE_MACHINE_ARMNT ):
         return SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_FLOATING_POINT | SERVER_CTX_EXEC_SPACE;
     default:
@@ -240,8 +240,8 @@ static void xstate_to_server( struct context_data *to, const CONTEXT_EX *xctx )
     const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
 
     if (xs->CompactionMask && !(xs->CompactionMask & 4)) return;
-    to->flags |= SERVER_CTX_YMM_REGISTERS;
-    if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+    to->flags |= SERVER_CTX_VECTOR_REGISTERS;
+    if (xs->Mask & 4) memcpy( &to->vector.ymm_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
 }
 
 
@@ -655,10 +655,10 @@ static void xstate_from_server( CONTEXT_EX *xctx, const struct context_data *fro
         if (!(xs->CompactionMask & 4)) return;
     }
 
-    for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
+    for (i = 0; i < ARRAY_SIZE( from->vector.ymm_regs.ymm_high); i++)
     {
-        if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
-        memcpy( &xs->YmmContext, &from->ymm.regs, sizeof(xs->YmmContext) );
+        if (!from->vector.ymm_regs.ymm_high[i].low && !from->vector.ymm_regs.ymm_high[i].high) continue;
+        memcpy( &xs->YmmContext, &from->vector.ymm_regs, sizeof(xs->YmmContext) );
         xs->Mask |= 4;
         break;
     }
@@ -751,7 +751,7 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             to->ContextFlags |= CONTEXT_I386_EXTENDED_REGISTERS;
             memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
         }
-        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
+        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
             xstate_from_server( (CONTEXT_EX *)(to + 1), from );
         exception_request_flags_from_server( &to->ContextFlags, from );
         return STATUS_SUCCESS;
@@ -816,7 +816,7 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             to->Dr6 = from->debug.x86_64_regs.dr6;
             to->Dr7 = from->debug.x86_64_regs.dr7;
         }
-        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
+        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
             xstate_from_server( (CONTEXT_EX *)(to + 1), from );
         exception_request_flags_from_server( &to->ContextFlags, from );
         return STATUS_SUCCESS;
@@ -879,7 +879,7 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             to->Dr6 = from->debug.x86_64_regs.dr6;
             to->Dr7 = from->debug.x86_64_regs.dr7;
         }
-        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
+        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
             xstate_from_server( (CONTEXT_EX *)(to + 1), from );
         exception_request_flags_from_server( &to->ContextFlags, from );
         return STATUS_SUCCESS;
@@ -952,7 +952,7 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             to->Dr6 = from->debug.i386_regs.dr6;
             to->Dr7 = from->debug.i386_regs.dr7;
         }
-        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
+        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
             xstate_from_server( (CONTEXT_EX *)(to + 1), from );
         exception_request_flags_from_server( &to->ContextFlags, from );
         return STATUS_SUCCESS;
