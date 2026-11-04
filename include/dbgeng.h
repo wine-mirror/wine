@@ -624,7 +624,7 @@ DECLARE_INTERFACE_(IDebugEventContextCallbacks, IUnknown)
     STDMETHOD(ExitThread)(THIS_ ULONG exitcode, void *context, ULONG size) PURE;
 
     STDMETHOD(CreateProcess)(THIS_ ULONG64 image_handle, ULONG64 handle, ULONG64 baseoffset, ULONG module_size,
-                const WCHAR *module_name, const WCHAR image_name, ULONG checksum, ULONG timestamp, ULONG64 initial,
+                const WCHAR *module_name, const WCHAR *image_name, ULONG checksum, ULONG timestamp, ULONG64 initial,
                 ULONG64 thread_offset, ULONG64 start_offset, void *context, ULONG size) PURE;
     STDMETHOD(ExitProcess)(THIS_ ULONG exitcode, void *context, ULONG size) PURE;
     STDMETHOD(LoadModule)(THIS_ ULONG64 image_handle, ULONG64 baseoffset, ULONG module_size, const WCHAR *module_name,
