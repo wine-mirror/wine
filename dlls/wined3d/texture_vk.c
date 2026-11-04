@@ -1182,7 +1182,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     unsigned int layer_count;
     VkClearColorValue *c;
     VkResult vr;
-    RECT r;
+    RECT r, framebuffer_rect = *draw_rect;
 
     TRACE("context_vk %p, rt_count %u, fb %p, rect_count %u, clear_rects %p, "
             "draw_rect %s, flags %#x, colour %s, depth %.8e, stencil %#x.\n",
@@ -1240,6 +1240,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
         if (view->layer_count > layer_count)
             layer_count = view->layer_count;
+        framebuffer_rect.right = min(framebuffer_rect.right, (LONG)view->width);
+        framebuffer_rect.bottom = min(framebuffer_rect.bottom, (LONG)view->height);
 
         ++attachment_count;
     }
@@ -1289,6 +1291,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
             if (view->layer_count > layer_count)
                 layer_count = view->layer_count;
+            framebuffer_rect.right = min(framebuffer_rect.right, (LONG)view->width);
+            framebuffer_rect.bottom = min(framebuffer_rect.bottom, (LONG)view->height);
 
             depth_stencil = true;
             ++attachment_count;
@@ -1334,8 +1338,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     fb_desc.renderPass = vk_render_pass;
     fb_desc.attachmentCount = attachment_count;
     fb_desc.pAttachments = views;
-    fb_desc.width = draw_rect->right - draw_rect->left;
-    fb_desc.height = draw_rect->bottom - draw_rect->top;
+    fb_desc.width = framebuffer_rect.right;
+    fb_desc.height = framebuffer_rect.bottom;
     fb_desc.layers = layer_count;
     if ((vr = VK_CALL(vkCreateFramebuffer(device_vk->vk_device, &fb_desc, NULL, &vk_framebuffer))) < 0)
     {
@@ -1356,8 +1360,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     {
         r.left = max(clear_rects[i].left, draw_rect->left);
         r.top = max(clear_rects[i].top, draw_rect->top);
-        r.right = min(clear_rects[i].right, draw_rect->right);
-        r.bottom = min(clear_rects[i].bottom, draw_rect->bottom);
+        r.right = min(clear_rects[i].right, framebuffer_rect.right);
+        r.bottom = min(clear_rects[i].bottom, framebuffer_rect.bottom);
 
         if (r.left >= r.right || r.top >= r.bottom)
             continue;
