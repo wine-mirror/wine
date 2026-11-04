@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stddef.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -67,7 +68,16 @@ struct syscall_frame
 };
 
 C_ASSERT( sizeof( struct syscall_frame ) % 16 == 0 );
-
+C_ASSERT( offsetof( struct syscall_frame, x ) == 0 );
+C_ASSERT( offsetof( struct syscall_frame, pc ) == 256 );
+C_ASSERT( offsetof( struct syscall_frame, sp ) == 264 );
+C_ASSERT( offsetof( struct syscall_frame, ra ) == 272 );
+C_ASSERT( offsetof( struct syscall_frame, f ) == 280 );
+C_ASSERT( offsetof( struct syscall_frame, fcsr ) == 536 );
+C_ASSERT( offsetof( struct syscall_frame, restore_flags ) == 544 );
+C_ASSERT( offsetof( struct syscall_frame, prev_frame ) == 552 );
+C_ASSERT( offsetof( struct syscall_frame, syscall_cfa ) == 560 );
+C_ASSERT( offsetof( struct syscall_frame, syscall_id ) == 568 );
 
 static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry,
                                                  void *arg, TEB *teb )
@@ -100,6 +110,8 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     frame->sp = (ULONG64)ctx;
     frame->x[10] = (ULONG64)ctx;
     frame->x[4] = (ULONG64)teb;
+    frame->x[2] = frame->sp;
+    frame->x[1] = frame->ra;
 
     frame->restore_flags = CONTEXT_CONTROL | CONTEXT_INTEGER;
 
@@ -149,6 +161,13 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         context->Gpr.X[1] = frame->ra;
     }
 
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        unsigned int i;
+        for (i = 0; i < 32; i++) context->F[i].Q = frame->f[i];
+        context->Fcsr = frame->fcsr;
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -175,8 +194,15 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         frame->ra = context->Gpr.X[1];
     }
 
-    frame->restore_flags |= flags & ~CONTEXT_INTEGER;
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        unsigned int i;
+        for (i = 0; i < 32; i++) frame->f[i] = context->F[i].Q;
+        frame->fcsr = context->Fcsr;
+    }
 
+    frame->restore_flags |= flags & (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT);
+ 
     return STATUS_SUCCESS;
 }
 
@@ -318,11 +344,128 @@ void __wine_syscall_dispatcher_return( void )
     __builtin_unreachable();
 }
 
-void __wine_syscall_dispatcher(void)
+/* Initial RV64 NT-service bridge.  Calls with more than seven argument
+ * registers are deliberately rejected until stack-argument marshalling
+ * is implemented.  The helper runs on the Unix stack. */
+static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const ULONG64 *args )
 {
-    abort();
+    struct thread_data *data = get_thread_data();
+    SYSTEM_SERVICE_TABLE *tables;
+    SYSTEM_SERVICE_TABLE *table;
+    ULONG index = id & 0xfff;
+    ULONG table_id = (id >> 12) & 3;
+    ULONG arg_size;
+    typedef NTSTATUS (*service_t)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
+                                  ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR);
+    service_t service;
+
+    if (!data || !data->teb) return STATUS_INVALID_SYSTEM_SERVICE;
+    tables = get_teb_data(data)->syscall_table;
+    if (!tables) return STATUS_INVALID_SYSTEM_SERVICE;
+    table = &tables[table_id];
+    if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
+        return STATUS_INVALID_SYSTEM_SERVICE;
+    arg_size = table->ArgumentTable[index];
+    if (arg_size > 7 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
+    service = (service_t)table->ServiceTable[index];
+    if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
+    return service( args[0], args[1], args[2], args[3],
+                    args[4], args[5], args[6], 0 );
 }
 
+/* The Windows stub tail-jumps here with a7 = NT service id, ra = caller.
+ * Save arguments on the original stack before using the C ABI to locate
+ * the per-thread syscall frame.  The syscall frame is at the high end of
+ * Wine's Unix kernel stack; C calls grow downwards from it. */
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   "addi sp, sp, -96\n\t"
+                   "sd ra, 0(sp)\n\t"
+                   "sd s0, 8(sp)\n\t"
+                   "sd s1, 16(sp)\n\t"
+                   "sd a0, 24(sp)\n\t"
+                   "sd a1, 32(sp)\n\t"
+                   "sd a2, 40(sp)\n\t"
+                   "sd a3, 48(sp)\n\t"
+                   "sd a4, 56(sp)\n\t"
+                   "sd a5, 64(sp)\n\t"
+                   "sd a6, 72(sp)\n\t"
+                   "sd a7, 80(sp)\n\t"
+                   "mv a0, sp\n\t"
+                   "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
+                   "beqz a0, 2f\n\t"
+                   "mv t0, a0\n\t"        /* frame */
+                   "ld t1, 80(sp)\n\t"    /* service id */
+                   "sw t1, 568(t0)\n\t"
+                   "ld t1, 0(sp)\n\t"     /* return address */
+                   "sd t1, 272(t0)\n\t"
+                   "sd t1, 256(t0)\n\t"
+                   "addi t1, sp, 96\n\t"
+                   "sd t1, 264(t0)\n\t"
+                   "ld t1, 8(sp)\n\t"
+                   "sd t1, 64(t0)\n\t"
+                   "ld t1, 16(sp)\n\t"
+                   "sd t1, 72(t0)\n\t"
+                   "sd s2, 144(t0)\n\t"
+                   "sd s3, 152(t0)\n\t"
+                   "sd s4, 160(t0)\n\t"
+                   "sd s5, 168(t0)\n\t"
+                   "sd s6, 176(t0)\n\t"
+                   "sd s7, 184(t0)\n\t"
+                   "sd s8, 192(t0)\n\t"
+                   "sd s9, 200(t0)\n\t"
+                   "sd s10, 208(t0)\n\t"
+                   "sd s11, 216(t0)\n\t"
+                   "ld t1, 24(sp)\n\t"
+                   "sd t1, 80(t0)\n\t"
+                   "ld t1, 32(sp)\n\t"
+                   "sd t1, 88(t0)\n\t"
+                   "ld t1, 40(sp)\n\t"
+                   "sd t1, 96(t0)\n\t"
+                   "ld t1, 48(sp)\n\t"
+                   "sd t1, 104(t0)\n\t"
+                   "ld t1, 56(sp)\n\t"
+                   "sd t1, 112(t0)\n\t"
+                   "ld t1, 64(sp)\n\t"
+                   "sd t1, 120(t0)\n\t"
+                   "ld t1, 72(sp)\n\t"
+                   "sd t1, 128(t0)\n\t"
+                   "ld t1, 80(sp)\n\t"
+                   "sd t1, 136(t0)\n\t"
+                   "mv sp, t0\n\t"
+                   "lw a0, 568(sp)\n\t"
+                   "addi a1, sp, 80\n\t"
+                   "call " __ASM_NAME("riscv64_dispatch_syscall") "\n\t"
+                   "mv t0, sp\n\t"
+                   "ld s0, 64(t0)\n\t"
+                   "ld s1, 72(t0)\n\t"
+                   "ld s2, 144(t0)\n\t"
+                   "ld s3, 152(t0)\n\t"
+                   "ld s4, 160(t0)\n\t"
+                   "ld s5, 168(t0)\n\t"
+                   "ld s6, 176(t0)\n\t"
+                   "ld s7, 184(t0)\n\t"
+                   "ld s8, 192(t0)\n\t"
+                   "ld s9, 200(t0)\n\t"
+                   "ld s10, 208(t0)\n\t"
+                   "ld s11, 216(t0)\n\t"
+                   "ld ra, 272(t0)\n\t"
+                   "ld sp, 264(t0)\n\t"
+                   "ret\n"
+                   "2:\tld ra, 0(sp)\n\t"
+                   "ld s0, 8(sp)\n\t"
+                   "ld s1, 16(sp)\n\t"
+                   "addi sp, sp, 96\n\t"
+                   "li a0, 0xc000001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
+                   "ret" )
+
+/* Called before switching stacks.  Its return value is an existing
+ * per-thread frame, or NULL if thread initialization is incomplete. */
+static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void *unused )
+{
+    struct thread_data *data = get_thread_data();
+    return data && data->teb ? get_syscall_frame(data) : NULL;
+}
+ 
 
 void __wine_unix_call_dispatcher(void)
 {

@@ -306,12 +306,10 @@
 # define __ASM_SYSCALL_FUNC(id,name) \
     __ASM_GLOBAL_FUNC( name, \
                        "li a7, (" #id ")\n\t" \
-                       "mv t0, ra\n\t" \
                        "1:\tauipc t1, %got_pcrel_hi(" __ASM_NAME("__wine_syscall_dispatcher") ")\n\t" \
                        "ld t1, %pcrel_lo(1b)(t1)\n\t" \
                        "ld t1, 0(t1)\n\t" \
-                       "jalr ra, t1, 0\n\t" \
-                       "ret" )
+                       "jr t1" )
 #elif defined __arm__
 # define __ASM_SYSCALL_FUNC(id,name,args) \
     __ASM_GLOBAL_FUNC( name, \
