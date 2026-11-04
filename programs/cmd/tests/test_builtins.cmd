@@ -3180,6 +3180,9 @@ dir /B /O:G-NE
 echo ---
 dir /B /O:G-E-N
 echo ---
+set DIRCMD=/O:G-E-N
+dir /B
+echo ---
 set DIRCMD=/O:GN
 dir /B /O:G-N
 set DIRCMD=

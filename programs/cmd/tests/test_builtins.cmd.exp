@@ -1940,6 +1940,12 @@ a1.ac
 a2.aa
 a1.aa
 ---
+@todo_wine@a2.ac
+a1.ab
+a1.ac
+a2.aa
+@todo_wine@a1.aa
+---
 a2.ac
 a1.ab
 a2.aa
