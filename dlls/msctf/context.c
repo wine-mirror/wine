@@ -60,7 +60,7 @@ typedef struct tagContext {
     TS_STATUS documentStatus;
     ITfDocumentMgr *manager;
 
-    ITextStoreACP   *pITextStoreACP;
+    ITextStoreACP2  *pITextStoreACP;
     ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
 
     ITfEditSession* currentEditSession;
@@ -120,7 +120,7 @@ static void Context_Destructor(Context *This)
     TRACE("destroying %p\n", This);
 
     if (This->pITextStoreACP)
-        ITextStoreACP_Release(This->pITextStoreACP);
+        ITextStoreACP2_Release(This->pITextStoreACP);
 
     if (This->pITfContextOwnerCompositionSink)
         ITfContextOwnerCompositionSink_Release(This->pITfContextOwnerCompositionSink);
@@ -234,7 +234,7 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
         dwLockFlags |= TS_LF_READ;
 
     if (!This->documentStatus.dwDynamicFlags)
-        ITextStoreACP_GetStatus(This->pITextStoreACP, &This->documentStatus);
+        ITextStoreACP2_GetStatus(This->pITextStoreACP, &This->documentStatus);
 
     if (((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE) && (This->documentStatus.dwDynamicFlags & TS_SD_READONLY))
     {
@@ -248,7 +248,7 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
         return E_INVALIDARG;
     }
 
-    hr = ITextStoreACP_RequestLock(This->pITextStoreACP, dwLockFlags, phrSession);
+    hr = ITextStoreACP2_RequestLock(This->pITextStoreACP, dwLockFlags, phrSession);
 
     return hr;
 }
@@ -298,7 +298,7 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
         DWORD fetched;
         TS_SELECTION_ACP acps;
 
-        hr = ITextStoreACP_GetSelection(This->pITextStoreACP, ulIndex + i,
+        hr = ITextStoreACP2_GetSelection(This->pITextStoreACP, ulIndex + i,
                 1, &acps, &fetched);
 
         if (hr == TS_E_NOLOCK)
@@ -350,7 +350,7 @@ static HRESULT WINAPI Context_SetSelection (ITfContext *iface,
             return E_FAIL;
         }
 
-    hr = ITextStoreACP_SetSelection(This->pITextStoreACP, ulCount, acp);
+    hr = ITextStoreACP2_SetSelection(This->pITextStoreACP, ulCount, acp);
 
     free(acp);
 
@@ -402,7 +402,7 @@ static HRESULT WINAPI Context_GetEnd (ITfContext *iface,
         return E_NOTIMPL;
     }
 
-    ITextStoreACP_GetEndACP(This->pITextStoreACP,&end);
+    ITextStoreACP2_GetEndACP(This->pITextStoreACP,&end);
 
     return Range_Constructor(iface, end, end, ppEnd);
 }
@@ -441,7 +441,7 @@ static HRESULT WINAPI Context_GetStatus (ITfContext *iface,
         return E_NOTIMPL;
     }
 
-    ITextStoreACP_GetStatus(This->pITextStoreACP, &This->documentStatus);
+    ITextStoreACP2_GetStatus(This->pITextStoreACP, &This->documentStatus);
 
     *pdcs = This->documentStatus;
 
@@ -712,7 +712,7 @@ static HRESULT WINAPI InsertAtSelection_InsertTextAtSelection(
         return E_NOTIMPL;
     }
 
-    hr = ITextStoreACP_InsertTextAtSelection(This->pITextStoreACP, dwFlags, pchText, cch, &acpStart, &acpEnd, &change);
+    hr = ITextStoreACP2_InsertTextAtSelection(This->pITextStoreACP, dwFlags, pchText, cch, &acpStart, &acpEnd, &change);
     if (SUCCEEDED(hr))
         Range_Constructor(&This->ITfContext_iface, change.acpStart, change.acpNewEnd, ppRange);
 
@@ -863,7 +863,7 @@ static HRESULT WINAPI TextStoreACPSink_OnStatusChange(ITextStoreACPSink *iface,
         return E_NOTIMPL;
     }
 
-    hr = ITextStoreACP_RequestLock(This->pITextStoreACP, TS_LF_READ, &hrSession);
+    hr = ITextStoreACP2_RequestLock(This->pITextStoreACP, TS_LF_READ, &hrSession);
 
     if(SUCCEEDED(hr) && SUCCEEDED(hrSession))
         This->documentStatus.dwDynamicFlags = dwFlags;
@@ -1075,8 +1075,13 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr 
 
     if (punk)
     {
-        IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
-                          (LPVOID*)&This->pITextStoreACP);
+        IUnknown_QueryInterface(punk, &IID_ITextStoreACP, (void **)&This->pITextStoreACP);
+        if (!This->pITextStoreACP)
+        {
+            /* ITextStoreACP2 has the same definition as ITextStoreACP except for missing the last GetWnd() method
+             * which we don't use. */
+            IUnknown_QueryInterface(punk, &IID_ITextStoreACP2, (void **)&This->pITextStoreACP);
+        }
 
         IUnknown_QueryInterface(punk, &IID_ITfContextOwnerCompositionSink,
                                 (LPVOID*)&This->pITfContextOwnerCompositionSink);
@@ -1105,7 +1110,7 @@ HRESULT Context_Initialize(ITfContext *iface, ITfDocumentMgr *manager)
     Context *This = impl_from_ITfContext(iface);
 
     if (This->pITextStoreACP)
-        ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
+        ITextStoreACP2_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
             (IUnknown*)&This->ITextStoreACPSink_iface, TS_AS_ALL_SINKS);
     This->connected = TRUE;
     This->manager = manager;
@@ -1117,7 +1122,7 @@ HRESULT Context_Uninitialize(ITfContext *iface)
     Context *This = impl_from_ITfContext(iface);
 
     if (This->pITextStoreACP)
-        ITextStoreACP_UnadviseSink(This->pITextStoreACP, (IUnknown*)&This->ITextStoreACPSink_iface);
+        ITextStoreACP2_UnadviseSink(This->pITextStoreACP, (IUnknown*)&This->ITextStoreACPSink_iface);
     This->connected = FALSE;
     This->manager = NULL;
     return S_OK;

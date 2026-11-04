@@ -324,3 +324,152 @@ interface ITextStoreACP : IUnknown
         [in] TsViewCookie vcView,
         [out] HWND *phwnd);
 }
+
+[
+  object,
+  uuid(f86ad89f-5fe4-4b8d-bb9f-ef3797a84f1f),
+  pointer_default(unique)
+]
+interface ITextStoreACP2 : IUnknown
+{
+    HRESULT AdviseSink(
+        [in] REFIID riid,
+        [in, iid_is(riid)] IUnknown *punk,
+        [in] DWORD dwMask);
+
+    HRESULT UnadviseSink([in] IUnknown *punk);
+
+    HRESULT RequestLock(
+        [in] DWORD dwLockFlags,
+        [out] HRESULT *phrSession);
+
+    HRESULT GetStatus([out] TS_STATUS *pdcs);
+
+    HRESULT QueryInsert(
+        [in] LONG acpTestStart,
+        [in] LONG acpTestEnd,
+        [in] ULONG cch,
+        [out] LONG *pacpResultStart,
+        [out] LONG *pacpResultEnd);
+
+    HRESULT GetSelection(
+        [in] ULONG ulIndex,
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetched)] TS_SELECTION_ACP *pSelection,
+        [out] ULONG *pcFetched);
+
+    HRESULT SetSelection(
+        [in] ULONG ulCount,
+        [in, size_is(ulCount)] const TS_SELECTION_ACP *pSelection);
+
+    HRESULT GetText(
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [out, size_is(cchPlainReq), length_is(*pcchPlainRet)] WCHAR *pchPlain,
+        [in] ULONG cchPlainReq,
+        [out] ULONG *pcchPlainRet,
+        [out, size_is(cRunInfoReq), length_is(*pcRunInfoRet)] TS_RUNINFO *prgRunInfo,
+        [in] ULONG cRunInfoReq,
+        [out] ULONG *pcRunInfoRet,
+        [out] LONG *pacpNext);
+
+    HRESULT SetText(
+        [in] DWORD dwFlags,
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [in, size_is(cch)] const WCHAR *pchText,
+        [in] ULONG cch,
+        [out] TS_TEXTCHANGE *pChange);
+
+    HRESULT GetFormattedText(
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [out] IDataObject **ppDataObject);
+
+    HRESULT GetEmbedded(
+        [in] LONG acpPos,
+        [in] REFGUID rguidService,
+        [in] REFIID riid,
+        [out, iid_is(riid)] IUnknown **ppunk);
+
+    HRESULT QueryInsertEmbedded(
+        [in] const GUID *pguidService,
+        [in] const FORMATETC *pFormatEtc,
+        [out] BOOL *pfInsertable);
+
+    HRESULT InsertEmbedded(
+        [in] DWORD dwFlags,
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [in] IDataObject *pDataObject,
+        [out] TS_TEXTCHANGE *pChange);
+
+
+    HRESULT InsertTextAtSelection(
+        [in] DWORD dwFlags,
+        [in, size_is(cch)] const WCHAR *pchText,
+        [in] ULONG cch,
+        [out] LONG *pacpStart,
+        [out] LONG *pacpEnd,
+        [out] TS_TEXTCHANGE *pChange);
+
+    HRESULT InsertEmbeddedAtSelection(
+        [in] DWORD dwFlags,
+        [in] IDataObject *pDataObject,
+        [out] LONG *pacpStart,
+        [out] LONG *pacpEnd,
+        [out] TS_TEXTCHANGE *pChange);
+
+    HRESULT RequestSupportedAttrs(
+        [in] DWORD dwFlags,
+        [in] ULONG cFilterAttrs,
+        [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs);
+
+    HRESULT RequestAttrsAtPosition(
+        [in] LONG acpPos,
+        [in] ULONG cFilterAttrs,
+        [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+        [in] DWORD dwFlags);
+
+    HRESULT RequestAttrsTransitioningAtPosition(
+        [in] LONG acpPos,
+        [in] ULONG cFilterAttrs,
+        [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+        [in] DWORD dwFlags);
+
+    HRESULT FindNextAttrTransition(
+        [in] LONG acpStart,
+        [in] LONG acpHalt,
+        [in] ULONG cFilterAttrs,
+        [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+        [in] DWORD dwFlags,
+        [out] LONG *pacpNext,
+        [out] BOOL *pfFound,
+        [out] LONG *plFoundOffset);
+
+    HRESULT RetrieveRequestedAttrs(
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetched)] TS_ATTRVAL *paAttrVals,
+        [out] ULONG *pcFetched);
+
+    HRESULT GetEndACP([out] LONG *pacp);
+
+    HRESULT GetActiveView([out] TsViewCookie *pvcView);
+
+    HRESULT GetACPFromPoint(
+        [in] TsViewCookie vcView,
+        [in] const POINT *ptScreen,
+        [in] DWORD dwFlags,
+        [out] LONG *pacp);
+
+    HRESULT GetTextExt(
+        [in] TsViewCookie vcView,
+        [in] LONG acpStart,
+        [in] LONG acpEnd,
+        [out] RECT *prc,
+        [out] BOOL *pfClipped);
+
+    HRESULT GetScreenExt(
+        [in] TsViewCookie vcView,
+        [out] RECT *prc);
+};
