@@ -168,7 +168,7 @@ struct context_data
                  unsigned char regs[80]; } i386_regs;
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
-        struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
+        struct { struct { unsigned __int64 low, high; } q[16]; unsigned int fpcr, fpsr; } arm64_regs;
     } fp;  /* selected by SERVER_CTX_FLOATING_POINT */
     union
     {
@@ -188,6 +188,7 @@ struct context_data
     union
     {
         struct { struct { unsigned __int64 low, high; } ymm_high[16]; } ymm_regs;
+        struct { struct { unsigned __int64 low, high; } q16[16]; } arm64_regs;
     } vector;                    /* selected by SERVER_CTX_VECTOR_REGISTERS */
     union
     {
