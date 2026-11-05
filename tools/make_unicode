@@ -531,7 +531,7 @@ my @locales =
  { name => "ar-TD" },
  { name => "ar-TN", lcid => 0x00001c01, sabbrevlangname => "ART", nativedigits => "0123456789" },
  { name => "ar-YE", lcid => 0x00002401, sabbrevlangname => "ARY" },
- { name => "arn", lcid => 0x0000007a, oemcp => 850, ebcdiccp => 20284, slist => ",", sabbrevlangname => "MPD", sopentypelang => "MAP" },
+ { name => "arn", lcid => 0x0000007a, oemcp => 850, ebcdiccp => 20284, slist => ",", sabbrevlangname => "MPD", sopentypelang => "MAP", scurrency => "\$" },
  { name => "arn-CL", lcid => 0x0000047a },
  { name => "arn-Latn", alias => "arn" },
  { name => "arn-Latn-CL", alias => "arn-CL" },
@@ -551,7 +551,7 @@ my @locales =
  { name => "az-Cyrl-AZ", lcid => 0x0000082c },
  { name => "az-Latn", lcid => 0x0000782c },
  { name => "az-Latn-AZ", lcid => 0x0000042c },
- { name => "ba", lcid => 0x0000006d, oemcp => 866, group => 5, sabbrevlangname => "BAS", sopentypelang => "BSH" },
+ { name => "ba", lcid => 0x0000006d, oemcp => 866, group => 5, sabbrevlangname => "BAS", sopentypelang => "BSH", scurrency => "\x{20bd}" },
  { name => "ba-Cyrl", alias => "ba" },
  { name => "ba-Cyrl-RU", alias => "ba-RU" },
  { name => "ba-RU", lcid => 0x0000046d },
@@ -997,7 +997,7 @@ my @locales =
  { name => "gez-ET" },
  { name => "gl", lcid => 0x00000056, oemcp => 850, sabbrevlangname => "GLC", sopentypelang => "GAL" },
  { name => "gl-ES", lcid => 0x00000456 },
- { name => "gn", lcid => 0x00000074, oemcp => 850, ebcdiccp => 20284, slist => ",", sopentypelang => "GUA" },
+ { name => "gn", lcid => 0x00000074, oemcp => 850, ebcdiccp => 20284, slist => ",", sopentypelang => "GUA", scurrency => "\x{20b2}" },
  { name => "gn-PY", lcid => 0x00000474 },
  { name => "gsw", lcid => 0x00000084, oemcp => 850, ebcdiccp => 20297, sabbrevlangname => "ZZZ", sopentypelang => "ALS" },
  { name => "gsw-CH" },
@@ -1043,7 +1043,7 @@ my @locales =
  { name => "hsb-DE", lcid => 0x0000042e },
  { name => "ht" },
  { name => "ht-HT" },
- { name => "hu", lcid => 0x0000000e, oemcp => 852, group => 2 },
+ { name => "hu", lcid => 0x0000000e, oemcp => 852, group => 2, scurrency => "Ft" },
  { name => "hu-HU", lcid => 0x0000040e },
  { name => "hu-HU_technl", lcid => 0x0001040e, alias => "hu-HU" },
  { name => "hy", lcid => 0x0000002b, slist => ",", group => 17 },
@@ -1078,12 +1078,12 @@ my @locales =
  { name => "it-IT", lcid => 0x00000410 },
  { name => "it-SM" },
  { name => "it-VA", oemcp => 65001 },
- { name => "iu", lcid => 0x0000005d, oemcp => 437, slist => ",", sortlocale => "iu-Latn-CA", sabbrevlangname => "IUK", sopentypelang => "INU" },
+ { name => "iu", lcid => 0x0000005d, oemcp => 437, slist => ",", sortlocale => "iu-Latn-CA", sabbrevlangname => "IUK", sopentypelang => "INU", scurrency => "\$" },
  { name => "iu-Cans", lcid => 0x0000785d, file => "iu", oemcp => 65001, sabbrevlangname => "IUS" },
  { name => "iu-Cans-CA", lcid => 0x0000045d, file => "iu_CA" },
  { name => "iu-Latn", lcid => 0x00007c5d },
  { name => "iu-Latn-CA", lcid => 0x0000085d },
- { name => "ja", lcid => 0x00000011, ireadinglayout => 2, oemcp => 932, slist => ",",  sscripts => "Hani Hira Jpan Kana", group => 7, sopentypelang => "JAN" },
+ { name => "ja", lcid => 0x00000011, ireadinglayout => 2, oemcp => 932, slist => ",",  sscripts => "Hani Hira Jpan Kana", group => 7, sopentypelang => "JAN", scurrency => "\x{00a5}" },
  { name => "ja-JP", lcid => 0x00000411 },
  { name => "ja-JP_radstr", lcid => 0x00040411, alias => "ja-JP" },
  { name => "ja-JP-u-co-unihan", alias => "ja-JP_radstr" },
@@ -1403,7 +1403,7 @@ my @locales =
  { name => "pi-Latn-GB" },
  { name => "pis" },
  { name => "pis-SB" },
- { name => "pl", lcid => 0x00000015, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "PLK", sopentypelang => "PLK" },
+ { name => "pl", lcid => 0x00000015, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "PLK", sopentypelang => "PLK", scurrency => "z\x{0142}" },
  { name => "pl-PL", lcid => 0x00000415 },
  { name => "pms" },
  { name => "pms-IT" },
@@ -1465,8 +1465,8 @@ my @locales =
  { name => "rm-CH", lcid => 0x00000417 },
  { name => "rn" },
  { name => "rn-BI" },
- { name => "ro", lcid => 0x00000018, oemcp => 852, ebcdiccp => 20880, sabbrevlangname => "ROM", sopentypelang => "ROM" },
- { name => "ro-MD", lcid => 0x00000818, maccp => 65001, sabbrevlangname => "ROD" },
+ { name => "ro", lcid => 0x00000018, oemcp => 852, ebcdiccp => 20880, sabbrevlangname => "ROM", sopentypelang => "ROM", scurrency => "lei" },
+ { name => "ro-MD", lcid => 0x00000818, maccp => 65001, sabbrevlangname => "ROD", scurrency => "" },
  { name => "ro-RO", lcid => 0x00000418, group => 2 },
  { name => "rof" },
  { name => "rof-TZ" },
@@ -5071,10 +5071,11 @@ sub build_locale_data()
         # currencies
 
         my $sintlsymbol = $geo->{sintlsymbol} || "XDR";
-        my $scurrency = $geo->{scurrency} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[\@alt='narrow']" );
-        $scurrency ||= loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[not(\@alt)]" );
+        my $scurrency = locale_entry( $loc, "scurrency", "" );
         $geo->{scurrency} = $scurrency if $scurrency;
-        $scurrency ||= $geo->{sintlsymbol};
+        $scurrency ||= loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[not(\@alt)]" ) || $geo->{scurrency};
+        $geo->{scurrency} ||= $scurrency;
+        $scurrency ||= $sintlsymbol;
         my $sengcurrname = $loc->{sengcurrname} || loc_query( $lcnames{en}, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" );
         my $snativecurrname = $loc->{sengcurrname} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" ) || $sengcurrname;
         my $icurrdigits = xml_query( $suppl, "/supplementalData/currencyData/fractions/info[\@iso4217='$sintlsymbol']/\@digits" );
