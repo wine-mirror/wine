@@ -201,7 +201,8 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         flags = ((const ARM64_NT_CONTEXT *)context)->ContextFlags & ~CONTEXT_ARM64;
         if (flags & CONTEXT_ARM64_CONTROL) ret |= SERVER_CTX_CONTROL;
         if (flags & CONTEXT_ARM64_INTEGER) ret |= SERVER_CTX_INTEGER;
-        if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT | SERVER_CTX_VECTOR_REGISTERS;
+        if (flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_LOW)) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_HIGH)) ret |= SERVER_CTX_VECTOR_REGISTERS;
         if (flags & CONTEXT_ARM64_X18) ret |= SERVER_CTX_TLS;
         if (flags & CONTEXT_ARM64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
         break;
@@ -598,9 +599,9 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             for (i = 0; i < 18; i++) to->integer.arm64_regs.x0[i] = from->X[i];
             for (i = 19; i <= 28; i++) to->integer.arm64_regs.x19[i - 19] = from->X[i];
         }
-        if (flags & CONTEXT_ARM64_FLOATING_POINT)
+        if (flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_LOW))
         {
-            to->flags |= SERVER_CTX_FLOATING_POINT | SERVER_CTX_VECTOR_REGISTERS;
+            to->flags |= SERVER_CTX_FLOATING_POINT;
             for (i = 0; i < 16; i++)
             {
                 to->fp.arm64_regs.q[i].low = from->V[i].Low;
@@ -608,6 +609,10 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             }
             to->fp.arm64_regs.fpcr = from->Fpcr;
             to->fp.arm64_regs.fpsr = from->Fpsr;
+        }
+        if (flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_HIGH))
+        {
+            to->flags |= SERVER_CTX_VECTOR_REGISTERS;
             for (i = 0; i < 16; i++)
             {
                 to->vector.arm64_regs.q16[i].low = from->V[i + 16].Low;
@@ -1030,9 +1035,10 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             for (i = 0; i < 18; i++) to->X[i] = from->integer.arm64_regs.x0[i];
             for (i = 19; i <= 28; i++) to->X[i] = from->integer.arm64_regs.x19[i - 19];
         }
-        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM64_FLOATING_POINT))
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) &&
+            (to_flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_LOW)))
         {
-            to->ContextFlags |= CONTEXT_ARM64_FLOATING_POINT;
+            to->ContextFlags |= CONTEXT_ARM64 | (to_flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_LOW));
             for (i = 0; i < 16; i++)
             {
                 to->V[i].Low = from->fp.arm64_regs.q[i].low;
@@ -1041,9 +1047,10 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             to->Fpcr = from->fp.arm64_regs.fpcr;
             to->Fpsr = from->fp.arm64_regs.fpsr;
         }
-        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) && (to_flags & CONTEXT_ARM64_FLOATING_POINT))
+        if ((from->flags & SERVER_CTX_VECTOR_REGISTERS) &&
+            (to_flags & (CONTEXT_ARM64_FLOATING_POINT | CONTEXT_ARM64_FLOATING_POINT_HIGH)))
         {
-            to->ContextFlags |= CONTEXT_ARM64_FLOATING_POINT;
+            to->ContextFlags |= CONTEXT_ARM64 | (to_flags & CONTEXT_ARM64_FLOATING_POINT_HIGH);
             for (i = 0; i < 16; i++)
             {
                 to->V[i + 16].Low = from->vector.arm64_regs.q16[i].low;
