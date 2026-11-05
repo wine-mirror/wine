@@ -199,10 +199,11 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
         VariantInit( &v );
 
         V_VT( &v ) = VT_UI4;
-        V_UI4( &v ) = pi.dwProcessId;
-
-        if (bret && (ret = IWbemClassObject_Put( out_params, L"ProcessId", 0, &v, 0 ))) goto done;
-
+        if (bret)
+        {
+            V_UI4( &v ) = pi.dwProcessId;
+            if ((ret = IWbemClassObject_Put( out_params, L"ProcessId", 0, &v, 0 ))) goto done;
+        }
         V_UI4( &v ) = error;
         if ((ret = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &v, 0 ))) goto done;
 
