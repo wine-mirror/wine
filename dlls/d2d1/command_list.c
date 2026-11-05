@@ -158,8 +158,8 @@ struct d2d_command_fill_opacity_mask
     struct d2d_command c;
     ID2D1Bitmap *bitmap;
     ID2D1Brush *brush;
-    D2D1_RECT_F *dst_rect;
-    D2D1_RECT_F *src_rect;
+    size_t dst_rect;
+    size_t src_rect;
 };
 
 struct d2d_command_fill_geometry
@@ -177,14 +177,33 @@ struct d2d_command_fill_rectangle
     ID2D1Brush *brush;
 };
 
+struct d2d_command_draw_glyph_run_description
+{
+    UINT32 stringLength;
+    UINT32 textPosition;
+    size_t localeName;
+    size_t string;
+    size_t clusterMap;
+};
+
 struct d2d_command_draw_glyph_run
 {
     struct d2d_command c;
     D2D1_POINT_2F origin;
     DWRITE_MEASURING_MODE measuring_mode;
     ID2D1Brush *brush;
-    DWRITE_GLYPH_RUN run;
-    DWRITE_GLYPH_RUN_DESCRIPTION *run_desc;
+    struct
+    {
+        IDWriteFontFace *fontFace;
+        FLOAT fontEmSize;
+        UINT32 glyphCount;
+        BOOL isSideways;
+        UINT32 bidiLevel;
+        size_t glyphIndices;
+        size_t glyphAdvances;
+        size_t glyphOffsets;
+    } run;
+    size_t run_desc;
 };
 
 struct d2d_command_draw_bitmap
@@ -193,9 +212,9 @@ struct d2d_command_draw_bitmap
     float opacity;
     D2D1_INTERPOLATION_MODE interpolation_mode;
     ID2D1Bitmap *bitmap;
-    D2D1_RECT_F *dst_rect;
-    D2D1_RECT_F *src_rect;
-    D2D1_MATRIX_4X4_F *perspective_transform;
+    size_t dst_rect;
+    size_t src_rect;
+    size_t perspective_transform;
 };
 
 struct d2d_command_draw_image
@@ -204,8 +223,8 @@ struct d2d_command_draw_image
     ID2D1Image *image;
     D2D1_INTERPOLATION_MODE interpolation_mode;
     D2D1_COMPOSITE_MODE composite_mode;
-    D2D1_POINT_2F *target_offset;
-    D2D1_RECT_F *image_rect;
+    size_t target_offset;
+    size_t image_rect;
 };
 
 struct d2d_command_draw_sprite_batch
@@ -218,6 +237,12 @@ struct d2d_command_draw_sprite_batch
     D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
     D2D1_SPRITE_OPTIONS sprite_options;
 };
+
+static const void * d2d_command_list_get_field(const BYTE *data, size_t offset)
+{
+    if (!offset) return NULL;
+    return data + offset;
+}
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
 {
@@ -387,7 +412,32 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             case D2D_COMMAND_DRAW_GLYPH_RUN:
             {
                 const struct d2d_command_draw_glyph_run *c = data;
-                hr = ID2D1CommandSink_DrawGlyphRun(sink, c->origin, &c->run, c->run_desc, c->brush, c->measuring_mode);
+                DWRITE_GLYPH_RUN_DESCRIPTION run_desc;
+                DWRITE_GLYPH_RUN run;
+
+                run.fontFace = c->run.fontFace;
+                run.fontEmSize = c->run.fontEmSize;
+                run.glyphCount = c->run.glyphCount;
+                run.isSideways = c->run.isSideways;
+                run.bidiLevel = c->run.bidiLevel;
+                run.glyphIndices = d2d_command_list_get_field(data, c->run.glyphIndices);
+                run.glyphAdvances = d2d_command_list_get_field(data, c->run.glyphAdvances);
+                run.glyphOffsets = d2d_command_list_get_field(data, c->run.glyphOffsets);
+
+                if (c->run_desc)
+                {
+                    const struct d2d_command_draw_glyph_run_description *desc;
+
+                    desc = d2d_command_list_get_field(data, c->run_desc);
+                    run_desc.localeName = d2d_command_list_get_field(data, desc->localeName);
+                    run_desc.string = d2d_command_list_get_field(data, desc->string);
+                    run_desc.stringLength = desc->stringLength;
+                    run_desc.clusterMap = d2d_command_list_get_field(data, desc->clusterMap);
+                    run_desc.textPosition = desc->textPosition;
+                }
+
+                hr = ID2D1CommandSink_DrawGlyphRun(sink, c->origin, &run,
+                        c->run_desc ? &run_desc : NULL, c->brush, c->measuring_mode);
                 break;
             }
             case D2D_COMMAND_DRAW_LINE:
@@ -414,14 +464,25 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             case D2D_COMMAND_DRAW_BITMAP:
             {
                 const struct d2d_command_draw_bitmap *c = data;
-                hr = ID2D1CommandSink_DrawBitmap(sink, c->bitmap, c->dst_rect, c->opacity,
-                        c->interpolation_mode, c->src_rect, c->perspective_transform);
+                const D2D1_MATRIX_4X4_F *perspective_transform;
+                const D2D1_RECT_F *dst_rect, *src_rect;
+
+                dst_rect = d2d_command_list_get_field(data, c->dst_rect);
+                src_rect = d2d_command_list_get_field(data, c->src_rect);
+                perspective_transform = d2d_command_list_get_field(data, c->perspective_transform);
+                hr = ID2D1CommandSink_DrawBitmap(sink, c->bitmap, dst_rect, c->opacity,
+                        c->interpolation_mode, src_rect, perspective_transform);
                 break;
             }
             case D2D_COMMAND_DRAW_IMAGE:
             {
                 const struct d2d_command_draw_image *c = data;
-                hr = ID2D1CommandSink_DrawImage(sink, c->image, c->target_offset, c->image_rect,
+                const D2D1_POINT_2F *target_offset;
+                const D2D1_RECT_F *image_rect;
+
+                target_offset = d2d_command_list_get_field(data, c->target_offset);
+                image_rect = d2d_command_list_get_field(data, c->image_rect);
+                hr = ID2D1CommandSink_DrawImage(sink, c->image, target_offset, image_rect,
                         c->interpolation_mode, c->composite_mode);
                 break;
             }
@@ -452,7 +513,11 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             case D2D_COMMAND_FILL_OPACITY_MASK:
             {
                 const struct d2d_command_fill_opacity_mask *c = data;
-                hr = ID2D1CommandSink_FillOpacityMask(sink, c->bitmap, c->brush, c->dst_rect, c->src_rect);
+                const D2D1_RECT_F *dst_rect, *src_rect;
+
+                dst_rect = d2d_command_list_get_field(data, c->dst_rect);
+                src_rect = d2d_command_list_get_field(data, c->src_rect);
+                hr = ID2D1CommandSink_FillOpacityMask(sink, c->bitmap, c->brush, dst_rect, src_rect);
                 break;
             }
             case D2D_COMMAND_FILL_GEOMETRY:
@@ -949,19 +1014,18 @@ void d2d_command_list_set_text_rendering_params(struct d2d_command_list *command
     d2d_command_list_set_text_rendering_params_internal(command_list, FALSE, params);
 }
 
-static inline void d2d_command_list_write_field(BYTE **data, void *dst, const void *src, size_t size)
+static inline size_t d2d_command_list_write_field(BYTE *buffer, size_t *offset,
+        const void *data, size_t size)
 {
-    void **ptr = dst;
+    size_t ret = *offset;
 
-    if (!src)
-    {
-        *ptr = NULL;
-        return;
-    }
+    if (!data)
+        return 0;
 
-    *ptr = *data;
-    memcpy(*data, src, size);
-    *data = *data + size;
+    memcpy(buffer + *offset, data, size);
+    *offset = *offset + size;
+
+    return ret;
 }
 
 void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
@@ -969,10 +1033,9 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
         const DWRITE_GLYPH_RUN_DESCRIPTION *run_desc, ID2D1Brush *orig_brush,
         DWRITE_MEASURING_MODE measuring_mode)
 {
+    struct d2d_command_draw_glyph_run_description desc;
     struct d2d_command_draw_glyph_run *command;
-    size_t size, locale_name_size = 0;
-    DWRITE_GLYPH_RUN_DESCRIPTION *d;
-    DWRITE_GLYPH_RUN *r;
+    size_t size, locale_name_size = 0, offset;
     UINT32 glyph_count;
     ID2D1Brush *brush;
     BYTE *data;
@@ -996,7 +1059,7 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
     if (run->glyphOffsets) size += glyph_count * sizeof(*run->glyphOffsets);
     if (run_desc)
     {
-        size += sizeof(*run_desc);
+        size += sizeof(desc);
         if (run_desc->localeName)
         {
             locale_name_size = (wcslen(run_desc->localeName) + 1) * sizeof(*run_desc->localeName);
@@ -1004,8 +1067,6 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
         }
         if (run_desc->string) size += run_desc->stringLength * sizeof(*run_desc->string);
         if (run_desc->clusterMap) size += run_desc->stringLength * sizeof(*run_desc->clusterMap);
-        size += sizeof(run_desc->stringLength);
-        size += sizeof(run_desc->textPosition);
     }
 
     d2d_command_list_reference_object(command_list, run->fontFace);
@@ -1013,37 +1074,39 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
     if (!(command = d2d_command_list_require_space(command_list, size)))
         return;
     command->c.op = D2D_COMMAND_DRAW_GLYPH_RUN;
-    r = &command->run;
 
-    r->fontFace = run->fontFace;
-    r->fontEmSize = run->fontEmSize;
-    r->glyphCount = run->glyphCount;
-    r->isSideways = run->isSideways;
-    r->bidiLevel = run->bidiLevel;
-
-    data = (BYTE *)(command + 1);
-
-    d2d_command_list_write_field(&data, &r->glyphIndices, run->glyphIndices, glyph_count * sizeof(*r->glyphIndices));
-    d2d_command_list_write_field(&data, &r->glyphAdvances, run->glyphAdvances, glyph_count * sizeof(*r->glyphAdvances));
-    d2d_command_list_write_field(&data, &r->glyphOffsets, run->glyphOffsets, glyph_count * sizeof(*r->glyphOffsets));
-
-    command->run_desc = NULL;
-    if (run_desc)
-    {
-        d = command->run_desc = (DWRITE_GLYPH_RUN_DESCRIPTION *)data;
-        memset(d, 0, sizeof(*d));
-        data += sizeof(*d);
-
-        d2d_command_list_write_field(&data, &d->localeName, run_desc->localeName, locale_name_size);
-        d2d_command_list_write_field(&data, &d->string, run_desc->string, run_desc->stringLength * sizeof(*run_desc->string));
-        d->stringLength = run_desc->stringLength;
-        d2d_command_list_write_field(&data, &d->clusterMap, run_desc->clusterMap, run_desc->stringLength * sizeof(*run_desc->clusterMap));
-        d->textPosition = run_desc->textPosition;
-    }
-
-    command->brush = brush;
     command->origin = origin;
     command->measuring_mode = measuring_mode;
+    command->brush = brush;
+    command->run.fontFace = run->fontFace;
+    command->run.fontEmSize = run->fontEmSize;
+    command->run.glyphCount = run->glyphCount;
+    command->run.isSideways = run->isSideways;
+    command->run.bidiLevel = run->bidiLevel;
+    command->run_desc = 0;
+
+    data = (BYTE *)command;
+    offset = sizeof(*command);
+
+    command->run.glyphIndices = d2d_command_list_write_field(data, &offset, run->glyphIndices,
+            glyph_count * sizeof(*run->glyphIndices));
+    command->run.glyphAdvances = d2d_command_list_write_field(data, &offset, run->glyphAdvances,
+            glyph_count * sizeof(*run->glyphAdvances));
+    command->run.glyphOffsets = d2d_command_list_write_field(data, &offset, run->glyphOffsets,
+            glyph_count * sizeof(*run->glyphOffsets));
+
+    if (run_desc)
+    {
+        desc.stringLength = run_desc->stringLength;
+        desc.textPosition = run_desc->textPosition;
+        desc.localeName = d2d_command_list_write_field(data, &offset, run_desc->localeName, locale_name_size);
+        desc.string = d2d_command_list_write_field(data, &offset, run_desc->string,
+                run_desc->stringLength * sizeof(*run_desc->string));
+        desc.clusterMap = d2d_command_list_write_field(data, &offset,
+                run_desc->clusterMap, run_desc->stringLength * sizeof(*run_desc->clusterMap));
+
+        command->run_desc = d2d_command_list_write_field(data, &offset, &desc, sizeof(desc));
+    }
 }
 
 void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bitmap *bitmap,
@@ -1051,7 +1114,7 @@ void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bi
         const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
 {
     struct d2d_command_draw_bitmap *command;
-    size_t size;
+    size_t size, offset;
     BYTE *data;
 
     size = sizeof(*command);
@@ -1068,11 +1131,12 @@ void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bi
         command->opacity = opacity;
         command->interpolation_mode = interpolation_mode;
 
-        data = (BYTE *)(command + 1);
+        data = (BYTE *)command;
+        offset = sizeof(*command);
 
-        d2d_command_list_write_field(&data, &command->dst_rect, dst_rect, sizeof(*dst_rect));
-        d2d_command_list_write_field(&data, &command->src_rect, src_rect, sizeof(*src_rect));
-        d2d_command_list_write_field(&data, &command->perspective_transform, perspective_transform,
+        command->dst_rect = d2d_command_list_write_field(data, &offset, dst_rect, sizeof(*dst_rect));
+        command->src_rect = d2d_command_list_write_field(data, &offset, src_rect, sizeof(*src_rect));
+        command->perspective_transform = d2d_command_list_write_field(data, &offset, perspective_transform,
                 sizeof(*perspective_transform));
     }
 }
@@ -1082,7 +1146,7 @@ void d2d_command_list_draw_image(struct d2d_command_list *command_list, ID2D1Ima
         D2D1_COMPOSITE_MODE composite_mode)
 {
     struct d2d_command_draw_image *command;
-    size_t size;
+    size_t size, offset;
     BYTE *data;
 
     size = sizeof(*command);
@@ -1098,10 +1162,11 @@ void d2d_command_list_draw_image(struct d2d_command_list *command_list, ID2D1Ima
         command->interpolation_mode = interpolation_mode;
         command->composite_mode = composite_mode;
 
-        data = (BYTE *)(command + 1);
+        data = (BYTE *)command;
+        offset = sizeof(*command);
 
-        d2d_command_list_write_field(&data, &command->target_offset, target_offset, sizeof(*target_offset));
-        d2d_command_list_write_field(&data, &command->image_rect, image_rect, sizeof(*image_rect));
+        command->target_offset = d2d_command_list_write_field(data, &offset, target_offset, sizeof(*target_offset));
+        command->image_rect = d2d_command_list_write_field(data, &offset, image_rect, sizeof(*image_rect));
     }
 }
 
@@ -1152,8 +1217,8 @@ void d2d_command_list_fill_opacity_mask(struct d2d_command_list *command_list, c
         ID2D1Bitmap *bitmap, ID2D1Brush *orig_brush, const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
 {
     struct d2d_command_fill_opacity_mask *command;
+    size_t size, offset;
     ID2D1Brush *brush;
-    size_t size;
     BYTE *data;
 
     if (!d2d_command_list_create_brush(command_list, context, orig_brush, &brush))
@@ -1171,9 +1236,10 @@ void d2d_command_list_fill_opacity_mask(struct d2d_command_list *command_list, c
         command->bitmap = bitmap;
         command->brush = brush;
 
-        data = (BYTE *)(command + 1);
+        data = (BYTE *)command;
+        offset = sizeof(*command);
 
-        d2d_command_list_write_field(&data, &command->dst_rect, dst_rect, sizeof(*dst_rect));
-        d2d_command_list_write_field(&data, &command->src_rect, src_rect, sizeof(*src_rect));
+        command->dst_rect = d2d_command_list_write_field(data, &offset, dst_rect, sizeof(*dst_rect));
+        command->src_rect = d2d_command_list_write_field(data, &offset, src_rect, sizeof(*src_rect));
     }
 }
