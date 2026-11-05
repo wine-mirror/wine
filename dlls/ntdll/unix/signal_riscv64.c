@@ -98,7 +98,9 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     context.Gpr.X[2]  = stack_top;
     context.Pc        = (ULONG64)pRtlUserThreadStart;
 
-    ctx = (CONTEXT *)(stack_top - sizeof(*ctx));
+    /* The RISC-V LP64 ABI requires a 16-byte aligned stack pointer.
+     * sizeof(CONTEXT) need not itself be a multiple of 16. */
+    ctx = (CONTEXT *)((stack_top - sizeof(*ctx)) & ~(ULONG_PTR)15);
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
 
@@ -154,6 +156,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     if (flags & CONTEXT_INTEGER)
         memcpy( context->Gpr.X, frame->x, sizeof(frame->x) );
 
+    /* x0 is architecturally hardwired to zero. */
+    if (flags & CONTEXT_INTEGER)
+        context->Gpr.X[0] = 0;
+
     if (flags & CONTEXT_CONTROL)
     {
         context->Pc = frame->pc;
@@ -186,6 +192,9 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (flags & CONTEXT_INTEGER)
         memcpy( frame->x, context->Gpr.X, sizeof(frame->x) );
+
+    if (flags & CONTEXT_INTEGER)
+        frame->x[0] = 0;
 
     if (flags & CONTEXT_CONTROL)
     {
