@@ -2971,7 +2971,8 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
 }
 
 static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state, const struct wined3d_vk_info *vk_info)
+        const struct wined3d_state *state, struct wined3d_rendertarget_view *dsv,
+        const struct wined3d_vk_info *vk_info)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS + 1];
@@ -3045,7 +3046,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
         ++attachment_count;
     }
 
-    if ((view = state->fb.depth_stencil))
+    if ((view = dsv))
     {
         rtv_vk = wined3d_rendertarget_view_vk(view);
 
@@ -3094,7 +3095,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     }
 
     if (!(context_vk->vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, &state->fb,
-            ARRAY_SIZE(state->fb.render_targets), !!state->fb.depth_stencil, 0)))
+            ARRAY_SIZE(state->fb.render_targets), !!dsv, 0)))
     {
         ERR("Failed to get render pass.\n");
         return false;
@@ -4010,6 +4011,21 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if ((dsv = state->fb.depth_stencil))
     {
+        sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
+        if (!context_vk->sample_count)
+        {
+            context_vk->sample_count = sample_count;
+        }
+        else if (context_vk->sample_count != sample_count)
+        {
+            WARN("Colour buffers have %u samples, depth stencil has %u samples, disabling ds buffer.\n",
+                    context_vk->sample_count, sample_count);
+            dsv = NULL;
+        }
+    }
+
+    if (dsv)
+    {
         if (wined3d_state_uses_depth_buffer(state))
             wined3d_context_vk_prepare_used_rtv(context_vk, dsv);
         else
@@ -4017,12 +4033,6 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
         if (!state->depth_stencil_state || state->depth_stencil_state->writes_ds)
             invalidate_ds = true;
-
-        sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
-        if (!context_vk->sample_count)
-            context_vk->sample_count = sample_count;
-        else if (context_vk->sample_count != sample_count)
-            FIXME("Inconsistent sample counts (%u != %u).\n", context_vk->sample_count, sample_count);
     }
 
     if (!context_vk->sample_count)
@@ -4050,7 +4060,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
         wined3d_context_vk_end_current_render_pass(context_vk);
 
-    if (!wined3d_context_vk_begin_render_pass(context_vk, state, vk_info))
+    if (!wined3d_context_vk_begin_render_pass(context_vk, state, dsv, vk_info))
     {
         ERR("Failed to begin render pass.\n");
         return VK_NULL_HANDLE;
