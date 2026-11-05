@@ -344,7 +344,7 @@ void __wine_syscall_dispatcher_return( void )
     __builtin_unreachable();
 }
 
-/* Initial RV64 NT-service bridge.  Calls with more than seven argument
+/* Initial RV64 NT-service bridge.  Calls with more than eight argument
  * registers are deliberately rejected until stack-argument marshalling
  * is implemented.  The helper runs on the Unix stack. */
 static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const ULONG64 *args )
@@ -366,14 +366,14 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
         return STATUS_INVALID_SYSTEM_SERVICE;
     arg_size = table->ArgumentTable[index];
-    if (arg_size > 7 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
+    if (arg_size > 8 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
     return service( args[0], args[1], args[2], args[3],
                     args[4], args[5], args[6], 0 );
 }
 
-/* The Windows stub tail-jumps here with a7 = NT service id, ra = caller.
+/* The Windows stub tail-jumps here with t2 = NT service id, ra = caller.
  * Save arguments on the original stack before using the C ABI to locate
  * the per-thread syscall frame.  The syscall frame is at the high end of
  * Wine's Unix kernel stack; C calls grow downwards from it. */
@@ -389,7 +389,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "sd a4, 56(sp)\n\t"
                    "sd a5, 64(sp)\n\t"
                    "sd a6, 72(sp)\n\t"
-                   "sd a7, 80(sp)\n\t"
+                   "sd t2, 80(sp)\n\t" /* syscall id */
+                   "sd a7, 88(sp)\n\t" /* eighth argument */
                    "mv a0, sp\n\t"
                    "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
                    "beqz a0, 2f\n\t"
@@ -429,7 +430,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "sd t1, 120(t0)\n\t"
                    "ld t1, 72(sp)\n\t"
                    "sd t1, 128(t0)\n\t"
-                   "ld t1, 80(sp)\n\t"
+                   "ld t1, 88(sp)\n\t"
                    "sd t1, 136(t0)\n\t"
                    "mv sp, t0\n\t"
                    "lw a0, 568(sp)\n\t"
@@ -467,10 +468,112 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
 }
  
 
-void __wine_unix_call_dispatcher(void)
-{
-    abort();
+/* Unix-call entry: a0 = function table, a1 = function index,
+ * a2 = argument block.  The entry runs on the Windows stack and the
+ * selected Unix function must execute on Wine's kernel stack.
+ *
+ * This first implementation supports the normal (non-nested) call path.
+ * Context-changing callbacks and signal unwinding still need integration.
+ */
+static ULONG_PTR __attribute__((used)) riscv64_dispatch_unix_call( const ULONG_PTR *table,
+                                                                    ULONG index, void *args )
+ {
+    typedef ULONG_PTR (*unix_call_t)(void *);
+    unix_call_t func;
+
+    if (!table) return STATUS_INVALID_PARAMETER;
+    func = (unix_call_t)table[index];
+    if (!func) return STATUS_INVALID_PARAMETER;
+    return func( args );
 }
+
+__ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+                   "addi sp, sp, -128\n\t"
+                   "sd ra, 0(sp)\n\t"
+                   "sd s0, 8(sp)\n\t"
+                   "sd s1, 16(sp)\n\t"
+                   "sd a0, 24(sp)\n\t"
+                   "sd a1, 32(sp)\n\t"
+                   "sd a2, 40(sp)\n\t"
+                   "sd s2, 48(sp)\n\t"
+                   "sd s3, 56(sp)\n\t"
+                   "sd s4, 64(sp)\n\t"
+                   "sd s5, 72(sp)\n\t"
+                   "sd s6, 80(sp)\n\t"
+                   "sd s7, 88(sp)\n\t"
+                   "sd s8, 96(sp)\n\t"
+                   "sd s9, 104(sp)\n\t"
+                   "sd s10, 112(sp)\n\t"
+                   "sd s11, 120(sp)\n\t"
+                   "mv a0, sp\n\t"
+                   "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
+                   "beqz a0, 1f\n\t"
+                   "mv t0, a0\n\t"
+                   "ld t1, 0(sp)\n\t"
+                   "sd t1, 272(t0)\n\t"
+                   "addi t1, sp, 128\n\t"
+                   "sd t1, 264(t0)\n\t"
+                   "ld t1, 8(sp)\n\t"
+                   "sd t1, 64(t0)\n\t"
+                   "ld t1, 16(sp)\n\t"
+                   "sd t1, 72(t0)\n\t"
+                   "ld t1, 48(sp)\n\t"
+                   "sd t1, 144(t0)\n\t"
+                   "ld t1, 56(sp)\n\t"
+                   "sd t1, 152(t0)\n\t"
+                   "ld t1, 64(sp)\n\t"
+                   "sd t1, 160(t0)\n\t"
+                   "ld t1, 72(sp)\n\t"
+                   "sd t1, 168(t0)\n\t"
+                   "ld t1, 80(sp)\n\t"
+                   "sd t1, 176(t0)\n\t"
+                   "ld t1, 88(sp)\n\t"
+                   "sd t1, 184(t0)\n\t"
+                   "ld t1, 96(sp)\n\t"
+                   "sd t1, 192(t0)\n\t"
+                   "ld t1, 104(sp)\n\t"
+                   "sd t1, 200(t0)\n\t"
+                   "ld t1, 112(sp)\n\t"
+                   "sd t1, 208(t0)\n\t"
+                   "ld t1, 120(sp)\n\t"
+                   "sd t1, 216(t0)\n\t"
+                   "ld a0, 24(sp)\n\t"
+                   "ld a1, 32(sp)\n\t"
+                   "ld a2, 40(sp)\n\t"
+                   "mv sp, t0\n\t"
+                   "call " __ASM_NAME("riscv64_dispatch_unix_call") "\n\t"
+                   "mv t0, sp\n\t"
+                   "ld s0, 64(t0)\n\t"
+                   "ld s1, 72(t0)\n\t"
+                   "ld s2, 144(t0)\n\t"
+                   "ld s3, 152(t0)\n\t"
+                   "ld s4, 160(t0)\n\t"
+                   "ld s5, 168(t0)\n\t"
+                   "ld s6, 176(t0)\n\t"
+                   "ld s7, 184(t0)\n\t"
+                   "ld s8, 192(t0)\n\t"
+                   "ld s9, 200(t0)\n\t"
+                   "ld s10, 208(t0)\n\t"
+                   "ld s11, 216(t0)\n\t"
+                   "ld ra, 272(t0)\n\t"
+                   "ld sp, 264(t0)\n\t"
+                   "ret\n"
+                   "1:\tld ra, 0(sp)\n\t"
+                   "ld s0, 8(sp)\n\t"
+                   "ld s1, 16(sp)\n\t"
+                   "ld s2, 48(sp)\n\t"
+                   "ld s3, 56(sp)\n\t"
+                   "ld s4, 64(sp)\n\t"
+                   "ld s5, 72(sp)\n\t"
+                   "ld s6, 80(sp)\n\t"
+                   "ld s7, 88(sp)\n\t"
+                   "ld s8, 96(sp)\n\t"
+                   "ld s9, 104(sp)\n\t"
+                   "ld s10, 112(sp)\n\t"
+                   "ld s11, 120(sp)\n\t"
+                   "addi sp, sp, 128\n\t"
+                   "li a0, 0xc000000d\n\t" /* STATUS_INVALID_PARAMETER */
+                   "ret" )
 
 /***********************************************************************
  *           unwind_builtin_dll
