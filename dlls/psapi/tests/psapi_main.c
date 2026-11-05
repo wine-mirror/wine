@@ -1201,6 +1201,7 @@ static void check_working_set_info(PSAPI_WORKING_SET_EX_INFORMATION *info, const
     ok(info->VirtualAttributes.LargePage == 0, "%s expected LargePage=0 but got %u\n",
         desc, info->VirtualAttributes.LargePage);
 
+    todo_wine_if(info->VirtualAddress == GetModuleHandleA(0))  /* main exe isn't shared on Wine */
     ok(info->VirtualAttributes.Shared == expected_shared || broken(!info->VirtualAttributes.Valid) /* w2003 */,
         "%s expected Shared=%lu but got %u\n", desc, expected_shared, info->VirtualAttributes.Shared);
     if (info->VirtualAttributes.Valid && info->VirtualAttributes.Shared)
