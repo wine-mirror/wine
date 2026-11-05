@@ -1030,6 +1030,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsProcessorFeaturePresent ( DWORD feature )
     return RtlIsProcessorFeaturePresent( feature );
 }
 
+/***********************************************************************
+ *           IsEnclaveTypeSupported   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsEnclaveTypeSupported( DWORD enclave_type )
+{
+    TRACE("%#lx.\n", enclave_type);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
 
 /**********************************************************************
  *           IsWow64Process2   (kernelbase.@)
