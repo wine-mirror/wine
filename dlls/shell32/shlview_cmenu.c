@@ -1491,6 +1491,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
         else if (!strcmp(lpcmi->lpVerb, "paste"))
         {
             do_paste(This, lpcmi->hwnd);
+            if (view) IShellView_Refresh(view);
         }
         else
         {
@@ -1511,6 +1512,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
 
             case FCIDM_SHVIEW_INSERT:
                 do_paste(This, lpcmi->hwnd);
+                if (view) IShellView_Refresh(view);
                 break;
 
             case FCIDM_SHVIEW_PROPERTIES:
