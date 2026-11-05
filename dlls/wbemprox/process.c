@@ -125,7 +125,7 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
 
     FIXME("%p, %p, %p, %p stub\n", obj, context, in, out);
 
-    *out = NULL;
+    if (out) *out = NULL;
 
     if ((hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Process", L"Create", PARAM_OUT, &sig ))) return hr;
 
