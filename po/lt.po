@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-10-03 00:33+0300\n"
+"PO-Revision-Date: 2026-11-05 19:56+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11786,26 +11786,18 @@ msgid "(UTC+07:00) Tomsk"
 msgstr "(UTC+07:00) Tomskas"
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Standard Time"
 msgctxt "maximum 31 characters"
 msgid "British Columbia Standard Time"
-msgstr "Kubos juostinis laikas"
+msgstr "Britų Kolumbijos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:73
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "British Columbia Daylight Time"
-msgstr "Kubos vasaros laikas"
+msgstr "Britų Kolumbijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:74
-#, fuzzy
-#| msgid "(UTC-03:00) Brasilia"
 msgid "(UTC-07:00) British Columbia"
-msgstr "(UTC-03:00) Brazilija"
+msgstr "(UTC-07:00) Britų Kolumbija"
 
 #: dlls/tzres/tzres.rc:81
 msgctxt "maximum 31 characters"
@@ -11906,26 +11898,18 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr "(UTC-06:00) Gvadalachara, Meksikas, Monterėjus"
 
 #: dlls/tzres/tzres.rc:210
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Namibia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Manitoba Standard Time"
-msgstr "Namibijos juostinis laikas"
+msgstr "Manitobos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:211
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Namibia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Manitoba Daylight Time"
-msgstr "Namibijos vasaros laikas"
+msgstr "Manitobos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:212
-#, fuzzy
-#| msgid "(UTC-05:00) Haiti"
 msgid "(UTC-05:00) Manitoba"
-msgstr "(UTC-05:00) Haitis"
+msgstr "(UTC-05:00) Manitoba"
 
 #: dlls/tzres/tzres.rc:321
 msgctxt "maximum 31 characters"
@@ -12403,26 +12387,18 @@ msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) Ašchabadas, Taškentas"
 
 #: dlls/tzres/tzres.rc:18
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Altai Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Alberta Standard Time"
-msgstr "Altajaus juostinis laikas"
+msgstr "Albertos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:19
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Altai Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Alberta Daylight Time"
-msgstr "Altajaus vasaros laikas"
+msgstr "Albertos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:20
-#, fuzzy
-#| msgid "(UTC-07:00) Arizona"
 msgid "(UTC-07:00) Alberta"
-msgstr "(UTC-07:00) Arizona"
+msgstr "(UTC-07:00) Alberta"
 
 #: dlls/tzres/tzres.rc:15
 msgctxt "maximum 31 characters"
