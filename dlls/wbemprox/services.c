@@ -297,7 +297,7 @@ static HRESULT WINAPI wbem_services_OpenNamespace(
     if (ws->ns != WBEMPROX_NAMESPACE_LAST || !strNamespace)
         return WBEM_E_INVALID_NAMESPACE;
 
-    return WbemServices_create( strNamespace, NULL, (void **)ppWorkingNamespace );
+    return WbemServices_create( strNamespace, pCtx, (void **)ppWorkingNamespace );
 }
 
 static HRESULT WINAPI wbem_services_CancelAsyncCall(
