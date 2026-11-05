@@ -292,7 +292,10 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     __builtin_unreachable();
 }
 
-void __wine_syscall_dispatcher_return( void )
+/* A normal C function may introduce a prologue before the register restore.
+ * GCC's naked attribute prevents it; the body contains basic asm only.
+ * This does not yet solve complete t6 restoration or nested dispatch. */
+void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
 {
     /*
      * a0 = struct syscall_frame *
@@ -370,7 +373,7 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
     return service( args[0], args[1], args[2], args[3],
-                    args[4], args[5], args[6], 0 );
+                    args[4], args[5], args[6], args[7] );
 }
 
 /* The Windows stub tail-jumps here with t2 = NT service id, ra = caller.
