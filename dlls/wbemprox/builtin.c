@@ -3746,9 +3746,9 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
         rec->location             = info[i].pLocation ? wcsdup( info[i].pLocation ) : NULL;
         rec->name                 = wcsdup( info[i].pPrinterName );
         rec->portname             = wcsdup( info[i].pPortName );
-        if (!match_row( table, i, cond, &status ))
+        if (!match_row( table, num_rows, cond, &status ))
         {
-            free_row_values( table, i );
+            free_row_values( table, num_rows );
             continue;
         }
         offset += sizeof(*rec);
