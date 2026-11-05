@@ -102,6 +102,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
 
     *server = NULL;
     *namespace = NULL;
+    if (!resource) return WBEM_E_INVALID_PARAMETER;
     p = q = resource;
     if (*p == '\\' || *p == '/')
     {
