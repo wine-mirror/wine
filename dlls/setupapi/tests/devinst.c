@@ -2038,7 +2038,7 @@ static void test_device_iface(void)
             expected_path = "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
         else
             expected_path = "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\Oogah";
-        todo_wine_if(i) ok(!strcmp(path, expected_path), "Got unexpected path %s.\n", path);
+        ok(!strcmp(path, expected_path), "Got unexpected path %s.\n", path);
     }
 
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "test", 0, &iface);

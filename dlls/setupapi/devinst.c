@@ -1968,16 +1968,16 @@ static void SETUPDI_EnumerateMatchingInterfaces(struct DeviceInfoSet *set, const
 
         /* Copy path, starting after the "\\?\". */
         wcscpy(buf, &path[4]);
-        /* Replace the last '#' with a NULL terminator. */
-        tmp = wcsrchr(buf, '#');
-        *tmp = 0;
 
         /*
-         * Characters between the last '#' and the '{' from the GUID contain
-         * the refstr, if present.
+         * If the interface has a refstr, it is appended after the class GUID
+         * with a '\' prefix, e.g "{class-guid}\<refstr>". If there is no refstr,
+         * the path will have no '\' after the class GUID.
          */
-        refstr = tmp + 1;
-        tmp = wcschr(refstr, '{');
+        refstr = wcsrchr(buf, '}') + 2;
+
+        /* Replace the last '#' with a NULL terminator. */
+        tmp = wcsrchr(buf, '#');
         *tmp = 0;
 
         /* Now replace '#' with '\' to reconstruct the instance ID. */
