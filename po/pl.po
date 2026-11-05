@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-10-04 12:11+0200\n"
+"PO-Revision-Date: 2026-11-05 11:56+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.10\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -11818,26 +11818,18 @@ msgid "(UTC+07:00) Tomsk"
 msgstr "(UTC+07:00) Tomsk"
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Standard Time"
 msgctxt "maximum 31 characters"
 msgid "British Columbia Standard Time"
-msgstr "Czas urzędowy Kuby"
+msgstr "Czas urzędowy Kolumbii Brytyjskiej"
 
 #: dlls/tzres/tzres.rc:73
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "British Columbia Daylight Time"
-msgstr "Czas letni Kuby"
+msgstr "Czas letni Kolumbii Brytyjskiej"
 
 #: dlls/tzres/tzres.rc:74
-#, fuzzy
-#| msgid "(UTC-03:00) Brasilia"
 msgid "(UTC-07:00) British Columbia"
-msgstr "(UTC-03:00) Brasilia"
+msgstr "(UTC-07:00) Kolumbia Brytyjska"
 
 #: dlls/tzres/tzres.rc:81
 msgctxt "maximum 31 characters"
@@ -11938,26 +11930,18 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 
 #: dlls/tzres/tzres.rc:210
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Namibia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Manitoba Standard Time"
-msgstr "Czas urzędowy Namibii"
+msgstr "Czas urzędowy Manitoby"
 
 #: dlls/tzres/tzres.rc:211
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Namibia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Manitoba Daylight Time"
-msgstr "Czas letni Namibii"
+msgstr "Czas letni Manitoby"
 
 #: dlls/tzres/tzres.rc:212
-#, fuzzy
-#| msgid "(UTC-05:00) Haiti"
 msgid "(UTC-05:00) Manitoba"
-msgstr "(UTC-05:00) Haiti"
+msgstr "(UTC-05:00) Manitoba"
 
 #: dlls/tzres/tzres.rc:321
 msgctxt "maximum 31 characters"
@@ -12435,26 +12419,18 @@ msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) Ashgabat, Taszkent"
 
 #: dlls/tzres/tzres.rc:18
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Altai Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Alberta Standard Time"
-msgstr "Czas urzędowy Altai"
+msgstr "Czas urzędowy Alberty"
 
 #: dlls/tzres/tzres.rc:19
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Altai Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Alberta Daylight Time"
-msgstr "Czas letni Altai"
+msgstr "Czas letni Alberty"
 
 #: dlls/tzres/tzres.rc:20
-#, fuzzy
-#| msgid "(UTC-07:00) Arizona"
 msgid "(UTC-07:00) Alberta"
-msgstr "(UTC-07:00) Arizona"
+msgstr "(UTC-07:00) Alberty"
 
 #: dlls/tzres/tzres.rc:15
 msgctxt "maximum 31 characters"
