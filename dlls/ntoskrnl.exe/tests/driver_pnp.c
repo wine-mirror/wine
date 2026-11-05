@@ -55,7 +55,7 @@ static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
 
 static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
 static const GUID child_class   = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc2}};
-static UNICODE_STRING control_symlink, bus_symlink;
+static UNICODE_STRING control_symlink, bus_symlink, bus_refstr_symlink;
 
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
@@ -153,6 +153,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             IoDeleteDevice(bus_fdo);
             RtlFreeUnicodeString(&control_symlink);
             RtlFreeUnicodeString(&bus_symlink);
+            RtlFreeUnicodeString(&bus_refstr_symlink);
             return ret;
 
         case IRP_MN_QUERY_DEVICE_RELATIONS:
@@ -1007,12 +1008,32 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
             return STATUS_SUCCESS;
 
         case IOCTL_WINETEST_BUS_REGISTER_IFACE:
-            return IoRegisterDeviceInterface(bus_pdo, &bus_class, NULL, &bus_symlink);
+        {
+            UNICODE_STRING expect_symlink = RTL_CONSTANT_STRING(L"\\??\\ROOT#WINETEST#0#{deadbeef-29ef-4538-a5fd-b69573a362c1}\\Iface2");
+            UNICODE_STRING refstr = RTL_CONSTANT_STRING( L"Iface2" );
+            NTSTATUS status;
+
+            status = IoRegisterDeviceInterface(bus_pdo, &bus_class, NULL, &bus_symlink);
+            ok(status == STATUS_SUCCESS, "Failed to register interface, ret %#lx.\n", status);
+            status = IoRegisterDeviceInterface(bus_pdo, &bus_class, &refstr, &bus_refstr_symlink);
+            ok(status == STATUS_SUCCESS, "Failed to register interface, ret %#lx.\n", status);
+            ok(RtlEqualUnicodeString(&bus_refstr_symlink, &expect_symlink, FALSE), "Got symlink \"%ls\".\n", bus_refstr_symlink.Buffer);
+            return STATUS_SUCCESS;
+        }
 
         case IOCTL_WINETEST_BUS_ENABLE_IFACE:
             IoSetDeviceInterfaceState(&bus_symlink, TRUE);
             test_device_interface_properties(&bus_symlink);
             return STATUS_SUCCESS;
+
+        case IOCTL_WINETEST_BUS_ENABLE_REFSTR_IFACE:
+        {
+            NTSTATUS status;
+
+            status = IoSetDeviceInterfaceState(&bus_refstr_symlink, TRUE);
+            todo_wine ok(status == STATUS_SUCCESS, "Failed to set device interface state, status %#lx.\n", status);
+            return STATUS_SUCCESS;
+        }
 
         case IOCTL_WINETEST_BUS_DISABLE_IFACE:
         {
@@ -1023,6 +1044,24 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 
             IoSetDeviceInterfaceState(&bus_symlink, FALSE);
             status = IoGetDeviceInterfacePropertyData(&bus_symlink, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0,
+                                                      sizeof(val), &val, &req_size, &type);
+            ok(!status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status);
+            ok(req_size == sizeof(val), "got req_size = %lu\n", req_size);
+            ok(type == DEVPROP_TYPE_BOOLEAN, "got type = %#lx\n", type);
+            ok(val == DEVPROP_FALSE, "got val %d\n", val);
+            return STATUS_SUCCESS;
+        }
+
+        case IOCTL_WINETEST_BUS_DISABLE_REFSTR_IFACE:
+        {
+            DEVPROP_BOOLEAN val = DEVPROP_TRUE;
+            DEVPROPTYPE type = DEVPROP_TYPE_EMPTY;
+            NTSTATUS status;
+            DWORD req_size = 0;
+
+            status = IoSetDeviceInterfaceState(&bus_refstr_symlink, FALSE);
+            todo_wine ok(status == STATUS_SUCCESS, "Failed to set device interface state, status %#lx.\n", status);
+            status = IoGetDeviceInterfacePropertyData(&bus_refstr_symlink, &DEVPKEY_DeviceInterface_Enabled, LOCALE_NEUTRAL, 0,
                                                       sizeof(val), &val, &req_size, &type);
             ok(!status, "IoGetDeviceInterfacePropertyData failed: %#lx\n", status);
             ok(req_size == sizeof(val), "got req_size = %lu\n", req_size);
