@@ -3741,9 +3741,9 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
         swprintf( id, ARRAY_SIZE( id ), L"Printer%u", i );
         rec->device_id            = wcsdup( id );
         rec->drivername           = wcsdup( info[i].pDriverName );
-        rec->horizontalresolution = info[i].pDevMode->dmPrintQuality;
+        rec->horizontalresolution = info[i].pDevMode ? info[i].pDevMode->dmPrintQuality : 0;
         rec->local                = -1;
-        rec->location             = wcsdup( info[i].pLocation );
+        rec->location             = info[i].pLocation ? wcsdup( info[i].pLocation ) : NULL;
         rec->name                 = wcsdup( info[i].pPrinterName );
         rec->portname             = wcsdup( info[i].pPortName );
         if (!match_row( table, i, cond, &status ))
