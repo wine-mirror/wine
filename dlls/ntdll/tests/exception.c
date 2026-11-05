@@ -7930,6 +7930,59 @@ static void test_thread_context(void)
     ok( context.X[0] == fill, "unexpected x0 = %Ix\n", context.X[0] );
     ok( context.X[18] == fill, "unexpected x18 = %Ix\n", context.X[18] );
 
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT;
+    context.V[0].Low = 1;
+    context.V[16].Low = 2;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.V[0].Low == 1, "unexpected v0 = %Ix\n", context.V[0].Low );
+    ok( context.V[16].Low == 2, "unexpected v16 = %Ix\n", context.V[16].Low );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT_LOW;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.V[0].Low == 1, "unexpected v0 = %Ix\n", context.V[0].Low );
+    ok( context.V[16].Low == fill, "unexpected v16 = %Ix\n", context.V[16].Low );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT_HIGH;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.V[0].Low == fill, "unexpected v0 = %Ix\n", context.V[0].Low );
+    ok( context.V[16].Low == 2, "unexpected v16 = %Ix\n", context.V[16].Low );
+
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT_LOW;
+    context.V[0].Low = 3;
+    context.V[16].Low = 4;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.V[0].Low == 3, "unexpected v0 = %Ix\n", context.V[0].Low );
+    ok( context.V[16].Low == 2, "unexpected v16 = %Ix\n", context.V[16].Low );
+
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT_HIGH;
+    context.V[0].Low = 5;
+    context.V[16].Low = 6;
+    status = pNtSetContextThread( thread, &context );
+    ok( !status, "NtSetContextThread failed %08lx\n", status );
+
+    memset( &context, 0xcc, sizeof(context) );
+    context.ContextFlags = CONTEXT_ARM64_FLOATING_POINT;
+    status = pNtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread failed %08lx\n", status );
+    ok( context.V[0].Low == 3, "unexpected v0 = %Ix\n", context.V[0].Low );
+    ok( context.V[16].Low == 6, "unexpected v16 = %Ix\n", context.V[16].Low );
+
     status = pNtSetContextThread( thread, &orig_context );
     ok( !status, "NtSetContextThread failed %08lx\n", status );
 
