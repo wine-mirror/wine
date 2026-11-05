@@ -4716,9 +4716,13 @@ static struct display_adapter *get_display_adapters( UINT *count )
 
     if (!(ret = malloc( nb_allocated * sizeof(*ret) ))) return NULL;
 
-    if ((devs = SetupDiGetClassDevsW( &GUID_DEVCLASS_DISPLAY, NULL, NULL, DIGCF_PRESENT )) == INVALID_HANDLE_VALUE) return NULL;
+    if ((devs = SetupDiGetClassDevsW( &GUID_DEVCLASS_DISPLAY, NULL, NULL, DIGCF_PRESENT )) == INVALID_HANDLE_VALUE)
+    {
+        free( ret );
+        return NULL;
+    }
 
-    while(SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
+    while (SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
     {
         WCHAR *driver, *instance_id;
         UINT key_len;
