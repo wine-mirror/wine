@@ -108,12 +108,8 @@ static HRESULT create_key( HKEY root, const WCHAR *subkey, IWbemContext *context
 
     res = RegCreateKeyExW( root, subkey, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS | get_access_mask( context ), NULL, &hkey, NULL );
     set_variant( VT_UI4, res, NULL, retval );
-    if (!res)
-    {
-        RegCloseKey( hkey );
-        return S_OK;
-    }
-    return HRESULT_FROM_WIN32( res );
+    if (!res) RegCloseKey( hkey );
+    return S_OK;
 }
 
 HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
