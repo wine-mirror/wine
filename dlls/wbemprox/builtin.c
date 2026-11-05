@@ -1837,7 +1837,7 @@ static enum fill_status fill_rawbiosdata( struct table *table, const struct expr
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
+    if (len < sizeof(*buf) || !(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_rawsmbiostables *)table->data;
