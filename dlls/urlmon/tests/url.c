@@ -2045,10 +2045,16 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
         if(test_protocol == FILE_TEST)
             ok(!lstrcmpW(pstgmed->lpszFileName, file_url+7),
                "unexpected file name %s\n", wine_dbgstr_w(pstgmed->lpszFileName));
-        else if(emulate_protocol)
-            ok(!lstrcmpW(pstgmed->lpszFileName, cache_fileW),
+        else if(emulate_protocol) {
+            ok(!lstrcmpW(pstgmed->lpszFileName, use_cache_file ? cache_file_name : cache_fileW),
                "unexpected file name %s\n", wine_dbgstr_w(pstgmed->lpszFileName));
-        else if(test_protocol == HTTP_TEST)
+            if(use_cache_file) {
+                HANDLE file = CreateFileW(pstgmed->lpszFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                ok(file != INVALID_HANDLE_VALUE, "CreateFileW failed: %lu\n", GetLastError());
+                CloseHandle(file);
+            }
+        }else if(test_protocol == HTTP_TEST)
             lstrcpyW(http_cache_file, pstgmed->lpszFileName);
         else
             ok(pstgmed->lpszFileName != NULL, "lpszFileName == NULL\n");
@@ -4044,6 +4050,9 @@ START_TEST(url)
 
         trace("emulated synchronous http test (with cache)...\n");
         test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE, TYMED_ISTREAM);
+
+        trace("emulated synchronous http test (to file, with cache)...\n");
+        test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE, TYMED_FILE);
 
         trace("emulated synchronous http test (with cache, no read)...\n");
         test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_USE_CACHE|BINDTEST_NO_CALLBACK_READ, TYMED_ISTREAM);

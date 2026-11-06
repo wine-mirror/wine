@@ -1513,12 +1513,10 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
     if(to_obj)
         ret->bindinfo.dwOptions |= 0x100000;
 
-    if(!(ret->bindf & BINDF_ASYNCHRONOUS) || !(ret->bindf & BINDF_PULLDATA)) {
-        ret->bindf |= BINDF_NEEDFILE;
+    if(!(ret->bindf & BINDF_ASYNCHRONOUS) || !(ret->bindf & BINDF_PULLDATA))
         ret->use_cache_file = TRUE;
-    }else if(!is_urlmon_protocol(uri)) {
+    if(ret->use_cache_file || !is_urlmon_protocol(uri))
         ret->bindf |= BINDF_NEEDFILE;
-    }
 
     hres = IUri_GetDisplayUri(uri, &ret->url);
     if(FAILED(hres)) {
@@ -1540,6 +1538,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
         ret->stgmed_obj = create_stgmed_stream(ret->stgmed_buf);
     }else if(IsEqualGUID(&IID_IUnknown, riid)) {
         ret->bindf |= BINDF_NEEDFILE;
+        ret->use_cache_file = FALSE;
         ret->stgmed_obj = create_stgmed_file(ret->stgmed_buf);
     }else {
         FIXME("Unsupported riid %s\n", debugstr_guid(riid));
