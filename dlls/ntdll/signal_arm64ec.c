@@ -742,10 +742,25 @@ NTSTATUS SYSCALL_API NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_
 NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     ARM64_NT_CONTEXT arm_ctx = { .ContextFlags = ctx_flags_x64_to_arm( context->ContextFlags ) };
-    NTSTATUS status = syscall_NtGetContextThread( handle, &arm_ctx );
+    NTSTATUS status;
 
+    if ((context->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+    {
+        CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+        XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+
+        if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) || context_ex->XState.Length > sizeof(*xstate))
+            return STATUS_INVALID_PARAMETER;
+
+        xstate->Mask &= XSTATE_MASK_AVX & user_xstate_config->EnabledFeatures;
+        xstate->CompactionMask = 0;
+        if ((xstate->Mask & XSTATE_MASK_AVX) && context_ex->XState.Length < sizeof(*xstate))
+            return STATUS_BUFFER_OVERFLOW;
+    }
+
+    status = syscall_NtGetContextThread( handle, &arm_ctx );
     if (!status) context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_ctx,
-                                     ctx_flags_arm_to_x64( arm_ctx.ContextFlags ));
+                                     ctx_flags_arm_to_x64( arm_ctx.ContextFlags ) | (context->ContextFlags & CONTEXT_AMD64_XSTATE));
     return status;
 }
 

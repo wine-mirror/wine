@@ -238,6 +238,16 @@ static inline void context_arm_to_x64( ARM64EC_NT_CONTEXT *ec_ctx, const ARM64_N
     ec_ctx->X17_3 = arm_ctx->X17 >> 48;
 
     memcpy( ec_ctx->V, arm_ctx->V, sizeof(ec_ctx->V) );
+
+    if ((ec_ctx->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+    {
+        CONTEXT_EX *context_ex = (CONTEXT_EX *)(ec_ctx + 1);
+        XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+        xstate->Mask &= XSTATE_MASK_AVX;
+        xstate->CompactionMask = 0;
+        if (xstate->Mask & XSTATE_MASK_AVX)
+            memcpy( &xstate->YmmContext, &arm_ctx->V[16], sizeof(xstate->YmmContext) );
+    }
 }
 
 #endif /* __aarch64__ || __arm64ec__ */
