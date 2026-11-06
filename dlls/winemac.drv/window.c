@@ -1874,7 +1874,7 @@ void macdrv_app_deactivated(void)
 /***********************************************************************
  *              macdrv_window_maximize_requested
  *
- * Handler for WINDOW_MAXIMIZE_REQUESTED events.
+ * Handle a maximize request from Cocoa.
  */
 void macdrv_window_maximize_requested(HWND hwnd)
 {
