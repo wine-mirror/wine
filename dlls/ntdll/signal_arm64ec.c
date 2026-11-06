@@ -2194,7 +2194,7 @@ void __attribute__((naked)) RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry,
  */
 void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
 {
-    ARM64EC_NT_CONTEXT context;
+    struct xcontext context;
 
     if (!__os_arm64x_check_call)
     {
@@ -2205,10 +2205,10 @@ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR 
         __os_arm64x_set_x64_information = LdrpSetX64Information;
     }
 
-    context_arm_to_x64( &context, (ARM64_NT_CONTEXT *)arm_context, CONTEXT_AMD64_FULL );
-    loader_init( &context.AMD64_Context, (void **)&context.X0 );
-    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.X0, (void *)context.X1 );
-    NtContinue( &context.AMD64_Context, TRUE );
+    init_xcontext( &context, (ARM64_NT_CONTEXT *)arm_context );
+    loader_init( &context.c.AMD64_Context, (void **)&context.c.X0 );
+    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.c.X0, (void *)context.c.X1 );
+    NtContinue( &context.c.AMD64_Context, TRUE );
 }
 
 
