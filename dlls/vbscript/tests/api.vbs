@@ -2307,6 +2307,9 @@ if isEnglishLang then Call ok(ChrW(255) = Chr(255), "ChrW(255) <> Chr(255)")
 Call ok(ChrW(0) = Chr(0), "ChrW(0) <> Chr(0)")
 Call ok(AscW(ChrW(8364)) = 8364, "AscW(ChrW(8364)) = " & AscW(ChrW(8364)))
 Call ok(AscW(ChrW(65535)) = -1, "AscW(ChrW(65535)) = " & AscW(ChrW(65535)))
+Call ok(ChrW(-1) = ChrW(65535), "ChrW(-1) <> ChrW(65535)")
+Call ok(ChrW(&HFEFF) = ChrW(65279), "ChrW(&HFEFF) <> ChrW(65279)")
+Call ok(AscW(ChrW(&HFEFF)) = -257, "AscW(ChrW(&HFEFF)) = " & AscW(ChrW(&HFEFF)))
 
 sub testChrWError()
     on error resume next
