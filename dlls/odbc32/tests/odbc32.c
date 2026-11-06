@@ -558,7 +558,7 @@ static SQLRETURN WINAPI driver_SQLDescribeCol( SQLHSTMT stmt, SQLUSMALLINT col,
     default:
         ok( !name, "name = %p\n", name );
         ok( !max_len, "max_len = %d\n", max_len );
-        todo_wine ok( len != NULL, "len = %p\n", len );
+        ok( len != NULL, "len = %p\n", len );
         *type = col;
         break;
     }

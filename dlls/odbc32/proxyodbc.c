@@ -1873,6 +1873,9 @@ static SQLRETURN describe_col_win32_a( struct statement *stmt, SQLUSMALLINT col_
                                        SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
 {
     SQLRETURN ret = SQL_ERROR;
+    SQLSMALLINT tmp;
+
+    if (!retlen) retlen = &tmp;
 
     if (stmt->hdr.win32_funcs->SQLDescribeCol)
     {
@@ -1888,10 +1891,7 @@ static SQLRETURN describe_col_win32_a( struct statement *stmt, SQLUSMALLINT col_
         ret = stmt->hdr.win32_funcs->SQLDescribeColW( stmt->hdr.win32_handle, col_number, nameW, buflen, &lenW,
                                                       data_type, col_size, decimal_digits, nullable );
         if (SUCCESS( ret ))
-        {
-            int len = WideCharToMultiByte( CP_ACP, 0, nameW, -1, (char *)col_name, buflen, NULL, NULL );
-            if (retlen) *retlen = len - 1;
-        }
+            *retlen = WideCharToMultiByte( CP_ACP, 0, nameW, -1, (char *)col_name, buflen, NULL, NULL ) - 1;
         free( nameW );
     }
 
@@ -6379,6 +6379,9 @@ static SQLRETURN describe_col_win32_w( struct statement *stmt, SQLUSMALLINT col_
                                        SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
 {
     SQLRETURN ret = SQL_ERROR;
+    SQLSMALLINT tmp;
+
+    if (!name_len) name_len = &tmp;
 
     if (stmt->hdr.win32_funcs->SQLDescribeColW)
     {
