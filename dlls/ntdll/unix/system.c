@@ -1716,7 +1716,7 @@ static void read_dev_urandom( void *buf, ULONG len )
     else WARN( "can't open /dev/urandom\n" );
 }
 
-static void get_random( void *buf, ULONG len )
+void get_random( void *buf, ULONG len )
 {
 #ifdef HAVE_GETRANDOM
     int ret;

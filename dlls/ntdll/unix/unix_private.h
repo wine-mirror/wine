@@ -394,6 +394,7 @@ extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MA
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length );
 extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info );
+extern void get_random( void *buf, ULONG len );
 extern void init_files(void);
 extern void init_cpu_info(void);
 extern void init_shared_data_cpuinfo( struct _KUSER_SHARED_DATA *data );
