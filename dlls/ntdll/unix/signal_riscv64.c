@@ -94,7 +94,8 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
 
     context.Gpr.X[10] = (ULONG64)entry;
     context.Gpr.X[11] = (ULONG64)arg;
-    context.Gpr.X[4]  = (ULONG64)teb;
+    /* Keep x4/tp reserved for native ELF thread-local storage. */
+    context.Gpr.X[4]  = (ULONG64)__builtin_thread_pointer();
     context.Gpr.X[2]  = stack_top;
     context.Pc        = (ULONG64)pRtlUserThreadStart;
 
@@ -111,7 +112,7 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     frame->pc = (ULONG64)pLdrInitializeThunk;
     frame->sp = (ULONG64)ctx;
     frame->x[10] = (ULONG64)ctx;
-    frame->x[4] = (ULONG64)teb;
+    frame->x[4] = (ULONG64)__builtin_thread_pointer();
     frame->x[2] = frame->sp;
     frame->x[1] = frame->ra;
 
@@ -320,7 +321,7 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
         "ld x1,    8(t0)\n"
         "ld x2,   16(t0)\n"
         "ld x3,   24(t0)\n"
-        "ld x4,   32(t0)\n"
+        /* x4/tp is native ELF TLS and must not be restored from CONTEXT. */
         "ld x6,   48(t0)\n"
         "ld x7,   56(t0)\n"
         "ld x8,   64(t0)\n"
