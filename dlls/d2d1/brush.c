@@ -206,6 +206,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
     gradient->stop_count = stop_count;
     if (!(gradient->stops = calloc(stop_count, sizeof(*stops))))
     {
+        ID2D1Factory_Release(gradient->factory);
         ID3D11ShaderResourceView_Release(view);
         free(gradient);
         return E_OUTOFMEMORY;
