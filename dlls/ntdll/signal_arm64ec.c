@@ -38,6 +38,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+struct xcontext
+{
+    ARM64EC_NT_CONTEXT c;
+    CONTEXT_EX c_ex;
+    char xs[sizeof(XSTATE) + 64];
+};
+
+C_ASSERT( sizeof(struct xcontext) == 0x670 );
+
 /* xtajit64.dll functions */
 static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
@@ -58,7 +67,9 @@ static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
 static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
-static XSTATE_CONFIGURATION xstate_config;
+static XSTATE_CONFIGURATION xstate_config = {
+    .EnabledFeatures = XSTATE_MASK_AVX /* store full xstate before the config is fully initialized */
+};
 
 static BYTE KiUserExceptionDispatcher_orig[16]; /* to detect patching */
 extern void KiUserExceptionDispatcher_thunk(void) asm("EXP+#KiUserExceptionDispatcher");
@@ -1299,12 +1310,33 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 }
 
 
+static void init_xcontext( struct xcontext *ctx, ARM64_NT_CONTEXT *arm_ctx )
+{
+    XSTATE *xs = (XSTATE *)(((ULONG_PTR)ctx->xs + 63) & ~63ull);
+
+    ctx->c_ex.Legacy.Length = sizeof(CONTEXT);
+    ctx->c_ex.Legacy.Offset = -(LONG)sizeof(CONTEXT);
+    ctx->c_ex.XState.Length = sizeof(*xs);
+    ctx->c_ex.XState.Offset = (char *)xs - (char *)&ctx->c_ex;
+    ctx->c_ex.All.Offset = ctx->c_ex.Legacy.Offset;
+    ctx->c_ex.All.Length = sizeof(CONTEXT) + ctx->c_ex.XState.Offset + ctx->c_ex.XState.Length;
+
+    xs->Mask = XSTATE_MASK_AVX & xstate_config.EnabledFeatures;
+    xs->CompactionMask = 0;
+    memset( xs->Reserved, 0, sizeof(xs->Reserved) );
+
+    context_arm_to_x64( &ctx->c, arm_ctx, CONTEXT_AMD64_FULL | CONTEXT_AMD64_XSTATE );
+}
+
+
 /*******************************************************************
  *		KiUserEmulationDispatcher (NTDLL.@)
  */
 void dispatch_emulation( ARM64_NT_CONTEXT *arm_ctx )
 {
-    context_arm_to_x64( get_arm64ec_cpu_area()->ContextAmd64, arm_ctx, CONTEXT_AMD64_FULL );
+    struct xcontext *context = (void *)get_arm64ec_cpu_area()->ContextAmd64;
+
+    init_xcontext( context, arm_ctx );
     pBeginSimulation();
 }
 __ASM_GLOBAL_FUNC( "#KiUserEmulationDispatcher",
