@@ -58,6 +58,8 @@ static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
 static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
+static XSTATE_CONFIGURATION xstate_config;
+
 static BYTE KiUserExceptionDispatcher_orig[16]; /* to detect patching */
 extern void KiUserExceptionDispatcher_thunk(void) asm("EXP+#KiUserExceptionDispatcher");
 
@@ -227,6 +229,24 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     {
         for (unsigned int i = 0; i < PROCESSOR_FEATURE_MAX; i++)
             emulated_processor_features[i] = pBTCpu64IsProcessorFeaturePresent( i );
+
+        xstate_config.EnabledFeatures = XSTATE_MASK_LEGACY;
+        xstate_config.Features[XSTATE_LEGACY_FLOATING_POINT].Offset = 0;
+        xstate_config.Features[XSTATE_LEGACY_FLOATING_POINT].Size   = 10 * sizeof(M128A);
+        xstate_config.Features[XSTATE_LEGACY_SSE].Offset = 10 * sizeof(M128A);
+        xstate_config.Features[XSTATE_LEGACY_SSE].Size   = 16 * sizeof(M128A);
+        xstate_config.Size = sizeof(XSAVE_AREA);
+        if (emulated_processor_features[PF_AVX_INSTRUCTIONS_AVAILABLE])
+        {
+            xstate_config.EnabledFeatures |= XSTATE_MASK_AVX;
+            xstate_config.Features[XSTATE_AVX].Offset = sizeof(XSAVE_AREA);
+            xstate_config.Features[XSTATE_AVX].Size   = sizeof(YMMCONTEXT);
+            xstate_config.Size += sizeof(YMMCONTEXT);
+        }
+        xstate_config.EnabledVolatileFeatures = xstate_config.EnabledFeatures;
+        xstate_config.AllFeatureSize = xstate_config.Size;
+        user_xstate_config = &xstate_config;
+
         status = create_cross_process_work_list( info );
     }
     if (!status && pThreadInit) status = pThreadInit();
