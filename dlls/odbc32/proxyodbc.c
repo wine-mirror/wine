@@ -6388,8 +6388,18 @@ static SQLRETURN describe_col_win32_w( struct statement *stmt, SQLUSMALLINT col_
         ret = stmt->hdr.win32_funcs->SQLDescribeColW( stmt->hdr.win32_handle, col_number, col_name, buf_len,
                                                        name_len, data_type, col_size, decimal_digits, nullable );
     }
-    else if (stmt->hdr.win32_funcs->SQLDescribeCol) FIXME( "Unicode to ANSI conversion not handled\n" );
+    else if (stmt->hdr.win32_funcs->SQLDescribeCol)
+    {
+        SQLCHAR *nameA = NULL;
+        SQLSMALLINT lenA;
 
+        if (col_name && !(nameA = malloc( buf_len ))) return SQL_ERROR;
+        ret = stmt->hdr.win32_funcs->SQLDescribeCol( stmt->hdr.win32_handle, col_number, nameA, buf_len,
+                &lenA, data_type, col_size, decimal_digits, nullable );
+        if (nameA && SUCCESS(ret))
+            *name_len = MultiByteToWideChar( CP_ACP, 0, (const char *)nameA, -1, col_name, buf_len ) - 1;
+        free( nameA );
+    }
 
     if (SUCCESS( ret ) && data_type)
         *data_type = map_type( stmt, FALSE, *data_type );
