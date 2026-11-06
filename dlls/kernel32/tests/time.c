@@ -28,6 +28,7 @@
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTimeEx)(const DYNAMIC_TIME_ZONE_INFORMATION *, const SYSTEMTIME *, SYSTEMTIME *);
+static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTimeEx)(const DYNAMIC_TIME_ZONE_INFORMATION *, const SYSTEMTIME *, SYSTEMTIME *);
 static BOOL (WINAPI *pGetSystemTimes)(LPFILETIME, LPFILETIME, LPFILETIME);
 static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
 static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
@@ -685,6 +686,52 @@ static BOOL daylight_lt_std( const TIME_ZONE_INFORMATION *info )
     return info->DaylightDate.wHour < info->StandardDate.wHour;
 }
 
+static DWORD get_timezone_id_local( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER time )
+{
+    BOOL before_standard_date, after_daylight_date;
+    TIME_FIELDS tf;
+
+    if (!info->DaylightDate.wMonth) return TIME_ZONE_ID_UNKNOWN;
+
+    RtlTimeToTimeFields( &time, &tf );
+    before_standard_date = compare_tzdate( &tf, &info->StandardDate ) < 0;
+    after_daylight_date = compare_tzdate( &tf, &info->DaylightDate ) >= 0;
+
+    if (daylight_lt_std( info ))
+    {
+        if (before_standard_date && after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    else
+    {
+        if (before_standard_date || after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    return TIME_ZONE_ID_STANDARD;
+}
+
+static BOOL tz_specific_local_time_to_system_time( const TIME_ZONE_INFORMATION *info,
+                                                               const SYSTEMTIME *local,
+                                                               SYSTEMTIME *system )
+{
+    LARGE_INTEGER ft;
+
+    if (!SystemTimeToFileTime( local, (FILETIME *)&ft )) return FALSE;
+    switch (get_timezone_id_local( info, ft ))
+    {
+    case TIME_ZONE_ID_UNKNOWN:
+        ft.QuadPart += info->Bias * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_STANDARD:
+        ft.QuadPart += (info->Bias + info->StandardBias) * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_DAYLIGHT:
+        ft.QuadPart += (info->Bias + info->DaylightBias) * (LONGLONG)600000000;
+        break;
+    default:
+        return FALSE;
+    }
+    return FileTimeToSystemTime( (FILETIME *)&ft, system );
+}
+
 static BOOL system_time_to_local_time_for_year( DYNAMIC_TIME_ZONE_INFORMATION *dinfo, LARGE_INTEGER time,
                                                          int year, TIME_FIELDS *ret_tf )
 {
@@ -808,12 +855,13 @@ static void test_TzSpecificLocalTimeEx(void)
         { 2027, 1, 0, 1, 6, 15, 0, 0 },
     };
     DYNAMIC_TIME_ZONE_INFORMATION dtzi;
-    SYSTEMTIME utc, expect, systime;
+    TIME_ZONE_INFORMATION tzi;
+    SYSTEMTIME utc, expect, local, systime;
     WCHAR curr_tz_name[256];
     BOOL ret;
     unsigned int i, tzindex;
 
-    if (!pSystemTimeToTzSpecificLocalTimeEx)
+    if (!pSystemTimeToTzSpecificLocalTimeEx || !pTzSpecificLocalTimeToSystemTimeEx)
     {
         win_skip( "SystemTimeToTzSpecificLocalTimeEx not available.\n" );
         return;
@@ -860,6 +908,31 @@ static void test_TzSpecificLocalTimeEx(void)
                     expect.wYear, expect.wMonth, expect.wDay, expect.wHour, expect.wMinute, expect.wSecond );
             }
 
+            local = systime;
+            ret = pGetTimeZoneInformationForYear( local.wYear, &dtzi, &tzi );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            /* TzSpecificLocalTimeToSystemTimeEx does not necessarily yields the same utc time,
+             * compute the expected result. */
+            if (is_special_dst_date( &tzi.StandardDate ))
+                tzi.StandardDate.wYear = 1900;
+            if (is_special_dst_date( &tzi.DaylightDate ))
+                tzi.DaylightDate.wYear = 1900;
+            ret = tz_specific_local_time_to_system_time( &tzi, &local, &expect );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            memset( &systime, 0xcc, sizeof(systime) );
+            ret = pTzSpecificLocalTimeToSystemTimeEx( &dtzi, &local, &systime );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            utc.wDayOfWeek = systime.wDayOfWeek;
+            ok( !memcmp( &systime, &expect, sizeof(systime) ),
+                "got %04u-%02u-%02u %02u:%02u:%02u, expected %04u-%02u-%02u %02u:%02u:%02u, "
+                "local %04u-%02u-%02u %02u:%02u:%02u.\n",
+                systime.wYear, systime.wMonth, systime.wDay, systime.wHour, systime.wMinute, systime.wSecond,
+                expect.wYear, expect.wMonth, expect.wDay, expect.wHour, expect.wMinute, expect.wSecond,
+                local.wYear, local.wMonth, local.wDay, local.wHour, local.wMinute, local.wSecond );
+
             winetest_pop_context();
         }
     }
@@ -869,6 +942,9 @@ static void test_TzSpecificLocalTimeEx(void)
     SetLastError( 0xdeadbeef );
     ret = pSystemTimeToTzSpecificLocalTimeEx( &dtzi, &utc, &systime );
     ok( !ret, "SystemTimeToTzSpecificLocalTimeEx succeeded with invalid time\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu.\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pTzSpecificLocalTimeToSystemTimeEx( &dtzi, &utc, &systime );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu.\n", GetLastError() );
 }
 
@@ -1544,6 +1620,7 @@ START_TEST(time)
     pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
     pSystemTimeToTzSpecificLocalTimeEx = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTimeEx");
+    pTzSpecificLocalTimeToSystemTimeEx = (void *)GetProcAddress( hKernel, "TzSpecificLocalTimeToSystemTimeEx");
     pGetSystemTimes = (void *)GetProcAddress( hKernel, "GetSystemTimes");
     pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
     pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");

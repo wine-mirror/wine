@@ -7511,6 +7511,31 @@ BOOL WINAPI DECLSPEC_HOTPATCH TzSpecificLocalTimeToSystemTime( const TIME_ZONE_I
 
 
 /***********************************************************************
+ *	TzSpecificLocalTimeToSystemTimeEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TzSpecificLocalTimeToSystemTimeEx( const DYNAMIC_TIME_ZONE_INFORMATION *info,
+                                                                 const SYSTEMTIME *local,
+                                                                 SYSTEMTIME *system )
+{
+    TIME_ZONE_INFORMATION tzinfo;
+
+    if (!local || !system)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!GetTimeZoneInformationForYear( local->wYear, (DYNAMIC_TIME_ZONE_INFORMATION *)info, &tzinfo )) return FALSE;
+
+    if (is_special_dst_date( &tzinfo.StandardDate ))
+        tzinfo.StandardDate.wYear = local->wYear;
+    if (is_special_dst_date( &tzinfo.DaylightDate ))
+        tzinfo.DaylightDate.wYear = local->wYear;
+
+    return TzSpecificLocalTimeToSystemTime( &tzinfo, local, system );
+}
+
+
+/***********************************************************************
  *	VerLanguageNameA   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH VerLanguageNameA( DWORD lang, LPSTR buffer, DWORD size )

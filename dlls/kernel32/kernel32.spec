@@ -1569,7 +1569,7 @@
 @ stdcall TryEnterCriticalSection(ptr) NTDLL.RtlTryEnterCriticalSection
 @ stdcall -import TrySubmitThreadpoolCallback(ptr ptr ptr)
 @ stdcall -import TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
-# @ stub TzSpecificLocalTimeToSystemTimeEx
+@ stdcall -import TzSpecificLocalTimeToSystemTimeEx(ptr ptr ptr)
 # @ stub -arch=x86_64 uaw_lstrcmpW
 # @ stub -arch=x86_64 uaw_lstrcmpiW
 # @ stub -arch=x86_64 uaw_lstrlenW
