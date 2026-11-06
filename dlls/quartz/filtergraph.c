@@ -2859,7 +2859,7 @@ static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid
 
     *ppvSite = NULL;
     if (!This->pSite)
-        return E_FAIL;
+        return E_NOINTERFACE;
     else
         return IUnknown_QueryInterface(This->pSite, riid, ppvSite);
 }

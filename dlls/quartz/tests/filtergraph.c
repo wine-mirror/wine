@@ -582,7 +582,7 @@ static void test_graph_site(IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IObjectWithSite_GetSite(object_with_site, &IID_IUnknown, (void **)&site);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
     IObjectWithSite_Release(object_with_site);
 }
