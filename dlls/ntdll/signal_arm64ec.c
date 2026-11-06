@@ -1413,11 +1413,11 @@ static void __attribute__((used)) dispatch_apc( void (CALLBACK *func)(ULONG_PTR,
                                                 ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
                                                 BOOLEAN alertable, ARM64_NT_CONTEXT *arm_ctx )
 {
-    ARM64EC_NT_CONTEXT context;
+    struct xcontext context;
 
-    context_arm_to_x64( &context, arm_ctx, CONTEXT_AMD64_FULL );
-    func( arg1, arg2, arg3, &context.AMD64_Context );
-    NtContinue( &context.AMD64_Context, alertable );
+    init_xcontext( &context, arm_ctx );
+    func( arg1, arg2, arg3, &context.c.AMD64_Context );
+    NtContinue( &context.c.AMD64_Context, alertable );
 }
 __ASM_GLOBAL_FUNC( "#KiUserApcDispatcher",
                    ".seh_context\n\t"
