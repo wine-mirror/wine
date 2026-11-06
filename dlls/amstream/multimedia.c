@@ -38,7 +38,6 @@ struct multimedia_stream
     IMediaSeeking* media_seeking;
     IMediaControl* media_control;
     IMediaStreamFilter *filter;
-    IPin* ipin;
     BOOL initialized;
     STREAM_TYPE type;
     OAEVENT event;
@@ -90,8 +89,6 @@ static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
 
     if (!ref)
     {
-        if (This->ipin)
-            IPin_Release(This->ipin);
         IMediaStreamFilter_Release(This->filter);
         IMediaStreamFilter_Release(This->filter);
         if (This->media_seeking)
@@ -459,11 +456,7 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         ret = IEnumPins_Next(EnumPins, 1, &ipin, NULL);
 
     if (SUCCEEDED(ret))
-    {
         ret = IPin_QueryDirection(ipin, &pin_direction);
-        if (ret == S_OK && pin_direction == PINDIR_OUTPUT)
-            This->ipin = ipin;
-    }
 
     if (SUCCEEDED(ret) && !(flags & AMMSF_NORENDER))
     {
@@ -473,7 +466,7 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         {
             DWORD renderflags = (flags & AMMSF_RENDERALLSTREAMS) ? 0 : AM_RENDEREX_RENDERTOEXISTINGRENDERERS;
 
-            ret = IFilterGraph2_RenderEx(graph, This->ipin, renderflags, NULL);
+            ret = IFilterGraph2_RenderEx(graph, ipin, renderflags, NULL);
             if (ret == VFW_E_CANNOT_RENDER) ret = VFW_E_CANNOT_CONNECT;
             else if (ret == VFW_S_PARTIAL_RENDER) ret = S_OK;
 
@@ -482,7 +475,7 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         else
         {
             FIXME("Failed to get IFilterGraph2 interface, hr %#lx.\n", ret);
-            ret = IGraphBuilder_Render(This->graph, This->ipin);
+            ret = IGraphBuilder_Render(This->graph, ipin);
         }
     }
 
