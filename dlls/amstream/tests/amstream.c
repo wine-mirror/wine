@@ -2722,11 +2722,9 @@ static void test_render(void)
 
     /* Test Render prior to Initialize */
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     /* Test Render with STREAMTYPE_READ */
