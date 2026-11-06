@@ -2077,7 +2077,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
         status = RtlVirtualUnwind2_arm64( type, base, pc, (ARM64_RUNTIME_FUNCTION *)function,
                                           &arm_context, NULL, data, frame_ret, NULL,
                                           limit_low, limit_high, handler_ret, flags );
-        context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_context );
+        context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_context, context->ContextFlags );
         context->ContextFlags = flags | (arm_context.ContextFlags & CONTEXT_UNWOUND_TO_CALL);
         return status;
     }

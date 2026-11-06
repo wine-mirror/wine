@@ -190,10 +190,10 @@ static inline NTSTATUS context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const ARM6
     return status;
 }
 
-static inline void context_arm_to_x64( ARM64EC_NT_CONTEXT *ec_ctx, const ARM64_NT_CONTEXT *arm_ctx )
+static inline void context_arm_to_x64( ARM64EC_NT_CONTEXT *ec_ctx, const ARM64_NT_CONTEXT *arm_ctx, ULONG flags )
 {
     memset( ec_ctx, 0, sizeof(*ec_ctx) );
-    ec_ctx->ContextFlags = ctx_flags_arm_to_x64( arm_ctx->ContextFlags );
+    ec_ctx->ContextFlags = flags;
     ec_ctx->AMD64_SegCs  = 0x33;
     ec_ctx->AMD64_SegDs  = 0x2b;
     ec_ctx->AMD64_SegEs  = 0x2b;

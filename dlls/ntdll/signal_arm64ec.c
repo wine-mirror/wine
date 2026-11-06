@@ -724,7 +724,8 @@ NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
     ARM64_NT_CONTEXT arm_ctx = { .ContextFlags = ctx_flags_x64_to_arm( context->ContextFlags ) };
     NTSTATUS status = syscall_NtGetContextThread( handle, &arm_ctx );
 
-    if (!status) context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_ctx );
+    if (!status) context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_ctx,
+                                     ctx_flags_arm_to_x64( arm_ctx.ContextFlags ));
     return status;
 }
 
@@ -1268,7 +1269,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
  */
 void dispatch_emulation( ARM64_NT_CONTEXT *arm_ctx )
 {
-    context_arm_to_x64( get_arm64ec_cpu_area()->ContextAmd64, arm_ctx );
+    context_arm_to_x64( get_arm64ec_cpu_area()->ContextAmd64, arm_ctx, CONTEXT_AMD64_FULL );
     pBeginSimulation();
 }
 __ASM_GLOBAL_FUNC( "#KiUserEmulationDispatcher",
@@ -1301,7 +1302,7 @@ static void dispatch_syscall( ARM64_NT_CONTEXT *context )
 static void * __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64EC_NT_CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
 {
     if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
-    context_arm_to_x64( context, arm_ctx );
+    context_arm_to_x64( context, arm_ctx, CONTEXT_AMD64_FULL );
     if (pResetToConsistentState) pResetToConsistentState( rec, &context->AMD64_Context, arm_ctx );
     /* call x64 dispatcher if the thunk or the function pointer was modified */
     if (pWow64PrepareForException || memcmp( KiUserExceptionDispatcher_thunk, KiUserExceptionDispatcher_orig,
@@ -1347,7 +1348,7 @@ static void __attribute__((used)) dispatch_apc( void (CALLBACK *func)(ULONG_PTR,
 {
     ARM64EC_NT_CONTEXT context;
 
-    context_arm_to_x64( &context, arm_ctx );
+    context_arm_to_x64( &context, arm_ctx, CONTEXT_AMD64_FULL );
     func( arg1, arg2, arg3, &context.AMD64_Context );
     NtContinue( &context.AMD64_Context, alertable );
 }
@@ -1484,7 +1485,7 @@ void __attribute__((naked)) RtlCaptureContext( CONTEXT *context )
 /* fixup jump buffer information; helper for _setjmpex */
 static int __attribute__((used)) do_setjmpex( _JUMP_BUFFER *buf, UINT fpcr, UINT fpsr )
 {
-    CONTEXT context = { .ContextFlags = CONTEXT_FULL };
+    CONTEXT context = { .ContextFlags = CONTEXT_AMD64_FULL };
 
     buf->MxCsr = fpcsr_to_mxcsr( fpcr, fpsr );
     buf->FpCsr = 0x27f;
@@ -2134,7 +2135,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR 
         __os_arm64x_set_x64_information = LdrpSetX64Information;
     }
 
-    context_arm_to_x64( &context, (ARM64_NT_CONTEXT *)arm_context );
+    context_arm_to_x64( &context, (ARM64_NT_CONTEXT *)arm_context, CONTEXT_AMD64_FULL );
     loader_init( &context.AMD64_Context, (void **)&context.X0 );
     TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.X0, (void *)context.X1 );
     NtContinue( &context.AMD64_Context, TRUE );
