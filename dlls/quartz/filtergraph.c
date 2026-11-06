@@ -934,7 +934,7 @@ static void sort_filters(struct filter_graph *graph)
 
 /* NOTE: despite the implication, it doesn't matter which
  * way round you put in the input and output pins */
-static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppinIn, IPin *ppinOut,
+static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppinOut, IPin *ppinIn,
         const AM_MEDIA_TYPE *pmt)
 {
     struct filter_graph *This = impl_from_IFilterGraph2(iface);
