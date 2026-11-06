@@ -1161,9 +1161,103 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
     return res;
 }
 
+static inline BOOL is_variant_empty(REFVARIANT var)
+{
+    return var->vt == VT_EMPTY || var->vt == VT_NULL;
+}
+
+static void convert_variant_int(const VARIANT *src, VARIANT *dest)
+{
+    switch (src->vt)
+    {
+    /* don't convert VT_I1 */
+    case VT_I2:
+        V_VT(dest) = VT_I8;
+        V_I8(dest) = V_I2(src);
+        return;
+    case VT_I4:
+        V_VT(dest) = VT_I8;
+        V_I8(dest) = V_I4(src);
+        return;
+    case VT_UI1:
+        V_VT(dest) = VT_UI8;
+        V_UI8(dest) = V_UI1(src);
+        return;
+    case VT_UI2:
+        V_VT(dest) = VT_UI8;
+        V_UI8(dest) = V_UI2(src);
+        return;
+    case VT_UI4:
+        V_VT(dest) = VT_UI8;
+        V_UI8(dest) = V_UI4(src);
+        return;
+    default:
+        *dest = *src;
+        return;
+    }
+}
+
 INT WINAPI VariantCompare(const VARIANT *var1, const VARIANT *var2)
 {
-    FIXME("%s %s: stub!\n", debugstr_variant(var1), debugstr_variant(var2));
+    HRESULT ret;
+    DWORD xmask;
+
+    TRACE("(%s %s)\n", debugstr_variant(var1), debugstr_variant(var2));
+
+    if (is_variant_empty(var1))
+        return is_variant_empty(var2) ? 0 : -1;
+    if (is_variant_empty(var2)) return 1;
+
+    xmask = 1 << (V_VT(var1) & VT_TYPEMASK);
+    xmask |= 1 << (V_VT(var2) & VT_TYPEMASK);
+    /* handle types not supported by VarCmp */
+    if (xmask & (VTBIT_I1 | VTBIT_UI2 | VTBIT_UI4 | VTBIT_UI8))
+    {
+        VARIANT v1, v2;
+        INT r = 1;
+
+        convert_variant_int(var1, &v1);
+        convert_variant_int(var2, &v2);
+        if (V_VT(&v1) != VT_I1 && V_VT(&v1) != VT_UI8)
+        {
+            VARIANT v = v1;
+
+            v1 = v2;
+            v2 = v;
+            r = -1;
+        }
+
+#define SPACESHIP_CMP(a, b) ((a) == (b) ? 0 : ((a) < (b) ? -1 : 1))
+        if (V_VT(&v1) == VT_I1)
+        {
+            switch(V_VT(&v2))
+            {
+            case VT_I1:
+                return r * SPACESHIP_CMP(V_I1(&v1), V_I1(&v2));
+            }
+        }
+        else
+        {
+            switch(V_VT(&v2))
+            {
+            case VT_I8:
+                if (V_I8(&v2) < 0) return r;
+                return r * SPACESHIP_CMP(V_UI8(&v1), (ULONGLONG)V_I8(&v2));
+            case VT_UI8:
+                return r * SPACESHIP_CMP(V_UI8(&v1), V_UI8(&v2));
+            case VT_R8:
+                return r * SPACESHIP_CMP((double)V_UI8(&v1), V_R8(&v2));
+            }
+        }
+#undef SPACESHIP_CMP
+
+        FIXME("Case not handled %s <=> %s\n", debugstr_variant(var1), debugstr_variant(var2));
+        return 0;
+    }
+
+    ret = VarCmp((VARIANT *)var1, (VARIANT *)var2, GetUserDefaultLCID(), 0);
+    if (ret == VARCMP_LT) return -1;
+    if (ret == VARCMP_GT) return 1;
     return 0;
 }
 
