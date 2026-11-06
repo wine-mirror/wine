@@ -635,18 +635,17 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
             return D2DERR_UNSUPPORTED_OPERATION;
         }
 
-        if (!(*bitmap = calloc(1, sizeof(**bitmap))))
-        {
-            ID3D11Resource_Release(resource);
-            return E_OUTOFMEMORY;
-        }
-
-
         if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
         {
             WARN("Failed to get surface desc, hr %#lx.\n", hr);
             ID3D11Resource_Release(resource);
             return hr;
+        }
+
+        if (!(*bitmap = calloc(1, sizeof(**bitmap))))
+        {
+            ID3D11Resource_Release(resource);
+            return E_OUTOFMEMORY;
         }
 
         if (!desc)
