@@ -6178,7 +6178,7 @@ static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Tessellate(ID2D1Transf
     if (transform)
         d2d_matrix_multiply(&g, transform);
 
-    return ID2D1Geometry_Tessellate(geometry->u.transformed.src_geometry, transform, tolerance, sink);
+    return ID2D1Geometry_Tessellate(geometry->u.transformed.src_geometry, &g, tolerance, sink);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_CombineWithGeometry(ID2D1TransformedGeometry *iface,
