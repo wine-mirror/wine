@@ -1942,6 +1942,12 @@ a1.aa
 ---
 a2.ac
 a1.ab
+a1.ac
+a2.aa
+a1.aa
+---
+a2.ac
+a1.ab
 a2.aa
 a1.ac
 a1.aa

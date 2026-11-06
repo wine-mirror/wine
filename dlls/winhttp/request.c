@@ -398,12 +398,7 @@ static DWORD gzip_fill_buffer( struct data_stream *stream, struct request *reque
     {
         if (!gzip_stream->buf.size)
         {
-            if (gzip_stream->buf.pos)
-            {
-                if (gzip_stream->buf.size)
-                    memmove( gzip_stream->buf.buf, gzip_stream->buf.buf + gzip_stream->buf.pos, gzip_stream->buf.size );
-                gzip_stream->buf.pos = 0;
-            }
+            gzip_stream->buf.pos = 0;
             if ((ret = gzip_stream->parent->vtbl->fill_buffer( gzip_stream->parent, request, &gzip_stream->buf )))
                 return ret;
             if (!gzip_stream->buf.size)
@@ -514,7 +509,7 @@ static const WCHAR *attribute_table[] =
     L"Referer",                     /* WINHTTP_QUERY_REFERER                    = 35 */
     L"Retry-After",                 /* WINHTTP_QUERY_RETRY_AFTER                = 36 */
     L"Server",                      /* WINHTTP_QUERY_SERVER                     = 37 */
-    NULL,                           /* WINHTTP_TITLE                            = 38 */
+    NULL,                           /* WINHTTP_QUERY_TITLE                      = 38 */
     L"User-Agent",                  /* WINHTTP_QUERY_USER_AGENT                 = 39 */
     L"WWW-Authenticate",            /* WINHTTP_QUERY_WWW_AUTHENTICATE           = 40 */
     L"Proxy-Authenticate",          /* WINHTTP_QUERY_PROXY_AUTHENTICATE         = 41 */
@@ -547,10 +542,6 @@ static const WCHAR *attribute_table[] =
     L"Expect",                      /* WINHTTP_QUERY_EXPECT                     = 68 */
     L"Proxy-Connection",            /* WINHTTP_QUERY_PROXY_CONNECTION           = 69 */
     L"Unless-Modified-Since",       /* WINHTTP_QUERY_UNLESS_MODIFIED_SINCE      = 70 */
-    NULL,                           /* WINHTTP_QUERY_PROXY_SUPPORT              = 75 */
-    NULL,                           /* WINHTTP_QUERY_AUTHENTICATION_INFO        = 76 */
-    NULL,                           /* WINHTTP_QUERY_PASSPORT_URLS              = 77 */
-    NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
 void init_queue( struct queue *queue )
@@ -819,8 +810,12 @@ static DWORD insert_header( struct request *request, struct header *header )
     if (!hdrs) return ERROR_OUTOFMEMORY;
 
     request->headers = hdrs;
-    request->headers[count - 1].field = wcsdup( header->field );
-    request->headers[count - 1].value = wcsdup( header->value );
+    if (!(request->headers[count - 1].field = wcsdup( header->field ))) return ERROR_OUTOFMEMORY;
+    if (!(request->headers[count - 1].value = wcsdup( header->value )))
+    {
+        free( request->headers[count - 1].field );
+        return ERROR_OUTOFMEMORY;
+    }
     request->headers[count - 1].is_request = header->is_request;
     request->num_headers = count;
     return ERROR_SUCCESS;
@@ -1978,31 +1973,26 @@ static DWORD map_secure_protocols( DWORD mask )
 static DWORD ensure_cred_handle( struct request *request )
 {
     SECURITY_STATUS status = SEC_E_OK;
+    SCHANNEL_CRED cred;
 
     if (request->cred_handle_initialized) return ERROR_SUCCESS;
 
-    if (!request->cred_handle_initialized)
+    memset( &cred, 0, sizeof(cred) );
+    cred.dwVersion             = SCHANNEL_CRED_VERSION;
+    cred.grbitEnabledProtocols = map_secure_protocols( request->connect->session->secure_protocols );
+    if (request->client_cert)
     {
-        SCHANNEL_CRED cred;
-        memset( &cred, 0, sizeof(cred) );
-        cred.dwVersion             = SCHANNEL_CRED_VERSION;
-        cred.grbitEnabledProtocols = map_secure_protocols( request->connect->session->secure_protocols );
-        if (request->client_cert)
-        {
-            cred.paCred = &request->client_cert;
-            cred.cCreds = 1;
-        }
-        status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL,
-                                            &cred, NULL, NULL, &request->cred_handle, NULL );
-        if (status == SEC_E_OK)
-            request->cred_handle_initialized = TRUE;
+        cred.paCred = &request->client_cert;
+        cred.cCreds = 1;
     }
-
+    status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL,
+                                        &request->cred_handle, NULL );
     if (status != SEC_E_OK)
     {
         WARN( "AcquireCredentialsHandleW failed: %#lx\n", status );
         return status;
     }
+    request->cred_handle_initialized = TRUE;
     return ERROR_SUCCESS;
 }
 
@@ -2329,7 +2319,7 @@ static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_
     len = WideCharToMultiByte( CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL );
     if (!(utf8 = malloc( len ))) return 0;
 
-    WideCharToMultiByte( CP_UTF8, 0, src, -1, utf8, len, NULL, NULL );
+    WideCharToMultiByte( CP_UTF8, 0, src, src_len, utf8, len, NULL, NULL );
     len = escape_string( utf8, len, dst, flags );
     free( utf8 );
 
@@ -2504,7 +2494,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
         process_header( request, L"Upgrade", L"websocket", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Connection", L"Upgrade", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
         process_header( request, L"Sec-WebSocket-Version", L"13", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
-        if ((ret = add_websocket_key_header( request ))) return ret;
+        if ((ret = add_websocket_key_header( request ))) goto end;
     }
     else if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
     {
@@ -2519,7 +2509,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
                                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE )))
     {
         TRACE( "failed to add request headers: %lu\n", ret );
-        return ret;
+        goto end;
     }
     if (request->hdr.decompression)
     {
@@ -2532,7 +2522,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES) && (ret = add_cookie_headers( request )))
     {
         WARN( "failed to add cookie headers: %lu\n", ret );
-        return ret;
+        goto end;
     }
 
     if (context) request->hdr.context = context;
@@ -3095,7 +3085,7 @@ static DWORD handle_redirect( struct request *request, DWORD status )
             lstrcpyW( path, request->path );
             lstrcatW( path, L"/" );
             memcpy( path + lstrlenW(path), location, len_loc * sizeof(WCHAR) );
-            path[len_loc] = 0;
+            path[len] = 0;
         }
         free( request->path );
         request->path = path;
@@ -3158,7 +3148,11 @@ static DWORD handle_redirect( struct request *request, DWORD status )
         if (uc.dwUrlPathLength)
         {
             len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
-            if (!(request->path = malloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            if (!(request->path = malloc( (len + 1) * sizeof(WCHAR) )))
+            {
+                ret = ERROR_OUTOFMEMORY;
+                goto end;
+            }
             memcpy( request->path, uc.lpszUrlPath, (len + 1) * sizeof(WCHAR) );
             request->path[len] = 0;
         }
@@ -4292,6 +4286,7 @@ static HRESULT WINAPI winhttp_request_GetResponseHeader(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD size, err = ERROR_SUCCESS;
+    BSTR str;
 
     TRACE("%p, %p\n", request, header);
 
@@ -4312,16 +4307,17 @@ static HRESULT WINAPI winhttp_request_GetResponseHeader(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*value = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CUSTOM, header, *value, &size, NULL ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_CUSTOM, header, str, &size, NULL )) *value = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *value );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4334,6 +4330,7 @@ static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD size, err = ERROR_SUCCESS;
+    BSTR str;
 
     TRACE("%p, %p\n", request, headers);
 
@@ -4351,16 +4348,17 @@ static HRESULT WINAPI winhttp_request_GetAllResponseHeaders(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*headers = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, size / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, *headers, &size, NULL ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, str, &size, NULL )) *headers = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *headers );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4421,22 +4419,20 @@ static DWORD wait_for_completion( struct winhttp_request *request )
     return ret;
 }
 
-static HRESULT request_receive( struct winhttp_request *request )
+static DWORD request_receive( struct winhttp_request *request )
 {
     DWORD err, size, buflen = 4096;
 
     wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE );
-    if (!WinHttpReceiveResponse( request->hrequest, NULL ))
-    {
-        return HRESULT_FROM_WIN32( GetLastError() );
-    }
-    if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
+    if (!WinHttpReceiveResponse( request->hrequest, NULL )) return GetLastError();
+
+    if ((err = wait_for_completion( request ))) return err;
     if (!wcscmp( request->verb, L"HEAD" ))
     {
         request->state = WINHTTP_REQUEST_STATE_RESPONSE_RECEIVED;
-        return S_OK;
+        return ERROR_SUCCESS;
     }
-    if (!(request->buffer = malloc( buflen ))) return E_OUTOFMEMORY;
+    if (!(request->buffer = malloc( buflen ))) return ERROR_OUTOFMEMORY;
     request->buffer[0] = 0;
     size = 0;
     do
@@ -4478,7 +4474,7 @@ static HRESULT request_receive( struct winhttp_request *request )
 error:
     free( request->buffer );
     request->buffer = NULL;
-    return HRESULT_FROM_WIN32( err );
+    return err;
 }
 
 static DWORD request_set_parameters( struct winhttp_request *request )
@@ -4515,7 +4511,7 @@ static void request_set_utf8_content_type( struct winhttp_request *request )
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
 }
 
-static HRESULT request_send( struct winhttp_request *request )
+static DWORD request_send( struct winhttp_request *request )
 {
     SAFEARRAY *sa = NULL;
     VARIANT data;
@@ -4524,7 +4520,7 @@ static HRESULT request_send( struct winhttp_request *request )
     HRESULT hr;
     DWORD err;
 
-    if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
+    if ((err = request_set_parameters( request ))) return err;
     if (wcscmp( request->verb, L"GET" ))
     {
         VariantInit( &data );
@@ -4543,7 +4539,7 @@ static HRESULT request_send( struct winhttp_request *request )
                 }
             }
             size = WideCharToMultiByte( cp, 0, str, len, NULL, 0, NULL, NULL );
-            if (!(ptr = malloc( size ))) return E_OUTOFMEMORY;
+            if (!(ptr = malloc( size ))) return ERROR_OUTOFMEMORY;
             WideCharToMultiByte( cp, 0, str, len, ptr, size, NULL, NULL );
             if (cp == CP_UTF8) request_set_utf8_content_type( request );
         }
@@ -4569,18 +4565,18 @@ static HRESULT request_send( struct winhttp_request *request )
     if (sa) SafeArrayUnaccessData( sa );
     else free( ptr );
     request->state = WINHTTP_REQUEST_STATE_SENT;
-    return S_OK;
+    return ERROR_SUCCESS;
 
 error:
     if (sa) SafeArrayUnaccessData( sa );
     else free( ptr );
-    return HRESULT_FROM_WIN32( err );
+    return err;
 }
 
 static void CALLBACK send_and_receive_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
 {
     struct winhttp_request *request = (struct winhttp_request *)ctx;
-    if (request_send( request ) == S_OK) request_receive( request );
+    if ((request->error = request_send( request )) == S_OK) request->error = request_receive( request );
     SetEvent( request->done );
 }
 
@@ -4693,6 +4689,7 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD err = ERROR_SUCCESS, len = 0, index = 0;
+    BSTR str;
 
     TRACE("%p, %p\n", request, status);
 
@@ -4709,17 +4706,18 @@ static HRESULT WINAPI winhttp_request_get_StatusText(
         err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) goto done;
     }
-    if (!(*status = SysAllocStringLen( NULL, len / sizeof(WCHAR) )))
+    if (!(str = SysAllocStringLen( NULL, len / sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
     index = 0;
     err = ERROR_SUCCESS;
-    if (!WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, *status, &len, &index ))
+    if (WinHttpQueryHeaders( request->hrequest, WINHTTP_QUERY_STATUS_TEXT, NULL, str, &len, &index )) *status = str;
+    else
     {
         err = GetLastError();
-        SysFreeString( *status );
+        SysFreeString( str );
     }
 done:
     LeaveCriticalSection( &request->cs );
@@ -4763,6 +4761,7 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     UINT codepage;
     DWORD err = ERROR_SUCCESS;
+    BSTR str;
     int len;
 
     TRACE("%p, %p\n", request, body);
@@ -4777,13 +4776,14 @@ static HRESULT WINAPI winhttp_request_get_ResponseText(
     }
     if ((err = request_get_codepage( request, &codepage ))) goto done;
     len = MultiByteToWideChar( codepage, 0, request->buffer, request->offset, NULL, 0 );
-    if (!(*body = SysAllocStringLen( NULL, len )))
+    if (!(str = SysAllocStringLen( NULL, len )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
-    MultiByteToWideChar( codepage, 0, request->buffer, request->offset, *body, len );
-    (*body)[len] = 0;
+    MultiByteToWideChar( codepage, 0, request->buffer, request->offset, str, len );
+    str[len] = 0;
+    *body = str;
 
 done:
     LeaveCriticalSection( &request->cs );
@@ -4893,14 +4893,14 @@ static HRESULT WINAPI stream_Read( IStream *iface, void *buf, ULONG len, ULONG *
 
     if (stream->pos.QuadPart >= stream->size.QuadPart)
     {
-        *read = 0;
+        if (read) *read = 0;
         return S_FALSE;
     }
 
     size = min( stream->size.QuadPart - stream->pos.QuadPart, len );
     memcpy( buf, stream->data + stream->pos.QuadPart, size );
     stream->pos.QuadPart += size;
-    *read = size;
+    if (read) *read = size;
 
     return S_OK;
 }

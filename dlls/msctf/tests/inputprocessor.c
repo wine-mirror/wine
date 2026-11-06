@@ -76,7 +76,9 @@ static INT  test_OnPushContext = SINK_UNEXPECTED;
 static INT  test_OnPopContext = SINK_UNEXPECTED;
 static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
+static INT  test_ACP2_AdviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_UnadviseSink = SINK_UNEXPECTED;
+static INT  test_ACP2_UnadviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
 static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
 static INT  test_ACP_GetSelection = SINK_UNEXPECTED;
@@ -176,6 +178,8 @@ static inline void _sink_check_saved(INT *sink, ITfDocumentMgr *PrevFocus, ITfDo
 typedef struct tagTextStoreACP
 {
     ITextStoreACP ITextStoreACP_iface;
+    ITextStoreACP2 ITextStoreACP2_iface;
+    unsigned int version;
     LONG refCount;
 
 } TextStoreACP;
@@ -192,11 +196,17 @@ static void TextStoreACP_Destructor(TextStoreACP *This)
 
 static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID iid, LPVOID *ppvOut)
 {
+    TextStoreACP *This = impl_from_ITextStoreACP(iface);
     *ppvOut = NULL;
 
-    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACP))
+    if (IsEqualIID(iid, &IID_IUnknown) || (This->version == 1 && IsEqualIID(iid, &IID_ITextStoreACP)))
     {
-        *ppvOut = iface;
+        *ppvOut = &This->ITextStoreACP_iface;
+    }
+    else if (IsEqualIID(iid, &IID_ITextStoreACP2))
+    {
+        ok(This->version == 2, "ITextStoreACP2 queried while ITextStoreACP is available.\n");
+        *ppvOut = &This->ITextStoreACP2_iface;
     }
 
     if (*ppvOut)
@@ -467,7 +477,247 @@ static const ITextStoreACPVtbl TextStoreACP_TextStoreACPVtbl =
     TextStoreACP_GetWnd
 };
 
-static HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
+static inline TextStoreACP *impl_from_ITextStoreACP2(ITextStoreACP2 *iface)
+{
+    return CONTAINING_RECORD(iface, TextStoreACP, ITextStoreACP2_iface);
+}
+
+static HRESULT WINAPI TextStoreACP2_QueryInterface(ITextStoreACP2 *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+
+    return ITextStoreACP_QueryInterface(&This->ITextStoreACP_iface, iid, ppvOut);
+}
+
+static ULONG WINAPI TextStoreACP2_AddRef(ITextStoreACP2 *iface)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_AddRef(&This->ITextStoreACP_iface);
+}
+
+static ULONG WINAPI TextStoreACP2_Release(ITextStoreACP2 *iface)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_Release(&This->ITextStoreACP_iface);
+}
+
+static HRESULT WINAPI TextStoreACP2_AdviseSink(ITextStoreACP2 *iface,
+    REFIID riid, IUnknown *punk, DWORD dwMask)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+
+    if (winetest_debug > 1) trace("ITextStoreACP2::AdviseSink(iid %s, mask %#lx)\n",
+            wine_dbgstr_guid(riid), dwMask);
+
+    sink_fire_ok(&test_ACP2_AdviseSink,"TextStoreACP2_AdviseSink");
+    return ITextStoreACP_AdviseSink(&This->ITextStoreACP_iface, riid, punk, dwMask);
+}
+
+static HRESULT WINAPI TextStoreACP2_UnadviseSink(ITextStoreACP2 *iface,
+    IUnknown *punk)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    sink_fire_ok(&test_ACP2_UnadviseSink,"TextStoreACP2_UnadviseSink");
+    return ITextStoreACP_UnadviseSink(&This->ITextStoreACP_iface, punk);
+}
+
+static HRESULT WINAPI TextStoreACP2_RequestLock(ITextStoreACP2 *iface,
+        DWORD flags, HRESULT *session_hr)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_RequestLock(&This->ITextStoreACP_iface, flags, session_hr);
+}
+static HRESULT WINAPI TextStoreACP2_GetStatus(ITextStoreACP2 *iface,
+    TS_STATUS *pdcs)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetStatus(&This->ITextStoreACP_iface, pdcs);
+}
+
+static HRESULT WINAPI TextStoreACP2_QueryInsert(ITextStoreACP2 *iface, LONG start,
+        LONG end, ULONG len, LONG *ret_start, LONG *ret_end)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_QueryInsert(&This->ITextStoreACP_iface, start, end, len, ret_start, ret_end);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetSelection(ITextStoreACP2 *iface,
+        ULONG index, ULONG count, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetSelection(&This->ITextStoreACP_iface, index, count, pSelection, pcFetched);
+}
+
+static HRESULT WINAPI TextStoreACP2_SetSelection(ITextStoreACP2 *iface,
+    ULONG ulCount, const TS_SELECTION_ACP *pSelection)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_SetSelection(&This->ITextStoreACP_iface, ulCount, pSelection);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetText(ITextStoreACP2 *iface, LONG start, LONG end,
+        WCHAR *plain, ULONG plain_len, ULONG *plain_ret_len, TS_RUNINFO *runinfo,
+        ULONG runinfo_count, ULONG *runinfo_ret_count, LONG *next)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetText(&This->ITextStoreACP_iface, start, end, plain, plain_len, plain_ret_len,
+            runinfo, runinfo_count, runinfo_ret_count, next);
+}
+
+static HRESULT WINAPI TextStoreACP2_SetText(ITextStoreACP2 *iface, DWORD flags,
+        LONG start, LONG end, const WCHAR *text, ULONG len, TS_TEXTCHANGE *textchange)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_SetText(&This->ITextStoreACP_iface, flags, start, end, text, len, textchange);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetFormattedText(ITextStoreACP2 *iface,
+        LONG start, LONG end, IDataObject **out)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetFormattedText(&This->ITextStoreACP_iface, start, end, out);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetEmbedded(ITextStoreACP2 *iface, LONG pos,
+        REFGUID format, REFIID iid, IUnknown **out)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetEmbedded(&This->ITextStoreACP_iface, pos, format, iid, out);
+}
+
+static HRESULT WINAPI TextStoreACP2_QueryInsertEmbedded(ITextStoreACP2 *iface,
+        const GUID *type, const FORMATETC *formatetc, BOOL *insertable)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_QueryInsertEmbedded(&This->ITextStoreACP_iface, type, formatetc, insertable);
+}
+
+static HRESULT WINAPI TextStoreACP2_InsertEmbedded(ITextStoreACP2 *iface, DWORD flags,
+        LONG start, LONG end, IDataObject *object, TS_TEXTCHANGE *textchange)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_InsertEmbedded(&This->ITextStoreACP_iface, flags, start, end, object, textchange);
+}
+
+static HRESULT WINAPI TextStoreACP2_InsertTextAtSelection(ITextStoreACP2 *iface, DWORD flags,
+        const WCHAR *text, ULONG len, LONG *start, LONG *end, TS_TEXTCHANGE *textchange)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_InsertTextAtSelection(&This->ITextStoreACP_iface, flags, text, len, start, end, textchange);
+}
+
+static HRESULT WINAPI TextStoreACP2_InsertEmbeddedAtSelection(ITextStoreACP2 *iface,
+        DWORD flags, IDataObject *object, LONG *start, LONG *end, TS_TEXTCHANGE *textchange)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_InsertEmbeddedAtSelection(&This->ITextStoreACP_iface, flags, object, start, end, textchange);
+}
+
+static HRESULT WINAPI TextStoreACP2_RequestSupportedAttrs(ITextStoreACP2 *iface,
+        DWORD flags, ULONG count, const TS_ATTRID *attrs)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_RequestSupportedAttrs(&This->ITextStoreACP_iface, flags, count, attrs);
+}
+
+static HRESULT WINAPI TextStoreACP2_RequestAttrsAtPosition(ITextStoreACP2 *iface,
+        LONG pos, ULONG count, const TS_ATTRID *attrs, DWORD flags)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_RequestAttrsAtPosition(&This->ITextStoreACP_iface, pos, count, attrs, flags);
+}
+
+static HRESULT WINAPI TextStoreACP2_RequestAttrsTransitioningAtPosition(ITextStoreACP2 *iface,
+        LONG pos, ULONG count, const TS_ATTRID *attrs, DWORD flags)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_RequestAttrsTransitioningAtPosition(&This->ITextStoreACP_iface, pos, count, attrs, flags);
+}
+
+static HRESULT WINAPI TextStoreACP2_FindNextAttrTransition(ITextStoreACP2 *iface,
+        LONG start, LONG end, ULONG count, const TS_ATTRID *attrs, DWORD flags,
+        LONG *next, BOOL *found, LONG *offset)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_FindNextAttrTransition(&This->ITextStoreACP_iface, start, end, count, attrs, flags,
+            next, found, offset);
+}
+
+static HRESULT WINAPI TextStoreACP2_RetrieveRequestedAttrs(ITextStoreACP2 *iface,
+        ULONG count, TS_ATTRVAL *values, ULONG *ret_count)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_RetrieveRequestedAttrs(&This->ITextStoreACP_iface, count, values, ret_count);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetEndACP(ITextStoreACP2 *iface,
+    LONG *pacp)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetEndACP(&This->ITextStoreACP_iface, pacp);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetActiveView(ITextStoreACP2 *iface, TsViewCookie *view)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetActiveView(&This->ITextStoreACP_iface, view);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetACPFromPoint(ITextStoreACP2 *iface,
+        TsViewCookie view, const POINT *pt, DWORD flags, LONG *pos)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetACPFromPoint(&This->ITextStoreACP_iface, view, pt, flags, pos);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetTextExt(ITextStoreACP2 *iface,
+        TsViewCookie view, LONG start, LONG end, RECT *rect, BOOL *clipped)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetTextExt(&This->ITextStoreACP_iface, view, start, end, rect, clipped);
+}
+
+static HRESULT WINAPI TextStoreACP2_GetScreenExt(ITextStoreACP2 *iface,
+        TsViewCookie view, RECT *rect)
+{
+    TextStoreACP *This = impl_from_ITextStoreACP2(iface);
+    return ITextStoreACP_GetScreenExt(&This->ITextStoreACP_iface, view, rect);
+}
+
+static const ITextStoreACP2Vtbl TextStoreACP2_TextStoreACP2Vtbl =
+{
+    TextStoreACP2_QueryInterface,
+    TextStoreACP2_AddRef,
+    TextStoreACP2_Release,
+
+    TextStoreACP2_AdviseSink,
+    TextStoreACP2_UnadviseSink,
+    TextStoreACP2_RequestLock,
+    TextStoreACP2_GetStatus,
+    TextStoreACP2_QueryInsert,
+    TextStoreACP2_GetSelection,
+    TextStoreACP2_SetSelection,
+    TextStoreACP2_GetText,
+    TextStoreACP2_SetText,
+    TextStoreACP2_GetFormattedText,
+    TextStoreACP2_GetEmbedded,
+    TextStoreACP2_QueryInsertEmbedded,
+    TextStoreACP2_InsertEmbedded,
+    TextStoreACP2_InsertTextAtSelection,
+    TextStoreACP2_InsertEmbeddedAtSelection,
+    TextStoreACP2_RequestSupportedAttrs,
+    TextStoreACP2_RequestAttrsAtPosition,
+    TextStoreACP2_RequestAttrsTransitioningAtPosition,
+    TextStoreACP2_FindNextAttrTransition,
+    TextStoreACP2_RetrieveRequestedAttrs,
+    TextStoreACP2_GetEndACP,
+    TextStoreACP2_GetActiveView,
+    TextStoreACP2_GetACPFromPoint,
+    TextStoreACP2_GetTextExt,
+    TextStoreACP2_GetScreenExt,
+};
+
+static HRESULT TextStoreACP_Constructor(IUnknown **ppOut, unsigned int version)
 {
     TextStoreACP *This;
 
@@ -476,9 +726,12 @@ static HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
         return E_OUTOFMEMORY;
 
     This->ITextStoreACP_iface.lpVtbl = &TextStoreACP_TextStoreACPVtbl;
+    This->ITextStoreACP2_iface.lpVtbl = &TextStoreACP2_TextStoreACP2Vtbl;
+    ok(version == 1 || version == 2, "got %d.\n", version);
+    This->version = version;
     This->refCount = 1;
 
-    *ppOut = (IUnknown*)&This->ITextStoreACP_iface;
+    *ppOut = version == 1 ? (IUnknown*)&This->ITextStoreACP_iface : (IUnknown*)&This->ITextStoreACP2_iface;
     return S_OK;
 }
 
@@ -1791,7 +2044,7 @@ static void test_startSession(void)
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
     ITfDocumentMgr_Release(dmtest);
 
-    hr = TextStoreACP_Constructor((IUnknown**)&ts);
+    hr = TextStoreACP_Constructor((IUnknown**)&ts, 1);
     ok(SUCCEEDED(hr),"Constructor Failed\n");
     if (FAILED(hr)) return;
 
@@ -2651,6 +2904,37 @@ static void test_function_provider(void)
     ITfFunctionProvider_Release(provider);
 }
 
+static void test_ITextStoreACP2(void)
+{
+    ITextStoreACP2 *ts2;
+    DWORD edit_cookie;
+    ITfContext *ctx;
+    HRESULT hr;
+
+    hr = TextStoreACP_Constructor((IUnknown**)&ts2, 2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts2, &ctx, &edit_cookie);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    test_ACP_AdviseSink = SINK_EXPECTED;
+    test_ACP2_AdviseSink = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Push(g_dm, ctx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    sink_check_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
+    sink_check_ok(&test_ACP2_AdviseSink,"TextStoreACP2_AdviseSink");
+
+    test_ACP_UnadviseSink = SINK_EXPECTED;
+    test_ACP2_UnadviseSink = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Pop(g_dm, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    sink_check_ok(&test_ACP_UnadviseSink,"TextStoreACP_UnadviseSink");
+    sink_check_ok(&test_ACP2_UnadviseSink,"TextStoreACP2_UnadviseSink");
+
+    ITfContext_Release(ctx);
+    ITextStoreACP2_Release(ts2);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -2682,6 +2966,7 @@ START_TEST(inputprocessor)
         test_profile_mgr();
         test_MultiThreadApartment();
         test_function_provider();
+        test_ITextStoreACP2();
 
         ITextStoreACPSink_Release(ACPSink);
         ITfDocumentMgr_Release(g_dm);

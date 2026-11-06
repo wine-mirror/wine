@@ -207,7 +207,7 @@ static BOOL print_sid_numeric(PSID psid, WCHAR **pwptr, ULONG *plen)
         return FALSE;
     }
 
-    swprintf( buf, ARRAY_SIZE(buf), L"S-%u-%d", pisid->Revision, MAKELONG(
+    swprintf( buf, ARRAY_SIZE(buf), L"S-%u-%u", pisid->Revision, MAKELONG(
             MAKEWORD( pisid->IdentifierAuthority.Value[5], pisid->IdentifierAuthority.Value[4] ),
             MAKEWORD( pisid->IdentifierAuthority.Value[3], pisid->IdentifierAuthority.Value[2] )
             ) );

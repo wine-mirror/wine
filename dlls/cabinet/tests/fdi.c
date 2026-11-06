@@ -96,7 +96,7 @@ struct CFDATA
 #endif
 };
 
-static const struct
+static struct
 {
     struct CFHEADER header;
     struct CFFOLDER folder;
@@ -780,9 +780,20 @@ static UINT CDECL fdi_mem_write(INT_PTR hf, void *pv, UINT cb)
     return cb;
 }
 
+static UINT CDECL fdi_mem_write_bad(INT_PTR hf, void *pv, UINT cb)
+{
+    SetLastError(ERROR_DISK_FULL);
+    return 0;
+}
+
 static int CDECL fdi_mem_close(INT_PTR hf)
 {
     HeapFree(GetProcessHeap(), 0, (void *)hf);
+    return 0;
+}
+
+static int CDECL fdi_mem_close_noop(INT_PTR hf)
+{
     return 0;
 }
 
@@ -826,7 +837,7 @@ static INT_PTR CDECL fdi_mem_notify(FDINOTIFICATIONTYPE fdint, FDINOTIFICATION *
         ok(info->date == 0x1225, "expected 0x1225, got %#x\n", info->date);
         ok(info->time == 0x2013, "expected 0x2013, got %#x\n", info->time);
         ok(info->attribs == 0xa114, "expected 0xa114, got %#x\n", info->attribs);
-        ok(info->iFolder == 0x1234, "expected 0x1234, got %#x\n", info->iFolder);
+        ok(info->iFolder == cab_data.file.iFolder, "expected %#x, got %#x\n", cab_data.file.iFolder, info->iFolder);
         return 1;
 
     case fdintCOPY_FILE:
@@ -835,7 +846,7 @@ static INT_PTR CDECL fdi_mem_notify(FDINOTIFICATIONTYPE fdint, FDINOTIFICATION *
 
         ok(info->cb == 12, "expected 12, got %lu\n", info->cb);
         ok(!strcmp(info->psz1, expected), "expected %s, got %s\n", expected, info->psz1);
-        ok(info->iFolder == 0x1234, "expected 0x1234, got %#x\n", info->iFolder);
+        ok(info->iFolder == cab_data.file.iFolder, "expected %#x, got %#x\n", cab_data.file.iFolder, info->iFolder);
         return 0x12345678; /* call write() callback */
     }
 
@@ -930,6 +941,23 @@ static void test_FDICopy(void)
 
     ret = FDICopy(hfdi, block, memory, 0, fdi_mem_notify, NULL, 0);
     ok(ret, "FDICopy error %d\n", erf.erfOper);
+
+    FDIDestroy(hfdi);
+
+    /* pfnwrite fails */
+    cab_data.file.iFolder = 0;
+    memset(&erf, 0xcc, sizeof(erf));
+    hfdi = FDICreate(fdi_alloc, fdi_free, fdi_mem_open, fdi_mem_read,
+                     fdi_mem_write_bad, fdi_mem_close_noop, fdi_mem_seek, cpuUNKNOWN, &erf);
+    ok(hfdi != NULL, "FDICreate error %d\n", erf.erfOper);
+
+    SetLastError(0xdeadbeef);
+    ret = FDICopy(hfdi, block, memory, 0, fdi_mem_notify, NULL, 0);
+    ok(!ret, "Expected FALSE, got %d\n", ret);
+    ok(erf.erfOper == FDIERROR_TARGET_FILE, "Expected FDIERROR_TARGET_FILE, got %d\n", erf.erfOper);
+    ok(erf.erfType == 0, "Expected 0, got %d\n", erf.erfType);
+    ok(erf.fError == TRUE, "Expected TRUE, got %d\n", erf.fError);
+    ok(GetLastError() == ERROR_DISK_FULL, "Expected ERROR_DISK_FULL, got %lu\n", GetLastError());
 
     FDIDestroy(hfdi);
 }

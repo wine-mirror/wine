@@ -1837,7 +1837,7 @@ static enum fill_status fill_rawbiosdata( struct table *table, const struct expr
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
+    if (len < sizeof(*buf) || !(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_rawsmbiostables *)table->data;
@@ -3741,14 +3741,14 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
         swprintf( id, ARRAY_SIZE( id ), L"Printer%u", i );
         rec->device_id            = wcsdup( id );
         rec->drivername           = wcsdup( info[i].pDriverName );
-        rec->horizontalresolution = info[i].pDevMode->dmPrintQuality;
+        rec->horizontalresolution = info[i].pDevMode ? info[i].pDevMode->dmPrintQuality : 0;
         rec->local                = -1;
-        rec->location             = wcsdup( info[i].pLocation );
+        rec->location             = info[i].pLocation ? wcsdup( info[i].pLocation ) : NULL;
         rec->name                 = wcsdup( info[i].pPrinterName );
         rec->portname             = wcsdup( info[i].pPortName );
-        if (!match_row( table, i, cond, &status ))
+        if (!match_row( table, num_rows, cond, &status ))
         {
-            free_row_values( table, i );
+            free_row_values( table, num_rows );
             continue;
         }
         offset += sizeof(*rec);
@@ -4716,9 +4716,13 @@ static struct display_adapter *get_display_adapters( UINT *count )
 
     if (!(ret = malloc( nb_allocated * sizeof(*ret) ))) return NULL;
 
-    if ((devs = SetupDiGetClassDevsW( &GUID_DEVCLASS_DISPLAY, NULL, NULL, DIGCF_PRESENT )) == INVALID_HANDLE_VALUE) return NULL;
+    if ((devs = SetupDiGetClassDevsW( &GUID_DEVCLASS_DISPLAY, NULL, NULL, DIGCF_PRESENT )) == INVALID_HANDLE_VALUE)
+    {
+        free( ret );
+        return NULL;
+    }
 
-    while(SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
+    while (SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
     {
         WCHAR *driver, *instance_id;
         UINT key_len;

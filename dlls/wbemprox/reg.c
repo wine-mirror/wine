@@ -108,12 +108,8 @@ static HRESULT create_key( HKEY root, const WCHAR *subkey, IWbemContext *context
 
     res = RegCreateKeyExW( root, subkey, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS | get_access_mask( context ), NULL, &hkey, NULL );
     set_variant( VT_UI4, res, NULL, retval );
-    if (!res)
-    {
-        RegCloseKey( hkey );
-        return S_OK;
-    }
-    return HRESULT_FROM_WIN32( res );
+    if (!res) RegCloseKey( hkey );
+    return S_OK;
 }
 
 HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
@@ -276,8 +272,8 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
 {
     HKEY hkey = NULL;
     HRESULT hr = S_OK;
-    BSTR *value_names = NULL;
-    DWORD count, buflen, len, *value_types = NULL;
+    BSTR *value_names = NULL, *tmp_names;
+    DWORD count, buflen, len, *value_types = NULL, *tmp_types;
     LONG res, i = 0;
     WCHAR *buf = NULL;
 
@@ -295,6 +291,14 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
     hr = S_OK;
     for (;;)
     {
+        if (i >= count)
+        {
+            count *= 2;
+            if (!(tmp_names = realloc( value_names, count * sizeof(*tmp_names) ))) { hr = E_OUTOFMEMORY; break; }
+            value_names = tmp_names;
+            if (!(tmp_types = realloc( value_types, count * sizeof(*tmp_types) ))) { hr = E_OUTOFMEMORY; break; }
+            value_types = tmp_types;
+        }
         len = buflen + 1;
         res = RegEnumValueW( hkey, i, buf, &len, NULL, &value_types[i], NULL, NULL );
         if (res == ERROR_NO_MORE_ITEMS)

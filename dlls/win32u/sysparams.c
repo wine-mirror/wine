@@ -1653,6 +1653,12 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     set_reg_value( hkey, memory_sizeW, REG_DWORD, &value, sizeof(value) );
 
     set_reg_ascii_value( hkey, "DriverVersion", driver_vendor_to_version( pci->vendor ) );
+    if (pci->vendor == 0x1002 /* AMD */)
+    {
+        set_reg_ascii_value( hkey, "RadeonSoftwareEdition", "AMD Software: Adrenalin Edition" );
+        /* some version in the future */
+        set_reg_ascii_value( hkey, "RadeonSoftwareVersion", "28.10.10" );
+    }
     NtClose( hkey );
 
 

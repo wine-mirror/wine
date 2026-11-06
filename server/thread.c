@@ -1572,6 +1572,7 @@ int thread_get_inflight_fd( struct thread *thread, int client )
             {
                 ret = thread->inflight[i].server;
                 thread->inflight[i].server = thread->inflight[i].client = -1;
+                clear_error();
                 return ret;
             }
         }
@@ -1615,7 +1616,7 @@ static void copy_context( struct context_data *to, const struct context_data *fr
     if (flags & SERVER_CTX_FLOATING_POINT) to->fp = from->fp;
     if (flags & SERVER_CTX_DEBUG_REGISTERS) to->debug = from->debug;
     if (flags & SERVER_CTX_EXTENDED_REGISTERS) to->ext = from->ext;
-    if (flags & SERVER_CTX_YMM_REGISTERS) to->ymm = from->ymm;
+    if (flags & SERVER_CTX_VECTOR_REGISTERS) to->vector = from->vector;
     if (flags & SERVER_CTX_EXEC_SPACE) to->exec_space = from->exec_space;
     if (flags & SERVER_CTX_TLS) to->tls = from->tls;
 }

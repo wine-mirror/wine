@@ -369,6 +369,11 @@ DWORD add_cookie_headers( struct request *request )
                     ret = add_request_headers( request, header, len,
                                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
                     free( header );
+                    if (ret)
+                    {
+                        LeaveCriticalSection( &session->cs );
+                        return ret;
+                    }
                 }
             }
         }

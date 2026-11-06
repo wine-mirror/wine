@@ -2132,8 +2132,8 @@ static void test_loadwmf(void)
     if (stat == Ok)
     {
         expect(MetafileTypeWmfPlaceable, header.Type);
-        todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
-        todo_wine expect(0x300, header.Version);
+        expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
+        expect(0x300, header.Version);
         expect(0, header.EmfPlusFlags);
         expectf(1440.0, header.DpiX);
         expectf(1440.0, header.DpiY);
@@ -2190,8 +2190,8 @@ static void test_createfromwmf(void)
     if (stat == Ok)
     {
         expect(MetafileTypeWmfPlaceable, header.Type);
-        todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
-        todo_wine expect(0x300, header.Version);
+        expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
+        expect(0x300, header.Version);
         expect(0, header.EmfPlusFlags);
         expectf(1440.0, header.DpiX);
         expectf(1440.0, header.DpiY);

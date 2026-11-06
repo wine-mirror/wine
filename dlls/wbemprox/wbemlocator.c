@@ -102,6 +102,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
 
     *server = NULL;
     *namespace = NULL;
+    if (!resource) return WBEM_E_INVALID_PARAMETER;
     p = q = resource;
     if (*p == '\\' || *p == '/')
     {
@@ -126,7 +127,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     p = q;
     while (*q && *q != '\\' && *q != '/') q++;
     len = q - p;
-    if (len >= ARRAY_SIZE( L"root" ) - 1 && wcsnicmp( L"root", p, len )) goto done;
+    if (len != ARRAY_SIZE( L"root" ) - 1 || wcsnicmp( L"root", p, len )) goto done;
     if (!*q)
     {
         hr = S_OK;

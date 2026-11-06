@@ -4098,6 +4098,14 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
         header->Version = VERSION_MAGIC2;
     }
 
+    if (metafile->hwmf)
+    {
+        memset(&header->EmfHeader, 0, sizeof(header->EmfHeader));
+        GetMetaFileBitsEx(metafile->hwmf, sizeof(header->WmfHeader), &header->WmfHeader);
+        header->Size = GetMetaFileBitsEx(metafile->hwmf, 0, NULL);
+        header->Version = header->WmfHeader.mtVersion;
+    }
+
     header->Type = metafile->metafile_type;
     header->DpiX = metafile->image.xres;
     header->DpiY = metafile->image.yres;

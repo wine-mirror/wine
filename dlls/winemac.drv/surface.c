@@ -45,24 +45,49 @@ struct macdrv_window_surface
 {
     struct window_surface   header;
     WineWindow             *window;
-    CGDataProviderRef       provider;
+    IOSurfaceRef            front_buffer;
+    IOSurfaceRef            back_buffer;
+    vImage_Buffer           shape_mask;
 };
 
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
 
-static CGDataProviderRef data_provider_create(size_t size, void **bits)
+static IOSurfaceRef create_io_surface(int width, int height)
 {
-    CGDataProviderRef provider;
-    CFMutableDataRef data;
+    CFStringRef keys[] = { kIOSurfaceWidth, kIOSurfaceHeight, kIOSurfaceBytesPerElement, kIOSurfacePixelFormat };
+    CFNumberRef values[4];
+    CFDictionaryRef properties;
+    IOSurfaceRef surface;
+    uint32_t surface_width = width, surface_height = height;
+    uint32_t bytes_per_element = 4, pixel_format = 'BGRA';
 
-    if (!(data = CFDataCreateMutable(kCFAllocatorDefault, size))) return NULL;
-    CFDataSetLength(data, size);
+    values[0] = CFNumberCreate(NULL, kCFNumberSInt32Type, &surface_width);
+    values[1] = CFNumberCreate(NULL, kCFNumberSInt32Type, &surface_height);
+    values[2] = CFNumberCreate(NULL, kCFNumberSInt32Type, &bytes_per_element);
+    values[3] = CFNumberCreate(NULL, kCFNumberSInt32Type, &pixel_format);
+    properties = CFDictionaryCreate(NULL, (const void **)keys, (const void **)values, ARRAY_SIZE(keys),
+                                    &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    surface = IOSurfaceCreate(properties);
+    CFRelease(properties);
+    CFRelease(values[0]);
+    CFRelease(values[1]);
+    CFRelease(values[2]);
+    CFRelease(values[3]);
+    return surface;
+}
 
-    if ((provider = CGDataProviderCreateWithCFData(data)))
-        *bits = CFDataGetMutableBytePtr(data);
-    CFRelease(data);
+static void fill_io_surface(IOSurfaceRef surface, DWORD color)
+{
+    BYTE *base;
+    size_t row_bytes, y, height;
 
-    return provider;
+    IOSurfaceLock(surface, 0, NULL);
+    base = IOSurfaceGetBaseAddress(surface);
+    row_bytes = IOSurfaceGetBytesPerRow(surface);
+    height = IOSurfaceGetHeight(surface);
+    for (y = 0; y < height; y++)
+        memset_pattern4(base + y * row_bytes, &color, IOSurfaceGetWidth(surface) * 4);
+    IOSurfaceUnlock(surface, 0, NULL);
 }
 
 /***********************************************************************
@@ -70,6 +95,24 @@ static CGDataProviderRef data_provider_create(size_t size, void **bits)
  */
 static void macdrv_surface_set_clip(struct window_surface *window_surface, const RECT *rects, UINT count)
 {
+}
+
+static void update_shape(vImage_Buffer *shape_mask, const BITMAPINFO *shape_info,
+                         const void *shape_bits)
+{
+    const BYTE *src = shape_bits;
+    UINT width = shape_mask->width, height = shape_mask->height;
+    UINT src_row_bytes = shape_info->bmiHeader.biSizeImage / abs(shape_info->bmiHeader.biHeight);
+    UINT x, y;
+
+    for (y = 0; y < height; y++)
+    {
+        const BYTE *src_row = src + y * src_row_bytes;
+        DWORD *dst_row = (DWORD *)((BYTE *)shape_mask->data + y * shape_mask->rowBytes);
+
+        for (x = 0; x < width; x++)
+            dst_row[x] = ((src_row[x / 8] >> (7 - x % 8)) & 1) ? 0xffffffff : 0;
+    }
 }
 
 /***********************************************************************
@@ -80,44 +123,55 @@ static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RE
                                  const BITMAPINFO *shape_info, const void *shape_bits)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    CGImageAlphaInfo alpha_info = (window_surface->alpha_mask ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
-    CGColorSpaceRef colorspace;
-    CGImageRef image;
+    IOSurfaceRef io_surface = surface->back_buffer;
+    bool use_alpha = !!window_surface->alpha_mask;
     struct macdrv_win_data *data;
+    vImage_Buffer src = {
+        .data = (void *)color_bits,
+        .height = IOSurfaceGetHeight(io_surface),
+        .width = IOSurfaceGetWidth(io_surface),
+        .rowBytes = color_info->bmiHeader.biSizeImage / abs(color_info->bmiHeader.biHeight),
+    };
+    vImage_Buffer dst = {
+        .data = IOSurfaceGetBaseAddress(io_surface),
+        .height = src.height,
+        .width = src.width,
+        .rowBytes = IOSurfaceGetBytesPerRow(io_surface),
+    };
 
-    colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    image = CGImageCreate(color_info->bmiHeader.biWidth, abs(color_info->bmiHeader.biHeight), 8, 32,
-                          color_info->bmiHeader.biSizeImage / abs(color_info->bmiHeader.biHeight), colorspace,
-                          alpha_info | kCGBitmapByteOrder32Little, surface->provider, NULL, retina_on, kCGRenderingIntentDefault);
-    CGColorSpaceRelease(colorspace);
+    if (shape_changed && shape_bits) update_shape(&surface->shape_mask, shape_info, shape_bits);
 
-    macdrv_window_set_color_image(surface->window, image, cgrect_from_rect(*rect), cgrect_from_rect(*dirty));
-    CGImageRelease(image);
-
-    if (shape_changed)
+    IOSurfaceLock(io_surface, 0, NULL);
+    if (use_alpha)
     {
-        if (!shape_bits)
-            macdrv_window_set_shape_image(surface->window, NULL);
-        else
+        vImageClipToAlpha_BGRA8888(&src, &dst, kvImageNoFlags);
+        if (shape_bits &&
+            (window_surface->shape_region || window_surface->color_key != CLR_INVALID))
         {
-            const BYTE *src = shape_bits;
-            CGDataProviderRef provider;
-            CGImageRef image;
-            BYTE *dst;
-            UINT i;
+            vImage_Buffer bytes = dst, mask = surface->shape_mask;
 
-            if (!(provider = data_provider_create(shape_info->bmiHeader.biSizeImage, (void **)&dst))) return TRUE;
-            for (i = 0; i < shape_info->bmiHeader.biSizeImage; i++) dst[i] = ~src[i]; /* CGImage mask bits are inverted */
-
-            image = CGImageMaskCreate(shape_info->bmiHeader.biWidth, abs(shape_info->bmiHeader.biHeight), 1, 1,
-                                      shape_info->bmiHeader.biSizeImage / abs(shape_info->bmiHeader.biHeight),
-                                      provider, NULL, retina_on);
-            CGDataProviderRelease(provider);
-
-            macdrv_window_set_shape_image(surface->window, image);
-            CGImageRelease(image);
+            /* The mask repeats 0 or 255 across BGRA, so bytewise clipping clears whole pixels. */
+            bytes.width *= 4;
+            mask.width *= 4;
+            vImageClipToAlpha_Planar8(&bytes, &mask, &bytes, kvImageNoFlags);
         }
     }
+    else if (!shape_bits)
+    {
+        vImageOverwriteChannelsWithScalar_ARGB8888(255, &src, &dst, 0x1, kvImageNoFlags);
+    }
+    else
+    {
+        vImageSelectChannels_ARGB8888(&surface->shape_mask, &src, &dst, 0x1, kvImageNoFlags);
+        vImageClipToAlpha_BGRA8888(&dst, &dst, kvImageNoFlags);
+    }
+    IOSurfaceUnlock(io_surface, 0, NULL);
+
+    surface->back_buffer = surface->front_buffer;
+    surface->front_buffer = io_surface;
+    macdrv_window_set_io_surface(surface->window, io_surface, cgrect_from_rect(*rect), cgrect_from_rect(*dirty));
+
+    if (shape_changed) macdrv_window_shape_changed(surface->window, !!shape_bits);
 
     /* The window may have been previously drawn with client_surface, for example, when the window
      * had been a target for a D3D swapchain. Hide the client_view so that it doesn't occlude the
@@ -143,7 +197,9 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p\n", surface);
-    CGDataProviderRelease(surface->provider);
+    free(surface->shape_mask.data);
+    if (surface->back_buffer) CFRelease(surface->back_buffer);
+    if (surface->front_buffer) CFRelease(surface->front_buffer);
 }
 
 static const struct window_surface_funcs macdrv_surface_funcs =
@@ -168,13 +224,11 @@ static struct window_surface *create_surface(HWND hwnd, WineWindow *window, cons
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD window_background;
-    D3DKMT_CREATEDCFROMMEMORY desc = {.Format = D3DDDIFMT_A8R8G8B8};
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct window_surface *window_surface;
-    CGDataProviderRef provider;
-    HBITMAP bitmap = 0;
-    UINT status;
+    IOSurfaceRef io_surface1 = NULL, io_surface2 = NULL;
+    HBITMAP bitmap;
     void *bits;
 
     memset(info, 0, sizeof(*info));
@@ -186,35 +240,41 @@ static struct window_surface *create_surface(HWND hwnd, WineWindow *window, cons
     info->bmiHeader.biSizeImage   = get_dib_image_size(info);
     info->bmiHeader.biCompression = BI_RGB;
 
-    if (!(provider = data_provider_create(info->bmiHeader.biSizeImage, &bits))) return NULL;
-    window_background = macdrv_window_background_color();
-    memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
+    if (!(bitmap = NtGdiCreateDIBSection(0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, &bits)))
+        return NULL;
 
-    /* wrap the data in a HBITMAP so we can write to the surface pixels directly */
-    desc.Width = info->bmiHeader.biWidth;
-    desc.Height = abs(info->bmiHeader.biHeight);
-    desc.Pitch = info->bmiHeader.biSizeImage / abs(info->bmiHeader.biHeight);
-    desc.pMemory = bits;
-    desc.hDeviceDc = NtUserGetDCEx(hwnd, 0, DCX_CACHE | DCX_WINDOW);
-    if ((status = NtGdiDdDDICreateDCFromMemory(&desc)))
-        ERR("Failed to create HBITMAP, status %#x\n", status);
-    else
+    window_background = macdrv_window_background_color();
+
+    if (!(io_surface1 = create_io_surface(width, height)) ||
+        !(io_surface2 = create_io_surface(width, height)))
     {
-        bitmap = desc.hBitmap;
-        NtGdiDeleteObjectApp(desc.hDc);
+        if (io_surface1) CFRelease(io_surface1);
+        NtGdiDeleteObjectApp(bitmap);
+        return NULL;
     }
-    if (desc.hDeviceDc) NtUserReleaseDC(hwnd, desc.hDeviceDc);
+
+    fill_io_surface(io_surface1, window_background);
+    fill_io_surface(io_surface2, window_background);
 
     if (!(window_surface = window_surface_create(&macdrv_surface_funcs, hwnd, rect, info, bitmap)))
     {
-        if (bitmap) NtGdiDeleteObjectApp(bitmap);
-        CGDataProviderRelease(provider);
+        NtGdiDeleteObjectApp(bitmap);
+        CFRelease(io_surface1);
+        CFRelease(io_surface2);
     }
     else
     {
         surface = get_mac_surface(window_surface);
         surface->window = window;
-        surface->provider = provider;
+        surface->front_buffer = io_surface1;
+        surface->back_buffer = io_surface2;
+        if (vImageBuffer_Init(&surface->shape_mask, height, width, 32, kvImageNoFlags))
+        {
+            window_surface_release(window_surface);
+            return NULL;
+        }
+        window_background &= 0x00ffffff;
+        memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
     }
 
     return window_surface;

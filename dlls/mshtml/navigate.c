@@ -1458,7 +1458,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 
     outer_window = This->bsc.window->base.outer_window;
     doc = outer_window->browser->doc;
-    if(!doc->doc_object_service || !doc->client)
+    if(!doc || !doc->doc_object_service || !doc->client)
         return;
 
     hres = IDocObjectService_IsErrorUrl(doc->doc_object_service,

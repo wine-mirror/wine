@@ -720,59 +720,9 @@ static void init_time_format(void)
     TRACE("time format: %s\n", wine_dbgstr_w(time_format));
 }
 
-/*****************************************************************************
- * WCMD_directory
- *
- * List a file directory.
- *
- */
-
-RETURN_CODE WCMD_directory(struct word_iterator *iterator)
+static BOOL parse_dir_options(struct word_iterator *iterator)
 {
-  WCHAR path[MAX_PATH];
-  DWORD status;
-  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-  WCHAR *p;
-  WCHAR string[MAXSTRING];
-  WCHAR  lastDrive;
-  BOOL  trailerReqd = FALSE;
-  DIRECTORY_STACK *fullParms = NULL;
-  DIRECTORY_STACK *prevEntry = NULL;
-  DIRECTORY_STACK *thisEntry = NULL;
-  WCHAR drive[10];
-  WCHAR dir[MAX_PATH];
-  WCHAR fname[MAX_PATH];
-  WCHAR ext[MAX_PATH];
-  unsigned num_empty = 0, num_with_data = 0;
-  RETURN_CODE return_code = NO_ERROR;
-
-  /* Prefill quals with (uppercased) DIRCMD env var */
-  if (GetEnvironmentVariableW(L"DIRCMD", string, ARRAY_SIZE(string))) {
-    wcsupr( string );
-    lstrcatW(string,quals);
-    lstrcpyW(quals, string);
-  }
-
-  byte_total = 0;
-  file_total = dir_total = 0;
-
-  /* Initialize all flags to their defaults as if no DIRCMD or quals */
-  paged_mode = FALSE;
-  recurse    = FALSE;
-  wide       = FALSE;
-  bare       = FALSE;
-  lower      = FALSE;
-  shortname  = FALSE;
-  usernames  = FALSE;
-  orderByCol = FALSE;
-  separator  = TRUE;
-  dirTime = Written;
-  dirOrder = Unspecified;
-  orderReverse = FALSE;
-  orderGroupDirs = FALSE;
-  orderGroupDirsReverse = FALSE;
-  showattrs  = 0;
-  attrsbits  = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+    WCHAR *p;
 
     /* Handle args - Loop through so right most is the effective one
      * Note: /- appears to be a negate rather than an off, eg. dir
@@ -806,12 +756,7 @@ RETURN_CODE WCMD_directory(struct word_iterator *iterator)
             if (towupper(*p) == L'A') dirTime = Access;
             else if (towupper(*p) == L'C') dirTime = Creation;
             else if (towupper(*p) == L'W' || !*p) dirTime = Written;
-            else
-            {
-                SetLastError(return_code = ERROR_INVALID_PARAMETER);
-                WCMD_print_error();
-                goto exit;
-            }
+            else return FALSE;
         }
         else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/O", TRUE, &p))
         {
@@ -825,7 +770,8 @@ RETURN_CODE WCMD_directory(struct word_iterator *iterator)
             {
                 WINE_TRACE("Processing subparm '%lc' (in /O)\n", *p);
                 /* Options N,E,S,D are mutually-exclusive, first encountered takes precedence. */
-                switch (towupper(*p)) {
+                switch (towupper(*p))
+                {
                 case 'N': if (dirOrder == Unspecified) dirOrder = Name;       break;
                 case 'E': if (dirOrder == Unspecified) dirOrder = Extension;  break;
                 case 'S': if (dirOrder == Unspecified) dirOrder = Size;       break;
@@ -837,15 +783,13 @@ RETURN_CODE WCMD_directory(struct word_iterator *iterator)
                     }
                     break;
                 case 'G': orderGroupDirs = TRUE; break;
-                default:
-                    SetLastError(return_code = ERROR_INVALID_PARAMETER);
-                    WCMD_print_error();
-                    goto exit;
+                default: return FALSE;
                 }
             }
             /* Handle default case of /O specified by itself, with no specific options.
                This is equivalent to /O:GN. */
-            if (dirOrder == Unspecified && !orderGroupDirs) {
+            if (dirOrder == Unspecified && !orderGroupDirs)
+            {
                 orderGroupDirs = TRUE;
                 orderGroupDirsReverse = FALSE;
                 dirOrder = Name;
@@ -871,12 +815,8 @@ RETURN_CODE WCMD_directory(struct word_iterator *iterator)
                 case 'S': mask = FILE_ATTRIBUTE_SYSTEM;    break;
                 case 'R': mask = FILE_ATTRIBUTE_READONLY;  break;
                 case 'A': mask = FILE_ATTRIBUTE_ARCHIVE;   break;
-                default:
-                    SetLastError(return_code = ERROR_INVALID_PARAMETER);
-                    WCMD_print_error();
-                    goto exit;
+                default: return FALSE;
                 }
-
                 /* Keep running list of bits we care about */
                 attrsbits |= mask;
 
@@ -887,11 +827,74 @@ RETURN_CODE WCMD_directory(struct word_iterator *iterator)
             WINE_TRACE("Result: showattrs %lx, bits %lx\n", showattrs, attrsbits);
         }
         else
-        {
-            SetLastError(return_code = ERROR_INVALID_PARAMETER);
-            WCMD_print_error();
-            goto exit;
-        }
+            return FALSE;
+    }
+    return TRUE;
+}
+
+/*****************************************************************************
+ * WCMD_directory
+ *
+ * List a file directory.
+ *
+ */
+
+RETURN_CODE WCMD_directory(struct word_iterator *iterator)
+{
+    WCHAR path[MAX_PATH];
+    DWORD status;
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    WCHAR string[MAXSTRING];
+    WCHAR  lastDrive;
+    BOOL  trailerReqd = FALSE;
+    DIRECTORY_STACK *fullParms = NULL;
+    DIRECTORY_STACK *prevEntry = NULL;
+    DIRECTORY_STACK *thisEntry = NULL;
+    WCHAR drive[10];
+    WCHAR dir[MAX_PATH];
+    WCHAR fname[MAX_PATH];
+    WCHAR ext[MAX_PATH];
+    unsigned num_empty = 0, num_with_data = 0;
+    RETURN_CODE return_code = NO_ERROR;
+
+    byte_total = 0;
+    file_total = dir_total = 0;
+
+    /* Initialize all flags to their defaults as if no DIRCMD or quals */
+    paged_mode = FALSE;
+    recurse    = FALSE;
+    wide       = FALSE;
+    bare       = FALSE;
+    lower      = FALSE;
+    shortname  = FALSE;
+    usernames  = FALSE;
+    orderByCol = FALSE;
+    separator  = TRUE;
+    dirTime = Written;
+    dirOrder = Unspecified;
+    orderReverse = FALSE;
+    orderGroupDirs = FALSE;
+    orderGroupDirsReverse = FALSE;
+    showattrs  = 0;
+    attrsbits  = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+
+    /* gather options from env (if any) */
+    if (GetEnvironmentVariableW(L"DIRCMD", string, ARRAY_SIZE(string)))
+    {
+        struct word_iterator env_iterator;
+
+        WCMD_word_iterator_init(&env_iterator, string, STANDARD_DELIMS, WORD_WITH_OPT);
+        if (!parse_dir_options(&env_iterator))
+            return_code = ERROR_INVALID_FUNCTION;
+        WCMD_word_iterator_dispose(&env_iterator);
+    }
+    if (return_code == NO_ERROR && !parse_dir_options(iterator))
+        return_code = ERROR_INVALID_FUNCTION;
+    if (return_code != NO_ERROR)
+    {
+        /* native displays more detailed information here... */
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        goto exit;
     }
 
   /* Handle conflicting args and initialization */

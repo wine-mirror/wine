@@ -715,7 +715,11 @@ static void sync_trusted_roots_from_known_locations( HKEY key, HCERTSTORE cached
             continue;
         }
 
-        CertAddEncodedCertificateToStore( cached, X509_ASN_ENCODING, params.buffer, needed, CERT_STORE_ADD_ALWAYS, &cert );
+        if (!CertAddEncodedCertificateToStore( cached, X509_ASN_ENCODING, params.buffer, needed, CERT_STORE_ADD_ALWAYS, &cert ))
+        {
+            WARN( "adding root cert failed: %08lx\n", GetLastError() );
+            continue;
+        }
         is_new = 1;
         if (!CertSetCertificateContextProperty( cert, CERT_FIRST_USER_PROP_ID, 0, &exists_blob ))
             ERR("Failed to set property.\n");

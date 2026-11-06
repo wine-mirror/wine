@@ -3667,7 +3667,35 @@ static void test_states(void)
     r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
     update_ProductVersion_property( hdb, "1.1.2" );
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    MsiCloseHandle(hdb);
+
+    r = MsiInstallProductA(msifile2, "");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiOpenProductA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    size = MAX_PATH;
+    r = MsiGetProductPropertyA(hprod, "ProductVersion", value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!strcmp(value, "1.1.1"), "ProductVersion = %s\n", value);
+    MsiCloseHandle(hprod);
+
+    r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
+    update_ProductVersion_property( hdb, "1.1.1" );
     set_summary_str(hdb, PID_REVNUMBER, "{A219A62A-D931-4F1B-89DB-FF1C300A8D43}");
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    MsiCloseHandle(hdb);
+
+    r = MsiInstallProductA(msifile2, "");
+    ok(r == ERROR_PRODUCT_VERSION, "Expected ERROR_PRODUCT_VERSION, got %d\n", r);
+
+    r = MsiOpenDatabaseA(msifile2, (const char*)MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
+    update_ProductVersion_property( hdb, "1.1.2" );
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
     MsiCloseHandle(hdb);
@@ -9544,6 +9572,36 @@ static void test_top_level_action(void)
     DeleteFileA("forcecodepage.idt");
 }
 
+static void test_desktopfolder(void)
+{
+    MSIHANDLE db, package = 0;
+    char expected_path[MAX_PATH], actual_path[MAX_PATH] = "";
+    DWORD size = sizeof(actual_path);
+    HRESULT hr;
+    UINT r;
+
+    hr = SHGetFolderPathA(NULL, CSIDL_COMMON_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, expected_path);
+    if (FAILED(hr))
+    {
+        skip("Failed to get common desktop path: %#lx\n", hr);
+        return;
+    }
+    lstrcatA(expected_path, "\\");
+
+    db = create_package_db();
+    ok(db, "Failed to create package database\n");
+    create_property_table(db);
+    add_property_entry(db, "'ALLUSERS', '1'");
+
+    r = package_from_db(db, &package);
+    ok(r == ERROR_SUCCESS, "Failed to open package: %u\n", r);
+    r = MsiGetPropertyA(package, "DesktopFolder", actual_path, &size);
+    ok(r == ERROR_SUCCESS, "Failed to get DesktopFolder: %u\n", r);
+    ok(!lstrcmpiA(actual_path, expected_path), "Expected %s, got %s\n", expected_path, actual_path);
+    MsiCloseHandle(package);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     char temp_path[MAX_PATH], prev_path[MAX_PATH];
@@ -9601,6 +9659,7 @@ START_TEST(package)
     test_externalui_message();
     test_controlevent();
     test_top_level_action();
+    test_desktopfolder();
 
     SetCurrentDirectoryA(prev_path);
 }

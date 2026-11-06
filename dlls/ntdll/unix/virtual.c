@@ -3085,54 +3085,44 @@ static NTSTATUS map_image_view( struct file_view **view_ret, struct pe_image_inf
                                 ULONG_PTR limit_low, ULONG_PTR limit_high, ULONG alloc_type )
 {
     unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
-    void *base;
+    client_ptr_t base;
     NTSTATUS status;
-    ULONG_PTR start, end;
-    BOOL top_down = (image_info->image_charact & IMAGE_FILE_DLL) &&
-                    (image_info->image_flags & IMAGE_FLAGS_ImageDynamicallyRelocated);
 
     limit_low = max( limit_low, (ULONG_PTR)address_space_start );  /* make sure the DOS area remains free */
     if (!limit_high) limit_high = (ULONG_PTR)user_space_limit;
 
     /* first try the specified base */
 
-    if (image_info->map_addr)
+    if (!(base = image_info->map_addr))
     {
-        base = wine_server_get_ptr( image_info->map_addr );
-        if ((ULONG_PTR)base != image_info->map_addr) base = NULL;
+        USHORT dll_charact = main_module ? main_image_info.DllCharacteristics : image_info->dll_charact;
+
+        if ((image_info->image_charact & IMAGE_FILE_RELOCS_STRIPPED) ||
+            !(dll_charact & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+            base = image_info->base;
     }
-    else
+    if (base && (ULONG_PTR)base == base)
     {
-        base = wine_server_get_ptr( image_info->base );
-        if ((ULONG_PTR)base != image_info->base) base = NULL;
-    }
-    if (base)
-    {
-        status = map_view( view_ret, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
+        status = map_view( view_ret, wine_server_get_ptr( base ), size,
+                           alloc_type, vprot, limit_low, limit_high, 0 );
         if (!status) return status;
     }
 
     /* then some appropriate address range */
 
-    if (image_info->base >= limit_4g)
+    if (image_info->base < limit_4g)
     {
-        start = max( limit_low, limit_4g );
-        end = limit_high;
-    }
-    else
-    {
-        start = limit_low;
-        end = min( limit_high, get_wow_user_space_limit() );
-    }
-    if (start < end && (start != limit_low || end != limit_high))
-    {
-        status = map_view( view_ret, NULL, size, top_down ? MEM_TOP_DOWN : 0, vprot, start, end, 0 );
-        if (!status) return status;
+        ULONG_PTR end = min( limit_4g - 1, get_wow_user_space_limit() );
+        if (limit_low < end && end < limit_high)
+        {
+            status = map_view( view_ret, NULL, size, 0, vprot, limit_low, end, 0 );
+            if (!status) return status;
+        }
     }
 
     /* then any suitable address */
 
-    return map_view( view_ret, NULL, size, top_down ? MEM_TOP_DOWN : 0, vprot, limit_low, limit_high, 0 );
+    return map_view( view_ret, NULL, size, 0, vprot, limit_low, limit_high, 0 );
 }
 
 
@@ -3168,7 +3158,6 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     }
 
     if (!pe_mapping->image.map_addr &&
-        (pe_mapping->image.image_charact & IMAGE_FILE_DLL) &&
         (pe_mapping->image.image_flags & IMAGE_FLAGS_ImageDynamicallyRelocated))
     {
         SERVER_START_REQ( get_image_map_address )
@@ -6321,7 +6310,8 @@ NTSTATUS WINAPI NtUnmapViewOfSectionEx( HANDLE process, PVOID addr, ULONG flags 
  */
 void virtual_fill_image_information( const struct pe_image_info *pe_info, SECTION_IMAGE_INFORMATION *info )
 {
-    info->TransferAddress             = wine_server_get_ptr( pe_info->base + pe_info->entry_point );
+    client_ptr_t base = pe_info->map_addr ? pe_info->map_addr : pe_info->base;
+    info->TransferAddress             = wine_server_get_ptr( base + pe_info->entry_point );
     info->ZeroBits                    = pe_info->zerobits;
     info->MaximumStackSize            = pe_info->stack_size;
     info->CommittedStackSize          = pe_info->stack_commit;

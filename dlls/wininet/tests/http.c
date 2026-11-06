@@ -1256,10 +1256,10 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
                     ok(!length, "InternetQueryDataAvailable returned ERROR_IO_PENDING and %lu length\n", length);
                 WaitForSingleObject(complete_event, INFINITE);
                 exlen = length;
-                ok(exlen, "length = 0\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
                 CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-                ok(req_error, "req_error = 0\n");
+                /* the final chunk may arrive after the data, the query then completes with no data */
+                ok(!req_error == !exlen, "req_error = %lu, length = %lu\n", req_error, exlen);
                 continue;
             }else {
                 ok(0, "InternetQueryDataAvailable failed: %lu\n", GetLastError());
@@ -6454,6 +6454,7 @@ static void test_persistent_connection(int port)
     INTERNET_BUFFERSW ib;
     test_request_t req;
     char buf[24000];
+    DWORD read_size;
 
     if(!is_ie7plus)
         return;
@@ -6491,6 +6492,25 @@ static void test_persistent_connection(int port)
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab", 0);
     readex_expect_async(req.request, IRF_ASYNC, &ib, sizeof(buf), NULL);
     send_response_ex_and_wait("3\r\nabc\r\n0\r\n\r\n", FALSE, &ib, "abc", 0, 13);
+    close_async_handle(req.session, 2);
+
+    open_socket_request(port, &req, "/test_chunked_end");
+    server_read_request("GET /test_chunked_end HTTP/1.1");
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    server_send_string("HTTP/1.1 200 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Transfer-Encoding: chunked\r\n"
+                       "\r\n"
+                       "2\r\nab\r\n");
+    WaitForSingleObject(complete_event, INFINITE);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", req_error);
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab", 0);
+    async_query_data_available(req.request, &read_size);
+    send_response_and_wait("0\r\n\r\n", FALSE, NULL, &read_size, NULL, 0, 0, -1);
+    expect_data_available(req.request, 0);
     close_async_handle(req.session, 2);
 
     open_socket_request(port, &req, "/chunked");

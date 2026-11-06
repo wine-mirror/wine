@@ -1953,8 +1953,8 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
     if (cando > bytes) cando = bytes;
 
     /* if cando != 0 */
-    if (cando && savemode)
-      CAB(fdi)->write(CAB(filehf), CAB(outpos), cando);
+    if (cando && savemode && CAB(fdi)->write(CAB(filehf), CAB(outpos), cando) != cando)
+      return DECR_OUTPUT;
 
     CAB(outpos) += cando;
     CAB(outlen) -= cando;
@@ -2780,6 +2780,9 @@ BOOL __cdecl FDICopy(
           goto bail_and_fail;
         case DECR_NOMEMORY:
           set_error( fdi, FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+          goto bail_and_fail;
+        case DECR_OUTPUT:
+          set_error( fdi, FDIERROR_TARGET_FILE, 0 );
           goto bail_and_fail;
         default:
           set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 );

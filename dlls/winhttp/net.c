@@ -780,18 +780,15 @@ static struct async_resolve *create_async_resolve( const WCHAR *hostname, INTERN
 {
     struct async_resolve *ret;
 
-    if (!(ret = malloc(sizeof(*ret))))
-    {
-        ERR( "No memory.\n" );
-        return NULL;
-    }
+    if (!(ret = malloc( sizeof(*ret) + (wcslen(hostname) + 1) * sizeof(WCHAR) ))) return NULL;
+
     ret->ref = 1;
-    ret->hostname = wcsdup( hostname );
+    ret->hostname = (WCHAR *)(ret + 1);
+    wcscpy( ret->hostname, hostname );
     ret->port     = port;
     ret->flags    = flags;
     if (!(ret->done = CreateEventW( NULL, FALSE, FALSE, NULL )))
     {
-        free( ret->hostname );
         free( ret );
         return NULL;
     }
@@ -802,7 +799,6 @@ static void async_resolve_release( struct async_resolve *async )
 {
     if (InterlockedDecrement( &async->ref )) return;
 
-    free( async->hostname );
     CloseHandle( async->done );
     free( async );
 }

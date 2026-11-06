@@ -3645,9 +3645,14 @@ static HRESULT filedata_get_name(ID3DXFileData *filedata, char **name)
 
     hr = filedata->lpVtbl->GetName(filedata, *name, &name_len);
     if (FAILED(hr))
+    {
         free(*name);
+        *name = NULL;
+    }
     else if (!name_len)
+    {
         (*name)[0] = 0;
+    }
 
     return hr;
 }
