@@ -1885,7 +1885,7 @@ void macdrv_window_maximize_requested(HWND hwnd)
 /***********************************************************************
  *              macdrv_window_minimize_requested
  *
- * Handler for WINDOW_MINIMIZE_REQUESTED events.
+ * Handle a minimize request from Cocoa.
  */
 void macdrv_window_minimize_requested(HWND hwnd)
 {

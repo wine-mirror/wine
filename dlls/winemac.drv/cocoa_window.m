@@ -1696,7 +1696,6 @@ static inline BOOL stage_manager_enabled(void)
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                              event_mask_for_type(WINDOW_GOT_FOCUS) |
                                              event_mask_for_type(WINDOW_LOST_FOCUS) |
-                                             event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
                                              event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                    forWindow:self];
             return;
@@ -1732,7 +1731,6 @@ static inline BOOL stage_manager_enabled(void)
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                          event_mask_for_type(WINDOW_GOT_FOCUS) |
                                          event_mask_for_type(WINDOW_LOST_FOCUS) |
-                                         event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
                                          event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                forWindow:self];
     }
@@ -2401,9 +2399,7 @@ static inline BOOL stage_manager_enabled(void)
             return;
         }
 
-        macdrv_event* event = macdrv_create_event(WINDOW_MINIMIZE_REQUESTED, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        macdrv_window_minimize_requested(self.hwnd);
 
         WineWindow* parent = (WineWindow*)self.parentWindow;
         if ([parent isKindOfClass:[WineWindow class]])
