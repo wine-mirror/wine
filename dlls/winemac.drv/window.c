@@ -1021,6 +1021,39 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
 
 
 /***********************************************************************
+ *              perform_inactive_window_command
+ */
+static void perform_inactive_window_command(HWND hwnd, WORD command, WORD hittest)
+{
+    LRESULT ma;
+
+    TRACE("win %p command 0x%04x hittest 0x%04x\n", hwnd, command, hittest);
+
+    ma = send_message(hwnd, WM_MOUSEACTIVATE, (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
+                      MAKELPARAM(hittest, WM_NCLBUTTONDOWN));
+    switch (ma)
+    {
+        case MA_NOACTIVATEANDEAT:
+        case MA_ACTIVATEANDEAT:
+            TRACE("not changing win %p mouse-activate result %ld\n", hwnd, ma);
+            return;
+        case MA_NOACTIVATE:
+            break;
+        case MA_ACTIVATE:
+        case 0:
+            NtUserSetActiveWindow(hwnd);
+            break;
+        default:
+            WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
+            break;
+    }
+
+    TRACE("changing win %p\n", hwnd);
+    NtUserPostMessage(hwnd, WM_SYSCOMMAND, command, 0);
+}
+
+
+/***********************************************************************
  *              perform_window_command
  */
 static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned int style_none, WORD command, WORD hittest)
@@ -1037,26 +1070,10 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
         return;
     }
 
-    if (get_active_window() != hwnd)
+    if (get_active_window(NtUserGetWindowThread(hwnd, NULL)) != hwnd)
     {
-        LRESULT ma = send_message(hwnd, WM_MOUSEACTIVATE, (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
-                                  MAKELPARAM(hittest, WM_NCLBUTTONDOWN));
-        switch (ma)
-        {
-            case MA_NOACTIVATEANDEAT:
-            case MA_ACTIVATEANDEAT:
-                TRACE("not changing win %p mouse-activate result %ld\n", hwnd, ma);
-                return;
-            case MA_NOACTIVATE:
-                break;
-            case MA_ACTIVATE:
-            case 0:
-                NtUserSetActiveWindow(hwnd);
-                break;
-            default:
-                WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
-                break;
-        }
+        perform_inactive_window_command(hwnd, command, hittest);
+        return;
     }
 
     TRACE("changing win %p\n", hwnd);
@@ -1800,7 +1817,7 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
     TRACE("win %p/%p serial %lu enabled %d visible %d style %08x focus %p active %p fg %p\n",
           hwnd, event->window, event->window_got_focus.serial, NtUserIsWindowEnabled(hwnd),
-          NtUserIsWindowVisible(hwnd), style, get_focus(), get_active_window(), NtUserGetForegroundWindow());
+          NtUserIsWindowVisible(hwnd), style, get_focus(), get_active_window(GetCurrentThreadId()), NtUserGetForegroundWindow());
 
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
@@ -1843,7 +1860,7 @@ void macdrv_app_deactivated(void)
 {
     NtUserClipCursor(NULL);
 
-    if (get_active_window() == NtUserGetForegroundWindow())
+    if (get_active_window(GetCurrentThreadId()) == NtUserGetForegroundWindow())
     {
         TRACE("setting fg to desktop\n");
         NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());

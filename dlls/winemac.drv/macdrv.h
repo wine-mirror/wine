@@ -335,11 +335,11 @@ static inline LRESULT send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, L
     return res;
 }
 
-static inline HWND get_active_window(void)
+static inline HWND get_active_window(DWORD thread_id)
 {
     GUITHREADINFO info;
     info.cbSize = sizeof(info);
-    return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndActive : 0;
+    return NtUserGetGUIThreadInfo(thread_id, &info) ? info.hwndActive : 0;
 }
 
 static inline HWND get_capture(void)
