@@ -584,6 +584,12 @@ static void test_graph_site(IFilterGraph2 *graph)
     hr = IObjectWithSite_GetSite(object_with_site, &IID_IUnknown, (void **)&site);
     ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
 
+    hr = IObjectWithSite_SetSite(object_with_site, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IObjectWithSite_GetSite(object_with_site, &IID_IUnknown, (void **)&site);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
     IObjectWithSite_Release(object_with_site);
 }
 
