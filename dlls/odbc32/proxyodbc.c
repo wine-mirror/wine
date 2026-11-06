@@ -1884,13 +1884,13 @@ static SQLRETURN describe_col_win32_a( struct statement *stmt, SQLUSMALLINT col_
     }
     else if (stmt->hdr.win32_funcs->SQLDescribeColW)
     {
-        SQLWCHAR *nameW;
+        SQLWCHAR *nameW = NULL;
         SQLSMALLINT lenW;
 
-        if (!(nameW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+        if (col_name && !(nameW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
         ret = stmt->hdr.win32_funcs->SQLDescribeColW( stmt->hdr.win32_handle, col_number, nameW, buflen, &lenW,
                                                       data_type, col_size, decimal_digits, nullable );
-        if (SUCCESS( ret ))
+        if (nameW && SUCCESS( ret ))
             *retlen = WideCharToMultiByte( CP_ACP, 0, nameW, -1, (char *)col_name, buflen, NULL, NULL ) - 1;
         free( nameW );
     }
