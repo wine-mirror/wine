@@ -1605,6 +1605,9 @@ static void __attribute__((naked,noreturn)) consolidate_callback( CONTEXT *conte
          "stp x6, x7, [x4], #16\n\t"
          "subs x5, x5, #1\n\t"
          "b.ne 1b\n\t"
+         "ldr w5, [sp, #0x30]\n\t"  /* ContextFlags */
+         "and w5, w5, #~0x40\n\t"
+         "str w5, [sp, #0x30]\n\t"
          "mov x0, x2\n\t"           /* rec */
          "b invoke_callback\n\t"
          ".seh_endproc\n\t"
