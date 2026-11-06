@@ -2200,10 +2200,10 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     {
         if (!array_reserve((void **)&cp->sinks, &cp->capacity, cp->count + 1, sizeof(*cp->sinks)))
             return E_OUTOFMEMORY;
+        cp->count++;
     }
 
     cp->sinks[i] = sink;
-    cp->count++;
     if (cookie)
         *cookie = i+1;
 
