@@ -1072,7 +1072,7 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
 
     if (get_active_window(NtUserGetWindowThread(hwnd, NULL)) != hwnd)
     {
-        perform_inactive_window_command(hwnd, command, hittest);
+        NtUserPostMessage(hwnd, WM_MACDRV_INACTIVE_WINDOW_COMMAND, command, hittest);
         return;
     }
 
@@ -1564,6 +1564,9 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
         activate_on_following_focus();
         TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
+        return 0;
+    case WM_MACDRV_INACTIVE_WINDOW_COMMAND:
+        perform_inactive_window_command(hwnd, wp, lp);
         return 0;
     case WM_MACDRV_CREATE_REMOTE_LAYER:
         if ((data = get_win_data(hwnd)))
