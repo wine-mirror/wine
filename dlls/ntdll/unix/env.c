@@ -1701,9 +1701,9 @@ static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
 
 
 /*************************************************************************
- *		load_global_options
+ *		open_option_keys
  */
-static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
+static void open_option_keys( const UNICODE_STRING *image, HANDLE *session_key, HANDLE *ifeo_key )
 {
     static const WCHAR optionsW[] = {'\\','R','e','g','i','s','t','r','y','\\',
         'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
@@ -1714,34 +1714,16 @@ static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
         'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\','S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
-    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
-    static const WCHAR critsectionW[] = {'C','r','i','t','i','c','a','l','S','e','c','t','i','o','n','T','i','m','e','o','u','t',0};
-    static const WCHAR heapreserveW[] = {'H','e','a','p','S','e','g','m','e','n','t','R','e','s','e','r','v','e',0};
-    static const WCHAR heapcommitW[] = {'H','e','a','p','S','e','g','m','e','n','t','C','o','m','m','i','t',0};
-    static const WCHAR heapdecommittotalW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','T','o','t','a','l','F','r','e','e','T','h','r','e','s','h','o','l','d',0};
-    static const WCHAR heapdecommitblockW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','F','r','e','e','B','l','o','c','k','T','h','r','e','s','h','o','l','d',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE key;
     ULONG i;
 
+    *session_key = *ifeo_key = 0;
+
     InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
     init_unicode_string( &nameW, sessionW );
-    if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
-    {
-        peb->NtGlobalFlag = get_dword_option( key, globalflagW, 0 );
-        peb->CriticalSectionTimeout.QuadPart = get_dword_option( key, critsectionW, 30 * 24 * 60 * 60 ) * (ULONGLONG)-10000000;
-        peb->HeapSegmentReserve = get_dword_option( key, heapreserveW, 0x100000 );
-        peb->HeapSegmentCommit = get_dword_option( key, heapcommitW, 0x10000 );
-        peb->HeapDeCommitTotalFreeThreshold = get_dword_option( key, heapdecommittotalW, 0x10000 );
-        peb->HeapDeCommitFreeBlockThreshold = get_dword_option( key, heapdecommitblockW, 0x1000 );
-        NtClose( key );
-    }
-
-    if (debugged) peb->NtGlobalFlag |= FLG_HEAP_ENABLE_TAIL_CHECK |
-                                       FLG_HEAP_ENABLE_FREE_CHECK |
-                                       FLG_HEAP_VALIDATE_PARAMETERS;
-    else peb->ProcessParameters->Flags |= PROCESS_PARAMS_IMAGE_KEY_MISSING;
+    NtOpenKey( session_key, KEY_QUERY_VALUE, &attr );
 
     init_unicode_string( &nameW, optionsW );
     if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
@@ -1750,14 +1732,35 @@ static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
         for (i = image->Length / sizeof(WCHAR); i; i--) if (image->Buffer[i - 1] == '\\') break;
         nameW.Buffer = image->Buffer + i;
         nameW.Length = image->Length - i * sizeof(WCHAR);
-        if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
-        {
-            peb->NtGlobalFlag = get_dword_option( key, globalflagW, peb->NtGlobalFlag );
-            peb->ProcessParameters->Flags &= ~PROCESS_PARAMS_IMAGE_KEY_MISSING;
-            NtClose( key );
-        }
-        NtClose( attr.RootDirectory );
+        NtOpenKey( ifeo_key, KEY_QUERY_VALUE, &attr );
+        NtClose( key );
     }
+}
+
+
+/*************************************************************************
+ *		load_global_options
+ */
+static void load_global_options( HANDLE session_key, HANDLE ifeo_key, BOOL debugged )
+{
+    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
+    static const WCHAR critsectionW[] = {'C','r','i','t','i','c','a','l','S','e','c','t','i','o','n','T','i','m','e','o','u','t',0};
+    static const WCHAR heapreserveW[] = {'H','e','a','p','S','e','g','m','e','n','t','R','e','s','e','r','v','e',0};
+    static const WCHAR heapcommitW[] = {'H','e','a','p','S','e','g','m','e','n','t','C','o','m','m','i','t',0};
+    static const WCHAR heapdecommittotalW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','T','o','t','a','l','F','r','e','e','T','h','r','e','s','h','o','l','d',0};
+    static const WCHAR heapdecommitblockW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','F','r','e','e','B','l','o','c','k','T','h','r','e','s','h','o','l','d',0};
+
+    if (session_key)
+    {
+        peb->NtGlobalFlag = get_dword_option( session_key, globalflagW, 0 );
+        peb->CriticalSectionTimeout.QuadPart = get_dword_option( session_key, critsectionW, 30 * 24 * 60 * 60 ) * (ULONGLONG)-10000000;
+        peb->HeapSegmentReserve = get_dword_option( session_key, heapreserveW, 0x100000 );
+        peb->HeapSegmentCommit = get_dword_option( session_key, heapcommitW, 0x10000 );
+        peb->HeapDeCommitTotalFreeThreshold = get_dword_option( session_key, heapdecommittotalW, 0x10000 );
+        peb->HeapDeCommitFreeBlockThreshold = get_dword_option( session_key, heapdecommitblockW, 0x1000 );
+    }
+    if (debugged) peb->NtGlobalFlag |= FLG_HEAP_ENABLE_TAIL_CHECK | FLG_HEAP_ENABLE_FREE_CHECK | FLG_HEAP_VALIDATE_PARAMETERS;
+    if (ifeo_key) peb->NtGlobalFlag = get_dword_option( ifeo_key, globalflagW, peb->NtGlobalFlag );
 }
 
 
@@ -1828,7 +1831,7 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
 /*************************************************************************
  *		init_peb
  */
-static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, BOOL debugged )
+static void init_peb( RTL_USER_PROCESS_PARAMETERS *params )
 {
     peb->ImageBaseAddress           = main_module;
     peb->ProcessParameters          = params;
@@ -1841,8 +1844,6 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, BOOL debugged )
     peb->ImageSubSystemMajorVersion = main_image_info.MajorSubsystemVersion;
     peb->ImageSubSystemMinorVersion = main_image_info.MinorSubsystemVersion;
     peb->SessionId                  = session_id;
-
-    load_global_options( &params->ImagePathName, debugged );
 
     if (wow_peb)
     {
@@ -1883,6 +1884,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     WCHAR *dst, *cmdline, *path, *bootstrap;
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
     WCHAR *curdir = get_initial_directory();
+    HANDLE session_key, ifeo_key;
     UNICODE_STRING nt_name;
     NTSTATUS status;
     struct thread_data *data = get_thread_data();
@@ -1909,6 +1911,8 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     env[env_pos++] = 0;
 
     get_full_path( main_argv[1], curdir, &nt_name );
+    open_option_keys( &nt_name, &session_key, &ifeo_key );
+
     status = load_main_exe( &nt_name, 0 );
     /* fail only if the file contained an explicit path */
     if (status == STATUS_DLL_NOT_FOUND &&
@@ -1968,6 +1972,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params->wShowWindow     = 1; /* SW_SHOWNORMAL */
     params->ProcessGroupId  = pid;
+    if (!ifeo_key) params->Flags |= PROCESS_PARAMS_IMAGE_KEY_MISSING;
 
     params->CurrentDirectory.DosPath.Buffer = (WCHAR *)(params + 1);
     wcscpy( params->CurrentDirectory.DosPath.Buffer, get_dos_path( curdir ));
@@ -1988,7 +1993,10 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     free( env );
 
     get_initial_console( params );
+    load_global_options( session_key, ifeo_key, FALSE );
 
+    if (session_key) NtClose( session_key );
+    if (ifeo_key) NtClose( ifeo_key );
     return params;
 }
 
@@ -2004,13 +2012,14 @@ void init_startup_info(void)
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     struct startup_info_data *info;
     UNICODE_STRING nt_name;
+    HANDLE session_key, ifeo_key;
     USHORT machine;
     BOOL debugged;
 
     if (!startup_info_size)
     {
         params = build_initial_params();
-        init_peb( params, FALSE );
+        init_peb( params );
         return;
     }
 
@@ -2037,6 +2046,8 @@ void init_startup_info(void)
 
     nt_name.Buffer = (WCHAR *)(info + 1);
     nt_name.Length = info->imagepath_len;
+    open_option_keys( &nt_name, &session_key, &ifeo_key );
+
     status = load_main_exe( &nt_name, machine );
     if (!NT_SUCCESS(status))
     {
@@ -2080,6 +2091,7 @@ void init_startup_info(void)
     params->dwFlags         = info->flags;
     params->wShowWindow     = info->show;
     params->ProcessGroupId  = info->process_group_id;
+    if (!ifeo_key && !debugged) params->Flags |= PROCESS_PARAMS_IMAGE_KEY_MISSING;
 
     src = (WCHAR *)(info + 1);
     dst = (WCHAR *)(params + 1);
@@ -2115,7 +2127,11 @@ void init_startup_info(void)
 
     rebuild_argv();
     main_wargv = build_wargv( params->ImagePathName.Buffer );
-    init_peb( params, debugged );
+    load_global_options( session_key, ifeo_key, debugged );
+    init_peb( params );
+
+    if (session_key) NtClose( session_key );
+    if (ifeo_key) NtClose( ifeo_key );
 }
 
 
