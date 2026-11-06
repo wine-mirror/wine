@@ -121,8 +121,6 @@ void init_process_tracing( struct process *process )
     struct
     {
         mach_msg_header_t           header;
-        mach_msg_body_t             body;
-        mach_msg_port_descriptor_t  task_port;
         mach_msg_trailer_t          trailer; /* only present on receive */
     } msg;
 
@@ -139,19 +137,16 @@ void init_process_tracing( struct process *process )
 
         /* if anything in the message is invalid, ignore it */
         if (msg.header.msgh_size != offsetof(typeof(msg), trailer)) continue;
-        if (msg.body.msgh_descriptor_count != 1) continue;
-        if (msg.task_port.type != MACH_MSG_PORT_DESCRIPTOR) continue;
-        if (msg.task_port.disposition != MACH_MSG_TYPE_PORT_SEND) continue;
-        if (!MACH_PORT_VALID(msg.task_port.name)) continue;
+        if (!MACH_PORT_VALID(msg.header.msgh_remote_port)) continue;
 
-        if (!pid_for_task( msg.task_port.name, &pid ))
+        if (!pid_for_task( msg.header.msgh_remote_port, &pid ))
         {
             struct thread *thread = get_thread_from_pid( pid );
 
             if (thread && !thread->process->trace_data)
-                thread->process->trace_data = msg.task_port.name;
+                thread->process->trace_data = msg.header.msgh_remote_port;
             else
-                mach_port_deallocate( mach_task_self(), msg.task_port.name );
+                mach_port_deallocate( mach_task_self(), msg.header.msgh_remote_port );
         }
     }
     /* On Mach thread priorities depend on having the process port available, so
