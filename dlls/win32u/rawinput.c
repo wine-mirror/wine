@@ -224,7 +224,7 @@ static const WCHAR device_classesW[] =
     '\\','S','y','s','t','e','m',
     '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
     '\\','C','o','n','t','r','o','l',
-    '\\','D','e','v','i','c','e','C','l','a','s','s','e','s','\\',0
+    '\\','D','e','v','i','c','e','C','l','a','s','s','e','s',0
 };
 static const WCHAR guid_devinterface_hidW[] =
 {
@@ -242,6 +242,9 @@ static const WCHAR guid_devinterface_mouseW[] =
     '-','b','c','8','c','-','0','0','a','0','c','9','1','4','0','5','d','d','}',0
 };
 
+static HKEY device_classes_key;
+static HANDLE device_classes_changed_event;
+
 static void enumerate_devices( DWORD type, const WCHAR *class )
 {
     WCHAR buffer[1024];
@@ -250,9 +253,7 @@ static void enumerate_devices( DWORD type, const WCHAR *class )
     unsigned int i, j;
     DWORD size;
 
-    wcscpy( buffer, device_classesW );
-    wcscat( buffer, class );
-    if (!(class_key = reg_open_key( NULL, buffer, wcslen( buffer ) * sizeof(WCHAR) )))
+    if (!(class_key = reg_open_key( device_classes_key, class, wcslen( class ) * sizeof(WCHAR) )))
         return;
 
     for (i = 0; !NtEnumerateKey( class_key, i, KeyNodeInformation, buffer, sizeof(buffer), &size ); ++i)
@@ -281,16 +282,37 @@ static void enumerate_devices( DWORD type, const WCHAR *class )
     NtClose( class_key );
 }
 
-static void rawinput_update_device_list( BOOL force )
+static void rawinput_update_device_list(void)
 {
-    unsigned int ticks = NtGetTickCount();
-    static unsigned int last_check;
+    static const LARGE_INTEGER zero = { 0 };
     struct device *device, *next;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
 
     TRACE( "\n" );
 
-    if (ticks - last_check <= 2000 && !force) return;
-    last_check = ticks;
+    if (device_classes_key)
+    {
+        if (NtWaitForSingleObject( device_classes_changed_event, FALSE, &zero ) == STATUS_TIMEOUT) return;
+        TRACE( "key changed.\n" );
+    }
+    else
+    {
+        if (!(device_classes_key = reg_open_key( NULL, device_classesW, wcslen( device_classesW ) * sizeof(WCHAR) )))
+        {
+            WARN( "no key.\n" );
+            return;
+        }
+        InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+        NtCreateEvent( &device_classes_changed_event, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE );
+        TRACE( "opened key %p, event %p.\n", device_classes_key, device_classes_changed_event );
+    }
+
+    if ((status = NtNotifyChangeKey( device_classes_key, device_classes_changed_event, NULL, NULL, &iosb,
+                                     REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET, TRUE, NULL, 0, TRUE ))
+         && status != STATUS_PENDING)
+        ERR( "NtNotifyChangeKey failed, status %#x.\n", status );
 
     LIST_FOR_EACH_ENTRY_SAFE( device, next, &devices, struct device, entry )
     {
@@ -313,7 +335,7 @@ static struct device *find_device_from_handle( HANDLE handle, BOOL refresh )
         if (device->handle == handle) return device;
     if (!refresh) return NULL;
 
-    rawinput_update_device_list( TRUE );
+    rawinput_update_device_list();
 
     LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
         if (device->handle == handle) return device;
@@ -345,7 +367,7 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *
 
     pthread_mutex_lock( &rawinput_mutex );
 
-    rawinput_update_device_list( FALSE );
+    rawinput_update_device_list();
 
     LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
     {
@@ -711,7 +733,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
         return FALSE;
     }
 
-    rawinput_update_device_list( TRUE );
+    rawinput_update_device_list();
 
     registered_devices = new_registered_devices;
     for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );
