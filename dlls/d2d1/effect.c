@@ -2639,14 +2639,17 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateVertexBuffer(ID2D1Effe
     if (id && d2d_device_get_indexed_object(&context->vertex_buffers, id, (IUnknown **)buffer))
         return S_OK;
 
-    if (SUCCEEDED(hr = d2d_vertex_buffer_create(buffer)))
-    {
-        if (id)
-            hr = d2d_device_add_indexed_object(&context->vertex_buffers, id, (IUnknown *)*buffer);
-    }
+    if (FAILED(hr = d2d_vertex_buffer_create(buffer)))
+        return hr;
+
+    if (id)
+        hr = d2d_device_add_indexed_object(&context->vertex_buffers, id, (IUnknown *)*buffer);
 
     if (FAILED(hr))
+    {
+        ID2D1VertexBuffer_Release(*buffer);
         *buffer = NULL;
+    }
 
     return hr;
 }
