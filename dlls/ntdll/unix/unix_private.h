@@ -219,6 +219,7 @@ extern USHORT *lctable;
 extern SIZE_T startup_info_size;
 extern BOOL is_prefix_bootstrap;
 extern ULONG session_id;
+extern ULONG64 mitigation_options[2];
 extern int main_argc;
 extern char **main_argv;
 extern WCHAR **main_wargv;

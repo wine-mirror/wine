@@ -70,6 +70,7 @@ USHORT *uctable = NULL, *lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
 ULONG session_id = 0;
+ULONG64 mitigation_options[2] = { 0 };
 
 static const WCHAR bootstrapW[] = {'W','I','N','E','B','O','O','T','S','T','R','A','P','M','O','D','E'};
 
@@ -1683,20 +1684,34 @@ static inline void dup_unicode_string( const UNICODE_STRING *src, WCHAR **dst, U
 
 
 /*************************************************************************
- *		get_dword_option
+ *		get_binary_option
  */
-static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
+static BOOL get_binary_option( HANDLE key, const WCHAR *name, void *data, ULONG max_size )
 {
     UNICODE_STRING str;
     ULONG size;
     WCHAR buffer[64];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
+    memset( data, 0, max_size );
     init_unicode_string( &str, name );
     size = sizeof(buffer) - sizeof(WCHAR);
-    if (NtQueryValueKey( key, &str, KeyValuePartialInformation, buffer, size, &size )) return defval;
-    if (info->Type != REG_DWORD) return defval;
-    return *(ULONG *)info->Data;
+    if (NtQueryValueKey( key, &str, KeyValuePartialInformation, buffer, size, &size )) return FALSE;
+    if (info->Type != REG_DWORD && info->Type != REG_QWORD && info->Type != REG_BINARY) return FALSE;
+    memcpy( data, info->Data, min( max_size, info->DataLength ));
+    return TRUE;
+}
+
+
+/*************************************************************************
+ *		get_dword_option
+ */
+static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
+{
+    ULONG ret;
+
+    if (get_binary_option( key, name, &ret, sizeof(ret) )) return ret;
+    return defval;
 }
 
 
@@ -1734,6 +1749,42 @@ static void open_option_keys( const UNICODE_STRING *image, HANDLE *session_key, 
         nameW.Length = image->Length - i * sizeof(WCHAR);
         NtOpenKey( ifeo_key, KEY_QUERY_VALUE, &attr );
         NtClose( key );
+    }
+}
+
+
+/*************************************************************************
+ *		load_mitigation_options
+ */
+static void load_mitigation_options( HANDLE session_key, HANDLE ifeo_key )
+{
+    static const WCHAR kernelW[] = {'k','e','r','n','e','l',0};
+    static const WCHAR mitigationW[] = {'M','i','t','i','g','a','t','i','o','n','O','p','t','i','o','n','s',0};
+    ULONG64 opts[2];
+
+    if (session_key)
+    {
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        HANDLE key;
+
+        InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, session_key, NULL );
+        init_unicode_string( &nameW, kernelW );
+        if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
+        {
+            get_binary_option( key, mitigationW, mitigation_options, sizeof(mitigation_options) );
+            NtClose( key );
+        }
+    }
+
+    if (ifeo_key && get_binary_option( ifeo_key, mitigationW, opts, sizeof(opts) ))
+    {
+        for (UINT i = 0; i < 2; i++)
+        {
+            for (ULONG64 mask = 0x7; mask; mask <<= 4)
+                if (opts[i] & mask) mitigation_options[i] &= ~mask;
+            mitigation_options[i] |= opts[i];
+        }
     }
 }
 
@@ -1912,6 +1963,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 
     get_full_path( main_argv[1], curdir, &nt_name );
     open_option_keys( &nt_name, &session_key, &ifeo_key );
+    load_mitigation_options( session_key, ifeo_key );
 
     status = load_main_exe( &nt_name, 0 );
     /* fail only if the file contained an explicit path */
@@ -2047,6 +2099,7 @@ void init_startup_info(void)
     nt_name.Buffer = (WCHAR *)(info + 1);
     nt_name.Length = info->imagepath_len;
     open_option_keys( &nt_name, &session_key, &ifeo_key );
+    load_mitigation_options( session_key, ifeo_key );
 
     status = load_main_exe( &nt_name, machine );
     if (!NT_SUCCESS(status))
