@@ -528,6 +528,9 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
     if(dwFlags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
 
+    if (!This->ipin)
+        return E_UNEXPECTED;
+
     return IGraphBuilder_Render(This->graph, This->ipin);
 }
 
