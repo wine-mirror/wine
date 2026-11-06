@@ -52,6 +52,7 @@ enum error_codes
 
     E_DOM_REQUIRED_ATTRIBUTE_MISSING = 0xc00ce020,
 
+    E_DOM_DUPLICATE_ID_VALUE = 0xc00ce200,
     E_DOM_INVALIDTYPE = 0xc00ce208,
 
     E_SAX_MISSINGEQUALS = 0xc00ce501,
@@ -370,6 +371,12 @@ extern HRESULT parse_xml_decl_body(const WCHAR *text, BSTR *version, BSTR *encod
 struct validation_context
 {
     LONG code;
+    struct
+    {
+        BSTR *values;
+        size_t count;
+        size_t capacity;
+    } id;
 };
 
 extern struct dtd * parser_dtd_addref(struct dtd *dtd);

@@ -1145,6 +1145,21 @@ struct attlist_attr * parser_dtd_get_attr_decl(struct dtd *dtd, struct domnode *
     return NULL;
 }
 
+static bool parser_dtd_validate_add_id(struct validation_context *ctxt, BSTR value)
+{
+    for (size_t i = 0; i < ctxt->id.count; ++i)
+    {
+        if (bstr_equal(ctxt->id.values[i], value))
+            return false;
+    }
+
+    if (!array_reserve((void **)&ctxt->id.values, &ctxt->id.capacity, ctxt->id.count + 1, sizeof(*ctxt->id.values)))
+        return false;
+
+    ctxt->id.values[ctxt->id.count++] = SysAllocString(value);
+    return true;
+}
+
 bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct dtd *dtd,
         struct attlist_attr *decl, struct domnode *attr)
 {
@@ -1179,6 +1194,12 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
 
         if (!ret)
             ctxt->code = E_DOM_ATTRIBUTE_VALUE;
+    }
+
+    if (ret && decl->type == ATTR_TYPE_ID && !parser_dtd_validate_add_id(ctxt, value))
+    {
+        ctxt->code = E_DOM_DUPLICATE_ID_VALUE;
+        ret = false;
     }
 
     SysFreeString(value);

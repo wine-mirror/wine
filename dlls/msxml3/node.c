@@ -4967,13 +4967,18 @@ static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ..
     va_end(ap);
 }
 
-static HRESULT return_validation_error(LONG code, IXMLDOMParseError **err)
+static HRESULT return_validation_error(struct validation_context *ctxt, IXMLDOMParseError **err)
 {
     HRESULT hr;
 
+    for (size_t i = 0; i < ctxt->id.count; ++i)
+        SysFreeString(ctxt->id.values[i]);
+    free(ctxt->id.values);
+    memset(&ctxt->id, 0, sizeof(ctxt->id));
+
     if (err)
     {
-        if (FAILED(hr = create_parse_error(code, NULL, err)))
+        if (FAILED(hr = create_parse_error(ctxt->code, NULL, err)))
             return hr;
     }
 
@@ -5095,7 +5100,6 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
     struct validation_context ctxt = { 0 };
     struct domnode *node, *root, *dtd;
     IXMLDOMSchemaCollection2 *schema;
-    LONG err_code = 0;
     HRESULT hr = S_OK;
     int validated = 0;
     xmlDocPtr xmldoc;
@@ -5108,7 +5112,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
 
         if (node->owner != doc && node != doc)
         {
-            return_validation_error(err_code, err);
+            return_validation_error(&ctxt, err);
             return E_FAIL;
         }
 
@@ -5117,7 +5121,8 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
             case NODE_DOCUMENT:
             case NODE_DOCUMENT_TYPE:
             case NODE_DOCUMENT_FRAGMENT:
-                return return_validation_error(E_DOM_INVALIDTYPE, err);
+                ctxt.code = E_DOM_INVALIDTYPE;
+                return return_validation_error(&ctxt, err);
             default:
                 ;
         }
@@ -5130,7 +5135,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
     if (node->type == NODE_DOCUMENT)
     {
         if (!node_validate_root(&ctxt, node))
-            return return_validation_error(ctxt.code, err);
+            return return_validation_error(&ctxt, err);
     }
 
     if ((dtd = domnode_get_dtd(node_get_doc(node))))
@@ -5141,7 +5146,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
             root = node;
 
         if (!node_dtd_validate_node(&ctxt, dtd->dtd, root))
-            return return_validation_error(ctxt.code, err);
+            return return_validation_error(&ctxt, err);
     }
 
     xmldoc = create_xmldoc_from_domdoc(node, &xmlnode);
@@ -5161,7 +5166,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         {
             /* TODO: get a real error code here */
             TRACE("DTD validation failed\n");
-            err_code = E_XML_INVALID;
+            ctxt.code = E_XML_INVALID;
             hr = S_FALSE;
         }
         xmlFreeValidCtxt(vctx);
@@ -5184,7 +5189,7 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
             else
             {
                 WARN("schema validation failed\n");
-                err_code = E_XML_INVALID;
+                ctxt.code = E_XML_INVALID;
             }
         }
         else
@@ -5198,11 +5203,11 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
     if (!validated)
     {
         WARN("no DTD or schema found\n");
-        err_code = E_XML_NODTD;
+        ctxt.code = E_XML_NODTD;
         hr = S_FALSE;
     }
 
-    return_validation_error(err_code, err);
+    return_validation_error(&ctxt, err);
 
     return hr;
 }
