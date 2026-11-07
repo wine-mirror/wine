@@ -340,7 +340,7 @@ int attribute_align_arg mpg123_index(mpg123_handle *mh, off_t **offsets, off_t *
 	if(*fill == 0) return MPG123_OK;
 
 	/* Construct a copy of the index to hand over to the small-minded client. */
-	*offsets = INT123_safe_realloc(whd->indextable, (*fill)*sizeof(int32_t));
+	*offsets = INT123_safe_reallocn(whd->indextable, (*fill), sizeof(int32_t));
 	if(*offsets == NULL)
 		return INT123_set_err(mh, MPG123_OUT_OF_MEM);
 	whd->indextable = *offsets;
@@ -370,8 +370,8 @@ int attribute_align_arg mpg123_set_index(mpg123_handle *mh, off_t *offsets, off_
 	else
 	{
 		/* Expensive temporary storage... for staying outside at the API layer. */
-		indextmp = INT123_safe_realloc(whd->set_indextable, fill*sizeof(int64_t));
-		if(indextmp == NULL)
+		indextmp = INT123_safe_reallocn(whd->set_indextable, fill, sizeof(int64_t));
+		if(fill && indextmp == NULL)
 			return INT123_set_err(mh, MPG123_OUT_OF_MEM);
 		whd->set_indextable = indextmp;
 		/* Fill the large-file copy of the provided index, then feed it to mpg123. */

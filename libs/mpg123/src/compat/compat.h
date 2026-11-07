@@ -166,6 +166,8 @@ typedef unsigned char byte;
 
 /* A safe realloc also for very old systems where realloc(NULL, size) returns NULL. */
 void *INT123_safe_realloc(void *ptr, size_t size);
+// Use this instead of realloc(ptr, size*sizeof(member)) to check for size_t overflow.
+void *INT123_safe_reallocn(void *ptr, size_t size_factor1, size_t size_factor2);
 // Also freeing ptr if result is NULL. You can do
 // ptr = INT123_safer_realloc(ptr, size)
 // Also, ptr = INT123_safer_realloc(ptr, 0) will do free(ptr); ptr=NULL;.

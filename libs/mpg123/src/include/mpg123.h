@@ -325,7 +325,14 @@ enum mpg123_param_flags
 	,MPG123_SEEKBUFFER   = 0x100 /**< 000100000000 Enable small buffer on non-seekable streams to allow some peek-ahead (for better MPEG sync). */
 	,MPG123_FUZZY        = 0x200 /**< 001000000000 Enable fuzzy seeks (guessing byte offsets or using approximate seek points from Xing TOC) */
 	,MPG123_FORCE_FLOAT  = 0x400 /**< 010000000000 Force floating point output (32 or 64 bits depends on mpg123 internal precision). */
-	,MPG123_PLAIN_ID3TEXT = 0x800 /**< 100000000000 Do not translate ID3 text data to UTF-8. ID3 strings will contain the raw text data, with the first byte containing the ID3 encoding code. */
+	,MPG123_PLAIN_ID3TEXT = 0x800 /**< 100000000000 Do not convert ID3 text data.
+	 *  ID3 strings will contain the raw text data, with the first byte
+         *  containing the ID3 encoding code. The bytes appear as in the ID3 tag.
+         *  This means that there is no zero termination, no sanitation.
+         *  You need to explicitly process the data with the given buffer fill
+         *  and encoding value before handing it over to library routins expecting
+         *  zero-terminated byte strings, for example.
+         */
 	,MPG123_IGNORE_STREAMLENGTH = 0x1000 /**< 1000000000000 Ignore any stream length information contained in the stream, which can be contained in a 'TLEN' frame of an ID3v2 tag or a Xing tag */
 	,MPG123_SKIP_ID3V2 = 0x2000 /**< 10 0000 0000 0000 Do not parse ID3v2 tags, just skip them. */
 	,MPG123_IGNORE_INFOFRAME = 0x4000 /**< 100 0000 0000 0000 Do not parse the LAME/Xing info frame, treat it as normal MPEG data. */
@@ -2067,6 +2074,8 @@ MPG123_EXPORT void mpg123_meta_free(mpg123_handle *mh);
 
 /** Point v1 and v2 to existing data structures wich may change on any next read/decode function call.
  *  v1 and/or v2 can be set to NULL when there is no corresponding data.
+ *  I repeat: Access of these pointed-to structures is only valid between mpg123_id3() and
+ *  any other API  call. Make copies if you want to keep things.
  *  \return MPG123_OK on success
  */
 MPG123_EXPORT int mpg123_id3( mpg123_handle *mh
