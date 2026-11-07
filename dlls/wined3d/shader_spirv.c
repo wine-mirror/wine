@@ -1058,6 +1058,8 @@ static void shader_spirv_invalidate_graphics_program_variant(struct wined3d_cont
 {
     enum wined3d_shader_type shader_type;
 
+    wined3d_context_vk_remove_graphics_pipelines(context_vk, variant->vk_module);
+
     for (shader_type = 0; shader_type < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++shader_type)
     {
         if (context_vk->graphics.vk_modules[shader_type] != variant->vk_module)

@@ -3735,6 +3735,42 @@ fail:
     return NULL;
 }
 
+static bool wined3d_graphics_pipeline_vk_uses_module(const struct wined3d_graphics_pipeline_vk *pipeline_vk,
+        VkShaderModule vk_module)
+{
+    unsigned int i;
+
+    for (i = 0; i < pipeline_vk->key.pipeline_desc.stageCount; ++i)
+    {
+        if (pipeline_vk->key.stages[i].module == vk_module)
+            return true;
+    }
+
+    return false;
+}
+
+void wined3d_context_vk_remove_graphics_pipelines(struct wined3d_context_vk *context_vk, VkShaderModule vk_module)
+{
+    struct wined3d_graphics_pipeline_vk *pipeline_vk;
+    struct wine_rb_entry *entry, *next;
+
+    for (entry = rb_head(context_vk->graphics_pipelines.root); entry; entry = next)
+    {
+        next = rb_next(entry);
+        pipeline_vk = WINE_RB_ENTRY_VALUE(entry, struct wined3d_graphics_pipeline_vk, entry);
+
+        if (!wined3d_graphics_pipeline_vk_uses_module(pipeline_vk, vk_module))
+            continue;
+
+        if (context_vk->graphics.vk_pipeline == pipeline_vk->vk_pipeline)
+            context_vk->graphics.vk_pipeline = VK_NULL_HANDLE;
+        wine_rb_remove(&context_vk->graphics_pipelines, entry);
+        wined3d_context_vk_destroy_vk_pipeline(context_vk, pipeline_vk->vk_pipeline,
+                context_vk->current_command_buffer.id);
+        free(pipeline_vk);
+    }
+}
+
 static VkPipeline wined3d_context_vk_get_graphics_pipeline(struct wined3d_context_vk *context_vk)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
