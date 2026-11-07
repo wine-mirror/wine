@@ -1195,7 +1195,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_ELEMENT_ID_NOT_FOUND */
-    todo_wine ok(res == 0xC00CE00E, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce00e, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml_11), NULL);

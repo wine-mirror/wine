@@ -978,6 +978,10 @@ static inline bool saxreader_has_handler(const struct saxlocator *locator, enum 
     return (locator->vbInterface && iface->vbhandler) || (!locator->vbInterface && iface->handler);
 }
 
+static void saxlocator_standalone_init(struct saxlocator *locator, ISequentialStream *stream);
+static bool saxreader_skipspaces(struct saxlocator *locator);
+static void saxreader_parse_name(struct saxlocator *locator, BSTR *name);
+
 static inline HRESULT set_feature_value(struct saxreader *reader, enum saxreader_feature feature, VARIANT_BOOL value)
 {
     /* handling of non-VARIANT_* values is version dependent */
@@ -1145,18 +1149,105 @@ struct attlist_attr * parser_dtd_get_attr_decl(struct dtd *dtd, struct domnode *
     return NULL;
 }
 
-static bool parser_dtd_validate_add_id(struct validation_context *ctxt, BSTR value)
+static bool parser_dtd_has_id(struct validation_context *ctxt, BSTR value)
 {
     for (size_t i = 0; i < ctxt->id.count; ++i)
     {
         if (bstr_equal(ctxt->id.values[i], value))
-            return false;
+            return true;
     }
+
+    return false;
+}
+
+static bool parser_dtd_validate_add_id(struct validation_context *ctxt, BSTR value)
+{
+    if (parser_dtd_has_id(ctxt, value))
+        return false;
 
     if (!array_reserve((void **)&ctxt->id.values, &ctxt->id.capacity, ctxt->id.count + 1, sizeof(*ctxt->id.values)))
         return false;
 
     ctxt->id.values[ctxt->id.count++] = SysAllocString(value);
+    return true;
+}
+
+static bool parser_dtd_validate_add_idref(struct validation_context *ctxt, struct attlist_attr *decl, BSTR value)
+{
+    if (!array_reserve((void **)&ctxt->idref.refs, &ctxt->idref.capacity, ctxt->idref.count + 1,
+            sizeof(*ctxt->idref.refs)))
+    {
+        return false;
+    }
+
+    ctxt->idref.refs[ctxt->idref.count].value = SysAllocString(value);
+    ctxt->idref.refs[ctxt->idref.count].decl = decl;
+    ++ctxt->idref.count;
+
+    return true;
+}
+
+static bool parser_dtd_validate_idrefs(struct validation_context *ctxt, BSTR value)
+{
+    struct saxlocator locator = { 0 };
+    ISequentialStream *stream;
+    HRESULT hr;
+    BSTR part;
+    bool ret;
+
+    if (FAILED(hr = stream_wrapper_create(value, SysStringLen(value) * sizeof(WCHAR), &stream)))
+    {
+        ctxt->code = hr;
+        return false;
+    }
+    saxlocator_standalone_init(&locator, stream);
+
+    while (!locator.eos)
+    {
+        saxreader_skipspaces(&locator);
+        saxreader_parse_name(&locator, &part);
+        if (locator.status != S_OK)
+        {
+            ctxt->code = locator.status;
+            break;
+        }
+        saxreader_skipspaces(&locator);
+
+        ret = parser_dtd_has_id(ctxt, part);
+        SysFreeString(part);
+
+        if (!ret)
+        {
+            ctxt->code = E_DOM_ELEMENT_ID_NOT_FOUND;
+            break;
+        }
+    }
+
+    encoded_buffer_cleanup(&locator.buffer.utf16);
+    ISequentialStream_Release(stream);
+
+    return ctxt->code == S_OK;
+}
+
+bool parser_dtd_validate_references(struct validation_context *ctxt)
+{
+    for (size_t i = 0; i < ctxt->idref.count; ++i)
+    {
+        if (ctxt->idref.refs[i].decl->type == ATTR_TYPE_IDREF)
+        {
+            if (!parser_dtd_has_id(ctxt, ctxt->idref.refs[i].value))
+            {
+                ctxt->code = E_DOM_ELEMENT_ID_NOT_FOUND;
+                return false;
+            }
+        }
+        else if (ctxt->idref.refs[i].decl->type == ATTR_TYPE_IDREFS)
+        {
+            if (!parser_dtd_validate_idrefs(ctxt, ctxt->idref.refs[i].value))
+                return false;
+        }
+    }
+
     return true;
 }
 
@@ -1201,6 +1292,9 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
         ctxt->code = E_DOM_DUPLICATE_ID_VALUE;
         ret = false;
     }
+
+    if (decl->type == ATTR_TYPE_IDREF || decl->type == ATTR_TYPE_IDREFS)
+        parser_dtd_validate_add_idref(ctxt, decl, value);
 
     SysFreeString(value);
 

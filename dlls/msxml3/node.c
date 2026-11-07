@@ -4976,6 +4976,11 @@ static HRESULT return_validation_error(struct validation_context *ctxt, IXMLDOMP
     free(ctxt->id.values);
     memset(&ctxt->id, 0, sizeof(ctxt->id));
 
+    for (size_t i = 0; i < ctxt->idref.count; ++i)
+        SysFreeString(ctxt->idref.refs[i].value);
+    free(ctxt->idref.refs);
+    memset(&ctxt->idref, 0, sizeof(ctxt->idref));
+
     if (err)
     {
         if (FAILED(hr = create_parse_error(ctxt->code, NULL, err)))
@@ -5148,6 +5153,11 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
         if (!node_dtd_validate_node(&ctxt, dtd->dtd, root))
             return return_validation_error(&ctxt, err);
     }
+
+    /* References are accumulated along with id's and have to be cross-checked
+       at the end. */
+    if (!parser_dtd_validate_references(&ctxt))
+        return return_validation_error(&ctxt, err);
 
     xmldoc = create_xmldoc_from_domdoc(node, &xmlnode);
 
