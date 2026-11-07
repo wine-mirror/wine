@@ -1445,7 +1445,7 @@ msgstr "Caps Lock 켜짐"
 
 #: dlls/crypt32/crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr "권한 키 식별자"
+msgstr "기관 키 식별자"
 
 #: dlls/crypt32/crypt32.rc:31
 msgid "Key Attributes"
@@ -1457,7 +1457,7 @@ msgstr "키 사용 제한"
 
 #: dlls/crypt32/crypt32.rc:33
 msgid "Subject Alternative Name"
-msgstr "주제 대체 이름"
+msgstr "주체 대체 이름"
 
 #: dlls/crypt32/crypt32.rc:34
 msgid "Issuer Alternative Name"
@@ -1465,7 +1465,7 @@ msgstr "발급자 대체 이름"
 
 #: dlls/crypt32/crypt32.rc:35
 msgid "Basic Constraints"
-msgstr "기본 제한"
+msgstr "기본 제약 조건"
 
 #: dlls/crypt32/crypt32.rc:36
 msgid "Key Usage"
@@ -1477,7 +1477,7 @@ msgstr "인증서 정책"
 
 #: dlls/crypt32/crypt32.rc:38
 msgid "Subject Key Identifier"
-msgstr "주제 키 식별자"
+msgstr "주체 키 식별자"
 
 #: dlls/crypt32/crypt32.rc:39
 msgid "CRL Reason Code"
@@ -1493,7 +1493,7 @@ msgstr "확장된 키 사용"
 
 #: dlls/crypt32/crypt32.rc:42
 msgid "Authority Information Access"
-msgstr "권한 정보 접근"
+msgstr "기관 정보 액세스"
 
 #: dlls/crypt32/crypt32.rc:43
 msgid "Certificate Extensions"
@@ -1529,7 +1529,7 @@ msgstr "서명 시간"
 
 #: dlls/crypt32/crypt32.rc:51
 msgid "Counter Sign"
-msgstr "연대 서명"
+msgstr "카운터 서명"
 
 #: dlls/crypt32/crypt32.rc:52
 msgid "Challenge Password"
@@ -1550,7 +1550,7 @@ msgstr "서명한 데이터 선호"
 #: dlls/crypt32/crypt32.rc:56 dlls/cryptdlg/cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr "CPS(인증서 사용 약관)"
+msgstr "CPS(인증 업무 준칙)"
 
 #: dlls/crypt32/crypt32.rc:57 dlls/cryptdlg/cryptdlg.rc:35
 msgid "User Notice"
@@ -1574,7 +1574,7 @@ msgstr "인증서 종류"
 
 #: dlls/crypt32/crypt32.rc:62
 msgid "Certificate Manifold"
-msgstr "인증서 사본"
+msgstr "인증서 매니폴드"
 
 #: dlls/crypt32/crypt32.rc:63
 msgid "Netscape Cert Type"
@@ -1586,11 +1586,11 @@ msgstr "넷스케이프 기준 URL"
 
 #: dlls/crypt32/crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr "넷스케이프 해지 URL"
+msgstr "넷스케이프 폐지 URL"
 
 #: dlls/crypt32/crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr "넷스케이프 CA 해지 URL"
+msgstr "넷스케이프 CA 폐지 URL"
 
 #: dlls/crypt32/crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
@@ -1622,7 +1622,7 @@ msgstr "조직 단위"
 
 #: dlls/crypt32/crypt32.rc:74
 msgid "Common Name"
-msgstr "일반 이름"
+msgstr "공통 이름"
 
 #: dlls/crypt32/crypt32.rc:75
 msgid "Locality"
@@ -1634,7 +1634,7 @@ msgstr "시/도"
 
 #: dlls/crypt32/crypt32.rc:77
 msgid "Title"
-msgstr "제목"
+msgstr "직함"
 
 #: dlls/crypt32/crypt32.rc:78
 msgid "Given Name"
@@ -1670,11 +1670,11 @@ msgstr "상호 CA 버전"
 
 #: dlls/crypt32/crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "순차적인 서명 일련 번호"
+msgstr "직렬화된 서명 일련 번호"
 
 #: dlls/crypt32/crypt32.rc:87
 msgid "Principal Name"
-msgstr "주체 이름"
+msgstr "보안 주체 이름"
 
 #: dlls/crypt32/crypt32.rc:88
 msgid "Windows Product Update"
@@ -1702,7 +1702,7 @@ msgstr "델타 CRL 표시기"
 
 #: dlls/crypt32/crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "배포 지점 발급 중"
+msgstr "발급 배포 지점"
 
 #: dlls/crypt32/crypt32.rc:95
 msgid "Freshest CRL"
@@ -1790,7 +1790,7 @@ msgstr "이전 CA 인증서 해시"
 
 #: dlls/crypt32/crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "가상 기반 CRL 숫자"
+msgstr "가상 기본 CRL 번호"
 
 #: dlls/crypt32/crypt32.rc:117
 msgid "Next CRL Publish"
@@ -1834,11 +1834,11 @@ msgstr "트랜잭션 ID"
 
 #: dlls/crypt32/crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "임시 보낸 사람"
+msgstr "송신자 Nonce"
 
 #: dlls/crypt32/crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "임시 받는 사람"
+msgstr "수신자 Nonce"
 
 #: dlls/crypt32/crypt32.rc:129
 msgid "Reg Info"
@@ -1846,7 +1846,7 @@ msgstr "등록 정보"
 
 #: dlls/crypt32/crypt32.rc:130
 msgid "Get Certificate"
-msgstr "인증서 가져오기"
+msgstr "인증서 요청"
 
 #: dlls/crypt32/crypt32.rc:131
 msgid "Get CRL"
@@ -1854,11 +1854,11 @@ msgstr "CRL 가져오기"
 
 #: dlls/crypt32/crypt32.rc:132
 msgid "Revoke Request"
-msgstr "요청 해지"
+msgstr "폐지 요청"
 
 #: dlls/crypt32/crypt32.rc:133
 msgid "Query Pending"
-msgstr "대기 중인 쿼리"
+msgstr "보류 요청 조회"
 
 #: dlls/crypt32/crypt32.rc:134 dlls/cryptui/cryptui.rc:95
 msgid "Certificate Trust List"
@@ -1866,7 +1866,7 @@ msgstr "인증서 신뢰 목록"
 
 #: dlls/crypt32/crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "저장된 키 인증서 해시"
+msgstr "보관된 키 인증서 해시"
 
 #: dlls/crypt32/crypt32.rc:136
 msgid "Private Key Usage Period"
@@ -1954,7 +1954,7 @@ msgstr "디지털 권한"
 
 #: dlls/crypt32/crypt32.rc:157 dlls/cryptui/cryptui.rc:138
 msgid "Qualified Subordination"
-msgstr "정규 종속"
+msgstr "한정 종속"
 
 #: dlls/crypt32/crypt32.rc:158 dlls/cryptui/cryptui.rc:139
 msgid "Key Recovery"
@@ -1990,7 +1990,7 @@ msgstr "인증서 요청 에이전트"
 
 #: dlls/crypt32/crypt32.rc:166 dlls/cryptui/cryptui.rc:141
 msgid "Lifetime Signing"
-msgstr "영구 서명"
+msgstr "수명 제한 서명"
 
 #: dlls/crypt32/crypt32.rc:167
 msgid "All issuance policies"
@@ -2070,7 +2070,7 @@ msgstr "알 수 없는 키 사용"
 
 #: dlls/crypt32/crypt32.rc:194
 msgid "Subject Type="
-msgstr "주제 종류="
+msgstr "주체 유형="
 
 #: dlls/crypt32/crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -2079,11 +2079,11 @@ msgstr "CA(인증기관)"
 
 #: dlls/crypt32/crypt32.rc:196
 msgid "End Entity"
-msgstr "엔티티 종료"
+msgstr "최종 엔티티"
 
 #: dlls/crypt32/crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "경로 길이 제한="
+msgstr "경로 길이 제약 조건="
 
 #: dlls/crypt32/crypt32.rc:198
 msgctxt "path length"
@@ -2096,7 +2096,7 @@ msgstr "사용 가능한 정보 없음"
 
 #: dlls/crypt32/crypt32.rc:200
 msgid "Authority Info Access"
-msgstr "권한 정보 접근"
+msgstr "기관 정보 액세스"
 
 #: dlls/crypt32/crypt32.rc:201
 msgid "Access Method="
@@ -2165,7 +2165,7 @@ msgstr "작업 중지됨"
 
 #: dlls/crypt32/crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "인증서 대기"
+msgstr "인증서 보류"
 
 #: dlls/crypt32/crypt32.rc:218
 msgid "Financial Information="
@@ -2213,7 +2213,7 @@ msgstr "데이터 암호화"
 
 #: dlls/crypt32/crypt32.rc:228
 msgid "Key Agreement"
-msgstr "키 계약"
+msgstr "키 합의"
 
 #: dlls/crypt32/crypt32.rc:229
 msgid "Certificate Signing"
@@ -2233,7 +2233,7 @@ msgstr "암호화만"
 
 #: dlls/crypt32/crypt32.rc:233
 msgid "Decipher Only"
-msgstr "암호 해독만"
+msgstr "복호화만"
 
 #: dlls/crypt32/crypt32.rc:234
 msgid "SSL Client Authentication"
@@ -2269,7 +2269,7 @@ msgstr "인증서 정책"
 
 #: dlls/cryptdlg/cryptdlg.rc:31
 msgid "Policy Identifier: "
-msgstr "접근 키 식별자: "
+msgstr "정책 식별자: "
 
 #: dlls/cryptdlg/cryptdlg.rc:32
 msgid "Policy Qualifier Info"
@@ -2289,15 +2289,15 @@ msgstr "공지 사항 참조"
 
 #: dlls/cryptdlg/cryptdlg.rc:38
 msgid "Organization="
-msgstr "단체"
+msgstr "조직="
 
 #: dlls/cryptdlg/cryptdlg.rc:39
 msgid "Notice Number="
-msgstr "인증서 시리얼 번호="
+msgstr "고지 번호="
 
 #: dlls/cryptdlg/cryptdlg.rc:40
 msgid "Notice Text="
-msgstr "공지 사항="
+msgstr "고지 텍스트="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
 #: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:350
@@ -2311,7 +2311,7 @@ msgstr "인증서 설치(&I)..."
 
 #: dlls/cryptui/cryptui.rc:197
 msgid "Issuer &Statement"
-msgstr "발행자 설명(&S)"
+msgstr "발급자 설명(&S)"
 
 #: dlls/cryptui/cryptui.rc:205
 msgid "&Show:"
@@ -2343,7 +2343,7 @@ msgstr "인증서 상태(&S):"
 
 #: dlls/cryptui/cryptui.rc:229
 msgid "Disclaimer"
-msgstr "거부"
+msgstr "고지 사항"
 
 #: dlls/cryptui/cryptui.rc:236
 msgid "More &Info"
@@ -2421,12 +2421,11 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"이 마법사는 인증서, 인증서 취소 목록 및 인증서 신뢰 목록을 파일에서 인증서 저"
-"장소로 가져오는 데 도움을 줍니다.\n"
+"이 마법사는 인증서, 인증서 폐지 목록 및 인증서 신뢰 목록을 파일에서 인증서 저장소로 가져오는 데 "
+"도움을 줍니다.\n"
 "\n"
-"인증서를 사용하여 사용자 또는 통신 중인 컴퓨터를 식별할 수 있습니다. 인증 및 "
-"메시지에 서명하는 데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 "
-"취소 목록 및 인증서 신뢰 목록의 모음입니다.\n"
+"인증서를 사용하여 사용자 또는 통신 중인 컴퓨터를 식별할 수 있습니다. 인증 및 메시지에 서명하는 "
+"데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 폐지 목록 및 인증서 신뢰 목록의 모음입니다.\n"
 "\n"
 "계속하려면 [다음]을 클릭합니다."
 
@@ -2444,8 +2443,8 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰"
-"목록을 가지고 있을 수 있음:"
+"주의: 다음 파일 형식에는 둘 이상의 인증서, 인증서 폐지 목록, 또는 인증서 신뢰 목록이 들어 "
+"있을 수 있습니다:"
 
 #: dlls/cryptui/cryptui.rc:304
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
@@ -2458,7 +2457,7 @@ msgstr "개인 정보 교환/PKCS #12 (*.pfx;*.p12)"
 #: dlls/cryptui/cryptui.rc:308 dlls/cryptui/cryptui.rc:81
 #: dlls/cryptui/cryptui.rc:162
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Microsoft 연속 인증서 보관소 (*.sst)"
+msgstr "Microsoft 직렬화된 인증서 저장소 (*.sst)"
 
 #: dlls/cryptui/cryptui.rc:316
 msgid ""
@@ -2563,12 +2562,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"이 마법사는 인증서,인증서 폐기 목록을 내보오는 데 도움을 주고,인증서 신뢰 목"
-"록을 인증서 저장소의 인증서 신뢰 목록을 파일로 내보내는 데도 도움을 줍니다.\n"
+"이 마법사는 인증서, 인증서 폐지 목록, 인증서 신뢰 목록을 인증서 저장소에서 파일로 내보내도록 "
+"도와줍니다.\n"
 "\n"
-"이 인증서는 유저 및 유저가 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니"
-"다. 또한  메시지에 사인하고 인증하는 데도 사용됩니다.인증서 보관소는 인증서, "
-"인증서 파기 목록, 인증서 신뢰 목록의저장소입니다.\n"
+"인증서는 사용자 또는 사용자와 통신하는 컴퓨터를 식별하는 데 사용할 수 있습니다. 인증에 사용하거나 "
+"메시지에 서명하는 데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 폐지 목록, 인증서 "
+"신뢰 목록의 모음입니다.\n"
 "\n"
 "계속 하려면, [다음]을 클릭하세요."
 
@@ -2602,11 +2601,11 @@ msgstr "사용할 파일 형식 선택:"
 
 #: dlls/cryptui/cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "DER(&D) 부호화 X.509 (*.cer)"
+msgstr "DER(&D) 인코딩 X.509 (*.cer)"
 
 #: dlls/cryptui/cryptui.rc:415
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Base64(&S) 부호화 X.509 (*.cer):"
+msgstr "Base64(&S) 인코딩 X.509 (*.cer):"
 
 #: dlls/cryptui/cryptui.rc:417
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
@@ -2669,8 +2668,8 @@ msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"이 루트 인증서는 신뢰할 수 없습니다. 이것을 신뢰하려면 시스템의 신뢰할 수 있"
-"는 루트 인증서 저장소에 추가하세요."
+"이 루트 인증서는 신뢰하는 인증서로 등록되어 있지 않습니다. 이것을 신뢰하려면 시스템의 신뢰할 수 있는 "
+"루트 인증서 저장소에 추가하세요."
 
 #: dlls/cryptui/cryptui.rc:34
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2690,11 +2689,11 @@ msgstr "이 인증서는 다음 목적을 위해 작성되었습니다:"
 
 #: dlls/cryptui/cryptui.rc:38
 msgid "Issued to: "
-msgstr "발행 대상: "
+msgstr "발급 대상: "
 
 #: dlls/cryptui/cryptui.rc:39
 msgid "Issued by: "
-msgstr "발행자: "
+msgstr "발급자: "
 
 #: dlls/cryptui/cryptui.rc:40
 msgid "Valid from "
@@ -2706,7 +2705,7 @@ msgstr " 유효기간(끝) "
 
 #: dlls/cryptui/cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr "인증서 서명이 잘못되었습니다."
+msgstr "인증서 서명이 유효하지 않습니다."
 
 #: dlls/cryptui/cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
@@ -2714,11 +2713,11 @@ msgstr "만료되었거나 아직 유효하지 않은 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:44
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "발행자가 정한 유효 기간을 넘긴 인증서입니다."
+msgstr "이 인증서의 유효 기간이 발급자 인증서의 유효 기간을 벗어납니다."
 
 #: dlls/cryptui/cryptui.rc:45
 msgid "This certificate was revoked by its issuer."
-msgstr "발행자가 취소한 인증서입니다."
+msgstr "발급자가 폐지한 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:46
 msgid "This certificate is OK."
@@ -2747,7 +2746,7 @@ msgstr "오직 확장만"
 
 #: dlls/cryptui/cryptui.rc:52
 msgid "Critical Extensions Only"
-msgstr "오직 중요한 확장만"
+msgstr "필수(critical) 확장만"
 
 #: dlls/cryptui/cryptui.rc:53
 msgid "Properties Only"
@@ -2759,7 +2758,7 @@ msgstr "시리얼 번호"
 
 #: dlls/cryptui/cryptui.rc:56 dlls/wininet/wininet.rc:34
 msgid "Issuer"
-msgstr "발행자"
+msgstr "발급자"
 
 #: dlls/cryptui/cryptui.rc:57
 msgid "Valid from"
@@ -2771,11 +2770,11 @@ msgstr "유효기간(끝)"
 
 #: dlls/cryptui/cryptui.rc:59 dlls/wininet/wininet.rc:33
 msgid "Subject"
-msgstr "제목"
+msgstr "주체"
 
 #: dlls/cryptui/cryptui.rc:60
 msgid "Public key"
-msgstr "공용 키"
+msgstr "공개 키"
 
 #: dlls/cryptui/cryptui.rc:61
 msgid "%1 (%2!d! bits)"
@@ -2804,7 +2803,7 @@ msgstr "인증서 속성"
 
 #: dlls/cryptui/cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "폼 1,2,3,4에 하나의 OID를 입력하세요"
+msgstr "1.2.3.4 형식으로 OID를 입력하세요"
 
 #: dlls/cryptui/cryptui.rc:68
 msgid "The OID you entered already exists."
@@ -2831,14 +2830,14 @@ msgstr "가져올 파일 선택."
 
 #: dlls/cryptui/cryptui.rc:75 dlls/cryptui/cryptui.rc:98
 msgid "Certificate Store"
-msgstr "인증서 보관소"
+msgstr "인증서 저장소"
 
 #: dlls/cryptui/cryptui.rc:76
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
 msgstr ""
-"인증서 보관소는 인증서, 인증서 파기 목록, 인증서 신뢰 목록의 집합소입니다."
+"인증서 저장소는 인증서, 인증서 폐지 목록, 인증서 신뢰 목록의 집합소입니다."
 
 #: dlls/cryptui/cryptui.rc:77
 msgid "X.509 Certificate (*.cer; *.crt)"
@@ -2850,7 +2849,7 @@ msgstr "개인 정보 교환 (*.pfx; *.p12)"
 
 #: dlls/cryptui/cryptui.rc:79 dlls/cryptui/cryptui.rc:158
 msgid "Certificate Revocation List (*.crl)"
-msgstr "인증소 파기 목록 (*.crl)"
+msgstr "인증서 폐지 목록 (*.crl)"
 
 #: dlls/cryptui/cryptui.rc:80 dlls/cryptui/cryptui.rc:159
 msgid "Certificate Trust List (*.stl)"
@@ -2878,11 +2877,11 @@ msgstr "프로그램이 결정"
 
 #: dlls/cryptui/cryptui.rc:88
 msgid "Please select a store"
-msgstr "보관소를 선택하세요"
+msgstr "저장소를 선택하세요"
 
 #: dlls/cryptui/cryptui.rc:89
 msgid "Certificate Store Selected"
-msgstr "인증서 보관소가 선택됨"
+msgstr "인증서 저장소가 선택됨"
 
 #: dlls/cryptui/cryptui.rc:90
 msgid "Automatically determined by the program"
@@ -2898,7 +2897,7 @@ msgstr "내용"
 
 #: dlls/cryptui/cryptui.rc:94
 msgid "Certificate Revocation List"
-msgstr "인증서 파기 목록"
+msgstr "인증서 폐지 목록"
 
 #: dlls/cryptui/cryptui.rc:96
 msgid "CMS/PKCS #7 Message"
@@ -2926,11 +2925,11 @@ msgstr "<추가 용도>"
 
 #: dlls/cryptui/cryptui.rc:104
 msgid "Issued To"
-msgstr "발행목적"
+msgstr "발급 대상"
 
 #: dlls/cryptui/cryptui.rc:105
 msgid "Issued By"
-msgstr "발행자"
+msgstr "발급자"
 
 #: dlls/cryptui/cryptui.rc:106 dlls/wininet/wininet.rc:36
 msgid "Expiration Date"
@@ -3004,9 +3003,9 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"이 루트 인증 기관 또는 발급한 인증 기관에서 발급한 인증서는 더 이상 신뢰할 "
-"수 없습니다.\n"
-"이 루트 인증서를 제거할 수 있는가?"
+"이 루트 인증 기관 또는 이 기관이 발급한 인증 기관에서 발급한 인증서는 더 이상 신뢰할 수 "
+"없습니다.\n"
+"이 루트 인증서를 제거하시겠습니까?"
 
 #: dlls/cryptui/cryptui.rc:117
 msgid ""
@@ -3014,9 +3013,9 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"이러한 루트 인증 기관 또는 발급한 인증 기관이 발급한 인증서는 더 이상 신뢰할 "
-"수 없습니다.\n"
-"이 루트 인증서를 제거할 수 있는가?"
+"이러한 루트 인증 기관 또는 이 기관들이 발급한 인증 기관에서 발급한 인증서는 더 이상 신뢰할 수 "
+"없습니다.\n"
+"이 루트 인증서를 제거하시겠습니까?"
 
 #: dlls/cryptui/cryptui.rc:118
 msgid ""
@@ -3104,11 +3103,11 @@ msgstr "지정한 파일이 이미 있습니다. 파일을 교체하시겠습니
 
 #: dlls/cryptui/cryptui.rc:156
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr "DER-암호화된 바이너리 X.509 (*.cer)"
+msgstr "DER 인코딩 바이너리 X.509 (*.cer)"
 
 #: dlls/cryptui/cryptui.rc:157
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr "Base64-암호화된 X.509 (*.cer)"
+msgstr "Base64 인코딩 X.509 (*.cer)"
 
 #: dlls/cryptui/cryptui.rc:160
 msgid "CMS/PKCS #7 Messages (*.p7b)"
@@ -3843,7 +3842,7 @@ msgstr "축"
 
 #: dlls/joy.cpl/joy.rc:63 dlls/joy.cpl/joy.rc:112
 msgid "POVs"
-msgstr "시점"
+msgstr "POV(해트 스위치)"
 
 #: dlls/joy.cpl/joy.rc:64 dlls/joy.cpl/joy.rc:113
 msgid "Buttons"
@@ -3851,7 +3850,7 @@ msgstr "버튼"
 
 #: dlls/joy.cpl/joy.rc:65
 msgid "Force Feedback Effect"
-msgstr "피드백 효과 강제"
+msgstr "포스 피드백 효과"
 
 #: dlls/joy.cpl/joy.rc:67
 msgid ""
@@ -3886,32 +3885,32 @@ msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #0 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
+"슬롯 #0에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
+"재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #1 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
+"슬롯 #1에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
+"재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #2 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
+"슬롯 #2에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
+"재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #3 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
+"슬롯 #3에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
+"재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
 #: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
@@ -6681,7 +6680,7 @@ msgstr "RPC 프로토콜 시퀀스가 지원되지 않음.\n"
 
 #: dlls/kernelbase/winerror.mc:3070
 msgid "Invalid RPC protocol sequence.\n"
-msgstr "잘못된 RPC 프로토콜 순서.\n"
+msgstr "유효하지 않은 RPC 프로토콜 시퀀스.\n"
 
 #: dlls/kernelbase/winerror.mc:3075
 msgid "Invalid string UUID.\n"
@@ -6717,15 +6716,15 @@ msgstr "UUID 형식은 이미 등록되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3115
 msgid "Server already listening.\n"
-msgstr "서버는 이미 응답중입니다.\n"
+msgstr "서버가 이미 수신 대기 중입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3120
 msgid "No protocol sequences registered.\n"
-msgstr "어떤 프로토콜 순서도 등록되어있지 않습니다.\n"
+msgstr "등록된 프로토콜 시퀀스가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server not listening.\n"
-msgstr "RPC 서버는 응답이 없습니다.\n"
+msgstr "RPC 서버가 수신 대기 중이 아닙니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3130
 msgid "Unknown manager type.\n"
@@ -6741,7 +6740,7 @@ msgstr "바인딩이 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3145
 msgid "No protocol sequences.\n"
-msgstr "어떤 프로토콜 순서도 없습니다.\n"
+msgstr "프로토콜 시퀀스가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3150
 msgid "Can't create endpoint.\n"
@@ -6849,7 +6848,7 @@ msgstr "잘못된 인증 ID.\n"
 
 #: dlls/kernelbase/winerror.mc:3285
 msgid "Unknown authorization service.\n"
-msgstr "알 수 없는 인증 서비스.\n"
+msgstr "알 수 없는 권한 부여 서비스.\n"
 
 #: dlls/kernelbase/winerror.mc:3290
 msgid "Invalid entry.\n"
@@ -7133,7 +7132,7 @@ msgstr "지원되지 않는 권한 수준.\n"
 
 #: dlls/kernelbase/winerror.mc:3640
 msgid "No principal name registered.\n"
-msgstr "등록된 기본 이름이 없습니다.\n"
+msgstr "등록된 보안 주체 이름이 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3645
 msgid "Not an RPC error.\n"
@@ -7157,7 +7156,7 @@ msgstr "잘못된 핸들 작업.\n"
 
 #: dlls/kernelbase/winerror.mc:3670
 msgid "Wrong serializing package version.\n"
-msgstr "잘못된 일련의 순차적인 패키지 버전.\n"
+msgstr "잘못된 직렬화 패키지 버전.\n"
 
 #: dlls/kernelbase/winerror.mc:3675
 msgid "Wrong stub version.\n"
@@ -7337,7 +7336,7 @@ msgstr "요청한 주소를 지정할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3905
 msgid "Connection reset by peer.\n"
-msgstr "피어가 연결을 다시 설정했습니다.\n"
+msgstr "피어가 연결을 리셋했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3915
 msgid "Host not found.\n"
@@ -7962,7 +7961,7 @@ msgstr "잘못된 타임스탬프입니다.\n"
 
 #: dlls/mferror/mferror.mc:144
 msgid "Unsupported scheme.\n"
-msgstr "지원되지 않는 스키마입니다.\n"
+msgstr "지원되지 않는 스킴입니다.\n"
 
 #: dlls/mferror/mferror.mc:151
 msgid "Unsupported bytestream type.\n"
@@ -13334,7 +13333,7 @@ msgstr "용지 트레이(&T):"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
-msgstr "영역"
+msgstr "인증 영역"
 
 #: dlls/wininet/wininet.rc:68
 msgid "Authentication Required"
@@ -13362,7 +13361,7 @@ msgstr "알려지지 않았거나 신뢰할 수 없는 게시자가 발행한 �
 
 #: dlls/wininet/wininet.rc:30
 msgid "The date on the certificate is invalid."
-msgstr "인증서 날짜가 잘못되었습니다."
+msgstr "인증서 날짜가 유효하지 않습니다."
 
 #: dlls/wininet/wininet.rc:31
 msgid "The name on the certificate does not match the site."
@@ -13411,7 +13410,7 @@ msgstr "URL이 잘못되었습니다.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr "URL 스키마가 인식되지 않거나 지원되지 않습니다.\n"
+msgstr "URL 스킴이 인식되지 않거나 지원되지 않습니다.\n"
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
@@ -14090,11 +14089,11 @@ msgstr "높은 수준의 인증이 요구됩니다"
 
 #: dlls/wldap32/wldap32.rc:41
 msgid "Referral (v2)"
-msgstr "조회 (v2)"
+msgstr "리퍼럴 (v2)"
 
 #: dlls/wldap32/wldap32.rc:42
 msgid "Referral"
-msgstr "조회"
+msgstr "리퍼럴"
 
 #: dlls/wldap32/wldap32.rc:43
 msgid "Administration Limit Exceeded"
@@ -14102,7 +14101,7 @@ msgstr "관리 제한이 초과되었습니다"
 
 #: dlls/wldap32/wldap32.rc:44
 msgid "Unavailable Critical Extension"
-msgstr "중요한 확장을 사용할 수 없습니다"
+msgstr "필수(critical) 확장을 사용할 수 없습니다"
 
 #: dlls/wldap32/wldap32.rc:45
 msgid "Confidentiality Required"
@@ -14122,7 +14121,7 @@ msgstr "정의되지 않은 유형입니다"
 
 #: dlls/wldap32/wldap32.rc:50
 msgid "Inappropriate Matching"
-msgstr "부적합한 일치입니다"
+msgstr "부적합한 일치 규칙입니다"
 
 #: dlls/wldap32/wldap32.rc:51
 msgid "Constraint Violation"
@@ -14154,7 +14153,7 @@ msgstr "잎 노드입니다"
 
 #: dlls/wldap32/wldap32.rc:68
 msgid "Alias Dereference Problem"
-msgstr "별칭 참조 취소에 문제가 있습니다"
+msgstr "별칭 역참조 문제"
 
 #: dlls/wldap32/wldap32.rc:80
 msgid "Inappropriate Authentication"
@@ -14162,7 +14161,7 @@ msgstr "부적합한 인증입니다"
 
 #: dlls/wldap32/wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr "자격 증명이 올바르지 않습니다"
+msgstr "자격 증명이 유효하지 않습니다"
 
 #: dlls/wldap32/wldap32.rc:82
 msgid "Insufficient Rights"
@@ -14178,7 +14177,7 @@ msgstr "사용할 수 없습니다"
 
 #: dlls/wldap32/wldap32.rc:85
 msgid "Unwilling To Perform"
-msgstr "수행하지 않으려고 합니다"
+msgstr "서버가 작업 수행을 거부했습니다"
 
 #: dlls/wldap32/wldap32.rc:86
 msgid "Loop Detected"
@@ -14186,7 +14185,7 @@ msgstr "루프를 감지했습니다"
 
 #: dlls/wldap32/wldap32.rc:92
 msgid "Sort Control Missing"
-msgstr "정렬 컨트롤 손실"
+msgstr "정렬 컨트롤이 없습니다"
 
 #: dlls/wldap32/wldap32.rc:93
 msgid "Index range error"
@@ -14214,7 +14213,7 @@ msgstr "이미 존재합니다"
 
 #: dlls/wldap32/wldap32.rc:101
 msgid "No Object Class Mods"
-msgstr "개체 클래스 모드가 없습니다"
+msgstr "객체 클래스 수정이 금지되어 있습니다"
 
 #: dlls/wldap32/wldap32.rc:102
 msgid "Results Too Large"
@@ -14286,11 +14285,11 @@ msgstr "추가 결과를 반환했습니다"
 
 #: dlls/wldap32/wldap32.rc:128
 msgid "Loop while handling referrals"
-msgstr "조회를 처리하는 동안의 루프"
+msgstr "리퍼럴 처리 중 루프 발생"
 
 #: dlls/wldap32/wldap32.rc:129
 msgid "Referral hop limit exceeded"
-msgstr "조회 홉 한계를 초과했습니다"
+msgstr "리퍼럴 홉 제한을 초과했습니다"
 
 #: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:370
 msgid ""
@@ -15621,7 +15620,7 @@ msgstr "종료 시간"
 
 #: programs/klist/klist.rc:32
 msgid "Renew Time"
-msgstr "시간 갱신"
+msgstr "갱신 기한"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
@@ -15791,11 +15790,11 @@ msgstr "프로토콜"
 
 #: programs/netstat/netstat.rc:32
 msgid "Local Address"
-msgstr "지역 주소"
+msgstr "로컬 주소"
 
 #: programs/netstat/netstat.rc:33
 msgid "Foreign Address"
-msgstr "외부 주소"
+msgstr "원격 주소"
 
 #: programs/netstat/netstat.rc:34
 msgid "State"
@@ -15843,7 +15842,7 @@ msgstr "IPv4 TCP 통계"
 
 #: programs/netstat/netstat.rc:45
 msgid "Active Opens"
-msgstr "활성 열기"
+msgstr "능동 열기"
 
 #: programs/netstat/netstat.rc:46
 msgid "Passive Opens"
@@ -15855,7 +15854,7 @@ msgstr "실패한 연결 시도"
 
 #: programs/netstat/netstat.rc:48
 msgid "Reset Connections"
-msgstr "재설정된 연결"
+msgstr "리셋된 연결"
 
 #: programs/netstat/netstat.rc:49
 msgid "Current Connections"
