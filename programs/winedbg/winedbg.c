@@ -250,6 +250,8 @@ extern struct backend_cpu be_x86_64;
 extern struct backend_cpu be_arm;
 #elif defined(__aarch64__) && !defined(__AARCH64EB__)
 extern struct backend_cpu be_arm64;
+#elif defined(__riscv) && (__riscv_xlen == 64)
+/* RISC-V64 debugger backend not implemented yet. */
 #else
 # error CPU unknown
 #endif
@@ -301,6 +303,8 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->be_cpu = &be_arm;
 #elif defined(__aarch64__) && !defined(__AARCH64EB__)
     p->be_cpu = &be_arm64;
+#elif defined(__riscv) && (__riscv_xlen == 64)
+    p->be_cpu = NULL;
 #else
 # error CPU unknown
 #endif

@@ -1115,7 +1115,8 @@ static HRESULT write_param_fs(ITypeInfo *typeinfo, unsigned char *type,
     return hr;
 }
 
-#if defined __arm__ || defined __aarch64__
+#if defined __arm__ || defined __aarch64__ || \
+    (defined(__riscv) && (__riscv_xlen == 64))
 
 /* replace consecutive params code by a repeat sequence: 0x9d code<1> repeat_count<2> */
 static unsigned int compress_params_array( unsigned char *params, unsigned int count )
@@ -1158,7 +1159,7 @@ static unsigned int fill_params_array( ITypeInfo *typeinfo, FUNCDESC *desc,
         offset = ROUND_SIZE( offset, align );
         pos = offset / pointer_size;
 
-#ifdef __aarch64__
+#if defined(__aarch64__) || (defined(__riscv) && (__riscv_xlen == 64))
         switch (basetype)
         {
         case FC_FLOAT:

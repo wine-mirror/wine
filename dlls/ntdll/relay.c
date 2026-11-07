@@ -33,7 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__) || \ 
+    defined(__aarch64__) || defined(__riscv) && !defined(__arm64ec__)
 
 struct relay_descr  /* descriptor for a module */
 {
@@ -667,6 +668,128 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "2: blr x9\n\t"
                    "mov SP, x29\n\t"
                    "ldp x29, x30, [SP], #16\n\t"
+                   "ret\n" )
+
+static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+{
+    unsigned int nb_args;
+    void *func = relay_trace_entry( descr, idx, stack, &nb_args );
+    LONGLONG ret = call_entry_point( func, nb_args, stack );
+    relay_trace_exit( descr, idx, stack[-1], ret );
+    return ret;
+}
+
+#elif defined(__riscv)
+
+/***********************************************************************
+ *           relay_trace_entry
+ */
+void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx,
+                                 const INT_PTR *stack, unsigned int *nb_args )
+{
+    WORD ordinal = LOWORD(idx);
+    const char *arg_types = descr->args_string + HIWORD(idx);
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    unsigned int i;
+
+    TRACE( "\1Call %s(", func_name( data, ordinal ));
+
+    for (i = 0; !is_ret_val( arg_types[i] ); i++)
+    {
+        switch (arg_types[i])
+        {
+        case 's': /* str */
+            trace_string_a( stack[i] );
+            break;
+        case 'w': /* wstr */
+            trace_string_w( stack[i] );
+            break;
+        case 'i': /* long */
+        default:
+            TRACE( "%08Ix", stack[i] );
+            break;
+        }
+        if (!is_ret_val( arg_types[i + 1] )) TRACE( "," );
+    }
+    *nb_args = i;
+    TRACE( ") ret=%08Ix\n", stack[-1] );
+    return entry_point->orig_func;
+}
+
+/***********************************************************************
+ *           relay_trace_exit
+ */
+void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                              INT_PTR retaddr, INT_PTR retval )
+{
+    TRACE( "\1Ret  %s() retval=%08Ix ret=%08Ix\n",
+           func_name( descr->private, LOWORD(idx) ), retval, retaddr );
+}
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "addi sp, sp, -96\n\t"
+                   "sd ra, 88(sp)\n\t"
+                   "sd s0, 80(sp)\n\t"
+                   "sd s1, 72(sp)\n\t"
+                   "sd s2, 64(sp)\n\t"
+                   "sd s3, 56(sp)\n\t"
+                   "sd s4, 48(sp)\n\t"
+                   "sd s5, 40(sp)\n\t"
+                   "sd s6, 32(sp)\n\t"
+                   "sd s7, 24(sp)\n\t"
+                   "mv s5, a0\n\t"
+                   "mv s7, a1\n\t"
+                   "mv s0, a0\n\t"
+                   "mv s2, a1\n\t"
+                   "mv s1, a2\n\t"
+                   "mv s6, sp\n\t"
+                   "li t0, 8\n\t"
+                   "ble s2, t0, 2f\n\t"
+                   "addi t1, s2, -8\n\t"
+                   "slli t1, t1, 3\n\t"
+                   "addi t2, t1, 15\n\t"
+                   "andi t2, t2, -16\n\t"
+                   "sub sp, sp, t2\n\t"
+                   "mv t3, sp\n\t"
+                   "addi t4, s1, 64\n\t"
+                   "mv t5, t1\n\t"
+                   "1: ld t6, 0(t4)\n\t"
+                   "sd t6, 0(t3)\n\t"
+                   "addi t4, t4, 8\n\t"
+                   "addi t3, t3, 8\n\t"
+                   "addi t5, t5, -8\n\t"
+                   "bnez t5, 1b\n\t"
+                   "2: ld a0, 0(s1)\n\t"
+                   "ld a1, 8(s1)\n\t"
+                   "ld a2, 16(s1)\n\t"
+                   "ld a3, 24(s1)\n\t"
+                   "ld a4, 32(s1)\n\t"
+                   "ld a5, 40(s1)\n\t"
+                   "ld a6, 48(s1)\n\t"
+                   "ld a7, 56(s1)\n\t"
+                   "jalr ra, 0(s0)\n\t"
+                   "mv s3, a0\n\t"
+                   "mv s4, a1\n\t"
+                   "mv sp, s6\n\t"
+                   "mv a0, s5\n\t"
+                   "mv a1, s7\n\t"
+                   "ld a2, -8(s1)\n\t"
+                   "mv a3, s3\n\t"
+                   "call relay_trace_exit\n\t"
+                   "mv a0, s3\n\t"
+                   "mv a1, s4\n\t"
+                   "ld s7, 24(sp)\n\t"
+                   "ld s6, 32(sp)\n\t"
+                   "ld s5, 40(sp)\n\t"
+                   "ld s4, 48(sp)\n\t"
+                   "ld s3, 56(sp)\n\t"
+                   "ld s2, 64(sp)\n\t"
+                   "ld s1, 72(sp)\n\t"
+                   "ld s0, 80(sp)\n\t"
+                   "ld ra, 88(sp)\n\t"
+                   "addi sp, sp, 96\n\t"
                    "ret\n" )
 
 static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )

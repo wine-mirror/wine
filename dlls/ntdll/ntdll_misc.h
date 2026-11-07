@@ -45,6 +45,8 @@ static const USHORT current_machine = IMAGE_FILE_MACHINE_AMD64;
 static const USHORT current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
 static const USHORT current_machine = IMAGE_FILE_MACHINE_ARM64;
+#elif defined(__riscv) && (__riscv_xlen == 64)
+static const USHORT current_machine = IMAGE_FILE_MACHINE_RISCV64;
 #else
 static const USHORT current_machine = IMAGE_FILE_MACHINE_UNKNOWN;
 #endif
@@ -156,6 +158,15 @@ extern void heap_thread_detach(void);
     TRACE( "x20=%016I64x x21=%016I64x x22=%016I64x x23=%016I64x\n", (c)->X20, (c)->X21, (c)->X22, (c)->X23 ); \
     TRACE( "x24=%016I64x x25=%016I64x x26=%016I64x x27=%016I64x\n", (c)->X24, (c)->X25, (c)->X26, (c)->X27 ); \
     TRACE( "x28=%016I64x cpsr=%08lx fpcr=%08lx fpsr=%08lx\n", (c)->X28, (c)->Cpsr, (c)->Fpcr, (c)->Fpsr ); \
+    } while(0)
+#elif defined(__riscv) && __riscv_xlen == 64
+# define TRACE_CONTEXT(c) do { \
+    TRACE( " pc=%016I64x sp=%016I64x ra=%016I64x fp=%016I64x\n", \
+           (c)->Pc, (c)->Gpr.X[2], (c)->Gpr.X[1], (c)->Gpr.X[8] ); \
+    TRACE( " a0=%016I64x a1=%016I64x a2=%016I64x a3=%016I64x\n", \
+           (c)->Gpr.X[10], (c)->Gpr.X[11], (c)->Gpr.X[12], (c)->Gpr.X[13] ); \
+    TRACE( " a4=%016I64x a5=%016I64x a6=%016I64x a7=%016I64x\n", \
+           (c)->Gpr.X[14], (c)->Gpr.X[15], (c)->Gpr.X[16], (c)->Gpr.X[17] ); \
     } while(0)
 #endif
 

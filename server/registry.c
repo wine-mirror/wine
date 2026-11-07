@@ -1818,6 +1818,9 @@ static void init_supported_machines(void)
         if (supports_aarch32()) supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
         supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
     }
+#elif defined(__riscv) && (__riscv_xlen == 64)
+    if (prefix_type == PREFIX_64BIT)
+        supported_machines[count++] = IMAGE_FILE_MACHINE_RISCV64;
 #else
 #error Unsupported machine
 #endif
@@ -1837,6 +1840,12 @@ void init_registry(void)
     static const WCHAR classes_arm[] = {'S','o','f','t','w','a','r','e','\\',
                                         'C','l','a','s','s','e','s','\\',
                                         'W','o','w','A','A','3','2','N','o','d','e'};
+
+    static const WCHAR classes_riscv64[]  = {'S','o','f','t','w','a','r','e','\\',
+                                        'C','l','a','s','s','e','s','\\',
+                                        'W','o','w','R','I','S','C','V','6','4','N','o','d','e'};
+
+
     static const WCHAR perflib[] = {'S','o','f','t','w','a','r','e','\\',
                                     'M','i','c','r','o','s','o','f','t','\\',
                                     'W','i','n','d','o','w','s',' ','N','T','\\',
@@ -1925,6 +1934,7 @@ void init_registry(void)
         {
         case IMAGE_FILE_MACHINE_I386:  name.str = classes_i386;  name.len = sizeof(classes_i386);  break;
         case IMAGE_FILE_MACHINE_ARMNT: name.str = classes_arm;   name.len = sizeof(classes_arm);   break;
+        case IMAGE_FILE_MACHINE_RISCV64: name.str = classes_riscv64;   name.len = sizeof(classes_riscv64);   break;
         default: continue;
         }
         if ((key = create_key_recursive( hklm, name, current_time )))
@@ -1958,6 +1968,7 @@ void init_registry(void)
             {
             case IMAGE_FILE_MACHINE_I386:  mkdir( "drive_c/windows/syswow64", 0777 ); break;
             case IMAGE_FILE_MACHINE_ARMNT: mkdir( "drive_c/windows/sysarm32", 0777 ); break;
+            case IMAGE_FILE_MACHINE_RISCV64: mkdir( "drive_c/windows/sysriscv64", 0777 ); break;
             }
         }
     }

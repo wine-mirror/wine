@@ -1,6 +1,7 @@
 EXTRADEFS = -DWINBASEAPI= -DWINADVAPI= -DWINUSERAPI= -DWINSHLWAPI=
 MODULE    = kernelbase.dll
 IMPORTLIB = kernelbase
+UNIXLIB   = kernelbase.so
 IMPORTS   = uuid ntdll
 
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles

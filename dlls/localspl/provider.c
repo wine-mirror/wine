@@ -329,6 +329,8 @@ static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_ia64,
 #define env_arch env_arm
 #elif defined __aarch64__
 #define env_arch env_arm64
+#elif defined __riscv && __riscv_xlen == 64
+#define env_arch env_arm64
 #else
 #error not defined for this cpu
 #endif

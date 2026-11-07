@@ -3399,6 +3399,14 @@ void virtual_init(void)
         high_range.start = high_range.end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
 
 #ifdef _WIN64
+#if defined(__riscv) && (__riscv_xlen == 64)
+    fprintf( stderr,
+             "virtual: host_addr_space_limit=%#lx page_shift=%u "
+             "pages_vprot_shift=%lu\n",
+             (unsigned long)host_addr_space_limit,
+             page_shift,
+             pages_vprot_shift );
+
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
     pages_vprot = calloc( pages_vprot_size, sizeof(*pages_vprot) );
     assert( pages_vprot != NULL );
@@ -3408,6 +3416,48 @@ void virtual_init(void)
 #endif
     view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+#if 0    
+    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+
+    fprintf( stderr,
+             "virtual: host_addr_space_limit=%#lx page_shift=%u "
+             "pages_vprot_shift=%zu\n",
+             (unsigned long)host_addr_space_limit,
+             page_shift,
+             pages_vprot_shift );
+#endif
+    pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
+    view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+//    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+
+#if defined(__riscv) && (__riscv_xlen == 64)
+    fprintf( stderr,
+             "pages_vprot: size=%zu sizeof=%zu total=%zu\n",
+             pages_vprot_size,
+             sizeof(*pages_vprot),
+             pages_vprot_size * sizeof(*pages_vprot) );
+
+    {
+        size_t pages_vprot_alloc_size;
+
+        pages_vprot_alloc_size = (pages_vprot_size * sizeof(*pages_vprot)
+                                  + host_page_mask) & ~host_page_mask;
+
+        pages_vprot = anon_mmap_alloc( pages_vprot_alloc_size,
+                                       PROT_READ | PROT_WRITE );
+    }
+#else
+pages_vprot = anon_mmap_alloc( pages_vprot_size * sizeof(*pages_vprot), PROT_READ | PROT_WRITE );
+/* !! #if defined(__riscv) && (__riscv_xlen == 64) */
+#endif /* #if defined(__riscv) && (__riscv_xlen == 64) */
+#else
+    /* try to find space in a reserved area for the views and pages protection table */
+    view_block_start = alloc_virtual_heap( 2 * view_block_size + (1U << (32 - page_shift)) );
+    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+    free_ranges = (void *)((char *)view_block_start + view_block_size);
+    pages_vprot = (void *)((char *)view_block_start + 2 * view_block_size);
+#endif
     assert( view_block_start != MAP_FAILED );
     wine_rb_init( &views_tree, compare_view );
     kernel_writewatch_init();

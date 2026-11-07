@@ -142,6 +142,9 @@ static const printenv_t * const all_printenv[] = { &env_x86, &env_x64, &env_arm,
 #define env_arch env_arm
 #elif defined __aarch64__
 #define env_arch env_arm64
+/* This is totally and completely wrong as we do not expect to support printing for quite a quite a while */
+#elif defined(__riscv) && __riscv_xlen == 64
+#define env_arch env_win40
 #else
 #error not defined for this cpu
 #endif

@@ -344,6 +344,12 @@ extern "C" {
 
 /* C99 restrict support */
 
+#if defined(__riscv) && (__riscv_xlen == 64)
+# ifndef _WIN64
+#  define _WIN64
+# endif
+#endif
+
 #if defined(ENABLE_RESTRICTED) && !defined(MIDL_PASS) && !defined(RC_INVOKED)
 # if defined(_MSC_VER) && defined(_M_MRX000)
 #  define RESTRICTED_POINTER __restrict
@@ -2104,6 +2110,218 @@ typedef ARM64_NT_CONTEXT CONTEXT, *PCONTEXT;
 
 #endif /* __aarch64__ */
 
+
+#ifdef __riscv
+
+#if __riscv_xlen == 64
+
+typedef union _RISCV64_FPREG
+{
+    ULONGLONG Q;
+    double D;
+    float S[2];
+} RISCV64_FPREG, *PRISCV64_FPREG;
+
+
+typedef union _RISCV64_GPR
+{
+    struct
+    {
+        DWORD64 X0;
+        DWORD64 X1;
+        DWORD64 X2;
+        DWORD64 X3;
+        DWORD64 X4;
+        DWORD64 X5;
+        DWORD64 X6;
+        DWORD64 X7;
+        DWORD64 X8;
+        DWORD64 X9;
+        DWORD64 X10;
+        DWORD64 X11;
+        DWORD64 X12;
+        DWORD64 X13;
+        DWORD64 X14;
+        DWORD64 X15;
+        DWORD64 X16;
+        DWORD64 X17;
+        DWORD64 X18;
+        DWORD64 X19;
+        DWORD64 X20;
+        DWORD64 X21;
+        DWORD64 X22;
+        DWORD64 X23;
+        DWORD64 X24;
+        DWORD64 X25;
+        DWORD64 X26;
+        DWORD64 X27;
+        DWORD64 X28;
+        DWORD64 X29;
+        DWORD64 X30;
+        DWORD64 X31;
+    };
+
+    DWORD64 X[32];
+
+} RISCV64_GPR;
+
+
+typedef struct DECLSPEC_ALIGN(16) _RISCV64_CONTEXT
+{
+    ULONG ContextFlags;
+
+    RISCV64_GPR Gpr;
+
+    DWORD64 Pc;
+    DWORD64 Fcsr;
+
+    RISCV64_FPREG F[32];
+
+    DWORD64 Bvr[8];
+    DWORD64 Bcr[8];
+
+    DWORD64 Wvr[4];
+    DWORD64 Wcr[4];
+
+} RISCV64_CONTEXT, *PRISCV64_CONTEXT;
+
+
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS_RISCV64
+{
+    PDWORD64 X8;
+    PDWORD64 X9;
+
+    PDWORD64 X18;
+    PDWORD64 X19;
+    PDWORD64 X20;
+    PDWORD64 X21;
+    PDWORD64 X22;
+    PDWORD64 X23;
+    PDWORD64 X24;
+    PDWORD64 X25;
+    PDWORD64 X26;
+    PDWORD64 X27;
+
+    PRISCV64_FPREG F8;
+    PRISCV64_FPREG F9;
+
+    PRISCV64_FPREG F18;
+    PRISCV64_FPREG F19;
+    PRISCV64_FPREG F20;
+    PRISCV64_FPREG F21;
+    PRISCV64_FPREG F22;
+    PRISCV64_FPREG F23;
+    PRISCV64_FPREG F24;
+    PRISCV64_FPREG F25;
+    PRISCV64_FPREG F26;
+    PRISCV64_FPREG F27;
+
+} KNONVOLATILE_CONTEXT_POINTERS_RISCV64,
+  *PKNONVOLATILE_CONTEXT_POINTERS_RISCV64;
+
+#endif /* __riscv_xlen == 64 */
+
+#endif /* __riscv */
+
+#ifdef __riscv
+#define CONTEXT_RISCV64                  0x800000
+#define CONTEXT_RISCV64_CONTROL          (CONTEXT_RISCV64 | 0x00000001)
+#define CONTEXT_RISCV64_INTEGER          (CONTEXT_RISCV64 | 0x00000002)
+#define CONTEXT_RISCV64_FLOATING_POINT   (CONTEXT_RISCV64 | 0x00000004)
+#define CONTEXT_RISCV64_DEBUG_REGISTERS  (CONTEXT_RISCV64 | 0x00000008)
+
+#define CONTEXT_RISCV64_FULL \
+    (CONTEXT_RISCV64_CONTROL | \
+     CONTEXT_RISCV64_INTEGER | \
+     CONTEXT_RISCV64_FLOATING_POINT)
+
+#define CONTEXT_RISCV64_ALL \
+    (CONTEXT_RISCV64_FULL | \
+     CONTEXT_RISCV64_DEBUG_REGISTERS)
+
+#define CONTEXT_CONTROL        CONTEXT_RISCV64_CONTROL
+#define CONTEXT_INTEGER        CONTEXT_RISCV64_INTEGER
+#define CONTEXT_FLOATING_POINT CONTEXT_RISCV64_FLOATING_POINT
+#define CONTEXT_DEBUG_REGISTERS CONTEXT_RISCV64_DEBUG_REGISTERS
+#define CONTEXT_FULL           CONTEXT_RISCV64_FULL
+#define CONTEXT_ALL            CONTEXT_RISCV64_ALL
+
+typedef KNONVOLATILE_CONTEXT_POINTERS_RISCV64
+    KNONVOLATILE_CONTEXT_POINTERS;
+
+typedef KNONVOLATILE_CONTEXT_POINTERS_RISCV64
+    *PKNONVOLATILE_CONTEXT_POINTERS;
+
+typedef struct _RISCV64_RUNTIME_FUNCTION
+{
+    DWORD BeginAddress;
+    DWORD EndAddress;
+    DWORD UnwindData;
+} RISCV64_RUNTIME_FUNCTION, *PRISCV64_RUNTIME_FUNCTION;
+
+typedef RISCV64_RUNTIME_FUNCTION RUNTIME_FUNCTION;
+typedef PRISCV64_RUNTIME_FUNCTION PRUNTIME_FUNCTION;
+
+typedef RISCV64_CONTEXT CONTEXT, *PCONTEXT;
+
+/*
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS_RISCV64
+{
+    PDWORD64 X8;
+    PDWORD64 X9;
+
+    PDWORD64 X18;
+    PDWORD64 X19;
+    PDWORD64 X20;
+    PDWORD64 X21;
+    PDWORD64 X22;
+    PDWORD64 X23;
+    PDWORD64 X24;
+    PDWORD64 X25;
+    PDWORD64 X26;
+    PDWORD64 X27;
+
+    PRISCV64_FPREG F8;
+    PRISCV64_FPREG F9;
+
+    PRISCV64_FPREG F18;
+    PRISCV64_FPREG F19;
+    PRISCV64_FPREG F20;
+    PRISCV64_FPREG F21;
+    PRISCV64_FPREG F22;
+    PRISCV64_FPREG F23;
+    PRISCV64_FPREG F24;
+    PRISCV64_FPREG F25;
+    PRISCV64_FPREG F26;
+    PRISCV64_FPREG F27;
+
+} KNONVOLATILE_CONTEXT_POINTERS_RISCV64,
+  *PKNONVOLATILE_CONTEXT_POINTERS_RISCV64;
+*/
+
+#endif /* __riscv */
+
+#ifdef __riscv
+
+#if __riscv_xlen == 64
+
+#define CONTEXT_CONTROL          CONTEXT_RISCV64_CONTROL
+#define CONTEXT_INTEGER          CONTEXT_RISCV64_INTEGER
+#define CONTEXT_FLOATING_POINT   CONTEXT_RISCV64_FLOATING_POINT
+#define CONTEXT_DEBUG_REGISTERS  CONTEXT_RISCV64_DEBUG_REGISTERS
+#define CONTEXT_FULL             CONTEXT_RISCV64_FULL
+#define CONTEXT_ALL              CONTEXT_RISCV64_ALL
+
+typedef RISCV64_CONTEXT CONTEXT, *PCONTEXT;
+
+typedef KNONVOLATILE_CONTEXT_POINTERS_RISCV64
+    KNONVOLATILE_CONTEXT_POINTERS,
+    *PKNONVOLATILE_CONTEXT_POINTERS;
+
+#endif /* __riscv_xlen == 64 */
+
+#endif /* __riscv */
+
 #if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
 #error You need to define a CONTEXT for your CPU
 #endif
@@ -2248,6 +2466,37 @@ typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD);
 #define UNW_FLAG_NHANDLER  0
 #define UNW_FLAG_EHANDLER  1
 #define UNW_FLAG_UHANDLER  2
+
+#elif defined(__riscv)
+
+#if __riscv_xlen == 64
+
+typedef struct _DISPATCHER_CONTEXT_RISCV64
+{
+    ULONG_PTR                     ControlPc;
+    ULONG_PTR                     ImageBase;
+    PRISCV64_RUNTIME_FUNCTION    FunctionEntry;
+    ULONG_PTR                     EstablisherFrame;
+    ULONG_PTR                     TargetPc;
+    PRISCV64_CONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE            LanguageHandler;
+    PVOID                         HandlerData;
+    struct _UNWIND_HISTORY_TABLE *HistoryTable;
+    DWORD                         ScopeIndex;
+    BOOLEAN                       ControlPcIsUnwound;
+    PBYTE                         NonVolatileRegisters;
+} DISPATCHER_CONTEXT_RISCV64, *PDISPATCHER_CONTEXT_RISCV64;
+
+typedef DISPATCHER_CONTEXT_RISCV64 DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
+typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,ULONG_PTR);
+typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,ULONG_PTR);
+
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
+
+#endif /* __riscv_xlen == 64 */
 
 #elif defined(__aarch64__)
 
@@ -2734,6 +2983,12 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return (struct _TEB *)__getReg(18);
+}
+#elif defined(__riscv) && defined(__GNUC__)
+register struct _TEB *__wine_current_teb __asm__("tp");
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return __wine_current_teb;
 }
 #elif defined(__x86_64__) && defined(__GNUC__)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
@@ -8621,6 +8876,10 @@ static FORCEINLINE unsigned char InterlockedCompareExchange128( volatile __int64
                           : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
                             "c" (xchg_high), "b" (xchg_low) );
     return ret;
+#elif defined(__riscv) && __riscv_xlen == 64
+    return __atomic_compare_exchange_n( (__int128 *)dest, (__int128 *)compare,
+                                        ((__int128)xchg_high << 64) | xchg_low, 0,
+                                        __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 #else
     return __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low );
 #endif

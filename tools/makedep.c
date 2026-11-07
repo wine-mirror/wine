@@ -617,6 +617,15 @@ static const char *escape_cstring( const char *str )
     return ret;
 }
 
+/*
+ * Check whether the native platform supports ELF-only Winelib builds
+ * without requiring a PE toolchain.
+ */
+static bool non_pe_supported_platform(void)
+{
+    return archs.count &&
+           get_cpu_from_name( archs.str[0] ) == CPU_RISCV;
+}
 
 /*******************************************************************
  *         is_native_arch_disabled
@@ -3664,6 +3673,23 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     if (make->disabled[arch] && !(source->file->flags & FLAG_C_IMPLIB)) return;
     if (is_subdir_other_arch( source->name, arch )) return;
 
+    /*
+     * RISC-V has no PE compiler/toolchain yet. For native Unix libraries,
+     * build ordinary C sources directly into the ELF Unix library.
+     */
+#if 0
+    fprintf( stderr, "ARCH CHECK: arch=%u archname=%s cpu=%d CPU_RISCV=%d unixlib=%s\n",
+             arch, archs.str[0], get_cpu_from_name( archs.str[0] ),
+             CPU_RISCV, make->unixlib ? make->unixlib : "(null)" );
+
+    if (!arch && make->unixlib &&
+        get_cpu_from_name( archs.str[0] ) == CPU_RISCV &&
+        strendswith( source->name, ".c" ))
+        source->file->flags |= FLAG_C_UNIX;
+
+    fprintf( stderr, "RISC-V CLASSIFY: %s flags=0x%x arch=%u\n",
+             source->name, source->file->flags, arch );
+#endif
     if (arch)
     {
         if (source->file->flags & FLAG_C_UNIX) return;
@@ -3828,6 +3854,13 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     struct strarray defines = get_source_defines( make, source, obj );
     struct strarray targets = empty_strarray;
     unsigned int arch;
+
+#if 0
+    if (make->unixlib && get_cpu_from_name( archs.str[0] ) == CPU_RISCV &&
+        strendswith( source->name, ".c" ))
+        fprintf( stderr, "RISC-V SOURCE: %s flags=%x unixlib=%s\n",
+                 source->name, source->file->flags, make->unixlib );
+#endif
 
     for (arch = 0; arch < archs.count; arch++)
         if (!source->arch || source->arch == arch)
@@ -4011,6 +4044,11 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
+
+    //if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make, spec_file );
+    if (!make->data_only && !arch && unix_lib_supported &&
+        !non_pe_supported_platform())
+        output_fake_module( make, spec_file );
 }
 
 
@@ -4367,6 +4405,12 @@ static void output_subdirs( struct makefile *make )
  */
 static void output_sources( struct makefile *make )
 {
+#if 0
+fprintf( stderr, "MAKEDEP: obj_dir=%s unixlib=%s\n",
+         make->obj_dir ? make->obj_dir : "(null)",
+         make->unixlib ? make->unixlib : "(null)" );
+#endif
+
     struct strarray all_targets = empty_strarray;
     struct incl_file *source;
     unsigned int i, j, arch;
@@ -4375,6 +4419,13 @@ static void output_sources( struct makefile *make )
 
     LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
     {
+#if 0
+    fprintf( stderr, "SOURCE: obj_dir=%s name=%s flags=0x%x arch=%u\n",
+             make->obj_dir ? make->obj_dir : "(null)",
+             source->name,
+             source->file->flags,
+             source->arch );
+#endif
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
 
@@ -4384,6 +4435,13 @@ static void output_sources( struct makefile *make )
 
             for (j = 0; output_source_funcs[j].ext; j++)
                 if (!strcmp( ext, output_source_funcs[j].ext )) break;
+
+#if 0
+            if (make->unixlib && get_cpu_from_name( archs.str[0] ) == CPU_RISCV &&
+                make->obj_dir && !strcmp( make->obj_dir, "dlls/kernelbase" ))
+                fprintf( stderr, "KERNELBASE SOURCE: name=%s arch=%u flags=%x\\n",
+                         source->name, source->arch, source->file->flags );
+#endif
 
             output_source_funcs[j].fn( make, source, obj );
         }
@@ -4436,7 +4494,13 @@ static void output_sources( struct makefile *make )
         for (arch = 0; arch < archs.count; arch++)
         {
             if (is_multiarch( arch )) output_module( make, arch );
-            if (make->importlib && (is_multiarch( arch ) || (!arch && !is_native_arch_disabled( make ))))
+            //if (make->importlib && arch && is_multiarch( arch ))
+            //if (make->importlib && (is_multiarch( arch ) || (!arch && !is_native_arch_disabled( make ))))
+            // output_import_lib( make, arch );
+            if (make->importlib &&
+                (is_multiarch( arch ) ||
+                 (!non_pe_supported_platform() && !arch &&
+                  !is_native_arch_disabled( make ))))
                 output_import_lib( make, arch );
         }
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))

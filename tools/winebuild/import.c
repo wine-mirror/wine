@@ -647,6 +647,11 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_x86_64:
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
+    case CPU_RISCV:
+        output( "\tlla t0, %s+%d\n", table, pos );
+        output( "\tld t0, 0(t0)\n" );
+        output( "\tjr t0\n" );
+        break;
     default:
         assert( 0 );
         break;
@@ -928,6 +933,33 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset -0x98" );
             output( "\tjmp *%%rax\n" );
             break;
+        case CPU_RISCV:
+            output( "\taddi sp, sp, -64\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 64" );
+            output( "\tsd a0, 0(sp)\n" );
+            output( "\tsd a1, 8(sp)\n" );
+            output( "\tsd a2, 16(sp)\n" );
+            output( "\tsd a3, 24(sp)\n" );
+            output( "\tsd a4, 32(sp)\n" );
+            output( "\tsd a5, 40(sp)\n" );
+            output( "\tsd a6, 48(sp)\n" );
+            output( "\tsd a7, 56(sp)\n" );
+            output( "\tld a1, 8(sp)\n" );
+            output( "\tlla a0, .L__wine_spec_delay_imports+%d\n", pos );
+            output( "\tcall %s\n", asm_name("__delayLoadHelper2") );
+            output( "\tmv t0, a0\n" );
+            output( "\tld a0, 0(sp)\n" );
+            output( "\tld a1, 8(sp)\n" );
+            output( "\tld a2, 16(sp)\n" );
+            output( "\tld a3, 24(sp)\n" );
+            output( "\tld a4, 32(sp)\n" );
+            output( "\tld a5, 40(sp)\n" );
+            output( "\tld a6, 48(sp)\n" );
+            output( "\tld a7, 56(sp)\n" );
+            output( "\taddi sp, sp, 64\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -64" );
+            output( "\tjr t0\n" );
+            break;
         default:
             assert( 0 );
             break;
@@ -956,6 +988,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             case CPU_x86_64:
                 output( "\tleaq .L__wine_delay_IAT+%d(%%rip),%%rax\n", iat_pos );
                 output( "\tjmp %s\n", asm_name(module_func) );
+                break;
+            case CPU_RISCV:
+                output( "\tlla a1, .L__wine_delay_IAT+%d\n", iat_pos );
+                output( "\tj %s\n", asm_name(module_func) );
                 break;
             default:
                 assert( 0 );
@@ -1132,6 +1168,16 @@ void output_stubs( DLLSPEC *spec )
             output( "\tb %s\n", asm_name("__wine_spec_unimplemented_stub") );
             output( "\t.seh_endproc\n" );
             break;
+        case CPU_RISCV:
+            output_cfi( ".cfi_startproc" );
+            output( "\tlla a0, .L__wine_spec_file_name\n" );
+            if (exp_name)
+                output( "\tlla a1, .L%s_string\n", name );
+            else
+                output( "\tli a1, %u\n", odp->ordinal );
+            output( "\ttail %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output_cfi( ".cfi_endproc" );
+            break;
         }
         output_function_size( name );
     }
@@ -1200,6 +1246,7 @@ static const char *get_target_machine(void)
         [CPU_ARM]     = "arm",
         [CPU_ARM64]   = "arm64",
         [CPU_ARM64EC] = "arm64ec",
+        [CPU_RISCV]   = "riscv64",
     };
 
     return machine_names[target.cpu];
@@ -1284,6 +1331,9 @@ static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struc
         case CPU_ARM64:
             strarray_add( &args, "-m" );
             strarray_add( &args, "arm64" );
+            break;
+        case CPU_RISCV:
+            assert( 0 ); /* RISC-V native build does not use PE import libraries */
             break;
         case CPU_ARM64EC:
             strarray_add( &args, "-m" );
@@ -1409,6 +1459,9 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\tldp x29, x30, [sp], #80\n" );
             output( "\tbr x16\n" );
             output( "\t.seh_endproc\n" );
+            break;
+        case CPU_RISCV:
+            assert( 0 ); /* RISC-V native build does not use PE import libraries */
             break;
         case CPU_ARM64EC:
             assert( 0 );
@@ -1555,6 +1608,9 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                     output( "\tadd x16, x16, #:lo12:%s\n", asm_name( imp_name ) );
                     output( "\tb %s\n", asm_name( delay_load ) );
                 }
+                break;
+            case CPU_RISCV:
+                assert( 0 ); /* RISC-V native build does not use PE import libraries */
                 break;
             case CPU_ARM64EC:
                 assert( 0 );

@@ -222,6 +222,8 @@ static void minidump_check_threads(void *data)
         sp = ctx->Rsp;
 #elif defined(__arm__) || defined(__aarch64__)
         sp = ctx->Sp;
+#elif defined(__riscv) && (__riscv_xlen == 64)
+        sp = ctx->Gpr.X[2]; 
 #else
 #error unsupported architecture
 #endif

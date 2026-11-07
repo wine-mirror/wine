@@ -135,6 +135,10 @@ void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
     return NULL;
 }
 
+#if defined(__riscv) && __riscv_xlen == 64
+__ASM_GLOBAL_FUNC( _setjmp, "tail _setjmpex" );
+#endif
+
 #ifndef __i386__  /* i386 implementation is in except_i386.c */
 
 typedef struct

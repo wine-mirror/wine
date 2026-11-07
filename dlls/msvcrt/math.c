@@ -291,6 +291,9 @@ __ASM_GLOBAL_FUNC( asm_sqrtf, "vsqrt s0,s0; bx lr" )
 #elif defined __x86_64__
 float CDECL asm_sqrtf(float);
 __ASM_GLOBAL_FUNC( asm_sqrtf, "sqrtss %xmm0, %xmm0; ret" )
+#elif defined(__riscv) && __riscv_xlen == 64
+float CDECL asm_sqrtf(float);
+__ASM_GLOBAL_FUNC( asm_sqrtf, "fsqrt.s fa0, fa0; ret" )
 #endif
 #endif
 
@@ -433,6 +436,9 @@ static double __attribute__((naked)) CDECL asm_sqrt(double x)
 #elif defined __aarch64__
 double CDECL asm_sqrt(double);
 __ASM_GLOBAL_FUNC( asm_sqrt, "fsqrt d0,d0; ret" )
+#elif defined(__riscv) && __riscv_xlen == 64
+double CDECL asm_sqrt(double);
+__ASM_GLOBAL_FUNC( asm_sqrt, "fsqrt.d fa0, fa0; ret" )
 #elif defined __arm__
 double CDECL asm_sqrt(double);
 __ASM_GLOBAL_FUNC( asm_sqrt, "vsqrt d0,d0; bx lr" )
