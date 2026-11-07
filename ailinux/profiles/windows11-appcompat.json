@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "name": "windows11-appcompat",
+  "windows_version": "win11",
+  "graphics": {"dxvk": "3.1.1", "vkd3d-proton": "3.0.1"},
+  "runtimes": {"vc14": "official-x86-x64-verified", "dotnet48": "optional-isolated", "extras": ["d3dcompiler_47", "gdiplus", "msxml6"]},
+  "policy": {"automatic_system_packages": false, "require_backup": true, "allow_default_wine_prefix": false}
+}
