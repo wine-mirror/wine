@@ -67,7 +67,7 @@ msgid ""
 "Remove."
 msgstr ""
 "다음 소프트웨어는 자동으로 제거됩니다. 프로그램을 제거하거나 설치된 구성 요소"
-"를 수정하려면, 목록에서 선택한 후 [수정] 또는 [제거]를 클릭하세요."
+"를 수정하려면, 목록에서 선택한 후 [수정]/[제거]를 클릭하세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:69
 msgid "&Support Information"
@@ -3664,8 +3664,7 @@ msgid ""
 "preferences and login information."
 msgstr ""
 "쿠키\n"
-"사용자 기본 설정 및 로그인 정보와 같은 항목을 저장하는 웹 사이트에서 컴퓨터"
-"에 저장한 파일입니다."
+"웹 사이트가 컴퓨터에 저장한 파일로, 사용자 기본 설정과 로그인 정보 같은 항목을 저장합니다."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:75
 msgid ""
@@ -3763,7 +3762,7 @@ msgstr "매우 낮음"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:36 dlls/wininet/wininet.rc:42
 msgid "Low"
-msgstr "낮음(&L)"
+msgstr "낮음"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:37
 msgid "Medium"
@@ -3831,7 +3830,7 @@ msgstr "SDL 사용"
 
 #: dlls/joy.cpl/joy.rc:53
 msgid "Disable hidraw"
-msgstr "HID 규격 장치 비활성화"
+msgstr "hidraw 사용 안 함"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
@@ -3932,7 +3931,7 @@ msgstr "게임 컨트롤러를 테스트하고 구성합니다."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
-msgstr "개체를 기본 형식으로 변환하는 중에 오류 발생"
+msgstr "객체를 원시 형식으로 변환하는 중에 오류 발생"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
@@ -3956,7 +3955,7 @@ msgstr "자동화 서버가 객체를 만들 수 없음"
 
 #: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support this property or method"
-msgstr "개체가 이 속성이나 메소드를 지원하지 않습니다"
+msgstr "객체가 이 속성이나 메서드를 지원하지 않습니다"
 
 #: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support this action"
@@ -3964,7 +3963,7 @@ msgstr "객체는 이 행동을 지원하지 않음"
 
 #: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:58
 msgid "Argument not optional"
-msgstr "인수는 옵션이 아닙니다"
+msgstr "인수가 선택 사항이 아닙니다"
 
 #: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:60
 msgid "Object not a collection"
@@ -3988,7 +3987,7 @@ msgstr "')' 필요"
 
 #: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:73
 msgid "Expected identifier"
-msgstr "필요한 식별자"
+msgstr "식별자 필요"
 
 #: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:74
 msgid "Expected '='"
@@ -4004,7 +4003,7 @@ msgstr "끝나지 않은 문자열 상수"
 
 #: dlls/jscript/jscript.rc:46
 msgid "'return' statement outside of function"
-msgstr "함수 밖에 'return'문장이 있음"
+msgstr "함수 밖에 'return' 구문이 있음"
 
 #: dlls/jscript/jscript.rc:47
 msgid "Can't have 'break' outside of loop"
@@ -4024,7 +4023,7 @@ msgstr "레이블을 찾을 수 없습니다"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Expected '@end'"
-msgstr "'@end'가 필요합니다"
+msgstr "'@end' 필요"
 
 #: dlls/jscript/jscript.rc:52
 msgid "Conditional compilation is turned off"
@@ -4032,7 +4031,7 @@ msgstr "조건부 컴파일이 해제되었습니다"
 
 #: dlls/jscript/jscript.rc:53
 msgid "Expected '@'"
-msgstr "'@'가 필요합니다"
+msgstr "'@' 필요"
 
 #: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
@@ -4048,15 +4047,15 @@ msgstr "알 수 없는 런타임 오류"
 
 #: dlls/jscript/jscript.rc:57
 msgid "Number expected"
-msgstr "숫자가 필요합니다"
+msgstr "숫자 필요"
 
 #: dlls/jscript/jscript.rc:54
 msgid "Function expected"
-msgstr "함수가 필요합니다"
+msgstr "함수 필요"
 
 #: dlls/jscript/jscript.rc:55
 msgid "'[object]' is not a string object"
-msgstr "'[object]'는 날짜 개체가 아닙니다"
+msgstr "'[object]'는 문자열 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4064,7 +4063,7 @@ msgstr "'[object]'은(는) 날짜 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:58
 msgid "Object expected"
-msgstr "개체가 필요합니다"
+msgstr "객체 필요"
 
 #: dlls/jscript/jscript.rc:59 dlls/vbscript/vbscript.rc:66
 msgid "Illegal assignment"
@@ -4076,7 +4075,7 @@ msgstr "'|'이(가) 정의되지 않았습니다"
 
 #: dlls/jscript/jscript.rc:61
 msgid "Boolean object expected"
-msgstr "Boolean 개체가 필요합니다"
+msgstr "Boolean 객체 필요"
 
 #: dlls/jscript/jscript.rc:62
 msgid "Cannot delete '|'"
@@ -4084,19 +4083,19 @@ msgstr "'|'을(를) 삭제할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:63
 msgid "VBArray object expected"
-msgstr "VBArray 개체가 필요합니다"
+msgstr "VBArray 객체 필요"
 
 #: dlls/jscript/jscript.rc:64
 msgid "JScript object expected"
-msgstr "JScript 개체가 필요합니다"
+msgstr "JScript 객체 필요"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Enumerator object expected"
-msgstr "열거형 개체가 필요합니다"
+msgstr "Enumerator 객체 필요"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Regular Expression object expected"
-msgstr "정규식 개체가 필요합니다"
+msgstr "정규식 객체 필요"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Syntax error in regular expression"
@@ -4108,7 +4107,7 @@ msgstr "예기치 않은 수량자"
 
 #: dlls/jscript/jscript.rc:69
 msgid "Exception thrown and not caught"
-msgstr "예외가 발생했지만 catch할 수 없습니다"
+msgstr "예외가 발생했지만 catch되지 않았습니다"
 
 #: dlls/jscript/jscript.rc:71
 msgid "URI to be encoded contains invalid characters"
@@ -4120,7 +4119,7 @@ msgstr "디코딩할 URI가 잘못되었습니다"
 
 #: dlls/jscript/jscript.rc:72
 msgid "Number of fraction digits is out of range"
-msgstr "분수 자리수 값이 범위를 벗어났습니다"
+msgstr "소수 자릿수가 범위를 벗어났습니다"
 
 #: dlls/jscript/jscript.rc:73
 msgid "Precision is out of range"
@@ -4128,7 +4127,7 @@ msgstr "정밀도가 범위를 벗어났습니다"
 
 #: dlls/jscript/jscript.rc:74
 msgid "Array or arguments object expected"
-msgstr "배열 또는 인수 개체가 필요합니다"
+msgstr "배열 또는 arguments 객체 필요"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4136,7 +4135,7 @@ msgstr "배열의 길이는 유한한 양의 정수이어야 합니다"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Array object expected"
-msgstr "배열 개체가 필요합니다"
+msgstr "배열 객체 필요"
 
 #: dlls/jscript/jscript.rc:77
 msgid ""
@@ -4155,7 +4154,7 @@ msgstr "확장 가능하지 않은 객체에 대한 속성을 만들 수 없습�
 
 #: dlls/jscript/jscript.rc:80
 msgid "Cannot define property '|': object is not extensible"
-msgstr "확장 가능하지 않은 속성 '|'을(를) 정의할 수 없습니다"
+msgstr "속성 '|'을(를) 정의할 수 없습니다: 객체가 확장 가능하지 않습니다"
 
 #: dlls/jscript/jscript.rc:81
 msgid "Cannot redefine non-configurable property '|'"
@@ -4183,7 +4182,7 @@ msgstr "형식화된 배열의 subarray 메서드에 있는 시작/끝 값이 �
 
 #: dlls/jscript/jscript.rc:87
 msgid "Invalid source in typed array set"
-msgstr "형식화된 배열 세트의 소스가 유효하지 않습니다"
+msgstr "형식화된 배열 set 메서드의 소스가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
@@ -4211,7 +4210,7 @@ msgstr "'key'는 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
-msgstr "ArrayBuffer 개체가 필요합니다"
+msgstr "ArrayBuffer 객체 필요"
 
 #: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
@@ -4555,7 +4554,7 @@ msgstr "너무 많은 세마포어 요청.\n"
 
 #: dlls/kernelbase/winerror.mc:400
 msgid "Invalid at interrupt time.\n"
-msgstr "잘못된 인터럽트 시간.\n"
+msgstr "인터럽트 시점에는 유효하지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:405
 msgid "Semaphore owner died.\n"
@@ -4635,7 +4634,7 @@ msgstr "모듈을 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:505
 msgid "Procedure not found.\n"
-msgstr "프로시져를 찾을 수 없습니다.\n"
+msgstr "프로시저를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:510
 msgid "No children to wait for.\n"
@@ -4647,7 +4646,7 @@ msgstr "자식 프로세스가 완료되지 않았습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:520
 msgid "Invalid use of direct access handle.\n"
-msgstr "직접 접근할 수 없는 핸들입니다.\n"
+msgstr "유효하지 않은 직접 접근 핸들 사용.\n"
 
 #: dlls/kernelbase/winerror.mc:525
 msgid "Negative seek.\n"
@@ -4751,7 +4750,7 @@ msgstr "시그널이 거부되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:655
 msgid "Segment discarded.\n"
-msgstr "세그맨트가 폐기되었습니다.\n"
+msgstr "세그먼트가 폐기되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:660
 msgid "Segment not locked.\n"
@@ -4971,7 +4970,7 @@ msgstr "확장 속성 파일 손상.\n"
 
 #: dlls/kernelbase/winerror.mc:930
 msgid "Extended attribute table full.\n"
-msgstr "확장 속성 테이블이 가득 찾습니다.\n"
+msgstr "확장 속성 테이블이 가득 찼습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:935
 msgid "Invalid extended attribute handle.\n"
@@ -5401,7 +5400,7 @@ msgstr "미디어 잠금 불가능.\n"
 
 #: dlls/kernelbase/winerror.mc:1460
 msgid "Unable to unload media.\n"
-msgstr "미디어를 적재 해제 불가능.\n"
+msgstr "미디어 언로드 불가능.\n"
 
 #: dlls/kernelbase/winerror.mc:1465
 msgid "Media changed.\n"
@@ -5761,11 +5760,11 @@ msgstr "호스트에 연결할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1915
 msgid "Protocol unreachable.\n"
-msgstr "접근할 수 없는 프르토콜.\n"
+msgstr "프로토콜에 연결할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1920
 msgid "Port unreachable.\n"
-msgstr "접근할 수 없는 포트.\n"
+msgstr "포트에 연결할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1925
 msgid "Request aborted.\n"
@@ -5937,7 +5936,7 @@ msgstr "사용자가 그룹에 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2135
 msgid "Can't delete last admin user.\n"
-msgstr "마지막  관리 사용자를 지울 수 없음.\n"
+msgstr "마지막 관리 사용자를 지울 수 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2140
 msgid "Wrong password.\n"
@@ -5981,7 +5980,7 @@ msgstr "매핑된 보안 ID가 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2190
 msgid "Too many LUIDs requested.\n"
-msgstr "너무 많은  LUI가 요구됨.\n"
+msgstr "너무 많은 LUID가 요구됨.\n"
 
 #: dlls/kernelbase/winerror.mc:2195
 msgid "LUIDs exhausted.\n"
@@ -6017,7 +6016,7 @@ msgstr "서버가 가능하지 않지가 않음.\n"
 
 #: dlls/kernelbase/winerror.mc:2235
 msgid "Invalid ID authority.\n"
-msgstr "잘못된 아이디 권한.\n"
+msgstr "유효하지 않은 ID 기관.\n"
 
 #: dlls/kernelbase/winerror.mc:2240
 msgid "Allotted space exceeded.\n"
@@ -6061,7 +6060,7 @@ msgstr "유효하지 않은 도메인 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2290
 msgid "Invalid domain role.\n"
-msgstr "잘못된 도메인 법칙.\n"
+msgstr "유효하지 않은 도메인 역할.\n"
 
 #: dlls/kernelbase/winerror.mc:2295
 msgid "No such domain.\n"
@@ -6189,11 +6188,11 @@ msgstr "교차-암호화된 NT 암호가 요구됨.\n"
 
 #: dlls/kernelbase/winerror.mc:2455
 msgid "No such member.\n"
-msgstr "어떤 회원도 없습니다.\n"
+msgstr "어떤 구성원도 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2460
 msgid "Invalid member.\n"
-msgstr "잘못된 회원.\n"
+msgstr "유효하지 않은 구성원.\n"
 
 #: dlls/kernelbase/winerror.mc:2465
 msgid "Too many SIDs.\n"
@@ -6201,7 +6200,7 @@ msgstr "너무 많은 SID이 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2470
 msgid "Cross-encrypted LM password required.\n"
-msgstr "교차-암호화된  LM 암호가 요구됨.\n"
+msgstr "교차-암호화된 LM 암호가 요구됨.\n"
 
 #: dlls/kernelbase/winerror.mc:2475
 msgid "No inheritable components.\n"
@@ -6209,11 +6208,11 @@ msgstr "상속가능한 구성요소가 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2480
 msgid "File or directory corrupt.\n"
-msgstr "파일이나 디렉터리가 망가졌습니다.\n"
+msgstr "파일이나 디렉터리가 손상되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2485
 msgid "Disk is corrupt.\n"
-msgstr "디스크가 망가졌습니다.\n"
+msgstr "디스크가 손상되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2490
 msgid "No user session key.\n"
@@ -6233,11 +6232,11 @@ msgstr "상호 인증 실패.\n"
 
 #: dlls/kernelbase/winerror.mc:2510
 msgid "Time skew between client and server.\n"
-msgstr "클라이언트와 서버 사이의 시간 왜곡.\n"
+msgstr "클라이언트와 서버 사이의 시계 차이(clock skew)가 큽니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2515
 msgid "Invalid window handle.\n"
-msgstr "잘못된 원도우 핸들.\n"
+msgstr "유효하지 않은 창 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2520
 msgid "Invalid menu handle.\n"
@@ -6373,7 +6372,7 @@ msgstr "유효하지 않은 LB_SETCOUNT 보내기.\n"
 
 #: dlls/kernelbase/winerror.mc:2685
 msgid "No tab stops on this list box.\n"
-msgstr "이 목록상자는 탭정지가 없습니다.\n"
+msgstr "이 목록 박스는 탭 정지가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2690
 msgid "Can't destroy object owned by another thread.\n"
@@ -6441,11 +6440,11 @@ msgstr "시스템 리소스가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2770
 msgid "No non-paged system resources.\n"
-msgstr "페이지되지 않은 시스템 자원이 없음.\n"
+msgstr "페이지되지 않은 시스템 리소스가 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2775
 msgid "No paged system resources.\n"
-msgstr "페이지된 시스템 자원이 없음.\n"
+msgstr "페이지된 시스템 리소스가 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2780
 msgid "No working set quota.\n"
@@ -6629,7 +6628,7 @@ msgstr "임시 디렉터리에 기록할 수 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:3005
 msgid "Installation platform not supported.\n"
-msgstr "설치하려는 플랫폼이 지원되지 않스니다.\n"
+msgstr "설치하려는 플랫폼이 지원되지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3010
 msgid "Installer not used.\n"
@@ -6705,7 +6704,7 @@ msgstr "유효하지 않은 시간 초과 값.\n"
 
 #: dlls/kernelbase/winerror.mc:3100
 msgid "Object UUID not found.\n"
-msgstr "UUID 개체를 찾을 수 없습니다.\n"
+msgstr "객체 UUID를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3105
 msgid "UUID already registered.\n"
@@ -6829,7 +6828,7 @@ msgstr "프로토콜 시퀀스를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3260
 msgid "Procedure number out of range.\n"
-msgstr "절차 번호가 범위를 벗어났습니다.\n"
+msgstr "프로시저 번호가 범위를 벗어났습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3265
 msgid "Binding has no authentication data.\n"
@@ -6881,7 +6880,7 @@ msgstr "구성원이 더 이상 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3325
 msgid "Not all objects unexported.\n"
-msgstr "내보내기 취소된 개체가 없습니다.\n"
+msgstr "일부 객체의 내보내기를 취소하지 못했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3330
 msgid "Interface not found.\n"
@@ -6949,7 +6948,7 @@ msgstr "문자 변환 테이블 파일이 너무 작습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3410
 msgid "Null context handle.\n"
-msgstr "널 컨택스트 핸들.\n"
+msgstr "널 컨텍스트 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:3415
 msgid "Context handle damaged.\n"
@@ -7065,11 +7064,11 @@ msgstr "유효하지 않은 데이터 형식.\n"
 
 #: dlls/kernelbase/winerror.mc:3555
 msgid "Invalid environment.\n"
-msgstr "잘못된 환경변수.\n"
+msgstr "유효하지 않은 환경.\n"
 
 #: dlls/kernelbase/winerror.mc:3560
 msgid "No more bindings.\n"
-msgstr "이제 바인딩이 없습니다.\n"
+msgstr "더이상 바인딩이 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3565
 msgid "Can't log on with inter-domain trust account.\n"
@@ -7177,7 +7176,7 @@ msgstr "잘못된 파이프 버전.\n"
 
 #: dlls/kernelbase/winerror.mc:3695
 msgid "Group member not found.\n"
-msgstr "그룹 멤버를 찾을 수 없습니다.\n"
+msgstr "그룹 구성원을 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3700
 msgid "Can't create endpoint mapper DB.\n"
@@ -7253,7 +7252,7 @@ msgstr "RPC 파이프가 닫혔습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3790
 msgid "Discipline error on RPC pipe.\n"
-msgstr "RPC 파이프의 징계 오류입니다.\n"
+msgstr "RPC 파이프 처리 규칙 위반 오류입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3795
 msgid "No data on RPC pipe.\n"
@@ -7273,7 +7272,7 @@ msgstr "파일 이름을 확인할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3815
 msgid "RPC entry type mismatch.\n"
-msgstr "RPC 입력 유형이 일치하지 않습니다.\n"
+msgstr "RPC 항목 유형이 일치하지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3820
 msgid "Not all objects could be exported.\n"
@@ -7325,7 +7324,7 @@ msgstr "유효하지 않은 파일 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:3885
 msgid "Invalid pointer address.\n"
-msgstr "주소가 잘못되었습니다.\n"
+msgstr "유효하지 않은 포인터 주소.\n"
 
 #: dlls/kernelbase/winerror.mc:3890
 msgid "Invalid argument.\n"
@@ -8418,7 +8417,7 @@ msgstr ""
 "\t/uninstall {제품|제품코드} [속성]\n"
 "\t/x {제품|제품코드} [속성]\n"
 "제품 알리기:\n"
-"\t/j[u|m] 패키지 [/t 변환] [/g 언어아이디]\n"
+"\t/j[u|m] 패키지 [/t 변환] [/g 언어 ID]\n"
 "패치 추가:\n"
 "\t/p 패치할 패키지 [속성]\n"
 "\t/p 패치할 패키지 /a 패키지 [속성]\n"
@@ -8933,7 +8932,7 @@ msgstr "kB/s"
 
 #: dlls/msvfw32/msvfw32.rc:28
 msgid "Full Frames (Uncompressed)"
-msgstr "전채 프레임(비압축)"
+msgstr "전체 프레임(비압축)"
 
 #: dlls/msvidc32/msvidc32.rc:29
 msgid "Wine Video 1 video codec"
@@ -10704,7 +10703,7 @@ msgstr "검색"
 
 #: dlls/shell32/shell32.rc:234
 msgid "Users"
-msgstr "사용"
+msgstr "사용자"
 
 #: dlls/shell32/shell32.rc:236
 msgid "Downloads"
@@ -10712,7 +10711,7 @@ msgstr "다운로드"
 
 #: dlls/shell32/shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
-msgstr "새 폴더를 만들 수 없습니다: 만들 권한이 없습니다."
+msgstr "새 폴더를 만들 수 없습니다: 권한 없음."
 
 #: dlls/shell32/shell32.rc:170
 msgid "Error during creation of a new folder"
@@ -13081,7 +13080,7 @@ msgstr "명명된 인수를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr "인수의 개수나 속성 할당이 잘못되었습니다"
+msgstr "인수의 개수가 잘못되었거나 속성 할당이 유효하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Specified DLL function not found"
@@ -13105,7 +13104,7 @@ msgstr "변수가 정의되지 않음"
 
 #: dlls/vbscript/vbscript.rc:67
 msgid "Invalid or unqualified reference"
-msgstr "잘못된 참조입니다"
+msgstr "유효하지 않거나 한정되지 않은 참조"
 
 #: dlls/vbscript/vbscript.rc:68
 msgid "Class not defined"
@@ -13415,7 +13414,7 @@ msgstr "URL 스킴이 인식되지 않거나 지원되지 않습니다.\n"
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
-msgstr "서버 이름을 확인할 수 없습니다.\n"
+msgstr "서버 이름을 해석할 수 없습니다.\n"
 
 #: dlls/wininet/winineterror.mc:51
 msgid "The requested operation is invalid.\n"
@@ -13524,8 +13523,8 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"미디어 데이터가 계속 재생되는 동안에는 이 작업을 수행할 수 없습니다. 장치를 "
-"재설정하거나 데이터 재생이 끝날 때까지 기다립니다."
+"미디어 데이터가 계속 재생되는 동안에는 이 작업을 수행할 수 없습니다. 장치를 재설정하거나, 데이터 "
+"재생이 끝날 때까지 기다립니다."
 
 #: dlls/winmm/winmm.rc:48
 msgid ""
@@ -13540,8 +13539,8 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"WAVE_ALLOWSYNC 플래그를 사용하지 않고 장치를 열 수 없습니다. 플래그를 사용한 "
-"후 다시 시도하세요."
+"WAVE_ALLOWSYNC 플래그를 사용하지 않고 장치를 열 수 없습니다. 플래그를 사용한 후, 다시 "
+"시도하세요."
 
 #: dlls/winmm/winmm.rc:52
 msgid ""
@@ -13723,8 +13722,7 @@ msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
-"지정한 장치를 찾을 수 없습니다. 장치가 설치 여부와 장치 이름 철자가 올바른지"
-"를 확인하세요."
+"지정한 장치를 찾을 수 없습니다. 장치가 설치 여부와 장치 이름 철자가 올바른지 확인하세요."
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
@@ -13788,7 +13786,7 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:96
 msgid "A null parameter block was passed to MCI."
-msgstr "비어있는 매개변수 블럭이 MCI에 전달되었습니다."
+msgstr "비어 있는 매개변수 블록이 MCI에 전달되었습니다."
 
 #: dlls/winmm/winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -15229,7 +15227,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:407
 msgid "Syntax error: unexpected %1\n"
-msgstr "예기치 않은 구문 오류: %1\n"
+msgstr "구문 오류: 예기치 않은 %1\n"
 
 #: programs/cmd/cmd.rc:408
 msgid "End of line"
@@ -15393,7 +15391,7 @@ msgstr "스크린 버퍼 크기는 Windows 크기보다 크거나 같아야 합�
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr "각각의 글자는 %1!u!  픽셀 너비에 %2!u! 픽셀 높이를 가집니다"
+msgstr "각각의 글자는 %1!u! 픽셀 너비에 %2!u! 픽셀 높이를 가집니다"
 
 #: programs/conhost/conhost.rc:42
 msgid "This is a test"
@@ -15582,7 +15580,7 @@ msgstr "하이브리드"
 
 #: programs/ipconfig/ipconfig.rc:44
 msgid "IP routing enabled"
-msgstr "IP 라우팅 가능"
+msgstr "IP 라우팅 사용"
 
 #: programs/ipconfig/ipconfig.rc:46
 msgid "Physical address"
@@ -15590,7 +15588,7 @@ msgstr "물리 주소"
 
 #: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
-msgstr "DHCP 가능"
+msgstr "DHCP 사용"
 
 #: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
@@ -16347,7 +16345,7 @@ msgstr "파일 모니커를 통해서 파일 연결"
 
 #: programs/oleview/oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
-msgstr "TypeLib  파일 열고 내용 보기"
+msgstr "TypeLib 파일 열고 내용 보기"
 
 #: programs/oleview/oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
@@ -16732,7 +16730,7 @@ msgstr "도움말을 보려면 \"REG %1 /?\"를 입력하세요.\n"
 
 #: programs/reg/reg.rc:181
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: 지정한 레지스트리 키를 액세스하거나 만들 수 없습니다\n"
+msgstr "reg: 지정한 레지스트리 키에 접근하거나 만들 수 없습니다\n"
 
 #: programs/reg/reg.rc:116
 msgid "reg: The operation completed successfully\n"
@@ -17151,7 +17149,7 @@ msgstr ""
 "     <key> 아래의 모든 레지스트리 값이 나열됩니다.\n"
 "\n"
 "  /ve\n"
-"     비어있는 레지스트리 값을 쿼리합니다. 이 옵션은 (기본)\n"
+"     비어 있는 레지스트리 값을 쿼리합니다. 이 옵션은 (기본)\n"
 "     레지스트리 값을 쿼리합니다.\n"
 "\n"
 "  /s\n"
@@ -18888,7 +18886,7 @@ msgstr "유효하지 않은 옵션입니다"
 
 #: programs/taskmgr/taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "프로세스 선호도를 설정 또는 액세스할 수 없습니다"
+msgstr "프로세스 선호도에 접근하거나 설정할 수 없습니다"
 
 #: programs/taskmgr/taskmgr.rc:322
 msgid "System Idle Process"
@@ -20113,7 +20111,7 @@ msgstr "오류: 유효하지 않은 질의입니다\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "오류: 잘못된 구문입니다\n"
+msgstr "오류: 유효하지 않은 PATH 구문입니다\n"
 
 #: programs/wmic/wmic.rc:32
 msgid "Supply a command\n"
@@ -20610,7 +20608,7 @@ msgstr ""
 "[/I]  지정한 대상이 없고 둘 또는 그 이상의 파일을 복사한다면\n"
 "      대상을 디렉터리로 가정합니다.\n"
 "[/S]  디렉터리와 하위 디렉터리를 복사합니다.\n"
-"[/E]  디렉터리와 하위 디렉터리를 복사합니다. 비어있는 원본도 복사합니다.\n"
+"[/E]  디렉터리와 하위 디렉터리를 복사합니다. 비어 있는 원본도 복사합니다.\n"
 "[/Q]  복사하는 동안 복사 목록을 출력하지 않습니다.\n"
 "[/F]  복사하는 동안 원본과 대상 전부를 출력합니다.\n"
 "[/L]  가상 동작. 복사할 목록을 출력합니다.\n"
