@@ -283,7 +283,7 @@
 @ stdcall sqlite3_wal_checkpoint(ptr ptr)
 @ stdcall sqlite3_wal_checkpoint_v2(ptr ptr long ptr ptr)
 @ stdcall sqlite3_wal_hook(ptr ptr ptr)
-@ stdcall sqlite3_win32_is_nt()
+@ stub sqlite3_win32_is_nt
 @ stdcall sqlite3_win32_mbcs_to_utf8(ptr)
 @ stdcall sqlite3_win32_mbcs_to_utf8_v2(ptr long)
 @ stdcall sqlite3_win32_set_directory(long ptr)
