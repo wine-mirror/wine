@@ -2320,9 +2320,23 @@ static void transform_write_text(xmlDocPtr result, xsltStylesheetPtr style, xmlO
         st = xsltNextImport(st);                        \
     }}
 
+static void xmldoc_unlink_xmldecl(xmlDocPtr doc)
+{
+    xmlNodePtr first;
+
+    first = doc->children;
+    if (first && first->type == XML_PI_NODE && xmlStrEqual(first->name, BAD_CAST "xml"))
+    {
+        xmlUnlinkNode( first );
+        xmlFreeNode( first );
+    }
+}
+
 static void transform_write_xmldecl(xmlDocPtr result, xsltStylesheetPtr style, BOOL omit_encoding, xmlOutputBufferPtr output)
 {
     int omit_xmldecl, standalone;
+
+    xmldoc_unlink_xmldecl(result);
 
     XSLT_GET_IMPORT_INT(omit_xmldecl, style, omitXmlDeclaration);
     if (omit_xmldecl == 1) return;
