@@ -767,7 +767,14 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL);
 }
 
-void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
+static void wined3d_cs_release_frame_latency(void *object)
+{
+    struct wined3d_swapchain *swapchain = object;
+
+    ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL);
+}
+
+HRESULT wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         unsigned int swap_interval, uint32_t flags)
 {
@@ -775,6 +782,13 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     unsigned int i;
 
     wined3d_not_from_cs(cs);
+
+    if ((swapchain->state.desc.flags & WINED3D_SWAPCHAIN_REPORT_OCCLUSION) && IsIconic(swapchain->win_handle))
+    {
+        TRACE("Window %p is minimised, not presenting.\n", swapchain->win_handle);
+        wined3d_cs_destroy_object(cs, wined3d_cs_release_frame_latency, swapchain);
+        return WINED3DOK_PRESENT_OCCLUDED;
+    }
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_PRESENT;
@@ -792,6 +806,8 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     }
 
     wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+
+    return WINED3D_OK;
 }
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)

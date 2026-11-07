@@ -35,6 +35,7 @@
 #define _FACWINED3D                                             0x876
 #define MAKE_WINED3DSTATUS(code)                                MAKE_HRESULT(0, _FACWINED3D, code)
 #define WINED3DOK_NOMIPGEN                                      MAKE_WINED3DSTATUS(2159)
+#define WINED3DOK_PRESENT_OCCLUDED                              MAKE_WINED3DSTATUS(2168)
 
 #define MAKE_WINED3DHRESULT(code)                               MAKE_HRESULT(1, _FACWINED3D, code)
 #define WINED3DERR_CONFLICTINGRENDERSTATE                       MAKE_WINED3DHRESULT(2081)
@@ -923,6 +924,7 @@ enum wined3d_memory_segment_group
 /* Allow the swapchain flag, but not actual locking */
 #define WINED3D_SWAPCHAIN_ALLOW_MS_LOCKABLE_BACKBUFFER          0x00200000u
 #define WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT         0x00400000u
+#define WINED3D_SWAPCHAIN_REPORT_OCCLUSION                      0x00800000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 

@@ -334,18 +334,20 @@ static HRESULT d3d11_swapchain_present(struct d3d11_swapchain *swapchain,
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (IsIconic(d3d11_swapchain_get_hwnd(swapchain)))
-        return DXGI_STATUS_OCCLUDED;
-
     if (flags & ~(DXGI_PRESENT_TEST | DXGI_PRESENT_ALLOW_TEARING))
         FIXME("Unimplemented flags %#x.\n", flags);
     if (flags & DXGI_PRESENT_TEST)
     {
+        if (IsIconic(d3d11_swapchain_get_hwnd(swapchain)))
+            return DXGI_STATUS_OCCLUDED;
         WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
         return S_OK;
     }
 
-    if (SUCCEEDED(hr = wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0)))
+    hr = wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0);
+    if (hr == WINED3DOK_PRESENT_OCCLUDED)
+        return DXGI_STATUS_OCCLUDED;
+    if (SUCCEEDED(hr))
         InterlockedIncrement(&swapchain->present_count);
     return hr;
 }
