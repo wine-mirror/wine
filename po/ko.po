@@ -1013,7 +1013,7 @@ msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
-msgstr "경로에 잘못된 문자가 들어 있습니다"
+msgstr "경로에 유효하지 않은 문자(들)이 있습니다"
 
 #: dlls/comdlg32/comdlg32.rc:38
 msgid ""
@@ -1033,7 +1033,7 @@ msgstr "파일이 없습니다"
 
 #: dlls/comdlg32/comdlg32.rc:41
 msgid "The selection contains a non-folder object"
-msgstr "선택 영역에 폴더가 아닌 개체가 들어 있습니다"
+msgstr "선택 영역에 폴더가 아닌 객체가 들어 있습니다"
 
 #: dlls/comdlg32/comdlg32.rc:46
 msgid "Up One Level"
@@ -2277,7 +2277,7 @@ msgstr "정책 한정자 정보"
 
 #: dlls/cryptdlg/cryptdlg.rc:33
 msgid "Policy Qualifier Id="
-msgstr "정책 한정자 아이디="
+msgstr "정책 한정자 ID="
 
 #: dlls/cryptdlg/cryptdlg.rc:36
 msgid "Qualifier"
@@ -2385,7 +2385,7 @@ msgstr "용도 추가"
 #: dlls/cryptui/cryptui.rc:265
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr "추가하고자 하는 인증서 용도의 개체 식별자(OID) 추가:"
+msgstr "추가하고자 하는 인증서 용도의 객체 식별자(OID) 추가:"
 
 #: dlls/cryptui/cryptui.rc:273 dlls/cryptui/cryptui.rc:69
 msgid "Select Certificate Store"
@@ -2421,11 +2421,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"이 마법사는 인증서, 인증서 폐지 목록 및 인증서 신뢰 목록을 파일에서 인증서 저장소로 가져오는 데 "
-"도움을 줍니다.\n"
+"이 마법사는 인증서, 인증서 폐지 목록 및 인증서 신뢰 목록을 파일에서 인증서 저"
+"장소로 가져오는 데 도움을 줍니다.\n"
 "\n"
-"인증서를 사용하여 사용자 또는 통신 중인 컴퓨터를 식별할 수 있습니다. 인증 및 메시지에 서명하는 "
-"데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 폐지 목록 및 인증서 신뢰 목록의 모음입니다.\n"
+"인증서를 사용하여 사용자 또는 통신 중인 컴퓨터를 식별할 수 있습니다. 인증 및 "
+"메시지에 서명하는 데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 "
+"폐지 목록 및 인증서 신뢰 목록의 모음입니다.\n"
 "\n"
 "계속하려면 [다음]을 클릭합니다."
 
@@ -2443,8 +2444,8 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"주의: 다음 파일 형식에는 둘 이상의 인증서, 인증서 폐지 목록, 또는 인증서 신뢰 목록이 들어 "
-"있을 수 있습니다:"
+"주의: 다음 파일 형식에는 둘 이상의 인증서, 인증서 폐지 목록, 또는 인증서 신"
+"뢰 목록이 들어 있을 수 있습니다:"
 
 #: dlls/cryptui/cryptui.rc:304
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
@@ -2562,12 +2563,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"이 마법사는 인증서, 인증서 폐지 목록, 인증서 신뢰 목록을 인증서 저장소에서 파일로 내보내도록 "
-"도와줍니다.\n"
+"이 마법사는 인증서, 인증서 폐지 목록, 인증서 신뢰 목록을 인증서 저장소에서 파"
+"일로 내보내도록 도와줍니다.\n"
 "\n"
-"인증서는 사용자 또는 사용자와 통신하는 컴퓨터를 식별하는 데 사용할 수 있습니다. 인증에 사용하거나 "
-"메시지에 서명하는 데에도 사용할 수 있습니다. 인증서 저장소는 인증서, 인증서 폐지 목록, 인증서 "
-"신뢰 목록의 모음입니다.\n"
+"인증서는 사용자 또는 사용자와 통신하는 컴퓨터를 식별하는 데 사용할 수 있습니"
+"다. 인증에 사용하거나 메시지에 서명하는 데에도 사용할 수 있습니다. 인증서 저"
+"장소는 인증서, 인증서 폐지 목록, 인증서 신뢰 목록의 모음입니다.\n"
 "\n"
 "계속 하려면, [다음]을 클릭하세요."
 
@@ -2660,16 +2661,16 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"이 인증서에는 잘못된 서명이 있습니다. 인증서가 변경되었거나 손상되었을 수 있"
-"습니다."
+"이 인증서에는 유효하지 않은 서명이 있습니다. 인증서가 변경되었거나 손상되었"
+"을 수 있습니다."
 
 #: dlls/cryptui/cryptui.rc:33
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"이 루트 인증서는 신뢰하는 인증서로 등록되어 있지 않습니다. 이것을 신뢰하려면 시스템의 신뢰할 수 있는 "
-"루트 인증서 저장소에 추가하세요."
+"이 루트 인증서는 신뢰하는 인증서로 등록되어 있지 않습니다. 이것을 신뢰하려면 "
+"시스템의 신뢰할 수 있는 루트 인증서 저장소에 추가하세요."
 
 #: dlls/cryptui/cryptui.rc:34
 msgid "This certificate could not be validated to a trusted root certificate."
@@ -2818,7 +2819,7 @@ msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"이 파일에 주어진 기준에 맞지 않는 개체가 있습니다. 다른 파일을 선택하세요."
+"이 파일에 주어진 기준에 맞지 않는 객체가 있습니다. 다른 파일을 선택하세요."
 
 #: dlls/cryptui/cryptui.rc:73
 msgid "File to Import"
@@ -3003,8 +3004,8 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"이 루트 인증 기관 또는 이 기관이 발급한 인증 기관에서 발급한 인증서는 더 이상 신뢰할 수 "
-"없습니다.\n"
+"이 루트 인증 기관 또는 이 기관이 발급한 인증 기관에서 발급한 인증서는 더 이"
+"상 신뢰할 수 없습니다.\n"
 "이 루트 인증서를 제거하시겠습니까?"
 
 #: dlls/cryptui/cryptui.rc:117
@@ -3013,8 +3014,8 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"이러한 루트 인증 기관 또는 이 기관들이 발급한 인증 기관에서 발급한 인증서는 더 이상 신뢰할 수 "
-"없습니다.\n"
+"이러한 루트 인증 기관 또는 이 기관들이 발급한 인증 기관에서 발급한 인증서는 "
+"더 이상 신뢰할 수 없습니다.\n"
 "이 루트 인증서를 제거하시겠습니까?"
 
 #: dlls/cryptui/cryptui.rc:118
@@ -3242,7 +3243,7 @@ msgstr "행동"
 
 #: dlls/dinput/dinput.rc:29
 msgid "Object"
-msgstr "개체"
+msgstr "객체"
 
 #: dlls/dxdiagn/dxdiagn.rc:28
 msgid "Regional Setting"
@@ -3672,7 +3673,7 @@ msgid ""
 "List of websites you have accessed."
 msgstr ""
 "방문 기록\n"
-"액세스한 웹 사이트 목록입니다."
+"접근한 웹 사이트 목록입니다."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:77
 msgid ""
@@ -3885,32 +3886,32 @@ msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #0에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
-"재정의되지 않았는지 확인하십시오."
+"슬롯 #0에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스"
+"틱 탭에서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #1에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
-"재정의되지 않았는지 확인하십시오."
+"슬롯 #1에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스"
+"틱 탭에서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #2에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
-"재정의되지 않았는지 확인하십시오."
+"슬롯 #2에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스"
+"틱 탭에서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"슬롯 #3에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에서 DirectInput으로 "
-"재정의되지 않았는지 확인하십시오."
+"슬롯 #3에서 사용자가 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스"
+"틱 탭에서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
 #: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
@@ -3935,7 +3936,7 @@ msgstr "개체를 기본 형식으로 변환하는 중에 오류 발생"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr "잘못된 프로시져 호출이나 인수"
+msgstr "유효하지 않은 프로시저 호출이나 인수"
 
 #: dlls/jscript/jscript.rc:30 dlls/vbscript/vbscript.rc:32
 msgid "Subscript out of range"
@@ -3947,11 +3948,11 @@ msgstr "스택 공간이 부족함"
 
 #: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:49
 msgid "Object required"
-msgstr "개체가 필요함"
+msgstr "객체가 필요함"
 
 #: dlls/jscript/jscript.rc:33
 msgid "Automation server can't create object"
-msgstr "자동화 서버가 개체를 만들 수 없음"
+msgstr "자동화 서버가 객체를 만들 수 없음"
 
 #: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support this property or method"
@@ -3959,7 +3960,7 @@ msgstr "개체가 이 속성이나 메소드를 지원하지 않습니다"
 
 #: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support this action"
-msgstr "개체는 이 행동을 지원하지 않음"
+msgstr "객체는 이 행동을 지원하지 않음"
 
 #: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:58
 msgid "Argument not optional"
@@ -3967,11 +3968,11 @@ msgstr "인수는 옵션이 아닙니다"
 
 #: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:60
 msgid "Object not a collection"
-msgstr "컬렉션이 아닌 개체입니다"
+msgstr "컬렉션이 아닌 객체입니다"
 
 #: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:69
 msgid "Syntax error"
-msgstr "문법 오류"
+msgstr "구문 오류"
 
 #: dlls/jscript/jscript.rc:39
 msgid "Expected ';'"
@@ -3995,7 +3996,7 @@ msgstr "'=' 필요"
 
 #: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:93
 msgid "Invalid character"
-msgstr "잘못된 문자"
+msgstr "유효하지 않은 문자"
 
 #: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:94
 msgid "Unterminated string constant"
@@ -4059,7 +4060,7 @@ msgstr "'[object]'는 날짜 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
-msgstr "'[object]'은(는) 날짜 개체가 아닙니다"
+msgstr "'[object]'은(는) 날짜 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:58
 msgid "Object expected"
@@ -4111,7 +4112,7 @@ msgstr "예외가 발생했지만 catch할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:71
 msgid "URI to be encoded contains invalid characters"
-msgstr "인코딩할 URI에 잘못된 문자가 들어 있습니다"
+msgstr "인코딩할 URI에 유효하지 않은 문자가 들어 있음"
 
 #: dlls/jscript/jscript.rc:70
 msgid "URI to be decoded is incorrect"
@@ -4142,7 +4143,7 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
-"속성 설명자의 'writable' 특성은 이 개체에서 'true'로 설정할 수 없습니다"
+"속성 설명자의 'writable' 특성은 이 객체에서 'true'로 설정할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Cyclic __proto__ value"
@@ -4150,7 +4151,7 @@ msgstr "순환하는 __proto__ 값"
 
 #: dlls/jscript/jscript.rc:79
 msgid "Cannot create property for a non-extensible object"
-msgstr "확장 가능하지 않은 개체에 대한 속성을 만들 수 없습니다"
+msgstr "확장 가능하지 않은 객체에 대한 속성을 만들 수 없습니다"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Cannot define property '|': object is not extensible"
@@ -4170,7 +4171,7 @@ msgstr "형식화된 배열 생성자 인수가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:83
 msgid "'this' is not a typed array object"
-msgstr "'this'는 형식화된 배열 개체가 아닙니다"
+msgstr "'this'는 형식화된 배열 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:85
 msgid "Invalid offset/length when creating typed array"
@@ -4186,7 +4187,7 @@ msgstr "형식화된 배열 세트의 소스가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
-msgstr "'this'는 DataView 개체가 아닙니다"
+msgstr "'this'는 DataView 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
@@ -4194,19 +4195,19 @@ msgstr "DataView 메서드에 필요한 인수(오프셋 또는 값)가 지정�
 
 #: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
-msgstr "DataView 작업 시 지정된 버퍼 길이를 초과하여 액세스했습니다"
+msgstr "DataView 작업 시 지정된 버퍼 길이를 초과하여 접근했습니다"
 
 #: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
-msgstr "DataView 생성자 인수의 오프셋 값이 잘못되었습니다"
+msgstr "DataView 생성자 인수의 오프셋 값이 유효하지 않음"
 
 #: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
-msgstr "'this'는 '|' 개체가 아닙니다"
+msgstr "'this'는 '|' 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
-msgstr "'key'는 개체가 아닙니다"
+msgstr "'key'는 객체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
@@ -4262,7 +4263,7 @@ msgstr "성공.\n"
 
 #: dlls/kernelbase/winerror.mc:35
 msgid "Invalid function.\n"
-msgstr "잘못된 함수입니다.\n"
+msgstr "유효하지 않은 함수.\n"
 
 #: dlls/kernelbase/winerror.mc:40
 msgid "File not found.\n"
@@ -4282,7 +4283,7 @@ msgstr "접근이 거부되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:60
 msgid "Invalid handle.\n"
-msgstr "잘못된 핸들입니다.\n"
+msgstr "유효하지 않은 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:65
 msgid "Memory trashed.\n"
@@ -4294,7 +4295,7 @@ msgstr "메모리가 부족합니다.\n"
 
 #: dlls/kernelbase/winerror.mc:75
 msgid "Invalid block.\n"
-msgstr "잘못된 블록입니다.\n"
+msgstr "유효하지 않은 블록.\n"
 
 #: dlls/kernelbase/winerror.mc:80
 msgid "Bad environment.\n"
@@ -4306,11 +4307,11 @@ msgstr "잘못된 형식입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:90
 msgid "Invalid access.\n"
-msgstr "잘못된 접근입니다.\n"
+msgstr "유효하지 않은 접근.\n"
 
 #: dlls/kernelbase/winerror.mc:95
 msgid "Invalid data.\n"
-msgstr "잘못된 데이터입니다.\n"
+msgstr "유효하지 않은 데이터.\n"
 
 #: dlls/kernelbase/winerror.mc:100
 msgid "Out of memory.\n"
@@ -4318,7 +4319,7 @@ msgstr "메모리 부족.\n"
 
 #: dlls/kernelbase/winerror.mc:105
 msgid "Invalid drive.\n"
-msgstr "잘못된 드라이브.\n"
+msgstr "유효하지 않은 드라이브.\n"
 
 #: dlls/kernelbase/winerror.mc:110
 msgid "Can't delete current directory.\n"
@@ -4522,11 +4523,11 @@ msgstr "이미 할당되어 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1830
 msgid "Invalid password.\n"
-msgstr "잘못된 암호.\n"
+msgstr "유효하지 않은 암호.\n"
 
 #: dlls/kernelbase/winerror.mc:365
 msgid "Invalid parameter.\n"
-msgstr "잘못된 매개변수.\n"
+msgstr "유효하지 않은 매개변수.\n"
 
 #: dlls/kernelbase/winerror.mc:370
 msgid "Net write fault.\n"
@@ -4590,15 +4591,15 @@ msgstr "핸들을 더이상 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:450
 msgid "Invalid target handle.\n"
-msgstr "잘못된 목표 핸들.\n"
+msgstr "유효하지 않은 목표 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:455
 msgid "Invalid IOCTL.\n"
-msgstr "잘못된 IOCTL.\n"
+msgstr "유효하지 않은 IOCTL.\n"
 
 #: dlls/kernelbase/winerror.mc:460
 msgid "Invalid verify switch.\n"
-msgstr "잘못된 검증 스위치.\n"
+msgstr "유효하지 않은 검증 스위치.\n"
 
 #: dlls/kernelbase/winerror.mc:465
 msgid "Bad driver level.\n"
@@ -4618,11 +4619,11 @@ msgstr "충분하지 않은 버퍼.\n"
 
 #: dlls/kernelbase/winerror.mc:485 dlls/mferror/mferror.mc:109
 msgid "Invalid name.\n"
-msgstr "잘못된 이름.\n"
+msgstr "유효하지 않은 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:490
 msgid "Invalid level.\n"
-msgstr "잘못된 레벨.\n"
+msgstr "유효하지 않은 레벨.\n"
 
 #: dlls/kernelbase/winerror.mc:495
 msgid "No volume label.\n"
@@ -4734,7 +4735,7 @@ msgstr "DosMuxSemWait 용 대기자가 너무 많습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:635
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosSemMuxWait 목록이 잘못되었습니다.\n"
+msgstr "유효하지 않은 DosSemMuxWait 목록.\n"
 
 #: dlls/kernelbase/winerror.mc:640
 msgid "Volume label too long.\n"
@@ -4754,7 +4755,7 @@ msgstr "세그맨트가 폐기되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:660
 msgid "Segment not locked.\n"
-msgstr "세그멘트를 잠글 수 없습니다.\n"
+msgstr "세그먼트를 잠글 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:665
 msgid "Bad thread ID address.\n"
@@ -4766,7 +4767,7 @@ msgstr "잘못된 DosExecPgm 인수.\n"
 
 #: dlls/kernelbase/winerror.mc:675
 msgid "Path is invalid.\n"
-msgstr "잘못된 경로.\n"
+msgstr "유효하지 않은 경로입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:680
 msgid "Signal pending.\n"
@@ -4794,11 +4795,11 @@ msgstr "원자적 잠금 미지원.\n"
 
 #: dlls/kernelbase/winerror.mc:710
 msgid "Invalid segment number.\n"
-msgstr "잘못된 세그멘트 번호.\n"
+msgstr "유효하지 않은 세그먼트 번호.\n"
 
 #: dlls/kernelbase/winerror.mc:715
 msgid "Invalid ordinal for %1.\n"
-msgstr "잘못된 %1 번호.\n"
+msgstr "유효하지 않은 %1 번호.\n"
 
 #: dlls/kernelbase/winerror.mc:720
 msgid "File already exists.\n"
@@ -4806,7 +4807,7 @@ msgstr "파일이 이미 존재합니다.\n"
 
 #: dlls/kernelbase/winerror.mc:725
 msgid "Invalid flag number.\n"
-msgstr "잘못된 플래그.\n"
+msgstr "유효하지 않은 플래그.\n"
 
 #: dlls/kernelbase/winerror.mc:730
 msgid "Semaphore name not found.\n"
@@ -4814,23 +4815,23 @@ msgstr "세마포어 이름을 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:735
 msgid "Invalid starting code segment for %1.\n"
-msgstr "잘못된 %1 시작 코드 세그멘트.\n"
+msgstr "유효하지 않은 %1 시작 코드 세그먼트.\n"
 
 #: dlls/kernelbase/winerror.mc:740
 msgid "Invalid starting stack segment for %1.\n"
-msgstr "잘못된 %1 시작 스택 세그먼트.\n"
+msgstr "유효하지 않은 %1 시작 스택 세그먼트.\n"
 
 #: dlls/kernelbase/winerror.mc:745
 msgid "Invalid module type for %1.\n"
-msgstr "잘못된 %1 모듈 유형.\n"
+msgstr "유효하지 않은 %1 모듈 유형.\n"
 
 #: dlls/kernelbase/winerror.mc:750
 msgid "Invalid EXE signature in %1.\n"
-msgstr "잘못된 %1 EXE 서명.\n"
+msgstr "유효하지 않은 %1 EXE 서명.\n"
 
 #: dlls/kernelbase/winerror.mc:755
 msgid "EXE %1 is marked invalid.\n"
-msgstr "EXE %1이(가) 잘못된 것으로 표시되었습니다.\n"
+msgstr "EXE %1이(가) 유효하지 않은 것으로 표시되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:760
 msgid "Bad EXE format for %1.\n"
@@ -4842,11 +4843,11 @@ msgstr "%1에 통합된 데이터가 64k를 초과했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:770
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr "%1 최소 할당 크기가 잘못되었습니다.\n"
+msgstr "유효하지 않은 %1 최소 할당 크기.\n"
 
 #: dlls/kernelbase/winerror.mc:775
 msgid "Dynlink from invalid ring.\n"
-msgstr "잘못된 링에서의 동적 링크.\n"
+msgstr "유효하지 않은 링에서의 동적 링크.\n"
 
 #: dlls/kernelbase/winerror.mc:780
 msgid "IOPL not enabled.\n"
@@ -4854,15 +4855,15 @@ msgstr "불가능한 IOPL.\n"
 
 #: dlls/kernelbase/winerror.mc:785
 msgid "Invalid SEGDPL in %1.\n"
-msgstr "잘못된 %1 SEGDPL.\n"
+msgstr "유효하지 않은 %1 SEGDPL.\n"
 
 #: dlls/kernelbase/winerror.mc:790
 msgid "Auto data segment exceeds 64k.\n"
-msgstr "자동 데이터 세그멘트가 64k를 초과했습니다.\n"
+msgstr "자동 데이터 세그먼트가 64k를 초과했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:795
 msgid "Ring 2 segment must be movable.\n"
-msgstr "링 2 세그멘트는 이동 가능해야 합니다.\n"
+msgstr "링 2 세그먼트는 이동 가능해야 합니다.\n"
 
 #: dlls/kernelbase/winerror.mc:800
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -4874,7 +4875,7 @@ msgstr "%1 안 재배치 체인에 무한 루프가 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:810
 msgid "Environment variable not found.\n"
-msgstr "환경변수를 찾을 수 없습니다.\n"
+msgstr "환경 변수를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:815
 msgid "No signal sent.\n"
@@ -4894,7 +4895,7 @@ msgstr "파일 이름 와일드카드 사용 오류.\n"
 
 #: dlls/kernelbase/winerror.mc:835
 msgid "Invalid signal number.\n"
-msgstr "잘못된 시그널 번호.\n"
+msgstr "유효하지 않은 시그널 번호.\n"
 
 #: dlls/kernelbase/winerror.mc:840
 msgid "Error setting signal handler.\n"
@@ -4902,7 +4903,7 @@ msgstr "시그널 핸들러 설정 오류.\n"
 
 #: dlls/kernelbase/winerror.mc:845
 msgid "Segment locked.\n"
-msgstr "세그멘트 잠김.\n"
+msgstr "세그먼트 잠김.\n"
 
 #: dlls/kernelbase/winerror.mc:850
 msgid "Too many modules.\n"
@@ -4942,7 +4943,7 @@ msgstr "세션 취소.\n"
 
 #: dlls/kernelbase/winerror.mc:895
 msgid "Invalid extended attribute name.\n"
-msgstr "잘못된 확장 속성 이름.\n"
+msgstr "유효하지 않은 확장 속성 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:900
 msgid "Extended attribute list inconsistent.\n"
@@ -4958,7 +4959,7 @@ msgstr "복사 API를 사용할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:915
 msgid "Directory name invalid.\n"
-msgstr "잘못된 디렉터리 이름.\n"
+msgstr "유효하지 않은 디렉터리 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:920
 msgid "Extended attributes didn't fit.\n"
@@ -4974,7 +4975,7 @@ msgstr "확장 속성 테이블이 가득 찾습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:935
 msgid "Invalid extended attribute handle.\n"
-msgstr "잘못된 확장 속성 핸들.\n"
+msgstr "유효하지 않은 확장 속성 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:940
 msgid "Extended attributes not supported.\n"
@@ -4998,7 +4999,7 @@ msgstr "승인되지 않은 oplock.\n"
 
 #: dlls/kernelbase/winerror.mc:965
 msgid "Invalid oplock message received.\n"
-msgstr "잘못된 oplock 메시지 수신.\n"
+msgstr "유효하지 않은 oplock 메시지를 수신했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:970
 msgid "Disk is too fragmented.\n"
@@ -5104,7 +5105,7 @@ msgstr "해당 장치는 파일 수준 TRIM을 지원하지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
-msgstr "잘못된 주소.\n"
+msgstr "유효하지 않은 주소.\n"
 
 #: dlls/kernelbase/winerror.mc:1095
 msgid "Arithmetic overflow.\n"
@@ -5148,7 +5149,7 @@ msgstr "스택 오버플로우.\n"
 
 #: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid message.\n"
-msgstr "잘못된 메시지입니다.\n"
+msgstr "유효하지 않은 메시지.\n"
 
 #: dlls/kernelbase/winerror.mc:1150
 msgid "Cannot complete.\n"
@@ -5156,7 +5157,7 @@ msgstr "완료할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1155
 msgid "Invalid flags.\n"
-msgstr "잘못된 플래그입니다.\n"
+msgstr "유효하지 않은 플래그.\n"
 
 #: dlls/kernelbase/winerror.mc:1160
 msgid "Unrecognized volume.\n"
@@ -5164,7 +5165,7 @@ msgstr "인식되지 않는 볼륨.\n"
 
 #: dlls/kernelbase/winerror.mc:1165
 msgid "File invalid.\n"
-msgstr "잘못된 파일입니다.\n"
+msgstr "유효하지 않은 파일.\n"
 
 #: dlls/kernelbase/winerror.mc:1170
 msgid "Cannot run full-screen.\n"
@@ -5180,7 +5181,7 @@ msgstr "레지스트리 손상.\n"
 
 #: dlls/kernelbase/winerror.mc:1185
 msgid "Invalid key.\n"
-msgstr "잘못된 키.\n"
+msgstr "유효하지 않은 키.\n"
 
 #: dlls/kernelbase/winerror.mc:1190
 msgid "Can't open registry key.\n"
@@ -5236,7 +5237,7 @@ msgstr "의존 서비스 실행 중.\n"
 
 #: dlls/kernelbase/winerror.mc:1255
 msgid "Invalid service control.\n"
-msgstr "잘못된 서비스 컨트롤.\n"
+msgstr "유효하지 않은 서비스 제어.\n"
 
 #: dlls/kernelbase/winerror.mc:1260
 msgid "Service request timeout.\n"
@@ -5256,7 +5257,7 @@ msgstr "서비스 실행 증.\n"
 
 #: dlls/kernelbase/winerror.mc:1280
 msgid "Invalid service account.\n"
-msgstr "잘못된 서비스 계정.\n"
+msgstr "유효하지 않은 서비스 계정.\n"
 
 #: dlls/kernelbase/winerror.mc:1285
 msgid "Service is disabled.\n"
@@ -5312,7 +5313,7 @@ msgstr "서비스 start-hang.\n"
 
 #: dlls/kernelbase/winerror.mc:1350
 msgid "Invalid service lock.\n"
-msgstr "잘못된 서비스 잠금.\n"
+msgstr "유효하지 않은 서비스 잠금.\n"
 
 #: dlls/kernelbase/winerror.mc:1355
 msgid "Service marked for delete.\n"
@@ -5388,7 +5389,7 @@ msgstr "파티션 실패.\n"
 
 #: dlls/kernelbase/winerror.mc:1445
 msgid "Invalid block length.\n"
-msgstr "잘못된 블럭 길이.\n"
+msgstr "유효하지 않은 블록 길이.\n"
 
 #: dlls/kernelbase/winerror.mc:1450
 msgid "Device not partitioned.\n"
@@ -5524,7 +5525,7 @@ msgstr "리얼 모드 프로그램.\n"
 
 #: dlls/kernelbase/winerror.mc:1615
 msgid "Invalid DLL.\n"
-msgstr "잘못된 DLL.\n"
+msgstr "유효하지 않은 DLL.\n"
 
 #: dlls/kernelbase/winerror.mc:1620
 msgid "No associated application.\n"
@@ -5556,7 +5557,7 @@ msgstr "대상 요소가 가능 차 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1655
 msgid "The element address is invalid.\n"
-msgstr "잘못된 요소 주소.\n"
+msgstr "유효하지 않은 요소 주소.\n"
 
 #: dlls/kernelbase/winerror.mc:1660
 msgid "The magazine is not present.\n"
@@ -5632,7 +5633,7 @@ msgstr "저널 엔트리가 지워짐.\n"
 
 #: dlls/kernelbase/winerror.mc:1750
 msgid "Invalid device name.\n"
-msgstr "잘못된 장치 이름.\n"
+msgstr "유효하지 않은 장치 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1755
 msgid "Connection unavailable.\n"
@@ -5648,7 +5649,7 @@ msgstr "네트워크가 없거나 잘못된 경로.\n"
 
 #: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid network provider name.\n"
-msgstr "잘못된 네트워크 제공자 이름.\n"
+msgstr "유효하지 않은 네트워크 공급자 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1775
 msgid "Cannot open network connection profile.\n"
@@ -5668,39 +5669,39 @@ msgstr "확장된 오류.\n"
 
 #: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid group name.\n"
-msgstr "잘못된 그룹 이름.\n"
+msgstr "유효하지 않은 그룹 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid computer name.\n"
-msgstr "잘못된 컴퓨터 이름.\n"
+msgstr "유효하지 않은 컴퓨터 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1805
 msgid "Invalid event name.\n"
-msgstr "잘못된 이벤트 이름.\n"
+msgstr "유효하지 않은 이벤트 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1810
 msgid "Invalid domain name.\n"
-msgstr "잘못된 도메인 이름.\n"
+msgstr "유효하지 않은 도메인 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1815
 msgid "Invalid service name.\n"
-msgstr "잘못된 서비스 이름.\n"
+msgstr "유효하지 않은 서비스 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1820
 msgid "Invalid network name.\n"
-msgstr "잘못된 네트워크 이름.\n"
+msgstr "유효하지 않은 네트워크 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1825
 msgid "Invalid share name.\n"
-msgstr "잘못된 공유 이름.\n"
+msgstr "유효하지 않은 공유 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1835
 msgid "Invalid message name.\n"
-msgstr "잘못된 메시지 이름.\n"
+msgstr "유효하지 않은 메시지 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:1840
 msgid "Invalid message destination.\n"
-msgstr "잘못된 메시지 대상.\n"
+msgstr "유효하지 않은 메시지 대상.\n"
 
 #: dlls/kernelbase/winerror.mc:1845
 msgid "Session credential conflict.\n"
@@ -5744,7 +5745,7 @@ msgstr "주소가 전송 엔드포인트와 연결되지 않았습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:1895
 msgid "Connection invalid.\n"
-msgstr "연결이 잘못되었습니다.\n"
+msgstr "유효하지 않은 연결.\n"
 
 #: dlls/kernelbase/winerror.mc:1900
 msgid "Connection is active.\n"
@@ -5840,7 +5841,7 @@ msgstr "바뀐 것이 없는 경우에도 작업을 수행합니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2015
 msgid "The user profile is invalid.\n"
-msgstr "사용자 프로파일이 잘못되었습니다.\n"
+msgstr "유효하지 않은 사용자 프로파일입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2020
 msgid "Not supported on Small Business Server.\n"
@@ -5876,11 +5877,11 @@ msgstr "호환되지 않는 리비전 레벨.\n"
 
 #: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid owner.\n"
-msgstr "잘못된 소유자.\n"
+msgstr "유효하지 않은 소유자.\n"
 
 #: dlls/kernelbase/winerror.mc:2065
 msgid "Invalid primary group.\n"
-msgstr "잘못된 기본 그룹.\n"
+msgstr "유효하지 않은 기본 그룹.\n"
 
 #: dlls/kernelbase/winerror.mc:2070
 msgid "No impersonation token.\n"
@@ -5908,7 +5909,7 @@ msgstr "권한이 유지 되지 않음.\n"
 
 #: dlls/kernelbase/winerror.mc:2100
 msgid "Invalid account name.\n"
-msgstr "잘못된 계정 이름.\n"
+msgstr "유효하지 않은 계정 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:2105
 msgid "User already exists.\n"
@@ -5960,11 +5961,11 @@ msgstr "계정 제한.\n"
 
 #: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid logon hours.\n"
-msgstr "잘못된 로그온 시간.\n"
+msgstr "유효하지 않은 로그온 시간.\n"
 
 #: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid workstation.\n"
-msgstr "잘못된 워크스테이션.\n"
+msgstr "유효하지 않은 워크스테이션.\n"
 
 #: dlls/kernelbase/winerror.mc:2175
 msgid "Password expired.\n"
@@ -5976,7 +5977,7 @@ msgstr "계정을 사용할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2185
 msgid "No security ID mapped.\n"
-msgstr "매핑된 보안 아이디가 없음.\n"
+msgstr "매핑된 보안 ID가 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2190
 msgid "Too many LUIDs requested.\n"
@@ -5988,19 +5989,19 @@ msgstr "LUID가 고갈됨.\n"
 
 #: dlls/kernelbase/winerror.mc:2200
 msgid "Invalid sub authority.\n"
-msgstr "잘못된 하위 기관.\n"
+msgstr "유효하지 않은 하위 기관.\n"
 
 #: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid ACL.\n"
-msgstr "잘못된 ACL.\n"
+msgstr "유효하지 않은 ACL.\n"
 
 #: dlls/kernelbase/winerror.mc:2210
 msgid "Invalid SID.\n"
-msgstr "잘못된 SID.\n"
+msgstr "유효하지 않은 SID.\n"
 
 #: dlls/kernelbase/winerror.mc:2215
 msgid "Invalid security descriptor.\n"
-msgstr "잘못된 보안 설명자.\n"
+msgstr "유효하지 않은 보안 설명자.\n"
 
 #: dlls/kernelbase/winerror.mc:2220
 msgid "Bad inherited ACL.\n"
@@ -6024,7 +6025,7 @@ msgstr "할당된 공간을 초과했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid group attributes.\n"
-msgstr "잘못된 그룹 속성.\n"
+msgstr "유효하지 않은 그룹 속성.\n"
 
 #: dlls/kernelbase/winerror.mc:2250
 msgid "Bad impersonation level.\n"
@@ -6044,7 +6045,7 @@ msgstr "나쁜 토큰 형식.\n"
 
 #: dlls/kernelbase/winerror.mc:2270
 msgid "No security on object.\n"
-msgstr "개체에 보안 없음.\n"
+msgstr "객체에 보안 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2275
 msgid "Can't access domain information.\n"
@@ -6052,11 +6053,11 @@ msgstr "도메인 정보에 접근할 수 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2280
 msgid "Invalid server state.\n"
-msgstr "잘못된 서버 상태.\n"
+msgstr "유효하지 않은 서버 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2285
 msgid "Invalid domain state.\n"
-msgstr "잘못된 도메인 상태.\n"
+msgstr "유효하지 않은 도메인 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2290
 msgid "Invalid domain role.\n"
@@ -6084,7 +6085,7 @@ msgstr "내부 오류.\n"
 
 #: dlls/kernelbase/winerror.mc:2320
 msgid "Generic access types not mapped.\n"
-msgstr "매핑되지 않은 일반 액세스 유형.\n"
+msgstr "매핑되지 않은 일반 접근 유형.\n"
 
 #: dlls/kernelbase/winerror.mc:2325
 msgid "Bad descriptor format.\n"
@@ -6096,7 +6097,7 @@ msgstr "로그온 프로세스가 아님.\n"
 
 #: dlls/kernelbase/winerror.mc:2335
 msgid "Logon session ID exists.\n"
-msgstr "로그온 세션 아이디가 존재함.\n"
+msgstr "로그온 세션 ID가 존재함.\n"
 
 #: dlls/kernelbase/winerror.mc:2340
 msgid "Unknown authentication package.\n"
@@ -6108,11 +6109,11 @@ msgstr "나쁜 로그온 세션 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2350
 msgid "Logon session ID collision.\n"
-msgstr "로그온 세션 아이디 충돌.\n"
+msgstr "로그온 세션 ID 충돌.\n"
 
 #: dlls/kernelbase/winerror.mc:2355
 msgid "Invalid logon type.\n"
-msgstr "잘못된 로그온 타입.\n"
+msgstr "유효하지 않은 로그온 타입.\n"
 
 #: dlls/kernelbase/winerror.mc:2360
 msgid "Cannot impersonate.\n"
@@ -6120,7 +6121,7 @@ msgstr "사칭할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2365
 msgid "Invalid transaction state.\n"
-msgstr "트랜잭션 상태가 잘못되었습니다.\n"
+msgstr "유효하지 않은 트랜잭션 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2370
 msgid "Security DB commit failure.\n"
@@ -6180,7 +6181,7 @@ msgstr "내부 보안 ID 오류.\n"
 
 #: dlls/kernelbase/winerror.mc:2440
 msgid "Too many context IDs.\n"
-msgstr "컨텍스트 아이디가 너무 많음.\n"
+msgstr "컨텍스트 ID가 너무 많음.\n"
 
 #: dlls/kernelbase/winerror.mc:2450
 msgid "Cross-encrypted NT password required.\n"
@@ -6240,23 +6241,23 @@ msgstr "잘못된 원도우 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2520
 msgid "Invalid menu handle.\n"
-msgstr "잘못된 메뉴 핸들.\n"
+msgstr "유효하지 않은 메뉴 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2525
 msgid "Invalid cursor handle.\n"
-msgstr "잘못된 커서 핸들.\n"
+msgstr "유효하지 않은 커서 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2530
 msgid "Invalid accelerator table handle.\n"
-msgstr "잘못된 엑셀레이터 테이블 핸들.\n"
+msgstr "유효하지 않은 액셀러레이터 테이블 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2535
 msgid "Invalid hook handle.\n"
-msgstr "잘못된 hook 핸들.\n"
+msgstr "유효하지 않은 훅 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2540
 msgid "Invalid DWP handle.\n"
-msgstr "잘못된 DWP 핸들.\n"
+msgstr "유효하지 않은 DWP 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2545
 msgid "Can't create top-level child window.\n"
@@ -6288,11 +6289,11 @@ msgstr "클래스는 연 상태의 창을 가지고 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2580 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
-msgstr "잘못된 인덱스.\n"
+msgstr "유효하지 않은 인덱스.\n"
 
 #: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid icon handle.\n"
-msgstr "잘못된 아이콘 핸들.\n"
+msgstr "유효하지 않은 아이콘 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2590
 msgid "Private dialog index.\n"
@@ -6300,7 +6301,7 @@ msgstr "비공개 다이얼로그 색인.\n"
 
 #: dlls/kernelbase/winerror.mc:2595
 msgid "List box ID not found.\n"
-msgstr "목록상자 ID를 찾을 수 없습니다.\n"
+msgstr "목록 박스 ID를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2600
 msgid "No wildcard characters.\n"
@@ -6320,11 +6321,11 @@ msgstr "대화창이 아닙니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2620
 msgid "Control ID not found.\n"
-msgstr "컨트롤 아이디를 찾을 수 없음.\n"
+msgstr "컨트롤 ID를 찾을 수 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:2625
 msgid "Invalid combo box message.\n"
-msgstr "잘못된  콤보 박스 메시지입니다.\n"
+msgstr "유효하지 않은 콤보 박스 메시지.\n"
 
 #: dlls/kernelbase/winerror.mc:2630
 msgid "Not a combo box window.\n"
@@ -6332,7 +6333,7 @@ msgstr "콤보 박스 창이 아닙니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid edit height.\n"
-msgstr "잘못된 편집 높이.\n"
+msgstr "유효하지 않은 편집 높이.\n"
 
 #: dlls/kernelbase/winerror.mc:2640
 msgid "DC not found.\n"
@@ -6340,11 +6341,11 @@ msgstr "DC를 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2645
 msgid "Invalid hook filter.\n"
-msgstr "잘못된 훅 필터.\n"
+msgstr "유효하지 않은 훅 필터.\n"
 
 #: dlls/kernelbase/winerror.mc:2650
 msgid "Invalid filter procedure.\n"
-msgstr "잘못된 필터 프로시져.\n"
+msgstr "유효하지 않은 필터 프로시저.\n"
 
 #: dlls/kernelbase/winerror.mc:2655
 msgid "Hook procedure needs module handle.\n"
@@ -6364,11 +6365,11 @@ msgstr "훅 프로시저가 설치되어 있지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2675
 msgid "Invalid list box message.\n"
-msgstr "잘못된 목록상자 메시지.\n"
+msgstr "유효하지 않은 목록 박스 메시지.\n"
 
 #: dlls/kernelbase/winerror.mc:2680
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "잘못된 LB_SETCOUNT 보내기.\n"
+msgstr "유효하지 않은 LB_SETCOUNT 보내기.\n"
 
 #: dlls/kernelbase/winerror.mc:2685
 msgid "No tab stops on this list box.\n"
@@ -6376,7 +6377,7 @@ msgstr "이 목록상자는 탭정지가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2690
 msgid "Can't destroy object owned by another thread.\n"
-msgstr "다른 스레드가 소유한 개체를 파괴할 수 없습니다.\n"
+msgstr "다른 스레드가 소유한 객체를 파괴할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2695
 msgid "Child window menus not allowed.\n"
@@ -6388,11 +6389,11 @@ msgstr "창이 시스템 메뉴를 가지고 있지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2705
 msgid "Invalid message box style.\n"
-msgstr "잘못된 메시지 박스 스타일.\n"
+msgstr "유효하지 않은 메시지 박스 스타일.\n"
 
 #: dlls/kernelbase/winerror.mc:2710
 msgid "Invalid SPI parameter.\n"
-msgstr "잘못된 SPI 매개변수.\n"
+msgstr "유효하지 않은 SPI 매개변수.\n"
 
 #: dlls/kernelbase/winerror.mc:2715
 msgid "Screen already locked.\n"
@@ -6408,11 +6409,11 @@ msgstr "자식 창이 아닙니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2730
 msgid "Invalid GW command.\n"
-msgstr "잘못된 GW 명령.\n"
+msgstr "유효하지 않은 GW 명령.\n"
 
 #: dlls/kernelbase/winerror.mc:2735
 msgid "Invalid thread ID.\n"
-msgstr "잘못된 스레드 ID.\n"
+msgstr "유효하지 않은 스레드 ID.\n"
 
 #: dlls/kernelbase/winerror.mc:2740
 msgid "Not an MDI child window.\n"
@@ -6428,11 +6429,11 @@ msgstr "스크롤바가 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2755
 msgid "Invalid scrollbar range.\n"
-msgstr "잘못된 스코롤바 범위.\n"
+msgstr "유효하지 않은 스크롤바 범위.\n"
 
 #: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid ShowWin command.\n"
-msgstr "잘못된 ShowWin 명령.\n"
+msgstr "유효하지 않은 ShowWin 명령.\n"
 
 #: dlls/kernelbase/winerror.mc:2765
 msgid "No system resources.\n"
@@ -6464,7 +6465,7 @@ msgstr "메뉴 항목을 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2800
 msgid "Invalid keyboard handle.\n"
-msgstr "잘못된 키보드 핸들.\n"
+msgstr "유효하지 않은 키보드 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2805
 msgid "Hook type not allowed.\n"
@@ -6480,7 +6481,7 @@ msgstr "시간 초과.\n"
 
 #: dlls/kernelbase/winerror.mc:2820
 msgid "Invalid monitor handle.\n"
-msgstr "잘못된 모니터 핸들.\n"
+msgstr "유효하지 않은 모니터 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:2825
 msgid "Event log file corrupt.\n"
@@ -6532,7 +6533,7 @@ msgstr "알 수 없는 속성.\n"
 
 #: dlls/kernelbase/winerror.mc:2885
 msgid "Invalid handle state.\n"
-msgstr "잘못된 핸들 상태.\n"
+msgstr "유효하지 않은 핸들 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:2890
 msgid "Bad configuration.\n"
@@ -6556,11 +6557,11 @@ msgstr "제품이 제거되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2915
 msgid "Invalid query syntax.\n"
-msgstr "잘못된 쿼리 구문입니다.\n"
+msgstr "유효하지 않은 쿼리 구문.\n"
 
 #: dlls/kernelbase/winerror.mc:2920
 msgid "Invalid field.\n"
-msgstr "잘못된 필드입니다.\n"
+msgstr "유효하지 않은 필드.\n"
 
 #: dlls/kernelbase/winerror.mc:2925
 msgid "Device removed.\n"
@@ -6576,7 +6577,7 @@ msgstr "설치 패키지를 열지 못했습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2940
 msgid "Installation package is invalid.\n"
-msgstr "설치 패키지가 잘못되었습니다.\n"
+msgstr "유효하지 않은 설치 패키지입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:2945
 msgid "Installer user interface failed.\n"
@@ -6608,7 +6609,7 @@ msgstr "함수 실패.\n"
 
 #: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid table.\n"
-msgstr "잘못된 테이블.\n"
+msgstr "유효하지 않은 테이블.\n"
 
 #: dlls/kernelbase/winerror.mc:2985
 msgid "Data type mismatch.\n"
@@ -6640,7 +6641,7 @@ msgstr "패치 패키지 열기 실패.\n"
 
 #: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid patch package.\n"
-msgstr "잘못된 패치 패키지.\n"
+msgstr "유효하지 않은 패치 패키지.\n"
 
 #: dlls/kernelbase/winerror.mc:3025
 msgid "Unsupported patch package.\n"
@@ -6652,7 +6653,7 @@ msgstr "다른 버전이 설치되어 있음.\n"
 
 #: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid command line.\n"
-msgstr "잘못된 명령줄.\n"
+msgstr "유효하지 않은 명령줄.\n"
 
 #: dlls/kernelbase/winerror.mc:3040
 msgid "Remote installation not allowed.\n"
@@ -6664,7 +6665,7 @@ msgstr "설치가 성공한 후에 스스로 재부팅될 것임.\n"
 
 #: dlls/kernelbase/winerror.mc:3050
 msgid "Invalid string binding.\n"
-msgstr "잘못된 문자열 바인딩.\n"
+msgstr "유효하지 않은 문자열 바인딩.\n"
 
 #: dlls/kernelbase/winerror.mc:3055
 msgid "Wrong kind of binding.\n"
@@ -6672,7 +6673,7 @@ msgstr "잘못된 종류의 바인딩.\n"
 
 #: dlls/kernelbase/winerror.mc:3060
 msgid "Invalid binding.\n"
-msgstr "잘못된 바인딩.\n"
+msgstr "유효하지 않은 바인딩.\n"
 
 #: dlls/kernelbase/winerror.mc:3065
 msgid "RPC protocol sequence not supported.\n"
@@ -6684,15 +6685,15 @@ msgstr "유효하지 않은 RPC 프로토콜 시퀀스.\n"
 
 #: dlls/kernelbase/winerror.mc:3075
 msgid "Invalid string UUID.\n"
-msgstr "잘못된 문자열 UUID.\n"
+msgstr "유효하지 않은 문자열 UUID.\n"
 
 #: dlls/kernelbase/winerror.mc:3080
 msgid "Invalid endpoint format.\n"
-msgstr "잘못된 엔드포인트 포맷.\n"
+msgstr "유효하지 않은 엔드포인트 형식.\n"
 
 #: dlls/kernelbase/winerror.mc:3085
 msgid "Invalid network address.\n"
-msgstr "잘못된 네트워크 주소.\n"
+msgstr "유효하지 않은 네트워크 주소.\n"
 
 #: dlls/kernelbase/winerror.mc:3090
 msgid "No endpoint found.\n"
@@ -6700,7 +6701,7 @@ msgstr "엔드포인트를 찾을 수 없음.\n"
 
 #: dlls/kernelbase/winerror.mc:3095
 msgid "Invalid timeout value.\n"
-msgstr "잘못된 시간 초과 값.\n"
+msgstr "유효하지 않은 시간 초과 값.\n"
 
 #: dlls/kernelbase/winerror.mc:3100
 msgid "Object UUID not found.\n"
@@ -6760,7 +6761,7 @@ msgstr "RPC 서버가 지나치게 사용 중입니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid network options.\n"
-msgstr "잘못된 네트워크 옵션.\n"
+msgstr "유효하지 않은 네트워크 옵션.\n"
 
 #: dlls/kernelbase/winerror.mc:3175
 msgid "No RPC call active.\n"
@@ -6784,11 +6785,11 @@ msgstr "지원되지 않는 전송 구문.\n"
 
 #: dlls/kernelbase/winerror.mc:3205
 msgid "Invalid tag.\n"
-msgstr "잘못된 태그.\n"
+msgstr "유효하지 않은 태그.\n"
 
 #: dlls/kernelbase/winerror.mc:3210
 msgid "Invalid array bounds.\n"
-msgstr "배열 경계가 잘못되었습니다.\n"
+msgstr "유효하지 않은 배열 경계.\n"
 
 #: dlls/kernelbase/winerror.mc:3215
 msgid "No entry name.\n"
@@ -6796,7 +6797,7 @@ msgstr "항목 이름이 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3220
 msgid "Invalid name syntax.\n"
-msgstr "잘못된 이름 구문.\n"
+msgstr "유효하지 않은 이름 구문.\n"
 
 #: dlls/kernelbase/winerror.mc:3225
 msgid "Unsupported name syntax.\n"
@@ -6844,7 +6845,7 @@ msgstr "알 수 없는 인증 수준.\n"
 
 #: dlls/kernelbase/winerror.mc:3280
 msgid "Invalid authentication identity.\n"
-msgstr "잘못된 인증 ID.\n"
+msgstr "유효하지 않은 인증 ID.\n"
 
 #: dlls/kernelbase/winerror.mc:3285
 msgid "Unknown authorization service.\n"
@@ -6852,7 +6853,7 @@ msgstr "알 수 없는 권한 부여 서비스.\n"
 
 #: dlls/kernelbase/winerror.mc:3290
 msgid "Invalid entry.\n"
-msgstr "잘못된 항목.\n"
+msgstr "유효하지 않은 항목.\n"
 
 #: dlls/kernelbase/winerror.mc:3295
 msgid "Can't perform operation.\n"
@@ -6872,7 +6873,7 @@ msgstr "불완전한 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:3315
 msgid "Invalid version option.\n"
-msgstr "잘못된 버전 옵션.\n"
+msgstr "유효하지 않은 버전 옵션.\n"
 
 #: dlls/kernelbase/winerror.mc:3320
 msgid "No more members.\n"
@@ -6900,7 +6901,7 @@ msgstr "이름 서비스를 사용할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3350
 msgid "Invalid network address family.\n"
-msgstr "네트워크 주소 패밀리가 잘못되었습니다.\n"
+msgstr "유효하지 않은 네트워크 주소 패밀리.\n"
 
 #: dlls/kernelbase/winerror.mc:3355
 msgid "Operation not supported.\n"
@@ -6980,7 +6981,7 @@ msgstr "잘못된 스텁 데이터.\n"
 
 #: dlls/kernelbase/winerror.mc:3450
 msgid "Invalid user buffer.\n"
-msgstr "잘못된 사용자 버퍼.\n"
+msgstr "유효하지 않은 사용자 버퍼.\n"
 
 #: dlls/kernelbase/winerror.mc:3455
 msgid "Unrecognized media.\n"
@@ -7040,15 +7041,15 @@ msgstr "알 수 없는 인쇄 프로세서.\n"
 
 #: dlls/kernelbase/winerror.mc:3525
 msgid "Invalid separator file.\n"
-msgstr "잘못된 구분 파일.\n"
+msgstr "유효하지 않은 구분 파일.\n"
 
 #: dlls/kernelbase/winerror.mc:3530
 msgid "Invalid priority.\n"
-msgstr "잘못된 우선순위.\n"
+msgstr "유효하지 않은 우선순위.\n"
 
 #: dlls/kernelbase/winerror.mc:3535
 msgid "Invalid printer name.\n"
-msgstr "잘못된 프린터 이름.\n"
+msgstr "유효하지 않은 프린터 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:3540
 msgid "Printer already exists.\n"
@@ -7056,11 +7057,11 @@ msgstr "프린터가 이미 존재합니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3545
 msgid "Invalid printer command.\n"
-msgstr "잘못된 프린터 명령.\n"
+msgstr "유효하지 않은 프린터 명령.\n"
 
 #: dlls/kernelbase/winerror.mc:3550
 msgid "Invalid data type.\n"
-msgstr "잘못된 데이터 형식.\n"
+msgstr "유효하지 않은 데이터 형식.\n"
 
 #: dlls/kernelbase/winerror.mc:3555
 msgid "Invalid environment.\n"
@@ -7152,7 +7153,7 @@ msgstr "스레드가 취소되지 않았습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid handle operation.\n"
-msgstr "잘못된 핸들 작업.\n"
+msgstr "유효하지 않은 핸들 작업.\n"
 
 #: dlls/kernelbase/winerror.mc:3670
 msgid "Wrong serializing package version.\n"
@@ -7164,7 +7165,7 @@ msgstr "잘못된 스텁 버전.\n"
 
 #: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid pipe object.\n"
-msgstr "잘못된 파이프 개체.\n"
+msgstr "유효하지 않은 파이프 객체.\n"
 
 #: dlls/kernelbase/winerror.mc:3685
 msgid "Wrong pipe order.\n"
@@ -7184,19 +7185,19 @@ msgstr "엔드포인트 매핑기 DB를 만들 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3705
 msgid "Invalid object.\n"
-msgstr "잘못된 개체.\n"
+msgstr "유효하지 않은 객체.\n"
 
 #: dlls/kernelbase/winerror.mc:3710
 msgid "Invalid time.\n"
-msgstr "잘못된 시간.\n"
+msgstr "유효하지 않은 시간.\n"
 
 #: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid form name.\n"
-msgstr "잘못된 폼 이름.\n"
+msgstr "유효하지 않은 폼 이름.\n"
 
 #: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid form size.\n"
-msgstr "잘못된 폼 크기.\n"
+msgstr "유효하지 않은 폼 크기.\n"
 
 #: dlls/kernelbase/winerror.mc:3725
 msgid "Already awaiting printer handle.\n"
@@ -7208,7 +7209,7 @@ msgstr "프린터가 삭제되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid printer state.\n"
-msgstr "프린터 상태가 잘못되었습니다.\n"
+msgstr "유효하지 않은 프린터 상태.\n"
 
 #: dlls/kernelbase/winerror.mc:3740
 msgid "User must change password.\n"
@@ -7224,15 +7225,15 @@ msgstr "계정이 잠겨 있습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3755
 msgid "Invalid pixel format.\n"
-msgstr "잘못된 픽셀 형식.\n"
+msgstr "유효하지 않은 픽셀 형식.\n"
 
 #: dlls/kernelbase/winerror.mc:3760
 msgid "Invalid driver.\n"
-msgstr "잘못된 드라이버.\n"
+msgstr "유효하지 않은 드라이버.\n"
 
 #: dlls/kernelbase/winerror.mc:3765
 msgid "Invalid object resolver set.\n"
-msgstr "잘못된 개체 해결기 집합.\n"
+msgstr "유효하지 않은 객체 해결기 집합.\n"
 
 #: dlls/kernelbase/winerror.mc:3770
 msgid "Incomplete RPC send.\n"
@@ -7240,11 +7241,11 @@ msgstr "불완전한 RPC 전송.\n"
 
 #: dlls/kernelbase/winerror.mc:3775
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "잘못된 비동기 RPC 핸들.\n"
+msgstr "유효하지 않은 비동기 RPC 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:3780
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "잘못된 비동기 RPC 호출.\n"
+msgstr "유효하지 않은 비동기 RPC 호출.\n"
 
 #: dlls/kernelbase/winerror.mc:3785
 msgid "RPC pipe closed.\n"
@@ -7264,7 +7265,7 @@ msgstr "사용할 수 있는 사이트 이름이 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3805
 msgid "The file cannot be accessed.\n"
-msgstr "파일에 액세스할 수 없습니다.\n"
+msgstr "파일에 접근할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3810
 msgid "The filename cannot be resolved.\n"
@@ -7276,7 +7277,7 @@ msgstr "RPC 입력 유형이 일치하지 않습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3820
 msgid "Not all objects could be exported.\n"
-msgstr "모든 개체를 내보낼 수는 없습니다.\n"
+msgstr "모든 객체를 내보낼 수는 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3825
 msgid "The interface could not be exported.\n"
@@ -7320,7 +7321,7 @@ msgstr "호출이 중단되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3875
 msgid "Invalid file handle.\n"
-msgstr "파일 핸들이 잘못되었습니다.\n"
+msgstr "유효하지 않은 파일 핸들.\n"
 
 #: dlls/kernelbase/winerror.mc:3885
 msgid "Invalid pointer address.\n"
@@ -7328,7 +7329,7 @@ msgstr "주소가 잘못되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3890
 msgid "Invalid argument.\n"
-msgstr "인수가 잘못되었습니다.\n"
+msgstr "유효하지 않은 인수.\n"
 
 #: dlls/kernelbase/winerror.mc:3900
 msgid "Cannot assign requested address.\n"
@@ -7372,7 +7373,7 @@ msgstr "파일에서 서명을 찾을 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3958
 msgid "Invalid call.\n"
-msgstr "잘못된 호출입니다.\n"
+msgstr "유효하지 않은 호출.\n"
 
 #: dlls/kernelbase/winerror.mc:3965
 msgid "Resource is not currently available.\n"
@@ -7913,15 +7914,15 @@ msgstr "버퍼가 너무 작습니다.\n"
 
 #: dlls/mferror/mferror.mc:46
 msgid "Invalid request.\n"
-msgstr "잘못된 요청입니다.\n"
+msgstr "유효하지 않은 요청.\n"
 
 #: dlls/mferror/mferror.mc:53
 msgid "Invalid stream number.\n"
-msgstr "스트림 번호가 잘못되었습니다.\n"
+msgstr "유효하지 않은 스트림 번호.\n"
 
 #: dlls/mferror/mferror.mc:60
 msgid "Invalid media type.\n"
-msgstr "미디어 형식이 잘못되었습니다.\n"
+msgstr "유효하지 않은 미디어 형식.\n"
 
 #: dlls/mferror/mferror.mc:67
 msgid "No more input is accepted.\n"
@@ -7929,7 +7930,7 @@ msgstr "더 이상 입력이 허용되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:74
 msgid "Object is not initialized.\n"
-msgstr "개체가 초기화되지 않았습니다.\n"
+msgstr "객체가 초기화되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:81
 msgid "Representation is not supported.\n"
@@ -7949,15 +7950,15 @@ msgstr "예상치 못한 오류입니다.\n"
 
 #: dlls/mferror/mferror.mc:116
 msgid "Invalid type.\n"
-msgstr "잘못된 형식입니다.\n"
+msgstr "유효하지 않은 형식.\n"
 
 #: dlls/mferror/mferror.mc:123
 msgid "Invalid file format.\n"
-msgstr "잘못된 파일 형식입니다.\n"
+msgstr "유효하지 않은 파일 형식.\n"
 
 #: dlls/mferror/mferror.mc:137
 msgid "Invalid timestamp.\n"
-msgstr "잘못된 타임스탬프입니다.\n"
+msgstr "유효하지 않은 타임스탬프.\n"
 
 #: dlls/mferror/mferror.mc:144
 msgid "Unsupported scheme.\n"
@@ -7981,7 +7982,7 @@ msgstr "샘플에 대한 재생 시간 설정이 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:179
 msgid "Invalid stream data.\n"
-msgstr "잘못된 스트림 데이터입니다.\n"
+msgstr "유효하지 않은 스트림 데이터.\n"
 
 #: dlls/mferror/mferror.mc:186
 msgid "Realtime support is not available.\n"
@@ -8009,7 +8010,7 @@ msgstr "비율 변경이 선점되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:228
 msgid "Object or value wasn't found.\n"
-msgstr "개체 또는 값을 찾을 수 없습니다.\n"
+msgstr "객체 또는 값을 찾을 수 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:235
 msgid "Value is not available.\n"
@@ -8049,7 +8050,7 @@ msgstr "샘플에 쓰기가 가능하지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:312
 msgid "Key is invalid.\n"
-msgstr "키가 잘못되었습니다.\n"
+msgstr "유효하지 않은 키입니다.\n"
 
 #: dlls/mferror/mferror.mc:319
 msgid "Bad startup version.\n"
@@ -8061,7 +8062,7 @@ msgstr "지원되지 않는 자막입니다.\n"
 
 #: dlls/mferror/mferror.mc:333
 msgid "Invalid position.\n"
-msgstr "잘못된 위치입니다.\n"
+msgstr "유효하지 않은 위치.\n"
 
 #: dlls/mferror/mferror.mc:340
 msgid "Attribute is not found.\n"
@@ -8117,7 +8118,7 @@ msgstr "알 수 없는 바이트 스트림 길이입니다.\n"
 
 #: dlls/mferror/mferror.mc:431
 msgid "Invalid work queue index.\n"
-msgstr "잘못된 작업 큐 인덱스입니다.\n"
+msgstr "유효하지 않은 작업 큐 인덱스.\n"
 
 #: dlls/mferror/mferror.mc:438
 msgid "No events available.\n"
@@ -8125,7 +8126,7 @@ msgstr "사용할 수 있는 이벤트가 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:445
 msgid "Invalid media source state transition.\n"
-msgstr "잘못된 미디어 원본 상태 전환입니다.\n"
+msgstr "유효하지 않은 미디어 원본 상태 전환.\n"
 
 #: dlls/mferror/mferror.mc:452
 msgid "End of media stream has been reached.\n"
@@ -8225,7 +8226,7 @@ msgstr "싱크가 필요한 헤더를 제공하지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:627
 msgid "Optional node is invalid.\n"
-msgstr "선택적 노드가 잘못되었습니다.\n"
+msgstr "유효하지 않은 선택적 노드입니다.\n"
 
 #: dlls/mferror/mferror.mc:634
 msgid "Cannot find decryptor.\n"
@@ -8245,7 +8246,7 @@ msgstr "토폴로지 요청이 지원되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:662
 msgid "Invalid topology time attributes.\n"
-msgstr "잘못된 토폴로지 시간 특성입니다.\n"
+msgstr "유효하지 않은 토폴로지 시간 특성.\n"
 
 #: dlls/mferror/mferror.mc:669
 msgid "Found loops in topology.\n"
@@ -8883,8 +8884,8 @@ msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
-"원본 파일을 찾을 수 없습니다 {{(cabinet)}}: [2]. 파일 존재 및 액세스 가능 여"
-"부를 확인하세요."
+"원본 파일을 찾을 수 없습니다 {{(cabinet)}}: [2]. 파일 존재 및 접근 가능 여부"
+"를 확인하세요."
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -9108,7 +9109,7 @@ msgstr "유효하지 않은 xml 버전\n"
 
 #: dlls/oleacc/oleacc.rc:31
 msgid "unknown object"
-msgstr "알 수 없는 개체"
+msgstr "알 수 없는 객체"
 
 #: dlls/oleacc/oleacc.rc:32
 msgid "title bar"
@@ -9292,7 +9293,7 @@ msgstr "라디오 버튼"
 
 #: dlls/oleacc/oleacc.rc:77
 msgid "combo box"
-msgstr "콤보 상자"
+msgstr "콤보 박스"
 
 #: dlls/oleacc/oleacc.rc:78
 msgid "drop down"
@@ -9668,7 +9669,7 @@ msgstr "데이터 링크 속성"
 
 #: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
-msgstr "OLE DB 제공자"
+msgstr "OLE DB 공급자"
 
 #: dlls/oledb32/oledb32.rc:33
 msgid "Read"
@@ -9700,11 +9701,11 @@ msgstr "쓰기"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
-msgstr "개체 삽입"
+msgstr "객체 삽입"
 
 #: dlls/oledlg/oledlg.rc:61
 msgid "Object Type:"
-msgstr "개체 타입:"
+msgstr "객체 타입:"
 
 #: dlls/oledlg/oledlg.rc:64 dlls/oledlg/oledlg.rc:102
 msgid "Result"
@@ -9773,14 +9774,14 @@ msgstr "아이콘 바꾸기(&I)..."
 
 #: dlls/oledlg/oledlg.rc:28
 msgid "Insert a new %s object into your document"
-msgstr "새 %s 개체를 문서에 삽입"
+msgstr "새 %s 객체를 문서에 삽입"
 
 #: dlls/oledlg/oledlg.rc:29
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"파일 내용을 문서에 개체로 삽입합니다. 파일을 만든 프로그램을 사용하여 활성화"
+"파일 내용을 문서에 객체로 삽입합니다. 파일을 만든 프로그램을 사용하여 활성화"
 "합니다."
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:197
@@ -9804,15 +9805,15 @@ msgstr "변환(&C)..."
 
 #: dlls/oledlg/oledlg.rc:36
 msgid "%1 %2 &Object"
-msgstr "%1 %2 개체(&O)"
+msgstr "%1 %2 객체(&O)"
 
 #: dlls/oledlg/oledlg.rc:34
 msgid "%1 &Object"
-msgstr "%1 개체(&O)"
+msgstr "%1 객체(&O)"
 
 #: dlls/oledlg/oledlg.rc:33 programs/oleview/oleview.rc:40
 msgid "&Object"
-msgstr "개체(&O)"
+msgstr "객체(&O)"
 
 #: dlls/oledlg/oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -9874,7 +9875,7 @@ msgstr "알 수 없는 원본"
 
 #: dlls/oledlg/oledlg.rc:50
 msgid "the program which created it"
-msgstr "개체를 만든 프로그램"
+msgstr "객체를 만든 프로그램"
 
 #: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
@@ -10504,7 +10505,7 @@ msgstr "마지막으로 수정한 날짜:"
 
 #: dlls/shell32/shell32.rc:404
 msgid "Last accessed:"
-msgstr "마지막으로 액세스한 날짜:"
+msgstr "마지막으로 접근한 날짜:"
 
 #: dlls/shell32/shell32.rc:135 dlls/shell32/shell32.rc:139
 #: programs/winefile/winefile.rc:107
@@ -12865,8 +12866,8 @@ msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"설치할 때, ActiveX 구성 요소는 컴퓨터에 대한 완전한 액세스 권한을 가집니다. "
-"위 원본에 대한 절대적인 신뢰가 없는 경우 [설치]를 클릭하지 마세요."
+"설치할 때, ActiveX 구성 요소는 컴퓨터에 대한 완전한 접근 권한을 가집니다. 위 "
+"원본에 대한 절대적인 신뢰가 없는 경우 [설치]를 클릭하지 마세요."
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
@@ -13040,7 +13041,7 @@ msgstr "경로를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Object variable not set"
-msgstr "개체 변수가 설정되어 있지 않습니다"
+msgstr "객체 변수가 설정되어 있지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:46
 msgid "For loop not initialized"
@@ -13048,7 +13049,7 @@ msgstr "For 루프가 초기화되지 않음"
 
 #: dlls/vbscript/vbscript.rc:47
 msgid "Invalid use of Null"
-msgstr "잘못된 널 사용"
+msgstr "유효하지 않은 Null 사용"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "Can't create necessary temporary file"
@@ -13056,7 +13057,7 @@ msgstr "필요한 임시 파일을 만들 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:50
 msgid "ActiveX component can't create object"
-msgstr "ActiveX 구성 요소는 개체를 만들 수 없습니다"
+msgstr "ActiveX 구성 요소는 객체를 만들 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:51
 msgid "Class doesn't support Automation"
@@ -13068,11 +13069,11 @@ msgstr "자동화 작업 중에 파일 이름 또는 클래스 이름을 찾을 
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Object doesn't support named arguments"
-msgstr "개체는 명명된 인수를 지원하지 않습니다"
+msgstr "객체는 명명된 인수를 지원하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:56
 msgid "Object doesn't support current locale setting"
-msgstr "개체는 현재 로캘 설정을 지원하지 않습니다"
+msgstr "객체는 현재 로캘 설정을 지원하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:57
 msgid "Named argument not found"
@@ -13406,7 +13407,7 @@ msgstr "내부 오류 발생.\n"
 
 #: dlls/wininet/winineterror.mc:36
 msgid "The URL is invalid.\n"
-msgstr "URL이 잘못되었습니다.\n"
+msgstr "유효하지 않은 URL입니다.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -13418,7 +13419,7 @@ msgstr "서버 이름을 확인할 수 없습니다.\n"
 
 #: dlls/wininet/winineterror.mc:51
 msgid "The requested operation is invalid.\n"
-msgstr "요청한 작업이 잘못되었습니다.\n"
+msgstr "유효하지 않은 요청 작업입니다.\n"
 
 #: dlls/wininet/winineterror.mc:56
 msgid ""
@@ -13476,7 +13477,7 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:37
 msgid "The specified device handle is invalid."
-msgstr "지정한 장치 핸들이 잘못되었습니다."
+msgstr "지정한 장치 핸들이 유효하지 않습니다."
 
 #: dlls/winmm/winmm.rc:38
 msgid "There is no driver installed on your system!"
@@ -13504,11 +13505,11 @@ msgstr "시스템에서 정의되지 않은 오류 번호를 지정했습니다.
 
 #: dlls/winmm/winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "잘못된 플래그를 시스템 함수에 전달했습니다."
+msgstr "유효하지 않은 플래그를 시스템 함수에 전달했습니다."
 
 #: dlls/winmm/winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
-msgstr "잘못된 매개변수가 시스템 함수에 전달되었습니다."
+msgstr "유효하지 않은 매개변수가 시스템 함수에 전달되었습니다."
 
 #: dlls/winmm/winmm.rc:46
 msgid ""
@@ -13582,7 +13583,8 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
-msgstr "MCI 장치 ID가 잘못되었습니다. MCI 장치를 열 때 반환된 ID를 사용하세요."
+msgstr ""
+"MCI 장치 ID가 유효하지 않습니다. MCI 장치를 열 때 반환된 ID를 사용하세요."
 
 #: dlls/winmm/winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
@@ -13644,8 +13646,8 @@ msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"장치 드라이버가 잘못된 반환 형식을 반환했습니다. 새 드라이버를 얻을 수 있는"
-"지 장치 제조업체에 확인하세요."
+"장치 드라이버가 유효하지 않은 반환 형식을 반환했습니다. 새 드라이버를 얻을 "
+"수 있는지 장치 제조업체에 확인하세요."
 
 #: dlls/winmm/winmm.rc:73
 msgid ""
@@ -13681,8 +13683,8 @@ msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"장치 드라이버에 문제가 있습니다. 드라이버가 닫혔습니다. 오류에 액세스할 수 없"
-"습니다."
+"장치 드라이버에 문제가 있습니다. 드라이버가 닫혔습니다. 오류에 접근할 수 없습"
+"니다."
 
 #: dlls/winmm/winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
@@ -13763,8 +13765,8 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"시간 형식에 지정한 값이 잘못되었습니다. MCI 문서에서 유효한 형식에 관한 내용"
-"을 참조하세요."
+"시간 형식에 지정한 값이 유효하지 않습니다. MCI 문서에서 유효한 형식에 관한 내"
+"용을 참조하세요."
 
 #: dlls/winmm/winmm.rc:93
 msgid ""
@@ -13825,8 +13827,8 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"파일 이름이 잘못되었습니다. 파일 이름이 8 문자를 넘지 않고, 점과 확장명이 있"
-"는지 확인하세요."
+"파일 이름이 유효하지 않습니다. 파일 이름이 8 문자를 넘지 않고, 점과 확장명이 "
+"있는지 확인하세요."
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
@@ -14133,11 +14135,11 @@ msgstr "특성 또는 값이 있습니다"
 
 #: dlls/wldap32/wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "잘못된 구문입니다"
+msgstr "유효하지 않은 구문입니다"
 
 #: dlls/wldap32/wldap32.rc:64
 msgid "No Such Object"
-msgstr "그런 개체가 없습니다"
+msgstr "그런 객체가 없습니다"
 
 #: dlls/wldap32/wldap32.rc:65
 msgid "Alias Problem"
@@ -14145,7 +14147,7 @@ msgstr "별칭 문제"
 
 #: dlls/wldap32/wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr "잘못된 DN 구문입니다"
+msgstr "유효하지 않은 DN 구문입니다"
 
 #: dlls/wldap32/wldap32.rc:67
 msgid "Is Leaf"
@@ -14197,7 +14199,7 @@ msgstr "이름 짓기 규칙 위반"
 
 #: dlls/wldap32/wldap32.rc:97
 msgid "Object Class Violation"
-msgstr "개체 클래스 위반"
+msgstr "객체 클래스 위반"
 
 #: dlls/wldap32/wldap32.rc:98
 msgid "Not allowed on Non-leaf"
@@ -14257,7 +14259,7 @@ msgstr "사용자가 취소했습니다"
 
 #: dlls/wldap32/wldap32.rc:121
 msgid "Parameter Error"
-msgstr "매개 변수 오류"
+msgstr "매개변수 오류"
 
 #: dlls/wldap32/wldap32.rc:122
 msgid "No Memory"
@@ -14354,7 +14356,7 @@ msgstr "활성 코드 페이지: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
 msgid "Invalid code page\n"
-msgstr "잘못된 코드 페이지입니다\n"
+msgstr "유효하지 않은 코드 페이지\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -14533,7 +14535,7 @@ msgid ""
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
 "HELP <명령어>은 해당 명령어에 대한 간단한 도움말을 보여줍니다.\n"
-"매개 변수 없이 HELP를 실행하면 모든 CMD 내장 명령을 표시합니다.\n"
+"매개변수 없이 HELP를 실행하면 모든 CMD 내장 명령을 표시합니다.\n"
 
 #: programs/cmd/cmd.rc:108
 msgid ""
@@ -14611,7 +14613,7 @@ msgstr ""
 "(기본적으로 레지스트리로부터 가져옴).\n"
 "설정을 바꾸려면 PATH 이후에 새로운 값을 지정합니다.\n"
 "\n"
-"PATH 환경변수를 사용해서 PATH를 수정하는 것도 가능합니다.\n"
+"PATH 환경 변수를 사용해서 PATH를 수정하는 것도 가능합니다.\n"
 "예를 들어:\n"
 "PATH %PATH%;c:\\temp\n"
 
@@ -14710,9 +14712,9 @@ msgid ""
 "values than in a native Win32 implementation. Note that it is not possible\n"
 "to affect the operating system environment from within cmd.\n"
 msgstr ""
-"SET은 cmd 환경변수를 표시하거나 바꿉니다.\n"
+"SET은 cmd 환경 변수를 표시하거나 바꿉니다.\n"
 "\n"
-"매개변수가 없는 SET은 현재 환경변수를 모두 표시합니다.\n"
+"매개변수가 없는 SET은 현재 환경 변수를 모두 표시합니다.\n"
 "\n"
 "환경 변수를 만들거나 수정할 때 사용하는 구문:\n"
 "\n"
@@ -15017,7 +15019,7 @@ msgstr ""
 "DEL (ERASE)   하나의 파일이나 여러 파일을 제거\n"
 "DIR           디렉터리 내용 보기\n"
 "ECHO          문자를 바로 화면 출력으로 복사\n"
-"ENDLOCAL      배치파일에서 환경변수의 지역화의 끝을 알려줌\n"
+"ENDLOCAL      배치파일에서 환경 변수의 지역화의 끝을 알려줌\n"
 "FTYPE         파일 형식과 관련된 열기 명령어 보기 또는 수정\n"
 "HELP          목차의 짤막한 도움말 항목 보여줌\n"
 "MD (MKDIR)    하위 디렉터리 만들기\n"
@@ -15032,7 +15034,7 @@ msgstr ""
 "REN (RENAME)  파일 이름 바꾸기\n"
 "RD (RMDIR)    하위 디렉터리 제거\n"
 "SET           환경 변수 보여주거나 바꾸기\n"
-"SETLOCAL      배치 파일에서 환경변수의 지역화 시작을 알려줌\n"
+"SETLOCAL      배치 파일에서 환경 변수의 지역화 시작을 알려줌\n"
 "START         프로그램을 실행시키거나,연결된 프로그램으로 문서 열기\n"
 "TIME          시스템 날짜 변경 및 보기\n"
 "TITLE         CMD 세션의 창 제목 설정\n"
@@ -15084,7 +15086,7 @@ msgstr "인수 없음\n"
 
 #: programs/cmd/cmd.rc:372
 msgid "Syntax error\n"
-msgstr "문법 오류\n"
+msgstr "구문 오류\n"
 
 #: programs/cmd/cmd.rc:374
 msgid "No help available for %1\n"
@@ -15517,7 +15519,7 @@ msgstr "사용법: hostname\n"
 
 #: programs/hostname/hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "오류: 잘못된 옵션 '%c'.\n"
+msgstr "오류: 유효하지 않은 옵션 '%c'.\n"
 
 #: programs/hostname/hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
@@ -15536,7 +15538,7 @@ msgstr "사용법: ipconfig [ /? | /all ]\n"
 
 #: programs/ipconfig/ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "오류: 잘못된 명령줄 매개변수가 지정되었습니다\n"
+msgstr "오류: 유효하지 않은 명령줄 매개변수가 지정되었습니다\n"
 
 #: programs/ipconfig/ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -15636,7 +15638,7 @@ msgstr "KerbTicket 암호화 유형"
 
 #: programs/klist/klist.rc:37
 msgid "Current LogonId is"
-msgstr "현재 로그온 아이디"
+msgstr "현재 로그온 ID"
 
 #: programs/klist/klist.rc:38
 msgid "Client"
@@ -15862,15 +15864,15 @@ msgstr "현재 연결"
 
 #: programs/netstat/netstat.rc:50
 msgid "Segments Received"
-msgstr "받은 세그멘트"
+msgstr "받은 세그먼트"
 
 #: programs/netstat/netstat.rc:51
 msgid "Segments Sent"
-msgstr "보낸 세그멘트"
+msgstr "보낸 세그먼트"
 
 #: programs/netstat/netstat.rc:52
 msgid "Segments Retransmitted"
-msgstr "재전송된 세그멘트"
+msgstr "재전송된 세그먼트"
 
 #: programs/netstat/netstat.rc:53
 msgid "UDP Statistics for IPv4"
@@ -16226,7 +16228,7 @@ msgstr "C&LSID를 클립보드로 복사"
 
 #: programs/oleview/oleview.rc:57
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "&HTML 개체 태그를 클립보드로 복사"
+msgstr "&HTML 객체 태그를 클립보드로 복사"
 
 #: programs/oleview/oleview.rc:63
 msgid "&Expert mode"
@@ -16333,7 +16335,7 @@ msgstr "ITypeLib 뷰어"
 
 #: programs/oleview/oleview.rc:99
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - OLE/COM 개체 뷰어"
+msgstr "OleView - OLE/COM 객체 뷰어"
 
 #: programs/oleview/oleview.rc:102
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
@@ -16361,15 +16363,15 @@ msgstr "변경 사항을 저장할 지 물어본 후 프로그램 끝내기"
 
 #: programs/oleview/oleview.rc:110
 msgid "Create an instance of the selected object"
-msgstr "선택된 개체의 인스턴트 만들기"
+msgstr "선택된 객체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "지정한 시스템에서 선택한 개체의 인스턴트 만들기"
+msgstr "지정한 시스템에서 선택한 객체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:112
 msgid "Release the currently selected object instance"
-msgstr "현재 선택된 개체 인스턴트 해제하기"
+msgstr "현재 선택된 객체 인스턴트 해제하기"
 
 #: programs/oleview/oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
@@ -16422,7 +16424,7 @@ msgstr "CoGetClassObject를 호출할 때 원격 서버에 묻기"
 
 #: programs/oleview/oleview.rc:130
 msgid "ObjectClasses"
-msgstr "개체 클래스"
+msgstr "객체 클래스"
 
 #: programs/oleview/oleview.rc:131
 msgid "Grouped by Component Category"
@@ -16430,15 +16432,15 @@ msgstr "컴포넌트 범주별 그룹화"
 
 #: programs/oleview/oleview.rc:132
 msgid "OLE 1.0 Objects"
-msgstr "OLE 1.0 개체"
+msgstr "OLE 1.0 객체"
 
 #: programs/oleview/oleview.rc:133
 msgid "COM Library Objects"
-msgstr "COM 라이브러리 개체"
+msgstr "COM 라이브러리 객체"
 
 #: programs/oleview/oleview.rc:134
 msgid "All Objects"
-msgstr "모든 개체"
+msgstr "모든 객체"
 
 #: programs/oleview/oleview.rc:135
 msgid "Application IDs"
@@ -16722,7 +16724,7 @@ msgstr "아이콘 (*.ico)"
 
 #: programs/reg/reg.rc:139
 msgid "reg: Invalid syntax. "
-msgstr "reg: 잘못된 구문. "
+msgstr "reg: 유효하지 않은 구문. "
 
 #: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
@@ -17166,27 +17168,27 @@ msgid ""
 "\n"
 msgstr ""
 "  /reg:32\n"
-"     32-bit 뷰를 사용하여 레지스트리에 액세스합니다.\n"
+"     32-bit 뷰를 사용하여 레지스트리에 접근합니다.\n"
 "\n"
 "  /reg:64\n"
-"     64-bit 뷰를 사용하여 레지스트리에 액세스합니다.\n"
+"     64-bit 뷰를 사용하여 레지스트리에 접근합니다.\n"
 "\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
-msgstr "reg: 잘못된 레지스트리 키\n"
+msgstr "reg: 유효하지 않은 레지스트리 키\n"
 
 #: programs/reg/reg.rc:119
 msgid "reg: Unable to access remote machine\n"
-msgstr "reg: 원격 컴퓨터에 액세스할 수 없습니다\n"
+msgstr "reg: 원격 컴퓨터에 접근할 수 없습니다\n"
 
 #: programs/reg/reg.rc:172
 msgid "reg: Invalid system key\n"
-msgstr "reg: 잘못된 시스템 키\n"
+msgstr "reg: 유효하지 않은 시스템 키\n"
 
 #: programs/reg/reg.rc:140
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: 잘못된 옵션 [%1]. "
+msgstr "reg: 유효하지 않은 옵션 [%1]. "
 
 #: programs/reg/reg.rc:122
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
@@ -17214,7 +17216,7 @@ msgstr "레지스트리 값 '%1'(이)가 이미 존재합니다. 덮어쓰시겠
 
 #: programs/reg/reg.rc:118
 msgid "reg: Invalid command line parameters\n"
-msgstr "reg: 명령줄 매개변수가 잘못되었습니다\n"
+msgstr "reg: 명령줄 매개변수가 유효하지 않습니다\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
@@ -17447,7 +17449,7 @@ msgstr "레지스트리 창 사용자 정의 명령이 들어 있습니다"
 
 #: programs/regedit/regedit.rc:165
 msgid "Contains commands for accessing frequently used keys"
-msgstr "자주 사용되는 키에 액세스하는 명령이 들어 있습니다"
+msgstr "자주 사용되는 키에 접근하는 명령이 들어 있습니다"
 
 #: programs/regedit/regedit.rc:166
 msgid ""
@@ -17630,13 +17632,14 @@ msgstr "regedit: 메모리 초과! (%1!S!, line %2!u!)\n"
 
 #: programs/regedit/regedit.rc:422
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "regedit: 잘못된 16진수 값.\n"
+msgstr "regedit: 유효하지 않은 16진수 값.\n"
 
 #: programs/regedit/regedit.rc:423
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
-msgstr "regedit: 16진수 값을 변환할 수 없습니다. '%1'(이)가 잘못되었습니다.\n"
+msgstr ""
+"regedit: 16진수 값을 변환할 수 없습니다. '%1'(이)가 유효하지 않습니다.\n"
 
 #: programs/regedit/regedit.rc:424
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
@@ -17675,7 +17678,7 @@ msgstr "regedit: 레지스트리 값 '%1'(이)가 이진 정보로 출력됩니�
 
 #: programs/regedit/regedit.rc:432
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "regedit: 잘못된 시스템 키 [%1]\n"
+msgstr "regedit: 유효하지 않은 시스템 키 [%1]\n"
 
 #: programs/regedit/regedit.rc:433
 msgid ""
@@ -17896,7 +17899,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: [%1]은(는) 잘못된 스위치입니다\n"
+"regsvr32: [%1]은(는) 유효하지 않은 스위치입니다\n"
 "\n"
 
 #: programs/regsvr32/regsvr32.rc:43
@@ -18018,11 +18021,11 @@ msgstr "사용법: taskkill [/?] [/f] [/im 프로세스이름 | /pid 프로세�
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "오류: 잘못된 명령줄 옵션이 지정되었습니다.\n"
+msgstr "오류: 유효하지 않은 명령줄 옵션이 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "오류: 잘못된 명령줄 매개변수가 지정되었습니다.\n"
+msgstr "오류: 유효하지 않은 명령줄 매개변수가 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -18111,7 +18114,7 @@ msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
 msgid "ERROR: Invalid syntax\n"
-msgstr "오류: 잘못된 구문\n"
+msgstr "오류: 유효하지 않은 구문\n"
 
 #: programs/tasklist/tasklist.rc:37
 msgid "ERROR: The search filter cannot be recognized.\n"
@@ -18525,7 +18528,7 @@ msgstr "페이지 폴트(&F)"
 
 #: programs/taskmgr/taskmgr.rc:537
 msgid "&USER Objects"
-msgstr "사용자 개체(&U)"
+msgstr "사용자 객체(&U)"
 
 #: programs/taskmgr/taskmgr.rc:539 programs/taskmgr/taskmgr.rc:281
 msgid "I/O Reads"
@@ -18573,7 +18576,7 @@ msgstr "스레드 수(&T)"
 
 #: programs/taskmgr/taskmgr.rc:561 programs/taskmgr/taskmgr.rc:292
 msgid "GDI Objects"
-msgstr "GDI 개체"
+msgstr "GDI 객체"
 
 #: programs/taskmgr/taskmgr.rc:563 programs/taskmgr/taskmgr.rc:293
 msgid "I/O Writes"
@@ -18797,7 +18800,7 @@ msgstr "페이지 폴트"
 
 #: programs/taskmgr/taskmgr.rc:280
 msgid "USER Objects"
-msgstr "사용자 개체"
+msgstr "사용자 객체"
 
 #: programs/taskmgr/taskmgr.rc:283
 msgid "Session ID"
@@ -18881,7 +18884,7 @@ msgstr "프로세스는 하나 이상의 프로세서와 선호도가 있어야 
 
 #: programs/taskmgr/taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "잘못된 옵션입니다"
+msgstr "유효하지 않은 옵션입니다"
 
 #: programs/taskmgr/taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -18960,7 +18963,7 @@ msgstr "uninstaller: '--remove' 옵션 뒤에는 프로그램 GUID가 있어야 
 
 #: programs/uninstaller/uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: 잘못된 옵션 [%1]\n"
+msgstr "uninstaller: 유효하지 않은 옵션 [%1]\n"
 
 #: programs/uninstaller/uninstaller.rc:35
 msgid ""
@@ -19591,7 +19594,7 @@ msgstr "비활성 제목 표시줄 문자"
 
 #: programs/winecfg/winecfg.rc:121
 msgid "Message Box Text"
-msgstr "메시지 상자 문자"
+msgstr "메시지 박스 문자"
 
 #: programs/winecfg/winecfg.rc:122
 msgid "Application Workspace"
@@ -19659,7 +19662,7 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: 프로그램 %s 시작 실패.\n"
-"이 명령은 잘못되었습니다.\n"
+"이 명령은 유효하지 않습니다.\n"
 
 #: programs/winedbg/winedbg.rc:51 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
@@ -20106,7 +20109,7 @@ msgstr "오류: 별칭을 찾을 수 없습니다\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "오류: 잘못된 질의입니다\n"
+msgstr "오류: 유효하지 않은 질의입니다\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
@@ -20468,7 +20471,7 @@ msgstr ""
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
-msgstr "잘못된 숫자 형식."
+msgstr "유효하지 않은 숫자 형식."
 
 #: programs/wordpad/wordpad.rc:199
 msgid "OLE storage documents are not supported."
@@ -20504,11 +20507,13 @@ msgstr "워드패드 시작 실패"
 
 #: programs/xcopy/xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "잘못된 매개변수 개수 - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
+msgstr ""
+"유효하지 않은 매개변수 개수 - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
 
 #: programs/xcopy/xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "잘못된 매개변수 '%1' - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
+msgstr ""
+"유효하지 않은 매개변수 '%1' - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
 
 #: programs/xcopy/xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
