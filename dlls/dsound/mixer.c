@@ -390,6 +390,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 			dsb->out_channel_map = &channel_map_mono2quad;
 		else if (ochannels == 6)
 			dsb->out_channel_map = &channel_map_mono2surround51;
+                else if (ochannels == 8)
+                    dsb->out_channel_map = &channel_map_mono2surround71;
 	}
 	else if (ochannels == 1)
 	{
@@ -420,11 +422,6 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	{
 		dsb->mix_channels = 4;
 		dsb->out_channel_map = &channel_map_quad2stereo;
-	}
-	else if (ichannels == 1 && ochannels == 8)
-	{
-		dsb->mix_channels = 1;
-		dsb->out_channel_map = &channel_map_mono2surround71;
 	}
 	else if (ichannels == 2 && ochannels == 8)
 	{
