@@ -2324,21 +2324,21 @@ static void test_video_window_autoshow(IVideoWindow *window, IBaseFilter *filter
 
     hr = IVideoWindow_get_Visible(window, &l);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(l == OATRUE, "Got %ld.\n", l);
+    ok(l == OATRUE, "Got %ld.\n", l);
 
     hr = IBaseFilter_Pause(filter);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IVideoWindow_get_Visible(window, &l);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(l == OATRUE, "Got %ld.\n", l);
+    ok(l == OATRUE, "Got %ld.\n", l);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IVideoWindow_get_Visible(window, &l);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(l == OATRUE, "Got %ld.\n", l);
+    ok(l == OATRUE, "Got %ld.\n", l);
 
     hr = IVideoWindow_put_AutoShow(window, OAFALSE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

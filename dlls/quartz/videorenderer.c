@@ -173,6 +173,14 @@ static void video_renderer_init_stream(struct strmbase_renderer *iface)
         ShowWindow(filter->window.hwnd, SW_SHOW);
 }
 
+static void video_renderer_start_stream(struct strmbase_renderer *iface)
+{
+    struct video_renderer *filter = impl_from_strmbase_renderer(iface);
+
+    if (filter->window.AutoShow)
+        ShowWindow(filter->window.hwnd, SW_SHOW);
+}
+
 static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
@@ -206,6 +214,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_query_accept = video_renderer_query_accept,
     .renderer_render = video_renderer_render,
     .renderer_init_stream = video_renderer_init_stream,
+    .renderer_start_stream = video_renderer_start_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
     .renderer_destroy = video_renderer_destroy,
     .renderer_query_interface = video_renderer_query_interface,
