@@ -548,6 +548,7 @@ typedef PCWSTR         *PZPCWSTR;
 # ifdef UNICODE
 # ifndef _TCHAR_DEFINED
 typedef WCHAR           TCHAR,      *PTCHAR;
+typedef WCHAR           TBYTE,      *PTBYTE;
 # define _TCHAR_DEFINED
 #endif
 typedef LPWCH           PTCH,        LPTCH;
@@ -567,6 +568,7 @@ typedef PCUZZWSTR       PCUZZTSTR;
 # else  /* UNICODE */
 # ifndef _TCHAR_DEFINED
 typedef CHAR            TCHAR,      *PTCHAR;
+typedef unsigned char   TBYTE,      *PTBYTE;
 # define _TCHAR_DEFINED
 # endif
 typedef LPCH            PTCH,        LPTCH;
