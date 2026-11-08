@@ -73,12 +73,6 @@ static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
         return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
 }
 
-static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
-{
-    if (This->window.AutoShow)
-        ShowWindow(This->window.hwnd, SW_SHOW);
-}
-
 static HRESULT video_renderer_render(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
@@ -175,7 +169,8 @@ static void video_renderer_init_stream(struct strmbase_renderer *iface)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
 
-    VideoRenderer_AutoShowWindow(filter);
+    if (filter->window.AutoShow)
+        ShowWindow(filter->window.hwnd, SW_SHOW);
 }
 
 static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
