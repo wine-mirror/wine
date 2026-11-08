@@ -3966,6 +3966,8 @@ typedef struct tagLVITEMINDEX
 
 #define ListView_Arrange(hwnd,code) \
     (INT)SNDMSG((hwnd), LVM_ARRANGE, (WPARAM)(INT)(code), 0)
+#define ListView_ApproximateViewRect(hwnd,iWidth,iHeight,iCount) \
+    (DWORD)SNDMSG((hwnd),LVM_APPROXIMATEVIEWRECT,(WPARAM)(iCount),MAKELPARAM(iWidth,iHeight))
 #define ListView_GetItemPosition(hwnd,i,ppt) \
     (INT)SNDMSG((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
 #define ListView_GetItemRect(hwnd,i,prc,code) \
