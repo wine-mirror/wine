@@ -412,6 +412,7 @@ static const struct column col_process[] =
     { L"Create",          CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"GetOwner",        CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
+
 static const struct column col_processor[] =
 {
     { L"AddressWidth",              CIM_UINT16 },
@@ -419,9 +420,11 @@ static const struct column col_processor[] =
     { L"Caption",                   CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CpuStatus",                 CIM_UINT16 },
     { L"CurrentClockSpeed",         CIM_UINT32 },
+    { L"CurrentVoltage",            CIM_UINT16 },
     { L"DataWidth",                 CIM_UINT16 },
     { L"Description",               CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",                  CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { L"ExtClock",                  CIM_UINT32 },
     { L"Family",                    CIM_UINT16 },
     { L"Level",                     CIM_UINT16 },
     { L"Manufacturer",              CIM_STRING|COL_FLAG_DYNAMIC },
@@ -432,9 +435,11 @@ static const struct column col_processor[] =
     { L"ProcessorId",               CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ProcessorType",             CIM_UINT16 },
     { L"Revision",                  CIM_UINT16 },
+    { L"Status",                    CIM_STRING },
     { L"UniqueId",                  CIM_STRING },
     { L"Version",                   CIM_STRING|COL_FLAG_DYNAMIC },
 };
+
 static const struct column col_qualifier[] =
 {
     { L"Class",        CIM_STRING },
@@ -998,6 +1003,7 @@ struct record_process
     class_method *create;
     class_method *get_owner;
 };
+
 struct record_processor
 {
     UINT16       addresswidth;
@@ -1005,9 +1011,11 @@ struct record_processor
     const WCHAR *caption;
     UINT16       cpu_status;
     UINT32       currentclockspeed;
+    UINT16       currentvoltage;
     UINT16       datawidth;
     const WCHAR *description;
     const WCHAR *device_id;
+    UINT32       extclock;
     UINT16       family;
     UINT16       level;
     const WCHAR *manufacturer;
@@ -1018,9 +1026,11 @@ struct record_processor
     const WCHAR *processor_id;
     UINT16       processortype;
     UINT16       revision;
+    const WCHAR *status;
     const WCHAR *unique_id;
     const WCHAR *version;
 };
+
 struct record_qualifier
 {
     const WCHAR *class;
@@ -4015,10 +4025,12 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->caption                = get_processor_caption( i );
         rec->cpu_status             = proc->status;
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
+        rec->currentvoltage         = proc->voltage;
         rec->datawidth              = rec->addresswidth;
         rec->description            = get_processor_caption( i );
         swprintf( device_id, ARRAY_SIZE( device_id ), L"CPU%u", i );
         rec->device_id              = wcsdup( device_id );
+        rec->extclock               = proc->clock;
         rec->family                 = proc->family;
         rec->level                  = info.ProcessorLevel;
         rec->manufacturer           = get_processor_manufacturer( i, buf, len );
@@ -4030,6 +4042,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->processor_id           = wcsdup( processor_id );
         rec->processortype          = proc->type;
         rec->revision               = info.ProcessorRevision;
+        rec->status                 = L"OK";
         rec->version                = wcsdup( version );
         if (!match_row( table, i, cond, &status ))
         {

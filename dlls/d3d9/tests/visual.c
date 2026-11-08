@@ -1660,6 +1660,38 @@ done:
     DestroyWindow(window);
 }
 
+static void test_clear_oversized_viewport(void)
+{
+    struct d3d9_test_context context;
+    D3DVIEWPORT9 viewport = {0, 0, 0, 0, 0.0f, 1.0f};
+    D3DSURFACE_DESC desc;
+    D3DRECT rect = {0};
+    DWORD color;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+    hr = IDirect3DSurface9_GetDesc(context.backbuffer, &desc);
+    ok(hr == D3D_OK, "Failed to get backbuffer description, hr %#lx.\n", hr);
+    viewport.Width = 2 * desc.Width;
+    viewport.Height = 2 * desc.Height;
+    hr = IDirect3DDevice9_SetViewport(context.device, &viewport);
+    ok(hr == D3D_OK, "Failed to set viewport, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(context.device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear backbuffer, hr %#lx.\n", hr);
+    rect.x2 = desc.Width;
+    rect.y2 = desc.Height / 2;
+    hr = IDirect3DDevice9_Clear(context.device, 1, &rect, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear rectangle, hr %#lx.\n", hr);
+
+    color = getPixelColor(context.device, desc.Width / 2, desc.Height / 4);
+    ok(color == 0x0000ff, "Got unexpected color %#lx inside the rectangle.\n", color);
+    color = getPixelColor(context.device, desc.Width / 2, 3 * desc.Height / 4);
+    ok(color == 0xff0000, "Got unexpected color %#lx outside the rectangle.\n", color);
+    release_test_context(&context);
+}
+
 static void color_fill_test(void)
 {
     unsigned int fill_color, color, fill_a, expected_a;
@@ -29447,6 +29479,7 @@ START_TEST(visual)
     test_specular_lighting();
     clear_test();
     test_clear_different_size_surfaces();
+    test_clear_oversized_viewport();
     color_fill_test();
     fog_test();
     test_cube_wrap();

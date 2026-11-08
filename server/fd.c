@@ -2613,6 +2613,16 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
     }
 }
 
+/* default set_file_info() routine */
+void default_fd_set_file_info( struct fd *fd, struct async *async, unsigned int info_class )
+{
+    switch (info_class)
+    {
+    default:
+        set_error( STATUS_NOT_IMPLEMENTED );
+    }
+}
+
 /* default ioctl() routine */
 void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
@@ -2940,6 +2950,33 @@ DECL_HANDLER(get_file_info)
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( fd );
     }
+}
+
+static unsigned int get_set_info_class_access( unsigned int class )
+{
+    switch (class)
+    {
+        case FilePipeInformation: return FILE_WRITE_ATTRIBUTES;
+        default: return 0;
+    }
+}
+
+/* set file info */
+DECL_HANDLER(set_file_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, get_set_info_class_access( req->info_class ));
+    struct async *async;
+
+    if (!fd) return;
+
+    if ((async = create_request_async( fd, &req->async, 0 )))
+    {
+        if (fd->fd_ops->set_file_info) fd->fd_ops->set_file_info( fd, async, req->info_class );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        reply->wait = async_handoff( async, NULL, 1 );
+        release_object( async );
+    }
+    release_object( fd );
 }
 
 /* query volume info */

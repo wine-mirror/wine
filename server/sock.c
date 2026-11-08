@@ -494,6 +494,7 @@ static const struct fd_ops sock_fd_ops =
     .poll_event      = sock_poll_event,
     .get_fd_type     = sock_get_fd_type,
     .get_file_info   = default_fd_get_file_info,
+    .set_file_info   = default_fd_set_file_info,
     .ioctl           = sock_ioctl,
     .cancel_async    = sock_cancel_async,
     .reselect_async  = sock_reselect_async,

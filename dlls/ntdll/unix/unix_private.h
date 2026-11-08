@@ -223,6 +223,7 @@ extern USHORT *lctable;
 extern SIZE_T startup_info_size;
 extern BOOL is_prefix_bootstrap;
 extern ULONG session_id;
+extern ULONG64 mitigation_options[2];
 extern int main_argc;
 extern char **main_argv;
 extern WCHAR **main_wargv;
@@ -397,6 +398,7 @@ extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MA
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length );
 extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info );
+extern void get_random( void *buf, ULONG len );
 extern void init_files(void);
 extern void init_cpu_info(void);
 extern void init_shared_data_cpuinfo( struct _KUSER_SHARED_DATA *data );

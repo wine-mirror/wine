@@ -59,6 +59,7 @@ DECL_HANDLER(get_handle_fd);
 DECL_HANDLER(get_directory_cache_entry);
 DECL_HANDLER(flush);
 DECL_HANDLER(get_file_info);
+DECL_HANDLER(set_file_info);
 DECL_HANDLER(get_volume_info);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
@@ -149,7 +150,6 @@ DECL_HANDLER(write);
 DECL_HANDLER(ioctl);
 DECL_HANDLER(set_irp_result);
 DECL_HANDLER(create_named_pipe);
-DECL_HANDLER(set_named_pipe_info);
 DECL_HANDLER(create_window);
 DECL_HANDLER(destroy_window);
 DECL_HANDLER(get_desktop_window);
@@ -247,7 +247,6 @@ DECL_HANDLER(get_system_handles);
 DECL_HANDLER(get_tcp_connections);
 DECL_HANDLER(get_udp_endpoints);
 DECL_HANDLER(create_mailslot);
-DECL_HANDLER(set_mailslot_info);
 DECL_HANDLER(create_directory);
 DECL_HANDLER(open_directory);
 DECL_HANDLER(get_directory_entries);
@@ -374,6 +373,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_directory_cache_entry,
     (req_handler)req_flush,
     (req_handler)req_get_file_info,
+    (req_handler)req_set_file_info,
     (req_handler)req_get_volume_info,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,
@@ -464,7 +464,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_ioctl,
     (req_handler)req_set_irp_result,
     (req_handler)req_create_named_pipe,
-    (req_handler)req_set_named_pipe_info,
     (req_handler)req_create_window,
     (req_handler)req_destroy_window,
     (req_handler)req_get_desktop_window,
@@ -562,7 +561,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_tcp_connections,
     (req_handler)req_get_udp_endpoints,
     (req_handler)req_create_mailslot,
-    (req_handler)req_set_mailslot_info,
     (req_handler)req_create_directory,
     (req_handler)req_open_directory,
     (req_handler)req_get_directory_entries,
@@ -1025,6 +1023,12 @@ C_ASSERT( offsetof(struct get_file_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct get_file_info_request, info_class) == 16 );
 C_ASSERT( sizeof(struct get_file_info_request) == 24 );
 C_ASSERT( sizeof(struct get_file_info_reply) == 8 );
+C_ASSERT( offsetof(struct set_file_info_request, handle) == 12 );
+C_ASSERT( offsetof(struct set_file_info_request, async) == 16 );
+C_ASSERT( offsetof(struct set_file_info_request, info_class) == 56 );
+C_ASSERT( sizeof(struct set_file_info_request) == 64 );
+C_ASSERT( offsetof(struct set_file_info_reply, wait) == 8 );
+C_ASSERT( sizeof(struct set_file_info_reply) == 16 );
 C_ASSERT( offsetof(struct get_volume_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct get_volume_info_request, async) == 16 );
 C_ASSERT( offsetof(struct get_volume_info_request, info_class) == 56 );
@@ -1493,9 +1497,6 @@ C_ASSERT( sizeof(struct create_named_pipe_request) == 56 );
 C_ASSERT( offsetof(struct create_named_pipe_reply, handle) == 8 );
 C_ASSERT( offsetof(struct create_named_pipe_reply, created) == 12 );
 C_ASSERT( sizeof(struct create_named_pipe_reply) == 16 );
-C_ASSERT( offsetof(struct set_named_pipe_info_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_named_pipe_info_request, flags) == 16 );
-C_ASSERT( sizeof(struct set_named_pipe_info_request) == 24 );
 C_ASSERT( offsetof(struct create_window_request, parent) == 12 );
 C_ASSERT( offsetof(struct create_window_request, owner) == 16 );
 C_ASSERT( offsetof(struct create_window_request, atom) == 20 );
@@ -2049,13 +2050,6 @@ C_ASSERT( offsetof(struct create_mailslot_request, max_msgsize) == 32 );
 C_ASSERT( sizeof(struct create_mailslot_request) == 40 );
 C_ASSERT( offsetof(struct create_mailslot_reply, handle) == 8 );
 C_ASSERT( sizeof(struct create_mailslot_reply) == 16 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, read_timeout) == 16 );
-C_ASSERT( offsetof(struct set_mailslot_info_request, flags) == 24 );
-C_ASSERT( sizeof(struct set_mailslot_info_request) == 32 );
-C_ASSERT( offsetof(struct set_mailslot_info_reply, read_timeout) == 8 );
-C_ASSERT( offsetof(struct set_mailslot_info_reply, max_msgsize) == 16 );
-C_ASSERT( sizeof(struct set_mailslot_info_reply) == 24 );
 C_ASSERT( offsetof(struct create_directory_request, access) == 12 );
 C_ASSERT( sizeof(struct create_directory_request) == 16 );
 C_ASSERT( offsetof(struct create_directory_reply, handle) == 8 );

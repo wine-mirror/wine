@@ -1726,6 +1726,16 @@ enum server_fd_type
     VARARG(data,bytes);         /* file info data */
 @END
 
+/* Set file information */
+@REQ(set_file_info)
+    obj_handle_t handle;        /* handle to the file */
+    struct async_data async;    /* async I/O parameters */
+    unsigned int info_class;    /* queried information class */
+    VARARG(data,bytes);         /* file info data */
+@REPLY
+    obj_handle_t wait;          /* handle to wait on for blocking read */
+@END
+
 /* Query volume information */
 @REQ(get_volume_info)
     obj_handle_t handle;        /* handle to the file */
@@ -2653,12 +2663,6 @@ enum message_type
 #define NAMED_PIPE_MESSAGE_STREAM_READ  0x0002
 #define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 #define NAMED_PIPE_SERVER_END           0x8000
-
-/* Set named pipe information by handle */
-@REQ(set_named_pipe_info)
-    obj_handle_t   handle;
-    unsigned int   flags;
-@END
 
 /* Create a window */
 @REQ(create_window)
@@ -3680,18 +3684,6 @@ struct handle_info
 @REPLY
     obj_handle_t   handle;        /* handle to the mailslot */
 @END
-
-
-/* Set mailslot information */
-@REQ(set_mailslot_info)
-    obj_handle_t   handle;        /* handle to the mailslot */
-    timeout_t      read_timeout;
-    unsigned int   flags;
-@REPLY
-    timeout_t      read_timeout;
-    unsigned int   max_msgsize;
-@END
-#define MAILSLOT_SET_READ_TIMEOUT  1
 
 
 /* Create a directory object */

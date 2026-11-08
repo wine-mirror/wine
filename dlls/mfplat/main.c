@@ -7826,12 +7826,12 @@ static HRESULT WINAPI collection_RemoveElement(IMFCollection *iface, DWORD idx, 
 static HRESULT WINAPI collection_InsertElementAt(IMFCollection *iface, DWORD idx, IUnknown *element)
 {
     struct collection *collection = impl_from_IMFCollection(iface);
-    size_t i;
+    size_t i, count;
 
     TRACE("%p, %lu, %p.\n", iface, idx, element);
 
-    if (!mf_array_reserve((void **)&collection->elements, &collection->capacity, idx + 1,
-            sizeof(*collection->elements)))
+    count = max(idx + 1, collection->count + 1);
+    if (!mf_array_reserve((void **)&collection->elements, &collection->capacity, count, sizeof(*collection->elements)))
         return E_OUTOFMEMORY;
 
     if (idx < collection->count)

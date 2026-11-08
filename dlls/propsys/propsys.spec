@@ -153,7 +153,7 @@
 @ stdcall PropVariantToVariant(ptr ptr)
 @ stub StgDeserializePropVariant
 @ stub StgSerializePropVariant
-@ stub VariantCompare
+@ stdcall VariantCompare(ptr ptr)
 @ stub VariantGetBooleanElem
 @ stub VariantGetDoubleElem
 @ stub VariantGetElementCount

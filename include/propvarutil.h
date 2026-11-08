@@ -118,6 +118,7 @@ PSSTDAPI PropVariantToString(REFPROPVARIANT propvarIn, PWSTR ret, UINT cch);
 PSSTDAPI_(PCWSTR) PropVariantToStringWithDefault(REFPROPVARIANT propvarIn, LPCWSTR pszDefault);
 PSSTDAPI_(PCWSTR) VariantToStringWithDefault(const VARIANT *pvar, LPCWSTR pszDefault);
 PSSTDAPI VariantToString(REFVARIANT var, PWSTR ret, UINT cch);
+PSSTDAPI_(INT) VariantCompare(const VARIANT *var1, const VARIANT *var2);
 
 PSSTDAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret);
 

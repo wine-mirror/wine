@@ -984,6 +984,61 @@ static void test_PropVariantCompareEx(void)
     SysFreeString(str_b.bstrVal);
 }
 
+static void test_VariantCompare(void)
+{
+    static struct
+    {
+        DWORD len;
+        WCHAR string[8];
+    } bstr_66 = { 4, L"66" },
+        bstr_066 = { 6, L"066" };
+    static SAFEARRAY emptysafearray = {
+        .cDims = 1, .fFeatures = FADF_FIXEDSIZE, .cbElements = 4
+    };
+
+    static const struct
+    {
+        VARIANT v1;
+        VARIANT v2;
+        INT ret;
+    } test_data[] = {
+        /* matching variant type */
+        { {.vt = VT_EMPTY}, {.vt = VT_EMPTY}, 0 },
+        { {.vt = VT_I1, .cVal = 66}, {.vt = VT_I1, .cVal = 66}, 0 },
+        { {.vt = VT_I1, .cVal = 33}, {.vt = VT_I1, .cVal = 66}, -1 },
+        { {.vt = VT_I4, .lVal = 66}, {.vt = VT_I4, .lVal = 66}, 0 },
+        { {.vt = VT_I4, .lVal = 33}, {.vt = VT_I4, .lVal = 66}, -1 },
+        { {.vt = VT_UI4, .ulVal = 66}, {.vt = VT_UI4, .ulVal = 66}, 0 },
+        { {.vt = VT_UI4, .ulVal = 33}, {.vt = VT_UI4, .ulVal = 66}, -1 },
+        { {.vt = VT_BSTR, .bstrVal = bstr_66.string}, {.vt = VT_BSTR, .bstrVal = bstr_66.string}, 0 },
+        { {.vt = VT_BSTR, .bstrVal = bstr_66.string}, {.vt = VT_BSTR, .bstrVal = bstr_066.string}, 1 },
+        /* non-matching variant type */
+        { {.vt = VT_EMPTY}, {.vt = VT_NULL}, 0 },
+        { {.vt = VT_I4, .lVal = 66}, {.vt = VT_NULL}, 1 },
+        { {.vt = VT_I4 | VT_ARRAY, .parray = &emptysafearray}, {.vt = VT_NULL}, 1 },
+        { {.vt = VT_UI2, .uiVal = 66}, {.vt = VT_UI4, .ulVal = 99}, -1},
+        { {.vt = VT_UI8, .ullVal = 1}, {.vt = VT_I8, .llVal = -1}, 1 },
+        { {.vt = VT_UI4, .ulVal = 0}, {.vt = VT_I4, .lVal = -1}, 1},
+        /* not handled arguments */
+        { {.vt = VT_INT, .intVal = 1}, {.vt = VT_INT, .intVal = 0}, 0 },
+        { {.vt = VT_UINT, .uintVal = 1}, {.vt = VT_UINT, .uintVal = 0}, 0 },
+        { {.vt = VT_I1, .cVal = 66}, {.vt = VT_I2, .cVal = 99}, 0},
+        { {.vt = VT_UI8, .ullVal = 65}, {.vt = VT_BSTR, .bstrVal = bstr_66.string}, 0 },
+    };
+    int ret;
+
+    for (int i = 0; i < ARRAY_SIZE(test_data); i++)
+    {
+        winetest_push_context("%d) v1 = %s, v2 = %s", i,
+                debugstr_variant(&test_data[i].v1), debugstr_variant(&test_data[i].v2));
+        ret = VariantCompare(&test_data[i].v1, &test_data[i].v2);
+        ok(ret == test_data[i].ret, "got %d\n", ret);
+        ret = VariantCompare(&test_data[i].v2, &test_data[i].v1);
+        ok(ret == -test_data[i].ret, "got %d\n", ret);
+        winetest_pop_context();
+    }
+}
+
 static void test_intconversions(void)
 {
     PROPVARIANT propvar;
@@ -3255,6 +3310,7 @@ START_TEST(propsys)
     test_VariantToStringWithDefault();
     test_VariantToString();
     test_VariantToPropVariant();
+    test_VariantCompare();
     test_PropVariantToVariant();
     test_PropVariantGetStringElem();
     test_PropVariantToFileTime();

@@ -105,6 +105,7 @@ static const struct fd_ops file_fd_ops =
 {
     .get_fd_type   = file_get_fd_type,
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = default_fd_ioctl,
     .queue_async   = default_fd_queue_async,
 };

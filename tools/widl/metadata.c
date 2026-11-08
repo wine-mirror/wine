@@ -644,6 +644,11 @@ static enum table memberref_parent_to_table( UINT token )
     }
 }
 
+static UINT memberref_parent_to_row( UINT token )
+{
+    return token >> 3;
+}
+
 static enum table has_constant_to_table( UINT token )
 {
     switch (token & 0x3)
@@ -3979,6 +3984,7 @@ static UINT merge_typedef_or_ref( const struct winmd *winmd, UINT token )
     return typedef_or_ref( table, new_row );
 }
 
+/* Rewrite a single element of a signature blob, starting at idx. */
 static UINT rewrite_sig_blob( const struct winmd *winmd, const BYTE *sig, UINT idx, UINT sig_len, struct buffer *out )
 {
     const UINT start = idx;
@@ -4033,6 +4039,62 @@ static UINT rewrite_sig_blob( const struct winmd *winmd, const BYTE *sig, UINT i
     return idx - start;
 }
 
+/* Rewrite a signature blob for a method */
+static UINT rewrite_method_sig_blob( const struct winmd *winmd, UINT sig_blob_idx, UINT *ret_param_count, enum element_type *ret_return_type )
+{
+    UINT sig_len, len, param_count, read, i;
+    BYTE return_type, encoded[4];
+    struct buffer new_sig = {0};
+    const BYTE *sig;
+
+    sig = winmd_get_blob( winmd, sig_blob_idx, &sig_len );
+    assert( sig_len >= 3 );
+    if (sig[0] != SIG_TYPE_DEFAULT && sig[0] != SIG_TYPE_HASTHIS)
+    {
+        fprintf( stderr, "%s: unsupported calling convention: %#hhx\n", winmd->name, sig[0] );
+        exit( 1 );
+    }
+    add_bytes( &new_sig, &sig[0], 1 );
+
+    param_count = decode_int( &sig[1], &read );
+    len = encode_int( param_count, encoded );
+    add_bytes( &new_sig, encoded, len );
+
+    return_type = sig[1 + read];
+    if (return_type != ELEMENT_TYPE_VOID)
+        read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
+    else
+    {
+        add_bytes( &new_sig, &return_type, 1 );
+        read++;
+    }
+
+    assert( !!param_count == !!(sig_len - 1 - read));
+    for (i = 0; i < param_count; i++)
+        read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
+
+    if (ret_param_count) *ret_param_count = param_count;
+    if (ret_return_type) *ret_return_type = return_type;
+
+    return add_blob( new_sig.ptr, new_sig.offset );
+}
+
+/* Rewrite a signature blob for a field */
+static UINT rewrite_field_sig_blob( const struct winmd *winmd, UINT sig_blob_idx )
+{
+    static const BYTE field_prefix[] = {SIG_TYPE_FIELD};
+    struct buffer new_sig = {0};
+    const BYTE *sig;
+    UINT sig_len;
+
+    sig = winmd_get_blob( winmd, sig_blob_idx, &sig_len );
+    assert( sig_len && sig[0] == SIG_TYPE_FIELD );
+
+    add_bytes( &new_sig, field_prefix, ARRAY_SIZE( field_prefix ) );
+    rewrite_sig_blob( winmd, sig, ARRAY_SIZE( field_prefix ), sig_len, &new_sig );
+    return add_blob( new_sig.ptr, new_sig.offset );
+}
+
 static UINT merge_param_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
 {
     UINT i, first_param = 0;
@@ -4052,43 +4114,16 @@ static UINT merge_param_list( const struct winmd *winmd, UINT idx_start, UINT id
 
 static UINT merge_method_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
 {
-    struct buffer new_sig = {0};
     UINT i, first_method = 0;
 
     for (i = idx_start; i <= idx_end; i++)
     {
         const struct methoddef_row *def = &((const struct methoddef_row *)winmd->tables[TABLE_METHODDEF].ptr)[i];
-        UINT sig_len, param_count, read, len, j, param_start, param_end, method, new_params = 0;
-        BYTE return_type, encoded[4];
+        UINT param_count, param_start, param_end, method, new_params = 0, new_sig;
+        enum element_type return_type;
         const char *name;
-        const BYTE *sig;
 
-        sig = winmd_get_blob( winmd, def->signature, &sig_len );
-        assert( sig_len >= 3 );
-        if (sig[0] != SIG_TYPE_DEFAULT && sig[0] != SIG_TYPE_HASTHIS)
-        {
-            fprintf( stderr, "%s: unsupported calling convention: %#hhx\n", winmd->name, sig[0] );
-            exit( 1 );
-        }
-        new_sig.offset = 0;
-        add_bytes( &new_sig, &sig[0], 1 );
-
-        param_count = decode_int( &sig[1], &read );
-        len = encode_int( param_count, encoded );
-        add_bytes( &new_sig, encoded, len );
-
-        return_type = sig[1 + read];
-        if (return_type != ELEMENT_TYPE_VOID)
-            read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
-        else
-        {
-            add_bytes( &new_sig, &return_type, 1 );
-            read++;
-        }
-
-        assert( !!param_count == !!(sig_len - 1 - read));
-        for (j = 0; j < param_count; j++)
-            read += rewrite_sig_blob( winmd, sig, 1 + read, sig_len, &new_sig );
+        new_sig = rewrite_method_sig_blob( winmd, def->signature, &param_count, &return_type );
 
         if (param_count &&
             token_list_get_bounds( winmd, sizeof( *def ), i, FIELD_OFFSET( struct methoddef_row, paramlist ),
@@ -4101,8 +4136,7 @@ static UINT merge_method_list( const struct winmd *winmd, UINT idx_start, UINT i
             new_params = merge_param_list( winmd, param_start, param_end );
         }
         name = winmd_get_string( winmd, def->name );
-        method = add_methoddef_row( def->implflags, def->flags, add_string( name ),
-                                    add_blob( new_sig.ptr, new_sig.offset ), new_params );
+        method = add_methoddef_row( def->implflags, def->flags, add_string( name ), new_sig, new_params );
         if (!first_method) first_method = method;
     }
     assert( first_method );
@@ -4111,8 +4145,6 @@ static UINT merge_method_list( const struct winmd *winmd, UINT idx_start, UINT i
 
 static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT idx_end )
 {
-    static const BYTE field_prefix[] = {SIG_TYPE_FIELD};
-    struct buffer new_sig = {0};
     UINT i, first_field = 0;
 
     assert( idx_start <= idx_end );
@@ -4121,16 +4153,10 @@ static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT id
     {
         const struct field_row *field = &((struct field_row *)winmd->tables[TABLE_FIELD].ptr)[i];
         const char *name = winmd_get_string( winmd, field->name );
-        UINT sig_len, new_field;
-        const BYTE *sig;
+        UINT new_field, new_sig;
 
-        new_sig.offset = 0;
-        sig = winmd_get_blob( winmd, field->signature, &sig_len );
-        assert( sig_len && sig[0] == SIG_TYPE_FIELD );
-
-        add_bytes( &new_sig, field_prefix, ARRAY_SIZE( field_prefix ) );
-        rewrite_sig_blob( winmd, sig, 1, sig_len, &new_sig );
-        new_field = add_field_row( field->flags, add_string( name ), add_blob( new_sig.ptr, new_sig.offset ) );
+        new_sig = rewrite_field_sig_blob( winmd, field->signature );
+        new_field = add_field_row( field->flags, add_string( name ), new_sig );
         if (!first_field) first_field = new_field;
     }
     return first_field;
@@ -4174,6 +4200,101 @@ static void merge_typedefs( void )
     }
 }
 
+static void merge_interface_impls( void )
+{
+    UINT i;
+
+    for (i = 0; i < winmd_count - 1; i++)
+    {
+        const struct winmd *winmd = winmd_list[i];
+
+        FOR_EACH_TABLE_ROW( winmd, TABLE_INTERFACEIMPL, struct interfaceimpl_row, impl )
+        {
+            const struct typedef_row *class_def = &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[impl->class - 1];
+            UINT iface_row = typedef_or_ref_to_row( impl->interface ), new_iface_row, new_class_row;
+            enum table iface_table = typedef_or_ref_to_table( impl->interface );
+
+            new_class_row = winmd_find_typedef_row( current_winmd, winmd_get_string( winmd, class_def->name ),
+                                                    winmd_get_string( winmd, class_def->namespace ) );
+            assert( new_class_row );
+            switch (iface_table)
+            {
+            case TABLE_TYPEDEF:
+            {
+                const struct typedef_row *iface_def =
+                    &((const struct typedef_row *)winmd->tables[TABLE_TYPEDEF].ptr)[iface_row - 1];
+                new_iface_row = winmd_find_typedef_row( current_winmd, winmd_get_string( winmd, iface_def->name ),
+                                                        winmd_get_string( winmd, iface_def->namespace ) );
+                break;
+            }
+            case TABLE_TYPEREF:
+            {
+                const struct typeref_row *iface_ref =
+                    &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[iface_row - 1];
+                new_iface_row = winmd_find_typeref_row( current_winmd, winmd_get_string( winmd, iface_ref->name ),
+                                                        winmd_get_string( winmd, iface_ref->namespace ) );
+                break;
+            }
+            default:
+                fprintf( stderr, "%s: unknown TypeDefOrRef table: %#x\n", winmd->name, iface_table );
+                exit( 1 );
+            }
+            assert( new_iface_row );
+
+            add_interfaceimpl_row( new_class_row, typedef_or_ref( iface_table, new_iface_row ) );
+        }
+    }
+}
+
+
+static void merge_memberrefs( void )
+{
+    UINT i;
+
+    for (i = 0; i < winmd_count - 1; i++)
+    {
+        const struct winmd *winmd = winmd_list[i];
+
+        FOR_EACH_TABLE_ROW( winmd, TABLE_MEMBERREF, struct memberref_row, ref )
+        {
+            UINT class_row = memberref_parent_to_row( ref->class ), new_class_row;
+            enum table class_table = memberref_parent_to_table( ref->class );
+            UINT sig_len, new_sig;
+            const char *name;
+            const BYTE *sig;
+
+            switch (class_table)
+            {
+            case TABLE_TYPEDEF:
+                new_class_row = merge_typedef_row( winmd, class_row - 1 );
+            case TABLE_TYPEREF:
+            {
+                const struct typeref_row *ref = &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[class_row - 1];
+                new_class_row = winmd_find_typeref_row( current_winmd, winmd_get_string( winmd, ref->name ),
+                                                        winmd_get_string( winmd, ref->namespace ) );
+                break;
+            }
+            default:
+            {
+                fprintf( stderr, "%s: unsupported MemberRefParent table: %#x\n", winmd->name, class_table );
+                exit( 1 );
+            }
+            }
+            assert( new_class_row );
+
+            sig = winmd_get_blob( winmd, ref->signature, &sig_len );
+            assert( sig_len );
+            if (sig[0] == SIG_TYPE_FIELD)
+                new_sig = rewrite_field_sig_blob( winmd, ref->signature );
+            else
+                new_sig = rewrite_method_sig_blob( winmd, ref->signature, NULL, NULL );
+
+            name = winmd_get_string( winmd, ref->name );
+            add_memberref_row( memberref_parent( class_table, new_class_row ), add_string( name ), new_sig );
+        }
+    }
+}
+
 static void merge_tables( void )
 {
     if (winmd_count <= 1) return;
@@ -4182,4 +4303,6 @@ static void merge_tables( void )
 
     merge_typerefs();
     merge_typedefs();
+    merge_interface_impls();
+    merge_memberrefs();
 }

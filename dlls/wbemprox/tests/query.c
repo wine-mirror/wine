@@ -1924,6 +1924,7 @@ static void test_Win32_Processor( IWbemServices *services )
         check_property_nullable( obj, L"Name", VT_BSTR, CIM_STRING );
         check_property_nullable( obj, L"ProcessorId", VT_BSTR, CIM_STRING );
         check_property_nullable( obj, L"Revision", VT_I4, CIM_UINT16 );
+        check_property( obj, L"Status", VT_BSTR, CIM_STRING );
         check_property( obj, L"Version", VT_BSTR, CIM_STRING );
 
         type = 0xdeadbeef;

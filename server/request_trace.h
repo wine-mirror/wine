@@ -727,6 +727,19 @@ static void dump_get_file_info_reply( const struct get_file_info_reply *req )
     dump_varargs_bytes( " data=", cur_size );
 }
 
+static void dump_set_file_info_request( const struct set_file_info_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    dump_async_data( ", async=", &req->async );
+    fprintf( stderr, ", info_class=%08x", req->info_class );
+    dump_varargs_bytes( ", data=", cur_size );
+}
+
+static void dump_set_file_info_reply( const struct set_file_info_reply *req )
+{
+    fprintf( stderr, " wait=%04x", req->wait );
+}
+
 static void dump_get_volume_info_request( const struct get_volume_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -1686,12 +1699,6 @@ static void dump_create_named_pipe_reply( const struct create_named_pipe_reply *
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", created=%d", req->created );
-}
-
-static void dump_set_named_pipe_info_request( const struct set_named_pipe_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", flags=%08x", req->flags );
 }
 
 static void dump_create_window_request( const struct create_window_request *req )
@@ -2820,19 +2827,6 @@ static void dump_create_mailslot_reply( const struct create_mailslot_reply *req 
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
-static void dump_set_mailslot_info_request( const struct set_mailslot_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    dump_timeout( ", read_timeout=", &req->read_timeout );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
-static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
-{
-    dump_timeout( " read_timeout=", &req->read_timeout );
-    fprintf( stderr, ", max_msgsize=%08x", req->max_msgsize );
-}
-
 static void dump_create_directory_request( const struct create_directory_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -3619,6 +3613,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_directory_cache_entry_request,
     (dump_func)dump_flush_request,
     (dump_func)dump_get_file_info_request,
+    (dump_func)dump_set_file_info_request,
     (dump_func)dump_get_volume_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -3709,7 +3704,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_ioctl_request,
     (dump_func)dump_set_irp_result_request,
     (dump_func)dump_create_named_pipe_request,
-    (dump_func)dump_set_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
     (dump_func)dump_get_desktop_window_request,
@@ -3807,7 +3801,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_tcp_connections_request,
     (dump_func)dump_get_udp_endpoints_request,
     (dump_func)dump_create_mailslot_request,
-    (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
     (dump_func)dump_open_directory_request,
     (dump_func)dump_get_directory_entries_request,
@@ -3934,6 +3927,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_directory_cache_entry_reply,
     (dump_func)dump_flush_reply,
     (dump_func)dump_get_file_info_reply,
+    (dump_func)dump_set_file_info_reply,
     (dump_func)dump_get_volume_info_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
@@ -4024,7 +4018,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_ioctl_reply,
     NULL,
     (dump_func)dump_create_named_pipe_reply,
-    NULL,
     (dump_func)dump_create_window_reply,
     NULL,
     (dump_func)dump_get_desktop_window_reply,
@@ -4122,7 +4115,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_tcp_connections_reply,
     (dump_func)dump_get_udp_endpoints_reply,
     (dump_func)dump_create_mailslot_reply,
-    (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
     (dump_func)dump_open_directory_reply,
     (dump_func)dump_get_directory_entries_reply,
@@ -4249,6 +4241,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_directory_cache_entry",
     "flush",
     "get_file_info",
+    "set_file_info",
     "get_volume_info",
     "lock_file",
     "unlock_file",
@@ -4339,7 +4332,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "ioctl",
     "set_irp_result",
     "create_named_pipe",
-    "set_named_pipe_info",
     "create_window",
     "destroy_window",
     "get_desktop_window",
@@ -4437,7 +4429,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_tcp_connections",
     "get_udp_endpoints",
     "create_mailslot",
-    "set_mailslot_info",
     "create_directory",
     "open_directory",
     "get_directory_entries",

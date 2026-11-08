@@ -158,6 +158,7 @@ static void pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
+static void pipe_end_set_file_info( struct fd *fd, struct async *async, unsigned int info_class );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
@@ -191,6 +192,7 @@ static const struct fd_ops pipe_server_fd_ops =
     .write           = pipe_end_write,
     .flush           = pipe_end_flush,
     .get_file_info   = pipe_end_get_file_info,
+    .set_file_info   = pipe_end_set_file_info,
     .get_volume_info = pipe_end_get_volume_info,
     .ioctl           = pipe_server_ioctl,
     .reselect_async  = pipe_end_reselect_async,
@@ -221,6 +223,7 @@ static const struct fd_ops pipe_client_fd_ops =
     .write           = pipe_end_write,
     .flush           = pipe_end_flush,
     .get_file_info   = pipe_end_get_file_info,
+    .set_file_info   = pipe_end_set_file_info,
     .get_volume_info = pipe_end_get_volume_info,
     .ioctl           = pipe_client_ioctl,
     .reselect_async  = pipe_end_reselect_async,
@@ -269,6 +272,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
 {
     .get_fd_type   = named_pipe_device_file_get_fd_type,
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = named_pipe_device_ioctl,
     .queue_async   = default_fd_queue_async,
 };
@@ -299,6 +303,7 @@ static const struct object_ops named_pipe_dir_ops =
 static const struct fd_ops named_pipe_dir_fd_ops =
 {
     .get_file_info = default_fd_get_file_info,
+    .set_file_info = default_fd_set_file_info,
     .ioctl         = named_pipe_dir_ioctl,
     .queue_async   = default_fd_queue_async,
 };
@@ -844,6 +849,45 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
         }
     default:
         default_fd_get_file_info( fd, handle, info_class );
+    }
+}
+
+static void pipe_end_set_file_info( struct fd *fd, struct async *async, unsigned int info_class )
+{
+    struct pipe_end *pipe_end = get_fd_user( fd );
+
+    switch (info_class)
+    {
+    case FilePipeInformation:
+        {
+            const FILE_PIPE_INFORMATION *info = get_req_data();
+
+            if (get_req_data_size() < sizeof(*info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+            }
+            else if ((info->CompletionMode | info->ReadMode) & ~1)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+            }
+            else if (!pipe_end->pipe)
+            {
+                set_error( STATUS_PIPE_DISCONNECTED );
+            }
+            else if (info->ReadMode && !pipe_end->pipe->message_mode)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+            }
+            else
+            {
+                pipe_end->flags = (info->CompletionMode ? NAMED_PIPE_NONBLOCKING_MODE    : 0) |
+                                  (info->ReadMode       ? NAMED_PIPE_MESSAGE_STREAM_READ : 0);
+            }
+        }
+        break;
+
+    default:
+        default_fd_set_file_info( fd, async, info_class );
     }
 }
 
@@ -1601,38 +1645,4 @@ DECL_HANDLER(create_named_pipe)
     }
 
     release_object( pipe );
-}
-
-DECL_HANDLER(set_named_pipe_info)
-{
-    struct pipe_end *pipe_end;
-
-    pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
-                                                  FILE_WRITE_ATTRIBUTES, &pipe_server_ops );
-    if (!pipe_end)
-    {
-        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
-            return;
-
-        clear_error();
-        pipe_end = (struct pipe_end *)get_handle_obj( current->process, req->handle,
-                                                      0, &pipe_client_ops );
-        if (!pipe_end) return;
-    }
-
-    if (!pipe_end->pipe)
-    {
-        set_error( STATUS_PIPE_DISCONNECTED );
-    }
-    else if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
-            ((req->flags & NAMED_PIPE_MESSAGE_STREAM_READ) && !pipe_end->pipe->message_mode))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-    }
-    else
-    {
-        pipe_end->flags = req->flags;
-    }
-
-    release_object( pipe_end );
 }

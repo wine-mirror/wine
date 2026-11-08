@@ -449,6 +449,11 @@ static HRESULT WINAPI d3d9_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
                         buffer->_2d.width, buffer->_2d.height);
                 IDirect3DSurface9_UnlockRect(buffer->d3d9_surface.surface);
             }
+            else
+            {
+                free(buffer->_2d.linear_buffer);
+                buffer->_2d.linear_buffer = NULL;
+            }
         }
     }
 
@@ -1080,6 +1085,11 @@ static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
             {
                 copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
                         buffer->dxgi_surface.map_desc.RowPitch, buffer->_2d.width, buffer->_2d.height);
+            }
+            else
+            {
+                free(buffer->_2d.linear_buffer);
+                buffer->_2d.linear_buffer = NULL;
             }
         }
     }
