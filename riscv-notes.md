@@ -82,3 +82,5 @@ How this helps our Wine port
 - If it fails, the exact error will show whether the issue is target recognition, code generation, or another missing component.
 - Either way, we should continue fixing Wine's architecture validation independently; switching linkers won't fix the is_machine_64bit() omission.
 One important clarification: the command you found compiles for Windows, whereas our Winelib hello-world test is a Linux-native shared object loaded by Wine. We should retain that original test because it checks the native Wine runtime path we are trying to get working.
+
+LDFLAGS="-Wl,-u,__wine_riscv64_get_teb -latomic"
