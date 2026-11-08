@@ -2985,11 +2985,14 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     return (struct _TEB *)__getReg(18);
 }
 #elif defined(__riscv) && defined(__GNUC__)
-/*
- * RISC-V Linux reserves tp (x4) for native ELF TLS.
- * Retrieve the Windows TEB through Wine's existing implementation.
- */
-NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void);
+/* Linux uses tp (x4) for native ELF TLS.  Winelib modules must not
+ * interpret it as a Windows TEB.  The native CRT resolves the TEB
+ * through the already initialized Unix-side ntdll runtime. */
+extern struct _TEB *__wine_riscv64_get_teb(void);
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return __wine_riscv64_get_teb();
+}
 #elif defined(__x86_64__) && defined(__GNUC__)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
