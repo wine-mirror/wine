@@ -220,7 +220,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     if (nid->uFlags & NIF_ICON)
         GetIconInfo( nid->hIcon, &icon_info );
 
-    if ((nid->uFlags & NIF_INFO) && (nid->dwInfoFlags & NIIF_ICONMASK) == NIIF_USER)
+    if ((nid->uFlags & NIF_INFO) && (nid->dwInfoFlags & NIIF_ICON_MASK) == NIIF_USER)
         GetIconInfo( nid->hBalloonIcon, &balloon_icon_info );
 
     get_bitmap_info( &icon_info, &mask, &color, &mask_size, &color_size );
