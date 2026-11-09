@@ -91,6 +91,8 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     memset( frame, 0, sizeof(*frame) );
 
     stack_top = (ULONG_PTR)teb->Tib.StackBase & ~(ULONG_PTR)15;
+    WARN("RISCV64 initial stack base=%p limit=%p top=%p frame=%p\n",
+         teb->Tib.StackBase, teb->Tib.StackLimit, (void *)stack_top, frame);
 
     context.Gpr.X[10] = (ULONG64)entry;
     context.Gpr.X[11] = (ULONG64)arg;
@@ -133,6 +135,9 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
     struct syscall_frame *frame = get_syscall_frame( data );
     NTSTATUS status;
 
+    WARN("RISCV64 requested context pc=%016llx sp=%016llx ra=%016llx flags=%08x\n",
+         (unsigned long long)context->Pc, (unsigned long long)context->Gpr.X[2],
+         (unsigned long long)context->Gpr.X[1], context->ContextFlags);
     status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && frame && (context->ContextFlags & CONTEXT_INTEGER))
@@ -202,6 +207,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         frame->pc = context->Pc;
         frame->sp = context->Gpr.X[2];
         frame->ra = context->Gpr.X[1];
+        frame->x[1] = frame->ra;
+        frame->x[2] = frame->sp;
     }
 
     if (flags & CONTEXT_FLOATING_POINT)
@@ -212,6 +219,9 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
 
     frame->restore_flags |= flags & (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT);
+    WARN("RISCV64 saved frame pc=%016llx sp=%016llx ra=%016llx flags=%08x\n",
+         (unsigned long long)frame->pc, (unsigned long long)frame->sp,
+         (unsigned long long)frame->ra, frame->restore_flags);
  
     return STATUS_SUCCESS;
 }
@@ -318,9 +328,9 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
         "mv t0, a0\n"
         "ld t6, 256(t0)\n"
 
-        "ld x1,    8(t0)\n"
+        "ld x1,  272(t0)\n"
         "ld x2,   16(t0)\n"
-        "ld x3,   24(t0)\n"
+        /* Preserve native ELF gp, as well as tp. */
         /* x4/tp is native ELF TLS and must not be restored from CONTEXT. */
         "ld x6,   48(t0)\n"
         "ld x7,   56(t0)\n"
@@ -410,6 +420,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mv t0, a0\n\t"        /* frame */
                    "ld t1, 80(sp)\n\t"    /* service id */
                    "sw t1, 568(t0)\n\t"
+                   "sw zero, 544(t0)\n\t" /* clear stale restore flags */
                    "ld t1, 0(sp)\n\t"     /* return address */
                    "sd t1, 272(t0)\n\t"
                    "sd t1, 256(t0)\n\t"
@@ -449,7 +460,16 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "lw a0, 568(sp)\n\t"
                    "addi a1, sp, 80\n\t"
                    "call " __ASM_NAME("riscv64_dispatch_syscall") "\n\t"
-                   "mv t0, sp\n\t"
+                   /* A successful context-setting syscall must resume at the
+                    * requested PC instead of returning to the syscall stub. */
+                   "bnez a0, 1f\n\t"
+                   "lw t1, 544(sp)\n\t"
+                   "andi t1, t1, 3\n\t"
+                   "beqz t1, 1f\n\t"
+                   "mv a0, sp\n\t"
+                   "la t1, " __ASM_NAME("__wine_syscall_dispatcher_return") "\n\t"
+                   "jr t1\n\t"
+                   "1:\t mv t0, sp\n\t"
                    "ld s0, 64(t0)\n\t"
                    "ld s1, 72(t0)\n\t"
                    "ld s2, 144(t0)\n\t"
