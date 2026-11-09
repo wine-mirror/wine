@@ -367,10 +367,10 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
     __builtin_unreachable();
 }
 
-/* Initial RV64 NT-service bridge.  Calls with more than eight argument
- * registers are deliberately rejected until stack-argument marshalling
- * is implemented.  The helper runs on the Unix stack. */
-static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const ULONG64 *args )
+/* RV64 NT-service bridge. The first eight arguments arrive in a0-a7;
+ * additional arguments are read from the original caller stack before
+ * the service is invoked on the Unix stack. */
+static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const ULONG64 *args, const ULONG64 *stack_args )
 {
     struct thread_data *data = get_thread_data();
     SYSTEM_SERVICE_TABLE *tables;
@@ -379,7 +379,8 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     ULONG table_id = (id >> 12) & 3;
     ULONG arg_size;
     typedef NTSTATUS (*service_t)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
-                                  ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR);
+                                  ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
+                                  ULONG_PTR, ULONG_PTR);
     service_t service;
 
     if (!data || !data->teb) return STATUS_INVALID_SYSTEM_SERVICE;
@@ -389,11 +390,13 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
         return STATUS_INVALID_SYSTEM_SERVICE;
     arg_size = table->ArgumentTable[index];
-    if (arg_size > 8 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
+    if (arg_size > 10 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
     return service( args[0], args[1], args[2], args[3],
-                    args[4], args[5], args[6], args[7] );
+                    args[4], args[5], args[6], args[7],
+                    arg_size > 8 * sizeof(ULONG_PTR) ? stack_args[0] : 0,
+                    arg_size > 9 * sizeof(ULONG_PTR) ? stack_args[1] : 0 );
 }
 
 /* The Windows stub tail-jumps here with t2 = NT service id, ra = caller.
@@ -459,6 +462,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mv sp, t0\n\t"
                    "lw a0, 568(sp)\n\t"
                    "addi a1, sp, 80\n\t"
+                   "ld a2, 264(sp)\n\t" /* original Windows stack args */
                    "call " __ASM_NAME("riscv64_dispatch_syscall") "\n\t"
                    /* A successful context-setting syscall must resume at the
                     * requested PC instead of returning to the syscall stub. */
