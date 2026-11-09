@@ -564,11 +564,37 @@ static void parse_command_line( int argc, WCHAR *argv[] )
 
 int __cdecl wmain (int argc, WCHAR *argv[])
 {
-	DWORD binary_type;
+    DWORD binary_type;
+    BOOL recognized_binary;
 
-        parse_command_line( argc, argv );
+#if defined(__riscv) && __riscv_xlen == 64
+    BOOL try_builtin = FALSE;
+#endif
 
-        if (GetBinaryTypeW(opts.sei.lpFile, &binary_type)) {
+    parse_command_line( argc, argv );
+
+    recognized_binary = GetBinaryTypeW( opts.sei.lpFile, &binary_type );
+
+#if defined(__riscv) && __riscv_xlen == 64
+    /*
+     * RISC-V64 Winelib builtins may only exist as .exe.so modules in the
+     * build tree.  GetBinaryTypeW cannot recognize a missing PE stub, but
+     * CreateProcessW can resolve the builtin through NtCreateUserProcess.
+     * Only try this for explicit .exe names; on failure retain the normal
+     * ShellExecuteEx path for associations and genuinely missing files.
+     */
+    if (!recognized_binary)
+    {
+        const WCHAR *ext = wcsrchr( opts.sei.lpFile, L'.' );
+        if (ext && !wcsicmp( ext, L".exe" )) try_builtin = TRUE;
+    }
+#endif
+
+        if (recognized_binary
+#if defined(__riscv) && __riscv_xlen == 64
+            || try_builtin
+#endif
+           ) {
                     WCHAR *commandline;
                     STARTUPINFOEXW si = {{ sizeof(si.StartupInfo) }};
                     PROCESS_INFORMATION process_information;
@@ -599,10 +625,18 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                                          opts.creation_flags, NULL, opts.sei.lpDirectory,
                                          &si.StartupInfo, &process_information ))
                     {
-			fatal_string_error(STRING_EXECFAIL, GetLastError(), opts.sei.lpFile);
+#if defined(__riscv) && __riscv_xlen == 64
+                        if (recognized_binary)
+#endif
+                            fatal_string_error(STRING_EXECFAIL, GetLastError(), opts.sei.lpFile);
+                        /* Missing RISC-V64 builtin: let ShellExecuteEx report the error. */
                     }
-                    opts.sei.hProcess = process_information.hProcess;
-                    goto done;
+                    else
+                    {
+                        opts.sei.hProcess = process_information.hProcess;
+                        goto done;
+                    }
+                    free( commandline );
         }
 
         if (!ShellExecuteExW(&opts.sei))
