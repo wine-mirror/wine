@@ -116,7 +116,8 @@ void init_tracing_mechanism(void)
 /* initialize the per-process tracing mechanism */
 void init_process_tracing( struct process *process )
 {
-    int pid, ret;
+    mach_msg_return_t ret;
+    int pid;
     struct
     {
         mach_msg_header_t           header;
@@ -141,8 +142,7 @@ void init_process_tracing( struct process *process )
         if (msg.body.msgh_descriptor_count != 1) continue;
         if (msg.task_port.type != MACH_MSG_PORT_DESCRIPTOR) continue;
         if (msg.task_port.disposition != MACH_MSG_TYPE_PORT_SEND) continue;
-        if (msg.task_port.name == MACH_PORT_NULL) continue;
-        if (msg.task_port.name == MACH_PORT_DEAD) continue;
+        if (!MACH_PORT_VALID(msg.task_port.name)) continue;
 
         if (!pid_for_task( msg.task_port.name, &pid ))
         {
