@@ -274,6 +274,11 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
                                  FILE_SHARE_READ | FILE_SHARE_DELETE,
                                  FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     }
+#ifdef __riscv
+    WARN( "RISCV64 get_pe_file_info: path=%s status=%08x unix_name=%s\n",
+          debugstr_us( attr->ObjectName ), status,
+          *unix_name ? *unix_name : "(null)" );
+#endif
     if (status) goto done;
 
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
