@@ -2836,7 +2836,6 @@ static void test_render(void)
     ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
 
     ref = IAMMultiMediaStream_Release(mmstream);

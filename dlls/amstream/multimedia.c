@@ -523,6 +523,7 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
 {
     struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
     IMediaStream *stream;
+    STREAM_TYPE type;
     HRESULT hr;
     IPin *pin;
 
@@ -536,6 +537,13 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
 
     for (unsigned int i = 0; IMediaStreamFilter_EnumMediaStreams(mmstream->filter, i, &stream) == S_OK; ++i)
     {
+        IMediaStream_GetInformation(stream, NULL, &type);
+        if (type != STREAMTYPE_WRITE)
+        {
+            IMediaStream_Release(stream);
+            return VFW_E_INVALID_DIRECTION;
+        }
+
         if (FAILED(hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin)))
         {
             IMediaStream_Release(stream);
