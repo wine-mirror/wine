@@ -215,6 +215,7 @@ static const IID * const doc_obj_iids[] = {
     &IID_IConnectionPointContainer,
     &IID_ICustomDoc,
     &IID_IMarkupContainer,
+    &IID_IMarkupContainer2,
     &IID_IMarkupServices,
     &IID_IOleContainer,
     &IID_IObjectSafety,
