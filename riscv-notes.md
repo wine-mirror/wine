@@ -1,11 +1,15 @@
+### Packages
 sudo apt install lld llvm strace libc6-dev-riscv64-cross gh xxd tree
 apt-cache policy clang lld llvm
 
+### Try to diagnose single file
 make -B dlls/ntdll/actctx.o \
     CFLAGS="-g -O2 -fshort-wchar" --verbose
 
+### Regenerate configure script
 autoreconf -fi
 
+### building
 CFLAGS="-g -O2 -fshort-wchar" ./configure --without-mingw && make clean && make -j3 && make install
 
 ./configure \
@@ -19,6 +23,11 @@ make -C loader wine-preloader \
     WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -static -Wl,-Ttext=0x200100000" \
     -B V=1
 
+### Debugging
+make -j4 LDFLAGS="-Wl,-u,__wine_riscv64_get_teb -latomic" \
+    2>&1 | tee /tmp/wine-riscv64-build.log
+
+### Attempt a standard Wine build as a PE/COFF like EFI (Failed)
 
 the LLVM/Clang ecosystem fully supports the RISC-V PE/COFF binary format. While traditional GNU Binutils focuses almost exclusively on ELF for RISC-V, LLVM handles Windows and UEFI-style PE/COFF compilation. [1, 2, 3]
 
@@ -35,12 +44,6 @@ If you are developing for Windows on RISC-V or doing RISC-V UEFI firmware develo
 bash
 # Compile and link directly to a PE/COFF binary using Clang and LLD
 clang --target=riscv64-windows-coff -fuse-ld=lld main.c -o main.exe
-
-
-
-
-
-
 
 
 

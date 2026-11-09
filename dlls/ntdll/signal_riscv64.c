@@ -16,6 +16,10 @@
 #include "ntdll_misc.h"
 #include "ntsyscalls.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(riscv64);
+
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
 ALL_SYSCALLS
 #undef SYSCALL_ENTRY
@@ -61,8 +65,27 @@ __ASM_GLOBAL_FUNC( __C_specific_handler, "li a0, 1\n\tret" )
 void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2,
                                 ULONG_PTR unk3, ULONG_PTR unk4 )
 {
+    NTSTATUS status;
+
+    WARN( "RISCV64 LdrInitializeThunk: context=%p pc=%p sp=%p ra=%p\n",
+          context,
+          (void *)(ULONG_PTR)context->Pc,
+          (void *)(ULONG_PTR)context->Gpr.X[2],
+          (void *)(ULONG_PTR)context->Gpr.X[1] );
+
     loader_init( context, (void **)&context->Gpr.X[10] );
-    NtContinue( context, TRUE );
+
+    WARN( "RISCV64 LdrInitializeThunk: after loader_init pc=%p sp=%p ra=%p\n",
+          (void *)(ULONG_PTR)context->Pc,
+          (void *)(ULONG_PTR)context->Gpr.X[2],
+          (void *)(ULONG_PTR)context->Gpr.X[1] );
+
+    status = NtContinue( context, TRUE );
+
+    ERR( "RISCV64 NtContinue unexpectedly returned status=%#lx\n",
+         (unsigned long)status );
+
+    __builtin_trap();
 }
 
 void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
