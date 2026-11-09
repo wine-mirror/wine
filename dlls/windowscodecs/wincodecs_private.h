@@ -458,7 +458,6 @@ HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **re
 HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result);
 HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **result);
 HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result);
-HRESULT CDECL icns_encoder_create(struct encoder_info *info, struct encoder **result);
 
 extern HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
     const struct decoder_info *decoder_info, REFIID iid, void** ppv);
