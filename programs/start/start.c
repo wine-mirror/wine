@@ -654,12 +654,12 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                         if (GetSystemDirectoryW( system_exe, ARRAY_SIZE(system_exe) ) &&
                             lstrlenW( system_exe ) + lstrlenW( opts.sei.lpFile ) + 2 < ARRAY_SIZE(system_exe))
                         {
-                            lstrcatW( system_exe, L"\\\\" );
+                            lstrcatW( system_exe, L"\\" );
                             lstrcatW( system_exe, opts.sei.lpFile );
                             cmdlen = lstrlenW( system_exe ) + 4 + lstrlenW( opts.sei.lpParameters );
                             if ((system_cmd = malloc( cmdlen * sizeof(WCHAR) )))
                             {
-                                swprintf( system_cmd, cmdlen, L"\\\"%s\\\" %s", system_exe, opts.sei.lpParameters );
+                                swprintf( system_cmd, cmdlen, L"\"%s\" %s", system_exe, opts.sei.lpParameters );
                                 if (CreateProcessW( system_exe, system_cmd, NULL, NULL, opts.cp_inherit,
                                                     opts.creation_flags, NULL, opts.sei.lpDirectory,
                                                     &si.StartupInfo, &process_information ))
