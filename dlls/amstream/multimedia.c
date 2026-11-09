@@ -519,22 +519,39 @@ static HRESULT WINAPI multimedia_stream_OpenMoniker(IAMMultiMediaStream *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD dwFlags)
+static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD flags)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
+    IMediaStream *stream;
+    HRESULT hr;
+    IPin *pin;
 
-    FIXME("(%p/%p)->(%lx) partial stub!\n", This, iface, dwFlags);
+    TRACE("mmstream %p, flags %#lx.\n", mmstream, flags);
 
-    if (!This->initialized || This->type == STREAMTYPE_READ)
+    if (!mmstream->initialized || mmstream->type == STREAMTYPE_READ)
         return VFW_E_CANNOT_CONNECT;
 
-    if(dwFlags != AMMSF_NOCLOCK)
+    if (flags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
 
-    if (!This->ipin)
-        return E_UNEXPECTED;
+    for (unsigned int i = 0; IMediaStreamFilter_EnumMediaStreams(mmstream->filter, i, &stream) == S_OK; ++i)
+    {
+        if (FAILED(hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin)))
+        {
+            IMediaStream_Release(stream);
+            return hr;
+        }
 
-    return IGraphBuilder_Render(This->graph, This->ipin);
+        hr = IGraphBuilder_Render(mmstream->graph, pin);
+
+        IPin_Release(pin);
+        IMediaStream_Release(stream);
+
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
 }
 
 static const IAMMultiMediaStreamVtbl multimedia_stream_vtbl =

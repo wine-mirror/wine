@@ -2759,7 +2759,6 @@ static void test_render(void)
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
@@ -2827,7 +2826,6 @@ static void test_render(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
