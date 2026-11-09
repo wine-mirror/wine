@@ -393,7 +393,12 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
         return STATUS_INVALID_SYSTEM_SERVICE;
     arg_size = table->ArgumentTable[index];
-    if (arg_size > 16 * sizeof(ULONG_PTR))\n    {\n        ERR( "RISCV64 syscall %04x requires %u bytes of arguments (maximum %zu)\n",\n             id, arg_size, 16 * sizeof(ULONG_PTR) );\n        return STATUS_NOT_IMPLEMENTED;\n    }
+    if (arg_size > 16 * sizeof(ULONG_PTR))
+    {
+        ERR( "RISCV64 syscall %04x requires %u bytes of arguments (maximum %u)\n",
+             id, arg_size, (unsigned int)(16 * sizeof(ULONG_PTR)) );
+        return STATUS_NOT_IMPLEMENTED;
+    }
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
     return service( args[0], args[1], args[2], args[3],
