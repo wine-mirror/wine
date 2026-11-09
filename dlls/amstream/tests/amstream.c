@@ -2822,7 +2822,6 @@ static void test_render(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
@@ -2832,7 +2831,6 @@ static void test_render(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
-    todo_wine
     ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);

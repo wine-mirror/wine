@@ -532,7 +532,7 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
     if (!mmstream->initialized || mmstream->type == STREAMTYPE_READ)
         return VFW_E_CANNOT_CONNECT;
 
-    if (flags != AMMSF_NOCLOCK)
+    if (mmstream->type == STREAMTYPE_WRITE && flags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
 
     for (unsigned int i = 0; IMediaStreamFilter_EnumMediaStreams(mmstream->filter, i, &stream) == S_OK; ++i)
