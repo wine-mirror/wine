@@ -5073,43 +5073,91 @@ static const IMarkupServicesVtbl MarkupServicesVtbl = {
 };
 
 /**********************************************************
- * IMarkupContainer implementation
+ * IMarkupContainer2 implementation
  */
-static inline HTMLDocumentNode *impl_from_IMarkupContainer(IMarkupContainer *iface)
+static inline HTMLDocumentNode *impl_from_IMarkupContainer2(IMarkupContainer2 *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocumentNode, IMarkupContainer_iface);
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, IMarkupContainer2_iface);
 }
 
-static HRESULT WINAPI MarkupContainer_QueryInterface(IMarkupContainer *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI MarkupContainer2_QueryInterface(IMarkupContainer2 *iface, REFIID riid, void **ppvObject)
 {
-    HTMLDocumentNode *This = impl_from_IMarkupContainer(iface);
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
     return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppvObject);
 }
 
-static ULONG WINAPI MarkupContainer_AddRef(IMarkupContainer *iface)
+static ULONG WINAPI MarkupContainer2_AddRef(IMarkupContainer2 *iface)
 {
-    HTMLDocumentNode *This = impl_from_IMarkupContainer(iface);
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
     return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
 }
 
-static ULONG WINAPI MarkupContainer_Release(IMarkupContainer *iface)
+static ULONG WINAPI MarkupContainer2_Release(IMarkupContainer2 *iface)
 {
-    HTMLDocumentNode *This = impl_from_IMarkupContainer(iface);
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
     return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
 }
 
-static HRESULT WINAPI MarkupContainer_OwningDoc(IMarkupContainer *iface, IHTMLDocument2 **ppDoc)
+static HRESULT WINAPI MarkupContainer2_OwningDoc(IMarkupContainer2 *iface, IHTMLDocument2 **ppDoc)
 {
-    HTMLDocumentNode *This = impl_from_IMarkupContainer(iface);
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
     FIXME("(%p)->(%p)\n", This, ppDoc);
     return E_NOTIMPL;
 }
 
-static const IMarkupContainerVtbl MarkupContainerVtbl = {
-    MarkupContainer_QueryInterface,
-    MarkupContainer_AddRef,
-    MarkupContainer_Release,
-    MarkupContainer_OwningDoc
+static HRESULT WINAPI MarkupContainer2_CreateChangeLog(IMarkupContainer2 *iface, IHTMLChangeSink *pChangeSink, IHTMLChangeLog **ppChangeLog, BOOL fforward, BOOL fBackward)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)->(%p %p %d %d)\n", This, pChangeSink, ppChangeLog, fforward, fBackward);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupContainer2_RegisterForDirtyRange(IMarkupContainer2 *iface, IHTMLChangeSink *pChangeSink, DWORD *pdwCookie)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)->(%p %p)\n", This, pChangeSink, pdwCookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupContainer2_UnRegisterForDirtyRange(IMarkupContainer2 *iface, DWORD dwCookie)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)->(%08lx)\n", This, dwCookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupContainer2_GetAndClearDirtyRange(IMarkupContainer2 *iface, DWORD dwCookie, IMarkupPointer *pIPointerBegin, IMarkupPointer *pIPointerEnd)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)->(%08lx %p %p)\n", This, dwCookie, pIPointerBegin, pIPointerEnd);
+    return E_NOTIMPL;
+}
+
+static LONG WINAPI MarkupContainer2_GetVersionNumber(IMarkupContainer2 *iface)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupContainer2_GetMasterElement(IMarkupContainer2 *iface, IHTMLElement **ppElementMaster)
+{
+    HTMLDocumentNode *This = impl_from_IMarkupContainer2(iface);
+    FIXME("(%p)->(%p)\n", This, ppElementMaster);
+    return E_NOTIMPL;
+}
+
+static const IMarkupContainer2Vtbl MarkupContainer2Vtbl = {
+    MarkupContainer2_QueryInterface,
+    MarkupContainer2_AddRef,
+    MarkupContainer2_Release,
+    MarkupContainer2_OwningDoc,
+    MarkupContainer2_CreateChangeLog,
+    MarkupContainer2_RegisterForDirtyRange,
+    MarkupContainer2_UnRegisterForDirtyRange,
+    MarkupContainer2_GetAndClearDirtyRange,
+    MarkupContainer2_GetVersionNumber,
+    MarkupContainer2_GetMasterElement
 };
 
 /**********************************************************
@@ -5357,8 +5405,8 @@ static void *HTMLDocumentNode_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IProvideMultipleClassInfo_iface;
     if(IsEqualGUID(&IID_IMarkupServices, riid))
         return &This->IMarkupServices_iface;
-    if(IsEqualGUID(&IID_IMarkupContainer, riid))
-        return &This->IMarkupContainer_iface;
+    if(IsEqualGUID(&IID_IMarkupContainer, riid) || IsEqualGUID(&IID_IMarkupContainer2, riid))
+        return &This->IMarkupContainer2_iface;
     if(IsEqualGUID(&IID_IDisplayServices, riid))
         return &This->IDisplayServices_iface;
     if(IsEqualGUID(&IID_IDocumentRange, riid))
@@ -5915,7 +5963,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     doc->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     doc->IMarkupServices_iface.lpVtbl = &MarkupServicesVtbl;
-    doc->IMarkupContainer_iface.lpVtbl = &MarkupContainerVtbl;
+    doc->IMarkupContainer2_iface.lpVtbl = &MarkupContainer2Vtbl;
     doc->IDisplayServices_iface.lpVtbl = &DisplayServicesVtbl;
     doc->IDocumentRange_iface.lpVtbl = &DocumentRangeVtbl;
 
