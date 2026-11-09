@@ -637,6 +637,42 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                         goto done;
                     }
                     free( commandline );
+#if defined(__riscv) && __riscv_xlen == 64
+                    /*
+                     * An ELF-only builtin has no file for SearchPathW to find.
+                     * Retry a bare .exe name at the canonical builtin location;
+                     * the RISC-V64 NtCreateUserProcess path knows how to load
+                     * its .exe.so implementation from the build tree.
+                     */
+                    if (try_builtin && !wcschr( opts.sei.lpFile, L'\\' ) &&
+                        !wcschr( opts.sei.lpFile, L'/' ))
+                    {
+                        WCHAR system_exe[MAX_PATH];
+                        WCHAR *system_cmd;
+                        int cmdlen;
+
+                        if (GetSystemDirectoryW( system_exe, ARRAY_SIZE(system_exe) ) &&
+                            lstrlenW( system_exe ) + lstrlenW( opts.sei.lpFile ) + 2 < ARRAY_SIZE(system_exe))
+                        {
+                            lstrcatW( system_exe, L"\\\\" );
+                            lstrcatW( system_exe, opts.sei.lpFile );
+                            cmdlen = lstrlenW( system_exe ) + 4 + lstrlenW( opts.sei.lpParameters );
+                            if ((system_cmd = malloc( cmdlen * sizeof(WCHAR) )))
+                            {
+                                swprintf( system_cmd, cmdlen, L"\\\"%s\\\" %s", system_exe, opts.sei.lpParameters );
+                                if (CreateProcessW( system_exe, system_cmd, NULL, NULL, opts.cp_inherit,
+                                                    opts.creation_flags, NULL, opts.sei.lpDirectory,
+                                                    &si.StartupInfo, &process_information ))
+                                {
+                                    free( system_cmd );
+                                    opts.sei.hProcess = process_information.hProcess;
+                                    goto done;
+                                }
+                                free( system_cmd );
+                            }
+                        }
+                    }
+#endif
         }
 
         if (!ShellExecuteExW(&opts.sei))
