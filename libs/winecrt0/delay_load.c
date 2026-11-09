@@ -59,7 +59,7 @@ FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAG
 
     proc = ResolveDelayLoadedAPI( base, descr, NULL, DelayLoadFailureHook, addr, 0 );
     if ((ULONG_PTR)proc < 0x10000)
-        fprintf( stderr, "riscv64: invalid delayed import target %p (image base %p, descriptor %p, thunk %p)\\n",
+        fprintf( stderr, "riscv64: invalid delayed import target %p (image base %p, descriptor %p, thunk %p)\n",
                  proc, base, descr, addr );
     return proc;
 #else
