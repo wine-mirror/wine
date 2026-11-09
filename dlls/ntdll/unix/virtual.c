@@ -1927,7 +1927,14 @@ static void *alloc_reserved_area( void *limit_low, void *limit_high, size_t size
         low_range.end = (char *)low_range.end + reserve_size;
     }
 #else
-    if (top_down && limit_high == user_space_limit) limit_high = high_range.end;
+    if (top_down)
+    {
+        if (limit_high == user_space_limit) limit_high = high_range.end;
+    }
+    else
+    {
+        if (limit_low == address_space_start) limit_low = low_range.start;
+    }
 #endif
     return map_reserved_area( limit_low, limit_high, size, top_down, unix_prot, align_mask );
 }
