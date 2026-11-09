@@ -50,6 +50,7 @@
 #define _Deref_ret_z_
 
 #define _Field_size_(size)
+#define _Field_size_opt_(size)
 #define _Field_size_bytes_(size)
 #define _Field_range_(min, max)
 
