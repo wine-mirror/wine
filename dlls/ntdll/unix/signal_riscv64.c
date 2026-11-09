@@ -378,9 +378,12 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     ULONG index = id & 0xfff;
     ULONG table_id = (id >> 12) & 3;
     ULONG arg_size;
+    /* RV64 passes the first eight integer arguments in a0-a7 and the rest
+     * in eight-byte stack slots.  Support up to 16 NT syscall arguments. */
     typedef NTSTATUS (*service_t)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
                                   ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
-                                  ULONG_PTR, ULONG_PTR);
+                                  ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
+                                  ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR);
     service_t service;
 
     if (!data || !data->teb) return STATUS_INVALID_SYSTEM_SERVICE;
@@ -390,13 +393,19 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
         return STATUS_INVALID_SYSTEM_SERVICE;
     arg_size = table->ArgumentTable[index];
-    if (arg_size > 10 * sizeof(ULONG_PTR)) return STATUS_NOT_IMPLEMENTED;
+    if (arg_size > 16 * sizeof(ULONG_PTR))\n    {\n        ERR( "RISCV64 syscall %04x requires %u bytes of arguments (maximum %zu)\n",\n             id, arg_size, 16 * sizeof(ULONG_PTR) );\n        return STATUS_NOT_IMPLEMENTED;\n    }
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
     return service( args[0], args[1], args[2], args[3],
                     args[4], args[5], args[6], args[7],
                     arg_size > 8 * sizeof(ULONG_PTR) ? stack_args[0] : 0,
-                    arg_size > 9 * sizeof(ULONG_PTR) ? stack_args[1] : 0 );
+                    arg_size > 9 * sizeof(ULONG_PTR) ? stack_args[1] : 0,
+                    arg_size > 10 * sizeof(ULONG_PTR) ? stack_args[2] : 0,
+                    arg_size > 11 * sizeof(ULONG_PTR) ? stack_args[3] : 0,
+                    arg_size > 12 * sizeof(ULONG_PTR) ? stack_args[4] : 0,
+                    arg_size > 13 * sizeof(ULONG_PTR) ? stack_args[5] : 0,
+                    arg_size > 14 * sizeof(ULONG_PTR) ? stack_args[6] : 0,
+                    arg_size > 15 * sizeof(ULONG_PTR) ? stack_args[7] : 0 );
 }
 
 /* The Windows stub tail-jumps here with t2 = NT service id, ra = caller.
