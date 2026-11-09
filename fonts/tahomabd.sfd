@@ -2776,23 +2776,23 @@ EndChar
 
 StartChar: z
 Encoding: 122 122 91
-Width: 1030
+Width: 1077
 Flags: W
-HStem: 0 256<428 986> 864 256<62 596>
+HStem: 0 256<452 1030> 864 256<73 626>
 LayerCount: 2
 Fore
 SplineSet
-62 1120 m 1
- 986 1120 l 1
- 986 870 l 1
- 428 256 l 1
- 986 256 l 1
- 986 0 l 1
- 38 0 l 1
- 38 250 l 1
- 596 864 l 1
- 62 864 l 1
- 62 1120 l 1
+48 0 m 1
+ 48 250 l 1
+ 626 864 l 1
+ 73 864 l 1
+ 73 1120 l 1
+ 1030 1120 l 1
+ 1030 870 l 1
+ 452 256 l 1
+ 1030 256 l 1
+ 1030 0 l 1
+ 48 0 l 1
 EndSplineSet
 Kerns2: 238 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 237 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 181 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 164 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 82 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 80 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 72 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 70 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 69 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 68 -10 "'kern' Horizontal Kerning in Latin lookup 0 subtable" 14 -18 "'kern' Horizontal Kerning in Latin lookup 0 subtable"
 EndChar
@@ -8060,18 +8060,18 @@ EndChar
 
 StartChar: uni2219
 Encoding: 8729 8729 315
-Width: 1304
+Width: 640
 Flags: W
-HStem: 518 387<472 832>
-VStem: 472 360<518 905>
+HStem: 468 381<143 497>
+VStem: 143 354<468 849>
 LayerCount: 2
 Fore
 SplineSet
-472 518 m 1
- 472 905 l 1
- 832 905 l 1
- 832 518 l 1
- 472 518 l 1
+143 468 m 1
+ 143 849 l 1
+ 497 849 l 1
+ 497 468 l 1
+ 143 468 l 1
 EndSplineSet
 EndChar
 
@@ -10089,56 +10089,12 @@ EndChar
 
 StartChar: afii61352
 Encoding: 8470 8470 408
-Width: 1578
-Flags: W
-HStem: 0 200<1045 1514> 338 150<1255.27 1301.29>
-VStem: 79 365<221.007 1024> 621 365<469 1271.99> 1045 199<495.597 912.391> 1313 201<495.597 912.391>
+Width: 2525
+Flags: HW
 LayerCount: 2
 Fore
-SplineSet
-44 0 m 1
- 44 221 l 1
- 61 221 71 231 74 252 c 0
- 77 273 79 303 79 342 c 2
- 79 1493 l 1
- 463 1493 l 1
- 621 469 l 1
- 621 1151 l 2
- 621 1284 652 1375 713 1422 c 0
- 774 1469 905 1493 1021 1493 c 1
- 1021 1272 l 1
- 1004 1272 994 1262 991 1241 c 0
- 988 1220 986 1190 986 1151 c 2
- 986 0 l 1
- 602 0 l 1
- 444 1024 l 1
- 444 342 l 2
- 444 209 413 118 352 71 c 0
- 291 24 160 0 44 0 c 1
-1045 0 m 1
- 1045 200 l 1
- 1514 200 l 1
- 1514 0 l 1
- 1045 0 l 1
-1045 704 m 0
- 1045 817 1073 907 1130 972 c 0
- 1187 1037 1250 1069 1279 1069 c 0
- 1308 1069 1372 1037 1429 972 c 0
- 1486 907 1514 817 1514 704 c 0
- 1514 591 1486 501 1429 436 c 0
- 1372 371 1308 338 1279 338 c 0
- 1250 338 1187 371 1130 436 c 0
- 1073 501 1045 591 1045 704 c 0
-1244 704 m 0
- 1244 635 1247 582 1253 544 c 0
- 1259 506 1267 488 1278 488 c 0
- 1289 488 1298 506 1304 544 c 0
- 1310 582 1313 635 1313 704 c 0
- 1313 773 1310 825 1304 862 c 0
- 1298 899 1289 918 1278 918 c 0
- 1267 918 1259 899 1253 862 c 0
- 1247 825 1244 773 1244 704 c 0
-EndSplineSet
+Refer: 119 186 N 1 0 0 1 1402 0 2
+Refer: 47 78 N 1 0 0 1 0 0 2
 EndChar
 
 StartChar: afii10110
