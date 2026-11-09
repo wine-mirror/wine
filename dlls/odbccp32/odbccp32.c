@@ -1915,7 +1915,7 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
     TRACE("%s %s %s %s\n", debugstr_w(lpszSection), debugstr_w(lpszEntry),
                 debugstr_w(lpszString), debugstr_w(lpszFilename));
 
-    if(!lpszFilename || !*lpszFilename)
+    if(!lpszFilename || !*lpszFilename || !lpszSection || !*lpszSection)
     {
         push_error(ODBC_ERROR_INVALID_STR, L"Invalid parameter string");
         return FALSE;

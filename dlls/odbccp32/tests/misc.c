@@ -432,6 +432,15 @@ static void test_SQLGetPrivateProfileStringW(void)
     }
     ok(ret, "SQLWritePrivateProfileString failed\n");
 
+    ret = SQLWritePrivateProfileStringW(L"", L"testing" , L"value", L"ODBC.INI");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
+
+    ret = SQLWritePrivateProfileStringW(NULL, L"testing" , L"value", L"ODBC.INI");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
+
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"value", L"");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
+
     ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"systemdsn", L"ODBC.INI");
     ok(ret, "SQLWritePrivateProfileString failed\n");
 
