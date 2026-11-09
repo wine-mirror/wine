@@ -525,7 +525,7 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
 
     FIXME("(%p/%p)->(%lx) partial stub!\n", This, iface, dwFlags);
 
-    if (!This->initialized)
+    if (!This->initialized || This->type == STREAMTYPE_READ)
         return VFW_E_CANNOT_CONNECT;
 
     if(dwFlags != AMMSF_NOCLOCK)

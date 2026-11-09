@@ -2732,22 +2732,18 @@ static void test_render(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
-    todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
 
     ref = IAMMultiMediaStream_Release(mmstream);
