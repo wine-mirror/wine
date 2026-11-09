@@ -2858,15 +2858,15 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
  *           load_so_dll
  */
 static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
-                             DWORD flags, WINE_MODREF **pwm )
+                             DWORD flags, WINE_MODREF **pwm, BOOL builtin )
 {
-    void *module;
+    void *module = NULL;
     NTSTATUS status;
     WINE_MODREF *wm;
     struct load_so_dll_params params = { *nt_name, &module };
 
     TRACE( "trying %s as so lib\n", debugstr_us(nt_name) );
-    if ((status = WINE_UNIX_CALL( unix_load_so_dll, &params )))
+    if ((status = WINE_UNIX_CALL( builtin ? unix_load_builtin_so_dll : unix_load_so_dll, &params )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
         if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
@@ -3380,12 +3380,13 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
  */
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD flags, WINE_MODREF** pwm, BOOL system )
 {
-    UNICODE_STRING nt_name;
+    UNICODE_STRING nt_name = { 0 };
     struct file_id id;
     HANDLE mapping = 0;
     SECTION_IMAGE_INFORMATION image_info;
     NTSTATUS nts = STATUS_DLL_NOT_FOUND;
     BOOL redirected;
+    BOOL riscv_builtin = FALSE;
     void *prev;
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
@@ -3415,6 +3416,18 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
         return STATUS_SUCCESS;
     }
 
+#if defined(__riscv) && __riscv_xlen == 64
+    if (nts == STATUS_DLL_NOT_FOUND && !contains_path( libname ) && __wine_unixlib_handle)
+    {
+        RtlFreeUnicodeString( &nt_name );
+        nt_name.Buffer = NULL;
+        build_sysdir_nt_name( libname, &nt_name );
+        if (!nt_name.Buffer) { nts = STATUS_NO_MEMORY; goto done; }
+        nts = STATUS_INVALID_IMAGE_NOT_MZ;
+        riscv_builtin = TRUE;
+        TRACE( "RISCV64-WINELIB ELF fallback for %s\n", debugstr_w(libname) );
+    }
+#endif
     if (nts && nts != STATUS_INVALID_IMAGE_NOT_MZ) goto done;
 
     prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
@@ -3423,7 +3436,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
     switch (nts)
     {
     case STATUS_INVALID_IMAGE_NOT_MZ:  /* not in PE format, maybe it's a .so file */
-        if (__wine_unixlib_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm );
+        if (__wine_unixlib_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm, riscv_builtin );
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */

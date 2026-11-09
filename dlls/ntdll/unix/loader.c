@@ -1001,10 +1001,12 @@ static NTSTATUS unwind_builtin_dll( void *args )
 
 #endif /* SO_DLLS_SUPPORTED */
 
+static NTSTATUS load_builtin_so_dll( void *args );
 
 static const unixlib_entry_t unix_call_funcs[] =
 {
     load_so_dll,
+    load_builtin_so_dll,
     unwind_builtin_dll,
     unixcall_wine_dbg_write,
     unixcall_wine_server_call,
@@ -1018,11 +1020,13 @@ static const unixlib_entry_t unix_call_funcs[] =
 #ifdef _WIN64
 
 static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
+static NTSTATUS wow64_load_builtin_so_dll( void *args ) { return STATUS_DLL_NOT_FOUND; }
 static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 
 const unixlib_entry_t unix_call_wow64_funcs[] =
 {
     wow64_load_so_dll,
+    wow64_load_builtin_so_dll,
     wow64_unwind_builtin_dll,
     wow64_wine_dbg_write,
     wow64_wine_server_call,
@@ -1242,6 +1246,31 @@ done:
     }
     free( file );
     return status;
+}
+
+
+/* Discover a native RISC-V64 Winelib ELF builtin without a PE placeholder. */
+static NTSTATUS load_builtin_so_dll( void *args )
+{
+#if defined(__riscv) && __riscv_xlen == 64
+    struct load_so_dll_params *params = args;
+    SECTION_IMAGE_INFORMATION info = { 0 };
+    SIZE_T size = 0;
+    void *module = NULL;
+    NTSTATUS status;
+
+    if (get_load_order( &params->nt_name, TRUE, NULL ) == LO_DISABLED)
+        return STATUS_DLL_NOT_FOUND;
+
+    status = find_builtin_dll( &params->nt_name, NULL, &module, &size, &info,
+                               0, 0, current_machine, 0, FALSE, 0 );
+    if (!status) *params->module = module;
+    TRACE( "RISCV64-WINELIB builtin ELF %s: status=%#x module=%p\n",
+           debugstr_us(&params->nt_name), status, module );
+    return status;
+#else
+    return STATUS_DLL_NOT_FOUND;
+#endif
 }
 
 
