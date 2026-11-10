@@ -272,7 +272,7 @@ struct d3d8_vertex_declaration
 
 void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration);
 HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration,
-        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle);
+        struct d3d8_device *device, const DWORD *elements, DWORD shader_handle, const struct wined3d_shader *shader);
 HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declaration,
         struct d3d8_device *device, DWORD fvf);
 
