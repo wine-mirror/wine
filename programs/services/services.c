@@ -820,6 +820,37 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     return ERROR_SUCCESS;
 }
 
+static WCHAR *get_windir_path( const WCHAR *path )
+{
+    WCHAR buffer[MAX_PATH];
+    int len = GetWindowsDirectoryW( buffer, MAX_PATH );
+    int len2 = wcslen( path );
+    WCHAR *ret = malloc( (len + len2 + 2) * sizeof(WCHAR) );
+    swprintf( ret, len + len2 + 2, L"%s\\%s", buffer, path );
+    return ret;
+}
+
+static BOOL get_binary_type(WCHAR *path, DWORD *type)
+{
+    BOOL ret = FALSE;
+    WCHAR *str = NULL;
+
+    if (!wcsnicmp( path, L"\\SystemRoot\\", 12 ))
+    {
+        path = str = get_windir_path( path + 12 );
+    }
+    else if (RtlDetermineDosPathNameType_U( path ) == RtlPathTypeRelative)
+    {
+        path = str = get_windir_path( path );
+    }
+    else if (!wcsncmp( path, L"\\??\\", 4 ))
+        path = path + 4;
+
+    ret = GetBinaryTypeW(path, type);
+    free(str);
+    return ret;
+}
+
 static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCHAR **path, BOOL *is_wow64)
 {
     WCHAR system_dir[MAX_PATH];
@@ -827,7 +858,7 @@ static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCH
 
     if (!is_win64)
         *is_wow64 = FALSE;
-    else if (GetBinaryTypeW(*path, &type))
+    else if (get_binary_type(*path, &type))
         *is_wow64 = (type == SCS_32BIT_BINARY);
     else
         *is_wow64 = service_entry->is_wow64;

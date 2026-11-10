@@ -261,8 +261,17 @@ BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, co
     /* case /OPT ARG */
     if (!wcsicmp(iterator->unquoted_argument, option))
     {
-        ret = WCMD_word_iterator_advance(iterator);
-        if (ret) *arg = iterator->unquoted_argument;
+        if (!optsep)
+        {
+            ret = WCMD_word_iterator_advance(iterator);
+            if (ret) *arg = iterator->unquoted_argument;
+        }
+        else
+        {
+            /* case /OPT with no ARG */
+            *arg = &iterator->unquoted_argument[option_len];
+            ret = TRUE;
+        }
     }
     /* case /OPT:ARG */
     else if (!wcsnicmp(iterator->unquoted_argument, option, option_len) &&

@@ -4684,7 +4684,7 @@ HRESULT WINAPI SHGetKnownFolderIDList(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE
         FIXME("user token is not used.\n");
 
     *pidl = NULL;
-    if (IsEqualIID(rfid, &FOLDERID_Desktop))
+    if (IsEqualIID(rfid, &FOLDERID_Desktop) && !(flags & KF_FLAG_NO_ALIAS))
         *pidl = _ILCreateDesktop();
     else if (IsEqualIID(rfid, &FOLDERID_RecycleBinFolder))
         *pidl = _ILCreateBitBucket();

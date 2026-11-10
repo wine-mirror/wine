@@ -1219,6 +1219,22 @@ SZ_EMAIL_DTD
 "   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
 "</email>";
 
+static const CHAR szEmailXML_200[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 87)</subject>"
+"   <body>"
+"       Duplicated ID 0xc00ce200"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
 static const char xpath_simple_list[] =
 "<?xml version=\"1.0\"?>"
 "<root>"
@@ -17961,7 +17977,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_ELEMENT_ID_NOT_FOUND */
-    todo_wine ok(res == 0xC00CE00E, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce00e, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_11), NULL);
@@ -17973,7 +17989,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_EMPTY_NOT_ALLOWED */
-    todo_wine ok(res == 0xC00CE011, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce011, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_13), NULL);
@@ -17997,7 +18013,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_INVALID_CONTENT */
-    todo_wine ok(res == 0xC00CE014, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce014, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_14_1), NULL);
@@ -18070,7 +18086,7 @@ static void test_dtd_validation(void)
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_ILLEGAL_TEXT */
-    todo_wine ok(res == 0xC00CE018, "Unexpected code %#lx.\n", res);
+    ok(res == 0xc00ce018, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_18_1), NULL);
@@ -18095,6 +18111,18 @@ static void test_dtd_validation(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* XML_REQUIRED_ATTRIBUTE_MISSING */
     ok(res == 0xc00ce020, "Unexpected code %#lx.\n", res);
+    IXMLDOMParseError_Release(err);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML_200), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    err = NULL;
+    hr = IXMLDOMDocument2_validate(doc, &err);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    res = 0;
+    hr = IXMLDOMParseError_get_errorCode(err, &res);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* Duplicated ID */
+    ok(res == 0xc00ce200, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
     IXMLDOMDocument2_Release(doc);

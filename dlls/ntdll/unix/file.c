@@ -4883,11 +4883,12 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
 {
     int fd, needs_close = 0;
     unsigned int status = STATUS_SUCCESS;
+    unsigned int access = (class == FileValidDataLengthInformation) ? FILE_WRITE_DATA : 0;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class );
 
     if (class != FileCompletionInformation &&
-        (status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+        (status = server_get_unix_fd( handle, access, &fd, &needs_close, NULL, NULL )))
     {
         if (status != STATUS_BAD_DEVICE_TYPE) return io->Status = status;
         return server_set_file_info( handle, io, ptr, len, class );

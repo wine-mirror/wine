@@ -1468,7 +1468,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
     stat = GdipCreateStreamOnFile(filename, GENERIC_READ, &stream);
 
     if(stat != Ok)
-        return stat;
+        return InvalidParameter;
 
     stat = GdipCreateBitmapFromStream(stream, bitmap);
 
@@ -3007,7 +3007,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromFile(GDIPCONST WCHAR* filename,
     stat = GdipCreateStreamOnFile(filename, GENERIC_READ, &stream);
 
     if (stat != Ok)
-        return stat;
+        return OutOfMemory;
 
     stat = GdipLoadImageFromStream(stream, image);
 

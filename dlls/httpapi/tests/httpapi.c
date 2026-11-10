@@ -62,9 +62,9 @@ static void init(void)
 
 static const char simple_req[] =
     "GET /foobar HTTP/1.1\r\n"
-    "Host: localhost:%u\r\n"
-    "Connection: keep-alive\r\n"
-    "User-Agent: WINE\r\n"
+    "HoSt: localhost:%u\r\n"
+    "CoNnection: keep-alive\r\n"
+    "UsEr-Agent: WINE\r\n"
     "\r\n";
 
 static SOCKET create_client_socket(unsigned short port)

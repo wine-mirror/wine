@@ -219,6 +219,11 @@ static void test_SQLGetPrivateProfileString(void)
     ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);
 
     strcpy(buffer, "wine");
+    ret = SQLGetPrivateProfileString("", "testing" , "default", buffer, 256, "ODBC.INI");
+    ok(ret == 0, "SQLGetPrivateProfileString returned %d\n", ret);
+    ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);
+
+    strcpy(buffer, "wine");
     ret = SQLGetPrivateProfileString("wineodbc", NULL , "default", buffer, 256, "ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileString returned %d\n", ret);
     ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);
@@ -431,6 +436,15 @@ static void test_SQLGetPrivateProfileStringW(void)
         }
     }
     ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLWritePrivateProfileStringW(L"", L"testing" , L"value", L"ODBC.INI");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
+
+    ret = SQLWritePrivateProfileStringW(NULL, L"testing" , L"value", L"ODBC.INI");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
+
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"value", L"");
+    ok(!ret, "SQLWritePrivateProfileString passed\n");
 
     ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"systemdsn", L"ODBC.INI");
     ok(ret, "SQLWritePrivateProfileString failed\n");

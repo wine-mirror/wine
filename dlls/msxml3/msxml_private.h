@@ -41,6 +41,8 @@ enum error_codes
     E_SAX_CONTAINSCOLON = 0xc00ce00c,
 
     E_DOM_ELEMENT_UNDECLARED = 0xc00ce00d,
+    E_DOM_ELEMENT_ID_NOT_FOUND = 0xc00ce00e,
+    E_DOM_EMPTY_NOT_ALLOWED = 0xc00ce011,
     E_DOM_ROOT_NAME_MISMATCH = 0xc00ce013,
     E_DOM_INVALID_CONTENT = 0xc00ce014,
     E_DOM_ATTRIBUTE_NOT_DEFINED = 0xc00ce015,
@@ -52,6 +54,7 @@ enum error_codes
 
     E_DOM_REQUIRED_ATTRIBUTE_MISSING = 0xc00ce020,
 
+    E_DOM_DUPLICATE_ID_VALUE = 0xc00ce200,
     E_DOM_INVALIDTYPE = 0xc00ce208,
 
     E_SAX_MISSINGEQUALS = 0xc00ce501,
@@ -370,6 +373,22 @@ extern HRESULT parse_xml_decl_body(const WCHAR *text, BSTR *version, BSTR *encod
 struct validation_context
 {
     LONG code;
+    struct
+    {
+        BSTR *values;
+        size_t count;
+        size_t capacity;
+    } id;
+    struct
+    {
+        struct
+        {
+            BSTR value;
+            struct attlist_attr *decl;
+        } *refs;
+        size_t count;
+        size_t capacity;
+    } idref;
 };
 
 extern struct dtd * parser_dtd_addref(struct dtd *dtd);
@@ -382,6 +401,7 @@ extern bool parser_dtd_validate_element_content(struct validation_context *ctxt,
         struct element_decl *decl, struct domnode *elem);
 extern bool parser_dtd_check_required_attributes(struct validation_context *ctxt, struct dtd *dtd,
         struct domnode *elem);
+extern bool parser_dtd_validate_references(struct validation_context *ctxt);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);

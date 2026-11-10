@@ -11951,7 +11951,7 @@ static void test_d3d12_surface_buffer(void)
     ID3D12CommandQueue *queue;
     D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_COPY };
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
-    DWORD max_length, cur_length, length, color;
+    DWORD max_length, cur_length, length, color, *pixels;
     BYTE *data, *data2, *buffer_start;
     LONG pitch, pitch2;
     UINT index;
@@ -12564,6 +12564,57 @@ if (SUCCEEDED(hr))
     {
         skip("Failed to create NV12 texture, hr %#lx, skipping test.\n", hr);
     }
+
+    /* Relocking for writing immediately after Unlock2D() must not overwrite the pending upload.
+     * Write both the first pixel (0, 0) and the last pixel (desc.Width - 1, desc.Height - 1),
+     * using pitch / 4 as the row stride in DWORDs, so that if Lock2DSize(Write) reuses the same
+     * upload buffer while the asynchronous 1024x1024 copy from Unlock2D() is still in flight,
+     * the second write clobbers the last pixel before the copy reaches the last row. */
+    desc.Width = 1024;
+    desc.Height = 1024;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    hr = ID3D12Device_CreateCommittedResource(device, &heap_props, D3D12_HEAP_FLAG_NONE,
+            &desc, D3D12_RESOURCE_STATE_RENDER_TARGET, NULL, &IID_ID3D12Resource, (void **)&resource);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFDXGIBuffer_GetUnknown(dxgi_buffer, &MF_D3D12_SYNCHRONIZATION_OBJECT,
+            &IID_IMFD3D12SynchronizationObjectCommands, (void **)&sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, (BYTE **)&pixels, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    pixels[0] = 0x89898989;
+    pixels[pitch / 4 * (desc.Height - 1) + desc.Width - 1] = 0x89898989;
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, (BYTE **)&pixels, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    pixels[0] = 0x12121212;
+    pixels[pitch / 4 * (desc.Height - 1) + desc.Width - 1] = 0x12121212;
+
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, desc.Width - 1, desc.Height - 1);
+    ok(color == 0x89898989, "Unexpected trailing dword %#lx.\n", color);
+
+    hr = IMF2DBuffer2_Unlock2D(_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, 0, 0);
+    ok(color == 0x12121212, "Unexpected leading dword %#lx.\n", color);
+    color = get_d3d12_texture_color(resource, sync_cmd, 0, desc.Width - 1, desc.Height - 1);
+    ok(color == 0x12121212, "Unexpected trailing dword %#lx.\n", color);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMF2DBuffer2_Release(_2dbuffer2);
+    IMFMediaBuffer_Release(buffer);
+    ID3D12Resource_Release(resource);
 
     heap_props.Type = D3D12_HEAP_TYPE_READBACK;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;

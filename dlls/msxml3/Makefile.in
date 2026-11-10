@@ -45,5 +45,6 @@ SOURCES = \
 	xmldoc.c \
 	xmlparser.c \
 	xmlparser.idl \
+	xmlregexp.c \
 	xmlview.c \
 	xpath.c

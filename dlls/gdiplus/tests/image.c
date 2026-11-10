@@ -632,7 +632,7 @@ static void test_LoadingImages(void)
 
     bm = (GpBitmap *)0xdeadbeef;
     stat = GdipCreateBitmapFromFile(L"nonexistent", &bm);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
     ok(!bm, "returned %p\n", bm);
 
     stat = GdipLoadImageFromFile(0, 0);
@@ -645,7 +645,7 @@ static void test_LoadingImages(void)
 
     img = (GpImage *)0xdeadbeef;
     stat = GdipLoadImageFromFile(L"nonexistent", &img);
-    todo_wine expect(OutOfMemory, stat);
+    expect(OutOfMemory, stat);
     ok(!img, "returned %p\n", img);
 
     stat = GdipLoadImageFromFileICM(0, 0);
@@ -658,7 +658,7 @@ static void test_LoadingImages(void)
 
     img = (GpImage *)0xdeadbeef;
     stat = GdipLoadImageFromFileICM(L"nonexistent", &img);
-    todo_wine expect(OutOfMemory, stat);
+    expect(OutOfMemory, stat);
     ok(!img, "returned %p\n", img);
 
     create_test_resource(filename_ico, 5);

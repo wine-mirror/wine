@@ -4371,11 +4371,9 @@ static void test_dpi_context(void)
     ok( awareness == DPI_AWARENESS_UNAWARE, "wrong awareness %u\n", awareness );
     ok( !pIsProcessDPIAware(), "already aware\n" );
     dpi = pGetDpiForSystem();
-    todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
-        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
+    ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
     dpi = GetDeviceCaps( hdc, LOGPIXELSX );
-    todo_wine_if (real_dpi != USER_DEFAULT_SCREEN_DPI)
-        ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
+    ok( dpi == USER_DEFAULT_SCREEN_DPI, "wrong dpi %u\n", dpi );
     SetLastError( 0xdeadbeef );
     ret = pSetProcessDpiAwarenessContext( NULL );
     ok( !ret, "got %d\n", ret );

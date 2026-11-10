@@ -38,6 +38,7 @@
 #include "wine/debug.h"
 
 #include "msxml_private.h"
+#include "xmlregexp.h"
 
 #include "initguid.h"
 #include "saxreader_extensions.h"
@@ -264,6 +265,7 @@ struct element_decl
     BSTR name;
     enum element_type type;
     struct element_content *content;
+    struct xmlregex *regex;
 };
 
 struct entity_part
@@ -978,6 +980,10 @@ static inline bool saxreader_has_handler(const struct saxlocator *locator, enum 
     return (locator->vbInterface && iface->vbhandler) || (!locator->vbInterface && iface->handler);
 }
 
+static void saxlocator_standalone_init(struct saxlocator *locator, ISequentialStream *stream);
+static bool saxreader_skipspaces(struct saxlocator *locator);
+static void saxreader_parse_name(struct saxlocator *locator, BSTR *name);
+
 static inline HRESULT set_feature_value(struct saxreader *reader, enum saxreader_feature feature, VARIANT_BOOL value)
 {
     /* handling of non-VARIANT_* values is version dependent */
@@ -1109,6 +1115,7 @@ static void saxreader_free_element_decl(struct element_decl *decl)
     if (decl->content)
         saxreader_free_element_content(decl->content);
     SysFreeString(decl->name);
+    xmlregex_free(decl->regex);
     free(decl);
 }
 
@@ -1143,6 +1150,108 @@ struct attlist_attr * parser_dtd_get_attr_decl(struct dtd *dtd, struct domnode *
     }
 
     return NULL;
+}
+
+static bool parser_dtd_has_id(struct validation_context *ctxt, BSTR value)
+{
+    for (size_t i = 0; i < ctxt->id.count; ++i)
+    {
+        if (bstr_equal(ctxt->id.values[i], value))
+            return true;
+    }
+
+    return false;
+}
+
+static bool parser_dtd_validate_add_id(struct validation_context *ctxt, BSTR value)
+{
+    if (parser_dtd_has_id(ctxt, value))
+        return false;
+
+    if (!array_reserve((void **)&ctxt->id.values, &ctxt->id.capacity, ctxt->id.count + 1, sizeof(*ctxt->id.values)))
+        return false;
+
+    ctxt->id.values[ctxt->id.count++] = SysAllocString(value);
+    return true;
+}
+
+static bool parser_dtd_validate_add_idref(struct validation_context *ctxt, struct attlist_attr *decl, BSTR value)
+{
+    if (!array_reserve((void **)&ctxt->idref.refs, &ctxt->idref.capacity, ctxt->idref.count + 1,
+            sizeof(*ctxt->idref.refs)))
+    {
+        return false;
+    }
+
+    ctxt->idref.refs[ctxt->idref.count].value = SysAllocString(value);
+    ctxt->idref.refs[ctxt->idref.count].decl = decl;
+    ++ctxt->idref.count;
+
+    return true;
+}
+
+static bool parser_dtd_validate_idrefs(struct validation_context *ctxt, BSTR value)
+{
+    struct saxlocator locator = { 0 };
+    ISequentialStream *stream;
+    HRESULT hr;
+    BSTR part;
+    bool ret;
+
+    if (FAILED(hr = stream_wrapper_create(value, SysStringLen(value) * sizeof(WCHAR), &stream)))
+    {
+        ctxt->code = hr;
+        return false;
+    }
+    saxlocator_standalone_init(&locator, stream);
+
+    while (!locator.eos)
+    {
+        saxreader_skipspaces(&locator);
+        saxreader_parse_name(&locator, &part);
+        if (locator.status != S_OK)
+        {
+            ctxt->code = locator.status;
+            break;
+        }
+        saxreader_skipspaces(&locator);
+
+        ret = parser_dtd_has_id(ctxt, part);
+        SysFreeString(part);
+
+        if (!ret)
+        {
+            ctxt->code = E_DOM_ELEMENT_ID_NOT_FOUND;
+            break;
+        }
+    }
+
+    encoded_buffer_cleanup(&locator.buffer.utf16);
+    ISequentialStream_Release(stream);
+
+    return ctxt->code == S_OK;
+}
+
+bool parser_dtd_validate_references(struct validation_context *ctxt)
+{
+    for (size_t i = 0; i < ctxt->idref.count; ++i)
+    {
+        if (ctxt->idref.refs[i].decl->type == ATTR_TYPE_IDREF)
+        {
+            if (!parser_dtd_has_id(ctxt, ctxt->idref.refs[i].value))
+            {
+                ctxt->code = E_DOM_ELEMENT_ID_NOT_FOUND;
+                return false;
+            }
+        }
+        else if (ctxt->idref.refs[i].decl->type == ATTR_TYPE_IDREFS)
+        {
+            if (!parser_dtd_validate_idrefs(ctxt, ctxt->idref.refs[i].value))
+                return false;
+        }
+    }
+
+    return true;
 }
 
 bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct dtd *dtd,
@@ -1180,6 +1289,15 @@ bool parser_dtd_validate_attribute_value(struct validation_context *ctxt, struct
         if (!ret)
             ctxt->code = E_DOM_ATTRIBUTE_VALUE;
     }
+
+    if (ret && decl->type == ATTR_TYPE_ID && !parser_dtd_validate_add_id(ctxt, value))
+    {
+        ctxt->code = E_DOM_DUPLICATE_ID_VALUE;
+        ret = false;
+    }
+
+    if (decl->type == ATTR_TYPE_IDREF || decl->type == ATTR_TYPE_IDREFS)
+        parser_dtd_validate_add_idref(ctxt, decl, value);
 
     SysFreeString(value);
 
@@ -1251,6 +1369,212 @@ bool parser_dtd_check_required_attributes(struct validation_context *ctxt, struc
     return true;
 }
 
+struct content_model_build_context
+{
+    struct xmlregex_parser_context *ctxt;
+    struct xmlregex_state *state;
+    HRESULT status;
+};
+
+static void parse_dtd_build_content_model(struct content_model_build_context *c,
+        struct element_content *content, const WCHAR *name)
+{
+    struct xmlregex_state *oldstate, *oldend;
+    enum element_content_occurrence o;
+
+    switch (content->type)
+    {
+        case ELEMENT_CONTENT_PCDATA:
+            c->status = E_UNEXPECTED;
+            break;
+        case ELEMENT_CONTENT_ELEMENT:
+            oldstate = c->state;
+            switch (content->occurrence)
+            {
+                case ELEMENT_CONTENT_ONCE:
+                    c->state = xmlregex_parser_new_transition(c->ctxt, c->state, NULL, content->name, NULL);
+                    break;
+                case ELEMENT_CONTENT_OPT:
+                    c->state = xmlregex_parser_new_transition(c->ctxt, c->state, NULL, content->name, NULL);
+                    xmlregex_parser_new_epsilon(c->ctxt, oldstate, c->state);
+                    break;
+                case ELEMENT_CONTENT_PLUS:
+                    c->state = xmlregex_parser_new_transition(c->ctxt, c->state, NULL, content->name, NULL);
+                    xmlregex_parser_new_transition(c->ctxt, c->state, c->state, content->name, NULL);
+                    break;
+                case ELEMENT_CONTENT_MULT:
+                    c->state = xmlregex_parser_new_epsilon(c->ctxt, c->state, NULL);
+                    xmlregex_parser_new_transition(c->ctxt, c->state, c->state, content->name, NULL);
+                    break;
+            }
+            break;
+        case XML_ELEMENT_CONTENT_SEQ:
+            oldstate = c->state;
+            o = content->occurrence;
+
+            if (o != ELEMENT_CONTENT_ONCE)
+            {
+                c->state = xmlregex_parser_new_epsilon(c->ctxt, oldstate, NULL);
+                oldstate = c->state;
+            }
+
+            do
+            {
+                parse_dtd_build_content_model(c, content->left, name);
+                content = content->right;
+            } while ((content->type == ELEMENT_CONTENT_SEQ)
+                    && (content->occurrence == ELEMENT_CONTENT_ONCE));
+            parse_dtd_build_content_model(c, content, name);
+
+            oldend = c->state;
+            c->state = xmlregex_parser_new_epsilon(c->ctxt, oldend, NULL);
+            switch (o)
+            {
+                case ELEMENT_CONTENT_ONCE:
+                    break;
+                case ELEMENT_CONTENT_OPT:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldstate, c->state);
+                    break;
+                case ELEMENT_CONTENT_MULT:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldstate, c->state);
+                    xmlregex_parser_new_epsilon(c->ctxt, oldend, oldstate);
+                    break;
+                case ELEMENT_CONTENT_PLUS:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldend, oldstate);
+                    break;
+            }
+            break;
+        case ELEMENT_CONTENT_OR:
+
+            o = content->occurrence;
+            if ((o == ELEMENT_CONTENT_PLUS) || (o == ELEMENT_CONTENT_MULT))
+                c->state = xmlregex_parser_new_epsilon(c->ctxt, c->state, NULL);
+
+            oldstate = c->state;
+            oldend = xmlregex_parser_push_state(c->ctxt);
+
+            /*
+             * iterate over the subtypes and remerge the end with an
+             * epsilon transition
+             */
+            do
+            {
+                c->state = oldstate;
+                parse_dtd_build_content_model(c, content->left, name);
+                xmlregex_parser_new_epsilon(c->ctxt, c->state, oldend);
+                content = content->right;
+            }
+            while ((content->type == ELEMENT_CONTENT_OR)
+                    && (content->occurrence == ELEMENT_CONTENT_ONCE));
+            c->state = oldstate;
+            parse_dtd_build_content_model(c, content, name);
+            xmlregex_parser_new_epsilon(c->ctxt, c->state, oldend);
+            c->state = xmlregex_parser_new_epsilon(c->ctxt, oldend, NULL);
+            switch (o)
+            {
+                case ELEMENT_CONTENT_ONCE:
+                    break;
+                case ELEMENT_CONTENT_OPT:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldstate, c->state);
+                    break;
+                case ELEMENT_CONTENT_MULT:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldstate, c->state);
+                    xmlregex_parser_new_epsilon(c->ctxt, oldend, oldstate);
+                    break;
+                case ELEMENT_CONTENT_PLUS:
+                    xmlregex_parser_new_epsilon(c->ctxt, oldend, oldstate);
+                    break;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+static struct xmlregex * create_content_model_regex(struct element_decl *decl)
+{
+    struct content_model_build_context c = { 0 };
+    struct xmlregex *ret;
+
+    c.ctxt = xmlregex_new_fa();
+    if (!c.ctxt)
+        return NULL;
+
+    c.state = xmlregex_parser_get_init_state(c.ctxt);
+    parse_dtd_build_content_model(&c, decl->content, decl->name);
+    xmlregex_parser_set_final_state(c.ctxt, c.state);
+    ret = xmlregex_parser_compile(c.ctxt);
+
+    c.state = NULL;
+    xmlregex_free_parser_context(c.ctxt);
+
+    return ret;
+}
+
+static bool parser_dtd_is_textual_node(const struct domnode *node)
+{
+    switch (node->type)
+    {
+        case NODE_PROCESSING_INSTRUCTION:
+        case NODE_ENTITY_REFERENCE:
+        case NODE_CDATA_SECTION:
+        case NODE_COMMENT:
+        case NODE_TEXT:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool parser_dtd_validate_element_complex(struct validation_context *ctxt, struct dtd *dtd,
+        struct element_decl *decl, struct domnode *elem)
+{
+    struct xmlregex_exec_context *exec;
+    struct domnode *child;
+    bool has_children;
+
+    if (!decl->regex)
+        decl->regex = create_content_model_regex(decl);
+
+    if (!decl->regex)
+    {
+        WARN("Failed to create regex representation of content model.\n");
+        ctxt->code = E_FAIL;
+        return false;
+    }
+
+    if (!xmlregex_is_determinist(decl->regex))
+        return false;
+
+    if (!(exec = xmlregex_new_exec_context(decl->regex, NULL, NULL)))
+        return false;
+
+    has_children = (child = domnode_get_first_child(elem)) != NULL;
+    while (child)
+    {
+        if (parser_dtd_is_textual_node(child))
+        {
+            ctxt->code = E_DOM_ILLEGAL_TEXT;
+            break;
+        }
+        else if (child->type == NODE_ELEMENT)
+        {
+            xmlregex_exec_push_string(exec, child->qname, NULL);
+        }
+
+        child = domnode_get_next_sibling(child);
+    }
+
+    if (ctxt->code == S_OK && (xmlregex_exec_push_string(exec, NULL, NULL) != 1))
+    {
+        ctxt->code = has_children ? E_DOM_INVALID_CONTENT : E_DOM_EMPTY_NOT_ALLOWED;
+    }
+
+    xmlregex_free_exec_context(exec);
+
+    return ctxt->code == S_OK;
+}
+
 bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct dtd *dtd,
         struct element_decl *decl, struct domnode *elem)
 {
@@ -1281,6 +1605,10 @@ bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct
     else if (decl->type == ELEMENT_TYPE_MIXED)
     {
         return parser_dtd_validate_element_mixed_content(ctxt, dtd, decl, elem);
+    }
+    else if (decl->type == ELEMENT_TYPE_ELEMENT)
+    {
+        return parser_dtd_validate_element_complex(ctxt, dtd, decl, elem);
     }
 
     return true;

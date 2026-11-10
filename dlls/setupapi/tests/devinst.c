@@ -1962,10 +1962,12 @@ static void check_device_iface_(int line, HDEVINFO set, SP_DEVINFO_DATA *device,
 
 static void test_device_iface(void)
 {
-    char buffer[200];
+    char buffer[4096] = { 0 };
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buffer;
     SP_DEVINFO_DATA device = {0}, device2 = {sizeof(device2)};
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    unsigned int i;
+    CONFIGRET cr;
     BOOL ret;
     HDEVINFO set;
 
@@ -2025,10 +2027,25 @@ static void test_device_iface(void)
     check_device_iface(set, &device, &guid, 1, 0, "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6A55B5A4-3F65-11DB-B704-0011955C2BDB}\\Oogah");
     check_device_iface(set, &device, &guid, 2, 0, NULL);
 
+    cr = CM_Get_Device_Interface_ListA(&guid, NULL, buffer, sizeof(buffer), CM_GET_DEVICE_INTERFACE_LIST_ALL_DEVICES);
+    ok(!cr, "Got %#lx.\n", cr);
+    i = 0;
+    for (char *path = buffer; *path; path = path + strlen(path) + 1, i++)
+    {
+        const char *expected_path;
+
+        if (!i)
+            expected_path = "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+        else
+            expected_path = "\\\\?\\ROOT#LEGACY_BOGUS#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\Oogah";
+        ok(!strcmp(path, expected_path), "Got unexpected path %s.\n", path);
+    }
+
     ret = SetupDiCreateDeviceInterfaceA(set, &device, &guid, "test", 0, &iface);
     ok(ret, "Failed to create interface, error %#lx.\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &guid), "Got unexpected class %s.\n",
             wine_dbgstr_guid(&iface.InterfaceClassGuid));
+    detail->cbSize = sizeof(*detail);
     ok(iface.Flags == 0, "Got unexpected flags %#lx.\n", iface.Flags);
     ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, detail, sizeof(buffer), NULL, NULL);
     ok(ret, "Failed to get interface detail, error %#lx.\n", GetLastError());
