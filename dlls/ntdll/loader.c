@@ -3941,7 +3941,7 @@ void* WINAPI LdrResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIP
         nts = LdrGetProcedureAddress(*phmod, &fnc, 0, (void**)&fp);
     }
 #ifdef __riscv
-    WARN( "RISCV64 delay import %s!%s module=%p image=%p target=%p status=%08lx thunk=%p\\n",
+    WARN( "RISCV64 delay import %s!%s module=%p image=%p target=%p status=%08lx thunk=%p\n",
           name, IMAGE_SNAP_BY_ORDINAL(pINT[id].u1.Ordinal) ? "(ordinal)" :
           (const char *)((const IMAGE_IMPORT_BY_NAME *)get_rva(base, pINT[id].u1.AddressOfData))->Name,
           *phmod, base, nts ? NULL : fp, nts, addr );
