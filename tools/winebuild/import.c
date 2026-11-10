@@ -650,7 +650,13 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_RISCV:
         output( "\tlla t0, %s+%d\n", table, pos );
         output( "\tld t0, 0(t0)\n" );
-        output( "\tjr t0\n" );
+        /* Diagnostic: trap on an implausible 64-bit import target instead of
+         * branching into UTF-16 data when a delay IAT slot is overwritten.
+         * Remove once the underlying memory corruption has been identified. */
+        output( "\tsrli t1, t0, 48\n" );
+        output( "\tbeqz t1, 1f\n" );
+        output( "\tebreak\n" );
+        output( "1:\tjr t0\n" );
         break;
     default:
         assert( 0 );
