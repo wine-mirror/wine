@@ -27,9 +27,6 @@
  */
 
 #include <stdarg.h>
-#ifdef __riscv
-#include <stdio.h>
-#endif
 #include "windef.h"
 #include "winbase.h"
 #include "delayloadhandler.h"
@@ -53,16 +50,5 @@ static inline void *image_base(void)
 
 FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAGE_THUNK_DATA *addr )
 {
-#ifdef __riscv
-    FARPROC proc;
-    void *base = image_base();
-
-    proc = ResolveDelayLoadedAPI( base, descr, NULL, DelayLoadFailureHook, addr, 0 );
-    if ((ULONG_PTR)proc < 0x10000)
-        fprintf( stderr, "riscv64: invalid delayed import target %p (image base %p, descriptor %p, thunk %p)\n",
-                 proc, base, descr, addr );
-    return proc;
-#else
     return ResolveDelayLoadedAPI( image_base(), descr, NULL, DelayLoadFailureHook, addr, 0 );
-#endif
 }
