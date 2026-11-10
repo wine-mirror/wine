@@ -588,6 +588,7 @@ static void frame_free_buffers(mpg123_handle *fr)
 	fr->conv16to8_buf = NULL;
 #endif
 	if(fr->layerscratch != NULL) free(fr->layerscratch);
+	fr->layerscratch = NULL;
 }
 
 void INT123_frame_exit(mpg123_handle *fr)

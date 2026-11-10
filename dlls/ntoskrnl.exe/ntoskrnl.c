@@ -646,6 +646,8 @@ static NTSTATUS dispatch_read( struct dispatch_context *context )
     if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
 
     offset.QuadPart = context->params.read.pos;
+    if (offset.QuadPart == (LONGLONG)-2) /* FILE_USE_FILE_POINTER_POSITION */
+        offset = file->CurrentByteOffset;
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ, device, out_buff, out_size,
                                               &offset, NULL, NULL )))
@@ -682,6 +684,8 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
     TRACE( "device %p file %p size %lu\n", device, file, context->in_size );
 
     offset.QuadPart = context->params.write.pos;
+    if (offset.QuadPart == (LONGLONG)-2) /* FILE_USE_FILE_POINTER_POSITION */
+        offset = file->CurrentByteOffset;
 
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, context->in_buff, context->in_size,
                                               &offset, NULL, NULL )))
@@ -696,6 +700,51 @@ static NTSTATUS dispatch_write( struct dispatch_context *context )
     irpsp->Parameters.Write.Key = context->params.write.key;
 
     irp->Flags |= IRP_WRITE_OPERATION;
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
+    return dispatch_irp( device, irp, context );
+}
+
+/* process a set file information request for a given device */
+static NTSTATUS dispatch_set_info( struct dispatch_context *context )
+{
+    IRP *irp;
+    IO_STACK_LOCATION *irpsp;
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.set_info.file );
+
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = IoGetAttachedDevice( file->DeviceObject );
+
+    TRACE( "device %p file %p class %#x size %lu\n",
+           device, file, context->params.set_info.class, context->in_size );
+
+    if (context->params.set_info.class == FilePositionInformation)
+    {
+        /* Handled by ntoskrnl; never passed to the driver. */
+        FILE_POSITION_INFORMATION *info = context->in_buff;
+
+        if (context->in_size < sizeof(FILE_POSITION_INFORMATION))
+            return STATUS_INFO_LENGTH_MISMATCH;
+
+        file->CurrentByteOffset = info->CurrentByteOffset;
+        return STATUS_SUCCESS;
+    }
+
+    if (!(irp = IoAllocateIrp( device->StackSize, FALSE )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MajorFunction = IRP_MJ_SET_INFORMATION;
+    irpsp->Parameters.SetFile.FileInformationClass = context->params.set_info.class;
+    irpsp->Parameters.SetFile.Length = context->in_size;
+    irpsp->FileObject = file;
+    irp->AssociatedIrp.SystemBuffer = context->in_buff;
+    irp->RequestorMode = UserMode;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
+    irp->Tail.Overlay.OriginalFileObject = file;
+
+    context->in_buff = NULL;
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
     return dispatch_irp( device, irp, context );
 }
@@ -882,6 +931,7 @@ static const dispatch_func dispatch_funcs[] =
     dispatch_close,    /* IRP_CALL_CLOSE */
     dispatch_read,     /* IRP_CALL_READ */
     dispatch_write,    /* IRP_CALL_WRITE */
+    dispatch_set_info, /* IRP_CALL_SET_INFO */
     dispatch_flush,    /* IRP_CALL_FLUSH */
     dispatch_ioctl,    /* IRP_CALL_IOCTL */
     dispatch_volume,   /* IRP_CALL_VOLUME */

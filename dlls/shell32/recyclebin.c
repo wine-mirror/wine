@@ -1248,10 +1248,6 @@ HRESULT WINAPI SHEmptyRecycleBinA(HWND hwnd, LPCSTR pszRootPath, DWORD dwFlags)
     return SHEmptyRecycleBinW(hwnd, wszRootPath, dwFlags);
 }
 
-#define SHERB_NOCONFIRMATION 1
-#define SHERB_NOPROGRESSUI   2
-#define SHERB_NOSOUND        4
-
 HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
 {
     LPITEMIDLIST *apidl;

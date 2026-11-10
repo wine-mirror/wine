@@ -2502,6 +2502,7 @@ static void test_procedures(void)
     IDispatch *disp;
     EXCEPINFO ei = {0};
     VARIANT v;
+    BSTR str;
     HRESULT hres;
 
     strict_enter_script = TRUE;
@@ -2513,6 +2514,21 @@ static void test_procedures(void)
     hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, NULL, NULL, L"", NULL, NULL, NULL, 0, 0, 0, &disp);
     ok(hres == S_OK, "ParseProcedureText failed: %08lx\n", hres);
     IDispatch_Release(disp);
+
+    /* Unlike script text, procedure text does not skip a leading BOM */
+    str = SysAllocString(L"\xfeff""dim x\n");
+    SET_EXPECT(OnScriptError);
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, L"", NULL, NULL, NULL, 0, 0, 0, &disp);
+    ok(hres == MAKE_VBSERROR(1032), "ParseProcedureText returned: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+    SysFreeString(str);
+
+    str = SysAllocString(L"\xfffe""dim x\n");
+    SET_EXPECT(OnScriptError);
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, L"", NULL, NULL, NULL, 0, 0, 0, &disp);
+    ok(hres == MAKE_VBSERROR(1032), "ParseProcedureText returned: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+    SysFreeString(str);
 
     proc = parse_procedure(parse_proc, L"dim x\nif true then x=false", 0);
 
@@ -3821,6 +3837,30 @@ static void test_parse_errors(void)
             L"With x\n. y = 1\nEnd With\n",
             1, 2,
             L". y = 1", S_OK, 1002
+        },
+        {
+            /* Only a single leading BOM is skipped */
+            L"\xfeff\xfeff""x = 1\n",
+            0, 0,
+            NULL, S_OK, 1032
+        },
+        {
+            /* A byte-swapped BOM after a BOM */
+            L"\xfeff\xfffe""x = 1\n",
+            0, 0,
+            NULL, S_OK, 1032
+        },
+        {
+            /* BOM after leading whitespace */
+            L" \xfeff""x = 1\n",
+            0, 1,
+            NULL, S_OK, 1032
+        },
+        {
+            /* BOM at the start of a later line */
+            L"x = 1\n\xfeff""y = 2\n",
+            1, 0,
+            NULL, S_OK, 1032
         }
     };
     HRESULT hres;
@@ -4277,6 +4317,15 @@ static void test_isexpression(void)
     VariantClear(&var);
     SysFreeString(str);
 
+    /* A leading BOM is skipped in expressions */
+    str = SysAllocString(L"\xfeff""(1 + 7) * 2 - 3");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_I2, "Expected VT_I2, got %s\n", vt2a(&var));
+    ok(V_I2(&var) == 13, "Expected 13, got %d\n", V_I2(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
     /* Without a global host or named item context, "me" returns the script dispatch */
     hres = IActiveScript_GetScriptDispatch(engine, NULL, &disp);
     ok(hres == S_OK, "GetScriptDispatch failed: %08lx\n", hres);
@@ -4526,6 +4575,12 @@ static void run_tests(void)
     parse_script_w(L"x\x0b""=\x0b""1\n");
     parse_script_w(L"x\x0c""=\x0c""1\n");
 
+    /* A single BOM at the start of the script text is skipped */
+    parse_script_w(L"\xfeff");
+    parse_script_w(L"\xfeff""dim x\n");
+    parse_script_w(L"\xfeff\n""dim x\n");
+    parse_script_w(L"\xfffe""dim x\n");
+
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     parse_script_w(L"reportSuccess");
@@ -4659,6 +4714,7 @@ static void run_tests(void)
     parse_htmlscript(L" -->");
     parse_htmlscript(L"<!--\ndim x\nx=1\n-->\n");
     parse_htmlscript(L"<!--\ndim x\n-->\n<!--\nx=1\n-->\n");
+    parse_htmlscript(L"\xfeff""dim x\n");
 
     SET_EXPECT(OnScriptError);
     hres = parse_script_wr(L"<!--");

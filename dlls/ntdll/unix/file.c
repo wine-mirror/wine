@@ -4881,10 +4881,17 @@ static NTSTATUS server_set_file_info( HANDLE handle, IO_STATUS_BLOCK *io,
 NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                                       void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
 {
-    int fd, needs_close;
+    int fd, needs_close = 0;
     unsigned int status = STATUS_SUCCESS;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class );
+
+    if (class != FileCompletionInformation &&
+        (status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+    {
+        if (status != STATUS_BAD_DEVICE_TYPE) return io->Status = status;
+        return server_set_file_info( handle, io, ptr, len, class );
+    }
 
     switch (class)
     {
@@ -4894,9 +4901,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             const FILE_BASIC_INFORMATION *info = ptr;
             LARGE_INTEGER mtime, atime;
             char *unix_name;
-
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-                return io->Status = status;
 
             if (server_get_unix_name( handle, &unix_name )) unix_name = NULL;
 
@@ -4910,7 +4914,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 status = fd_set_file_info( fd, info->FileAttributes,
                                            unix_name && is_hidden_file( unix_name ));
 
-            if (needs_close) close( fd );
             free( unix_name );
         }
         else status = STATUS_INVALID_PARAMETER_3;
@@ -4921,29 +4924,8 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             const FILE_POSITION_INFORMATION *info = ptr;
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-                return io->Status = status;
-
             if (lseek( fd, info->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
                 status = errno_to_status( errno );
-
-            if (needs_close) close( fd );
-        }
-        else status = STATUS_INVALID_PARAMETER_3;
-        break;
-
-    case FileEndOfFileInformation:
-        if (len >= sizeof(FILE_END_OF_FILE_INFORMATION))
-        {
-            const FILE_END_OF_FILE_INFORMATION *info = ptr;
-
-            SERVER_START_REQ( set_fd_eof_info )
-            {
-                req->handle   = wine_server_obj_handle( handle );
-                req->eof      = info->EndOfFile.QuadPart;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
         }
         else status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -4963,25 +4945,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             SERVER_END_REQ;
         }
         else status = STATUS_INVALID_PARAMETER_3;
-        break;
-
-    case FileIoCompletionNotificationInformation:
-        if (len >= sizeof(FILE_IO_COMPLETION_NOTIFICATION_INFORMATION))
-        {
-            FILE_IO_COMPLETION_NOTIFICATION_INFORMATION *info = ptr;
-
-            if (info->Flags & FILE_SKIP_SET_USER_EVENT_ON_FAST_IO)
-                FIXME( "FILE_SKIP_SET_USER_EVENT_ON_FAST_IO not supported\n" );
-
-            SERVER_START_REQ( set_fd_completion_mode )
-            {
-                req->handle   = wine_server_obj_handle( handle );
-                req->flags    = info->Flags;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-        }
-        else status = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
     case FileIoPriorityHintInformation:
@@ -5006,9 +4969,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             struct stat st;
             const FILE_VALID_DATA_LENGTH_INFORMATION *info = ptr;
 
-            if ((status = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
-                return io->Status = status;
-
             if (fstat( fd, &st ) == -1) status = errno_to_status( errno );
             else if (info->ValidDataLength.QuadPart <= 0 || (off_t)info->ValidDataLength.QuadPart > st.st_size)
                 status = STATUS_INVALID_PARAMETER;
@@ -5025,7 +4985,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 WARN( "setting valid data length not supported\n" );
 #endif
             }
-            if (needs_close) close( fd );
         }
         else status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -5156,8 +5115,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         break;
 
     default:
+        if (needs_close) close( fd );
         return server_set_file_info( handle, io, ptr, len, class );
     }
+
+    if (needs_close) close( fd );
     io->Information = 0;
     return io->Status = status;
 }
@@ -5411,7 +5373,7 @@ static unsigned int server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     SERVER_START_REQ( read )
     {
         req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
-        req->pos   = offset ? offset->QuadPart : 0;
+        req->pos   = offset ? offset->QuadPart : FILE_USE_FILE_POINTER_POSITION;
         wine_server_set_reply( req, buffer, size );
         status = virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -5446,7 +5408,7 @@ static unsigned int server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUT
     SERVER_START_REQ( write )
     {
         req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
-        req->pos   = offset ? offset->QuadPart : 0;
+        req->pos   = offset ? offset->QuadPart : FILE_USE_FILE_POINTER_POSITION;
         wine_server_add_data( req, buffer, size );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );

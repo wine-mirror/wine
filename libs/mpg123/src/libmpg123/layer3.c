@@ -518,6 +518,18 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 	int gainpow2_scale_idx = 378;
 #endif
 
+	// Writes to xr jump around wildly with corrupted files. It is not guaranteed
+	// that all values are correctly written to. Zero all values beforehand
+	// to have a clean slate, instead of trying to do that afterwards.
+	// All branches that zero a value can also be dropped, then.
+	// After some micro optimization here and there, the resulting code seems
+	// to be up to 3 % faster than before with AVX decoder, but this depends a
+	// lot on the target CPU, could give a small hit on some.
+	// This loop here also seems to be a bit faster than calling memset(0).
+	for(int i=0; i<SBLIMIT; ++i)
+		for(int j=0; j<SSLIMIT; ++j)
+			xr[i][j] = DOUBLE_TO_REAL(0.0);
+
 	/* Assumption: If there is some part2_3_length at all, there should be
 	   enough of it to work with properly. In case of zero length we silently
 	   zero things. */
@@ -563,12 +575,26 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 		}
 	}
 
-#define CHECK_XRPNT if(xrpnt >= xrpntlimit) \
+// About 2/3 of checks when checking on use.
+//#define CHECK_XRPNT_ON_SET 1
+
+#ifdef CHECK_XRPNT_ON_SET
+#define CHECK_XRPNT_SET do { if(xrpnt >= xrpntlimit) \
 { \
 	if(NOQUIET) \
 		error2("attempted xrpnt overflow (%p !< %p)", (void*) xrpnt, (void*) xrpntlimit); \
 	return 1; \
-}
+} } while(0)
+#define CHECK_XRPNT_USE
+#else
+#define CHECK_XRPNT_SET
+#define CHECK_XRPNT_USE do { if(xrpnt >= xrpntlimit) \
+{ \
+	if(NOQUIET) \
+		error2("attempted xrpnt overflow (%p !< %p)", (void*) xrpnt, (void*) xrpntlimit); \
+	return 1; \
+} } while(0)
+#endif
 
 	if(gr_info->block_type == 2)
 	{
@@ -605,8 +631,8 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 				if( (!mc) )
 				{
 					mc    = *m++;
-//fprintf(stderr, "%i setting xrpnt = xr + %i (%ld)\n", __LINE__, *m, xrpnt-(real*)xr);
 					xrpnt = ((real *) xr) + (*m++);
+					CHECK_XRPNT_SET;
 					lwin  = *m++;
 					cb    = *m++;
 					if(lwin == 3)
@@ -652,7 +678,6 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					y &= 0xf;
 #endif
 				}
-				CHECK_XRPNT;
 				if(x == 15 && h->linbits)
 				{
 					max[lwin] = cb;
@@ -660,6 +685,7 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					x += ((MASK_UTYPE) mask) >> (BITSHIFT+8-h->linbits);
 					num -= h->linbits+1;
 					mask <<= h->linbits;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt = REAL_MUL_SCALE_LAYER3(-ispow[x], v, gainpow2_scale_idx);
 					else         *xrpnt = REAL_MUL_SCALE_LAYER3( ispow[x], v, gainpow2_scale_idx);
 
@@ -668,16 +694,16 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 				else if(x)
 				{
 					max[lwin] = cb;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt = REAL_MUL_SCALE_LAYER3(-ispow[x], v, gainpow2_scale_idx);
 					else         *xrpnt = REAL_MUL_SCALE_LAYER3( ispow[x], v, gainpow2_scale_idx);
 
 					num--;
 					mask <<= 1;
 				}
-				else *xrpnt = DOUBLE_TO_REAL(0.0);
 
 				xrpnt += step;
-				CHECK_XRPNT;
+				CHECK_XRPNT_SET;
 				if(y == 15 && h->linbits)
 				{
 					max[lwin] = cb;
@@ -685,6 +711,7 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					y += ((MASK_UTYPE) mask) >> (BITSHIFT+8-h->linbits);
 					num -= h->linbits+1;
 					mask <<= h->linbits;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt = REAL_MUL_SCALE_LAYER3(-ispow[y], v, gainpow2_scale_idx);
 					else         *xrpnt = REAL_MUL_SCALE_LAYER3( ispow[y], v, gainpow2_scale_idx);
 
@@ -693,15 +720,16 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 				else if(y)
 				{
 					max[lwin] = cb;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt = REAL_MUL_SCALE_LAYER3(-ispow[y], v, gainpow2_scale_idx);
 					else         *xrpnt = REAL_MUL_SCALE_LAYER3( ispow[y], v, gainpow2_scale_idx);
 
 					num--;
 					mask <<= 1;
 				}
-				else *xrpnt = DOUBLE_TO_REAL(0.0);
 
 				xrpnt += step;
+				CHECK_XRPNT_SET;
 			}
 		}
 
@@ -735,8 +763,8 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					if(!mc)
 					{
 						mc = *m++;
-//fprintf(stderr, "%i setting xrpnt = xr + %i (%ld)\n", __LINE__, *m, xrpnt-(real*)xr);
 						xrpnt = ((real *) xr) + (*m++);
+						CHECK_XRPNT_SET;
 						lwin = *m++;
 						cb = *m++;
 						if(lwin == 3)
@@ -758,22 +786,22 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					}
 					mc--;
 				}
-				CHECK_XRPNT;
 				if( (a & (0x8>>i)) )
 				{
 					max[lwin] = cb;
 					if(part2remain+num <= 0)
 					break;
 
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt = -REAL_SCALE_LAYER3(v, gainpow2_scale_idx);
 					else         *xrpnt =  REAL_SCALE_LAYER3(v, gainpow2_scale_idx);
 
 					num--;
 					mask <<= 1;
 				}
-				else *xrpnt = DOUBLE_TO_REAL(0.0);
 
 				xrpnt += step;
+				CHECK_XRPNT_SET;
 			}
 		}
 
@@ -781,19 +809,24 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 		{ /* short band? */
 			while(1)
 			{
-				for(;mc > 0;mc--)
-				{
-					CHECK_XRPNT;
-					*xrpnt = DOUBLE_TO_REAL(0.0); xrpnt += 3; /* short band -> step=3 */
-					*xrpnt = DOUBLE_TO_REAL(0.0); xrpnt += 3;
-				}
 				if(m >= me)
-				break;
+				{
+					if(mc > 0)
+					{
+						// No actual writes here because xr has been zeroed before.
+						// short band -> step=3, two steps per mc round
+						xrpnt += 6*mc;
+						mc = 0;
+						CHECK_XRPNT_SET;
+					}
+					break;
+				}
 
 				mc    = *m++;
 				xrpnt = ((real *) xr) + *m++;
+				CHECK_XRPNT_SET;
 				if(*m++ == 0)
-				break; /* optimize: field will be set to zero at the end of the function */
+				break; /* optimized: zero fields zero-initialized */
 
 				m++; /* cb */
 			}
@@ -873,7 +906,6 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 #endif
 				}
 
-				CHECK_XRPNT;
 				if(x == 15 && h->linbits)
 				{
 					max = cb;
@@ -881,6 +913,7 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					x += ((MASK_UTYPE) mask) >> (BITSHIFT+8-h->linbits);
 					num -= h->linbits+1;
 					mask <<= h->linbits;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt++ = REAL_MUL_SCALE_LAYER3(-ispow[x], v, gainpow2_scale_idx);
 					else         *xrpnt++ = REAL_MUL_SCALE_LAYER3( ispow[x], v, gainpow2_scale_idx);
 
@@ -889,15 +922,16 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 				else if(x)
 				{
 					max = cb;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt++ = REAL_MUL_SCALE_LAYER3(-ispow[x], v, gainpow2_scale_idx);
 					else         *xrpnt++ = REAL_MUL_SCALE_LAYER3( ispow[x], v, gainpow2_scale_idx);
 					num--;
 
 					mask <<= 1;
 				}
-				else *xrpnt++ = DOUBLE_TO_REAL(0.0);
+				else xrpnt++;
+				CHECK_XRPNT_SET;
 
-				CHECK_XRPNT;
 				if(y == 15 && h->linbits)
 				{
 					max = cb;
@@ -905,6 +939,7 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					y += ((MASK_UTYPE) mask) >> (BITSHIFT+8-h->linbits);
 					num -= h->linbits+1;
 					mask <<= h->linbits;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt++ = REAL_MUL_SCALE_LAYER3(-ispow[y], v, gainpow2_scale_idx);
 					else         *xrpnt++ = REAL_MUL_SCALE_LAYER3( ispow[y], v, gainpow2_scale_idx);
 
@@ -913,13 +948,15 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 				else if(y)
 				{
 					max = cb;
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt++ = REAL_MUL_SCALE_LAYER3(-ispow[y], v, gainpow2_scale_idx);
 					else         *xrpnt++ = REAL_MUL_SCALE_LAYER3( ispow[y], v, gainpow2_scale_idx);
 
 					num--;
 					mask <<= 1;
 				}
-				else *xrpnt++ = DOUBLE_TO_REAL(0.0);
+				else xrpnt++;
+				CHECK_XRPNT_SET;
 			}
 		}
 
@@ -966,20 +1003,21 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 					}
 					mc--;
 				}
-				CHECK_XRPNT;
 				if( (a & (0x8>>i)) )
 				{
 					max = cb;
 					if(part2remain+num <= 0)
 					break;
 
+					CHECK_XRPNT_USE;
 					if(MSB_MASK) *xrpnt++ = -REAL_SCALE_LAYER3(v, gainpow2_scale_idx);
 					else         *xrpnt++ =  REAL_SCALE_LAYER3(v, gainpow2_scale_idx);
 
 					num--;
 					mask <<= 1;
 				}
-				else *xrpnt++ = DOUBLE_TO_REAL(0.0);
+				else xrpnt++;
+				CHECK_XRPNT_SET;
 			}
 		}
 
@@ -1003,8 +1041,7 @@ static int III_dequantize_sample(mpg123_handle *fr, real xr[SBLIMIT][SSLIMIT],in
 		gr_info->maxb       = 1;
 	}
 
-	while(xrpnt < xrpntlimit)
-	*xrpnt++ = DOUBLE_TO_REAL(0.0);
+	// Relying on initial zeroing if xr has not been written to fully.
 
 	while( part2remain > 16 )
 	{

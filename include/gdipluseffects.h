@@ -118,11 +118,17 @@ struct ColorCurveParams
 };
 
 #ifdef __cplusplus
+
+class CGpEffect;
+
 extern "C" {
 #endif
 
-GpStatus WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect);
-GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect);
+Status WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect);
+Status WINGDIPAPI GdipDeleteEffect(CGpEffect *effect);
+Status WINGDIPAPI GdipGetEffectParameterSize(CGpEffect *effect, UINT *size);
+Status WINGDIPAPI GdipGetEffectParameters(CGpEffect *effect, UINT *size, VOID *params);
+Status WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect, const VOID *params, const UINT size);
 
 #ifdef __cplusplus
 }

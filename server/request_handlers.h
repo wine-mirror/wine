@@ -279,10 +279,8 @@ DECL_HANDLER(get_thread_completion);
 DECL_HANDLER(query_completion);
 DECL_HANDLER(set_completion_info);
 DECL_HANDLER(add_fd_completion);
-DECL_HANDLER(set_fd_completion_mode);
 DECL_HANDLER(set_fd_disp_info);
 DECL_HANDLER(set_fd_name_info);
-DECL_HANDLER(set_fd_eof_info);
 DECL_HANDLER(get_window_layered_info);
 DECL_HANDLER(set_window_layered_info);
 DECL_HANDLER(alloc_user_handle);
@@ -593,10 +591,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_query_completion,
     (req_handler)req_set_completion_info,
     (req_handler)req_add_fd_completion,
-    (req_handler)req_set_fd_completion_mode,
     (req_handler)req_set_fd_disp_info,
     (req_handler)req_set_fd_name_info,
-    (req_handler)req_set_fd_eof_info,
     (req_handler)req_get_window_layered_info,
     (req_handler)req_set_window_layered_info,
     (req_handler)req_alloc_user_handle,
@@ -2216,9 +2212,6 @@ C_ASSERT( offsetof(struct add_fd_completion_request, information) == 24 );
 C_ASSERT( offsetof(struct add_fd_completion_request, status) == 32 );
 C_ASSERT( offsetof(struct add_fd_completion_request, async) == 36 );
 C_ASSERT( sizeof(struct add_fd_completion_request) == 40 );
-C_ASSERT( offsetof(struct set_fd_completion_mode_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_fd_completion_mode_request, flags) == 16 );
-C_ASSERT( sizeof(struct set_fd_completion_mode_request) == 24 );
 C_ASSERT( offsetof(struct set_fd_disp_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct set_fd_disp_info_request, flags) == 16 );
 C_ASSERT( sizeof(struct set_fd_disp_info_request) == 24 );
@@ -2228,9 +2221,6 @@ C_ASSERT( offsetof(struct set_fd_name_info_request, namelen) == 20 );
 C_ASSERT( offsetof(struct set_fd_name_info_request, link) == 24 );
 C_ASSERT( offsetof(struct set_fd_name_info_request, flags) == 28 );
 C_ASSERT( sizeof(struct set_fd_name_info_request) == 32 );
-C_ASSERT( offsetof(struct set_fd_eof_info_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_fd_eof_info_request, eof) == 16 );
-C_ASSERT( sizeof(struct set_fd_eof_info_request) == 24 );
 C_ASSERT( offsetof(struct get_window_layered_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_window_layered_info_request) == 16 );
 C_ASSERT( offsetof(struct get_window_layered_info_reply, color_key) == 8 );

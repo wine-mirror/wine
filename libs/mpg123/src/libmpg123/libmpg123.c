@@ -848,6 +848,7 @@ static int get_next_frame(mpg123_handle *mh)
 		if(mh->to_ignore && mh->num < mh->firstframe && mh->num >= mh->ignoreframe)
 		{
 			debug1("ignoring frame %li", (long)mh->num);
+			if(mh->buffer.size < mh->outblock) return MPG123_NO_SPACE;
 			/* Decoder structure must be current! INT123_decode_update has been called before... */
 			(mh->do_layer)(mh); mh->buffer.fill = 0;
 #ifndef NO_NTOM
@@ -1741,9 +1742,9 @@ int attribute_align_arg mpg123_id3_raw( mpg123_handle *mh
 	if(!mh)
 		return MPG123_ERR;
 	if(v1 != NULL)
-		*v1 = mh->id3buf[0] ? mh->id3buf : NULL;
+		*v1 = (mh->rdat.flags & READER_ID3TAG) ? mh->id3buf : NULL;
 	if(v1_size != NULL)
-		*v1_size = mh->id3buf[0] ? 128 : 0;
+		*v1_size =(mh->rdat.flags & READER_ID3TAG) ? 128 : 0;
 	if(v2 != NULL)
 		*v2 = mh->id3v2_raw;
 	if(v2_size != NULL)
@@ -1805,7 +1806,10 @@ int attribute_align_arg mpg123_enc_from_id3_2(unsigned char id3_enc_byte)
 #ifndef NO_STRING
 int attribute_align_arg mpg123_store_utf8(mpg123_string *sb, enum mpg123_text_encoding enc, const unsigned char *source, size_t source_size)
 {
-	switch(enc)
+	if(!sb)
+		return 0;
+	sb->fill = 0;
+	if(source) switch(enc)
 	{
 #ifndef NO_ID3V2
 		/* The encodings we get from ID3v2 tags. */
@@ -1831,7 +1835,7 @@ int attribute_align_arg mpg123_store_utf8(mpg123_string *sb, enum mpg123_text_en
 		{
 			mpg123_free_string(sb);
 			/* Paranoia: Make sure that the string ends inside the buffer... */
-			if(source[source_size-1] == 0)
+			if(source_size && source[source_size-1] == 0)
 			{
 				/* Convert from ICY encoding... with force applied or not. */
 				char *tmpstring = INT123_icy2utf8((const char*)source, enc == mpg123_text_cp1252 ? 1 : 0);

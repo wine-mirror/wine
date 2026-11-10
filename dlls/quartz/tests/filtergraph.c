@@ -572,6 +572,27 @@ static void test_media_event(IFilterGraph2 *graph)
     IMediaFilter_Release(filter);
 }
 
+static void test_graph_site(IFilterGraph2 *graph)
+{
+    IObjectWithSite *object_with_site;
+    IUnknown *site;
+    HRESULT hr;
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IObjectWithSite, (void **)&object_with_site);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IObjectWithSite_GetSite(object_with_site, &IID_IUnknown, (void **)&site);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
+    hr = IObjectWithSite_SetSite(object_with_site, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IObjectWithSite_GetSite(object_with_site, &IID_IUnknown, (void **)&site);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+
+    IObjectWithSite_Release(object_with_site);
+}
+
 static void rungraph(IFilterGraph2 *graph, BOOL video)
 {
     if (video)
@@ -579,6 +600,7 @@ static void rungraph(IFilterGraph2 *graph, BOOL video)
     test_media_seeking(graph);
     test_state_change(graph);
     test_media_event(graph);
+    test_graph_site(graph);
 }
 
 static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL video)

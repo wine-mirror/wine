@@ -428,6 +428,7 @@ static int64_t get_fileinfo(mpg123_handle *fr)
 			return -1;
 		}
 		if(!strncmp((char*)fr->id3buf,"TAG",3)) len -= 128;
+		else{ memset(fr->id3buf, 0, 128); }
 	} else
 	{
 		debug("stream too short for ID3");

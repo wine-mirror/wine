@@ -925,7 +925,7 @@ struct HTMLDocumentObj {
     ISupportErrorInfo ISupportErrorInfo_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
     IMarkupServices IMarkupServices_iface;
-    IMarkupContainer IMarkupContainer_iface;
+    IMarkupContainer2 IMarkupContainer2_iface;
     IDisplayServices IDisplayServices_iface;
     IDocumentRange IDocumentRange_iface;
     IOleDocumentView IOleDocumentView_iface;
@@ -1138,7 +1138,7 @@ struct HTMLDocumentNode {
     ISupportErrorInfo            ISupportErrorInfo_iface;
     IProvideMultipleClassInfo    IProvideMultipleClassInfo_iface;
     IMarkupServices              IMarkupServices_iface;
-    IMarkupContainer             IMarkupContainer_iface;
+    IMarkupContainer2            IMarkupContainer2_iface;
     IDisplayServices             IDisplayServices_iface;
     IDocumentRange               IDocumentRange_iface;
     IPersistMoniker              IPersistMoniker_iface;

@@ -63,7 +63,7 @@ int INT123_fi_resize(struct frame_index *fi, size_t newsize)
 		while(fi->fill > newsize){ fi_shrink(fi); }
 	}
 
-	newdata = INT123_safe_realloc(fi->data, newsize*sizeof(int64_t));
+	newdata = INT123_safe_reallocn(fi->data, newsize, sizeof(int64_t));
 	if(newsize == 0 || newdata != NULL)
 	{
 		fi->data = newdata;

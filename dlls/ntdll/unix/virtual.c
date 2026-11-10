@@ -1927,7 +1927,14 @@ static void *alloc_reserved_area( void *limit_low, void *limit_high, size_t size
         low_range.end = (char *)low_range.end + reserve_size;
     }
 #else
-    if (top_down && limit_high == user_space_limit) limit_high = high_range.end;
+    if (top_down)
+    {
+        if (limit_high == user_space_limit) limit_high = high_range.end;
+    }
+    else
+    {
+        if (limit_low == address_space_start) limit_low = low_range.start;
+    }
 #endif
     return map_reserved_area( limit_low, limit_high, size, top_down, unix_prot, align_mask );
 }
@@ -5440,33 +5447,73 @@ static struct file_view *get_memory_region_size( char *base, char **region_start
     }
 #ifdef __i386__
     {
+        char *next, *end;
+        size_t size;
         unsigned int area = find_mem_area( base );
 
-        /* on i386, pretend that space outside of a reserved area is allocated,
-         * so that the app doesn't believe it's fully available */
+        /* on i386, check free space for host allocations so that the app
+         * doesn't believe it's fully available */
+
         if (mem_area_state( area ) != AREA_FREE)
         {
             *region_start = max( *region_start, (char *)mem_area_base( area ));
             *region_end   = min( *region_end, (char *)mem_area_end( area ));
             return NULL;
         }
+        if (mem_area_end( area ) <= address_space_start)
+        {
+            *region_end = min( *region_end, (char *)mem_area_end( area + 1 ));
+            return NULL;
+        }
+
+        end = min( *region_end, (char *)mem_area_end( area ));
 
         /* report the remaining part of the 64K after the view as free */
         if ((UINT_PTR)*region_start & granularity_mask)
         {
-            char *next = (char *)ROUND_ADDR( *region_start, granularity_mask ) + granularity_mask + 1;
+            next = (char *)ROUND_ADDR( *region_start, granularity_mask ) + granularity_mask + 1;
+            if (base < next) goto is_free;
+        }
 
-            if (base < next)
+        next = ROUND_ADDR( base, granularity_mask );
+        size = min( end - next, granularity_mask + 1 );
+        if (anon_mmap_tryfixed( next, size, PROT_NONE, MAP_NORESERVE ) == MAP_FAILED)
+        {
+            /* not free, look for the next free 64k block */
+            for (next += size; next < end; next += size)
             {
-                *region_end = min( next, *region_end );
-                return NULL;
+                size = min( end - next, granularity_mask + 1 );
+                if (anon_mmap_tryfixed( next, size, PROT_NONE, MAP_NORESERVE ) == MAP_FAILED) continue;
+                munmap( next, size );
+                break;
             }
             *region_start = base;
+            *region_end = next;
+            *fake_reserved = TRUE;
+            return NULL;
         }
-        /* pretend it's allocated */
-        if (mem_area_end( area ) <= address_space_start) area++;
-        *region_end = min( *region_end, (char *)mem_area_end( area ));
-        *fake_reserved = TRUE;
+
+        *region_start = next;
+        munmap( next, size );
+        next += size;
+
+     is_free:
+        /* free region, bisect the total free size */
+        size = end - next;
+        while (size)
+        {
+            if (anon_mmap_tryfixed( next, size, PROT_NONE, MAP_NORESERVE ) != MAP_FAILED)
+            {
+                munmap( next, size );
+                next += size;
+                size = end - next;
+            }
+            else size = (size / 2) & ~granularity_mask;
+        }
+        /* also include the next area if it's not allocated */
+        if (next == mem_area_end( area ) && mem_area_state( area + 1 ) == AREA_RESERVED)
+            next = mem_area_end( area + 1 );
+        *region_end = min( next, *region_end );
     }
 #endif
     return NULL;

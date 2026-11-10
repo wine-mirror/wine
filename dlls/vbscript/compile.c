@@ -2581,8 +2581,8 @@ static void release_compiler(compile_ctx_t *ctx)
         release_vbscode(ctx->code);
 }
 
-HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
-                       DWORD_PTR cookie, unsigned start_line, DWORD flags, BOOL skip_collisions, vbscode_t **ret)
+static HRESULT compile_code(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
+                           DWORD_PTR cookie, unsigned start_line, DWORD flags, BOOL skip_collisions, vbscode_t **ret)
 {
     function_decl_t *func_decl;
     named_item_t *item = NULL;
@@ -2686,6 +2686,17 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     return S_OK;
 }
 
+HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
+                       DWORD_PTR cookie, unsigned start_line, DWORD flags, BOOL skip_collisions, vbscode_t **ret)
+{
+    /* A single BOM, in either byte order, at the start of the script text
+     * is skipped. Procedure text does not skip it. */
+    if(src && (*src == 0xfeff || *src == 0xfffe))
+        src++;
+
+    return compile_code(script, src, item_name, delimiter, cookie, start_line, flags, skip_collisions, ret);
+}
+
 HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
                           DWORD_PTR cookie, unsigned start_line, DWORD flags, class_desc_t **ret)
 {
@@ -2693,8 +2704,8 @@ HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *i
     vbscode_t *code;
     HRESULT hres;
 
-    hres = compile_script(script, src, item_name, delimiter, cookie, start_line,
-                          flags & ~SCRIPTTEXT_ISPERSISTENT, FALSE, &code);
+    hres = compile_code(script, src, item_name, delimiter, cookie, start_line,
+                        flags & ~SCRIPTTEXT_ISPERSISTENT, FALSE, &code);
     if(FAILED(hres))
         return hres;
 

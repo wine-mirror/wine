@@ -130,6 +130,26 @@ sub testLiteralOverflowErrors()
 end sub
 call testLiteralOverflowErrors()
 
+sub testBOM()
+    Dim bom, swapped, x
+    bom = ChrW(&HFEFF)
+    swapped = ChrW(&HFFFE)
+    on error resume next
+    Err.Clear : x = Eval(bom & "1+1") : call ok(Err.number = 0 and x = 2, "leading BOM in Eval: err=" & Err.number & " x=" & x)
+    Err.Clear : Execute bom & "x = 3" : call ok(Err.number = 0 and x = 3, "leading BOM in Execute: err=" & Err.number & " x=" & x)
+    Err.Clear : ExecuteGlobal bom & "bomGlobal = 4" : call ok(Err.number = 0 and bomGlobal = 4, "leading BOM in ExecuteGlobal: err=" & Err.number)
+    Err.Clear : x = Eval(swapped & "1+2") : call ok(Err.number = 0 and x = 3, "leading swapped BOM in Eval: err=" & Err.number & " x=" & x)
+    Err.Clear : Execute swapped & swapped & "x = 1" : call ok(Err.number = 1032, "two leading swapped BOMs: err=" & Err.number)
+    Err.Clear : Execute "x = 1" & vbCrLf & swapped & "x = 2" : call ok(Err.number = 1032, "swapped BOM at line start: err=" & Err.number)
+    Err.Clear : Execute "x = """ & bom & swapped & """" : call ok(Err.number = 0 and x = bom & swapped, "BOMs in a string literal: err=" & Err.number)
+    Err.Clear : Execute "x = 5 ' " & bom : call ok(Err.number = 0 and x = 5, "BOM in a comment: err=" & Err.number)
+    Err.Clear : Execute bom & bom & "x = 1" : call ok(Err.number = 1032, "two leading BOMs: err=" & Err.number)
+    Err.Clear : Execute " " & bom & "x = 1" : call ok(Err.number = 1032, "BOM after space: err=" & Err.number)
+    Err.Clear : Execute "x = 1" & vbCrLf & bom & "x = 2" : call ok(Err.number = 1032, "BOM at line start: err=" & Err.number)
+    Err.Clear : Execute "x = 1 " & bom & "+ 2" : call ok(Err.number = 1032, "BOM between tokens: err=" & Err.number)
+end sub
+call testBOM()
+
 ' Test concat when no space and var begins with h
 hi = "y"
 x = "x" &hi

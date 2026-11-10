@@ -35,6 +35,16 @@ void *INT123_safe_realloc(void *ptr, size_t size)
 	else return realloc(ptr, size);
 }
 
+/* A variant that checks for multiplication overflow. */
+void *INT123_safe_reallocn(void *ptr, size_t size_factor1, size_t size_factor2)
+{
+	if(size_factor2 && size_factor1 > SIZE_MAX/size_factor2)
+		return NULL;
+	size_t size = size_factor1 * size_factor2;
+	if(ptr == NULL) return malloc(size);
+	else return realloc(ptr, size);
+}
+
 // A more sensible variant of realloc: It deallocates the original memory if
 // realloc fails or if size zero was requested.
 void *INT123_safer_realloc(void *ptr, size_t size)
@@ -92,7 +102,7 @@ int win32_wide_common(const wchar_t * const wptr, char **mbptr, size_t * buflen,
   if(!buf) len = 0;
   else {
     if (len != 0) ret = WideCharToMultiByte(cp, 0, wptr, -1, buf, len, NULL, NULL); /*Do actual conversion*/
-    buf[len] = '0'; /* Must terminate */
+    buf[len] = 0; /* Must terminate */
   }
   *mbptr = buf; /* Set string pointer to allocated buffer */
   if(buflen != NULL) *buflen = (len) * sizeof (char); /* Give length of allocated memory if needed. */
@@ -121,7 +131,7 @@ int INT123_win32_utf8_wide(const char *const mbptr, wchar_t **wptr, size_t *bufl
   if(!buf) len = 0;
   else {
     if (len != 0) ret = MultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS, mbptr, -1, buf, len); /* Do conversion */
-    buf[len] = L'0'; /* Must terminate */
+    buf[len] = 0; /* Must terminate */
   }
   *wptr = buf; /* Set string pointer to allocated buffer */
   if (buflen != NULL) *buflen = len * sizeof (wchar_t); /* Give length of allocated memory if needed. */

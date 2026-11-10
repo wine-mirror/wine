@@ -2840,14 +2840,16 @@ static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
 
 /*** IObjectWithSite methods ***/
 
-static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
+static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *site)
 {
-    struct filter_graph *This = impl_from_IObjectWithSite( iface );
+    struct filter_graph *graph = impl_from_IObjectWithSite(iface);
 
-    TRACE("(%p/%p)->()\n", This, iface);
-    if (This->pSite) IUnknown_Release(This->pSite);
-    This->pSite = pUnkSite;
-    IUnknown_AddRef(This->pSite);
+    TRACE("graph %p, site %p.\n", graph, site);
+
+    if (graph->pSite)
+        IUnknown_Release(graph->pSite);
+    if ((graph->pSite = site))
+        IUnknown_AddRef(graph->pSite);
     return S_OK;
 }
 
@@ -2859,7 +2861,7 @@ static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid
 
     *ppvSite = NULL;
     if (!This->pSite)
-        return E_FAIL;
+        return E_NOINTERFACE;
     else
         return IUnknown_QueryInterface(This->pSite, riid, ppvSite);
 }

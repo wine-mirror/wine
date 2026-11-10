@@ -3564,10 +3564,12 @@ static void test_http_protocol(void)
     test_http_protocol_url(winetest_url, HTTP_TEST, TEST_DIRECT_READ|TEST_USEIURI, TYMED_NULL);
 
     trace("Testing http protocol (redirected)...\n");
+    DeleteUrlCacheEntryW(redirect_url);
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
 
     trace("Testing http protocol (redirected, disable auto redirect)...\n");
+    DeleteUrlCacheEntryW(redirect_url);
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT | TEST_DISABLEAUTOREDIRECT, TYMED_NULL);
 
@@ -3576,6 +3578,7 @@ static void test_http_protocol(void)
     test_http_protocol_url(empty_url, HTTP_TEST, TEST_EMPTY, TYMED_NULL);
 
     trace("Testing http protocol (redirected, binding)...\n");
+    DeleteUrlCacheEntryW(redirect_url);
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT|TEST_USEBINDING, TYMED_NULL);
 

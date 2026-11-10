@@ -140,11 +140,12 @@
 #if defined AC_APPLE_UNIVERSAL_BUILD
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
+# else
+#  define WORDS_BIGENDIAN 0
 # endif
 #else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
+/* # undef WORDS_BIGENDIAN */
+# define WORDS_BIGENDIAN 0
 #endif
 
 /* Support zstd compression */

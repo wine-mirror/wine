@@ -383,9 +383,9 @@ WINSHELLAPI void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName
 #define NIIF_WARNING            0x00000002
 #define NIIF_ERROR              0x00000003
 #define NIIF_USER               0x00000004
-#define NIIF_ICONMASK           0x0000000f
+#define NIIF_ICON_MASK          0x0000000f
 #define NIIF_NOSOUND            0x00000010
-#define NIIF_LARGEICON          0x00000020
+#define NIIF_LARGE_ICON         0x00000020
 
 /* dwMessage values */
 #define NIM_ADD                 0x00000000
@@ -503,6 +503,10 @@ typedef struct _SHQUERYRBINFO
     DWORDLONG i64Size;
     DWORDLONG i64NumItems;
 } SHQUERYRBINFO, *LPSHQUERYRBINFO;
+
+#define SHERB_NOCONFIRMATION    0x00000001
+#define SHERB_NOPROGRESSUI      0x00000002
+#define SHERB_NOSOUND           0x00000004
 
 WINSHELLAPI HRESULT     WINAPI SHEmptyRecycleBinA(HWND,LPCSTR,DWORD);
 WINSHELLAPI HRESULT     WINAPI SHEmptyRecycleBinW(HWND,LPCWSTR,DWORD);

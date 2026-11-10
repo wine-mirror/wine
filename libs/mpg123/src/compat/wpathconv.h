@@ -77,7 +77,7 @@ static wchar_t* wlongpath(wchar_t *wpath)
 	}
 	plen = wcslen(prefix);
 	len = plen + wcslen(wpath);
-	wlpath = malloc(len+1*sizeof(wchar_t));
+	wlpath = malloc((len+1)*sizeof(wchar_t));
 	if(wlpath)
 	{
 		/* Brute force memory copying, swprintf is too dandy. */

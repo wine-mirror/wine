@@ -11,7 +11,7 @@ import urllib.request
 import zipfile
 from clang.cindex import Cursor, CursorKind, Index, TypeKind, TokenGroup
 
-SQLITE_VERSION = "3530200"
+SQLITE_VERSION = "3540100"
 
 REPLACE_STRINGS = [
     #Uppercase in Windows.h breaks clang compilation.

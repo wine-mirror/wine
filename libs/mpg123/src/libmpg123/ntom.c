@@ -32,6 +32,13 @@ int INT123_synth_ntom_set_step(mpg123_handle *fr)
 		fr->err = MPG123_BAD_RATE;
 		return -1;
 	}
+	if(fr->ntom_step < 1)
+	{
+		if(NOQUIET)
+			merror("too small target rate for NtoM resampling, limit would be around %ld", m/NTOM_MUL+(m%NTOM_MUL ? 1 : 0));
+		fr->err = MPG123_BAD_RATE;
+		return -1;
+	}
 
 	fr->INT123_ntom_val[0] = fr->INT123_ntom_val[1] = INT123_ntom_val(fr, fr->num);
 	return 0;

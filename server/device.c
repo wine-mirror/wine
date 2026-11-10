@@ -170,6 +170,7 @@ static void device_file_write( struct fd *fd, struct async *async, file_pos_t po
 static void device_file_flush( struct fd *fd, struct async *async );
 static void device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void device_file_cancel_async( struct fd *fd, struct async *async );
+static void device_file_set_file_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 
 static const struct object_ops device_file_ops =
@@ -193,7 +194,7 @@ static const struct fd_ops device_file_fd_ops =
     .write           = device_file_write,
     .flush           = device_file_flush,
     .get_file_info   = default_fd_get_file_info,
-    .set_file_info   = default_fd_set_file_info,
+    .set_file_info   = device_file_set_file_info,
     .get_volume_info = device_file_get_volume_info,
     .ioctl           = device_file_ioctl,
     .cancel_async    = device_file_cancel_async,
@@ -522,6 +523,9 @@ static int fill_irp_params( struct device_manager *manager, struct irp_call *irp
     case IRP_CALL_WRITE:
         irp->params.write.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
+    case IRP_CALL_SET_INFO:
+        irp->params.set_info.file  = get_kernel_object_ptr( manager, &irp->file->obj );
+        break;
     case IRP_CALL_FLUSH:
         irp->params.flush.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         break;
@@ -567,6 +571,20 @@ static void queue_irp( struct device_file *file, const union irp_params *params,
 static enum server_fd_type device_file_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_DEVICE;
+}
+
+static void device_file_set_file_info( struct fd *fd, struct async *async, unsigned int class )
+{
+    struct device_file *file = get_fd_user( fd );
+    union irp_params params;
+
+    if (class == FileIoCompletionNotificationInformation)
+        return default_fd_set_file_info( fd, async, class );
+
+    memset( &params, 0, sizeof(params) );
+    params.set_info.type = IRP_CALL_SET_INFO;
+    params.set_info.class = class;
+    queue_irp( file, &params, async );
 }
 
 static void device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
