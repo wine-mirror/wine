@@ -934,8 +934,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tjmp *%%rax\n" );
             break;
         case CPU_RISCV:
-            output( "\taddi sp, sp, -64\n" );
-            output_cfi( ".cfi_adjust_cfa_offset 64" );
+            output( "\taddi sp, sp, -80\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 80" );
             output( "\tsd a0, 0(sp)\n" );
             output( "\tsd a1, 8(sp)\n" );
             output( "\tsd a2, 16(sp)\n" );
@@ -944,6 +944,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tsd a5, 40(sp)\n" );
             output( "\tsd a6, 48(sp)\n" );
             output( "\tsd a7, 56(sp)\n" );
+            output( "\tsd ra, 64(sp)\n" );
             output( "\tld a1, 8(sp)\n" );
             output( "\tlla a0, .L__wine_spec_delay_imports+%d\n", pos );
             output( "\tcall %s\n", asm_name("__delayLoadHelper2") );
@@ -956,8 +957,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tld a5, 40(sp)\n" );
             output( "\tld a6, 48(sp)\n" );
             output( "\tld a7, 56(sp)\n" );
-            output( "\taddi sp, sp, 64\n" );
-            output_cfi( ".cfi_adjust_cfa_offset -64" );
+            output( "\tld ra, 64(sp)\n" );
+            output( "\taddi sp, sp, 80\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -80" );
             output( "\tjr t0\n" );
             break;
         default:
