@@ -1560,10 +1560,17 @@ static void fd_destroy( struct object *obj )
     if (fd->sync) release_object( fd->sync );
 }
 
+static inline bool is_replace_file_disposition( unsigned int disposition )
+{
+    return (disposition == FILE_SUPERSEDE ||
+            disposition == FILE_OVERWRITE ||
+            disposition == FILE_OVERWRITE_IF);
+}
+
 /* check if the desired access is possible without violating */
 /* the sharing mode of other opens of the same file */
 static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
-                                   unsigned int open_flags, unsigned int options )
+                                   unsigned int disposition, unsigned int options )
 {
     /* only a few access bits are meaningful wrt sharing */
     const unsigned int read_access = FILE_READ_DATA | FILE_EXECUTE;
@@ -1594,7 +1601,7 @@ static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned 
         return STATUS_SHARING_VIOLATION;
     if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
         return STATUS_CANNOT_DELETE;
-    if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
+    if ((existing_access & FILE_MAPPING_ACCESS) && is_replace_file_disposition( disposition ))
         return STATUS_USER_MAPPED_FILE;
     if (!(access & all_access))
         return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
@@ -1775,7 +1782,7 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
         fd->closed = closed;
         fd->inode = (struct inode *)grab_object( orig->inode );
         list_add_head( &fd->inode->open, &fd->inode_entry );
-        if ((err = check_sharing( fd, access, sharing, 0, options )))
+        if ((err = check_sharing( fd, access, sharing, FILE_OPEN, options )))
         {
             set_error( err );
             goto failed;
@@ -1929,6 +1936,7 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
             }
         }
         flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
+        disposition = FILE_OPEN;
     }
 
     if ((access & FILE_UNIX_WRITE_ACCESS) && !(options & FILE_DIRECTORY_FILE))
@@ -2003,23 +2011,24 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
             set_error( STATUS_FILE_IS_A_DIRECTORY );
             goto error;
         }
-        if ((err = check_sharing( fd, access, sharing, flags, options )))
+        if ((err = check_sharing( fd, access, sharing, disposition, options )))
         {
             set_error( err );
             goto error;
         }
 
         /* can't unlink files if we don't have permission to access */
-        if ((options & FILE_DELETE_ON_CLOSE) && !(flags & O_CREAT) &&
+        if ((options & FILE_DELETE_ON_CLOSE) &&
+            (disposition == FILE_OPEN || disposition == FILE_OVERWRITE) &&
             !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
         {
             set_error( STATUS_CANNOT_DELETE );
             goto error;
         }
 
-        fd->closed->disp_flags = (options & FILE_DELETE_ON_CLOSE) ?
-            FILE_DISPOSITION_DELETE : 0;
-        if (flags & O_TRUNC)
+        fd->closed->disp_flags = (options & FILE_DELETE_ON_CLOSE) ? FILE_DISPOSITION_DELETE : 0;
+
+        if (is_replace_file_disposition( disposition ))
         {
             if (S_ISDIR(st.st_mode))
             {
