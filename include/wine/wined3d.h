@@ -2991,8 +2991,8 @@ void * __cdecl wined3d_unordered_access_view_get_parent(const struct wined3d_uno
 ULONG __cdecl wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view);
 
 HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
-        const struct wined3d_vertex_element *elements, UINT element_count, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration);
+        const struct wined3d_vertex_element *elements, UINT element_count, const struct wined3d_shader *shader,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration);
 HRESULT __cdecl wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *device,
         uint32_t fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_vertex_declaration **declaration);

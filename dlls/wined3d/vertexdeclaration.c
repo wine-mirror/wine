@@ -273,15 +273,48 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
     return WINED3D_OK;
 }
 
+static bool vertex_declaration_has_output_slot(const struct wined3d_vertex_element *elements,
+        unsigned int element_count, unsigned int output_slot)
+{
+    for (unsigned int i = 0; i < element_count; ++i)
+    {
+        if (elements[i].output_slot == output_slot)
+            return true;
+    }
+
+    return false;
+}
+
+/* Every input register the shader reads must be supplied by an element. */
+static bool vertex_declaration_supplies_shader_inputs(const struct wined3d_vertex_element *elements,
+        unsigned int element_count, const struct wined3d_shader *shader)
+{
+    for (unsigned int i = 0; i < shader->input_signature.element_count; ++i)
+    {
+        unsigned int register_idx = shader->input_signature.elements[i].register_idx;
+
+        if (!vertex_declaration_has_output_slot(elements, element_count, register_idx))
+        {
+            WARN("Shader input register %u is not supplied by the declaration.\n", register_idx);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 HRESULT CDECL wined3d_vertex_declaration_create(struct wined3d_device *device,
-        const struct wined3d_vertex_element *elements, UINT element_count, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration)
+        const struct wined3d_vertex_element *elements, UINT element_count, const struct wined3d_shader *shader,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration)
 {
     struct wined3d_vertex_declaration *object;
     HRESULT hr;
 
-    TRACE("device %p, elements %p, element_count %u, parent %p, parent_ops %p, declaration %p.\n",
-            device, elements, element_count, parent, parent_ops, declaration);
+    TRACE("device %p, elements %p, element_count %u, shader %p, parent %p, parent_ops %p, declaration %p.\n",
+            device, elements, element_count, shader, parent, parent_ops, declaration);
+
+    if (shader && !vertex_declaration_supplies_shader_inputs(elements, element_count, shader))
+        return WINED3DERR_INVALIDCALL;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -457,7 +490,7 @@ HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *
     if (size == ~0u)
         return E_OUTOFMEMORY;
 
-    hr = wined3d_vertex_declaration_create(device, elements, size, parent, parent_ops, declaration);
+    hr = wined3d_vertex_declaration_create(device, elements, size, NULL, parent, parent_ops, declaration);
     free(elements);
     return hr;
 }

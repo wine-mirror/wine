@@ -395,7 +395,7 @@ static HRESULT vertexdeclaration_init(struct d3d9_vertex_declaration *declaratio
 
     wined3d_mutex_lock();
     hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, wined3d_element_count,
-            declaration, &d3d9_vertexdeclaration_wined3d_parent_ops, &declaration->wined3d_declaration);
+            NULL, declaration, &d3d9_vertexdeclaration_wined3d_parent_ops, &declaration->wined3d_declaration);
     wined3d_mutex_unlock();
     free(wined3d_elements);
     if (FAILED(hr))

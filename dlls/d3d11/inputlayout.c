@@ -366,7 +366,7 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
     }
 
     hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, element_count,
-            layout, &d3d_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
+            NULL, layout, &d3d_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
     free(wined3d_elements);
     if (FAILED(hr))
     {
