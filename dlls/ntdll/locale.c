@@ -396,7 +396,14 @@ ULONG get_resource_lcids( LANGID *langs, ULONG size, LCID lcid )
     if (PRIMARYLANGID(lcid) != LANG_NEUTRAL)  /* explicit language */
     {
         const NLS_LOCALE_LCID_INDEX *entry = find_lcid_entry( locale_table, lcid );
-        if (entry) append_ui_lang_with_neutral( merged, &len, entry->idx );
+        if (!entry)  /* invalid locale, use it anyway */
+        {
+            if (len < size) langs[len++] = lcid;
+            if (len < size) langs[len++] = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL );
+            if (len < size) langs[len++] = MAKELANGID( LANG_NEUTRAL, SUBLANG_NEUTRAL );
+            return len;
+        }
+        append_ui_lang_with_neutral( merged, &len, entry->idx );
         merged[len++] = 0;  /* neutral */
     }
     else
