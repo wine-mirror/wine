@@ -1870,15 +1870,25 @@ struct unicode_str get_nt_name( struct fd *fd )
 
 /* open() wrapper that returns a struct fd with no fd user set */
 struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
-                    int flags, mode_t *mode, unsigned int access,
-                    unsigned int sharing, unsigned int options )
+                    mode_t *mode, unsigned int access, unsigned int sharing,
+                    unsigned int disposition, unsigned int options )
 {
     struct stat st;
     struct closed_fd *closed_fd;
     struct fd *fd;
     int root_fd = -1;
-    int rw_mode;
+    int flags = O_NONBLOCK, rw_mode;
     char *path;
+
+    switch (disposition)
+    {
+    case FILE_OPEN:         break;
+    case FILE_OVERWRITE:    flags |= O_TRUNC; access |= FILE_WRITE_ATTRIBUTES; break;
+    case FILE_OPEN_IF:      flags |= O_CREAT; break;
+    case FILE_CREATE:       flags |= O_CREAT | O_EXCL; break;
+    case FILE_SUPERSEDE:    flags |= O_CREAT | O_TRUNC; break;
+    case FILE_OVERWRITE_IF: flags |= O_CREAT | O_TRUNC; access |= FILE_WRITE_ATTRIBUTES; break;
+    }
 
     if (((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE)) ||
         ((options & FILE_DIRECTORY_FILE) && (flags & O_TRUNC)))

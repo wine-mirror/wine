@@ -411,7 +411,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
             mode_t mode = 0666;
             access = map_obj_access( &file->obj, access );
             nt_name.str = fullname;
-            file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK, &mode, access, sharing, options );
+            file->fd = open_fd( NULL, device->unix_path, nt_name, &mode, access, sharing, FILE_OPEN, options );
             if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
             free( fullname );
         }

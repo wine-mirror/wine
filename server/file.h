@@ -86,8 +86,8 @@ struct fd_ops
 extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user,
                                    unsigned int options );
 extern struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
-                           int flags, mode_t *mode, unsigned int access,
-                           unsigned int sharing, unsigned int options );
+                           mode_t *mode, unsigned int access, unsigned int sharing,
+                           unsigned int disposition, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
 extern struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing,
