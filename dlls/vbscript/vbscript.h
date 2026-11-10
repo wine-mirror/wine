@@ -260,6 +260,12 @@ struct _script_ctx_t {
     vbscode_t *error_loc_code;
     unsigned error_loc_offset;
 
+    /* InterruptScriptThread may be called from any thread. The lock guards the engine
+     * state, the interrupt and whether a script is running (current_exec being set). */
+    CRITICAL_SECTION interrupt_cs;
+    LONG interrupt;
+    EXCEPINFO interrupt_ei;
+
     struct list objects;
     struct list code_list;
     struct list named_items;
@@ -473,6 +479,7 @@ void release_dynamic_var(dynamic_var_t*);
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
 void release_named_item(named_item_t*);
 void clear_error_loc(script_ctx_t*);
+void clear_interrupt(script_ctx_t*);
 void clear_ei(EXCEPINFO*);
 void clear_error(script_ctx_t*);
 HRESULT report_script_error(script_ctx_t*,vbscode_t*,unsigned,BOOL);
@@ -515,6 +522,11 @@ BSTR string_replace(BSTR,BSTR,BSTR,int,int,int);
 void map_vbs_exception(EXCEPINFO *);
 
 HRESULT create_safearray_iter(SAFEARRAY *sa, BOOL owned, IEnumVARIANT **ev);
+
+enum {
+    INTERRUPT_NONE,
+    INTERRUPT_PENDING
+};
 
 #define FACILITY_VBS 0xa
 #define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)

@@ -3582,6 +3582,562 @@ static void test_RegExp_Replace(void)
     IRegExp2_Release(regexp);
 }
 
+static IActiveScript *interrupt_script;
+static HANDLE interrupt_ready_event, interrupt_done_event;
+static LONG interrupt_marks, interrupt_timeouts, interrupt_errors, interrupt_enters, interrupt_leaves;
+static SCRIPTTHREADID interrupt_self_stid;
+static DWORD interrupt_self_flags;
+static const EXCEPINFO *interrupt_self_ei;
+static HRESULT interrupt_self_hres, interrupt_callback_hres;
+static EXCEPINFO interrupt_error_ei;
+static ULONG interrupt_error_line;
+static SCODE interrupt_first_scode;
+
+static HRESULT WINAPI interrupt_item_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
+                                                   LCID lcid, DISPID *ids)
+{
+    static const WCHAR *methods[] = { L"Ready", L"Mark", L"TimedOut", L"InterruptSelf", L"WaitInterrupted", L"CallBack" };
+    unsigned i;
+
+    for(i = 0; i < ARRAY_SIZE(methods); i++) {
+        if(!_wcsicmp(names[0], methods[i])) {
+            ids[0] = i + 1;
+            return S_OK;
+        }
+    }
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT WINAPI interrupt_item_Invoke(IDispatch *iface, DISPID id, REFIID riid, LCID lcid, WORD flags,
+                                            DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, UINT *err)
+{
+    switch(id) {
+    case 1:
+        SetEvent(interrupt_ready_event);
+        return S_OK;
+    case 2:
+        interrupt_marks++;
+        return S_OK;
+    case 3:
+        interrupt_timeouts++;
+        return S_OK;
+    case 4:
+        interrupt_self_hres = IActiveScript_InterruptScriptThread(interrupt_script, interrupt_self_stid,
+                                                                  interrupt_self_ei, interrupt_self_flags);
+        return S_OK;
+    case 5:
+        SetEvent(interrupt_ready_event);
+        WaitForSingleObject(interrupt_done_event, 10000);
+        return S_OK;
+    case 6: {
+        DISPPARAMS no_args = {0};
+        IDispatch *disp;
+        DISPID inner_id;
+        BSTR str = SysAllocString(L"Inner");
+        IActiveScript_GetScriptDispatch(interrupt_script, NULL, &disp);
+        IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, 0, &inner_id);
+        SysFreeString(str);
+        interrupt_callback_hres = IDispatch_Invoke(disp, inner_id, &IID_NULL, 0, DISPATCH_METHOD, &no_args, NULL, NULL, NULL);
+        IDispatch_Release(disp);
+        return S_OK;
+    }
+    }
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl interrupt_item_vtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    interrupt_item_GetIDsOfNames,
+    interrupt_item_Invoke
+};
+
+static IDispatch interrupt_item = { &interrupt_item_vtbl };
+
+static HRESULT WINAPI interrupt_site_GetLCID(IActiveScriptSite *iface, LCID *plcid)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI interrupt_site_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR name,
+        DWORD return_mask, IUnknown **item_unk, ITypeInfo **item_ti)
+{
+    *item_unk = (IUnknown*)&interrupt_item;
+    return S_OK;
+}
+
+static HRESULT WINAPI interrupt_site_OnStateChange(IActiveScriptSite *iface, SCRIPTSTATE ssScriptState)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI interrupt_site_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *error)
+{
+    DWORD cookie;
+    LONG pos;
+
+    interrupt_errors++;
+    SysFreeString(interrupt_error_ei.bstrSource);
+    SysFreeString(interrupt_error_ei.bstrDescription);
+    SysFreeString(interrupt_error_ei.bstrHelpFile);
+    memset(&interrupt_error_ei, 0, sizeof(interrupt_error_ei));
+    IActiveScriptError_GetExceptionInfo(error, &interrupt_error_ei);
+    if(interrupt_errors == 1)
+        interrupt_first_scode = interrupt_error_ei.scode;
+    IActiveScriptError_GetSourcePosition(error, &cookie, &interrupt_error_line, &pos);
+    return S_OK;
+}
+
+static HRESULT WINAPI interrupt_site_OnEnterScript(IActiveScriptSite *iface)
+{
+    interrupt_enters++;
+    return S_OK;
+}
+
+static HRESULT WINAPI interrupt_site_OnLeaveScript(IActiveScriptSite *iface)
+{
+    interrupt_leaves++;
+    return S_OK;
+}
+
+static const IActiveScriptSiteVtbl interrupt_site_vtbl = {
+    ActiveScriptSite_QueryInterface,
+    ActiveScriptSite_AddRef,
+    ActiveScriptSite_Release,
+    interrupt_site_GetLCID,
+    interrupt_site_GetItemInfo,
+    ActiveScriptSite_GetDocVersionString,
+    ActiveScriptSite_OnScriptTerminate,
+    interrupt_site_OnStateChange,
+    interrupt_site_OnScriptError,
+    interrupt_site_OnEnterScript,
+    interrupt_site_OnLeaveScript
+};
+
+static IActiveScriptSite interrupt_site = { &interrupt_site_vtbl };
+
+struct interrupt_args {
+    SCRIPTTHREADID stid;
+    DWORD flags;
+    const EXCEPINFO *ei;
+    HRESULT hres;
+};
+
+static DWORD WINAPI interrupt_thread_proc(void *arg)
+{
+    struct interrupt_args *args = arg;
+
+    WaitForSingleObject(interrupt_ready_event, 10000);
+    args->hres = IActiveScript_InterruptScriptThread(interrupt_script, args->stid, args->ei, args->flags);
+    SetEvent(interrupt_done_event);
+    return 0;
+}
+
+static IActiveScriptParse *create_interrupt_script(void)
+{
+    IActiveScriptParse *parse;
+    HRESULT hres;
+
+    interrupt_script = create_vbscript();
+    hres = IActiveScript_QueryInterface(interrupt_script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse iface: %08lx\n", hres);
+    hres = IActiveScript_SetScriptSite(interrupt_script, &interrupt_site);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
+    hres = IActiveScript_AddNamedItem(interrupt_script, L"hostItem", SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+    hres = IActiveScript_SetScriptState(interrupt_script, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState failed: %08lx\n", hres);
+    return parse;
+}
+
+static void close_interrupt_script(IActiveScriptParse *parse)
+{
+    IActiveScriptParse_Release(parse);
+    IActiveScript_Close(interrupt_script);
+    IActiveScript_Release(interrupt_script);
+    interrupt_script = NULL;
+}
+
+static void reset_interrupt_counters(void)
+{
+    interrupt_marks = interrupt_timeouts = interrupt_errors = interrupt_enters = interrupt_leaves = 0;
+    interrupt_self_hres = interrupt_callback_hres = 0xdeadbeef;
+    interrupt_error_line = ~0u;
+    SysFreeString(interrupt_error_ei.bstrSource);
+    SysFreeString(interrupt_error_ei.bstrDescription);
+    SysFreeString(interrupt_error_ei.bstrHelpFile);
+    memset(&interrupt_error_ei, 0, sizeof(interrupt_error_ei));
+    ResetEvent(interrupt_ready_event);
+    ResetEvent(interrupt_done_event);
+}
+
+static HRESULT parse_interrupt_script(IActiveScriptParse *parse, const WCHAR *src)
+{
+    BSTR str = SysAllocString(src);
+    HRESULT hres;
+
+    hres = IActiveScriptParse_ParseScriptText(parse, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    SysFreeString(str);
+    return hres;
+}
+
+static HRESULT invoke_interrupt_script(const WCHAR *name)
+{
+    DISPPARAMS dp = {0};
+    IDispatchEx *dispex;
+    HRESULT hres;
+    DISPID id;
+
+    dispex = get_script_dispatch(interrupt_script, NULL);
+    get_disp_id(dispex, name, S_OK, &id);
+    hres = IDispatchEx_InvokeEx(dispex, id, 0, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    IDispatchEx_Release(dispex);
+    return hres;
+}
+
+static HRESULT run_thread_interrupt(IActiveScriptParse *parse, const WCHAR *src, const WCHAR *func,
+        SCRIPTTHREADID stid, DWORD flags, const EXCEPINFO *ei, HRESULT *interrupt_hres)
+{
+    struct interrupt_args args = { stid, flags, ei, 0xdeadbeef };
+    HANDLE thread;
+    HRESULT hres;
+
+    reset_interrupt_counters();
+    thread = CreateThread(NULL, 0, interrupt_thread_proc, &args, 0, NULL);
+    hres = func ? invoke_interrupt_script(func) : parse_interrupt_script(parse, src);
+    SetEvent(interrupt_ready_event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    *interrupt_hres = args.hres;
+    return hres;
+}
+
+#define test_interrupt_error(a,b,c,d) _test_interrupt_error(__LINE__,a,b,c,d)
+static void _test_interrupt_error(unsigned line, SCODE scode, WORD wcode, const WCHAR *source, const WCHAR *desc)
+{
+    ok_(__FILE__,line)(interrupt_errors == 1, "OnScriptError called %ld times\n", interrupt_errors);
+    ok_(__FILE__,line)(interrupt_error_ei.scode == scode, "scode = %08lx, expected %08lx\n", interrupt_error_ei.scode, scode);
+    ok_(__FILE__,line)(interrupt_error_ei.wCode == wcode, "wCode = %u, expected %u\n", interrupt_error_ei.wCode, wcode);
+    ok_(__FILE__,line)(!lstrcmpW(interrupt_error_ei.bstrSource, source), "source = %s, expected %s\n",
+                       wine_dbgstr_w(interrupt_error_ei.bstrSource), wine_dbgstr_w(source));
+    ok_(__FILE__,line)(!lstrcmpW(interrupt_error_ei.bstrDescription, desc), "description = %s, expected %s\n",
+                       wine_dbgstr_w(interrupt_error_ei.bstrDescription), wine_dbgstr_w(desc));
+}
+
+#define test_thread_interrupt(a,b,c,d,e,f,g,h) _test_thread_interrupt(__LINE__,a,b,c,d,e,f,g,h)
+static void _test_thread_interrupt(unsigned line, SCRIPTTHREADID stid, DWORD flags, const EXCEPINFO *ei,
+        HRESULT exhres, SCODE scode, WORD wcode, const WCHAR *source, const WCHAR *desc)
+{
+    IActiveScriptParse *parse = create_interrupt_script();
+    HRESULT hres, interrupt_hres;
+
+    hres = run_thread_interrupt(parse, L"hostItem.WaitInterrupted\nhostItem.Mark\n", NULL, stid, flags, ei, &interrupt_hres);
+    ok_(__FILE__,line)(interrupt_hres == exhres, "InterruptScriptThread returned %08lx, expected %08lx\n",
+                       interrupt_hres, exhres);
+    ok_(__FILE__,line)(interrupt_enters == 1, "OnEnterScript called %ld times\n", interrupt_enters);
+    ok_(__FILE__,line)(interrupt_leaves == 1, "OnLeaveScript called %ld times\n", interrupt_leaves);
+    if(exhres == S_OK) {
+        ok_(__FILE__,line)(hres == SCRIPT_E_REPORTED, "ParseScriptText returned %08lx\n", hres);
+        ok_(__FILE__,line)(!interrupt_marks, "script continued after the interrupt\n");
+        _test_interrupt_error(line, scode, wcode, source, desc);
+        ok_(__FILE__,line)(interrupt_error_line == 1, "error line = %lu\n", interrupt_error_line);
+    }else {
+        ok_(__FILE__,line)(hres == S_OK, "ParseScriptText returned %08lx\n", hres);
+        ok_(__FILE__,line)(interrupt_marks == 1, "script did not continue\n");
+        ok_(__FILE__,line)(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    }
+    close_interrupt_script(parse);
+}
+
+#define test_loop_interrupt(a) _test_loop_interrupt(__LINE__,a)
+static void _test_loop_interrupt(unsigned line, const WCHAR *src)
+{
+    IActiveScriptParse *parse = create_interrupt_script();
+    HRESULT hres, interrupt_hres;
+
+    hres = run_thread_interrupt(parse, src, NULL, SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, &interrupt_hres);
+    ok_(__FILE__,line)(interrupt_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_hres);
+    ok_(__FILE__,line)(hres == SCRIPT_E_REPORTED, "ParseScriptText returned %08lx\n", hres);
+    ok_(__FILE__,line)(!interrupt_timeouts, "loop was not interrupted\n");
+    ok_(__FILE__,line)(!interrupt_marks, "script continued after the interrupt\n");
+    _test_interrupt_error(line, E_FAIL, 0, NULL, NULL);
+    close_interrupt_script(parse);
+}
+
+#define test_self_interrupt(a,b,c,d,e,f,g) _test_self_interrupt(__LINE__,a,b,c,d,e,f,g)
+static void _test_self_interrupt(unsigned line, const WCHAR *src, SCRIPTTHREADID stid, DWORD flags,
+        HRESULT exhres, LONG marks, ULONG error_line, BOOL todo_line)
+{
+    IActiveScriptParse *parse = create_interrupt_script();
+    HRESULT hres;
+
+    reset_interrupt_counters();
+    interrupt_self_stid = stid;
+    interrupt_self_flags = flags;
+    hres = parse_interrupt_script(parse, src);
+    ok_(__FILE__,line)(interrupt_self_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_self_hres);
+    ok_(__FILE__,line)(hres == exhres, "ParseScriptText returned %08lx, expected %08lx\n", hres, exhres);
+    ok_(__FILE__,line)(interrupt_marks == marks, "marks = %ld, expected %ld\n", interrupt_marks, marks);
+    if(exhres == S_OK) {
+        ok_(__FILE__,line)(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    }else {
+        _test_interrupt_error(line, E_FAIL, 0, NULL, NULL);
+        todo_wine_if(todo_line)
+        ok_(__FILE__,line)(interrupt_error_line == error_line, "error line = %lu, expected %lu\n",
+                           interrupt_error_line, error_line);
+    }
+    close_interrupt_script(parse);
+}
+
+static void test_interrupt(void)
+{
+    static const SCRIPTTHREADID stids[] = {
+        SCRIPTTHREADID_CURRENT, SCRIPTTHREADID_BASE, SCRIPTTHREADID_ALL, 0, 1234
+    };
+    EXCEPINFO ei_wcode = {0}, ei_desc = {0}, ei_scode = {0}, ei_both = {0}, ei_empty = {0};
+    HRESULT hres, interrupt_hres;
+    IActiveScriptParse *parse;
+    unsigned i;
+
+    interrupt_ready_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    interrupt_done_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    ei_wcode.wCode = 2345;
+    ei_wcode.bstrSource = SysAllocString(L"interrupt source");
+    ei_wcode.bstrDescription = SysAllocString(L"interrupt description");
+    ei_desc.wCode = 2345;
+    ei_desc.bstrDescription = SysAllocString(L"interrupt description");
+    ei_scode.scode = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 5);
+    ei_both.wCode = 2345;
+    ei_both.scode = E_FAIL;
+    ei_both.bstrDescription = SysAllocString(L"interrupt description");
+
+    interrupt_script = create_vbscript();
+    hres = IActiveScript_InterruptScriptThread(interrupt_script, SCRIPTTHREADID_BASE, NULL, SCRIPTINTERRUPT_RAISEEXCEPTION);
+    ok(hres == E_UNEXPECTED, "InterruptScriptThread returned %08lx\n", hres);
+    IActiveScript_Release(interrupt_script);
+
+    parse = create_interrupt_script();
+    for(i = 0; i < ARRAY_SIZE(stids); i++) {
+        hres = IActiveScript_InterruptScriptThread(interrupt_script, stids[i], &ei_wcode, SCRIPTINTERRUPT_RAISEEXCEPTION);
+        ok(hres == E_INVALIDARG, "InterruptScriptThread(%Id) returned %08lx\n", (INT_PTR)stids[i], hres);
+    }
+    hres = IActiveScript_InterruptScriptThread(interrupt_script, GetCurrentThreadId(), &ei_wcode, SCRIPTINTERRUPT_RAISEEXCEPTION);
+    ok(hres == E_INVALIDARG, "InterruptScriptThread returned %08lx\n", hres);
+    reset_interrupt_counters();
+    hres = parse_interrupt_script(parse, L"hostItem.Mark\n");
+    ok(hres == S_OK, "ParseScriptText returned %08lx\n", hres);
+    ok(interrupt_marks == 1, "marks = %ld\n", interrupt_marks);
+    hres = IActiveScript_SetScriptState(interrupt_script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == S_OK, "SetScriptState failed: %08lx\n", hres);
+    hres = IActiveScript_InterruptScriptThread(interrupt_script, SCRIPTTHREADID_BASE, NULL, SCRIPTINTERRUPT_RAISEEXCEPTION);
+    ok(hres == E_INVALIDARG, "InterruptScriptThread returned %08lx\n", hres);
+    hres = IActiveScript_Close(interrupt_script);
+    ok(hres == S_OK, "Close failed: %08lx\n", hres);
+    hres = IActiveScript_InterruptScriptThread(interrupt_script, SCRIPTTHREADID_BASE, NULL, SCRIPTINTERRUPT_RAISEEXCEPTION);
+    ok(hres == E_INVALIDARG, "InterruptScriptThread returned %08lx\n", hres);
+    IActiveScriptParse_Release(parse);
+    IActiveScript_Release(interrupt_script);
+
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_wcode, S_OK,
+                          MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 2345), 0, L"interrupt source", L"interrupt description");
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_desc, S_OK,
+                          MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 2345), 0, NULL, L"interrupt description");
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_both, S_OK,
+                          E_FAIL, 2345, NULL, L"interrupt description");
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_empty, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_BASE, 0, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_DEBUG, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_ALL_FLAGS, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_BASE, 0x80000004, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_ALL, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(GetCurrentThreadId(), SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, S_OK, E_FAIL, 0, NULL, NULL);
+    test_thread_interrupt(SCRIPTTHREADID_CURRENT, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, E_INVALIDARG, 0, 0, NULL, NULL);
+    test_thread_interrupt(0, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, E_INVALIDARG, 0, 0, NULL, NULL);
+    test_thread_interrupt(1234, SCRIPTINTERRUPT_RAISEEXCEPTION, NULL, E_INVALIDARG, 0, 0, NULL, NULL);
+
+    parse = create_interrupt_script();
+    hres = run_thread_interrupt(parse, L"hostItem.WaitInterrupted\nhostItem.Mark\n", NULL, SCRIPTTHREADID_BASE,
+                                SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_scode, &interrupt_hres);
+    ok(interrupt_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_hres);
+    ok(hres == SCRIPT_E_REPORTED, "ParseScriptText returned %08lx\n", hres);
+    ok(interrupt_errors == 1, "OnScriptError called %ld times\n", interrupt_errors);
+    ok(interrupt_error_ei.scode == MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 5), "scode = %08lx\n", interrupt_error_ei.scode);
+    ok(interrupt_error_ei.bstrSource != NULL, "source not set\n");
+    ok(interrupt_error_ei.bstrDescription != NULL, "description not set\n");
+    close_interrupt_script(parse);
+
+    test_loop_interrupt(L"hostItem.Ready\n"
+                        L"t = Timer\n"
+                        L"Do\n"
+                        L"    If Abs(Timer - t) > 3 Then\n"
+                        L"        hostItem.TimedOut\n"
+                        L"        Exit Do\n"
+                        L"    End If\n"
+                        L"Loop\n"
+                        L"hostItem.Mark\n");
+    test_loop_interrupt(L"hostItem.Ready\n"
+                        L"t = Timer\n"
+                        L"While Abs(Timer - t) <= 3\n"
+                        L"Wend\n"
+                        L"hostItem.TimedOut\n"
+                        L"hostItem.Mark\n");
+    test_loop_interrupt(L"hostItem.Ready\n"
+                        L"t = Timer\n"
+                        L"For i = 0 To 1 Step 0\n"
+                        L"    If Abs(Timer - t) > 3 Then\n"
+                        L"        hostItem.TimedOut\n"
+                        L"        Exit For\n"
+                        L"    End If\n"
+                        L"Next\n"
+                        L"hostItem.Mark\n");
+    test_loop_interrupt(L"Function Expired(t)\n"
+                        L"    Expired = Abs(Timer - t) > 3\n"
+                        L"End Function\n"
+                        L"hostItem.Ready\n"
+                        L"t = Timer\n"
+                        L"Do Until Expired(t)\n"
+                        L"Loop\n"
+                        L"hostItem.TimedOut\n"
+                        L"hostItem.Mark\n");
+
+    test_loop_interrupt(L"On Error Resume Next\n"
+                        L"hostItem.WaitInterrupted\n"
+                        L"hostItem.Mark\n");
+    test_loop_interrupt(L"Sub Wait\n"
+                        L"    hostItem.WaitInterrupted\n"
+                        L"    hostItem.Mark\n"
+                        L"End Sub\n"
+                        L"On Error Resume Next\n"
+                        L"Wait\n"
+                        L"hostItem.Mark\n");
+
+    parse = create_interrupt_script();
+    hres = run_thread_interrupt(parse,
+                                L"Sub Inner\n"
+                                L"    hostItem.WaitInterrupted\n"
+                                L"    hostItem.Mark\n"
+                                L"End Sub\n"
+                                L"hostItem.CallBack\n"
+                                L"hostItem.Mark\n",
+                                NULL, SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, &ei_wcode, &interrupt_hres);
+    ok(interrupt_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_hres);
+    ok(hres == SCRIPT_E_REPORTED, "ParseScriptText returned %08lx\n", hres);
+    ok(interrupt_callback_hres == SCRIPT_E_REPORTED, "nested call returned %08lx\n", interrupt_callback_hres);
+    ok(!interrupt_marks, "script continued after the interrupt\n");
+    ok(interrupt_errors == 2, "OnScriptError called %ld times\n", interrupt_errors);
+    ok(interrupt_first_scode == MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 2345), "first scode = %08lx\n", interrupt_first_scode);
+    ok(interrupt_error_ei.scode == MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 2345), "scode = %08lx\n", interrupt_error_ei.scode);
+    ok(!lstrcmpW(interrupt_error_ei.bstrDescription, L"interrupt description"), "description = %s\n",
+       wine_dbgstr_w(interrupt_error_ei.bstrDescription));
+    ok(interrupt_error_line == 5, "error line = %lu\n", interrupt_error_line);
+    ok(interrupt_enters == 2, "OnEnterScript called %ld times\n", interrupt_enters);
+    ok(interrupt_leaves == 2, "OnLeaveScript called %ld times\n", interrupt_leaves);
+    close_interrupt_script(parse);
+
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf\nhostItem.Mark\nhostItem.Mark\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 1, 2, FALSE);
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf\nhostItem.Mark\nhostItem.Mark\n",
+                        SCRIPTTHREADID_CURRENT, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 1, 2, FALSE);
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf\nhostItem.Mark\nhostItem.Mark\n",
+                        SCRIPTTHREADID_ALL, 0, SCRIPT_E_REPORTED, 1, 2, FALSE);
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf\nhostItem.Mark\nhostItem.Mark\n",
+                        GetCurrentThreadId(), 0, SCRIPT_E_REPORTED, 1, 2, FALSE);
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf : hostItem.Mark\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 1, 1, FALSE);
+    test_self_interrupt(L"On Error Resume Next\nhostItem.InterruptSelf\nhostItem.InterruptSelf\nhostItem.Mark\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 0, 2, FALSE);
+    test_self_interrupt(L"Sub S\nhostItem.InterruptSelf\nhostItem.Mark\nEnd Sub\nS\nhostItem.Mark\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 0, 2, FALSE);
+    test_self_interrupt(L"Sub S\nhostItem.InterruptSelf\nEnd Sub\nS\nhostItem.Mark\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, SCRIPT_E_REPORTED, 0, 2, TRUE);
+    test_self_interrupt(L"hostItem.Mark\nhostItem.InterruptSelf\n",
+                        SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION, S_OK, 1, 0, FALSE);
+
+    parse = create_interrupt_script();
+    reset_interrupt_counters();
+    interrupt_self_stid = SCRIPTTHREADID_BASE;
+    interrupt_self_flags = SCRIPTINTERRUPT_RAISEEXCEPTION;
+    interrupt_self_ei = &ei_wcode;
+    hres = parse_interrupt_script(parse, L"Sub M\nhostItem.Mark\nEnd Sub\nhostItem.InterruptSelf\n");
+    ok(hres == S_OK, "ParseScriptText returned %08lx\n", hres);
+    ok(interrupt_self_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_self_hres);
+    ok(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    interrupt_self_ei = NULL;
+    hres = invoke_interrupt_script(L"M");
+    ok(hres == SCRIPT_E_REPORTED, "InvokeEx returned %08lx\n", hres);
+    ok(!interrupt_marks, "script was executed\n");
+    test_interrupt_error(E_FAIL, 0, NULL, NULL);
+    close_interrupt_script(parse);
+
+    parse = create_interrupt_script();
+    hres = parse_interrupt_script(parse,
+                                  L"Sub Wait\n"
+                                  L"    hostItem.WaitInterrupted\n"
+                                  L"    hostItem.Mark\n"
+                                  L"End Sub\n"
+                                  L"Sub M\n"
+                                  L"    hostItem.Mark\n"
+                                  L"End Sub\n");
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    hres = run_thread_interrupt(parse, NULL, L"Wait", SCRIPTTHREADID_BASE, SCRIPTINTERRUPT_RAISEEXCEPTION,
+                                &ei_wcode, &interrupt_hres);
+    ok(interrupt_hres == S_OK, "InterruptScriptThread returned %08lx\n", interrupt_hres);
+    ok(hres == SCRIPT_E_REPORTED, "InvokeEx returned %08lx\n", hres);
+    ok(!interrupt_marks, "script continued after the interrupt\n");
+    test_interrupt_error(MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, 2345), 0, L"interrupt source", L"interrupt description");
+    ok(interrupt_error_line == 2, "error line = %lu\n", interrupt_error_line);
+    test_state(interrupt_script, SCRIPTSTATE_STARTED);
+
+    for(i = 0; i < 2; i++) {
+        reset_interrupt_counters();
+        hres = invoke_interrupt_script(L"M");
+        ok(hres == SCRIPT_E_REPORTED, "InvokeEx returned %08lx\n", hres);
+        ok(!interrupt_marks, "script was executed\n");
+        test_interrupt_error(E_FAIL, 0, NULL, NULL);
+        ok(interrupt_error_line == 5, "error line = %lu\n", interrupt_error_line);
+        ok(interrupt_enters == 1, "OnEnterScript called %ld times\n", interrupt_enters);
+        ok(interrupt_leaves == 1, "OnLeaveScript called %ld times\n", interrupt_leaves);
+    }
+
+    reset_interrupt_counters();
+    hres = parse_interrupt_script(parse, L"hostItem.Mark\n");
+    ok(hres == S_OK, "ParseScriptText returned %08lx\n", hres);
+    ok(!interrupt_marks, "script was executed\n");
+    ok(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    ok(!interrupt_enters, "OnEnterScript called %ld times\n", interrupt_enters);
+
+    hres = IActiveScript_InterruptScriptThread(interrupt_script, SCRIPTTHREADID_BASE, NULL, SCRIPTINTERRUPT_RAISEEXCEPTION);
+    ok(hres == E_INVALIDARG, "InterruptScriptThread returned %08lx\n", hres);
+
+    hres = IActiveScript_SetScriptState(interrupt_script, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState failed: %08lx\n", hres);
+    hres = parse_interrupt_script(parse, L"hostItem.Mark\n");
+    ok(hres == S_OK, "ParseScriptText returned %08lx\n", hres);
+    ok(interrupt_marks == 2, "marks = %ld\n", interrupt_marks);
+    ok(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    reset_interrupt_counters();
+    hres = invoke_interrupt_script(L"M");
+    ok(hres == S_OK, "InvokeEx returned %08lx\n", hres);
+    ok(interrupt_marks == 1, "marks = %ld\n", interrupt_marks);
+    ok(!interrupt_errors, "OnScriptError called %ld times\n", interrupt_errors);
+    close_interrupt_script(parse);
+
+    SysFreeString(ei_wcode.bstrSource);
+    SysFreeString(ei_wcode.bstrDescription);
+    SysFreeString(ei_desc.bstrDescription);
+    SysFreeString(ei_both.bstrDescription);
+    reset_interrupt_counters();
+    CloseHandle(interrupt_ready_event);
+    CloseHandle(interrupt_done_event);
+}
+
 static BOOL check_vbscript(void)
 {
     IActiveScriptParseProcedure2 *vbscript;
@@ -3619,6 +4175,7 @@ START_TEST(vbscript)
         test_vbdisp_typeinfo();
         test_RegExp();
         test_RegExp_Replace();
+        test_interrupt();
     }else {
         win_skip("VBScript engine not available or too old\n");
     }

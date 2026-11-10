@@ -81,7 +81,10 @@ static void change_state(VBScript *This, SCRIPTSTATE state)
     if(This->state == state)
         return;
 
+    EnterCriticalSection(&This->ctx->interrupt_cs);
     This->state = state;
+    LeaveCriticalSection(&This->ctx->interrupt_cs);
+
     if(This->ctx->site)
         IActiveScriptSite_OnStateChange(This->ctx->site, state);
 }
@@ -341,6 +344,7 @@ static void release_script(script_ctx_t *ctx)
 
     collect_objects(ctx);
     clear_error(ctx);
+    clear_interrupt(ctx);
 
     LIST_FOR_EACH_ENTRY_SAFE(code, code_next, &ctx->code_list, vbscode_t, entry)
     {
@@ -769,6 +773,7 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
         decrease_state(This, SCRIPTSTATE_CLOSED);
         detach_global_objects(This->ctx);
         IServiceProvider_Release(&This->ctx->vbcaller->IServiceProvider_iface);
+        DeleteCriticalSection(&This->ctx->interrupt_cs);
         free(This->ctx);
         free(This);
     }
@@ -854,6 +859,8 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
 
     if(!This->is_initialized || (!This->ctx->site && ss != SCRIPTSTATE_CLOSED))
         return E_UNEXPECTED;
+
+    clear_interrupt(This->ctx);
 
     switch(ss) {
     case SCRIPTSTATE_STARTED:
@@ -1032,8 +1039,48 @@ static HRESULT WINAPI VBScript_InterruptScriptThread(IActiveScript *iface,
         SCRIPTTHREADID stidThread, const EXCEPINFO *pexcepinfo, DWORD dwFlags)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    script_ctx_t *ctx = This->ctx;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%Ix %p %lx)\n", This, (DWORD_PTR)stidThread, pexcepinfo, dwFlags);
+
+    EnterCriticalSection(&ctx->interrupt_cs);
+
+    if(This->state == SCRIPTSTATE_UNINITIALIZED) {
+        hres = E_UNEXPECTED;
+    }else if(!ctx->current_exec) {
+        /* Only a thread that is running a script may be interrupted. */
+        hres = E_INVALIDARG;
+    }else {
+        switch(stidThread) {
+        case SCRIPTTHREADID_BASE:
+        case SCRIPTTHREADID_ALL:
+            break;
+        case SCRIPTTHREADID_CURRENT:
+            if(GetCurrentThreadId() != This->thread_id)
+                hres = E_INVALIDARG;
+            break;
+        default:
+            if(stidThread != This->thread_id)
+                hres = E_INVALIDARG;
+        }
+    }
+
+    if(SUCCEEDED(hres) && ctx->interrupt == INTERRUPT_NONE) {
+        if(pexcepinfo) {
+            ctx->interrupt_ei.wCode = pexcepinfo->wCode;
+            ctx->interrupt_ei.scode = pexcepinfo->scode;
+            ctx->interrupt_ei.bstrSource = SysAllocString(pexcepinfo->bstrSource);
+            ctx->interrupt_ei.bstrDescription = SysAllocString(pexcepinfo->bstrDescription);
+            ctx->interrupt_ei.bstrHelpFile = SysAllocString(pexcepinfo->bstrHelpFile);
+            ctx->interrupt_ei.dwHelpContext = pexcepinfo->dwHelpContext;
+        }
+        /* The script thread polls the flag without taking the lock. */
+        InterlockedExchange(&ctx->interrupt, INTERRUPT_PENDING);
+    }
+
+    LeaveCriticalSection(&ctx->interrupt_cs);
+    return hres;
 }
 
 static HRESULT WINAPI VBScript_Clone(IActiveScript *iface, IActiveScript **ppscript)
@@ -1199,7 +1246,8 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         return hres;
     }
 
-    if(!(dwFlags & SCRIPTTEXT_ISEXPRESSION) && !is_started(This)) {
+    if(!(dwFlags & SCRIPTTEXT_ISEXPRESSION)
+       && (!is_started(This) || ReadNoFence(&This->ctx->interrupt) == INTERRUPT_PENDING)) {
         code->pending_exec = TRUE;
         return S_OK;
     }
@@ -1381,6 +1429,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     vbcaller->ctx = ctx;
     ctx->vbcaller = vbcaller;
     ctx->safeopt = INTERFACE_USES_DISPEX;
+    InitializeCriticalSection(&ctx->interrupt_cs);
     list_init(&ctx->objects);
     list_init(&ctx->code_list);
     list_init(&ctx->named_items);
