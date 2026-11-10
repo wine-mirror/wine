@@ -576,6 +576,11 @@ static struct image_file_map* image_locate_debug_link(const struct module* modul
         if ((slash2 = wcsrchr(slash, '\\'))) slash = slash2 + 1;
         MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash, filename_len);
         if (image_check_debug_link_crc(p, fmap_link, crc)) goto found;
+
+        /* testing realdir/.debug/filename */
+        memcpy(slash, dotDebugW, sizeof(dotDebugW));
+        MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash + ARRAY_SIZE(dotDebugW), filename_len);
+        if (image_check_debug_link_crc(p, fmap_link, crc)) goto found;
     }
 
     /* testing globaldebugdir/execdir/filename */
