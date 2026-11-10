@@ -219,6 +219,11 @@ static void test_SQLGetPrivateProfileString(void)
     ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);
 
     strcpy(buffer, "wine");
+    ret = SQLGetPrivateProfileString("", "testing" , "default", buffer, 256, "ODBC.INI");
+    ok(ret == 0, "SQLGetPrivateProfileString returned %d\n", ret);
+    ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);
+
+    strcpy(buffer, "wine");
     ret = SQLGetPrivateProfileString("wineodbc", NULL , "default", buffer, 256, "ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileString returned %d\n", ret);
     ok(!strcmp(buffer, ""), "incorrect string '%s'\n", buffer);

@@ -771,7 +771,7 @@ int WINAPI SQLGetPrivateProfileStringW(LPCWSTR section, LPCWSTR entry,
 
     clear_errors();
 
-    if (buff_len <= 0 || !section)
+    if (buff_len <= 0 || !section || !*section)
         return 0;
 
     if(buff)
@@ -860,7 +860,7 @@ int WINAPI SQLGetPrivateProfileString(LPCSTR section, LPCSTR entry,
     if (buff)
         buff[0] = 0;
 
-    if (!section || !defvalue || !buff)
+    if (!section || !*section || !defvalue || !buff)
         return 0;
 
     if (!(sectionW = strdupAtoW(section))) return 0;
