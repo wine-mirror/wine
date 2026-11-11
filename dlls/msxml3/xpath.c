@@ -7578,6 +7578,20 @@ static void xslpattern_compile_and_expr(struct xpath_parser_context *ctxt)
     }
 }
 
+static bool xslpattern_is_or_operator(struct xpath_parser_context *ctxt)
+{
+    if (xpath_parse_cmp(ctxt, L"$or$") || xpath_parse_cmp(ctxt, L"||"))
+        return true;
+
+    if (ctxt->cur[0] == 'o' && ctxt->cur[1] == 'r' && xml_is_space(ctxt->cur[2]))
+    {
+        xpath_parse_skip(ctxt, 2);
+        return true;
+    }
+
+    return false;
+}
+
 /*
  *  Expr ::=   OrExpr
  *  OrExpr ::=   AndExpr
@@ -7601,9 +7615,7 @@ static void xslpattern_compile_expr(struct xpath_parser_context *ctxt, bool sort
     xslpattern_compile_and_expr(ctxt);
 
     xpath_parse_skipspaces(ctxt);
-    while (xpath_parse_cmp(ctxt, L"or")
-            || xpath_parse_cmp(ctxt, L"$or$")
-            || xpath_parse_cmp(ctxt, L"||"))
+    while (xslpattern_is_or_operator(ctxt))
     {
         int op1 = ctxt->comp->last;
 
