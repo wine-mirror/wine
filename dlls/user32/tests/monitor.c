@@ -2822,7 +2822,6 @@ static void test_display_dc(void)
                         break;
                     }
                 }
-                todo_wine
                 ok(found, "No colors in palette entries.\n");
 
                 SelectObject(mem_dc, old_hbitmap);

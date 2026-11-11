@@ -89,9 +89,8 @@ HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
             bi->bmiHeader.biPlanes = 1;
             bi->bmiHeader.biBitCount = 8;
             bi->bmiHeader.biCompression = BI_RGB;
-            bi->bmiHeader.biClrUsed = 256;
             bi->bmiHeader.biClrImportant = 256;
-            NtGdiDoPalette( hdc, 0, 256, bi->bmiColors, NtGdiGetDIBColorTable, FALSE );
+            fill_default_color_table( bi );
             return NtGdiCreateDIBSection( hdc, NULL, 0, bi, DIB_RGB_COLORS, 0, 0, 0, NULL );
         }
         /* A 16-bit display DC -> Create a 32-bit DDB */
