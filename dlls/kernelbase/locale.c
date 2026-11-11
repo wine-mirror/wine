@@ -4380,7 +4380,7 @@ static DWORD get_timezone_id( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER t
     else
         after_daylight_date = tf.Year > year;
 
-    if (info->DaylightDate.wMonth < info->StandardDate.wMonth) /* Northern hemisphere */
+    if (daylight_lt_std( info )) /* Northern hemisphere */
     {
         if (before_standard_date && after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
     }
