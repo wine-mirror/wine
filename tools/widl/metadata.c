@@ -1015,6 +1015,15 @@ static void serialize_constant_table( void )
     }
 }
 
+static UINT has_constant( enum table table, UINT row );
+
+static const struct constant_row *winmd_find_constant_row( const struct winmd *winmd, UINT token, enum table table)
+{
+    const struct constant_row key = { .parent = has_constant( table, token ) };
+    return bsearch( &key, winmd->tables[TABLE_CONSTANT].ptr, winmd->tables[TABLE_CONSTANT].count, sizeof(key),
+                    cmp_constant_row );
+}
+
 struct customattribute_row
 {
     UINT parent;
@@ -4166,11 +4175,25 @@ static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT id
     {
         const struct field_row *field = &((struct field_row *)winmd->tables[TABLE_FIELD].ptr)[i];
         const char *name = winmd_get_string( winmd, field->name );
+        const struct constant_row *cst;
         UINT new_field, new_sig;
 
         new_sig = rewrite_field_sig_blob( winmd, field->signature );
         new_field = add_field_row( field->flags, add_string( name ), new_sig );
         if (!first_field) first_field = new_field;
+
+        /* If this field has a constant value, merge that as well. */
+        cst = winmd_find_constant_row( winmd, i + 1, TABLE_FIELD );
+        if (cst)
+        {
+            const BYTE *cst_value;
+            UINT len = 0;
+
+            cst_value = winmd_get_blob( winmd, cst->value, &len );
+            assert( len );
+            /* The Value blob can be copied as is. */
+            add_constant_row(cst->type, has_constant( TABLE_FIELD, new_field ), add_blob( cst_value, len ) );
+        }
     }
     return first_field;
 }
