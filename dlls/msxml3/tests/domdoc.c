@@ -7746,6 +7746,10 @@ static const struct query_test xslpattern_test[] =
 
     /* Predicate at different levels requiring index fixup vs XPath */
     { "root//elem[0][0]", "E1.E2.D1" },
+
+    /* Failing queries */
+    { "$any$", NULL },
+
     { NULL }
 };
 
