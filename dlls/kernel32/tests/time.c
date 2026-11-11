@@ -22,6 +22,7 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
@@ -1035,6 +1036,10 @@ static void test_GetTimeZoneInformationForYear(void)
         { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0 },
         { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0 },
     };
+    WCHAR key_name[256];
+    DWORD first, last, size;
+    LSTATUS lstatus;
+    HKEY key;
 
     if (!pGetTimeZoneInformationForYear || !pGetDynamicTimeZoneInformation)
     {
@@ -1095,6 +1100,46 @@ static void test_GetTimeZoneInformationForYear(void)
     {
         win_skip("Old Windows version\n");
         return;
+    }
+
+    for (i = 0; !EnumDynamicTimeZoneInformation(i, &dyn_tzinfo); ++i)
+    {
+        winetest_push_context("tz %s", debugstr_w(dyn_tzinfo.TimeZoneKeyName));
+        swprintf(key_name, ARRAY_SIZE(key_name), L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones\\%s\\Dynamic DST",
+            dyn_tzinfo.TimeZoneKeyName);
+        lstatus = RegOpenKeyW(HKEY_LOCAL_MACHINE, key_name, &key);
+        ok(!lstatus || lstatus == ERROR_FILE_NOT_FOUND, "got %#lx.\n", lstatus);
+        if (lstatus)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        size = sizeof(first);
+        lstatus = RegQueryValueExW(key, L"FirstEntry", NULL, NULL, (BYTE *)&first, &size);
+        ok(!lstatus, "got %#lx.\n", lstatus);
+        lstatus = RegQueryValueExW(key, L"LastEntry", NULL, NULL, (BYTE *)&last, &size);
+        ok(!lstatus, "got %#lx.\n", lstatus);
+
+        RegCloseKey(key);
+
+        memset(&tzinfo, 0, sizeof(tzinfo));
+        memset(&tzinfo2, 0, sizeof(tzinfo2));
+        ret = pGetTimeZoneInformationForYear(first, &dyn_tzinfo, &tzinfo);
+        ok(ret, "got error %lu.\n", GetLastError());
+
+        ret = pGetTimeZoneInformationForYear(first - 1, &dyn_tzinfo, &tzinfo2);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ok(!memcmp(&tzinfo, &tzinfo2, sizeof(tzinfo)), "TZ info does not match, first %ld.\n", first);
+
+        memset(&tzinfo, 0, sizeof(tzinfo));
+        memset(&tzinfo2, 0, sizeof(tzinfo2));
+        ret = pGetTimeZoneInformationForYear(last, &dyn_tzinfo, &tzinfo);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ret = pGetTimeZoneInformationForYear(last + 1, &dyn_tzinfo, &tzinfo2);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ok(!memcmp(&tzinfo, &tzinfo2, sizeof(tzinfo)), "TZ info does not match, last %ld.\n", last);
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
