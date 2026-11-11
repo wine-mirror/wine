@@ -7503,6 +7503,26 @@ static void xslpattern_compile_equality_expr(struct xpath_parser_context *ctxt)
     }
 }
 
+/* Lookahead for "not(" notation. */
+static bool xslpattern_is_not_func(struct xpath_parser_context *ctxt)
+{
+    const WCHAR *p = ctxt->cur;
+
+    if (p[0] == 'n' && p[1] == 'o' && p[2] == 't')
+    {
+        p += 3;
+        while (xml_is_space(*p))
+            ++p;
+        if (*p == '(')
+        {
+            ctxt->cur = ++p;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /*
  *  NegationExpr ::= EqualityExpr
  *          | '$not$' NegationExpr
@@ -7518,11 +7538,9 @@ static void xslpattern_compile_negation_expr(struct xpath_parser_context *ctxt)
         xpath_parse_skipspaces(ctxt);
         neg = true;
     }
-    else if (xpath_parse_cmp(ctxt, L"not"))
+    else if (xslpattern_is_not_func(ctxt))
     {
         xpath_parse_skipspaces(ctxt);
-        if (!xpath_parse_cmp(ctxt, L"("))
-            return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
         neg = functional = true;
     }
 

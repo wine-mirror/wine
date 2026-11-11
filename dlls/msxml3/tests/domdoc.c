@@ -7657,6 +7657,7 @@ static const struct query_test xslpattern_test[] =
     { "root//elem[$not$ $any$ end()]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
     { "root//elem[not($any$ end())]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
     { "root//elem[$not$ end()]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
+    { "root//elem[not\t ( end())]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
     { "root//elem[index() != 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[$any$ (index() != 0)]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() $ne$ 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
