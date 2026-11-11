@@ -5160,9 +5160,17 @@ HRESULT node_validate(struct domnode *doc, IXMLDOMNode *node_obj, IXMLDOMParseEr
     if ((dtd = domnode_get_dtd(node_get_doc(node))))
     {
         if (node->type == NODE_DOCUMENT)
+        {
             root = domnode_get_root_element(node);
+        }
         else
+        {
             root = node;
+
+            /* Collect ID values, unless we're validating a root node. */
+            if (node->parent != node_get_doc(node))
+                parser_dtd_collect_ids(&ctxt, dtd->dtd, node);
+        }
 
         if (!node_dtd_validate_node(&ctxt, dtd->dtd, root))
             return return_validation_error(&ctxt, err);

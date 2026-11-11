@@ -402,6 +402,8 @@ extern bool parser_dtd_validate_element_content(struct validation_context *ctxt,
 extern bool parser_dtd_check_required_attributes(struct validation_context *ctxt, struct dtd *dtd,
         struct domnode *elem);
 extern bool parser_dtd_validate_references(struct validation_context *ctxt);
+extern void parser_dtd_collect_ids(struct validation_context *ctxt, struct dtd *dtd,
+        struct domnode *subtree);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);

@@ -1694,7 +1694,6 @@ static void test_validateNode(void)
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(res == 0xc00ce200, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
