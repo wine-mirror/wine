@@ -1875,6 +1875,22 @@ struct unicode_str get_nt_name( struct fd *fd )
     return name;
 }
 
+static int open_file_or_dir( const char *name, unsigned int access, int flags, mode_t mode )
+{
+    int fd, rw_mode = O_RDONLY;
+
+    if (access & FILE_UNIX_WRITE_ACCESS)
+        rw_mode = (access & FILE_UNIX_READ_ACCESS) ? O_RDWR : O_WRONLY;
+
+    fd = open( name, rw_mode | flags | O_NONBLOCK, mode );
+
+    /* if we tried to open a directory for write access, retry read-only */
+    if (fd == -1 && errno == EISDIR && (rw_mode != O_RDONLY || (flags & O_CREAT)))
+        fd = open( name, O_RDONLY | O_NONBLOCK, mode );
+
+    return fd;
+}
+
 /* open() wrapper that returns a struct fd with no fd user set */
 struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
                     mode_t *mode, unsigned int access, unsigned int sharing,
@@ -1884,21 +1900,9 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
     struct closed_fd *closed_fd;
     struct fd *fd;
     int root_fd = -1;
-    int flags = O_NONBLOCK, rw_mode;
     char *path;
 
-    switch (disposition)
-    {
-    case FILE_OPEN:         break;
-    case FILE_OVERWRITE:    flags |= O_TRUNC; access |= FILE_WRITE_ATTRIBUTES; break;
-    case FILE_OPEN_IF:      flags |= O_CREAT; break;
-    case FILE_CREATE:       flags |= O_CREAT | O_EXCL; break;
-    case FILE_SUPERSEDE:    flags |= O_CREAT | O_TRUNC; break;
-    case FILE_OVERWRITE_IF: flags |= O_CREAT | O_TRUNC; access |= FILE_WRITE_ATTRIBUTES; break;
-    }
-
-    if (((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE)) ||
-        ((options & FILE_DIRECTORY_FILE) && (flags & O_TRUNC)))
+    if ((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
@@ -1924,46 +1928,57 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
         }
     }
 
-    /* create the directory if needed */
-    if ((options & FILE_DIRECTORY_FILE) && (flags & O_CREAT))
+    if (options & FILE_DIRECTORY_FILE)
     {
-        if (mkdir( name, *mode ) == -1)
+        switch (disposition)
         {
-            if (errno != EEXIST || (flags & O_EXCL))
-            {
-                file_set_error();
-                goto error;
-            }
-        }
-        flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
-        disposition = FILE_OPEN;
-    }
-
-    if ((access & FILE_UNIX_WRITE_ACCESS) && !(options & FILE_DIRECTORY_FILE))
-    {
-        if (access & FILE_UNIX_READ_ACCESS) rw_mode = O_RDWR;
-        else rw_mode = O_WRONLY;
-    }
-    else rw_mode = O_RDONLY;
-
-    if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
-    {
-        /* if we tried to open a directory for write access, retry read-only */
-        if (errno == EISDIR)
-        {
-            if ((access & FILE_UNIX_WRITE_ACCESS) || (flags & O_CREAT))
-                fd->unix_fd = open( name, O_RDONLY | (flags & ~(O_TRUNC | O_CREAT | O_EXCL)), *mode );
-        }
-
-        if (fd->unix_fd == -1)
-        {
-            /* check for trailing slash on file path */
-            if ((errno == ENOENT || (errno == ENOTDIR && !(options & FILE_DIRECTORY_FILE))) && name[strlen(name) - 1] == '/')
-                set_error( STATUS_OBJECT_NAME_INVALID );
-            else
-                file_set_error();
+        case FILE_CREATE:
+        case FILE_OPEN_IF:
+            if (mkdir( name, *mode ) != -1) break;
+            if (errno == EEXIST && disposition == FILE_OPEN_IF) break;
+            file_set_error();
+            goto error;
+        case FILE_OPEN:
+            break;
+        case FILE_SUPERSEDE:
+        case FILE_OVERWRITE:
+        case FILE_OVERWRITE_IF:
+            set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
+        fd->unix_fd = open( name, O_RDONLY | O_NONBLOCK, *mode );
+    }
+    else
+    {
+        switch (disposition)
+        {
+        case FILE_OPEN:
+            fd->unix_fd = open_file_or_dir( name, access, 0, *mode );
+            break;
+        case FILE_CREATE:
+            fd->unix_fd = open_file_or_dir( name, access, O_CREAT | O_EXCL, *mode );
+            break;
+        case FILE_OVERWRITE:
+            fd->unix_fd = open_file_or_dir( name, access | FILE_WRITE_DATA, 0, *mode );
+            break;
+        case FILE_OVERWRITE_IF:
+            fd->unix_fd = open_file_or_dir( name, access | FILE_WRITE_DATA, O_CREAT, *mode );
+            break;
+        case FILE_OPEN_IF:
+        case FILE_SUPERSEDE:
+            fd->unix_fd = open_file_or_dir( name, access, O_CREAT, *mode );
+            break;
+        }
+    }
+
+    if (fd->unix_fd == -1)
+    {
+        /* check for trailing slash on file path */
+        if ((errno == ENOENT || (errno == ENOTDIR && !(options & FILE_DIRECTORY_FILE))) && name[strlen(name) - 1] == '/')
+            set_error( STATUS_OBJECT_NAME_INVALID );
+        else
+            file_set_error();
+        goto error;
     }
 
     fd->nt_name = dup_nt_name( root, nt_name, &fd->nt_namelen );
