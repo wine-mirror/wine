@@ -2660,9 +2660,11 @@ static void test_display_dc(void)
     DWORD device_idx, mode_idx;
     DEVMODEA dm, dm2, dm3;
     HDC hdc, hdc2, mem_dc;
+    RGBQUAD colors[256];
     DISPLAY_DEVICEA dd;
     DIBSECTION dib;
     BITMAP bitmap;
+    BOOL found;
     BOOL ret;
     LONG res;
 
@@ -2797,6 +2799,34 @@ static void test_display_dc(void)
                 ok(dib.dsBmih.biYPelsPerMeter == 0, "Got unexpected biYPelsPerMeter %ld.\n", dib.dsBmih.biYPelsPerMeter);
                 ok(dib.dsBmih.biClrUsed == 256, "Got unexpected biClrUsed %ld.\n", dib.dsBmih.biClrUsed);
                 ok(dib.dsBmih.biClrImportant == 256, "Got unexpected biClrImportant %ld.\n", dib.dsBmih.biClrImportant);
+
+                /* Test that an 8-bit display DC doesn't have a color table */
+                count = GetDIBColorTable(hdc2, 0, ARRAY_SIZE(colors), colors);
+                ok(count == 0, "GetDIBColorTable succeeded, count %d.\n", count);
+
+                /* Test that a valid palette is present in the compatible bitmap */
+                mem_dc = CreateCompatibleDC(hdc2);
+                old_hbitmap = SelectObject(mem_dc, hbitmap);
+                ok(!!old_hbitmap, "Failed to select bitmap.\n");
+
+                memset(colors, 0, sizeof(colors));
+                count = GetDIBColorTable(mem_dc, 0, ARRAY_SIZE(colors), colors);
+                ok(count == 256, "GetDIBColorTable failed, count %d.\n", count);
+
+                found = FALSE;
+                for (j = 0; j < count; j++)
+                {
+                    if (colors[j].rgbRed || colors[j].rgbGreen || colors[j].rgbBlue)
+                    {
+                        found = TRUE;
+                        break;
+                    }
+                }
+                todo_wine
+                ok(found, "No colors in palette entries.\n");
+
+                SelectObject(mem_dc, old_hbitmap);
+                DeleteDC(mem_dc);
             }
             ok(dib.dsBm.bmBitsPixel == (bpps[i] == 16 ? 32 : bpps[i]), "Expected %d, got %d.\n",
                bpps[i] == 16 ? 32 : bpps[i], dib.dsBm.bmBitsPixel);
