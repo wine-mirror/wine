@@ -1524,14 +1524,13 @@ BOOL WINAPI SQLRemoveDriverW(LPCWSTR drivername, BOOL remove_dsn, LPDWORD usage_
         if (RegOpenKeyW(hkey, drivername, &hkeydriver) == ERROR_SUCCESS)
         {
             DWORD size, type;
-            DWORD count;
 
             size = sizeof(usagecount);
             RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
             TRACE("Usage count %ld\n", usagecount);
-            count = usagecount - 1;
-            if (count)
+            if (usagecount > 1)
             {
+                DWORD count = usagecount - 1;
                  if (RegSetValueExA(hkeydriver, "UsageCount", 0, REG_DWORD, (BYTE*)&count, sizeof(count)) != ERROR_SUCCESS)
                     ERR("Failed to write registry UsageCount key\n");
             }
@@ -1677,14 +1676,13 @@ BOOL WINAPI SQLRemoveTranslatorW(const WCHAR *translator, DWORD *usage_count)
         if (RegOpenKeyW(hkey, translator, &hkeydriver) == ERROR_SUCCESS)
         {
             DWORD size, type;
-            DWORD count;
 
             size = sizeof(usagecount);
             RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
             TRACE("Usage count %ld\n", usagecount);
-            count = usagecount - 1;
-            if (count)
+            if (usagecount > 1)
             {
+                DWORD count = usagecount - 1;
                  if (RegSetValueExA(hkeydriver, "UsageCount", 0, REG_DWORD, (BYTE*)&count, sizeof(count)) != ERROR_SUCCESS)
                     ERR("Failed to write registry UsageCount key\n");
             }
