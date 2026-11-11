@@ -255,7 +255,6 @@ extern void macdrv_free_monitors(struct macdrv_monitor* monitors, int monitor_co
 
 /* event */
 enum {
-    APP_ACTIVATED,
     APP_DEACTIVATED,
     APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
