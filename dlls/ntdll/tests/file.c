@@ -6075,12 +6075,12 @@ static void test_file_readonly_access(void)
 
     /* NtOpenFile FILE_{READ,WRITE}_ATTRIBUTES */
     status = pNtOpenFile(&handle, FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
-    todo_wine ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx.\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx.\n", status);
     CloseHandle(handle);
 
     /* NtOpenFile FILE_{READ,WRITE}_EA */
     status = pNtOpenFile(&handle, FILE_READ_EA | FILE_WRITE_EA, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
-    todo_wine ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx.\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx.\n", status);
     CloseHandle(handle);
 
     /* NtOpenFile DELETE without FILE_DELETE_ON_CLOSE */

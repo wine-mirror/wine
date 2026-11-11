@@ -1879,8 +1879,8 @@ static int open_file_or_dir( const char *name, unsigned int access, int flags, m
 {
     int fd, rw_mode = O_RDONLY;
 
-    if (access & FILE_UNIX_WRITE_ACCESS)
-        rw_mode = (access & FILE_UNIX_READ_ACCESS) ? O_RDWR : O_WRONLY;
+    if (access & (FILE_WRITE_DATA | FILE_APPEND_DATA))
+        rw_mode = (access & FILE_READ_DATA) ? O_RDWR : O_WRONLY;
 
     fd = open( name, rw_mode | flags | O_NONBLOCK, mode );
 
