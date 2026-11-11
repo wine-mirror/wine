@@ -1384,6 +1384,14 @@ static void build(struct strarray input_files, const char *output)
         }
     }
 
+    /* Native RISC-V64 Winelib objects may reference CRT helpers from
+     * archives listed earlier on the command line (notably the TEB helper
+     * in libwinecrt0.a, referenced by ucrtbase startup objects).  GNU ld
+     * normally scans each archive only once; group them so references
+     * introduced by later archives can resolve from earlier ones. */
+    if (target.cpu == CPU_RISCV && !is_pe)
+        strarray_add( &link_args, "-Wl,--start-group" );
+
     STRARRAY_FOR_EACH( file, &files )
     {
 	const char* name = file + 2;
@@ -1413,6 +1421,9 @@ static void build(struct strarray input_files, const char *output)
 		break;
 	}
     }
+
+    if (target.cpu == CPU_RISCV && !is_pe)
+        strarray_add( &link_args, "-Wl,--end-group" );
 
     if (!nostdlib && !is_pe)
     {
