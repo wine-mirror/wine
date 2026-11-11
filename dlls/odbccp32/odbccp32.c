@@ -1034,7 +1034,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                     int len;
 
                     /* Write pair values to the registry. */
-                    lstrcpynW(entry, p, divider - p + 1);
+                    lstrcpynW(entry, p, min(divider - p + 1, ARRAY_SIZE(entry)));
 
                     divider++;
                     TRACE("Writing pair %s,%s\n", debugstr_w(entry), debugstr_w(divider));
