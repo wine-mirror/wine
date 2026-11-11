@@ -7557,6 +7557,20 @@ static void xslpattern_compile_negation_expr(struct xpath_parser_context *ctxt)
         xpath_push_unary_step(ctxt, XPATH_OP_NOT, ctxt->comp->last, 0, 0);
 }
 
+static bool xslpattern_is_and_operator(struct xpath_parser_context *ctxt)
+{
+    if (xpath_parse_cmp(ctxt, L"$and$") || xpath_parse_cmp(ctxt, L"&&"))
+        return true;
+
+    if (ctxt->cur[0] == 'a' && ctxt->cur[1] == 'n' && ctxt->cur[2] == 'd' && xml_is_space(ctxt->cur[3]))
+    {
+        xpath_parse_skip(ctxt, 3);
+        return true;
+    }
+
+    return false;
+}
+
 /*
  *  AndExpr ::= NegationExpr
  *          | NegationExpr ('and' | '$and$' | '&&') AndExpr
@@ -7565,9 +7579,7 @@ static void xslpattern_compile_and_expr(struct xpath_parser_context *ctxt)
 {
     xslpattern_compile_negation_expr(ctxt);
     xpath_parse_skipspaces(ctxt);
-    while (xpath_parse_cmp(ctxt, L"and")
-            || xpath_parse_cmp(ctxt, L"$and$")
-            || xpath_parse_cmp(ctxt, L"&&"))
+    while (xslpattern_is_and_operator(ctxt))
     {
         int op1 = ctxt->comp->last;
 
