@@ -87,6 +87,7 @@ static void initialize_providers( void )
 
     HidD_GetHidGuid( &guid );
 
+    i = 0;
     while (SetupDiEnumDeviceInterfaces( set, NULL, &guid, i++, &iface ))
     {
         detail->cbSize = sizeof(*detail);
