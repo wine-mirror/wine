@@ -1644,7 +1644,7 @@
 @ stdcall SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr)
-@ stub SystemTimeToTzSpecificLocalTimeEx
+@ stdcall SystemTimeToTzSpecificLocalTimeEx(ptr ptr ptr)
 @ stdcall TerminateProcess(long long)
 # @ stub TerminateProcessOnMemoryExhaustion
 @ stdcall TerminateThread(long long)

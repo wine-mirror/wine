@@ -4328,6 +4328,16 @@ static int compare_tzdate( const TIME_FIELDS *tf, const SYSTEMTIME *compare )
 }
 
 
+static BOOL daylight_lt_std( const TIME_ZONE_INFORMATION *info )
+{
+    if (info->DaylightDate.wMonth != info->StandardDate.wMonth)
+        return info->DaylightDate.wMonth < info->StandardDate.wMonth;
+    if (info->DaylightDate.wDay != info->StandardDate.wDay)
+        return info->DaylightDate.wDay < info->StandardDate.wDay;
+    return info->DaylightDate.wHour < info->StandardDate.wHour;
+}
+
+
 static DWORD get_timezone_id( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER time, BOOL is_local )
 {
     int year;
@@ -7370,6 +7380,98 @@ BOOL WINAPI DECLSPEC_HOTPATCH SystemTimeToTzSpecificLocalTime( const TIME_ZONE_I
         return FALSE;
     }
     return FileTimeToSystemTime( (FILETIME *)&ft, local );
+}
+
+
+static BOOL is_special_dst_date( SYSTEMTIME *time)
+{
+    return time->wMonth == 1 && time->wDay == 1 && !time->wHour && !time->wSecond;
+}
+
+
+static BOOL system_time_to_local_time_for_year( const DYNAMIC_TIME_ZONE_INFORMATION *dinfo, LARGE_INTEGER time,
+                                                int year, TIME_FIELDS *ret_tf )
+{
+    BOOL before_standard_date, after_daylight_date;
+    TIME_ZONE_INFORMATION info;
+    TIME_FIELDS std_tf;
+    LARGE_INTEGER t;
+
+    if (!GetTimeZoneInformationForYear( year, (DYNAMIC_TIME_ZONE_INFORMATION *)dinfo, &info )) return FALSE;
+
+    if (!info.DaylightDate.wMonth)
+    {
+        t.QuadPart = time.QuadPart - info.Bias * (LONGLONG)600000000;
+        RtlTimeToTimeFields( &t, ret_tf );
+        return TRUE;
+    }
+
+    if (is_special_dst_date( &info.StandardDate ))
+        info.StandardDate.wYear = year;
+    if (is_special_dst_date( &info.DaylightDate ))
+        info.DaylightDate.wYear = year;
+
+    t.QuadPart = time.QuadPart - (info.Bias + info.DaylightBias) * (LONGLONG)600000000;
+    RtlTimeToTimeFields( &t, ret_tf );
+    if (ret_tf->Year == year)
+        before_standard_date = compare_tzdate( ret_tf, &info.StandardDate ) < 0;
+    else
+        before_standard_date = ret_tf->Year < year;
+
+    t.QuadPart = time.QuadPart - (info.Bias + info.StandardBias) * (LONGLONG)600000000;
+    RtlTimeToTimeFields( &t, &std_tf );
+    if (std_tf.Year == year)
+        after_daylight_date = compare_tzdate( &std_tf, &info.DaylightDate ) >= 0;
+    else
+        after_daylight_date = std_tf.Year > year || is_special_dst_date( &info.DaylightDate );
+
+    if (daylight_lt_std( &info ))
+    {
+        if (before_standard_date && after_daylight_date) return TRUE;
+    }
+    else
+    {
+        if (before_standard_date || after_daylight_date) return TRUE;
+    }
+    *ret_tf = std_tf;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	SystemTimeToTzSpecificLocalTimeEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SystemTimeToTzSpecificLocalTimeEx( const DYNAMIC_TIME_ZONE_INFORMATION *info,
+                                                                 const SYSTEMTIME *system,
+                                                                 SYSTEMTIME *local )
+{
+    LARGE_INTEGER time;
+    TIME_FIELDS tf;
+    int year;
+
+    if (!system || !local)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!SystemTimeToFileTime( system, (FILETIME *)&time )) return FALSE;
+    year = system->wYear;
+    if (system->wMonth == 1 && system->wDay == 1) --year;
+
+    if (!system_time_to_local_time_for_year( info, time, year, &tf )) return FALSE;
+
+    if (year != tf.Year && !system_time_to_local_time_for_year( info, time, year + 1, &tf )) return FALSE;
+
+    local->wYear = tf.Year;
+    local->wMonth = tf.Month;
+    local->wDay = tf.Day;
+    local->wHour = tf.Hour;
+    local->wMinute = tf.Minute;
+    local->wSecond = tf.Second;
+    local->wMilliseconds = tf.Milliseconds;
+    local->wDayOfWeek = tf.Weekday;
+    return TRUE;
 }
 
 
