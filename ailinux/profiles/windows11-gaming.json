@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "name": "windows11-gaming",
+  "windows_version": "win11",
+  "graphics": {
+    "dxvk": "3.1.1",
+    "vkd3d-proton": "3.0.1"
+  },
+  "runtimes": {
+    "vc14": "manual-verified",
+    "dotnet48": "optional-per-application"
+  },
+  "policy": {
+    "automatic_system_packages": false,
+    "require_backup": true,
+    "allow_default_wine_prefix": false
+  }
+}

@@ -2331,13 +2331,15 @@ void WINAPI ClosePseudoConsole( HPCON handle )
     TRACE( "%p\n", handle );
 
     if (!pseudo_console) return;
-    if (pseudo_console->signal) CloseHandle( pseudo_console->signal );
+    if (pseudo_console->signal && pseudo_console->signal != INVALID_HANDLE_VALUE)
+        CloseHandle( pseudo_console->signal );
     if (pseudo_console->process)
     {
         WaitForSingleObject( pseudo_console->process, INFINITE );
         CloseHandle( pseudo_console->process );
     }
     if (pseudo_console->reference) CloseHandle( pseudo_console->reference );
+    HeapFree( GetProcessHeap(), 0, pseudo_console );
 }
 
 /******************************************************************************
@@ -2345,7 +2347,19 @@ void WINAPI ClosePseudoConsole( HPCON handle )
  */
 HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
 {
-    FIXME( "%p (%u,%u) stub, faking success\n", handle, size.X, size.Y );
+    struct pseudo_console *pseudo_console = handle;
+    struct wine_pty_resize_signal signal = { WINE_PTY_SIGNAL_RESIZE_WINDOW, size.X, size.Y };
+    DWORD written;
+
+    TRACE( "%p (%u,%u)\n", handle, size.X, size.Y );
+
+    if (size.X < 0 || size.Y < 0) return E_INVALIDARG;
+    if (!pseudo_console || !pseudo_console->signal ||
+        pseudo_console->signal == INVALID_HANDLE_VALUE) return E_INVALIDARG;
+
+    if (!WriteFile( pseudo_console->signal, &signal, sizeof(signal), &written, NULL ))
+        return HRESULT_FROM_WIN32( GetLastError() );
+    if (written != sizeof(signal)) return E_FAIL;
     return S_OK;
 }
 

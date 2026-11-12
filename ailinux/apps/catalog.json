@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "apps": {
+    "notepad": {
+      "exe": "notepad.exe",
+      "kind": "wine-builtin",
+      "display": "Editor"
+    },
+    "regedit": {
+      "exe": "regedit.exe",
+      "kind": "wine-builtin",
+      "display": "Registrierungseditor"
+    },
+    "taskmgr": {
+      "exe": "taskmgr.exe",
+      "kind": "wine-builtin",
+      "display": "Task-Manager"
+    },
+    "explorer": {
+      "exe": "explorer.exe",
+      "kind": "wine-builtin",
+      "display": "Explorer"
+    },
+    "control": {
+      "exe": "control.exe",
+      "kind": "wine-builtin",
+      "display": "Systemsteuerung"
+    },
+    "cmd": {
+      "exe": "cmd.exe",
+      "kind": "wine-builtin",
+      "display": "Eingabeaufforderung"
+    },
+    "winefile": {
+      "exe": "winefile.exe",
+      "kind": "wine-builtin",
+      "display": "Wine-Dateimanager"
+    },
+    "wordpad": {
+      "exe": "write.exe",
+      "kind": "wine-builtin",
+      "display": "WordPad (Wine Write)"
+    },
+    "clock": {
+      "exe": "clock.exe",
+      "kind": "wine-builtin",
+      "display": "Uhr"
+    },
+    "dxdiag": {
+      "exe": "dxdiag.exe",
+      "kind": "wine-builtin",
+      "display": "DirectX-Diagnose"
+    },
+    "msinfo32": {
+      "exe": "msinfo32.exe",
+      "kind": "wine-builtin",
+      "display": "Systeminformationen"
+    },
+    "winver": {
+      "exe": "winver.exe",
+      "kind": "wine-builtin",
+      "display": "Windows-Version"
+    },
+    "powershell7": {
+      "exe": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "kind": "staged-unverified",
+      "display": "Windows PowerShell 7.6.9"
+    },
+    "calculator": {
+      "kind": "unsupported-msix",
+      "display": "Windows-11-Rechner"
+    },
+    "photos": {
+      "kind": "unsupported-msix",
+      "display": "Windows-11-Fotos"
+    },
+    "windows-terminal": {
+      "kind": "unsupported-msix",
+      "display": "Windows Terminal"
+    },
+    "paint": {
+      "kind": "unsupported-msix",
+      "display": "Microsoft Paint (neu)"
+    }
+  }
+}

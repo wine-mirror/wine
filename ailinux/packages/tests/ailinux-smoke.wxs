@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="{A113B749-7D27-4516-987B-9D015ACB69D0}" Name="AILinux Wine MSI Smoke" Language="1033" Version="1.0.0" Manufacturer="AILinux" UpgradeCode="{27D6EB58-EB72-4A17-9175-DA4F11E64560}">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" />
+    <MediaTemplate EmbedCab="yes" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLDIR" Name="AILinuxMSISmoke" />
+      </Directory>
+    </Directory>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="Payload" Guid="{909648A3-E788-4B4E-867F-CB85E5F95EA8}">
+        <File Id="SmokeText" Name="ailinux-msi-smoke.txt" Source="ailinux-msi-smoke.txt" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+    <Feature Id="Complete" Level="1"><ComponentRef Id="Payload" /></Feature>
+  </Product>
+</Wix>
