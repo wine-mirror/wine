@@ -2465,8 +2465,8 @@ static void test_register_device_iface(void)
 static void test_registry_property_a(void)
 {
     static const CHAR bogus[] = "System\\CurrentControlSet\\Enum\\Root\\LEGACY_BOGUS";
+    CHAR buf[64] = "", buf2[MAX_PATH], id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA device = {sizeof(device)};
-    CHAR buf[64] = "";
     DWORD size, type;
     HDEVINFO set;
     BOOL ret;
@@ -2585,7 +2585,22 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID, NULL, (BYTE *)buf, sizeof(buf), NULL);
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
-    ok(!lstrcmpiA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
+    todo_wine ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
+
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+
+    sprintf(buf2, "System\\CurrentControlSet\\Enum\\%s", id);
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, buf2, &key);
+    ok(!res, "Failed to open key, error %lu.\n", res);
+
+    /* Registry key value is also lowercased. */
+    size = sizeof(buf);
+    memset(buf, 0, sizeof(buf));
+    res = RegGetValueA(key, NULL, "ClassGUID", RRF_RT_REG_SZ, NULL, buf, &size);
+    ok(!res, "Failed get key value, error %lu.\n", res);
+    todo_wine ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
+    RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInfo(set, &device);
     ok(ret, "Failed to delete device, error %#lx.\n", GetLastError());
@@ -2660,9 +2675,9 @@ todo_wine {
 
 static void test_registry_property_w(void)
 {
+    WCHAR buf[64] = {0}, buf2[MAX_PATH], id[MAX_DEVICE_ID_LEN];
     WCHAR friendly_name[] = {'B','o','g','u','s',0};
     SP_DEVINFO_DATA device = {sizeof(device)};
-    WCHAR buf[64] = {0};
     DWORD size, type, i;
     HDEVINFO set;
     BOOL ret;
@@ -2785,7 +2800,22 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_CLASSGUID, NULL, (BYTE *)buf, sizeof(buf), NULL);
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
-    ok(!lstrcmpiW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+    todo_wine ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+
+    ret = SetupDiGetDeviceInstanceIdW(set, &device, id, sizeof(id), NULL);
+    ok(ret, "Got unexpected error %#lx.\n", GetLastError());
+
+    swprintf(buf2, ARRAY_SIZE(buf2), L"System\\CurrentControlSet\\Enum\\%s", id);
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, buf2, &key);
+    ok(!res, "Failed to open key, error %lu.\n", res);
+
+    /* Registry key value is also lowercased. */
+    size = sizeof(buf);
+    memset(buf, 0, sizeof(buf));
+    res = RegGetValueW(key, NULL, L"ClassGUID", RRF_RT_REG_SZ, NULL, buf, &size);
+    ok(!res, "Failed get key value, error %lu.\n", res);
+    todo_wine ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+    RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInfo(set, &device);
     ok(ret, "Failed to delete device, error %#lx.\n", GetLastError());
