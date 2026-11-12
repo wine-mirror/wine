@@ -4650,18 +4650,20 @@ static void bitmap_scanline_span_fill(GpBitmap *dst_bitmap, const DWORD *src_row
 
 static GpStatus SOFTWARE_GdipFillPathAntialiased(GpGraphics *graphics, GpBrush *brush, GpPath *path)
 {
-    INT ss_x = 8, ss_y = graphics->smoothing == SmoothingModeAntiAlias8x8 ? 8 : 4;
+    const INT ss_x = 8, ss_y = graphics->smoothing == SmoothingModeAntiAlias8x8 ? 8 : 4;
     struct region_element element = { RegionDataPath };
     struct span_list spans = { 0 };
     REAL offset, left, top, right, bottom;
     GpRectF bounds, device_bounds;
-    INT *coverage = NULL, *row, x, next;
-    DWORD *pixels = NULL;
+    BYTE *coverage, *buf = NULL;
+    DWORD *pixels;
     GpMatrix transform;
     GpStatus stat;
     RECT sample_rect;
     GpRect rect;
     size_t i;
+    /* Difference array to calculate final pixel coverage from the high resolution spans */
+    INT8 *diff;
 
     stat = gdi_transform_acquire(graphics);
     if (stat != Ok)
@@ -4695,13 +4697,18 @@ static GpStatus SOFTWARE_GdipFillPathAntialiased(GpGraphics *graphics, GpBrush *
     rect.Y = top;
     rect.Width = right - left;
     rect.Height = bottom - top;
-    SetRect(&sample_rect, rect.X * ss_x, rect.Y * ss_y, (rect.X + rect.Width) * ss_x, (rect.Y + rect.Height) * ss_y);
-    GdipSetMatrixElements(&transform, ss_x, 0.0, 0.0, ss_y, 0.0, 0.0);
+    SetRect(&sample_rect, 0, 0, rect.Width * ss_x, rect.Height * ss_y);
+    GdipSetMatrixElements(&transform, ss_x, 0.0, 0.0, ss_y, -rect.X * ss_x, -rect.Y * ss_y);
 
-    pixels = calloc(rect.Width * rect.Height, sizeof(*pixels));
-    coverage = calloc(rect.Width * rect.Height, sizeof(*coverage));
-    if (!pixels || !coverage)
+    buf = calloc(rect.Width * rect.Height, sizeof(*pixels) + sizeof(*coverage) + sizeof(*diff));
+    if (!buf)
+    {
         stat = OutOfMemory;
+        goto done;
+    }
+    pixels = (DWORD *)buf;
+    coverage = (BYTE *)(pixels + (rect.Width * rect.Height));
+    diff = (INT8 *)(coverage + (rect.Width * rect.Height));
     if (stat == Ok)
         stat = GdipTransformPath(element.elementdata.path, &transform);
     if (stat == Ok)
@@ -4710,28 +4717,52 @@ static GpStatus SOFTWARE_GdipFillPathAntialiased(GpGraphics *graphics, GpBrush *
         stat = brush_fill_pixels(graphics, brush, pixels, &rect, rect.Width);
     if (stat == Ok)
     {
+        INT x, y, pfx_sum;
+
         for (i = 0; i < spans.length; i++)
         {
-            row = coverage + (spans.spans[i].y / ss_y - rect.Y) * rect.Width;
-            for (x = spans.spans[i].x[0]; x < spans.spans[i].x[1]; x = next)
+            INT span_x0 = spans.spans[i].x[0], span_x1 = spans.spans[i].x[1], pixel_x0, pixel_x1;
+            BYTE *coverage_row;
+
+            pixel_x0 = span_x0 / ss_x;
+            pixel_x1 = (span_x1 - 1) / ss_x;
+            coverage_row = coverage + spans.spans[i].y / ss_y * rect.Width;
+
+            if (pixel_x0 != pixel_x1)
             {
-                next = min((x / ss_x + 1) * ss_x, spans.spans[i].x[1]);
-                row[x / ss_x - rect.X] += next - x;
+                INT8 *diff_row = diff + spans.spans[i].y / ss_y * rect.Width;
+
+                /* Coverage for the left and right-most pixels */
+                coverage_row[pixel_x0] += (pixel_x0 + 1) * ss_x - span_x0;
+                coverage_row[pixel_x1] += span_x1 - pixel_x1 * ss_x;
+                /* Coverage for the remaining pixels between them */
+                diff_row[pixel_x0 + 1]++;
+                diff_row[pixel_x1]--;
             }
+            else
+                coverage_row[pixel_x0] += span_x1 - span_x0;
         }
 
-        for (i = 0; i < rect.Width * rect.Height; i++)
-            pixels[i] = (pixels[i] & 0xffffff) |
-                (((pixels[i] >> 24) * coverage[i] + ss_x * ss_y / 2) / (ss_x * ss_y) << 24);
+        for (y = 0; y < rect.Height; y++)
+        {
+            pfx_sum = 0;
+            for (x = 0; x < rect.Width; x++)
+            {
+                size_t j = y * rect.Width + x;
+
+                /* The prefix sum represents how many supersampled scanlines cover each original pixel */
+                pfx_sum += diff[j];
+                pixels[j] = (pixels[j] & 0xffffff) | (((pixels[j] >> 24) * (coverage[j] + pfx_sum * ss_x) + ss_x * ss_y / 2) / (ss_x * ss_y) << 24);
+            }
+        }
 
         stat = alpha_blend_pixels(graphics, rect.X, rect.Y, (BYTE *)pixels, rect.Width, rect.Height,
             rect.Width * 4, PixelFormat32bppARGB);
     }
 
 done:
+    free(buf);
     free(spans.spans);
-    free(coverage);
-    free(pixels);
     GdipDeletePath(element.elementdata.path);
     gdi_transform_release(graphics);
 
