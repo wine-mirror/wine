@@ -4521,7 +4521,7 @@ void loader_init( CONTEXT *context, void **entry )
     else
     {
 #ifdef _WIN64
-        if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
+        if (NtCurrentTeb()->WowTebOffset && !((ULONG_PTR)*entry >> 32)) init_wow64( context );
 #endif
 #ifdef __arm64ec__
         arm64ec_thread_init();
