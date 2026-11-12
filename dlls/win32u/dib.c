@@ -1544,7 +1544,7 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
 
         map_offset.QuadPart = offset - (offset % system_info.AllocationGranularity);
         map_size = bmp->dib.dsBmih.biSizeImage + (offset - map_offset.QuadPart);
-        if (NtMapViewOfSection( section, GetCurrentProcess(), &mapBits, 0, 0, &map_offset,
+        if (NtMapViewOfSection( section, GetCurrentProcess(), &mapBits, zero_bits, 0, &map_offset,
                                 &map_size, ViewShare, 0, PAGE_READWRITE ))
             goto error;
         bmp->dib.dsBm.bmBits = (char *)mapBits + (offset - map_offset.QuadPart);
