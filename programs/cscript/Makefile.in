@@ -2,6 +2,7 @@ MODULE    = cscript.exe
 IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32
 EXTRADEFS = -DCSCRIPT_BUILD
 PARENTSRC = ../wscript
+ENABLE_ARCHS = $(PE_ARCHS)
 
 EXTRADLLFLAGS = -mconsole -municode
 
