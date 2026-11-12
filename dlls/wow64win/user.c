@@ -3168,7 +3168,7 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
         ret = NtUserGetRawInputDeviceList( devices64, count, sizeof(RAWINPUTDEVICELIST) );
         if (ret == ~0u) return ret;
 
-        for (i = 0; i < *count; ++i)
+        for (i = 0; i < ret; ++i)
         {
             devices32[i].hDevice = (UINT_PTR)devices64[i].hDevice;
             devices32[i].dwType  = devices64[i].dwType;
