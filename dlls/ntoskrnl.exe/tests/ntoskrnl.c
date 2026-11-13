@@ -2051,7 +2051,7 @@ static void CALLBACK devquery_notify_callback(HDEVQUERY devquery, void *user_dat
 
 static void test_pnp_devices(void)
 {
-    static const GUID expect_container_id_guid = {0x12345678, 0x1234, 0x1234, {0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x91, 0x23}};
+    static const GUID expect_container_id_guid = {0x12345678, 0x1234, 0x1234, {0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x91, 0xab}};
     static const char expect_hardware_id[] = "winetest_hardware\0winetest_hardware_1\0";
     static const WCHAR expect_hardware_id_w[] = L"winetest_hardware\0winetest_hardware_1\0";
     static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
@@ -2059,7 +2059,7 @@ static void test_pnp_devices(void)
     static const WCHAR expect_device_location_w[] = L"WineTestDeviceLocation";
     static const WCHAR expect_device_bus_desc_w[] = L"WineTestDevice";
     static const WCHAR expect_compat_id_w[] = L"winetest_compat\0winetest_compat_1\0";
-    static const WCHAR expect_container_id_w[] = L"{12345678-1234-1234-1234-123456789123}";
+    static const WCHAR expect_container_id_w[] = L"{12345678-1234-1234-1234-1234567891aB}";
     static const char foobar[] = "foobar";
     static const char foo[] = "foo";
     static const char bar[] = "bar";
