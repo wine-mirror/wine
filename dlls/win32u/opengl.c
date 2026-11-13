@@ -3385,7 +3385,7 @@ static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
     return query_renderer_string( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute );
 }
 
-static void import_memory( GLuint memory, GLuint64 size, GLenum type, void *handle )
+static GLenum import_memory( GLuint memory, GLuint64 size, GLenum type, void *handle )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     D3DKMT_HANDLE local, mutex, sync;
@@ -3400,27 +3400,27 @@ static void import_memory( GLuint memory, GLuint64 size, GLenum type, void *hand
     case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
         local = d3dkmt_open_resource( PtrToUlong( handle ), NULL, &mutex, &sync );
         break;
-    default: return set_gl_error( GL_INVALID_ENUM );
+    default:
+        return GL_INVALID_ENUM;
     }
     if (mutex) d3dkmt_destroy_mutex( mutex );
     if (sync) d3dkmt_destroy_sync( sync );
+
     fd = d3dkmt_object_get_fd( local );
     d3dkmt_destroy_resource( local );
-    if (fd < 0) return set_gl_error( GL_INVALID_VALUE );
+    if (fd < 0) return GL_INVALID_VALUE;
 
     set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
     funcs->p_glImportMemoryFdEXT( memory, size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
-    if (!(err = funcs->p_glGetError())) return;
-
-    close( fd );
-    set_gl_error( err );
+    if ((err = funcs->p_glGetError())) close( fd );
+    return err;
 }
 
 static void win32u_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum type, void *handle )
 {
     TRACE( "memory %u size %s type %#x handle %p\n", memory, wine_dbgstr_longlong( size ), type, handle );
 
-    if (handle) import_memory( memory, size, type, handle );
+    if (handle) set_gl_error( import_memory( memory, size, type, handle ) );
     else set_gl_error( GL_INVALID_VALUE );
 }
 
@@ -3434,12 +3434,12 @@ static void win32u_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLe
     else if (!(handle = open_shared_resource_from_name( name ))) set_gl_error( GL_INVALID_VALUE );
     else
     {
-        import_memory( memory, size, type, handle );
+        set_gl_error( import_memory( memory, size, type, handle ) );
         NtClose( handle );
     }
 }
 
-static void import_semaphore( GLuint semaphore, GLenum type, void *handle )
+static GLenum import_semaphore( GLuint semaphore, GLenum type, void *handle )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     D3DKMT_HANDLE local;
@@ -3454,25 +3454,25 @@ static void import_semaphore( GLuint semaphore, GLenum type, void *handle )
     case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
         local = d3dkmt_open_sync( PtrToUlong( handle ), NULL );
         break;
-    default: return set_gl_error( GL_INVALID_ENUM );
+    default:
+        return GL_INVALID_ENUM;
     }
+
     fd = d3dkmt_object_get_fd( local );
     d3dkmt_destroy_sync( local );
-    if (fd < 0) return set_gl_error( GL_INVALID_VALUE );
+    if (fd < 0) return GL_INVALID_VALUE;
 
     set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
     funcs->p_glImportSemaphoreFdEXT( semaphore, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
-    if (!(err = funcs->p_glGetError())) return;
-
-    close( fd );
-    set_gl_error( err );
+    if ((err = funcs->p_glGetError())) close( fd );
+    return err;
 }
 
 void win32u_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum type, void *handle )
 {
     TRACE( "semaphore %u type %#x handle %p\n", semaphore, type, handle );
 
-    if (handle) import_semaphore( semaphore, type, handle );
+    if (handle) set_gl_error( import_semaphore( semaphore, type, handle ) );
     else set_gl_error( GL_INVALID_VALUE );
 }
 
@@ -3486,7 +3486,7 @@ void win32u_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum type, const 
     else if (!(handle = open_shared_semaphore_from_name( name ))) set_gl_error( GL_INVALID_VALUE );
     else
     {
-        import_semaphore( semaphore, type, handle );
+        set_gl_error( import_semaphore( semaphore, type, handle ) );
         NtClose( handle );
     }
 }
