@@ -2346,7 +2346,15 @@ static void test_pnp_devices(void)
     ok(size == sizeof(expect_hardware_id), "got size %lu\n", size);
     ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
 
-    /* Using the WCHAR variant because Windows returns a WCHAR for this property even when using SetupDiGetDeviceRegistryPropertyA */
+    /* ASCII version of the function gets a wide character string. */
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_BASE_CONTAINERID,
+            &type, (BYTE *)buffer, sizeof(buffer), &size);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ok(type == REG_SZ, "Got type %lu.\n", type);
+    todo_wine ok(size == sizeof(expect_container_id_w), "Got size %lu.\n", size);
+    todo_wine ok(!memcmp(buffer, expect_container_id_w, size), "Got unexpected container ID.\n");
+
+    /* Same wide string returned by ASCII version. */
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_BASE_CONTAINERID,
             &type, (BYTE *)buffer_w, sizeof(buffer_w), &size);
     ok(ret, "got error %#lx\n", GetLastError());
