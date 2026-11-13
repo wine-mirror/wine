@@ -8,6 +8,7 @@
 static void dump_abstime( const char *prefix, const abstime_t *val );
 static void dump_apc_result( const char *prefix, const union apc_result *val );
 static void dump_async_data( const char *prefix, const struct async_data *val );
+static void dump_fd_desc( const char *prefix, const struct fd_desc *val );
 static void dump_generic_map( const char *prefix, const struct generic_map *val );
 static void dump_hw_input( const char *prefix, const union hw_input *val );
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *val );
@@ -3416,6 +3417,7 @@ static void dump_d3dkmt_object_create_request( const struct d3dkmt_object_create
 {
     fprintf( stderr, " type=%08x", req->type );
     fprintf( stderr, ", fd=%d", req->fd );
+    dump_fd_desc( ", fd_desc=", &req->fd_desc );
     dump_uint64( ", value=", &req->value );
     dump_varargs_bytes( ", runtime=", cur_size );
 }
@@ -3456,6 +3458,7 @@ static void dump_d3dkmt_object_open_reply( const struct d3dkmt_object_open_reply
 {
     fprintf( stderr, " global=%08x", req->global );
     fprintf( stderr, ", handle=%04x", req->handle );
+    dump_fd_desc( ", fd_desc=", &req->fd_desc );
     fprintf( stderr, ", runtime_size=%u", req->runtime_size );
     dump_varargs_bytes( ", runtime=", cur_size );
 }

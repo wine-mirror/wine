@@ -3389,16 +3389,17 @@ static GLenum import_memory( GLuint memory, GLuint64 size, GLenum type, void *ha
 {
     const struct opengl_funcs *funcs = &display_funcs;
     D3DKMT_HANDLE local, mutex, sync;
+    struct fd_desc desc;
     GLenum err;
     int fd;
 
     switch (type)
     {
     case GL_HANDLE_TYPE_OPAQUE_WIN32_EXT:
-        local = d3dkmt_open_resource( 0, handle, &mutex, &sync );
+        local = d3dkmt_open_resource( 0, handle, &desc, &mutex, &sync );
         break;
     case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
-        local = d3dkmt_open_resource( PtrToUlong( handle ), NULL, &mutex, &sync );
+        local = d3dkmt_open_resource( PtrToUlong( handle ), &desc, NULL, &mutex, &sync );
         break;
     default:
         return GL_INVALID_ENUM;
@@ -3443,16 +3444,17 @@ static GLenum import_semaphore( GLuint semaphore, GLenum type, void *handle )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     D3DKMT_HANDLE local;
+    struct fd_desc desc;
     GLenum err;
     int fd;
 
     switch (type)
     {
     case GL_HANDLE_TYPE_OPAQUE_WIN32_EXT:
-        local = d3dkmt_open_sync( 0, handle );
+        local = d3dkmt_open_sync( 0, handle, &desc );
         break;
     case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
-        local = d3dkmt_open_sync( PtrToUlong( handle ), NULL );
+        local = d3dkmt_open_sync( PtrToUlong( handle ), NULL, &desc );
         break;
     default:
         return GL_INVALID_ENUM;
@@ -3716,6 +3718,7 @@ static void free_opengl_swapchain( struct opengl_swapchain *swapchain )
 
 D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 {
+    static const struct fd_desc no_fd;
     struct opengl_swapchain *swapchain;
     D3DKMT_HANDLE resources[3], global;
     const struct opengl_funcs *funcs;
@@ -3741,7 +3744,7 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 
     for (UINT i = 0; i < ARRAY_SIZE(resources); i++)
     {
-        resources[i] = d3dkmt_create_resource( -1, &global );
+        resources[i] = d3dkmt_create_resource( -1, no_fd, &global );
         if (!resources[i]) goto failed;
     }
 

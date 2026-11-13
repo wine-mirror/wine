@@ -42,6 +42,7 @@ struct d3dkmt_object
     void               *runtime;        /* client runtime data */
     data_size_t         runtime_size;   /* size of client runtime data */
     struct fd          *fd;             /* fd object for unix fds */
+    struct fd_desc      fd_desc;        /* host specific fd metadata */
 };
 
 static void d3dkmt_object_dump( struct object *obj, int verbose );
@@ -603,6 +604,7 @@ DECL_HANDLER(d3dkmt_object_create)
         set_fd_user( fd, &d3dkmt_fd_ops, &object->obj );
         object->fd = (struct fd *)grab_object( fd );
     }
+    object->fd_desc = req->fd_desc;
 
     reply->handle = alloc_handle( current->process, object, STANDARD_RIGHTS_ALL, OBJ_INHERIT );
     reply->global = object->global;
@@ -665,6 +667,7 @@ DECL_HANDLER(d3dkmt_object_open)
     {
         reply->handle = handle;
         reply->global = object->global;
+        reply->fd_desc = object->fd_desc;
         reply->runtime_size = object->runtime_size;
         if (runtime_size) set_reply_data( object->runtime, object->runtime_size );
     }

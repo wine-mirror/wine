@@ -178,6 +178,11 @@ static void dump_ratio( const char *prefix, const struct ratio *q )
     fprintf( stderr, "%s{%d:%d}", prefix, q->num, q->den );
 }
 
+static void dump_fd_desc( const char *prefix, const struct fd_desc *desc )
+{
+    fprintf( stderr, "%s{type=%d}", prefix, desc->type );
+}
+
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
 {
     switch(*code)

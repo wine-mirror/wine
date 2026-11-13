@@ -230,12 +230,13 @@ extern NTSTATUS d3dkmt_destroy_mutex( D3DKMT_HANDLE local );
 extern HANDLE open_shared_resource_from_name( const WCHAR *name );
 extern HANDLE open_shared_semaphore_from_name( const WCHAR *name );
 
-extern D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global );
-extern D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local );
+extern D3DKMT_HANDLE d3dkmt_create_resource( int fd, struct fd_desc fd_desc, D3DKMT_HANDLE *global );
+extern D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, struct fd_desc *fd_desc,
+                                           D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local );
 extern NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local );
 
-extern D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global );
-extern D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared );
+extern D3DKMT_HANDLE d3dkmt_create_sync( int fd, struct fd_desc fd_desc, D3DKMT_HANDLE *global );
+extern D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared, struct fd_desc *fd_desc );
 extern NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local );
 
 extern NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HANDLE resources[3],
