@@ -4239,17 +4239,28 @@ enum inproc_sync_type
 
 struct fd_desc
 {
-    unsigned int type;                  /* fd type, see below */
+    int type;                           /* fd type, see below */
+    int format;                         /* DMA-BUF fourcc */
+    union
+    {
+        struct
+        {
+            unsigned __int64 modifier;  /* DRM format modifier */
+            int offset;                 /* plane offset */
+            int stride;                 /* plane stride */
+        } dma_buf;
+    };
 };
 #define FD_NONE       0                 /* object has no fd */
 #define FD_OPAQUE     1                 /* object uses Vulkan OPAQUE_FD */
+#define FD_DMA_BUF    2                 /* object uses Linux DMA-BUF fd */
 
 
 /* Create a global d3dkmt object */
 @REQ(d3dkmt_object_create)
     unsigned int        type;           /* d3dkmt object type */
     int                 fd;             /* host specific fd */
-    struct fd_desc      fd_desc;        /* fd-specific metadata, defined in ntuser.h */
+    struct fd_desc      fd_desc;        /* fd-specific metadata */
     unsigned __int64    value;          /* initial value for keyed mutex */
     VARARG(runtime,bytes);              /* client runtime data */
 @REPLY
@@ -4284,7 +4295,7 @@ struct fd_desc
 @REPLY
     d3dkmt_handle_t     global;         /* global d3dkmt handle */
     obj_handle_t        handle;         /* internal handle of the server object */
-    struct fd_desc      fd_desc;        /* fd-specific metadata, defined in ntuser.h */
+    struct fd_desc      fd_desc;        /* fd-specific metadata */
     data_size_t         runtime_size;   /* size of client runtime data */
     VARARG(runtime,bytes);              /* client runtime data */
 @END

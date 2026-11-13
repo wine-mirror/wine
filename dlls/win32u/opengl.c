@@ -1636,6 +1636,46 @@ static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 }
 
+static D3DKMT_HANDLE egldrv_texture_export( GLuint texture, D3DKMT_HANDLE *global )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+    struct opengl_context *context = NtCurrentTeb()->glReserved2;
+    struct fd_desc desc = { .type = FD_DMA_BUF };
+    D3DKMT_HANDLE local = 0;
+    int fd = -1, planes = 0;
+    EGLImage *image;
+
+    TRACE( "texture %u, global %p\n", texture, global );
+
+    if (!egl->extensions[EGL_KHR_gl_texture_2D_image] || !egl->extensions[EGL_MESA_image_dma_buf_export])
+    {
+        static UINT once;
+        if (!once++) FIXME( "Missing EGL_KHR_gl_texture_2D_image or EGL_MESA_image_dma_buf_export extensions\n" );
+        return 0;
+    }
+
+    if (!(image = funcs->p_eglCreateImage( egl->display, context->host_context, EGL_GL_TEXTURE_2D, (EGLClientBuffer)(uintptr_t)texture, NULL ))) goto failed;
+    if (!funcs->p_eglExportDMABUFImageQueryMESA( egl->display, image, &desc.format, &planes, &desc.dma_buf.modifier ) || planes != 1) goto failed;
+    if (!funcs->p_eglExportDMABUFImageMESA( egl->display, image, &fd, &desc.dma_buf.stride, &desc.dma_buf.offset )) goto failed;
+    TRACE( "Exported texture %u as image %p fd %d stride %d offset %d fourcc %s modifier %#jx\n", texture, image, fd,
+           desc.dma_buf.stride, desc.dma_buf.offset, debugstr_fourcc(desc.format), (intmax_t)desc.dma_buf.modifier );
+
+    local = d3dkmt_create_resource( fd, desc, global );
+    funcs->p_eglDestroyImage( egl->display, image );
+    close( fd );
+
+    TRACE( "Exported texture %u into d3dkmt local/global %#x/%#x\n", texture, local, *global );
+    return local;
+
+failed:
+    if (planes > 1) FIXME( "Unsupported plane count %u\n", planes );
+    WARN( "Failed to export texture %u\n", texture );
+    if (image) funcs->p_eglDestroyImage( egl->display, image );
+    close( fd );
+    return 0;
+}
+
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
 {
     .size = sizeof(struct opengl_drawable),
@@ -1654,6 +1694,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
     .p_context_activate = egldrv_context_activate,
+    .p_texture_export = egldrv_texture_export,
 };
 
 #define USE_GL_EXT(x) [x] = #x,
@@ -2114,6 +2155,11 @@ static BOOL nulldrv_context_activate( struct opengl_context *context, struct ope
     return FALSE;
 }
 
+static D3DKMT_HANDLE nulldrv_texture_export( GLuint texture, D3DKMT_HANDLE *global )
+{
+    return 0;
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_get_proc_address = nulldrv_get_proc_address,
@@ -2125,6 +2171,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
     .p_context_activate = nulldrv_context_activate,
+    .p_texture_export = nulldrv_texture_export,
 };
 
 static int win32u_wglGetPixelFormat( HDC hdc )
@@ -3734,10 +3781,10 @@ static void free_opengl_swapchain( struct opengl_swapchain *swapchain )
 
 D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 {
-    static const struct fd_desc no_fd;
     struct opengl_swapchain *swapchain;
     D3DKMT_HANDLE resources[3], global;
     const struct opengl_funcs *funcs;
+    GLuint texture;
     int format;
     SIZE size;
     WND *win;
@@ -3758,11 +3805,21 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
     if (!(swapchain->drawable = get_window_unused_drawable( hwnd, format, TRUE ))) goto failed;
     size = swapchain->drawable->virtual_size;
 
+    make_thread_context_current( NULL, swapchain->drawable );
+
+    funcs->p_glGenTextures( 1, &texture );
+    funcs->p_glBindTexture( GL_TEXTURE_2D, texture );
+
     for (UINT i = 0; i < ARRAY_SIZE(resources); i++)
     {
-        resources[i] = d3dkmt_create_resource( -1, no_fd, &global );
+        funcs->p_glTexStorage2D( GL_TEXTURE_2D, 1, GL_RGBA8, size.cx, size.cy );
+        resources[i] = driver_funcs->p_texture_export( texture, &global );
         if (!resources[i]) goto failed;
     }
+
+    funcs->p_glDeleteTextures( 1, &texture );
+
+    make_client_context_current();
 
     if (d3dkmt_swapchain_create( toplevel, hwnd, size, resources, &swapchain->local, &swapchain->global )) goto failed;
 

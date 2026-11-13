@@ -1499,6 +1499,11 @@ static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
     return TRUE;
 }
 
+static D3DKMT_HANDLE x11drv_texture_export( GLuint texture, D3DKMT_HANDLE *global )
+{
+    return 0;
+}
+
 static BOOL x11drv_cleanup_thread(void)
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
@@ -1521,6 +1526,7 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
     .p_context_destroy = x11drv_context_destroy,
     .p_context_activate = x11drv_context_activate,
     .p_pbuffer_create = x11drv_pbuffer_create,
+    .p_texture_export = x11drv_texture_export,
     .p_cleanup_thread = x11drv_cleanup_thread,
 };
 
