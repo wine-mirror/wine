@@ -11,6 +11,7 @@
 #include <corecrt_malloc.h>
 #include <corecrt_wstdlib.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #pragma pack(push,8)
 

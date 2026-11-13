@@ -14,6 +14,7 @@ SOURCES = \
 	environ.c \
 	errno.c \
 	except.c \
+	except_riscv64.c \
 	except_arm.c \
 	except_arm64.c \
 	except_arm64ec.c \

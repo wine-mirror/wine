@@ -299,7 +299,9 @@ static inline int is_machine_32bit( unsigned short machine )
 }
 static inline int is_machine_64bit( unsigned short machine )
 {
-    return machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64;
+    return machine == IMAGE_FILE_MACHINE_AMD64 ||
+           machine == IMAGE_FILE_MACHINE_ARM64 ||
+           machine == IMAGE_FILE_MACHINE_RISCV64;
 }
 static inline int is_machine_supported( unsigned short machine )
 {

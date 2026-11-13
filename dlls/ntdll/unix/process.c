@@ -210,6 +210,7 @@ static NTSTATUS get_non_pe_file_info( int fd, struct pe_image_info *info )
         case 40:  info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
         case 62:  info->machine = IMAGE_FILE_MACHINE_AMD64; break;
         case 183: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
+        case 243: info->machine = IMAGE_FILE_MACHINE_RISCV64; break;
         }
         if (header.elf.type != 3 /* ET_DYN */) return STATUS_INVALID_IMAGE_NOT_MZ;
         if (header.elf.class == 2 /* ELFCLASS64 */)
@@ -273,6 +274,11 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
                                  FILE_SHARE_READ | FILE_SHARE_DELETE,
                                  FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     }
+#ifdef __riscv
+    WARN( "RISCV64 get_pe_file_info: path=%s status=%08x unix_name=%s\n",
+          debugstr_us( attr->ObjectName ), status,
+          *unix_name ? *unix_name : "(null)" );
+#endif
     if (status) goto done;
 
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |

@@ -617,6 +617,15 @@ static const char *escape_cstring( const char *str )
     return ret;
 }
 
+/*
+ * Check whether the native platform supports ELF-only Winelib builds
+ * without requiring a PE toolchain.
+ */
+static bool non_pe_supported_platform(void)
+{
+    return archs.count &&
+           get_cpu_from_name( archs.str[0] ) == CPU_RISCV;
+}
 
 /*******************************************************************
  *         is_native_arch_disabled
@@ -4011,6 +4020,10 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filenames( all_libs );
     output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
+
+    if (!make->data_only && !arch && unix_lib_supported &&
+        !non_pe_supported_platform())
+        output_fake_module( make, spec_file );
 }
 
 
@@ -4436,7 +4449,10 @@ static void output_sources( struct makefile *make )
         for (arch = 0; arch < archs.count; arch++)
         {
             if (is_multiarch( arch )) output_module( make, arch );
-            if (make->importlib && (is_multiarch( arch ) || (!arch && !is_native_arch_disabled( make ))))
+            if (make->importlib &&
+                (is_multiarch( arch ) ||
+                 (!non_pe_supported_platform() && !arch &&
+                  !is_native_arch_disabled( make ))))
                 output_import_lib( make, arch );
         }
         if (make->is_exe && !make->is_win16 && unix_lib_supported && strendswith( make->module, ".exe" ))

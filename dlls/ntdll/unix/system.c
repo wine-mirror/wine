@@ -602,7 +602,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         init_xstate_features( &data->XState );
 }
 
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(__riscv)
 
 #if defined(AT_HWCAP)
 static BOOLEAN has_capability( int hwcap, unsigned long hwcap_bit )
@@ -766,11 +766,11 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
     features[PF_FASTFAIL_AVAILABLE]      = TRUE;
     features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 
-#ifdef __arm__
+#if defined(__arm__)
     features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = HAS_FEATURE( 1, HWCAP_VFPv3 );
     features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = HAS_FEATURE( 1, HWCAP_NEON );
     features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = HAS_FEATURE( 1, HWCAP_IDIVT );
-#else
+#elif defined(__aarch64__)
     features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = TRUE;
     features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = TRUE;
     features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = TRUE;
@@ -1775,6 +1775,8 @@ static SYSTEM_CPU_INFORMATION get_cpuinfo(void)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL,
 #elif defined(__x86_64__)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64,
+#elif defined(__riscv) && (__riscv_xlen == 64)
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_UNKNOWN,
 #endif
     };
 

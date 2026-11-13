@@ -331,12 +331,19 @@ static void create_user_shared_data(void)
         return;
     }
     data = MapViewOfFile( handle, FILE_MAP_WRITE, 0, 0, sizeof(*data) );
-    CloseHandle( handle );
+
     if (!data)
     {
-        ERR( "cannot map __wine_user_shared_data\n" );
-        return;
+        DWORD error = GetLastError();
+
+        ERR( "cannot map __wine_user_shared_data: "
+             "GetLastError=%lu (0x%08lx), size=%zu\n",
+             error, error, sizeof(*data) );
     }
+
+    CloseHandle( handle );
+
+    if (!data) return;
 
     version.dwOSVersionInfoSize = sizeof(version);
     RtlGetVersion( &version );

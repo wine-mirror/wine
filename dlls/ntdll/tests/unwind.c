@@ -3726,6 +3726,8 @@ static void test_virtual_unwind_x86(void)
 #define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->EndAddress = (func)->BeginAddress + (len); } while(0)
 #elif defined(__arm__)
 #define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->FunctionLength = len / 2; (func)->Flag = 1; } while(0)
+#elif defined(__riscv) && __riscv_xlen == 64
+#define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->EndAddress = (func)->BeginAddress + (len); } while(0)
 #else
 #define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->FunctionLength = len / 4; (func)->Flag = 1; } while(0)
 #endif

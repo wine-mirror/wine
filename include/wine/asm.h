@@ -302,6 +302,14 @@
                        ".byte 0xff,0x14,0x25\n\t" /* 18: callq *(0x7ffe1000) */ \
                        ".long 0x7ffe1000\n\t" \
                        ".byte 0xc3" )             /* 1f: ret */
+#elif defined __riscv && (__riscv_xlen == 64)
+# define __ASM_SYSCALL_FUNC(id,name) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "li t2, (" #id ")\n\t" \
+                       "1:\tauipc t1, %got_pcrel_hi(" __ASM_NAME("__wine_syscall_dispatcher") ")\n\t" \
+                       "ld t1, %pcrel_lo(1b)(t1)\n\t" \
+                       "ld t1, 0(t1)\n\t" \
+                       "jr t1" )
 #elif defined __arm__
 # define __ASM_SYSCALL_FUNC(id,name,args) \
     __ASM_GLOBAL_FUNC( name, \
@@ -319,6 +327,9 @@
                        "movt r0, :upper16:__wine_syscall_dispatcher\n\t" \
                        "ldr r0, [r0]\n\t" \
                        "bx r0" )
+#elif defined __riscv && (__riscv_xlen == 64)
+# define __ASM_SYSCALL_FUNC(id,name) \
+    /* RISC-V64 syscall entry assembly */
 #endif
 
 #endif  /* __WINE_WINE_ASM_H */

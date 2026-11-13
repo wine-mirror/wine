@@ -2689,6 +2689,9 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
     NTSTATUS status;
     HANDLE handle;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    WARN("RISCV64-LOADER open_dll_file path=%s\n", debugstr_us(nt_name));
+#endif
     if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
 
     InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
@@ -2696,6 +2699,10 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
                               FILE_SHARE_READ | FILE_SHARE_DELETE,
                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
     {
+#if defined(__riscv) && __riscv_xlen == 64
+        WARN("RISCV64-LOADER NtOpenFile path=%s status=%#lx\n",
+             debugstr_us(nt_name), (unsigned long)status);
+#endif
         if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
             status != STATUS_OBJECT_NAME_NOT_FOUND &&
             !NtQueryAttributesFile( &attr, &info ))
@@ -2836,15 +2843,15 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
  *           load_so_dll
  */
 static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
-                             DWORD flags, WINE_MODREF **pwm )
+                             DWORD flags, WINE_MODREF **pwm, BOOL builtin )
 {
-    void *module;
+    void *module = NULL;
     NTSTATUS status;
     WINE_MODREF *wm;
     struct load_so_dll_params params = { *nt_name, &module };
 
     TRACE( "trying %s as so lib\n", debugstr_us(nt_name) );
-    if ((status = WINE_UNIX_CALL( unix_load_so_dll, &params )))
+    if ((status = WINE_UNIX_CALL( builtin ? unix_load_builtin_so_dll : unix_load_so_dll, &params )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
         if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
@@ -3141,6 +3148,9 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    WARN("RISCV64-LOADER builtin name=%s bootstrap=%u\n", debugstr_w(name), is_prefix_bootstrap);
+#endif
     if (contains_path( name )) return status;
 
     if (!is_prefix_bootstrap)
@@ -3158,6 +3168,9 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
         RtlAppendUnicodeToString( new_name, pe_dir );
         RtlAppendUnicodeToString( new_name, L"\\" );
         RtlAppendUnicodeToString( new_name, name );
+#if defined(__riscv) && __riscv_xlen == 64
+        WARN("RISCV64-LOADER builtin build candidate=%s\n", debugstr_us(new_name));
+#endif
         status = open_dll_file( new_name, pwm, mapping, image_info, id );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
 
@@ -3267,14 +3280,24 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     *redirected = FALSE;
     nt_name->Buffer = NULL;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    WARN("RISCV64-LOADER find_dll_file name=%s load_path=%s bootstrap=%u\n",
+         debugstr_w(libname), debugstr_w(load_path), is_prefix_bootstrap);
+#endif
     if (!contains_path( libname ))
     {
         status = find_apiset_dll( libname, &fullname );
+#if defined(__riscv) && __riscv_xlen == 64
+        WARN("RISCV64-LOADER apiset name=%s status=%#lx\n", debugstr_w(libname), (unsigned long)status);
+#endif
         if (status == STATUS_DLL_NOT_FOUND) return status;
 
         if (status)
         {
             status = find_actctx_dll( libname, &fullname );
+#if defined(__riscv) && __riscv_xlen == 64
+            WARN("RISCV64-LOADER actctx name=%s status=%#lx\n", debugstr_w(libname), (unsigned long)status);
+#endif
             if (status == STATUS_SUCCESS) *redirected = TRUE;
         }
 
@@ -3302,6 +3325,9 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     if (RtlDetermineDosPathNameType_U( libname ) == RtlPathTypeRelative)
     {
         status = search_dll_file( load_path, libname, nt_name, pwm, mapping, image_info, id );
+#if defined(__riscv) && __riscv_xlen == 64
+        WARN("RISCV64-LOADER search name=%s status=%#lx\n", debugstr_w(libname), (unsigned long)status);
+#endif
         switch (status)
         {
         case STATUS_NOT_SUPPORTED:
@@ -3310,6 +3336,10 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
             /* fall through */
         case STATUS_DLL_NOT_FOUND:
             status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
+#if defined(__riscv) && __riscv_xlen == 64
+            WARN("RISCV64-LOADER builtin result name=%s status=%#lx\n",
+                 debugstr_w(libname), (unsigned long)status);
+#endif
             break;
         }
     }
@@ -3318,6 +3348,9 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
 
     if (status == STATUS_NOT_SUPPORTED) status = STATUS_INVALID_IMAGE_FORMAT;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    WARN("RISCV64-LOADER find_dll_file final name=%s status=%#lx\n", debugstr_w(libname), (unsigned long)status);
+#endif
     RtlFreeHeap( GetProcessHeap(), 0, fullname );
     if (wow64_old_value) RtlWow64EnableFsRedirectionEx( 1, &wow64_old_value );
     return status;
@@ -3332,12 +3365,13 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
  */
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD flags, WINE_MODREF** pwm, BOOL system )
 {
-    UNICODE_STRING nt_name;
+    UNICODE_STRING nt_name = { 0 };
     struct file_id id;
     HANDLE mapping = 0;
     SECTION_IMAGE_INFORMATION image_info;
     NTSTATUS nts = STATUS_DLL_NOT_FOUND;
     BOOL redirected;
+    BOOL riscv_builtin = FALSE;
     void *prev;
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
@@ -3350,6 +3384,10 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
         nts = find_dll_file( load_path, libname, &nt_name, pwm, &mapping, &image_info, &id,
                              &redirected, FALSE );
         system = FALSE;
+#if defined(__riscv) && __riscv_xlen == 64
+        WARN("RISCV64-LOADER load_dll lookup name=%s status=%#lx nt_name=%s\n",
+             debugstr_w(libname), (unsigned long)nts, debugstr_us(&nt_name));
+#endif
     }
 
     if (*pwm)  /* found already loaded module */
@@ -3363,6 +3401,18 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
         return STATUS_SUCCESS;
     }
 
+#if defined(__riscv) && __riscv_xlen == 64
+    if (nts == STATUS_DLL_NOT_FOUND && !contains_path( libname ) && __wine_unixlib_handle)
+    {
+        RtlFreeUnicodeString( &nt_name );
+        nt_name.Buffer = NULL;
+        build_sysdir_nt_name( libname, &nt_name );
+        if (!nt_name.Buffer) { nts = STATUS_NO_MEMORY; goto done; }
+        nts = STATUS_INVALID_IMAGE_NOT_MZ;
+        riscv_builtin = TRUE;
+        TRACE( "RISCV64-WINELIB ELF fallback for %s\n", debugstr_w(libname) );
+    }
+#endif
     if (nts && nts != STATUS_INVALID_IMAGE_NOT_MZ) goto done;
 
     prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
@@ -3371,7 +3421,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
     switch (nts)
     {
     case STATUS_INVALID_IMAGE_NOT_MZ:  /* not in PE format, maybe it's a .so file */
-        if (__wine_unixlib_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm );
+        if (__wine_unixlib_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm, riscv_builtin );
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */
@@ -3875,6 +3925,12 @@ void* WINAPI LdrResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIP
         RtlInitAnsiString(&fnc, (char*)iibn->Name);
         nts = LdrGetProcedureAddress(*phmod, &fnc, 0, (void**)&fp);
     }
+#ifdef __riscv
+    WARN( "RISCV64 delay import %s!%s module=%p image=%p target=%p status=%08lx thunk=%p\n",
+          name, IMAGE_SNAP_BY_ORDINAL(pINT[id].u1.Ordinal) ? "(ordinal)" :
+          (const char *)((const IMAGE_IMPORT_BY_NAME *)get_rva(base, pINT[id].u1.AddressOfData))->Name,
+          *phmod, base, nts ? NULL : fp, nts, addr );
+#endif
     if (!nts)
     {
         pIAT[id].u1.Function = (ULONG_PTR)fp;

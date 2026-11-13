@@ -16,7 +16,7 @@ AC_PREREQ([2.69d],[AC_CONFIG_AUX_DIR(tools)],
 
 dnl **** Command-line arguments ****
 
-AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64,arm64ec,none}],[enable multiple architectures for PE compilation]))
+AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64,arm64ec,riscv64,none}],[enable multiple architectures for PE compilation]))
 AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--disable-tests],[do not build the regression tests]))
@@ -166,6 +166,7 @@ case "$host_cpu" in
   arm*)            HOST_ARCH=arm ;;
   i[[3456789]]86*) HOST_ARCH=i386 ;;
   x86_64)          HOST_ARCH=x86_64 ;;
+  riscv64)         HOST_ARCH=riscv64 ;;
 esac
 m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,x86_64],
                                 [m4_foreach([var],[CC,CXX,CFLAGS,CXXFLAGS,EXTRACFLAGS,EXTRACXXFLAGS,LDFLAGS,DEBUG,TARGET,STRIP,DELAYLOADFLAG],[,cpu[_]var])]))
@@ -382,7 +383,7 @@ AS_VAR_SET_IF([enable_archs],
      for arch
      do
          case $arch in
-           i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
+           i386|x86_64|arm|aarch64|arm64ec|riscv64) cross_archs="$cross_archs $arch" ;;
            no|none) PE_ARCHS=none ;;
            *) AC_MSG_ERROR([Unknown cross-compilation architecture '$arch']) ;;
          esac
@@ -430,32 +431,41 @@ do
       arm)  mingw_cpu=armv7 ;;
       *)    mingw_cpu=$wine_arch ;;
     esac
-    case "x$with_mingw" in
-      xclang|x*/clang) AS_VAR_SET(${wine_arch}_CC,$with_mingw) ;;
-      xllvm-mingw)     AS_VAR_SET(${wine_arch}_CC,${mingw_cpu}-w64-mingw32-clang) ;;
+    case $wine_arch in
+      riscv64)
+        dnl RISC-V POC: use the native compiler and ABI.
+        AC_CHECK_PROGS(riscv64_CC,[gcc],[false])
+        ;;
+      *)
+        case "x$with_mingw" in
+          xclang|x*/clang) AS_VAR_SET(${wine_arch}_CC,$with_mingw) ;;
+          xllvm-mingw)     AS_VAR_SET(${wine_arch}_CC,${mingw_cpu}-w64-mingw32-clang) ;;
+        esac
+        AS_VAR_IF([${wine_arch}_CC],[],
+            [case $wine_arch in
+              aarch64)
+                AC_CHECK_PROGS(aarch64_CC,[aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang],[false])
+                ;;
+              arm64ec)
+                AC_CHECK_PROGS(arm64ec_CC,[arm64ec-w64-mingw32-clang arm64ec-w64-mingw32-gcc clang],[false])
+                ;;
+              arm)
+                AC_CHECK_PROGS(arm_CC,[armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang],[false])
+                ;;
+              i386)
+                ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[i686,i586,i486,i386],[cpu-w64-mingw32-cc ]))"
+                AC_CHECK_PROGS(i386_CC,[$ac_prefix_list clang],[false])
+                ;;
+              x86_64)
+                ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[x86_64,amd64],[cpu-w64-mingw32-cc ]))"
+                AC_CHECK_PROGS(x86_64_CC,[$ac_prefix_list clang],[false])
+                ;;
+             esac
+             wine_try_msvc=yes],
+            [wine_try_msvc=no])
+        ;;
     esac
-    AS_VAR_IF([${wine_arch}_CC],[],
-        [case $wine_arch in
-          aarch64)
-            AC_CHECK_PROGS(aarch64_CC,[aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang],[false])
-            ;;
-          arm64ec)
-            AC_CHECK_PROGS(arm64ec_CC,[arm64ec-w64-mingw32-clang arm64ec-w64-mingw32-gcc clang],[false])
-            ;;
-          arm)
-            AC_CHECK_PROGS(arm_CC,[armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang],[false])
-            ;;
-          i386)
-            ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[i686,i586,i486,i386],[cpu-w64-mingw32-cc ]))"
-            AC_CHECK_PROGS(i386_CC,[$ac_prefix_list clang],[false])
-            ;;
-          x86_64)
-            ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[x86_64,amd64],[cpu-w64-mingw32-cc ]))"
-            AC_CHECK_PROGS(x86_64_CC,[$ac_prefix_list clang],[false])
-            ;;
-         esac
-         wine_try_msvc=yes],
-        [wine_try_msvc=no])
+    wine_try_msvc=yes
 
     CPPFLAGS=""
     AS_VAR_SET_IF([${wine_arch}_CFLAGS],[],[AS_VAR_SET([${wine_arch}_CFLAGS],[${CROSSCFLAGS:-"-g -O2"}])])
@@ -483,9 +493,28 @@ do
         shift
     done
 
+    if test "$wine_arch" = riscv64
+    then
+        dnl Native RISC-V GCC has no MinGW target triple.  Use a
+        dnl Wine-internal target name for the native RV64 POC.
+        target=riscv64
+    fi
+
     dnl Check if cross compiler supports -target argument
-    target_strip=${target:-llvm}-strip
-    if test "$wine_try_msvc" = yes -o -z "$target"
+    if test "$wine_arch" = riscv64
+    then
+        dnl Native RV64 GCC is not a MinGW/LLVM target compiler.
+        target_strip=strip
+        llvm_extra_cflags=""
+        llvm_cflags=""
+        llvm_extra_ldflags=""
+    else
+        target_strip=${target:-llvm}-strip
+    fi
+    if test "$wine_arch" = riscv64
+    then
+        :
+    elif test "$wine_try_msvc" = yes -o -z "$target"
     then
         case $wine_arch in
           arm)  llvm_target="$mingw_cpu-windows-gnu"
@@ -548,15 +577,21 @@ Please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw.])
     esac
     WINE_NO_PE_ERROR([test "x$res" = xno],[The $wine_arch PE compiler doesn't support C99.])
 
+    dnl RISC-V64 does not yet have Windows SEH assembler support.
+    dnl Its exception handling will initially use the native RISC-V
+    dnl signal and unwind implementation.
     AS_VAR_IF([wine_arch],[i386],[],
-              [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
-               AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
-                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
-                                     [AS_VAR_SET([wine_cv_seh_support],[yes])],[AS_VAR_SET([wine_cv_seh_support],[no])]))
-               AS_VAR_COPY([res],[wine_cv_seh_support])
-               AS_VAR_POPDEF([wine_cv_seh_support])
-               WINE_NO_PE_ERROR([test "x$res" != xyes],
-                                [The $wine_arch PE compiler doesn't support SEH directives.])])
+        [AS_VAR_IF([wine_arch],[riscv64],[],
+            [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
+             AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
+                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
+                                   [AS_VAR_SET([wine_cv_seh_support],[yes])],
+                                   [AS_VAR_SET([wine_cv_seh_support],[no])]))
+             AS_VAR_COPY([res],[wine_cv_seh_support])
+             AS_VAR_POPDEF([wine_cv_seh_support])
+             WINE_NO_PE_ERROR([test "x$res" != xyes],
+                              [The $wine_arch PE compiler doesn't support SEH directives.])])
+        ])
 
     AS_VAR_IF([wine_arch],[$extra_arch],[],[AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])])
 
@@ -710,6 +745,18 @@ dnl **** Check for some libraries ****
 
 dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt,[AC_SUBST(I386_LIBS, "-li386")])
+
+dnl Check for libatomic on RISC-V64.
+ATOMIC_LIBS=""
+case $host_cpu in
+    riscv64*)
+        AC_CHECK_LIB([atomic], [__atomic_compare_exchange_16],
+                     [ATOMIC_LIBS="-latomic"],
+                     [AC_MSG_ERROR([RISC-V64 requires libatomic with __atomic_compare_exchange_16])])
+        LDFLAGS="$LDFLAGS $ATOMIC_LIBS"
+        ;;
+esac
+AC_SUBST([ATOMIC_LIBS])
 
 AC_SUBST(OPENGL_LIBS,"")
 
@@ -1090,11 +1137,13 @@ case $host_os in
             [
                 case $HOST_ARCH in
                   aarch64)
-                    dnl AArch64 kernels may be limited to 39 bits of address
-                    dnl space; limit the text section load address to that.
+                    dnl AArch64 kernels may be limited to 39 bits of address space.
                     AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d000000"]) ;;
+                  riscv|riscv64)
+                    dnl Use a low fixed address compatible with RISC-V Sv39.
+                    AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x200100000"]) ;;
                   *)
-                    AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d00000000"]) ;;
+                    AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x200100000"]) ;;
                 esac
                 WINE_TRY_CFLAGS([-Wl,--no-rosegment],[AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -Wl,--no-rosegment"])])]) ;;
         esac
@@ -2009,25 +2058,32 @@ then
     WINE_TRY_CFLAGS([-fno-builtin],[MSVCRTFLAGS="$MSVCRTFLAGS -fno-builtin"])
     WINE_TRY_CFLAGS([-fshort-wchar],[MSVCRTFLAGS="$MSVCRTFLAGS -fshort-wchar"])
     WINE_TRY_CFLAGS([-Wno-format],[MSVCRTFLAGS="$MSVCRTFLAGS -Wno-format"])
+
     if test "$HOST_ARCH" = i386
     then
       dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
       WINE_TRY_CFLAGS([-fno-omit-frame-pointer],[MSVCRTFLAGS="$MSVCRTFLAGS -fno-omit-frame-pointer"])
     else
-      dnl Default to ms_abi on 64-bit
-      AC_CACHE_CHECK([for working -mabi=ms], ac_cv_mabi_ms,
-             [CFLAGS="$CFLAGS -mabi=ms"
-              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
+      dnl Default to ms_abi on 64-bit.
+      dnl RISC-V has no Microsoft PE ABI, so the RV64 POC uses the
+      dnl native ABI instead.
+      if test "$HOST_ARCH" = riscv64
+      then
+        :
+      else
+        AC_CACHE_CHECK([for working -mabi=ms], ac_cv_mabi_ms,
+          [CFLAGS="$CFLAGS -mabi=ms"
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
 void a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }]])],
-                 [ac_cv_mabi_ms=yes],[ac_cv_mabi_ms=no])
-              CFLAGS=$saved_CFLAGS])
-      AS_VAR_IF([ac_cv_mabi_ms],[yes],
-                [MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms"],
-                [test -n "$PE_ARCHS" || AC_MSG_ERROR([The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64.])
-                 DLLEXT=""])
+             [ac_cv_mabi_ms=yes],[ac_cv_mabi_ms=no])
+           CFLAGS=$saved_CFLAGS])
+        AS_VAR_IF([ac_cv_mabi_ms],[yes],
+          [MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms"],
+          [test -n "$PE_ARCHS" || AC_MSG_ERROR([The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64.])
+           DLLEXT=""])
+      fi
     fi
   fi
-
   CFLAGS=$saved_CFLAGS
 
   dnl Enable -Werror

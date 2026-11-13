@@ -27,6 +27,7 @@
  */
 
 #include <stdarg.h>
+#include <setjmp.h>
 #include "excpt.h"
 #undef USE_COMPILER_EXCEPTIONS
 #undef GetExceptionInformation
@@ -238,6 +239,74 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "ldp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
                    "ldp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
                    "mov x0, x1\n\t"                /* retval */
+                   "ret" )
+
+#elif defined(__riscv) && __riscv_xlen == 64
+
+__ASM_GLOBAL_FUNC( __wine_setjmpex,
+                   "sd a1,   0(a0)\n\t"     /* jmp_buf->Frame */
+                   "sd s0,   8(a0)\n\t"
+                   "sd s1,  16(a0)\n\t"
+                   "sd s2,  24(a0)\n\t"
+                   "sd s3,  32(a0)\n\t"
+                   "sd s4,  40(a0)\n\t"
+                   "sd s5,  48(a0)\n\t"
+                   "sd s6,  56(a0)\n\t"
+                   "sd s7,  64(a0)\n\t"
+                   "sd s8,  72(a0)\n\t"
+                   "sd s9,  80(a0)\n\t"
+                   "sd s10, 88(a0)\n\t"
+                   "sd s11, 96(a0)\n\t"
+                   "sd sp, 104(a0)\n\t"
+                   "sd ra, 112(a0)\n\t"
+                   "fsd fs0,  120(a0)\n\t"
+                   "fsd fs1,  128(a0)\n\t"
+                   "fsd fs2,  136(a0)\n\t"
+                   "fsd fs3,  144(a0)\n\t"
+                   "fsd fs4,  152(a0)\n\t"
+                   "fsd fs5,  160(a0)\n\t"
+                   "fsd fs6,  168(a0)\n\t"
+                   "fsd fs7,  176(a0)\n\t"
+                   "fsd fs8,  184(a0)\n\t"
+                   "fsd fs9,  192(a0)\n\t"
+                   "fsd fs10, 200(a0)\n\t"
+                   "fsd fs11, 208(a0)\n\t"
+                   "frcsr t0\n\t"
+                   "sd t0, 216(a0)\n\t"
+                   "li a0, 0\n\t"
+                   "ret" )
+
+__ASM_GLOBAL_FUNC( __wine_longjmp,
+                   "mv t0, a0\n\t"          /* Preserve jmp_buf pointer */
+                   "ld s0,   8(t0)\n\t"
+                   "ld s1,  16(t0)\n\t"
+                   "ld s2,  24(t0)\n\t"
+                   "ld s3,  32(t0)\n\t"
+                   "ld s4,  40(t0)\n\t"
+                   "ld s5,  48(t0)\n\t"
+                   "ld s6,  56(t0)\n\t"
+                   "ld s7,  64(t0)\n\t"
+                   "ld s8,  72(t0)\n\t"
+                   "ld s9,  80(t0)\n\t"
+                   "ld s10, 88(t0)\n\t"
+                   "ld s11, 96(t0)\n\t"
+                   "fld fs0,  120(t0)\n\t"
+                   "fld fs1,  128(t0)\n\t"
+                   "fld fs2,  136(t0)\n\t"
+                   "fld fs3,  144(t0)\n\t"
+                   "fld fs4,  152(t0)\n\t"
+                   "fld fs5,  160(t0)\n\t"
+                   "fld fs6,  168(t0)\n\t"
+                   "fld fs7,  176(t0)\n\t"
+                   "fld fs8,  184(t0)\n\t"
+                   "fld fs9,  192(t0)\n\t"
+                   "fld fs10, 200(t0)\n\t"
+                   "fld fs11, 208(t0)\n\t"
+                   "ld t1, 216(t0)\n\t"
+                   "fscsr t1\n\t"
+                   "ld ra, 112(t0)\n\t"
+                   "ld sp, 104(t0)\n\t"
+                   "mv a0, a1\n\t"          /* Return value */
                    "ret" )
 
 #else
