@@ -6389,6 +6389,87 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformation( TIME_ZONE_INFORMATION *in
 }
 
 
+struct tzinfo_for_year_cache_entry
+{
+    WCHAR key_name[128];
+    BOOLEAN dlt_disabled;
+    unsigned int year;
+    TIME_ZONE_INFORMATION info;
+};
+
+static struct tzinfo_for_year_cache_entry tzinfo_for_year_cache[4];
+
+static BOOL dynamic_tzinfo_key_matches( struct tzinfo_for_year_cache_entry *entry,
+                                        const DYNAMIC_TIME_ZONE_INFORMATION *dynamic, unsigned int year )
+{
+    if (!entry->dlt_disabled != !dynamic->DynamicDaylightTimeDisabled) return FALSE;
+    if (entry->year != year) return FALSE;
+    return !wcscmp( entry->key_name, dynamic->TimeZoneKeyName );
+}
+
+
+static BOOL get_cached_tzinfo_for_year( USHORT year, const DYNAMIC_TIME_ZONE_INFORMATION *dynamic,
+                                        TIME_ZONE_INFORMATION *info)
+{
+    static ULONGLONG last_checked;
+    struct tzinfo_for_year_cache_entry tmp;
+    unsigned int i;
+
+    if (!year) return FALSE;
+
+    RtlEnterCriticalSection( &tzname_section );
+    if (GetTickCount64() - last_checked >= 5000)
+    {
+        last_checked = GetTickCount64();
+        for (i = 0; i < ARRAY_SIZE(tzinfo_for_year_cache); ++i) tzinfo_for_year_cache[i].year = 0;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tzinfo_for_year_cache); ++i)
+    {
+        if (!dynamic_tzinfo_key_matches( &tzinfo_for_year_cache[i], dynamic, year )) continue;
+        *info = tzinfo_for_year_cache[i].info;
+        if (i)
+        {
+            tmp = tzinfo_for_year_cache[i];
+            memmove( &tzinfo_for_year_cache[1], &tzinfo_for_year_cache[0],
+                     sizeof(*tzinfo_for_year_cache) * i );
+            tzinfo_for_year_cache[0] = tmp;
+        }
+        break;
+    }
+    RtlLeaveCriticalSection( &tzname_section );
+    return i < ARRAY_SIZE(tzinfo_for_year_cache);
+}
+
+
+static void cache_tzinfo_for_year( USHORT year, const DYNAMIC_TIME_ZONE_INFORMATION *dynamic,
+                                        TIME_ZONE_INFORMATION *info)
+{
+    unsigned int i;
+
+    RtlEnterCriticalSection( &tzname_section );
+    for (i = 0; i < ARRAY_SIZE(tzinfo_for_year_cache); ++i)
+    {
+        if (dynamic_tzinfo_key_matches( &tzinfo_for_year_cache[i], dynamic, year ))
+        {
+            tzinfo_for_year_cache[i].info = *info;
+            break;
+        }
+    }
+
+    if (i == ARRAY_SIZE(tzinfo_for_year_cache))
+    {
+        memmove( &tzinfo_for_year_cache[1], &tzinfo_for_year_cache[0],
+                 sizeof(*tzinfo_for_year_cache) * (ARRAY_SIZE(tzinfo_for_year_cache) - 1) );
+        wcscpy( tzinfo_for_year_cache[0].key_name, dynamic->TimeZoneKeyName );
+        tzinfo_for_year_cache[0].year = year;
+        tzinfo_for_year_cache[0].dlt_disabled = dynamic->DynamicDaylightTimeDisabled;
+        tzinfo_for_year_cache[0].info = *info;
+    }
+    RtlLeaveCriticalSection( &tzname_section );
+}
+
+
 /***********************************************************************
  *	GetTimeZoneInformationForYear   (kernelbase.@)
  */
@@ -6417,6 +6498,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformationForYear( USHORT year,
         dynamic = &local_info;
     }
 
+    if (get_cached_tzinfo_for_year( year, dynamic, info )) return TRUE;
+
     if ((ret = RegOpenKeyExW( tz_key, dynamic->TimeZoneKeyName, 0, KEY_ALL_ACCESS, &key ))) goto done;
     if (RegLoadMUIStringW( key, L"MUI_Std", info->StandardName,
                            sizeof(info->StandardName), NULL, 0, system_dir ))
@@ -6438,13 +6521,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformationForYear( USHORT year,
         !RegOpenKeyExW( key, L"Dynamic DST", 0, KEY_ALL_ACCESS, &dst_key ))
     {
         WCHAR yearW[16];
-        DWORD edge_year;
+        DWORD use_year;
 
-        count = sizeof(edge_year);
-        if ((!RegQueryValueExW( dst_key, L"LastEntry", NULL, NULL, (BYTE *)&edge_year, &count ) && year > edge_year)
-            || (!RegQueryValueExW( dst_key, L"FirstEntry", NULL, NULL, (BYTE *)&edge_year, &count ) && year < edge_year))
-            year = edge_year;
-        swprintf( yearW, ARRAY_SIZE(yearW), L"%u", year );
+        count = sizeof(use_year);
+        if ((RegQueryValueExW( dst_key, L"LastEntry", NULL, NULL, (BYTE *)&use_year, &count ) || year < use_year)
+            && (RegQueryValueExW( dst_key, L"FirstEntry", NULL, NULL, (BYTE *)&use_year, &count ) || year > use_year))
+            use_year = year;
+
+        swprintf( yearW, ARRAY_SIZE(yearW), L"%u", use_year );
         count = sizeof(data);
         ret = RegQueryValueExW( dst_key, yearW, NULL, NULL, (BYTE *)&data, &count );
         RegCloseKey( dst_key );
@@ -6462,6 +6546,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformationForYear( USHORT year,
         info->DaylightBias = data.dlt_bias;
         info->StandardDate = data.std_date;
         info->DaylightDate = data.dlt_date;
+        cache_tzinfo_for_year( year, dynamic, info );
     }
 
 done:
