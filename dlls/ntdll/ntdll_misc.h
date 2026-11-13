@@ -99,7 +99,6 @@ extern const WCHAR windows_dir[];
 extern void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *);
 
 extern struct _KUSER_SHARED_DATA *user_shared_data;
-extern struct _XSTATE_CONFIGURATION *user_xstate_config;
 
 #ifdef _WIN64
 static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
