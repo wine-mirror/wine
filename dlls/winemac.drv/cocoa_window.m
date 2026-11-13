@@ -174,6 +174,24 @@ static inline NSUInteger adjusted_modifiers_for_settings(NSUInteger modifiers)
     return new_modifiers;
 }
 
+static void update_key_repeat(void)
+{
+    static NSTimeInterval last_delay = -1, last_interval = -1;
+    NSTimeInterval delay = [NSEvent keyRepeatDelay];
+    NSTimeInterval interval = [NSEvent keyRepeatInterval];
+    int spi_delay, spi_speed;
+
+    if (delay == last_delay && interval == last_interval) return;
+    last_delay = delay;
+    last_interval = interval;
+    spi_delay = MIN(3, MAX(0, delay * 4 - 0.5));
+    spi_speed = MIN(31, MAX(0, 0.4 / interval - 0.5));
+
+    NtUserSystemParametersInfo(SPI_SETKEYBOARDDELAY, spi_delay, NULL, 0);
+    NtUserSystemParametersInfo(SPI_SETKEYBOARDSPEED, spi_speed, NULL, 0);
+    NtUserCallOneParam(delay > 0, NtUserCallOneParam_SetKeyboardAutoRepeat);
+}
+
 static inline BOOL stage_manager_enabled(void)
 {
     /* There is no documented way to determine if Stage Manager is enabled,
@@ -1959,6 +1977,8 @@ static inline BOOL stage_manager_enabled(void)
         CGEventRef cgevent;
         WineApplicationController* controller = [WineApplicationController sharedController];
 
+        if (pressed) update_key_repeat();
+
         event = macdrv_create_event(pressed ? KEY_PRESS : KEY_RELEASE, self);
         event->key.keycode   = keyCode;
         event->key.modifiers = modifiers;
@@ -2533,15 +2553,8 @@ static inline BOOL stage_manager_enabled(void)
      */
     - (void) keyDown:(NSEvent *)theEvent
     {
-        if ([theEvent isARepeat])
-        {
-            if (!allowKeyRepeats)
-                return;
-        }
-        else
-            allowKeyRepeats = YES;
-
-        [self postKeyEvent:theEvent];
+        if (![theEvent isARepeat])
+            [self postKeyEvent:theEvent];
     }
 
     - (void) flagsChanged:(NSEvent *)theEvent
@@ -2578,9 +2591,6 @@ static inline BOOL stage_manager_enabled(void)
             if (changed & modifiers[i].mask)
             {
                 BOOL pressed = (modifierFlags & modifiers[i].mask) != 0;
-
-                if (pressed)
-                    allowKeyRepeats = NO;
 
                 if (i == last_changed)
                     lastModifierFlags = modifierFlags;
