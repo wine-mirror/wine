@@ -66,10 +66,9 @@ static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
-static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
-static XSTATE_CONFIGURATION xstate_config = {
-    .EnabledFeatures = XSTATE_MASK_AVX /* store full xstate before the config is fully initialized */
-};
+/* store full xstate before the config is fully initialized */
+static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX] = { [PF_AVX_INSTRUCTIONS_AVAILABLE] = TRUE };
+static XSTATE_CONFIGURATION xstate_config;
 
 static BYTE KiUserExceptionDispatcher_orig[16]; /* to detect patching */
 extern void KiUserExceptionDispatcher_thunk(void) asm("EXP+#KiUserExceptionDispatcher");
@@ -763,7 +762,7 @@ NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) || context_ex->XState.Length > sizeof(*xstate))
             return STATUS_INVALID_PARAMETER;
 
-        xstate->Mask &= XSTATE_MASK_AVX & user_xstate_config->EnabledFeatures;
+        xstate->Mask &= XSTATE_MASK_AVX & RtlGetEnabledExtendedFeatures( XSTATE_MASK_AVX );
         xstate->CompactionMask = 0;
         if ((xstate->Mask & XSTATE_MASK_AVX) && context_ex->XState.Length < sizeof(*xstate))
             return STATUS_BUFFER_OVERFLOW;
@@ -1321,7 +1320,7 @@ static void init_xcontext( struct xcontext *ctx, ARM64_NT_CONTEXT *arm_ctx )
     ctx->c_ex.All.Offset = ctx->c_ex.Legacy.Offset;
     ctx->c_ex.All.Length = sizeof(CONTEXT) + ctx->c_ex.XState.Offset + ctx->c_ex.XState.Length;
 
-    xs->Mask = XSTATE_MASK_AVX & xstate_config.EnabledFeatures;
+    xs->Mask = XSTATE_MASK_AVX & RtlGetEnabledExtendedFeatures( XSTATE_MASK_AVX );
     xs->CompactionMask = 0;
     memset( xs->Reserved, 0, sizeof(xs->Reserved) );
 
@@ -1912,7 +1911,7 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
 {
     if (!emulated_processor_features[PF_AVX_INSTRUCTIONS_AVAILABLE]) return 0;
-    return user_xstate_config->EnabledFeatures & feature_mask;
+    return user_shared_data->XState.EnabledFeatures & feature_mask;
 }
 
 
