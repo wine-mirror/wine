@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "ntstatus.h"
 /* Define WIN32_NO_STATUS so MSVC does not give us duplicate macro
@@ -7591,6 +7592,135 @@ static void test_find_file(void)
     pNtClose(handle);
 }
 
+static void test_root_directory(void)
+{
+    WCHAR buffer[512];
+    FILE_RENAME_INFORMATION *rename_info = (void *)buffer;
+    WCHAR link_name[40], temp_path[MAX_PATH];
+    HANDLE file, symlink, temp_src;
+    UNICODE_STRING string, target;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS ret;
+
+    static const struct
+    {
+        const WCHAR *root, *name;
+        NTSTATUS status, rename_status;
+        bool dir_obj;
+    }
+    tests[] =
+    {
+        {L"\\??\\C:\\windows\\", L"\\system32", STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:\\windows\\", L"system32",   STATUS_SUCCESS,           STATUS_OBJECT_NAME_COLLISION},
+        {L"\\??\\C:\\windows\\", L"",           STATUS_SUCCESS,           STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:\\windows", L"\\system32",   STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:\\windows", L"system32",     STATUS_SUCCESS,           STATUS_OBJECT_NAME_COLLISION},
+        {L"\\??\\C:\\", L"\\windows",           STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:\\", L"windows",             STATUS_SUCCESS,           STATUS_OBJECT_NAME_COLLISION},
+        {L"\\??\\C:", L"\\windows",             STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:", L"windows",               STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:", L"\\",                    STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??\\C:", L"",                      STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\??", L"C:",                        STATUS_SUCCESS,           STATUS_OBJECT_TYPE_MISMATCH, true},
+        {L"\\??", L"C:\\",                      STATUS_SUCCESS,           STATUS_OBJECT_TYPE_MISMATCH, true},
+        {L"\\??", L"C:\\windows",               STATUS_SUCCESS,           STATUS_OBJECT_TYPE_MISMATCH, true},
+        /* ?? is apparently special and can't be used here, but GLOBAL?? is equivalent */
+        {L"\\", L"GLOBAL??\\C:\\windows",       STATUS_SUCCESS,           STATUS_OBJECT_TYPE_MISMATCH, true},
+        {L"\\SystemRoot", L"\\system32",        STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER},
+        {L"\\SystemRoot", L"system32",          STATUS_SUCCESS,           STATUS_OBJECT_NAME_COLLISION},
+    };
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context( "root %s, name %s", debugstr_w(tests[i].root), debugstr_w(tests[i].name) );
+
+        InitializeObjectAttributes( &attr, &string, 0, 0, NULL );
+        RtlInitUnicodeString( &string, tests[i].root );
+        if (tests[i].dir_obj)
+        {
+            ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+            ok( ret == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", ret );
+            ret = NtOpenDirectoryObject( &file, DIRECTORY_TRAVERSE, &attr );
+            ok( !ret, "got %#lx\n", ret );
+        }
+        else
+        {
+            ret = NtOpenDirectoryObject( &file, DIRECTORY_TRAVERSE, &attr );
+            todo_wine_if (i < 5 || i > 14) ok( ret == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", ret );
+            ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+            todo_wine_if (i > 14) ok( !ret, "got %#lx\n", ret );
+        }
+
+        if (ret)
+        {
+            winetest_pop_context();
+            return;
+        }
+
+        attr.RootDirectory = file;
+        RtlInitUnicodeString( &string, tests[i].name );
+        ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+        todo_wine_if (i == 8 || i == 10 || i == 13 || i == 14)
+            ok( ret == tests[i].status, "got %#lx\n", ret );
+        if (!ret) NtClose( file );
+
+        /* test FileRenameInformation */
+
+        GetTempPathW( MAX_PATH, temp_path );
+        wcscat( temp_path, L"winetest_rename_src" );
+        temp_src = CreateFileW( temp_path, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, 0 );
+        ok( temp_src != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n",
+            debugstr_w( temp_path ), GetLastError() );
+
+        rename_info->ReplaceIfExists = 0;
+        rename_info->RootDirectory = attr.RootDirectory;
+        rename_info->FileNameLength = string.Length;
+        memcpy( rename_info->FileName, string.Buffer, string.Length );
+        ret = NtSetInformationFile( temp_src, &io, rename_info,
+                                    sizeof(FILE_RENAME_INFORMATION) + string.Length, FileRenameInformation );
+        todo_wine_if (i == 2 || i == 8 || i >= 10)
+            ok( ret == tests[i].rename_status, "got %#lx\n", ret );
+
+        CloseHandle( temp_src );
+        ret = DeleteFileW( temp_path );
+        ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+        NtClose( attr.RootDirectory );
+        winetest_pop_context();
+    }
+
+    InitializeObjectAttributes( &attr, &string, 0, 0, NULL );
+
+    swprintf( link_name, ARRAY_SIZE(link_name),
+              L"\\BaseNamedObjects\\Session\\%u\\testsymlink", NtCurrentTeb()->Peb->SessionId );
+    RtlInitUnicodeString( &string, link_name );
+    RtlInitUnicodeString( &target, L"\\??\\C:\\" );
+    ret = NtCreateSymbolicLinkObject( &symlink, 0, &attr, &target );
+    ok( !ret, "got %#lx\n", ret );
+
+    attr.RootDirectory = symlink;
+    RtlInitUnicodeString( &string, L"windows" );
+    ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+    todo_wine ok( ret == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", ret );
+
+    attr.RootDirectory = NULL;
+    RtlInitUnicodeString( &string, link_name );
+    ret = NtOpenDirectoryObject( &file, DIRECTORY_TRAVERSE, &attr );
+    ok( ret == STATUS_OBJECT_TYPE_MISMATCH, "got %#lx\n", ret );
+    ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+    ok( !ret, "got %#lx\n", ret );
+
+    attr.RootDirectory = file;
+    RtlInitUnicodeString( &string, L"windows" );
+    ret = NtOpenFile( &file, FILE_READ_ATTRIBUTES, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 );
+    todo_wine ok( !ret, "got %#lx\n", ret );
+    if (!ret) NtClose( file );
+
+    NtClose( attr.RootDirectory );
+    NtClose( symlink );
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -7673,4 +7803,5 @@ START_TEST(file)
     test_reparse_points();
     test_file_map_large_size();
     test_find_file();
+    test_root_directory();
 }
