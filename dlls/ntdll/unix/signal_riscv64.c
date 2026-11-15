@@ -310,9 +310,92 @@ void signal_free_thread( TEB *teb )
 }
 
 
+/* Translate synchronous Linux traps into NT exceptions.  Keep the signal
+ * handler itself free of loader and wineserver calls: those run after the
+ * kernel restores the interrupted thread context. */
+struct riscv64_signal_exception
+{
+    EXCEPTION_RECORD record;
+    CONTEXT context;
+};
+
+static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
+{
+    NtRaiseException( &exc->record, &exc->context, TRUE );
+    abort();
+}
+
+static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
+{
+    ucontext_t *uc = opaque;
+    struct riscv64_signal_exception *exc;
+    ULONG_PTR sp = SP_sig( uc );
+    unsigned int i;
+
+    /* Allocate the exception payload on the interrupted stack, preserving
+     * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
+    exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
+    memset( exc, 0, sizeof(*exc) );
+    exc->context.ContextFlags = CONTEXT_FULL;
+    exc->context.Pc = PC_sig( uc );
+    for (i = 1; i < 32; ++i) exc->context.Gpr.X[i] = REGn_sig( i, uc );
+    exc->context.Gpr.X[2] = sp;
+    exc->record.ExceptionAddress = (void *)(ULONG_PTR)exc->context.Pc;
+
+    switch (sig)
+    {
+    case SIGSEGV:
+    case SIGBUS:
+        exc->record.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        exc->record.NumberParameters = 2;
+        exc->record.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+        exc->record.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        break;
+    case SIGILL:
+        exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    case SIGTRAP:
+        exc->record.ExceptionCode = EXCEPTION_BREAKPOINT;
+        break;
+    case SIGFPE:
+        exc->record.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+#ifdef FPE_INTDIV
+        if (info->si_code == FPE_INTDIV) exc->record.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+#endif
+#ifdef FPE_INTOVF
+        if (info->si_code == FPE_INTOVF) exc->record.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+#endif
+#ifdef FPE_FLTDIV
+        if (info->si_code == FPE_FLTDIV) exc->record.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+#endif
+        break;
+    default:
+        exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+    }
+
+    SP_sig( uc ) = (ULONG_PTR)exc;
+    REGn_sig( REG_A0, uc ) = (ULONG_PTR)exc;
+    PC_sig( uc ) = (ULONG_PTR)riscv64_raise_signal_exception;
+}
+
 void signal_init_process( TEB *teb )
 {
+    struct sigaction action;
+
     alloc_syscall_frame( sizeof(struct syscall_frame) );
+    memset( &action, 0, sizeof(action) );
+    action.sa_mask = server_block_set;
+    action.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+    action.sa_sigaction = riscv64_fault_handler;
+    if (sigaction( SIGSEGV, &action, NULL ) == -1 ||
+        sigaction( SIGBUS, &action, NULL ) == -1 ||
+        sigaction( SIGILL, &action, NULL ) == -1 ||
+        sigaction( SIGTRAP, &action, NULL ) == -1 ||
+        sigaction( SIGFPE, &action, NULL ) == -1)
+    {
+        perror( "sigaction" );
+        exit( 1 );
+    }
 }
 
 
