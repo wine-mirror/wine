@@ -373,6 +373,13 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
     }
 
+    /* Match ARM64's virtual-memory fault resolution before entering SEH.
+     * Guard pages and committed stack growth can be handled here without
+     * raising an exception.  Keep the original interrupted SP intact. */
+    if ((sig == SIGSEGV || sig == SIGBUS) &&
+        !virtual_handle_fault( get_thread_data(), &exc->record, (void *)sp ))
+        return;
+
     SP_sig( uc ) = (ULONG_PTR)exc;
     REGn_sig( REG_A0, uc ) = (ULONG_PTR)exc;
     PC_sig( uc ) = (ULONG_PTR)riscv64_raise_signal_exception;
