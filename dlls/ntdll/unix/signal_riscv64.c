@@ -342,7 +342,12 @@ struct riscv64_signal_exception
 
 static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
 {
-    NtRaiseException( &exc->record, &exc->context, TRUE );
+    NTSTATUS status = NtRaiseException( &exc->record, &exc->context, TRUE );
+
+    /* A handled first-chance exception may return after updating CONTEXT.
+     * Continue with the interrupted register image rather than aborting. */
+    if (!status) status = NtContinue( &exc->context, FALSE );
+    ERR( "RISC-V64 exception continuation failed: %#lx\\n", (unsigned long)status );
     abort();
 }
 
