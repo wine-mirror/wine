@@ -166,7 +166,11 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
         return STATUS_NOT_SUPPORTED;
 
-    if (handle != GetCurrentThread())\n        return STATUS_NOT_IMPLEMENTED;\n\n    if (!frame)\n        return STATUS_ACCESS_DENIED;
+    if (handle != GetCurrentThread())
+        return STATUS_NOT_IMPLEMENTED;
+
+    if (!frame)
+        return STATUS_ACCESS_DENIED;
 
     if (flags & CONTEXT_INTEGER)
         memcpy( context->Gpr.X, frame->x, sizeof(frame->x) );
@@ -204,7 +208,11 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
         return STATUS_NOT_SUPPORTED;
 
-    if (handle != GetCurrentThread())\n        return STATUS_NOT_IMPLEMENTED;\n\n    if (!frame)\n        return STATUS_ACCESS_DENIED;
+    if (handle != GetCurrentThread())
+        return STATUS_NOT_IMPLEMENTED;
+
+    if (!frame)
+        return STATUS_ACCESS_DENIED;
 
     if (flags & CONTEXT_INTEGER)
         memcpy( frame->x, context->Gpr.X, sizeof(frame->x) );
