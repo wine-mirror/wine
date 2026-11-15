@@ -332,6 +332,19 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     ULONG_PTR sp = SP_sig( uc );
     unsigned int i;
 
+    /* Resolve guard-page and stack-growth faults before writing to the
+     * interrupted stack.  That stack may itself be the faulting mapping. */
+    if (sig == SIGSEGV || sig == SIGBUS)
+    {
+        EXCEPTION_RECORD fault = {0};
+        fault.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        fault.ExceptionAddress = (void *)(ULONG_PTR)PC_sig( uc );
+        fault.NumberParameters = 2;
+        fault.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+        fault.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        if (!virtual_handle_fault( get_thread_data(), &fault, (void *)sp )) return;
+    }
+
     /* Allocate the exception payload on the interrupted stack, preserving
      * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
     exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
@@ -372,13 +385,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     default:
         exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
     }
-
-    /* Match ARM64's virtual-memory fault resolution before entering SEH.
-     * Guard pages and committed stack growth can be handled here without
-     * raising an exception.  Keep the original interrupted SP intact. */
-    if ((sig == SIGSEGV || sig == SIGBUS) &&
-        !virtual_handle_fault( get_thread_data(), &exc->record, (void *)sp ))
-        return;
 
     SP_sig( uc ) = (ULONG_PTR)exc;
     REGn_sig( REG_A0, uc ) = (ULONG_PTR)exc;
