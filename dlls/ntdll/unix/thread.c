@@ -197,6 +197,12 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_ARM_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_ARM_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
         break;
+    case IMAGE_FILE_MACHINE_RISCV64:
+        flags = ((const RISCV64_CONTEXT *)context)->ContextFlags & ~CONTEXT_RISCV64;
+        if (flags & CONTEXT_RISCV64_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_RISCV64_INTEGER) ret |= SERVER_CTX_INTEGER;
+        if (flags & CONTEXT_RISCV64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        break;
     case IMAGE_FILE_MACHINE_ARM64:
         flags = ((const ARM64_NT_CONTEXT *)context)->ContextFlags & ~CONTEXT_ARM64;
         if (flags & CONTEXT_ARM64_CONTROL) ret |= SERVER_CTX_CONTROL;
@@ -574,6 +580,34 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bcr[i] = from->Bcr[i];
             for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wvr[i] = from->Wvr[i];
             for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wcr[i] = from->Wcr[i];
+        }
+        exception_request_flags_to_server( to, flags );
+        return STATUS_SUCCESS;
+    }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_RISCV64, IMAGE_FILE_MACHINE_RISCV64 ):
+    {
+        const RISCV64_CONTEXT *from = src;
+
+        flags = from->ContextFlags & ~CONTEXT_RISCV64;
+        if (flags & CONTEXT_RISCV64_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->ctl.riscv64_regs.pc = from->Pc;
+            to->ctl.riscv64_regs.sp = from->Gpr.X[2];
+            to->ctl.riscv64_regs.ra = from->Gpr.X[1];
+        }
+        if (flags & CONTEXT_RISCV64_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            memcpy( to->integer.riscv64_regs.x, from->Gpr.X, sizeof(from->Gpr.X) );
+            to->integer.riscv64_regs.x[0] = 0;
+        }
+        if (flags & CONTEXT_RISCV64_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            for (i = 0; i < 32; i++) to->fp.riscv64_regs.f[i] = from->F[i].Q;
+            to->fp.riscv64_regs.fcsr = from->Fcsr;
         }
         exception_request_flags_to_server( to, flags );
         return STATUS_SUCCESS;
@@ -1010,6 +1044,31 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
             for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm_regs.bcr[i];
             for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm_regs.wvr[i];
             for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm_regs.wcr[i];
+        }
+        exception_request_flags_from_server( &to->ContextFlags, from );
+        return STATUS_SUCCESS;
+    }
+
+    case MAKELONG( IMAGE_FILE_MACHINE_RISCV64, IMAGE_FILE_MACHINE_RISCV64 ):
+    {
+        RISCV64_CONTEXT *to = dst;
+
+        to_flags = to->ContextFlags & ~CONTEXT_RISCV64;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_RISCV64_CONTROL))
+        {
+            to->Pc = from->ctl.riscv64_regs.pc;
+            to->Gpr.X[2] = from->ctl.riscv64_regs.sp;
+            to->Gpr.X[1] = from->ctl.riscv64_regs.ra;
+        }
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_RISCV64_INTEGER))
+        {
+            memcpy( to->Gpr.X, from->integer.riscv64_regs.x, sizeof(to->Gpr.X) );
+            to->Gpr.X[0] = 0;
+        }
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_RISCV64_FLOATING_POINT))
+        {
+            for (i = 0; i < 32; i++) to->F[i].Q = from->fp.riscv64_regs.f[i];
+            to->Fcsr = from->fp.riscv64_regs.fcsr;
         }
         exception_request_flags_from_server( &to->ContextFlags, from );
         return STATUS_SUCCESS;
