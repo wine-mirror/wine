@@ -1156,7 +1156,10 @@ static SIZE_T get_machine_context_size( USHORT machine )
 {
     switch (machine)
     {
-    case IMAGE_FILE_MACHINE_I386:  return sizeof(I386_CONTEXT);
+    case IMAGE_FILE_MACHINE_I386:
+        if (!user_shared_data->XState.EnabledFeatures) return sizeof(I386_CONTEXT);
+        return sizeof(I386_CONTEXT) + 32 /* sizeof(CONTEXT_EX) */ + 63 +
+            user_shared_data->XState.Size - sizeof(XSAVE_FORMAT);
     case IMAGE_FILE_MACHINE_ARMNT: return sizeof(ARM_CONTEXT);
     case IMAGE_FILE_MACHINE_AMD64: return sizeof(AMD64_CONTEXT);
     case IMAGE_FILE_MACHINE_ARM64: return sizeof(ARM64_NT_CONTEXT);
