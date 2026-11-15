@@ -452,6 +452,14 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     if (!table->ServiceTable || !table->ArgumentTable || index >= table->ServiceLimit)
         return STATUS_INVALID_SYSTEM_SERVICE;
     arg_size = table->ArgumentTable[index];
+    /* The service argument table records a byte count, while the RV64 ABI
+     * passes arguments in eight-byte slots.  Reject malformed entries
+     * before reading any of the original caller's stack arguments. */
+    if (arg_size % sizeof(ULONG_PTR))
+    {
+        ERR( "RISCV64 syscall %04x has misaligned argument size %u\n", id, arg_size );
+        return STATUS_INVALID_SYSTEM_SERVICE;
+    }
     if (arg_size > 20 * sizeof(ULONG_PTR))
     {
         ERR( "RISCV64 syscall %04x requires %u bytes of arguments (maximum %u)\n",
