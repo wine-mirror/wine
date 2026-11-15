@@ -353,6 +353,14 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     exc->context.Pc = PC_sig( uc );
     for (i = 1; i < 32; ++i) exc->context.Gpr.X[i] = REGn_sig( i, uc );
     exc->context.Gpr.X[2] = sp;
+#if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
+    /* Linux RISC-V signal ABI stores the D-extension register image
+     * directly in mcontext, not behind an fpregs pointer. */
+    for (i = 0; i < 32; ++i)
+        exc->context.F[i].Q = uc->uc_mcontext.__fpregs.__d.__f[i];
+    exc->context.Fcsr = uc->uc_mcontext.__fpregs.__d.__fcsr;
+    exc->context.ContextFlags |= CONTEXT_FLOATING_POINT;
+#endif
     exc->record.ExceptionAddress = (void *)(ULONG_PTR)exc->context.Pc;
 
     switch (sig)
