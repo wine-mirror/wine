@@ -44,10 +44,10 @@ void WINAPI process_breakpoint(void)
 /* Stack probing. */
 __ASM_GLOBAL_FUNC( __chkstk, "ret" )
 
-/* Capture the integer/control state at the caller boundary. */
+/* Capture integer, control, and floating-point state at the caller boundary. */
 __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "sd t0, 48(a0)\n\t"
-                   "li t0, 0x800003\n\t"
+                   "li t0, 0x800007\n\t"
                    "sw t0, 0(a0)\n\t"
                    "sd zero, 8(a0)\n\t"
                    "sd x1, 16(a0)\n\t"
@@ -80,7 +80,7 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "sd x30, 248(a0)\n\t"
                    "sd x31, 256(a0)\n\t"
                    "sd zero, 88(a0)\n\t" /* a0 is the context pointer */
-                   "sd ra, 264(a0)\n\t"
+                   "sd ra, 264(a0)\n\t"\n                   "frcsr t0\n\t"\n                   "sd t0, 272(a0)\n\t"\n                   "fsd f0, 280(a0)\\n\\t"\n                   "fsd f1, 288(a0)\\n\\t"\n                   "fsd f2, 296(a0)\\n\\t"\n                   "fsd f3, 304(a0)\\n\\t"\n                   "fsd f4, 312(a0)\\n\\t"\n                   "fsd f5, 320(a0)\\n\\t"\n                   "fsd f6, 328(a0)\\n\\t"\n                   "fsd f7, 336(a0)\\n\\t"\n                   "fsd f8, 344(a0)\\n\\t"\n                   "fsd f9, 352(a0)\\n\\t"\n                   "fsd f10, 360(a0)\\n\\t"\n                   "fsd f11, 368(a0)\\n\\t"\n                   "fsd f12, 376(a0)\\n\\t"\n                   "fsd f13, 384(a0)\\n\\t"\n                   "fsd f14, 392(a0)\\n\\t"\n                   "fsd f15, 400(a0)\\n\\t"\n                   "fsd f16, 408(a0)\\n\\t"\n                   "fsd f17, 416(a0)\\n\\t"\n                   "fsd f18, 424(a0)\\n\\t"\n                   "fsd f19, 432(a0)\\n\\t"\n                   "fsd f20, 440(a0)\\n\\t"\n                   "fsd f21, 448(a0)\\n\\t"\n                   "fsd f22, 456(a0)\\n\\t"\n                   "fsd f23, 464(a0)\\n\\t"\n                   "fsd f24, 472(a0)\\n\\t"\n                   "fsd f25, 480(a0)\\n\\t"\n                   "fsd f26, 488(a0)\\n\\t"\n                   "fsd f27, 496(a0)\\n\\t"\n                   "fsd f28, 504(a0)\\n\\t"\n                   "fsd f29, 512(a0)\\n\\t"\n                   "fsd f30, 520(a0)\\n\\t"\n                   "fsd f31, 528(a0)\\n\\t"
                    "ret" )
 
 /* NtContinue performs the non-returning context transfer. */
