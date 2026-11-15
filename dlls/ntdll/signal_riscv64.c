@@ -147,7 +147,7 @@ struct riscv64_exception_stack
     EXCEPTION_RECORD record;
 };
 
-static void WINAPI DECLSPEC_NORETURN riscv64_dispatch_exception( struct riscv64_exception_stack *stack )
+void WINAPI DECLSPEC_NORETURN riscv64_dispatch_exception( struct riscv64_exception_stack *stack )
 {
     NTSTATUS status = dispatch_exception( &stack->record, &stack->context );
     RtlRaiseStatus( status );
