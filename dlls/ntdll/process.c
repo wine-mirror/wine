@@ -173,24 +173,27 @@ NTSTATUS WINAPI RtlWow64GetCpuAreaInfo( WOW64_CPURESERVED *cpu, ULONG reserved, 
     static const struct { ULONG machine, align, size, offset, flag; } data[] =
     {
 #define ENTRY(machine,type,flag) { machine, TYPE_ALIGNMENT(type), sizeof(type), offsetof(type,ContextFlags), flag },
-        ENTRY( IMAGE_FILE_MACHINE_I386, I386_CONTEXT, CONTEXT_i386 )
+        ENTRY( IMAGE_FILE_MACHINE_I386, I386_CONTEXT, CONTEXT_I386_XSTATE )
         ENTRY( IMAGE_FILE_MACHINE_AMD64, AMD64_CONTEXT, CONTEXT_AMD64 )
         ENTRY( IMAGE_FILE_MACHINE_ARMNT, ARM_CONTEXT, CONTEXT_ARM )
         ENTRY( IMAGE_FILE_MACHINE_ARM64, ARM64_NT_CONTEXT, CONTEXT_ARM64 )
 #undef ENTRY
     };
     unsigned int i;
+    ULONG ext_size;
 
     for (i = 0; i < ARRAY_SIZE(data); i++)
     {
 #define ALIGN(ptr,align) ((void *)(((ULONG_PTR)(ptr) + (align) - 1) & ~((ULONG_PTR)(align) - 1)))
         if (data[i].machine != cpu->Machine) continue;
         info->Context = ALIGN( cpu + 1, data[i].align );
-        info->ContextEx = ALIGN( (char *)info->Context + data[i].size, sizeof(void *) );
+        if (RtlGetExtendedContextLength( data[i].flag, &ext_size )) ext_size = data[i].size;
+        info->ContextEx = ALIGN( (char *)info->Context + ext_size, sizeof(void *) );
         info->ContextFlagsLocation = (char *)info->Context + data[i].offset;
         info->ContextFlag = data[i].flag;
         info->CpuReserved = cpu;
         info->Machine = data[i].machine;
+        info->CpuAreaEnd = (void **)info->ContextEx + 1;
         return STATUS_SUCCESS;
 #undef ALIGN
     }
