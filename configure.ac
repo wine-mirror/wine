@@ -95,14 +95,10 @@ AC_SUBST(srcdir)
 
 dnl RISC-V64 native Wine builds currently have no usable MinGW toolchain.
 dnl Default to Unix-only builds, but honor an explicit --with-mingw.
-dnl Use the Wine-compatible 16-bit wchar_t ABI unless CFLAGS was supplied.
+dnl Native Unix code must retain the system wchar_t ABI.  Windows
+dnl compilation gets its own 16-bit wchar_t flags below.
 case $host_cpu in
-  riscv64*)
-    with_mingw=${with_mingw-no}
-    if test "${CFLAGS+set}" != set; then
-      CFLAGS="-g -O2 -fshort-wchar"
-    fi
-    ;;
+  riscv64*) with_mingw=${with_mingw-no} ;;
 esac
 
 AS_IF([test "x$enable_sast" = xyes],[CC=${CC:-clang}
@@ -180,7 +176,7 @@ case "$host_cpu" in
   x86_64)          HOST_ARCH=x86_64 ;;
   riscv64)         HOST_ARCH=riscv64 ;;
 esac
-m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,x86_64],
+m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,x86_64,riscv64],
                                 [m4_foreach([var],[CC,CXX,CFLAGS,CXXFLAGS,EXTRACFLAGS,EXTRACXXFLAGS,LDFLAGS,DEBUG,TARGET,STRIP,DELAYLOADFLAG],[,cpu[_]var])]))
 
 dnl Some special cases for the Windows platform
@@ -481,6 +477,11 @@ do
 
     CPPFLAGS=""
     AS_VAR_SET_IF([${wine_arch}_CFLAGS],[],[AS_VAR_SET([${wine_arch}_CFLAGS],[${CROSSCFLAGS:-"-g -O2"}])])
+    dnl Windows WCHAR is 16-bit; do not impose that ABI on Unix objects.
+    dnl Apply it to both C and C++ compilation of RISC-V64 PE objects.
+    AS_VAR_IF([wine_arch],[riscv64],[
+        AS_VAR_APPEND([${wine_arch}_CFLAGS],[" -fshort-wchar"])
+    ])
     AS_VAR_SET_IF([${wine_arch}_LDFLAGS],[],[AS_VAR_SET([${wine_arch}_LDFLAGS],[$CROSSLDFLAGS])])
     AS_VAR_SET_IF([${wine_arch}_CXX],[],[AS_VAR_COPY([${wine_arch}_CXX],[${wine_arch}_CC])])
     AS_VAR_SET_IF([${wine_arch}_CXXFLAGS],[],[AS_VAR_COPY([${wine_arch}_CXXFLAGS],[${wine_arch}_CFLAGS])])
