@@ -41,7 +41,9 @@
 # define WIN32
 #endif
 
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if (defined(__x86_64__) || defined(__powerpc64__) || \
+     defined(__aarch64__) || \
+     (defined(__riscv) && (__riscv_xlen == 64))) && !defined(_WIN64)
 #define _WIN64
 #endif
 

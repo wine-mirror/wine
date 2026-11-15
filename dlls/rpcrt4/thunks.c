@@ -202,6 +202,40 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
     "mov w16,#"#num"\n\t" \
     "b call_stubless_func\n\t"
 
+#elif defined(__riscv) && __riscv_xlen == 64
+__ASM_GLOBAL_FUNC( call_stubless_func,
+                   "addi sp, sp, -144\n\t"
+                   "sd ra, 128(sp)\n\t"
+                   "fsd fa0, 0(sp)\n\t"
+                   "fsd fa1, 8(sp)\n\t"
+                   "fsd fa2, 16(sp)\n\t"
+                   "fsd fa3, 24(sp)\n\t"
+                   "fsd fa4, 32(sp)\n\t"
+                   "fsd fa5, 40(sp)\n\t"
+                   "fsd fa6, 48(sp)\n\t"
+                   "fsd fa7, 56(sp)\n\t"
+                   "sd a0, 64(sp)\n\t"
+                   "sd a1, 72(sp)\n\t"
+                   "sd a2, 80(sp)\n\t"
+                   "sd a3, 88(sp)\n\t"
+                   "sd a4, 96(sp)\n\t"
+                   "sd a5, 104(sp)\n\t"
+                   "sd a6, 112(sp)\n\t"
+                   "sd a7, 120(sp)\n\t"
+                   "mv a0, t0\n\t"
+                   "addi a1, sp, 64\n\t"
+                   "mv a2, sp\n\t"
+                   "call ndr_stubless_client_call\n\t"
+                   "ld ra, 128(sp)\n\t"
+                   "addi sp, sp, 144\n\t"
+                   "ret" )
+
+#define T(num) \
+    ".globl ObjectStublessClient" #num "\n\t" \
+    "ObjectStublessClient" #num ":\n\t" \
+    "li t0, " #num "\n\t" \
+    "tail call_stubless_func\n\t"
+
 #elif defined __arm__
 
 __ASM_GLOBAL_FUNC( call_stubless_func,
@@ -228,6 +262,9 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
     "ldr ip,1f\n\t" \
     "b.w call_stubless_func\n" \
     "1:\t.long "#num"\n\t"
+
+#elif defined(__riscv) && __riscv_xlen == 64
+#define T(num) ""
 
 #endif  /* __i386__ */
 
@@ -286,6 +323,18 @@ __ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
     "ldr ip, [r0]\n\t" \
     "ldr pc, [ip, #(4*"#num")]\n\t"
 
+#elif defined(__riscv) && __riscv_xlen == 64
+#define T(num) \
+    ".globl NdrProxyForwardingFunction" #num "\n\t" \
+    "NdrProxyForwardingFunction" #num ":\n\t" \
+    "ld t0, 32(a0)\n\t" \
+    "ld t1, 0(t0)\n\t" \
+    "li t2, " #num "\n\t" \
+    "slli t2, t2, 3\n\t" \
+    "add t1, t1, t2\n\t" \
+    "ld t1, 0(t1)\n\t" \
+    "jr t1\n\t"
+
 #endif  /* __i386__ */
 
 __ASM_GLOBAL_FUNC( vtbl_thunks, ALL_THUNK_ENTRIES )
@@ -323,7 +372,8 @@ const struct delegating_vtbl delegating_vtbl =
 };
 
 
-#if defined(__aarch64__) || defined(__arm__)
+#if defined(__aarch64__) || defined(__arm__) || \
+    (defined(__riscv) && (__riscv_xlen == 64))
 static void __attribute__((used)) args_stack_to_regs( void **args, void **regs, void **stack,
                                                       const NDR_PROC_PARTIAL_OIF_HEADER *header )
 {
@@ -513,4 +563,44 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "ldp x19, x20, [sp, #0x10]\n\t"
                    "ldp x29, x30, [sp], #0x20\n\t"
                    "ret" )
+#elif defined(__riscv) && (__riscv_xlen == 64)
+__ASM_GLOBAL_FUNC( call_server_func,
+                   "addi sp, sp, -32\n\t"
+                   "sd ra, 24(sp)\n\t"
+                   "sd s0, 16(sp)\n\t"
+                   "sd s1, 8(sp)\n\t"
+                   "mv s0, a0\n\t"
+                   "mv s1, sp\n\t"
+                   "addi t0, a2, 143\n\t"
+                   "andi t0, t0, -16\n\t"
+                   "sub sp, sp, t0\n\t"
+                   "mv a0, a1\n\t"
+                   "mv a1, sp\n\t"
+                   "addi a2, sp, 128\n\t"
+                   "call args_stack_to_regs\n\t"
+                   "ld a0, 0(sp)\n\t"
+                   "ld a1, 8(sp)\n\t"
+                   "ld a2, 16(sp)\n\t"
+                   "ld a3, 24(sp)\n\t"
+                   "ld a4, 32(sp)\n\t"
+                   "ld a5, 40(sp)\n\t"
+                   "ld a6, 48(sp)\n\t"
+                   "ld a7, 56(sp)\n\t"
+                   "fld fa0, 64(sp)\n\t"
+                   "fld fa1, 72(sp)\n\t"
+                   "fld fa2, 80(sp)\n\t"
+                   "fld fa3, 88(sp)\n\t"
+                   "fld fa4, 96(sp)\n\t"
+                   "fld fa5, 104(sp)\n\t"
+                   "fld fa6, 112(sp)\n\t"
+                   "fld fa7, 120(sp)\n\t"
+                   "addi sp, sp, 128\n\t"
+                   "jalr ra, s0, 0\n\t"
+                   "mv sp, s1\n\t"
+                   "ld s1, 8(sp)\n\t"
+                   "ld s0, 16(sp)\n\t"
+                   "ld ra, 24(sp)\n\t"
+                   "addi sp, sp, 32\n\t"
+                   "ret" )
+
 #endif

@@ -5,7 +5,7 @@ IMPORTLIB = ntdll
 IMPORTS   = $(SYMCRYPT_PE_LIBS) $(ZLIB_PE_LIBS) $(MUSL_PE_LIBS)
 EXTRAINCL = $(SYMCRYPT_PE_CFLAGS) $(ZLIB_PE_CFLAGS)
 UNIX_CFLAGS  = $(HWLOC_CFLAGS)
-UNIX_LIBS    = $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(I386_LIBS) $(PROCSTAT_LIBS) $(HWLOC_LIBS)
+UNIX_LIBS    = $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(I386_LIBS) $(PROCSTAT_LIBS) $(HWLOC_LIBS) -latomic
 
 EXTRADLLFLAGS = -nodefaultlibs
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
@@ -42,6 +42,7 @@ SOURCES = \
 	signal_arm.c \
 	signal_arm64.c \
 	signal_arm64ec.c \
+	signal_riscv64.c \
 	signal_i386.c \
 	signal_x86_64.c \
 	string.c \
@@ -64,6 +65,7 @@ SOURCES = \
 	unix/signal_arm64.c \
 	unix/signal_i386.c \
 	unix/signal_x86_64.c \
+	unix/signal_riscv64.c \
 	unix/socket.c \
 	unix/sync.c \
 	unix/syscall.c \

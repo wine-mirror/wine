@@ -10035,6 +10035,12 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %p\n", (void *)rec->ExceptionInformation[0]);
     context->Pc += 4;
+#elif defined(__riscv) && __riscv_xlen == 64
+    ok(context->Pc == (DWORD_PTR)code_mem,
+       "expected pc = %p, got %p\n", code_mem, (void *)context->Pc);
+    ok(rec->ExceptionAddress == code_mem,
+       "expected address %p, got %p\n", code_mem, rec->ExceptionAddress);
+    context->Pc += 4;
 #endif
 
     breakpoint_exceptions++;
@@ -10047,6 +10053,8 @@ static const BYTE breakpoint_code[] = { 0xcd, 0x03, 0xc3 };   /* int $0x3; ret *
 static const DWORD breakpoint_code[] = { 0xdefe, 0x4770 };  /* udf #0xfe; bx lr */
 #elif defined(__aarch64__)
 static const DWORD breakpoint_code[] = { 0xd43e0000, 0xd65f03c0 };  /* brk #0xf000; ret */
+#elif defined(__riscv) && __riscv_xlen == 64
+static const DWORD breakpoint_code[] = { 0x00100073, 0x00008067 }; /* ebreak; ret */
 #endif
 
 static void test_breakpoint(DWORD numexc)
@@ -12992,6 +13000,7 @@ START_TEST(exception)
             return;
         }
 
+#if !defined(__riscv) || __riscv_xlen != 64
         if (pRtlRaiseException)
         {
             test_stage = STAGE_RTLRAISE_NOT_HANDLED;
@@ -13004,7 +13013,7 @@ START_TEST(exception)
             run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
         }
         else skip( "RtlRaiseException not found\n" );
-
+#endif
         test_stage = STAGE_OUTPUTDEBUGSTRINGA_CONTINUE;
 
         test_outputdebugstring(FALSE, 0, FALSE, 0, 0);
@@ -13020,10 +13029,12 @@ START_TEST(exception)
         test_ripevent(0);
         test_stage = STAGE_RIPEVENT_NOT_HANDLED;
         test_ripevent(1);
+#if !defined(__riscv) || __riscv_xlen != 64
         test_stage = STAGE_SERVICE_CONTINUE;
         test_debug_service(0);
         test_stage = STAGE_SERVICE_NOT_HANDLED;
         test_debug_service(1);
+#endif
         test_stage = STAGE_BREAKPOINT_CONTINUE;
         test_breakpoint(0);
         test_stage = STAGE_BREAKPOINT_NOT_HANDLED;
@@ -13129,6 +13140,7 @@ START_TEST(exception)
 
 #endif
 
+#if !defined(__riscv) || __riscv_xlen != 64
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
     test_KiUserCallbackDispatcher();
@@ -13138,6 +13150,7 @@ START_TEST(exception)
     test_debugger(DBG_EXCEPTION_HANDLED, TRUE);
     test_debugger(DBG_CONTINUE, TRUE);
     test_thread_context();
+#endif
     test_outputdebugstring(FALSE, 1, FALSE, 0, 0);
     if (pWaitForDebugEventEx)
     {

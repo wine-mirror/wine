@@ -44,7 +44,14 @@ typedef enum MONITOR_DPI_TYPE
 } MONITOR_DPI_TYPE;
 
 typedef NTSTATUS (WINAPI *ntuser_callback)( void *args, ULONG len );
-NTSYSAPI NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len );
+
+#ifdef __riscv
+extern NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len,
+                                    void **ret_ptr, ULONG *ret_len );
+#else
+NTSYSAPI NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len,
+                                      void **ret_ptr, ULONG *ret_len );
+#endif
 
 struct user_entry
 {

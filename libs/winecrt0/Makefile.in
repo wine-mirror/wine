@@ -20,6 +20,7 @@ SOURCES = \
 	exe_wmain.c \
 	gcc_ctors.c \
 	register.c \
+	riscv64_teb.c \
 	setjmp.c \
 	stub.c \
 	tls.c \

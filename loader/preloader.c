@@ -650,6 +650,103 @@ unsigned long long __aeabi_uidivmod(unsigned int num, unsigned int den)
     return ((unsigned long long)num << 32) | quota;
 }
 
+#elif defined(__riscv) && (__riscv_xlen == 64)
+
+void *thread_data[256];
+
+/*
+ * Entry point for the RISC-V64 preloader.
+ */
+void _start(void);
+extern char _end[];
+__ASM_GLOBAL_FUNC(_start,
+                  "mv t0, sp\n\t"
+                  "addi sp, sp, -144\n\t"
+                  "sd t0, 0(sp)\n\t"
+                  ".option push\n\t"
+                  ".option norelax\n\t"
+                  "la gp, __global_pointer$\n\t"
+                  "la tp, thread_data\n\t"
+                  ".option pop\n\t"
+                  "mv a0, sp\n\t"
+                  "call wld_start\n\t"
+                  "ld t0, 0(sp)\n\t"
+                  "mv sp, t0\n\t"
+                  "mv t1, a0\n\t"
+                  "li ra, 0\n\t"
+                  "li a0, 0\n\t"
+                  "li a1, 0\n\t"
+                  "li a2, 0\n\t"
+                  "li a3, 0\n\t"
+                  "li a4, 0\n\t"
+                  "li a5, 0\n\t"
+                  "li a6, 0\n\t"
+                  "li a7, 0\n\t"
+                  "li t0, 0\n\t"
+                  "li t2, 0\n\t"
+                  "li t3, 0\n\t"
+                  "li t4, 0\n\t"
+                  "li t5, 0\n\t"
+                  "li t6, 0\n\t"
+                  "jr t1")
+
+#define SYSCALL_FUNC( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "li a7, " #nr "\n\t" \
+                       "ecall\n\t" \
+                       "li t0, -4096\n\t" \
+                       "bgtu a0, t0, 1f\n\t" \
+                       "ret\n\t" \
+                       "1: li a0, -1\n\t" \
+                       "ret" )
+
+#define SYSCALL_NOERR( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "li a7, " #nr "\n\t" \
+                       "ecall\n\t" \
+                       "ret" )
+
+void wld_exit( int code ) __attribute__((noreturn));
+SYSCALL_NOERR( wld_exit, 93 /* SYS_exit */ );
+
+ssize_t wld_read( int fd, void *buffer, size_t len );
+SYSCALL_FUNC( wld_read, 63 /* SYS_read */ );
+
+ssize_t wld_write( int fd, const void *buffer, size_t len );
+SYSCALL_FUNC( wld_write, 64 /* SYS_write */ );
+
+int wld_openat( int dirfd, const char *name, int flags );
+SYSCALL_FUNC( wld_openat, 56 /* SYS_openat */ );
+
+int wld_open( const char *name, int flags )
+{
+    return wld_openat( -100 /* AT_FDCWD */, name, flags );
+}
+
+int wld_close( int fd );
+SYSCALL_FUNC( wld_close, 57 /* SYS_close */ );
+
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
+SYSCALL_FUNC( wld_mmap, 222 /* SYS_mmap */ );
+
+int wld_mprotect( const void *addr, size_t len, int prot );
+SYSCALL_FUNC( wld_mprotect, 226 /* SYS_mprotect */ );
+
+int wld_prctl( int code, long arg );
+SYSCALL_FUNC( wld_prctl, 167 /* SYS_prctl */ );
+
+uid_t wld_getuid(void);
+SYSCALL_NOERR( wld_getuid, 174 /* SYS_getuid */ );
+
+uid_t wld_geteuid(void);
+SYSCALL_NOERR( wld_geteuid, 175 /* SYS_geteuid */ );
+
+gid_t wld_getgid(void);
+SYSCALL_NOERR( wld_getgid, 176 /* SYS_getgid */ );
+
+gid_t wld_getegid(void);
+SYSCALL_NOERR( wld_getegid, 177 /* SYS_getegid */ );
+
 #else
 #error preloader not implemented for this CPU
 #endif

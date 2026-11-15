@@ -705,6 +705,7 @@ static const char *get_multiarch_dir( struct target target )
    case CPU_ARM:     return "/arm-linux-gnueabi";
    case CPU_ARM64EC:
    case CPU_ARM64:   return "/aarch64-linux-gnu";
+   case CPU_RISCV: return "/riscv64-linux-gnu";
    default:
        assert(0);
    }
@@ -863,6 +864,8 @@ static struct strarray get_compat_defines( int gcc_defs )
             strarray_add(&args, "-D__fastcall=__stdcall");
             break;
         case CPU_ARM64EC:
+            break;
+        case CPU_RISCV:
             break;
         }
         strarray_add(&args, "-D_stdcall=__stdcall");
@@ -1381,6 +1384,14 @@ static void build(struct strarray input_files, const char *output)
         }
     }
 
+    /* Native RISC-V64 Winelib objects may reference CRT helpers from
+     * archives listed earlier on the command line (notably the TEB helper
+     * in libwinecrt0.a, referenced by ucrtbase startup objects).  GNU ld
+     * normally scans each archive only once; group them so references
+     * introduced by later archives can resolve from earlier ones. */
+    if (target.cpu == CPU_RISCV && !is_pe)
+        strarray_add( &link_args, "-Wl,--start-group" );
+
     STRARRAY_FOR_EACH( file, &files )
     {
 	const char* name = file + 2;
@@ -1410,6 +1421,9 @@ static void build(struct strarray input_files, const char *output)
 		break;
 	}
     }
+
+    if (target.cpu == CPU_RISCV && !is_pe)
+        strarray_add( &link_args, "-Wl,--end-group" );
 
     if (!nostdlib && !is_pe)
     {
@@ -2037,7 +2051,8 @@ int main(int argc, char **argv)
 
     if (!file_align) file_align = section_align;
 
-    if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64)
+    //if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64)
+    if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64 && target.cpu != CPU_RISCV)
         error( "Non-PE builds are not supported on this platform. You need to use something like '--target=%s-windows'.\n",
                target.cpu == CPU_ARM ? "arm" : "aarch64" );
 

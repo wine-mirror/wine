@@ -69,6 +69,7 @@ struct unwind_builtin_dll_params
 enum ntdll_unix_funcs
 {
     unix_load_so_dll,
+    unix_load_builtin_so_dll,
     unix_unwind_builtin_dll,
     unix_wine_dbg_write,
     unix_wine_server_call,

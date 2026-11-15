@@ -457,6 +457,7 @@ static unsigned int get_stack_size( const var_t *var, unsigned int *stack_align,
             by_val = (stack_size == 1 || stack_size == 2 || stack_size == 4 || stack_size == 8);
             break;
         case CPU_ARM64:
+        case CPU_RISCV:
             by_val = (stack_size <= 2 * pointer_size);
             break;
         case CPU_ARM:
@@ -1641,6 +1642,27 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
     }
     case CPU_ARM:
     case CPU_ARM64:
+    {
+        unsigned int i, len, count = stack_size / pointer_size;
+        unsigned char *params = xmalloc( count );
+
+        count = fill_params_array( iface, func, params, count );
+        len = compress_params_array( params, count );
+
+        extra_size += 3 + len + !(len % 2);
+        print_file( file, indent, "0x%02x,\n", extra_size );
+        print_file( file, indent, "0x%02x,\n", ext_flags );
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* client corr hint */
+        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* FIXME: notify index */
+        print_file( file, indent, "NdrFcShort(0x%02x),\n", count );
+        print_file( file, indent, "0x%02x,\n", len );
+        for (i = 0; i < len; i++) print_file( file, indent, "0x%02x,\n", params[i] );
+        if (!(len % 2)) print_file( file, indent, "0x00,\n" );
+        free( params );
+        break;
+    }
+    case CPU_RISCV:
     {
         unsigned int i, len, count = stack_size / pointer_size;
         unsigned char *params = xmalloc( count );

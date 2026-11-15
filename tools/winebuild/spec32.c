@@ -37,6 +37,7 @@
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
 #define IMAGE_FILE_MACHINE_ARMNT   0x01c4
 #define IMAGE_FILE_MACHINE_ARM64   0xaa64
+#define IMAGE_FILE_MACHINE_RISCV64 0x5064
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
 #define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 240
@@ -372,6 +373,55 @@ static void output_relay_debug( struct exports *exports )
             output( "\tldp x29, x30, [sp], #%u\n", stack_size + 16 );
             output( "\tret\n");
             output( "\t.seh_endproc\n" );
+            break;
+        }
+
+        case CPU_RISCV:
+        {
+            int stack_size = 16 * ((odp->u.func.nb_args + 2) / 2);
+            int j;
+
+            output( "\t.balign 4\n" );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
+
+            /*
+             * Build the argument array expected by relay_call:
+             *
+             *   0(sp)             saved return address
+             *   8(sp)             argument 0
+             *   ...
+             *
+             * Pass sp + 8 as the argument array, so stack[-1] is the
+             * original return address.  Preserve the incoming sp in t0
+             * before allocating the relay frame since arguments beyond
+             * a7 are supplied on the caller's stack.
+             */
+            output( "\tmv t0, sp\n" );
+            output( "\taddi sp, sp, -%d\n", stack_size );
+            output( "\tsd ra, 0(sp)\n" );
+
+            for (j = 0; j < min(odp->u.func.nb_args, 8); j++)
+                output( "\tsd a%d, %d(sp)\n", j, (j + 1) * 8 );
+
+            for (j = 8; j < odp->u.func.nb_args; j++)
+                output( "\tld t1, %d(t0)\n\tsd t1, %d(sp)\n",
+                        (j - 8) * 8, (j + 1) * 8 );
+
+            output( "\taddi a2, sp, 8\n" );
+            output( "\tli a1, %u\n", odp->u.func.args_str_offset << 16 );
+            if (i - exports->base)
+            {
+                if (i - exports->base <= 2047)
+                    output( "\taddi a1, a1, %u\n", i - exports->base );
+                else
+                    output( "\tli t1, %u\n\tadd a1, a1, t1\n", i - exports->base );
+            }
+            output( "\tlla a0, .L__wine_spec_relay_descr\n" );
+            output( "\tld t1, 8(a0)\n" );
+            output( "\tjalr ra, 0(t1)\n" );
+            output( "\tld ra, 0(sp)\n" );
+            output( "\taddi sp, sp, %d\n", stack_size );
+            output( "\tret\n" );
             break;
         }
 
@@ -818,7 +868,10 @@ void output_module( DLLSPEC *spec )
         break;
     default:
         output( "\n\t.section \".init\",\"ax\"\n" );
-        output( "\tjmp 1f\n" );
+        if (target.cpu == CPU_RISCV)
+          output( "\tj 1f\n" );
+        else
+          output( "\tjmp 1f\n" );
         output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
         output( "1:\n" );
@@ -841,6 +894,7 @@ void output_module( DLLSPEC *spec )
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
     case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case CPU_RISCV:   machine = IMAGE_FILE_MACHINE_RISCV64; break;
     }
     output( "\t.short 0x%04x\n",          /* Machine */
              machine );
@@ -1260,6 +1314,7 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
+    case CPU_RISCV:   put_word( IMAGE_FILE_MACHINE_RISCV64 ); break;
     }
     put_word( pe.sec_count );                        /* NumberOfSections */
     put_dword( hash_filename(spec->file_name) );     /* TimeDateStamp */
