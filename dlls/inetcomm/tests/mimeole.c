@@ -1627,6 +1627,40 @@ static void test_MimeOleObjectFromMoniker(void)
     }
 }
 
+static void test_mhtml_protocol_info_parseurl(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    WCHAR buffer[2038] = { 0 };
+    HRESULT hres;
+    DWORD result;
+
+    hres = CoCreateInstance(&CLSID_IMimeHtmlProtocol, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == S_OK, "Could not create protocol info: %08lx\n", hres);
+
+    hres = IInternetProtocolInfo_ParseUrl (protocol_info, L"mhtml:file://C:\\sample.mht", PARSE_CANONICALIZE, 0x10000, buffer, 2048, &result, 0);
+    ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "got %08lx\n", hres);
+    ok(!*buffer, "got  %s\n", debugstr_w(buffer));
+
+    hres = IInternetProtocolInfo_ParseUrl (protocol_info, L"mhtml:mhtml:file://C:\\sample.mht", PARSE_CANONICALIZE, 0x10000, buffer, 2048, &result, 0);
+    ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "got %08lx\n", hres);
+    ok(!*buffer, "got  %s\n", debugstr_w(buffer));
+
+    hres = IInternetProtocolInfo_ParseUrl (protocol_info, L"mhtml:file://C:\\sample.mht", PARSE_SECURITY_URL, 0, buffer, 2048, &result, 0);
+    todo_wine ok(hres == S_OK, "got %08lx\n", hres);
+    todo_wine ok(!lstrcmpW(buffer, L"file:///C:/sample.mht"), "got  %s\n", debugstr_w(buffer));
+
+    buffer[0] = 0;
+    hres = IInternetProtocolInfo_ParseUrl (protocol_info, L"mhtml:mhtml:file://C:\\sample.mht", PARSE_SECURITY_URL, 0, buffer, 2048, &result, 0);
+    todo_wine ok(hres == E_FAIL, "got %08lx\n", hres);
+
+    buffer[0] = 0;
+    hres = IInternetProtocolInfo_ParseUrl (protocol_info, L"mhtml:file://C:\\sample.mht", PARSE_SECURITY_DOMAIN, 0, buffer, 2048, &result, 0);
+    todo_wine ok(hres == E_FAIL, "got %08lx\n", hres);
+
+    IInternetProtocolInfo_Release(protocol_info);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -1645,5 +1679,6 @@ START_TEST(mimeole)
     test_mhtml_message();
     test_MimeOleObjectFromMoniker();
     test_mhtml_protocol();
+    test_mhtml_protocol_info_parseurl();
     OleUninitialize();
 }
