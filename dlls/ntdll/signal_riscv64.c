@@ -145,6 +145,13 @@ __ASM_GLOBAL_FUNC( DbgBreakPoint, "ebreak\n\tret" )
 __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "ebreak\n\tret" )
 __ASM_GLOBAL_FUNC( DbgUiRemoteBreakin, "ret" )
 
+/* RISC-V64 has no Windows x86 XSAVE extended-feature state.  As on
+ * ARM64, report no enabled extended context features. */
+ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
+{
+    return 0;
+}
+
 /* Processor information. */
 __ASM_GLOBAL_FUNC( RtlIsProcessorFeaturePresent, "li a0, 0\n\tret" )
 __ASM_GLOBAL_FUNC( RtlGetNativeSystemInformation,
