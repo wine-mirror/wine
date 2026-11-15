@@ -44,9 +44,52 @@ void WINAPI process_breakpoint(void)
 /* Stack probing. */
 __ASM_GLOBAL_FUNC( __chkstk, "ret" )
 
-/* Context management. */
-__ASM_GLOBAL_FUNC( RtlCaptureContext, "ret" )
-__ASM_GLOBAL_FUNC( RtlRestoreContext, "ret" )
+/* Capture the integer/control state at the caller boundary. */
+__ASM_GLOBAL_FUNC( RtlCaptureContext,
+                   "sd t0, 48(a0)\n\t"
+                   "li t0, 0x800003\n\t"
+                   "sw t0, 0(a0)\n\t"
+                   "sd zero, 8(a0)\n\t"
+                   "sd x1, 16(a0)\n\t"
+                   "sd x2, 24(a0)\n\t"
+                   "sd x3, 32(a0)\n\t"
+                   "sd x4, 40(a0)\n\t"
+                   "sd x6, 56(a0)\n\t"
+                   "sd x7, 64(a0)\n\t"
+                   "sd x8, 72(a0)\n\t"
+                   "sd x9, 80(a0)\n\t"
+                   "sd x11, 96(a0)\n\t"
+                   "sd x12, 104(a0)\n\t"
+                   "sd x13, 112(a0)\n\t"
+                   "sd x14, 120(a0)\n\t"
+                   "sd x15, 128(a0)\n\t"
+                   "sd x16, 136(a0)\n\t"
+                   "sd x17, 144(a0)\n\t"
+                   "sd x18, 152(a0)\n\t"
+                   "sd x19, 160(a0)\n\t"
+                   "sd x20, 168(a0)\n\t"
+                   "sd x21, 176(a0)\n\t"
+                   "sd x22, 184(a0)\n\t"
+                   "sd x23, 192(a0)\n\t"
+                   "sd x24, 200(a0)\n\t"
+                   "sd x25, 208(a0)\n\t"
+                   "sd x26, 216(a0)\n\t"
+                   "sd x27, 224(a0)\n\t"
+                   "sd x28, 232(a0)\n\t"
+                   "sd x29, 240(a0)\n\t"
+                   "sd x30, 248(a0)\n\t"
+                   "sd x31, 256(a0)\n\t"
+                   "sd zero, 88(a0)\n\t" /* a0 is the context pointer */
+                   "sd ra, 264(a0)\n\t"
+                   "ret" )
+
+/* NtContinue performs the non-returning context transfer. */
+void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *record )
+{
+    NTSTATUS status = NtContinue( context, FALSE );
+    ERR( "RISCV64 RtlRestoreContext: NtContinue returned %#lx\n", (unsigned long)status );
+    __builtin_trap();
+}
 
 /* Exception dispatch. */
 __ASM_GLOBAL_FUNC( RtlRaiseException, "ret" )
