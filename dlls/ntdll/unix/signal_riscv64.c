@@ -657,7 +657,7 @@ NTSTATUS unwind_builtin_dll( void *args )
 
 void *get_native_context( CONTEXT *context )
 {
-    return NULL;
+    return context;
 }
 
 
