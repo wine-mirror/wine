@@ -276,6 +276,10 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, unsigned int flags,
 
 void call_raise_user_exception_dispatcher( struct thread_data *data )
 {
+    struct syscall_frame *frame = get_syscall_frame( data );
+
+    frame->pc = (ULONG64)pKiRaiseUserExceptionDispatcher;
+    frame->restore_flags |= CONTEXT_CONTROL;
 }
 
 
