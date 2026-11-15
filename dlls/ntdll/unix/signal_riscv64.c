@@ -161,6 +161,9 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     struct syscall_frame *frame = get_syscall_frame( data );
     DWORD flags = context->ContextFlags & ~CONTEXT_RISCV64;
 
+    if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
+        return STATUS_INVALID_PARAMETER;
+
     if (handle != GetCurrentThread())
         return STATUS_NOT_IMPLEMENTED;
 
@@ -197,6 +200,9 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
     DWORD flags = context->ContextFlags & ~CONTEXT_RISCV64;
+
+    if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
+        return STATUS_INVALID_PARAMETER;
 
     if (handle != GetCurrentThread())
         return STATUS_NOT_IMPLEMENTED;
