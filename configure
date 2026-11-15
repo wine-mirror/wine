@@ -809,7 +809,6 @@ OPENGL_LIBS
 ATOMIC_LIBS
 I386_LIBS
 DLLEXT
-riscv64_CC
 WIN16_ARCH
 CPPABI_PE_ARCHS
 CXX_PE_ARCHS
@@ -829,6 +828,17 @@ RUNTESTFLAGS
 wine64dir
 toolsdir
 toolsext
+riscv64_DELAYLOADFLAG
+riscv64_STRIP
+riscv64_TARGET
+riscv64_DEBUG
+riscv64_LDFLAGS
+riscv64_EXTRACXXFLAGS
+riscv64_EXTRACFLAGS
+riscv64_CXXFLAGS
+riscv64_CFLAGS
+riscv64_CXX
+riscv64_CC
 x86_64_DELAYLOADFLAG
 x86_64_STRIP
 x86_64_TARGET
@@ -4830,6 +4840,10 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+case $host_cpu in
+  riscv64*) with_mingw=${with_mingw-no} ;;
+esac
+
 if test "x$enable_sast" = xyes
 then :
   CC=${CC:-clang}
@@ -7778,6 +7792,12 @@ then :
 
 else $as_nop
   eval "${wine_arch}_CFLAGS=\${CROSSCFLAGS:-\"-g -O2\"}"
+fi
+            if test "x$wine_arch" = xriscv64
+then :
+
+        as_fn_append ${wine_arch}_CFLAGS " -fshort-wchar"
+
 fi
     if eval test \${${wine_arch}_LDFLAGS+y}
 then :
@@ -23530,6 +23550,17 @@ x86_64_DEBUG = $x86_64_DEBUG
 x86_64_TARGET = $x86_64_TARGET
 x86_64_STRIP = $x86_64_STRIP
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
+riscv64_CC = $riscv64_CC
+riscv64_CXX = $riscv64_CXX
+riscv64_CFLAGS = $riscv64_CFLAGS
+riscv64_CXXFLAGS = $riscv64_CXXFLAGS
+riscv64_EXTRACFLAGS = $riscv64_EXTRACFLAGS
+riscv64_EXTRACXXFLAGS = $riscv64_EXTRACXXFLAGS
+riscv64_LDFLAGS = $riscv64_LDFLAGS
+riscv64_DEBUG = $riscv64_DEBUG
+riscv64_TARGET = $riscv64_TARGET
+riscv64_STRIP = $riscv64_STRIP
+riscv64_DELAYLOADFLAG = $riscv64_DELAYLOADFLAG
 toolsext = $toolsext
 toolsdir = $toolsdir
 wine64dir = $wine64dir
@@ -23549,7 +23580,6 @@ PE_ARCHS = $PE_ARCHS
 CXX_PE_ARCHS = $CXX_PE_ARCHS
 CPPABI_PE_ARCHS = $CPPABI_PE_ARCHS
 WIN16_ARCH = $WIN16_ARCH
-riscv64_CC = $riscv64_CC
 DLLEXT = $DLLEXT
 I386_LIBS = $I386_LIBS
 ATOMIC_LIBS = $ATOMIC_LIBS
