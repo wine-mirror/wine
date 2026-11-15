@@ -167,7 +167,11 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
-        return STATUS_NOT_IMPLEMENTED;
+    {
+        BOOL self = FALSE;
+        NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_RISCV64 );
+        if (ret || !self) return ret;
+    }
 
     if (!frame)
         return STATUS_ACCESS_DENIED;
@@ -209,7 +213,11 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
-        return STATUS_NOT_IMPLEMENTED;
+    {
+        BOOL self = FALSE;
+        NTSTATUS ret = set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_RISCV64 );
+        if (ret || !self) return ret;
+    }
 
     if (!frame)
         return STATUS_ACCESS_DENIED;
