@@ -199,33 +199,22 @@ static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     INT ret;
 
-    pthread_mutex_lock(&device_data_mutex);
-
-    if (!device_data_valid) device_init();
-
     switch(cap)
     {
     case HORZSIZE:
-        ret = horz_size;
-        break;
     case VERTSIZE:
-        ret = vert_size;
-        break;
-    case HORZRES:
-    case VERTRES:
-    default:
+        pthread_mutex_lock(&device_data_mutex);
+
+        if (!device_data_valid) device_init();
+        ret = cap == HORZSIZE ? horz_size : vert_size;
+
         pthread_mutex_unlock(&device_data_mutex);
-        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
-        ret = dev->funcs->pGetDeviceCaps( dev, cap );
-        if ((cap == HORZRES || cap == VERTRES) && retina_on)
-            ret *= 2;
+        TRACE("cap %d -> %d\n", cap, ret);
         return ret;
+    default:
+        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
+        return dev->funcs->pGetDeviceCaps( dev, cap );
     }
-
-    TRACE("cap %d -> %d\n", cap, ret);
-
-    pthread_mutex_unlock(&device_data_mutex);
-    return ret;
 }
 
 

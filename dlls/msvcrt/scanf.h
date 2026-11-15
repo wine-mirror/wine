@@ -213,6 +213,9 @@ _FUNCTION_ {
 #endif /* STRING */
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
+#if !defined(STRING) && !defined(CONSOLE)
+    if (!MSVCRT_CHECK_PMT(file)) return -1;
+#endif /* STRING && CONSOLE */
     _LOCK_FILE_(file);
 
     nch = _GETC_(file);

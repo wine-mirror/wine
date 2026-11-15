@@ -353,7 +353,7 @@
 @ cdecl wined3d_unordered_access_view_get_parent(ptr)
 @ cdecl wined3d_unordered_access_view_incref(ptr)
 
-@ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
+@ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_decref(ptr)
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)

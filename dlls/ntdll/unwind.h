@@ -179,7 +179,7 @@ static inline NTSTATUS context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const ARM6
         XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) || context_ex->XState.Length > sizeof(*xstate))
             status = STATUS_INVALID_PARAMETER;
-        else if (xstate->Mask & XSTATE_MASK_AVX & user_xstate_config->EnabledFeatures)
+        else if (xstate->Mask & XSTATE_MASK_AVX & RtlGetEnabledExtendedFeatures( XSTATE_MASK_AVX ))
         {
             if (context_ex->XState.Length == sizeof(*xstate)) ymm = &xstate->YmmContext;
             else status = STATUS_BUFFER_OVERFLOW;

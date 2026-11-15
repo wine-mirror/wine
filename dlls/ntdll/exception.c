@@ -601,14 +601,6 @@ void WINAPI RtlGetCallersAddress( void **caller, void **parent )
 }
 
 
-/**********************************************************************
- *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
- */
-ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
-{
-    return user_xstate_config->EnabledFeatures & feature_mask;
-}
-
 struct context_copy_range
 {
     ULONG start;
@@ -682,8 +674,8 @@ static int next_compacted_xstate_offset( int off, UINT64 compaction_mask, int fe
 {
     const UINT64 feature_mask = (UINT64)1 << feature_idx;
 
-    if (compaction_mask & feature_mask) off += user_xstate_config->Features[feature_idx].Size;
-    if (user_xstate_config->AlignedFeatures & (feature_mask << 1))
+    if (compaction_mask & feature_mask) off += user_shared_data->XState.Features[feature_idx].Size;
+    if (user_shared_data->XState.AlignedFeatures & (feature_mask << 1))
         off = (off + 63) & ~63;
     return off;
 }
@@ -701,7 +693,7 @@ static int xstate_get_compacted_size( UINT64 mask )
     i = 2;
     while (mask)
     {
-        if (mask == 1) return off + user_xstate_config->Features[i].Size;
+        if (mask == 1) return off + user_shared_data->XState.Features[i].Size;
         off = next_compacted_xstate_offset( off, compaction_mask, i );
         mask >>= 1;
         ++i;
@@ -721,7 +713,7 @@ static int xstate_get_size( UINT64 mask )
         mask >>= 1;
         ++i;
     }
-    return user_xstate_config->Features[i].Offset + user_xstate_config->Features[i].Size - sizeof(XSAVE_FORMAT);
+    return user_shared_data->XState.Features[i].Offset + user_shared_data->XState.Features[i].Size - sizeof(XSAVE_FORMAT);
 }
 
 /**********************************************************************
@@ -751,9 +743,9 @@ NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length
     size = p->context_size + p->context_ex_size + 63;
 
     compaction_mask &= supported_mask & ~(ULONG64)3;
-    if (user_xstate_config->CompactionEnabled) size += xstate_get_compacted_size( compaction_mask );
-    else if (compaction_mask)                  size += xstate_get_size( compaction_mask );
-    else                                       size += sizeof(XSAVE_AREA_HEADER);
+    if (user_shared_data->XState.CompactionEnabled) size += xstate_get_compacted_size( compaction_mask );
+    else if (compaction_mask)                       size += xstate_get_size( compaction_mask );
+    else                                            size += sizeof(XSAVE_AREA_HEADER);
 
     *length = size;
     return STATUS_SUCCESS;
@@ -806,12 +798,12 @@ NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flag
         c_ex->XState.Offset = (ULONG_PTR)xs - (ULONG_PTR)c_ex;
         compaction_mask &= supported_mask;
 
-        if (user_xstate_config->CompactionEnabled) c_ex->XState.Length = xstate_get_compacted_size( compaction_mask );
-        else if (compaction_mask & ~(ULONG64)3)    c_ex->XState.Length = xstate_get_size( compaction_mask );
-        else                                       c_ex->XState.Length = sizeof(XSAVE_AREA_HEADER);
+        if (user_shared_data->XState.CompactionEnabled) c_ex->XState.Length = xstate_get_compacted_size( compaction_mask );
+        else if (compaction_mask & ~(ULONG64)3)         c_ex->XState.Length = xstate_get_size( compaction_mask );
+        else                                            c_ex->XState.Length = sizeof(XSAVE_AREA_HEADER);
 
         memset( xs, 0, c_ex->XState.Length );
-        if (user_xstate_config->CompactionEnabled)
+        if (user_shared_data->XState.CompactionEnabled)
             xs->CompactionMask = ((ULONG64)1 << 63) | compaction_mask;
 
         c_ex->All.Length = p->context_size + c_ex->XState.Offset + c_ex->XState.Length;
@@ -855,7 +847,7 @@ void * WINAPI RtlLocateExtendedFeature2( CONTEXT_EX *context_ex, ULONG feature_i
         return NULL;
     }
 
-    if (xstate_config != user_xstate_config)
+    if (xstate_config != &user_shared_data->XState)
     {
         FIXME( "Custom xstate configuration is not supported.\n" );
         return NULL;
@@ -895,7 +887,7 @@ void * WINAPI RtlLocateExtendedFeature2( CONTEXT_EX *context_ex, ULONG feature_i
 void * WINAPI RtlLocateExtendedFeature( CONTEXT_EX *context_ex, ULONG feature_id,
         ULONG *length )
 {
-    return RtlLocateExtendedFeature2( context_ex, feature_id, user_xstate_config, length );
+    return RtlLocateExtendedFeature2( context_ex, feature_id, &user_shared_data->XState, length );
 }
 
 /**********************************************************************
@@ -1040,7 +1032,7 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
 
     memset(dst_xs, 0, sizeof(XSAVE_AREA_HEADER));
     dst_xs->Mask = (src_xs->Mask & ~(ULONG64)3) & feature_mask;
-    dst_xs->CompactionMask = user_xstate_config->CompactionEnabled
+    dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled
             ? ((ULONG64)1 << 63) | (src_xs->CompactionMask & feature_mask) : 0;
     feature_mask = dst_xs->Mask >> 2;
 
@@ -1050,8 +1042,8 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
     {
         if (feature_mask & 1)
         {
-            if (!dst_xs->CompactionMask) off = user_xstate_config->Features[i].Offset - sizeof(XSAVE_FORMAT);
-            size = user_xstate_config->Features[i].Size;
+            if (!dst_xs->CompactionMask) off = user_shared_data->XState.Features[i].Offset - sizeof(XSAVE_FORMAT);
+            size = user_shared_data->XState.Features[i].Size;
             if (src->XState.Length < off + size || dst->XState.Length < off + size) break;
             memcpy( (BYTE *)dst_xs + off, (BYTE *)src_xs + off, size );
         }

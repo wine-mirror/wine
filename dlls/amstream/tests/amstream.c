@@ -2709,6 +2709,137 @@ static void test_initialize(void)
     graph_destroy(&graph);
 }
 
+static void test_render(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    FILTER_INFO filter_info;
+    IMediaStream *stream;
+    IPin *pin, *pin_peer;
+    PIN_INFO pin_info;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+
+    /* Test Render prior to Initialize */
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    /* Test Render with STREAMTYPE_READ */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    /* Test Render with STREAMTYPE_WRITE */
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void**)&pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &pin_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(pin_info.dir == PINDIR_OUTPUT, "Unexpected pin dir %d.\n", pin_info.dir);
+    todo_wine
+    ok(!lstrcmpW(pin_info.achName, L"O{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}"), "Unexpected achName in pin_info: \"%S\".\n", pin_info.achName);
+    ok(pin_info.pFilter != NULL, "Pin info filter is NULL.\n");
+
+    hr = IBaseFilter_QueryFilterInfo(pin_info.pFilter, &filter_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(filter_info.achName, L""), "Unexpected achName in filter_info: \"%S\".\n", filter_info.achName);
+    ok(filter_info.pGraph != NULL, "Filter info graph is NULL.\n");
+
+    IFilterGraph_Release(filter_info.pGraph);
+    IBaseFilter_Release(pin_info.pFilter);
+
+    hr = IPin_ConnectedTo(pin, &pin_peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IPin_ConnectedTo(pin, &pin_peer);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(pin_peer != NULL, "pin_peer is NULL.\n");
+
+        hr = IPin_ConnectionMediaType(pin, &mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video), "Got unexpected major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+        ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_RGB32), "Got unexpected sub type %s.\n", wine_dbgstr_guid(&mt.subtype));
+
+        FreeMediaType(&mt);
+        IPin_Release(pin_peer);
+    }
+
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    /* Test Render with STREAMTYPE_TRANSFORM */
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_RENDERALLSTREAMS);
+    ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_Render(mmstream, AMMSF_NOCLOCK);
+    ok(hr == VFW_E_INVALID_DIRECTION, "Got hr %#lx.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 static IAMMultiMediaStream *mmstream_mmstream;
 static STREAM_STATE mmstream_state;
 
@@ -10999,6 +11130,7 @@ START_TEST(amstream)
     test_find_pin();
     test_pin_info();
     test_initialize();
+    test_render();
     test_set_state();
     test_enum_media_types();
     test_media_types();

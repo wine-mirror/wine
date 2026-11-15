@@ -59,7 +59,7 @@ static BOOL eject_cd( WCHAR drive )
 
     lstrcpyW( buffer, L"\\\\.\\a:" );
     buffer[4] = drive;
-    handle = CreateFileW( buffer, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    handle = CreateFileW( buffer, FILE_READ_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, 0, 0 );
     if (handle == INVALID_HANDLE_VALUE)
     {

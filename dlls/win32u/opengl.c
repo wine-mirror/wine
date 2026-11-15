@@ -3089,18 +3089,18 @@ static struct opengl_context *win32u_context_create( HDC hdc, struct opengl_cont
         RtlSetLastWin32Error( ERROR_INVALID_PROFILE_ARB );
         return FALSE;
     }
-    if (attrs.flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+    if (attrs.flags & ~(WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB))
     {
-        FIXME( "Unknown WGL_CONTEXT_FLAGS_ARB %#x\n", attrs.flags & ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB );
-        attrs.flags &= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+        FIXME( "Unknown WGL_CONTEXT_FLAGS_ARB %#x\n", attrs.flags & ~(WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB) );
+        attrs.flags &= (WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB);
     }
 
-    if ((attrs.major >= 0 && attrs.major < 3) || (attrs.major == 3 && attrs.minor <= 1 && !attrs.flags))
+    if ((attrs.major >= 0 && attrs.major < 3) || (attrs.major == 3 && attrs.minor <= 1 && !(attrs.flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)))
     {
         WARN( "Ignoring legacy OpenGL version %d.%d\n", attrs.major, attrs.minor == -1 ? 0 : attrs.minor );
         attrs.profile = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
         attrs.major = attrs.minor = -1;
-        attrs.flags = 0;
+        attrs.flags &= ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
     }
     else if ((attrs.major > 3 || attrs.minor >= 2) && !attrs.profile)
     {
@@ -3502,7 +3502,8 @@ static void display_funcs_init(void)
 
     init_enabled_extensions();
 
-    if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
+    if (!use_egl) WARN( "EGL is disabled, skipping initialization\n" );
+    else if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );

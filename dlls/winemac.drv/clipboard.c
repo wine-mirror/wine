@@ -1417,9 +1417,9 @@ LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 
 /**************************************************************************
- *              macdrv_UpdateClipboard
+ *              request_clipboard_update
  */
-void macdrv_UpdateClipboard(void)
+static void request_clipboard_update(BOOL wait)
 {
     static ULONG last_update;
     static HWND clipboard_manager;
@@ -1428,7 +1428,7 @@ void macdrv_UpdateClipboard(void)
 
     if (GetCurrentThreadId() == clipboard_thread_id) return;
 
-    TRACE("\n");
+    TRACE("%s\n", wait ? "wait" : "post");
 
     now = NtGetTickCount();
     if (last_update && (int)(now - last_update) <= CLIPBOARD_UPDATE_DELAY) return;
@@ -1444,15 +1444,39 @@ void macdrv_UpdateClipboard(void)
         }
     }
 
-    send_message_timeout(clipboard_manager, WM_USER, 0, 0,
-                         SMTO_ABORTIFHUNG, 5000, &ret);
-    last_update = now;
+    if (wait)
+    {
+        send_message_timeout(clipboard_manager, WM_USER, 0, 0,
+                             SMTO_ABORTIFHUNG, 5000, &ret);
+        last_update = now;
+        return;
+    }
+
+    NtUserPostMessage(clipboard_manager, WM_USER, 0, 0);
+}
+
+
+/**************************************************************************
+ *              macdrv_UpdateClipboard
+ */
+void macdrv_UpdateClipboard(void)
+{
+    request_clipboard_update(TRUE);
 }
 
 
 /**************************************************************************
  *              MACDRV Private Clipboard Exports
  **************************************************************************/
+
+
+/**************************************************************************
+ *              macdrv_update_clipboard_async
+ */
+void macdrv_update_clipboard_async(void)
+{
+    request_clipboard_update(FALSE);
+}
 
 
 /**************************************************************************

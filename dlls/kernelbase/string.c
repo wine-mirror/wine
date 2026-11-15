@@ -395,8 +395,20 @@ WCHAR * WINAPI StrStrNW(const WCHAR *str, const WCHAR *search, UINT max_len)
 
 int WINAPI StrCmpNIA(const char *str, const char *cmp, int len)
 {
+    int str_len, cmp_len;
+
     TRACE("%s, %s, %i\n", wine_dbgstr_a(str), wine_dbgstr_a(cmp), len);
-    return CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str, len, cmp, len) - CSTR_EQUAL;
+
+    if (!str || !cmp)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return -2;
+    }
+    if (!len) return 0;
+    str_len = strnlen(str, len - 1) + 1;
+    cmp_len = strnlen(cmp, len - 1) + 1;
+
+    return CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str, str_len, cmp, cmp_len) - CSTR_EQUAL;
 }
 
 WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
@@ -422,13 +434,30 @@ WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
 int WINAPI StrCmpNA(const char *str, const char *comp, int len)
 {
     TRACE("%s, %s, %i\n", wine_dbgstr_a(str), wine_dbgstr_a(comp), len);
+
+    if (!str || !comp || !len) return 0;
+    len = strnlen(str, len - 1) + 1;
+    len = strnlen(comp, len - 1) + 1;
+
     return CompareStringA(GetThreadLocale(), 0, str, len, comp, len) - CSTR_EQUAL;
 }
 
 int WINAPI StrCmpNW(const WCHAR *str, const WCHAR *comp, int len)
 {
+    int str_len, comp_len;
+
     TRACE("%s, %s, %i\n", wine_dbgstr_w(str), wine_dbgstr_w(comp), len);
-    return CompareStringW(GetThreadLocale(), 0, str, len, comp, len) - CSTR_EQUAL;
+
+    if (!str || !comp)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return -2;
+    }
+    if (!len) return 0;
+    str_len = wcsnlen(str, len - 1) + 1;
+    comp_len = wcsnlen(comp, len - 1) + 1;
+
+    return CompareStringW(GetThreadLocale(), 0, str, str_len, comp, comp_len) - CSTR_EQUAL;
 }
 
 DWORD WINAPI StrCmpNCA(const char *str, const char *comp, int len)
@@ -443,8 +472,20 @@ DWORD WINAPI StrCmpNCW(const WCHAR *str, const WCHAR *comp, int len)
 
 int WINAPI StrCmpNIW(const WCHAR *str, const WCHAR *comp, int len)
 {
+    int str_len, comp_len;
+
     TRACE("%s, %s, %i\n", wine_dbgstr_w(str), wine_dbgstr_w(comp), len);
-    return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str, len, comp, len) - CSTR_EQUAL;
+
+    if (!str || !comp)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return -2;
+    }
+    if (!len) return 0;
+    str_len = wcsnlen(str, len - 1) + 1;
+    comp_len = wcsnlen(comp, len - 1) + 1;
+
+    return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str, str_len, comp, comp_len) - CSTR_EQUAL;
 }
 
 int WINAPI StrCmpW(const WCHAR *str, const WCHAR *comp)
@@ -1329,10 +1370,20 @@ int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
 
 BOOL WINAPI StrIsIntlEqualA(BOOL case_sensitive, const char *str, const char *cmp, int len)
 {
+    int str_len, cmp_len;
     DWORD flags;
 
     TRACE("%d, %s, %s, %d\n", case_sensitive, wine_dbgstr_a(str), wine_dbgstr_a(cmp), len);
 
+    if (!str || !cmp)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!len) return TRUE;
+    str_len = strnlen(str, len - 1) + 1;
+    cmp_len = strnlen(cmp, len - 1) + 1;
+
     /* FIXME: This flag is undocumented and unknown by our CompareString.
      *        We need a define for it.
      */
@@ -1340,14 +1391,24 @@ BOOL WINAPI StrIsIntlEqualA(BOOL case_sensitive, const char *str, const char *cm
     if (!case_sensitive)
         flags |= NORM_IGNORECASE;
 
-    return (CompareStringA(GetThreadLocale(), flags, str, len, cmp, len) == CSTR_EQUAL);
+    return (CompareStringA(GetThreadLocale(), flags, str, str_len, cmp, cmp_len) == CSTR_EQUAL);
 }
 
 BOOL WINAPI StrIsIntlEqualW(BOOL case_sensitive, const WCHAR *str, const WCHAR *cmp, int len)
 {
+    int str_len, cmp_len;
     DWORD flags;
 
     TRACE("%d, %s, %s, %d\n", case_sensitive, debugstr_w(str), debugstr_w(cmp), len);
+
+    if (!str || !cmp)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!len) return TRUE;
+    str_len = wcsnlen(str, len - 1) + 1;
+    cmp_len = wcsnlen(cmp, len - 1) + 1;
 
     /* FIXME: This flag is undocumented and unknown by our CompareString.
      *        We need a define for it.
@@ -1356,7 +1417,7 @@ BOOL WINAPI StrIsIntlEqualW(BOOL case_sensitive, const WCHAR *str, const WCHAR *
     if (!case_sensitive)
         flags |= NORM_IGNORECASE;
 
-    return (CompareStringW(GetThreadLocale(), flags, str, len, cmp, len) == CSTR_EQUAL);
+    return (CompareStringW(GetThreadLocale(), flags, str, str_len, cmp, cmp_len) == CSTR_EQUAL);
 }
 
 char * WINAPI StrCatBuffA(char *str, const char *cat, INT max_len)

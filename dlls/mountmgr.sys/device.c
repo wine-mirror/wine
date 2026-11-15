@@ -2083,6 +2083,37 @@ static NTSTATUS WINAPI disk_close( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
+static NTSTATUS WINAPI disk_read( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    struct disk_device *dev = device->DeviceExtension;
+    NTSTATUS status;
+
+    TRACE( "read size %lu offset %I64d\n",
+           stack->Parameters.Read.Length, stack->Parameters.Read.ByteOffset.QuadPart );
+
+    if (dev->type == DEVICE_CDROM || dev->type == DEVICE_DVD)
+    {
+        struct cdrom_read_params params;
+
+        params.cdrom = stack->FileObject->FsContext;
+        params.output = irp->AssociatedIrp.SystemBuffer;
+        params.offset = stack->Parameters.Read.ByteOffset.QuadPart;
+        params.size = stack->Parameters.Read.Length;
+        if (!(status = MOUNTMGR_CALL( cdrom_read, &params )))
+            stack->FileObject->CurrentByteOffset.QuadPart += params.ret_size;
+        irp->IoStatus.Information = params.ret_size;
+    }
+    else
+    {
+        status = STATUS_INVALID_DEVICE_REQUEST;
+    }
+
+    irp->IoStatus.Status = status;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return status;
+}
+
 /* driver entry point for the harddisk driver */
 NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
@@ -2091,6 +2122,7 @@ NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     disk_driver = driver;
     driver->MajorFunction[IRP_MJ_CREATE] = disk_create;
     driver->MajorFunction[IRP_MJ_CLOSE] = disk_close;
+    driver->MajorFunction[IRP_MJ_READ] = disk_read;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = disk_ioctl;
     driver->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL] = disk_ioctl;
     driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = disk_query_volume;

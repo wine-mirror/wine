@@ -752,9 +752,9 @@ static bool xpath_push_long_step(struct xpath_parser_context *ctxt, enum xpath_o
 static bool xpath_push_full_step(struct xpath_parser_context *ctxt, enum xpath_op op, int ch1, int ch2,
         int value, int value2, int value3, void *value4, void *value5)
 {
-    struct xpath_step_op *step = xpath_push_step(ctxt);
+    struct xpath_step_op *step;
 
-    if (!step)
+    if (!(step = xpath_push_step(ctxt)))
         return false;
 
     step->op = op;
@@ -771,7 +771,10 @@ static bool xpath_push_full_step(struct xpath_parser_context *ctxt, enum xpath_o
 
 static void xpath_push_leave_step(struct xpath_parser_context *ctxt, enum xpath_op op, int value, int value2)
 {
-    struct xpath_step_op *step = xpath_push_step(ctxt);
+    struct xpath_step_op *step;
+
+    if (!(step = xpath_push_step(ctxt)))
+        return;
 
     step->op = op;
     step->ch1 = -1;
@@ -782,7 +785,10 @@ static void xpath_push_leave_step(struct xpath_parser_context *ctxt, enum xpath_
 
 static void xpath_push_unary_step(struct xpath_parser_context *ctxt, enum xpath_op op, int ch, int value, int value2)
 {
-    struct xpath_step_op *step = xpath_push_step(ctxt);
+    struct xpath_step_op *step;
+
+    if (!(step = xpath_push_step(ctxt)))
+        return;
 
     step->op = op;
     step->ch1 = ch;
@@ -793,7 +799,10 @@ static void xpath_push_unary_step(struct xpath_parser_context *ctxt, enum xpath_
 static void xpath_push_binary_step(struct xpath_parser_context *ctxt, enum xpath_op op, int ch1, int ch2,
         int value, int value2)
 {
-    struct xpath_step_op *step = xpath_push_step(ctxt);
+    struct xpath_step_op *step;
+
+    if (!(step = xpath_push_step(ctxt)))
+        return;
 
     step->op = op;
     step->ch1 = ch1;
@@ -2085,7 +2094,8 @@ static void xpath_compile_expr(struct xpath_parser_context *ctxt, bool sort)
         xpath_parse_skipspaces(ctxt);
     }
 
-    if (sort && (ctxt->comp->steps.values[ctxt->comp->last].op != XPATH_OP_VALUE))
+    if (ctxt->error == XPATH_EXPRESSION_OK
+            && sort && (ctxt->comp->steps.values[ctxt->comp->last].op != XPATH_OP_VALUE))
     {
         /* more ops could be optimized too */
         /*
@@ -7503,6 +7513,26 @@ static void xslpattern_compile_equality_expr(struct xpath_parser_context *ctxt)
     }
 }
 
+/* Lookahead for "not(" notation. */
+static bool xslpattern_is_not_func(struct xpath_parser_context *ctxt)
+{
+    const WCHAR *p = ctxt->cur;
+
+    if (p[0] == 'n' && p[1] == 'o' && p[2] == 't')
+    {
+        p += 3;
+        while (xml_is_space(*p))
+            ++p;
+        if (*p == '(')
+        {
+            ctxt->cur = ++p;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /*
  *  NegationExpr ::= EqualityExpr
  *          | '$not$' NegationExpr
@@ -7518,11 +7548,9 @@ static void xslpattern_compile_negation_expr(struct xpath_parser_context *ctxt)
         xpath_parse_skipspaces(ctxt);
         neg = true;
     }
-    else if (xpath_parse_cmp(ctxt, L"not"))
+    else if (xslpattern_is_not_func(ctxt))
     {
         xpath_parse_skipspaces(ctxt);
-        if (!xpath_parse_cmp(ctxt, L"("))
-            return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
         neg = functional = true;
     }
 
@@ -7539,6 +7567,20 @@ static void xslpattern_compile_negation_expr(struct xpath_parser_context *ctxt)
         xpath_push_unary_step(ctxt, XPATH_OP_NOT, ctxt->comp->last, 0, 0);
 }
 
+static bool xslpattern_is_and_operator(struct xpath_parser_context *ctxt)
+{
+    if (xpath_parse_cmp(ctxt, L"$and$") || xpath_parse_cmp(ctxt, L"&&"))
+        return true;
+
+    if (ctxt->cur[0] == 'a' && ctxt->cur[1] == 'n' && ctxt->cur[2] == 'd' && xml_is_space(ctxt->cur[3]))
+    {
+        xpath_parse_skip(ctxt, 3);
+        return true;
+    }
+
+    return false;
+}
+
 /*
  *  AndExpr ::= NegationExpr
  *          | NegationExpr ('and' | '$and$' | '&&') AndExpr
@@ -7547,9 +7589,7 @@ static void xslpattern_compile_and_expr(struct xpath_parser_context *ctxt)
 {
     xslpattern_compile_negation_expr(ctxt);
     xpath_parse_skipspaces(ctxt);
-    while (xpath_parse_cmp(ctxt, L"and")
-            || xpath_parse_cmp(ctxt, L"$and$")
-            || xpath_parse_cmp(ctxt, L"&&"))
+    while (xslpattern_is_and_operator(ctxt))
     {
         int op1 = ctxt->comp->last;
 
@@ -7558,6 +7598,20 @@ static void xslpattern_compile_and_expr(struct xpath_parser_context *ctxt)
         xpath_push_binary_step(ctxt, XPATH_OP_AND, op1, ctxt->comp->last, 0, 0);
         xpath_parse_skipspaces(ctxt);
     }
+}
+
+static bool xslpattern_is_or_operator(struct xpath_parser_context *ctxt)
+{
+    if (xpath_parse_cmp(ctxt, L"$or$") || xpath_parse_cmp(ctxt, L"||"))
+        return true;
+
+    if (ctxt->cur[0] == 'o' && ctxt->cur[1] == 'r' && xml_is_space(ctxt->cur[2]))
+    {
+        xpath_parse_skip(ctxt, 2);
+        return true;
+    }
+
+    return false;
 }
 
 /*
@@ -7583,9 +7637,7 @@ static void xslpattern_compile_expr(struct xpath_parser_context *ctxt, bool sort
     xslpattern_compile_and_expr(ctxt);
 
     xpath_parse_skipspaces(ctxt);
-    while (xpath_parse_cmp(ctxt, L"or")
-            || xpath_parse_cmp(ctxt, L"$or$")
-            || xpath_parse_cmp(ctxt, L"||"))
+    while (xslpattern_is_or_operator(ctxt))
     {
         int op1 = ctxt->comp->last;
 
@@ -7595,7 +7647,8 @@ static void xslpattern_compile_expr(struct xpath_parser_context *ctxt, bool sort
         xpath_parse_skipspaces(ctxt);
     }
 
-    if (sort && (ctxt->comp->steps.values[ctxt->comp->last].op != XPATH_OP_VALUE))
+    if (ctxt->error == XPATH_EXPRESSION_OK
+            && sort && (ctxt->comp->steps.values[ctxt->comp->last].op != XPATH_OP_VALUE))
     {
         /* more ops could be optimized too */
         /*

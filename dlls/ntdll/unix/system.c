@@ -761,7 +761,7 @@ static ULONGLONG get_cpu_features(void)
 
 void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 {
-    BOOLEAN *features = data->ProcessorFeatures;
+    BOOLEAN *features = data->ProcessorFeatures, have_x86 = FALSE;
 
     features[PF_FASTFAIL_AVAILABLE]      = TRUE;
     features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
@@ -806,20 +806,40 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         switch (supported_machines[i])
         {
         case IMAGE_FILE_MACHINE_I386:
-            features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
-            features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
-            features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
-            features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-            features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
-            features[PF_COMPARE_EXCHANGE128]           = TRUE;
-            features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
-            features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
-            features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
-            features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+        case IMAGE_FILE_MACHINE_AMD64:
+            have_x86 = TRUE;
             break;
         }
     }
 #endif
+
+    if (have_x86)
+    {
+        XSTATE_CONFIGURATION *xstate_config = &data->XState;
+
+        features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+        features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
+        features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
+        features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+        features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
+        features[PF_COMPARE_EXCHANGE128]           = TRUE;
+        features[PF_XSAVE_ENABLED]                 = TRUE;
+        features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
+        features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
+        features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
+        features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+        features[PF_AVX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+        features[PF_AVX2_INSTRUCTIONS_AVAILABLE]   = TRUE;
+
+        xstate_config->EnabledFeatures = xstate_config->EnabledVolatileFeatures = XSTATE_MASK_LEGACY | XSTATE_MASK_AVX;
+        xstate_config->Features[XSTATE_LEGACY_FLOATING_POINT].Offset = 0;
+        xstate_config->Features[XSTATE_LEGACY_FLOATING_POINT].Size   = 10 * sizeof(M128A);
+        xstate_config->Features[XSTATE_LEGACY_SSE].Offset = 10 * sizeof(M128A);
+        xstate_config->Features[XSTATE_LEGACY_SSE].Size   = 16 * sizeof(M128A);
+        xstate_config->Features[XSTATE_AVX].Offset = sizeof(XSAVE_AREA);
+        xstate_config->Features[XSTATE_AVX].Size   = sizeof(YMMCONTEXT);
+        xstate_config->Size = xstate_config->AllFeatureSize = sizeof(XSAVE_FORMAT) + sizeof(XSTATE);
+    }
 }
 
 #endif /* End architecture specific feature detection for CPUs */

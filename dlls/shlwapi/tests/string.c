@@ -40,10 +40,6 @@
     ok(ret == val1 || ret == val2, "Unexpected value of '" #expr "': " #fmt " instead of " #val1 " or " #val2 "\n", ret); \
 } while (0);
 
-static BOOL    (WINAPI *pChrCmpIA)(CHAR, CHAR);
-static BOOL    (WINAPI *pChrCmpIW)(WCHAR, WCHAR);
-static BOOL    (WINAPI *pIntlStrEqWorkerA)(BOOL,LPCSTR,LPCSTR,int);
-static BOOL    (WINAPI *pIntlStrEqWorkerW)(BOOL,LPCWSTR,LPCWSTR,int);
 static DWORD   (WINAPI *pSHAnsiToAnsi)(LPCSTR,LPSTR,int);
 static DWORD   (WINAPI *pSHUnicodeToUnicode)(LPCWSTR,LPWSTR,int);
 static LPSTR   (WINAPI *pStrCatBuffA)(LPSTR,LPCSTR,INT);
@@ -55,8 +51,6 @@ static LPSTR   (WINAPI *pStrFormatByteSize64A)(LONGLONG,LPSTR,UINT);
 static HRESULT (WINAPI *pStrFormatByteSizeEx)(LONGLONG,SFBS_FLAGS,LPWSTR,UINT);
 static LPSTR   (WINAPI *pStrFormatKBSizeA)(LONGLONG,LPSTR,UINT);
 static LPWSTR  (WINAPI *pStrFormatKBSizeW)(LONGLONG,LPWSTR,UINT);
-static BOOL    (WINAPI *pStrIsIntlEqualA)(BOOL,LPCSTR,LPCSTR,int);
-static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
 static LPWSTR  (WINAPI *pStrPBrkW)(LPCWSTR,LPCWSTR);
 static LPSTR   (WINAPI *pStrRChrA)(LPCSTR,LPCSTR,WORD);
 static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,LPCITEMIDLIST,BSTR*);
@@ -792,62 +786,231 @@ static void test_StrCmpA(void)
 {
   static const char str1[] = {'a','b','c','d','e','f'};
   static const char str2[] = {'a','B','c','d','e','f'};
-  ok(0 != StrCmpNA(str1, str2, 6), "StrCmpNA is case-insensitive\n");
-  ok(0 == StrCmpNIA(str1, str2, 6), "StrCmpNIA is case-sensitive\n");
-  if (pChrCmpIA) {
-    ok(!pChrCmpIA('a', 'a'), "ChrCmpIA doesn't work at all!\n");
-    ok(!pChrCmpIA('b', 'B'), "ChrCmpIA is not case-insensitive\n");
-    ok(pChrCmpIA('a', 'z'), "ChrCmpIA believes that a == z!\n");
-  }
-  else
-    win_skip("ChrCmpIA() is not available\n");
+  static const char str3[] = {'a',0,'b'};
+  static const char str4[] = {'a',0,'c'};
+  static const char str5[] = {'a',0xad,'d'}; /* soft hyphen */
+  int res;
 
-  if (pStrIsIntlEqualA)
-  {
-    ok(pStrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
-    ok(!pStrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
-  }
-  else
-    win_skip("StrIsIntlEqualA() is not available\n");
+  SetLastError(0xdeadbeef);
+  res = StrCmpNA(NULL, NULL, 0);
+  ok(res == 0, "StrCmpNA(NULL,NULL,0) returned %i\n", res);
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
 
-  if (pIntlStrEqWorkerA)
+  SetLastError(0xdeadbeef);
+  res = StrCmpNIA(NULL, NULL, 0);
+  ok(res == -2, "StrCmpNIA(NULL,NULL,0) returned %i\n", res);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  res = StrCmpNA(str1, str2, 0);
+  ok(res == 0, "StrCmpNA(...,0) returned %i\n", res);
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  res = StrCmpNIA(str1, str2, 0);
+  ok(res == 0, "StrCmpNIA(...,0) returned %i\n", res);
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  res = StrCmpNA(str1, str2, 6);
+  ok(res == -1, "StrCmpNA returned %i\n", res);
+
+  res = StrCmpNIA(str1, str2, 6);
+  ok(res == 0, "StrCmpNIA returned %i\n", res);
+
+  res = StrCmpNA(str3, str4, 3);
+  ok(res == 0, "StrCmpNA returned %i\n", res);
+
+  res = StrCmpNIA(str3, str4, 3);
+  ok(res == 0, "StrCmpNIA returned %i\n", res);
+
+  if (is_locale_english())
   {
-    ok(pIntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
-    ok(!pIntlStrEqWorkerA(TRUE, str1, str2, 5), "pIntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+    res = StrCmpNA(str4, str5, 3);
+    ok(res == 0, "StrCmpNA returned %i\n", res);
+
+    res = StrCmpNA(str5, str4, 3);
+    ok(res == 0, "StrCmpNA returned %i\n", res);
+
+    res = StrCmpNIA(str4, str5, 3);
+    ok(res == -1, "StrCmpNIA returned %i\n", res);
+
+    res = StrCmpNIA(str5, str4, 3);
+    ok(res == 1, "StrCmpNIA returned %i\n", res);
   }
-  else
-    win_skip("IntlStrEqWorkerA() is not available\n");
+
+  res = ChrCmpIA('a', 'a');
+  ok(res == 0, "ChrCmpIA returned %i\n", res);
+
+  res = ChrCmpIA('b', 'B');
+  ok(res == 0, "ChrCmpIA returned %i\n", res);
+
+  res = ChrCmpIA('a', 'z');
+  ok(res == -1, "ChrCmpIA returned %i\n", res);
+
+  SetLastError(0xdeadbeef);
+  ok(!StrIsIntlEqualA(FALSE, NULL, NULL, 0), "StrIsIntlEqualA(FALSE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(!StrIsIntlEqualA(TRUE, NULL, NULL, 0), "StrIsIntlEqualA(TRUE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(StrIsIntlEqualA(FALSE, str1, str2, 0), "StrIsIntlEqualA(FALSE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(StrIsIntlEqualA(TRUE, str1, str2, 0), "StrIsIntlEqualA(TRUE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  ok(StrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) is case-sensitive\n");
+  ok(!StrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
+  ok(StrIsIntlEqualA(FALSE, str3, str4, 3), "StrIsIntlEqualA(FALSE,...) read past null terminator\n");
+  ok(StrIsIntlEqualA(TRUE, str3, str4, 3), "StrIsIntlEqualA(TRUE,...) read past null terminator\n");
+
+  if (is_locale_english())
+  {
+    ok(!StrIsIntlEqualA(FALSE, str4, str5, 3), "StrIsIntlEqualA(FALSE,...) was true\n");
+    ok(!StrIsIntlEqualA(TRUE, str4, str5, 3), "StrIsIntlEqualA(TRUE,...) was true\n");
+  }
+
+  SetLastError(0xdeadbeef);
+  ok(!IntlStrEqWorkerA(FALSE, NULL, NULL, 0), "IntlStrEqWorkerA(FALSE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(!IntlStrEqWorkerA(TRUE, NULL, NULL, 0), "IntlStrEqWorkerA(TRUE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(IntlStrEqWorkerA(FALSE, str1, str2, 0), "IntlStrEqWorkerA(FALSE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(IntlStrEqWorkerA(TRUE, str1, str2, 0), "IntlStrEqWorkerA(TRUE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  ok(IntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) is case-sensitive\n");
+  ok(!IntlStrEqWorkerA(TRUE, str1, str2, 5), "IntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+  ok(IntlStrEqWorkerA(FALSE, str3, str4, 3), "IntlStrEqWorkerA(FALSE,...) read past null terminator\n");
+  ok(IntlStrEqWorkerA(TRUE, str3, str4, 3), "IntlStrEqWorkerA(TRUE,...) read past null terminator\n");
+
+  if (is_locale_english())
+  {
+    ok(!IntlStrEqWorkerA(FALSE, str4, str5, 3), "IntlStrEqWorkerA(FALSE,...) was true\n");
+    ok(!IntlStrEqWorkerA(TRUE, str4, str5, 3), "IntlStrEqWorkerA(TRUE,...) was true\n");
+  }
 }
 
 static void test_StrCmpW(void)
 {
   static const WCHAR str1[] = {'a','b','c','d','e','f'};
   static const WCHAR str2[] = {'a','B','c','d','e','f'};
-  ok(0 != StrCmpNW(str1, str2, 5), "StrCmpNW is case-insensitive\n");
-  ok(0 == StrCmpNIW(str1, str2, 5), "StrCmpNIW is case-sensitive\n");
-  if (pChrCmpIW) {
-    ok(!pChrCmpIW('a', 'a'), "ChrCmpIW doesn't work at all!\n");
-    ok(!pChrCmpIW('b', 'B'), "ChrCmpIW is not case-insensitive\n");
-    ok(pChrCmpIW('a', 'z'), "ChrCmpIW believes that a == z!\n");
-  }
-  else
-    win_skip("ChrCmpIW() is not available\n");
+  static const WCHAR str3[] = {'a',0,'b'};
+  static const WCHAR str4[] = {'a',0,'c'};
+  static const WCHAR str5[] = {'a',0xad,'d'}; /* soft hyphen */
+  int res;
 
-  if (pStrIsIntlEqualW)
-  {
-    ok(pStrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
-    ok(!pStrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
-  }
-  else
-    win_skip("StrIsIntlEqualW() is not available\n");
+  SetLastError(0xdeadbeef);
+  res = StrCmpNW(NULL, NULL, 0);
+  ok(res == -2, "StrCmpNW(NULL,NULL,0) returned %i\n", res);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
 
-  if (pIntlStrEqWorkerW)
-  {
-    ok(pIntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
-    ok(!pIntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
-  }
-  else
-    win_skip("IntlStrEqWorkerW() is not available\n");
+  SetLastError(0xdeadbeef);
+  res = StrCmpNIW(NULL, NULL, 0);
+  ok(res == -2, "StrCmpNIW(NULL,NULL,0) returned %i\n", res);
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  res = StrCmpNW(str1, str2, 0);
+  ok(res == 0, "StrCmpNW(...,0) returned %i\n", res);
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  res = StrCmpNIW(str1, str2, 0);
+  ok(res == 0, "StrCmpNIW(...,0) returned %i\n", res);
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  res = StrCmpNW(str1, str2, 6);
+  ok(res == -1, "StrCmpNW returned %i\n", res);
+
+  res = StrCmpNIW(str1, str2, 6);
+  ok(res == 0, "StrCmpNIW returned %i\n", res);
+
+  res = StrCmpNW(str3, str4, 3);
+  ok(res == 0, "StrCmpNW returned %i\n", res);
+
+  res = StrCmpNIW(str3, str4, 3);
+  ok(res == 0, "StrCmpNIW returned %i\n", res);
+
+  res = StrCmpNW(str4, str5, 3);
+  ok(res == -1, "StrCmpNW returned %i\n", res);
+
+  res = StrCmpNW(str5, str4, 3);
+  ok(res == 1, "StrCmpNW returned %i\n", res);
+
+  res = StrCmpNIW(str4, str5, 3);
+  ok(res == -1, "StrCmpNIW returned %i\n", res);
+
+  res = StrCmpNIW(str5, str4, 3);
+  ok(res == 1, "StrCmpNIW returned %i\n", res);
+
+  res = ChrCmpIW('a', 'a');
+  ok(res == 0, "ChrCmpIW returned %i\n", res);
+
+  res = ChrCmpIW('b', 'B');
+  ok(res == 0, "ChrCmpIW returned %i\n", res);
+
+  res = ChrCmpIW('a', 'z');
+  ok(res == -1, "ChrCmpIW returned %i\n", res);
+
+  SetLastError(0xdeadbeef);
+  ok(!StrIsIntlEqualW(FALSE, NULL, NULL, 0), "StrIsIntlEqualW(FALSE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(!StrIsIntlEqualW(TRUE, NULL, NULL, 0), "StrIsIntlEqualW(TRUE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(StrIsIntlEqualW(FALSE, str1, str2, 0), "StrIsIntlEqualW(FALSE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(StrIsIntlEqualW(TRUE, str1, str2, 0), "StrIsIntlEqualW(TRUE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  ok(StrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) is case-sensitive\n");
+  ok(!StrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
+  ok(StrIsIntlEqualW(FALSE, str3, str4, 3), "StrIsIntlEqualW(FALSE,...) read past null terminator\n");
+  ok(StrIsIntlEqualW(TRUE, str3, str4, 3), "StrIsIntlEqualW(TRUE,...) read past null terminator\n");
+
+  ok(!StrIsIntlEqualW(FALSE, str4, str5, 3), "StrIsIntlEqualW(FALSE,...) was true\n");
+  ok(!StrIsIntlEqualW(TRUE, str4, str5, 3), "StrIsIntlEqualW(TRUE,...) was true\n");
+
+  SetLastError(0xdeadbeef);
+  ok(!IntlStrEqWorkerW(FALSE, NULL, NULL, 0), "IntlStrEqWorkerW(FALSE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(!IntlStrEqWorkerW(TRUE, NULL, NULL, 0), "IntlStrEqWorkerW(TRUE,NULL,NULL,0) was true\n");
+  ok(GetLastError() == ERROR_INVALID_PARAMETER, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(IntlStrEqWorkerW(FALSE, str1, str2, 0), "IntlStrEqWorkerW(FALSE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  SetLastError(0xdeadbeef);
+  ok(IntlStrEqWorkerW(TRUE, str1, str2, 0), "IntlStrEqWorkerW(TRUE,...,0) was false\n");
+  ok(GetLastError() == 0xdeadbeef, "last error was %lu\n", GetLastError());
+
+  ok(IntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) is case-sensitive\n");
+  ok(!IntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
+  ok(IntlStrEqWorkerW(FALSE, str3, str4, 3), "IntlStrEqWorkerW(FALSE,...) read past null terminator\n");
+  ok(IntlStrEqWorkerW(TRUE, str3, str4, 3), "IntlStrEqWorkerW(TRUE,...) read past null terminator\n");
+
+  ok(!IntlStrEqWorkerW(FALSE, str4, str5, 3), "IntlStrEqWorkerW(FALSE,...) was true\n");
+  ok(!IntlStrEqWorkerW(TRUE, str4, str5, 3), "IntlStrEqWorkerW(TRUE,...) was true\n");
 }
 
 static WCHAR *CoDupStrW(const char* src)
@@ -1897,10 +2060,6 @@ START_TEST(string)
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimalDelim, 8);
 
   hShlwapi = GetModuleHandleA("shlwapi");
-  pChrCmpIA = (void *)GetProcAddress(hShlwapi, "ChrCmpIA");
-  pChrCmpIW = (void *)GetProcAddress(hShlwapi, "ChrCmpIW");
-  pIntlStrEqWorkerA = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerA");
-  pIntlStrEqWorkerW = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerW");
   pSHAnsiToAnsi = (void *)GetProcAddress(hShlwapi, (LPSTR)345);
   pSHUnicodeToUnicode = (void *)GetProcAddress(hShlwapi, (LPSTR)346);
   pStrCatBuffA = (void *)GetProcAddress(hShlwapi, "StrCatBuffA");
@@ -1913,8 +2072,6 @@ START_TEST(string)
   pStrFormatByteSizeEx = (void *)GetProcAddress(hShlwapi, "StrFormatByteSizeEx");
   pStrFormatKBSizeA = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeA");
   pStrFormatKBSizeW = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeW");
-  pStrIsIntlEqualA = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualA");
-  pStrIsIntlEqualW = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualW");
   pStrPBrkW = (void *)GetProcAddress(hShlwapi, "StrPBrkW");
   pStrRChrA = (void *)GetProcAddress(hShlwapi, "StrRChrA");
   pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");

@@ -35,7 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
-        "APP_ACTIVATED",
         "APP_DEACTIVATED",
         "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
@@ -56,15 +55,12 @@ static const char *dbgstr_event(int type)
         "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_BROUGHT_FORWARD",
         "WINDOW_CLOSE_REQUESTED",
-        "WINDOW_DID_MINIMIZE",
         "WINDOW_DID_UNMINIMIZE",
         "WINDOW_DRAG_BEGIN",
         "WINDOW_DRAG_END",
         "WINDOW_FRAME_CHANGED",
         "WINDOW_GOT_FOCUS",
         "WINDOW_LOST_FOCUS",
-        "WINDOW_MAXIMIZE_REQUESTED",
-        "WINDOW_MINIMIZE_REQUESTED",
         "WINDOW_RESIZE_ENDED",
         "WINDOW_RESTORE_REQUESTED",
     };
@@ -108,7 +104,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_POSTMESSAGE)
     {
-        event_mask |= event_mask_for_type(APP_ACTIVATED);
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
@@ -131,8 +126,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DRAG_BEGIN);
         event_mask |= event_mask_for_type(WINDOW_DRAG_END);
-        event_mask |= event_mask_for_type(WINDOW_MAXIMIZE_REQUESTED);
-        event_mask |= event_mask_for_type(WINDOW_MINIMIZE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_RESIZE_ENDED);
         event_mask |= event_mask_for_type(WINDOW_RESTORE_REQUESTED);
     }
@@ -319,9 +312,6 @@ void macdrv_handle_event(const macdrv_event *event)
 
     switch (event->type)
     {
-    case APP_ACTIVATED:
-        macdrv_app_activated();
-        break;
     case APP_DEACTIVATED:
         macdrv_app_deactivated();
         break;
@@ -376,9 +366,6 @@ void macdrv_handle_event(const macdrv_event *event)
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
         break;
-    case WINDOW_DID_MINIMIZE:
-        macdrv_window_did_minimize(hwnd);
-        break;
     case WINDOW_DID_UNMINIMIZE:
         macdrv_window_did_unminimize(hwnd);
         break;
@@ -396,12 +383,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case WINDOW_LOST_FOCUS:
         macdrv_window_lost_focus(hwnd, event);
-        break;
-    case WINDOW_MAXIMIZE_REQUESTED:
-        macdrv_window_maximize_requested(hwnd);
-        break;
-    case WINDOW_MINIMIZE_REQUESTED:
-        macdrv_window_minimize_requested(hwnd);
         break;
     case WINDOW_RESIZE_ENDED:
         macdrv_window_resize_ended(hwnd);

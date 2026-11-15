@@ -66,10 +66,8 @@ static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
-static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
-static XSTATE_CONFIGURATION xstate_config = {
-    .EnabledFeatures = XSTATE_MASK_AVX /* store full xstate before the config is fully initialized */
-};
+/* store full xstate before the config is fully initialized */
+static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX] = { [PF_AVX_INSTRUCTIONS_AVAILABLE] = TRUE };
 
 static BYTE KiUserExceptionDispatcher_orig[16]; /* to detect patching */
 extern void KiUserExceptionDispatcher_thunk(void) asm("EXP+#KiUserExceptionDispatcher");
@@ -240,23 +238,6 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     {
         for (unsigned int i = 0; i < PROCESSOR_FEATURE_MAX; i++)
             emulated_processor_features[i] = pBTCpu64IsProcessorFeaturePresent( i );
-
-        xstate_config.EnabledFeatures = XSTATE_MASK_LEGACY;
-        xstate_config.Features[XSTATE_LEGACY_FLOATING_POINT].Offset = 0;
-        xstate_config.Features[XSTATE_LEGACY_FLOATING_POINT].Size   = 10 * sizeof(M128A);
-        xstate_config.Features[XSTATE_LEGACY_SSE].Offset = 10 * sizeof(M128A);
-        xstate_config.Features[XSTATE_LEGACY_SSE].Size   = 16 * sizeof(M128A);
-        xstate_config.Size = sizeof(XSAVE_AREA);
-        if (emulated_processor_features[PF_AVX_INSTRUCTIONS_AVAILABLE])
-        {
-            xstate_config.EnabledFeatures |= XSTATE_MASK_AVX;
-            xstate_config.Features[XSTATE_AVX].Offset = sizeof(XSAVE_AREA);
-            xstate_config.Features[XSTATE_AVX].Size   = sizeof(YMMCONTEXT);
-            xstate_config.Size += sizeof(YMMCONTEXT);
-        }
-        xstate_config.EnabledVolatileFeatures = xstate_config.EnabledFeatures;
-        xstate_config.AllFeatureSize = xstate_config.Size;
-        user_xstate_config = &xstate_config;
 
         status = create_cross_process_work_list( info );
     }
@@ -763,7 +744,7 @@ NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) || context_ex->XState.Length > sizeof(*xstate))
             return STATUS_INVALID_PARAMETER;
 
-        xstate->Mask &= XSTATE_MASK_AVX & user_xstate_config->EnabledFeatures;
+        xstate->Mask &= XSTATE_MASK_AVX & RtlGetEnabledExtendedFeatures( XSTATE_MASK_AVX );
         xstate->CompactionMask = 0;
         if ((xstate->Mask & XSTATE_MASK_AVX) && context_ex->XState.Length < sizeof(*xstate))
             return STATUS_BUFFER_OVERFLOW;
@@ -1321,7 +1302,7 @@ static void init_xcontext( struct xcontext *ctx, ARM64_NT_CONTEXT *arm_ctx )
     ctx->c_ex.All.Offset = ctx->c_ex.Legacy.Offset;
     ctx->c_ex.All.Length = sizeof(CONTEXT) + ctx->c_ex.XState.Offset + ctx->c_ex.XState.Length;
 
-    xs->Mask = XSTATE_MASK_AVX & xstate_config.EnabledFeatures;
+    xs->Mask = XSTATE_MASK_AVX & RtlGetEnabledExtendedFeatures( XSTATE_MASK_AVX );
     xs->CompactionMask = 0;
     memset( xs->Reserved, 0, sizeof(xs->Reserved) );
 
@@ -1903,6 +1884,16 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
     if (feature >= PROCESSOR_FEATURE_MAX) return FALSE;
     if (arm64_features & (1ull << feature)) return user_shared_data->ProcessorFeatures[feature];
     return emulated_processor_features[feature];
+}
+
+
+/**********************************************************************
+ *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
+{
+    if (!emulated_processor_features[PF_AVX_INSTRUCTIONS_AVAILABLE]) return 0;
+    return user_shared_data->XState.EnabledFeatures & feature_mask;
 }
 
 

@@ -428,8 +428,9 @@ static DWORD cache_container_set_size(cache_container *container, HANDLE file, D
 
     header = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
     if(!header) {
+        DWORD error = GetLastError();
         CloseHandle(mapping);
-        return GetLastError();
+        return error;
     }
 
     if(blocks_no != MIN_BLOCK_NO) {
@@ -515,14 +516,21 @@ static DWORD cache_container_set_size(cache_container *container, HANDLE file, D
                     header->directory_data[i].name[k] = dir_name[k];
                 break;
             }else if(j >= 255) {
+                DWORD error = GetLastError();
+
                 /* Give up. The most likely cause of this
                  * is a full disk, but whatever the cause
                  * is, it should be more than apparent that
                  * we won't succeed.
                  */
+                while(i--) {
+                    for(k = 0; k < 8; ++k)
+                        dir_name[k] = header->directory_data[i].name[k];
+                    RemoveDirectoryW(dir_path);
+                }
                 UnmapViewOfFile(header);
                 CloseHandle(mapping);
-                return GetLastError();
+                return error;
             }
         }
     }
@@ -550,6 +558,14 @@ static BOOL cache_container_is_valid(urlcache_header *header, DWORD file_size)
 
     if(FILE_SIZE(header->capacity_in_blocks) != file_size)
         return FALSE;
+
+    if(header->dirs_no > MAX_DIR_NO)
+        return FALSE;
+
+    for(i=0; i<header->dirs_no; i++) {
+        if(!header->directory_data[i].name[0])
+            return FALSE;
+    }
 
     allocation_size = 0;
     for(i=0; i<header->capacity_in_blocks/8; i++) {
@@ -623,6 +639,8 @@ static DWORD cache_container_open_index(cache_container *container, DWORD blocks
     if(file_size < FILE_SIZE(blocks_no)) {
         DWORD ret = cache_container_set_size(container, file, blocks_no);
         CloseHandle(file);
+        if(ret != ERROR_SUCCESS && blocks_no == MIN_BLOCK_NO)
+            DeleteFileW(index_path);
         ReleaseMutex(container->mutex);
         return ret;
     }

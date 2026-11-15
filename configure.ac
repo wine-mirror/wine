@@ -93,6 +93,18 @@ AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine i
 AC_CANONICAL_HOST
 AC_SUBST(srcdir)
 
+dnl RISC-V64 native Wine builds currently have no usable MinGW toolchain.
+dnl Default to Unix-only builds, but honor an explicit --with-mingw.
+dnl Use the Wine-compatible 16-bit wchar_t ABI unless CFLAGS was supplied.
+case $host_cpu in
+  riscv64*)
+    with_mingw=${with_mingw-no}
+    if test "${CFLAGS+set}" != set; then
+      CFLAGS="-g -O2 -fshort-wchar"
+    fi
+    ;;
+esac
+
 AS_IF([test "x$enable_sast" = xyes],[CC=${CC:-clang}
 with_mingw=${with_mingw:-clang}
 AC_CHECK_PROGS(SARIF_CONVERTER,sarif-converter,false)])

@@ -3463,7 +3463,7 @@ static void test_wglCreateContextAttribsARB( HDC hdc )
     glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
     glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
     ok_ret( 0, glGetError() );
-    todo_wine ok_x4( flags, ==, GL_CONTEXT_FLAG_DEBUG_BIT );
+    ok_x4( flags, ==, GL_CONTEXT_FLAG_DEBUG_BIT );
     ok( profile == 0 /* AMD */ || profile == GL_CONTEXT_COMPATIBILITY_PROFILE_BIT /* NVIDIA */, "got profile %u\n", profile );
 
     ok_ret( TRUE, wglDeleteContext( ctx ) );

@@ -5197,7 +5197,18 @@ int main( int argc, char *argv[] )
 
     for (arch = 1; arch < archs.count; arch++)
     {
+        /* "none" is a sentinel for builds without PE cross-compilation,
+         * not an architecture with a compiler target. */
+        if (!strcmp( archs.str[arch], "none" )) continue;
         target = get_expanded_arch_var( top_makefile, "TARGET", arch );
+        /* The native RISC-V64 port can generate PE module rules without
+         * a MinGW compiler target.  Use the same native target name as
+         * configure.ac instead of passing NULL to output_filename(). */
+        if ((!target || !*target) && !strcmp( archs.str[arch], "riscv64" ))
+            target = "riscv64";
+        if (!target || !*target)
+            fatal_error( "missing %s_TARGET for enabled PE architecture %s\n",
+                         archs.str[arch], archs.str[arch] );
         strarray_add( &target_flags[arch], "-b" );
         strarray_add( &target_flags[arch], target );
         arch_dirs[arch] = strmake( "%s-windows/", archs.str[arch] );

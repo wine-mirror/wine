@@ -2216,6 +2216,13 @@ static void test_shader(void)
         D3DVSD_REG(D3DVSDE_POSITION,  D3DVSDT_FLOAT3),
         D3DVSD_END()
     };
+    /* Reads v4, which dwVertexDecl does not declare. */
+    static const DWORD vs_undeclared_input[] = {0xfffe0101,     /* vs_1_1             */
+        0x00000009, 0xc0010000, 0x90e40004, 0xa0e40000,         /* dp4 oPos.x, v4, c0 */
+        0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001,         /* dp4 oPos.y, v0, c1 */
+        0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002,         /* dp4 oPos.z, v0, c2 */
+        0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003,         /* dp4 oPos.w, v0, c3 */
+        0x0000ffff};                                            /* end                */
     DWORD decl_normal_float2[] =
     {
         D3DVSD_STREAM(0),
@@ -2326,6 +2333,12 @@ static void test_shader(void)
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_normal_float2, simple_vs, &hVertexShader, 0);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     IDirect3DDevice8_DeleteVertexShader(device, hVertexShader);
+
+    /* Shaders that read input registers the declaration does not supply are
+     * rejected. Pure Pinball ships such a shader and depends on the
+     * failure. */
+    hr = IDirect3DDevice8_CreateVertexShader(device, dwVertexDecl, vs_undeclared_input, &hVertexShader, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
 
     if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
     {

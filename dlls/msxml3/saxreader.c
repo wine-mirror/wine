@@ -1614,6 +1614,62 @@ bool parser_dtd_validate_element_content(struct validation_context *ctxt, struct
     return true;
 }
 
+static void parser_dtd_collect_attribute_id(struct validation_context *ctxt, struct dtd *dtd,
+        struct attlist_attr *decl, struct domnode *attr)
+{
+    BSTR value;
+
+    if (decl->type != ATTR_TYPE_ID)
+        return;
+
+    if (node_get_text(attr, &value) == S_OK)
+    {
+        /* TODO: do we need to validate for duplicates here too? */
+        parser_dtd_validate_add_id(ctxt, value);
+        SysFreeString(value);
+    }
+}
+
+/* Collect ID/IDREFs from the entire document, excluding the 'subtree'. */
+void parser_dtd_collect_ids(struct validation_context *ctxt, struct dtd *dtd, struct domnode *subtree)
+{
+    struct domnode *root, *node, *child, *attr;
+    struct attlist_attr *decl;
+
+    root = node = domnode_get_root_element(subtree->owner);
+    for (;;)
+    {
+        if (node->type == NODE_ELEMENT && node != subtree)
+        {
+            attr = domnode_get_first_attribute(node);
+
+            while (attr)
+            {
+                if ((decl = parser_dtd_get_attr_decl(dtd, attr)))
+                    parser_dtd_collect_attribute_id(ctxt, dtd, decl, attr);
+                attr = domnode_get_next_attribute_sibling(attr);
+            }
+
+            if ((child = domnode_get_first_child(node)))
+            {
+                node = child;
+                continue;
+            }
+        }
+
+        for (;;)
+        {
+            if (node == root)
+                return;
+            if (domnode_get_next_sibling(node))
+                break;
+            node = node->parent;
+        }
+
+        node = domnode_get_next_sibling(node);
+    }
+}
+
 struct dtd *parser_dtd_addref(struct dtd *dtd)
 {
     if (dtd)

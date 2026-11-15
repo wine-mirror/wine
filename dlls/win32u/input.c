@@ -1418,7 +1418,11 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                       virt, scan, state, str, size, flags, layout );
 
     if (!state || !size) return 0;
-    if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1) return len;
+    if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1)
+    {
+        if (!len && str && size) *str = 0;
+        return len;
+    }
 
     if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
     if (scan & 0x8000) str[0] = 0; /* key up */

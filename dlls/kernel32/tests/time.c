@@ -22,10 +22,13 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
+static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTimeEx)(const DYNAMIC_TIME_ZONE_INFORMATION *, const SYSTEMTIME *, SYSTEMTIME *);
+static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTimeEx)(const DYNAMIC_TIME_ZONE_INFORMATION *, const SYSTEMTIME *, SYSTEMTIME *);
 static BOOL (WINAPI *pGetSystemTimes)(LPFILETIME, LPFILETIME, LPFILETIME);
 static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
 static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
@@ -639,6 +642,312 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
     }        
 }
 
+static BOOL is_special_dst_date( SYSTEMTIME *time)
+{
+    return time->wMonth == 1 && time->wDay == 1 && !time->wHour && !time->wSecond;
+}
+
+static int compare_tzdate( const TIME_FIELDS *tf, const SYSTEMTIME *compare )
+{
+    static const int month_lengths[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    int first, last, limit, dayinsecs;
+
+    if (tf->Month < compare->wMonth) return -1; /* We are in a month before the date limit. */
+    if (tf->Month > compare->wMonth) return 1; /* We are in a month after the date limit. */
+
+    /* if year is 0 then date is in day-of-week format, otherwise
+     * it's absolute date.
+     */
+    if (!compare->wYear)
+    {
+        /* wDay is interpreted as number of the week in the month
+         * 5 means: the last week in the month */
+        /* calculate the day of the first DayOfWeek in the month */
+        first = (6 + compare->wDayOfWeek - tf->Weekday + tf->Day) % 7 + 1;
+        /* check needed for the 5th weekday of the month */
+        last = month_lengths[tf->Month - 1] +
+            (tf->Month == 2 && (!(tf->Year % 4) && (tf->Year % 100 || !(tf->Year % 400))));
+        limit = first + 7 * (compare->wDay - 1);
+        if (limit > last) limit -= 7;
+    }
+    else limit = compare->wDay;
+
+    limit = ((limit * 24 + compare->wHour) * 60 + compare->wMinute) * 60;
+    dayinsecs = ((tf->Day * 24  + tf->Hour) * 60 + tf->Minute) * 60 + tf->Second;
+    return dayinsecs - limit;
+}
+
+static BOOL daylight_lt_std( const TIME_ZONE_INFORMATION *info )
+{
+    if (info->DaylightDate.wMonth != info->StandardDate.wMonth)
+        return info->DaylightDate.wMonth < info->StandardDate.wMonth;
+    if (info->DaylightDate.wDay != info->StandardDate.wDay)
+        return info->DaylightDate.wDay < info->StandardDate.wDay;
+    return info->DaylightDate.wHour < info->StandardDate.wHour;
+}
+
+static DWORD get_timezone_id_local( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER time )
+{
+    BOOL before_standard_date, after_daylight_date;
+    TIME_FIELDS tf;
+
+    if (!info->DaylightDate.wMonth) return TIME_ZONE_ID_UNKNOWN;
+
+    RtlTimeToTimeFields( &time, &tf );
+    before_standard_date = compare_tzdate( &tf, &info->StandardDate ) < 0;
+    after_daylight_date = compare_tzdate( &tf, &info->DaylightDate ) >= 0;
+
+    if (daylight_lt_std( info ))
+    {
+        if (before_standard_date && after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    else
+    {
+        if (before_standard_date || after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    return TIME_ZONE_ID_STANDARD;
+}
+
+static BOOL tz_specific_local_time_to_system_time( const TIME_ZONE_INFORMATION *info,
+                                                               const SYSTEMTIME *local,
+                                                               SYSTEMTIME *system )
+{
+    LARGE_INTEGER ft;
+
+    if (!SystemTimeToFileTime( local, (FILETIME *)&ft )) return FALSE;
+    switch (get_timezone_id_local( info, ft ))
+    {
+    case TIME_ZONE_ID_UNKNOWN:
+        ft.QuadPart += info->Bias * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_STANDARD:
+        ft.QuadPart += (info->Bias + info->StandardBias) * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_DAYLIGHT:
+        ft.QuadPart += (info->Bias + info->DaylightBias) * (LONGLONG)600000000;
+        break;
+    default:
+        return FALSE;
+    }
+    return FileTimeToSystemTime( (FILETIME *)&ft, system );
+}
+
+static BOOL system_time_to_local_time_for_year( DYNAMIC_TIME_ZONE_INFORMATION *dinfo, LARGE_INTEGER time,
+                                                         int year, TIME_FIELDS *ret_tf )
+{
+    BOOL before_standard_date, after_daylight_date;
+    TIME_ZONE_INFORMATION info;
+    TIME_FIELDS std_tf;
+    LARGE_INTEGER t;
+
+    if (!pGetTimeZoneInformationForYear( year, dinfo, &info )) return FALSE;
+
+    if (!info.DaylightDate.wMonth)
+    {
+        t.QuadPart = time.QuadPart - info.Bias * (LONGLONG)600000000;
+        RtlTimeToTimeFields( &t, ret_tf );
+        return TRUE;
+    }
+
+    if (is_special_dst_date( &info.StandardDate ))
+        info.StandardDate.wYear = year;
+    if (is_special_dst_date( &info.DaylightDate ))
+        info.DaylightDate.wYear = year;
+
+    t.QuadPart = time.QuadPart - (info.Bias + info.DaylightBias) * (LONGLONG)600000000;
+    RtlTimeToTimeFields( &t, ret_tf );
+    if (ret_tf->Year == year)
+        before_standard_date = compare_tzdate( ret_tf, &info.StandardDate ) < 0;
+    else
+        before_standard_date = ret_tf->Year < year;
+
+    t.QuadPart = time.QuadPart - (info.Bias + info.StandardBias) * (LONGLONG)600000000;
+    RtlTimeToTimeFields( &t, &std_tf );
+    if (std_tf.Year == year)
+        after_daylight_date = compare_tzdate( &std_tf, &info.DaylightDate ) >= 0;
+    else
+        after_daylight_date = std_tf.Year > year || is_special_dst_date( &info.DaylightDate );
+
+    if (daylight_lt_std( &info ))
+    {
+        if (before_standard_date && after_daylight_date) return TRUE;
+    }
+    else
+    {
+        if (before_standard_date || after_daylight_date) return TRUE;
+    }
+    *ret_tf = std_tf;
+    return TRUE;
+}
+
+static BOOL system_time_to_tz_specific_local_time( DYNAMIC_TIME_ZONE_INFORMATION *dinfo,
+                                                   const SYSTEMTIME *system, SYSTEMTIME *local )
+{
+    LARGE_INTEGER time;
+    TIME_FIELDS tf;
+    int year;
+
+    if (!SystemTimeToFileTime( system, (FILETIME *)&time )) return FALSE;
+
+    year = system->wYear;
+    if (system->wMonth == 1 && system->wDay == 1) --year;
+    if (!system_time_to_local_time_for_year( dinfo, time, year, &tf )) return FALSE;
+
+    if (year != tf.Year && !system_time_to_local_time_for_year( dinfo, time, year + 1, &tf )) return FALSE;
+
+    local->wYear = tf.Year;
+    local->wMonth = tf.Month;
+    local->wDay = tf.Day;
+    local->wHour = tf.Hour;
+    local->wMinute = tf.Minute;
+    local->wSecond = tf.Second;
+    local->wMilliseconds = tf.Milliseconds;
+    local->wDayOfWeek = tf.Weekday;
+    return TRUE;
+}
+
+static void test_TzSpecificLocalTimeEx(void)
+{
+    static const SYSTEMTIME times[] =
+    {
+        { 1999, 12, 0, 31, 14, 15, 0, 0 },
+        { 1999, 12, 0, 31, 19, 15, 0, 0 },
+        { 1999, 12, 0, 31, 23, 15, 0, 0 },
+        { 2000, 1, 0, 1, 0, 15, 0, 0 },
+        { 2000, 1, 0, 1, 0, 45, 0, 0 },
+        { 2000, 1, 0, 1, 23, 15, 0, 0 },
+        { 2000, 1, 0, 2, 0, 15, 0, 0 },
+        { 2000, 12, 0, 31, 14, 15, 0, 0 },
+        { 2001, 1, 0, 1, 0, 15, 0, 0 },
+        { 2002, 2, 0, 28, 23, 45, 0, 0 },
+        { 2002, 3, 0, 1, 0, 15, 0, 0 },
+        { 2002, 10, 0, 1, 0, 15, 0, 0 },
+        { 2002, 10, 0, 31, 23, 15, 0, 0 },
+        { 2003, 1, 0, 1, 0, 15, 0, 0 },
+        { 2003, 1, 0, 1, 3, 15, 0, 0 },
+        { 2003, 1, 0, 1, 4, 15, 0, 0 },
+        { 2004, 1, 0, 1, 0, 15, 0, 0 },
+        { 2005, 1, 0, 1, 0, 15, 0, 0 },
+        { 2007, 1, 0, 1, 0, 15, 0, 0 },
+        { 2009, 1, 0, 1, 0, 15, 0, 0 },
+        { 2010, 1, 0, 5, 12, 0, 0, 0 },
+        { 2010, 7, 0, 4, 12, 0, 0, 0 },
+        { 2015, 1, 0, 1, 0, 15, 0, 0 },
+        { 2017, 3, 0, 1, 0, 15, 0, 0 },
+        { 2017, 10, 0, 1, 0, 15, 0, 0 },
+        { 2017, 10, 0, 31, 23, 15, 0, 0 },
+        { 2018, 1, 0, 1, 4, 15, 0, 0 },
+        { 2019, 1, 0, 1, 0, 15, 0, 0 },
+        { 2019, 1, 0, 1, 3, 15, 0, 0 },
+        { 2019, 1, 0, 1, 4, 30, 0, 0 },
+        { 2019, 12, 0, 31, 20, 15, 0, 0 },
+        { 2021, 2, 0, 28, 23, 45, 0, 0 },
+        { 2021, 3, 0, 1, 0, 15, 0, 0 },
+        { 2021, 3, 0, 1, 1, 15, 0, 0 },
+        { 2021, 10, 0, 1, 0, 15, 0, 0 },
+        { 2021, 10, 0, 31, 23, 15, 0, 0 },
+        { 2021, 12, 0, 31, 0, 15, 0, 0 },
+        { 2024, 1, 0, 12, 12, 30, 15, 0 },
+        { 2024, 7, 0, 15, 12, 30, 15, 0 },
+        { 2025, 12, 0, 31, 23, 15, 0, 0 },
+        { 2026, 1, 0, 1, 0, 15, 0, 0 },
+        { 2027, 1, 0, 1, 0, 15, 0, 0 },
+        { 2027, 1, 0, 1, 6, 15, 0, 0 },
+    };
+    DYNAMIC_TIME_ZONE_INFORMATION dtzi;
+    TIME_ZONE_INFORMATION tzi;
+    SYSTEMTIME utc, expect, local, systime;
+    WCHAR curr_tz_name[256];
+    BOOL ret;
+    unsigned int i, tzindex;
+
+    if (!pSystemTimeToTzSpecificLocalTimeEx || !pTzSpecificLocalTimeToSystemTimeEx)
+    {
+        win_skip( "SystemTimeToTzSpecificLocalTimeEx not available.\n" );
+        return;
+    }
+    if (!pGetDynamicTimeZoneInformation || !pGetTimeZoneInformationForYear ||
+        !pSystemTimeToTzSpecificLocalTime)
+    {
+        win_skip( "time zone functions not available.\n" );
+        return;
+    }
+
+    pGetDynamicTimeZoneInformation( &dtzi );
+    wcscpy( curr_tz_name, dtzi.TimeZoneKeyName );
+
+    for (tzindex = 0; !EnumDynamicTimeZoneInformation( tzindex, &dtzi ); ++tzindex)
+    {
+        for (i = 0; i < ARRAY_SIZE(times); i++)
+        {
+            utc = times[i];
+            winetest_push_context( "tz %s, utc %04u-%02u-%02u %02u:%02u:%02u", debugstr_w(dtzi.TimeZoneKeyName),
+                                   utc.wYear, utc.wMonth, utc.wDay, utc.wHour, utc.wMinute, utc.wSecond );
+
+            memset( &expect, 0xcc, sizeof(expect) );
+            ret = system_time_to_tz_specific_local_time( &dtzi, &utc, &expect );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            memset( &systime, 0xcc, sizeof(systime) );
+            ret = pSystemTimeToTzSpecificLocalTimeEx( &dtzi, &utc, &systime );
+            ok( ret, "got error %lu\n", GetLastError() );
+            ok( !memcmp( &systime, &expect, sizeof(systime) ),
+                "got %04u-%02u-%02u %02u:%02u:%02u, expected %04u-%02u-%02u %02u:%02u:%02u.\n",
+                systime.wYear, systime.wMonth, systime.wDay, systime.wHour, systime.wMinute, systime.wSecond,
+                expect.wYear, expect.wMonth, expect.wDay, expect.wHour, expect.wMinute, expect.wSecond );
+
+            if (!wcscmp( curr_tz_name, dtzi.TimeZoneKeyName ))
+            {
+                /* NULL means the current time zone, which is what dtzi describes. */
+                memset( &systime, 0xcc, sizeof(systime) );
+                ret = pSystemTimeToTzSpecificLocalTimeEx( NULL, &utc, &systime );
+                ok( ret, "got error %lu\n", GetLastError() );
+                ok( !memcmp( &systime, &expect, sizeof(systime) ),
+                    "got %04u-%02u-%02u %02u:%02u:%02u, expected %04u-%02u-%02u %02u:%02u:%02u\n",
+                    systime.wYear, systime.wMonth, systime.wDay, systime.wHour, systime.wMinute, systime.wSecond,
+                    expect.wYear, expect.wMonth, expect.wDay, expect.wHour, expect.wMinute, expect.wSecond );
+            }
+
+            local = systime;
+            ret = pGetTimeZoneInformationForYear( local.wYear, &dtzi, &tzi );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            /* TzSpecificLocalTimeToSystemTimeEx does not necessarily yields the same utc time,
+             * compute the expected result. */
+            if (is_special_dst_date( &tzi.StandardDate ))
+                tzi.StandardDate.wYear = 1900;
+            if (is_special_dst_date( &tzi.DaylightDate ))
+                tzi.DaylightDate.wYear = 1900;
+            ret = tz_specific_local_time_to_system_time( &tzi, &local, &expect );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            memset( &systime, 0xcc, sizeof(systime) );
+            ret = pTzSpecificLocalTimeToSystemTimeEx( &dtzi, &local, &systime );
+            ok( ret, "got error %lu\n", GetLastError() );
+
+            utc.wDayOfWeek = systime.wDayOfWeek;
+            ok( !memcmp( &systime, &expect, sizeof(systime) ),
+                "got %04u-%02u-%02u %02u:%02u:%02u, expected %04u-%02u-%02u %02u:%02u:%02u, "
+                "local %04u-%02u-%02u %02u:%02u:%02u.\n",
+                systime.wYear, systime.wMonth, systime.wDay, systime.wHour, systime.wMinute, systime.wSecond,
+                expect.wYear, expect.wMonth, expect.wDay, expect.wHour, expect.wMinute, expect.wSecond,
+                local.wYear, local.wMonth, local.wDay, local.wHour, local.wMinute, local.wSecond );
+
+            winetest_pop_context();
+        }
+    }
+
+    utc = times[0];
+    utc.wMonth = 13;
+    SetLastError( 0xdeadbeef );
+    ret = pSystemTimeToTzSpecificLocalTimeEx( &dtzi, &utc, &systime );
+    ok( !ret, "SystemTimeToTzSpecificLocalTimeEx succeeded with invalid time\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu.\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pTzSpecificLocalTimeToSystemTimeEx( &dtzi, &utc, &systime );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu.\n", GetLastError() );
+}
+
 static void test_FileTimeToDosDateTime(void)
 {
     FILETIME ft = { 0 };
@@ -1035,6 +1344,10 @@ static void test_GetTimeZoneInformationForYear(void)
         { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0 },
         { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0 },
     };
+    WCHAR key_name[256];
+    DWORD first, last, size;
+    LSTATUS lstatus;
+    HKEY key;
 
     if (!pGetTimeZoneInformationForYear || !pGetDynamicTimeZoneInformation)
     {
@@ -1095,6 +1408,46 @@ static void test_GetTimeZoneInformationForYear(void)
     {
         win_skip("Old Windows version\n");
         return;
+    }
+
+    for (i = 0; !EnumDynamicTimeZoneInformation(i, &dyn_tzinfo); ++i)
+    {
+        winetest_push_context("tz %s", debugstr_w(dyn_tzinfo.TimeZoneKeyName));
+        swprintf(key_name, ARRAY_SIZE(key_name), L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones\\%s\\Dynamic DST",
+            dyn_tzinfo.TimeZoneKeyName);
+        lstatus = RegOpenKeyW(HKEY_LOCAL_MACHINE, key_name, &key);
+        ok(!lstatus || lstatus == ERROR_FILE_NOT_FOUND, "got %#lx.\n", lstatus);
+        if (lstatus)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        size = sizeof(first);
+        lstatus = RegQueryValueExW(key, L"FirstEntry", NULL, NULL, (BYTE *)&first, &size);
+        ok(!lstatus, "got %#lx.\n", lstatus);
+        lstatus = RegQueryValueExW(key, L"LastEntry", NULL, NULL, (BYTE *)&last, &size);
+        ok(!lstatus, "got %#lx.\n", lstatus);
+
+        RegCloseKey(key);
+
+        memset(&tzinfo, 0, sizeof(tzinfo));
+        memset(&tzinfo2, 0, sizeof(tzinfo2));
+        ret = pGetTimeZoneInformationForYear(first, &dyn_tzinfo, &tzinfo);
+        ok(ret, "got error %lu.\n", GetLastError());
+
+        ret = pGetTimeZoneInformationForYear(first - 1, &dyn_tzinfo, &tzinfo2);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ok(!memcmp(&tzinfo, &tzinfo2, sizeof(tzinfo)), "TZ info does not match, first %ld.\n", first);
+
+        memset(&tzinfo, 0, sizeof(tzinfo));
+        memset(&tzinfo2, 0, sizeof(tzinfo2));
+        ret = pGetTimeZoneInformationForYear(last, &dyn_tzinfo, &tzinfo);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ret = pGetTimeZoneInformationForYear(last + 1, &dyn_tzinfo, &tzinfo2);
+        ok(ret, "got error %lu.\n", GetLastError());
+        ok(!memcmp(&tzinfo, &tzinfo2, sizeof(tzinfo)), "TZ info does not match, last %ld.\n", last);
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
@@ -1266,6 +1619,8 @@ START_TEST(time)
     HMODULE hntdll = GetModuleHandleA("ntdll");
     pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
+    pSystemTimeToTzSpecificLocalTimeEx = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTimeEx");
+    pTzSpecificLocalTimeToSystemTimeEx = (void *)GetProcAddress( hKernel, "TzSpecificLocalTimeToSystemTimeEx");
     pGetSystemTimes = (void *)GetProcAddress( hKernel, "GetSystemTimes");
     pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
     pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");
@@ -1282,6 +1637,7 @@ START_TEST(time)
     test_FileTimeToSystemTime();
     test_FileTimeToLocalFileTime();
     test_TzSpecificLocalTimeToSystemTime();
+    test_TzSpecificLocalTimeEx();
     test_GetSystemTimes();
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();

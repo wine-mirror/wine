@@ -167,6 +167,7 @@ static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
 BOOL emulate_modeset = FALSE;
 BOOL decorated_mode = TRUE;
+BOOL use_egl = TRUE;
 UINT64 thunk_lock_callback = 0;
 
 #define VIRTUAL_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
@@ -6087,6 +6088,8 @@ void sysparams_init(void)
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
     if (!get_config_key( hkey, appkey, "Decorated", buffer, sizeof(buffer) ))
         decorated_mode = IS_OPTION_TRUE( buffer[0] );
+    if (!get_config_key( hkey, appkey, "UseEGL", buffer, sizeof(buffer) ))
+        use_egl = IS_OPTION_TRUE( buffer[0] );
     if (!get_config_key( hkey, appkey, "EmulateModeset", buffer, sizeof(buffer) ))
         emulate_modeset = IS_OPTION_TRUE( buffer[0] );
 

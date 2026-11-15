@@ -60,6 +60,7 @@ struct stream
     IMFStreamSink *stream_sink;
     IMFTransform *converter, *encoder;
     MF_SINK_WRITER_STATISTICS stats;
+    BOOL type_is_default;
     struct list queue; /* struct pending_item. */
 };
 
@@ -242,20 +243,41 @@ static HRESULT stream_enumerate_transforms(struct stream *stream, IMFMediaType *
 static HRESULT stream_set_transform(struct stream *stream, IMFTransform *transform,
         IMFMediaType *input_type, IMFMediaType *output_type, BOOL use_encoder)
 {
-    IMFMediaType *output_current_type;
+    IMFMediaType *current_type = NULL;
     HRESULT hr;
 
     /* Set the output type on transform. */
-    if (FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
-            || FAILED(hr = IMFTransform_GetOutputCurrentType(transform, 0, &output_current_type)))
-        return hr;
+    if (FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+    {
+        if (hr != MF_E_TRANSFORM_TYPE_NOT_SET)
+            return hr;
+    }
+    else
+    {
+        if (FAILED(hr = IMFTransform_GetOutputCurrentType(transform, 0, &current_type)))
+            return hr;
+    }
 
     /* Set the input type on transform. */
-    if (FAILED(hr = update_media_type(input_type, output_current_type, FALSE))
+    if ((current_type && FAILED(hr = update_media_type(input_type, current_type, FALSE)))
             || FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
     {
-        IMFMediaType_Release(output_current_type);
+        IMFMediaType_Release(current_type);
         return hr;
+    }
+
+    /* Set the output type on transform if input type is required first (e.g. audio converter). */
+    if (!current_type)
+    {
+        if (FAILED(hr = IMFTransform_GetInputCurrentType(transform, 0, &current_type)))
+            return hr;
+
+        if (FAILED(hr = update_media_type(output_type, current_type, FALSE))
+                || FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+        {
+            IMFMediaType_Release(current_type);
+            return hr;
+        }
     }
 
     /* Set the transform to stream. */
@@ -270,7 +292,7 @@ static HRESULT stream_set_transform(struct stream *stream, IMFTransform *transfo
         stream->converter = transform;
     }
 
-    IMFMediaType_Release(output_current_type);
+    IMFMediaType_Release(current_type);
     return hr;
 }
 
@@ -407,6 +429,8 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriterEx *iface)
 
 static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink *stream_sink, DWORD *index)
 {
+    IMFMediaTypeHandler *type_handler;
+    IMFMediaType *media_type;
     struct stream *stream;
     DWORD id = 0;
     HRESULT hr;
@@ -429,6 +453,21 @@ static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink 
     list_init(&stream->queue);
 
     writer->streams.next_id = max(writer->streams.next_id, id);
+
+    if (FAILED(hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler))) return hr;
+
+    if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type)))
+        IMFMediaType_Release(media_type);
+    else
+    {
+        if (SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 0, &media_type)))
+        {
+            hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
+            IMFMediaType_Release(media_type);
+        }
+        stream->type_is_default = TRUE;
+    }
+    IMFMediaTypeHandler_Release(type_handler);
 
     return hr;
 }
@@ -469,10 +508,10 @@ static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriterEx *iface, DWOR
         IMFAttributes *parameters)
 {
     struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
+    HRESULT hr = MF_E_INVALIDMEDIATYPE;
     IMFMediaType *stream_type = NULL;
     struct stream *stream;
     DWORD flags;
-    HRESULT hr;
 
     TRACE("%p, %lu, %p, %p.\n", iface, index, type, parameters);
 
@@ -487,23 +526,41 @@ static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriterEx *iface, DWOR
         goto done;
     }
 
-    if (FAILED(hr = stream_get_type(stream, &stream_type))
-            || FAILED(hr = IMFMediaType_IsEqual(type, stream_type, &flags)))
-        goto done;
-
-    if (!(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
+    /* Stream media type may be set once only, if the sink supports the type. If the stream
+     * sink had a type when the stream was added, that counts and type_is_default is false.
+     * Subsequent type changes will add transform(s) as required. */
+    if (stream->type_is_default)
     {
-        hr = MF_E_INVALIDMEDIATYPE;
-        goto done;
+        IMFMediaTypeHandler *type_handler;
+
+        if (FAILED(hr = IMFStreamSink_GetMediaTypeHandler(stream->stream_sink, &type_handler)))
+            goto done;
+        if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, type)))
+            FIXME("Type not supported (which may not match native), inserting a transform.\n");
+        IMFMediaTypeHandler_Release(type_handler);
+        stream->type_is_default = FALSE;
     }
 
-    /* Types are not compatible, create transforms. */
-    stream_release_transforms(stream);
-    if (!(flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA))
+    if (FAILED(hr))
     {
-        /* Try only using converter first, then try again with encoder. */
-        if (FAILED(hr = stream_create_transforms(stream, type, stream_type, FALSE, writer->attributes)))
-            hr = stream_create_transforms(stream, type, stream_type, TRUE, writer->attributes);
+        if (FAILED(hr = stream_get_type(stream, &stream_type))
+                || FAILED(hr = IMFMediaType_IsEqual(type, stream_type, &flags)))
+            goto done;
+
+        if (!(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
+        {
+            hr = MF_E_INVALIDMEDIATYPE;
+            goto done;
+        }
+
+        /* Types are not compatible, create transforms. */
+        stream_release_transforms(stream);
+        if (!(flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA))
+        {
+            /* Try only using converter first, then try again with encoder. */
+            if (FAILED(hr = stream_create_transforms(stream, type, stream_type, FALSE, writer->attributes)))
+                hr = stream_create_transforms(stream, type, stream_type, TRUE, writer->attributes);
+        }
     }
 
 done:
@@ -991,9 +1048,11 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         DWORD stream_index, DWORD transform_index, GUID *out_category, IMFTransform **out_transform)
 {
     struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
+    GUID major_type = {}, category = {};
     IMFTransform *transform = NULL;
+    IMFMediaType *stream_type;
     struct stream *stream;
-    GUID category = {};
+    BOOL is_audio;
     HRESULT hr;
 
     TRACE("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, out_category, out_transform);
@@ -1010,16 +1069,25 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         return MF_E_INVALIDSTREAMNUMBER;
     }
 
+    if (FAILED(hr = stream_get_type(stream, &stream_type)))
+        goto done;
+    hr = IMFMediaType_GetMajorType(stream_type, &major_type);
+    IMFMediaType_Release(stream_type);
+
+    if (FAILED(hr))
+        goto done;
+
+    is_audio = IsEqualGUID(&major_type, &MFMediaType_Audio);
     if (stream->converter && transform_index == 0)
     {
         transform = stream->converter;
-        category = MFT_CATEGORY_VIDEO_PROCESSOR;
+        category = is_audio ? MFT_CATEGORY_AUDIO_EFFECT : MFT_CATEGORY_VIDEO_PROCESSOR;
     }
     else if ((stream->converter && transform_index == 1)
             || (!stream->converter && transform_index == 0))
     {
         transform = stream->encoder;
-        category = MFT_CATEGORY_VIDEO_ENCODER;
+        category = is_audio ? MFT_CATEGORY_AUDIO_ENCODER : MFT_CATEGORY_VIDEO_ENCODER;
     }
 
     hr = MF_E_INVALIDINDEX;
@@ -1031,6 +1099,7 @@ static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
         hr = S_OK;
     }
 
+done:
     LeaveCriticalSection(&writer->cs);
     return hr;
 }

@@ -1622,7 +1622,6 @@ static void test_validateNode(void)
     hr = IXMLDOMDocument3_get_documentElement(doc, &element);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)element, &err);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMParseError_Release(err);
 
@@ -1631,7 +1630,6 @@ static void test_validateNode(void)
     hr = IXMLDOMNamedNodeMap_get_item(attrs, 0, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMDocument3_validateNode(doc, node, &err);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMParseError_Release(err);
     IXMLDOMNode_Release(node);
@@ -1644,7 +1642,6 @@ static void test_validateNode(void)
     hr = IXMLDOMAttribute_put_text(attr, _bstr_(L"value"));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)attr, &err);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMAttribute_Release(attr);
 
@@ -1694,7 +1691,6 @@ static void test_validateNode(void)
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMParseError_get_errorCode(err, &res);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(res == 0xc00ce200, "Unexpected code %#lx.\n", res);
     IXMLDOMParseError_Release(err);
 
@@ -1704,7 +1700,6 @@ static void test_validateNode(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument3_validateNode(doc, (IXMLDOMNode *)element, &err);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMParseError_Release(err);
 

@@ -119,6 +119,15 @@ struct cdrom_open_params
     struct cdrom *cdrom;
 };
 
+struct cdrom_read_params
+{
+    struct cdrom *cdrom;
+    void *output;
+    UINT64 offset;
+    unsigned int size;
+    unsigned int ret_size;
+};
+
 struct cdrom_ioctl_params
 {
     struct cdrom *cdrom;
@@ -189,6 +198,7 @@ enum mountmgr_funcs
     unix_check_device_access,
     unix_cdrom_open,
     unix_cdrom_close,
+    unix_cdrom_read,
     unix_cdrom_ioctl,
     unix_dismount,
     unix_detect_serial_ports,
@@ -216,6 +226,7 @@ extern void run_diskarbitration_loop(void);
 
 extern NTSTATUS cdrom_open( void *args );
 extern NTSTATUS cdrom_close( void *args );
+extern NTSTATUS cdrom_read( void *args );
 extern NTSTATUS cdrom_ioctl( void *args );
 extern NTSTATUS dhcp_request( void *args );
 extern NTSTATUS query_symbol_file( void *args );

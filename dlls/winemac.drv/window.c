@@ -1021,6 +1021,39 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
 
 
 /***********************************************************************
+ *              perform_inactive_window_command
+ */
+static void perform_inactive_window_command(HWND hwnd, WORD command, WORD hittest)
+{
+    LRESULT ma;
+
+    TRACE("win %p command 0x%04x hittest 0x%04x\n", hwnd, command, hittest);
+
+    ma = send_message(hwnd, WM_MOUSEACTIVATE, (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
+                      MAKELPARAM(hittest, WM_NCLBUTTONDOWN));
+    switch (ma)
+    {
+        case MA_NOACTIVATEANDEAT:
+        case MA_ACTIVATEANDEAT:
+            TRACE("not changing win %p mouse-activate result %ld\n", hwnd, ma);
+            return;
+        case MA_NOACTIVATE:
+            break;
+        case MA_ACTIVATE:
+        case 0:
+            NtUserSetActiveWindow(hwnd);
+            break;
+        default:
+            WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
+            break;
+    }
+
+    TRACE("changing win %p\n", hwnd);
+    NtUserPostMessage(hwnd, WM_SYSCOMMAND, command, 0);
+}
+
+
+/***********************************************************************
  *              perform_window_command
  */
 static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned int style_none, WORD command, WORD hittest)
@@ -1037,26 +1070,10 @@ static void perform_window_command(HWND hwnd, unsigned int style_any, unsigned i
         return;
     }
 
-    if (get_active_window() != hwnd)
+    if (get_active_window(NtUserGetWindowThread(hwnd, NULL)) != hwnd)
     {
-        LRESULT ma = send_message(hwnd, WM_MOUSEACTIVATE, (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
-                                  MAKELPARAM(hittest, WM_NCLBUTTONDOWN));
-        switch (ma)
-        {
-            case MA_NOACTIVATEANDEAT:
-            case MA_ACTIVATEANDEAT:
-                TRACE("not changing win %p mouse-activate result %ld\n", hwnd, ma);
-                return;
-            case MA_NOACTIVATE:
-                break;
-            case MA_ACTIVATE:
-            case 0:
-                NtUserSetActiveWindow(hwnd);
-                break;
-            default:
-                WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
-                break;
-        }
+        NtUserPostMessage(hwnd, WM_MACDRV_INACTIVE_WINDOW_COMMAND, command, hittest);
+        return;
     }
 
     TRACE("changing win %p\n", hwnd);
@@ -1548,6 +1565,9 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         activate_on_following_focus();
         TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
         return 0;
+    case WM_MACDRV_INACTIVE_WINDOW_COMMAND:
+        perform_inactive_window_command(hwnd, wp, lp);
+        return 0;
     case WM_MACDRV_CREATE_REMOTE_LAYER:
         if ((data = get_win_data(hwnd)))
         {
@@ -1800,7 +1820,7 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
     TRACE("win %p/%p serial %lu enabled %d visible %d style %08x focus %p active %p fg %p\n",
           hwnd, event->window, event->window_got_focus.serial, NtUserIsWindowEnabled(hwnd),
-          NtUserIsWindowVisible(hwnd), style, get_focus(), get_active_window(), NtUserGetForegroundWindow());
+          NtUserIsWindowVisible(hwnd), style, get_focus(), get_active_window(GetCurrentThreadId()), NtUserGetForegroundWindow());
 
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
@@ -1835,18 +1855,6 @@ void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
 
 
 /***********************************************************************
- *              macdrv_app_activated
- *
- * Handler for APP_ACTIVATED events.
- */
-void macdrv_app_activated(void)
-{
-    TRACE("\n");
-    macdrv_UpdateClipboard();
-}
-
-
-/***********************************************************************
  *              macdrv_app_deactivated
  *
  * Handler for APP_DEACTIVATED events.
@@ -1855,7 +1863,7 @@ void macdrv_app_deactivated(void)
 {
     NtUserClipCursor(NULL);
 
-    if (get_active_window() == NtUserGetForegroundWindow())
+    if (get_active_window(GetCurrentThreadId()) == NtUserGetForegroundWindow())
     {
         TRACE("setting fg to desktop\n");
         NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
@@ -1866,7 +1874,7 @@ void macdrv_app_deactivated(void)
 /***********************************************************************
  *              macdrv_window_maximize_requested
  *
- * Handler for WINDOW_MAXIMIZE_REQUESTED events.
+ * Handle a maximize request from Cocoa.
  */
 void macdrv_window_maximize_requested(HWND hwnd)
 {
@@ -1877,26 +1885,11 @@ void macdrv_window_maximize_requested(HWND hwnd)
 /***********************************************************************
  *              macdrv_window_minimize_requested
  *
- * Handler for WINDOW_MINIMIZE_REQUESTED events.
+ * Handle a minimize request from Cocoa.
  */
 void macdrv_window_minimize_requested(HWND hwnd)
 {
     perform_window_command(hwnd, WS_MINIMIZEBOX, WS_MINIMIZE, SC_MINIMIZE, HTMINBUTTON);
-}
-
-
-/***********************************************************************
- *              macdrv_window_did_minimize
- *
- * Handler for WINDOW_DID_MINIMIZE events.
- */
-void macdrv_window_did_minimize(HWND hwnd)
-{
-    TRACE("win %p\n", hwnd);
-
-    /* If all our windows are minimized, disable cursor clipping. */
-    if (!macdrv_is_any_wine_window_visible())
-        NtUserClipCursor(NULL);
 }
 
 
@@ -1922,6 +1915,8 @@ void macdrv_window_did_unminimize(HWND hwnd)
     {
         TRACE("restoring win %p/%p\n", hwnd, data->cocoa_window);
         release_win_data(data);
+        if (can_window_become_foreground(hwnd))
+            NtUserSetForegroundWindowInternal(hwnd);
         NtUserSetActiveWindow(hwnd);
         send_message(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         return;

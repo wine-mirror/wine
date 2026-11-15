@@ -24,6 +24,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 static void STDMETHODCALLTYPE d3d8_vertexshader_wined3d_object_destroyed(void *parent)
 {
     struct d3d8_vertex_shader *shader = parent;
+
+    /* No declaration means d3d8_vertex_shader_init() failed after creating
+     * the wined3d shader. Its caller frees the object. */
+    if (!shader->vertex_declaration)
+        return;
+
     d3d8_vertex_declaration_destroy(shader->vertex_declaration);
     free(shader);
 }
@@ -50,18 +56,19 @@ static const struct wined3d_parent_ops d3d8_vertexshader_wined3d_parent_ops =
 };
 
 static HRESULT d3d8_vertexshader_create_vertexdeclaration(struct d3d8_device *device,
-        const DWORD *declaration, DWORD shader_handle, struct d3d8_vertex_declaration **decl_ptr)
+        const DWORD *declaration, DWORD shader_handle, const struct wined3d_shader *shader,
+        struct d3d8_vertex_declaration **decl_ptr)
 {
     struct d3d8_vertex_declaration *object;
     HRESULT hr;
 
-    TRACE("device %p, declaration %p, shader_handle %#lx, decl_ptr %p.\n",
-            device, declaration, shader_handle, decl_ptr);
+    TRACE("device %p, declaration %p, shader_handle %#lx, shader %p, decl_ptr %p.\n",
+            device, declaration, shader_handle, shader, decl_ptr);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    hr = d3d8_vertex_declaration_init(object, device, declaration, shader_handle);
+    hr = d3d8_vertex_declaration_init(object, device, declaration, shader_handle, shader);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#lx.\n", hr);
@@ -100,13 +107,8 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
         token += parse_token(token);
     }
 
-    hr = d3d8_vertexshader_create_vertexdeclaration(device, declaration, shader_handle, &shader->vertex_declaration);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create vertex declaration, hr %#lx.\n", hr);
-        return hr;
-    }
-
+    /* The shader is created first, so that the declaration can be checked
+     * against the input registers it reads. */
     if (byte_code)
     {
         struct wined3d_shader_desc desc;
@@ -124,12 +126,27 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
         if (FAILED(hr))
         {
             WARN("Failed to create wined3d vertex shader, hr %#lx.\n", hr);
-            d3d8_vertex_declaration_destroy(shader->vertex_declaration);
             return hr;
         }
-
-        load_local_constants(declaration, shader->wined3d_shader);
     }
+
+    hr = d3d8_vertexshader_create_vertexdeclaration(device, declaration, shader_handle,
+            shader->wined3d_shader, &shader->vertex_declaration);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create vertex declaration, hr %#lx.\n", hr);
+        if (shader->wined3d_shader)
+        {
+            wined3d_mutex_lock();
+            wined3d_shader_decref(shader->wined3d_shader);
+            wined3d_mutex_unlock();
+            shader->wined3d_shader = NULL;
+        }
+        return hr;
+    }
+
+    if (shader->wined3d_shader)
+        load_local_constants(declaration, shader->wined3d_shader);
 
     return D3D_OK;
 }

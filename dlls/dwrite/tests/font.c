@@ -10032,6 +10032,7 @@ static void test_fontsetbuilder(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFontSetBuilder_QueryInterface(builder, &IID_IDWriteFontSetBuilder1, (void **)&builder1);
+    if (hr == E_NOINTERFACE) goto done;
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* File doesn't exist on disk. */
@@ -10065,6 +10066,7 @@ static void test_fontsetbuilder(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IDWriteFontSetBuilder1_Release(builder1);
+done:
     IDWriteFontSetBuilder_Release(builder);
 
     refcount = IDWriteFactory3_Release(factory);

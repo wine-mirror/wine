@@ -33,6 +33,9 @@ static void test_fscanf( void )
     FILE *fp;
     int ret;
 
+    ret = fscanf(NULL, "%s", buf);
+    ok(ret == -1, "fscanf returned %d, expected -1\n", ret);
+
     fp = fopen(file_name, "wb");
     ok(fp != NULL, "fp = %p\n", fp);
     if(!fp) {

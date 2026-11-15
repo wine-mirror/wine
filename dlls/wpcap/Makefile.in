@@ -3,6 +3,7 @@ UNIXLIB   = wpcap.so
 IMPORTS   = iphlpapi
 DELAYIMPORTS = ws2_32
 UNIX_LIBS    = $(PCAP_LIBS)
+UNIX_CFLAGS  = $(PCAP_CFLAGS)
 
 VER_FILEDESCRIPTION_STR = "wpcap.dll Dynamic Link Library - based on libpcap 1.0"
 VER_PRODUCTVERSION      = 4,1,0,2980

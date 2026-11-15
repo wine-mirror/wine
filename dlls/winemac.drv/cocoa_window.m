@@ -1696,8 +1696,6 @@ static inline BOOL stage_manager_enabled(void)
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                              event_mask_for_type(WINDOW_GOT_FOCUS) |
                                              event_mask_for_type(WINDOW_LOST_FOCUS) |
-                                             event_mask_for_type(WINDOW_MAXIMIZE_REQUESTED) |
-                                             event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
                                              event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                    forWindow:self];
             return;
@@ -1733,8 +1731,6 @@ static inline BOOL stage_manager_enabled(void)
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                          event_mask_for_type(WINDOW_GOT_FOCUS) |
                                          event_mask_for_type(WINDOW_LOST_FOCUS) |
-                                         event_mask_for_type(WINDOW_MAXIMIZE_REQUESTED) |
-                                         event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
                                          event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                forWindow:self];
     }
@@ -2403,9 +2399,7 @@ static inline BOOL stage_manager_enabled(void)
             return;
         }
 
-        macdrv_event* event = macdrv_create_event(WINDOW_MINIMIZE_REQUESTED, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        macdrv_window_minimize_requested(self.hwnd);
 
         WineWindow* parent = (WineWindow*)self.parentWindow;
         if ([parent isKindOfClass:[WineWindow class]])
@@ -2734,14 +2728,14 @@ static inline BOOL stage_manager_enabled(void)
 
     - (void)windowDidMiniaturize:(NSNotification *)notification
     {
-        macdrv_event* event;
+        WineApplicationController* controller = [WineApplicationController sharedController];
 
         if (fullscreen && [self isOnActiveSpace])
-            [[WineApplicationController sharedController] updateFullscreenWindows];
+            [controller updateFullscreenWindows];
 
-        event = macdrv_create_event(WINDOW_DID_MINIMIZE, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        /* If all our windows are minimized, disable cursor clipping. */
+        if (![controller isAnyWineWindowVisible])
+            NtUserClipCursor(NULL);
     }
 
     - (void)windowDidMove:(NSNotification *)notification
@@ -2814,9 +2808,7 @@ static inline BOOL stage_manager_enabled(void)
         }
         else if (!resizable)
         {
-            macdrv_event* event = macdrv_create_event(WINDOW_MAXIMIZE_REQUESTED, self);
-            [queue postEvent:event];
-            macdrv_release_event(event);
+            macdrv_window_maximize_requested(self.hwnd);
             return NO;
         }
 

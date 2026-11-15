@@ -8360,9 +8360,9 @@ static void test_vshader_input(void)
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd, swapped_shader_code, &swapped_twotexcrd_shader, 0);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_onetexcrd, swapped_shader_code, &swapped_onetexcrd_shader, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd_wrongidx, swapped_shader_code, &swapped_twotex_wrongidx_shader, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd_rightorder, swapped_shader_code, &swapped_twotexcrd_rightorder_shader, 0);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#lx.\n", hr);
 
@@ -8375,7 +8375,7 @@ static void test_vshader_input(void)
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_color_float, color_color_shader_code, &color_float_shader, 0);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_CreateVertexShader(device, decl_nocolor, color_color_shader_code, &color_nocolor_shader, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#lx.\n", hr);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#lx.\n", hr);

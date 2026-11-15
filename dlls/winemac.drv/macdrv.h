@@ -136,6 +136,7 @@ enum macdrv_window_messages
     WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS,
     WM_MACDRV_CREATE_REMOTE_LAYER,
     WM_MACDRV_RELEASE_REMOTE_LAYER,
+    WM_MACDRV_INACTIVE_WINDOW_COMMAND,
 };
 
 struct macdrv_thread_data
@@ -267,12 +268,10 @@ extern void macdrv_window_close_requested(HWND hwnd);
 extern void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event);
 extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event);
 extern void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event);
-extern void macdrv_app_activated(void);
 extern void macdrv_app_deactivated(void);
 extern void macdrv_app_quit_requested(const macdrv_event *event);
 extern void macdrv_window_maximize_requested(HWND hwnd);
 extern void macdrv_window_minimize_requested(HWND hwnd);
-extern void macdrv_window_did_minimize(HWND hwnd);
 extern void macdrv_window_did_unminimize(HWND hwnd);
 extern void macdrv_window_brought_forward(HWND hwnd);
 extern void macdrv_window_resize_ended(HWND hwnd);
@@ -298,6 +297,7 @@ extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source);
 extern void macdrv_displays_changed(const macdrv_event *event);
 
 extern void macdrv_UpdateClipboard(void);
+extern void macdrv_update_clipboard_async(void);
 extern bool query_pasteboard_data(HWND hwnd, CFStringRef type);
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
@@ -336,11 +336,11 @@ static inline LRESULT send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, L
     return res;
 }
 
-static inline HWND get_active_window(void)
+static inline HWND get_active_window(DWORD thread_id)
 {
     GUITHREADINFO info;
     info.cbSize = sizeof(info);
-    return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndActive : 0;
+    return NtUserGetGUIThreadInfo(thread_id, &info) ? info.hwndActive : 0;
 }
 
 static inline HWND get_capture(void)

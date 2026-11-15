@@ -3500,11 +3500,12 @@ static void test_ToUnicode(void)
         state[VK_CONTROL] = state[VK_LCONTROL] = (mod & ctrl) ? HIGHEST_BIT : 0;
         state[VK_MENU]    = state[VK_LMENU]    = (mod & menu) ? HIGHEST_BIT : 0;
 
+        wStr[0] = 0xcd;
+        wStr[1] = 0;
         ret = ToUnicode(vk, scan, state, wStr, 4, 0);
         ok(ret == utests[i].expect_ret, "%d: got %d expected %d\n", i, ret, utests[i].expect_ret);
-        if (ret)
-            ok(!lstrcmpW(wStr, utests[i].expect_buf), "%d: got %s expected %s\n", i, wine_dbgstr_w(wStr),
-                wine_dbgstr_w(utests[i].expect_buf));
+        ok(!lstrcmpW(wStr, utests[i].expect_buf), "%d: got %s expected %s\n", i, wine_dbgstr_w(wStr),
+            wine_dbgstr_w(utests[i].expect_buf));
 
     }
     state[VK_SHIFT]   = state[VK_LSHIFT]   = 0;

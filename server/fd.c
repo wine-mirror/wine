@@ -1560,10 +1560,17 @@ static void fd_destroy( struct object *obj )
     if (fd->sync) release_object( fd->sync );
 }
 
+static inline bool is_replace_file_disposition( unsigned int disposition )
+{
+    return (disposition == FILE_SUPERSEDE ||
+            disposition == FILE_OVERWRITE ||
+            disposition == FILE_OVERWRITE_IF);
+}
+
 /* check if the desired access is possible without violating */
 /* the sharing mode of other opens of the same file */
 static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
-                                   unsigned int open_flags, unsigned int options )
+                                   unsigned int disposition, unsigned int options )
 {
     /* only a few access bits are meaningful wrt sharing */
     const unsigned int read_access = FILE_READ_DATA | FILE_EXECUTE;
@@ -1594,7 +1601,7 @@ static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned 
         return STATUS_SHARING_VIOLATION;
     if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
         return STATUS_CANNOT_DELETE;
-    if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
+    if ((existing_access & FILE_MAPPING_ACCESS) && is_replace_file_disposition( disposition ))
         return STATUS_USER_MAPPED_FILE;
     if (!(access & all_access))
         return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
@@ -1775,7 +1782,7 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
         fd->closed = closed;
         fd->inode = (struct inode *)grab_object( orig->inode );
         list_add_head( &fd->inode->open, &fd->inode_entry );
-        if ((err = check_sharing( fd, access, sharing, 0, options )))
+        if ((err = check_sharing( fd, access, sharing, FILE_OPEN, options )))
         {
             set_error( err );
             goto failed;
@@ -1868,20 +1875,34 @@ struct unicode_str get_nt_name( struct fd *fd )
     return name;
 }
 
+static int open_file_or_dir( const char *name, unsigned int access, int flags, mode_t mode )
+{
+    int fd, rw_mode = O_RDONLY;
+
+    if (access & (FILE_WRITE_DATA | FILE_APPEND_DATA))
+        rw_mode = (access & FILE_READ_DATA) ? O_RDWR : O_WRONLY;
+
+    fd = open( name, rw_mode | flags | O_NONBLOCK, mode );
+
+    /* if we tried to open a directory for write access, retry read-only */
+    if (fd == -1 && errno == EISDIR && (rw_mode != O_RDONLY || (flags & O_CREAT)))
+        fd = open( name, O_RDONLY | O_NONBLOCK, mode );
+
+    return fd;
+}
+
 /* open() wrapper that returns a struct fd with no fd user set */
 struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
-                    int flags, mode_t *mode, unsigned int access,
-                    unsigned int sharing, unsigned int options )
+                    mode_t *mode, unsigned int access, unsigned int sharing,
+                    unsigned int disposition, unsigned int options )
 {
     struct stat st;
     struct closed_fd *closed_fd;
     struct fd *fd;
     int root_fd = -1;
-    int rw_mode;
     char *path;
 
-    if (((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE)) ||
-        ((options & FILE_DIRECTORY_FILE) && (flags & O_TRUNC)))
+    if ((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
@@ -1907,45 +1928,57 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
         }
     }
 
-    /* create the directory if needed */
-    if ((options & FILE_DIRECTORY_FILE) && (flags & O_CREAT))
+    if (options & FILE_DIRECTORY_FILE)
     {
-        if (mkdir( name, *mode ) == -1)
+        switch (disposition)
         {
-            if (errno != EEXIST || (flags & O_EXCL))
-            {
-                file_set_error();
-                goto error;
-            }
-        }
-        flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
-    }
-
-    if ((access & FILE_UNIX_WRITE_ACCESS) && !(options & FILE_DIRECTORY_FILE))
-    {
-        if (access & FILE_UNIX_READ_ACCESS) rw_mode = O_RDWR;
-        else rw_mode = O_WRONLY;
-    }
-    else rw_mode = O_RDONLY;
-
-    if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
-    {
-        /* if we tried to open a directory for write access, retry read-only */
-        if (errno == EISDIR)
-        {
-            if ((access & FILE_UNIX_WRITE_ACCESS) || (flags & O_CREAT))
-                fd->unix_fd = open( name, O_RDONLY | (flags & ~(O_TRUNC | O_CREAT | O_EXCL)), *mode );
-        }
-
-        if (fd->unix_fd == -1)
-        {
-            /* check for trailing slash on file path */
-            if ((errno == ENOENT || (errno == ENOTDIR && !(options & FILE_DIRECTORY_FILE))) && name[strlen(name) - 1] == '/')
-                set_error( STATUS_OBJECT_NAME_INVALID );
-            else
-                file_set_error();
+        case FILE_CREATE:
+        case FILE_OPEN_IF:
+            if (mkdir( name, *mode ) != -1) break;
+            if (errno == EEXIST && disposition == FILE_OPEN_IF) break;
+            file_set_error();
+            goto error;
+        case FILE_OPEN:
+            break;
+        case FILE_SUPERSEDE:
+        case FILE_OVERWRITE:
+        case FILE_OVERWRITE_IF:
+            set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
+        fd->unix_fd = open( name, O_RDONLY | O_NONBLOCK, *mode );
+    }
+    else
+    {
+        switch (disposition)
+        {
+        case FILE_OPEN:
+            fd->unix_fd = open_file_or_dir( name, access, 0, *mode );
+            break;
+        case FILE_CREATE:
+            fd->unix_fd = open_file_or_dir( name, access, O_CREAT | O_EXCL, *mode );
+            break;
+        case FILE_OVERWRITE:
+            fd->unix_fd = open_file_or_dir( name, access | FILE_WRITE_DATA, 0, *mode );
+            break;
+        case FILE_OVERWRITE_IF:
+            fd->unix_fd = open_file_or_dir( name, access | FILE_WRITE_DATA, O_CREAT, *mode );
+            break;
+        case FILE_OPEN_IF:
+        case FILE_SUPERSEDE:
+            fd->unix_fd = open_file_or_dir( name, access, O_CREAT, *mode );
+            break;
+        }
+    }
+
+    if (fd->unix_fd == -1)
+    {
+        /* check for trailing slash on file path */
+        if ((errno == ENOENT || (errno == ENOTDIR && !(options & FILE_DIRECTORY_FILE))) && name[strlen(name) - 1] == '/')
+            set_error( STATUS_OBJECT_NAME_INVALID );
+        else
+            file_set_error();
+        goto error;
     }
 
     fd->nt_name = dup_nt_name( root, nt_name, &fd->nt_namelen );
@@ -1993,23 +2026,24 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
             set_error( STATUS_FILE_IS_A_DIRECTORY );
             goto error;
         }
-        if ((err = check_sharing( fd, access, sharing, flags, options )))
+        if ((err = check_sharing( fd, access, sharing, disposition, options )))
         {
             set_error( err );
             goto error;
         }
 
         /* can't unlink files if we don't have permission to access */
-        if ((options & FILE_DELETE_ON_CLOSE) && !(flags & O_CREAT) &&
+        if ((options & FILE_DELETE_ON_CLOSE) &&
+            (disposition == FILE_OPEN || disposition == FILE_OVERWRITE) &&
             !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
         {
             set_error( STATUS_CANNOT_DELETE );
             goto error;
         }
 
-        fd->closed->disp_flags = (options & FILE_DELETE_ON_CLOSE) ?
-            FILE_DISPOSITION_DELETE : 0;
-        if (flags & O_TRUNC)
+        fd->closed->disp_flags = (options & FILE_DELETE_ON_CLOSE) ? FILE_DISPOSITION_DELETE : 0;
+
+        if (is_replace_file_disposition( disposition ))
         {
             if (S_ISDIR(st.st_mode))
             {

@@ -86,8 +86,8 @@ struct fd_ops
 extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user,
                                    unsigned int options );
 extern struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
-                           int flags, mode_t *mode, unsigned int access,
-                           unsigned int sharing, unsigned int options );
+                           mode_t *mode, unsigned int access, unsigned int sharing,
+                           unsigned int disposition, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
 extern struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing,
@@ -286,12 +286,6 @@ static inline int async_queued( struct async_queue *queue )
     return !list_empty( &queue->queue );
 }
 
-
-/* access rights that require Unix read permission */
-#define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
-
-/* access rights that require Unix write permission */
-#define FILE_UNIX_WRITE_ACCESS (FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES|FILE_WRITE_EA)
 
 /* magic file access rights for mappings */
 #define FILE_MAPPING_IMAGE  0x80000000  /* set for SEC_IMAGE mappings */

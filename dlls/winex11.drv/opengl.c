@@ -477,7 +477,7 @@ static struct glx_pixel_format *glx_pixel_format_from_format( int format )
 
 BOOL visual_from_pixel_format( int format, XVisualInfo *visual )
 {
-    if (use_egl)
+    if (funcs->egl_handle)
     {
         EGLConfig config = egl_config_for_format( format );
         XVisualInfo *visuals;
@@ -565,7 +565,7 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
     }
     funcs = opengl_funcs;
 
-    if (use_egl && opengl_funcs->egl_handle)
+    if (opengl_funcs->egl_handle)
     {
         TRACE( "Using EGL OpenGL backend\n" );
         x11drv_driver_funcs = **driver_funcs;
@@ -576,8 +576,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         *driver_funcs = &x11drv_driver_funcs;
         return STATUS_SUCCESS;
     }
-
-    use_egl = FALSE;
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
