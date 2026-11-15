@@ -273,7 +273,6 @@ void mdmp_dump(void)
                     str = "Unknown";
                     break;
                 case PROCESSOR_ARCHITECTURE_INTEL:
-                    strcpy(tmp, "Intel ");
                     switch (msi->ProcessorLevel)
                     {
                     case  3: str = "80386"; break;
@@ -284,18 +283,12 @@ void mdmp_dump(void)
                     case 23: str = "AMD Zen 1 or 2"; break;
                     case 25: str = "AMD Zen 3 or 4"; break;
                     case 26: str = "AMD Zen 5"; break;
-                    default: str = "???"; break;
+                    default: str = NULL; break;
                     }
-                    strcat(tmp, str);
-                    strcat(tmp, " (");
-                    if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
-                    {
-                        if (HIBYTE(msi->ProcessorRevision) == 0xFF)
-                            snprintf(tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), "%c%d", 'A' + ((msi->ProcessorRevision>>4)&0xf)-0x0a, msi->ProcessorRevision&0xf);
-                        else
-                            snprintf(tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), "%c%d", 'A' + HIBYTE(msi->ProcessorRevision), LOBYTE(msi->ProcessorRevision));
-                    }
-                    else snprintf(tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), "%d.%d", HIBYTE(msi->ProcessorRevision), LOBYTE(msi->ProcessorRevision));
+                    if (str)
+                        snprintf(tmp, sizeof(tmp), "Intel %s rev=%04x", str, msi->ProcessorRevision);
+                    else
+                        snprintf(tmp, sizeof(tmp), "Intel level=%u rev=%04x", msi->ProcessorLevel, msi->ProcessorRevision);
                     str = tmp;
                     break;
                 case PROCESSOR_ARCHITECTURE_MIPS:
