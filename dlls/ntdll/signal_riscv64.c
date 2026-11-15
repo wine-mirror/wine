@@ -197,7 +197,14 @@ ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
 }
 
 /* Processor information. */
-__ASM_GLOBAL_FUNC( RtlIsProcessorFeaturePresent, "li a0, 0\n\tret" )
+/* Do not report every processor feature as unavailable.  The shared user
+ * data contains the features exposed to Windows processes by Wine.  RISC-V
+ * has no x86/ARM-specific extended feature namespace here. */
+BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
+{
+    if (feature >= PROCESSOR_FEATURE_MAX) return FALSE;
+    return !!user_shared_data->ProcessorFeatures[feature];
+}
 /* Mirror the native ARM64 implementation: this API is not architecture-
  * specific and should forward the query rather than report a stub error. */
 NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
