@@ -137,7 +137,27 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *record )
     record->ExceptionAddress = (void *)(ULONG_PTR)context.Pc;
     NtRaiseException( record, &context, TRUE );
 }
-__ASM_GLOBAL_FUNC( KiUserExceptionDispatcher, "ret" )
+/* Unix signal delivery and the syscall return path arrange a CONTEXT followed
+ * by an EXCEPTION_RECORD at the current stack pointer.  The helper is
+ * deliberately noreturn: dispatch_exception either continues via NtContinue
+ * or raises the resulting failure status. */
+struct riscv64_exception_stack
+{
+    CONTEXT context;
+    EXCEPTION_RECORD record;
+};
+
+static void WINAPI DECLSPEC_NORETURN riscv64_dispatch_exception( struct riscv64_exception_stack *stack )
+{
+    NTSTATUS status = dispatch_exception( &stack->record, &stack->context );
+    RtlRaiseStatus( status );
+    __builtin_unreachable();
+}
+
+__ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
+                   "mv a0, sp\\n\\t"
+                   "call riscv64_dispatch_exception\\n\\t"
+                   "ebreak" )
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher, "ret" )
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
 
