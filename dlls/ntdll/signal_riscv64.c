@@ -92,7 +92,17 @@ void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *record )
 }
 
 /* Exception dispatch. */
-__ASM_GLOBAL_FUNC( RtlRaiseException, "ret" )
+/* Raise a Windows exception through the NT exception path instead of silently
+ * returning to the caller.  Full SEH dispatch still requires the RV64
+ * exception dispatcher and signal translation machinery. */
+void WINAPI RtlRaiseException( EXCEPTION_RECORD *record )
+{
+    CONTEXT context;
+
+    RtlCaptureContext( &context );
+    record->ExceptionAddress = (void *)(ULONG_PTR)context.Pc;
+    NtRaiseException( record, &context, TRUE );
+}
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher, "ret" )
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher, "ret" )
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
