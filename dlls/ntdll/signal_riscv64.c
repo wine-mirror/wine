@@ -164,8 +164,13 @@ ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
 
 /* Processor information. */
 __ASM_GLOBAL_FUNC( RtlIsProcessorFeaturePresent, "li a0, 0\n\tret" )
-__ASM_GLOBAL_FUNC( RtlGetNativeSystemInformation,
-                   "li a0, -1073741822\n\tret" )
+/* Mirror the native ARM64 implementation: this API is not architecture-
+ * specific and should forward the query rather than report a stub error. */
+NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
+                                               void *info, ULONG size, ULONG *ret_size )
+{
+    return NtQuerySystemInformation( class, info, size, ret_size );
+}
 
 /* Jump-buffer helpers. */
 __ASM_GLOBAL_FUNC( NTDLL__setjmpex, "li a0, 0\n\tret" )
