@@ -88,6 +88,14 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     CONTEXT *ctx;
     ULONG_PTR stack_top;
 
+    /* The initial thread gets its frame in signal_init_process(), but
+     * subsequent threads need their own frame on their kernel stack. */
+    if (!frame)
+    {
+        alloc_syscall_frame( sizeof(*frame) );
+        frame = get_syscall_frame( data );
+    }
+
     memset( frame, 0, sizeof(*frame) );
 
     stack_top = (ULONG_PTR)teb->Tib.StackBase & ~(ULONG_PTR)15;
