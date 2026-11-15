@@ -163,6 +163,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
         return STATUS_INVALID_PARAMETER;
+    if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
+        return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
         return STATUS_NOT_IMPLEMENTED;
@@ -203,6 +205,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
         return STATUS_INVALID_PARAMETER;
+    if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
+        return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
         return STATUS_NOT_IMPLEMENTED;
