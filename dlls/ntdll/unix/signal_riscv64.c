@@ -420,6 +420,21 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
     }
 
+    /* Faults on Wine's Unix syscall stack cannot be dispatched using
+     * the interrupted kernel-stack pointer.  Return the exception status
+     * through the saved Windows syscall frame instead. */
+    if (is_inside_syscall( get_thread_data(), sp ))
+    {
+        struct syscall_frame *frame = get_syscall_frame( get_thread_data() );
+        if (frame)
+        {
+            frame->x[10] = exc->record.ExceptionCode;
+            REGn_sig( REG_A0, uc ) = (ULONG_PTR)frame;
+            PC_sig( uc ) = (ULONG_PTR)__wine_syscall_dispatcher_return;
+            return;
+        }
+    }
+
     SP_sig( uc ) = (ULONG_PTR)exc;
     REGn_sig( REG_A0, uc ) = (ULONG_PTR)exc;
     PC_sig( uc ) = (ULONG_PTR)riscv64_raise_signal_exception;
