@@ -4452,6 +4452,7 @@ typedef struct _WOW64_CPU_AREA_INFO
     WOW64_CPURESERVED *CpuReserved;
     ULONG              ContextFlag;
     USHORT             Machine;
+    void              *CpuAreaEnd;
 } WOW64_CPU_AREA_INFO, *PWOW64_CPU_AREA_INFO;
 
 typedef struct _WOW64INFO

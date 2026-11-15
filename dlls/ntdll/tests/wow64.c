@@ -2088,10 +2088,10 @@ static void test_cpu_area(void)
         {
             USHORT machine;
             NTSTATUS expect;
-            ULONG_PTR align, size, offset, flag;
+            ULONG_PTR align, size, offset, flag, flag_ext;
         } tests[] =
         {
-            { IMAGE_FILE_MACHINE_I386,  0,  4, 0x2cc, 0x00, 0x00010000 },
+            { IMAGE_FILE_MACHINE_I386,  0,  4, 0x2cc, 0x00, 0x00010000, 0x00010040 },
             { IMAGE_FILE_MACHINE_AMD64, 0, 16, 0x4d0, 0x30, 0x00100000 },
             { IMAGE_FILE_MACHINE_ARMNT, 0,  8, 0x1a0, 0x00, 0x00200000 },
             { IMAGE_FILE_MACHINE_ARM64, 0, 16, 0x390, 0x00, 0x00400000 },
@@ -2101,7 +2101,7 @@ static void test_cpu_area(void)
         USHORT buffer[2048];
         WOW64_CPURESERVED *cpu;
         WOW64_CPU_AREA_INFO info;
-        ULONG i, j;
+        ULONG i, j, ext_size;
         NTSTATUS status;
 #define ALIGN(ptr,align) ((void *)(((ULONG_PTR)(ptr) + (align) - 1) & ~((align) - 1)))
 
@@ -2112,6 +2112,8 @@ static void test_cpu_area(void)
                 cpu = (WOW64_CPURESERVED *)(buffer + j);
                 cpu->Flags = 0;
                 cpu->Machine = tests[i].machine;
+
+                memset( &info, 0xcc, sizeof(info) );
                 status = pRtlWow64GetCpuAreaInfo( cpu, 0, &info );
                 ok( status == tests[i].expect, "%lu:%lu: failed %lx\n", i, j, status );
                 if (status) continue;
@@ -2119,14 +2121,19 @@ static void test_cpu_area(void)
                     broken( (ULONG_PTR)info.Context == (ULONG)(ULONG_PTR)ALIGN( cpu + 1, tests[i].align ) ), /* win10 <= 1709 */
                     "%lu:%lu: wrong offset %Iu cpu %p context %p\n",
                     i, j, (ULONG_PTR)((char *)info.Context - (char *)cpu), cpu, info.Context );
-                ok( info.ContextEx == ALIGN( (char *)info.Context + tests[i].size, sizeof(void*) ),
+                if (RtlGetExtendedContextLength( info.ContextFlag, &ext_size )) ext_size = tests[i].size;
+                ok( info.ContextEx == ALIGN( (char *)info.Context + tests[i].size, sizeof(void*) ) ||
+                    info.ContextEx == ALIGN( (char *)info.Context + ext_size, sizeof(void*) ),
                     "%lu:%lu: wrong ex offset %lu\n", i, j, (ULONG)((char *)info.ContextEx - (char *)cpu) );
                 ok( info.ContextFlagsLocation == (char *)info.Context + tests[i].offset,
                     "%lu:%lu: wrong flags offset %lu\n",
                     i, j, (ULONG)((char *)info.ContextFlagsLocation - (char *)info.Context) );
                 ok( info.CpuReserved == cpu, "%lu:%lu: wrong cpu %p / %p\n", i, j, info.CpuReserved, cpu );
-                ok( info.ContextFlag == tests[i].flag, "%lu:%lu: wrong flag %08lx\n", i, j, info.ContextFlag );
+                ok( info.ContextFlag == tests[i].flag || (tests[i].flag_ext && info.ContextFlag == tests[i].flag_ext),
+                    "%lu:%lu: wrong flag %08lx\n", i, j, info.ContextFlag );
                 ok( info.Machine == tests[i].machine, "%lu:%lu: wrong machine %x\n", i, j, info.Machine );
+                ok( PtrToUlong(info.CpuAreaEnd) == 0xcccccccc || info.CpuAreaEnd == (void **)info.ContextEx + 1,
+                    "%lu:%lu: wrong area end %p\n", i, j, info.CpuAreaEnd );
             }
         }
 #undef ALIGN
