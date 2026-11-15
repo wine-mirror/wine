@@ -283,11 +283,32 @@ void call_raise_user_exception_dispatcher( struct thread_data *data )
 }
 
 
+struct riscv64_exception_stack_layout
+{
+    CONTEXT context;
+    EXCEPTION_RECORD record;
+};
+
 NTSTATUS call_user_exception_dispatcher( struct thread_data *data,
                                          EXCEPTION_RECORD *rec,
                                          CONTEXT *context )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct syscall_frame *frame = get_syscall_frame( data );
+    struct riscv64_exception_stack_layout *stack;
+    NTSTATUS status;
+
+    if (!frame) return STATUS_ACCESS_DENIED;
+    status = NtSetContextThread( GetCurrentThread(), context );
+    if (status) return status;
+
+    stack = (void *)(((ULONG_PTR)context->Gpr.X[2] - sizeof(*stack)) & ~(ULONG_PTR)15);
+    stack->context = *context;
+    stack->record = *rec;
+    frame->sp = (ULONG_PTR)stack;
+    frame->pc = (ULONG_PTR)pKiUserExceptionDispatcher;
+    frame->x[2] = frame->sp;
+    frame->restore_flags |= CONTEXT_CONTROL;
+    return STATUS_SUCCESS;
 }
 
 
