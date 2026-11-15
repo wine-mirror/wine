@@ -3971,7 +3971,7 @@ static void test_file_disposition_information(void)
 
 static void test_file_name_information(void)
 {
-    WCHAR *file_name, *volume_prefix, *expected;
+    WCHAR *file_name, *volume_prefix, expected[MAX_PATH];
     FILE_NAME_INFORMATION *info;
     OBJECT_NAME_INFORMATION *nameinfo;
     OBJECT_ATTRIBUTES attr;
@@ -3993,7 +3993,6 @@ static void test_file_name_information(void)
     file_name_size = GetSystemDirectoryW( NULL, 0 );
     file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
     volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
-    expected = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
 
     len = GetSystemDirectoryW( file_name, file_name_size );
     ok(len == file_name_size - 1,
@@ -4050,12 +4049,23 @@ static void test_file_name_information(void)
 
     CloseHandle( h );
     HeapFree( GetProcessHeap(), 0, info );
-    HeapFree( GetProcessHeap(), 0, expected );
     HeapFree( GetProcessHeap(), 0, volume_prefix );
 
     info_size = sizeof(*nameinfo) + MAX_PATH * sizeof(WCHAR);
     nameinfo = malloc( info_size );
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    RtlInitUnicodeString( &nt_name, L"\\??\\C:" );
+    status = NtOpenSymbolicLinkObject( &h, GENERIC_READ, &attr );
+    ok( !status, "got %#lx\n", status );
+
+    nt_name.Buffer = expected;
+    nt_name.MaximumLength = sizeof(expected);
+    status = NtQuerySymbolicLinkObject( h, &nt_name, NULL );
+    ok( !status, "got %#lx\n", status );
+    wcscpy( &expected[nt_name.Length / sizeof(WCHAR)], L"\\windows" );
+
+    NtClose( h );
 
     RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows" );
     status = pNtOpenFile( &h, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
@@ -4065,6 +4075,10 @@ static void test_file_name_information(void)
     ok( status == STATUS_SUCCESS, "NtQueryObject returned %#lx\n", status );
     ok( nameinfo->Name.Buffer[nameinfo->Name.Length / sizeof(WCHAR) - 1] != '\\',
         "name ends with backslash %s\n", debugstr_w(nameinfo->Name.Buffer) );
+    todo_wine ok( nameinfo->Name.Length == wcslen( expected ) * sizeof(WCHAR) &&
+        !wcsnicmp( nameinfo->Name.Buffer, expected, wcslen( expected )),
+        "expected %s, got %s\n", debugstr_w( expected ),
+        debugstr_wn( nameinfo->Name.Buffer, nameinfo->Name.Length / sizeof(WCHAR) ));
     CloseHandle( h );
 
     RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows\\" );
@@ -4115,7 +4129,6 @@ static void test_file_name_information(void)
 
     file_name = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*file_name) );
     volume_prefix = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*volume_prefix) );
-    expected = HeapAlloc( GetProcessHeap(), 0, file_name_size * sizeof(*expected) );
 
     len = pGetSystemWow64DirectoryW( file_name, file_name_size );
     ok(len == file_name_size - 1,
@@ -4141,7 +4154,6 @@ static void test_file_name_information(void)
 
     CloseHandle( h );
     HeapFree( GetProcessHeap(), 0, info );
-    HeapFree( GetProcessHeap(), 0, expected );
     HeapFree( GetProcessHeap(), 0, volume_prefix );
     HeapFree( GetProcessHeap(), 0, file_name );
 }
