@@ -1595,6 +1595,7 @@ static void test_MimeOleObjectFromMoniker(void)
         const WCHAR *mhtml_url;
     } tests[] = {
         {L"file:///x:\\dir\\file.mht", L"mhtml:file://x:\\dir\\file.mht"},
+        {L"mhtml:file://x:\\dir\\file.mht", L"mhtml:file://x:\\dir\\file.mht"},
         {L"file:///x:/dir/file.mht", L"mhtml:file://x:\\dir\\file.mht"},
         {L"http://www.winehq.org/index.html?query#hash", L"mhtml:http://www.winehq.org/index.html?query#hash"},
         {L"../test.mht", L"mhtml:../test.mht"}

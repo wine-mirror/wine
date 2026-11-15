@@ -3680,7 +3680,6 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
        REFIID riid, void **out, IMoniker **moniker_new)
 {
     WCHAR *display_name, *mhtml_url;
-    size_t len;
     HRESULT hres;
 
     WARN("(0x%08x, %p, %p, %s, %p, %p) semi-stub\n", bindf, moniker, binding, debugstr_guid(riid), out, moniker_new);
@@ -3696,17 +3695,28 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
 
     TRACE("display name %s\n", debugstr_w(display_name));
 
-    len = lstrlenW(display_name);
-    mhtml_url = malloc(len * sizeof(WCHAR) + sizeof(L"mhtml:"));
-    if(!mhtml_url)
-        return E_OUTOFMEMORY;
+    if(wcsnicmp(display_name, L"mhtml:", 6) != 0)
+    {
+        size_t len = lstrlenW(display_name);
 
-    lstrcpyW(mhtml_url, L"mhtml:");
-    lstrcatW(mhtml_url, display_name);
-    CoTaskMemFree(display_name);
+        mhtml_url = malloc(len * sizeof(WCHAR) + sizeof(L"mhtml:"));
+        if(!mhtml_url)
+        {
+            CoTaskMemFree(display_name);
+            return E_OUTOFMEMORY;
+        }
+        lstrcpyW(mhtml_url, L"mhtml:");
+        lstrcatW(mhtml_url, display_name);
+    }
+    else
+        mhtml_url = display_name;
+
+    TRACE("mhtml_url name %s\n", debugstr_w(mhtml_url));
 
     hres = CreateURLMoniker(NULL, mhtml_url, moniker_new);
-    free(mhtml_url);
+    CoTaskMemFree(display_name);
+    if (display_name != mhtml_url)
+        free(mhtml_url);
     if(FAILED(hres))
         return hres;
 
