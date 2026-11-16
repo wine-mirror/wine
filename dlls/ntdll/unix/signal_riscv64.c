@@ -584,104 +584,12 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
 /* A normal C function may introduce a prologue before the register restore.
  * GCC's naked attribute prevents it; the body contains basic asm only.
  * This does not yet solve complete t6 restoration or nested dispatch. */
+/* Entry receives the syscall frame in a0 and never returns.  The
+ * synchronous SIGUSR2 handler edits the kernel-created signal frame;
+ * rt_sigreturn then restores all GPRs and the target PC. */
 void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
 {
-    /*
-     * a0 = struct syscall_frame *
-     *
-     * Use t1 (x6) for the frame pointer and t0 (x5) for the
-     * destination PC. This permits restoration of t6 (x31).
-     * A direct jalr requires one scratch GPR for the branch target,
-     * so t0 cannot simultaneously be restored from an arbitrary CONTEXT.
-     * Exact all-register continuation requires a sigreturn-based path.
-     */
-    /* The kernel rt_sigreturn path is required for exact register restore.
-     * It avoids sacrificing t0 (or t6) as the final jump register. */
-    __asm__ volatile (
-        "tail " __ASM_NAME("riscv64_sigreturn_continue") "\\n"
-    );
-#if 0
-        __asm__ volatile (
-        "mv t1, a0\n"
-        "ld t0, 256(t1)\n"
-
-        /* Restore floating-point state only for an explicit context update. */
-        "lw t2, 544(t1)\n"
-        "andi t2, t2, 4\n"
-        "beqz t2, 1f\n"
-        "fld f0, 280(t1)\n"
-        "fld f1, 288(t1)\n"
-        "fld f2, 296(t1)\n"
-        "fld f3, 304(t1)\n"
-        "fld f4, 312(t1)\n"
-        "fld f5, 320(t1)\n"
-        "fld f6, 328(t1)\n"
-        "fld f7, 336(t1)\n"
-        "fld f8, 344(t1)\n"
-        "fld f9, 352(t1)\n"
-        "fld f10, 360(t1)\n"
-        "fld f11, 368(t1)\n"
-        "fld f12, 376(t1)\n"
-        "fld f13, 384(t1)\n"
-        "fld f14, 392(t1)\n"
-        "fld f15, 400(t1)\n"
-        "fld f16, 408(t1)\n"
-        "fld f17, 416(t1)\n"
-        "fld f18, 424(t1)\n"
-        "fld f19, 432(t1)\n"
-        "fld f20, 440(t1)\n"
-        "fld f21, 448(t1)\n"
-        "fld f22, 456(t1)\n"
-        "fld f23, 464(t1)\n"
-        "fld f24, 472(t1)\n"
-        "fld f25, 480(t1)\n"
-        "fld f26, 488(t1)\n"
-        "fld f27, 496(t1)\n"
-        "fld f28, 504(t1)\n"
-        "fld f29, 512(t1)\n"
-        "fld f30, 520(t1)\n"
-        "fld f31, 528(t1)\n"
-        "ld t2, 536(t1)\n"
-        "fscsr t2\n"
-        "1:\n"
-
-        "ld x1,  272(t1)\n"
-        "ld x2,   16(t1)\n"
-        /* Preserve native ELF gp, as well as tp. */
-        /* x4/tp is native ELF TLS and must not be restored from CONTEXT. */
-        
-        "ld x7,   56(t1)\n"
-        "ld x8,   64(t1)\n"
-        "ld x9,   72(t1)\n"
-        "ld x10,  80(t1)\n"
-        "ld x11,  88(t1)\n"
-        "ld x12,  96(t1)\n"
-        "ld x13, 104(t1)\n"
-        "ld x14, 112(t1)\n"
-        "ld x15, 120(t1)\n"
-        "ld x16, 128(t1)\n"
-        "ld x17, 136(t1)\n"
-        "ld x18, 144(t1)\n"
-        "ld x19, 152(t1)\n"
-        "ld x20, 160(t1)\n"
-        "ld x21, 168(t1)\n"
-        "ld x22, 176(t1)\n"
-        "ld x23, 184(t1)\n"
-        "ld x24, 192(t1)\n"
-        "ld x25, 200(t1)\n"
-        "ld x26, 208(t1)\n"
-        "ld x27, 216(t1)\n"
-        "ld x28, 224(t1)\n"
-        "ld x29, 232(t1)\n"
-        "ld x30, 240(t1)\n"
-
-        "ld sp, 264(t1)\n"
-        "ld x31, 248(t1)\n"\n        "ld x7, 56(t1)\n"\n        "ld x6, 48(t1)\n"
-
-        "jr t0\n"
-    );
-
-    #endif\n    __builtin_unreachable();
+    __asm__ volatile ( "tail " __ASM_NAME("riscv64_sigreturn_continue") "\n" );
 }
 
 /* RV64 NT-service bridge. The first eight arguments arrive in a0-a7;
