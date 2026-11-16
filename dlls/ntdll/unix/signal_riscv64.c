@@ -618,7 +618,7 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
         "ld x30, 240(t1)\n"
 
         "ld sp, 264(t1)\n"
-        "ld x31, 248(t1)\n"\n        "ld x6, 48(t1)\n"
+        "ld x31, 248(t1)\n"\n        "ld x7, 56(t1)\n"\n        "ld x6, 48(t1)\n"
 
         "jr t0\n"
     );
