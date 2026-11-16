@@ -141,7 +141,8 @@ struct context_data
                                   r8, r9, r10, r11, r12, r13, r14, r15; } x86_64_regs;
         struct { unsigned int r[13]; } arm_regs;
         struct { unsigned __int64 x0[18], x19[12]; } arm64_regs;
-        struct { unsigned __int64 x[32]; } riscv64_regs;
+
+        struct { unsigned __int64 x[30]; } riscv64_regs;
     } integer;
     union
     {
@@ -7200,6 +7201,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 979
+#define SERVER_PROTOCOL_VERSION 980
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
