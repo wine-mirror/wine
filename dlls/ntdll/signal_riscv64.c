@@ -12,6 +12,7 @@
 #include "ntstatus.h"
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/asm.h"
 #include "ntdll_misc.h"
 #include "ntsyscalls.h"
