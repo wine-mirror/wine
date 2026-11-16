@@ -1229,11 +1229,27 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
         wow_teb->Tib.StackBase = PtrToUlong( stack.StackBase );
         wow_teb->Tib.StackLimit = PtrToUlong( stack.StackLimit );
         wow_teb->DeallocationStack = PtrToUlong( stack.DeallocationStack );
-        return STATUS_SUCCESS;
 #else
         wow_teb->Tib.StackBase = wow_teb->TlsSlots[WOW64_TLS_CPURESERVED] = PtrToUlong( cpu );
         wow_teb->Tib.StackLimit = PtrToUlong( stack.StackLimit );
         wow_teb->DeallocationStack = PtrToUlong( stack.DeallocationStack );
+#endif
+
+        if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386 && user_shared_data->XState.EnabledFeatures)
+        {
+            I386_CONTEXT *ctx = (I386_CONTEXT *)(cpu + 1);
+            CONTEXT_EX *xctx = (CONTEXT_EX *)(ctx + 1);
+            XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)(((ULONG_PTR)xctx + 32 + 63) & ~(ULONG_PTR)63);
+
+            xctx->Legacy.Length = sizeof(I386_CONTEXT);
+            xctx->Legacy.Offset = -(LONG)sizeof(I386_CONTEXT);
+            xctx->XState.Length = user_shared_data->XState.Size - sizeof(XSAVE_FORMAT);
+            xctx->XState.Offset = (char *)xs - (char *)xctx;
+            xctx->All.Offset = xctx->Legacy.Offset;
+            xctx->All.Length = sizeof(I386_CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+        }
+#ifdef _WIN64
+        return STATUS_SUCCESS;
 #endif
     }
 

@@ -1644,7 +1644,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     if ((i386_context = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 )))
     {
         XMM_SAVE_AREA32 *fpu = (XMM_SAVE_AREA32 *)i386_context->ExtendedRegisters;
-        i386_context->ContextFlags = CONTEXT_I386_ALL;
+        i386_context->ContextFlags = CONTEXT_I386_ALL | CONTEXT_I386_XSTATE;
         i386_context->Eax = (ULONG_PTR)entry;
         i386_context->Ebx = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
         i386_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;

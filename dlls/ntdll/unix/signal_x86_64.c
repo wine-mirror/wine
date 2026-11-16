@@ -2896,6 +2896,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     if ((wow_context = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 )))
     {
         wow_context->ContextFlags = CONTEXT_I386_ALL;
+        if (user_shared_data->XState.EnabledFeatures) wow_context->ContextFlags |= CONTEXT_I386_XSTATE;
         wow_context->Eax = (ULONG_PTR)entry;
         wow_context->Ebx = (arg == peb ? (ULONG_PTR)wow_peb : (ULONG_PTR)arg);
         wow_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
