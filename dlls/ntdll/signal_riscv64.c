@@ -26,14 +26,87 @@ WINE_DEFAULT_DEBUG_CHANNEL(riscv64);
 ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 
-/*
- * Temporary build-enabling implementations.
- * Proper RISC-V64 SEH dispatch and breakpoint handling are still required.
- */
-NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+/* Registered TEB handlers are used by Wine's builtin exception machinery.
+ * PE language handlers still require RV64 unwind metadata decoding. */
+static BOOL riscv64_valid_seh_frame( const EXCEPTION_REGISTRATION_RECORD *frame )
 {
-    (void)rec;
-    (void)context;
+    ULONG_PTR addr = (ULONG_PTR)frame;
+    NT_TIB *tib = &NtCurrentTeb()->Tib;
+
+    return !(addr & (sizeof(void *) - 1)) &&
+           addr >= (ULONG_PTR)tib->StackLimit &&
+           addr < (ULONG_PTR)tib->StackBase &&
+           (ULONG_PTR)tib->StackBase - addr >= sizeof(*frame);
+}
+
+NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
+{
+    EXCEPTION_REGISTRATION_RECORD *frame = NtCurrentTeb()->Tib.ExceptionList;
+    EXCEPTION_REGISTRATION_RECORD *next;
+    CONTEXT context = *original;
+    DISPATCHER_CONTEXT dispatch = {0};
+    ULONG_PTR image_base, establisher, sp, prev_sp = 0;
+    RUNTIME_FUNCTION *function;
+    PEXCEPTION_ROUTINE handler;
+    unsigned int depth = 0;
+    LONG status;
+    EXCEPTION_DISPOSITION disposition;
+
+    dispatch.ContextRecord = &context;
+    while (depth++ < 1024)
+    {
+        sp = context.Gpr.X[2];
+        if (!sp || sp >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase ||
+            sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit ||
+            (prev_sp && sp <= prev_sp)) break;
+        prev_sp = sp;
+
+        image_base = 0;
+        function = RtlLookupFunctionEntry( context.Pc, &image_base, NULL );
+        dispatch.ControlPc = context.Pc;
+        dispatch.ImageBase = image_base;
+        dispatch.FunctionEntry = function;
+        dispatch.HandlerData = NULL;
+        dispatch.LanguageHandler = NULL;
+        status = RtlVirtualUnwind2( UNW_FLAG_EHANDLER, image_base, context.Pc,
+                                     function, &context, NULL, &dispatch.HandlerData,
+                                     &establisher, NULL, NULL, NULL,
+                                     &dispatch.LanguageHandler, 0 );
+        if (status) return status;
+        dispatch.EstablisherFrame = establisher;
+        handler = dispatch.LanguageHandler;
+        if (handler)
+        {
+            disposition = handler( rec, (void *)establisher, original, &dispatch );
+            if (disposition == ExceptionContinueExecution)
+                return (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) ?
+                       STATUS_NONCONTINUABLE_EXCEPTION : STATUS_SUCCESS;
+            if (disposition != ExceptionContinueSearch) return STATUS_INVALID_DISPOSITION;
+        }
+        else while (frame && riscv64_valid_seh_frame( frame ) &&
+                    (ULONG_PTR)frame < context.Gpr.X[2])
+        {
+            next = frame->Prev;
+            disposition = ((PEXCEPTION_ROUTINE)frame->Handler)( rec, frame, original, &dispatch );
+            if (disposition == ExceptionContinueExecution)
+                return (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) ?
+                       STATUS_NONCONTINUABLE_EXCEPTION : STATUS_SUCCESS;
+            if (disposition == ExceptionNestedException) rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
+            else if (disposition != ExceptionContinueSearch) return STATUS_INVALID_DISPOSITION;
+            if (next && next != (void *)(ULONG_PTR)-1 && (ULONG_PTR)next <= (ULONG_PTR)frame)
+            {
+                rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
+                return STATUS_BAD_STACK;
+            }
+            frame = next;
+        }
+        if (frame && frame != (void *)(ULONG_PTR)-1 && !riscv64_valid_seh_frame( frame ))
+        {
+            rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
+            return STATUS_BAD_STACK;
+        }
+        if (context.Pc == original->Pc && depth > 1) break;
+    }
     return STATUS_UNHANDLED_EXCEPTION;
 }
 
