@@ -5738,6 +5738,102 @@ static void test_stringtable(void)
     DeleteFileA(msifile);
 }
 
+static void test_stringpoolflag(void)
+{
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    IStorage *stg = NULL;
+    IStream *stm;
+    UINT i, col;
+    HRESULT hr;
+    const char *query;
+    char buffer[16];
+    WCHAR data[MAX_PATH];
+    DWORD read;
+    UINT r;
+
+    static const DWORD mode = STGM_DIRECT | STGM_READ | STGM_SHARE_DENY_WRITE;
+    static const WCHAR stringpool[] = {0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0}; /* _StringPool */
+
+    r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `T` ( "
+        "`K` INT, "
+        "`S0` CHAR(72), "
+        "`S1` CHAR(72), "
+        "`S2` CHAR(72), "
+        "`S3` CHAR(72), "
+        "`S4` CHAR(72), "
+        "`S5` CHAR(72), "
+        "`S6` CHAR(72), "
+        "`S7` CHAR(72) "
+        "PRIMARY KEY `K`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `T` "
+        "(`K`, `S0`, `S1`, `S2`, `S3`, `S4`, `S5`, `S6`, `S7`) "
+        "VALUES "
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    r = MsiDatabaseOpenViewA(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* insert 64000 unique strings */
+    for (i = 0; i < 64000; i++)
+    {
+        col = i % 8;
+
+        if (col == 0)
+        {
+            hrec = MsiCreateRecord(9);
+            MsiRecordSetInteger(hrec, 1, i / 8);
+        }
+
+        sprintf(buffer, "%u", i);
+        MsiRecordSetStringA(hrec, 2 + col, buffer);
+
+        if (col == 7)
+        {
+            r = MsiViewExecute(hview, hrec);
+            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+            r = MsiCloseHandle(hrec);
+            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        }
+    }
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hr = StgOpenStorage(msifileW, NULL, mode, NULL, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
+    ok(stg != NULL, "Expected non-NULL storage\n");
+
+    hr = IStorage_OpenStream(stg, stringpool, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
+    ok(stm != NULL, "Expected non-NULL stream\n");
+
+    hr = IStream_Read(stm, data, MAX_PATH, &read);
+    ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
+    todo_wine ok(!(data[1] & 0x8000), "Unexpected flag in stringpool header\n");
+
+    hr = IStream_Release(stm);
+    ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
+
+    hr = IStorage_Release(stg);
+    ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
+
+    DeleteFileA(msifile);
+}
+
 static void test_viewmodify_delete(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
@@ -9397,6 +9493,7 @@ START_TEST(db)
     test_viewmodify_update();
     test_viewmodify_assign();
     test_stringtable();
+    test_stringpoolflag();
     test_viewmodify_delete();
     test_defaultdatabase();
     test_order();
