@@ -826,8 +826,15 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
                    "beqz a0, 1f\n\t"
                    "mv t0, a0\n\t"
+                   /* Keep Unix-call frame bookkeeping consistent with the
+                    * NT syscall entry path.  The same frame is reused for
+                    * successive non-nested transitions; without clearing
+                    * restore_flags a previous NtContinue can leave a stale
+                    * context request behind. */
+                   "sw zero, 544(t0)\n\t"
                    "ld t1, 0(sp)\n\t"
                    "sd t1, 272(t0)\n\t"
+                   "sd t1, 256(t0)\n\t"
                    "addi t1, sp, 128\n\t"
                    "sd t1, 264(t0)\n\t"
                    "ld t1, 8(sp)\n\t"
