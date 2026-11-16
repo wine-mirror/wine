@@ -43,6 +43,9 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+#define NTDLL_DWARF_H_NO_UNWINDER
+#include "dwarf.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 #define REGn_sig(reg, context) ((context)->uc_mcontext.__gregs[(reg)])
@@ -947,10 +950,27 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 /***********************************************************************
  *           unwind_builtin_dll
  *
- * RISC-V ELF unwinding is not implemented yet.
+ * Locate the native ELF FDE for a Winelib call site.  CFI evaluation
+ * and register restoration are not implemented by this preparatory change.
  */
 NTSTATUS unwind_builtin_dll( void *args )
 {
+    struct unwind_builtin_dll_params *params = args;
+    CONTEXT *context;
+    struct dwarf_eh_bases bases;
+    const struct dwarf_fde *fde;
+
+    if (!params || !params->context || !params->dispatch)
+        return STATUS_INVALID_PARAMETER;
+    context = params->context;
+    if (!context->Pc) return STATUS_UNSUCCESSFUL;
+
+    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(context->Pc - 1), &bases );
+    if (!fde) return STATUS_UNSUCCESSFUL;
+
+    TRACE( "RISC-V64 native FDE %p for pc %p, function %p\n",
+           fde, (void *)(ULONG_PTR)context->Pc, bases.func );
+    /* TODO: evaluate CIE/FDE CFI and update CONTEXT and dispatcher. */
     return STATUS_UNSUCCESSFUL;
 }
 
