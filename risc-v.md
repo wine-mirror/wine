@@ -89,6 +89,40 @@ Use the build system's generated compiler flags rather than replacing `CFLAGS` w
 
 If `configure` itself was changed, regenerate it using the project's documented build procedure before reconfiguring. `autoreconf -fi` appeared in early experiments but should not be applied automatically to an otherwise configured tree.
 
+### Whole-program ELF build coverage
+
+The acceptance target is parity with the same Wine revision on native x86-64/AArch64,
+including GUI programs and services. Existing PE binaries and CPU translation are not
+required. There are currently 116 program modules: 111 native ELF targets, four Win16
+exclusions (`rundll.exe16`, `winevdm`, `winhelp.exe16`, `winoldap.mod16`), and `dpnsvr`,
+which upstream also excludes on native ARM64. Tests beneath program directories are
+additional targets, not counted as application modules.
+
+After building, audit the configured rules and actual ELF files from the source root:
+
+```sh
+python3 tools/riscv64-programs ../wine-riscv-build > /tmp/wine-riscv-programs.json
+```
+
+The command exits nonzero for missing rules, missing outputs, or incorrect ELF targets.
+Its JSON inventory explicitly separates build status from runtime validation. PE
+placeholders do not count as built ELF applications. This audit does not certify
+application behavior: each applicable program still needs functional testing against
+the reference build, first under full-system QEMU and then on native hardware.
+
+For cross-builds, prepare `__tooldeps__` **and** `nls/all` in the native host-tools build;
+otherwise resource compilers can fail to load `locale.nls`. Use a disk-backed build
+directory with enough space for the complete build; the initial debug build exhausted
+a small temporary filesystem. `--disable-tests` can prioritize application bring-up,
+but it also disables `winetest`; the audit reports that as `disabled-by-config`,
+not an exclusion. A test-enabled build is required for final acceptance.
+
+Current validation: native RISC-V loader and wineserver version commands run under
+QEMU user emulation; a full application build is in progress. A successful version
+command is not a startup pass. QEMU user emulation without binfmt integration cannot
+transparently execute RISC-V child loaders, so service/process acceptance requires
+a complete target environment. Local Unix sockets must be available to wineserver.
+
 ## 3. Smoke-test startup
 
 From the **configured build directory**, using its Wine launcher:
