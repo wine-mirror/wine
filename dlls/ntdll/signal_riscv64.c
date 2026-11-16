@@ -192,11 +192,37 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "fsd f31, 528(a0)\n\t"
                    "ret" )
 
+struct riscv64_jump_buffer
+{
+    ULONG64 frame, reserved;
+    ULONG64 s[12];
+    ULONG64 ra, sp, fcsr, reserved2;
+    ULONG64 fs[12];
+};
 /* NtContinue performs the non-returning context transfer. */
 void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *record )
 {
-    NTSTATUS status = NtContinue( context, FALSE );
-    ERR( "RISCV64 RtlRestoreContext: NtContinue returned %#lx\n", (unsigned long)status );
+    NTSTATUS status;
+    unsigned int i;
+
+    if (record && record->ExceptionCode == STATUS_LONGJUMP && record->NumberParameters >= 1)
+    {
+        const struct riscv64_jump_buffer *jmp = (void *)(ULONG_PTR)record->ExceptionInformation[0];
+        if (!jmp) RtlRaiseStatus( STATUS_INVALID_PARAMETER );
+        for (i = 0; i < 12; ++i)
+        {
+            unsigned int reg = i < 2 ? i + 8 : i + 16;
+            context->Gpr.X[reg] = jmp->s[i];
+            context->F[reg].Q = jmp->fs[i];
+        }
+        context->Gpr.X[1] = jmp->ra;
+        context->Gpr.X[2] = jmp->sp;
+        context->Pc = jmp->ra;
+        context->Fcsr = jmp->fcsr;
+        context->ContextFlags |= CONTEXT_FULL;
+    }
+    status = NtContinue( context, FALSE );
+    ERR( "RISCV64 RtlRestoreContext: NtContinue returned %#lx\\n", (unsigned long)status );
     __builtin_trap();
 }
 
@@ -377,13 +403,6 @@ NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
 }
 
 /* Wine RV64 LP64D jump buffer, shared with include/msvcrt/setjmp.h. */
-struct riscv64_jump_buffer
-{
-    ULONG64 frame, reserved;
-    ULONG64 s[12];
-    ULONG64 ra, sp, fcsr, reserved2;
-    ULONG64 fs[12];
-};
 C_ASSERT( sizeof(struct riscv64_jump_buffer) == 240 );
 C_ASSERT( offsetof(struct riscv64_jump_buffer, s) == 0x10 );
 C_ASSERT( offsetof(struct riscv64_jump_buffer, ra) == 0x70 );
