@@ -3406,37 +3406,18 @@ void virtual_init(void)
         high_range.start = high_range.end = ROUND_ADDR( host_addr_space_limit, limit_4g - 1 );
 
 #ifdef _WIN64
-#if defined(__riscv) && (__riscv_xlen == 64)
-    fprintf( stderr,
-             "virtual: host_addr_space_limit=%#lx page_shift=%u "
-             "pages_vprot_shift=%lu\n",
-             (unsigned long)host_addr_space_limit,
-             page_shift,
-             pages_vprot_shift );
-
-    pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    pages_vprot = calloc( pages_vprot_size, sizeof(*pages_vprot) );
-    assert( pages_vprot != NULL );
-#else
+#if !defined(__riscv) || (__riscv_xlen != 64)
     pages_vprot = anon_mmap_alloc( 1U << (32 - page_shift), PROT_READ | PROT_WRITE );
     assert( pages_vprot != MAP_FAILED );
-#endif
     view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-#if 0    
-    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
-
-    fprintf( stderr,
-             "virtual: host_addr_space_limit=%#lx page_shift=%u "
-             "pages_vprot_shift=%zu\n",
-             (unsigned long)host_addr_space_limit,
-             page_shift,
-             pages_vprot_shift );
 #endif
     pages_vprot_size = ((size_t)host_addr_space_limit >> page_shift >> pages_vprot_shift) + 1;
+#if defined(__riscv) && (__riscv_xlen == 64)
+    /* The RV64 protection table and view block are allocated once below. */
     view_block_start = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-//    free_ranges = anon_mmap_alloc( view_block_size, PROT_READ | PROT_WRITE );
+#endif
 
 #if defined(__riscv) && (__riscv_xlen == 64)
     fprintf( stderr,
