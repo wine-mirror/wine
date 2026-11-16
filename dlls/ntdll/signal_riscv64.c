@@ -189,8 +189,52 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
 
 /* Unwinding. */
 __ASM_GLOBAL_FUNC( RtlUnwindEx, "ret" )
-__ASM_GLOBAL_FUNC( RtlVirtualUnwind, "ret" )
-__ASM_GLOBAL_FUNC( RtlVirtualUnwind2, "li a0, -1073741822\n\tret" )
+/* Only leaf functions can be unwound without architecture-specific PE
+ * unwind opcodes. Never guess a frame for a non-leaf function. */
+LONG WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR image_base, ULONG_PTR pc,
+                               RUNTIME_FUNCTION *function, CONTEXT *context,
+                               BOOLEAN *machine_frame, void **handler_data,
+                               ULONG_PTR *establisher, KNONVOLATILE_CONTEXT_POINTERS *nonvol,
+                               ULONG_PTR *low_limit, ULONG_PTR *high_limit,
+                               PEXCEPTION_ROUTINE *handler, ULONG flags )
+{
+    ULONG_PTR sp, ra;
+
+    if (!context || !establisher) return STATUS_INVALID_PARAMETER;
+    if (handler) *handler = NULL;
+    if (handler_data) *handler_data = NULL;
+    if (machine_frame) *machine_frame = FALSE;
+    sp = context->Gpr.X[2];
+    *establisher = sp;
+    if (function)
+    {
+        FIXME( "RISC-V64 PE unwind opcodes not implemented at pc %p\n", (void *)pc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    if (!sp || (sp & 15)) return STATUS_BAD_STACK;
+    if (low_limit && sp < *low_limit) return STATUS_BAD_STACK;
+    if (high_limit && sp >= *high_limit) return STATUS_BAD_STACK;
+    ra = context->Gpr.X[1];
+    if (!ra || ra == context->Pc) return STATUS_INVALID_DISPOSITION;
+    context->Pc = ra;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    return STATUS_SUCCESS;
+}
+
+PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR image_base,
+                                            ULONG_PTR pc, RUNTIME_FUNCTION *function,
+                                            CONTEXT *context, void **handler_data,
+                                            ULONG_PTR *establisher,
+                                            KNONVOLATILE_CONTEXT_POINTERS *nonvol )
+{
+    PEXCEPTION_ROUTINE handler = NULL;
+    LONG status = RtlVirtualUnwind2( type, image_base, pc, function, context, NULL,
+                                     handler_data, establisher, nonvol,
+                                     NULL, NULL, &handler, 0 );
+    if (status) WARN( "RISC-V64 virtual unwind failed at %p: %#lx\n",
+                      (void *)pc, (unsigned long)status );
+    return handler;
+}
 __ASM_GLOBAL_FUNC( RtlWalkFrameChain, "li a0, 0\n\tret" )
 __ASM_GLOBAL_FUNC( __C_specific_handler, "li a0, 1\n\tret" )
 
