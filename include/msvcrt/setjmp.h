@@ -132,6 +132,25 @@ typedef struct _JUMP_BUFFER
 #define _JBLEN  24
 #define _JBTYPE unsigned __int64
 
+#elif defined(__riscv) && (__riscv_xlen == 64)
+
+/* Wine native RV64 LP64D jump buffer.  This is Wine's proposed PE ABI,
+ * not the Linux libc jmp_buf layout.  All offsets are in 64-bit words. */
+typedef struct _JUMP_BUFFER
+{
+    unsigned __int64 Frame;       /* 0x00 */
+    unsigned __int64 Reserved;    /* 0x08 */
+    unsigned __int64 S[12];       /* 0x10: s0-s11 */
+    unsigned __int64 Ra;          /* 0x70 */
+    unsigned __int64 Sp;          /* 0x78 */
+    unsigned __int64 Fcsr;        /* 0x80 */
+    unsigned __int64 Reserved2;   /* 0x88 */
+    unsigned __int64 Fs[12];      /* 0x90: fs0-fs11 */
+} _JUMP_BUFFER;
+
+#define _JBLEN 30
+#define _JBTYPE unsigned __int64
+
 #else
 
 #define _JBLEN 1
