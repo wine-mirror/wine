@@ -2585,7 +2585,7 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID, NULL, (BYTE *)buf, sizeof(buf), NULL);
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
-    todo_wine ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
+    ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
 
     ret = SetupDiGetDeviceInstanceIdA(set, &device, id, sizeof(id), NULL);
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
@@ -2599,7 +2599,7 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     res = RegGetValueA(key, NULL, "ClassGUID", RRF_RT_REG_SZ, NULL, buf, &size);
     ok(!res, "Failed get key value, error %lu.\n", res);
-    todo_wine ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
+    ok(!lstrcmpA(buf, "{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", buf);
     RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInfo(set, &device);
@@ -2800,7 +2800,7 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_CLASSGUID, NULL, (BYTE *)buf, sizeof(buf), NULL);
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
-    todo_wine ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
 
     ret = SetupDiGetDeviceInstanceIdW(set, &device, id, sizeof(id), NULL);
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
@@ -2814,7 +2814,7 @@ todo_wine {
     memset(buf, 0, sizeof(buf));
     res = RegGetValueW(key, NULL, L"ClassGUID", RRF_RT_REG_SZ, NULL, buf, &size);
     ok(!res, "Failed get key value, error %lu.\n", res);
-    todo_wine ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"{6a55b5a4-3f65-11db-b704-0011955c2bdb}"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
     RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInfo(set, &device);

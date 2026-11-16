@@ -827,6 +827,7 @@ static struct device *create_device(struct DeviceInfoSet *set,
         RegSetValueExW(device->key, L"Phantom", 0, REG_DWORD, (const BYTE *)&one, sizeof(one));
 
     SETUPDI_GuidToString(class, guidstr);
+    wcslwr(guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
         (const BYTE *)guidstr, sizeof(guidstr));
 
