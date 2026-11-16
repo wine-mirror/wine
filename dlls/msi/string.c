@@ -420,7 +420,19 @@ UINT msi_string2id( const string_table *st, const WCHAR *str, int len, UINT *id 
     return ERROR_INVALID_PARAMETER;
 }
 
-static void string_totalsize( const string_table *st, UINT *datasize, UINT *poolsize )
+static UINT max_persistent( const string_table *st )
+{
+    UINT i;
+
+    for (i = st->maxcount - 1; i > 0; i--)
+    {
+        if (st->strings[i].persistent_refcount)
+            return i + 1;
+    }
+    return 1;
+}
+
+static void string_totalsize( const string_table *st, UINT *datasize, UINT *poolsize, UINT *count )
 {
     UINT i, len, holesize;
 
@@ -430,7 +442,9 @@ static void string_totalsize( const string_table *st, UINT *datasize, UINT *pool
     *poolsize = 4;
     *datasize = 0;
     holesize = 0;
-    for( i=1; i<st->maxcount; i++ )
+    *count = max_persistent( st );
+
+    for (i = 1; i < *count; i++)
     {
         if( !st->strings[i].persistent_refcount )
         {
@@ -562,7 +576,7 @@ end:
 
 UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *bytes_per_strref )
 {
-    UINT i, datasize = 0, poolsize = 0, sz, used, r, codepage, n;
+    UINT i, datasize = 0, poolsize = 0, sz, used, r, codepage, n, count;
     UINT ret = ERROR_FUNCTION_FAILED;
     CHAR *data = NULL;
     USHORT *pool = NULL;
@@ -570,7 +584,7 @@ UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *byt
     TRACE("\n");
 
     /* construct the new table in memory first */
-    string_totalsize( st, &datasize, &poolsize );
+    string_totalsize( st, &datasize, &poolsize, &count );
 
     TRACE("%u %u %u\n", st->maxcount, datasize, poolsize );
 
@@ -591,7 +605,7 @@ UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *byt
     codepage = st->codepage;
     pool[0] = codepage & 0xffff;
     pool[1] = codepage >> 16;
-    if (st->maxcount > 0xffff)
+    if (count > 0xffff)
     {
         pool[1] |= 0x8000;
         *bytes_per_strref = LONG_STR_BYTES;
@@ -600,7 +614,7 @@ UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *byt
         *bytes_per_strref = sizeof(USHORT);
 
     n = 1;
-    for( i=1; i<st->maxcount; i++ )
+    for (i = 1; i < count; i++)
     {
         if( !st->strings[i].persistent_refcount )
         {

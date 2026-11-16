@@ -5823,7 +5823,7 @@ static void test_stringpoolflag(void)
 
     hr = IStream_Read(stm, data, MAX_PATH, &read);
     ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
-    todo_wine ok(!(data[1] & 0x8000), "Unexpected flag in stringpool header\n");
+    ok(!(data[1] & 0x8000), "Unexpected flag in stringpool header\n");
 
     hr = IStream_Release(stm);
     ok(hr == S_OK, "Expected S_OK, got %#lx\n", hr);
