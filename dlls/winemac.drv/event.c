@@ -35,7 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
-        "APP_DEACTIVATED",
         "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
         "HOTKEY_PRESS",
@@ -60,7 +59,6 @@ static const char *dbgstr_event(int type)
         "WINDOW_DRAG_END",
         "WINDOW_FRAME_CHANGED",
         "WINDOW_GOT_FOCUS",
-        "WINDOW_LOST_FOCUS",
         "WINDOW_RESIZE_ENDED",
         "WINDOW_RESTORE_REQUESTED",
     };
@@ -104,7 +102,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_POSTMESSAGE)
     {
-        event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
         event_mask |= event_mask_for_type(LOST_PASTEBOARD_OWNERSHIP);
@@ -113,7 +110,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
-        event_mask |= event_mask_for_type(WINDOW_LOST_FOCUS);
     }
 
     if (mask & QS_SENDMESSAGE)
@@ -312,9 +308,6 @@ void macdrv_handle_event(const macdrv_event *event)
 
     switch (event->type)
     {
-    case APP_DEACTIVATED:
-        macdrv_app_deactivated();
-        break;
     case APP_QUIT_REQUESTED:
         macdrv_app_quit_requested(event);
         break;
@@ -380,9 +373,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case WINDOW_GOT_FOCUS:
         macdrv_window_got_focus(hwnd, event);
-        break;
-    case WINDOW_LOST_FOCUS:
-        macdrv_window_lost_focus(hwnd, event);
         break;
     case WINDOW_RESIZE_ENDED:
         macdrv_window_resize_ended(hwnd);

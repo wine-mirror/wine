@@ -1836,36 +1836,19 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
 /***********************************************************************
  *              macdrv_window_lost_focus
- *
- * Handler for WINDOW_LOST_FOCUS events.
  */
-void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
+void macdrv_window_lost_focus(HWND hwnd)
 {
+    HWND foreground = NtUserGetForegroundWindow();
+    unsigned int style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+
     if (!hwnd) return;
 
-    TRACE("win %p/%p fg %p\n", hwnd, event->window, NtUserGetForegroundWindow());
+    TRACE("win %p style %08x fg %p\n", hwnd, style, foreground);
 
-    if (hwnd == NtUserGetForegroundWindow())
+    if (hwnd == foreground && (style & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE)
     {
-        send_message(hwnd, WM_CANCELMODE, 0, 0);
-        if (hwnd == NtUserGetForegroundWindow())
-            NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
-    }
-}
-
-
-/***********************************************************************
- *              macdrv_app_deactivated
- *
- * Handler for APP_DEACTIVATED events.
- */
-void macdrv_app_deactivated(void)
-{
-    NtUserClipCursor(NULL);
-
-    if (get_active_window(GetCurrentThreadId()) == NtUserGetForegroundWindow())
-    {
-        TRACE("setting fg to desktop\n");
+        send_notify_message(hwnd, WM_CANCELMODE, 0, 0);
         NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
     }
 }

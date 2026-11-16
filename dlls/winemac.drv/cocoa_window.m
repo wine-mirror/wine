@@ -1217,8 +1217,7 @@ static inline BOOL stage_manager_enabled(void)
                         [self setStyleMask:([self styleMask] | NSWindowStyleMaskMiniaturizable)];
                         [super miniaturize:nil];
                         discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
-                                   event_mask_for_type(WINDOW_GOT_FOCUS) |
-                                   event_mask_for_type(WINDOW_LOST_FOCUS);
+                                   event_mask_for_type(WINDOW_GOT_FOCUS);
                     }
                 }
                 else
@@ -1228,7 +1227,6 @@ static inline BOOL stage_manager_enabled(void)
             {
                 ignore_windowDeminiaturize = TRUE;
                 [self deminiaturize:nil];
-                discard |= event_mask_for_type(WINDOW_LOST_FOCUS);
             }
 
             if (discard)
@@ -1713,7 +1711,6 @@ static inline BOOL stage_manager_enabled(void)
             pendingOrderOut = TRUE;
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                              event_mask_for_type(WINDOW_GOT_FOCUS) |
-                                             event_mask_for_type(WINDOW_LOST_FOCUS) |
                                              event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                    forWindow:self];
             return;
@@ -1729,6 +1726,7 @@ static inline BOOL stage_manager_enabled(void)
             [parent grabDockIconSnapshotFromWindow:self force:NO];
 
         [self becameIneligibleParentOrChild];
+        causing_becomeKeyWindow = self;
         if ([self isMiniaturized] || [self styleMask] & NSWindowStyleMaskFullScreen)
         {
             fakingClose = TRUE;
@@ -1737,6 +1735,7 @@ static inline BOOL stage_manager_enabled(void)
         }
         else
             [self orderOut:nil];
+        causing_becomeKeyWindow = nil;
         [self setBackgroundColor:[NSColor clearColor]];
         [self setOpaque:NO];
         drawnSinceShown = NO;
@@ -1748,7 +1747,6 @@ static inline BOOL stage_manager_enabled(void)
 
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                          event_mask_for_type(WINDOW_GOT_FOCUS) |
-                                         event_mask_for_type(WINDOW_LOST_FOCUS) |
                                          event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                forWindow:self];
     }
@@ -1963,8 +1961,7 @@ static inline BOOL stage_manager_enabled(void)
         [self makeKeyWindow];
         causing_becomeKeyWindow = nil;
 
-        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_GOT_FOCUS) |
-                                         event_mask_for_type(WINDOW_LOST_FOCUS)
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_GOT_FOCUS)
                                forWindow:self];
     }
 
@@ -2755,13 +2752,9 @@ static inline BOOL stage_manager_enabled(void)
 
     - (void)windowDidResignKey:(NSNotification *)notification
     {
-        macdrv_event* event;
-
         if (causing_becomeKeyWindow) return;
 
-        event = macdrv_create_event(WINDOW_LOST_FOCUS, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        macdrv_window_lost_focus(hwnd);
     }
 
     - (void)windowDidResize:(NSNotification *)notification skipSizeMove:(BOOL)skipSizeMove

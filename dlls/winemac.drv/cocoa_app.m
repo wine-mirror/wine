@@ -28,6 +28,7 @@
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
 
+WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponseMode";
 
@@ -2236,19 +2237,23 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (void)applicationDidResignActive:(NSNotification *)notification
     {
-        macdrv_event* event;
-        WineEventQueue* queue;
+        HWND foreground = NtUserGetForegroundWindow();
+        WineWindow* window;
 
         [self invalidateGotFocusEvents];
 
-        event = macdrv_create_event(APP_DEACTIVATED, nil);
+        NtUserClipCursor(NULL);
 
-        [eventQueuesLock lock];
-        for (queue in eventQueues)
-            [queue postEvent:event];
-        [eventQueuesLock unlock];
-
-        macdrv_release_event(event);
+        for (window in [NSApp windows])
+        {
+            if ([window isKindOfClass:[WineWindow class]] &&
+                macdrv_get_window_hwnd(window) == foreground)
+            {
+                TRACE("setting fg to desktop\n");
+                NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
+                break;
+            }
+        }
 
         [self releaseMouseCapture];
     }
