@@ -2001,6 +2001,15 @@ static void get_resource_global_keyed_mutex( struct d3dkmt_dxgi_desc *desc, D3DK
     }
 }
 
+/* get the fd_desc associated with an object fd */
+struct fd_desc d3dkmt_object_get_fd_desc( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *object;
+
+    if (!(object = get_d3dkmt_object( local, -1 ))) return no_fd;
+    return object->fd_desc;
+}
+
 /* get a locally opened D3DKMT object host-specific fd */
 int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
 {

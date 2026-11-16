@@ -862,21 +862,24 @@ static void win32u_vkGetDeviceQueue2( VkDevice client_device, const VkDeviceQueu
     *client_queue = device_find_queue( client_device, &info );
 }
 
-static VkResult import_semaphore_from_d3dkmt_sync( struct vulkan_device *device, D3DKMT_HANDLE sync, VkSemaphore host_semaphore )
+static VkResult import_semaphore_from_d3dkmt_sync( struct vulkan_device *device, D3DKMT_HANDLE sync, VkSemaphore host_semaphore, struct fd_desc desc )
 {
-    VkExternalSemaphoreHandleTypeFlagBits type;
-
-    switch ((type = get_host_external_semaphore_type()))
+    switch (desc.type)
     {
-    case VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT:
+    case FD_OPAQUE:
     {
-        VkImportSemaphoreFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR, .semaphore = host_semaphore, .handleType = type};
+        VkImportSemaphoreFdInfoKHR fd_info =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR,
+            .semaphore = host_semaphore,
+            .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT,
+        };
         if ((fd_info.fd = d3dkmt_object_get_fd( sync )) < 0) return VK_ERROR_INVALID_EXTERNAL_HANDLE;
         return device->p_vkImportSemaphoreFdKHR( device->host.device, &fd_info );
     }
 
     default:
-        FIXME( "Unsupported semaphore handle type %#x\n", type );
+        FIXME( "Unsupported semaphore fd type %#x\n", desc.type );
         return VK_ERROR_INVALID_EXTERNAL_HANDLE;
     }
 }
@@ -947,7 +950,6 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
     if (import_win32)
     {
-        VkExternalMemoryHandleTypeFlagBits type;
         struct fd_desc desc;
 
         switch (import_win32->handleType)
@@ -977,26 +979,27 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         {
             VkSemaphoreTypeCreateInfo semaphore_type = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO};
             VkSemaphoreCreateInfo semaphore_create = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, .pNext = &semaphore_type};
+            struct fd_desc sync_desc = d3dkmt_object_get_fd_desc( memory->sync );
 
             semaphore_type.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
             if ((res = device->p_vkCreateSemaphore( device->host.device, &semaphore_create, NULL, &memory->semaphore ))) goto failed;
-            if ((res = import_semaphore_from_d3dkmt_sync( device, memory->sync, memory->semaphore ))) goto failed;
+            if ((res = import_semaphore_from_d3dkmt_sync( device, memory->sync, memory->semaphore, sync_desc ))) goto failed;
         }
 
-        switch ((type = get_host_external_memory_type()))
+        switch (desc.type)
         {
-        case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT:
+        case FD_OPAQUE:
             if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
             {
                 res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
                 goto failed;
             }
-            fd_info.handleType = type;
+            fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
             fd_info.pNext = alloc_info->pNext;
             alloc_info->pNext = &fd_info;
             break;
         default:
-            FIXME( "Unsupported memory handle type %#x\n", type );
+            FIXME( "Unsupported memory fd type %#x\n", desc.type );
             break;
         }
     }
@@ -2690,7 +2693,7 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
         }
     }
 
-    res = import_semaphore_from_d3dkmt_sync( device, local, semaphore->obj.host.semaphore );
+    res = import_semaphore_from_d3dkmt_sync( device, local, semaphore->obj.host.semaphore, desc );
     if (res || handle_info->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetSemaphoreWin32HandleKHR? */
@@ -2878,21 +2881,24 @@ static VkResult win32u_vkGetFenceWin32HandleKHR( VkDevice client_device, const V
     }
 }
 
-static VkResult import_fence_from_d3dkmt_sync( struct vulkan_device *device, D3DKMT_HANDLE sync, VkFence host_fence )
+static VkResult import_fence_from_d3dkmt_sync( struct vulkan_device *device, D3DKMT_HANDLE sync, VkFence host_fence, struct fd_desc desc )
 {
-    VkExternalFenceHandleTypeFlagBits type;
-
-    switch ((type = get_host_external_fence_type()))
+    switch (desc.type)
     {
-    case VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT:
+    case FD_OPAQUE:
     {
-        VkImportFenceFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_FENCE_FD_INFO_KHR, .fence = host_fence, .handleType = type};
+        VkImportFenceFdInfoKHR fd_info =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMPORT_FENCE_FD_INFO_KHR,
+            .fence = host_fence,
+            .handleType = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT,
+        };
         if ((fd_info.fd = d3dkmt_object_get_fd( sync )) < 0) return VK_ERROR_INVALID_EXTERNAL_HANDLE;
         return device->p_vkImportFenceFdKHR( device->host.device, &fd_info );
     }
 
     default:
-        FIXME( "Unsupported fence handle type %#x\n", type );
+        FIXME( "Unsupported fence fd type %#x\n", desc.type );
         return VK_ERROR_INVALID_EXTERNAL_HANDLE;
     }
 }
@@ -2932,7 +2938,7 @@ static VkResult win32u_vkImportFenceWin32HandleKHR( VkDevice client_device, cons
         return VK_ERROR_INVALID_EXTERNAL_HANDLE;
     }
 
-    res = import_fence_from_d3dkmt_sync( device, local, fence->obj.host.fence );
+    res = import_fence_from_d3dkmt_sync( device, local, fence->obj.host.fence, desc );
     if (res || handle_info->flags & VK_FENCE_IMPORT_TEMPORARY_BIT)
     {
         /* FIXME: Should we still keep the temporary handles for vkGetFenceWin32HandleKHR? */

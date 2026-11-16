@@ -224,6 +224,7 @@ struct gpu_info
 
 extern BOOL get_vulkan_gpus( struct list *gpus );
 
+extern struct fd_desc d3dkmt_object_get_fd_desc( D3DKMT_HANDLE local );
 extern int d3dkmt_object_get_fd( D3DKMT_HANDLE local );
 extern NTSTATUS d3dkmt_destroy_mutex( D3DKMT_HANDLE local );
 
