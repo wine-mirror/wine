@@ -274,6 +274,7 @@ struct riscv64_apc_stack_layout
     ULONG_PTR reserved;
     CONTEXT context;
 };
+C_ASSERT( offsetof( struct riscv64_apc_stack_layout, context ) == 0x30 );
 
 NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, unsigned int flags,
                                    ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
