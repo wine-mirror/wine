@@ -156,8 +156,8 @@ void WINAPI DECLSPEC_NORETURN riscv64_dispatch_exception( struct riscv64_excepti
 }
 
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
-                   "mv a0, sp\\n\\t"
-                   "call riscv64_dispatch_exception\\n\\t"
+                   "mv a0, sp\n\t"
+                   "call riscv64_dispatch_exception\n\t"
                    "ebreak" )
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher, "ret" )
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
