@@ -528,6 +528,23 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
     sigemptyset( &set );
     sigaddset( &set, SIGUSR2 );
     if (pthread_sigmask( SIG_UNBLOCK, &set, &oldmask )) abort();
+    /* A nonlocal continuation can bypass all ordinary dispatcher epilogues.
+     * If the target is outside the Unix kernel stack, discard nested frame
+     * links before rt_sigreturn resumes the caller's stack.  Keep the
+     * supplied frame itself alive until the SIGUSR2 handler has consumed it. */
+    {
+        struct thread_data *data = get_thread_data();
+        ULONG_PTR target_sp = frame->sp;
+        ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
+        if (data->teb && (target_sp < base || target_sp >= base + kernel_stack_size))
+        {
+            struct syscall_frame *root = get_syscall_frame( data );
+            unsigned int depth = 0;
+            while (root && root->prev_frame && depth++ < 64) root = root->prev_frame;
+            if (root && !root->prev_frame) get_teb_data( data )->syscall_frame = root;
+            else WARN( "invalid RISC-V64 nested syscall-frame chain during continuation\n" );
+        }
+    }
     riscv64_sigreturn_mask = oldmask;
     riscv64_sigreturn_frame = frame;
     if (raise( SIGUSR2 )) abort();
