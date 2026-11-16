@@ -482,6 +482,58 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     PC_sig( uc ) = (ULONG_PTR)riscv64_raise_signal_exception;
 }
 
+/* A kernel-created signal frame is safer than fabricating an rt_sigframe:
+ * its extension records, signal mask and altstack layout match this kernel.
+ * The signal restorer invokes rt_sigreturn, restoring all GPRs including
+ * t0/t6 and the exact requested PC in one atomic kernel transition.
+ * SIGUSR2 is also used by Wine for cross-thread context updates; only
+ * consume signals marked as our synchronous continuation request. */
+static __thread struct syscall_frame *riscv64_sigreturn_frame;
+static __thread sigset_t riscv64_sigreturn_mask;
+
+static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
+{
+    ucontext_t *uc = opaque;
+    struct syscall_frame *frame = riscv64_sigreturn_frame;
+    unsigned int i;
+
+    if (!frame) return; /* TODO: implement external SIGUSR2 context requests. */
+    riscv64_sigreturn_frame = NULL;
+    uc->uc_sigmask = riscv64_sigreturn_mask;
+    PC_sig( uc ) = frame->pc;
+    for (i = 1; i < 32; ++i) REGn_sig( i, uc ) = frame->x[i];
+    REGn_sig( 1, uc ) = frame->ra;
+    REGn_sig( 2, uc ) = frame->sp;
+    /* tp is the host ELF TLS pointer and cannot be changed here. */
+    REGn_sig( 4, uc ) = (ULONG_PTR)__builtin_thread_pointer();
+#if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
+    if (frame->restore_flags & CONTEXT_FLOATING_POINT)
+    {
+        for (i = 0; i < 32; ++i) uc->uc_mcontext.__fpregs.__d.__f[i] = frame->f[i];
+        uc->uc_mcontext.__fpregs.__d.__fcsr = frame->fcsr;
+    }
+#endif
+}
+
+/* Called on the Unix stack with the desired CONTEXT already in frame.
+ * raise() delivers SIGUSR2 to this thread; the signal handler edits the
+ * authentic kernel ucontext and returning from it executes rt_sigreturn.
+ * This intentionally does not use a manually forged signal frame. */
+static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct syscall_frame *frame )
+{
+    sigset_t set, oldmask;
+
+    sigemptyset( &set );
+    sigaddset( &set, SIGUSR2 );
+    if (pthread_sigmask( SIG_UNBLOCK, &set, &oldmask )) abort();
+    riscv64_sigreturn_mask = oldmask;
+    riscv64_sigreturn_frame = frame;
+    if (raise( SIGUSR2 )) abort();
+    /* If the signal was not delivered synchronously, do not run with
+     * partially restored registers or return to the wrong stack. */
+    abort();
+}
+
 void signal_init_process( TEB *teb )
 {
     struct sigaction action;
@@ -491,7 +543,7 @@ void signal_init_process( TEB *teb )
     action.sa_mask = server_block_set;
     action.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
     action.sa_sigaction = riscv64_fault_handler;
-    if (sigaction( SIGSEGV, &action, NULL ) == -1 ||
+    action.sa_sigaction = riscv64_sigreturn_handler;\n    if (sigaction( SIGUSR2, &action, NULL ) == -1)\n    {\n        perror( "sigaction(SIGUSR2)" );\n        exit( 1 );\n    }\n    action.sa_sigaction = riscv64_fault_handler;\n    if (sigaction( SIGSEGV, &action, NULL ) == -1 ||
         sigaction( SIGBUS, &action, NULL ) == -1 ||
         sigaction( SIGILL, &action, NULL ) == -1 ||
         sigaction( SIGTRAP, &action, NULL ) == -1 ||
@@ -543,7 +595,13 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
      * so t0 cannot simultaneously be restored from an arbitrary CONTEXT.
      * Exact all-register continuation requires a sigreturn-based path.
      */
+    /* The kernel rt_sigreturn path is required for exact register restore.
+     * It avoids sacrificing t0 (or t6) as the final jump register. */
     __asm__ volatile (
+        "tail " __ASM_NAME("riscv64_sigreturn_continue") "\\n"
+    );
+#if 0
+        __asm__ volatile (
         "mv t1, a0\n"
         "ld t0, 256(t1)\n"
 
@@ -623,7 +681,7 @@ void __attribute__((naked)) __wine_syscall_dispatcher_return( void )
         "jr t0\n"
     );
 
-    __builtin_unreachable();
+    #endif\n    __builtin_unreachable();
 }
 
 /* RV64 NT-service bridge. The first eight arguments arrive in a0-a7;
