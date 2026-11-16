@@ -2222,6 +2222,30 @@ static void test_file_rename_information(FILE_INFORMATION_CLASS class)
     ok( GetFileAttributesW( oldpath ) != INVALID_FILE_ATTRIBUTES, "file should exist\n" );
 
     pRtlFreeUnicodeString( &name_str );
+
+    /* test some invalid NT names */
+
+    res = set_rename_information( handle, class, 0, NULL, L"\\??\\C:" );
+    todo_wine ok( res == STATUS_INVALID_PARAMETER, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\\\a" );
+    todo_wine ok( res == STATUS_OBJECT_NAME_INVALID, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\Device" );
+    todo_wine ok( res == STATUS_OBJECT_TYPE_MISMATCH, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\ObjectTypes\\Process" );
+    todo_wine ok( res == STATUS_OBJECT_TYPE_MISMATCH, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\" );
+    todo_wine ok( res == STATUS_OBJECT_TYPE_MISMATCH, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\Device\\" );
+    todo_wine ok( res == STATUS_OBJECT_NAME_INVALID, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\Device\\NamedPipe" );
+    todo_wine ok( res == STATUS_NOT_SAME_DEVICE, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\Device\\NamedPipe\\" );
+    todo_wine ok( res == STATUS_NOT_SAME_DEVICE, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\bogus" );
+    todo_wine ok( res == STATUS_OBJECT_NAME_NOT_FOUND, "got status %#lx\n", res );
+    res = set_rename_information( handle, class, 0, NULL, L"\\bogus\\path" );
+    todo_wine ok( res == STATUS_OBJECT_PATH_NOT_FOUND, "got status %#lx\n", res );
+
     CloseHandle( handle );
     delete_object( oldpath );
 }
