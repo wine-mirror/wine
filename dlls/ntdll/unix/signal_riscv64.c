@@ -757,10 +757,31 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
 /* Called before switching stacks.  Its return value is an existing
  * per-thread frame, or NULL if thread initialization is incomplete. */
-static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void *unused )
+static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void *entry_sp )
 {
     struct thread_data *data = get_thread_data();
-    return data && data->teb ? get_syscall_frame(data) : NULL;
+    struct syscall_frame *frame;
+    ULONG_PTR sp = (ULONG_PTR)entry_sp;
+    ULONG_PTR stack_base, stack_end;
+
+    if (!data || !data->teb) return NULL;
+    frame = get_syscall_frame( data );
+    if (!frame) return NULL;
+
+    /* Both dispatchers currently use the same top-of-kernel-stack frame.
+     * Re-entering them while executing on that stack would overwrite the
+     * outer call's saved PC, SP and nonvolatile registers.  Reject this
+     * case until nested frames have their own storage and return path.
+     * In particular, never switch sp back to an already active frame. */
+    stack_base = (ULONG_PTR)get_kernel_stack( data );
+    stack_end = stack_base + kernel_stack_size;
+    if (sp >= stack_base && sp < stack_end)
+    {
+        WARN( "rejecting nested RISC-V64 syscall/Unix call at %p (kernel stack %p-%p)\n",
+              entry_sp, (void *)stack_base, (void *)stack_end );
+        return NULL;
+    }
+    return frame;
 }
  
 
