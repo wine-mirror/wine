@@ -771,7 +771,7 @@ static WCHAR *get_container_id(struct device_extension *ext)
 
     if ((dst = ExAllocatePool(PagedPool, 39 * sizeof(WCHAR))))
     {
-        swprintf(dst, 39, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        swprintf(dst, 39, L"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                  guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
                  guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
         TRACE("Returning container ID %s.\n", debugstr_w(dst));

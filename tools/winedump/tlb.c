@@ -195,7 +195,7 @@ static void print_begin_block(const char *name)
 static void print_begin_block_id(const char *name, int id)
 {
     char buf[64];
-    sprintf(buf, "%s %d", name, id);
+    snprintf(buf, sizeof(buf), "%s %d", name, id);
     print_begin_block(buf);
 }
 
@@ -225,7 +225,7 @@ static int print_hex(const char *name)
 static int print_hex_id(const char *name, int id)
 {
     char buf[64];
-    sprintf(buf, name, id);
+    snprintf(buf, sizeof(buf), name, id);
     return print_hex(buf);
 }
 
@@ -540,7 +540,7 @@ static void print_string0(void)
         else
         {
             char buf[16];
-            sprintf(buf, "\\%u", c);
+            snprintf(buf, sizeof(buf), "\\%u", c);
             fwrite(buf, 1, strlen(buf), stdout);
         }
     }
@@ -1245,7 +1245,7 @@ static void dump_sltg_block_entry(int idx, const char *index)
     char name[32];
     short index_offset;
 
-    sprintf(name, "Block entry %d", idx);
+    snprintf(name, sizeof(name), "Block entry %d", idx);
     print_begin_block(name);
 
     print_hex("len");
@@ -1305,7 +1305,7 @@ static void dump_sltg_other_typeinfo(int idx, const char *hlp_strings)
     int hlpstr_len, saved_offset;
     char name[32];
 
-    sprintf(name, "Other typeinfo %d", idx);
+    snprintf(name, sizeof(name), "Other typeinfo %d", idx);
     print_begin_block(name);
 
     print_sltg_name("index name");
@@ -1577,7 +1577,7 @@ static void dump_type(int len, const char *hlp_strings)
             char magic, flags;
             short next, value;
 
-            sprintf(name, "variable %d", i);
+            snprintf(name, sizeof(name), "variable %d", i);
             print_begin_block(name);
 
             saved_off = offset;
@@ -1683,7 +1683,7 @@ static void dump_type(int len, const char *hlp_strings)
         {
             char name[64];
 
-            sprintf(name, "impl.type %d (current offset %#x)", i, offset);
+            snprintf(name, sizeof(name), "impl.type %d (current offset %#x)", i, offset);
             print_begin_block(name);
 
             print_short_hex("res00");
@@ -1714,7 +1714,7 @@ static void dump_type(int len, const char *hlp_strings)
             BYTE magic, flags;
             short args_off, value, n_params, j;
 
-            sprintf(name, "function %d (current offset %#x)", i, offset);
+            snprintf(name, sizeof(name), "function %d (current offset %#x)", i, offset);
             print_begin_block(name);
 
             magic = print_byte("magic");
@@ -1812,7 +1812,7 @@ static void dump_type(int len, const char *hlp_strings)
                 char name[32];
                 unsigned short name_offset;
 
-                sprintf(name, "arg %d", j);
+                snprintf(name, sizeof(name), "arg %d", j);
                 print_begin_block(name);
 
                 name_offset = tlb_read_short();
@@ -1960,7 +1960,7 @@ static void sltg_dump(void)
 
         saved_offset = offset;
 
-        sprintf(name, "Block %d", i);
+        snprintf(name, sizeof(name), "Block %d", i);
         print_begin_block(name);
         magic = tlb_read_short();
         assert(magic == 0x0501);

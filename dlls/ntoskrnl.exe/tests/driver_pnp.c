@@ -254,7 +254,7 @@ static NTSTATUS query_id(struct device *device, IRP *irp, BUS_QUERY_ID_TYPE type
         case BusQueryContainerID:
             if (!(id = ExAllocatePool(PagedPool, 39 * sizeof(WCHAR))))
                 return STATUS_NO_MEMORY;
-            wcscpy(id, L"{12345678-1234-1234-1234-123456789123}");
+            wcscpy(id, L"{12345678-1234-1234-1234-1234567891aB}");
             break;
 
         default:
@@ -983,7 +983,7 @@ static void test_get_device_property(void)
 
 static void test_child_get_device_property(DEVICE_OBJECT *device)
 {
-    static const WCHAR child_container_id[] = L"{12345678-1234-1234-1234-123456789123}";
+    static const WCHAR child_container_id[] = L"{12345678-1234-1234-1234-1234567891aB}";
     WCHAR buffer[MAX_GUID_STRING_LEN] = {0};
     ULONG req_size = 0;
     NTSTATUS status;

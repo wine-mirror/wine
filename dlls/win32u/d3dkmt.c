@@ -148,6 +148,7 @@ struct d3dkmt_object
     D3DKMT_HANDLE       global;         /* object global handle */
     BOOL                shared;         /* object is shared using nt handles */
     HANDLE              handle;         /* internal handle of the server object */
+    struct fd_desc      fd_desc;        /* host specific fd metadata */
 };
 
 struct d3dkmt_mutex
@@ -206,6 +207,7 @@ struct d3dkmt_swapchain
     struct d3dkmt_sync *sync;
 };
 
+static const struct fd_desc no_fd;
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
@@ -319,23 +321,25 @@ static NTSTATUS d3dkmt_object_alloc( UINT size, enum d3dkmt_type type, void **ob
 }
 
 /* create a global generic D3DKMT object, with optional NT sharing, use type-specific helpers below instead */
-static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, UINT value, BOOL shared,
-                                      const void *runtime, UINT runtime_size )
+static NTSTATUS d3dkmt_object_create( struct d3dkmt_object *object, int fd, struct fd_desc fd_desc,
+                                      UINT value, BOOL shared, const void *runtime, UINT runtime_size )
 {
     NTSTATUS status;
 
-    if (fd >= 0) wine_server_send_fd( fd );
+    if (fd_desc.type) wine_server_send_fd( fd );
 
     SERVER_START_REQ( d3dkmt_object_create )
     {
         req->type = object->type;
         req->fd = fd;
         req->value = value;
+        req->fd_desc = fd_desc;
         if (runtime_size) wine_server_add_data( req, runtime, runtime_size );
         status = wine_server_call( req );
         object->handle = wine_server_ptr_handle( reply->handle );
         object->global = reply->global;
         object->shared = shared;
+        object->fd_desc = fd_desc;
     }
     SERVER_END_REQ;
 
@@ -380,6 +384,7 @@ static NTSTATUS d3dkmt_object_open( struct d3dkmt_object *obj, D3DKMT_HANDLE glo
         obj->handle = wine_server_ptr_handle( reply->handle );
         obj->global = reply->global;
         obj->shared = !global;
+        obj->fd_desc = reply->fd_desc;
         *runtime_size = reply->runtime_size;
     }
     SERVER_END_REQ;
@@ -500,7 +505,7 @@ static NTSTATUS d3dkmt_mutex_create( UINT value, BOOL shared, const void *runtim
     NTSTATUS status;
 
     if ((status = d3dkmt_object_alloc( sizeof(*mutex), D3DKMT_MUTEX, (void **)&mutex ))) goto done;
-    if ((status = d3dkmt_object_create( &mutex->obj, -1, value, shared, runtime, runtime_size ))) d3dkmt_mutex_free( mutex );
+    if ((status = d3dkmt_object_create( &mutex->obj, -1, no_fd, value, shared, runtime, runtime_size ))) d3dkmt_mutex_free( mutex );
 done:
     *ret = status ? NULL : mutex;
     return status;
@@ -542,13 +547,14 @@ done:
     return status;
 }
 
-static NTSTATUS d3dkmt_resource_create( int fd, BOOL shared, const void *runtime, UINT runtime_size, struct d3dkmt_resource **ret )
+static NTSTATUS d3dkmt_resource_create( int fd, struct fd_desc fd_desc, BOOL shared, const void *runtime,
+                                        UINT runtime_size, struct d3dkmt_resource **ret )
 {
     struct d3dkmt_resource *resource;
     NTSTATUS status;
 
     if ((status = d3dkmt_object_alloc( sizeof(*resource), D3DKMT_RESOURCE, (void **)&resource ))) goto done;
-    if ((status = d3dkmt_object_create( &resource->obj, fd, 0, shared, runtime, runtime_size ))) d3dkmt_resource_free( resource );
+    if ((status = d3dkmt_object_create( &resource->obj, fd, fd_desc, 0, shared, runtime, runtime_size ))) d3dkmt_resource_free( resource );
 done:
     *ret = status ? NULL : resource;
     return status;
@@ -590,13 +596,13 @@ done:
     return status;
 }
 
-static NTSTATUS d3dkmt_sync_create( int fd, BOOL shared, struct d3dkmt_sync **ret )
+static NTSTATUS d3dkmt_sync_create( int fd, struct fd_desc fd_desc, BOOL shared, struct d3dkmt_sync **ret )
 {
     struct d3dkmt_sync *sync;
     NTSTATUS status;
 
     if ((status = d3dkmt_object_alloc( sizeof(*sync), D3DKMT_SYNC, (void **)&sync ))) goto done;
-    if ((status = d3dkmt_object_create( &sync->obj, fd, 0, shared, NULL, 0 ))) d3dkmt_sync_free( sync );
+    if ((status = d3dkmt_object_create( &sync->obj, fd, fd_desc, 0, shared, NULL, 0 ))) d3dkmt_sync_free( sync );
 done:
     *ret = status ? NULL : sync;
     return status;
@@ -1238,7 +1244,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
             return STATUS_INVALID_HANDLE;
 
         if (!params->Flags.CreateShared) status = d3dkmt_resource_alloc( &resource );
-        else status = d3dkmt_resource_create( -1, params->Flags.NtSecuritySharing, params->pPrivateRuntimeData,
+        else status = d3dkmt_resource_create( -1, no_fd, params->Flags.NtSecuritySharing, params->pPrivateRuntimeData,
                                               params->PrivateRuntimeDataSize, &resource );
         if (status) return status;
 
@@ -1796,7 +1802,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZA
     if (params->Info.Flags.NtSecuritySharing && !params->Info.Flags.Shared) return STATUS_INVALID_PARAMETER;
 
     if (!params->Info.Flags.Shared) status = d3dkmt_sync_alloc( &sync );
-    else status = d3dkmt_sync_create( -1, params->Info.Flags.NtSecuritySharing, &sync );
+    else status = d3dkmt_sync_create( -1, no_fd, params->Info.Flags.NtSecuritySharing, &sync );
     if (status) return status;
 
     if (params->Info.Flags.Shared) params->Info.SharedHandle = sync->obj.shared ? 0 : sync->obj.global;
@@ -1995,6 +2001,15 @@ static void get_resource_global_keyed_mutex( struct d3dkmt_dxgi_desc *desc, D3DK
     }
 }
 
+/* get the fd_desc associated with an object fd */
+struct fd_desc d3dkmt_object_get_fd_desc( D3DKMT_HANDLE local )
+{
+    struct d3dkmt_object *object;
+
+    if (!(object = get_d3dkmt_object( local, -1 ))) return no_fd;
+    return object->fd_desc;
+}
+
 /* get a locally opened D3DKMT object host-specific fd */
 int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
 {
@@ -2005,6 +2020,8 @@ int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
     TRACE( "local %#x\n", local );
 
     if (!(object = get_d3dkmt_object( local, -1 ))) return -1;
+    if (object->fd_desc.type == FD_NONE) return -1;
+
     if ((status = wine_server_handle_to_fd( object->handle, GENERIC_ALL, &fd, NULL )))
     {
         WARN( "Failed to receive object %p/%#x fd, status %#x\n", object, local, status );
@@ -2015,7 +2032,7 @@ int d3dkmt_object_get_fd( D3DKMT_HANDLE local )
 }
 
 /* create a D3DKMT global or shared resource from a host-specific fd */
-D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
+D3DKMT_HANDLE d3dkmt_create_resource( int fd, struct fd_desc fd_desc, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_resource *resource;
     struct d3dkmt_object *allocation;
@@ -2023,7 +2040,7 @@ D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global )
 
     TRACE( "fd %d, global %p\n", fd, global );
 
-    if ((status = d3dkmt_resource_create( fd, !global, NULL, 0, &resource ))) return status;
+    if ((status = d3dkmt_resource_create( fd, fd_desc, !global, NULL, 0, &resource ))) return status;
     if ((status = d3dkmt_allocation_alloc( &allocation ))) goto failed;
     resource->allocation = allocation->local;
 
@@ -2037,7 +2054,8 @@ failed:
 }
 
 /* open a D3DKMT global or shared resource */
-D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local )
+D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, struct fd_desc *desc,
+                                    D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local )
 {
     UINT runtime_size, mutex_size = 0;
     D3DKMT_HANDLE mutex_global = 0, sync_global = 0;
@@ -2075,6 +2093,7 @@ D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_
     }
 
     free( runtime_data );
+    *desc = resource->obj.fd_desc;
     return resource->obj.local;
 
 failed:
@@ -2102,20 +2121,20 @@ NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
 }
 
 /* create a D3DKMT global or shared sync */
-D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global )
+D3DKMT_HANDLE d3dkmt_create_sync( int fd, struct fd_desc fd_desc, D3DKMT_HANDLE *global )
 {
     struct d3dkmt_sync *sync;
     NTSTATUS status;
 
     TRACE( "global %p\n", global );
 
-    if ((status = d3dkmt_sync_create( fd, !global, &sync ))) return status;
+    if ((status = d3dkmt_sync_create( fd, fd_desc, !global, &sync ))) return status;
     if (global) *global = sync->obj.global;
     return sync->obj.local;
 }
 
 /* open a D3DKMT global or shared sync */
-D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared )
+D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared, struct fd_desc *desc )
 {
     struct d3dkmt_sync *sync;
     NTSTATUS status;
@@ -2123,6 +2142,7 @@ D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared )
     TRACE( "global %#x, shared %p\n", global, shared );
 
     if ((status = d3dkmt_sync_open( global, shared, &sync ))) return status;
+    *desc = sync->obj.fd_desc;
     return sync->obj.local;
 }
 
@@ -2269,13 +2289,13 @@ NTSTATUS d3dkmt_swapchain_create( HWND toplevel, HWND hwnd, SIZE size, D3DKMT_HA
     }
     if ((status = d3dkmt_mutex_create( 0, FALSE, NULL, 0, &swapchain->mutex ))) goto failed;
     swapchain->desc.mutex = swapchain->mutex->obj.global;
-    if ((status = d3dkmt_sync_create( -1, FALSE, &swapchain->sync ))) goto failed;
+    if ((status = d3dkmt_sync_create( -1, no_fd, FALSE, &swapchain->sync ))) goto failed;
     swapchain->desc.sync = swapchain->sync->obj.global;
     swapchain->desc.toplevel = toplevel;
     swapchain->desc.hwnd = hwnd;
     swapchain->desc.size = size;
 
-    if ((status = d3dkmt_object_create( &swapchain->obj, -1, 0, FALSE, &swapchain->desc, sizeof(swapchain->desc) ))) goto failed;
+    if ((status = d3dkmt_object_create( &swapchain->obj, -1, no_fd, 0, FALSE, &swapchain->desc, sizeof(swapchain->desc) ))) goto failed;
     *local = swapchain->obj.local;
     *global = swapchain->obj.global;
 

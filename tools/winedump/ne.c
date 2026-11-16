@@ -178,7 +178,7 @@ static const char *get_resource_type( WORD id )
     case NE_RSCTYPE_GROUP_ICON: return "ICON_GROUP";
     case NE_RSCTYPE_VERSION: return "VERSION";
     default:
-        sprintf( buffer, "%04x", id );
+        snprintf( buffer, sizeof(buffer), "%04x", id );
         return buffer;
     }
 }

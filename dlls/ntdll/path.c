@@ -547,7 +547,8 @@ static BOOL get_unix_full_path( LPCWSTR name, LPWSTR buffer, ULONG size, ULONG *
         ULONG retsize, bufsize = sizeof(OBJECT_NAME_INFORMATION) + size + 4 * sizeof(WCHAR);
         OBJECT_NAME_INFORMATION *info = RtlAllocateHeap( GetProcessHeap(), 0, bufsize );
 
-        if (!(status = NtQueryObject( handle, ObjectNameInformation, info, bufsize, &retsize )))
+        if (!(status = NtQueryObject( handle, ObjectNameInformation, info, bufsize, &retsize )) &&
+            info->Name.Length)
         {
             ULONG len = info->Name.Length;
             WCHAR *name = info->Name.Buffer;

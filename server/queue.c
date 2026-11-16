@@ -198,6 +198,7 @@ static unsigned int cursor_history_latest;
 
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue );
 static void free_message( struct message *msg );
+static void stop_key_repeat( struct desktop *desktop );
 
 /* set the caret window in a given thread input, requires write lock on the thread input shared member */
 static void set_caret_window( struct thread_input *input, input_shm_t *shared, user_handle_t win )
@@ -654,6 +655,7 @@ static void set_foreground_input( struct desktop *desktop, struct process *proce
     old_input_shm = desktop->foreground_input ? desktop->foreground_input->shared : &dummy_obj.shm.input;
 
     set_clip_rectangle( desktop, NULL, SET_CURSOR_NOCLIP, 1 );
+    stop_key_repeat( desktop );
     desktop->foreground_input = input;
     desktop->foreground_pid = process->id;
 

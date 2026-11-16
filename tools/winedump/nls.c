@@ -540,9 +540,9 @@ static const char *get_sortkey( UINT key )
     static char buffer[16];
     if (!key) return "....";
     if ((WORD)key == 0x200)
-        sprintf( buffer, "expand %04x", key >> 16 );
+        snprintf( buffer, sizeof(buffer), "expand %04x", key >> 16 );
     else
-        sprintf( buffer, "%u.%u.%u.%u", (BYTE)(key >> 8), (BYTE)key, (BYTE)(key >> 16), (BYTE)(key >> 24) );
+        snprintf( buffer, sizeof(buffer), "%u.%u.%u.%u", (BYTE)(key >> 8), (BYTE)key, (BYTE)(key >> 16), (BYTE)(key >> 24) );
     return buffer;
 }
 
@@ -837,7 +837,7 @@ static const char *get_locale_string( DWORD offset )
     {
         if (*p < 0x20)
         {
-            i += sprintf( buffer + i, "\\%03o", *p );
+            i += snprintf( buffer + i, sizeof(buffer) - i, "\\%03o", *p );
         }
         else if (*p < 0x80)
         {
@@ -885,7 +885,7 @@ static const char *get_locale_strarray( DWORD offset )
     while (count--)
     {
         if (i > 1) buffer[i++] = ' ';
-        i += sprintf( buffer + i, "%s", get_locale_string( *array++ ));
+        i += snprintf( buffer + i, sizeof(buffer) - i, "%s", get_locale_string( *array++ ));
     }
     buffer[i++] = '}';
     buffer[i] = 0;
@@ -904,7 +904,7 @@ static const char *get_locale_uints( DWORD offset )
     if (offset + len + 1 > locale_strings_len) return "<invalid>";
     if (len < 2) return "[]";
     for (p = (unsigned int *)(locale_strings + offset + 1); len >= 2; p++, len -= 2)
-        sprintf( buffer + strlen(buffer), " %08x", *p );
+        snprintf( buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), " %08x", *p );
     buffer[0] = '[';
     strcat( buffer, "]" );
     return buffer;

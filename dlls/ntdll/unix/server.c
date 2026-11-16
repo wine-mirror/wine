@@ -1480,12 +1480,11 @@ extern NTSTATUS apple_spawn_main_thread(void);
 static void send_server_task_port(void)
 {
     mach_port_t bootstrap_port, wineserver_port;
+    mach_msg_return_t mret;
     kern_return_t kret;
 
     struct {
         mach_msg_header_t           header;
-        mach_msg_body_t             body;
-        mach_msg_port_descriptor_t  task_port;
     } msg;
 
     if (task_get_bootstrap_port(mach_task_self(), &bootstrap_port) != KERN_SUCCESS) return;
@@ -1502,19 +1501,14 @@ static void send_server_task_port(void)
 
     mach_port_deallocate(mach_task_self(), bootstrap_port);
 
-    msg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0) | MACH_MSGH_BITS_COMPLEX;
+    msg.header.msgh_bits        = MACH_MSGH_BITS_SET_PORTS(MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_COPY_SEND, 0);
     msg.header.msgh_size        = sizeof(msg);
     msg.header.msgh_remote_port = wineserver_port;
-    msg.header.msgh_local_port  = MACH_PORT_NULL;
+    msg.header.msgh_local_port  = mach_task_self();
 
-    msg.body.msgh_descriptor_count  = 1;
-    msg.task_port.name              = mach_task_self();
-    msg.task_port.disposition       = MACH_MSG_TYPE_COPY_SEND;
-    msg.task_port.type              = MACH_MSG_PORT_DESCRIPTOR;
-
-    kret = mach_msg_send(&msg.header);
-    if (kret != KERN_SUCCESS)
-        server_protocol_error( "mach_msg_send failed: 0x%08x\n", kret );
+    mret = mach_msg_send(&msg.header);
+    if (mret != MACH_MSG_SUCCESS)
+        server_protocol_error( "mach_msg_send failed: 0x%08x\n", mret );
 
     mach_port_deallocate(mach_task_self(), wineserver_port);
 }

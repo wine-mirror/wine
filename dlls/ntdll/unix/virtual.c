@@ -3099,11 +3099,28 @@ static NTSTATUS map_image_view( struct file_view **view_ret, struct pe_image_inf
 
     if (!(base = image_info->map_addr))
     {
-        USHORT dll_charact = main_module ? main_image_info.DllCharacteristics : image_info->dll_charact;
-
-        if ((image_info->image_charact & IMAGE_FILE_RELOCS_STRIPPED) ||
-            !(dll_charact & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+        switch (mitigation_options[0] & PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_MASK)
+        {
+        case PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_ALWAYS_ON:
+            if ((image_info->image_charact & IMAGE_FILE_RELOCS_STRIPPED) &&
+                (image_info->contains_code ||
+                 !(main_image_info.ImageFlags & IMAGE_FLAGS_ImageDynamicallyRelocated)))
+                base = image_info->base;
+            break;
+        case PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_ALWAYS_ON_REQ_RELOCS:
+            if (image_info->image_charact & IMAGE_FILE_RELOCS_STRIPPED)
+                return STATUS_ILLEGAL_DLL_RELOCATION;
+            break;
+        case PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_ALWAYS_OFF:
             base = image_info->base;
+            break;
+        default:
+            if ((image_info->image_charact & IMAGE_FILE_RELOCS_STRIPPED) ||
+                !(image_info->dll_charact & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) ||
+                !(main_image_info.ImageFlags & IMAGE_FLAGS_ImageDynamicallyRelocated))
+                base = image_info->base;
+            break;
+        }
     }
     if (base && (ULONG_PTR)base == base)
     {
@@ -6380,8 +6397,7 @@ NTSTATUS WINAPI NtUnmapViewOfSectionEx( HANDLE process, PVOID addr, ULONG flags 
  */
 void virtual_fill_image_information( const struct pe_image_info *pe_info, SECTION_IMAGE_INFORMATION *info )
 {
-    client_ptr_t base = pe_info->map_addr ? pe_info->map_addr : pe_info->base;
-    info->TransferAddress             = wine_server_get_ptr( base + pe_info->entry_point );
+    info->TransferAddress             = wine_server_get_ptr( pe_info->base + pe_info->entry_point );
     info->ZeroBits                    = pe_info->zerobits;
     info->MaximumStackSize            = pe_info->stack_size;
     info->CommittedStackSize          = pe_info->stack_commit;

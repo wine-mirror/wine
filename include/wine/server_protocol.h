@@ -6070,13 +6070,21 @@ struct get_inproc_alert_fd_reply
 };
 
 
+struct fd_desc
+{
+    unsigned int type;
+};
+#define FD_NONE       0
+#define FD_OPAQUE     1
+
+
 
 struct d3dkmt_object_create_request
 {
     struct request_header __header;
     unsigned int        type;
     int                 fd;
-    char __pad_20[4];
+    struct fd_desc      fd_desc;
     unsigned __int64    value;
     /* VARARG(runtime,bytes); */
 };
@@ -6132,9 +6140,9 @@ struct d3dkmt_object_open_reply
     struct reply_header __header;
     d3dkmt_handle_t     global;
     obj_handle_t        handle;
+    struct fd_desc      fd_desc;
     data_size_t         runtime_size;
     /* VARARG(runtime,bytes); */
-    char __pad_20[4];
 };
 
 

@@ -353,6 +353,38 @@ void clear_error_loc(script_ctx_t *ctx)
     }
 }
 
+void clear_interrupt(script_ctx_t *ctx)
+{
+    EnterCriticalSection(&ctx->interrupt_cs);
+    if(ctx->interrupt == INTERRUPT_PENDING) {
+        clear_ei(&ctx->interrupt_ei);
+        InterlockedExchange(&ctx->interrupt, INTERRUPT_NONE);
+    }
+    LeaveCriticalSection(&ctx->interrupt_cs);
+}
+
+static HRESULT raise_interrupt(script_ctx_t *ctx)
+{
+    clear_error(ctx);
+
+    EnterCriticalSection(&ctx->interrupt_cs);
+    ctx->ei = ctx->interrupt_ei;
+    ctx->ei.bstrSource = SysAllocString(ctx->interrupt_ei.bstrSource);
+    ctx->ei.bstrDescription = SysAllocString(ctx->interrupt_ei.bstrDescription);
+    ctx->ei.bstrHelpFile = SysAllocString(ctx->interrupt_ei.bstrHelpFile);
+    LeaveCriticalSection(&ctx->interrupt_cs);
+
+    if(!ctx->ei.scode) {
+        if(ctx->ei.wCode) {
+            ctx->ei.scode = MAKE_VBSERROR(ctx->ei.wCode);
+            ctx->ei.wCode = 0;
+        }else {
+            ctx->ei.scode = E_FAIL;
+        }
+    }
+    return SCRIPT_E_RECORDED;
+}
+
 /* The identifier is not part of the error description visible to scripts
    through the Err object; report_script_error appends it to the description
    passed to the host. */
@@ -3214,11 +3246,23 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     ctx->current_named_item = exec.code->named_item;
 
     prev_exec = ctx->current_exec;
-    ctx->current_exec = &exec;
+    if(prev_exec) {
+        ctx->current_exec = &exec;
+    }else {
+        EnterCriticalSection(&ctx->interrupt_cs);
+        ctx->current_exec = &exec;
+        LeaveCriticalSection(&ctx->interrupt_cs);
+    }
 
     while(exec.instr) {
         op = exec.instr->op;
-        hres = op_funcs[op](&exec);
+        /* An interrupt is not raised at the end of a statement or of the global code,
+         * so that the error is located at the statement that would have run next. */
+        if(ReadNoFence(&ctx->interrupt) == INTERRUPT_PENDING && op != OP_catch
+           && (op != OP_ret || func->type != FUNC_GLOBAL))
+            hres = raise_interrupt(ctx);
+        else
+            hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
             if(hres != SCRIPT_E_RECORDED) {
                 /* SCRIPT_E_RECORDED means ctx->ei is already populated */
@@ -3229,7 +3273,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
             if(!ctx->ei.bstrDescription)
                 map_vbs_exception(&ctx->ei);
 
-            if(exec.resume_next) {
+            if(exec.resume_next && ReadNoFence(&ctx->interrupt) != INTERRUPT_PENDING) {
                 unsigned stack_off;
 
                 WARN("Failed %08lx in resume next mode\n", ctx->ei.scode);
@@ -3276,7 +3320,16 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         exec.instr += op_move[op];
     }
 
-    ctx->current_exec = prev_exec;
+    if(prev_exec) {
+        ctx->current_exec = prev_exec;
+    }else {
+        EnterCriticalSection(&ctx->interrupt_cs);
+        ctx->current_exec = NULL;
+        /* Once the script is left, the interrupt stays pending without its error info. */
+        if(ctx->interrupt == INTERRUPT_PENDING)
+            clear_ei(&ctx->interrupt_ei);
+        LeaveCriticalSection(&ctx->interrupt_cs);
+    }
 
     assert(!exec.top);
 
