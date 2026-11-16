@@ -795,8 +795,11 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
 
     /* Keep room for the C helper and a guard against kernel-stack exhaustion.
      * All RISC-V LP64 stack pointers and frame allocations are 16-aligned. */
-    if (sp < stack_base + 8192 + sizeof(*nested)) return NULL;
-    frame_addr = (sp - sizeof(*nested)) & ~(ULONG_PTR)15;
+    /* Reserve a scratch gap for this C helper and its callees; placing the
+     * frame immediately below entry_sp would overwrite the helper's own
+     * stack while memset() initializes the nested frame. */
+    if (sp < stack_base + 8192 + 2048 + sizeof(*nested)) return NULL;
+    frame_addr = (sp - 2048 - sizeof(*nested)) & ~(ULONG_PTR)15;
     nested = (struct syscall_frame *)frame_addr;
     memset( nested, 0, sizeof(*nested) );
     nested->prev_frame = frame;
