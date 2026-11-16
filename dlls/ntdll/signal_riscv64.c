@@ -159,7 +159,30 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                    "mv a0, sp\n\t"
                    "call riscv64_dispatch_exception\n\t"
                    "ebreak" )
-__ASM_GLOBAL_FUNC( KiUserApcDispatcher, "ret" )
+/* Mirrors the Unix-side riscv64_apc_stack_layout.  The dispatcher
+ * executes on the Windows stack and resumes the saved context afterward. */
+struct riscv64_apc_stack
+{
+    void (*func)(ULONG_PTR, ULONG_PTR, ULONG_PTR);
+    ULONG_PTR args[3];
+    ULONG_PTR alertable;
+    ULONG_PTR reserved;
+    CONTEXT context;
+};
+
+void WINAPI DECLSPEC_NORETURN riscv64_dispatch_apc( struct riscv64_apc_stack *stack )
+{
+    NTSTATUS status;
+    stack->func( stack->args[0], stack->args[1], stack->args[2] );
+    status = NtContinue( &stack->context, stack->alertable );
+    RtlRaiseStatus( status );
+    __builtin_unreachable();
+}
+
+__ASM_GLOBAL_FUNC( KiUserApcDispatcher,
+                   "mv a0, sp\n\t"
+                   "call riscv64_dispatch_apc\n\t"
+                   "ebreak" )
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
 
 /* Unwinding. */
