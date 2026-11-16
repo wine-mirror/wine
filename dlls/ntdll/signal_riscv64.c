@@ -9,6 +9,7 @@
 #if defined(__riscv) && (__riscv_xlen == 64)
 
 #include <stdarg.h>
+#include <stddef.h>
 #include "ntstatus.h"
 #include "windef.h"
 #include "winternl.h"
