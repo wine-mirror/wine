@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/test.h"
+#include "wine/asm.h"
 
 static BOOL is_wow64;
 static BOOL old_wow64;
@@ -570,6 +571,126 @@ static void test_arm64_skip_loader_init(void)
     CloseHandle( thread );
 }
 
+#if defined(__riscv) && __riscv_xlen == 64
+struct riscv64_context_test
+{
+    LONG ready, stop;
+    ULONG64 integer, fp;
+    ULONG fcsr, reserved;
+    ULONG64 tp, gp;
+};
+
+extern DWORD WINAPI riscv64_context_thread( struct riscv64_context_test *state );
+__ASM_GLOBAL_FUNC( riscv64_context_thread,
+                   "addi sp, sp, -32\n\t"
+                   "sd s2, 0(sp)\n\t"
+                   "fsd fs0, 8(sp)\n\t"
+                   "frcsr t1\n\t"
+                   "sd t1, 16(sp)\n\t"
+                   "mv t0, a0\n\t"
+                   "li s2, 0x12345678\n\t"
+                   "fmv.d.x fs0, s2\n\t"
+                   "fence rw, rw\n\t"
+                   "li t1, 1\n\t"
+                   "sw t1, 0(t0)\n\t"
+                   "1: lw t1, 4(t0)\n\t"
+                   "beqz t1, 1b\n\t"
+                   "sd s2, 8(t0)\n\t"
+                   "fsd fs0, 16(t0)\n\t"
+                   "frcsr t1\n\t"
+                   "sw t1, 24(t0)\n\t"
+                   "sd tp, 32(t0)\n\t"
+                   "sd gp, 40(t0)\n\t"
+                   "ld s2, 0(sp)\n\t"
+                   "fld fs0, 8(sp)\n\t"
+                   "ld t1, 16(sp)\n\t"
+                   "fscsr t1\n\t"
+                   "addi sp, sp, 32\n\t"
+                   "li a0, 0\n\t"
+                   "ret" )
+
+static void test_riscv64_thread_context(void)
+{
+    struct riscv64_context_test state = {0};
+    CONTEXT context, updated;
+    HANDLE thread;
+    NTSTATUS status;
+    DWORD start, ret;
+
+    thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)riscv64_context_thread,
+                           &state, CREATE_SUSPENDED, NULL );
+    ok( !!thread, "CreateThread failed: %lu\n", GetLastError() );
+    if (!thread) return;
+    ret = WaitForSingleObject( thread, 100 );
+    ok( ret == WAIT_TIMEOUT, "Suspended thread wait returned %#lx\n", ret );
+    ok( !state.ready, "Suspended thread executed its entry point\n" );
+    context.ContextFlags = CONTEXT_FULL;
+    status = NtGetContextThread( thread, &context );
+    ok( !status, "Initial NtGetContextThread returned %#lx\n", status );
+    if (!status)
+    {
+        ok( !!context.Pc, "Initial PC is zero\n" );
+        ok( context.Gpr.X[2] && !(context.Gpr.X[2] & 15),
+            "Invalid initial SP %s\n", wine_dbgstr_longlong(context.Gpr.X[2]) );
+    }
+    ResumeThread( thread );
+    start = GetTickCount();
+    while (!InterlockedCompareExchange( &state.ready, 0, 0 ) && GetTickCount() - start < 5000)
+        Sleep( 1 );
+    ok( !!state.ready, "Thread did not reach its register loop\n" );
+    if (!state.ready) goto done;
+
+    ret = SuspendThread( thread );
+    ok( ret == 0, "SuspendThread returned %#lx\n", ret );
+    if (ret == ~0u) goto done;
+    context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
+    status = NtGetContextThread( thread, &context );
+    ok( !status, "NtGetContextThread returned %#lx\n", status );
+    if (!status)
+    {
+        ok( context.Gpr.X[0] == 0, "x0 is not zero\n" );
+        ok( context.Gpr.X[18] == 0x12345678, "Unexpected s2 %s\n",
+            wine_dbgstr_longlong(context.Gpr.X[18]) );
+        ok( context.F[8].Q == 0x12345678, "Unexpected fs0 %s\n",
+            wine_dbgstr_longlong(context.F[8].Q) );
+        updated = context;
+        updated.ContextFlags = CONTEXT_INTEGER | CONTEXT_FLOATING_POINT;
+        updated.Gpr.X[18] = 0x23456789;
+        updated.F[8].Q = 0x3456789a;
+        updated.Fcsr = 0x40; /* RDN, no accrued exception flags. */
+        updated.Gpr.X[2] = 0xdeadbeef; /* Integer-only updates must preserve SP/PC. */
+        updated.Pc = 0xdeadbeef;
+        status = NtSetContextThread( thread, &updated );
+        ok( !status, "NtSetContextThread returned %#lx\n", status );
+        updated.ContextFlags = CONTEXT_FULL;
+        status = NtGetContextThread( thread, &updated );
+        ok( !status, "Updated NtGetContextThread returned %#lx\n", status );
+        if (!status)
+        {
+            ok( updated.Pc == context.Pc, "Integer update changed PC\n" );
+            ok( updated.Gpr.X[2] == context.Gpr.X[2], "Integer update changed SP\n" );
+        }
+    }
+    InterlockedExchange( &state.stop, 1 );
+    ResumeThread( thread );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( ret == WAIT_OBJECT_0, "Thread wait returned %#lx\n", ret );
+    if (!status && ret == WAIT_OBJECT_0)
+    {
+        ok( state.integer == 0x23456789, "s2 update lost: %s\n",
+            wine_dbgstr_longlong(state.integer) );
+        ok( state.fp == 0x3456789a, "fs0 update lost: %s\n", wine_dbgstr_longlong(state.fp) );
+        ok( state.fcsr == 0x40, "FCSR update lost: %#lx\n", state.fcsr );
+        ok( state.tp == context.Gpr.X[4], "Native TLS pointer changed\n" );
+        ok( state.gp == context.Gpr.X[3], "Native global pointer changed\n" );
+    }
+ done:
+    InterlockedExchange( &state.stop, 1 );
+    if (WaitForSingleObject( thread, 5000 ) == WAIT_TIMEOUT) TerminateThread( thread, 1 );
+    CloseHandle( thread );
+}
+#endif
+
 START_TEST(thread)
 {
     char **argv;
@@ -604,6 +725,9 @@ START_TEST(thread)
         return;
     }
 
+#if defined(__riscv) && __riscv_xlen == 64
+    test_riscv64_thread_context();
+#endif
     test_dbg_hidden_thread_creation();
     test_unique_teb();
     test_errno();

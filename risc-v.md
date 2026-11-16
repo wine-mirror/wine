@@ -113,15 +113,15 @@ The branch contains initial implementations in several areas. **Status here mean
 
 | Area | Branch status / next validation |
 | --- | --- |
-| Native RISC-V64 thread initialization | Initial implementation; verify TEB, stacks, and entry transitions. |
+| Native RISC-V64 thread initialization | Suspended startup now waits for wineserver and applies the initial context; verify TEB, stacks, and entry transitions on hardware. |
 | Syscall and Unix-call dispatch | Implemented paths under development; validate nested and cross-stack transitions. |
 | `RtlCaptureContext` / `RtlRestoreContext` / `NtContinue` | Initial and experimental; verify all integer and FP registers, PC, SP, and non-returning transfer. |
 | Linux signal-context transition | Experimental `rt_sigreturn`-based continuation; verify signal masks and context restoration. |
-| Floating-point context | Partial; verify capture, save, restore, and signal interactions. |
+| Floating-point context | LP64D syscall/Unix-call entry now captures all 32 FP registers and FCSR; normal returns restore callee-saved FP state and FCSR. Signal-context helpers share capture/restore code. Hardware integration remains unverified. |
 | Nested syscall frames | Frame-chain handling and nonlocal-continuation cleanup added; complex exception paths remain unverified. |
 | Native ELF/DWARF virtual unwind | Initial CIE/FDE parsing, CFA evaluation, and register mapping added; requires compilation and unwind tests. |
 | Windows `RtlVirtualUnwind` / `RtlUnwindEx` / SEH | Incomplete; do not infer full Windows SEH from ELF unwind work. |
-| APC, remote thread context, user-mode callbacks | Incomplete / requires focused integration tests. |
+| APC, remote thread context, user-mode callbacks | SIGUSR1 suspension and remote context exchange implemented; regression coverage added for suspended startup and integer/FP updates. Dispatcher-boundary races and APC integration remain unverified; user-mode callbacks remain incomplete. |
 | `setjmp` / `longjmp` | Initial RISC-V64 implementation; verify jump-buffer layout and nonlocal transfers. |
 | RISC-V vector extension | Future work. |
 | Native Windows RISC-V PE/COFF and x86 translation | Exploratory / out of current scope. |
@@ -133,6 +133,14 @@ Wine's `struct context_data` protocol has a fixed **1712-byte** layout. Early RI
 The branch now uses **30 transmitted integer registers**: `x1` and `x3`–`x31`. `x0` is architecturally zero; `x2` (SP) is represented by the control-register union. The corresponding packing/unpacking code lives in `dlls/ntdll/unix/thread.c`.
 
 **Do not change or comment out the assertion** in `server/request_handlers.h`. The goal is to retain the shared protocol layout. If the build still reports a size mismatch, verify that generated headers match the current `server/protocol.def`, and measure the layout rather than changing the expected size.
+
+After changing `server/protocol.def`, regenerate its checked-in headers from the source root:
+
+```sh
+tools/make_requests
+```
+
+The generated `include/wine/server_protocol.h` must also contain `x[30]`. Building against an older `x[32]` header still violates the layout assertion even when the protocol source is correct. Rebuild both Wine and wineserver together after a protocol version change.
 
 ## 5. Debugging and validation
 
@@ -154,6 +162,18 @@ grep -n -m 10 -E 'error:|undefined reference|Error [0-9]' /tmp/wine-riscv-build.
 ```
 
 For a reproducible crash, collect the executable name, exact command, build commit, signal, `gdb bt`, `info registers`, and relevant `x/i` and `x/gx` output. For context and unwind defects, test leaf and non-leaf functions, saved `ra`/`s0`–`s11`, FP state, nested syscall callbacks, and nonlocal exception exits. Distinguish **native ELF DWARF unwinding** from **Windows PE unwind metadata**.
+
+### Thread/context regression coverage
+
+The RISC-V64 cases in `dlls/ntdll/tests/thread.c` check suspended startup, suspension of a running register loop, remote integer/FP updates, integer-only SP/PC preservation, FCSR, and native `gp`/`tp` preservation. With a working target Wine runtime, run:
+
+```sh
+make dlls/ntdll/tests/thread.ok
+# Clear cached results before repeating:
+make dlls/ntdll/tests/testclean
+```
+
+Cross-compiling the test object is only a compilation check. Isolated QEMU checks of dispatcher assembly and Linux signal-context helpers do not establish full Wine startup, suspension at every dispatcher instruction, Windows SEH, or callback correctness.
 
 ### Development priorities
 

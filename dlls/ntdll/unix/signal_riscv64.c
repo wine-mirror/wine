@@ -86,9 +86,10 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
-    CONTEXT context = { CONTEXT_ALL };
+    CONTEXT context = { CONTEXT_FULL };
     CONTEXT *ctx;
     ULONG_PTR stack_top;
+    unsigned int i;
 
     /* The initial thread gets its frame in signal_init_process(), but
      * subsequent threads need their own frame on their kernel stack. */
@@ -111,9 +112,14 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     context.Gpr.X[2]  = stack_top;
     context.Pc        = (ULONG64)pRtlUserThreadStart;
 
-    /* The RISC-V LP64 ABI requires a 16-byte aligned stack pointer.
-     * sizeof(CONTEXT) need not itself be a multiple of 16. */
-    ctx = (CONTEXT *)((stack_top - sizeof(*ctx)) & ~(ULONG_PTR)15);
+    if (data->suspend)
+    {
+        context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
+        wait_suspend( &context );
+    }
+
+    /* Apply any debugger-supplied stack before placing the initial context. */
+    ctx = (CONTEXT *)((context.Gpr.X[2] - sizeof(*ctx)) & ~(ULONG_PTR)15);
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
 
@@ -121,6 +127,10 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
      * First enter LdrInitializeThunk with the initial CONTEXT.
      * It will initialize the loader and continue at RtlUserThreadStart.
      */
+    memcpy( frame->x, ctx->Gpr.X, sizeof(frame->x) );
+    for (i = 0; i < 32; ++i) frame->f[i] = ctx->F[i].Q;
+    frame->fcsr = ctx->Fcsr;
+    frame->ra = ctx->Gpr.X[1];
     frame->pc = (ULONG64)pLdrInitializeThunk;
     frame->sp = (ULONG64)ctx;
     frame->x[10] = (ULONG64)ctx;
@@ -128,7 +138,7 @@ static struct syscall_frame *init_syscall_frame( PRTL_THREAD_START_ROUTINE entry
     frame->x[2] = frame->sp;
     frame->x[1] = frame->ra;
 
-    frame->restore_flags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    frame->restore_flags = CONTEXT_FULL & ~CONTEXT_RISCV64;
 
     return frame;
 }
@@ -150,8 +160,8 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
          (unsigned long long)context->Gpr.X[1], context->ContextFlags);
     status = NtSetContextThread( GetCurrentThread(), context );
 
-    if (!status && frame && (context->ContextFlags & CONTEXT_INTEGER))
-        frame->restore_flags |= CONTEXT_INTEGER;
+    if (!status && frame && (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_RISCV64)))
+        frame->restore_flags |= CONTEXT_INTEGER & ~CONTEXT_RISCV64;
 
     return status;
 }
@@ -165,7 +175,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
         return STATUS_INVALID_PARAMETER;
-    if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
+    if (flags & ~(CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING |
+                  CONTEXT_EXCEPTION_ACTIVE | CONTEXT_SERVICE_ACTIVE))
         return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
@@ -179,11 +190,11 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         return STATUS_ACCESS_DENIED;
 
     if (flags & CONTEXT_INTEGER)
-        memcpy( context->Gpr.X, frame->x, sizeof(frame->x) );
-
-    /* x0 is architecturally hardwired to zero. */
-    if (flags & CONTEXT_INTEGER)
+    {
         context->Gpr.X[0] = 0;
+        context->Gpr.X[1] = frame->ra;
+        memcpy( context->Gpr.X + 3, frame->x + 3, 29 * sizeof(frame->x[0]) );
+    }
 
     if (flags & CONTEXT_CONTROL)
     {
@@ -199,6 +210,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         context->Fcsr = frame->fcsr;
     }
 
+    set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
     return STATUS_SUCCESS;
 }
 
@@ -211,7 +223,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
         return STATUS_INVALID_PARAMETER;
-    if (flags & ~(CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT))
+    if (flags & ~(CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING |
+                  CONTEXT_EXCEPTION_ACTIVE | CONTEXT_SERVICE_ACTIVE))
         return STATUS_NOT_SUPPORTED;
 
     if (handle != GetCurrentThread())
@@ -225,10 +238,11 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         return STATUS_ACCESS_DENIED;
 
     if (flags & CONTEXT_INTEGER)
-        memcpy( frame->x, context->Gpr.X, sizeof(frame->x) );
-
-    if (flags & CONTEXT_INTEGER)
+    {
         frame->x[0] = 0;
+        frame->ra = frame->x[1] = context->Gpr.X[1];
+        memcpy( frame->x + 3, context->Gpr.X + 3, 29 * sizeof(frame->x[0]) );
+    }
 
     if (flags & CONTEXT_CONTROL)
     {
@@ -314,7 +328,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, unsigned int flags,
     frame->sp = (ULONG_PTR)stack;
     frame->x[2] = frame->sp;
     frame->pc = (ULONG_PTR)pKiUserApcDispatcher;
-    frame->restore_flags |= CONTEXT_CONTROL;
+    frame->restore_flags |= CONTEXT_CONTROL & ~CONTEXT_RISCV64;
     return status;
 }
 
@@ -323,7 +337,7 @@ void call_raise_user_exception_dispatcher( struct thread_data *data )
     struct syscall_frame *frame = get_syscall_frame( data );
 
     frame->pc = (ULONG64)pKiRaiseUserExceptionDispatcher;
-    frame->restore_flags |= CONTEXT_CONTROL;
+    frame->restore_flags |= CONTEXT_CONTROL & ~CONTEXT_RISCV64;
 }
 
 
@@ -351,7 +365,7 @@ NTSTATUS call_user_exception_dispatcher( struct thread_data *data,
     frame->sp = (ULONG_PTR)stack;
     frame->pc = (ULONG_PTR)pKiUserExceptionDispatcher;
     frame->x[2] = frame->sp;
-    frame->restore_flags |= CONTEXT_CONTROL;
+    frame->restore_flags |= CONTEXT_CONTROL & ~CONTEXT_RISCV64;
     return STATUS_SUCCESS;
 }
 
@@ -374,6 +388,72 @@ void signal_free_thread( TEB *teb )
 {
 }
 
+
+/* Linux reserves greg[0] for PC; x0 must never be copied from it. */
+static void save_context( CONTEXT *context, const ucontext_t *uc )
+{
+    unsigned int i;
+
+    memset( context, 0, sizeof(*context) );
+    context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    context->Pc = PC_sig( uc );
+    for (i = 1; i < 32; ++i) context->Gpr.X[i] = REGn_sig( i, uc );
+#if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
+    for (i = 0; i < 32; ++i) context->F[i].Q = uc->uc_mcontext.__fpregs.__d.__f[i];
+    context->Fcsr = uc->uc_mcontext.__fpregs.__d.__fcsr;
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+#endif
+}
+
+static void restore_context( const CONTEXT *context, ucontext_t *uc )
+{
+    DWORD flags = context->ContextFlags & ~CONTEXT_RISCV64;
+    unsigned int i;
+
+    if (flags & CONTEXT_INTEGER)
+        for (i = 1; i < 32; ++i)
+            /* gp/tp belong to the native ELF runtime, and SP is control state. */
+            if (i != 2 && i != 3 && i != 4) REGn_sig( i, uc ) = context->Gpr.X[i];
+    if (flags & CONTEXT_CONTROL)
+    {
+        PC_sig( uc ) = context->Pc;
+        SP_sig( uc ) = context->Gpr.X[2];
+        RA_sig( uc ) = context->Gpr.X[1];
+    }
+#if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        for (i = 0; i < 32; ++i) uc->uc_mcontext.__fpregs.__d.__f[i] = context->F[i].Q;
+        uc->uc_mcontext.__fpregs.__d.__fcsr = context->Fcsr;
+    }
+#endif
+}
+
+/* As on ARM64/x86-64, publish the user context while wineserver suspends
+ * the thread, then apply any context updates made before ResumeThread. */
+static void usr1_handler( int sig, siginfo_t *info, void *opaque )
+{
+    ucontext_t *uc = opaque;
+    struct thread_data *data = get_thread_data();
+    CONTEXT context;
+
+    if (!data->teb)
+        server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL, NULL );
+    else if (is_inside_syscall( data, SP_sig( uc ) ))
+    {
+        context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
+        if (NtGetContextThread( GetCurrentThread(), &context )) return;
+        wait_suspend( &context );
+        NtSetContextThread( GetCurrentThread(), &context );
+    }
+    else
+    {
+        save_context( &context, uc );
+        context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
+        wait_suspend( &context );
+        restore_context( &context, uc );
+    }
+}
 
 /* Translate synchronous Linux traps into NT exceptions.  Keep the signal
  * handler itself free of loader and wineserver calls: those run after the
@@ -400,8 +480,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     ucontext_t *uc = opaque;
     struct riscv64_signal_exception *exc;
     ULONG_PTR sp = SP_sig( uc );
-    unsigned int i;
-
     /* Resolve guard-page and stack-growth faults before writing to the
      * interrupted stack.  That stack may itself be the faulting mapping. */
     if (sig == SIGSEGV || sig == SIGBUS)
@@ -419,18 +497,7 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
      * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
     exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
     memset( exc, 0, sizeof(*exc) );
-    exc->context.ContextFlags = CONTEXT_FULL;
-    exc->context.Pc = PC_sig( uc );
-    for (i = 1; i < 32; ++i) exc->context.Gpr.X[i] = REGn_sig( i, uc );
-    exc->context.Gpr.X[2] = sp;
-#if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
-    /* Linux RISC-V signal ABI stores the D-extension register image
-     * directly in mcontext, not behind an fpregs pointer. */
-    for (i = 0; i < 32; ++i)
-        exc->context.F[i].Q = uc->uc_mcontext.__fpregs.__d.__f[i];
-    exc->context.Fcsr = uc->uc_mcontext.__fpregs.__d.__fcsr;
-    exc->context.ContextFlags |= CONTEXT_FLOATING_POINT;
-#endif
+    save_context( &exc->context, uc );
     exc->record.ExceptionAddress = (void *)(ULONG_PTR)exc->context.Pc;
 
     switch (sig)
@@ -488,8 +555,8 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
  * its extension records, signal mask and altstack layout match this kernel.
  * The signal restorer invokes rt_sigreturn, restoring all GPRs including
  * t0/t6 and the exact requested PC in one atomic kernel transition.
- * SIGUSR2 is also used by Wine for cross-thread context updates; only
- * consume signals marked as our synchronous continuation request. */
+ * Remote context updates are exchanged with wineserver in usr1_handler.
+ * SIGUSR2 is reserved here for our synchronous continuation request. */
 static __thread struct syscall_frame *riscv64_sigreturn_frame;
 static __thread sigset_t riscv64_sigreturn_mask;
 
@@ -499,7 +566,7 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     struct syscall_frame *frame = riscv64_sigreturn_frame;
     unsigned int i;
 
-    if (!frame) return; /* TODO: implement external SIGUSR2 context requests. */
+    if (!frame) return;
     riscv64_sigreturn_frame = NULL;
     uc->uc_sigmask = riscv64_sigreturn_mask;
     PC_sig( uc ) = frame->pc;
@@ -509,7 +576,7 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     REGn_sig( 2, uc ) = frame->sp;
     /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
-    if (frame->restore_flags & CONTEXT_FLOATING_POINT)
+    if (frame->restore_flags & (CONTEXT_FLOATING_POINT & ~CONTEXT_RISCV64))
     {
         for (i = 0; i < 32; ++i) uc->uc_mcontext.__fpregs.__d.__f[i] = frame->f[i];
         uc->uc_mcontext.__fpregs.__d.__fcsr = frame->fcsr;
@@ -561,7 +628,12 @@ void signal_init_process( TEB *teb )
     memset( &action, 0, sizeof(action) );
     action.sa_mask = server_block_set;
     action.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
-    action.sa_sigaction = riscv64_fault_handler;
+    action.sa_sigaction = usr1_handler;
+    if (sigaction( SIGUSR1, &action, NULL ) == -1)
+    {
+        perror( "sigaction(SIGUSR1)" );
+        exit( 1 );
+    }
     action.sa_sigaction = riscv64_sigreturn_handler;
     if (sigaction( SIGUSR2, &action, NULL ) == -1)
     {
@@ -587,6 +659,7 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     struct syscall_frame *frame;
 
     frame = init_syscall_frame( entry, arg, teb );
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     /*
      * Enter the RV64 dispatcher-return path with the syscall
@@ -607,9 +680,7 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     __builtin_unreachable();
 }
 
-/* A normal C function may introduce a prologue before the register restore.
- * GCC's naked attribute prevents it; the body contains basic asm only.
- * This does not yet solve complete t6 restoration or nested dispatch. */
+/* Keep the frame argument intact while tail-calling the continuation helper. */
 /* Entry receives the syscall frame in a0 and never returns.  The
  * synchronous SIGUSR2 handler edits the kernel-created signal frame;
  * rt_sigreturn then restores all GPRs and the target PC. */
@@ -677,12 +748,50 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
                     arg_size > 19 * sizeof(ULONG_PTR) ? stack_args[11] : 0 );
 }
 
+/* a0 points to 32 double registers followed by the floating-point CSR. */
+__ASM_GLOBAL_FUNC( riscv64_save_fpu,
+                   "fsd f0, 0(a0)\n\t"
+                   "fsd f1, 8(a0)\n\t"
+                   "fsd f2, 16(a0)\n\t"
+                   "fsd f3, 24(a0)\n\t"
+                   "fsd f4, 32(a0)\n\t"
+                   "fsd f5, 40(a0)\n\t"
+                   "fsd f6, 48(a0)\n\t"
+                   "fsd f7, 56(a0)\n\t"
+                   "fsd f8, 64(a0)\n\t"
+                   "fsd f9, 72(a0)\n\t"
+                   "fsd f10, 80(a0)\n\t"
+                   "fsd f11, 88(a0)\n\t"
+                   "fsd f12, 96(a0)\n\t"
+                   "fsd f13, 104(a0)\n\t"
+                   "fsd f14, 112(a0)\n\t"
+                   "fsd f15, 120(a0)\n\t"
+                   "fsd f16, 128(a0)\n\t"
+                   "fsd f17, 136(a0)\n\t"
+                   "fsd f18, 144(a0)\n\t"
+                   "fsd f19, 152(a0)\n\t"
+                   "fsd f20, 160(a0)\n\t"
+                   "fsd f21, 168(a0)\n\t"
+                   "fsd f22, 176(a0)\n\t"
+                   "fsd f23, 184(a0)\n\t"
+                   "fsd f24, 192(a0)\n\t"
+                   "fsd f25, 200(a0)\n\t"
+                   "fsd f26, 208(a0)\n\t"
+                   "fsd f27, 216(a0)\n\t"
+                   "fsd f28, 224(a0)\n\t"
+                   "fsd f29, 232(a0)\n\t"
+                   "fsd f30, 240(a0)\n\t"
+                   "fsd f31, 248(a0)\n\t"
+                   "frcsr t0\n\t"
+                   "sd t0, 256(a0)\n\t"
+                   "ret" )
+
 /* The Windows stub tail-jumps here with t2 = NT service id, ra = caller.
  * Save arguments on the original stack before using the C ABI to locate
  * the per-thread syscall frame.  The syscall frame is at the high end of
  * Wine's Unix kernel stack; C calls grow downwards from it. */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
-                   "addi sp, sp, -96\n\t"
+                   "addi sp, sp, -368\n\t"
                    "sd ra, 0(sp)\n\t"
                    "sd s0, 8(sp)\n\t"
                    "sd s1, 16(sp)\n\t"
@@ -695,17 +804,30 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "sd a6, 72(sp)\n\t"
                    "sd t2, 80(sp)\n\t" /* syscall id */
                    "sd a7, 88(sp)\n\t" /* eighth argument */
+                   "addi a0, sp, 96\n\t"
+                   "call " __ASM_NAME("riscv64_save_fpu") "\n\t"
                    "mv a0, sp\n\t"
                    "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
                    "beqz a0, 2f\n\t"
                    "mv t0, a0\n\t"        /* frame */
+                   "addi t1, sp, 96\n\t"
+                   "addi t2, t0, 280\n\t"
+                   "li a3, 33\n\t"
+                   "3: ld a4, 0(t1)\n\t"
+                   "sd a4, 0(t2)\n\t"
+                   "addi t1, t1, 8\n\t"
+                   "addi t2, t2, 8\n\t"
+                   "addi a3, a3, -1\n\t"
+                   "bnez a3, 3b\n\t"
+                   "sd gp, 24(t0)\n\t"
+                   "sd tp, 32(t0)\n\t"
                    "ld t1, 80(sp)\n\t"    /* service id */
                    "sw t1, 568(t0)\n\t"
                    "sw zero, 544(t0)\n\t" /* clear stale restore flags */
                    "ld t1, 0(sp)\n\t"     /* return address */
                    "sd t1, 272(t0)\n\t"
                    "sd t1, 256(t0)\n\t"
-                   "addi t1, sp, 96\n\t"
+                   "addi t1, sp, 368\n\t"
                    "sd t1, 264(t0)\n\t"
                    "ld t1, 8(sp)\n\t"
                    "sd t1, 64(t0)\n\t"
@@ -742,12 +864,16 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "addi a1, sp, 80\n\t"
                    "ld a2, 264(sp)\n\t" /* original Windows stack args */
                    "call " __ASM_NAME("riscv64_dispatch_syscall") "\n\t"
-                   /* A successful context-setting syscall must resume at the
-                    * requested PC instead of returning to the syscall stub. */
-                   "bnez a0, 1f\n\t"
+                   /* Honor context requests even when the service returns a
+                    * nonzero status (for example, an interrupted wait). */
                    "lw t1, 544(sp)\n\t"
                    "andi t1, t1, 7\n\t"
                    "beqz t1, 1f\n\t"
+                   "lw t1, 544(sp)\n\t"
+                   "andi t1, t1, 2\n\t"
+                   "bnez t1, 5f\n\t"
+                   "sd a0, 80(sp)\n\t"
+                   "5:\n\t"
                    "mv t0, sp\n\t"
                    "addi sp, sp, -16\n\t"
                    "sd t0, 0(sp)\n\t"
@@ -776,13 +902,41 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ld s9, 200(t0)\n\t"
                    "ld s10, 208(t0)\n\t"
                    "ld s11, 216(t0)\n\t"
+                   "fld f8, 344(t0)\n\t"
+                   "fld f9, 352(t0)\n\t"
+                   "fld f18, 424(t0)\n\t"
+                   "fld f19, 432(t0)\n\t"
+                   "fld f20, 440(t0)\n\t"
+                   "fld f21, 448(t0)\n\t"
+                   "fld f22, 456(t0)\n\t"
+                   "fld f23, 464(t0)\n\t"
+                   "fld f24, 472(t0)\n\t"
+                   "fld f25, 480(t0)\n\t"
+                   "fld f26, 488(t0)\n\t"
+                   "fld f27, 496(t0)\n\t"
+                   "ld t1, 536(t0)\n\t"
+                   "fscsr t1\n\t"
                    "ld ra, 272(t0)\n\t"
                    "ld sp, 264(t0)\n\t"
                    "ret\n"
                    "2:\tld ra, 0(sp)\n\t"
                    "ld s0, 8(sp)\n\t"
                    "ld s1, 16(sp)\n\t"
-                   "addi sp, sp, 96\n\t"
+                   "fld f8, 160(sp)\n\t"
+                   "fld f9, 168(sp)\n\t"
+                   "fld f18, 240(sp)\n\t"
+                   "fld f19, 248(sp)\n\t"
+                   "fld f20, 256(sp)\n\t"
+                   "fld f21, 264(sp)\n\t"
+                   "fld f22, 272(sp)\n\t"
+                   "fld f23, 280(sp)\n\t"
+                   "fld f24, 288(sp)\n\t"
+                   "fld f25, 296(sp)\n\t"
+                   "fld f26, 304(sp)\n\t"
+                   "fld f27, 312(sp)\n\t"
+                   "ld t1, 352(sp)\n\t"
+                   "fscsr t1\n\t"
+                   "addi sp, sp, 368\n\t"
                    "li a0, 0xc000001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
                    "ret" )
 
@@ -862,7 +1016,7 @@ static ULONG_PTR __attribute__((used)) riscv64_dispatch_unix_call( const ULONG_P
 }
 
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
-                   "addi sp, sp, -128\n\t"
+                   "addi sp, sp, -400\n\t"
                    "sd ra, 0(sp)\n\t"
                    "sd s0, 8(sp)\n\t"
                    "sd s1, 16(sp)\n\t"
@@ -879,10 +1033,23 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "sd s9, 104(sp)\n\t"
                    "sd s10, 112(sp)\n\t"
                    "sd s11, 120(sp)\n\t"
+                   "addi a0, sp, 128\n\t"
+                   "call " __ASM_NAME("riscv64_save_fpu") "\n\t"
                    "mv a0, sp\n\t"
                    "call " __ASM_NAME("riscv64_prepare_syscall") "\n\t"
                    "beqz a0, 1f\n\t"
                    "mv t0, a0\n\t"
+                   "addi t1, sp, 128\n\t"
+                   "addi t2, t0, 280\n\t"
+                   "li a3, 33\n\t"
+                   "3: ld a4, 0(t1)\n\t"
+                   "sd a4, 0(t2)\n\t"
+                   "addi t1, t1, 8\n\t"
+                   "addi t2, t2, 8\n\t"
+                   "addi a3, a3, -1\n\t"
+                   "bnez a3, 3b\n\t"
+                   "sd gp, 24(t0)\n\t"
+                   "sd tp, 32(t0)\n\t"
                    /* Keep Unix-call frame bookkeeping consistent with the
                     * NT syscall entry path.  The same frame is reused for
                     * successive non-nested transitions; without clearing
@@ -892,7 +1059,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ld t1, 0(sp)\n\t"
                    "sd t1, 272(t0)\n\t"
                    "sd t1, 256(t0)\n\t"
-                   "addi t1, sp, 128\n\t"
+                   "addi t1, sp, 400\n\t"
                    "sd t1, 264(t0)\n\t"
                    "ld t1, 8(sp)\n\t"
                    "sd t1, 64(t0)\n\t"
@@ -923,6 +1090,23 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ld a2, 40(sp)\n\t"
                    "mv sp, t0\n\t"
                    "call " __ASM_NAME("riscv64_dispatch_unix_call") "\n\t"
+                   "lw t1, 544(sp)\n\t"
+                   "andi t1, t1, 7\n\t"
+                   "beqz t1, 4f\n\t"
+                   "lw t1, 544(sp)\n\t"
+                   "andi t1, t1, 2\n\t"
+                   "bnez t1, 5f\n\t"
+                   "sd a0, 80(sp)\n\t"
+                   "5:\n\t"
+                   "mv t0, sp\n\t"
+                   "addi sp, sp, -16\n\t"
+                   "sd t0, 0(sp)\n\t"
+                   "mv a0, t0\n\t"
+                   "call " __ASM_NAME("riscv64_finish_syscall") "\n\t"
+                   "ld a0, 0(sp)\n\t"
+                   "la t1, " __ASM_NAME("__wine_syscall_dispatcher_return") "\n\t"
+                   "jr t1\n\t"
+                   "4:\n\t"
                    "mv t0, sp\n\t"
                    "addi sp, sp, -16\n\t"
                    "sd a0, 0(sp)\n\t"
@@ -943,6 +1127,20 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ld s9, 200(t0)\n\t"
                    "ld s10, 208(t0)\n\t"
                    "ld s11, 216(t0)\n\t"
+                   "fld f8, 344(t0)\n\t"
+                   "fld f9, 352(t0)\n\t"
+                   "fld f18, 424(t0)\n\t"
+                   "fld f19, 432(t0)\n\t"
+                   "fld f20, 440(t0)\n\t"
+                   "fld f21, 448(t0)\n\t"
+                   "fld f22, 456(t0)\n\t"
+                   "fld f23, 464(t0)\n\t"
+                   "fld f24, 472(t0)\n\t"
+                   "fld f25, 480(t0)\n\t"
+                   "fld f26, 488(t0)\n\t"
+                   "fld f27, 496(t0)\n\t"
+                   "ld t1, 536(t0)\n\t"
+                   "fscsr t1\n\t"
                    "ld ra, 272(t0)\n\t"
                    "ld sp, 264(t0)\n\t"
                    "ret\n"
@@ -959,7 +1157,21 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ld s9, 104(sp)\n\t"
                    "ld s10, 112(sp)\n\t"
                    "ld s11, 120(sp)\n\t"
-                   "addi sp, sp, 128\n\t"
+                   "fld f8, 192(sp)\n\t"
+                   "fld f9, 200(sp)\n\t"
+                   "fld f18, 272(sp)\n\t"
+                   "fld f19, 280(sp)\n\t"
+                   "fld f20, 288(sp)\n\t"
+                   "fld f21, 296(sp)\n\t"
+                   "fld f22, 304(sp)\n\t"
+                   "fld f23, 312(sp)\n\t"
+                   "fld f24, 320(sp)\n\t"
+                   "fld f25, 328(sp)\n\t"
+                   "fld f26, 336(sp)\n\t"
+                   "fld f27, 344(sp)\n\t"
+                   "ld t1, 384(sp)\n\t"
+                   "fscsr t1\n\t"
+                   "addi sp, sp, 400\n\t"
                    "li a0, 0xc000000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "ret" )
 
