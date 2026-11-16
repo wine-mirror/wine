@@ -80,7 +80,7 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "sd x29, 240(a0)\n\t"
                    "sd x30, 248(a0)\n\t"
                    "sd x31, 256(a0)\n\t"
-                   "sd zero, 88(a0)\n\t" /* a0 is the context pointer */
+                   "sd a0, 88(a0)\n\t" /* capture the context pointer passed in a0 */
                    "sd ra, 264(a0)\n\t"
                    "frcsr t0\n\t"
                    "sd t0, 272(a0)\n\t"
