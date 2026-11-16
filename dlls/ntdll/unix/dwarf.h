@@ -382,6 +382,8 @@ enum reg_rule
 #define NB_FRAME_REGS 41
 #elif defined(__aarch64__)
 #define NB_FRAME_REGS 96
+#elif defined(__riscv) && __riscv_xlen == 64
+#define NB_FRAME_REGS 64
 #else
 #error Unsupported architecture
 #endif
@@ -430,6 +432,15 @@ static const char *dwarf_reg_names[NB_FRAME_REGS] =
 /* 72-79 */ "v8",  "v9",  "v10", "v11", "v12", "v13", "v14", "v15",
 /* 80-87 */ "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
 /* 88-95 */ "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",
+#elif defined(__riscv) && __riscv_xlen == 64
+/*  0-7  */ "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+/*  8-15 */ "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+/* 16-23 */ "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+/* 24-31 */ "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6",
+/* 32-39 */ "ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7",
+/* 40-47 */ "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",
+/* 48-55 */ "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",
+/* 56-63 */ "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11",
 #endif
 };
 
@@ -749,7 +760,12 @@ static void *get_context_reg( CONTEXT *context, ULONG_PTR dw_reg )
     case 95:
         return &context->V[dw_reg - 64];
 #endif
-    default: return NULL;
+    default:
+#if defined(__riscv) && __riscv_xlen == 64
+        if (dw_reg < 32) return &context->Gpr.X[dw_reg];
+        if (dw_reg < 64) return &context->F[dw_reg - 32].Q;
+#endif
+        return NULL;
     }
 }
 
@@ -868,6 +884,11 @@ static void set_context_reg( CONTEXT *context, ULONG_PTR dw_reg, void *val )
     case 95:
         memcpy( &context->V[dw_reg - 64], val, sizeof(ARM64_NT_NEON128) );
         break;
+#elif defined(__riscv) && __riscv_xlen == 64
+    default:
+        if (dw_reg > 0 && dw_reg < 32) context->Gpr.X[dw_reg] = *(ULONG64 *)val;
+        else if (dw_reg >= 32 && dw_reg < 64) context->F[dw_reg - 32].Q = *(ULONG64 *)val;
+        break;
 #endif
     }
 }
@@ -983,6 +1004,8 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
     new_context.Rsp = cfa;
 #elif defined(__aarch64__)
     new_context.Sp = cfa;
+#elif defined(__riscv) && __riscv_xlen == 64
+    new_context.Gpr.X[2] = cfa;
 #endif
 
     for (i = 0; i < NB_FRAME_REGS; i++)
