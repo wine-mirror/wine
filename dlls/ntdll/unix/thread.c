@@ -600,8 +600,11 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
         if (flags & CONTEXT_RISCV64_INTEGER)
         {
             to->flags |= SERVER_CTX_INTEGER;
-            memcpy( to->integer.riscv64_regs.x, from->Gpr.X, sizeof(from->Gpr.X) );
-            to->integer.riscv64_regs.x[0] = 0;
+            /* x0 is constant and x2 (sp) is carried by SERVER_CTX_CONTROL.
+             * Keep the protocol integer union at its original 240 bytes. */
+            to->integer.riscv64_regs.x[0] = from->Gpr.X[1];
+            for (i = 3; i < 32; i++)
+                to->integer.riscv64_regs.x[i - 2] = from->Gpr.X[i];
         }
         if (flags & CONTEXT_RISCV64_FLOATING_POINT)
         {
@@ -1062,8 +1065,11 @@ static NTSTATUS context_from_server( void *dst, const struct context_data *from,
         }
         if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_RISCV64_INTEGER))
         {
-            memcpy( to->Gpr.X, from->integer.riscv64_regs.x, sizeof(to->Gpr.X) );
             to->Gpr.X[0] = 0;
+            to->Gpr.X[1] = from->integer.riscv64_regs.x[0];
+            for (i = 3; i < 32; i++)
+                to->Gpr.X[i] = from->integer.riscv64_regs.x[i - 2];
+            /* Preserve x2: it is restored from SERVER_CTX_CONTROL, if present. */
         }
         if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_RISCV64_FLOATING_POINT))
         {
