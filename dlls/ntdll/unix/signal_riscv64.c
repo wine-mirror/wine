@@ -265,14 +265,55 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
+/* Keep this layout synchronized with the PE-side APC entry point. */
+struct riscv64_apc_stack_layout
+{
+    void (*func)(ULONG_PTR, ULONG_PTR, ULONG_PTR);
+    ULONG_PTR args[3];
+    ULONG_PTR alertable;
+    ULONG_PTR reserved;
+    CONTEXT context;
+};
+
 NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, unsigned int flags,
                                    ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
                                    void (*func)(ULONG_PTR, ULONG_PTR, ULONG_PTR),
                                    NTSTATUS status )
 {
-    return STATUS_NOT_IMPLEMENTED;
-}
+    struct thread_data *data = get_thread_data();
+    struct syscall_frame *frame = get_syscall_frame( data );
+    struct riscv64_apc_stack_layout *stack;
+    ULONG_PTR sp;
+    NTSTATUS ret;
 
+    if (!frame) return STATUS_ACCESS_DENIED;
+    if (flags) FIXME( "unsupported APC flags %#x\\n", flags );
+    sp = context_ptr ? context_ptr->Gpr.X[2] : frame->sp;
+    stack = (void *)((sp - sizeof(*stack)) & ~(ULONG_PTR)15);
+    if (context_ptr)
+    {
+        stack->context = *context_ptr;
+        ret = NtSetContextThread( GetCurrentThread(), &stack->context );
+    }
+    else
+    {
+        stack->context.ContextFlags = CONTEXT_FULL;
+        ret = NtGetContextThread( GetCurrentThread(), &stack->context );
+        stack->context.Gpr.X[10] = status;
+    }
+    if (ret) return ret;
+    stack->func = func;
+    stack->args[0] = arg1;
+    stack->args[1] = arg2;
+    stack->args[2] = arg3;
+    stack->alertable = TRUE;
+    stack->reserved = 0;
+    frame->sp = (ULONG_PTR)stack;
+    frame->x[2] = frame->sp;
+    frame->pc = (ULONG_PTR)pKiUserApcDispatcher;
+    frame->restore_flags |= CONTEXT_CONTROL;
+    return status;
+}
 
 void call_raise_user_exception_dispatcher( struct thread_data *data )
 {
