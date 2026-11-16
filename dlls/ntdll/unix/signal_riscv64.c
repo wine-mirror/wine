@@ -43,7 +43,6 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
-#define NTDLL_DWARF_H_NO_UNWINDER
 #include "dwarf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
@@ -953,25 +952,110 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
  * Locate the native ELF FDE for a Winelib call site.  CFI evaluation
  * and register restoration are not implemented by this preparatory change.
  */
+/* Virtual unwind a native RISC-V64 ELF frame using the common DWARF
+ * instruction interpreter.  This does not mutate the live syscall stack. */
+static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
+                                               const struct dwarf_fde *fde,
+                                               const struct dwarf_eh_bases *bases )
+{
+    const struct dwarf_cie *cie;
+    const unsigned char *ptr, *augmentation, *end;
+    struct frame_info info;
+    struct frame_state saved_states[MAX_SAVED_STATES];
+    CONTEXT next = *context;
+    ULONG_PTR length, code_end, old_pc = context->Pc, old_sp = context->Gpr.X[2];
+    unsigned char lsda_encoding = DW_EH_PE_omit;
+    int has_z = 0;
+
+    memset( &info, 0, sizeof(info) );
+    info.state_stack = saved_states;
+    info.ip = (ULONG_PTR)bases->func;
+    cie = (const struct dwarf_cie *)((const char *)&fde->cie_offset - fde->cie_offset);
+    if (cie->version != 1 && cie->version != 3 && cie->version != 4)
+        return STATUS_INVALID_DISPOSITION;
+    ptr = cie->augmentation + strlen((const char *)cie->augmentation) + 1;
+    if (cie->version == 4)
+    {
+        if (ptr[0] != sizeof(ULONG_PTR) || ptr[1]) return STATUS_INVALID_DISPOSITION;
+        ptr += 2;
+    }
+    info.code_align = dwarf_get_uleb128( &ptr );
+    info.data_align = dwarf_get_sleb128( &ptr );
+    info.retaddr_reg = cie->version == 1 ? *ptr++ : dwarf_get_uleb128( &ptr );
+    if (info.retaddr_reg != 1) return STATUS_INVALID_DISPOSITION;
+    info.state.cfa_rule = RULE_CFA_OFFSET;
+
+    end = NULL;
+    for (augmentation = cie->augmentation; *augmentation; ++augmentation)
+    {
+        switch (*augmentation)
+        {
+        case 'z':
+            length = dwarf_get_uleb128( &ptr );
+            end = ptr + length;
+            has_z = 1;
+            break;
+        case 'L': lsda_encoding = *ptr++; break;
+        case 'P':
+        {
+            unsigned char encoding = *ptr++;
+            /* This is a native DWARF personality, not a Windows SEH handler. */
+            (void)dwarf_get_ptr( &ptr, encoding, bases );
+            break;
+        }
+        case 'R': info.fde_encoding = *ptr++; break;
+        case 'S': info.signal_frame = 1; break;
+        default:
+            WARN( "unknown RISC-V64 CIE augmentation '%c'\n", *augmentation );
+            return STATUS_INVALID_DISPOSITION;
+        }
+    }
+    if (end) ptr = end;
+    end = (const unsigned char *)(&cie->length + 1) + cie->length;
+    execute_cfa_instructions( ptr, end, old_pc, &info, bases );
+
+    ptr = (const unsigned char *)(fde + 1);
+    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding, bases );
+    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f, bases );
+    if (old_pc < info.ip || old_pc > code_end) return STATUS_INVALID_DISPOSITION;
+    end = NULL;
+    if (has_z)
+    {
+        length = dwarf_get_uleb128( &ptr );
+        end = ptr + length;
+    }
+    if (lsda_encoding != DW_EH_PE_omit)
+        dispatch->HandlerData = (void *)dwarf_get_ptr( &ptr, lsda_encoding, bases );
+    else dispatch->HandlerData = NULL;
+    if (end) ptr = end;
+    end = (const unsigned char *)(&fde->length + 1) + fde->length;
+    execute_cfa_instructions( ptr, end, old_pc, &info, bases );
+
+    apply_frame_state( &next, &info.state, bases );
+    next.Pc = next.Gpr.X[1];
+    next.Gpr.X[0] = 0;
+    if (!next.Pc || next.Gpr.X[2] <= old_sp) return STATUS_INVALID_DISPOSITION;
+    dispatch->LanguageHandler = NULL;
+    dispatch->EstablisherFrame = old_sp;
+    *context = next;
+    TRACE( "RISC-V64 ELF unwind %p/%p -> %p/%p\n",
+           (void *)old_pc, (void *)old_sp,
+           (void *)(ULONG_PTR)context->Pc, (void *)(ULONG_PTR)context->Gpr.X[2] );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS unwind_builtin_dll( void *args )
 {
     struct unwind_builtin_dll_params *params = args;
-    CONTEXT *context;
     struct dwarf_eh_bases bases;
     const struct dwarf_fde *fde;
 
     if (!params || !params->context || !params->dispatch)
         return STATUS_INVALID_PARAMETER;
-    context = params->context;
-    if (!context->Pc) return STATUS_UNSUCCESSFUL;
-
-    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(context->Pc - 1), &bases );
+    if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
+    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(params->context->Pc - 1), &bases );
     if (!fde) return STATUS_UNSUCCESSFUL;
-
-    TRACE( "RISC-V64 native FDE %p for pc %p, function %p\n",
-           fde, (void *)(ULONG_PTR)context->Pc, bases.func );
-    /* TODO: evaluate CIE/FDE CFI and update CONTEXT and dispatcher. */
-    return STATUS_UNSUCCESSFUL;
+    return riscv64_dwarf_virtual_unwind( params->context, params->dispatch, fde, &bases );
 }
 
 void *get_native_context( CONTEXT *context )
