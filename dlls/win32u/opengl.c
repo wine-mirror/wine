@@ -3391,7 +3391,6 @@ static GLenum import_memory( GLuint memory, GLuint64 size, GLenum type, void *ha
     D3DKMT_HANDLE local, mutex, sync;
     struct fd_desc desc;
     GLenum err;
-    int fd;
 
     switch (type)
     {
@@ -3407,14 +3406,23 @@ static GLenum import_memory( GLuint memory, GLuint64 size, GLenum type, void *ha
     if (mutex) d3dkmt_destroy_mutex( mutex );
     if (sync) d3dkmt_destroy_sync( sync );
 
-    fd = d3dkmt_object_get_fd( local );
-    d3dkmt_destroy_resource( local );
-    if (fd < 0) return GL_INVALID_VALUE;
+    switch (desc.type)
+    {
+    case FD_OPAQUE:
+    {
+        int fd = d3dkmt_object_get_fd( local );
+        d3dkmt_destroy_resource( local );
+        if (fd < 0) return GL_INVALID_VALUE;
 
-    set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
-    funcs->p_glImportMemoryFdEXT( memory, size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
-    if ((err = funcs->p_glGetError())) close( fd );
-    return err;
+        set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
+        funcs->p_glImportMemoryFdEXT( memory, size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
+        if ((err = funcs->p_glGetError())) close( fd );
+        return err;
+    }
+    default:
+        FIXME( "Unsupported memory fd type %#x\n", desc.type );
+        return GL_INVALID_VALUE;
+    }
 }
 
 static void win32u_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum type, void *handle )
@@ -3446,7 +3454,6 @@ static GLenum import_semaphore( GLuint semaphore, GLenum type, void *handle )
     D3DKMT_HANDLE local;
     struct fd_desc desc;
     GLenum err;
-    int fd;
 
     switch (type)
     {
@@ -3460,14 +3467,23 @@ static GLenum import_semaphore( GLuint semaphore, GLenum type, void *handle )
         return GL_INVALID_ENUM;
     }
 
-    fd = d3dkmt_object_get_fd( local );
-    d3dkmt_destroy_sync( local );
-    if (fd < 0) return GL_INVALID_VALUE;
+    switch (desc.type)
+    {
+    case FD_OPAQUE:
+    {
+        int fd = d3dkmt_object_get_fd( local );
+        d3dkmt_destroy_sync( local );
+        if (fd < 0) return GL_INVALID_VALUE;
 
-    set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
-    funcs->p_glImportSemaphoreFdEXT( semaphore, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
-    if ((err = funcs->p_glGetError())) close( fd );
-    return err;
+        set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
+        funcs->p_glImportSemaphoreFdEXT( semaphore, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
+        if ((err = funcs->p_glGetError())) close( fd );
+        return err;
+    }
+    default:
+        FIXME( "Unsupported semaphore fd type %#x\n", desc.type );
+        return GL_INVALID_VALUE;
+    }
 }
 
 void win32u_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum type, void *handle )
