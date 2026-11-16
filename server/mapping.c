@@ -461,6 +461,7 @@ static int add_process_view( struct thread *thread, struct memory_view *view )
             if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
                 process->imagelen = name.len;
             process->image_info = view->image;
+            process->image_info.base = view->base;
             list_add_head( &process->views, &view->entry );
             return 1;
         }
