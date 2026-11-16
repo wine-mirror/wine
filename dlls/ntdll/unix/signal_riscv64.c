@@ -43,9 +43,9 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
-#include "dwarf.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+
+#include "dwarf.h"
 
 #define REGn_sig(reg, context) ((context)->uc_mcontext.__gregs[(reg)])
 #define PC_sig(context) REGn_sig( REG_PC, context )
@@ -1072,7 +1072,8 @@ NTSTATUS unwind_builtin_dll( void *args )
     if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
     fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(params->context->Pc - 1), &bases );
     if (!fde) return STATUS_UNSUCCESSFUL;
-    return riscv64_dwarf_virtual_unwind( params->context, params->dispatch, fde, &bases );
+    return riscv64_dwarf_virtual_unwind( params->context,
+                                          (DISPATCHER_CONTEXT *)params->dispatch, fde, &bases );
 }
 
 void *get_native_context( CONTEXT *context )
