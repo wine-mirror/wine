@@ -11546,9 +11546,9 @@ static void test_activateapp(HWND window1)
     check_wnd_state(window1, window1, window1, 0);
 
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    todo_wine ok(!num_inactive_msgs, "Received %lu unexpected WM_ACTIVATE(WA_INACTIVE) messages.\n", num_inactive_msgs);
+    ok(!num_inactive_msgs, "Received %lu unexpected WM_ACTIVATE(WA_INACTIVE) messages.\n", num_inactive_msgs);
     test_window = GetForegroundWindow();
-    todo_wine ok(test_window == window1, "Expected foreground window %p, got %p.\n", window1, test_window);
+    ok(test_window == window1, "Expected foreground window %p, got %p.\n", window1, test_window);
 
     PostThreadMessageA(tid, thread_params.msg_quit, 0, 0);
     WaitForSingleObject(thread, INFINITE);
