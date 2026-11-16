@@ -4267,6 +4267,7 @@ static void merge_memberrefs( void )
             {
             case TABLE_TYPEDEF:
                 new_class_row = merge_typedef_row( winmd, class_row - 1 );
+                break;
             case TABLE_TYPEREF:
             {
                 const struct typeref_row *ref = &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[class_row - 1];
