@@ -169,6 +169,7 @@ struct riscv64_apc_stack
     ULONG_PTR reserved;
     CONTEXT context;
 };
+C_ASSERT( offsetof( struct riscv64_apc_stack, context ) == 0x30 );
 
 void WINAPI DECLSPEC_NORETURN riscv64_dispatch_apc( struct riscv64_apc_stack *stack )
 {
