@@ -501,11 +501,11 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     riscv64_sigreturn_frame = NULL;
     uc->uc_sigmask = riscv64_sigreturn_mask;
     PC_sig( uc ) = frame->pc;
-    for (i = 1; i < 32; ++i) REGn_sig( i, uc ) = frame->x[i];
+    for (i = 1; i < 32; ++i)
+        if (i != 3 && i != 4) REGn_sig( i, uc ) = frame->x[i];
     REGn_sig( 1, uc ) = frame->ra;
     REGn_sig( 2, uc ) = frame->sp;
-    /* tp is the host ELF TLS pointer and cannot be changed here. */
-    REGn_sig( 4, uc ) = (ULONG_PTR)__builtin_thread_pointer();
+    /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
     if (frame->restore_flags & CONTEXT_FLOATING_POINT)
     {
