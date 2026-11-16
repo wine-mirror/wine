@@ -1,56 +1,225 @@
-# Wine RISC-V64 port: development and testing
+# Wine on Linux RISC-V64: getting started and development guide
 
-This document tracks the native Linux RISC-V64 Wine bring-up on the `risc-v` branch. Use `risc-v` for builds and testing; the historical `riscv64-context-experimental` branch is already an ancestor of `risc-v`.
+> **Experimental port — work in progress.** This guide describes the `risc-v` development branch of this fork, not an upstream-supported Wine configuration. Code merged into the branch is not necessarily verified on RISC-V hardware.
 
-## Context and SEH bring-up
+## Scope and project goals
 
-The experimental context changes already incorporated into `risc-v` include:
+The immediate goal is to build and run Wine's **native Linux RISC-V64 / Winelib (ELF)** path, then make thread startup, syscall dispatch, exception handling, context restoration, and unwinding reliable. This is distinct from running existing x86/x86-64 Windows binaries.
 
-- `RtlCaptureContext` captures integer registers and control state at the caller boundary.
-- `RtlRestoreContext` delegates the non-returning transfer to `NtContinue`.
-- `get_native_context` returns the native `CONTEXT` pointer.
+- **Current development branch:** `risc-v`. The historical `riscv64-context-experimental` branch was incorporated into it.
+- **Primary target:** a Linux RISC-V64 machine, such as the Orange Pi RV, with a native GCC toolchain.
+- **Near-term objective:** repeatable builds, startup and Winelib smoke tests, and architecture-specific tests for NTDLL.
+- **Future possibilities:** native RISC-V64 Windows PE/COFF binaries, RISC-V vector support, and x86/x86-64 translation. None is a prerequisite for the ELF bring-up.
 
-These are incremental implementations, **not** complete Windows exception or context support.
+Prefer small, reviewable architecture-specific changes and preserve Wine's shared server protocol ABI. Do not disable assertions or assume a successful compile proves exception correctness.
 
-### Known limitations and validation requirements
+## 1. Prepare the build machine
 
-- `RtlCaptureContext` does **not** capture floating-point state or set its floating-point context flag. It records `x10/a0` as zero because the context pointer occupies `a0` at the function boundary.
-- `RtlRestoreContext` depends on `NtContinue`, the syscall dispatcher and the frame-restore path. A successful call into `NtContinue` does not establish complete register restoration.
-- Remote `NtGetContextThread` and `NtSetContextThread` remain unsupported pending server-mediated suspend/context support.
-- The syscall return trampoline does not restore `t6` as a saved context register. Native ELF `gp` and `tp` preservation must remain consistent with the Linux ABI.
-- The newer `risc-v` branch has an **experimental** floating-point restore path for explicit context updates; it does not provide complete floating-point capture, signal-context support or verified end-to-end restoration. Earlier experimental-branch notes that FP restore was entirely absent therefore no longer describe the latest code.
-- Nested Unix/syscall transitions still share one frame and require redesign and validation.
-- APC dispatch, Windows exception dispatch, stack unwinding and user-mode callback paths remain incomplete or stubbed.
-- `__chkstk` is currently a no-op, as in the referenced ARM64 implementation. Do not attribute an initialization hang to it without evidence.
-
-## Remaining development roadmap
-
-1. Preserve full integer/FP state across syscall and Unix-call transitions, including nested entries and context restores.
-2. Implement Linux RISC-V64 signal-context capture/restore and signal-to-Windows exception translation.
-3. Complete current/remote thread context operations with Wine server integration and suspend/resume.
-4. Implement APC and exception stack layouts, dispatch and return paths.
-5. Implement PE/DWARF unwind support, `RtlVirtualUnwind` and `RtlUnwindEx`.
-6. Implement user-mode callbacks and add dedicated tests for `ntdll`, `kernel32` and `user32`.
-
-## Build and smoke-test sequence
-
-Run on the RISC-V64 target, from the existing configured build tree:
+On Debian-derived RISC-V64 distributions, install the standard build dependencies required by your checkout and configuration. Useful diagnostic tools include:
 
 ```sh
-cd ~/source/wine
+sudo apt update
+sudo apt install build-essential git pkg-config gdb binutils strace   autoconf automake libtool
+```
+
+Optional tools for investigating PE/COFF and repository history:
+
+```sh
+sudo apt install clang lld llvm gh xxd tree
+apt-cache policy clang lld llvm
+```
+
+Package names and availability vary by distribution. `libc6-dev-riscv64-cross` is for cross-compilation and is **not required** for a native RISC-V64 build.
+
+Confirm the native architecture:
+
+```sh
+uname -m
+gcc -dumpmachine
+gcc -dM -E - </dev/null | grep -E '__riscv|__SIZEOF_POINTER__'
+```
+
+A native 64-bit RISC-V compiler should report `__riscv_xlen 64`.
+
+## 2. Check out and build
+
+```sh
+git clone https://github.com/sedwards/wine.git
+cd wine
+git switch risc-v
+```
+
+For an existing checkout:
+
+```sh
 git fetch origin
 git switch risc-v
 git pull --ff-only origin risc-v
-make -j2 2>&1 | tee /tmp/wine-riscv-build.log
+```
 
+Use a **separate build directory** when practical, so generated files and configuration changes are isolated:
+
+```sh
+mkdir -p ../wine-riscv-build
+cd ../wine-riscv-build
+../wine/configure --without-mingw
+make -j2 2>&1 | tee /tmp/wine-riscv-build.log
+```
+
+The in-tree build used during bring-up is also supported by this fork's existing workflow:
+
+```sh
+cd ~/source/wine
+./configure --without-mingw
+make -j2 2>&1 | tee /tmp/wine-riscv-build.log
+```
+
+Choose **one** build layout and use it consistently. Do not run `make clean` or `make install` as part of routine debugging; first establish that the build and tests work. `--enable-archs=riscv64` was experimented with in older notes but is **not the default recommended configuration** for this native ELF bring-up. Confirm support in `./configure --help` before using it.
+
+### Build one object while debugging
+
+From the configured build directory:
+
+```sh
+make -B dlls/ntdll/unix/signal_riscv64.o
+make -j2 2>&1 | tee /tmp/wine-riscv-build.log
+```
+
+Use the build system's generated compiler flags rather than replacing `CFLAGS` wholesale. The historical `-fshort-wchar` workaround is not a default requirement.
+
+If `configure` itself was changed, regenerate it using the project's documented build procedure before reconfiguring. `autoreconf -fi` appeared in early experiments but should not be applied automatically to an otherwise configured tree.
+
+## 3. Smoke-test startup
+
+From the **configured build directory**, using its Wine launcher:
+
+```sh
 export WINEPREFIX="$HOME/.wine-riscv-context-test"
 WINEDEBUG=+timestamp,+pid,+seh,+process \
   timeout -s TERM -k 10s 120s ./wine cmd.exe /c ver \
   > /tmp/wine-riscv-context.log 2>&1
 
+printf 'exit status: %s\n' "$?"
 grep -E 'LdrInitializeThunk|NtContinue|err:|SIG' /tmp/wine-riscv-context.log
 ```
 
-Use a fresh test prefix when isolating initialization issues. The `+riscv64` debug channel from the original bring-up instructions is optional and should be used only if registered in the current build. Compare test output with a known working baseline, and **do not infer success from wineserver shutdown alone**.
+This command is a **diagnostic**, not a guarantee that a Windows PE program will start on this port. Test a small native Winelib ELF executable separately; inspect its format with `file` and `readelf -h`. Use a fresh `WINEPREFIX` to isolate initialization failures. A wineserver exit or clean shutdown **does not** by itself establish that Wine initialized successfully.
 
-All runtime changes require compilation and execution on the RISC-V64 target before being considered validated.
+Only enable a debug channel if it exists in the current source. In particular, `+riscv64` is not guaranteed to be registered.
+
+## 4. Current implementation status
+
+The branch contains initial implementations in several areas. **Status here means code is present, not that it passed end-to-end hardware tests.** Earlier notes described some features as entirely absent; those descriptions are now outdated.
+
+| Area | Branch status / next validation |
+| --- | --- |
+| Native RISC-V64 thread initialization | Initial implementation; verify TEB, stacks, and entry transitions. |
+| Syscall and Unix-call dispatch | Implemented paths under development; validate nested and cross-stack transitions. |
+| `RtlCaptureContext` / `RtlRestoreContext` / `NtContinue` | Initial and experimental; verify all integer and FP registers, PC, SP, and non-returning transfer. |
+| Linux signal-context transition | Experimental `rt_sigreturn`-based continuation; verify signal masks and context restoration. |
+| Floating-point context | Partial; verify capture, save, restore, and signal interactions. |
+| Nested syscall frames | Frame-chain handling and nonlocal-continuation cleanup added; complex exception paths remain unverified. |
+| Native ELF/DWARF virtual unwind | Initial CIE/FDE parsing, CFA evaluation, and register mapping added; requires compilation and unwind tests. |
+| Windows `RtlVirtualUnwind` / `RtlUnwindEx` / SEH | Incomplete; do not infer full Windows SEH from ELF unwind work. |
+| APC, remote thread context, user-mode callbacks | Incomplete / requires focused integration tests. |
+| `setjmp` / `longjmp` | Initial RISC-V64 implementation; verify jump-buffer layout and nonlocal transfers. |
+| RISC-V vector extension | Future work. |
+| Native Windows RISC-V PE/COFF and x86 translation | Exploratory / out of current scope. |
+
+### RISC-V64 server-context layout
+
+Wine's `struct context_data` protocol has a fixed **1712-byte** layout. Early RISC-V64 code serialized all 32 integer registers into the integer union, growing the structure to **1728 bytes** and triggering the server's static assertion.
+
+The branch now uses **30 transmitted integer registers**: `x1` and `x3`–`x31`. `x0` is architecturally zero; `x2` (SP) is represented by the control-register union. The corresponding packing/unpacking code lives in `dlls/ntdll/unix/thread.c`.
+
+**Do not change or comment out the assertion** in `server/request_handlers.h`. The goal is to retain the shared protocol layout. If the build still reports a size mismatch, verify that generated headers match the current `server/protocol.def`, and measure the layout rather than changing the expected size.
+
+## 5. Debugging and validation
+
+Useful starting points:
+
+```sh
+# Confirm object and executable formats
+file dlls/ntdll/unix/signal_riscv64.o
+readelf -h dlls/ntdll/unix/signal_riscv64.o
+
+# Inspect native unwind metadata
+readelf --debug-dump=frames dlls/ntdll/unix/signal_riscv64.o
+
+# Trace process and signal activity
+strace -f -o /tmp/wine-riscv-strace.log ./wine --version
+
+# Inspect the first build error
+grep -n -m 10 -E 'error:|undefined reference|Error [0-9]' /tmp/wine-riscv-build.log
+```
+
+For a reproducible crash, collect the executable name, exact command, build commit, signal, `gdb bt`, `info registers`, and relevant `x/i` and `x/gx` output. For context and unwind defects, test leaf and non-leaf functions, saved `ra`/`s0`–`s11`, FP state, nested syscall callbacks, and nonlocal exception exits. Distinguish **native ELF DWARF unwinding** from **Windows PE unwind metadata**.
+
+### Development priorities
+
+1. Obtain a clean, repeatable native build and basic Winelib startup.
+2. Verify syscall/Unix-call entry and return, including `t6`, `gp`, `tp`, and nested frame bookkeeping.
+3. Verify signal capture and `NtContinue` restoration of PC, SP, integer registers, and FP state.
+4. Test ELF CIE/FDE parsing, CFA computation, register recovery, and unwind progress across multiple frames.
+5. Complete Windows exception dispatch, `RtlVirtualUnwind`, `RtlUnwindEx`, and collided/nonlocal unwinding.
+6. Complete APCs, thread suspension and remote context handling, callbacks, and debugger integration.
+7. Add regression tests suitable for upstream review.
+
+## 6. Historical experiments and optional future work
+
+The following notes are **retained for research**, not recommended build steps.
+
+### LLVM / RISC-V64 COFF experiments
+
+An earlier attempt to generate Windows-style PE/COFF files with Clang and LLD did not establish a working Wine PE runtime. Compiler support for a target triple, COFF object generation, PE linking, Wine loader recognition, and executable startup are **separate questions**. Support varies with installed LLVM versions.
+
+To check whether a particular Clang accepts a COFF target:
+
+```sh
+clang --version
+ld.lld --version
+command -v lld-link
+
+cat >/tmp/riscv-pe-test.c <<'EOF'
+int main(void) { return 0; }
+EOF
+
+clang --target=riscv64-windows-coff -c /tmp/riscv-pe-test.c \
+  -o /tmp/riscv-pe-test.obj
+file /tmp/riscv-pe-test.obj
+```
+
+Even a successful `.obj` compilation **does not** imply that `clang --target=riscv64-windows-coff -fuse-ld=lld ...` can link a usable executable, or that Wine can load it. Earlier bring-up logs included `STATUS_INVALID_IMAGE_WIN_64 (c000035a)`; investigate machine validation separately from compiler/linker support. Claims of full upstream LLVM RISC-V Windows COFF support in old notes were not independently verified for the installed toolchain.
+
+### Historical local workarounds — do not apply automatically
+
+The old scratch notes recorded these commands:
+
+```sh
+# Historical linker workaround, not a default build setting:
+make -j4 LDFLAGS="-Wl,-u,__wine_riscv64_get_teb -latomic"
+
+# Historical investigation of preloader placement:
+make -C loader wine-preloader \
+  WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -static -Wl,-Ttext=0x200100000" \
+  -B V=1
+
+# Historical workaround for a missing build-tool path:
+ln -s ../winebuild/winebuild tools/winegcc/winebuild
+```
+
+Do **not** create the symlink, override linker flags, or force a preloader address without first reproducing and understanding the underlying issue on a clean tree. These are debugging artifacts, not project requirements.
+
+### Future architecture options
+
+- Native RISC-V64 PE/COFF generation and loader support.
+- RISC-V vector register context and unwind handling.
+- WOW64 or x86/x86-64 binary translation through a separately designed emulation layer.
+
+None should block the native Linux/Winelib ELF milestone.
+
+## Contributing and reporting results
+
+Keep changes small, architecture-scoped, and consistent with existing x86-64/AArch64 Wine patterns. Prefer protocol-neutral solutions; include tests and explain ABI assumptions. For a useful bug report, record the commit (`git rev-parse HEAD`), toolchain versions, configure options, failing command, first error, and GDB trace where applicable.
+
+This guide reflects the development branch and its known experiments as of **November 2026**. Update the status table only after confirming the implementation and its tests on the target hardware.
