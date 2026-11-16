@@ -223,7 +223,7 @@ ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
  * has no x86/ARM-specific extended feature namespace here. */
 BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 {
-    if (feature >= PROCESSOR_FEATURE_MAX) return FALSE;
+    if (feature >= PROCESSOR_FEATURE_MAX || !user_shared_data) return FALSE;
     return !!user_shared_data->ProcessorFeatures[feature];
 }
 /* Mirror the native ARM64 implementation: this API is not architecture-
