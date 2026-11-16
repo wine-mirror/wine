@@ -729,10 +729,22 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "lw t1, 544(sp)\n\t"
                    "andi t1, t1, 7\n\t"
                    "beqz t1, 1f\n\t"
-                   "mv a0, sp\n\t"
+                   "mv t0, sp\n\t"
+                   "addi sp, sp, -16\n\t"
+                   "sd t0, 0(sp)\n\t"
+                   "mv a0, t0\n\t"
+                   "call " __ASM_NAME("riscv64_finish_syscall") "\n\t"
+                   "ld a0, 0(sp)\n\t"
                    "la t1, " __ASM_NAME("__wine_syscall_dispatcher_return") "\n\t"
                    "jr t1\n\t"
                    "1:\t mv t0, sp\n\t"
+                   "addi sp, sp, -16\n\t"
+                   "sd a0, 0(sp)\n\t"
+                   "mv a0, t0\n\t"
+                   "call " __ASM_NAME("riscv64_finish_syscall") "\n\t"
+                   "ld a0, 0(sp)\n\t"
+                   "addi sp, sp, 16\n\t"
+                   "mv t0, sp\n\t"
                    "ld s0, 64(t0)\n\t"
                    "ld s1, 72(t0)\n\t"
                    "ld s2, 144(t0)\n\t"
@@ -755,35 +767,52 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "li a0, 0xc000001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
                    "ret" )
 
-/* Called before switching stacks.  Its return value is an existing
- * per-thread frame, or NULL if thread initialization is incomplete. */
+/* The top-of-kernel-stack frame belongs to the thread.  Nested entries
+ * allocate a temporary frame below the interrupted Unix stack pointer,
+ * leaving the outer frame and its live C stack untouched.  The entry
+ * assembly saves its arguments before calling this helper. */
 static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void *entry_sp )
 {
     struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame;
+    struct syscall_frame *frame, *nested;
     ULONG_PTR sp = (ULONG_PTR)entry_sp;
-    ULONG_PTR stack_base, stack_end;
+    ULONG_PTR stack_base, stack_end, frame_addr;
 
     if (!data || !data->teb) return NULL;
     frame = get_syscall_frame( data );
     if (!frame) return NULL;
 
-    /* Both dispatchers currently use the same top-of-kernel-stack frame.
-     * Re-entering them while executing on that stack would overwrite the
-     * outer call's saved PC, SP and nonvolatile registers.  Reject this
-     * case until nested frames have their own storage and return path.
-     * In particular, never switch sp back to an already active frame. */
     stack_base = (ULONG_PTR)get_kernel_stack( data );
     stack_end = stack_base + kernel_stack_size;
-    if (sp >= stack_base && sp < stack_end)
+    if (sp < stack_base || sp >= stack_end)
     {
-        WARN( "rejecting nested RISC-V64 syscall/Unix call at %p (kernel stack %p-%p)\n",
-              entry_sp, (void *)stack_base, (void *)stack_end );
-        return NULL;
+        /* A callback on a different stack cannot be nested safely without
+         * tracking the suspended Unix SP; preserve the existing base path. */
+        if (frame->prev_frame) return NULL;
+        frame->prev_frame = NULL;
+        return frame;
     }
-    return frame;
+
+    /* Keep room for the C helper and a guard against kernel-stack exhaustion.
+     * All RISC-V LP64 stack pointers and frame allocations are 16-aligned. */
+    if (sp < stack_base + 8192 + sizeof(*nested)) return NULL;
+    frame_addr = (sp - sizeof(*nested)) & ~(ULONG_PTR)15;
+    nested = (struct syscall_frame *)frame_addr;
+    memset( nested, 0, sizeof(*nested) );
+    nested->prev_frame = frame;
+    get_teb_data( data )->syscall_frame = nested;
+    return nested;
 }
- 
+
+/* Called while sp still points to the completed frame.  The caller must
+ * preserve the service return value across this C call. */
+static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *frame )
+{
+    struct thread_data *data = get_thread_data();
+
+    if (data && data->teb && frame->prev_frame)
+        get_teb_data( data )->syscall_frame = frame->prev_frame;
+}
 
 /* Unix-call entry: a0 = function table, a1 = function index,
  * a2 = argument block.  The entry runs on the Windows stack and the
@@ -866,6 +895,13 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ld a2, 40(sp)\n\t"
                    "mv sp, t0\n\t"
                    "call " __ASM_NAME("riscv64_dispatch_unix_call") "\n\t"
+                   "mv t0, sp\n\t"
+                   "addi sp, sp, -16\n\t"
+                   "sd a0, 0(sp)\n\t"
+                   "mv a0, t0\n\t"
+                   "call " __ASM_NAME("riscv64_finish_syscall") "\n\t"
+                   "ld a0, 0(sp)\n\t"
+                   "addi sp, sp, 16\n\t"
                    "mv t0, sp\n\t"
                    "ld s0, 64(t0)\n\t"
                    "ld s1, 72(t0)\n\t"
