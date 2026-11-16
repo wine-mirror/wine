@@ -2974,6 +2974,11 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO devinfo,
     TRACE("devinfo %p, device_data %p, property %ld, type %p, buffer %p, size %ld, required %p\n",
             devinfo, device_data, Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize, RequiredSize);
 
+    /* The ASCII version if this function returns a wide string for this property. */
+    if (Property == SPDRP_BASE_CONTAINERID)
+        return SetupDiGetDeviceRegistryPropertyW(devinfo, device_data, Property, PropertyRegDataType, PropertyBuffer,
+                PropertyBufferSize, RequiredSize);
+
     if (!(device = get_device(devinfo, device_data)))
         return FALSE;
 

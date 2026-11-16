@@ -2351,8 +2351,8 @@ static void test_pnp_devices(void)
             &type, (BYTE *)buffer, sizeof(buffer), &size);
     ok(ret, "Got error %#lx.\n", GetLastError());
     ok(type == REG_SZ, "Got type %lu.\n", type);
-    todo_wine ok(size == sizeof(expect_container_id_w), "Got size %lu.\n", size);
-    todo_wine ok(!memcmp(buffer, expect_container_id_w, size), "Got unexpected container ID.\n");
+    ok(size == sizeof(expect_container_id_w), "Got size %lu.\n", size);
+    ok(!memcmp(buffer, expect_container_id_w, size), "Got unexpected container ID.\n");
 
     /* Same wide string returned by ASCII version. */
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_BASE_CONTAINERID,
