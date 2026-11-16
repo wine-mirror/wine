@@ -543,7 +543,14 @@ void signal_init_process( TEB *teb )
     action.sa_mask = server_block_set;
     action.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
     action.sa_sigaction = riscv64_fault_handler;
-    action.sa_sigaction = riscv64_sigreturn_handler;\n    if (sigaction( SIGUSR2, &action, NULL ) == -1)\n    {\n        perror( "sigaction(SIGUSR2)" );\n        exit( 1 );\n    }\n    action.sa_sigaction = riscv64_fault_handler;\n    if (sigaction( SIGSEGV, &action, NULL ) == -1 ||
+    action.sa_sigaction = riscv64_sigreturn_handler;
+    if (sigaction( SIGUSR2, &action, NULL ) == -1)
+    {
+        perror( "sigaction(SIGUSR2)" );
+        exit( 1 );
+    }
+    action.sa_sigaction = riscv64_fault_handler;
+    if (sigaction( SIGSEGV, &action, NULL ) == -1 ||
         sigaction( SIGBUS, &action, NULL ) == -1 ||
         sigaction( SIGILL, &action, NULL ) == -1 ||
         sigaction( SIGTRAP, &action, NULL ) == -1 ||
