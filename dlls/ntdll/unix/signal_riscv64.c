@@ -787,8 +787,14 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
     if (sp < stack_base || sp >= stack_end)
     {
         /* A callback on a different stack cannot be nested safely without
-         * tracking the suspended Unix SP; preserve the existing base path. */
-        if (frame->prev_frame) return NULL;
+         * tracking the suspended Unix SP.  In particular, do not reuse the
+         * base frame while an outer Unix transition is still active. */
+        if (frame->prev_frame)
+        {
+            WARN( "rejecting cross-stack RISC-V64 callback at %p (active frame %p)\n",
+                  entry_sp, frame );
+            return NULL;
+        }
         frame->prev_frame = NULL;
         return frame;
     }
