@@ -39,14 +39,45 @@ static BOOL riscv64_valid_seh_frame( const EXCEPTION_REGISTRATION_RECORD *frame 
            (ULONG_PTR)tib->StackBase - addr >= sizeof(*frame);
 }
 
+/* Native Winelib modules use ELF CFI, including modules without a PE
+ * runtime function table. Follow the x86-64 builtin unwind bridge. */
+static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    LDR_DATA_TABLE_ENTRY *module;
+    ULONG_PTR pc = context->Pc;
+    NTSTATUS status;
+
+    dispatch->ControlPc = pc;
+    dispatch->ControlPcIsUnwound = !!(context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+    /* RISC-V instructions may be compressed; one byte selects the call site. */
+    if (pc && dispatch->ControlPcIsUnwound) pc--;
+    dispatch->ImageBase = 0;
+    dispatch->ScopeIndex = 0;
+    dispatch->HandlerData = NULL;
+    dispatch->LanguageHandler = NULL;
+    dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, &dispatch->ImageBase,
+                                                     dispatch->HistoryTable );
+    if (!dispatch->FunctionEntry &&
+        (LdrFindEntryForAddress( (void *)pc, &module ) || (module->Flags & LDR_WINE_INTERNAL)))
+    {
+        struct unwind_builtin_dll_params params =
+            { type, (struct _DISPATCHER_CONTEXT *)dispatch, context };
+
+        status = WINE_UNIX_CALL( unix_unwind_builtin_dll, &params );
+        if (status != STATUS_UNSUCCESSFUL) return status;
+    }
+    return RtlVirtualUnwind2( type, dispatch->ImageBase, pc, dispatch->FunctionEntry,
+                             context, NULL, &dispatch->HandlerData, &dispatch->EstablisherFrame,
+                             NULL, NULL, NULL, &dispatch->LanguageHandler, 0 );
+}
+
 NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
 {
     EXCEPTION_REGISTRATION_RECORD *frame = NtCurrentTeb()->Tib.ExceptionList;
     EXCEPTION_REGISTRATION_RECORD *next;
     CONTEXT context = *original;
     DISPATCHER_CONTEXT dispatch = {0};
-    ULONG_PTR image_base, establisher, sp, prev_sp = 0;
-    RUNTIME_FUNCTION *function;
+    ULONG_PTR establisher, sp, prev_sp = 0, prev_pc = 0;
     PEXCEPTION_ROUTINE handler;
     unsigned int depth = 0;
     LONG status;
@@ -58,22 +89,13 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
         sp = context.Gpr.X[2];
         if (!sp || sp >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase ||
             sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit ||
-            (prev_sp && sp <= prev_sp)) break;
+            (prev_sp && (sp < prev_sp || (sp == prev_sp && context.Pc == prev_pc)))) break;
         prev_sp = sp;
+        prev_pc = context.Pc;
 
-        image_base = 0;
-        function = RtlLookupFunctionEntry( context.Pc, &image_base, NULL );
-        dispatch.ControlPc = context.Pc;
-        dispatch.ImageBase = image_base;
-        dispatch.FunctionEntry = function;
-        dispatch.HandlerData = NULL;
-        dispatch.LanguageHandler = NULL;
-        status = RtlVirtualUnwind2( UNW_FLAG_EHANDLER, image_base, context.Pc,
-                                     function, &context, NULL, &dispatch.HandlerData,
-                                     &establisher, NULL, NULL, NULL,
-                                     &dispatch.LanguageHandler, 0 );
+        status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
         if (status) return status;
-        dispatch.EstablisherFrame = establisher;
+        establisher = dispatch.EstablisherFrame;
         handler = dispatch.LanguageHandler;
         if (handler)
         {
@@ -105,7 +127,6 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
             rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
             return STATUS_BAD_STACK;
         }
-        if (context.Pc == original->Pc && depth > 1) break;
     }
     return STATUS_UNHANDLED_EXCEPTION;
 }
@@ -334,7 +355,31 @@ PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR image_base,
                       (void *)pc, (unsigned long)status );
     return handler;
 }
-__ASM_GLOBAL_FUNC( RtlWalkFrameChain, "li a0, 0\n\tret" )
+ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
+{
+    CONTEXT context;
+    DISPATCHER_CONTEXT dispatch = {0};
+    UNWIND_HISTORY_TABLE table = {0};
+    ULONG i, skip = flags >> 8, num_entries = 0;
+    ULONG_PTR sp, pc;
+
+    RtlCaptureContext( &context );
+    dispatch.ContextRecord = &context;
+    dispatch.HistoryTable = &table;
+    for (i = 0; i < count; ++i)
+    {
+        sp = context.Gpr.X[2];
+        pc = context.Pc;
+        if (!sp || (sp & 15) || sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit ||
+            sp >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase) break;
+        if (virtual_unwind( UNW_FLAG_NHANDLER, &dispatch, &context )) break;
+        if (!context.Pc || context.Gpr.X[2] < sp ||
+            (context.Gpr.X[2] == sp && context.Pc == pc)) break;
+        if (context.Gpr.X[2] >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase) break;
+        if (i >= skip) buffer[num_entries++] = (void *)context.Pc;
+    }
+    return num_entries;
+}
 __ASM_GLOBAL_FUNC( __C_specific_handler, "li a0, 1\n\tret" )
 
 /* Thread startup. */

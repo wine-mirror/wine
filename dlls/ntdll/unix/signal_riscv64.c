@@ -1178,8 +1178,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 /***********************************************************************
  *           unwind_builtin_dll
  *
- * Locate the native ELF FDE for a Winelib call site.  CFI evaluation
- * and register restoration are not implemented by this preparatory change.
+ * Locate and evaluate the native ELF FDE for a Winelib call site.
  */
 /* Virtual unwind a native RISC-V64 ELF frame using the common DWARF
  * instruction interpreter.  This does not mutate the live syscall stack. */
@@ -1194,10 +1193,11 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     CONTEXT next = *context;
     ULONG_PTR length, code_end, old_pc = context->Pc, old_sp = context->Gpr.X[2];
     unsigned char lsda_encoding = DW_EH_PE_omit;
-    int has_z = 0;
+    int has_z = 0, signal_frame = 0;
 
     memset( &info, 0, sizeof(info) );
     info.state_stack = saved_states;
+    info.signal_frame = !(context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
     info.ip = (ULONG_PTR)bases->func;
     cie = (const struct dwarf_cie *)((const char *)&fde->cie_offset - fde->cie_offset);
     if (cie->version != 1 && cie->version != 3 && cie->version != 4)
@@ -1233,7 +1233,7 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
             break;
         }
         case 'R': info.fde_encoding = *ptr++; break;
-        case 'S': info.signal_frame = 1; break;
+        case 'S': info.signal_frame = signal_frame = 1; break;
         default:
             WARN( "unknown RISC-V64 CIE augmentation '%c'\n", *augmentation );
             return STATUS_INVALID_DISPOSITION;
@@ -1263,7 +1263,11 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     apply_frame_state( &next, &info.state, bases );
     next.Pc = next.Gpr.X[1];
     next.Gpr.X[0] = 0;
-    if (!next.Pc || next.Gpr.X[2] <= old_sp) return STATUS_INVALID_DISPOSITION;
+    if (info.state.rules[info.retaddr_reg] == RULE_UNDEFINED) next.Pc = 0;
+    if (next.Gpr.X[2] < old_sp || (next.Gpr.X[2] == old_sp && next.Pc == old_pc))
+        return STATUS_INVALID_DISPOSITION;
+    if (signal_frame) next.ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
+    else next.ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     dispatch->LanguageHandler = NULL;
     dispatch->EstablisherFrame = old_sp;
     *context = next;
@@ -1282,7 +1286,8 @@ NTSTATUS unwind_builtin_dll( void *args )
     if (!params || !params->context || !params->dispatch)
         return STATUS_INVALID_PARAMETER;
     if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
-    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(params->context->Pc - 1), &bases );
+    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(params->context->Pc -
+                          !!(params->context->ContextFlags & CONTEXT_UNWOUND_TO_CALL)), &bases );
     if (!fde) return STATUS_UNSUCCESSFUL;
     return riscv64_dwarf_virtual_unwind( params->context,
                                           (DISPATCHER_CONTEXT *)params->dispatch, fde, &bases );

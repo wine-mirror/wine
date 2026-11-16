@@ -119,7 +119,7 @@ The branch contains initial implementations in several areas. **Status here mean
 | Linux signal-context transition | Experimental `rt_sigreturn`-based continuation; verify signal masks and context restoration. |
 | Floating-point context | LP64D syscall/Unix-call entry now captures all 32 FP registers and FCSR; normal returns restore callee-saved FP state and FCSR. Signal-context helpers share capture/restore code. Hardware integration remains unverified. |
 | Nested syscall frames | Frame-chain handling and nonlocal-continuation cleanup added; complex exception paths remain unverified. |
-| Native ELF/DWARF virtual unwind | Initial CIE/FDE parsing, CFA evaluation, and register mapping added; requires compilation and unwind tests. |
+| Native ELF/DWARF virtual unwind | Connected to native exception dispatch and frame walking. Isolated QEMU CFI tests pass for integer/FP recovery, leaf frames, exact PCs, call-site boundaries, and end-of-stack detection; full runtime/hardware validation remains pending. |
 | Windows `RtlVirtualUnwind` / `RtlUnwindEx` / SEH | Incomplete; do not infer full Windows SEH from ELF unwind work. |
 | APC, remote thread context, user-mode callbacks | SIGUSR1 suspension and remote context exchange implemented; regression coverage added for suspended startup and integer/FP updates. Dispatcher-boundary races and APC integration remain unverified; user-mode callbacks remain incomplete. |
 | `setjmp` / `longjmp` | Initial RISC-V64 implementation; verify jump-buffer layout and nonlocal transfers. |
@@ -174,6 +174,20 @@ make dlls/ntdll/tests/testclean
 ```
 
 Cross-compiling the test object is only a compilation check. Isolated QEMU checks of dispatcher assembly and Linux signal-context helpers do not establish full Wine startup, suspension at every dispatcher instruction, Windows SEH, or callback correctness.
+
+### ELF frame walking
+
+Native exception dispatch and `RtlWalkFrameChain` now consult ELF unwind information
+through the Unix builtin-unwind bridge before falling back to leaf unwinding. A saved
+return address is looked up one byte before its PC to handle compressed instructions;
+an interrupted instruction uses its exact PC. Leaf frames may preserve SP if PC advances,
+and an undefined DWARF return register terminates the walk.
+
+`dlls/ntdll/tests/exception.c` includes a RISC-V64 recursive frame-walk test covering
+frame counts, skip flags, and output bounds. Run `make dlls/ntdll/tests/exception.ok`
+with a working target runtime. The changed signal objects and exception test have
+cross-compiled; isolated tests using assembler-generated ELF CFI passed under QEMU.
+This does not complete `RtlUnwindEx`, language-specific handlers, or collided unwind.
 
 ### Development priorities
 
