@@ -1656,7 +1656,7 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     ptr = (const unsigned char *)(fde + 1);
     info.ip = dwarf_get_ptr( &ptr, info.fde_encoding, bases );
     code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f, bases );
-    if (old_pc < info.ip || old_pc > code_end) return STATUS_INVALID_DISPOSITION;
+    if (old_pc < info.ip || old_pc >= code_end) return STATUS_INVALID_DISPOSITION;
     end = NULL;
     if (has_z)
     {
@@ -1670,12 +1670,24 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     end = (const unsigned char *)(&fde->length + 1) + fde->length;
     execute_cfa_instructions( ptr, end, old_pc, &info, bases );
 
+    TRACE( "RV64 DWARF CFA pc=%p sp=%p ra=%p fp=%p cfa_reg=%u cfa_offset=%ld ra_rule=%u ra_offset=%lld\n",
+           (void *)old_pc, (void *)old_sp, (void *)(ULONG_PTR)context->Gpr.X[1],
+           (void *)(ULONG_PTR)context->Gpr.X[8], info.state.cfa_reg,
+           (long)info.state.cfa_offset, info.state.rules[1],
+           (long long)info.state.regs[1] );
     apply_frame_state( &next, &info.state, bases );
     next.Pc = next.Gpr.X[1];
     next.Gpr.X[0] = 0;
     if (info.state.rules[info.retaddr_reg] == RULE_UNDEFINED) next.Pc = 0;
-    if (next.Gpr.X[2] < old_sp || (next.Gpr.X[2] == old_sp && next.Pc == old_pc))
-        return STATUS_INVALID_DISPOSITION;
+    if (!next.Gpr.X[2] || (next.Gpr.X[2] & 15) ||
+        next.Gpr.X[2] < old_sp || (next.Gpr.X[2] == old_sp && next.Pc == old_pc))
+    {
+        WARN( "RV64 DWARF invalid caller pc=%p sp=%p ra=%p fp=%p from pc=%p sp=%p\n",
+              (void *)(ULONG_PTR)next.Pc, (void *)(ULONG_PTR)next.Gpr.X[2],
+              (void *)(ULONG_PTR)next.Gpr.X[1], (void *)(ULONG_PTR)next.Gpr.X[8],
+              (void *)old_pc, (void *)old_sp );
+        return STATUS_BAD_STACK;
+    }
     if (signal_frame) next.ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
     else next.ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     dispatch->LanguageHandler = NULL;
