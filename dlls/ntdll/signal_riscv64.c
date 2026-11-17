@@ -47,6 +47,8 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     ULONG_PTR pc = context->Pc;
     NTSTATUS status;
 
+    ULONG_PTR old_sp = context->Gpr.X[2], old_ra = context->Gpr.X[1];
+
     dispatch->ControlPc = pc;
     dispatch->ControlPcIsUnwound = !!(context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
     /* RISC-V instructions may be compressed; one byte selects the call site. */
@@ -64,7 +66,16 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
             { type, (struct _DISPATCHER_CONTEXT *)dispatch, context };
 
         status = WINE_UNIX_CALL( unix_unwind_builtin_dll, &params );
-        if (status != STATUS_UNSUCCESSFUL) return status;
+        if (status != STATUS_UNSUCCESSFUL)
+        {
+            TRACE( "RV64 native unwind status=%#lx pc=%p sp=%p ra=%p -> pc=%p sp=%p ra=%p establisher=%p handler=%p\n",
+                   (unsigned long)status, (void *)dispatch->ControlPc, (void *)old_sp,
+                   (void *)old_ra, (void *)(ULONG_PTR)context->Pc,
+                   (void *)(ULONG_PTR)context->Gpr.X[2],
+                   (void *)(ULONG_PTR)context->Gpr.X[1],
+                   (void *)dispatch->EstablisherFrame, dispatch->LanguageHandler );
+            return status;
+        }
     }
     return RtlVirtualUnwind2( type, dispatch->ImageBase, pc, dispatch->FunctionEntry,
                              context, NULL, &dispatch->HandlerData, &dispatch->EstablisherFrame,
@@ -94,7 +105,17 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
         prev_pc = context.Pc;
 
         status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
-        if (status) return status;
+        if (status)
+        {
+            WARN( "RV64 dispatch unwind failed status=%#lx pc=%p sp=%p ra=%p depth=%u\n",
+                  (unsigned long)status, (void *)prev_pc, (void *)prev_sp,
+                  (void *)(ULONG_PTR)context.Gpr.X[1], depth );
+            return status;
+        }
+        TRACE( "RV64 dispatch frame depth=%u pc=%p sp=%p ra=%p establisher=%p handler=%p\n",
+               depth, (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2],
+               (void *)(ULONG_PTR)context.Gpr.X[1],
+               (void *)dispatch.EstablisherFrame, dispatch.LanguageHandler );
         establisher = dispatch.EstablisherFrame;
         handler = dispatch.LanguageHandler;
         if (handler)
@@ -103,7 +124,13 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
             if (disposition == ExceptionContinueExecution)
                 return (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) ?
                        STATUS_NONCONTINUABLE_EXCEPTION : STATUS_SUCCESS;
-            if (disposition != ExceptionContinueSearch) return STATUS_INVALID_DISPOSITION;
+            if (disposition != ExceptionContinueSearch)
+            {
+                ERR( "RV64 language handler=%p returned invalid disposition=%d frame=%p pc=%p sp=%p\n",
+                     handler, disposition, (void *)establisher,
+                     (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2] );
+                return STATUS_INVALID_DISPOSITION;
+            }
         }
         else while (frame && riscv64_valid_seh_frame( frame ) &&
                     (ULONG_PTR)frame < context.Gpr.X[2])
@@ -114,7 +141,13 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
                 return (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) ?
                        STATUS_NONCONTINUABLE_EXCEPTION : STATUS_SUCCESS;
             if (disposition == ExceptionNestedException) rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
-            else if (disposition != ExceptionContinueSearch) return STATUS_INVALID_DISPOSITION;
+            else if (disposition != ExceptionContinueSearch)
+            {
+                ERR( "RV64 SEH handler=%p returned invalid disposition=%d frame=%p pc=%p sp=%p\n",
+                     frame->Handler, disposition, frame,
+                     (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2] );
+                return STATUS_INVALID_DISPOSITION;
+            }
             if (next && next != (void *)(ULONG_PTR)-1 && (ULONG_PTR)next <= (ULONG_PTR)frame)
             {
                 rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
