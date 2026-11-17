@@ -652,6 +652,25 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         riscv64_report_missing_thread_data( sig, info, uc );
         _exit( 128 + sig );
     }
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[320], *p = buf;
+        struct thread_data *tls_data = get_thread_data();
+        p = riscv64_diag_text( p, "RV64-DIAG TEB CHECK signal_data=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)data );
+        p = riscv64_diag_text( p, " pthread_data=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)tls_data );
+        p = riscv64_diag_text( p, " signal_teb=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)data->teb );
+        p = riscv64_diag_text( p, " pthread_teb=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)(tls_data ? tls_data->teb : NULL) );
+        p = riscv64_diag_text( p, " syscall_frame=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)(data->teb ? get_syscall_frame( data ) : NULL) );
+        p = riscv64_diag_text( p, " saved_tp=" );
+        p = riscv64_diag_hex( p, REGn_sig( 4, uc ) );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     /* Repeated faults at one instruction with a descending stack indicate
      * recursive exception dispatch.  Stop before exhausting the stack and
      * destroying the original evidence.  State is per Wine thread, not TLS. */
@@ -669,7 +688,18 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         if (state->repeated_faults >= 3)
         {
             RV64_CHECKPOINT( "recursive fault at identical PC; terminating before stack exhaustion" );
-            riscv64_report_missing_thread_data( sig, info, uc );
+            if (riscv64_transition_diag_enabled())
+            {
+                char buf[256], *p = buf;
+                p = riscv64_diag_text( p, "RV64-DIAG recursive exception pc=" );
+                p = riscv64_diag_hex( p, pc );
+                p = riscv64_diag_text( p, " sp=" );
+                p = riscv64_diag_hex( p, sp );
+                p = riscv64_diag_text( p, " teb=" );
+                p = riscv64_diag_hex( p, (ULONG_PTR)data->teb );
+                *p++ = '\n';
+                write( 2, buf, p - buf );
+            }
             _exit( 128 + sig );
         }
     }
