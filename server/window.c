@@ -188,6 +188,12 @@ static int is_orphan_window( struct window *win )
     return 0;
 }
 
+/* is the window topmost style set */
+static bool is_topmost( struct window *win )
+{
+    return win->ex_style & WS_EX_TOPMOST;
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -326,12 +332,13 @@ static struct ratio get_window_dpi( struct window *win )
 /* link a window at the right place in the siblings list */
 static int link_window( struct window *win, struct window *previous )
 {
+    bool topmost = is_topmost( win );
     struct list *old_prev;
 
     if (previous == WINPTR_NOTOPMOST)
     {
-        if (!(win->ex_style & WS_EX_TOPMOST) && win->is_linked) return 0;  /* nothing to do */
-        win->ex_style &= ~WS_EX_TOPMOST;
+        if (topmost) topmost = false;
+        else if (win->is_linked) return 0;  /* nothing to do */
         previous = WINPTR_TOP;  /* fallback to the HWND_TOP case */
     }
 
@@ -341,25 +348,25 @@ static int link_window( struct window *win, struct window *previous )
     if (previous == WINPTR_BOTTOM)
     {
         list_add_tail( &win->parent->children, &win->entry );
-        win->ex_style &= ~WS_EX_TOPMOST;
+        topmost = false;
     }
     else if (previous == WINPTR_TOPMOST)
     {
         list_add_head( &win->parent->children, &win->entry );
-        win->ex_style |= WS_EX_TOPMOST;
+        topmost = true;
     }
     else if (previous == WINPTR_TOP)
     {
         struct list *entry = win->parent->children.next;
-        if (!(win->ex_style & WS_EX_TOPMOST))  /* put it above the first non-topmost window */
+        if (!topmost)  /* put it above the first non-topmost window */
         {
             while (entry != &win->parent->children)
             {
                 struct window *next = LIST_ENTRY( entry, struct window, entry );
-                if (!(next->ex_style & WS_EX_TOPMOST)) break;
+                if (!is_topmost( next )) break;
                 if (next->handle == win->owner)  /* keep it above owner */
                 {
-                    win->ex_style |= WS_EX_TOPMOST;
+                    topmost = true;
                     break;
                 }
                 entry = entry->next;
@@ -370,13 +377,16 @@ static int link_window( struct window *win, struct window *previous )
     else
     {
         list_add_after( &previous->entry, &win->entry );
-        if (!(previous->ex_style & WS_EX_TOPMOST)) win->ex_style &= ~WS_EX_TOPMOST;
+        if (!is_topmost( previous )) topmost = false;
         else
         {
             struct window *next = get_next_window( win );
-            if (next && (next->ex_style & WS_EX_TOPMOST)) win->ex_style |= WS_EX_TOPMOST;
+            if (next && is_topmost( next )) topmost = true;
         }
     }
+
+    if (topmost) win->ex_style |= WS_EX_TOPMOST;
+    else win->ex_style &= ~WS_EX_TOPMOST;
 
     win->is_linked = 1;
     return old_prev != win->entry.prev;
@@ -3101,7 +3111,7 @@ void set_window_rect_visible( user_handle_t window, struct rectangle rect )
         }
         /* found a window obscuring the rectangle, now move win above this one */
         /* making sure to not violate the topmost rule */
-        if (!(ptr->ex_style & WS_EX_TOPMOST) || (win->ex_style & WS_EX_TOPMOST))
+        if (!is_topmost( ptr ) || is_topmost( win ))
         {
             list_remove( &win->entry );
             list_add_before( &ptr->entry, &win->entry );
