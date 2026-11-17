@@ -1809,28 +1809,30 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 
 /***********************************************************************
  *              macdrv_window_got_focus
- *
- * Handler for WINDOW_GOT_FOCUS events.
  */
-void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
+bool macdrv_window_got_focus(HWND hwnd)
 {
     unsigned int style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
 
-    if (!hwnd) return;
+    if (!hwnd) return false;
 
-    TRACE("win %p/%p serial %lu enabled %d visible %d style %08x focus %p active %p fg %p\n",
-          hwnd, event->window, event->window_got_focus.serial, NtUserIsWindowEnabled(hwnd),
-          NtUserIsWindowVisible(hwnd), style, get_focus(), get_active_window(GetCurrentThreadId()), NtUserGetForegroundWindow());
+    TRACE("win %p enabled %d visible %d style %08x fg %p\n",
+          hwnd, NtUserIsWindowEnabled(hwnd), NtUserIsWindowVisible(hwnd), style,
+          NtUserGetForegroundWindow());
 
-    if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
+    if (!can_window_become_foreground(hwnd))
+    {
+        TRACE("win %p rejecting focus\n", hwnd);
+        return false;
+    }
+
+    if (!(style & WS_MINIMIZE))
     {
         TRACE("setting foreground window to %p\n", hwnd);
         NtUserSetForegroundWindowInternal(hwnd);
-        return;
     }
 
-    TRACE("win %p/%p rejecting focus\n", hwnd, event->window);
-    macdrv_window_rejected_focus(event);
+    return true;
 }
 
 

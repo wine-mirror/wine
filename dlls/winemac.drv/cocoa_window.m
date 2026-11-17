@@ -1216,8 +1216,7 @@ static inline BOOL stage_manager_enabled(void)
                     {
                         [self setStyleMask:([self styleMask] | NSWindowStyleMaskMiniaturizable)];
                         [super miniaturize:nil];
-                        discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
-                                   event_mask_for_type(WINDOW_GOT_FOCUS);
+                        discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
                     }
                 }
                 else
@@ -1710,7 +1709,6 @@ static inline BOOL stage_manager_enabled(void)
         {
             pendingOrderOut = TRUE;
             [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
-                                             event_mask_for_type(WINDOW_GOT_FOCUS) |
                                              event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                    forWindow:self];
             return;
@@ -1746,7 +1744,6 @@ static inline BOOL stage_manager_enabled(void)
         [NSApp removeWindowsItem:self];
 
         [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
-                                         event_mask_for_type(WINDOW_GOT_FOCUS) |
                                          event_mask_for_type(WINDOW_RESTORE_REQUESTED)
                                forWindow:self];
     }
@@ -1960,9 +1957,6 @@ static inline BOOL stage_manager_enabled(void)
         causing_becomeKeyWindow = self;
         [self makeKeyWindow];
         causing_becomeKeyWindow = nil;
-
-        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_GOT_FOCUS)
-                               forWindow:self];
     }
 
     - (void) postKey:(uint16_t)keyCode
@@ -2657,7 +2651,7 @@ static inline BOOL stage_manager_enabled(void)
         if (event)
             [self flagsChanged:event];
 
-        if (causing_becomeKeyWindow == self) return;
+        if (causing_becomeKeyWindow) return;
 
         [controller windowGotFocus:self];
     }

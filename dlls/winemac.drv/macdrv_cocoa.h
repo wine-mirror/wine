@@ -190,7 +190,6 @@ static inline CGPoint cgpoint_win_from_mac(CGPoint point)
 }
 
 extern int macdrv_start_cocoa_app(unsigned long long tickcount);
-extern void macdrv_window_rejected_focus(const struct macdrv_event *event);
 extern void macdrv_beep(void);
 extern void macdrv_set_application_icon(CFArrayRef images);
 extern void macdrv_quit_reply(int reply);
@@ -278,7 +277,6 @@ enum {
     WINDOW_DRAG_BEGIN,
     WINDOW_DRAG_END,
     WINDOW_FRAME_CHANGED,
-    WINDOW_GOT_FOCUS,
     WINDOW_RESIZE_ENDED,
     WINDOW_RESTORE_REQUESTED,
     NUM_EVENT_TYPES
@@ -367,10 +365,6 @@ typedef struct macdrv_event {
             bool    in_resize;
             bool    skip_size_move_loop;
         }                                           window_frame_changed;
-        struct {
-            unsigned long   serial;
-            void           *tried_windows;
-        }                                           window_got_focus;
         struct {
             bool    keep_frame;
             CGRect  frame;

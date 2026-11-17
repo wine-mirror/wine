@@ -673,9 +673,6 @@ void macdrv_release_event(macdrv_event *event)
             case QUERY_EVENT_NO_PREEMPT_WAIT:
                 macdrv_release_query(event->query_event.query);
                 break;
-            case WINDOW_GOT_FOCUS:
-                [(NSMutableSet*)event->window_got_focus.tried_windows release];
-                break;
         }
 
         [event->window release];

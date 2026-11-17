@@ -58,7 +58,6 @@ static const char *dbgstr_event(int type)
         "WINDOW_DRAG_BEGIN",
         "WINDOW_DRAG_END",
         "WINDOW_FRAME_CHANGED",
-        "WINDOW_GOT_FOCUS",
         "WINDOW_RESIZE_ENDED",
         "WINDOW_RESTORE_REQUESTED",
     };
@@ -109,7 +108,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
-        event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
     }
 
     if (mask & QS_SENDMESSAGE)
@@ -370,9 +368,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case WINDOW_FRAME_CHANGED:
         macdrv_window_frame_changed(hwnd, event);
-        break;
-    case WINDOW_GOT_FOCUS:
-        macdrv_window_got_focus(hwnd, event);
         break;
     case WINDOW_RESIZE_ENDED:
         macdrv_window_resize_ended(hwnd);

@@ -266,7 +266,7 @@ extern void macdrv_handle_event(const macdrv_event *event);
 
 extern void macdrv_window_close_requested(HWND hwnd);
 extern void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event);
-extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event);
+extern bool macdrv_window_got_focus(HWND hwnd);
 extern void macdrv_window_lost_focus(HWND hwnd);
 extern void macdrv_app_quit_requested(const macdrv_event *event);
 extern void macdrv_window_maximize_requested(HWND hwnd);
