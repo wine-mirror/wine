@@ -535,12 +535,25 @@ static int riscv64_transition_diag_enabled(void)
     return riscv64_transition_diag;
 }
 
+/* Fixed-size checkpoints: write() is async-signal-safe and does not use
+ * Wine logging, malloc, or pthread TLS. Enable only with WINE_RISCV_DIAG. */
+#define RV64_CHECKPOINT(message) do { \
+    if (riscv64_transition_diag) { \
+        static const char msg[] = "RV64-DIAG " message "\n"; \
+        write( 2, msg, sizeof(msg) - 1 ); \
+    } \
+} while (0)
+
 static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
     struct riscv64_signal_exception *exc;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data;
     ULONG_PTR sp = SP_sig( uc );
+
+    RV64_CHECKPOINT( "fault ENTER before pthread TLS lookup" );
+    data = get_thread_data();
+    RV64_CHECKPOINT( "fault AFTER pthread TLS lookup" );
 
     /* Avoid a recursive SIGSEGV when pthread-specific data is absent. */
     if (riscv64_transition_diag_enabled())
@@ -554,6 +567,10 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         p = riscv64_diag_hex( p, sp );
         p = riscv64_diag_text( p, " addr=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)(info ? info->si_addr : NULL) );
+        p = riscv64_diag_text( p, " signal_tp=" );
+        p = riscv64_diag_hex( p, REGn_sig( 4, uc ) );
+        p = riscv64_diag_text( p, " current_tp=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)__builtin_thread_pointer() );
         *p++ = '\n';
         write( 2, buf, p - buf );
     }
@@ -645,10 +662,17 @@ static __thread sigset_t riscv64_sigreturn_mask;
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
-    struct syscall_frame *frame = riscv64_sigreturn_frame;
+    struct syscall_frame *frame;
     unsigned int i;
 
-    if (!frame) return;
+    RV64_CHECKPOINT( "SIGUSR2 ENTER before TLS frame read" );
+    frame = riscv64_sigreturn_frame;
+    RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame read" );
+    if (!frame)
+    {
+        RV64_CHECKPOINT( "SIGUSR2 NULL frame" );
+        return;
+    }
     /* Do not call libc logging functions in the signal handler: use the
      * async-signal-safe write() diagnostic helper instead. */
     if (riscv64_transition_diag_enabled())
@@ -663,13 +687,17 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         *p++ = '\n';
         write( 2, buf, p - buf );
     }
+    RV64_CHECKPOINT( "SIGUSR2 BEFORE TLS frame clear" );
     riscv64_sigreturn_frame = NULL;
+    RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame clear" );
     uc->uc_sigmask = riscv64_sigreturn_mask;
+    RV64_CHECKPOINT( "SIGUSR2 AFTER TLS mask read" );
     PC_sig( uc ) = frame->pc;
     for (i = 1; i < 32; ++i)
         if (i != 3 && i != 4) REGn_sig( i, uc ) = frame->x[i];
     REGn_sig( 1, uc ) = frame->ra;
     REGn_sig( 2, uc ) = frame->sp;
+    RV64_CHECKPOINT( "SIGUSR2 AFTER GPR restore" );
     /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
     if (frame->restore_flags & (CONTEXT_FLOATING_POINT & ~CONTEXT_RISCV64))
@@ -729,9 +757,18 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         WARN( "RV64-DIAG continuation REQUEST frame=%p pc=%016llx sp=%016llx ra=%016llx tp=%p\n",
               frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp,
               (unsigned long long)frame->ra, __builtin_thread_pointer() );
+    RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     riscv64_sigreturn_mask = oldmask;
+    RV64_CHECKPOINT( "continuation AFTER TLS mask write" );
     riscv64_sigreturn_frame = frame;
-    if (raise( SIGUSR2 )) abort();
+    RV64_CHECKPOINT( "continuation AFTER TLS frame write" );
+    RV64_CHECKPOINT( "continuation BEFORE raise SIGUSR2" );
+    if (raise( SIGUSR2 ))
+    {
+        RV64_CHECKPOINT( "continuation raise FAILED" );
+        abort();
+    }
+    RV64_CHECKPOINT( "continuation raise RETURNED unexpectedly" );
     /* If the signal was not delivered synchronously, do not run with
      * partially restored registers or return to the wrong stack. */
     abort();
