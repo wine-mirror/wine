@@ -519,7 +519,21 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2,
 
 void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
-    pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
+    /* The loader initially installs a fallback thunk, then replaces it
+     * with kernel32's export.  Report the actual transition target before
+     * entering the application; a missing export must not become a jump
+     * through address zero. */
+    void (FASTCALL *thunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = pBaseThreadInitThunk;
+
+    WARN( "RV64 thread start entry=%p arg=%p BaseThreadInitThunk=%p teb=%p\n",
+          entry, arg, thunk, NtCurrentTeb() );
+    if (!thunk || !entry)
+    {
+        ERR( "RV64 invalid thread startup: entry=%p thunk=%p\n", entry, thunk );
+        RtlExitUserThread( STATUS_INVALID_PARAMETER );
+    }
+
+    thunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
 
     /* BaseThreadInitThunk should terminate the thread, not return. */
     RtlExitUserThread( STATUS_UNSUCCESSFUL );
