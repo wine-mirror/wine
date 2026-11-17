@@ -29,7 +29,7 @@ static const char *libdir;
 
 static void *try_dlopen( const char *path, struct strarray *errors )
 {
-    void *handle = dlopen( path, RTLD_NOW );
+    void *handle = dlopen( path, RTLD_NOW | RTLD_NODELETE );
     if (!handle) strarray_add( errors, xstrdup( dlerror() ) );
     return handle;
 }

@@ -156,7 +156,7 @@ static void *try_dlopen( const char *argv0 )
     else
         path = build_path( dir, "ntdll.so" );
 
-    handle = dlopen( path, RTLD_NOW );
+    handle = dlopen( path, RTLD_NOW | RTLD_NODELETE );
     free( p );
     free( dir );
     free( path );
