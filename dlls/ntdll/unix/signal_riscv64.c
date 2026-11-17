@@ -475,6 +475,59 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
     abort();
 }
 
+/* Minimal signal-path diagnostics: no stdio, heap allocation, or Wine logging. */
+static char *riscv64_diag_hex( char *p, ULONG_PTR value )
+{
+    static const char digits[] = "0123456789abcdef";
+    unsigned int shift;
+    *p++ = '0';
+    *p++ = 'x';
+    for (shift = sizeof(value) * 8; shift; shift -= 4)
+        *p++ = digits[(value >> (shift - 4)) & 15];
+    return p;
+}
+
+static char *riscv64_diag_dec( char *p, unsigned int value )
+{
+    char tmp[12];
+    unsigned int n = 0;
+    do { tmp[n++] = '0' + value % 10; value /= 10; } while (value);
+    while (n) *p++ = tmp[--n];
+    return p;
+}
+
+static char *riscv64_diag_text( char *p, const char *s )
+{
+    while (*s) *p++ = *s++;
+    return p;
+}
+
+static void riscv64_report_missing_thread_data( int sig, const siginfo_t *info, const ucontext_t *uc )
+{
+    char buf[256], *p = buf;
+    long tid;
+    /* Linux RISC-V64 gettid syscall, avoiding libc TLS and pthread APIs. */
+    register long a0 __asm__("a0") = 0;
+    register long a7 __asm__("a7") = 178;
+    __asm__ volatile ("ecall" : "+r"(a0) : "r"(a7) : "memory");
+    tid = a0;
+
+    p = riscv64_diag_text( p, "wine: RISC-V64 missing Unix thread data tid=" );
+    p = riscv64_diag_dec( p, (unsigned int)tid );
+    p = riscv64_diag_text( p, " sig=" );
+    p = riscv64_diag_dec( p, (unsigned int)sig );
+    p = riscv64_diag_text( p, " code=" );
+    p = riscv64_diag_hex( p, (ULONG_PTR)(unsigned int)(info ? info->si_code : 0) );
+    p = riscv64_diag_text( p, " addr=" );
+    p = riscv64_diag_hex( p, (ULONG_PTR)(info ? info->si_addr : NULL) );
+    p = riscv64_diag_text( p, " pc=" );
+    p = riscv64_diag_hex( p, PC_sig( uc ) );
+    p = riscv64_diag_text( p, " sp=" );
+    p = riscv64_diag_hex( p, SP_sig( uc ) );
+    *p++ = '\\n';
+    write( 2, buf, p - buf );
+}
+
 static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -485,8 +538,7 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     /* Avoid a recursive SIGSEGV when pthread-specific data is absent. */
     if (!data)
     {
-        static const char msg[] = "wine: RISC-V64 fatal signal without Unix thread data\n";
-        write( 2, msg, sizeof(msg) - 1 );
+        riscv64_report_missing_thread_data( sig, info, uc );
         _exit( 128 + sig );
     }
     /* Resolve guard-page and stack-growth faults before writing to the
