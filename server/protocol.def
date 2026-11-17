@@ -1085,12 +1085,19 @@ typedef volatile struct
     char                 extra[];            /* extra bytes storage */
 } class_shm_t;
 
+struct window_style
+{
+    unsigned int         ws;               /* window base styles (WS_*) */
+    unsigned int         ex;               /* window extended styles (WS_EX_*) */
+};
+
 struct window_info
 {
     lparam_t             id;               /* window id */
     mod_handle_t         instance;         /* creator instance */
     lparam_t             user_data;        /* user-specific data */
     client_ptr_t         wndproc;          /* window proc */
+    struct window_style  style;            /* combined window styles */
 };
 
 typedef volatile struct

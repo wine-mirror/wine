@@ -1069,12 +1069,19 @@ typedef volatile struct
     char                 extra[];
 } class_shm_t;
 
+struct window_style
+{
+    unsigned int         ws;
+    unsigned int         ex;
+};
+
 struct window_info
 {
     lparam_t             id;
     mod_handle_t         instance;
     lparam_t             user_data;
     client_ptr_t         wndproc;
+    struct window_style  style;
 };
 
 typedef volatile struct
@@ -7218,6 +7225,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 981
+#define SERVER_PROTOCOL_VERSION 982
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

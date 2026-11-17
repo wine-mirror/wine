@@ -74,8 +74,6 @@ struct window
     struct rectangle client_rect;     /* client rectangle (relative to parent client area) */
     struct region   *win_region;      /* region for shaped windows (relative to window rect) */
     struct region   *update_region;   /* update region (relative to window rect) */
-    unsigned int     style;           /* window style */
-    unsigned int     ex_style;        /* window extended style */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
     unsigned int     is_orphan : 1;   /* is window orphaned */
@@ -191,27 +189,27 @@ static int is_orphan_window( struct window *win )
 /* is the window topmost style set */
 static bool is_topmost( struct window *win )
 {
-    return win->ex_style & WS_EX_TOPMOST;
+    return win->shared->info.style.ex & WS_EX_TOPMOST;
 }
 
 static bool is_visible( const struct window *win )
 {
-    return win && (win->style & WS_VISIBLE);
+    return win && (win->shared->info.style.ws & WS_VISIBLE);
 }
 
 static bool is_minimized( const struct window *win )
 {
-    return win && (win->style & WS_MINIMIZE);
+    return win && (win->shared->info.style.ws & WS_MINIMIZE);
 }
 
 static bool is_disabled( const struct window *win )
 {
-    return win->style & WS_DISABLED;
+    return win->shared->info.style.ws & WS_DISABLED;
 }
 
 static bool is_child( const struct window *win )
 {
-    return (win->style & (WS_POPUP | WS_CHILD)) == WS_CHILD;
+    return (win->shared->info.style.ws & (WS_POPUP | WS_CHILD)) == WS_CHILD;
 }
 
 static bool is_clickable( const struct window *win )
@@ -221,27 +219,27 @@ static bool is_clickable( const struct window *win )
 
 static bool is_transparent( const struct window *win )
 {
-    return win && (win->ex_style & WS_EX_TRANSPARENT);
+    return win && (win->shared->info.style.ex & WS_EX_TRANSPARENT);
 }
 
 static bool is_layered( const struct window *win )
 {
-    return win->ex_style & WS_EX_LAYERED;
+    return win->shared->info.style.ex & WS_EX_LAYERED;
 }
 
 static bool is_rtl( const struct window *win )
 {
-    return win && (win->ex_style & WS_EX_LAYOUTRTL);
+    return win && (win->shared->info.style.ex & WS_EX_LAYOUTRTL);
 }
 
 static bool has_clipsiblings( const struct window *win )
 {
-    return win->style & WS_CLIPSIBLINGS;
+    return win->shared->info.style.ws & WS_CLIPSIBLINGS;
 }
 
 static bool has_clipchildren( const struct window *win )
 {
-    return win->style & WS_CLIPCHILDREN;
+    return win->shared->info.style.ws & WS_CLIPCHILDREN;
 }
 
 /* get next window in Z-order list */
@@ -435,8 +433,12 @@ static int link_window( struct window *win, struct window *previous )
         }
     }
 
-    if (topmost) win->ex_style |= WS_EX_TOPMOST;
-    else win->ex_style &= ~WS_EX_TOPMOST;
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        if (topmost) shared->info.style.ex |= WS_EX_TOPMOST;
+        else shared->info.style.ex &= ~WS_EX_TOPMOST;
+    }
+    SHARED_WRITE_END;
 
     win->is_linked = 1;
     return old_prev != win->entry.prev;
@@ -727,8 +729,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->atom           = atom;
     win->win_region     = NULL;
     win->update_region  = NULL;
-    win->style          = 0;
-    win->ex_style       = 0;
     win->is_linked      = 0;
     win->is_layered     = 0;
     win->is_orphan      = 0;
@@ -963,7 +963,7 @@ static bool is_window_using_parent_dc( struct window *win )
 
 static int is_window_composited( struct window *win )
 {
-    return (win->ex_style & WS_EX_COMPOSITED) != 0 && !is_window_using_parent_dc(win);
+    return (win->shared->info.style.ex & WS_EX_COMPOSITED) != 0 && !is_window_using_parent_dc(win);
 }
 
 static int is_parent_composited( struct window *win )
@@ -2000,8 +2000,13 @@ static void set_window_pos( struct window *win, struct window *previous,
     win->surface_rect = *surface_rect;
     win->client_rect  = *client_rect;
     if (!(swp_flags & SWP_NOZORDER) && win->parent) zorder_changed |= link_window( win, previous );
-    if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
-    else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
+
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        if (swp_flags & SWP_SHOWWINDOW) shared->info.style.ws |= WS_VISIBLE;
+        else if (swp_flags & SWP_HIDEWINDOW) shared->info.style.ws &= ~WS_VISIBLE;
+    }
+    SHARED_WRITE_END;
 
     /* update window monitor dpi for toplevel windows */
     if (is_toplevel( win )) set_window_monitor_dpi( win );
@@ -2191,7 +2196,13 @@ void free_window_handle( struct window *win )
     if (is_visible(win))
     {
         struct region *vis_rgn = get_visible_region( win, DCX_WINDOW );
-        win->style &= ~WS_VISIBLE;
+
+        SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+        {
+            shared->info.style.ws &= ~WS_VISIBLE;
+        }
+        SHARED_WRITE_END;
+
         if (vis_rgn)
         {
             struct region *exposed_rgn = expose_window( win, &win->window_rect, vis_rgn, 0 );
@@ -2248,19 +2259,21 @@ void free_window_handle( struct window *win )
     release_object( win );
 }
 
-static void fix_window_ex_style( struct window *win )
+static void fix_window_ex_style( window_shm_t *shared )
 {
-    if (win->ex_style & WS_EX_DLGMODALFRAME) win->ex_style |= WS_EX_WINDOWEDGE;
-    else if (win->ex_style & WS_EX_STATICEDGE) win->ex_style &= ~WS_EX_WINDOWEDGE;
-    else if (win->style & (WS_DLGFRAME | WS_THICKFRAME)) win->ex_style |= WS_EX_WINDOWEDGE;
-    else win->ex_style &= ~WS_EX_WINDOWEDGE;
+    volatile struct window_style *style = &shared->info.style;
+    if (style->ex & WS_EX_DLGMODALFRAME) style->ex |= WS_EX_WINDOWEDGE;
+    else if (style->ex & WS_EX_STATICEDGE) style->ex &= ~WS_EX_WINDOWEDGE;
+    else if (style->ws & (WS_DLGFRAME | WS_THICKFRAME)) style->ex |= WS_EX_WINDOWEDGE;
+    else style->ex &= ~WS_EX_WINDOWEDGE;
 }
 
-static void set_window_ex_style( struct window *win, unsigned int ex_style )
+static void set_window_ex_style( struct window *win, window_shm_t *shared, unsigned int ex_style )
 {
+    volatile struct window_style *style = &shared->info.style;
     /* WS_EX_TOPMOST can only be changed for unlinked windows */
-    if (!win->is_linked) win->ex_style = ex_style;
-    else win->ex_style = (ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
+    if (!win->is_linked) style->ex = ex_style;
+    else style->ex = (ex_style & ~WS_EX_TOPMOST) | (style->ex & WS_EX_TOPMOST);
     if (!is_layered( win )) win->is_layered = 0;
 }
 
@@ -2313,11 +2326,10 @@ DECL_HANDLER(create_window)
             shared->dpi         = parent->shared->dpi;
             shared->raw_dpi     = parent->shared->raw_dpi;
         }
+        shared->info.style.ws = req->style;
+        shared->info.style.ex = req->ex_style;
     }
     SHARED_WRITE_END;
-
-    win->style = req->style;
-    win->ex_style = req->ex_style;
 
     reply->handle      = win->handle;
     reply->parent      = win->parent ? win->parent->handle : 0;
@@ -2410,7 +2422,11 @@ DECL_HANDLER(get_desktop_window)
         if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->top_window );
-            desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            SHARED_WRITE_BEGIN( desktop->top_window->shared, window_shm_t )
+            {
+                shared->info.style.ws = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            }
+            SHARED_WRITE_END;
         }
     }
 
@@ -2425,7 +2441,11 @@ DECL_HANDLER(get_desktop_window)
         if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->msg_window );
-            desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            SHARED_WRITE_BEGIN( desktop->msg_window->shared, window_shm_t )
+            {
+                shared->info.style.ws = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            }
+            SHARED_WRITE_END;
         }
     }
 
@@ -2476,8 +2496,8 @@ DECL_HANDLER(get_window_info)
 
     switch (req->offset)
     {
-    case GWL_STYLE:       reply->info = win->style;  break;
-    case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
+    case GWL_STYLE:       reply->info = win->shared->info.style.ws;  break;
+    case GWL_EXSTYLE:     reply->info = win->shared->info.style.ex;  break;
     default:
         if (req->size) set_win32_error( ERROR_INVALID_INDEX );
         break;
@@ -2491,8 +2511,13 @@ DECL_HANDLER(init_window_info)
     struct window *win;
 
     if (!(win = get_window( req->handle ))) return;
-    win->style = req->style;
-    win->ex_style = req->ex_style;
+
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        shared->info.style.ws = req->style;
+        shared->info.style.ex = req->ex_style;
+    }
+    SHARED_WRITE_END;
 
     /* changing window style triggers a non-client paint */
     win->paint_flags |= PAINT_NONCLIENT;
@@ -2517,15 +2542,15 @@ DECL_HANDLER(set_window_info)
         switch (req->offset)
         {
         case GWL_STYLE:
-            reply->old_info = win->style;
-            win->style = req->new_info;
-            fix_window_ex_style( win );
+            reply->old_info = win->shared->info.style.ws;
+            shared->info.style.ws = req->new_info;
+            fix_window_ex_style( shared );
             /* changing window style triggers a non-client paint */
             win->paint_flags |= PAINT_NONCLIENT;
             break;
         case GWL_EXSTYLE:
-            reply->old_info = win->ex_style;
-            set_window_ex_style( win, req->new_info );
+            reply->old_info = win->shared->info.style.ex;
+            set_window_ex_style( win, shared, req->new_info );
             break;
         case GWLP_ID:
             reply->old_info = shared->info.id;
@@ -2819,8 +2844,8 @@ DECL_HANDLER(set_window_pos)
 
     if (win->paint_flags & SET_WINPOS_LAYERED_WINDOW) validate_whole_window( win );
 
-    reply->new_style = win->style;
-    reply->new_ex_style = win->ex_style;
+    reply->new_style = win->shared->info.style.ws;
+    reply->new_ex_style = win->shared->info.style.ex;
 
     top = get_top_clipping_window( win );
     if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE)) reply->surface_win = top->handle;
