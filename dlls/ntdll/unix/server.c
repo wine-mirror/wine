@@ -283,6 +283,8 @@ static inline unsigned int wait_reply( int reply_fd, struct __server_request_inf
  *           server_call_unlocked
  */
 /* Set WINE_RISCV_DIAG=1 to trace process/thread startup and server round trips. */
+static int get_unix_tid(void);
+
 static int riscv64_server_diag_enabled(void)
 {
 #ifdef __riscv
@@ -757,7 +759,7 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
 
     if (riscv64_server_diag_enabled())
         WARN( "RV64-DIAG select ENTER tid=%u flags=%08x size=%u timeout=%lld wait_fd=%d\n",
-              get_unix_tid(), flags, size, (long long)abs_timeout, data->wait_fd );
+              get_unix_tid(), flags, size, (long long)abs_timeout, data->wait_fd[0] );
     memset( &result, 0, sizeof(result) );
 
     do
@@ -799,7 +801,7 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
         if (signaled) break;
 
-        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select WAIT tid=%u fd=%d cookie=%d\n", get_unix_tid(), data->wait_fd, cookie );
+        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select WAIT tid=%u fd=%d cookie=%d\n", get_unix_tid(), data->wait_fd[0], cookie );
         ret = wait_select_reply( data->wait_fd, &cookie );
         if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select WAKE tid=%u status=%08x\n", get_unix_tid(), ret );
     }
