@@ -659,12 +659,16 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
      * missing thread_data: doing so recursively faults in the handler. */
     if (!data || !frame)
     {
-        ERR( "RISC-V64 continuation without %s: data=%p frame=%p tid=%lu tp=%p\n",
-             !data ? "Unix thread data" : "syscall frame", data, frame,
+        ERR( "RISC-V64 continuation without %s: tid=%lu key=%lu data=%p frame=%p tp=%p\n",
+             !data ? "Unix thread data" : "syscall frame",
              (unsigned long)syscall( 178 /* __NR_gettid on Linux RISC-V */, 0 ),
-             __builtin_thread_pointer() );
+             (unsigned long)thread_data_key, data, frame, __builtin_thread_pointer() );
         abort();
     }
+
+    WARN( "RISC-V64 continuation TLS: tid=%lu key=%lu data=%p frame=%p tp=%p\n",
+          (unsigned long)syscall( 178 /* __NR_gettid on Linux RISC-V */, 0 ),
+          (unsigned long)thread_data_key, data, frame, __builtin_thread_pointer() );
 
     sigemptyset( &set );
     sigaddset( &set, SIGUSR2 );
