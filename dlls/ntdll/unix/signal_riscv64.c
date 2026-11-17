@@ -528,6 +528,13 @@ static void riscv64_report_missing_thread_data( int sig, const siginfo_t *info, 
     write( 2, buf, p - buf );
 }
 
+static int riscv64_transition_diag;
+
+static int riscv64_transition_diag_enabled(void)
+{
+    return riscv64_transition_diag;
+}
+
 static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -635,12 +642,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 static __thread struct syscall_frame *riscv64_sigreturn_frame;
 static __thread sigset_t riscv64_sigreturn_mask;
 
-static int riscv64_transition_diag_enabled(void)
-{
-    const char *value = getenv( "WINE_RISCV_DIAG" );
-    return value && *value && strcmp( value, "0" );
-}
-
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -739,6 +740,8 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
 void signal_init_process( TEB *teb )
 {
     struct sigaction action;
+    const char *diag = getenv( "WINE_RISCV_DIAG" );
+    riscv64_transition_diag = diag && *diag && strcmp( diag, "0" );
 
     alloc_syscall_frame( sizeof(struct syscall_frame) );
     memset( &action, 0, sizeof(action) );
