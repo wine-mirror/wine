@@ -277,16 +277,51 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
 
 
 #ifdef __riscv
+/* RISC-V64 .pdata has no EndAddress; the .xdata header carries the
+ * function length in halfwords.  Use the same representation for
+ * image and dynamically registered function tables. */
+static ULONG riscv64_function_length( ULONG_PTR base, const RUNTIME_FUNCTION *func )
+{
+    DWORD header;
+    if (func->UnwindData & 3) return 0;
+    header = *(const DWORD *)(base + func->UnwindData);
+    if ((header >> 18) & 3) return 0;
+    return (header & 0x3ffff) * 2;
+}
+
+static RUNTIME_FUNCTION *riscv64_find_function( ULONG_PTR pc, ULONG_PTR base,
+                                                 RUNTIME_FUNCTION *table, ULONG count )
+{
+    ULONG i;
+    ULONG_PTR rva = pc - base;
+    for (i = 0; i < count; ++i)
+    {
+        ULONG length = riscv64_function_length( base, &table[i] );
+        if (length && rva >= table[i].BeginAddress &&
+            rva - table[i].BeginAddress < length) return &table[i];
+    }
+    return NULL;
+}
+
 /**********************************************************************
  *              RtlLookupFunctionEntry   (NTDLL.@)
  */
 PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
                                                  UNWIND_HISTORY_TABLE *history )
 {
-    *base = 0;
-    return NULL;
-}
+    RUNTIME_FUNCTION *table, *ret;
+    ULONG count = 0, size = 0;
 
+    if ((table = lookup_dynamic_function_table( pc, base, &count )))
+    {
+        /* Callback tables return a single function entry. */
+        return riscv64_find_function( pc, *base, table, count );
+    }
+    table = RtlLookupFunctionTable( pc, base, &size );
+    if (!table) return NULL;
+    ret = riscv64_find_function( pc, *base, table, size / sizeof(*table) );
+    return ret;
+}
 
 /**********************************************************************
  *              RtlAddFunctionTable   (NTDLL.@)
@@ -295,9 +330,13 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_P
 {
     ULONG_PTR end = base;
     void *ret;
-
-    if (count) end += table[count - 1].EndAddress;
-
+    DWORD i;
+    for (i = 0; i < count; ++i)
+    {
+        ULONG length = riscv64_function_length( base, &table[i] );
+        if (base + table[i].BeginAddress + length > end)
+            end = base + table[i].BeginAddress + length;
+    }
     return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
 }
 #endif  /* __riscv */
