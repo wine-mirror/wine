@@ -68,6 +68,7 @@ struct syscall_frame
     struct syscall_frame *prev_frame;
     void *syscall_cfa;
     ULONG syscall_id;
+    sigset_t continuation_mask; /* only used while SIGUSR2 restores this frame */
 };
 
 C_ASSERT( sizeof( struct syscall_frame ) % 16 == 0 );
@@ -696,7 +697,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 struct riscv64_continuation_data
 {
     struct syscall_frame *frame;
-    sigset_t mask;
     unsigned int ready;
 };
 
@@ -750,7 +750,7 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     continuation->ready = 0;
     continuation->frame = NULL;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame clear" );
-    uc->uc_sigmask = continuation->mask;
+    uc->uc_sigmask = frame->continuation_mask;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS mask read" );
     PC_sig( uc ) = frame->pc;
     for (i = 1; i < 32; ++i)
@@ -828,7 +828,7 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         __builtin_trap();
     }
     continuation->ready = 0;
-    continuation->mask = oldmask;
+    frame->continuation_mask = oldmask;
     RV64_CHECKPOINT( "continuation AFTER TLS mask write" );
     continuation->frame = frame;
     __atomic_store_n( &continuation->ready, 1, __ATOMIC_RELEASE );
