@@ -479,7 +479,16 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
     struct riscv64_signal_exception *exc;
+    struct thread_data *data = get_thread_data();
     ULONG_PTR sp = SP_sig( uc );
+
+    /* Avoid a recursive SIGSEGV when pthread-specific data is absent. */
+    if (!data)
+    {
+        static const char msg[] = "wine: RISC-V64 fatal signal without Unix thread data\n";
+        write( 2, msg, sizeof(msg) - 1 );
+        _exit( 128 + sig );
+    }
     /* Resolve guard-page and stack-growth faults before writing to the
      * interrupted stack.  That stack may itself be the faulting mapping. */
     if (sig == SIGSEGV || sig == SIGBUS)
@@ -490,7 +499,7 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         fault.NumberParameters = 2;
         fault.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
         fault.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        if (!virtual_handle_fault( get_thread_data(), &fault, (void *)sp )) return;
+        if (!virtual_handle_fault( data, &fault, (void *)sp )) return;
     }
 
     /* Allocate the exception payload on the interrupted stack, preserving
@@ -534,9 +543,9 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     /* Faults on Wine's Unix syscall stack cannot be dispatched using
      * the interrupted kernel-stack pointer.  Return the exception status
      * through the saved Windows syscall frame instead. */
-    if (is_inside_syscall( get_thread_data(), sp ))
+    if (is_inside_syscall( data, sp ))
     {
-        struct syscall_frame *frame = get_syscall_frame( get_thread_data() );
+        struct syscall_frame *frame = get_syscall_frame( data );
         if (frame)
         {
             frame->x[10] = exc->record.ExceptionCode;
