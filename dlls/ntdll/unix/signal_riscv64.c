@@ -655,13 +655,16 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     if (riscv64_transition_diag_enabled())
     {
         char buf[320], *p = buf;
-        struct thread_data *tls_data = get_thread_data();
+        struct thread_data *tls_data = pthread_getspecific( thread_data_key );
+        struct thread_data *native_data = riscv64_lookup_thread_data();
         p = riscv64_diag_text( p, "RV64-DIAG TEB CHECK signal_data=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)data );
         p = riscv64_diag_text( p, " pthread_data=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)tls_data );
         p = riscv64_diag_text( p, " signal_teb=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)data->teb );
+        p = riscv64_diag_text( p, " native_data=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)native_data );
         p = riscv64_diag_text( p, " pthread_teb=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)(tls_data ? tls_data->teb : NULL) );
         p = riscv64_diag_text( p, " syscall_frame=" );
