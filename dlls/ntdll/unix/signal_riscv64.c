@@ -483,9 +483,38 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
           (unsigned long)status, (void *)(ULONG_PTR)exc->context.Pc,
           (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
 
-    /* A handled first-chance exception may return after updating CONTEXT.
-     * Continue with the interrupted register image rather than aborting. */
-    if (!status) status = NtContinue( &exc->context, FALSE );
+    /* A successful NtRaiseException may have scheduled KiUserExceptionDispatcher
+     * in the syscall frame.  Never feed an invalid or overwritten CONTEXT
+     * back to NtContinue: doing so attempts to execute PC=0 on RV64. */
+    if (!status)
+    {
+        struct thread_data *data = get_thread_data();
+        struct syscall_frame *frame = data && data->teb ? get_syscall_frame( data ) : NULL;
+        WARN( "RV64 exception return context=%p flags=%08x pc=%p sp=%p frame=%p frame_pc=%p frame_sp=%p\n",
+              &exc->context, exc->context.ContextFlags,
+              (void *)(ULONG_PTR)exc->context.Pc,
+              (void *)(ULONG_PTR)exc->context.Gpr.X[2], frame,
+              (void *)(ULONG_PTR)(frame ? frame->pc : 0),
+              (void *)(ULONG_PTR)(frame ? frame->sp : 0) );
+        if (frame && frame->pc && frame->sp && frame->pc != exc->context.Pc)
+        {
+            WARN( "RV64 exception dispatch scheduled pc=%p sp=%p; transferring through syscall return\n",
+                  (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp );
+            __asm__ volatile ( "mv a0, %0\n\\tjr %1" :: "r"(frame),
+                               "r"(__wine_syscall_dispatcher_return) : "a0", "memory" );
+            __builtin_unreachable();
+        }
+        if (!(exc->context.ContextFlags & CONTEXT_CONTROL) ||
+            !exc->context.Pc || !exc->context.Gpr.X[2] ||
+            (exc->context.Gpr.X[2] & 15))
+        {
+            ERR( "RV64 refusing invalid exception continuation flags=%08x pc=%p sp=%p\n",
+                 exc->context.ContextFlags, (void *)(ULONG_PTR)exc->context.Pc,
+                 (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
+            abort();
+        }
+        status = NtContinue( &exc->context, FALSE );
+    }
     ERR( "RISC-V64 exception continuation failed: %#lx\\n", (unsigned long)status );
     abort();
 }
