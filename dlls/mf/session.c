@@ -209,6 +209,8 @@ struct topo_node
         {
             IMFMediaSource *source;
             DWORD stream_id;
+            /* Requests made before the source sent the streams. */
+            unsigned int requests;
         } source;
         struct
         {
@@ -3148,6 +3150,12 @@ static HRESULT session_add_media_stream(struct media_session *session, IMFMediaS
 
             node->object.source_stream = stream;
             IMFMediaStream_AddRef(node->object.source_stream);
+            while (node->u.source.requests)
+            {
+                if (FAILED(hr = IMFMediaStream_RequestSample(stream, NULL)))
+                    WARN("Sample request failed, hr %#lx.\n", hr);
+                node->u.source.requests--;
+            }
             break;
         }
     }
@@ -4203,7 +4211,9 @@ static HRESULT session_request_sample_from_node(struct media_session *session, s
     switch (topo_node->type)
     {
         case MF_TOPOLOGY_SOURCESTREAM_NODE:
-            if (FAILED(hr = IMFMediaStream_RequestSample(topo_node->object.source_stream, NULL)))
+            if (!topo_node->object.source_stream)
+                topo_node->u.source.requests++;
+            else if (FAILED(hr = IMFMediaStream_RequestSample(topo_node->object.source_stream, NULL)))
                 WARN("Sample request failed, hr %#lx.\n", hr);
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
