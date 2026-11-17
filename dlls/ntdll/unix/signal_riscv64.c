@@ -485,6 +485,13 @@ struct riscv64_signal_exception
     EXCEPTION_RECORD record;
     CONTEXT context;
 };
+/* The Unix signal handoff and the PE dispatcher must agree on the RV64
+ * register image.  Catch ABI drift at build time, not after rt_sigreturn. */
+C_ASSERT( offsetof( CONTEXT, Gpr ) == 16 );
+C_ASSERT( offsetof( CONTEXT, Pc ) == 16 + 32 * sizeof(ULONG64) );
+C_ASSERT( offsetof( CONTEXT, Fcsr ) == offsetof(CONTEXT, Pc) + sizeof(ULONG64) );
+C_ASSERT( offsetof( CONTEXT, F ) == offsetof(CONTEXT, Fcsr) + sizeof(ULONG64) );
+C_ASSERT( offsetof( struct riscv64_signal_exception, context ) % 16 == 0 );
 
 static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
 {
