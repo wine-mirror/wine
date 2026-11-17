@@ -137,9 +137,22 @@ struct thread_data
 
 extern pthread_key_t thread_data_key;
 
+#ifdef __riscv
+/* The Windows context switch can leave pthread_getspecific() unable to
+ * recover the key despite a valid native tp.  Use a separate Linux-TID
+ * registry as a fallback without assigning the host tp to the Windows TEB. */
+extern void riscv64_register_thread_data( struct thread_data *data );
+extern void riscv64_unregister_thread_data(void);
+extern struct thread_data *riscv64_lookup_thread_data(void);
+#endif
+
 static inline struct thread_data *get_thread_data(void)
 {
-    return pthread_getspecific( thread_data_key );
+    struct thread_data *data = pthread_getspecific( thread_data_key );
+#ifdef __riscv
+    if (!data) data = riscv64_lookup_thread_data();
+#endif
+    return data;
 }
 
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
