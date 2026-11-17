@@ -524,7 +524,7 @@ static void riscv64_report_missing_thread_data( int sig, const siginfo_t *info, 
     p = riscv64_diag_hex( p, PC_sig( uc ) );
     p = riscv64_diag_text( p, " sp=" );
     p = riscv64_diag_hex( p, SP_sig( uc ) );
-    *p++ = '\\n';
+    *p++ = '\n';
     write( 2, buf, p - buf );
 }
 
