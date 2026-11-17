@@ -326,6 +326,11 @@ static inline LRESULT send_message(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     return NtUserMessageCall(hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE);
 }
 
+static inline LRESULT send_notify_message(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return NtUserMessageCall(hwnd, msg, wparam, lparam, NULL, NtUserSendNotifyMessage, FALSE);
+}
+
 static inline LRESULT send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                            UINT flags, UINT timeout, PDWORD_PTR res_ptr)
 {
