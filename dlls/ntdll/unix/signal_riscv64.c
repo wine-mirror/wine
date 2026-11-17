@@ -157,6 +157,16 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
     struct syscall_frame *frame = get_syscall_frame( data );
     NTSTATUS status;
 
+    if (!context || (context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
+        return STATUS_INVALID_PARAMETER;
+    if ((context->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL &&
+        (!context->Pc || !context->Gpr.X[2] || (context->Gpr.X[2] & 15)))
+    {
+        ERR( "RV64 rejecting invalid full context pc=%p sp=%p ra=%p flags=%08x\n",
+             (void *)(ULONG_PTR)context->Pc, (void *)(ULONG_PTR)context->Gpr.X[2],
+             (void *)(ULONG_PTR)context->Gpr.X[1], context->ContextFlags );
+        return STATUS_INVALID_PARAMETER;
+    }
     WARN("RISCV64 requested context pc=%016llx sp=%016llx ra=%016llx flags=%08x\n",
          (unsigned long long)context->Pc, (unsigned long long)context->Gpr.X[2],
          (unsigned long long)context->Gpr.X[1], context->ContextFlags);
@@ -221,10 +231,20 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
-    DWORD flags = context->ContextFlags & ~CONTEXT_RISCV64;
+    DWORD flags;
 
+    if (!context) return STATUS_INVALID_PARAMETER;
+    flags = context->ContextFlags & ~CONTEXT_RISCV64;
     if ((context->ContextFlags & CONTEXT_RISCV64) != CONTEXT_RISCV64)
         return STATUS_INVALID_PARAMETER;
+    if ((flags & CONTEXT_CONTROL) &&
+        (!context->Pc || !context->Gpr.X[2] || (context->Gpr.X[2] & 15)))
+    {
+        ERR( "RV64 NtSetContextThread invalid control pc=%p sp=%p flags=%08x\n",
+             (void *)(ULONG_PTR)context->Pc, (void *)(ULONG_PTR)context->Gpr.X[2],
+             context->ContextFlags );
+        return STATUS_INVALID_PARAMETER;
+    }
     if (flags & ~(CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING |
                   CONTEXT_EXCEPTION_ACTIVE | CONTEXT_SERVICE_ACTIVE))
         return STATUS_NOT_SUPPORTED;
