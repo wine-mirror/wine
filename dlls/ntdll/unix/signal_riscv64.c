@@ -661,7 +661,8 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
     {
         ERR( "RISC-V64 continuation without %s: data=%p frame=%p tid=%lu tp=%p\n",
              !data ? "Unix thread data" : "syscall frame", data, frame,
-             (unsigned long)get_unix_tid(), __builtin_thread_pointer() );
+             (unsigned long)syscall( 178 /* __NR_gettid on Linux RISC-V */, 0 ),
+             __builtin_thread_pointer() );
         abort();
     }
 
