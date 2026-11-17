@@ -1829,6 +1829,7 @@ void server_init_thread( struct thread_data *data )
             abort();  /* Continuing would leave signal and syscall paths unsafe. */
         }
 #ifdef __riscv
+        riscv64_register_thread_data( data );
         WARN( "RISC-V64 Unix thread registered: tid=%u key=%lu data=%p readback=%p teb=%p tp=%p\n",
               get_unix_tid(), (unsigned long)thread_data_key, data, get_thread_data(),
               data->teb, __builtin_thread_pointer() );
