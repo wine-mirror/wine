@@ -1779,7 +1779,16 @@ void server_init_thread( struct thread_data *data )
     data->pthread_id = pthread_self();
     {
         int err = pthread_setspecific( thread_data_key, data );
-        if (err) ERR( "pthread_setspecific(thread_data_key) failed: %d\n", err );
+        if (err)
+        {
+            ERR( "pthread_setspecific(thread_data_key) failed: %d, tid=%u data=%p\n",
+                 err, get_unix_tid(), data );
+            abort();  /* Continuing would leave signal and syscall paths unsafe. */
+        }
+#ifdef __riscv
+        WARN( "RISC-V64 Unix thread registered: tid=%u data=%p teb=%p tp=%p\n",
+              get_unix_tid(), data, data->teb, __builtin_thread_pointer() );
+#endif
     }
 
     reply_pipe = init_thread_pipe( data );
