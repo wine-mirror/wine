@@ -579,6 +579,12 @@ static int riscv64_transition_diag_enabled(void)
     } \
 } while (0)
 
+static inline struct thread_data *riscv64_signal_thread_data(void)
+{
+    ULONG_PTR sp = (ULONG_PTR)__builtin_frame_address(0);
+    return (struct thread_data *)(sp & ~signal_stack_mask);
+}
+
 static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -586,9 +592,12 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     struct thread_data *data;
     ULONG_PTR sp = SP_sig( uc );
 
-    RV64_CHECKPOINT( "fault ENTER before pthread TLS lookup" );
-    data = get_thread_data();
-    RV64_CHECKPOINT( "fault AFTER pthread TLS lookup" );
+    /* The signal handler executes on Wine's aligned alternate stack.
+     * Recover the owning Unix thread record directly; pthread_getspecific()
+     * can itself depend on TLS state damaged by a context transition. */
+    RV64_CHECKPOINT( "fault ENTER before signal stack thread lookup" );
+    data = riscv64_signal_thread_data();
+    RV64_CHECKPOINT( "fault AFTER signal stack thread lookup" );
 
     /* Avoid a recursive SIGSEGV when pthread-specific data is absent. */
     if (riscv64_transition_diag_enabled())
@@ -705,12 +714,6 @@ C_ASSERT( sizeof(struct riscv64_continuation_data) <= sizeof(((struct teb_data *
 static inline struct riscv64_continuation_data *riscv64_continuation_data( struct thread_data *data )
 {
     return (struct riscv64_continuation_data *)get_teb_data( data )->cpu_data;
-}
-
-static inline struct thread_data *riscv64_signal_thread_data(void)
-{
-    ULONG_PTR sp = (ULONG_PTR)__builtin_frame_address(0);
-    return (struct thread_data *)(sp & ~signal_stack_mask);
 }
 
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
