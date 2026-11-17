@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-11-05 19:56+0200\n"
+"PO-Revision-Date: 2026-11-17 23:51+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -15309,22 +15309,16 @@ msgid "File cannot be copied onto itself.\n"
 msgstr "Failas negali būti nukopijuotas ant savęs.\n"
 
 #: programs/cmd/cmd.rc:412
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Path %1 isn't a valid directory.\n"
-msgstr "Neteisingas kelias.\n"
+msgstr "Kelias %1 nėra teisingas katalogas.\n"
 
 #: programs/cmd/cmd.rc:413
-#, fuzzy
-#| msgid "Can't delete current directory.\n"
 msgid "Can't resolve current directory.\n"
-msgstr "Negalima pašalinti dabartinio katalogo.\n"
+msgstr "Nepavyko nustatyti dabartinio katalogo.\n"
 
 #: programs/cmd/cmd.rc:414
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "The specified drive doesn't exist.\n"
-msgstr "Tinklavietė neegzistuoja.\n"
+msgstr "Nurodytas kaupiklis neegzistuoja.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
