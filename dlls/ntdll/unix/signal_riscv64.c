@@ -468,7 +468,20 @@ struct riscv64_signal_exception
 
 static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
 {
-    NTSTATUS status = NtRaiseException( &exc->record, &exc->context, TRUE );
+    NTSTATUS status;
+
+    WARN( "RV64 exception dispatch enter code=%#lx address=%p fault=%p pc=%p sp=%p ra=%p a0=%p a1=%p teb=%p\n",
+          (unsigned long)exc->record.ExceptionCode, exc->record.ExceptionAddress,
+          (void *)(ULONG_PTR)exc->record.ExceptionInformation[1],
+          (void *)(ULONG_PTR)exc->context.Pc,
+          (void *)(ULONG_PTR)exc->context.Gpr.X[2],
+          (void *)(ULONG_PTR)exc->context.Gpr.X[1],
+          (void *)(ULONG_PTR)exc->context.Gpr.X[10],
+          (void *)(ULONG_PTR)exc->context.Gpr.X[11], NtCurrentTeb() );
+    status = NtRaiseException( &exc->record, &exc->context, TRUE );
+    WARN( "RV64 NtRaiseException returned status=%#lx pc=%p sp=%p\n",
+          (unsigned long)status, (void *)(ULONG_PTR)exc->context.Pc,
+          (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
 
     /* A handled first-chance exception may return after updating CONTEXT.
      * Continue with the interrupted register image rather than aborting. */
@@ -726,6 +739,20 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         }
     }
 
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[256], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG exception HANDOFF source_pc=" );
+        p = riscv64_diag_hex( p, exc->context.Pc );
+        p = riscv64_diag_text( p, " source_sp=" );
+        p = riscv64_diag_hex( p, exc->context.Gpr.X[2] );
+        p = riscv64_diag_text( p, " exception_sp=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)exc );
+        p = riscv64_diag_text( p, " target=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)riscv64_raise_signal_exception );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     SP_sig( uc ) = (ULONG_PTR)exc;
     REGn_sig( REG_A0, uc ) = (ULONG_PTR)exc;
     PC_sig( uc ) = (ULONG_PTR)riscv64_raise_signal_exception;
