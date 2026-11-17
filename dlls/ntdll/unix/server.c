@@ -1779,7 +1779,7 @@ void server_init_thread( struct thread_data *data )
     data->pthread_id = pthread_self();
     {
         int err = pthread_setspecific( thread_data_key, data );
-        if (err) ERR( "pthread_setspecific(thread_data_key) failed: %d\\n", err );
+        if (err) ERR( "pthread_setspecific(thread_data_key) failed: %d\n", err );
     }
 
     reply_pipe = init_thread_pipe( data );
