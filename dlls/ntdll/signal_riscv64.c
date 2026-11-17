@@ -308,7 +308,114 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
 
 /* Unwinding. */
-__ASM_GLOBAL_FUNC( RtlUnwindEx, "ret" )
+/* Walk native ELF and PE frames, invoking termination handlers before
+ * restoring the requested continuation.  This follows the arm64/x86-64
+ * unwind loop, using the RISC-V64 context and the ELF unwind bridge. */
+void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec,
+                         PVOID retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
+{
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+    EXCEPTION_RECORD record;
+    DISPATCHER_CONTEXT dispatch = {0};
+    CONTEXT next;
+    ULONG_PTR sp, old_sp, old_pc, limit;
+    EXCEPTION_DISPOSITION disposition;
+    NTSTATUS status;
+    unsigned int depth = 0;
+
+    RtlCaptureContext( context );
+    next = *context;
+
+    if (!rec)
+    {
+        record.ExceptionCode = STATUS_UNWIND;
+        record.ExceptionFlags = 0;
+        record.ExceptionRecord = NULL;
+        record.ExceptionAddress = (void *)(ULONG_PTR)context->Pc;
+        record.NumberParameters = 0;
+        rec = &record;
+    }
+    rec->ExceptionFlags |= EXCEPTION_UNWINDING | (end_frame ? 0 : EXCEPTION_EXIT_UNWIND);
+
+    dispatch.TargetIp = (ULONG_PTR)target_ip;
+    dispatch.ContextRecord = context;
+    dispatch.HistoryTable = table;
+
+    for (;;)
+    {
+        old_sp = next.Gpr.X[2];
+        old_pc = next.Pc;
+        if (++depth > 1024) RtlRaiseStatus( STATUS_BAD_STACK );
+        if (!old_sp || (old_sp & 15) ||
+            old_sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit ||
+            old_sp >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase)
+            RtlRaiseStatus( STATUS_BAD_STACK );
+
+        status = virtual_unwind( UNW_FLAG_UHANDLER, &dispatch, &next );
+        if (status) RtlRaiseStatus( status );
+        sp = dispatch.EstablisherFrame;
+        if (!sp) break;
+        if (!riscv64_valid_seh_frame( (void *)sp ))
+            RtlRaiseStatus( STATUS_BAD_STACK );
+        if (end_frame && sp > (ULONG_PTR)end_frame)
+            RtlRaiseStatus( STATUS_INVALID_UNWIND_TARGET );
+
+        if (sp == (ULONG_PTR)end_frame) rec->ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
+
+        if (dispatch.LanguageHandler)
+        {
+            disposition = dispatch.LanguageHandler( rec, (void *)sp, context, &dispatch );
+            if (disposition == ExceptionCollidedUnwind)
+            {
+                /* The handler has supplied a replacement dispatcher context. */
+                next = *dispatch.ContextRecord;
+                rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
+                continue;
+            }
+            if (disposition != ExceptionContinueSearch)
+                RtlRaiseStatus( STATUS_INVALID_DISPOSITION );
+            rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+        }
+        else
+        {
+            limit = next.Gpr.X[2];
+            if (end_frame && limit > (ULONG_PTR)end_frame) limit = (ULONG_PTR)end_frame;
+            while (teb_frame && teb_frame != (void *)(ULONG_PTR)-1 &&
+                   (ULONG_PTR)teb_frame < limit)
+            {
+                EXCEPTION_REGISTRATION_RECORD *frame = teb_frame;
+                if (!riscv64_valid_seh_frame( frame ))
+                    RtlRaiseStatus( STATUS_BAD_STACK );
+                teb_frame = frame->Prev;
+                disposition = ((PEXCEPTION_ROUTINE)frame->Handler)( rec, frame, context, &dispatch );
+                if (disposition == ExceptionCollidedUnwind)
+                {
+                    next = *dispatch.ContextRecord;
+                    rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
+                    break;
+                }
+                if (disposition != ExceptionContinueSearch)
+                    RtlRaiseStatus( STATUS_INVALID_DISPOSITION );
+                rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+                if (teb_frame && teb_frame != (void *)(ULONG_PTR)-1 &&
+                    (ULONG_PTR)teb_frame <= (ULONG_PTR)frame)
+                    RtlRaiseStatus( STATUS_BAD_STACK );
+            }
+            if (disposition == ExceptionCollidedUnwind) continue;
+        }
+        if (sp == (ULONG_PTR)end_frame) break;
+        if (next.Gpr.X[2] < old_sp ||
+            (next.Gpr.X[2] == old_sp && next.Pc == old_pc))
+            RtlRaiseStatus( STATUS_BAD_STACK );
+        *context = next;
+    }
+
+    context->Gpr.X[10] = (ULONG_PTR)retval; /* a0: return value */
+    if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE)
+        context->Pc = (ULONG_PTR)target_ip;
+    RtlRestoreContext( context, rec );
+}
+
 /* Only leaf functions can be unwound without architecture-specific PE
  * unwind opcodes. Never guess a frame for a non-leaf function. */
 LONG WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR image_base, ULONG_PTR pc,
