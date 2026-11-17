@@ -818,6 +818,21 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         WARN( "RV64-DIAG continuation REQUEST frame=%p pc=%016llx sp=%016llx ra=%016llx tp=%p\n",
               frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp,
               (unsigned long long)frame->ra, __builtin_thread_pointer() );
+    /* Validate the supplied frame against Wine's dedicated Unix stack
+     * before publishing it to the asynchronous signal handler. */
+    {
+        ULONG_PTR stack_begin = (ULONG_PTR)get_kernel_stack( data );
+        ULONG_PTR stack_end = stack_begin + kernel_stack_size;
+        ULONG_PTR frame_addr = (ULONG_PTR)frame;
+        if (frame_addr < stack_begin || frame_addr > stack_end ||
+            stack_end - frame_addr < sizeof(*frame) ||
+            (frame_addr & 15))
+        {
+            ERR( "RISC-V64 invalid continuation frame=%p Unix stack=[%p,%p) size=%lu\n",
+                 frame, (void *)stack_begin, (void *)stack_end, (unsigned long)sizeof(*frame) );
+            abort();
+        }
+    }
     continuation = riscv64_continuation_data( data );
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
