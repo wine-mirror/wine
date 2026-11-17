@@ -527,7 +527,7 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
         {
             WARN( "RV64 exception dispatch scheduled pc=%p sp=%p; transferring through syscall return\n",
                   (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp );
-            __asm__ volatile ( "mv a0, %0\n\\tjr %1" :: "r"(frame),
+            __asm__ volatile ( "mv a0, %0\n\tjr %1" :: "r"(frame),
                                "r"(__wine_syscall_dispatcher_return) : "a0", "memory" );
             __builtin_unreachable();
         }
