@@ -3912,7 +3912,15 @@ struct thread_data *virtual_alloc_first_thread_data(void)
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     thread_data = init_thread_data( view->base );
-    pthread_setspecific( thread_data_key, thread_data );
+    {
+        int err = pthread_setspecific( thread_data_key, thread_data );
+        if (err) fatal_error( "failed to register first Unix thread data: %d\n", err );
+#ifdef __riscv
+        WARN( "RISC-V64 first TLS registration: key=%lu data=%p readback=%p tp=%p\n",
+              (unsigned long)thread_data_key, thread_data, get_thread_data(),
+              __builtin_thread_pointer() );
+#endif
+    }
     return thread_data;
 }
 
