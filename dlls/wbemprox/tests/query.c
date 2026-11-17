@@ -860,6 +860,26 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     refcount = IWbemClassObject_Release( sig_out );
     ok( !refcount, "got unexpected refcount %lu\n", refcount );
 
+    out = NULL;
+    method = SysAllocString( L"GetOwnerSid" );
+    class = SysAllocStringLen( NULL, full_path_len + ARRAY_SIZE( L"Win32_Process.Handle=\"%u\"" ) + 10 );
+    memcpy( class, full_path, full_path_len * sizeof(WCHAR) );
+    wsprintfW( class + full_path_len, L"Win32_Process.Handle=\"%u\"", GetCurrentProcessId() );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
+    SysFreeString( method );
+
+    type = 0xdeadbeef;
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+
+    check_property( out, L"Sid", VT_BSTR, CIM_STRING );
+    IWbemClassObject_Release( out );
+
     sig_in = (void*)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"getowner", 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get GetOwner method %#lx\n", hr );
@@ -868,7 +888,6 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
 
     out = NULL;
     method = SysAllocString( L"GetOwner" );
-    class = SysAllocStringLen( NULL, full_path_len + ARRAY_SIZE( L"Win32_Process.Handle=\"%u\"" ) + 10 );
     memcpy( class, full_path, full_path_len * sizeof(WCHAR) );
     wsprintfW( class + full_path_len, L"Win32_Process.Handle=\"%u\"", GetCurrentProcessId() );
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );

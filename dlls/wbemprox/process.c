@@ -127,6 +127,84 @@ done:
     return hr;
 }
 
+static HRESULT get_owner_sid( DWORD pid, VARIANT *sid, VARIANT *retval )
+{
+    UINT error = 8;
+    HANDLE token = NULL, process = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, pid );
+    char buf[256];
+    WCHAR *str;
+    TOKEN_OWNER *owner = (TOKEN_OWNER *)buf;
+    DWORD size = sizeof(buf);
+
+    if (!process || !OpenProcessToken( process, TOKEN_QUERY, &token ) ||
+        !GetTokenInformation( token, TokenOwner, owner, size, &size ) ||
+        !ConvertSidToStringSidW( owner->Owner, &str ))
+    {
+        error = GetLastError();
+        goto done;
+    }
+
+    V_BSTR( sid ) = SysAllocString( str );
+    LocalFree( str );
+    if (!V_BSTR( sid )) goto done;
+    V_VT( sid ) = VT_BSTR;
+
+    error = 0;
+
+done:
+    CloseHandle( token );
+    CloseHandle( process );
+    if (error) VariantClear( sid );
+    set_variant( VT_UI4, error, NULL, retval );
+    return S_OK;
+}
+
+HRESULT process_get_owner_sid( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
+{
+    VARIANT sid, retval;
+    IWbemClassObject *sig, *out_params = NULL;
+    DWORD pid = get_pid( obj );
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
+
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Process", L"GetOwnerSid", PARAM_OUT, &sig );
+    if (hr != S_OK) return hr;
+
+    if (out)
+    {
+        hr = IWbemClassObject_SpawnInstance( sig, 0, &out_params );
+        if (hr != S_OK)
+        {
+            IWbemClassObject_Release( sig );
+            return hr;
+        }
+    }
+    VariantInit( &sid );
+    hr = get_owner_sid( pid, &sid, &retval );
+    if (hr != S_OK) goto done;
+    if (out_params)
+    {
+        if (!V_UI4( &retval ))
+        {
+            hr = IWbemClassObject_Put( out_params, L"Sid", 0, &sid, CIM_STRING );
+            if (hr != S_OK) goto done;
+        }
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
+    }
+
+done:
+    VariantClear( &sid );
+    IWbemClassObject_Release( sig );
+    if (hr == S_OK && out)
+    {
+        *out = out_params;
+        IWbemClassObject_AddRef( out_params );
+    }
+    if (out_params) IWbemClassObject_Release( out_params );
+    return hr;
+}
+
 HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT command_line, current_directory, startup_info;
