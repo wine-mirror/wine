@@ -375,6 +375,10 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     RtlCaptureContext( context );
     next = *context;
+    TRACE( "RV64 unwind begin end_frame=%p target=%p pc=%p sp=%p ra=%p fp=%p\n",
+           end_frame, target_ip, (void *)(ULONG_PTR)next.Pc,
+           (void *)(ULONG_PTR)next.Gpr.X[2], (void *)(ULONG_PTR)next.Gpr.X[1],
+           (void *)(ULONG_PTR)next.Gpr.X[8] );
 
     if (!rec)
     {
@@ -402,7 +406,16 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
             RtlRaiseStatus( STATUS_BAD_STACK );
 
         status = virtual_unwind( UNW_FLAG_UHANDLER, &dispatch, &next );
-        if (status) RtlRaiseStatus( status );
+        if (status)
+        {
+            ERR( "RV64 unwind failure depth=%u status=%#lx pc=%p sp=%p target=%p\n",
+                 depth, (unsigned long)status, (void *)old_pc, (void *)old_sp, target_ip );
+            RtlRaiseStatus( status );
+        }
+        TRACE( "RV64 unwind frame depth=%u old_pc=%p old_sp=%p next_pc=%p next_sp=%p establisher=%p handler=%p target=%p\n",
+               depth, (void *)old_pc, (void *)old_sp,
+               (void *)(ULONG_PTR)next.Pc, (void *)(ULONG_PTR)next.Gpr.X[2],
+               (void *)dispatch.EstablisherFrame, dispatch.LanguageHandler, target_ip );
         sp = dispatch.EstablisherFrame;
         if (!sp) break;
         if (!riscv64_valid_seh_frame( (void *)sp ))
@@ -461,6 +474,9 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         *context = next;
     }
 
+    TRACE( "RV64 unwind complete target=%p pc=%p sp=%p ra=%p end_frame=%p depth=%u\n",
+           target_ip, (void *)(ULONG_PTR)context->Pc, (void *)(ULONG_PTR)context->Gpr.X[2],
+           (void *)(ULONG_PTR)context->Gpr.X[1], end_frame, depth );
     context->Gpr.X[10] = (ULONG_PTR)retval; /* a0: return value */
     if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE)
         context->Pc = (ULONG_PTR)target_ip;
