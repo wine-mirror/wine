@@ -651,7 +651,19 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
  * This intentionally does not use a manually forged signal frame. */
 static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct syscall_frame *frame )
 {
+    struct thread_data *data = get_thread_data();
     sigset_t set, oldmask;
+
+    /* The dispatcher may be reached before Unix TLS is installed, or
+     * after a broken nonlocal context transition.  Never dereference a
+     * missing thread_data: doing so recursively faults in the handler. */
+    if (!data || !frame)
+    {
+        ERR( "RISC-V64 continuation without %s: data=%p frame=%p tid=%lu tp=%p\n",
+             !data ? "Unix thread data" : "syscall frame", data, frame,
+             (unsigned long)syscall( SYS_gettid ), __builtin_thread_pointer() );
+        abort();
+    }
 
     sigemptyset( &set );
     sigaddset( &set, SIGUSR2 );
@@ -660,11 +672,11 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
      * If the target is outside the Unix kernel stack, discard nested frame
      * links before rt_sigreturn resumes the caller's stack.  Keep the
      * supplied frame itself alive until the SIGUSR2 handler has consumed it. */
+    if (data->teb)
     {
-        struct thread_data *data = get_thread_data();
         ULONG_PTR target_sp = frame->sp;
         ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
-        if (data->teb && (target_sp < base || target_sp >= base + kernel_stack_size))
+        if (target_sp < base || target_sp >= base + kernel_stack_size)
         {
             struct syscall_frame *root = get_syscall_frame( data );
             unsigned int depth = 0;
