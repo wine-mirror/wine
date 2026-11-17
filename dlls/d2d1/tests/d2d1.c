@@ -18170,6 +18170,12 @@ static void test_sprite_batch(BOOL d3d11)
         return;
 
     hr = ID2D1DeviceContext_QueryInterface(ctx.context, &IID_ID2D1DeviceContext3, (void **)&context);
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Sprite batches are not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DeviceContext3_CreateSpriteBatch(context, &sprite_batch);
