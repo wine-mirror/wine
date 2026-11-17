@@ -690,17 +690,42 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
  * t0/t6 and the exact requested PC in one atomic kernel transition.
  * Remote context updates are exchanged with wineserver in usr1_handler.
  * SIGUSR2 is reserved here for our synchronous continuation request. */
-static __thread struct syscall_frame *riscv64_sigreturn_frame;
-static __thread sigset_t riscv64_sigreturn_mask;
+/* Keep continuation state in Wine's TEB CPU area instead of ELF dynamic TLS.
+ * The SIGUSR2 handler runs on the 64K-aligned Wine alternate signal stack,
+ * allowing thread_data to be recovered without __tls_get_addr or pthread. */
+struct riscv64_continuation_data
+{
+    struct syscall_frame *frame;
+    sigset_t mask;
+    unsigned int ready;
+};
+
+C_ASSERT( sizeof(struct riscv64_continuation_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
+
+static inline struct riscv64_continuation_data *riscv64_continuation_data( struct thread_data *data )
+{
+    return (struct riscv64_continuation_data *)get_teb_data( data )->cpu_data;
+}
+
+static inline struct thread_data *riscv64_signal_thread_data(void)
+{
+    ULONG_PTR sp = (ULONG_PTR)__builtin_frame_address(0);
+    return (struct thread_data *)(sp & ~signal_stack_mask);
+}
 
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
+    struct thread_data *data = riscv64_signal_thread_data();
+    struct riscv64_continuation_data *continuation;
     struct syscall_frame *frame;
     unsigned int i;
 
-    RV64_CHECKPOINT( "SIGUSR2 ENTER before TLS frame read" );
-    frame = riscv64_sigreturn_frame;
+    RV64_CHECKPOINT( "SIGUSR2 ENTER before continuation frame read" );
+    if (!data->teb) return;
+    continuation = riscv64_continuation_data( data );
+    if (!continuation->ready) return;
+    frame = continuation->frame;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame read" );
     if (!frame)
     {
@@ -722,9 +747,10 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         write( 2, buf, p - buf );
     }
     RV64_CHECKPOINT( "SIGUSR2 BEFORE TLS frame clear" );
-    riscv64_sigreturn_frame = NULL;
+    continuation->ready = 0;
+    continuation->frame = NULL;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame clear" );
-    uc->uc_sigmask = riscv64_sigreturn_mask;
+    uc->uc_sigmask = continuation->mask;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS mask read" );
     PC_sig( uc ) = frame->pc;
     for (i = 1; i < 32; ++i)
@@ -750,6 +776,7 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
 {
     struct thread_data *data = get_thread_data();
     sigset_t set, oldmask;
+    struct riscv64_continuation_data *continuation;
 
     /* The dispatcher may be reached before Unix TLS is installed, or
      * after a broken nonlocal context transition.  Never dereference a
@@ -791,6 +818,7 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         WARN( "RV64-DIAG continuation REQUEST frame=%p pc=%016llx sp=%016llx ra=%016llx tp=%p\n",
               frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp,
               (unsigned long long)frame->ra, __builtin_thread_pointer() );
+    continuation = riscv64_continuation_data( data );
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
         __atomic_add_fetch( &riscv64_services_continuations, 1, __ATOMIC_RELAXED ) == 2)
@@ -799,9 +827,11 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         write( 2, message, sizeof(message) - 1 );
         __builtin_trap();
     }
-    riscv64_sigreturn_mask = oldmask;
+    continuation->ready = 0;
+    continuation->mask = oldmask;
     RV64_CHECKPOINT( "continuation AFTER TLS mask write" );
-    riscv64_sigreturn_frame = frame;
+    continuation->frame = frame;
+    __atomic_store_n( &continuation->ready, 1, __ATOMIC_RELEASE );
     RV64_CHECKPOINT( "continuation AFTER TLS frame write" );
     RV64_CHECKPOINT( "continuation BEFORE raise SIGUSR2" );
     if (raise( SIGUSR2 ))
