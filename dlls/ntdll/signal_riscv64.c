@@ -535,12 +535,10 @@ LONG WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR image_base, ULONG_PTR pc,
         /* Prologue/epilogue-aware interpretation is required before restoring
          * any registers there.  Reject these locations rather than inventing
          * an unwind that can corrupt the caller. */
-        if (offset < words * 2 || (length - offset) <= words * 2)
-        {
-            WARN( "RV64 PE unwind prologue/epilogue requires scope decoder pc=%p offset=%u length=%u\n",
-                  (void *)pc, offset, length );
-            return STATUS_UNSUCCESSFUL;
-        }
+        /* The code array is variable-length.  Its byte count is not a
+         * prologue instruction count.  Decode each opcode before deciding
+         * which operations have executed at the current control PC. */
+        if (!words) return STATUS_INVALID_DISPOSITION;
         codes = (const BYTE *)(header_ptr + ((header & (1 << 21)) ? 0 : scopes));
         end = codes + 4 * words;
         if ((header & (1 << 20)) && handler && (type & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER)))
@@ -559,15 +557,31 @@ LONG WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR image_base, ULONG_PTR pc,
                 if (codes >= end) return STATUS_INVALID_DISPOSITION;
                 new_sp += 16 * (((op & 7) << 8) | *codes++);
             }
-            else if (op == 0xd0)
+            else if (op == 0xd0 || (op & 0xfe) == 0xdc)
             {
+                unsigned int first, count = 1;
+                ULONG_PTR slot;
                 if (end - codes < 2) return STATUS_INVALID_DISPOSITION;
-                reg = 1 + *codes++;
-                address = new_sp + 8 * *codes++;
-                if (reg >= 32 || address < stack_low || address > stack_high - 8)
-                    return STATUS_BAD_STACK;
-                next.Gpr.X[reg] = *(const ULONG64 *)address;
-                if (reg == 1) new_ra = next.Gpr.X[1];
+                reg = *codes++;
+                slot = *codes++;
+                if (op == 0xd0)
+                {
+                    first = 1 + reg;
+                    address = new_sp + 8 * slot;
+                    if (first >= 32 || address < stack_low || address > stack_high - 8)
+                        return STATUS_BAD_STACK;
+                    next.Gpr.X[first] = *(const ULONG64 *)address;
+                    if (first == 1) new_ra = next.Gpr.X[1];
+                }
+                else
+                {
+                    first = 8 + (reg >> 4) + ((op & 1) << 4);
+                    address = new_sp + 8 * (((reg & 15) << 8) | slot);
+                    if (first >= 32 || address < stack_low || address > stack_high - 8)
+                        return STATUS_BAD_STACK;
+                    next.F[first].Q = *(const ULONG64 *)address;
+                }
+                (void)count;
             }
             else if (op == 0xe0)
             {
