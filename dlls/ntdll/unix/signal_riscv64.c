@@ -806,6 +806,18 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     unsigned int i;
 
     RV64_CHECKPOINT( "SIGUSR2 ENTER before continuation frame read" );
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[240], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG sigreturn TEB signal_data=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)data );
+        p = riscv64_diag_text( p, " teb=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)data->teb );
+        p = riscv64_diag_text( p, " tp=" );
+        p = riscv64_diag_hex( p, REGn_sig( 4, uc ) );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     if (!data->teb) return;
     continuation = riscv64_continuation_data( data );
     if (!continuation->ready) return;
@@ -990,6 +1002,11 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     struct syscall_frame *frame;
 
     frame = init_syscall_frame( entry, arg, teb );
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-DIAG startup TEB expected=%p pthread_data=%p pthread_teb=%p self=%p frame=%p native_tp=%p\n",
+              teb, get_thread_data(),
+              get_thread_data() ? get_thread_data()->teb : NULL,
+              teb ? teb->Tib.Self : NULL, frame, __builtin_thread_pointer() );
     if (riscv64_transition_diag_enabled())
         WARN( "RV64-DIAG thread BOOTSTRAP entry=%p teb=%p frame=%p loader_pc=%016llx stack=%016llx\n",
               entry, teb, frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp );
