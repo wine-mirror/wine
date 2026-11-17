@@ -337,7 +337,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     }
     rec->ExceptionFlags |= EXCEPTION_UNWINDING | (end_frame ? 0 : EXCEPTION_EXIT_UNWIND);
 
-    dispatch.TargetIp = (ULONG_PTR)target_ip;
+    dispatch.TargetPc = (ULONG_PTR)target_ip;
     dispatch.ContextRecord = context;
     dispatch.HistoryTable = table;
 
