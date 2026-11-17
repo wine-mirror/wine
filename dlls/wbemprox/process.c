@@ -24,6 +24,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "lmcons.h"
+#include "sddl.h"
 #include "wbemcli.h"
 
 #include "wine/debug.h"
@@ -31,28 +33,41 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
-static HRESULT get_owner( VARIANT *user, VARIANT *domain, VARIANT *retval )
+static DWORD get_pid( IWbemClassObject *obj )
 {
-    DWORD len;
+    VARIANT pid;
+    if (IWbemClassObject_Get( obj, L"ProcessID", 0, &pid, NULL, NULL ) != S_OK) return ~0u;
+    return V_UI4( &pid );
+}
+
+static HRESULT get_owner( DWORD pid, VARIANT *user, VARIANT *domain, VARIANT *retval )
+{
     UINT error = 8;
+    HANDLE token = NULL, process = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, pid );
+    char buf[256];
+    WCHAR domainname[DNLEN + 1], username[UNLEN + 1];
+    TOKEN_OWNER *owner = (TOKEN_OWNER *)buf;
+    DWORD size = sizeof(buf), username_len = ARRAY_SIZE(username), domainname_len = ARRAY_SIZE(domainname);
+    SID_NAME_USE use;
 
-    len = 0;
-    GetUserNameW( NULL, &len );
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
-    if (!(V_BSTR( user ) = SysAllocStringLen( NULL, len - 1 ))) goto done;
+    if (!process || !OpenProcessToken( process, TOKEN_QUERY, &token ) ||
+        !GetTokenInformation( token, TokenOwner, owner, size, &size ) ||
+        !LookupAccountSidW( NULL, owner->Owner, username, &username_len, domainname, &domainname_len, &use ))
+    {
+        error = GetLastError();
+        goto done;
+    }
+
+    if (!(V_BSTR( user ) = SysAllocString( username ))) goto done;
     V_VT( user ) = VT_BSTR;
-    if (!GetUserNameW( V_BSTR( user ), &len )) goto done;
-
-    len = 0;
-    GetComputerNameW( NULL, &len );
-    if (GetLastError() != ERROR_BUFFER_OVERFLOW) goto done;
-    if (!(V_BSTR( domain ) = SysAllocStringLen( NULL, len - 1 ))) goto done;
+    if (!(V_BSTR( domain ) = SysAllocString( domainname ))) goto done;
     V_VT( domain ) = VT_BSTR;
-    if (!GetComputerNameW( V_BSTR( domain ), &len )) goto done;
 
     error = 0;
 
 done:
+    CloseHandle( token );
+    CloseHandle( process );
     if (error)
     {
         VariantClear( user );
@@ -66,6 +81,7 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemContext *context, IWbemCl
 {
     VARIANT user, domain, retval;
     IWbemClassObject *sig, *out_params = NULL;
+    DWORD pid = get_pid( obj );
     HRESULT hr;
 
     TRACE("%p, %p, %p, %p\n", obj, context, in, out);
@@ -84,7 +100,7 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemContext *context, IWbemCl
     }
     VariantInit( &user );
     VariantInit( &domain );
-    hr = get_owner( &user, &domain, &retval );
+    hr = get_owner( pid, &user, &domain, &retval );
     if (hr != S_OK) goto done;
     if (out_params)
     {
