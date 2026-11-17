@@ -536,6 +536,20 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     ULONG_PTR sp = SP_sig( uc );
 
     /* Avoid a recursive SIGSEGV when pthread-specific data is absent. */
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[192], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG fault SIGNAL sig=" );
+        p = riscv64_diag_dec( p, (unsigned int)sig );
+        p = riscv64_diag_text( p, " pc=" );
+        p = riscv64_diag_hex( p, PC_sig( uc ) );
+        p = riscv64_diag_text( p, " sp=" );
+        p = riscv64_diag_hex( p, sp );
+        p = riscv64_diag_text( p, " addr=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)(info ? info->si_addr : NULL) );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     if (!data)
     {
         riscv64_report_missing_thread_data( sig, info, uc );
@@ -621,6 +635,12 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 static __thread struct syscall_frame *riscv64_sigreturn_frame;
 static __thread sigset_t riscv64_sigreturn_mask;
 
+static int riscv64_transition_diag_enabled(void)
+{
+    const char *value = getenv( "WINE_RISCV_DIAG" );
+    return value && *value && strcmp( value, "0" );
+}
+
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -628,6 +648,20 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     unsigned int i;
 
     if (!frame) return;
+    /* Do not call libc logging functions in the signal handler: use the
+     * async-signal-safe write() diagnostic helper instead. */
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[192], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG sigreturn RESTORE pc=" );
+        p = riscv64_diag_hex( p, frame->pc );
+        p = riscv64_diag_text( p, " sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        p = riscv64_diag_text( p, " ra=" );
+        p = riscv64_diag_hex( p, frame->ra );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     riscv64_sigreturn_frame = NULL;
     uc->uc_sigmask = riscv64_sigreturn_mask;
     PC_sig( uc ) = frame->pc;
@@ -690,6 +724,10 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
             else WARN( "invalid RISC-V64 nested syscall-frame chain during continuation\n" );
         }
     }
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-DIAG continuation REQUEST frame=%p pc=%016llx sp=%016llx ra=%016llx tp=%p\n",
+              frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp,
+              (unsigned long long)frame->ra, __builtin_thread_pointer() );
     riscv64_sigreturn_mask = oldmask;
     riscv64_sigreturn_frame = frame;
     if (raise( SIGUSR2 )) abort();
@@ -737,6 +775,9 @@ void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry,
     struct syscall_frame *frame;
 
     frame = init_syscall_frame( entry, arg, teb );
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-DIAG thread BOOTSTRAP entry=%p teb=%p frame=%p loader_pc=%016llx stack=%016llx\n",
+              entry, teb, frame, (unsigned long long)frame->pc, (unsigned long long)frame->sp );
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     /*
