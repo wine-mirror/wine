@@ -319,7 +319,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     DISPATCHER_CONTEXT dispatch = {0};
     CONTEXT next;
     ULONG_PTR sp, old_sp, old_pc, limit;
-    EXCEPTION_DISPOSITION disposition;
+    EXCEPTION_DISPOSITION disposition = ExceptionContinueSearch;
     NTSTATUS status;
     unsigned int depth = 0;
 
@@ -378,6 +378,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         }
         else
         {
+            disposition = ExceptionContinueSearch;
             limit = next.Gpr.X[2];
             if (end_frame && limit > (ULONG_PTR)end_frame) limit = (ULONG_PTR)end_frame;
             while (teb_frame && teb_frame != (void *)(ULONG_PTR)-1 &&
