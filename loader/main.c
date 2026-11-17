@@ -35,32 +35,54 @@
 # include <sys/sysctl.h>
 #endif
 #ifdef __APPLE__
+# include <crt_externs.h>
+# include <dlfcn.h>
 # include <mach-o/dyld.h>
+# include <mach-o/getsect.h>
 #endif
 
 #include "main.h"
 
-#if defined(__APPLE__) && defined(__x86_64__) && !defined(HAVE_WINE_PRELOADER)
+#if defined(__APPLE__) && !defined(HAVE_WINE_PRELOADER)
 
-/* Not using the preloader on x86_64:
- * Reserve the same areas as the preloader does, but using zero-fill sections
- * (the only way to prevent system frameworks from using them, including allocations
- * before main() runs).
+/* Not using the preloader (ARM64, or x86_64 with Xcode 15.3+):
+ * On x86_64, PAGEZERO is one 4K page and then a zero-fill WINE_RESERVE
+ * section is used to reserve the low 8GB of address space.
+ *
+ * On ARM64, PAGEZERO is used to reserve the low 8GB of address space.
  */
+#ifdef __x86_64__
 __asm__(".zerofill WINE_RESERVE,WINE_RESERVE");
 static char __wine_reserve[0x1fffff000] __attribute__((section("WINE_RESERVE, WINE_RESERVE")));
+#endif
 
-static const struct wine_preload_info preload_info[] =
+static struct wine_preload_info preload_info[] =
 {
+#ifdef __x86_64__
     { __wine_reserve,  sizeof(__wine_reserve)  }, /*         0x1000 -    0x200000000: low 8GB */
+#else
+    { (void *)0x1000, 0 },                        /*         0x1000 - end of PAGEZERO */
+#endif
     { 0, 0 }                                      /* end of list */
 };
 
-const __attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = preload_info;
+__attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = preload_info;
 
 static void init_reserved_areas(void)
 {
     int i;
+
+#ifndef __x86_64__
+    Dl_info dli;
+    /* Fill in the size of PAGEZERO */
+    if (dladdr( __func__, &dli ))
+    {
+        unsigned long size = 0;
+        getsegmentdata( dli.dli_fbase, "__PAGEZERO", &size );
+        if (size)
+            wine_main_preload_info[0].size = size - (intptr_t)wine_main_preload_info[0].addr;
+    }
+#endif
 
     for (i = 0; wine_main_preload_info[i].size != 0; i++)
     {

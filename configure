@@ -12421,12 +12421,42 @@ case $host_os in
     SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
 
-    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000"
-
     case $HOST_ARCH in
       aarch64)
         wine_use_preloader=no
         WINELOADER_PROGRAMS="wine.app"
+        as_fn_append WINELOADER_LDFLAGS " -Wl,-segalign,0x4000,-pagezero_size,0x200000000"
+        as_fn_append WINELOADER_LDFLAGS " -Wl,-no_fixup_chains"
+        { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-x86_64_layout_emulation" >&5
+printf %s "checking whether the compiler supports -Wl,-x86_64_layout_emulation... " >&6; }
+if test ${ac_cv_cflags__Wl__x86_64_layout_emulation+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-x86_64_layout_emulation"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__x86_64_layout_emulation=yes
+else case e in #(
+  e) ac_cv_cflags__Wl__x86_64_layout_emulation=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved ;;
+esac
+fi
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__x86_64_layout_emulation" >&5
+printf '%s\n' "$ac_cv_cflags__Wl__x86_64_layout_emulation" >&6; }
+if test "x$ac_cv_cflags__Wl__x86_64_layout_emulation" = xyes
+then :
+  as_fn_append WINELOADER_LDFLAGS " -Wl,-x86_64_layout_emulation"
+fi
         if ${PROVISIONING_PROFILE:+false} :
 then :
   as_fn_append wine_warnings "|No provisioning profile supplied; Wine will crash on launch on an unmodified macOS system."
@@ -12484,6 +12514,7 @@ then :
 fi
         ;;
       x86_64)
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-segalign,0x1000,-pagezero_size,0x1000"
         WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
                 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_huge" >&5
 printf %s "checking whether the compiler supports -Wl,-no_huge... " >&6; }

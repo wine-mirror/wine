@@ -992,18 +992,20 @@ case $host_os in
     AC_SUBST(SECURITY_LIBS,"-framework Security -framework CoreFoundation")
     AC_SUBST(SYSTEMCONFIGURATION_LIBS,"-framework SystemConfiguration")
 
-    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000"
-
     case $HOST_ARCH in
       aarch64)
         wine_use_preloader=no
         WINELOADER_PROGRAMS="wine.app"
+        AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -Wl,-segalign,0x4000,-pagezero_size,0x200000000"])
+        AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -Wl,-no_fixup_chains"])
+        WINE_TRY_CFLAGS([-Wl,-x86_64_layout_emulation],[AS_VAR_APPEND([WINELOADER_LDFLAGS],[" -Wl,-x86_64_layout_emulation"])])
         AS_VAR_IF([PROVISIONING_PROFILE],[],[WINE_WARNING([No provisioning profile supplied; Wine will crash on launch on an unmodified macOS system.])])
         AC_PATH_PROG([CODESIGN],[codesign])
         CODESIGN_IDENTITY=${CODESIGN_IDENTITY:-"-"}
         AS_VAR_IF([CODESIGN_IDENTITY],[-],[WINE_WARNING([Using ad-hoc code-signing; Wine will crash on launch on an unmodified macOS system.])])
         ;;
       x86_64)
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-segalign,0x1000,-pagezero_size,0x1000"
         WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
         dnl If the -no_huge linker option is present (added in Xcode 15.3), use zerofill sections instead of the preloader
         WINE_TRY_CFLAGS([-Wl,-no_huge],
