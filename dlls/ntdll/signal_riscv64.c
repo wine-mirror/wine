@@ -540,9 +540,15 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
      * through address zero. */
     void (FASTCALL *thunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = pBaseThreadInitThunk;
 
-    WARN( "RV64 thread start entry=%p arg=%p BaseThreadInitThunk=%p teb=%p stackbase=%p stacklimit=%p\n",
-          entry, arg, thunk, NtCurrentTeb(),
-          NtCurrentTeb()->Tib.StackBase, NtCurrentTeb()->Tib.StackLimit );
+    TEB *teb = NtCurrentTeb();
+
+    WARN( "RV64 thread start entry=%p arg=%p BaseThreadInitThunk=%p teb=%p\n",
+          entry, arg, thunk, teb );
+    if (teb)
+        WARN( "RV64 thread TEB self=%p stackbase=%p stacklimit=%p peb=%p\n",
+              teb->Tib.Self, teb->Tib.StackBase, teb->Tib.StackLimit, teb->Peb );
+    else
+        ERR( "RV64 thread start has NULL TEB; cannot safely access thread environment\n" );
     if (!thunk || !entry)
     {
         ERR( "RV64 invalid thread startup: entry=%p thunk=%p\n", entry, thunk );
