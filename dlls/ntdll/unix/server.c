@@ -1777,7 +1777,10 @@ void server_init_thread( struct thread_data *data )
     TEB64 *teb64 = get_teb64( data->teb );
 
     data->pthread_id = pthread_self();
-    pthread_setspecific( thread_data_key, data );
+    {
+        int err = pthread_setspecific( thread_data_key, data );
+        if (err) ERR( "pthread_setspecific(thread_data_key) failed: %d\\n", err );
+    }
 
     reply_pipe = init_thread_pipe( data );
     close( reply_pipe );
