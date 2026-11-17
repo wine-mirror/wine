@@ -282,14 +282,36 @@ static inline unsigned int wait_reply( int reply_fd, struct __server_request_inf
 /***********************************************************************
  *           server_call_unlocked
  */
+/* Set WINE_RISCV_DIAG=1 to trace process/thread startup and server round trips. */
+static int riscv64_server_diag_enabled(void)
+{
+#ifdef __riscv
+    const char *value = getenv( "WINE_RISCV_DIAG" );
+    return value && *value && strcmp( value, "0" );
+#else
+    return 0;
+#endif
+}
+
 unsigned int server_call_unlocked( void *req_ptr )
 {
     struct thread_data *data = get_thread_data();
     struct __server_request_info * const req = req_ptr;
     unsigned int ret;
 
-    if ((ret = send_request( data->request_fd, req ))) return ret;
-    return wait_reply( data->reply_fd, req );
+    if (riscv64_server_diag_enabled())
+        WARN( "RV64-DIAG server SEND tid=%u req=%p size=%u request_fd=%d reply_fd=%d\n",
+              get_unix_tid(), req_ptr, req->u.req.request_header.request_size,
+              data->request_fd, data->reply_fd );
+    if ((ret = send_request( data->request_fd, req )))
+    {
+        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG server SEND-FAIL tid=%u status=%08x\n", get_unix_tid(), ret );
+        return ret;
+    }
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG server WAIT-REPLY tid=%u fd=%d\n", get_unix_tid(), data->reply_fd );
+    ret = wait_reply( data->reply_fd, req );
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG server REPLY tid=%u status=%08x\n", get_unix_tid(), ret );
+    return ret;
 }
 
 
@@ -733,6 +755,9 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
         struct context_data context[2];
     } reply_data;
 
+    if (riscv64_server_diag_enabled())
+        WARN( "RV64-DIAG select ENTER tid=%u flags=%08x size=%u timeout=%lld wait_fd=%d\n",
+              get_unix_tid(), flags, size, (long long)abs_timeout, data->wait_fd );
     memset( &result, 0, sizeof(result) );
 
     do
@@ -774,10 +799,13 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
         if (signaled) break;
 
+        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select WAIT tid=%u fd=%d cookie=%d\n", get_unix_tid(), data->wait_fd, cookie );
         ret = wait_select_reply( data->wait_fd, &cookie );
+        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select WAKE tid=%u status=%08x\n", get_unix_tid(), ret );
     }
     while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
 
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG select EXIT tid=%u status=%08x\n", get_unix_tid(), ret );
     if (ret == STATUS_USER_APC) *user_apc = reply_data.call.user;
     if (reply_size > sizeof(reply_data.call))
     {
@@ -1677,6 +1705,7 @@ void server_init_process( struct thread_data *data )
     sigemptyset( &sig_act.sa_mask );
     sigaction( SIGPIPE, &sig_act, NULL );
 
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG thread INIT tid=%u teb=%p entry=%p\n", get_unix_tid(), data->teb, data->start );
     reply_pipe = init_thread_pipe( data );
     close( reply_pipe );
 
@@ -1757,6 +1786,7 @@ void server_init_process_done(void)
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that
      * is sent by init_process_done */
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG process INIT-SIGNALS tid=%u teb=%p\n", get_unix_tid(), data->teb );
     signal_init_process( data->teb );
     init_teb_data( data );
 
@@ -1770,7 +1800,9 @@ void server_init_process_done(void)
     }
     SERVER_END_REQ;
 
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG process INIT-DONE tid=%u status=%08x entry=%p suspend=%u\n", get_unix_tid(), status, main_image_info.TransferAddress, data->suspend );
     assert( !status );
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG process START-THREAD tid=%u\n", get_unix_tid() );
     signal_start_thread( main_image_info.TransferAddress, peb, data->teb );
 }
 
@@ -1816,9 +1848,11 @@ void server_init_thread( struct thread_data *data )
     }
     SERVER_END_REQ;
 
+    if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG thread INIT-REPLY tid=%u suspend=%u\n", get_unix_tid(), data->suspend );
     if (data->teb)
     {
         init_teb_data( data );
+        if (riscv64_server_diag_enabled()) WARN( "RV64-DIAG thread START tid=%u entry=%p\n", get_unix_tid(), data->start );
         signal_start_thread( data->start, data->param, data->teb );
     }
     else if (data->start)
