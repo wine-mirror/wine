@@ -949,10 +949,32 @@ static void set_page_vprot_bits( const void *addr, size_t size, BYTE set, BYTE c
     for ( ; idx < end; idx++)
     {
         BYTE *ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
-        *ptr = (*ptr & ~clear) | set;
+        if (*ptr) *ptr = (*ptr & ~clear) | set;
     }
 #else
-    for ( ; idx < end; idx++) pages_vprot[idx] = (pages_vprot[idx] & ~clear) | set;
+    for ( ; idx < end; idx++) if (pages_vprot[idx]) pages_vprot[idx] = (pages_vprot[idx] & ~clear) | set;
+#endif
+}
+
+
+/***********************************************************************
+ *           set_page_vprot_default
+ *
+ * Set a default value for page protection bytes that are not set yet.
+ */
+static void set_page_vprot_default( const void *addr, size_t size, BYTE vprot )
+{
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+
+#ifdef _WIN64
+    for ( ; idx < end; idx++)
+    {
+        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
+        if (!*ptr) *ptr = vprot;
+    }
+#else
+    for ( ; idx < end; idx++) if (!pages_vprot[idx]) pages_vprot[idx] = vprot;
 #endif
 }
 
@@ -1570,7 +1592,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->size    = size;
     view->protect = vprot;
     if (use_kernel_writewatch) vprot &= ~VPROT_WRITEWATCH;
-    set_page_vprot( base, size, vprot );
+    if (vprot & VPROT_COMMITTED) set_page_vprot( base, size, vprot );
 
     register_view( view );
     kernel_writewatch_register_range( view, view->base, view->size );
@@ -1699,6 +1721,7 @@ static BOOL set_vprot( struct file_view *view, void *base, size_t size, BYTE vpr
 {
     if (!use_kernel_writewatch && view->protect & VPROT_WRITEWATCH)
     {
+        set_page_vprot_default( base, size, vprot | VPROT_WRITEWATCH );
         /* each page may need different protections depending on write watch flag */
         set_page_vprot_bits( base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
     }
@@ -2023,7 +2046,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         TRACE( "found view %p, size %p, protect %#x.\n", view->base, (void *)view->size, view->protect );
 
         view->protect = vprot | VPROT_PLACEHOLDER;
-        set_vprot( view, base, size, vprot );
+        if (vprot & VPROT_COMMITTED) set_vprot( view, base, size, vprot );
         if (vprot & VPROT_WRITEWATCH)
         {
             kernel_writewatch_register_range( view, base, size );
@@ -2180,8 +2203,6 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, size_t max
     {
         size = 0;
 
-        *vprot = get_page_vprot( base );
-
         SERVER_START_REQ( get_mapping_committed_range )
         {
             req->base   = wine_server_client_ptr( view->base );
@@ -2190,14 +2211,12 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, size_t max
             {
                 size = min( reply->size, max_size );
                 if (reply->committed)
-                {
-                    *vprot |= VPROT_COMMITTED;
-                    set_page_vprot_bits( base, size, VPROT_COMMITTED, 0 );
-                }
+                    set_page_vprot_default( base, size, view->protect | VPROT_COMMITTED );
             }
         }
         SERVER_END_REQ;
 
+        *vprot = get_page_vprot( base );
         if (!size || !(vprot_mask & ~VPROT_COMMITTED)) return size;
     }
     else size = min( view->size - offset, max_size );
@@ -2224,7 +2243,7 @@ static NTSTATUS decommit_pages( struct file_view *view, char *base, size_t size 
     else host_end = ROUND_ADDR( base + size, host_page_mask );
 
     if (host_start < host_end) anon_mmap_fixed( host_start, host_end - host_start, PROT_NONE, 0 );
-    set_page_vprot_bits( base, size, 0, VPROT_COMMITTED );
+    set_page_vprot( base, size, 0 );
     if (host_start < host_end) kernel_writewatch_register_range( view, host_start, host_end - host_start );
     return STATUS_SUCCESS;
 }
@@ -3341,7 +3360,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     if (res == STATUS_SUCCESS)
     {
         /* file mappings must always be accessible */
-        mprotect_range( view->base, view->size, VPROT_COMMITTED, 0 );
+        mprotect_range( view->base, view->size, vprot | VPROT_COMMITTED, 0 );
 
         SERVER_START_REQ( map_view )
         {
@@ -4409,17 +4428,18 @@ static NTSTATUS grow_thread_stack( struct thread_data *data, char *page, struct 
 {
     NTSTATUS ret = 0;
 
-    set_page_vprot_bits( page, host_page_size, VPROT_COMMITTED, VPROT_GUARD );
+    set_page_vprot( page, host_page_size, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
     mprotect_range( page, host_page_size, 0, 0 );
     if (page >= stack_info->start + host_page_size + stack_info->guaranteed)
     {
-        set_page_vprot_bits( page - host_page_size, host_page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
+        set_page_vprot( page - host_page_size, host_page_size,
+                        VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
         mprotect_range( page - host_page_size, host_page_size, 0, 0 );
     }
     else  /* inside guaranteed space -> overflow exception */
     {
         page = stack_info->start + host_page_size;
-        set_page_vprot_bits( page, stack_info->guaranteed, VPROT_COMMITTED, VPROT_GUARD );
+        set_page_vprot( page, stack_info->guaranteed, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
         mprotect_range( page, stack_info->guaranteed, 0, 0 );
         ret = STATUS_STACK_OVERFLOW;
     }
@@ -6535,7 +6555,8 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
         {
             while (pos < *count && addr < end)
             {
-                if (!(get_page_vprot( addr ) & VPROT_WRITEWATCH)) addresses[pos++] = addr;
+                BYTE vprot = get_page_vprot( addr );
+                if (vprot && !(vprot & VPROT_WRITEWATCH)) addresses[pos++] = addr;
                 addr += page_size;
             }
             size = addr - (char *)base;

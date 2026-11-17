@@ -476,7 +476,6 @@ static void test_VirtualAlloc(void)
 
     ok(VirtualQuery((char *)addr1 + 0x1000, &info, sizeof(info)) == sizeof(info),
         "VirtualQuery failed\n");
-    todo_wine
     ok(info.RegionSize == 0xf000, "%Ix != 0xf000\n", info.RegionSize);
     ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
     ok(info.Protect == 0, "%lx != 0\n", info.Protect);
