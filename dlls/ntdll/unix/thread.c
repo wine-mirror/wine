@@ -1587,6 +1587,9 @@ void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     if (InterlockedDecrement( &nb_threads ) <= 0) abort_process( status );
+#ifdef __riscv
+    riscv64_unregister_thread_data();
+#endif
     pthread_exit_wrapper( status );
 }
 
@@ -1773,6 +1776,69 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     return STATUS_SUCCESS;
 }
 
+
+#ifdef __riscv
+/* Native Linux TIDs identify the running kernel thread without depending on
+ * pthread-specific keys.  This registry is deliberately separate from the
+ * Windows TEB and does not modify the ELF tp register.  A fixed-size array
+ * avoids allocation in the recovery path. */
+#define RISCV64_THREAD_SLOTS 4096
+static struct
+{
+    volatile long tid;
+    struct thread_data *data;
+} riscv64_threads[RISCV64_THREAD_SLOTS];
+
+static long riscv64_native_tid(void)
+{
+    register long a0 __asm__("a0") = 0;
+    register long a7 __asm__("a7") = 178; /* Linux gettid */
+    __asm__ volatile ("ecall" : "+r"(a0) : "r"(a7) : "memory");
+    return a0;
+}
+
+void riscv64_register_thread_data( struct thread_data *data )
+{
+    long tid = riscv64_native_tid();
+    unsigned int i;
+    for (i = 0; i < RISCV64_THREAD_SLOTS; ++i)
+    {
+        long expected = 0;
+        if (__atomic_compare_exchange_n( &riscv64_threads[i].tid, &expected, -tid,
+                                         0, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE ))
+        {
+            __atomic_store_n( &riscv64_threads[i].data, data, __ATOMIC_RELEASE );
+            __atomic_store_n( &riscv64_threads[i].tid, tid, __ATOMIC_RELEASE );
+            return;
+        }
+    }
+    ERR( "RISC-V64 native thread registry exhausted for tid=%ld\n", tid );
+    abort();
+}
+
+void riscv64_unregister_thread_data(void)
+{
+    long tid = riscv64_native_tid();
+    unsigned int i;
+    for (i = 0; i < RISCV64_THREAD_SLOTS; ++i)
+        if (__atomic_load_n( &riscv64_threads[i].tid, __ATOMIC_ACQUIRE ) == tid)
+        {
+            __atomic_store_n( &riscv64_threads[i].tid, 0, __ATOMIC_RELEASE );
+            __atomic_store_n( &riscv64_threads[i].data, NULL, __ATOMIC_RELEASE );
+            return;
+        }
+}
+
+struct thread_data *riscv64_lookup_thread_data(void)
+{
+    long tid = riscv64_native_tid();
+    unsigned int i;
+    for (i = 0; i < RISCV64_THREAD_SLOTS; ++i)
+        if (__atomic_load_n( &riscv64_threads[i].tid, __ATOMIC_ACQUIRE ) == tid)
+            return __atomic_load_n( &riscv64_threads[i].data, __ATOMIC_ACQUIRE );
+    return NULL;
+}
+#endif
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
