@@ -2166,7 +2166,7 @@ static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
         return;
     }
 
-    len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA), FALSE );
+    len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA) - 1, FALSE );
     nameA[len] = '\0';
     thr_set_name( unix_tid, nameA );
 #else
