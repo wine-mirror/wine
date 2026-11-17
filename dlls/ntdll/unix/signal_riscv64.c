@@ -585,6 +585,22 @@ static inline struct thread_data *riscv64_signal_thread_data(void)
     return (struct thread_data *)(sp & ~signal_stack_mask);
 }
 
+struct riscv64_continuation_data
+{
+    struct syscall_frame *frame;
+    unsigned int ready;
+    ULONG_PTR last_fault_pc;
+    ULONG_PTR last_fault_sp;
+    unsigned int repeated_faults;
+};
+
+C_ASSERT( sizeof(struct riscv64_continuation_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
+
+static inline struct riscv64_continuation_data *riscv64_continuation_data( struct thread_data *data )
+{
+    return (struct riscv64_continuation_data *)get_teb_data( data )->cpu_data;
+}
+
 static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
@@ -622,6 +638,27 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     {
         riscv64_report_missing_thread_data( sig, info, uc );
         _exit( 128 + sig );
+    }
+    /* Repeated faults at one instruction with a descending stack indicate
+     * recursive exception dispatch.  Stop before exhausting the stack and
+     * destroying the original evidence.  State is per Wine thread, not TLS. */
+    if (data->teb)
+    {
+        struct riscv64_continuation_data *state = riscv64_continuation_data( data );
+        ULONG_PTR pc = PC_sig( uc );
+        if (pc == state->last_fault_pc && sp < state->last_fault_sp &&
+            state->last_fault_sp - sp <= 0x10000)
+            ++state->repeated_faults;
+        else
+            state->repeated_faults = 0;
+        state->last_fault_pc = pc;
+        state->last_fault_sp = sp;
+        if (state->repeated_faults >= 3)
+        {
+            RV64_CHECKPOINT( "recursive fault at identical PC; terminating before stack exhaustion" );
+            riscv64_report_missing_thread_data( sig, info, uc );
+            _exit( 128 + sig );
+        }
     }
     /* Resolve guard-page and stack-growth faults before writing to the
      * interrupted stack.  That stack may itself be the faulting mapping. */
@@ -703,19 +740,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
 /* Keep continuation state in Wine's TEB CPU area instead of ELF dynamic TLS.
  * The SIGUSR2 handler runs on the 64K-aligned Wine alternate signal stack,
  * allowing thread_data to be recovered without __tls_get_addr or pthread. */
-struct riscv64_continuation_data
-{
-    struct syscall_frame *frame;
-    unsigned int ready;
-};
-
-C_ASSERT( sizeof(struct riscv64_continuation_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
-
-static inline struct riscv64_continuation_data *riscv64_continuation_data( struct thread_data *data )
-{
-    return (struct riscv64_continuation_data *)get_teb_data( data )->cpu_data;
-}
-
 static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
 {
     ucontext_t *uc = opaque;
