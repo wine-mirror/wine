@@ -502,8 +502,109 @@ LONG WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR image_base, ULONG_PTR pc,
     *establisher = sp;
     if (function)
     {
-        FIXME( "RISC-V64 PE unwind opcodes not implemented at pc %p\n", (void *)pc );
-        return STATUS_INVALID_DISPOSITION;
+        /* RISC-V64 PE .xdata uses 2-byte instruction units and a 4-byte
+         * header.  Decode the common allocation, saved-ra and frame-pointer
+         * operations; do not guess at unsupported unwind sequences. */
+        const BYTE *codes, *end;
+        const DWORD *header_ptr;
+        DWORD header, extra, scopes, words, length, offset, i;
+        ULONG_PTR new_sp = sp, new_ra = context->Gpr.X[1];
+        ULONG_PTR stack_low = (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit;
+        ULONG_PTR stack_high = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase;
+        CONTEXT next = *context;
+        BOOL ended = FALSE;
+
+        if (!image_base || (function->UnwindData & 3) ||
+            pc < image_base + function->BeginAddress)
+            return STATUS_INVALID_DISPOSITION;
+        header_ptr = (const DWORD *)(image_base + function->UnwindData);
+        header = *header_ptr++;
+        if ((header >> 18) & 3) return STATUS_INVALID_DISPOSITION;
+        length = header & 0x3ffff;
+        offset = (pc - image_base - function->BeginAddress) / 2;
+        if (offset >= length) return STATUS_INVALID_DISPOSITION;
+        scopes = (header >> 22) & 31;
+        words = (header >> 27) & 31;
+        if (!scopes && !words)
+        {
+            extra = *header_ptr++;
+            scopes = extra & 0xffff;
+            words = (extra >> 16) & 0xff;
+        }
+        if (words > 255 || scopes > 65535) return STATUS_INVALID_DISPOSITION;
+        /* Prologue/epilogue-aware interpretation is required before restoring
+         * any registers there.  Reject these locations rather than inventing
+         * an unwind that can corrupt the caller. */
+        if (offset < words * 2 || (length - offset) <= words * 2)
+        {
+            WARN( "RV64 PE unwind prologue/epilogue requires scope decoder pc=%p offset=%u length=%u\n",
+                  (void *)pc, offset, length );
+            return STATUS_UNSUCCESSFUL;
+        }
+        codes = (const BYTE *)(header_ptr + ((header & (1 << 21)) ? 0 : scopes));
+        end = codes + 4 * words;
+        if ((header & (1 << 20)) && handler && (type & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER)))
+        {
+            *handler = (PEXCEPTION_ROUTINE)(image_base + *(const DWORD *)end);
+            if (handler_data) *handler_data = (void *)(end + sizeof(DWORD));
+        }
+        for (i = 0; codes < end && i < 1024; ++i)
+        {
+            BYTE op = *codes++;
+            ULONG_PTR address;
+            unsigned int reg;
+            if (op <= 0x1f) new_sp += 16 * op;
+            else if ((op & 0xf8) == 0xc0)
+            {
+                if (codes >= end) return STATUS_INVALID_DISPOSITION;
+                new_sp += 16 * (((op & 7) << 8) | *codes++);
+            }
+            else if (op == 0xd0)
+            {
+                if (end - codes < 2) return STATUS_INVALID_DISPOSITION;
+                reg = 1 + *codes++;
+                address = new_sp + 8 * *codes++;
+                if (reg >= 32 || address < stack_low || address > stack_high - 8)
+                    return STATUS_BAD_STACK;
+                next.Gpr.X[reg] = *(const ULONG64 *)address;
+                if (reg == 1) new_ra = next.Gpr.X[1];
+            }
+            else if (op == 0xe0)
+            {
+                if (end - codes < 3) return STATUS_INVALID_DISPOSITION;
+                new_sp += 16 * ((codes[0] << 16) | (codes[1] << 8) | codes[2]);
+                codes += 3;
+            }
+            else if (op == 0xe1) new_sp = next.Gpr.X[8];
+            else if (op == 0xe2)
+            {
+                if (end - codes < 2) return STATUS_INVALID_DISPOSITION;
+                new_sp = next.Gpr.X[8] - 8 * ((codes[0] << 8) | codes[1]);
+                codes += 2;
+            }
+            else if (op == 0xe3) continue;
+            else if (op == 0xe4 || op == 0xe5) { ended = TRUE; break; }
+            else
+            {
+                WARN( "RV64 unsupported PE unwind opcode %#x pc=%p\n", op, (void *)pc );
+                return STATUS_UNSUCCESSFUL;
+            }
+            if (new_sp < stack_low || new_sp > stack_high || (new_sp & 7))
+                return STATUS_BAD_STACK;
+        }
+        if (!ended || !new_ra || (new_sp & 15) || new_sp < sp ||
+            new_sp >= stack_high || (new_sp == sp && new_ra == context->Pc))
+            return STATUS_BAD_STACK;
+        next.Gpr.X[2] = new_sp;
+        next.Gpr.X[1] = new_ra;
+        next.Pc = new_ra;
+        next.ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+        *establisher = new_sp;
+        *context = next;
+        TRACE( "RV64 PE unwind pc=%p sp=%p -> pc=%p sp=%p fp=%p\n",
+               (void *)pc, (void *)sp, (void *)next.Pc, (void *)new_sp,
+               (void *)(ULONG_PTR)next.Gpr.X[8] );
+        return STATUS_SUCCESS;
     }
     if (!sp || (sp & 15)) return STATUS_BAD_STACK;
     if (low_limit && sp < *low_limit) return STATUS_BAD_STACK;
