@@ -470,7 +470,7 @@ static struct opengl_context *get_thread_context( struct opengl_context *root, s
 
     /* re-create the context if the drawable we want to activate uses a different format */
     if (drawable && driver_funcs->context_format) attrs.format = drawable->format;
-    if (*context && (*context)->attrs.format != attrs.format)
+    if (*context && attrs.format && (*context)->attrs.format != attrs.format)
     {
         driver_funcs->p_context_destroy( *context );
         *context = NULL;
