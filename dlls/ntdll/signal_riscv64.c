@@ -502,6 +502,14 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2,
           (void *)(ULONG_PTR)context->Gpr.X[2],
           (void *)(ULONG_PTR)context->Gpr.X[1] );
 
+    WARN( "RV64 loader input a0=%p a1=%p a2=%p a3=%p tp=%p gp=%p flags=%#lx\n",
+          (void *)(ULONG_PTR)context->Gpr.X[10],
+          (void *)(ULONG_PTR)context->Gpr.X[11],
+          (void *)(ULONG_PTR)context->Gpr.X[12],
+          (void *)(ULONG_PTR)context->Gpr.X[13],
+          (void *)(ULONG_PTR)context->Gpr.X[4],
+          (void *)(ULONG_PTR)context->Gpr.X[3],
+          (unsigned long)context->ContextFlags );
     loader_init( context, (void **)&context->Gpr.X[10] );
 
     WARN( "RISCV64 LdrInitializeThunk: after loader_init pc=%p sp=%p ra=%p\n",
@@ -509,6 +517,13 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2,
           (void *)(ULONG_PTR)context->Gpr.X[2],
           (void *)(ULONG_PTR)context->Gpr.X[1] );
 
+    WARN( "RV64 loader continue target=%p sp=%p ra=%p entry(a0)=%p arg(a1)=%p tp=%p thunk=%p\n",
+          (void *)(ULONG_PTR)context->Pc,
+          (void *)(ULONG_PTR)context->Gpr.X[2],
+          (void *)(ULONG_PTR)context->Gpr.X[1],
+          (void *)(ULONG_PTR)context->Gpr.X[10],
+          (void *)(ULONG_PTR)context->Gpr.X[11],
+          (void *)(ULONG_PTR)context->Gpr.X[4], pBaseThreadInitThunk );
     status = NtContinue( context, TRUE );
 
     ERR( "RISCV64 NtContinue unexpectedly returned status=%#lx\n",
@@ -525,8 +540,9 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
      * through address zero. */
     void (FASTCALL *thunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = pBaseThreadInitThunk;
 
-    WARN( "RV64 thread start entry=%p arg=%p BaseThreadInitThunk=%p teb=%p\n",
-          entry, arg, thunk, NtCurrentTeb() );
+    WARN( "RV64 thread start entry=%p arg=%p BaseThreadInitThunk=%p teb=%p stackbase=%p stacklimit=%p\n",
+          entry, arg, thunk, NtCurrentTeb(),
+          NtCurrentTeb()->Tib.StackBase, NtCurrentTeb()->Tib.StackLimit );
     if (!thunk || !entry)
     {
         ERR( "RV64 invalid thread startup: entry=%p thunk=%p\n", entry, thunk );
