@@ -1,4 +1,5 @@
 MODULE    = hh.exe
+ENABLE_ARCHS = i386 x86_64 arm64ec
 
 EXTRADLLFLAGS = -mwindows
 
