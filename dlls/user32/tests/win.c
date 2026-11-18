@@ -69,6 +69,7 @@ static BOOL (WINAPI *pNtUserModifyUserStartupInfoFlags)(DWORD,DWORD);
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
 static DWORD num_settext_msgs;
+static DWORD num_inactive_msgs;
 static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
@@ -1111,6 +1112,9 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         case WM_SETTEXT:
             num_settext_msgs++;
+            break;
+        case WM_ACTIVATE:
+            if (hwnd == hwndMain && LOWORD(wparam) == WA_INACTIVE) num_inactive_msgs++;
             break;
         case WM_ACTIVATEAPP:
             if (wparam) app_activated = TRUE;
@@ -11481,7 +11485,9 @@ static void test_activateapp(HWND window1)
     ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
     ok(app_deactivated, "Expected WM_ACTIVATEAPP(0), did not receive it.\n");
 
+    num_inactive_msgs = 0;
     SetForegroundWindow(thread_params.thread_window);
+    ok(num_inactive_msgs == 1, "Expected one WM_ACTIVATE(WA_INACTIVE), got %lu.\n", num_inactive_msgs);
     check_wnd_state(0, thread_params.thread_window, 0, 0);
     flush_events(TRUE);
 
@@ -11527,6 +11533,22 @@ static void test_activateapp(HWND window1)
     check_wnd_state(window2, window2, window2, 0);
     ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
     ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+
+    /* Reclaim foreground with window1 before processing the loss for window2. */
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_STEAL_1, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == thread_params.thread_window, "Expected foreground window %p, got %p.\n",
+            thread_params.thread_window, test_window);
+
+    num_inactive_msgs = 0;
+    ok(SetForegroundWindow(window1), "SetForegroundWindow failed.\n");
+    check_wnd_state(window1, window1, window1, 0);
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    todo_wine ok(!num_inactive_msgs, "Received %lu unexpected WM_ACTIVATE(WA_INACTIVE) messages.\n", num_inactive_msgs);
+    test_window = GetForegroundWindow();
+    todo_wine ok(test_window == window1, "Expected foreground window %p, got %p.\n", window1, test_window);
 
     PostThreadMessageA(tid, thread_params.msg_quit, 0, 0);
     WaitForSingleObject(thread, INFINITE);
