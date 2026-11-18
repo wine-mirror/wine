@@ -1602,6 +1602,7 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     struct frame_state saved_states[MAX_SAVED_STATES];
     CONTEXT next = *context;
     ULONG_PTR length, code_end, old_pc = context->Pc, old_sp = context->Gpr.X[2];
+    ULONG_PTR control_pc = old_pc - !!(context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
     unsigned char lsda_encoding = DW_EH_PE_omit;
     int has_z = 0, signal_frame = 0;
 
@@ -1651,12 +1652,12 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     }
     if (end) ptr = end;
     end = (const unsigned char *)(&cie->length + 1) + cie->length;
-    execute_cfa_instructions( ptr, end, old_pc, &info, bases );
+    execute_cfa_instructions( ptr, end, control_pc, &info, bases );
 
     ptr = (const unsigned char *)(fde + 1);
     info.ip = dwarf_get_ptr( &ptr, info.fde_encoding, bases );
     code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f, bases );
-    if (old_pc < info.ip || old_pc >= code_end) return STATUS_INVALID_DISPOSITION;
+    if (control_pc < info.ip || control_pc >= code_end) return STATUS_INVALID_DISPOSITION;
     end = NULL;
     if (has_z)
     {
@@ -1670,8 +1671,8 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     end = (const unsigned char *)(&fde->length + 1) + fde->length;
     execute_cfa_instructions( ptr, end, old_pc, &info, bases );
 
-    TRACE( "RV64 DWARF CFA pc=%p sp=%p ra=%p fp=%p cfa_reg=%u cfa_offset=%ld ra_rule=%u ra_offset=%lld\n",
-           (void *)old_pc, (void *)old_sp, (void *)(ULONG_PTR)context->Gpr.X[1],
+    TRACE( "RV64 DWARF CFA pc=%p control_pc=%p sp=%p ra=%p fp=%p cfa_reg=%u cfa_offset=%ld ra_rule=%u ra_offset=%lld\n",
+           (void *)old_pc, (void *)control_pc, (void *)old_sp, (void *)(ULONG_PTR)context->Gpr.X[1],
            (void *)(ULONG_PTR)context->Gpr.X[8], info.state.cfa_reg,
            (long)info.state.cfa_offset, info.state.rules[1],
            (long long)info.state.regs[1] );
@@ -1707,9 +1708,12 @@ NTSTATUS unwind_builtin_dll( void *args )
 
     if (!params || !params->context || !params->dispatch)
         return STATUS_INVALID_PARAMETER;
+    ULONG_PTR control_pc;
+
     if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
-    fde = _Unwind_Find_FDE( (void *)(ULONG_PTR)(params->context->Pc -
-                          !!(params->context->ContextFlags & CONTEXT_UNWOUND_TO_CALL)), &bases );
+    control_pc = params->context->Pc -
+                 !!(params->context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+    fde = _Unwind_Find_FDE( (void *)control_pc, &bases );
     if (!fde) return STATUS_UNSUCCESSFUL;
     return riscv64_dwarf_virtual_unwind( params->context,
                                           (DISPATCHER_CONTEXT *)params->dispatch, fde, &bases );
