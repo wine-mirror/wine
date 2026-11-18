@@ -1176,6 +1176,11 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, ANSI_STRING *exp_name
     file[--pos] = '/';
 
     TRACE( "looking for %s for file %s\n", debugstr_a(file + pos + 1), debugstr_us(nt_name) );
+#ifdef __riscv
+    WARN( "RV64-LAUNCH find_builtin_dll nt=%s name=%s build_dir=%s search=%04x load=%04x\n",
+          debugstr_us(nt_name), debugstr_a(file + pos + 1), build_dir ? build_dir : "(null)",
+          search_machine, load_machine );
+#endif
 
     if (build_dir)
     {
