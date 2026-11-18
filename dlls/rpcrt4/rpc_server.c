@@ -652,7 +652,9 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
   SetThreadDescription(GetCurrentThread(), L"wine_rpcrt4_server");
 
   for (;;) {
+    TRACE("RV64-RPC wait-array before cps=%p objs=%p\n", cps, objs);
     objs = cps->ops->get_wait_array(cps, objs, &count);
+    TRACE("RV64-RPC wait-array after cps=%p objs=%p count=%u\n", cps, objs, count);
 
     if (set_ready_event)
     {
@@ -662,7 +664,9 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     }
 
     /* start waiting */
+    TRACE("RV64-RPC wait enter cps=%p objs=%p count=%u\n", cps, objs, count);
     res = cps->ops->wait_for_new_connection(cps, count, objs);
+    TRACE("RV64-RPC wait exit cps=%p result=%d\n", cps, res);
 
     if (res == -1 || (res == 0 && !std_listen))
     {

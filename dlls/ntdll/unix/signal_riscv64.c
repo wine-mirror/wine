@@ -935,12 +935,48 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         *p++ = '\n';
         write( 2, buf, p - buf );
     }
-    /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
+    /* gp and tp belong to the host ELF runtime; retain the signal-time values.
+     * Check the entire integer image while the kernel's real signal context
+     * is still available, rather than sampling C compiler-owned registers. */
+    if (riscv64_transition_diag_enabled())
+    {
+        unsigned int mismatch = 0;
+        for (i = 1; i < 32; ++i)
+        {
+            ULONG64 expected = i == 1 ? frame->ra : i == 2 ? frame->sp : frame->x[i];
+            if (i == 3 || i == 4) continue; /* host gp/tp */
+            if (REGn_sig( i, uc ) != expected) ++mismatch;
+        }
+        if (PC_sig( uc ) != frame->pc) ++mismatch;
+        if (mismatch)
+        {
+            char buf[128], *p = buf;
+            p = riscv64_diag_text( p, "RV64-CONTEXT GPR mismatch count=" );
+            p = riscv64_diag_hex( p, mismatch );
+            *p++ = '\n';
+            write( 2, buf, p - buf );
+        }
+    }
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
     if (frame->restore_flags & (CONTEXT_FLOATING_POINT & ~CONTEXT_RISCV64))
     {
         for (i = 0; i < 32; ++i) uc->uc_mcontext.__fpregs.__d.__f[i] = frame->f[i];
         uc->uc_mcontext.__fpregs.__d.__fcsr = frame->fcsr;
+        if (riscv64_transition_diag_enabled())
+        {
+            unsigned int mismatch = 0;
+            for (i = 0; i < 32; ++i)
+                if (uc->uc_mcontext.__fpregs.__d.__f[i] != frame->f[i]) ++mismatch;
+            if (uc->uc_mcontext.__fpregs.__d.__fcsr != frame->fcsr) ++mismatch;
+            if (mismatch)
+            {
+                char buf[128], *p = buf;
+                p = riscv64_diag_text( p, "RV64-CONTEXT FPR mismatch count=" );
+                p = riscv64_diag_hex( p, mismatch );
+                *p++ = '\n';
+                write( 2, buf, p - buf );
+            }
+        }
     }
 #endif
 }
@@ -1025,6 +1061,23 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
               (void *)(ULONG_PTR)frame->ra, (void *)(ULONG_PTR)frame->x[4],
               __builtin_thread_pointer(), frame, (unsigned long)sizeof(*frame),
               !(frame->sp & 15) );
+    if (riscv64_transition_diag_enabled())
+    {
+        WARN( "RV64-CONTEXT flags=%#x pc=%p sp=%p ra=%p x1=%p x2=%p gp=%p tp=%p fcsr=%#llx\n",
+              frame->restore_flags, (void *)(ULONG_PTR)frame->pc,
+              (void *)(ULONG_PTR)frame->sp, (void *)(ULONG_PTR)frame->ra,
+              (void *)(ULONG_PTR)frame->x[1], (void *)(ULONG_PTR)frame->x[2],
+              (void *)(ULONG_PTR)frame->x[3], (void *)(ULONG_PTR)frame->x[4],
+              (unsigned long long)frame->fcsr );
+        if (frame->x[1] != frame->ra || frame->x[2] != frame->sp)
+            WARN( "RV64-CONTEXT inconsistent mirrored ra/sp registers in continuation frame\n" );
+    }
+    if (!frame->pc || !frame->sp || (frame->sp & 15))
+    {
+        ERR( "RV64-CONTEXT refusing invalid target pc=%p sp=%p\n",
+             (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp );
+        abort();
+    }
     continuation = riscv64_continuation_data( data );
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
@@ -1147,6 +1200,8 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     ULONG index = id & 0xfff;
     ULONG table_id = (id >> 12) & 3;
     ULONG arg_size;
+    ULONG_PTR argv[20] = {0};
+    unsigned int argc, i;
     /* RV64 uses a0-a7 followed by eight-byte stack slots.  Some
      * win32u services have 17 arguments; allow up to 20 in total. */
     typedef NTSTATUS (*service_t)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
@@ -1188,20 +1243,39 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     }
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
-    return service( args[0], args[1], args[2], args[3],
-                    args[4], args[5], args[6], args[7],
-                    arg_size > 8 * sizeof(ULONG_PTR) ? stack_args[0] : 0,
-                    arg_size > 9 * sizeof(ULONG_PTR) ? stack_args[1] : 0,
-                    arg_size > 10 * sizeof(ULONG_PTR) ? stack_args[2] : 0,
-                    arg_size > 11 * sizeof(ULONG_PTR) ? stack_args[3] : 0,
-                    arg_size > 12 * sizeof(ULONG_PTR) ? stack_args[4] : 0,
-                    arg_size > 13 * sizeof(ULONG_PTR) ? stack_args[5] : 0,
-                    arg_size > 14 * sizeof(ULONG_PTR) ? stack_args[6] : 0,
-                    arg_size > 15 * sizeof(ULONG_PTR) ? stack_args[7] : 0,
-                    arg_size > 16 * sizeof(ULONG_PTR) ? stack_args[8] : 0,
-                    arg_size > 17 * sizeof(ULONG_PTR) ? stack_args[9] : 0,
-                    arg_size > 18 * sizeof(ULONG_PTR) ? stack_args[10] : 0,
-                    arg_size > 19 * sizeof(ULONG_PTR) ? stack_args[11] : 0 );
+    argc = arg_size / sizeof(ULONG_PTR);
+    /* The stub saves a0..a7 in the syscall frame.  Arguments beyond a7
+     * begin at the caller's original SP, with no x86-style shadow space.
+     * Snapshot only the slots declared by ArgumentTable, before calling
+     * into the service (which may itself reenter Wine). */
+    if (!args || ((ULONG_PTR)args & 7) || (argc > 8 && (!stack_args || ((ULONG_PTR)stack_args & 7))))
+    {
+        ERR( "RV64-SVC invalid argument vector id=%#x argc=%u regs=%p stack=%p\n",
+             id, argc, args, stack_args );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (argc > 8 && (ULONG_PTR)stack_args > ~(ULONG_PTR)0 - (argc - 8) * sizeof(ULONG_PTR))
+        return STATUS_INVALID_PARAMETER;
+    for (i = 0; i < argc && i < 8; ++i) argv[i] = args[i];
+    for (; i < argc; ++i) argv[i] = stack_args[i - 8];
+
+    if (riscv64_transition_diag_enabled() && id == 0x39)
+    {
+        WARN( "RV64-SVC id=%#x table=%u index=%u count=%u bytes=%u target=%p args=%p stack=%p\n",
+              id, table_id, index, argc, arg_size, service, args, stack_args );
+        for (i = 0; i < argc; ++i)
+            WARN( "RV64-SVC id=%#x arg[%u]=%016llx\n",
+                  id, i, (unsigned long long)argv[i] );
+    }
+    /* RISC-V LP64D passes the first eight integer/pointer arguments in
+     * a0..a7, then consecutive 8-byte slots on the stack.  A fixed
+     * prototype supplies the maximum supported slots; unused slots are
+     * initialized to zero and are never read from the Windows stack. */
+    return service( argv[0], argv[1], argv[2], argv[3],
+                    argv[4], argv[5], argv[6], argv[7],
+                    argv[8], argv[9], argv[10], argv[11],
+                    argv[12], argv[13], argv[14], argv[15],
+                    argv[16], argv[17], argv[18], argv[19] );
 }
 
 /* a0 points to 32 double registers followed by the floating-point CSR. */
@@ -1571,6 +1645,15 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
 
     stack_base = (ULONG_PTR)get_kernel_stack( data );
     stack_end = stack_base + kernel_stack_size;
+    if ((ULONG_PTR)frame < stack_base ||
+        (ULONG_PTR)frame > stack_end ||
+        stack_end - (ULONG_PTR)frame < sizeof(*frame) ||
+        ((ULONG_PTR)frame & 15))
+    {
+        ERR( "RV64-FRAME invalid active frame=%p stack=[%p,%p)\n",
+             frame, (void *)stack_base, (void *)stack_end );
+        return NULL;
+    }
     if (sp < stack_base || sp >= stack_end)
     {
         /* A callback on a different stack cannot be nested safely without
@@ -1582,7 +1665,8 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
                   entry_sp, frame );
             return NULL;
         }
-        frame->prev_frame = NULL;
+        /* The root frame is reusable only when no nested frame owns the
+         * syscall-frame pointer.  Do not modify its linkage on entry. */
         return frame;
     }
 
@@ -1594,6 +1678,15 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
     if (sp < stack_base + 8192 + 2048 + sizeof(*nested)) return NULL;
     frame_addr = (sp - 2048 - sizeof(*nested)) & ~(ULONG_PTR)15;
     nested = (struct syscall_frame *)frame_addr;
+    if (frame_addr < stack_base + 8192 ||
+        frame_addr + sizeof(*nested) > sp - 2048 ||
+        (frame_addr < (ULONG_PTR)frame + sizeof(*frame) &&
+         frame_addr + sizeof(*nested) > (ULONG_PTR)frame))
+    {
+        ERR( "RV64-FRAME overlap or guard failure nested=%p active=%p entry_sp=%p\n",
+             nested, frame, entry_sp );
+        return NULL;
+    }
     memset( nested, 0, sizeof(*nested) );
     nested->prev_frame = frame;
     get_teb_data( data )->syscall_frame = nested;
@@ -1615,8 +1708,27 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
               __builtin_thread_pointer(), data, data ? data->teb : NULL,
               frame, frame ? frame->prev_frame : NULL );
     }
-    if (data && data->teb && frame->prev_frame)
+    if (!data || !data->teb || !frame) return;
+    if (get_syscall_frame( data ) != frame)
+    {
+        ERR( "RV64-FRAME finish ownership mismatch completed=%p active=%p\n",
+             frame, get_syscall_frame( data ) );
+        /* Never install a stale previous-frame pointer over another
+         * active transition.  Leave the chain intact for diagnosis. */
+        return;
+    }
+    if (frame->prev_frame)
+    {
+        ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
+        ULONG_PTR end = base + kernel_stack_size;
+        ULONG_PTR prev = (ULONG_PTR)frame->prev_frame;
+        if (prev < base || prev > end || end - prev < sizeof(*frame) || (prev & 15))
+        {
+            ERR( "RV64-FRAME invalid previous=%p completed=%p\n", frame->prev_frame, frame );
+            return;
+        }
         get_teb_data( data )->syscall_frame = frame->prev_frame;
+    }
 }
 
 /* Unix-call entry: a0 = function table, a1 = function index,
