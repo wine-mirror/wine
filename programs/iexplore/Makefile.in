@@ -1,6 +1,7 @@
 MODULE    = iexplore.exe
 IMPORTS   = ieframe
 DELAYIMPORTS = advpack version user32
+ENABLE_ARCHS = i386 x86_64 arm64ec
 
 EXTRADLLFLAGS = -mwindows -municode -Wl,--large-address-aware
 
