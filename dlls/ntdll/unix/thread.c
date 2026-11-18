@@ -2649,7 +2649,12 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         write( 2, marker, sizeof(marker) - 1 );
     }
 #endif
-    TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
+#if defined(__riscv) && __riscv_xlen == 64
+    /* Isolate the Wine debug/TLS path from the service body when requested.
+     * If this avoids the fault, the normal TRACE path is implicated. */
+    if (class != ThreadNameInformation || !getenv("WINE_RISCV_SKIP_THREAD_TRACE"))
+#endif
+        TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
 
     switch (class)
     {
