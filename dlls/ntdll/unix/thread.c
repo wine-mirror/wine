@@ -2645,7 +2645,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
      * Diagnostic branch only; remove after the syscall bridge is fixed. */
     if (class == ThreadNameInformation)
     {
-        static const char marker[] = "RV64-THREADNAME RAW ENTRY\\n";
+        static const char marker[] = "RV64-THREADNAME RAW ENTRY\n";
         write( 2, marker, sizeof(marker) - 1 );
     }
 #endif
