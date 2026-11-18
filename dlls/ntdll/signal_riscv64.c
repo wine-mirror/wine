@@ -392,7 +392,40 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
                    "mv a0, sp\n\t"
                    "call riscv64_dispatch_apc\n\t"
                    "ebreak" )
-__ASM_GLOBAL_FUNC( KiUserCallbackDispatcher, "ret" )
+/* Windows-side half of KeUserModeCallback.  The Unix half builds the same
+ * header as ARM64: arguments pointer, byte count, callback index, then
+ * a machine-frame record.  Keep the callback on the Windows stack so it
+ * can issue nested NT syscalls. */
+struct riscv64_callback_stack
+{
+    void *args;
+    ULONG len;
+    ULONG id;
+    ULONG64 ra;
+    ULONG64 sp;
+    ULONG64 pc;
+    BYTE args_data[0];
+};
+
+static void __attribute__((used,noreturn)) riscv64_dispatch_callback( struct riscv64_callback_stack *stack )
+{
+    NTSTATUS (WINAPI *callback)( void *, ULONG );
+    NTSTATUS status;
+    void **table = NtCurrentTeb()->Peb->KernelCallbackTable;
+
+    if (!table) RtlRaiseStatus( STATUS_INVALID_PARAMETER );
+    callback = table[stack->id];
+    if (!callback) RtlRaiseStatus( STATUS_INVALID_PARAMETER );
+    status = callback( stack->args, stack->len );
+    status = NtCallbackReturn( NULL, 0, status );
+    RtlRaiseStatus( status );
+    __builtin_unreachable();
+}
+
+__ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
+                   "mv a0, sp\n\t"
+                   "call " __ASM_NAME("riscv64_dispatch_callback") "\n\t"
+                   "ebreak\n\t" )
 
 /* Unwinding. */
 /* Walk native ELF and PE frames, invoking termination handlers before

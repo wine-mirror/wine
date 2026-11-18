@@ -681,6 +681,36 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
      * Recover the owning Unix thread record directly; pthread_getspecific()
      * can itself depend on TLS state damaged by a context transition. */
     RV64_CHECKPOINT( "fault ENTER before signal stack thread lookup" );
+    if (riscv64_transition_diag_enabled())
+    {
+        stack_t alt = {0};
+        ULONG_PTR handler_sp = (ULONG_PTR)__builtin_frame_address(0);
+        ULONG_PTR candidate = handler_sp & ~signal_stack_mask;
+        int alt_result = sigaltstack( NULL, &alt );
+        char buf[320], *p = buf;
+        p = riscv64_diag_text( p, "RV64-ALTSTACK handler_sp=" );
+        p = riscv64_diag_hex( p, handler_sp );
+        p = riscv64_diag_text( p, " candidate=" );
+        p = riscv64_diag_hex( p, candidate );
+        p = riscv64_diag_text( p, " base=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)alt.ss_sp );
+        p = riscv64_diag_text( p, " size=" );
+        p = riscv64_diag_hex( p, alt.ss_size );
+        p = riscv64_diag_text( p, " flags=" );
+        p = riscv64_diag_hex( p, alt.ss_flags );
+        p = riscv64_diag_text( p, " query_result=" );
+        p = riscv64_diag_dec( p, alt_result );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+        if (alt_result || !(alt.ss_flags & SS_ONSTACK) ||
+            handler_sp < (ULONG_PTR)alt.ss_sp ||
+            handler_sp - (ULONG_PTR)alt.ss_sp >= alt.ss_size)
+        {
+            static const char msg[] = "RV64-ALTSTACK invalid handler stack; aborting diagnostic fault path\n";
+            write( 2, msg, sizeof(msg) - 1 );
+            _exit( 128 + sig );
+        }
+    }
     data = riscv64_signal_thread_data();
     RV64_CHECKPOINT( "fault AFTER signal stack thread lookup" );
 
@@ -1662,7 +1692,7 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
         /* A callback on a different stack cannot be nested safely without
          * tracking the suspended Unix SP.  In particular, do not reuse the
          * base frame while an outer Unix transition is still active. */
-        if (frame->prev_frame)
+        if (frame->prev_frame && !frame->syscall_cfa)
         {
             WARN( "rejecting cross-stack RISC-V64 callback at %p (active frame %p)\n",
                   entry_sp, frame );
@@ -1720,7 +1750,7 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
          * active transition.  Leave the chain intact for diagnosis. */
         return;
     }
-    if (frame->prev_frame)
+    if (frame->prev_frame && !frame->syscall_cfa)
     {
         ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
         ULONG_PTR end = base + kernel_stack_size;
@@ -2065,15 +2095,163 @@ void *get_wow_context( CONTEXT *context )
     return NULL;
 }
 
-NTSTATUS DECLSPEC_EXPORT KeUserModeCallback( ULONG id, const void *args, ULONG len,
-                             void **ret_ptr, ULONG *ret_len )
+
+/* ARM64 and x86-64 use an architecture-specific stack switch here.  RV64
+ * keeps the suspended host call in a fixed-size LP64D save area, with a
+ * separate syscall frame for Windows-side re-entry.  Never use setjmp here:
+ * its saved SP belongs to a different stack and it does not preserve the
+ * complete callback lifecycle. */
+struct riscv64_callback_stack
 {
-    return STATUS_NOT_IMPLEMENTED;
+    void *args;
+    ULONG len;
+    ULONG id;
+    ULONG64 ra;
+    ULONG64 sp;
+    ULONG64 pc;
+    BYTE args_data[0];
+};
+
+#define RV64_CALLBACK_SAVE_SIZE 256
+#define RV64_CALLBACK_FRAME_SIZE 768
+C_ASSERT( sizeof(struct syscall_frame) <= RV64_CALLBACK_FRAME_SIZE );
+C_ASSERT( offsetof(struct riscv64_callback_stack, args_data) == 40 );
+
+static void __attribute__((used)) riscv64_callback_enter( struct syscall_frame *callback,
+                                                           void *host_save )
+{
+    struct thread_data *data = get_thread_data();
+    struct syscall_frame *previous = get_syscall_frame( data );
+
+    memset( callback, 0, sizeof(*callback) );
+    callback->prev_frame = previous;
+    callback->syscall_cfa = host_save; /* Non-NULL marks a live callback. */
+    get_teb_data( data )->syscall_frame = callback;
+}
+
+extern NTSTATUS riscv64_call_user_mode_callback( ULONG_PTR sp, void **ret_ptr,
+                                                 ULONG *ret_len, void *dispatcher );
+__ASM_GLOBAL_FUNC( riscv64_call_user_mode_callback,
+                   "addi sp, sp, -1024\n\t"
+                   "sd s0, 768(sp)\n\t"
+                   "sd s1, 776(sp)\n\t"
+                   "sd s2, 784(sp)\n\t"
+                   "sd s3, 792(sp)\n\t"
+                   "sd s4, 800(sp)\n\t"
+                   "sd s5, 808(sp)\n\t"
+                   "sd s6, 816(sp)\n\t"
+                   "sd s7, 824(sp)\n\t"
+                   "sd s8, 832(sp)\n\t"
+                   "sd s9, 840(sp)\n\t"
+                   "sd s10, 848(sp)\n\t"
+                   "sd s11, 856(sp)\n\t"
+                   "fsd fs0, 864(sp)\n\t"
+                   "fsd fs1, 872(sp)\n\t"
+                   "fsd fs2, 880(sp)\n\t"
+                   "fsd fs3, 888(sp)\n\t"
+                   "fsd fs4, 896(sp)\n\t"
+                   "fsd fs5, 904(sp)\n\t"
+                   "fsd fs6, 912(sp)\n\t"
+                   "fsd fs7, 920(sp)\n\t"
+                   "fsd fs8, 928(sp)\n\t"
+                   "fsd fs9, 936(sp)\n\t"
+                   "fsd fs10, 944(sp)\n\t"
+                   "fsd fs11, 952(sp)\n\t"
+                   "sd ra, 960(sp)\n\t"
+                   "sd a1, 968(sp)\n\t" /* ret_ptr */
+                   "sd a2, 976(sp)\n\t" /* ret_len */
+                   "sd a0, 984(sp)\n\t" /* Windows stack */
+                   "sd a3, 992(sp)\n\t" /* dispatcher */
+                   "mv a0, sp\n\t"
+                   "addi a1, sp, 768\n\t"
+                   "call " __ASM_NAME("riscv64_callback_enter") "\n\t"
+                   "ld t0, 984(sp)\n\t"
+                   "ld t1, 992(sp)\n\t"
+                   "mv sp, t0\n\t"
+                   "jr t1\n\t" )
+
+/* Called from NtCallbackReturn on the kernel stack.  This never returns to
+ * the callback's syscall entry; it resumes the suspended Unix C caller. */
+extern void DECLSPEC_NORETURN riscv64_user_mode_callback_return( void *ret_ptr,
+                                                                 ULONG ret_len,
+                                                                 NTSTATUS status,
+                                                                 struct syscall_frame *frame );
+__ASM_GLOBAL_FUNC( riscv64_user_mode_callback_return,
+                   "ld t0, 560(a3)\n\t" /* frame->syscall_cfa */
+                   "mv sp, t0\n\t"
+                   "ld t1, 968(sp)\n\t"
+                   "sd a0, 0(t1)\n\t"
+                   "ld t1, 976(sp)\n\t"
+                   "sw a1, 0(t1)\n\t"
+                   "mv a0, a2\n\t"
+                   "ld s0, 768(sp)\n\t"
+                   "ld s1, 776(sp)\n\t"
+                   "ld s2, 784(sp)\n\t"
+                   "ld s3, 792(sp)\n\t"
+                   "ld s4, 800(sp)\n\t"
+                   "ld s5, 808(sp)\n\t"
+                   "ld s6, 816(sp)\n\t"
+                   "ld s7, 824(sp)\n\t"
+                   "ld s8, 832(sp)\n\t"
+                   "ld s9, 840(sp)\n\t"
+                   "ld s10, 848(sp)\n\t"
+                   "ld s11, 856(sp)\n\t"
+                   "fld fs0, 864(sp)\n\t"
+                   "fld fs1, 872(sp)\n\t"
+                   "fld fs2, 880(sp)\n\t"
+                   "fld fs3, 888(sp)\n\t"
+                   "fld fs4, 896(sp)\n\t"
+                   "fld fs5, 904(sp)\n\t"
+                   "fld fs6, 912(sp)\n\t"
+                   "fld fs7, 920(sp)\n\t"
+                   "fld fs8, 928(sp)\n\t"
+                   "fld fs9, 936(sp)\n\t"
+                   "fld fs10, 944(sp)\n\t"
+                   "fld fs11, 952(sp)\n\t"
+                   "ld ra, 960(sp)\n\t"
+                   "addi sp, sp, 1024\n\t"
+                   "ret\n\t" )
+
+NTSTATUS DECLSPEC_EXPORT KeUserModeCallback( ULONG id, const void *args, ULONG len,
+                                               void **ret_ptr, ULONG *ret_len )
+{
+    struct thread_data *data = get_thread_data();
+    struct syscall_frame *frame = data ? get_syscall_frame( data ) : NULL;
+    struct riscv64_callback_stack *stack;
+    ULONG_PTR sp, limit, base;
+    SIZE_T bytes;
+
+    if (!frame || !ret_ptr || !ret_len || (len && !args)) return STATUS_INVALID_PARAMETER;
+    if (!pKiUserCallbackDispatcher) return STATUS_NOT_IMPLEMENTED;
+    bytes = sizeof(*stack) + (SIZE_T)len;
+    if (bytes < len || frame->sp < bytes + 16) return STATUS_STACK_OVERFLOW;
+    sp = (frame->sp - bytes - 16) & ~(ULONG_PTR)15;
+    limit = (ULONG_PTR)data->teb->Tib.StackLimit;
+    base = (ULONG_PTR)data->teb->Tib.StackBase;
+    if (sp < limit || sp >= base || frame->sp > base) return STATUS_STACK_OVERFLOW;
+    if ((ULONG_PTR)get_kernel_stack( data ) + min_kernel_stack > (ULONG_PTR)&frame)
+        return STATUS_STACK_OVERFLOW;
+
+    stack = (struct riscv64_callback_stack *)sp;
+    stack->args = stack->args_data;
+    stack->len = len;
+    stack->id = id;
+    stack->ra = frame->ra;
+    stack->sp = frame->sp;
+    stack->pc = frame->pc;
+    if (len) memcpy( stack->args_data, args, len );
+    return riscv64_call_user_mode_callback( sp, ret_ptr, ret_len, pKiUserCallbackDispatcher );
 }
 
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct thread_data *data = get_thread_data();
+    struct syscall_frame *frame = data ? get_syscall_frame( data ) : NULL;
+
+    if (!frame || !frame->syscall_cfa || !frame->prev_frame)
+        return STATUS_NO_CALLBACK_ACTIVE;
+    get_teb_data( data )->syscall_frame = frame->prev_frame;
+    riscv64_user_mode_callback_return( ret_ptr, ret_len, status, frame );
 }
 
 #endif /* defined(__riscv) && (__riscv_xlen == 64) */
