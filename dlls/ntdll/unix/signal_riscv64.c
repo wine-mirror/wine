@@ -805,6 +805,39 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         if (!virtual_handle_fault( data, &fault, (void *)sp )) return;
     }
 
+    /* A fault on the Unix syscall stack must not construct an exception
+     * payload below the interrupted SP.  That address can be in a protected
+     * stack guard (as seen in the pipe tests), causing a second SIGSEGV in
+     * memset before the existing syscall-return path can run.  Complete the
+     * syscall through its saved Windows frame instead. */
+    if (is_inside_syscall( data, sp ))
+    {
+        struct syscall_frame *frame = get_syscall_frame( data );
+        if (riscv64_transition_diag_enabled())
+        {
+            char buf[256], *p = buf;
+            p = riscv64_diag_text( p, "RV64-DIAG syscall-stack fault pc=" );
+            p = riscv64_diag_hex( p, PC_sig( uc ) );
+            p = riscv64_diag_text( p, " sp=" );
+            p = riscv64_diag_hex( p, sp );
+            p = riscv64_diag_text( p, " addr=" );
+            p = riscv64_diag_hex( p, (ULONG_PTR)info->si_addr );
+            p = riscv64_diag_text( p, " frame=" );
+            p = riscv64_diag_hex( p, (ULONG_PTR)frame );
+            *p++ = '\\n';
+            write( 2, buf, p - buf );
+        }
+        if (frame)
+        {
+            frame->x[10] = EXCEPTION_ACCESS_VIOLATION;
+            REGn_sig( REG_A0, uc ) = (ULONG_PTR)frame;
+            PC_sig( uc ) = (ULONG_PTR)__wine_syscall_dispatcher_return;
+            return;
+        }
+        RV64_CHECKPOINT( "syscall-stack fault without saved frame" );
+        _exit( 128 + sig );
+    }
+
     /* Allocate the exception payload on the interrupted stack, preserving
      * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
     exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
@@ -841,21 +874,6 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         break;
     default:
         exc->record.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-    }
-
-    /* Faults on Wine's Unix syscall stack cannot be dispatched using
-     * the interrupted kernel-stack pointer.  Return the exception status
-     * through the saved Windows syscall frame instead. */
-    if (is_inside_syscall( data, sp ))
-    {
-        struct syscall_frame *frame = get_syscall_frame( data );
-        if (frame)
-        {
-            frame->x[10] = exc->record.ExceptionCode;
-            REGn_sig( REG_A0, uc ) = (ULONG_PTR)frame;
-            PC_sig( uc ) = (ULONG_PTR)__wine_syscall_dispatcher_return;
-            return;
-        }
     }
 
     if (riscv64_transition_diag_enabled())
