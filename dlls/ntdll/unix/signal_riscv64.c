@@ -1413,39 +1413,39 @@ static void __attribute__((noinline,used)) riscv64_check_syscall_nonvolatiles( s
 
     if (!riscv64_transition_diag_enabled()) return;
     __asm__ volatile (
-        "sd s0, 0(%0)\\n\\t"
-        "sd s1, 8(%0)\\n\\t"
-        "sd s2, 16(%0)\\n\\t"
-        "sd s3, 24(%0)\\n\\t"
-        "sd s4, 32(%0)\\n\\t"
-        "sd s5, 40(%0)\\n\\t"
-        "sd s6, 48(%0)\\n\\t"
-        "sd s7, 56(%0)\\n\\t"
-        "sd s8, 64(%0)\\n\\t"
-        "sd s9, 72(%0)\\n\\t"
-        "sd s10, 80(%0)\\n\\t"
-        "sd s11, 88(%0)\\n\\t"
-        "fsd f8, 96(%0)\\n\\t"
-        "fsd f9, 104(%0)\\n\\t"
-        "fsd f18, 112(%0)\\n\\t"
-        "fsd f19, 120(%0)\\n\\t"
-        "fsd f20, 128(%0)\\n\\t"
-        "fsd f21, 136(%0)\\n\\t"
-        "fsd f22, 144(%0)\\n\\t"
-        "fsd f23, 152(%0)\\n\\t"
-        "fsd f24, 160(%0)\\n\\t"
-        "fsd f25, 168(%0)\\n\\t"
-        "fsd f26, 176(%0)\\n\\t"
-        "fsd f27, 184(%0)\\n\\t"
+        "sd s0, 0(%0)\n\t"
+        "sd s1, 8(%0)\n\t"
+        "sd s2, 16(%0)\n\t"
+        "sd s3, 24(%0)\n\t"
+        "sd s4, 32(%0)\n\t"
+        "sd s5, 40(%0)\n\t"
+        "sd s6, 48(%0)\n\t"
+        "sd s7, 56(%0)\n\t"
+        "sd s8, 64(%0)\n\t"
+        "sd s9, 72(%0)\n\t"
+        "sd s10, 80(%0)\n\t"
+        "sd s11, 88(%0)\n\t"
+        "fsd f8, 96(%0)\n\t"
+        "fsd f9, 104(%0)\n\t"
+        "fsd f18, 112(%0)\n\t"
+        "fsd f19, 120(%0)\n\t"
+        "fsd f20, 128(%0)\n\t"
+        "fsd f21, 136(%0)\n\t"
+        "fsd f22, 144(%0)\n\t"
+        "fsd f23, 152(%0)\n\t"
+        "fsd f24, 160(%0)\n\t"
+        "fsd f25, 168(%0)\n\t"
+        "fsd f26, 176(%0)\n\t"
+        "fsd f27, 184(%0)\n\t"
         : : "r"(saved) : "memory" );
     for (i = 0; i < 12; ++i)
     {
         if (saved[i] != frame->x[regs[i]])
-            ERR( "RV64-ABI INTEGER CORRUPTION syscall=%#x reg=s%u saved=%016llx live=%016llx frame=%p\\n",
+            ERR( "RV64-ABI INTEGER CORRUPTION syscall=%#x reg=s%u saved=%016llx live=%016llx frame=%p\n",
                  frame->syscall_id, i, (unsigned long long)frame->x[regs[i]],
                  (unsigned long long)saved[i], frame );
         if (saved[i + 12] != frame->f[regs[i]])
-            ERR( "RV64-ABI FP CORRUPTION syscall=%#x reg=f%u saved=%016llx live=%016llx frame=%p\\n",
+            ERR( "RV64-ABI FP CORRUPTION syscall=%#x reg=f%u saved=%016llx live=%016llx frame=%p\n",
                  frame->syscall_id, regs[i], (unsigned long long)frame->f[regs[i]],
                  (unsigned long long)saved[i + 12], frame );
     }
