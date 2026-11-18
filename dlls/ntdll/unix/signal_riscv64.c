@@ -1025,6 +1025,23 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
               (void *)(ULONG_PTR)frame->ra, (void *)(ULONG_PTR)frame->x[4],
               __builtin_thread_pointer(), frame, (unsigned long)sizeof(*frame),
               !(frame->sp & 15) );
+    if (riscv64_transition_diag_enabled())
+    {
+        WARN( "RV64-CONTEXT flags=%#x pc=%p sp=%p ra=%p x1=%p x2=%p gp=%p tp=%p fcsr=%#llx\n",
+              frame->restore_flags, (void *)(ULONG_PTR)frame->pc,
+              (void *)(ULONG_PTR)frame->sp, (void *)(ULONG_PTR)frame->ra,
+              (void *)(ULONG_PTR)frame->x[1], (void *)(ULONG_PTR)frame->x[2],
+              (void *)(ULONG_PTR)frame->x[3], (void *)(ULONG_PTR)frame->x[4],
+              (unsigned long long)frame->fcsr );
+        if (frame->x[1] != frame->ra || frame->x[2] != frame->sp)
+            WARN( "RV64-CONTEXT inconsistent mirrored ra/sp registers in continuation frame\n" );
+    }
+    if (!frame->pc || !frame->sp || (frame->sp & 15))
+    {
+        ERR( "RV64-CONTEXT refusing invalid target pc=%p sp=%p\n",
+             (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp );
+        abort();
+    }
     continuation = riscv64_continuation_data( data );
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
