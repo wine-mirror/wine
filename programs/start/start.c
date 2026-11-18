@@ -635,6 +635,10 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 #endif
                             fatal_string_error(STRING_EXECFAIL, GetLastError(), opts.sei.lpFile);
                         /* Missing RISC-V64 builtin: let ShellExecuteEx report the error. */
+#if defined(__riscv) && __riscv_xlen == 64
+                        fwprintf( stderr, L"RV64-LAUNCH start: CreateProcessW failed file=%ls error=%lu\n",
+                                  opts.sei.lpFile, GetLastError() );
+#endif
                     }
                     else
                     {
