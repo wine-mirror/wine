@@ -366,6 +366,10 @@ static NTSTATUS create_nt_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUT
                                   &process_attr, &thread_attr, process_flags,
                                   THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
                                   &create_info, attr );
+#ifdef __riscv
+    WARN( "RV64-LAUNCH NtCreateUserProcess returned %08x image=%s process=%p thread=%p\n",
+          status, debugstr_w( params->ImagePathName.Buffer ), info->Process, info->Thread );
+#endif
 
  done:
     RtlFreeUnicodeString( &nameW );
@@ -540,6 +544,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     NTSTATUS status;
 
     /* Process the AppName and/or CmdLine to get module name and path */
+#ifdef __riscv
+    WARN( "RV64-LAUNCH CreateProcessInternalW request app=%s cmd=%s flags=%08lx\n",
+          debugstr_w(app_name), debugstr_w(cmd_line), flags );
+#endif
 
     TRACE( "app %s cmdline %s\n", debugstr_w(app_name), debugstr_w(cmd_line) );
 

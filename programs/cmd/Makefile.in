@@ -1,6 +1,6 @@
 MODULE    = cmd.exe
 IMPORTS   = shell32 user32 advapi32 kernel32 kernelbase
-ENABLE_ARCHS = $(PE_ARCHS)
+ENABLE_ARCHS = $(PE_ARCHS) $(filter riscv64,$(HOST_ARCH))
 
 EXTRADLLFLAGS = -mconsole -municode
 

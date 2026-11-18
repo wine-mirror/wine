@@ -281,6 +281,10 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
 #endif
     if (status) goto done;
 
+#ifdef __riscv
+    WARN( "RV64-LAUNCH get_pe_file_info opened %s handle=%p unix=%s\n",
+          debugstr_us( attr->ObjectName ), *handle, *unix_name ? *unix_name : "(null)" );
+#endif
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                                     SECTION_MAP_READ | SECTION_MAP_EXECUTE,
                                     NULL, NULL, PAGE_EXECUTE_READ, SEC_IMAGE, *handle )))
@@ -308,11 +312,40 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     }
 
  done:
+#ifdef __riscv
+    WARN( "RV64-LAUNCH get_pe_file_info result=%08x path=%s bootstrap=%d handle=%p machine=%04x\n",
+          status, debugstr_us( attr->ObjectName ), is_prefix_bootstrap, *handle, info->machine );
+#endif
+#if defined(__riscv) && __riscv_xlen == 64
+    /*
+     * On RV64 the prefix can lack PE placeholder files. Only accept an
+     * absent system32 executable when a matching Winelib ELF has been
+     * verified, even during prefix bootstrap.
+     */
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND)
+    {
+        NTSTATUS builtin_status = get_riscv64_builtin_exe_info( attr->ObjectName, info );
+        if (builtin_status == STATUS_SUCCESS)
+        {
+            WARN( "RV64-LAUNCH resolved missing PE to verified Winelib builtin %s machine=%04x\n",
+                  debugstr_us( attr->ObjectName ), info->machine );
+            return STATUS_SUCCESS;
+        }
+        if (builtin_status == STATUS_NO_MEMORY) return builtin_status;
+    }
+    if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ) &&
+        info->machine != IMAGE_FILE_MACHINE_RISCV64)
+    {
+        TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
+        return STATUS_SUCCESS;
+    }
+#else
     if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
     {
         TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
         return STATUS_SUCCESS;
     }
+#endif
     return status;
 }
 
@@ -767,6 +800,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     InitializeObjectAttributes( &attr, &path, OBJ_CASE_INSENSITIVE, 0, 0 );
     if ((status = get_pe_file_info( &attr, &nt_name, &unix_name, &file_handle, &pe_info )))
     {
+#ifdef __riscv
+        WARN( "RV64-LAUNCH NtCreateUserProcess lookup failed status=%08x nt=%s unix=%s\n",
+              status, debugstr_us( &path ), unix_name ? unix_name : "(null)" );
+#endif
         if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &attr, unix_name, unixdir, params ))
         {
             *process_handle_ptr = *thread_handle_ptr = 0;
@@ -777,6 +814,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         }
         goto done;
     }
+#ifdef __riscv
+    WARN( "RV64-LAUNCH NtCreateUserProcess image resolved path=%s unix=%s machine=%04x\n",
+          debugstr_us( &path ), unix_name ? unix_name : "(null)", pe_info.machine );
+#endif
     if (!machine)
     {
         machine = pe_info.machine;

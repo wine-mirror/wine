@@ -574,6 +574,11 @@ int __cdecl wmain (int argc, WCHAR *argv[])
     parse_command_line( argc, argv );
 
     recognized_binary = GetBinaryTypeW( opts.sei.lpFile, &binary_type );
+#if defined(__riscv) && __riscv_xlen == 64
+    fwprintf( stderr, L"RV64-LAUNCH start: file=%ls recognized=%d type=%lu error=%lu\n",
+              opts.sei.lpFile, recognized_binary, recognized_binary ? binary_type : 0,
+              recognized_binary ? 0 : GetLastError() );
+#endif
 
 #if defined(__riscv) && __riscv_xlen == 64
     /*
@@ -630,6 +635,10 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 #endif
                             fatal_string_error(STRING_EXECFAIL, GetLastError(), opts.sei.lpFile);
                         /* Missing RISC-V64 builtin: let ShellExecuteEx report the error. */
+#if defined(__riscv) && __riscv_xlen == 64
+                        fwprintf( stderr, L"RV64-LAUNCH start: CreateProcessW failed file=%ls error=%lu\n",
+                                  opts.sei.lpFile, GetLastError() );
+#endif
                     }
                     else
                     {

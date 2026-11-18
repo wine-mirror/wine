@@ -3527,7 +3527,12 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     NTSTATUS status;
 
     if ((status = get_mapping_info( mapping, SECTION_MAP_READ, &sec_flags, &full_size, &pe_mapping )))
+    {
+#ifdef __riscv
+        WARN( "RV64-LAUNCH virtual_map_builtin_module mapping=%p get_mapping_info status=%08x\n", mapping, status );
+#endif
         return status;
+    }
 
     if (!pe_mapping) return STATUS_INVALID_PARAMETER;
 

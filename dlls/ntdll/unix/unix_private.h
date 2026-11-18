@@ -264,6 +264,10 @@ extern NTSTATUS load_builtin( struct pe_mapping_info *pe_mapping, USHORT machine
                               ULONG_PTR limit_low, ULONG_PTR limit_high, off_t offset );
 extern NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret );
 extern BOOL is_system_dir_path( const UNICODE_STRING *path, WORD *machine );
+#if defined(__riscv) && __riscv_xlen == 64
+extern NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name,
+                                               struct pe_image_info *info );
+#endif
 extern NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine );
 extern NTSTATUS load_start_exe( UNICODE_STRING *nt_name );
 extern ULONG_PTR redirect_arm64ec_rva( void *module, ULONG_PTR rva, const IMAGE_ARM64EC_METADATA *metadata );
