@@ -2639,6 +2639,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 {
     unsigned int status;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    /* Early, async-signal-safe entry marker.  Deliberately avoid TRACE,
+     * getenv(), TLS and printf until we know the service was entered.
+     * Diagnostic branch only; remove after the syscall bridge is fixed. */
+    if (class == ThreadNameInformation)
+    {
+        static const char marker[] = "RV64-THREADNAME RAW ENTRY\\n";
+        write( 2, marker, sizeof(marker) - 1 );
+    }
+#endif
     TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
 
     switch (class)
