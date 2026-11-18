@@ -3114,22 +3114,60 @@ static LONG64 get_current_tz_bias(void)
     return ((LONG64)high << 32) | low;
 }
 
-/* Winelib RV64 can run before the Windows timezone registry has been
- * populated.  Preserve the Unix-derived bias and transition rules, but
- * recover resource names from a readable mapped registry timezone. */
+/* Winelib-only RV64 may have no installed Windows timezone registry.
+ * These resource IDs are from dlls/tzres/tzres.rc, not fabricated strings.
+ * Never modify the Unix-derived bias or daylight transition dates here. */
 #if defined(__riscv) && __riscv_xlen == 64
 static void riscv64_complete_unix_timezone_names( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi,
                                                   const RTL_DYNAMIC_TIME_ZONE_INFORMATION *mapped )
 {
+    static const struct
+    {
+        const char *iana, *windows;
+        unsigned int std_id, dlt_id;
+    } zones[] =
+    {
+        { "Etc/UTC", "UTC", 22000, 22001 },
+        { "Etc/GMT", "UTC", 22000, 22001 },
+        { "UTC", "UTC", 22000, 22001 },
+        { "America/Los_Angeles", "Pacific Standard Time", 11232, 11233 },
+        { "America/New_York", "Eastern Standard Time", 30800, 30801 },
+        { "America/Chicago", "Central Standard Time", 17456, 17457 }
+    };
+    char path[PATH_MAX];
+    const char *iana = getenv( "TZ" );
+    unsigned int i;
+    char std_name[64], dlt_name[64];
+
     if (mapped && mapped->StandardName[0] && mapped->DaylightName[0])
     {
         memcpy( tzi->StandardName, mapped->StandardName, sizeof(tzi->StandardName) );
         memcpy( tzi->DaylightName, mapped->DaylightName, sizeof(tzi->DaylightName) );
         memcpy( tzi->TimeZoneKeyName, mapped->TimeZoneKeyName, sizeof(tzi->TimeZoneKeyName) );
-        TRACE( "RV64 Winelib: recovered timezone resource names from Unix zone mapping\\n" );
+        return;
     }
-    else
-        WARN( "RV64 Winelib: timezone mapping unavailable; Windows timezone registry needs initialization\\n" );
+    if (!iana)
+    {
+        size_t len = sizeof(default_tzinfo_dir) - 1;
+        if (!realpath( "/etc/localtime", path ) ||
+            strncmp( path, default_tzinfo_dir, len ) || path[len] != '/') return;
+        iana = path + len + 1;
+    }
+    if (*iana == ':') ++iana;
+    for (i = 0; i < ARRAY_SIZE(zones); ++i)
+    {
+        if (strcmp( iana, zones[i].iana )) continue;
+        snprintf( std_name, sizeof(std_name), "@tzres.dll,-%u", zones[i].std_id );
+        snprintf( dlt_name, sizeof(dlt_name), "@tzres.dll,-%u", zones[i].dlt_id );
+        ascii_to_unicode( tzi->StandardName, std_name, strlen(std_name) + 1 );
+        ascii_to_unicode( tzi->DaylightName, dlt_name, strlen(dlt_name) + 1 );
+        ascii_to_unicode( tzi->TimeZoneKeyName, zones[i].windows, strlen(zones[i].windows) + 1 );
+        TRACE( "RV64 Winelib: recovered %s as %s from tzres resources\\n",
+               debugstr_a(iana), debugstr_a(zones[i].windows) );
+        return;
+    }
+    WARN( "RV64 Winelib: no installed registry mapping or built-in tzres mapping for %s\\n",
+          debugstr_a(iana) );
 }
 #endif
 
