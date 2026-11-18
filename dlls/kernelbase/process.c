@@ -366,6 +366,10 @@ static NTSTATUS create_nt_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUT
                                   &process_attr, &thread_attr, process_flags,
                                   THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
                                   &create_info, attr );
+#ifdef __riscv
+    WARN( "RV64-LAUNCH NtCreateUserProcess returned %08x image=%s process=%p thread=%p\n",
+          status, debugstr_w( params->ImagePathName.Buffer ), info->Process, info->Thread );
+#endif
 
  done:
     RtlFreeUnicodeString( &nameW );
