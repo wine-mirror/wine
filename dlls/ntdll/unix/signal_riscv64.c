@@ -913,6 +913,28 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     REGn_sig( 1, uc ) = frame->ra;
     REGn_sig( 2, uc ) = frame->sp;
     RV64_CHECKPOINT( "SIGUSR2 AFTER GPR restore" );
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[360], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG sigreturn VERIFY requested_pc=" );
+        p = riscv64_diag_hex( p, frame->pc );
+        p = riscv64_diag_text( p, " actual_pc=" );
+        p = riscv64_diag_hex( p, PC_sig( uc ) );
+        p = riscv64_diag_text( p, " requested_sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        p = riscv64_diag_text( p, " actual_sp=" );
+        p = riscv64_diag_hex( p, REGn_sig( 2, uc ) );
+        p = riscv64_diag_text( p, " requested_ra=" );
+        p = riscv64_diag_hex( p, frame->ra );
+        p = riscv64_diag_text( p, " actual_ra=" );
+        p = riscv64_diag_hex( p, REGn_sig( 1, uc ) );
+        p = riscv64_diag_text( p, " host_tp=" );
+        p = riscv64_diag_hex( p, REGn_sig( 4, uc ) );
+        p = riscv64_diag_text( p, " saved_tp=" );
+        p = riscv64_diag_hex( p, frame->x[4] );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
     if (frame->restore_flags & (CONTEXT_FLOATING_POINT & ~CONTEXT_RISCV64))
@@ -988,6 +1010,12 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
             abort();
         }
     }
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-DIAG continuation FRAME target_pc=%p target_sp=%p target_ra=%p saved_tp=%p host_tp=%p frame=%p frame_size=%lu aligned=%u\n",
+              (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp,
+              (void *)(ULONG_PTR)frame->ra, (void *)(ULONG_PTR)frame->x[4],
+              __builtin_thread_pointer(), frame, (unsigned long)sizeof(*frame),
+              !(frame->sp & 15) );
     continuation = riscv64_continuation_data( data );
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
@@ -1669,14 +1697,21 @@ static NTSTATUS riscv64_dwarf_virtual_unwind( CONTEXT *context, DISPATCHER_CONTE
     else dispatch->HandlerData = NULL;
     if (end) ptr = end;
     end = (const unsigned char *)(&fde->length + 1) + fde->length;
-    execute_cfa_instructions( ptr, end, old_pc, &info, bases );
+    execute_cfa_instructions( ptr, end, control_pc, &info, bases );
 
     TRACE( "RV64 DWARF CFA pc=%p control_pc=%p sp=%p ra=%p fp=%p cfa_reg=%u cfa_offset=%ld ra_rule=%u ra_offset=%lld\n",
            (void *)old_pc, (void *)control_pc, (void *)old_sp, (void *)(ULONG_PTR)context->Gpr.X[1],
            (void *)(ULONG_PTR)context->Gpr.X[8], info.state.cfa_reg,
            (long)info.state.cfa_offset, info.state.rules[1],
            (long long)info.state.regs[1] );
+    TRACE( "RV64 DWARF FDE=[%p,%p) control=%p ra_rule=%u sp_rule=%u saved_ra=%p\n",
+           (void *)(ULONG_PTR)info.ip, (void *)code_end, (void *)control_pc,
+           info.state.rules[1], info.state.rules[2], (void *)(ULONG_PTR)context->Gpr.X[1] );
     apply_frame_state( &next, &info.state, bases );
+    TRACE( "RV64 DWARF RESULT old_pc=%p old_sp=%p old_ra=%p new_ra=%p new_sp=%p ra_rule=%u\n",
+           (void *)old_pc, (void *)old_sp, (void *)(ULONG_PTR)context->Gpr.X[1],
+           (void *)(ULONG_PTR)next.Gpr.X[1], (void *)(ULONG_PTR)next.Gpr.X[2],
+           info.state.rules[1] );
     next.Pc = next.Gpr.X[1];
     next.Gpr.X[0] = 0;
     if (info.state.rules[info.retaddr_reg] == RULE_UNDEFINED) next.Pc = 0;
