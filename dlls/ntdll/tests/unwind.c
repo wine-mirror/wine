@@ -3765,7 +3765,7 @@ static void test_dynamic_unwind_riscv64(void)
 
     if (!pRtlAddFunctionTable || !pRtlDeleteFunctionTable || !pRtlLookupFunctionEntry)
     {
-        win_skip( "RISC-V64 dynamic function table APIs unavailable\\n" );
+        win_skip( "RISC-V64 dynamic function table APIs unavailable\n" );
         return;
     }
     memset( &fixture, 0, sizeof(fixture) );
@@ -3774,49 +3774,60 @@ static void test_dynamic_unwind_riscv64(void)
     /* Use a relative .xdata RVA within the same image allocation. */
     fixture.functions[0].UnwindData = 0x800;
     fixture.functions[1].UnwindData = 0x804;
-    /* FunctionLength=4, Version=0, X=0, E=0, EpilogCount=0, CodeWords=0. */
-    ((DWORD *)code_mem)[0x800 / sizeof(DWORD)] = 4;
-    ((DWORD *)code_mem)[0x804 / sizeof(DWORD)] = 4;
+    /* FunctionLength=8 halfwords (16 bytes), Version=0, X=0, E=0. */
+    ((DWORD *)code_mem)[0x800 / sizeof(DWORD)] = 8;
+    ((DWORD *)code_mem)[0x804 / sizeof(DWORD)] = 8;
 
     ok( pRtlAddFunctionTable( fixture.functions, 2, image ),
-        "RISC-V64 RtlAddFunctionTable failed\\n" );
+        "RISC-V64 RtlAddFunctionTable failed\n" );
     base = 0;
     func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
-    ok( func == &fixture.functions[0], "RISC-V64 first lookup returned %p\\n", func );
-    ok( base == image, "RISC-V64 first lookup base %Ix\\n", base );
+    ok( func == &fixture.functions[0], "RISC-V64 first lookup returned %p\n", func );
+    ok( base == image, "RISC-V64 first lookup base %Ix\n", base );
     base = 0;
     func = pRtlLookupFunctionEntry( image + 0x418, &base, NULL );
-    ok( func == &fixture.functions[1], "RISC-V64 second lookup returned %p\\n", func );
-    ok( pRtlDeleteFunctionTable( fixture.functions ), "RISC-V64 delete failed\\n" );
+    ok( func == &fixture.functions[1], "RISC-V64 second lookup returned %p\n", func );
+    ok( pRtlDeleteFunctionTable( fixture.functions ), "RISC-V64 delete failed\n" );
 
     if (pRtlInstallFunctionTableCallback)
     {
         ULONG_PTR id = image | 3;
-        ok( pRtlInstallFunctionTableCallback( id, image, 0x430,
-                                              dynamic_unwind_callback, &callback_count, NULL ),
-            "RISC-V64 callback registration failed\\n" );
+        BOOLEAN installed;
+        /* Callback returns BeginAddress=0x410, UnwindData=0x800. */
+        installed = pRtlInstallFunctionTableCallback( id, image, 0x430,
+                                                      dynamic_unwind_callback, &callback_count, NULL );
+        ok( installed, "RISC-V64 callback registration failed\n" );
+        if (installed)
+        {
+            base = 0;
+            func = pRtlLookupFunctionEntry( image + 0x418, &base, NULL );
+            ok( callback_count == 1, "RISC-V64 callback invoked %lu times\n", callback_count );
+            ok( func && func->BeginAddress == 0x410,
+                "RISC-V64 callback lookup returned %p\n", func );
+            ok( base == image, "RISC-V64 callback base %Ix\n", base );
+        }
         ok( pRtlDeleteFunctionTable( (RUNTIME_FUNCTION *)id ),
-            "RISC-V64 callback deletion failed\\n" );
+            "RISC-V64 callback deletion failed\n" );
     }
     if (pRtlAddGrowableFunctionTable && pRtlGrowFunctionTable &&
         pRtlDeleteGrowableFunctionTable)
     {
         status = pRtlAddGrowableFunctionTable( &growable, fixture.functions, 0, 2,
                                               image, image + 0x430 );
-        ok( !status, "RISC-V64 growable registration returned %#lx\\n", status );
+        ok( !status, "RISC-V64 growable registration returned %#lx\n", status );
         if (!status)
         {
             base = 0;
             func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
-            ok( !func, "RISC-V64 empty growable table returned %p\\n", func );
+            ok( !func, "RISC-V64 empty growable table returned %p\n", func );
             pRtlGrowFunctionTable( growable, 1 );
             base = 0;
             func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
-            ok( func == &fixture.functions[0], "RISC-V64 grown lookup returned %p\\n", func );
+            ok( func == &fixture.functions[0], "RISC-V64 grown lookup returned %p\n", func );
             pRtlGrowFunctionTable( growable, 2 );
             base = 0;
             func = pRtlLookupFunctionEntry( image + 0x418, &base, NULL );
-            ok( func == &fixture.functions[1], "RISC-V64 second grown lookup returned %p\\n", func );
+            ok( func == &fixture.functions[1], "RISC-V64 second grown lookup returned %p\n", func );
             pRtlDeleteGrowableFunctionTable( growable );
         }
     }
