@@ -3114,6 +3114,25 @@ static LONG64 get_current_tz_bias(void)
     return ((LONG64)high << 32) | low;
 }
 
+/* Winelib RV64 can run before the Windows timezone registry has been
+ * populated.  Preserve the Unix-derived bias and transition rules, but
+ * recover resource names from a readable mapped registry timezone. */
+#if defined(__riscv) && __riscv_xlen == 64
+static void riscv64_complete_unix_timezone_names( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi,
+                                                  const RTL_DYNAMIC_TIME_ZONE_INFORMATION *mapped )
+{
+    if (mapped && mapped->StandardName[0] && mapped->DaylightName[0])
+    {
+        memcpy( tzi->StandardName, mapped->StandardName, sizeof(tzi->StandardName) );
+        memcpy( tzi->DaylightName, mapped->DaylightName, sizeof(tzi->DaylightName) );
+        memcpy( tzi->TimeZoneKeyName, mapped->TimeZoneKeyName, sizeof(tzi->TimeZoneKeyName) );
+        TRACE( "RV64 Winelib: recovered timezone resource names from Unix zone mapping\\n" );
+    }
+    else
+        WARN( "RV64 Winelib: timezone mapping unavailable; Windows timezone registry needs initialization\\n" );
+}
+#endif
+
 static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
@@ -3240,6 +3259,18 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
         WARN( "System config TZ info didn't match guessed parameters, falling back to search.\n" );
     }
     find_reg_tz_info(tzi, current_year + 1900);
+#if defined(__riscv) && __riscv_xlen == 64
+    /* A mismatched registry rule set must not replace Unix transition dates.
+     * The mapped resource names remain useful for the Winelib-only case. */
+    if (!tzi->StandardName[0] || !tzi->DaylightName[0])
+    {
+        RTL_DYNAMIC_TIME_ZONE_INFORMATION mapped;
+        if (get_system_config_tz_info( &mapped, current_year + 1900 ))
+            riscv64_complete_unix_timezone_names( tzi, &mapped );
+        else
+            riscv64_complete_unix_timezone_names( tzi, NULL );
+    }
+#endif
     cached_tzi = *tzi;
     mutex_unlock( &timezone_mutex );
 }
