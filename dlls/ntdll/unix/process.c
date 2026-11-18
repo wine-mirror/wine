@@ -789,6 +789,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         }
         goto done;
     }
+#ifdef __riscv
+    WARN( "RV64-LAUNCH NtCreateUserProcess image resolved path=%s unix=%s machine=%04x\n",
+          debugstr_us( &path ), unix_name ? unix_name : "(null)", pe_info.machine );
+#endif
     if (!machine)
     {
         machine = pe_info.machine;
