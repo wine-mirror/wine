@@ -1645,6 +1645,49 @@ typedef struct DECLSPEC_ALIGN(8) _XSAVE_AREA_HEADER
 }
 XSAVE_AREA_HEADER, *PXSAVE_AREA_HEADER;
 
+typedef struct _XSAVE_ARM64_SVE_HEADER
+{
+    DWORD VectorLength;
+    DWORD VectorRegisterOffset;
+    DWORD PredicateRegisterOffset;
+    union
+    {
+        DWORD Flags;
+        struct
+        {
+            DWORD Sm : 1;
+            DWORD ReservedFlags : 31;
+        };
+    };
+    DWORD Reserved[4];
+} XSAVE_ARM64_SVE_HEADER, *PXSAVE_ARM64_SVE_HEADER;
+
+typedef struct _XSAVE_ARM64_SME_ZA_HEADER
+{
+    DWORD VectorLength;
+    union
+    {
+        DWORD Flags;
+        struct
+        {
+            DWORD Za : 1;
+            DWORD ReservedFlags : 31;
+        };
+    };
+    DWORD Reserved[6];
+} XSAVE_ARM64_SME_ZA_HEADER, *PXSAVE_ARM64_SME_ZA_HEADER;
+
+typedef struct _XSAVE_ARM64_SME_TPIDR2_HEADER
+{
+    DWORD Reserved[8];
+} XSAVE_ARM64_SME_TPIDR2_HEADER, *PXSAVE_ARM64_SME_TPIDR2_HEADER;
+
+typedef struct _XSAVE_ARM64_SME_ZT_HEADER
+{
+    DWORD RegisterCount;
+    DWORD Reserved[7];
+} XSAVE_ARM64_SME_ZT_HEADER, *PXSAVE_ARM64_SME_ZT_HEADER;
+
 typedef struct DECLSPEC_ALIGN(16) _XSAVE_AREA
 {
     XSAVE_FORMAT LegacyState;
