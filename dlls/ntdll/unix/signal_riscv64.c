@@ -540,6 +540,13 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
                  (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
             abort();
         }
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-FLOW NtContinue caller=exception-dispatch context=%p pc=%p sp=%p ra=%p frame=%p frame_pc=%p frame_sp=%p\n",
+                  &exc->context, (void *)(ULONG_PTR)exc->context.Pc,
+                  (void *)(ULONG_PTR)exc->context.Gpr.X[2],
+                  (void *)(ULONG_PTR)exc->context.Gpr.X[1], frame,
+                  (void *)(ULONG_PTR)(frame ? frame->pc : 0),
+                  (void *)(ULONG_PTR)(frame ? frame->sp : 0) );
         status = NtContinue( &exc->context, FALSE );
     }
     ERR( "RISC-V64 exception continuation failed: %#lx\\n", (unsigned long)status );
@@ -962,6 +969,29 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         RV64_CHECKPOINT( "SIGUSR2 NULL frame" );
         return;
     }
+    if (riscv64_transition_diag_enabled())
+    {
+        struct syscall_frame *active = get_syscall_frame( data );
+        char buf[512], *p = buf;
+        p = riscv64_diag_text( p, "RV64-FLOW sigreturn APPLY frame=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame );
+        p = riscv64_diag_text( p, " active=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)active );
+        p = riscv64_diag_text( p, " prev=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame->prev_frame );
+        p = riscv64_diag_text( p, " cfa=" );
+        p = riscv64_diag_hex( p, frame->syscall_cfa );
+        p = riscv64_diag_text( p, " flags=" );
+        p = riscv64_diag_hex( p, frame->restore_flags );
+        p = riscv64_diag_text( p, " signal_sp=" );
+        p = riscv64_diag_hex( p, SP_sig( uc ) );
+        p = riscv64_diag_text( p, " target_pc=" );
+        p = riscv64_diag_hex( p, frame->pc );
+        p = riscv64_diag_text( p, " target_sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     /* Detect the recurring 0x800-byte stack descent seen in pipe tests.
      * This is a loop guard, not an attempt to synthesize a new stack or
      * silently change the requested continuation context. */
@@ -1182,6 +1212,31 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         abort();
     }
     continuation = riscv64_continuation_data( data );
+    if (riscv64_transition_diag_enabled())
+    {
+        struct syscall_frame *active = data->teb ? get_syscall_frame( data ) : NULL;
+        char buf[512], *p = buf;
+        p = riscv64_diag_text( p, "RV64-FLOW continue REQUEST frame=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame );
+        p = riscv64_diag_text( p, " active=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)active );
+        p = riscv64_diag_text( p, " prev=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame->prev_frame );
+        p = riscv64_diag_text( p, " cfa=" );
+        p = riscv64_diag_hex( p, frame->syscall_cfa );
+        p = riscv64_diag_text( p, " flags=" );
+        p = riscv64_diag_hex( p, frame->restore_flags );
+        p = riscv64_diag_text( p, " pc=" );
+        p = riscv64_diag_hex( p, frame->pc );
+        p = riscv64_diag_text( p, " sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        p = riscv64_diag_text( p, " ra=" );
+        p = riscv64_diag_hex( p, frame->ra );
+        p = riscv64_diag_text( p, " x2=" );
+        p = riscv64_diag_hex( p, frame->x[2] );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     RV64_CHECKPOINT( "continuation BEFORE TLS mask write" );
     if (riscv64_services_trap_enabled &&
         __atomic_add_fetch( &riscv64_services_continuations, 1, __ATOMIC_RELAXED ) == 2)
