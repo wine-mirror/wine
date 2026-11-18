@@ -971,6 +971,15 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
           (unsigned long)syscall( 178 /* __NR_gettid on Linux RISC-V */, 0 ),
           (unsigned long)thread_data_key, data, frame, __builtin_thread_pointer() );
 
+    if (riscv64_transition_diag_enabled())
+    {
+        ULONG_PTR current_sp;
+        __asm__ volatile ( "mv %0, sp" : "=r"(current_sp) );
+        WARN( "RV64-HEAP continuation ENTER sp=%p aligned=%u host_tp=%p data=%p teb=%p frame=%p target_sp=%p\n",
+              (void *)current_sp, !(current_sp & 15),
+              __builtin_thread_pointer(), data, data->teb, frame,
+              (void *)(ULONG_PTR)frame->sp );
+    }
     sigemptyset( &set );
     sigaddset( &set, SIGUSR2 );
     if (pthread_sigmask( SIG_UNBLOCK, &set, &oldmask )) abort();
@@ -1147,6 +1156,15 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
                                   ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR);
     service_t service;
 
+    if (riscv64_transition_diag_enabled())
+    {
+        ULONG_PTR current_sp;
+        __asm__ volatile ( "mv %0, sp" : "=r"(current_sp) );
+        WARN( "RV64-HEAP syscall ENTER id=%#x sp=%p aligned=%u host_tp=%p data=%p teb=%p args=%p stack_args=%p\n",
+              id, (void *)current_sp, !(current_sp & 15),
+              __builtin_thread_pointer(), data, data ? data->teb : NULL,
+              args, stack_args );
+    }
     if (!data || !data->teb) return STATUS_INVALID_SYSTEM_SERVICE;
     tables = get_teb_data(data)->syscall_table;
     if (!tables) return STATUS_INVALID_SYSTEM_SERVICE;
@@ -1389,6 +1407,10 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
     ULONG_PTR sp = (ULONG_PTR)entry_sp;
     ULONG_PTR stack_base, stack_end, frame_addr;
 
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-HEAP syscall PREPARE entry_sp=%p aligned=%u host_tp=%p data=%p teb=%p\n",
+              entry_sp, !(sp & 15), __builtin_thread_pointer(),
+              data, data ? data->teb : NULL );
     if (!data || !data->teb) return NULL;
     frame = get_syscall_frame( data );
     if (!frame) return NULL;
@@ -1430,6 +1452,15 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
 {
     struct thread_data *data = get_thread_data();
 
+    if (riscv64_transition_diag_enabled())
+    {
+        ULONG_PTR current_sp;
+        __asm__ volatile ( "mv %0, sp" : "=r"(current_sp) );
+        WARN( "RV64-HEAP syscall FINISH sp=%p aligned=%u host_tp=%p data=%p teb=%p frame=%p previous=%p\n",
+              (void *)current_sp, !(current_sp & 15),
+              __builtin_thread_pointer(), data, data ? data->teb : NULL,
+              frame, frame ? frame->prev_frame : NULL );
+    }
     if (data && data->teb && frame->prev_frame)
         get_teb_data( data )->syscall_frame = frame->prev_frame;
 }
