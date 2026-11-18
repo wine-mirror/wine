@@ -948,6 +948,32 @@ static void set_page_vprot( const void *addr, size_t size, BYTE vprot )
 
 
 /***********************************************************************
+ *           reset_page_vprot
+ *
+ * Reset a range of page protection bytes to zero.
+ */
+static void reset_page_vprot( const void *addr, size_t size )
+{
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+
+#ifdef _WIN64
+    while (idx >> pages_vprot_shift != end >> pages_vprot_shift)
+    {
+        size_t dir_size = pages_vprot_mask + 1 - (idx & pages_vprot_mask);
+        if (pages_vprot[idx >> pages_vprot_shift])
+            memset( pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask), 0, dir_size );
+        idx += dir_size;
+    }
+    if (pages_vprot[idx >> pages_vprot_shift])
+        memset( pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask), 0, end - idx );
+#else
+    memset( pages_vprot + idx, 0, end - idx );
+#endif
+}
+
+
+/***********************************************************************
  *           set_page_vprot_bits
  *
  * Set or clear bits in a range of page protection bytes.
@@ -1548,7 +1574,7 @@ static void unregister_view( struct file_view *view )
 static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
-    set_page_vprot( view->base, view->size, 0 );
+    reset_page_vprot( view->base, view->size );
     if (view->protect & VPROT_ARM64EC) clear_arm64ec_range( view->base, view->size );
     unregister_view( view );
     free_view( view );
@@ -2256,7 +2282,7 @@ static NTSTATUS decommit_pages( struct file_view *view, char *base, size_t size 
     else host_end = ROUND_ADDR( base + size, host_page_mask );
 
     if (host_start < host_end) anon_mmap_fixed( host_start, host_end - host_start, PROT_NONE, 0 );
-    set_page_vprot( base, size, 0 );
+    reset_page_vprot( base, size );
     if (host_start < host_end) kernel_writewatch_register_range( view, host_start, host_end - host_start );
     return STATUS_SUCCESS;
 }
@@ -2341,7 +2367,7 @@ static NTSTATUS free_pages_preserve_placeholder( struct file_view *view, char *b
     }
 
     view->protect = VPROT_PLACEHOLDER | VPROT_FREE_PLACEHOLDER;
-    set_page_vprot( view->base, view->size, 0 );
+    reset_page_vprot( view->base, view->size );
     anon_mmap_fixed( view->base, ROUND_SIZE( 0, view->size, host_page_mask ), PROT_NONE, 0 );
     return STATUS_SUCCESS;
 }
@@ -2388,7 +2414,7 @@ static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
     status = remove_pages_from_view( view, base, size );
     if (!status)
     {
-        set_page_vprot( base, size, 0 );
+        reset_page_vprot( base, size );
         if (view->protect & VPROT_ARM64EC) clear_arm64ec_range( base, size );
         if (host_base < host_end) unmap_area( host_base, host_end - host_base );
     }
@@ -4297,7 +4323,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
     /* setup no access guard page */
     if (guard_page)
     {
-        set_page_vprot( view->base, host_page_size, 0 );
+        reset_page_vprot( view->base, host_page_size );
         set_page_vprot( (char *)view->base + host_page_size, host_page_size,
                         VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
         mprotect_range( view->base, 2 * host_page_size , 0, 0 );
