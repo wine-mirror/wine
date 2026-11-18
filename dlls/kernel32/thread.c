@@ -66,7 +66,20 @@ __ASM_GLOBAL_FUNC( BaseThreadInitThunk,
 #else
 void __fastcall BaseThreadInitThunk( DWORD unknown, LPTHREAD_START_ROUTINE entry, void *arg )
 {
+#if defined(__riscv) && (__riscv_xlen == 64)
+    ULONG_PTR sp;
+    DWORD result;
+    __asm__ volatile ( "mv %0, sp" : "=r"(sp) );
+    WARN( "RV64-HEAP BaseThreadInitThunk ENTER sp=%p aligned=%u entry=%p arg=%p teb=%p\n",
+          (void *)sp, !(sp & 15), entry, arg, NtCurrentTeb() );
+    if (sp & 15) ERR( "RV64-HEAP misaligned BaseThreadInitThunk stack=%p\n", (void *)sp );
+    result = entry( arg );
+    WARN( "RV64-HEAP BaseThreadInitThunk EXIT result=%#lx sp=%p entry=%p\n",
+          (unsigned long)result, (void *)sp, entry );
+    RtlExitUserThread( result );
+#else
     RtlExitUserThread( entry( arg ) );
+#endif
 }
 #endif
 
