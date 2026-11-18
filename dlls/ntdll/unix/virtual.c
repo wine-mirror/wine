@@ -862,9 +862,8 @@ static BYTE get_host_page_vprot( const void *addr )
  *
  * Return the size of the region with equal masked vprot byte.
  * Also return the protections for the first page.
- * The function assumes that base and size are page aligned,
- * base + size does not wrap around and the range is within view so
- * vprot bytes are allocated for the range. */
+ * The function assumes that base and size are page aligned.
+ */
 static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vprot )
 {
     static const UINT_PTR word_from_byte = (UINT_PTR)0x101010101010101;
@@ -882,11 +881,20 @@ static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vp
     if (aligned_start_idx > end_idx) aligned_start_idx = end_idx;
 
 #ifdef _WIN64
-    vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift] + (curr_idx & pages_vprot_mask);
+    if (!(vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift]))
+    {
+        *vprot = 0;
+        curr_idx = (curr_idx & ~pages_vprot_mask) + pages_vprot_mask + 1;
+    }
+    else
+    {
+        vprot_ptr += curr_idx & pages_vprot_mask;
+        *vprot = *vprot_ptr;
+    }
 #else
     vprot_ptr = pages_vprot + curr_idx;
-#endif
     *vprot = *vprot_ptr;
+#endif
 
     /* Page count page table is at least the multiples of sizeof(UINT_PTR)
      * so we don't have to worry about crossing the boundary on unaligned idx values. */
@@ -899,7 +907,11 @@ static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vp
     for (; curr_idx < end_idx; curr_idx += sizeof(UINT_PTR), vprot_ptr += sizeof(UINT_PTR))
     {
 #ifdef _WIN64
-        if (!(curr_idx & pages_vprot_mask)) vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift];
+        if (!(curr_idx & pages_vprot_mask) && !(vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift]))
+        {
+            if (*vprot & mask) return (curr_idx - start_idx) << page_shift;
+            curr_idx += pages_vprot_mask + 1;
+        }
 #endif
         if ((vprot_word ^ *(UINT_PTR *)vprot_ptr) & mask_word)
         {
