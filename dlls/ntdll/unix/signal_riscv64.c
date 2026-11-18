@@ -1073,7 +1073,7 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         continuation->repeated_continuations = 0;
     continuation->last_continue_pc = frame->pc;
     continuation->last_continue_sp = frame->sp;
-    if (continuation->repeated_continuations == 16)
+    if (continuation->repeated_continuations == 16 && riscv64_transition_diag_enabled())
     {
         char buf[256], *p = buf;
         p = riscv64_diag_text( p, "RV64-DIAG repeated continuation pc=" );
