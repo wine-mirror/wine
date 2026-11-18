@@ -1611,7 +1611,30 @@ typedef struct _XSTATE_CONFIGURATION
     ULONG64 EnabledUserVisibleSupervisorFeatures;
     ULONG64 ExtendedFeatureDisableFeatures;
     ULONG AllNonLargeFeatureSize;
-    ULONG Spare;
+    union
+    {
+        struct
+        {
+            DWORD Amd64Spare1[3];
+        };
+        struct
+        {
+            WORD MaxSveVectorLength;
+            WORD MaxSmeVectorLength;
+            WORD SmeZTRegisterCount;
+            union
+            {
+                WORD Arm64Flags;
+                struct
+                {
+                    WORD SmeFa64 : 1;
+                };
+            };
+            BYTE SupportedSmeVectorLengths;
+            BYTE Arm64Spare[3];
+        };
+    };
+    ULONG64 Spare;
 } XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
 
 typedef struct DECLSPEC_ALIGN(8) _XSAVE_AREA_HEADER
