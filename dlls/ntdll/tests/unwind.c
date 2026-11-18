@@ -3746,6 +3746,83 @@ static RUNTIME_FUNCTION * CALLBACK dynamic_unwind_callback( DWORD_PTR pc, PVOID 
     return &runtime_func;
 }
 
+#if defined(__riscv) && __riscv_xlen == 64
+/* Lookup-only RISC-V64 PE fixtures.  The .xdata word encodes a 16-byte
+ * function length (four 4-byte instructions).  No virtual unwind is
+ * attempted: validating the RISC-V unwind opcode stream is separate. */
+static void test_dynamic_unwind_riscv64(void)
+{
+    struct
+    {
+        RUNTIME_FUNCTION functions[2];
+        DWORD xdata[2];
+    } fixture;
+    RUNTIME_FUNCTION *func;
+    ULONG_PTR base, image = (ULONG_PTR)code_mem;
+    void *growable = NULL;
+    DWORD callback_count = 0;
+    NTSTATUS status;
+
+    if (!pRtlAddFunctionTable || !pRtlDeleteFunctionTable || !pRtlLookupFunctionEntry)
+    {
+        win_skip( "RISC-V64 dynamic function table APIs unavailable\\n" );
+        return;
+    }
+    memset( &fixture, 0, sizeof(fixture) );
+    fixture.functions[0].BeginAddress = 0x400;
+    fixture.functions[1].BeginAddress = 0x410;
+    /* Use a relative .xdata RVA within the same image allocation. */
+    fixture.functions[0].UnwindData = 0x800;
+    fixture.functions[1].UnwindData = 0x804;
+    /* FunctionLength=4, Version=0, X=0, E=0, EpilogCount=0, CodeWords=0. */
+    ((DWORD *)code_mem)[0x800 / sizeof(DWORD)] = 4;
+    ((DWORD *)code_mem)[0x804 / sizeof(DWORD)] = 4;
+
+    ok( pRtlAddFunctionTable( fixture.functions, 2, image ),
+        "RISC-V64 RtlAddFunctionTable failed\\n" );
+    base = 0;
+    func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
+    ok( func == &fixture.functions[0], "RISC-V64 first lookup returned %p\\n", func );
+    ok( base == image, "RISC-V64 first lookup base %Ix\\n", base );
+    base = 0;
+    func = pRtlLookupFunctionEntry( image + 0x418, &base, NULL );
+    ok( func == &fixture.functions[1], "RISC-V64 second lookup returned %p\\n", func );
+    ok( pRtlDeleteFunctionTable( fixture.functions ), "RISC-V64 delete failed\\n" );
+
+    if (pRtlInstallFunctionTableCallback)
+    {
+        ULONG_PTR id = image | 3;
+        ok( pRtlInstallFunctionTableCallback( id, image, 0x430,
+                                              dynamic_unwind_callback, &callback_count, NULL ),
+            "RISC-V64 callback registration failed\\n" );
+        ok( pRtlDeleteFunctionTable( (RUNTIME_FUNCTION *)id ),
+            "RISC-V64 callback deletion failed\\n" );
+    }
+    if (pRtlAddGrowableFunctionTable && pRtlGrowFunctionTable &&
+        pRtlDeleteGrowableFunctionTable)
+    {
+        status = pRtlAddGrowableFunctionTable( &growable, fixture.functions, 0, 2,
+                                              image, image + 0x430 );
+        ok( !status, "RISC-V64 growable registration returned %#lx\\n", status );
+        if (!status)
+        {
+            base = 0;
+            func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
+            ok( !func, "RISC-V64 empty growable table returned %p\\n", func );
+            pRtlGrowFunctionTable( growable, 1 );
+            base = 0;
+            func = pRtlLookupFunctionEntry( image + 0x408, &base, NULL );
+            ok( func == &fixture.functions[0], "RISC-V64 grown lookup returned %p\\n", func );
+            pRtlGrowFunctionTable( growable, 2 );
+            base = 0;
+            func = pRtlLookupFunctionEntry( image + 0x418, &base, NULL );
+            ok( func == &fixture.functions[1], "RISC-V64 second grown lookup returned %p\\n", func );
+            pRtlDeleteGrowableFunctionTable( growable );
+        }
+    }
+}
+#endif
+
 static void test_dynamic_unwind(void)
 {
     static const int code_offset = 1024;
@@ -3762,7 +3839,7 @@ static void test_dynamic_unwind(void)
 #if defined(__riscv) && __riscv_xlen == 64
     /* These generic cases supply no valid RISC-V64 .xdata.  They need
      * architecture-specific unwind fixtures before lookup can be tested. */
-    win_skip( "RISC-V64 dynamic unwind tests require .xdata fixtures\n" );
+    test_dynamic_unwind_riscv64();
     return;
 #endif
 
