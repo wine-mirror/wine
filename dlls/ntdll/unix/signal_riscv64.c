@@ -493,6 +493,9 @@ C_ASSERT( offsetof( CONTEXT, Fcsr ) == offsetof(CONTEXT, Pc) + sizeof(ULONG64) )
 C_ASSERT( offsetof( CONTEXT, F ) == offsetof(CONTEXT, Fcsr) + sizeof(ULONG64) );
 C_ASSERT( offsetof( struct riscv64_signal_exception, context ) % 16 == 0 );
 
+/* Diagnostic helper is defined below the exception dispatch routine. */
+static int riscv64_transition_diag_enabled(void);
+
 static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
 {
     NTSTATUS status;
