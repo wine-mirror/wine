@@ -870,6 +870,191 @@ static NTSTATUS load_so_dll( void *args )
     return status;
 }
 
+/*
+ * Check a native RV64 Winelib executable without dlopen() in the parent.
+ *
+ * Winelib ELF builtins export __wine_spec_nt_header, a synthetic PE header.
+ * Reading that header from the ELF dynamic symbol table lets process creation
+ * obtain real image metadata without accepting arbitrary missing .exe files.
+ * It also avoids running library constructors in the calling process.
+ */
+#if defined(__riscv) && __riscv_xlen == 64 && defined(HAVE_ELF_H)
+static BOOL rv64_elf_range_valid( off_t file_size, ULONGLONG offset, ULONGLONG length )
+{
+    return file_size >= 0 && offset <= (ULONGLONG)file_size &&
+           length <= (ULONGLONG)file_size - offset;
+}
+
+static void rv64_fill_builtin_exe_info( const IMAGE_NT_HEADERS64 *nt, struct pe_image_info *info )
+{
+    memset( info, 0, sizeof(*info) );
+    info->base            = nt->OptionalHeader.ImageBase;
+    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
+    info->map_size        = nt->OptionalHeader.SizeOfImage;
+    info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
+    info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
+    info->subsystem       = nt->OptionalHeader.Subsystem;
+    info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
+    info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
+    info->osversion_major = nt->OptionalHeader.MajorOperatingSystemVersion;
+    info->osversion_minor = nt->OptionalHeader.MinorOperatingSystemVersion;
+    info->image_charact   = nt->FileHeader.Characteristics;
+    info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
+    info->machine         = nt->FileHeader.Machine;
+    info->contains_code   = TRUE;
+    info->wine_builtin    = TRUE;
+    info->header_size     = nt->OptionalHeader.SizeOfHeaders;
+    info->file_size       = nt->OptionalHeader.SizeOfImage;
+    info->checksum        = nt->OptionalHeader.CheckSum;
+}
+
+static BOOL rv64_probe_builtin_exe_so( const char *path, struct pe_image_info *info )
+{
+    static const char spec_symbol[] = "__wine_spec_nt_header";
+    Elf64_Ehdr ehdr;
+    Elf64_Shdr dynsym, strtab, section;
+    Elf64_Sym symbol;
+    IMAGE_NT_HEADERS64 nt;
+    struct stat st;
+    unsigned int i;
+    BOOL found = FALSE;
+    int fd;
+
+    if ((fd = open( path, O_RDONLY | O_CLOEXEC )) == -1) return FALSE;
+    if (fstat( fd, &st ) || !S_ISREG( st.st_mode ) ||
+        pread( fd, &ehdr, sizeof(ehdr), 0 ) != sizeof(ehdr) ||
+        memcmp( ehdr.e_ident, ELFMAG, SELFMAG ) ||
+        ehdr.e_ident[EI_CLASS] != ELFCLASS64 ||
+        ehdr.e_ident[EI_DATA] != ELFDATA2LSB ||
+        ehdr.e_ident[EI_VERSION] != EV_CURRENT ||
+        ehdr.e_type != ET_DYN || ehdr.e_machine != EM_RISCV ||
+        ehdr.e_version != EV_CURRENT ||
+        ehdr.e_shentsize != sizeof(Elf64_Shdr) || !ehdr.e_shnum ||
+        !rv64_elf_range_valid( st.st_size, ehdr.e_shoff,
+                               (ULONGLONG)ehdr.e_shnum * sizeof(Elf64_Shdr) ))
+        goto done;
+
+    for (i = 0; i < ehdr.e_shnum && !found; i++)
+    {
+        unsigned int j;
+        if (pread( fd, &dynsym, sizeof(dynsym),
+                   ehdr.e_shoff + (ULONGLONG)i * sizeof(Elf64_Shdr) ) != sizeof(dynsym))
+            break;
+        if (dynsym.sh_type != SHT_DYNSYM || dynsym.sh_entsize != sizeof(Elf64_Sym) ||
+            dynsym.sh_link >= ehdr.e_shnum ||
+            !rv64_elf_range_valid( st.st_size, dynsym.sh_offset, dynsym.sh_size ))
+            continue;
+        if (pread( fd, &strtab, sizeof(strtab),
+                   ehdr.e_shoff + (ULONGLONG)dynsym.sh_link * sizeof(Elf64_Shdr) ) != sizeof(strtab) ||
+            strtab.sh_type != SHT_STRTAB ||
+            !rv64_elf_range_valid( st.st_size, strtab.sh_offset, strtab.sh_size ))
+            continue;
+
+        for (j = 0; j < dynsym.sh_size / sizeof(Elf64_Sym); j++)
+        {
+            char name[sizeof(spec_symbol)];
+            ULONGLONG offset;
+
+            if (pread( fd, &symbol, sizeof(symbol),
+                       dynsym.sh_offset + (ULONGLONG)j * sizeof(Elf64_Sym) ) != sizeof(symbol))
+                break;
+            if (symbol.st_shndx == SHN_UNDEF || symbol.st_shndx >= ehdr.e_shnum ||
+                symbol.st_name > strtab.sh_size ||
+                sizeof(name) > strtab.sh_size - symbol.st_name ||
+                pread( fd, name, sizeof(name), strtab.sh_offset + symbol.st_name ) != sizeof(name) ||
+                memcmp( name, spec_symbol, sizeof(name) ))
+                continue;
+            if (pread( fd, &section, sizeof(section),
+                       ehdr.e_shoff + (ULONGLONG)symbol.st_shndx * sizeof(Elf64_Shdr) ) != sizeof(section))
+                break;
+            if (section.sh_type == SHT_NOBITS || symbol.st_value < section.sh_addr ||
+                symbol.st_value - section.sh_addr > section.sh_size ||
+                sizeof(nt) > section.sh_size - (symbol.st_value - section.sh_addr))
+                continue;
+
+            offset = section.sh_offset + symbol.st_value - section.sh_addr;
+            if (!rv64_elf_range_valid( st.st_size, offset, sizeof(nt) ) ||
+                pread( fd, &nt, sizeof(nt), offset ) != sizeof(nt) ||
+                nt.Signature != IMAGE_NT_SIGNATURE ||
+                nt.FileHeader.Machine != IMAGE_FILE_MACHINE_RISCV64 ||
+                nt.FileHeader.Characteristics & IMAGE_FILE_DLL ||
+                nt.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC ||
+                !nt.OptionalHeader.SizeOfImage)
+                continue;
+
+            rv64_fill_builtin_exe_info( &nt, info );
+            found = TRUE;
+        }
+    }
+
+done:
+    close( fd );
+    return found;
+}
+#endif
+
+NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_image_info *info )
+{
+#if defined(__riscv) && __riscv_xlen == 64 && defined(HAVE_ELF_H)
+    const WCHAR *name = nt_name->Buffer;
+    enum loadorder order;
+    WORD machine = 0;
+    unsigned int i, len;
+    char filename[256], *path;
+    BOOL found;
+
+    if (!is_system_dir_path( nt_name, &machine ) || machine != IMAGE_FILE_MACHINE_RISCV64)
+        return STATUS_DLL_NOT_FOUND;
+
+    order = get_load_order( nt_name, TRUE, NULL );
+    if (order == LO_DISABLED || order == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
+
+    len = nt_name->Length / sizeof(WCHAR);
+    for (i = 0; i < len; i++)
+        if (name[i] == '/' || name[i] == '\\') name = nt_name->Buffer + i + 1;
+    len = nt_name->Buffer + len - name;
+    if (len < 5 || len >= sizeof(filename)) return STATUS_DLL_NOT_FOUND;
+    for (i = 0; i < len; i++)
+    {
+        if (name[i] > 127) return STATUS_DLL_NOT_FOUND;
+        filename[i] = name[i] >= 'A' && name[i] <= 'Z' ? name[i] + ('a' - 'A') : name[i];
+    }
+    filename[len] = 0;
+    if (strcmp( filename + len - 4, ".exe" )) return STATUS_DLL_NOT_FOUND;
+
+    /* Match the existing find_builtin_dll() paths, but only for executables. */
+    if (build_dir)
+    {
+        if (asprintf( &path, "%s/programs/%.*s/%s.so",
+                      build_dir, (int)len - 4, filename, filename ) < 0)
+            return STATUS_NO_MEMORY;
+        found = rv64_probe_builtin_exe_so( path, info );
+        if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
+        free( path );
+        if (found) return STATUS_SUCCESS;
+    }
+
+    for (i = 0; dll_paths[i]; i++)
+    {
+        if (asprintf( &path, "%s%s/%s.so", dll_paths[i],
+                      get_so_dir( IMAGE_FILE_MACHINE_RISCV64 ), filename ) < 0)
+            return STATUS_NO_MEMORY;
+        found = rv64_probe_builtin_exe_so( path, info );
+        if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
+        free( path );
+        if (found) return STATUS_SUCCESS;
+
+        if (asprintf( &path, "%s/%s.so", dll_paths[i], filename ) < 0)
+            return STATUS_NO_MEMORY;
+        found = rv64_probe_builtin_exe_so( path, info );
+        if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
+        free( path );
+        if (found) return STATUS_SUCCESS;
+    }
+#endif
+    return STATUS_DLL_NOT_FOUND;
+}
+
 /* check if the library is the correct architecture */
 /* only returns false for a valid library of the wrong arch */
 static int check_library_arch( int fd )
@@ -1500,7 +1685,13 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine )
     case STATUS_INVALID_IMAGE_FORMAT:
     case STATUS_NOT_SUPPORTED:
         /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
+#if defined(__riscv) && __riscv_xlen == 64
+        if (loadorder != LO_NATIVE && is_system_dir &&
+            (is_prefix_bootstrap || (search_machine == IMAGE_FILE_MACHINE_RISCV64 &&
+             get_riscv64_builtin_exe_info( nt_name, &(struct pe_image_info){ 0 } ) == STATUS_SUCCESS)))
+#else
         if (loadorder != LO_NATIVE && is_prefix_bootstrap && is_system_dir)
+#endif
             status = find_builtin_dll( nt_name, NULL, &main_module, &size, &main_image_info, 0, 0,
                                        search_machine, load_machine, FALSE, 0 );
         break;
