@@ -2800,9 +2800,26 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
-        if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
-
-        if (diag) WARN("RV64-THREADNAME validated name_length=%u name_buffer=%p\n", info->ThreadName.Length, info->ThreadName.Buffer);
+#if defined(__riscv) && __riscv_xlen == 64
+        if (diag)
+        {
+            static const char before[] = "RV64-THREADNAME before structure read\n";
+            write( 2, before, sizeof(before) - 1 );
+        }
+#endif
+        {
+            USHORT name_length = info->ThreadName.Length;
+            WCHAR *name_buffer = info->ThreadName.Buffer;
+#if defined(__riscv) && __riscv_xlen == 64
+            if (diag)
+            {
+                static const char after[] = "RV64-THREADNAME after structure read\n";
+                write( 2, after, sizeof(after) - 1 );
+            }
+#endif
+            if (name_length && !name_buffer) return STATUS_ACCESS_VIOLATION;
+            if (diag) WARN("RV64-THREADNAME validated name_length=%u name_buffer=%p\n", name_length, name_buffer);
+        }
         status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
         if (diag) WARN("RV64-THREADNAME query returned status=%08x\n", status);
         if (handle == GetCurrentThread() || (!status && (HandleToULong(tbi.ClientId.UniqueThread) == GetCurrentThreadId())))
