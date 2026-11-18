@@ -459,6 +459,13 @@ static void preloader_exec( char **argv )
 #endif
     execv( argv[0], argv );
     free( argv[0] );
+#elif defined(__APPLE__) && defined(__aarch64__)
+    posix_spawnattr_t attr;
+    posix_spawnattr_init( &attr );
+    posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC );
+    posix_spawnattr_set_4k_page_size_np( &attr );
+    posix_spawn( NULL, argv[1], NULL, &attr, argv + 1, *_NSGetEnviron() );
+    posix_spawnattr_destroy( &attr );
 #endif
     execv( argv[1], argv + 1 );
 }
