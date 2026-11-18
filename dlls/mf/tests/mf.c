@@ -962,6 +962,7 @@ static HRESULT WINAPI test_media_sink_Shutdown(IMFMediaSink *iface)
         sink->stream = NULL;
     }
 
+    todo_wine_if(sink->shutdown)
     ok(!sink->shutdown, "Unexpected call.\n");
     sink->shutdown = TRUE;
     return S_OK;
@@ -12330,6 +12331,156 @@ static void test_media_session_unused_stream_selection(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_topology_reuse(void)
+{
+    media_type_desc video_nv12_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+    };
+    IMFTopology *topology, *raw_topology;
+    struct test_stream_sink *stream_sink;
+    struct test_media_sink *media_sink;
+    struct test_handler *handler;
+    IMFAsyncCallback *callback;
+    IMFTopoLoader *topo_loader;
+    IMFMediaType *output_type;
+    IMFMediaSession *session;
+    DWORD samples_count = 0;
+    IMFMediaSource *source;
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    if (!(source = create_media_source(L"test.mp4", L"video/mp4")))
+    {
+        todo_wine /* Gitlab CI Debian runner */
+        win_skip("MP4 media source is not supported, skipping tests.\n");
+        MFShutdown();
+        return;
+    }
+
+    hr = MFCreateMediaType(&output_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(output_type, video_nv12_desc, -1);
+
+    handler = create_test_handler();
+    handler->media_types_count = 1;
+    handler->media_types = &output_type;
+    IMFMediaType_AddRef((handler->current_type = output_type));
+    media_sink = create_test_media_sink(&handler->IMFMediaTypeHandler_iface);
+    IMFMediaTypeHandler_Release(&handler->IMFMediaTypeHandler_iface);
+    media_sink->characteristics = MEDIASINK_FIXED_STREAMS;
+    stream_sink = media_sink->stream;
+
+    raw_topology = create_test_topology_unk(source, (IUnknown *)stream_sink, NULL, NULL);
+    hr = MFCreateTopoLoader(&topo_loader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopoLoader_Load(topo_loader, raw_topology, &topology, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopology_Release(raw_topology);
+    IMFTopoLoader_Release(topo_loader);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_SetTopology(session, 0, topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback = create_test_callback(TRUE);
+    hr = wait_media_event(session, callback, MESessionTopologySet, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    SET_EXPECT(test_media_sink_GetPresentationClock);
+    SET_EXPECT(test_media_sink_SetPresentationClock);
+    SET_EXPECT(test_media_sink_GetStreamSinkCount);
+    SET_EXPECT(test_stream_sink_ProcessSample);
+
+    propvar.vt = VT_EMPTY;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+
+    while (hr == WAIT_OBJECT_0 && SUCCEEDED(hr = IMFCollection_GetElementCount(stream_sink->samples, &samples_count)) && samples_count < 2)
+    {
+        hr = WaitForSingleObject(stream_sink->sample_event, 1000);
+        ok(hr == WAIT_OBJECT_0, "Unexpected hr %#lx.\n", hr);
+    }
+    ok(samples_count == 2, "Unexpected samples count %ld.\n", samples_count);
+
+    SET_EXPECT(test_stream_sink_Flush);
+    hr = IMFMediaSession_Stop(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event_until_blocking(session, callback, MESessionStopped, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSession_SetTopology(session, MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event_until_blocking(session, callback, MESessionTopologySet, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    IMFCollection_RemoveAllElements(stream_sink->samples);
+
+    SET_EXPECT(test_media_sink_GetPresentationClock);
+    SET_EXPECT(test_media_sink_SetPresentationClock);
+    SET_EXPECT(test_media_sink_GetStreamSinkCount);
+    SET_EXPECT(test_stream_sink_ProcessSample);
+    SET_EXPECT(test_stream_sink_PlaceMarker);
+
+    /* Request samples before starting. Reusing the topology means the sink may still be subscribed to events. */
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+
+    propvar.vt = VT_I8;
+    propvar.hVal.QuadPart = 0;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+    IMFStreamSink_QueueEvent(&stream_sink->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+
+    samples_count = 0;
+    while (hr == WAIT_OBJECT_0 && SUCCEEDED(hr = IMFCollection_GetElementCount(stream_sink->samples, &samples_count)) && samples_count < 4)
+    {
+        SET_EXPECT(test_media_sink_GetStreamSinkCount);
+        hr = WaitForSingleObject(stream_sink->sample_event, 1000);
+        ok(hr == WAIT_OBJECT_0, "Unexpected hr %#lx.\n", hr);
+    }
+    ok(samples_count == 4, "Unexpected samples count %ld.\n", samples_count);
+
+    SET_EXPECT(test_stream_sink_Flush);
+    hr = IMFMediaSession_Close(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event_until_blocking(session, callback, MESessionClosed, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaSession_Shutdown(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFAsyncCallback_Release(callback);
+    IMFMediaSession_Release(session);
+    IMFTopology_Release(topology);
+    IMFMediaSink_Release(&media_sink->IMFMediaSink_iface);
+    IMFMediaType_Release(output_type);
+    IMFMediaSource_Release(source);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -12377,4 +12528,5 @@ START_TEST(mf)
     test_media_session_sink_shutdown();
     test_async_transform();
     test_media_session_unused_stream_selection();
+    test_topology_reuse();
 }
