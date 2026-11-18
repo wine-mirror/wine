@@ -1017,7 +1017,7 @@ NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_
 
     len = nt_name->Length / sizeof(WCHAR);
     for (i = 0; i < len; i++)
-        if (name[i] == '/' || name[i] == '\\') name = nt_name->Buffer + i + 1;
+        if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') name = nt_name->Buffer + i + 1;
     len = nt_name->Buffer + len - name;
     if (len < 5 || len >= sizeof(filename)) return STATUS_DLL_NOT_FOUND;
     for (i = 0; i < len; i++)
