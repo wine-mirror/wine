@@ -283,9 +283,22 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
 static ULONG riscv64_function_length( ULONG_PTR base, const RUNTIME_FUNCTION *func )
 {
     DWORD header;
-    if (func->UnwindData & 3) return 0;
+    if (func->UnwindData & 3)
+    {
+        WARN( "RV64-UNWIND metadata rejected: unaligned xdata RVA=%#lx base=%p\\n",
+              (unsigned long)func->UnwindData, (void *)base );
+        return 0;
+    }
     header = *(const DWORD *)(base + func->UnwindData);
-    if ((header >> 18) & 3) return 0;
+    if ((header >> 18) & 3)
+    {
+        WARN( "RV64-UNWIND metadata rejected: unsupported header=%#lx RVA=%#lx\\n",
+              (unsigned long)header, (unsigned long)func->UnwindData );
+        return 0;
+    }
+    if (!(header & 0x3ffff))
+        WARN( "RV64-UNWIND metadata rejected: zero function length RVA=%#lx\\n",
+              (unsigned long)func->UnwindData );
     return (header & 0x3ffff) * 2;
 }
 
@@ -300,6 +313,8 @@ static RUNTIME_FUNCTION *riscv64_find_function( ULONG_PTR pc, ULONG_PTR base,
         if (length && rva >= table[i].BeginAddress &&
             rva - table[i].BeginAddress < length) return &table[i];
     }
+    WARN( "RV64-UNWIND entry not found pc=%p base=%p rva=%#lx count=%lu\\n",
+          (void *)pc, (void *)base, (unsigned long)rva, (unsigned long)count );
     return NULL;
 }
 
@@ -314,11 +329,17 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
 
     if ((table = lookup_dynamic_function_table( pc, base, &count )))
     {
-        /* Callback tables return a single function entry. */
+        TRACE( "RV64-UNWIND dynamic table pc=%p base=%p table=%p count=%lu\\n",
+               (void *)pc, (void *)*base, table, (unsigned long)count );
         return riscv64_find_function( pc, *base, table, count );
     }
+    TRACE( "RV64-UNWIND dynamic table not found pc=%p\\n", (void *)pc );
     table = RtlLookupFunctionTable( pc, base, &size );
-    if (!table) return NULL;
+    if (!table)
+    {
+        TRACE( "RV64-UNWIND image table not found pc=%p\\n", (void *)pc );
+        return NULL;
+    }
     ret = riscv64_find_function( pc, *base, table, size / sizeof(*table) );
     return ret;
 }
