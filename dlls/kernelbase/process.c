@@ -540,6 +540,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     NTSTATUS status;
 
     /* Process the AppName and/or CmdLine to get module name and path */
+#ifdef __riscv
+    WARN( "RV64-LAUNCH CreateProcessInternalW request app=%s cmd=%s flags=%08lx\n",
+          debugstr_w(app_name), debugstr_w(cmd_line), flags );
+#endif
 
     TRACE( "app %s cmdline %s\n", debugstr_w(app_name), debugstr_w(cmd_line) );
 
