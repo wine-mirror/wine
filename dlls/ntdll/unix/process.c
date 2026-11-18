@@ -316,11 +316,36 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     WARN( "RV64-LAUNCH get_pe_file_info result=%08x path=%s bootstrap=%d handle=%p machine=%04x\n",
           status, debugstr_us( attr->ObjectName ), is_prefix_bootstrap, *handle, info->machine );
 #endif
+#if defined(__riscv) && __riscv_xlen == 64
+    /*
+     * On RV64 the prefix can lack PE placeholder files. Only accept an
+     * absent system32 executable when a matching Winelib ELF has been
+     * verified, even during prefix bootstrap.
+     */
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND)
+    {
+        NTSTATUS builtin_status = get_riscv64_builtin_exe_info( attr->ObjectName, info );
+        if (builtin_status == STATUS_SUCCESS)
+        {
+            WARN( "RV64-LAUNCH resolved missing PE to verified Winelib builtin %s machine=%04x\n",
+                  debugstr_us( attr->ObjectName ), info->machine );
+            return STATUS_SUCCESS;
+        }
+        if (builtin_status == STATUS_NO_MEMORY) return builtin_status;
+    }
+    if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ) &&
+        info->machine != IMAGE_FILE_MACHINE_RISCV64)
+    {
+        TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
+        return STATUS_SUCCESS;
+    }
+#else
     if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
     {
         TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
         return STATUS_SUCCESS;
     }
+#endif
     return status;
 }
 
