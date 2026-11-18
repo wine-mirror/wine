@@ -281,6 +281,10 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
 #endif
     if (status) goto done;
 
+#ifdef __riscv
+    WARN( "RV64-LAUNCH get_pe_file_info opened %s handle=%p unix=%s\n",
+          debugstr_us( attr->ObjectName ), *handle, *unix_name ? *unix_name : "(null)" );
+#endif
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                                     SECTION_MAP_READ | SECTION_MAP_EXECUTE,
                                     NULL, NULL, PAGE_EXECUTE_READ, SEC_IMAGE, *handle )))
@@ -308,6 +312,10 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     }
 
  done:
+#ifdef __riscv
+    WARN( "RV64-LAUNCH get_pe_file_info result=%08x path=%s bootstrap=%d handle=%p machine=%04x\n",
+          status, debugstr_us( attr->ObjectName ), is_prefix_bootstrap, *handle, info->machine );
+#endif
     if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
     {
         TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
@@ -767,6 +775,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     InitializeObjectAttributes( &attr, &path, OBJ_CASE_INSENSITIVE, 0, 0 );
     if ((status = get_pe_file_info( &attr, &nt_name, &unix_name, &file_handle, &pe_info )))
     {
+#ifdef __riscv
+        WARN( "RV64-LAUNCH NtCreateUserProcess lookup failed status=%08x nt=%s unix=%s\n",
+              status, debugstr_us( &path ), unix_name ? unix_name : "(null)" );
+#endif
         if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &attr, unix_name, unixdir, params ))
         {
             *process_handle_ptr = *thread_handle_ptr = 0;
