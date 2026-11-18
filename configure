@@ -757,6 +757,7 @@ GRADLE
 WINELOADER_DEPENDS
 OPENCL_LIBS
 COREAUDIO_LIBS
+CODESIGN
 SYSTEMCONFIGURATION_LIBS
 SECURITY_LIBS
 APPKIT_LIBS
@@ -885,6 +886,7 @@ build_vendor
 build_cpu
 build
 PROVISIONING_PROFILE
+CODESIGN_IDENTITY
 system_dllpath
 ECHO_T
 ECHO_N
@@ -1906,6 +1908,7 @@ enable_year2038
       ac_precious_vars='build_alias
 host_alias
 target_alias
+CODESIGN_IDENTITY
 PROVISIONING_PROFILE
 CC
 CFLAGS
@@ -2724,6 +2727,8 @@ Optional Packages:
   --with-x                use the X Window System
 
 Some influential environment variables:
+  CODESIGN_IDENTITY
+              Code signing identity to use on ARM64 macOS
   PROVISIONING_PROFILE
               Path to a provisioning profile to use on ARM64 macOS
   CC          C compiler command
@@ -4680,6 +4685,7 @@ if test ${with_wine64+y}
 then :
   withval=$with_wine64;
 fi
+
 
 
 
@@ -12424,6 +12430,57 @@ case $host_os in
         if ${PROVISIONING_PROFILE:+false} :
 then :
   as_fn_append wine_warnings "|No provisioning profile supplied; Wine will crash on launch on an unmodified macOS system."
+fi
+        # Extract the first word of "codesign", so it can be a program name with args.
+set dummy codesign; ac_word=$2
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_CODESIGN+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) case $CODESIGN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CODESIGN="$CODESIGN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_CODESIGN="$as_dir$ac_word$ac_exec_ext"
+    printf '%s\n' "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac ;;
+esac
+fi
+CODESIGN=$ac_cv_path_CODESIGN
+if test -n "$CODESIGN"; then
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $CODESIGN" >&5
+printf '%s\n' "$CODESIGN" >&6; }
+else
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf '%s\n' "no" >&6; }
+fi
+
+
+        CODESIGN_IDENTITY=${CODESIGN_IDENTITY:-"-"}
+        if test "x$CODESIGN_IDENTITY" = x-
+then :
+  as_fn_append wine_warnings "|Using ad-hoc code-signing; Wine will crash on launch on an unmodified macOS system."
 fi
         ;;
       x86_64)
@@ -24007,6 +24064,7 @@ ECHO_C = $ECHO_C
 ECHO_N = $ECHO_N
 ECHO_T = $ECHO_T
 system_dllpath = $system_dllpath
+CODESIGN_IDENTITY = $CODESIGN_IDENTITY
 PROVISIONING_PROFILE = $PROVISIONING_PROFILE
 build = $build
 build_cpu = $build_cpu
@@ -24135,6 +24193,7 @@ CORESERVICES_LIBS = $CORESERVICES_LIBS
 APPKIT_LIBS = $APPKIT_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
+CODESIGN = $CODESIGN
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS

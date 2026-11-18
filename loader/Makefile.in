@@ -17,8 +17,10 @@ wine_DEPS = $(WINELOADER_DEPENDS)
 wine_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
 
 wine_app_OBJS = main.o
+wine_app_DEPS = wine_arm64_entitlements.plist
 wine_app_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
 wine_app_INFO_PLIST = wine_info.plist
+wine_app_CODESIGN_FLAGS = -s "$(CODESIGN_IDENTITY)" -f --entitlements $(srcdir)/wine_arm64_entitlements.plist
 
 wine_preloader_OBJS = preloader.o preloader_mac.o
 wine_preloader_DEPS = $(WINELOADER_DEPENDS)

@@ -161,6 +161,7 @@ static const char *sed_cmd;
 static const char *wayland_scanner;
 static const char *sarif_converter;
 static const char *provisioning_profile;
+static const char *codesign;
 static const char *buildimage;
 static const char *runtest;
 static const char *install;
@@ -4224,6 +4225,7 @@ static void output_programs( struct makefile *make )
         struct strarray ldflags  = get_expanded_file_local_var( make, name, "LDFLAGS" );
         struct strarray objs     = get_expanded_file_local_var( make, name, "OBJS" );
         struct strarray symlinks = get_expanded_file_local_var( make, name, "SYMLINKS" );
+        struct strarray codesign_flags = get_expanded_file_local_var( make, name, "CODESIGN_FLAGS" );
         struct strarray all_libs = get_expanded_make_var_array( make, "UNIX_LIBS" );
 
         if (!objs.count) objs = make->object_files[arch];
@@ -4274,6 +4276,13 @@ static void output_programs( struct makefile *make )
         output_filenames( all_libs );
         output_filenames( ldflags );
         output( "\n" );
+        if (codesign && codesign_flags.count)
+        {
+            output( "\t%s%s", cmd_prefix( "GEN" ), codesign );
+            output_filenames( codesign_flags );
+            output_filename( "$@" );
+            output( "\n" );
+        }
         strarray_add( &make->all_targets[arch], program );
 
         STRARRAY_FOR_EACH( link, &symlinks )
@@ -5194,6 +5203,7 @@ int main( int argc, char *argv[] )
     ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
     wayland_scanner    = get_expanded_make_variable( top_makefile, "WAYLAND_SCANNER" );
     sarif_converter    = get_expanded_make_variable( top_makefile, "SARIF_CONVERTER" );
+    codesign           = get_expanded_make_variable( top_makefile, "CODESIGN" );
     provisioning_profile = get_expanded_make_variable( top_makefile, "PROVISIONING_PROFILE" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
