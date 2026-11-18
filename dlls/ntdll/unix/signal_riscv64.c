@@ -1164,6 +1164,8 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     ULONG index = id & 0xfff;
     ULONG table_id = (id >> 12) & 3;
     ULONG arg_size;
+    ULONG_PTR argv[20] = {0};
+    unsigned int argc, i;
     /* RV64 uses a0-a7 followed by eight-byte stack slots.  Some
      * win32u services have 17 arguments; allow up to 20 in total. */
     typedef NTSTATUS (*service_t)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR,
@@ -1205,35 +1207,39 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     }
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
-    /* Diagnostic-only: resolve the actual service-table slot and capture
-     * the argument vector immediately before the indirect call.  This
-     * records the values without changing the calling convention. */
+    argc = arg_size / sizeof(ULONG_PTR);
+    /* The stub saves a0..a7 in the syscall frame.  Arguments beyond a7
+     * begin at the caller's original SP, with no x86-style shadow space.
+     * Snapshot only the slots declared by ArgumentTable, before calling
+     * into the service (which may itself reenter Wine). */
+    if (!args || ((ULONG_PTR)args & 7) || (argc > 8 && (!stack_args || ((ULONG_PTR)stack_args & 7))))
+    {
+        ERR( "RV64-SVC invalid argument vector id=%#x argc=%u regs=%p stack=%p\n",
+             id, argc, args, stack_args );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (argc > 8 && (ULONG_PTR)stack_args > ~(ULONG_PTR)0 - (argc - 8) * sizeof(ULONG_PTR))
+        return STATUS_INVALID_PARAMETER;
+    for (i = 0; i < argc && i < 8; ++i) argv[i] = args[i];
+    for (; i < argc; ++i) argv[i] = stack_args[i - 8];
+
     if (riscv64_transition_diag_enabled() && id == 0x39)
     {
-        ULONG64 values[20] = {0};
-        unsigned int count = arg_size / sizeof(ULONG_PTR), i;
-        for (i = 0; i < count && i < 8; ++i) values[i] = args[i];
-        for (; i < count; ++i) values[i] = stack_args[i - 8];
         WARN( "RV64-SVC id=%#x table=%u index=%u count=%u bytes=%u target=%p args=%p stack=%p\n",
-              id, table_id, index, count, arg_size, service, args, stack_args );
-        for (i = 0; i < count; ++i)
+              id, table_id, index, argc, arg_size, service, args, stack_args );
+        for (i = 0; i < argc; ++i)
             WARN( "RV64-SVC id=%#x arg[%u]=%016llx\n",
-                  id, i, (unsigned long long)values[i] );
+                  id, i, (unsigned long long)argv[i] );
     }
-    return service( args[0], args[1], args[2], args[3],
-                    args[4], args[5], args[6], args[7],
-                    arg_size > 8 * sizeof(ULONG_PTR) ? stack_args[0] : 0,
-                    arg_size > 9 * sizeof(ULONG_PTR) ? stack_args[1] : 0,
-                    arg_size > 10 * sizeof(ULONG_PTR) ? stack_args[2] : 0,
-                    arg_size > 11 * sizeof(ULONG_PTR) ? stack_args[3] : 0,
-                    arg_size > 12 * sizeof(ULONG_PTR) ? stack_args[4] : 0,
-                    arg_size > 13 * sizeof(ULONG_PTR) ? stack_args[5] : 0,
-                    arg_size > 14 * sizeof(ULONG_PTR) ? stack_args[6] : 0,
-                    arg_size > 15 * sizeof(ULONG_PTR) ? stack_args[7] : 0,
-                    arg_size > 16 * sizeof(ULONG_PTR) ? stack_args[8] : 0,
-                    arg_size > 17 * sizeof(ULONG_PTR) ? stack_args[9] : 0,
-                    arg_size > 18 * sizeof(ULONG_PTR) ? stack_args[10] : 0,
-                    arg_size > 19 * sizeof(ULONG_PTR) ? stack_args[11] : 0 );
+    /* RISC-V LP64D passes the first eight integer/pointer arguments in
+     * a0..a7, then consecutive 8-byte slots on the stack.  A fixed
+     * prototype supplies the maximum supported slots; unused slots are
+     * initialized to zero and are never read from the Windows stack. */
+    return service( argv[0], argv[1], argv[2], argv[3],
+                    argv[4], argv[5], argv[6], argv[7],
+                    argv[8], argv[9], argv[10], argv[11],
+                    argv[12], argv[13], argv[14], argv[15],
+                    argv[16], argv[17], argv[18], argv[19] );
 }
 
 /* a0 points to 32 double registers followed by the floating-point CSR. */
