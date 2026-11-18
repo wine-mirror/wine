@@ -2639,6 +2639,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 {
     unsigned int status;
 
+#if defined(__riscv) && __riscv_xlen == 64
+    /* Early, async-signal-safe entry marker.  Deliberately avoid TRACE,
+     * getenv(), TLS and printf until we know the service was entered.
+     * Diagnostic branch only; remove after the syscall bridge is fixed. */
+    if (class == ThreadNameInformation)
+    {
+        static const char marker[] = "RV64-THREADNAME RAW ENTRY\n";
+        write( 2, marker, sizeof(marker) - 1 );
+    }
+#endif
     TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
 
     switch (class)
@@ -2776,12 +2786,20 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     {
         const THREAD_NAME_INFORMATION *info = data;
         THREAD_BASIC_INFORMATION tbi;
+        BOOL diag = FALSE;
+#if defined(__riscv) && __riscv_xlen == 64
+        const char *diag_env = getenv("WINE_RISCV_RPC_DIAG");
+        diag = diag_env && *diag_env && strcmp(diag_env, "0");
+#endif
+        if (diag) WARN("RV64-THREADNAME enter handle=%p info=%p length=%u\n", handle, info, length);
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
         if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
 
+        if (diag) WARN("RV64-THREADNAME validated name_length=%u name_buffer=%p\n", info->ThreadName.Length, info->ThreadName.Buffer);
         status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        if (diag) WARN("RV64-THREADNAME query returned status=%08x\n", status);
         if (handle == GetCurrentThread() || (!status && (HandleToULong(tbi.ClientId.UniqueThread) == GetCurrentThreadId())))
             WARN_(threadname)( "Thread renamed to %s\n", debugstr_us(&info->ThreadName) );
         else if (!status)
@@ -2789,6 +2807,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         else
             WARN_(threadname)( "Thread handle %p renamed to %s\n", handle, debugstr_us(&info->ThreadName) );
 
+        if (diag) WARN("RV64-THREADNAME before server request\n");
         SERVER_START_REQ( set_thread_info )
         {
             req->handle = wine_server_obj_handle( handle );
@@ -2798,7 +2817,9 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         }
         SERVER_END_REQ;
 
+        if (diag) WARN("RV64-THREADNAME server returned status=%08x\n", status);
         set_native_thread_name( handle, &info->ThreadName );
+        if (diag) WARN("RV64-THREADNAME native name set\n");
 
         return status;
     }

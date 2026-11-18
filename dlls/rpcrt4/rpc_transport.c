@@ -54,6 +54,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
+/* Opt-in named-pipe diagnostics; no behavior changes to RPC transport. */
+static BOOL rv64_rpc_pipe_diag_enabled(void)
+{
+#if defined(__riscv) && __riscv_xlen == 64
+    const char *value = getenv("WINE_RISCV_RPC_DIAG");
+    return value && value[0] && strcmp(value, "0");
+#else
+    return FALSE;
+#endif
+}
+
 static RpcConnection *rpcrt4_spawn_connection(RpcConnection *old_connection);
 
 /**** ncacn_np support ****/
@@ -665,7 +676,15 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
             if (!event)
                 continue;
 
+            if (rv64_rpc_pipe_diag_enabled())
+                WARN("RV64-RPC listen ENTER conn=%p endpoint=%s pipe=%p event=%p iosb=%p iosb_status=%08lx iosb_info=%Ix\\n",
+                     conn, debugstr_a(conn->listen_pipe), conn->pipe, event, &conn->io_status,
+                     (unsigned long)conn->io_status.Status, (ULONG_PTR)conn->io_status.Information);
             status = NtFsControlFile(conn->pipe, event, NULL, NULL, &conn->io_status, FSCTL_PIPE_LISTEN, NULL, 0, NULL, 0);
+            if (rv64_rpc_pipe_diag_enabled())
+                WARN("RV64-RPC listen EXIT conn=%p pipe=%p event=%p status=%08lx iosb_status=%08lx iosb_info=%Ix\\n",
+                     conn, conn->pipe, event, (unsigned long)status,
+                     (unsigned long)conn->io_status.Status, (ULONG_PTR)conn->io_status.Information);
             switch (status)
             {
             case STATUS_SUCCESS:

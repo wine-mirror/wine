@@ -1259,7 +1259,7 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     for (i = 0; i < argc && i < 8; ++i) argv[i] = args[i];
     for (; i < argc; ++i) argv[i] = stack_args[i - 8];
 
-    if (riscv64_transition_diag_enabled() && id == 0x39)
+    if (riscv64_transition_diag_enabled() && (id == 0x39 || id == 0x0d))
     {
         WARN( "RV64-SVC id=%#x table=%u index=%u count=%u bytes=%u target=%p args=%p stack=%p\n",
               id, table_id, index, argc, arg_size, service, args, stack_args );
@@ -1271,6 +1271,9 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
      * a0..a7, then consecutive 8-byte slots on the stack.  A fixed
      * prototype supplies the maximum supported slots; unused slots are
      * initialized to zero and are never read from the Windows stack. */
+    if (riscv64_transition_diag_enabled() && id == 0x0d)
+        WARN( "RV64-THREAD NtSetInformationThread handle=%p class=%lu buffer=%p length=%lu\n",
+              (void *)argv[0], (unsigned long)argv[1], (void *)argv[2], (unsigned long)argv[3] );
     return service( argv[0], argv[1], argv[2], argv[3],
                     argv[4], argv[5], argv[6], argv[7],
                     argv[8], argv[9], argv[10], argv[11],
