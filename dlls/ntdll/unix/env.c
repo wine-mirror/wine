@@ -35,6 +35,10 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if defined(__riscv) && __riscv_xlen == 64
+#include <time.h>
+#include <sys/syscall.h>
+#endif
 #ifdef HAVE_SYS_PRCTL_H
 # include <sys/prctl.h>
 #endif
@@ -1539,6 +1543,21 @@ static WCHAR *build_command_line( WCHAR **wargv )
 /***********************************************************************
  *           run_wineboot
  */
+#if defined(__riscv) && __riscv_xlen == 64
+static void rv64_boot_checkpoint( const char *phase, unsigned int status, unsigned int count )
+{
+    const char *enabled = getenv( "WINE_RISCV_BOOT_DIAG" );
+    struct timespec ts;
+    if (!enabled || !*enabled || !strcmp( enabled, "0" )) return;
+    if (clock_gettime( CLOCK_MONOTONIC, &ts )) return;
+    WARN( "RV64-BOOT t=%lld.%09ld tid=%ld phase=%s status=%08x count=%u\n",
+          (long long)ts.tv_sec, ts.tv_nsec, (long)syscall( SYS_gettid ),
+          phase, status, count );
+}
+#else
+#define rv64_boot_checkpoint(phase,status,count) do {} while (0)
+#endif
+
 static void run_wineboot( WCHAR *env, SIZE_T size )
 {
     static const WCHAR eventW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
@@ -1561,7 +1580,9 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
 
     init_unicode_string( &nameW, eventW );
     InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF, 0, NULL );
+    rv64_boot_checkpoint( "create-event-enter", 0, count );
     status = NtCreateEvent( &handles[0], EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
+    rv64_boot_checkpoint( "create-event-return", status, count );
     if (status == STATUS_OBJECT_NAME_EXISTS) goto wait;
     if (status)
     {
@@ -1590,9 +1611,11 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
 
     wine_server_fd_to_handle( 2, GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
 
+    rv64_boot_checkpoint( "create-process-enter", 0, count );
     status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                   NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
                                   &create_info, ps_attr );
+    rv64_boot_checkpoint( "create-process-return", status, count );
     NtClose( params.hStdError );
 
     if (status)
@@ -1601,13 +1624,18 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
         NtClose( handles[0] );
         return;
     }
-    NtResumeThread( thread, NULL );
+    rv64_boot_checkpoint( "resume-thread-enter", 0, count );
+    status = NtResumeThread( thread, NULL );
+    rv64_boot_checkpoint( "resume-thread-return", status, count );
     NtClose( thread );
     handles[count++] = process;
 
 wait:
     timeout.QuadPart = (ULONGLONG)5 * 60 * 1000 * -10000;
-    if (NtWaitForMultipleObjects( count, handles, WaitAny, FALSE, &timeout ) == WAIT_TIMEOUT)
+    rv64_boot_checkpoint( "wait-enter", 0, count );
+    status = NtWaitForMultipleObjects( count, handles, WaitAny, FALSE, &timeout );
+    rv64_boot_checkpoint( "wait-return", status, count );
+    if (status == WAIT_TIMEOUT)
         ERR( "boot event wait timed out\n" );
     while (count) NtClose( handles[--count] );
 }
