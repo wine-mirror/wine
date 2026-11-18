@@ -1617,10 +1617,6 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
         delete_view( view );
     }
 
-    if (!alloc_pages_vprot( base, size )) return STATUS_NO_MEMORY;
-
-    /* Create the view structure */
-
     if (!(view = alloc_view()))
     {
         FIXME( "out of memory for %p-%p\n", base, (char *)base + size );
@@ -1631,7 +1627,16 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->size    = size;
     view->protect = vprot;
     if (use_kernel_writewatch) vprot &= ~VPROT_WRITEWATCH;
-    if (vprot & VPROT_COMMITTED) set_page_vprot( base, size, vprot );
+
+    if (vprot & VPROT_COMMITTED)
+    {
+        if (!alloc_pages_vprot( base, size ))
+        {
+            free_view( view );
+            return STATUS_NO_MEMORY;
+        }
+        set_page_vprot( base, size, vprot );
+    }
 
     register_view( view );
     kernel_writewatch_register_range( view, view->base, view->size );
@@ -1795,6 +1800,7 @@ static NTSTATUS set_protection( struct file_view *view, void *base, SIZE_T size,
         if ((view->protect & access) != access) return STATUS_INVALID_PAGE_PROTECTION;
     }
 
+    if (!alloc_pages_vprot( base, size )) return STATUS_NO_MEMORY;
     if (!set_vprot( view, base, size, vprot | VPROT_COMMITTED )) return STATUS_ACCESS_DENIED;
     return STATUS_SUCCESS;
 }
@@ -2084,8 +2090,12 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         TRACE( "found view %p, size %p, protect %#x.\n", view->base, (void *)view->size, view->protect );
 
+        if (vprot & VPROT_COMMITTED)
+        {
+            if (!alloc_pages_vprot( base, size )) return STATUS_NO_MEMORY;
+            set_vprot( view, base, size, vprot );
+        }
         view->protect = vprot | VPROT_PLACEHOLDER;
-        if (vprot & VPROT_COMMITTED) set_vprot( view, base, size, vprot );
         if (vprot & VPROT_WRITEWATCH)
         {
             kernel_writewatch_register_range( view, base, size );
@@ -2249,7 +2259,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, size_t max
             if (!wine_server_call( req ))
             {
                 size = min( reply->size, max_size );
-                if (reply->committed)
+                if (reply->committed && alloc_pages_vprot( base, size ))
                     set_page_vprot_default( base, size, view->protect | VPROT_COMMITTED );
             }
         }
@@ -4466,19 +4476,19 @@ static BOOL is_inside_thread_stack( struct thread_data *data, void *ptr, struct 
 static NTSTATUS grow_thread_stack( struct thread_data *data, char *page, struct thread_stack_info *stack_info )
 {
     NTSTATUS ret = 0;
+    BYTE vprot = VPROT_READ | VPROT_WRITE | VPROT_COMMITTED;
 
-    set_page_vprot( page, host_page_size, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
-    mprotect_range( page, host_page_size, 0, 0 );
+    alloc_pages_vprot( stack_info->start, page - stack_info->start );
     if (page >= stack_info->start + host_page_size + stack_info->guaranteed)
     {
-        set_page_vprot( page - host_page_size, host_page_size,
-                        VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
-        mprotect_range( page - host_page_size, host_page_size, 0, 0 );
+        set_page_vprot( page, host_page_size, vprot );
+        set_page_vprot( page - host_page_size, host_page_size, vprot | VPROT_GUARD );
+        mprotect_range( page - host_page_size, host_page_size * 2, 0, 0 );
     }
     else  /* inside guaranteed space -> overflow exception */
     {
         page = stack_info->start + host_page_size;
-        set_page_vprot( page, stack_info->guaranteed, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED );
+        set_page_vprot( page, stack_info->guaranteed, vprot );
         mprotect_range( page, stack_info->guaranteed, 0, 0 );
         ret = STATUS_STACK_OVERFLOW;
     }
