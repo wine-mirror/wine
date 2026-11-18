@@ -681,6 +681,37 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
      * Recover the owning Unix thread record directly; pthread_getspecific()
      * can itself depend on TLS state damaged by a context transition. */
     RV64_CHECKPOINT( "fault ENTER before signal stack thread lookup" );
+    if (riscv64_transition_diag_enabled())
+    {
+        stack_t alt = {0};
+        ULONG_PTR handler_sp = (ULONG_PTR)__builtin_frame_address(0);
+        ULONG_PTR candidate = handler_sp & ~signal_stack_mask;
+        int alt_result = sigaltstack( NULL, &alt );
+        char buf[320], *p = buf;
+        p = riscv64_diag_text( p, "RV64-ALTSTACK handler_sp=" );
+        p = riscv64_diag_hex( p, handler_sp );
+        p = riscv64_diag_text( p, " candidate=" );
+        p = riscv64_diag_hex( p, candidate );
+        p = riscv64_diag_text( p, " base=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)alt.ss_sp );
+        p = riscv64_diag_text( p, " size=" );
+        p = riscv64_diag_hex( p, alt.ss_size );
+        p = riscv64_diag_text( p, " flags=" );
+        p = riscv64_diag_hex( p, alt.ss_flags );
+        p = riscv64_diag_text( p, " query_result=" );
+        p = riscv64_diag_dec( p, alt_result );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+        if (alt_result || !(alt.ss_flags & SS_ONSTACK) ||
+            handler_sp < (ULONG_PTR)alt.ss_sp ||
+            handler_sp - (ULONG_PTR)alt.ss_sp >= alt.ss_size ||
+            candidate != (ULONG_PTR)alt.ss_sp)
+        {
+            static const char msg[] = "RV64-ALTSTACK invalid handler stack; aborting diagnostic fault path\n";
+            write( 2, msg, sizeof(msg) - 1 );
+            _exit( 128 + sig );
+        }
+    }
     data = riscv64_signal_thread_data();
     RV64_CHECKPOINT( "fault AFTER signal stack thread lookup" );
 
