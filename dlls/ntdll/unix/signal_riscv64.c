@@ -499,6 +499,20 @@ static int riscv64_transition_diag_enabled(void);
 static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_signal_exception *exc )
 {
     NTSTATUS status;
+    ULONG_PTR entry_pc = exc->context.Pc;
+    ULONG_PTR entry_sp = exc->context.Gpr.X[2];
+    ULONG_PTR entry_ra = exc->context.Gpr.X[1];
+    struct thread_data *entry_data = get_thread_data();
+    struct syscall_frame *entry_frame = entry_data && entry_data->teb ? get_syscall_frame( entry_data ) : NULL;
+
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-EXC RAISE_ENTER exc=%p record=%p context=%p code=%#lx pc=%p sp=%p ra=%p flags=%#x frame=%p frame_pc=%p frame_sp=%p frame_ra=%p frame_flags=%#lx\n",
+              exc, &exc->record, &exc->context, (unsigned long)exc->record.ExceptionCode,
+              (void *)entry_pc, (void *)entry_sp, (void *)entry_ra, exc->context.ContextFlags,
+              entry_frame, (void *)(ULONG_PTR)(entry_frame ? entry_frame->pc : 0),
+              (void *)(ULONG_PTR)(entry_frame ? entry_frame->sp : 0),
+              (void *)(ULONG_PTR)(entry_frame ? entry_frame->ra : 0),
+              (unsigned long)(entry_frame ? entry_frame->restore_flags : 0) );
 
     WARN( "RV64 exception dispatch enter code=%#lx address=%p fault=%p pc=%p sp=%p ra=%p a0=%p a1=%p teb=%p\n",
           (unsigned long)exc->record.ExceptionCode, exc->record.ExceptionAddress,
@@ -509,6 +523,23 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
           (void *)(ULONG_PTR)exc->context.Gpr.X[10],
           (void *)(ULONG_PTR)exc->context.Gpr.X[11], NtCurrentTeb() );
     status = NtRaiseException( &exc->record, &exc->context, TRUE );
+    if (riscv64_transition_diag_enabled())
+    {
+        struct thread_data *after_data = get_thread_data();
+        struct syscall_frame *after_frame = after_data && after_data->teb ? get_syscall_frame( after_data ) : NULL;
+        WARN( "RV64-EXC RAISE_RETURN status=%#lx context_pc=%p context_sp=%p context_ra=%p delta_sp=%ld context_changed=%u frame_before=%p frame_after=%p frame_pc=%p frame_sp=%p frame_ra=%p frame_flags=%#lx\n",
+              (unsigned long)status, (void *)(ULONG_PTR)exc->context.Pc,
+              (void *)(ULONG_PTR)exc->context.Gpr.X[2],
+              (void *)(ULONG_PTR)exc->context.Gpr.X[1],
+              (long)(exc->context.Gpr.X[2] - entry_sp),
+              exc->context.Pc != entry_pc || exc->context.Gpr.X[2] != entry_sp ||
+              exc->context.Gpr.X[1] != entry_ra,
+              entry_frame, after_frame,
+              (void *)(ULONG_PTR)(after_frame ? after_frame->pc : 0),
+              (void *)(ULONG_PTR)(after_frame ? after_frame->sp : 0),
+              (void *)(ULONG_PTR)(after_frame ? after_frame->ra : 0),
+              (unsigned long)(after_frame ? after_frame->restore_flags : 0) );
+    }
     WARN( "RV64 NtRaiseException returned status=%#lx pc=%p sp=%p\n",
           (unsigned long)status, (void *)(ULONG_PTR)exc->context.Pc,
           (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
@@ -528,6 +559,13 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
               (void *)(ULONG_PTR)(frame ? frame->sp : 0) );
         if (frame && frame->pc && frame->sp && frame->pc != exc->context.Pc)
         {
+            if (riscv64_transition_diag_enabled())
+                WARN( "RV64-EXC DISPATCH_TRANSFER context_pc=%p context_sp=%p frame_pc=%p frame_sp=%p frame_ra=%p frame_x2=%p frame_flags=%#lx\n",
+                      (void *)(ULONG_PTR)exc->context.Pc,
+                      (void *)(ULONG_PTR)exc->context.Gpr.X[2],
+                      (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp,
+                      (void *)(ULONG_PTR)frame->ra, (void *)(ULONG_PTR)frame->x[2],
+                      (unsigned long)frame->restore_flags );
             WARN( "RV64 exception dispatch scheduled pc=%p sp=%p; transferring through syscall return\n",
                   (void *)(ULONG_PTR)frame->pc, (void *)(ULONG_PTR)frame->sp );
             __asm__ volatile ( "mv a0, %0\n\tjr %1" :: "r"(frame),
@@ -550,7 +588,16 @@ static void DECLSPEC_NORETURN riscv64_raise_signal_exception( struct riscv64_sig
                   (void *)(ULONG_PTR)exc->context.Gpr.X[1], frame,
                   (void *)(ULONG_PTR)(frame ? frame->pc : 0),
                   (void *)(ULONG_PTR)(frame ? frame->sp : 0) );
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-EXC CONTINUE_ENTER context=%p pc=%p sp=%p ra=%p flags=%#x\n",
+                  &exc->context, (void *)(ULONG_PTR)exc->context.Pc,
+                  (void *)(ULONG_PTR)exc->context.Gpr.X[2],
+                  (void *)(ULONG_PTR)exc->context.Gpr.X[1], exc->context.ContextFlags );
         status = NtContinue( &exc->context, FALSE );
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-EXC CONTINUE_RETURN status=%#lx pc=%p sp=%p\n",
+                  (unsigned long)status, (void *)(ULONG_PTR)exc->context.Pc,
+                  (void *)(ULONG_PTR)exc->context.Gpr.X[2] );
     }
     ERR( "RISC-V64 exception continuation failed: %#lx\\n", (unsigned long)status );
     abort();
@@ -878,6 +925,26 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
     /* Allocate the exception payload on the interrupted stack, preserving
      * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
     exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[384], *p = buf;
+        p = riscv64_diag_text( p, "RV64-EXC FRAME_ALLOC signal=" );
+        p = riscv64_diag_dec( p, (unsigned int)sig );
+        p = riscv64_diag_text( p, " fault_pc=" );
+        p = riscv64_diag_hex( p, PC_sig( uc ) );
+        p = riscv64_diag_text( p, " source_sp=" );
+        p = riscv64_diag_hex( p, sp );
+        p = riscv64_diag_text( p, " frame_sp=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)exc );
+        p = riscv64_diag_text( p, " size=" );
+        p = riscv64_diag_hex( p, sizeof(*exc) );
+        p = riscv64_diag_text( p, " delta=" );
+        p = riscv64_diag_hex( p, sp - (ULONG_PTR)exc );
+        p = riscv64_diag_text( p, " fault_addr=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)(info ? info->si_addr : NULL) );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     memset( exc, 0, sizeof(*exc) );
     save_context( &exc->context, uc );
     exc->record.ExceptionAddress = (void *)(ULONG_PTR)exc->context.Pc;
