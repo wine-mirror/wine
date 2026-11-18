@@ -99,8 +99,19 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
     {
         sp = context.Gpr.X[2];
         if (!sp || sp >= (ULONG_PTR)NtCurrentTeb()->Tib.StackBase ||
-            sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit ||
-            (prev_sp && (sp < prev_sp || (sp == prev_sp && context.Pc == prev_pc)))) break;
+            sp < (ULONG_PTR)NtCurrentTeb()->Tib.StackLimit)
+        {
+            WARN( "RV64 dispatch stopped on invalid stack depth=%u pc=%p sp=%p\n",
+                  depth, (void *)(ULONG_PTR)context.Pc, (void *)sp );
+            return STATUS_BAD_STACK;
+        }
+        if (prev_sp && (sp < prev_sp || (sp == prev_sp && context.Pc == prev_pc)))
+        {
+            WARN( "RV64 dispatch stopped on repeated/nonprogressing frame depth=%u pc=%p sp=%p previous_pc=%p previous_sp=%p\n",
+                  depth, (void *)(ULONG_PTR)context.Pc, (void *)sp,
+                  (void *)prev_pc, (void *)prev_sp );
+            return STATUS_BAD_STACK;
+        }
         prev_sp = sp;
         prev_pc = context.Pc;
 
@@ -116,6 +127,14 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
                depth, (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2],
                (void *)(ULONG_PTR)context.Gpr.X[1],
                (void *)dispatch.EstablisherFrame, dispatch.LanguageHandler );
+        if (context.Gpr.X[2] < sp ||
+            (context.Gpr.X[2] == sp && context.Pc == prev_pc))
+        {
+            WARN( "RV64 dispatch unwind made no progress depth=%u pc=%p sp=%p next_pc=%p next_sp=%p\n",
+                  depth, (void *)prev_pc, (void *)sp,
+                  (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2] );
+            return STATUS_BAD_STACK;
+        }
         establisher = dispatch.EstablisherFrame;
         handler = dispatch.LanguageHandler;
         if (handler)
@@ -160,6 +179,12 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
             rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
             return STATUS_BAD_STACK;
         }
+    }
+    if (depth > 1024)
+    {
+        WARN( "RV64 dispatch unwind depth limit exceeded pc=%p sp=%p\n",
+              (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)context.Gpr.X[2] );
+        return STATUS_BAD_STACK;
     }
     return STATUS_UNHANDLED_EXCEPTION;
 }
