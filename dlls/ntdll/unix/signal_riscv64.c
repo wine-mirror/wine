@@ -704,8 +704,7 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         write( 2, buf, p - buf );
         if (alt_result || !(alt.ss_flags & SS_ONSTACK) ||
             handler_sp < (ULONG_PTR)alt.ss_sp ||
-            handler_sp - (ULONG_PTR)alt.ss_sp >= alt.ss_size ||
-            candidate != (ULONG_PTR)alt.ss_sp)
+            handler_sp - (ULONG_PTR)alt.ss_sp >= alt.ss_size)
         {
             static const char msg[] = "RV64-ALTSTACK invalid handler stack; aborting diagnostic fault path\n";
             write( 2, msg, sizeof(msg) - 1 );
