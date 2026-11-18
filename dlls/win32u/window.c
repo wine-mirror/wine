@@ -796,6 +796,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     old_toplevel = NtUserGetAncestor( old_parent, GA_ROOT );
     if (new_toplevel != old_toplevel)
     {
+        invalidate_opengl_swapchains( old_toplevel, full_handle );
         if (new_toplevel) update_window_state( new_toplevel );
         if (old_toplevel) update_window_state( old_toplevel );
     }
@@ -2504,6 +2505,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
         user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, &monitor_rects,
                                         get_driver_window_surface( new_surface, raw_dpi ) );
+        invalidate_opengl_swapchains( toplevel, hwnd );
         update_client_surfaces( toplevel );
     }
 

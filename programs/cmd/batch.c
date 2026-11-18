@@ -144,12 +144,12 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     return return_code;
 }
 
-BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length)
+BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length, BOOL empty_last)
 {
     const WCHAR *ptr;
     if (!s || !*s) return FALSE;
     for (ptr = s; *ptr && wcschr(delims, *ptr); ptr++) {}
-    if (!*ptr) return FALSE;
+    if (!*ptr && !empty_last) return FALSE;
     *start = (WCHAR*)ptr;
     while (*ptr && !wcschr(delims, *ptr))
     {
@@ -209,7 +209,8 @@ BOOL WCMD_word_iterator_advance(struct word_iterator *iterator)
     size_t delta_in_option = 0;
 
     iterator->position += iterator->length;
-    if (!WCMD_next_word(&iterator->from[iterator->position], iterator->delimiters, &start, &length)) return FALSE;
+    if (!WCMD_next_word(&iterator->from[iterator->position], iterator->delimiters,
+                        &start, &length, (iterator->flags & WORD_WITH_EMPTY_LAST_ARG) != 0)) return FALSE;
     /* we need a bit of tweaking for / delimiter as start of option
      * + it can introduce an option as first character
      * + it can introduce an option when in quotes (for certain commands only, eg CHOICE)
@@ -248,7 +249,23 @@ BOOL WCMD_word_iterator_can_advance(struct word_iterator *iterator)
     WCHAR *start;
     size_t length;
 
-    return WCMD_next_word(&iterator->from[iterator->position + iterator->length], iterator->delimiters, &start, &length);
+    return WCMD_next_word(&iterator->from[iterator->position + iterator->length], iterator->delimiters,
+                          &start, &length, (iterator->flags & WORD_WITH_EMPTY_LAST_ARG) != 0);
+}
+
+void WCMD_word_iterator_extend_rest_of_line(struct word_iterator *iterator)
+{
+    size_t length = wcslen(&iterator->from[iterator->position]);
+    if (!length) return;
+    /* Remove trailing white-spaces (if any)
+     * strangely enough, separators are not used here
+     */
+    while (length && iswspace(iterator->from[iterator->position + length - 1]))
+        length--;
+    free(iterator->raw_argument);
+    free(iterator->unquoted_argument);
+    iterator->raw_argument = WCMD_dup(&iterator->from[iterator->position], length);
+    iterator->unquoted_argument = WCMD_dup_unquoted(&iterator->from[iterator->position], length);
 }
 
 BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, BOOL optsep, WCHAR **arg)

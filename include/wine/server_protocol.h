@@ -6072,10 +6072,21 @@ struct get_inproc_alert_fd_reply
 
 struct fd_desc
 {
-    unsigned int type;
+    int type;
+    int format;
+    union
+    {
+        struct
+        {
+            unsigned __int64 modifier;
+            int offset;
+            int stride;
+        } dma_buf;
+    };
 };
 #define FD_NONE       0
 #define FD_OPAQUE     1
+#define FD_DMA_BUF    2
 
 
 
@@ -6084,6 +6095,7 @@ struct d3dkmt_object_create_request
     struct request_header __header;
     unsigned int        type;
     int                 fd;
+    char __pad_20[4];
     struct fd_desc      fd_desc;
     unsigned __int64    value;
     /* VARARG(runtime,bytes); */
@@ -6143,6 +6155,7 @@ struct d3dkmt_object_open_reply
     struct fd_desc      fd_desc;
     data_size_t         runtime_size;
     /* VARARG(runtime,bytes); */
+    char __pad_44[4];
 };
 
 
@@ -7209,6 +7222,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 980
+#define SERVER_PROTOCOL_VERSION 981
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

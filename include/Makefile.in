@@ -319,6 +319,7 @@ SOURCES = \
 	dxgidebug.idl \
 	dxgiformat.idl \
 	dxgitype.idl \
+	dxprogrammablecapture.idl \
 	dxva.h \
 	dxva2api.idl \
 	dxvahd.idl \

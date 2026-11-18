@@ -746,7 +746,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
     /* on Windows, this value changes every time the user logs on */
     struct sid logon_sid = { SID_REVISION, 3, SECURITY_NT_AUTHORITY, { SECURITY_LOGON_IDS_RID, 0, 0 /* FIXME: should be randomly generated when tokens are inherited by new processes */ }};
     const struct sid *user_sid = security_unix_uid_to_sid( getuid() );
-    struct acl *default_dacl = create_default_dacl( &domain_users_sid );
+    struct acl *default_dacl = create_default_dacl( user_sid );
     const struct luid_attr admin_privs[] =
     {
         { SeChangeNotifyPrivilege, SE_PRIVILEGE_ENABLED },
@@ -785,7 +785,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
         { &logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
     };
 
-    token = create_token( primary, session_id, user_sid, &domain_users_sid, &domain_users_sid,
+    token = create_token( primary, session_id, user_sid, user_sid, &domain_users_sid,
                           admin_groups, ARRAY_SIZE( admin_groups ), admin_privs, ARRAY_SIZE( admin_privs ),
                           default_dacl, NULL, impersonation_level, elevation );
 
@@ -1211,7 +1211,7 @@ DECL_HANDLER(create_token)
         }
     }
     else
-        dacl = default_dacl = create_default_dacl( &domain_users_sid );
+        dacl = default_dacl = create_default_dacl( owner );
 
     token = create_token( req->primary, default_session_id, user, owner, primary_group, groups,
                           req->group_count, privs, req->priv_count, dacl, NULL,

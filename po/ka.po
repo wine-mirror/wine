@@ -14950,6 +14950,24 @@ msgstr "%t%1!u! ფაილი დაკოპირდა\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "ფაილს საკუთარ თავში ვერ დააკოპირებთ.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "ბილიკი არასწორია.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "მიმდინარე საქაღალდის წაშლა შეუძლებელია.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "საიტი არ არსებობს.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "კურსორის ზომა"

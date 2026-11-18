@@ -15248,6 +15248,24 @@ msgstr "%t%1!u!개의 파일이 복사되었습니다\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "파일을 자신에게 복사할 수 없습니다.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "유효하지 않은 경로입니다.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "현재 디렉터리 제거 실패.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "사이트가 없습니다.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"

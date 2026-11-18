@@ -15381,6 +15381,24 @@ msgstr "已複製 %1!d! 個檔案\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "無法存取檔案。\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "路徑無效。\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "無法刪除目前的目錄。\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "站臺不存在。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "游標大小"

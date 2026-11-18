@@ -16782,6 +16782,24 @@ msgstr "%1!d! file copiato/i\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "Impossibile accedere al file.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Percorso non valido.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Impossibile eliminare la cartella corrente.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Sito inesistente.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Dimensione del cursore"

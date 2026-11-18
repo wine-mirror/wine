@@ -2271,6 +2271,8 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return present_opengl_swapchain( hwnd, wparam, lparam );
     case WM_WINE_SWAPCHAIN_DESTROY:
         return destroy_opengl_swapchain( hwnd, wparam );
+    case WM_WINE_SWAPCHAIN_INVALIDATE:
+        return invalidate_opengl_swapchains( hwnd, (HWND)wparam );
     case WM_WINE_SETPIXELFORMAT:
         set_window_pixel_format( hwnd, wparam, lparam );
         return 0;

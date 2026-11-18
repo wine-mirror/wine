@@ -649,12 +649,9 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
  *
  */
 
-RETURN_CODE WCMD_copy(WCHAR * args)
+RETURN_CODE WCMD_copy(struct word_iterator *iterator)
 {
-  BOOL    opt_d, opt_v, opt_n, opt_z, opt_y, opt_noty;
-  WCHAR  *thisparam;
-  int     argno = 0;
-  WCHAR  *rawarg;
+  BOOL    opt_d, opt_v, opt_n, opt_z;
   WIN32_FIND_DATAW fd;
   HANDLE  hff = INVALID_HANDLE_VALUE;
   int     binarymode = -1;            /* -1 means use the default, 1 is binary, 0 ascii */
@@ -666,7 +663,6 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   WCHAR   destname[MAX_PATH];         /* Used in calculating the destination name       */
   BOOL    destisdirectory = FALSE;    /* Is the destination a directory?                */
   BOOL    status;
-  WCHAR   copycmd[4];
   DWORD   len;
   BOOL    dstisdevice = FALSE;
   unsigned numcopied = 0;
@@ -686,187 +682,186 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   COPY_FILES *prevcopy      = NULL;
   RETURN_CODE return_code;
 
-  /* Assume we were successful! */
-  return_code = NO_ERROR;
+    /* Assume we were successful! */
+    return_code = NO_ERROR;
 
-  /* If no args supplied at all, report an error */
-  if (param1[0] == 0x00) {
-    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
-    return errorlevel = ERROR_INVALID_FUNCTION;
-  }
+    opt_d = opt_v = opt_n = opt_z = FALSE;
+    /* By default, we will force the overwrite in batch mode and ask for
+     * confirmation in interactive mode.
+     */
+    prompt = !context;
 
-  opt_d = opt_v = opt_n = opt_z = opt_y = opt_noty = FALSE;
+    len = GetEnvironmentVariableW(L"COPYCMD", NULL, 0);
+    if (len)
+    {
+        WCHAR *copycmd = xalloc(len * sizeof(WCHAR));
+        struct word_iterator env_iterator;
 
-  /* Walk through all args, building up a list of files to process */
-  thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-  while (*(thisparam)) {
-    WCHAR *pos1, *pos2;
-    BOOL inquotes;
-
-    WINE_TRACE("Working on parameter '%s'\n", wine_dbgstr_w(thisparam));
-
-    /* Handle switches */
-    if (*thisparam == '/') {
-        while (*thisparam == '/') {
-        thisparam++;
-        if (towupper(*thisparam) == 'D') {
-          opt_d = TRUE;
-          if (opt_d) WINE_FIXME("copy /D support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'Y') {
-          opt_y = TRUE;
-        } else if (towupper(*thisparam) == '-' && towupper(*(thisparam+1)) == 'Y') {
-          opt_noty = TRUE;
-        } else if (towupper(*thisparam) == 'V') {
-          opt_v = TRUE;
-          if (opt_v) WINE_FIXME("copy /V support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'N') {
-          opt_n = TRUE;
-          if (opt_n) WINE_FIXME("copy /N support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'Z') {
-          opt_z = TRUE;
-          if (opt_z) WINE_FIXME("copy /Z support not implemented yet\n");
-        } else if (towupper(*thisparam) == 'A') {
-          if (binarymode != 0) {
-            binarymode = 0;
-            WINE_TRACE("Subsequent files will be handled as ASCII\n");
-            if (destination != NULL) {
-              WINE_TRACE("file %s will be written as ASCII\n", wine_dbgstr_w(destination->name));
-              destination->binarycopy = binarymode;
-            } else if (lastcopyentry != NULL) {
-              WINE_TRACE("file %s will be read as ASCII\n", wine_dbgstr_w(lastcopyentry->name));
-              lastcopyentry->binarycopy = binarymode;
+        GetEnvironmentVariableW(L"COPYCMD", copycmd, len);
+        WCMD_word_iterator_init(&env_iterator, copycmd, STANDARD_DELIMS, WORD_WITH_OPT);
+        while (WCMD_word_iterator_advance(&env_iterator))
+        {
+            if (env_iterator.is_an_option)
+            {
+                if (!wcsicmp(iterator->raw_argument, L"/Y"))  prompt = FALSE;
+                else if (!wcsicmp(iterator->raw_argument, L"/-Y")) prompt = TRUE;
             }
-          }
-        } else if (towupper(*thisparam) == 'B') {
-          if (binarymode != 1) {
-            binarymode = 1;
-            WINE_TRACE("Subsequent files will be handled as binary\n");
-            if (destination != NULL) {
-              WINE_TRACE("file %s will be written as binary\n", wine_dbgstr_w(destination->name));
-              destination->binarycopy = binarymode;
-            } else if (lastcopyentry != NULL) {
-              WINE_TRACE("file %s will be read as binary\n", wine_dbgstr_w(lastcopyentry->name));
-              lastcopyentry->binarycopy = binarymode;
-            }
-          }
-        } else {
-          WINE_FIXME("Unexpected copy switch %s\n", wine_dbgstr_w(thisparam));
         }
-        thisparam++;
-      }
-
-      /* This parameter was purely switches, get the next one */
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-      continue;
+        WCMD_word_iterator_dispose(&env_iterator);
+        free(copycmd);
     }
 
-    /* We have found something which is not a switch. If could be anything of the form
-         sourcefilename (which could be destination too)
-         + (when filename + filename syntex used)
-         sourcefilename+sourcefilename
-         +sourcefilename
-         +/b[tests show windows then ignores to end of parameter]
-     */
+    /* Walk through all args, building up a list of files to process */
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            if (!wcsicmp(iterator->raw_argument, L"/D"))
+            {
+                opt_d = TRUE;
+                if (opt_d) WINE_FIXME("copy /D support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/Y")) prompt = FALSE;
+            else if (!wcsicmp(iterator->raw_argument, L"/-Y")) prompt = TRUE;
+            else if (!wcsicmp(iterator->raw_argument, L"/V"))
+            {
+                opt_v = TRUE;
+                WINE_FIXME("copy /V support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/N"))
+            {
+                opt_n = TRUE;
+                WINE_FIXME("copy /N support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"Z"))
+            {
+                opt_z = TRUE;
+                WINE_FIXME("copy /Z support not implemented yet\n");
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/A"))
+            {
+                if (binarymode != 0)
+                {
+                    binarymode = 0;
+                    WINE_TRACE("Subsequent files will be handled as ASCII\n");
+                    if (destination != NULL)
+                    {
+                        WINE_TRACE("file %s will be written as ASCII\n", wine_dbgstr_w(destination->name));
+                        destination->binarycopy = binarymode;
+                    }
+                    else if (lastcopyentry != NULL)
+                    {
+                        WINE_TRACE("file %s will be read as ASCII\n", wine_dbgstr_w(lastcopyentry->name));
+                        lastcopyentry->binarycopy = binarymode;
+                    }
+                }
+            }
+            else if (!wcsicmp(iterator->raw_argument, L"/B"))
+            {
+                if (binarymode != 1)
+                {
+                    binarymode = 1;
+                    WINE_TRACE("Subsequent files will be handled as binary\n");
+                    if (destination != NULL)
+                    {
+                        WINE_TRACE("file %s will be written as binary\n", wine_dbgstr_w(destination->name));
+                        destination->binarycopy = binarymode;
+                    }
+                    else if (lastcopyentry != NULL)
+                    {
+                        WINE_TRACE("file %s will be read as binary\n", wine_dbgstr_w(lastcopyentry->name));
+                        lastcopyentry->binarycopy = binarymode;
+                    }
+                }
+            }
+            else
+                WINE_FIXME("Unexpected copy switch %s\n", wine_dbgstr_w(iterator->raw_argument));
+        }
+        else
+        {
+            WCHAR *toadd = iterator->raw_argument;
+            struct word_iterator src_iterator;
+            /* We have found something which is not a switch. If could be anything of the form
+             * sourcefilename (which could be destination too)
+             * + (when filename + filename syntex used)
+             * sourcefilename+sourcefilename
+             * +sourcefilename
+             * /b[tests show windows then ignores to end of parameter]
+             */
+            if (toadd[0] == L'+')
+            {
+                if (lastcopyentry == NULL)
+                {
+                    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                    return_code = ERROR_INVALID_FUNCTION;
+                    goto exitreturn;
+                }
+                concatnextfilename = TRUE;
+                anyconcats = TRUE;
+                /* Move to next thing to process */
+                if (!*++toadd) continue;
+            }
+            WCMD_word_iterator_init(&src_iterator, toadd, L"+", WORD_WITH_EMPTY_LAST_ARG);
+            while (WCMD_word_iterator_advance(&src_iterator))
+            {
+                len = wcslen(src_iterator.unquoted_argument);
+                if (len)
+                {
+                    /* We have found something to process - build a COPY_FILE block to store it */
+                    thiscopy = xalloc(sizeof(COPY_FILES));
 
-    if (*thisparam=='+') {
-      if (lastcopyentry == NULL) {
+                    WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(src_iterator.unquoted_argument));
+
+                    thiscopy->concatenate = concatnextfilename;
+                    thiscopy->binarycopy  = binarymode;
+                    thiscopy->next        = NULL;
+                    /* Time to work out the name. Allocate at least enough space (deliberately too much to
+                     * leave space to append \*.* to the end).
+                     */
+                    len += 5;  /* 5 spare characters, null + \*.*      */
+                    thiscopy->name = xalloc(len * sizeof(WCHAR));
+                    wcscpy(thiscopy->name, src_iterator.unquoted_argument);
+
+                    /* This is either the first source, concatenated subsequent source or destination */
+                    if (sourcelist == NULL)
+                    {
+                        WINE_TRACE("Adding as first source part\n");
+                        sourcelist = thiscopy;
+                        lastcopyentry = thiscopy;
+                    }
+                    else if (concatnextfilename)
+                    {
+                        WINE_TRACE("Adding to source file list to be concatenated\n");
+                        lastcopyentry->next = thiscopy;
+                        lastcopyentry = thiscopy;
+                    }
+                    else if (destination == NULL)
+                    {
+                        destination = thiscopy;
+                    }
+                    else
+                    {
+                        /* We have processed sources and destinations and still found more to do - invalid */
+                        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                        return_code = ERROR_INVALID_FUNCTION;
+                        goto exitreturn;
+                    }
+                }
+                if ((concatnextfilename = WCMD_word_iterator_can_advance(&src_iterator)))
+                    anyconcats = TRUE;
+            }
+            WCMD_word_iterator_dispose(&src_iterator);
+        }
+    }
+
+    /* Ensure we have at least one source file */
+    if (!sourcelist)
+    {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
         return_code = ERROR_INVALID_FUNCTION;
         goto exitreturn;
-      } else {
-        concatnextfilename = TRUE;
-        anyconcats         = TRUE;
-      }
-
-      /* Move to next thing to process */
-      thisparam++;
-      if (*thisparam == 0x00)
-        thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-      continue;
     }
 
-    /* We have found something to process - build a COPY_FILE block to store it */
-    thiscopy = xalloc(sizeof(COPY_FILES));
-
-    WINE_TRACE("Not a switch, but probably a filename/list %s\n", wine_dbgstr_w(thisparam));
-    thiscopy->concatenate = concatnextfilename;
-    thiscopy->binarycopy  = binarymode;
-    thiscopy->next        = NULL;
-
-    /* Time to work out the name. Allocate at least enough space (deliberately too much to
-       leave space to append \* to the end) , then copy in character by character. Strip off
-       quotes if we find them.                                                               */
-    len = lstrlenW(thisparam) + (sizeof(WCHAR) * 5);  /* 5 spare characters, null + \*.*      */
-    thiscopy->name = xalloc(len * sizeof(WCHAR));
-    memset(thiscopy->name, 0x00, len);
-
-    pos1 = thisparam;
-    pos2 = thiscopy->name;
-    inquotes = FALSE;
-    while (*pos1 && (inquotes || (*pos1 != '+' && *pos1 != '/'))) {
-      if (*pos1 == '"') {
-        inquotes = !inquotes;
-        pos1++;
-      } else *pos2++ = *pos1++;
-    }
-    *pos2 = 0;
-    WINE_TRACE("Calculated file name %s\n", wine_dbgstr_w(thiscopy->name));
-
-    /* This is either the first source, concatenated subsequent source or destination */
-    if (sourcelist == NULL) {
-      WINE_TRACE("Adding as first source part\n");
-      sourcelist = thiscopy;
-      lastcopyentry = thiscopy;
-    } else if (concatnextfilename) {
-      WINE_TRACE("Adding to source file list to be concatenated\n");
-      lastcopyentry->next = thiscopy;
-      lastcopyentry = thiscopy;
-    } else if (destination == NULL) {
-      destination = thiscopy;
-    } else {
-      /* We have processed sources and destinations and still found more to do - invalid */
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      return_code = ERROR_INVALID_FUNCTION;
-      goto exitreturn;
-    }
-    concatnextfilename    = FALSE;
-
-    /* We either need to process the rest of the parameter or move to the next */
-    if (*pos1 == '/' || *pos1 == '+') {
-      thisparam = pos1;
-      continue;
-    } else {
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
-    }
-  }
-
-  /* Ensure we have at least one source file */
-  if (!sourcelist) {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-    return_code = ERROR_INVALID_FUNCTION;
-    goto exitreturn;
-  }
-
-  /* Default whether automatic overwriting is on. If we are interactive then
-     we prompt by default, otherwise we overwrite by default
-     /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
-  if (opt_noty) prompt = TRUE;
-  else if (opt_y) prompt = FALSE;
-  else {
-    /* By default, we will force the overwrite in batch mode and ask for
-     * confirmation in interactive mode. */
-    prompt = !context;
-    /* If COPYCMD is set, then we force the overwrite with /Y and ask for
-     * confirmation with /-Y. If COPYCMD is neither of those, then we use the
-     * default behavior. */
-    len = GetEnvironmentVariableW(L"COPYCMD", copycmd, ARRAY_SIZE(copycmd));
-    if (len && len < ARRAY_SIZE(copycmd)) {
-      if (!lstrcmpiW(copycmd, L"/Y"))
-        prompt = FALSE;
-      else if (!lstrcmpiW(copycmd, L"/-Y"))
-        prompt = TRUE;
-    }
-  }
 
   /* Calculate the destination now - if none supplied, it's current dir +
      filename of first file in list*/
@@ -893,7 +888,10 @@ RETURN_CODE WCMD_copy(WCHAR * args)
 
     /* Convert to fully qualified path/filename */
     if (!WCMD_get_fullpath(destination->name, ARRAY_SIZE(destname), destname, &filenamepart))
-        return errorlevel = ERROR_INVALID_FUNCTION;
+    {
+        return_code = ERROR_INVALID_FUNCTION;
+        goto exitreturn;
+    }
     WINE_TRACE("Full dest name is '%s'\n", wine_dbgstr_w(destname));
 
     /* If parameter is a directory, ensure it ends in \ */
@@ -915,7 +913,8 @@ RETURN_CODE WCMD_copy(WCHAR * args)
      the copy defaults to an ascii copy (stop at EOF). We do not know the
      first source part yet (until we search) so flag as needing filling in. */
 
-  if (anyconcats) {
+  if (anyconcats)
+  {
     /* We have found an a+b type syntax, so destination has to be a filename
        and we need to default to ascii copying. If we have been supplied a
        directory as the destination, we need to defer calculating the name   */
@@ -1740,51 +1739,112 @@ RETURN_CODE WCMD_goto(struct word_iterator *iterator)
     return ERROR_INVALID_FUNCTION;
 }
 
+static RETURN_CODE resolve_wildcards(const WCHAR *path, WCHAR *dst, size_t dst_len)
+{
+    RETURN_CODE return_code = NO_ERROR;
+
+    if (wcspbrk(path, L"*?"))
+    {
+        WIN32_FIND_DATAW fd;
+        WCHAR full_path[MAX_PATH];
+        HANDLE hff;
+
+        if (!GetFullPathNameW(path, ARRAY_SIZE(full_path), full_path, NULL))
+            return ERROR_INVALID_FUNCTION;
+
+        hff = FindFirstFileW(full_path, &fd);
+
+        /* resolution on native picks up first entry */
+        if (hff != INVALID_HANDLE_VALUE)
+        {
+            const WCHAR *pos = wcsrchr(full_path, L'\\');
+
+            pos = pos ? pos + 1 : full_path;
+            if (pos - full_path + wcslen(fd.cFileName) < dst_len)
+            {
+                memcpy(dst, full_path, (pos - full_path) * sizeof(WCHAR));
+                wcscpy(dst + (pos - full_path), fd.cFileName);
+            }
+            else
+                return_code = ERROR_INVALID_FUNCTION;
+            FindClose(hff);
+        }
+        else
+            return_code = ERROR_INVALID_FUNCTION;
+    }
+    else if (!GetFullPathNameW(path, dst_len, dst, NULL))
+        return ERROR_INVALID_FUNCTION;
+
+    return return_code;
+}
+
+static RETURN_CODE set_current_directory(const WCHAR *path, BOOL change_drive)
+{
+    int dst_drive, curr_drive;
+    WCHAR dst[MAX_PATH];
+
+    /* Change to that directory */
+    WINE_TRACE("Really changing to directory '%s'\n", wine_dbgstr_w(path));
+
+    if (!GetCurrentDirectoryW(ARRAY_SIZE(dst), dst))
+        return ERROR_INVALID_FUNCTION;
+    curr_drive = (iswalpha(dst[0]) && dst[1] == L':') ? towupper(dst[0]) : -1;
+
+    if (resolve_wildcards(path, dst, ARRAY_SIZE(dst)) != NO_ERROR)
+        return ERROR_INVALID_FUNCTION;
+    dst_drive = (iswalpha(dst[0]) && dst[1] == L':') ? towupper(dst[0]) : curr_drive;
+    if ((change_drive || curr_drive == dst_drive) && !SetCurrentDirectoryW(dst))
+        return ERROR_INVALID_FUNCTION;
+    if (!change_drive && dst_drive != -1)
+    {
+        /* Set special =C: type environment variable (current directory on another drive) */
+        WCHAR env[4] = {L'=', (WCHAR)dst_drive, L':', L'\0'};
+
+        WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(dst));
+        SetEnvironmentVariableW(env, dst);
+    }
+    return NO_ERROR;
+}
+
 /*****************************************************************************
  * WCMD_pushd
  *
  *	Push a directory onto the stack
  */
 
-RETURN_CODE WCMD_pushd(const WCHAR *args)
+RETURN_CODE WCMD_pushd(struct word_iterator *iterator)
 {
     struct env_stack *curdir;
-    WCHAR *thisdir;
-    RETURN_CODE return_code;
+    WCHAR *thisdir = NULL;
 
-    if (!*args)
-        return errorlevel = NO_ERROR;
-
-    if (*args == '/') {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      WCMD_print_error();
-      return errorlevel = ERROR_INVALID_FUNCTION;
-    }
-
-    curdir  = xalloc(sizeof(struct env_stack));
-    thisdir = xalloc(1024 * sizeof(WCHAR));
-
-    /* Change directory using CD code with /D parameter */
-    lstrcpyW(quals, L"/D");
-    GetCurrentDirectoryW (1024, thisdir);
-
-    return_code = WCMD_setshow_default(args);
-    if (return_code != NO_ERROR)
+    while (WCMD_word_iterator_advance(iterator))
     {
-      free(curdir);
-      free(thisdir);
-      return errorlevel = ERROR_INVALID_FUNCTION;
-    } else {
-      curdir -> next    = pushd_directories;
-      curdir -> strings = thisdir;
-      if (pushd_directories == NULL) {
-        curdir -> u.stackdepth = 1;
-      } else {
-        curdir -> u.stackdepth = pushd_directories -> u.stackdepth + 1;
-      }
-      pushd_directories = curdir;
+        if (iterator->is_an_option)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            WCMD_print_error();
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+
+        WCMD_word_iterator_extend_rest_of_line(iterator);
+        curdir  = xalloc(sizeof(struct env_stack));
+        thisdir = xalloc(1024 * sizeof(WCHAR));
+
+        GetCurrentDirectoryW(1024, thisdir);
+
+        if (set_current_directory(iterator->unquoted_argument, TRUE) != NO_ERROR)
+        {
+            free(curdir);
+            free(thisdir);
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_INVALID_DIRECTORY), iterator->unquoted_argument);
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+        curdir->next = pushd_directories;
+        curdir->strings = thisdir;
+        pushd_directories = curdir;
     }
-    return errorlevel = return_code;
+
+    return errorlevel = NO_ERROR;
 }
 
 
@@ -1794,16 +1854,25 @@ RETURN_CODE WCMD_pushd(const WCHAR *args)
  *	Pop a directory from the stack
  */
 
-RETURN_CODE WCMD_popd(void)
+RETURN_CODE WCMD_popd(struct word_iterator *iterator)
 {
     struct env_stack *temp = pushd_directories;
+
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+    }
 
     if (!pushd_directories)
         return ERROR_INVALID_FUNCTION;
 
     /* pop the old environment from the stack, and make it the current dir */
     pushd_directories = temp->next;
-    SetCurrentDirectoryW(temp->strings);
+    SetCurrentDirectoryW(temp->strings); /* FIXME what happens if directory has been deleted after PUSHD? */
     free(temp->strings);
     free(temp);
     return NO_ERROR;
@@ -2218,7 +2287,7 @@ RETURN_CODE WCMD_setlocal(struct word_iterator *iterator)
 
         /* Save the current drive letter */
         GetCurrentDirectoryW(MAX_PATH, cwd);
-        env_copy->u.cwd = cwd[0];
+        env_copy->cwd = cwd[0];
     }
     else
         free(env_copy);
@@ -2286,11 +2355,11 @@ RETURN_CODE WCMD_endlocal(void)
   }
 
   /* Restore current drive letter */
-  if (IsCharAlphaW(temp->u.cwd)) {
+  if (IsCharAlphaW(temp->cwd)) {
     WCHAR envvar[4];
     WCHAR cwd[MAX_PATH];
 
-    wsprintfW(envvar, L"=%c:", temp->u.cwd);
+    wsprintfW(envvar, L"=%c:", temp->cwd);
     if (GetEnvironmentVariableW(envvar, cwd, MAX_PATH)) {
       WINE_TRACE("Resetting cwd to %s\n", wine_dbgstr_w(cwd));
       SetCurrentDirectoryW(cwd);
@@ -2303,113 +2372,90 @@ RETURN_CODE WCMD_endlocal(void)
 }
 
 /*****************************************************************************
- * WCMD_setshow_default
+ * WCMD_setshow_directory
  *
  *	Set/Show the current default directory
  */
 
-RETURN_CODE WCMD_setshow_default(const WCHAR *args)
+RETURN_CODE WCMD_setshow_directory(struct word_iterator *iterator)
 {
-  RETURN_CODE return_code;
-  BOOL status;
-  WCHAR string[1024];
-  WCHAR cwd[1024];
-  WCHAR *pos;
-  WIN32_FIND_DATAW fd;
-  HANDLE hff;
+    RETURN_CODE return_code = NOERROR;
+    BOOL change_drive = FALSE;
+    WCHAR path[MAX_PATH];
 
-  WINE_TRACE("Request change to directory '%s'\n", wine_dbgstr_w(args));
+    WINE_TRACE("Request change to directory '%s'\n", wine_dbgstr_w(&iterator->from[iterator->position]));
 
-  /* Skip /D and trailing whitespace if on the front of the command line */
-  if (lstrlenW(args) >= 2 &&
-      CompareStringW(LOCALE_USER_DEFAULT,
-                     NORM_IGNORECASE | SORT_STRINGSORT,
-                     args, 2, L"/D", -1) == CSTR_EQUAL) {
-    args += 2;
-    while (*args && (*args==' ' || *args=='\t'))
-      args++;
-  }
-
-  GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
-  return_code = NO_ERROR;
-
-  if (!*args) {
-    lstrcatW(cwd, L"\r\n");
-    WCMD_output_asis (cwd);
-  }
-  else {
-    /* Remove any double quotes, which may be in the
-       middle, eg. cd "C:\Program Files"\Microsoft is ok */
-    pos = string;
-    while (*args) {
-      if (*args != '"') *pos++ = *args;
-      args++;
-    }
-    while (pos > string && (*(pos-1) == ' ' || *(pos-1) == '\t'))
-      pos--;
-    *pos = 0x00;
-
-    /* Search for appropriate directory */
-    WINE_TRACE("Looking for directory '%s'\n", wine_dbgstr_w(string));
-    hff = FindFirstFileW(string, &fd);
-    if (hff != INVALID_HANDLE_VALUE) {
-      do {
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          WCHAR fpath[MAX_PATH];
-          WCHAR drive[10];
-          WCHAR dir[MAX_PATH];
-          WCHAR fname[MAX_PATH];
-          WCHAR ext[MAX_PATH];
-
-          /* Convert path into actual directory spec */
-          if (!WCMD_get_fullpath(string, ARRAY_SIZE(fpath), fpath, NULL))
-              return errorlevel = ERROR_INVALID_FUNCTION;
-
-          _wsplitpath(fpath, drive, dir, fname, ext);
-
-          /* Rebuild path */
-          wsprintfW(string, L"%s%s%s", drive, dir, fd.cFileName);
-          break;
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            if (!wcsicmp(iterator->raw_argument, L"/D")) change_drive = TRUE;
+            else
+            {
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                return errorlevel = ERROR_INVALID_FUNCTION;
+            }
+            continue;
         }
-      } while (FindNextFileW(hff, &fd) != 0);
-      FindClose(hff);
+        WCMD_word_iterator_extend_rest_of_line(iterator);
+
+        /* CD <drv>: show current directory of given drive */
+        if (!change_drive &&
+            iswalpha(iterator->unquoted_argument[0]) &&
+            iterator->unquoted_argument[1] == L':' &&
+            iterator->unquoted_argument[2] == L'\0')
+        {
+            WCHAR env[4] = {L'=', towupper(iterator->unquoted_argument[0]), L':', L'\0'};
+            DWORD len = GetEnvironmentVariableW(env, path, ARRAY_SIZE(path));
+            /* in case env var hasn't been set yet */
+            if (!len && (GetLogicalDrives() & (1ul << (env[1] - L'A'))))
+            {
+                path[0] = env[1];
+                path[1] = L':';
+                path[2] = L'\\';
+                path[3] = L'\0';
+                len = 4;
+            }
+            if (len && len < ARRAY_SIZE(path))
+            {
+                WCMD_output_asis(path);
+                WCMD_output_asis(L"\r\n");
+            }
+            else
+            {
+                WCMD_format_string(WCMD_LoadMessage(WCMD_NO_DRIVE));
+                return_code = ERROR_INVALID_FUNCTION;
+            }
+        }
+        else
+        {
+            return_code = set_current_directory(iterator->unquoted_argument, change_drive);
+            if (return_code != NO_ERROR)
+                WCMD_format_string(WCMD_LoadMessage(WCMD_INVALID_DIRECTORY), iterator->unquoted_argument);
+        }
+        return errorlevel = return_code;
     }
 
-    /* Change to that directory */
-    WINE_TRACE("Really changing to directory '%s'\n", wine_dbgstr_w(string));
-
-    status = SetCurrentDirectoryW(string);
-    if (!status) {
-      WCMD_print_error ();
-      return_code = ERROR_INVALID_FUNCTION;
-    } else {
-
-      /* Save away the actual new directory, to store as current location */
-      GetCurrentDirectoryW(ARRAY_SIZE(string), string);
-
-      /* Restore old directory if drive letter would change, and
-           CD x:\directory /D (or pushd c:\directory) not supplied */
-      if ((wcsstr(quals, L"/D") == NULL) &&
-          (param1[1] == ':') && (towupper(param1[0]) != towupper(cwd[0]))) {
-        SetCurrentDirectoryW(cwd);
-      }
+    /* no args passed, CD without args */
+    if (change_drive)
+    {
+        WCMD_format_string(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        return_code = ERROR_INVALID_FUNCTION;
     }
-
-    /* Set special =C: type environment variable, for drive letter of
-       change of directory, even if path was restored due to missing
-       /D (allows changing drive letter when not resident on that
-       drive                                                          */
-    if (IsCharAlphaW(string[0]) && string[1] == L':') {
-      WCHAR env[4];
-      lstrcpyW(env, L"=");
-      memcpy(env+1, string, 2 * sizeof(WCHAR));
-      env[3] = 0x00;
-      WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(string));
-      SetEnvironmentVariableW(env, string);
+    else
+    {
+        if (GetCurrentDirectoryW(ARRAY_SIZE(path), path))
+        {
+            WCMD_output_asis(path);
+            WCMD_output_asis(L"\r\n");
+        }
+        else
+        {
+            WCMD_format_string(WCMD_LoadMessage(WCMD_NO_CURRENT_DIRECTORY));
+            return_code = ERROR_INVALID_FUNCTION;
+        }
     }
-
-  }
-  return errorlevel = return_code;
+    return errorlevel = return_code;
 }
 
 /****************************************************************************
@@ -2848,7 +2894,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
         size_t length;
 
         /* For a variable - just push it onto the stack */
-        if (WCMD_next_word(pos, mathDelims, &start, &length))
+        if (WCMD_next_word(pos, mathDelims, &start, &length, FALSE))
         {
             WCMD_pushnumber(WCMD_dup_unquoted(start, length), 0, &varstackhead);
             pos = start + length;

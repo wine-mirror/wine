@@ -1764,7 +1764,7 @@ static void test_token_attr(void)
     TOKEN_DEFAULT_DACL *Dacl;
     BOOL ret;
     DWORD i, GLE;
-    LPSTR SidString;
+    char *SidString, *SidString2;
     SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
     ACL *acl;
 
@@ -1859,7 +1859,6 @@ static void test_token_attr(void)
 
     ConvertSidToStringSidA(User->User.Sid, &SidString);
     trace("TokenUser: %s attr: 0x%08lx\n", SidString, User->User.Attributes);
-    LocalFree(SidString);
     free(User);
 
     /* owner */
@@ -1871,9 +1870,11 @@ static void test_token_attr(void)
     ok(ret,
         "GetTokenInformation(TokenOwner) failed with error %ld\n", GetLastError());
 
-    ConvertSidToStringSidA(Owner->Owner, &SidString);
-    trace("TokenOwner: %s\n", SidString);
+    ConvertSidToStringSidA(Owner->Owner, &SidString2);
+    trace("TokenOwner: %s\n", SidString2);
+    ok(!strcmp(SidString, SidString2), "user %s <> owner %s\n", SidString, SidString2);
     LocalFree(SidString);
+    LocalFree(SidString2);
     free(Owner);
 
     /* logon */

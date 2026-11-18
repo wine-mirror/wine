@@ -15973,6 +15973,19 @@ msgstr "%d датотека/е је умножено\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr ""
 
+#: programs/cmd/cmd.rc:412
+msgid "Path %1 isn't a valid directory.\n"
+msgstr ""
+
+#: programs/cmd/cmd.rc:413
+msgid "Can't resolve current directory.\n"
+msgstr ""
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+msgid "The specified drive doesn't exist.\n"
+msgstr "Датотека не постоји.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

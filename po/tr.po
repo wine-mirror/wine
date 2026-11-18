@@ -15543,6 +15543,24 @@ msgstr "%1!d! dosya kopyalandı\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "Dosyaya erişilemiyor.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Yol geçersiz.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Şimdiki klasör silinemiyor.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Site mevcut değil.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "İmleç boyutu"

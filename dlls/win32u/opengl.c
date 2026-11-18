@@ -470,7 +470,7 @@ static struct opengl_context *get_thread_context( struct opengl_context *root, s
 
     /* re-create the context if the drawable we want to activate uses a different format */
     if (drawable && driver_funcs->context_format) attrs.format = drawable->format;
-    if (*context && (*context)->attrs.format != attrs.format)
+    if (*context && attrs.format && (*context)->attrs.format != attrs.format)
     {
         driver_funcs->p_context_destroy( *context );
         *context = NULL;
@@ -799,7 +799,7 @@ static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenu
         funcs->p_glRenderbufferStorageMultisample( GL_RENDERBUFFER, desc->samples, internal_format, size.cx, size.cy );
         break;
     case GL_TEXTURE:
-        if (fbo == drawable->draw_fbo) ERR( "Unexpected GL_TEXTURE for draw FBO\n" );
+        if (drawable->read_fbo != drawable->draw_fbo && fbo == drawable->draw_fbo) ERR( "Unexpected GL_TEXTURE for draw FBO\n" );
         funcs->p_glBindTexture( GL_TEXTURE_2D, name );
         funcs->p_glTexImage2D( GL_TEXTURE_2D, 0, internal_format, size.cx, size.cy, 0, format_from_pfd( desc ), GL_BYTE, NULL );
         funcs->p_glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
@@ -1007,20 +1007,35 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
     SIZE src = drawable->virtual_size, dst = drawable->monitor_size;
     BOOL compat = surface->root_context == root_compat;
     float ramp_data[GAMMA_RAMP_SIZE * 4];
+    GLenum ret, draw_buffer = GL_BACK;
+    GLuint fbo = 0, tex = 0;
     NTSTATUS status;
     UINT index = -1;
 
     TRACE( "%s src %s dst %s fbo %u\n", debugstr_opengl_drawable( drawable ), debugstr_size( &src ), debugstr_size( &dst ), drawable->read_fbo );
 
     if ((status = framebuffer_swapchain_acquire_image( drawable, &index )))
-    {
         WARN( "Failed to acquire swapchain image, status %#x\n", status );
-        index = -1;
+    else
+    {
+        D3DKMT_HANDLE image = d3dkmt_swapchain_get_image( surface->swapchain, index, &src );
+
+        funcs->p_glGenFramebuffers( 1, &fbo );
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo );
+
+        funcs->p_glGenTextures( 1, &tex );
+        driver_funcs->p_texture_import( tex, image, src );
+        funcs->p_glFramebufferTexture( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0 );
+
+        ret = funcs->p_glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER );
+        if (ret != GL_FRAMEBUFFER_COMPLETE) ERR( "glCheckFramebufferStatus returned %#x\n", ret );
+
+        draw_buffer = GL_COLOR_ATTACHMENT0;
     }
 
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
-    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
-    funcs->p_glDrawBuffer( GL_BACK );
+    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo );
+    funcs->p_glDrawBuffer( draw_buffer );
     if (drawable->srgb) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
 
     if (drawable->read_fbo == drawable->draw_fbo && use_default_gamma_ramp())
@@ -1068,10 +1083,13 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         funcs->p_glDeleteBuffers( 1, &vbo );
     }
 
+    if (tex) funcs->p_glDeleteTextures( 1, &tex );
+    if (fbo) funcs->p_glDeleteFramebuffers( 1, &fbo );
     if (drawable->srgb) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
 
     if (index != -1)
     {
+        funcs->p_glFlush();
         status = framebuffer_swapchain_queue_present( drawable, index );
         if (status) WARN( "Failed to present swapchain image, status %#x\n", status );
     }
@@ -1136,7 +1154,7 @@ static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT fl
         {
             make_thread_context_current( surface->root_context, surface->target );
             blit_framebuffer_surface( drawable );
-            opengl_drawable_swap( surface->target );
+            if (!surface->swapchain) opengl_drawable_swap( surface->target );
         }
     }
 
@@ -1192,7 +1210,7 @@ static BOOL framebuffer_surface_swap( struct opengl_drawable *drawable )
     {
         make_thread_context_current( surface->root_context, surface->target );
         blit_framebuffer_surface( drawable );
-        opengl_drawable_swap( surface->target );
+        if (!surface->swapchain) opengl_drawable_swap( surface->target );
     }
 
     make_client_context_current();
@@ -1636,6 +1654,103 @@ static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 }
 
+static D3DKMT_HANDLE egldrv_texture_export( GLuint texture, D3DKMT_HANDLE *global )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+    struct opengl_context *context = NtCurrentTeb()->glReserved2;
+    struct fd_desc desc = { .type = FD_DMA_BUF };
+    D3DKMT_HANDLE local = 0;
+    int fd = -1, planes = 0;
+    EGLImage *image;
+
+    TRACE( "texture %u, global %p\n", texture, global );
+
+    if (!egl->extensions[EGL_KHR_gl_texture_2D_image] || !egl->extensions[EGL_MESA_image_dma_buf_export])
+    {
+        static UINT once;
+        if (!once++) FIXME( "Missing EGL_KHR_gl_texture_2D_image or EGL_MESA_image_dma_buf_export extensions\n" );
+        return 0;
+    }
+
+    if (!(image = funcs->p_eglCreateImage( egl->display, context->host_context, EGL_GL_TEXTURE_2D, (EGLClientBuffer)(uintptr_t)texture, NULL ))) goto failed;
+    if (!funcs->p_eglExportDMABUFImageQueryMESA( egl->display, image, &desc.format, &planes, &desc.dma_buf.modifier ) || planes != 1) goto failed;
+    if (!funcs->p_eglExportDMABUFImageMESA( egl->display, image, &fd, &desc.dma_buf.stride, &desc.dma_buf.offset )) goto failed;
+    TRACE( "Exported texture %u as image %p fd %d stride %d offset %d fourcc %s modifier %#jx\n", texture, image, fd,
+           desc.dma_buf.stride, desc.dma_buf.offset, debugstr_fourcc(desc.format), (intmax_t)desc.dma_buf.modifier );
+
+    local = d3dkmt_create_resource( fd, desc, global );
+    funcs->p_eglDestroyImage( egl->display, image );
+    close( fd );
+
+    TRACE( "Exported texture %u into d3dkmt local/global %#x/%#x\n", texture, local, *global );
+    return local;
+
+failed:
+    if (planes > 1) FIXME( "Unsupported plane count %u\n", planes );
+    WARN( "Failed to export texture %u\n", texture );
+    if (image) funcs->p_eglDestroyImage( egl->display, image );
+    close( fd );
+    return 0;
+}
+
+static BOOL egldrv_texture_import( GLuint texture, D3DKMT_HANDLE local, SIZE size )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    const struct egl_platform *egl = &display_egl;
+    struct opengl_context *context = NtCurrentTeb()->glReserved2;
+    struct fd_desc desc = d3dkmt_object_get_fd_desc( local );
+    int fd = -1;
+
+    TRACE( "texture %u local %#x size %s\n", texture, local, debugstr_size(&size) );
+
+    switch (desc.type)
+    {
+    case FD_DMA_BUF:
+    {
+        EGLAttrib attribs[] =
+        {
+            EGL_DMA_BUF_PLANE0_FD_EXT, fd,
+            EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT, desc.dma_buf.modifier >> 32,
+            EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT, (UINT32)desc.dma_buf.modifier,
+            EGL_DMA_BUF_PLANE0_OFFSET_EXT, desc.dma_buf.offset,
+            EGL_DMA_BUF_PLANE0_PITCH_EXT, desc.dma_buf.stride,
+            EGL_LINUX_DRM_FOURCC_EXT, desc.format,
+            EGL_WIDTH, size.cx,
+            EGL_HEIGHT, size.cy,
+            EGL_NONE,
+        };
+        EGLImage *image;
+
+        if ((fd = attribs[1] = d3dkmt_object_get_fd( local )) == -1) break;
+
+        if (!egl->extensions[EGL_EXT_image_dma_buf_import] || !egl->extensions[EGL_EXT_image_dma_buf_import_modifiers] ||
+            !context->extensions[GL_EXT_EGL_image_storage])
+        {
+            static UINT once;
+            if (!once++) FIXME( "Missing EGL_EXT_image_dma_buf_import, EGL_EXT_image_dma_buf_import_modifiers, or GL_EXT_EGL_image_storage extensions\n" );
+            break;
+        }
+
+        if (!(image = funcs->p_eglCreateImage( egl->display, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, attribs ))) break;
+        funcs->p_glBindTexture( GL_TEXTURE_2D, texture );
+        funcs->p_glEGLImageTargetTexStorageEXT( GL_TEXTURE_2D, image, NULL );
+
+        TRACE( "Imported texture %u from image %p fd %d size %s stride %d offset %d fourcc %s modifier %#jx\n", texture, image, fd,
+               debugstr_size(&size), desc.dma_buf.stride, desc.dma_buf.offset, debugstr_fourcc(desc.format), (intmax_t)desc.dma_buf.modifier );
+        funcs->p_eglDestroyImage( egl->display, image );
+        close( fd );
+
+        return TRUE;
+    }
+    default: FIXME( "Unsupported fd type %#x\n", desc.type ); break;
+    }
+
+    WARN( "Failed to imported texture %u from fd %d\n", texture, fd );
+    close( fd );
+    return FALSE;
+}
+
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs =
 {
     .size = sizeof(struct opengl_drawable),
@@ -1654,6 +1769,8 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_context_create = egldrv_context_create,
     .p_context_destroy = egldrv_context_destroy,
     .p_context_activate = egldrv_context_activate,
+    .p_texture_export = egldrv_texture_export,
+    .p_texture_import = egldrv_texture_import,
 };
 
 #define USE_GL_EXT(x) [x] = #x,
@@ -2114,6 +2231,16 @@ static BOOL nulldrv_context_activate( struct opengl_context *context, struct ope
     return FALSE;
 }
 
+static D3DKMT_HANDLE nulldrv_texture_export( GLuint texture, D3DKMT_HANDLE *global )
+{
+    return 0;
+}
+
+static BOOL nulldrv_texture_import( GLuint texture, D3DKMT_HANDLE local, SIZE size )
+{
+    return FALSE;
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_get_proc_address = nulldrv_get_proc_address,
@@ -2125,6 +2252,8 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_create = nulldrv_context_create,
     .p_context_destroy = nulldrv_context_destroy,
     .p_context_activate = nulldrv_context_activate,
+    .p_texture_export = nulldrv_texture_export,
+    .p_texture_import = nulldrv_texture_import,
 };
 
 static int win32u_wglGetPixelFormat( HDC hdc )
@@ -3734,10 +3863,10 @@ static void free_opengl_swapchain( struct opengl_swapchain *swapchain )
 
 D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
 {
-    static const struct fd_desc no_fd;
     struct opengl_swapchain *swapchain;
     D3DKMT_HANDLE resources[3], global;
     const struct opengl_funcs *funcs;
+    GLuint texture;
     int format;
     SIZE size;
     WND *win;
@@ -3758,11 +3887,21 @@ D3DKMT_HANDLE create_opengl_swapchain( HWND toplevel, HWND hwnd )
     if (!(swapchain->drawable = get_window_unused_drawable( hwnd, format, TRUE ))) goto failed;
     size = swapchain->drawable->virtual_size;
 
+    make_thread_context_current( NULL, swapchain->drawable );
+
+    funcs->p_glGenTextures( 1, &texture );
+    funcs->p_glBindTexture( GL_TEXTURE_2D, texture );
+
     for (UINT i = 0; i < ARRAY_SIZE(resources); i++)
     {
-        resources[i] = d3dkmt_create_resource( -1, no_fd, &global );
+        funcs->p_glTexStorage2D( GL_TEXTURE_2D, 1, GL_RGBA8, size.cx, size.cy );
+        resources[i] = driver_funcs->p_texture_export( texture, &global );
         if (!resources[i]) goto failed;
     }
+
+    funcs->p_glDeleteTextures( 1, &texture );
+
+    make_client_context_current();
 
     if (d3dkmt_swapchain_create( toplevel, hwnd, size, resources, &swapchain->local, &swapchain->global )) goto failed;
 
@@ -3792,11 +3931,43 @@ BOOL destroy_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global )
 
 BOOL present_opengl_swapchain( HWND toplevel, D3DKMT_HANDLE global, UINT index )
 {
+    const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_swapchain *swapchain;
+    D3DKMT_HANDLE image;
+    GLuint fbo, tex;
+    SIZE src, dst;
 
     TRACE( "toplevel %p global %#x index %#x\n", toplevel, global, index );
 
     if (!(swapchain = get_opengl_swapchain( toplevel, global, FALSE ))) return FALSE;
+
+    image = d3dkmt_swapchain_get_image( swapchain->local, index, &src );
+    dst = swapchain->drawable->monitor_size;
+
+    make_thread_context_current( NULL, swapchain->drawable );
+    opengl_drawable_flush( swapchain->drawable, 0, GL_FLUSH_ACTIVATE );
+
+    funcs->p_glGenFramebuffers( 1, &fbo );
+    funcs->p_glGenTextures( 1, &tex );
+
+    driver_funcs->p_texture_import( tex, image, src );
+
+    funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, fbo );
+    funcs->p_glFramebufferTexture( GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0 );
+    funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
+
+    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
+    funcs->p_glDrawBuffer( GL_BACK );
+    funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, dst.cx, dst.cy, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+    funcs->p_glDeleteFramebuffers( 1, &fbo );
+    funcs->p_glDeleteTextures( 1, &tex );
+
+    opengl_drawable_swap( swapchain->drawable );
+
+    make_client_context_current();
+
+    d3dkmt_swapchain_release_image( swapchain->local, index );
     return TRUE;
 }
 
@@ -3810,4 +3981,29 @@ void free_opengl_swapchains( struct list *swapchains )
         list_remove( &swapchain->entry );
         free_opengl_swapchain( swapchain );
     }
+}
+
+BOOL invalidate_opengl_swapchains( HWND toplevel, HWND hwnd )
+{
+    struct list swapchains = LIST_INIT(swapchains);
+    struct opengl_swapchain *swapchain, *next;
+    WND *win;
+
+    if (!(win = get_win_ptr( toplevel )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        if (win == WND_OTHER_PROCESS) NtUserPostMessage( toplevel, WM_WINE_SWAPCHAIN_INVALIDATE, (WPARAM)hwnd, 0 );
+        return TRUE;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( swapchain, next, &win->opengl_swapchains, struct opengl_swapchain, entry )
+    {
+        struct opengl_drawable *drawable = swapchain->drawable;
+        if (hwnd != drawable->hwnd && !is_child( hwnd, drawable->hwnd )) continue;
+        list_remove( &swapchain->entry );
+        list_add_tail( &swapchains, &swapchain->entry );
+    }
+    release_win_ptr( win );
+
+    free_opengl_swapchains( &swapchains );
+    return TRUE;
 }

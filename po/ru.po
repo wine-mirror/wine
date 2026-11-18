@@ -15273,6 +15273,24 @@ msgstr "%tСкопировано файлов: %1!u!\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "Файл не может быть скопирован сам в себя.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Неверный путь.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Невозможно удалить текущий каталог.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Указанный сайт не существует.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

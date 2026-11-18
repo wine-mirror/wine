@@ -372,7 +372,7 @@ static void test_VirtualAlloc(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %ld, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    addr1 = VirtualAlloc(0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = VirtualAlloc(0, 0xFFFC, MEM_RESERVE, PAGE_READONLY);
     ok(addr1 != NULL, "VirtualAlloc failed\n");
 
     /* test a not committed memory */
@@ -380,7 +380,7 @@ static void test_VirtualAlloc(void)
         "VirtualQuery failed\n");
     ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
     ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
-    ok(info.AllocationProtect == PAGE_NOACCESS, "%lx != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.AllocationProtect == PAGE_READONLY, "%lx != PAGE_READONLY\n", info.AllocationProtect);
     ok(info.RegionSize == 0x10000, "%Ix != 0x10000\n", info.RegionSize);
     ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
     ok(info.Protect == 0, "%lx != PAGE_NOACCESS\n", info.Protect);
@@ -400,7 +400,7 @@ static void test_VirtualAlloc(void)
         "VirtualQuery failed\n");
     ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
     ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
-    ok(info.AllocationProtect == PAGE_NOACCESS, "%lx != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.AllocationProtect == PAGE_READONLY, "%lx != PAGE_READONLY\n", info.AllocationProtect);
     ok(info.RegionSize == 0x1000, "%Ix != 0x1000\n", info.RegionSize);
     ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
     /* this time NT reports PAGE_NOACCESS as well */
@@ -444,6 +444,38 @@ static void test_VirtualAlloc(void)
 
     ok(VirtualQuery(addr2, &info, sizeof(info)) == sizeof(info),
        "VirtualQuery failed\n");
+    ok(info.RegionSize == 0xf000, "%Ix != 0xf000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
+    ok(info.Protect == 0, "%lx != 0\n", info.Protect);
+
+    addr2 = VirtualAlloc( (char *)addr1 + 0x2000, 0x1000, MEM_COMMIT, PAGE_READONLY );
+    ok( (char *)addr2 == (char *)addr1 + 0x2000, "VirtualAlloc failed\n" );
+    addr2 = VirtualAlloc( (char *)addr1 + 0x3000, 0x1000, MEM_COMMIT, PAGE_READWRITE );
+    ok( (char *)addr2 == (char *)addr1 + 0x3000, "VirtualAlloc failed\n" );
+
+    ok(VirtualQuery((char *)addr1 + 0x1000, &info, sizeof(info)) == sizeof(info),
+       "VirtualQuery failed\n");
+    ok(info.RegionSize == 0x1000, "%Ix != 0xf000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
+    ok(info.Protect == 0, "%lx != 0\n", info.Protect);
+
+    ok(VirtualQuery((char *)addr1 + 0x2000, &info, sizeof(info)) == sizeof(info),
+       "VirtualQuery failed\n");
+    ok(info.RegionSize == 0x1000, "%Ix != 0xf000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%lx != MEM_RESERVE\n", info.State);
+    ok(info.Protect == PAGE_READONLY, "%lx != PAGE_READONLY\n", info.Protect);
+
+    ok(VirtualQuery((char *)addr1 + 0x3000, &info, sizeof(info)) == sizeof(info),
+       "VirtualQuery failed\n");
+    ok(info.RegionSize == 0x1000, "%Ix != 0xf000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%lx != MEM_RESERVE\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%lx != PAGE_READWRITE\n", info.Protect);
+
+    ok( VirtualFree( (char *)addr1 + 0x2000, 0x2000, MEM_DECOMMIT ),
+        "decommit failed %lu\n", GetLastError() );
+
+    ok(VirtualQuery((char *)addr1 + 0x1000, &info, sizeof(info)) == sizeof(info),
+        "VirtualQuery failed\n");
     ok(info.RegionSize == 0xf000, "%Ix != 0xf000\n", info.RegionSize);
     ok(info.State == MEM_RESERVE, "%lx != MEM_RESERVE\n", info.State);
     ok(info.Protect == 0, "%lx != 0\n", info.Protect);

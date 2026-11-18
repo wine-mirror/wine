@@ -925,6 +925,7 @@ static UINT add_interfaceimpl_row( UINT class, UINT interface )
     return add_row( TABLE_INTERFACEIMPL, (const BYTE *)&row, sizeof(row) );
 }
 
+/* sorted by class, interface */
 static int cmp_interfaceimpl_row( const void *a, const void *b )
 {
     const struct interfaceimpl_row *row = a, *row2 = b;
@@ -935,15 +936,11 @@ static int cmp_interfaceimpl_row( const void *a, const void *b )
     return 0;
 }
 
-/* sorted by class, interface */
 static void serialize_interfaceimpl_table( void )
 {
     const struct interfaceimpl_row *row =
         (const struct interfaceimpl_row *)current_winmd->tables[TABLE_INTERFACEIMPL].ptr;
     UINT i;
-
-    qsort( current_winmd->tables[TABLE_INTERFACEIMPL].ptr, current_winmd->tables[TABLE_INTERFACEIMPL].count,
-           sizeof(*row), cmp_interfaceimpl_row );
 
     for (i = 0; i < current_winmd->tables_idx[TABLE_INTERFACEIMPL].count; i++)
     {
@@ -994,6 +991,7 @@ static UINT add_constant_row( BYTE type, UINT parent, UINT value )
     return add_row( TABLE_CONSTANT, (const BYTE *)&row, sizeof(row) );
 }
 
+/* sorted by parent */
 static int cmp_constant_row( const void *a, const void *b )
 {
     const struct constant_row *row = a, *row2 = b;
@@ -1002,14 +1000,10 @@ static int cmp_constant_row( const void *a, const void *b )
     return 0;
 }
 
-/* sorted by parent */
 static void serialize_constant_table( void )
 {
     const struct constant_row *row = (const struct constant_row *)current_winmd->tables[TABLE_CONSTANT].ptr;
     UINT i;
-
-    qsort( current_winmd->tables[TABLE_CONSTANT].ptr, current_winmd->tables[TABLE_CONSTANT].count, sizeof(*row),
-           cmp_constant_row );
 
     for (i = 0; i < current_winmd->tables_idx[TABLE_CONSTANT].count; i++)
     {
@@ -1019,6 +1013,15 @@ static void serialize_constant_table( void )
         serialize_blob_idx( row->value );
         row++;
     }
+}
+
+static UINT has_constant( enum table table, UINT row );
+
+static const struct constant_row *winmd_find_constant_row( const struct winmd *winmd, UINT token, enum table table)
+{
+    const struct constant_row key = { .parent = has_constant( table, token ) };
+    return bsearch( &key, winmd->tables[TABLE_CONSTANT].ptr, winmd->tables[TABLE_CONSTANT].count, sizeof(key),
+                    cmp_constant_row );
 }
 
 struct customattribute_row
@@ -1034,6 +1037,7 @@ static UINT add_customattribute_row( UINT parent, UINT type, UINT value )
     return add_row( TABLE_CUSTOMATTRIBUTE, (const BYTE *)&row, sizeof(row) );
 }
 
+/* sorted by parent */
 static int cmp_customattribute_row( const void *a, const void *b )
 {
     const struct customattribute_row *row = a, *row2 = b;
@@ -1042,15 +1046,11 @@ static int cmp_customattribute_row( const void *a, const void *b )
     return 0;
 }
 
-/* sorted by parent */
 static void serialize_customattribute_table( void )
 {
     const struct customattribute_row *row =
         (const struct customattribute_row *)current_winmd->tables[TABLE_CUSTOMATTRIBUTE].ptr;
     UINT i;
-
-    qsort( current_winmd->tables[TABLE_CUSTOMATTRIBUTE].ptr, current_winmd->tables[TABLE_CUSTOMATTRIBUTE].count,
-           sizeof(*row), cmp_customattribute_row );
 
     for (i = 0; i < current_winmd->tables_idx[TABLE_CUSTOMATTRIBUTE].count; i++)
     {
@@ -1251,6 +1251,7 @@ static UINT add_methodsemantics_row( USHORT flags, UINT name, UINT type )
     return add_row( TABLE_METHODSEMANTICS, (const BYTE *)&row, sizeof(row) );
 }
 
+/* sorted by association */
 static int cmp_methodsemantics_row( const void *a, const void *b )
 {
     const struct methodsemantics_row *row = a, *row2 = b;
@@ -1259,15 +1260,11 @@ static int cmp_methodsemantics_row( const void *a, const void *b )
     return 0;
 }
 
-/* sorted by association */
 static void serialize_methodsemantics_table( void )
 {
     const struct methodsemantics_row *row =
         (const struct methodsemantics_row *)current_winmd->tables[TABLE_METHODSEMANTICS].ptr;
     UINT i;
-
-    qsort( current_winmd->tables[TABLE_METHODSEMANTICS].ptr, current_winmd->tables[TABLE_METHODSEMANTICS].count,
-           sizeof(*row), cmp_methodsemantics_row );
 
     for (i = 0; i < current_winmd->tables[TABLE_METHODSEMANTICS].count; i++)
     {
@@ -3598,6 +3595,29 @@ static void add_delegate_type_step2( type_t *type )
     add_contract_attr_step2( type );
 }
 
+static const struct {
+    size_t row_size;
+    int (*cmp_row)(const void *, const void *);
+} table_sort_info[] = {
+    [TABLE_INTERFACEIMPL] = { sizeof(struct interfaceimpl_row), cmp_interfaceimpl_row },
+    [TABLE_CONSTANT] = { sizeof(struct constant_row), cmp_constant_row },
+    [TABLE_CUSTOMATTRIBUTE] = { sizeof(struct customattribute_row), cmp_customattribute_row },
+    [TABLE_METHODSEMANTICS] = { sizeof(struct methodsemantics_row), cmp_methodsemantics_row },
+};
+
+static void sort_tables( void )
+{
+    struct buffer buf;
+    enum table table;
+
+    for (table = 0; table < ARRAY_SIZE( table_sort_info ); table++)
+    {
+        buf = current_winmd->tables[table];
+        if (table_sort_info[table].row_size)
+            qsort( buf.ptr, buf.count, table_sort_info[table].row_size, table_sort_info[table].cmp_row );
+    }
+}
+
 static void build_tables( const statement_list_t *stmt_list )
 {
     const statement_t *stmt;
@@ -3679,6 +3699,8 @@ static void build_tables( const statement_list_t *stmt_list )
             break;
         }
     }
+
+    sort_tables();
 }
 
 static void build_table_stream( void )
@@ -4153,11 +4175,25 @@ static UINT merge_field_list( const struct winmd *winmd, UINT idx_start, UINT id
     {
         const struct field_row *field = &((struct field_row *)winmd->tables[TABLE_FIELD].ptr)[i];
         const char *name = winmd_get_string( winmd, field->name );
+        const struct constant_row *cst;
         UINT new_field, new_sig;
 
         new_sig = rewrite_field_sig_blob( winmd, field->signature );
         new_field = add_field_row( field->flags, add_string( name ), new_sig );
         if (!first_field) first_field = new_field;
+
+        /* If this field has a constant value, merge that as well. */
+        cst = winmd_find_constant_row( winmd, i + 1, TABLE_FIELD );
+        if (cst)
+        {
+            const BYTE *cst_value;
+            UINT len = 0;
+
+            cst_value = winmd_get_blob( winmd, cst->value, &len );
+            assert( len );
+            /* The Value blob can be copied as is. */
+            add_constant_row(cst->type, has_constant( TABLE_FIELD, new_field ), add_blob( cst_value, len ) );
+        }
     }
     return first_field;
 }
@@ -4267,6 +4303,7 @@ static void merge_memberrefs( void )
             {
             case TABLE_TYPEDEF:
                 new_class_row = merge_typedef_row( winmd, class_row - 1 );
+                break;
             case TABLE_TYPEREF:
             {
                 const struct typeref_row *ref = &((const struct typeref_row *)winmd->tables[TABLE_TYPEREF].ptr)[class_row - 1];
@@ -4305,4 +4342,5 @@ static void merge_tables( void )
     merge_typedefs();
     merge_interface_impls();
     merge_memberrefs();
+    sort_tables();
 }

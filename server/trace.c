@@ -180,7 +180,17 @@ static void dump_ratio( const char *prefix, const struct ratio *q )
 
 static void dump_fd_desc( const char *prefix, const struct fd_desc *desc )
 {
-    fprintf( stderr, "%s{type=%d}", prefix, desc->type );
+    fprintf( stderr, "%s{type=%d,format=%#x", prefix, desc->type, desc->format );
+
+    switch (desc->type)
+    {
+    case FD_DMA_BUF:
+        dump_uint64( ",modifier=", &desc->dma_buf.modifier );
+        fprintf( stderr, ",offset=%d,stride=%d", desc->dma_buf.offset, desc->dma_buf.stride );
+        break;
+    }
+
+    fprintf( stderr, "}" );
 }
 
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )

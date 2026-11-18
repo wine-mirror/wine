@@ -874,9 +874,10 @@ static void WCMD_show_prompt(void)
 	  *q++ = '\n';
 	  break;
 	case '+':
-	  if (pushd_directories) {
-	    memset(q, '+', pushd_directories->u.stackdepth);
-	    q = q + pushd_directories->u.stackdepth;
+	  {
+              struct env_stack *s;
+              for (s = pushd_directories; s; s = s->next)
+                  *q++ = '+';
 	  }
 	  break;
       }
@@ -1828,8 +1829,8 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
         /* file contains full path to file to execute, while full_cmdline can contain a relative path
          * extract all arguments after filename in full_cmdline
          */
-        if (!WCMD_next_word(full_cmdline, EXECUTABLE_DELIMS, &start, &length) ||
-            !WCMD_next_word(start, STANDARD_DELIMS, &start, &length))
+        if (!WCMD_next_word(full_cmdline, EXECUTABLE_DELIMS, &start, &length, FALSE) ||
+            !WCMD_next_word(start, STANDARD_DELIMS, &start, &length, FALSE))
             return ERROR_INVALID_FUNCTION;
 
         /* FIXME: when the file extension is not registered,
@@ -1970,7 +1971,7 @@ static BOOL search_in_pathext(WCHAR *path)
                     !last[cached_pathext[i].length])
                     efound = i;
         } while (FindNextFileW(h, &find));
-        CloseHandle(h);
+        FindClose(h);
     }
     if (efound == cached_count) return FALSE;
 
@@ -2022,7 +2023,7 @@ static RETURN_CODE search_command(const WCHAR *command, struct search_command *s
         sc->end_command = p - command;
         return RETURN_CODE_CANT_LAUNCH;
     }
-    if (!WCMD_next_word(command, EXECUTABLE_DELIMS, &end_command, &length))
+    if (!WCMD_next_word(command, EXECUTABLE_DELIMS, &end_command, &length, FALSE))
         return ERROR_INVALID_FUNCTION;
     firstParam = WCMD_dup_unquoted(end_command, length);
     end_command += length;
@@ -2185,7 +2186,7 @@ BOOL WCMD_split_command_build(const WCHAR *from, struct split_command *split_com
     }
     else if (search_command(from, &sc, TRUE) == RETURN_CODE_CANT_LAUNCH && sc.cmd_index > WCMD_EXIT)
     {
-        if (!WCMD_next_word(from, STANDARD_DELIMS, &st, &length) || st != from)
+        if (!WCMD_next_word(from, STANDARD_DELIMS, &st, &length, FALSE) || st != from)
             return FALSE;
         command_len = st + length - from;
     }
@@ -2193,7 +2194,7 @@ BOOL WCMD_split_command_build(const WCHAR *from, struct split_command *split_com
         command_len = sc.end_command;
 
     split_command->arguments[0].length = command_len;
-    for (from += command_len; WCMD_next_word(from, STANDARD_DELIMS, &st, &length); from = st + length)
+    for (from += command_len; WCMD_next_word(from, STANDARD_DELIMS, &st, &length, FALSE); from = st + length)
     {
         split_command->arguments = xrealloc(split_command->arguments, (split_command->num_arguments + 1) * sizeof(split_command->arguments[0]));
         split_command->arguments[split_command->num_arguments].start_pos = st - split_command->command;
@@ -2368,13 +2369,13 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         break;
     case WCMD_CD:
     case WCMD_CHDIR:
-        return_code = WCMD_setshow_default(parms_start);
+        return_code = WCMD_setshow_directory(&iterator);
         break;
     case WCMD_CLS:
         return_code = WCMD_clear_screen(&iterator);
         break;
     case WCMD_COPY:
-        return_code = WCMD_copy(parms_start);
+        return_code = WCMD_copy(&iterator);
         break;
     case WCMD_DATE:
         return_code = WCMD_setshow_date();
@@ -2459,10 +2460,10 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_volume();
         break;
     case WCMD_PUSHD:
-        return_code = WCMD_pushd(parms_start);
+        return_code = WCMD_pushd(&iterator);
         break;
     case WCMD_POPD:
-        return_code = WCMD_popd();
+        return_code = WCMD_popd(&iterator);
         break;
     case WCMD_ASSOC:
         return_code = WCMD_assoc(parms_start, TRUE);
@@ -3275,7 +3276,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length) ?
+                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length, FALSE) ?
                         WCMD_dup_unquoted(filename, filename_length) : NULL;
                     tkn_pmt.redirection = redirection_create_file(REDIR_READ_FROM, 0, filename);
                     free(filename);
@@ -3295,7 +3296,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length) ?
+                    filename = WCMD_next_word(p, STANDARD_DELIMS, &filename, &filename_length, FALSE) ?
                         WCMD_dup_unquoted(filename, filename_length) : NULL;
                     tkn_pmt.redirection = redirection_create_file(op, fd, filename);
                     free(filename);

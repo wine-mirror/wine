@@ -16706,6 +16706,24 @@ msgstr "%1!d! fájl másolódott\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "A fájlhoz nem lehet hozzáférni.\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "Útvonal nem valós.\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "Nem lehet törölni az aktulális mappát.\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "Az oldal nem létezik.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kurzor mérete"

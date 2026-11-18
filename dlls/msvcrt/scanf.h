@@ -27,7 +27,6 @@
 #define _CHAR_ wchar_t
 #define _UCHAR_ wchar_t
 #define _EOF_ WEOF
-#define _EOF_RET (short)WEOF
 #define _ISSPACE_(c) iswspace(c)
 #define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */
 #define _CHAR2SUPPORTED_(c) c /* FIXME: convert char to wide char */
@@ -37,7 +36,6 @@
 #define _CHAR_ char
 #define _UCHAR_ unsigned char
 #define _EOF_ EOF
-#define _EOF_RET EOF
 #define _ISSPACE_(c) isspace(c)
 #define _WIDE2SUPPORTED_(c) c /* FIXME: convert wide char to char */
 #define _CHAR2SUPPORTED_(c) c /* No conversion needed (char to char) */
@@ -221,7 +219,7 @@ _FUNCTION_ {
     nch = _GETC_(file);
     if (nch == _EOF_) {
         _UNLOCK_FILE_(file);
-        return _EOF_RET;
+        return -1;
     }
 
     if(!locale)
@@ -426,7 +424,7 @@ _FUNCTION_ {
                     fpnum_double(&fp, &cur);
                     if(!rd && ctx.err) {
                         _UNLOCK_FILE_(file);
-                        return _EOF_RET;
+                        return -1;
                     }
                     if(ctx.err || !ctx.read)
                         break;
@@ -494,7 +492,7 @@ _FUNCTION_ {
                     /* if we have reached the EOF and output nothing then report EOF */
                     if (nch==_EOF_ && rd==0 && st==0) {
                         _UNLOCK_FILE_(file);
-                        return _EOF_RET;
+                        return -1;
                     }
                     /* terminate */
                     if (st && !suppress) *sptr = 0;
@@ -530,7 +528,7 @@ _FUNCTION_ {
                     /* if we have reached the EOF and output nothing then report EOF */
                     if (nch==_EOF_ && rd==0 && st==0) {
                         _UNLOCK_FILE_(file);
-                        return _EOF_RET;
+                        return -1;
                     }
 #endif
                     /* terminate */
@@ -737,7 +735,6 @@ _FUNCTION_ {
 #undef _CHAR_
 #undef _UCHAR_
 #undef _EOF_
-#undef _EOF_RET
 #undef _ISSPACE_
 #undef _CHAR2SUPPORTED_
 #undef _WIDE2SUPPORTED_

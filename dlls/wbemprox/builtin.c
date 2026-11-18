@@ -411,6 +411,7 @@ static const struct column col_process[] =
     /* methods */
     { L"Create",          CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"GetOwner",        CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"GetOwnerSid",     CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
 
 static const struct column col_processor[] =
@@ -1002,6 +1003,7 @@ struct record_process
     /* methods */
     class_method *create;
     class_method *get_owner;
+    class_method *get_owner_sid;
 };
 
 struct record_processor
@@ -1292,6 +1294,8 @@ static const struct record_param data_param[] =
     { L"Win32_Process", L"GetOwner", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Process", L"GetOwner", -1, L"User", CIM_STRING },
     { L"Win32_Process", L"GetOwner", -1, L"Domain", CIM_STRING },
+    { L"Win32_Process", L"GetOwnerSid", -1, L"ReturnValue", CIM_UINT32 },
+    { L"Win32_Process", L"GetOwnerSid", -1, L"Sid", CIM_STRING },
     { L"Win32_Service", L"ChangeStartMode", 1, L"StartMode", CIM_STRING },
     { L"Win32_Service", L"ChangeStartMode", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Service", L"PauseService", -1, L"ReturnValue", CIM_UINT32 },
@@ -3837,6 +3841,7 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         /* methods */
         rec->create         = process_create;
         rec->get_owner      = process_get_owner;
+        rec->get_owner_sid  = process_get_owner_sid;
         if (!match_row( table, row, cond, &status ))
         {
             free_row_values( table, row );

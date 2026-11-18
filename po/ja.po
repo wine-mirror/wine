@@ -15400,6 +15400,24 @@ msgstr "%t%1!d! ファイルをコピーしました\n"
 msgid "File cannot be copied onto itself.\n"
 msgstr "ファイルを同じ場所にコピーすることはできません。\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Path %1 isn't a valid directory.\n"
+msgstr "パス名が不正です。\n"
+
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Can't delete current directory.\n"
+msgid "Can't resolve current directory.\n"
+msgstr "カレント ディレクトリを削除することはできません。\n"
+
+#: programs/cmd/cmd.rc:414
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "The specified drive doesn't exist.\n"
+msgstr "ネットワーク上の場所がありません。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"
