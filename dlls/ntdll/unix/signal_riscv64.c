@@ -935,12 +935,48 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         *p++ = '\n';
         write( 2, buf, p - buf );
     }
-    /* gp and tp belong to the host ELF runtime; retain the signal-time values. */
+    /* gp and tp belong to the host ELF runtime; retain the signal-time values.
+     * Check the entire integer image while the kernel's real signal context
+     * is still available, rather than sampling C compiler-owned registers. */
+    if (riscv64_transition_diag_enabled())
+    {
+        unsigned int mismatch = 0;
+        for (i = 1; i < 32; ++i)
+        {
+            ULONG64 expected = i == 1 ? frame->ra : i == 2 ? frame->sp : frame->x[i];
+            if (i == 3 || i == 4) continue; /* host gp/tp */
+            if (REGn_sig( i, uc ) != expected) ++mismatch;
+        }
+        if (PC_sig( uc ) != frame->pc) ++mismatch;
+        if (mismatch)
+        {
+            char buf[128], *p = buf;
+            p = riscv64_diag_text( p, "RV64-CONTEXT GPR mismatch count=" );
+            p = riscv64_diag_hex( p, mismatch );
+            *p++ = '\n';
+            write( 2, buf, p - buf );
+        }
+    }
 #if defined(__linux__) && defined(__riscv_flen) && (__riscv_flen >= 64)
     if (frame->restore_flags & (CONTEXT_FLOATING_POINT & ~CONTEXT_RISCV64))
     {
         for (i = 0; i < 32; ++i) uc->uc_mcontext.__fpregs.__d.__f[i] = frame->f[i];
         uc->uc_mcontext.__fpregs.__d.__fcsr = frame->fcsr;
+        if (riscv64_transition_diag_enabled())
+        {
+            unsigned int mismatch = 0;
+            for (i = 0; i < 32; ++i)
+                if (uc->uc_mcontext.__fpregs.__d.__f[i] != frame->f[i]) ++mismatch;
+            if (uc->uc_mcontext.__fpregs.__d.__fcsr != frame->fcsr) ++mismatch;
+            if (mismatch)
+            {
+                char buf[128], *p = buf;
+                p = riscv64_diag_text( p, "RV64-CONTEXT FPR mismatch count=" );
+                p = riscv64_diag_hex( p, mismatch );
+                *p++ = '\n';
+                write( 2, buf, p - buf );
+            }
+        }
     }
 #endif
 }
