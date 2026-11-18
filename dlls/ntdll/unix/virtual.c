@@ -3456,11 +3456,9 @@ void virtual_init(void)
 #endif
 
 #if defined(__riscv) && (__riscv_xlen == 64)
-    fprintf( stderr,
-             "pages_vprot: size=%zu sizeof=%zu total=%zu\n",
-             pages_vprot_size,
-             sizeof(*pages_vprot),
-             pages_vprot_size * sizeof(*pages_vprot) );
+    TRACE( "pages_vprot: size=%zu sizeof=%zu total=%zu\n",
+           pages_vprot_size, sizeof(*pages_vprot),
+           pages_vprot_size * sizeof(*pages_vprot) );
 
     {
         size_t pages_vprot_alloc_size;
