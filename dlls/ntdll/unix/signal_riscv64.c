@@ -980,7 +980,7 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
         p = riscv64_diag_text( p, " prev=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)frame->prev_frame );
         p = riscv64_diag_text( p, " cfa=" );
-        p = riscv64_diag_hex( p, frame->syscall_cfa );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame->syscall_cfa );
         p = riscv64_diag_text( p, " flags=" );
         p = riscv64_diag_hex( p, frame->restore_flags );
         p = riscv64_diag_text( p, " signal_sp=" );
@@ -1223,7 +1223,7 @@ static void __attribute__((noreturn,used)) riscv64_sigreturn_continue( struct sy
         p = riscv64_diag_text( p, " prev=" );
         p = riscv64_diag_hex( p, (ULONG_PTR)frame->prev_frame );
         p = riscv64_diag_text( p, " cfa=" );
-        p = riscv64_diag_hex( p, frame->syscall_cfa );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame->syscall_cfa );
         p = riscv64_diag_text( p, " flags=" );
         p = riscv64_diag_hex( p, frame->restore_flags );
         p = riscv64_diag_text( p, " pc=" );
@@ -2198,10 +2198,10 @@ NTSTATUS unwind_builtin_dll( void *args )
     struct unwind_builtin_dll_params *params = args;
     struct dwarf_eh_bases bases;
     const struct dwarf_fde *fde;
+    ULONG_PTR control_pc;
 
     if (!params || !params->context || !params->dispatch)
         return STATUS_INVALID_PARAMETER;
-    ULONG_PTR control_pc;
 
     if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
     control_pc = params->context->Pc -
