@@ -95,6 +95,11 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
     EXCEPTION_DISPOSITION disposition;
 
     dispatch.ContextRecord = &context;
+    WARN( "RV64 dispatch ENTER exception=%p code=%#lx flags=%#lx address=%p original_pc=%p sp=%p ra=%p parent=%p\n",
+          rec, (unsigned long)rec->ExceptionCode, (unsigned long)rec->ExceptionFlags,
+          rec->ExceptionAddress, (void *)(ULONG_PTR)original->Pc,
+          (void *)(ULONG_PTR)original->Gpr.X[2],
+          (void *)(ULONG_PTR)original->Gpr.X[1], rec->ExceptionRecord );
     while (depth++ < 1024)
     {
         sp = context.Gpr.X[2];
@@ -115,9 +120,16 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *original )
         prev_sp = sp;
         prev_pc = context.Pc;
 
+        TRACE( "RV64 dispatch UNWIND_BEGIN depth=%u exception=%p pc=%p sp=%p ra=%p\n",
+               depth, rec, (void *)(ULONG_PTR)context.Pc, (void *)(ULONG_PTR)sp,
+               (void *)(ULONG_PTR)context.Gpr.X[1] );
         status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
         if (status)
         {
+            WARN( "RV64 dispatch UNWIND_FAILED exception=%p status=%#lx depth=%u original_pc=%p current_pc=%p current_sp=%p\n",
+                  rec, (unsigned long)status, depth,
+                  (void *)(ULONG_PTR)original->Pc, (void *)(ULONG_PTR)context.Pc,
+                  (void *)(ULONG_PTR)context.Gpr.X[2] );
             WARN( "RV64 dispatch unwind failed status=%#lx pc=%p sp=%p ra=%p depth=%u\n",
                   (unsigned long)status, (void *)prev_pc, (void *)prev_sp,
                   (void *)(ULONG_PTR)context.Gpr.X[1], depth );
