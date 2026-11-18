@@ -773,7 +773,17 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
         RtlExitUserThread( STATUS_INVALID_PARAMETER );
     }
 
+    if (teb)
+    {
+        ULONG_PTR sp;
+        __asm__ volatile ( "mv %0, sp" : "=r"(sp) );
+        WARN( "RV64-HEAP thread ENTER sp=%p aligned=%u entry=%p arg=%p thunk=%p teb=%p stack=[%p,%p)\n",
+              (void *)sp, !(sp & 15), entry, arg, thunk, teb,
+              teb->Tib.StackLimit, teb->Tib.StackBase );
+        if (sp & 15) ERR( "RV64-HEAP misaligned thread-entry stack sp=%p\n", (void *)sp );
+    }
     thunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
+    ERR( "RV64-HEAP BaseThreadInitThunk unexpectedly returned entry=%p arg=%p\n", entry, arg );
 
     /* BaseThreadInitThunk should terminate the thread, not return. */
     RtlExitUserThread( STATUS_UNSUCCESSFUL );
