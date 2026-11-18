@@ -3741,7 +3741,11 @@ static RUNTIME_FUNCTION * CALLBACK dynamic_unwind_callback( DWORD_PTR pc, PVOID 
     (*(DWORD *)context)++;
 
     runtime_func.BeginAddress = code_offset + 16;
-    runtime_func.UnwindData   = 0;
+#if defined(__riscv) && __riscv_xlen == 64
+    runtime_func.UnwindData = 0x800; /* RV64 lookup fixture: 16-byte .xdata function. */
+#else
+    runtime_func.UnwindData = 0;
+#endif
     SET_RUNTIME_FUNC_LEN( &runtime_func, 16 );
     return &runtime_func;
 }
