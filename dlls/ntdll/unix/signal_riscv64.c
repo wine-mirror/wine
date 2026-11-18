@@ -661,6 +661,9 @@ struct riscv64_continuation_data
     ULONG_PTR last_fault_pc;
     ULONG_PTR last_fault_sp;
     unsigned int repeated_faults;
+    ULONG_PTR last_continue_pc;
+    ULONG_PTR last_continue_sp;
+    unsigned int repeated_continuations;
 };
 
 C_ASSERT( sizeof(struct riscv64_continuation_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
@@ -824,7 +827,7 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
             p = riscv64_diag_hex( p, (ULONG_PTR)info->si_addr );
             p = riscv64_diag_text( p, " frame=" );
             p = riscv64_diag_hex( p, (ULONG_PTR)frame );
-            *p++ = '\\n';
+            *p++ = '\n';
             write( 2, buf, p - buf );
         }
         if (frame)
@@ -838,6 +841,30 @@ static void riscv64_fault_handler( int sig, siginfo_t *info, void *opaque )
         _exit( 128 + sig );
     }
 
+    /* A nested exception can arrive with SP at the Windows stack guard.
+     * Do not fault a second time while clearing an exception payload below
+     * StackLimit; preserve the original PC and fault address instead. */
+    if (data->teb && sp <= (ULONG_PTR)data->teb->Tib.StackBase &&
+        sp >= (ULONG_PTR)data->teb->Tib.StackLimit &&
+        (sp < sizeof(*exc) ||
+         ((sp - sizeof(*exc)) & ~(ULONG_PTR)15) < (ULONG_PTR)data->teb->Tib.StackLimit))
+    {
+        if (riscv64_transition_diag_enabled())
+        {
+            char buf[256], *p = buf;
+            p = riscv64_diag_text( p, "RV64-DIAG exception frame below StackLimit pc=" );
+            p = riscv64_diag_hex( p, PC_sig( uc ) );
+            p = riscv64_diag_text( p, " sp=" );
+            p = riscv64_diag_hex( p, sp );
+            p = riscv64_diag_text( p, " limit=" );
+            p = riscv64_diag_hex( p, (ULONG_PTR)data->teb->Tib.StackLimit );
+            p = riscv64_diag_text( p, " fault=" );
+            p = riscv64_diag_hex( p, (ULONG_PTR)(info ? info->si_addr : NULL) );
+            *p++ = '\n';
+            write( 2, buf, p - buf );
+        }
+        _exit( 128 + sig );
+    }
     /* Allocate the exception payload on the interrupted stack, preserving
      * the LP64D 16-byte stack alignment.  SA_ONSTACK protects delivery. */
     exc = (void *)((sp - sizeof(*exc)) & ~(ULONG_PTR)15);
@@ -934,6 +961,34 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     {
         RV64_CHECKPOINT( "SIGUSR2 NULL frame" );
         return;
+    }
+    /* Detect the recurring 0x800-byte stack descent seen in pipe tests.
+     * This is a loop guard, not an attempt to synthesize a new stack or
+     * silently change the requested continuation context. */
+    if (frame->pc == continuation->last_continue_pc &&
+        frame->sp < continuation->last_continue_sp &&
+        continuation->last_continue_sp - frame->sp == 0x800)
+        ++continuation->repeated_continuations;
+    else
+        continuation->repeated_continuations = 0;
+    continuation->last_continue_pc = frame->pc;
+    continuation->last_continue_sp = frame->sp;
+    if (continuation->repeated_continuations == 16)
+    {
+        char buf[256], *p = buf;
+        p = riscv64_diag_text( p, "RV64-DIAG repeated continuation pc=" );
+        p = riscv64_diag_hex( p, frame->pc );
+        p = riscv64_diag_text( p, " sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        p = riscv64_diag_text( p, " ra=" );
+        p = riscv64_diag_hex( p, frame->ra );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
+    if (continuation->repeated_continuations >= 32)
+    {
+        RV64_CHECKPOINT( "repeated continuation exhausted stack budget; stopping" );
+        _exit( 128 + SIGSEGV );
     }
     /* Do not call libc logging functions in the signal handler: use the
      * async-signal-safe write() diagnostic helper instead. */
