@@ -960,8 +960,9 @@ static void set_page_vprot_bits( const void *addr, size_t size, BYTE set, BYTE c
 #ifdef _WIN64
     for ( ; idx < end; idx++)
     {
-        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
-        if (*ptr) *ptr = (*ptr & ~clear) | set;
+        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift];
+        if (!ptr || !ptr[idx & pages_vprot_mask]) continue;
+        ptr[idx & pages_vprot_mask] = (ptr[idx & pages_vprot_mask] & ~clear) | set;
     }
 #else
     for ( ; idx < end; idx++) if (pages_vprot[idx]) pages_vprot[idx] = (pages_vprot[idx] & ~clear) | set;
@@ -1005,9 +1006,9 @@ static BOOL set_page_vprot_exec_write_protect( const void *addr, size_t size )
 
     for ( ; idx < end; idx++)
     {
-        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
-        if (!is_vprot_exec_write( *ptr )) continue;
-        *ptr |= VPROT_WRITEWATCH;
+        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift];
+        if (!ptr || !is_vprot_exec_write( ptr[idx & pages_vprot_mask] )) continue;
+        ptr[idx & pages_vprot_mask] |= VPROT_WRITEWATCH;
         ret = TRUE;
     }
 #endif
