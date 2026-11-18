@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-11-05 11:56+0100\n"
+"PO-Revision-Date: 2026-11-18 21:28+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -15358,22 +15358,16 @@ msgid "File cannot be copied onto itself.\n"
 msgstr "Nie można skopiować pliku do siebie samego.\n"
 
 #: programs/cmd/cmd.rc:412
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Path %1 isn't a valid directory.\n"
-msgstr "Niepoprawna ścieżka.\n"
+msgstr "Ścieżka %1 nie jest prawidłowym katalogiem.\n"
 
 #: programs/cmd/cmd.rc:413
-#, fuzzy
-#| msgid "Can't delete current directory.\n"
 msgid "Can't resolve current directory.\n"
-msgstr "Nie można usunąć bieżącego katalogu.\n"
+msgstr "Nie można ustalić bieżącego katalogu.\n"
 
 #: programs/cmd/cmd.rc:414
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "The specified drive doesn't exist.\n"
-msgstr "Strona nie istnieje.\n"
+msgstr "Wskazany dysk nie istnieje.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
