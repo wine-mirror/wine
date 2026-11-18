@@ -1188,6 +1188,21 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
     }
     service = (service_t)table->ServiceTable[index];
     if (!service) return STATUS_INVALID_SYSTEM_SERVICE;
+    /* Diagnostic-only: resolve the actual service-table slot and capture
+     * the argument vector immediately before the indirect call.  This
+     * records the values without changing the calling convention. */
+    if (riscv64_transition_diag_enabled() && id == 0x39)
+    {
+        ULONG64 values[20] = {0};
+        unsigned int count = arg_size / sizeof(ULONG_PTR), i;
+        for (i = 0; i < count && i < 8; ++i) values[i] = args[i];
+        for (; i < count; ++i) values[i] = stack_args[i - 8];
+        WARN( "RV64-SVC id=%#x table=%u index=%u count=%u bytes=%u target=%p args=%p stack=%p\n",
+              id, table_id, index, count, arg_size, service, args, stack_args );
+        for (i = 0; i < count; ++i)
+            WARN( "RV64-SVC id=%#x arg[%u]=%016llx\n",
+                  id, i, (unsigned long long)values[i] );
+    }
     return service( args[0], args[1], args[2], args[3],
                     args[4], args[5], args[6], args[7],
                     arg_size > 8 * sizeof(ULONG_PTR) ? stack_args[0] : 0,
