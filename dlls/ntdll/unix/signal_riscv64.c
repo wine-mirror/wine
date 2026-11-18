@@ -1665,7 +1665,8 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
                   entry_sp, frame );
             return NULL;
         }
-        frame->prev_frame = NULL;
+        /* The root frame is reusable only when no nested frame owns the
+         * syscall-frame pointer.  Do not modify its linkage on entry. */
         return frame;
     }
 
@@ -1709,8 +1710,13 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
     }
     if (!data || !data->teb || !frame) return;
     if (get_syscall_frame( data ) != frame)
+    {
         ERR( "RV64-FRAME finish ownership mismatch completed=%p active=%p\n",
              frame, get_syscall_frame( data ) );
+        /* Never install a stale previous-frame pointer over another
+         * active transition.  Leave the chain intact for diagnosis. */
+        return;
+    }
     if (frame->prev_frame)
     {
         ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
