@@ -1586,6 +1586,15 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
 
     stack_base = (ULONG_PTR)get_kernel_stack( data );
     stack_end = stack_base + kernel_stack_size;
+    if ((ULONG_PTR)frame < stack_base ||
+        (ULONG_PTR)frame > stack_end ||
+        stack_end - (ULONG_PTR)frame < sizeof(*frame) ||
+        ((ULONG_PTR)frame & 15))
+    {
+        ERR( "RV64-FRAME invalid active frame=%p stack=[%p,%p)\n",
+             frame, (void *)stack_base, (void *)stack_end );
+        return NULL;
+    }
     if (sp < stack_base || sp >= stack_end)
     {
         /* A callback on a different stack cannot be nested safely without
@@ -1609,6 +1618,15 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
     if (sp < stack_base + 8192 + 2048 + sizeof(*nested)) return NULL;
     frame_addr = (sp - 2048 - sizeof(*nested)) & ~(ULONG_PTR)15;
     nested = (struct syscall_frame *)frame_addr;
+    if (frame_addr < stack_base + 8192 ||
+        frame_addr + sizeof(*nested) > sp - 2048 ||
+        (frame_addr < (ULONG_PTR)frame + sizeof(*frame) &&
+         frame_addr + sizeof(*nested) > (ULONG_PTR)frame))
+    {
+        ERR( "RV64-FRAME overlap or guard failure nested=%p active=%p entry_sp=%p\n",
+             nested, frame, entry_sp );
+        return NULL;
+    }
     memset( nested, 0, sizeof(*nested) );
     nested->prev_frame = frame;
     get_teb_data( data )->syscall_frame = nested;
@@ -1630,8 +1648,22 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
               __builtin_thread_pointer(), data, data ? data->teb : NULL,
               frame, frame ? frame->prev_frame : NULL );
     }
-    if (data && data->teb && frame->prev_frame)
+    if (!data || !data->teb || !frame) return;
+    if (get_syscall_frame( data ) != frame)
+        ERR( "RV64-FRAME finish ownership mismatch completed=%p active=%p\n",
+             frame, get_syscall_frame( data ) );
+    if (frame->prev_frame)
+    {
+        ULONG_PTR base = (ULONG_PTR)get_kernel_stack( data );
+        ULONG_PTR end = base + kernel_stack_size;
+        ULONG_PTR prev = (ULONG_PTR)frame->prev_frame;
+        if (prev < base || prev > end || end - prev < sizeof(*frame) || (prev & 15))
+        {
+            ERR( "RV64-FRAME invalid previous=%p completed=%p\n", frame->prev_frame, frame );
+            return;
+        }
         get_teb_data( data )->syscall_frame = frame->prev_frame;
+    }
 }
 
 /* Unix-call entry: a0 = function table, a1 = function index,
