@@ -69,7 +69,7 @@ my %formats =
     "union udp_endpoint"       => [ 32, 4 ],
     "struct user_apc"          => [ 40, 8 ],
     "struct class_info"        => [ 56, 8 ],
-    "struct ratio"             => [  4, 4 ],
+    "struct ratio"             => [  8, 4 ],
     "struct fd_desc"           => [ 24, 8 ],
 );
 

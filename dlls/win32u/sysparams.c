@@ -321,8 +321,6 @@ static struct ratio make_ratio( UINT num, UINT den )
 {
     UINT d = gcd( num, den );
     struct ratio r = { num / d, den / d };
-    assert( num / d < 65536 );
-    assert( den / d < 65536 );
     return r;
 }
 
