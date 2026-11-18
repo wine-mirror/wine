@@ -1347,7 +1347,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "addi sp, sp, 16\n\t"
                    "addi sp, sp, -16\n\t"
                    "sd a0, 0(sp)\n\t"
-                   "mv a0, t0\n\t"
+                   "addi a0, sp, 16\n\t"
                    "call " __ASM_NAME("riscv64_check_syscall_nonvolatiles") "\n\t"
                    "ld a0, 0(sp)\n\t"
                    "addi sp, sp, 16\n\t"
