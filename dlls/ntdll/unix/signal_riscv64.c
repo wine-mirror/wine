@@ -1272,7 +1272,7 @@ static NTSTATUS __attribute__((used)) riscv64_dispatch_syscall( ULONG id, const 
      * prototype supplies the maximum supported slots; unused slots are
      * initialized to zero and are never read from the Windows stack. */
     if (riscv64_transition_diag_enabled() && id == 0x0d)
-        WARN( "RV64-THREAD NtSetInformationThread handle=%p class=%lu buffer=%p length=%lu\\n",
+        WARN( "RV64-THREAD NtSetInformationThread handle=%p class=%lu buffer=%p length=%lu\n",
               (void *)argv[0], (unsigned long)argv[1], (void *)argv[2], (unsigned long)argv[3] );
     return service( argv[0], argv[1], argv[2], argv[3],
                     argv[4], argv[5], argv[6], argv[7],
