@@ -2276,10 +2276,34 @@ NTSTATUS unwind_builtin_dll( void *args )
     if (!params->context->Pc) return STATUS_UNSUCCESSFUL;
     control_pc = params->context->Pc -
                  !!(params->context->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-DWARF lookup pc=%p control_pc=%p sp=%p ra=%p s0=%p flags=%#x\n",
+              (void *)(ULONG_PTR)params->context->Pc, (void *)control_pc,
+              (void *)(ULONG_PTR)params->context->Gpr.X[2],
+              (void *)(ULONG_PTR)params->context->Gpr.X[1],
+              (void *)(ULONG_PTR)params->context->Gpr.X[8], params->context->ContextFlags );
     fde = _Unwind_Find_FDE( (void *)control_pc, &bases );
-    if (!fde) return STATUS_UNSUCCESSFUL;
-    return riscv64_dwarf_virtual_unwind( params->context,
-                                          (DISPATCHER_CONTEXT *)params->dispatch, fde, &bases );
+    if (!fde)
+    {
+        if (riscv64_transition_diag_enabled()) WARN( "RV64-DWARF no FDE for %p\n", (void *)control_pc );
+        return STATUS_UNSUCCESSFUL;
+    }
+    {
+        ULONG_PTR old_pc = params->context->Pc;
+        ULONG_PTR old_sp = params->context->Gpr.X[2];
+        ULONG_PTR old_ra = params->context->Gpr.X[1];
+        ULONG_PTR old_s0 = params->context->Gpr.X[8];
+        NTSTATUS status = riscv64_dwarf_virtual_unwind( params->context,
+                                         (DISPATCHER_CONTEXT *)params->dispatch, fde, &bases );
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-DWARF result status=%#lx fde=%p old_pc=%p new_pc=%p old_sp=%p new_sp=%p old_ra=%p new_ra=%p old_s0=%p new_s0=%p\n",
+                  (unsigned long)status, fde, (void *)old_pc,
+                  (void *)(ULONG_PTR)params->context->Pc, (void *)old_sp,
+                  (void *)(ULONG_PTR)params->context->Gpr.X[2], (void *)old_ra,
+                  (void *)(ULONG_PTR)params->context->Gpr.X[1], (void *)old_s0,
+                  (void *)(ULONG_PTR)params->context->Gpr.X[8] );
+        return status;
+    }
 }
 
 void *get_native_context( CONTEXT *context )
