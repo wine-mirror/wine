@@ -1004,9 +1004,15 @@ NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_
     BOOL found;
 
     if (!is_system_dir_path( nt_name, &machine ) || machine != IMAGE_FILE_MACHINE_RISCV64)
+    {
+        WARN( "RV64-LAUNCH probe rejected path=%s system-machine=%04x\n",
+              debugstr_us(nt_name), machine );
         return STATUS_DLL_NOT_FOUND;
+    }
 
     order = get_load_order( nt_name, TRUE, NULL );
+    WARN( "RV64-LAUNCH probe path=%s loadorder=%d build_dir=%s\n",
+          debugstr_us(nt_name), order, build_dir ? build_dir : "(null)" );
     if (order == LO_DISABLED || order == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
 
     len = nt_name->Length / sizeof(WCHAR);
@@ -1029,6 +1035,7 @@ NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_
                       build_dir, (int)len - 4, filename, filename ) < 0)
             return STATUS_NO_MEMORY;
         found = rv64_probe_builtin_exe_so( path, info );
+        WARN( "RV64-LAUNCH ELF candidate=%s verified=%d\n", path, found );
         if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
         free( path );
         if (found) return STATUS_SUCCESS;
@@ -1040,6 +1047,7 @@ NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_
                       get_so_dir( IMAGE_FILE_MACHINE_RISCV64 ), filename ) < 0)
             return STATUS_NO_MEMORY;
         found = rv64_probe_builtin_exe_so( path, info );
+        WARN( "RV64-LAUNCH ELF candidate=%s verified=%d\n", path, found );
         if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
         free( path );
         if (found) return STATUS_SUCCESS;
@@ -1047,6 +1055,7 @@ NTSTATUS get_riscv64_builtin_exe_info( const UNICODE_STRING *nt_name, struct pe_
         if (asprintf( &path, "%s/%s.so", dll_paths[i], filename ) < 0)
             return STATUS_NO_MEMORY;
         found = rv64_probe_builtin_exe_so( path, info );
+        WARN( "RV64-LAUNCH ELF candidate=%s verified=%d\n", path, found );
         if (found) TRACE( "RV64-LAUNCH verified builtin ELF %s\n", debugstr_a(path) );
         free( path );
         if (found) return STATUS_SUCCESS;
