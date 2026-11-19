@@ -956,47 +956,32 @@ static void context_copy_ranges( BYTE *d, DWORD context_flags, BYTE *s, const st
  */
 NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src )
 {
-    DWORD context_size, arch_flag, flags_offset, dst_flags, src_flags;
+    DWORD dst_flags, src_flags;
     static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64;
     const struct context_parameters *p;
     BYTE *d, *s;
 
     TRACE("dst %p, context_flags %#lx, src %p.\n", dst, context_flags, src);
 
-    if (context_flags & 0x40 && !RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) return STATUS_NOT_SUPPORTED;
-
-    arch_flag = context_flags & arch_mask;
-    switch (arch_flag)
-    {
-    case CONTEXT_i386:
-        context_size = sizeof( I386_CONTEXT );
-        flags_offset = offsetof( I386_CONTEXT, ContextFlags );
-        break;
-    case CONTEXT_AMD64:
-        context_size = sizeof( AMD64_CONTEXT );
-        flags_offset = offsetof( AMD64_CONTEXT, ContextFlags );
-        break;
-    default:
+    if (!(p = context_get_parameters( context_flags )))
         return STATUS_INVALID_PARAMETER;
-    }
+
+    if (context_flags & p->xstate_flag && !RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) return STATUS_NOT_SUPPORTED;
 
     d = (BYTE *)dst;
     s = (BYTE *)src;
-    dst_flags = *(DWORD *)(d + flags_offset);
-    src_flags = *(DWORD *)(s + flags_offset);
+    dst_flags = *(DWORD *)(d + p->flags_offset);
+    src_flags = *(DWORD *)(s + p->flags_offset);
 
-    if ((dst_flags & arch_mask) != arch_flag || (src_flags & arch_mask) != arch_flag)
+    if ((dst_flags & arch_mask) != p->arch_flag || (src_flags & arch_mask) != p->arch_flag)
         return STATUS_INVALID_PARAMETER;
 
     context_flags &= src_flags;
-    if (context_flags & ~dst_flags & 0x40) return STATUS_BUFFER_OVERFLOW;
+    if (context_flags & ~dst_flags & p->xstate_flag) return STATUS_BUFFER_OVERFLOW;
 
-    if (context_flags & 0x40)
-        return RtlCopyExtendedContext( (CONTEXT_EX *)(d + context_size), context_flags,
-                                       (CONTEXT_EX *)(s + context_size) );
-
-    if (!(p = context_get_parameters( context_flags )))
-        return STATUS_INVALID_PARAMETER;
+    if (context_flags & p->xstate_flag)
+        return RtlCopyExtendedContext( (CONTEXT_EX *)(d + p->context_size), context_flags,
+                                       (CONTEXT_EX *)(s + p->context_size) );
 
     context_copy_ranges( d, context_flags, s, p );
     return STATUS_SUCCESS;

@@ -12182,6 +12182,9 @@ static void test_copy_context(void)
         ok(*(DWORD *)((BYTE *)dst + flags_offset) == flags, "Got unexpected ContextFlags %#lx, flags %#lx.\n",
                 *(DWORD *)((BYTE *)dst + flags_offset), flags);
 
+        status = pRtlCopyExtendedContext(dst_ex, flags | 0x100, src_ex);
+        ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
+
         memset(dst_context_buffer, 0xdd, sizeof(dst_context_buffer));
         status = pRtlInitializeExtendedContext(dst_context_buffer, flags, &dst_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
@@ -12222,6 +12225,11 @@ static void test_copy_context(void)
             check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                     0, context_length);
         }
+
+        *(DWORD *)((BYTE *)dst + flags_offset) = flags & (CONTEXT_AMD64 | CONTEXT_i386);
+        *(DWORD *)((BYTE *)src + flags_offset) = flags;
+        status = pRtlCopyContext(dst, flags | 0x100, src);
+        ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
     }
 
     for (i = 0; i < ARRAY_SIZE(arch_flags); ++i)
