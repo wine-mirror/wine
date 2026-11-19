@@ -623,6 +623,7 @@ static const struct context_parameters
 {
     ULONG arch_flag;
     ULONG supported_flags;
+    ULONG xstate_flag;
     ULONG context_size;    /* sizeof(CONTEXT) */
     ULONG legacy_size;     /* Legacy context size */
     ULONG alignment;       /* Used when computing size of context. */
@@ -635,6 +636,7 @@ arch_context_parameters[] =
     {
         CONTEXT_AMD64,
         0xf8000000 | CONTEXT_AMD64_ALL | CONTEXT_AMD64_XSTATE,
+        CONTEXT_AMD64_XSTATE & ~CONTEXT_AMD64,
         sizeof(AMD64_CONTEXT),
         sizeof(AMD64_CONTEXT),
         15,
@@ -645,6 +647,7 @@ arch_context_parameters[] =
     {
         CONTEXT_i386,
         0xf8000000 | CONTEXT_I386_ALL | CONTEXT_I386_XSTATE,
+        CONTEXT_I386_XSTATE & ~CONTEXT_i386,
         sizeof(I386_CONTEXT),
         offsetof(I386_CONTEXT,ExtendedRegisters),
         3,
@@ -730,7 +733,7 @@ NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length
     if (!(p = context_get_parameters( context_flags )))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(context_flags & 0x40))
+    if (!(context_flags & p->xstate_flag))
     {
         *length = p->context_size + context_ex_size + p->alignment;
         return STATUS_SUCCESS;
@@ -776,7 +779,7 @@ NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flag
     if (!(p = context_get_parameters( context_flags )))
         return STATUS_INVALID_PARAMETER;
 
-    if ((context_flags & 0x40) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
+    if ((context_flags & p->xstate_flag) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
         return STATUS_NOT_SUPPORTED;
 
     context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~(ULONG_PTR)p->true_alignment);
@@ -786,7 +789,7 @@ NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flag
     c_ex->Legacy.Offset = c_ex->All.Offset = -(LONG)p->context_size;
     c_ex->Legacy.Length = context_flags & 0x20 ? p->context_size : p->legacy_size;
 
-    if (context_flags & 0x40)
+    if (context_flags & p->xstate_flag)
     {
         XSTATE *xs;
 
@@ -1015,12 +1018,12 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
     if (!(p = context_get_parameters( context_flags )))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(feature_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) && context_flags & 0x40)
+    if (!(feature_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) && context_flags & p->xstate_flag)
         return STATUS_NOT_SUPPORTED;
 
     context_copy_ranges( RtlLocateLegacyContext( dst, NULL ), context_flags, RtlLocateLegacyContext( src, NULL ), p );
 
-    if (!(context_flags & 0x40))
+    if (!(context_flags & p->xstate_flag))
         return STATUS_SUCCESS;
 
     if (dst->XState.Length < sizeof(XSAVE_AREA_HEADER))
