@@ -619,6 +619,12 @@ static const struct context_copy_range copy_ranges_x86[] =
     {0x2cc,    0},
 };
 
+static const struct context_copy_range copy_ranges_arm64[] =
+{
+    {0x4, 0x1}, {0x8, 0x2}, {0x98, 0x10}, {0xa0, 0x2}, {0xf0, 0x1}, {0x110, 0x44}, {0x210, 0x84},
+    {0x310, 0x44}, {0x318, 0x8}, {0x390, 0}
+};
+
 static const struct context_parameters
 {
     ULONG arch_flag;
@@ -655,6 +661,17 @@ arch_context_parameters[] =
         offsetof(I386_CONTEXT,ContextFlags),
         copy_ranges_x86
     },
+    {
+        CONTEXT_ARM64,
+        0xf8000000 | CONTEXT_ARM64_ALL | CONTEXT_ARM64_XSTATE | CONTEXT_ARM64_X18,
+        CONTEXT_ARM64_XSTATE & ~CONTEXT_ARM64,
+        sizeof(ARM64_NT_CONTEXT),
+        sizeof(ARM64_NT_CONTEXT),
+        15,
+        TYPE_ALIGNMENT(ARM64_NT_CONTEXT) - 1,
+        offsetof(ARM64_NT_CONTEXT,ContextFlags),
+        copy_ranges_arm64
+    },
 };
 
 static const ULONG context_ex_size = 0x20; /* XState functions use a 0x20-byte CONTEXT_EX even on 32-bit */
@@ -667,9 +684,11 @@ static const struct context_parameters *context_get_parameters( ULONG context_fl
     {
         if (context_flags & arch_context_parameters[i].arch_flag)
         {
-            if (context_flags & ~arch_context_parameters[i].supported_flags) return NULL;
-            *xstate_config = &user_shared_data->XState;
-            return &arch_context_parameters[i];
+            const struct context_parameters *p = &arch_context_parameters[i];
+            if (context_flags & ~p->supported_flags) return NULL;
+            if (p->arch_flag == CONTEXT_ARM64) *xstate_config = &user_shared_data->XStateArm64;
+            else *xstate_config = &user_shared_data->XState;
+            return p;
         }
     }
     return NULL;
@@ -977,7 +996,7 @@ static void context_copy_ranges( BYTE *d, DWORD context_flags, BYTE *s, const st
 NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src )
 {
     DWORD dst_flags, src_flags;
-    static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64;
+    static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64 | CONTEXT_ARM64;
     const XSTATE_CONFIGURATION *xstate_config;
     const struct context_parameters *p;
     BYTE *d, *s;
