@@ -880,8 +880,8 @@ static void test_SQLDriverConnect( void )
     SET_EXPECT( driver_SQLDriverConnect );
     SET_EXPECT( driver_SQLGetDiagRec );
     SET_EXPECT( driver_SQLGetInfo );
-    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"dsn=winetest_dsn;UID=winetest",
-                            strlen("dsn=winetest_dsn;UID=winetest"), str, sizeof(str), &len, 0 );
+    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)";dsn=winetest_dsn;;UID=winetest;;",
+                            strlen(";dsn=winetest_dsn;;UID=winetest;;"), str, sizeof(str), &len, 0 );
     CHECK_CALLED( driver_SQLAllocHandle_env );
     CHECK_CALLED( driver_SQLSetEnvAttr );
     CHECK_CALLED( driver_SQLAllocHandle_con );

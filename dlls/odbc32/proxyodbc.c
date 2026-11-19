@@ -4837,6 +4837,7 @@ static SQLRETURN parse_connect_string( struct attribute_list *list, const WCHAR 
     list->attrs = NULL;
     for (;;)
     {
+        while (*p == ';') p++;
         if (!*p) break;
         if (!(q = wcschr( p, '=' )) || q == p) return SQL_SUCCESS;
         len = q - p;
