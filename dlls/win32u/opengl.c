@@ -957,6 +957,7 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
     {
         make_thread_context_current( surface->root_context, NULL );
         framebuffer_surface_reset( drawable );
+        make_client_context_current();
     }
     if (surface->swapchain) d3dkmt_swapchain_destroy_remote( surface->swapchain );
     if (surface->target) opengl_drawable_release( surface->target );
