@@ -730,9 +730,9 @@ static void test_DrawTextCalcRect(void)
 
     SetRect(&rect, 0, 0, 150, 100);
     textheight = DrawTextExW(hdc, string_w, -1, &rect, DT_WORDBREAK | DT_CALCRECT | DT_WORD_ELLIPSIS | DT_MODIFYSTRING, &dtp);
-    todo_wine ok(!wcsstr(string_w, L"..."), "got %s.\n", debugstr_w(string_w));
+    ok(!wcsstr(string_w, L"..."), "got %s.\n", debugstr_w(string_w));
     ok(dtp.uiLengthDrawn == len, "got %d, expected %d\n", dtp.uiLengthDrawn, len);
-    todo_wine ok(textheight / heightcheck > 1, "got %d.\n", textheight / heightcheck);
+    ok(textheight / heightcheck > 1, "got %d.\n", textheight / heightcheck);
     ok(rect.right <= 150, "got %ld.\n", rect.right);
 
     wcscpy(string_w, L"A quick brown  fox  jumps over the lazy dog long text");
@@ -754,7 +754,7 @@ static void test_DrawTextCalcRect(void)
     replace_wchar(string_w, 0x20, 0xf020);
     SetRect(&rect, 0, 0, 150, 100);
     textheight = DrawTextExW(hdc, string_w, -1, &rect, DT_WORDBREAK | DT_CALCRECT | DT_WORD_ELLIPSIS | DT_MODIFYSTRING, &dtp);
-    todo_wine ok(!wcsstr(string_w, L"..."), "got %s.\n", debugstr_w(string_w));
+    ok(!wcsstr(string_w, L"..."), "got %s.\n", debugstr_w(string_w));
     ok(dtp.uiLengthDrawn == len, "got %d, expected %d\n", dtp.uiLengthDrawn, len);
     ok(rect.right <= 150, "got %ld.\n", rect.right);
 

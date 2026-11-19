@@ -83,6 +83,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 #define LF     10
 #define CR     13
 #define SPACE  32
+#define SYMBOL_SPACE 0xf020
 #define PREFIX 38
 #define ALPHA_PREFIX 30 /* Win16: Alphabet prefix */
 #define KANA_PREFIX  31 /* Win16: Katakana prefix */
@@ -376,16 +377,18 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     word_fits = TRUE;
     if (!chars_fit)
         word_fits = FALSE;
-    else if (sla[i].fSoftBreak) /* chars_fit < *len_str so this is valid */
+    else if (sla[i].fSoftBreak || *p == SYMBOL_SPACE) /* chars_fit < *len_str so this is valid */
     {
          /* the word just fitted */
         p--;
     }
     else
     {
-        while (i > 0 && !sla[(--i)+1].fWhiteSpace) p--;
+        /* keep SYMBOL_SPACE on the same line if it fits */
+        while (i > 0 && !(sla[i--].fWhiteSpace || p[-1] == SYMBOL_SPACE ))
+            p--;
         p--;
-        word_fits = (i != 0 || sla[i+1].fWhiteSpace );
+        word_fits = (i != 0 || sla[i+1].fWhiteSpace);
     }
 
     /* If there was one. */
