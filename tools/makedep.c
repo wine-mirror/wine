@@ -3184,20 +3184,29 @@ static void output_source_ver( struct makefile *make, struct incl_file *source, 
 static void output_source_rc( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray defines = get_source_defines( make, source, obj );
-    const char *po_dir = NULL, *res_file = strmake( "%s.res", obj );
+    struct strarray targets = empty_strarray;
+    const char *po_dir = NULL, *res_file = NULL;
 
     if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
-    if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
-    if (!(source->file->flags & FLAG_TESTDLL)) strarray_add( &make->res_files[0], res_file );
-    else strarray_add( &make->clean_files, res_file );
+    if (!make->disabled[0]) res_file = strmake( "%s.res", obj );
 
     if (source->file->flags & FLAG_RC_PO)
     {
-        strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
-        output( "%s.pot ", obj_dir_path( make, obj ) );
+        char *pot_file = strmake( "%s.pot", obj );
+        strarray_add( &make->pot_files, pot_file );
+        strarray_add( &targets, pot_file );
+        if (linguas.count) po_dir = "po";
     }
-    output( "%s: %s", obj_dir_path( make, res_file ), source->filename );
+    if (res_file)
+    {
+        if (!(source->file->flags & FLAG_TESTDLL)) strarray_add( &make->res_files[0], res_file );
+        else strarray_add( &make->clean_files, res_file );
+        strarray_add( &targets, res_file );
+    }
+    if (!targets.count) return;
+    output_filenames_obj_dir( make, targets );
+    output( ": %s", source->filename );
     output_filename( wrc );
     if (make->src_dir) output_filename( "nls/locale.nls" );
     output_filenames( source->dependencies );
@@ -3209,7 +3218,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     output_filenames( defines );
     output_filename( source->filename );
     output( "\n" );
-    if (po_dir)
+    if (po_dir && res_file)
     {
         output( "%s:", obj_dir_path( make, res_file ));
         STRARRAY_FOR_EACH( lang, &linguas ) output_filename( strmake( "%s/%s.mo", po_dir, lang ));
