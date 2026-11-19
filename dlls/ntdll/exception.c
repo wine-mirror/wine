@@ -659,14 +659,18 @@ arch_context_parameters[] =
 
 static const ULONG context_ex_size = 0x20; /* XState functions use a 0x20-byte CONTEXT_EX even on 32-bit */
 
-static const struct context_parameters *context_get_parameters( ULONG context_flags )
+static const struct context_parameters *context_get_parameters( ULONG context_flags, const XSTATE_CONFIGURATION **xstate_config )
 {
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(arch_context_parameters); ++i)
     {
         if (context_flags & arch_context_parameters[i].arch_flag)
-            return context_flags & ~arch_context_parameters[i].supported_flags ? NULL : &arch_context_parameters[i];
+        {
+            if (context_flags & ~arch_context_parameters[i].supported_flags) return NULL;
+            *xstate_config = &user_shared_data->XState;
+            return &arch_context_parameters[i];
+        }
     }
     return NULL;
 }
@@ -723,14 +727,14 @@ static int xstate_get_size( UINT64 mask )
  */
 NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length, ULONG64 compaction_mask )
 {
+    const XSTATE_CONFIGURATION *xstate_config;
     const struct context_parameters *p;
-    ULONG64 supported_mask;
     ULONG64 size;
 
     TRACE( "context_flags %#lx, length %p, compaction_mask %s.\n", context_flags, length,
             wine_dbgstr_longlong(compaction_mask) );
 
-    if (!(p = context_get_parameters( context_flags )))
+    if (!(p = context_get_parameters( context_flags, &xstate_config )))
         return STATUS_INVALID_PARAMETER;
 
     if (!(context_flags & p->xstate_flag))
@@ -739,15 +743,15 @@ NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length
         return STATUS_SUCCESS;
     }
 
-    if (!(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0) ))
+    if (!xstate_config->EnabledFeatures)
         return STATUS_NOT_SUPPORTED;
 
     size = p->context_size + context_ex_size + 63;
 
-    compaction_mask &= supported_mask & ~(ULONG64)3;
-    if (user_shared_data->XState.CompactionEnabled) size += xstate_get_compacted_size( compaction_mask );
-    else if (compaction_mask)                       size += xstate_get_size( compaction_mask );
-    else                                            size += sizeof(XSAVE_AREA_HEADER);
+    compaction_mask &= xstate_config->EnabledFeatures & ~(ULONG64)3;
+    if (xstate_config->CompactionEnabled) size += xstate_get_compacted_size( compaction_mask );
+    else if (compaction_mask)             size += xstate_get_size( compaction_mask );
+    else                                  size += sizeof(XSAVE_AREA_HEADER);
 
     *length = size;
     return STATUS_SUCCESS;
@@ -769,17 +773,17 @@ NTSTATUS WINAPI RtlGetExtendedContextLength( ULONG context_flags, ULONG *length 
 NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flags, CONTEXT_EX **context_ex,
         ULONG64 compaction_mask )
 {
+    const XSTATE_CONFIGURATION *xstate_config;
     const struct context_parameters *p;
-    ULONG64 supported_mask = 0;
     CONTEXT_EX *c_ex;
 
     TRACE( "context %p, context_flags %#lx, context_ex %p, compaction_mask %s.\n",
             context, context_flags, context_ex, wine_dbgstr_longlong(compaction_mask));
 
-    if (!(p = context_get_parameters( context_flags )))
+    if (!(p = context_get_parameters( context_flags, &xstate_config )))
         return STATUS_INVALID_PARAMETER;
 
-    if ((context_flags & p->xstate_flag) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
+    if ((context_flags & p->xstate_flag) && !xstate_config->EnabledFeatures)
         return STATUS_NOT_SUPPORTED;
 
     context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~(ULONG_PTR)p->true_alignment);
@@ -793,19 +797,19 @@ NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flag
     {
         XSTATE *xs;
 
-        compaction_mask &= supported_mask;
+        compaction_mask &= xstate_config->EnabledFeatures;
 
         xs = (XSTATE *)(((ULONG_PTR)c_ex + context_ex_size + 63) & ~(ULONG_PTR)63);
 
         c_ex->XState.Offset = (ULONG_PTR)xs - (ULONG_PTR)c_ex;
-        compaction_mask &= supported_mask;
+        compaction_mask &= xstate_config->EnabledFeatures;
 
-        if (user_shared_data->XState.CompactionEnabled) c_ex->XState.Length = xstate_get_compacted_size( compaction_mask );
-        else if (compaction_mask & ~(ULONG64)3)         c_ex->XState.Length = xstate_get_size( compaction_mask );
-        else                                            c_ex->XState.Length = sizeof(XSAVE_AREA_HEADER);
+        if (xstate_config->CompactionEnabled)   c_ex->XState.Length = xstate_get_compacted_size( compaction_mask );
+        else if (compaction_mask & ~(ULONG64)3) c_ex->XState.Length = xstate_get_size( compaction_mask );
+        else                                    c_ex->XState.Length = sizeof(XSAVE_AREA_HEADER);
 
         memset( xs, 0, c_ex->XState.Length );
-        if (user_shared_data->XState.CompactionEnabled)
+        if (xstate_config->CompactionEnabled)
             xs->CompactionMask = ((ULONG64)1 << 63) | compaction_mask;
 
         c_ex->All.Length = p->context_size + c_ex->XState.Offset + c_ex->XState.Length;
@@ -958,15 +962,16 @@ NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src 
 {
     DWORD dst_flags, src_flags;
     static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64;
+    const XSTATE_CONFIGURATION *xstate_config;
     const struct context_parameters *p;
     BYTE *d, *s;
 
     TRACE("dst %p, context_flags %#lx, src %p.\n", dst, context_flags, src);
 
-    if (!(p = context_get_parameters( context_flags )))
+    if (!(p = context_get_parameters( context_flags, &xstate_config )))
         return STATUS_INVALID_PARAMETER;
 
-    if (context_flags & p->xstate_flag && !RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) return STATUS_NOT_SUPPORTED;
+    if (context_flags & p->xstate_flag && !xstate_config->EnabledFeatures) return STATUS_NOT_SUPPORTED;
 
     d = (BYTE *)dst;
     s = (BYTE *)src;
@@ -993,6 +998,7 @@ NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src 
  */
 NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CONTEXT_EX *src )
 {
+    const XSTATE_CONFIGURATION *xstate_config;
     const struct context_parameters *p;
     XSAVE_AREA_HEADER *dst_xs, *src_xs;
     ULONG64 feature_mask;
@@ -1000,10 +1006,10 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
 
     TRACE( "dst %p, context_flags %#lx, src %p.\n", dst, context_flags, src );
 
-    if (!(p = context_get_parameters( context_flags )))
+    if (!(p = context_get_parameters( context_flags, &xstate_config )))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(feature_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) && context_flags & p->xstate_flag)
+    if (!xstate_config->EnabledFeatures && context_flags & p->xstate_flag)
         return STATUS_NOT_SUPPORTED;
 
     context_copy_ranges( RtlLocateLegacyContext( dst, NULL ), context_flags, RtlLocateLegacyContext( src, NULL ), p );
@@ -1018,9 +1024,9 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
     src_xs = (XSAVE_AREA_HEADER *)((BYTE *)src + src->XState.Offset);
 
     memset(dst_xs, 0, sizeof(XSAVE_AREA_HEADER));
-    dst_xs->Mask = (src_xs->Mask & ~(ULONG64)3) & feature_mask;
-    dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled
-            ? ((ULONG64)1 << 63) | (src_xs->CompactionMask & feature_mask) : 0;
+    dst_xs->Mask = (src_xs->Mask & ~(ULONG64)3) & xstate_config->EnabledFeatures;
+    dst_xs->CompactionMask = xstate_config->CompactionEnabled
+            ? ((ULONG64)1 << 63) | (src_xs->CompactionMask & xstate_config->EnabledFeatures) : 0;
     feature_mask = dst_xs->Mask >> 2;
 
     i = 2;
@@ -1029,8 +1035,8 @@ NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CO
     {
         if (feature_mask & 1)
         {
-            if (!dst_xs->CompactionMask) off = user_shared_data->XState.Features[i].Offset - sizeof(XSAVE_FORMAT);
-            size = user_shared_data->XState.Features[i].Size;
+            if (!dst_xs->CompactionMask) off = xstate_config->Features[i].Offset - sizeof(XSAVE_FORMAT);
+            size = xstate_config->Features[i].Size;
             if (src->XState.Length < off + size || dst->XState.Length < off + size) break;
             memcpy( (BYTE *)dst_xs + off, (BYTE *)src_xs + off, size );
         }
