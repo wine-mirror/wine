@@ -190,6 +190,8 @@ static void    FILEDLG95_LOOKIN_Clean(HWND hwnd);
 static void FILEDLG95_MRU_load_filename(LPWSTR stored_path);
 static WCHAR FILEDLG95_MRU_get_slot(LPCWSTR module_name, LPWSTR stored_path, PHKEY hkey_ret);
 static void FILEDLG95_MRU_save_filename(LPCWSTR filename);
+static void mru_save_opensave_pidl(const WCHAR *filename);
+static void mru_load_opensave_pidls(const FileOpenDlgInfos *info);
 
 /* Miscellaneous tool functions */
 static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPWSTR lpstrFileName);
@@ -1578,6 +1580,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   {
       DestroyWindow( GetDlgItem( hwnd, edt1 ) );
       fodInfos->DlgInfos.hwndFileName = GetDlgItem( hwnd, cmb13 );
+      mru_load_opensave_pidls( fodInfos );
   }
 
   /* Get the hwnd of the controls */
@@ -2593,6 +2596,163 @@ int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
     return nOpenAction;
 }
 
+#define MRU_OPENSAVE_MAX_PIDL 10
+
+static HKEY mru_open_opensave_key(const WCHAR *ext, BOOL create)
+{
+    static const WCHAR path[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32\\OpenSavePidlMRU";
+    HKEY mru_key, ret_key;
+    LONG res;
+
+    if (create)
+        res = RegCreateKeyExW(HKEY_CURRENT_USER, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &mru_key, NULL);
+    else
+        res = RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_READ, &mru_key);
+    if (res) return NULL;
+
+    if (create)
+        res = RegCreateKeyExW(mru_key, ext, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &ret_key, NULL);
+    else
+        res = RegOpenKeyExW(mru_key, ext, 0, KEY_READ, &ret_key);
+
+    RegCloseKey(mru_key);
+    return res ? NULL : ret_key;
+}
+
+static DWORD mru_get_opensave_list(HKEY hkey, DWORD *list)
+{
+    DWORD type, size, *data, i, count = 0;
+
+    if (RegQueryValueExW(hkey, L"MRUListEx", NULL, &type, NULL, &size) || type != REG_BINARY) return 0;
+    if (!(data = malloc(size))) return 0;
+    if (!RegQueryValueExW(hkey, L"MRUListEx", NULL, &type, (BYTE *)data, &size))
+    {
+        for (i = 0; i < size / sizeof(DWORD) && data[i] != ~0u && count < MRU_OPENSAVE_MAX_PIDL; i++)
+            list[count++] = data[i];
+    }
+    free(data);
+    return count;
+}
+
+static WCHAR *mru_get_opensave_path(HKEY hkey, DWORD index)
+{
+    DWORD type, size, pos = 0, len_path = MAX_PATH;
+    WCHAR name[11], *path = NULL, *tmp;
+    USHORT len;
+    BYTE *data;
+
+    swprintf(name, ARRAY_SIZE(name), L"%lu", index);
+    if (RegQueryValueExW(hkey, name, NULL, &type, NULL, &size) || type != REG_BINARY) return NULL;
+    if (!(data = malloc(size))) return NULL;
+    if (!RegQueryValueExW(hkey, name, NULL, &type, data, &size))
+    {
+        while (pos + sizeof(len) <= size)
+        {
+            memcpy(&len, data + pos, sizeof(len));
+            if (!len)
+            {
+                path = malloc(len_path * sizeof(WCHAR));
+                while (path && !SHGetPathFromIDListEx((const ITEMIDLIST *)data, path, len_path, 0))
+                {
+                    if (len_path >= 32767 || !(tmp = realloc(path, len_path * 2 * sizeof(WCHAR))))
+                    {
+                        free(path);
+                        path = NULL;
+                    }
+                    else
+                    {
+                        len_path *= 2;
+                        path = tmp;
+                    }
+                }
+                break;
+            }
+            if (len < sizeof(len)) break;
+            pos += len;
+        }
+    }
+    free(data);
+    return path;
+}
+
+static void mru_add_opensave_pidl(const WCHAR *filename, const WCHAR *ext, const ITEMIDLIST *pidl)
+{
+    DWORD list[MRU_OPENSAVE_MAX_PIDL + 1], count, pos, i, j;
+    WCHAR name[11], *path;
+    BOOL exists = FALSE;
+    HKEY hkey;
+
+    if (!(hkey = mru_open_opensave_key(ext, TRUE))) return;
+    count = mru_get_opensave_list(hkey, list);
+
+    for (pos = 0; pos < count; pos++)
+    {
+        if ((path = mru_get_opensave_path(hkey, list[pos])))
+        {
+            exists = !wcsicmp(path, filename);
+            free(path);
+            if (exists) break;
+        }
+    }
+
+    if (pos < count) i = list[pos];
+    else if (count == MRU_OPENSAVE_MAX_PIDL) i = list[--pos];
+    else
+    {
+        for (i = 0; i < count; i++)
+        {
+            for (j = 0; j < count; j++) if (list[j] == i) break;
+            if (j == count) break;
+        }
+        pos = count++;
+    }
+
+    memmove(list + 1, list, pos * sizeof(DWORD));
+    list[0] = i;
+    list[count] = ~0u;
+
+    swprintf(name, ARRAY_SIZE(name), L"%lu", i);
+    if (!RegSetValueExW(hkey, name, 0, REG_BINARY, (const BYTE *)pidl, ILGetSize(pidl)))
+        RegSetValueExW(hkey, L"MRUListEx", 0, REG_BINARY, (const BYTE *)list, (count + 1) * sizeof(DWORD));
+    RegCloseKey(hkey);
+}
+
+static void mru_save_opensave_pidl(const WCHAR *filename)
+{
+    ITEMIDLIST *pidl;
+    const WCHAR *ext;
+
+    if (!(pidl = SHSimpleIDListFromPath(filename))) return;
+
+    ext = PathFindExtensionW(filename);
+    if (ext[0] && ext[1]) mru_add_opensave_pidl(filename, ext + 1, pidl);
+    mru_add_opensave_pidl(filename, L"*", pidl);
+    ILFree(pidl);
+}
+
+static void mru_load_opensave_pidls(const FileOpenDlgInfos *info)
+{
+    DWORD list[MRU_OPENSAVE_MAX_PIDL], count, i;
+    COMBOBOXEXITEMW item = {0};
+    WCHAR *path;
+    const WCHAR *ext = info->defext && *info->defext ? info->defext : L"*";
+    HKEY hkey;
+
+    if (!(hkey = mru_open_opensave_key(ext, FALSE))) return;
+    count = mru_get_opensave_list(hkey, list);
+
+    for (i = 0; i < count; i++)
+    {
+        if (!(path = mru_get_opensave_path(hkey, list[i]))) continue;
+        item.mask    = CBEIF_TEXT;
+        item.pszText = path;
+        item.iItem   = -1;
+        SendMessageW(info->DlgInfos.hwndFileName, CBEM_INSERTITEMW, 0, (LPARAM)&item);
+        free(path);
+    }
+    RegCloseKey(hkey);
+}
+
 /***********************************************************************
  *      FILEDLG95_OnOpen
  *
@@ -2952,6 +3112,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	      goto ret;
 
           FILEDLG95_MRU_save_filename(lpstrPathAndFile);
+          if (!(fodInfos->ofnInfos->Flags & OFN_DONTADDTORECENT)) mru_save_opensave_pidl(lpstrPathAndFile);
 
           TRACE("close\n");
 	  FILEDLG95_Clean(hwnd);
