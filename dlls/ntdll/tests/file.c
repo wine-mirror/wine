@@ -1754,6 +1754,16 @@ static void test_file_rename_information(FILE_INFORMATION_CLASS class)
         wine_dbgstr_w(newpath + 2), wine_dbgstr_w(fni->FileName) );
     HeapFree( GetProcessHeap(), 0, fni );
 
+    res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION) - 1, class );
+    todo_wine ok( res == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", res );
+    res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION), class );
+    todo_wine ok( res == STATUS_INVALID_PARAMETER, "got %#lx\n", res );
+    fri->FileNameLength = 0;
+    res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION) - 1, class );
+    todo_wine ok( res == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", res );
+    res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION), class );
+    todo_wine ok( res == STATUS_INVALID_PARAMETER, "got %#lx\n", res );
+
     CloseHandle( handle2 );
     CloseHandle( handle );
     HeapFree( GetProcessHeap(), 0, fri );
