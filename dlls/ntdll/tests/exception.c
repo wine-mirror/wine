@@ -12069,6 +12069,11 @@ static void test_copy_context(void)
         {0x0, ~0}, {0x4, 0x10}, {0x1c, 0x8}, {0x8c, 0x4}, {0x9c, 0x2}, {0xb4, 0x1}, {0xcc, 0x20}, {0x1ec, 0x80000020},
         {0x2cc, ~0}, {0x440, 0}, {0x1000, 0},
     };
+    static struct modified_range ranges_arm64[] =
+    {
+        {0x0, ~0}, {0x4, 0x1}, {0x8, 0x2}, {0x98, 0x10}, {0xa0, 0x2}, {0xf0, 0x1}, {0x110, 0x44}, {0x210, 0x84},
+        {0x310, 0x44}, {0x318, 0x8}, {0x390, ~0}, {0x500, 0}, {sizeof(src_context_buffer), 0},
+    };
     static const struct modified_range single_range[] =
     {
         {0x0, 0x1}, {0x1000, 0},
@@ -12084,6 +12089,7 @@ static void test_copy_context(void)
         ULONG test_flags[12];
         struct modified_range *ranges;
         ULONG ranges_cnt;
+        ULONG support_check;
     } archs[] =
     {
         {
@@ -12123,6 +12129,27 @@ static void test_copy_context(void)
             },
             ranges_x86,
             ARRAYSIZE(ranges_x86),
+        },
+        {
+            CONTEXT_ARM64,
+            CONTEXT_ARM64_XSTATE & ~CONTEXT_ARM64,
+            0,
+            sizeof(ARM64_NT_CONTEXT),
+            offsetof(ARM64_NT_CONTEXT, ContextFlags),
+            {
+                CONTEXT_ARM64_CONTROL,
+                CONTEXT_ARM64_INTEGER,
+                CONTEXT_ARM64_FLOATING_POINT,
+                CONTEXT_ARM64_DEBUG_REGISTERS,
+                CONTEXT_ARM64_X18,
+                CONTEXT_ARM64_XSTATE,
+                CONTEXT_ARM64_FLOATING_POINT_LOW,
+                CONTEXT_ARM64_FLOATING_POINT_HIGH,
+            },
+            ranges_arm64,
+            ARRAYSIZE(ranges_arm64),
+             /* Old Windows versions without AVX emulation support are not interesting */
+            CONTEXT_ARM64_FLOATING_POINT_LOW,
         },
     };
 
@@ -12178,6 +12205,16 @@ static void test_copy_context(void)
 
     for (i = 0; i < ARRAY_SIZE(archs); ++i)
     {
+        if (archs[i].support_check)
+        {
+            status = pRtlInitializeExtendedContext(src_context_buffer, archs[i].support_check, &src_ex);
+            if (status == STATUS_INVALID_PARAMETER)
+            {
+                win_skip("Unsupported context flags %#lx.\n", archs[i].support_check);
+                continue;
+            }
+        }
+
         for (j = 0; archs[i].test_flags[j]; ++j)
         {
             flags = archs[i].test_flags[j];
