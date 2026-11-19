@@ -934,15 +934,6 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 }
 
 
-/**********************************************************************
- *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
- */
-ULONG64 WINAPI RtlGetEnabledExtendedFeatures( ULONG64 feature_mask )
-{
-    return user_shared_data->XState.EnabledFeatures & feature_mask;
-}
-
-
 /*************************************************************************
  *		RtlWalkFrameChain (NTDLL.@)
  */

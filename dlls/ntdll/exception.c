@@ -675,6 +675,18 @@ static const struct context_parameters *context_get_parameters( ULONG context_fl
     return NULL;
 }
 
+static XSTATE_CONFIGURATION *get_xstate_config(void)
+{
+#if defined(__aarch64__)
+    return &user_shared_data->XStateArm64;
+#elif defined(__arm__)
+    static XSTATE_CONFIGURATION empty_config;
+    return &empty_config;
+#else
+    return &user_shared_data->XState;
+#endif
+}
+
 /* offset is from the start of XSAVE_AREA_HEADER. */
 static int next_compacted_xstate_offset( const XSTATE_CONFIGURATION *xstate_config, int off, UINT64 compaction_mask, int feature_idx )
 {
@@ -721,6 +733,16 @@ static int xstate_get_size( const XSTATE_CONFIGURATION *xstate_config, UINT64 ma
     }
     return xstate_config->Features[i].Offset + xstate_config->Features[i].Size - sizeof(XSAVE_FORMAT);
 }
+
+
+/**********************************************************************
+ *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
+{
+    return get_xstate_config()->EnabledFeatures & feature_mask;
+}
+
 
 /**********************************************************************
  *              RtlGetExtendedContextLength2    (NTDLL.@)
@@ -887,7 +909,7 @@ void * WINAPI RtlLocateExtendedFeature2( CONTEXT_EX *context_ex, ULONG feature_i
 void * WINAPI RtlLocateExtendedFeature( CONTEXT_EX *context_ex, ULONG feature_id,
         ULONG *length )
 {
-    return RtlLocateExtendedFeature2( context_ex, feature_id, &user_shared_data->XState, length );
+    return RtlLocateExtendedFeature2( context_ex, feature_id, get_xstate_config(), length );
 }
 
 /**********************************************************************
