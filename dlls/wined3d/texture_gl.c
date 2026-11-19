@@ -708,6 +708,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     struct wined3d_texture *src_staging_texture = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
+    BOOL enable_srgb = FALSE;
     GLenum gl_filter;
     GLenum buffer;
     RECT s, d;
@@ -752,6 +753,18 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
         {
             resolve_internal = wined3d_format_gl(resolve_format)->internal;
             resolve_format_id = resolve_format->id;
+
+            switch (resolve_format_id)
+            {
+                case WINED3DFMT_R8G8B8A8_UNORM_SRGB:
+                case WINED3DFMT_B8G8R8A8_UNORM_SRGB:
+                case WINED3DFMT_B8G8R8X8_UNORM_SRGB:
+                    enable_srgb = TRUE;
+                    break;
+
+                default:
+                    break;
+            }
         }
         else if (!wined3d_format_is_typeless(src_texture->resource.format))
         {
@@ -912,6 +925,15 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
+
+    if (gl_info->supported[ARB_FRAMEBUFFER_SRGB])
+    {
+        if (enable_srgb)
+            gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
+        else
+            gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
+        context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
+    }
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, GL_COLOR_BUFFER_BIT, gl_filter);
