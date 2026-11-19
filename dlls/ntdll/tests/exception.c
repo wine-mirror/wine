@@ -60,17 +60,18 @@ static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
 static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
-#if defined(__x86_64__) || defined(__i386__)
+static NTSTATUS  (WINAPI *pRtlWow64GetProcessMachines)(HANDLE, WORD*, WORD*);
 static ULONG64   (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
-static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength)(ULONG context_flags, ULONG *length);
-static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, ULONG *length, ULONG64 compaction_mask);
-static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG context_flags, CONTEXT_EX **context_ex);
-static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
-        ULONG64 compaction_mask);
 static NTSTATUS  (WINAPI *pRtlCopyContext)(CONTEXT *dst, DWORD context_flags, CONTEXT *src);
 static NTSTATUS  (WINAPI *pRtlCopyExtendedContext)(CONTEXT_EX *dst, ULONG context_flags, CONTEXT_EX *src);
-static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
+static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG context_flags, CONTEXT_EX **context_ex);
 static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
+#if defined(__x86_64__) || defined(__i386__)
+static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength)(ULONG context_flags, ULONG *length);
+static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, ULONG *length, ULONG64 compaction_mask);
+static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
+        ULONG64 compaction_mask);
+static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
 static void      (WINAPI *pRtlSetExtendedFeaturesMask)(CONTEXT_EX *context_ex, ULONG64 feature_mask);
 static ULONG64   (WINAPI *pRtlGetExtendedFeaturesMask)(CONTEXT_EX *context_ex);
 static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
@@ -105,6 +106,8 @@ static NTSTATUS  (WINAPI *pNtContinueEx)(CONTEXT*,KCONTINUE_ARGUMENT*);
 static void *pKiUserApcDispatcher;
 static void *pKiUserCallbackDispatcher;
 static void *pKiUserExceptionDispatcher;
+
+#define CONTEXT_NATIVE (CONTEXT_INTEGER & CONTEXT_CONTROL)
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -185,6 +188,7 @@ static int      my_argc;
 static char**   my_argv;
 static BOOL     is_wow64;
 static BOOL old_wow64;  /* Wine old-style wow64 */
+static BOOL is_arm64_native_machine;
 static UINT apc_count;
 static enum debugger_stages test_stage;
 static QUEUE_USER_APC_FLAGS apc_flags;
@@ -10903,8 +10907,6 @@ static void wait_for_thread_next_suspend(HANDLE thread)
     ok(result == 2, "Got unexpected suspend count %lu.\n", result);
 }
 
-#define CONTEXT_NATIVE (CONTEXT_XSTATE & CONTEXT_CONTROL)
-
 struct context_parameters
 {
     ULONG flag;
@@ -11993,6 +11995,8 @@ static void test_extended_context(void)
     CloseHandle(thread);
 }
 
+#endif
+
 struct modified_range
 {
     ULONG start;
@@ -12052,6 +12056,8 @@ static const XSTATE_CONFIGURATION *get_xstate_config( ULONG context_machine )
 
 static void test_copy_context(void)
 {
+    DECLSPEC_ALIGN(64) BYTE src_context_buffer[0x2000];
+    DECLSPEC_ALIGN(64) BYTE dst_context_buffer[0x2000];
     static struct modified_range ranges_amd64[] =
     {
         {0x30, ~0}, {0x38, 0x1}, {0x3a, 0x4}, {0x42, 0x1}, {0x48, 0x10}, {0x78, 0x2}, {0x98, 0x1},
@@ -12120,8 +12126,6 @@ static void test_copy_context(void)
         },
     };
 
-    DECLSPEC_ALIGN(64) BYTE src_context_buffer[4096];
-    DECLSPEC_ALIGN(64) BYTE dst_context_buffer[4096];
     ULONG64 enabled_features, expected_compaction;
     unsigned int context_length, flags_offset, i, j, feature_size;
     CONTEXT_EX *src_ex, *dst_ex;
@@ -12144,12 +12148,13 @@ static void test_copy_context(void)
     }
 
     enabled_features = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
-    ok(enabled_features == get_xstate_config(CONTEXT_NATIVE)->EnabledFeatures,
+    ok(enabled_features == get_xstate_config(CONTEXT_NATIVE)->EnabledFeatures || broken(is_arm64_native_machine),
        "unexpected enabled features %s\n", wine_dbgstr_longlong(enabled_features));
 
     memset(dst_context_buffer, 0xdd, sizeof(dst_context_buffer));
     memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));
 
+#ifdef CONTEXT_XSTATE
     status = pRtlInitializeExtendedContext(src_context_buffer, CONTEXT_ALL | CONTEXT_XSTATE, &src_ex);
     if (!status)
     {
@@ -12169,6 +12174,7 @@ static void test_copy_context(void)
         ok(status == STATUS_NOT_SUPPORTED, "Got status %#lx.\n", status);
         skip("Extended context is not supported.\n");
     }
+#endif
 
     for (i = 0; i < ARRAY_SIZE(archs); ++i)
     {
@@ -12182,6 +12188,13 @@ static void test_copy_context(void)
             memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));
 
             status = pRtlInitializeExtendedContext(src_context_buffer, flags, &src_ex);
+            if ((flags & archs[i].xstate_flag) && !status &&
+                src_ex->XState.Length != get_xstate_config(flags)->Size - sizeof(XSAVE_FORMAT) &&
+                (is_arm64_native_machine || archs[i].arch_flag == CONTEXT_ARM64))
+            {
+                win_skip("Context %#lx uses a different xstate config.\n", flags);
+                continue;
+            }
             if (enabled_features || !(flags & archs[i].xstate_flag))
             {
                 ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
@@ -12277,6 +12290,13 @@ static void test_copy_context(void)
         memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));
 
         status = pRtlInitializeExtendedContext(src_context_buffer, flags, &src_ex);
+        if ((flags & archs[i].xstate_flag) && !status &&
+            src_ex->XState.Length != get_xstate_config(flags)->Size - sizeof(XSAVE_FORMAT) &&
+            (is_arm64_native_machine || archs[i].arch_flag == CONTEXT_ARM64))
+        {
+            win_skip("Context %#lx uses a different xstate config.\n", flags);
+            continue;
+        }
         if (!enabled_features)
         {
             ok(status == STATUS_NOT_SUPPORTED, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
@@ -12340,8 +12360,8 @@ static void test_copy_context(void)
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
         ok(*(DWORD *)((BYTE *)dst + flags_offset) == flags, "Got unexpected ContextFlags %#lx, flags %#lx.\n",
                 *(DWORD *)((BYTE *)dst + flags_offset), flags);
-        ok(dst_xs->Mask == 0, "Got unexpected Mask %s.\n",
-                wine_dbgstr_longlong(dst_xs->Mask));
+        ok(dst_xs->Mask == 0 || broken(CONTEXT_NATIVE == CONTEXT_ARM64 && dst_xs->Mask == archs[i].legacy_flags),
+           "Got unexpected Mask %s.\n", wine_dbgstr_longlong(dst_xs->Mask));
         ok(dst_xs->CompactionMask == expected_compaction,
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(dst_xs->CompactionMask));
         check_changes_in_range((BYTE *)(dst_xs + 1), single_range, 0, feature_size);
@@ -12352,8 +12372,8 @@ static void test_copy_context(void)
         dst_ex->XState.Length = sizeof(XSAVE_AREA_HEADER) + feature_size;
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
-        ok(dst_xs->Mask == 0, "Got unexpected Mask %s.\n",
-                wine_dbgstr_longlong(dst_xs->Mask));
+        ok(dst_xs->Mask == 0 || broken(CONTEXT_NATIVE == CONTEXT_ARM64 && dst_xs->Mask == archs[i].legacy_flags),
+           "Got unexpected Mask %s.\n", wine_dbgstr_longlong(dst_xs->Mask));
         ok(dst_xs->CompactionMask == expected_compaction,
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(dst_xs->CompactionMask));
         check_changes_in_range((BYTE *)(dst_xs + 1), single_range, 0, feature_size);
@@ -12376,8 +12396,8 @@ static void test_copy_context(void)
         dst_xs->Mask = 0xdddddddddddddddd;
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
-        ok(dst_xs->Mask == 0, "Got unexpected Mask %s.\n",
-                wine_dbgstr_longlong(dst_xs->Mask));
+        ok(dst_xs->Mask == 0 || broken(CONTEXT_NATIVE == CONTEXT_ARM64 && dst_xs->Mask == archs[i].legacy_flags),
+           "Got unexpected Mask %s.\n", wine_dbgstr_longlong(dst_xs->Mask));
         ok(dst_xs->CompactionMask == expected_compaction,
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(dst_xs->CompactionMask));
         check_changes_in_range((BYTE *)(dst_xs + 1), single_range, 0, feature_size);
@@ -12391,8 +12411,8 @@ static void test_copy_context(void)
         dst_xs->Mask = 0xdddddddddddddddd;
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
-        ok(dst_xs->Mask == 4, "Got unexpected Mask %s.\n",
-                wine_dbgstr_longlong(dst_xs->Mask));
+        ok(dst_xs->Mask == 4 || broken(CONTEXT_NATIVE == CONTEXT_ARM64 && dst_xs->Mask == (4 | archs[i].legacy_flags)),
+           "Got unexpected Mask %s.\n", wine_dbgstr_longlong(dst_xs->Mask));
         ok(dst_xs->CompactionMask == expected_compaction,
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(dst_xs->CompactionMask));
         check_changes_in_range((BYTE *)(dst_xs + 1), single_range, 1, feature_size);
@@ -12411,6 +12431,8 @@ static void test_copy_context(void)
         check_changes_in_range((BYTE *)(dst_xs + 1), single_range, dst_xs->Mask == 4, feature_size);
     }
 }
+
+#if defined(__i386__) || defined(__x86_64__)
 
 #if defined(__i386__)
 # define IP_REG(ctx) ctx.Eip
@@ -12931,6 +12953,19 @@ START_TEST(exception)
     X(KiUserApcDispatcher);
     X(KiUserCallbackDispatcher);
     X(KiUserExceptionDispatcher);
+    X(RtlWow64GetProcessMachines);
+    X(RtlGetEnabledExtendedFeatures);
+    X(RtlCopyContext);
+    X(RtlCopyExtendedContext);
+    X(RtlInitializeExtendedContext);
+    X(RtlLocateLegacyContext);
+
+    if (pRtlWow64GetProcessMachines)
+    {
+        USHORT current, native;
+        is_arm64_native_machine = !pRtlWow64GetProcessMachines( GetCurrentProcess(), &current, &native ) &&
+                                  native == IMAGE_FILE_MACHINE_ARM64;
+    }
 
 #ifndef __i386__
     X(RtlRestoreContext);
@@ -12941,15 +12976,10 @@ START_TEST(exception)
 #endif
 
 #if defined(__x86_64__) || defined(__i386__)
-    X(RtlCopyContext);
-    X(RtlCopyExtendedContext);
-    X(RtlGetEnabledExtendedFeatures);
     X(RtlGetExtendedContextLength);
     X(RtlGetExtendedContextLength2);
-    X(RtlInitializeExtendedContext);
     X(RtlInitializeExtendedContext2);
     X(RtlLocateExtendedFeature);
-    X(RtlLocateLegacyContext);
     X(RtlSetExtendedFeaturesMask);
     X(RtlGetExtendedFeaturesMask);
     X(RtlUnwind);
@@ -13110,7 +13140,6 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_prot_fault();
     test_extended_context();
-    test_copy_context();
     test_set_live_context();
     test_hwbpt_in_syscall();
     test_instrumentation_callback();
@@ -13140,7 +13169,6 @@ START_TEST(exception)
     test_nested_exception();
     test_collided_unwind();
     test_extended_context();
-    test_copy_context();
     test_set_live_context();
     test_unwind_from_apc();
     test_syscall_clobbered_regs();
@@ -13170,6 +13198,7 @@ START_TEST(exception)
 
 #endif
 
+    test_copy_context();
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
     test_KiUserCallbackDispatcher();
