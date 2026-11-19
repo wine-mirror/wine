@@ -796,7 +796,8 @@ static void init_framebuffer_attachment( struct opengl_drawable *drawable, GLenu
     case GL_RENDERBUFFER:
         if (attachment != GL_DEPTH_ATTACHMENT && fbo == drawable->read_fbo) ERR( "Unexpected GL_RENDERBUFFER for read FBO\n" );
         funcs->p_glBindRenderbuffer( GL_RENDERBUFFER, name );
-        funcs->p_glRenderbufferStorageMultisample( GL_RENDERBUFFER, desc->samples, internal_format, size.cx, size.cy );
+        if (fbo == drawable->read_fbo) funcs->p_glRenderbufferStorage( GL_RENDERBUFFER, internal_format, size.cx, size.cy );
+        else funcs->p_glRenderbufferStorageMultisample( GL_RENDERBUFFER, desc->samples, internal_format, size.cx, size.cy );
         break;
     case GL_TEXTURE:
         if (drawable->read_fbo != drawable->draw_fbo && fbo == drawable->draw_fbo) ERR( "Unexpected GL_TEXTURE for draw FBO\n" );
