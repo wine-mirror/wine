@@ -5005,9 +5005,11 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
     if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
     if (con->hdr.win32_handle)
-        ret = browse_connect_win32_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
+        ret = browse_connect_win32_a( con, strA, strlen((const char *)strA), OutConnectionString, BufferLength,
+                                      StringLength2 );
     else
-        ret = browse_connect_unix_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
+        ret = browse_connect_unix_a( con, strA, strlen((const char *)strA), OutConnectionString, BufferLength,
+                                     StringLength2 );
 
 done:
     free( strA );
@@ -6144,13 +6146,13 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
     if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
     if (con->hdr.win32_handle)
     {
-        ret = driver_connect_win32_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
-                                      DriverCompletion );
+        ret = driver_connect_win32_a( con, WindowHandle, strA, strlen((const char *)strA), OutConnectionString,
+                                      BufferLength, Length2, DriverCompletion );
     }
     else
     {
-        ret = driver_connect_unix_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
-                                     DriverCompletion );
+        ret = driver_connect_unix_a( con, WindowHandle, strA, strlen((const char *)strA), OutConnectionString,
+                                     BufferLength, Length2, DriverCompletion );
     }
 
 done:
@@ -7495,12 +7497,12 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
     if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
     if (con->hdr.win32_handle)
     {
-        ret = driver_connect_win32_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
+        ret = driver_connect_win32_w( con, WindowHandle, connect_string, wcslen(connect_string), OutConnectionString,
                                       BufferLength, Length2, DriverCompletion );
     }
     else
     {
-        ret = driver_connect_unix_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
+        ret = driver_connect_unix_w( con, WindowHandle, connect_string, wcslen(connect_string), OutConnectionString,
                                      BufferLength, Length2, DriverCompletion );
     }
 
@@ -7938,12 +7940,12 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
     if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
     if (con->hdr.win32_handle)
     {
-        ret = browse_connect_win32_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
+        ret = browse_connect_win32_w( con, connect_string, wcslen(connect_string), OutConnectionString, BufferLength,
                                       StringLength2 );
     }
     else
     {
-        ret = browse_connect_unix_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
+        ret = browse_connect_unix_w( con, connect_string, wcslen(connect_string), OutConnectionString, BufferLength,
                                      StringLength2 );
     }
 

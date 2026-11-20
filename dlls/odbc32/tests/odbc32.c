@@ -249,7 +249,7 @@ static SQLRETURN WINAPI driver_SQLBrowseConnect( SQLHDBC con, SQLCHAR *in_con,
 {
     CHECK_EXPECT( driver_SQLBrowseConnect );
     ok( (ULONG_PTR)con == SQL_HANDLE_DBC, "con = %p\n", con );
-    todo_wine ok( in_con_len == 17, "in_con_len = %d\n", in_con_len );
+    ok( in_con_len == 17, "in_con_len = %d\n", in_con_len );
     ok( !strncmp((char *)in_con, "DSN=winetest_dsn;", 17), "in_con = %s\n", in_con );
     ok( out_con != NULL, "out_con = %p\n", out_con );
     ok( out_con_max_len == 256, "out_con_max_len = %d\n", out_con_max_len );
@@ -966,7 +966,7 @@ static void test_SQLBrowseConnect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     ok( !strncmp( (const char *)str, "DSN=winetest_dsn;", 17 ), "got '%s'\n", str );
-    todo_wine ok( len == 17, "got %d\n", len );
+    ok( len == 17, "got %d\n", len );
 
     SET_EXPECT( driver_SQLDisconnect );
     ret = SQLDisconnect( con );
