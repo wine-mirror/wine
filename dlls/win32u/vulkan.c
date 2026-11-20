@@ -1887,7 +1887,7 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
     VkSwapchainCreateInfoKHR create_info_host = *create_info;
     VkSurfaceCapabilitiesKHR capabilities;
     VkSwapchainKHR host_swapchain;
-    struct ratio raw_dpi;
+    struct ratio scale;
     RECT client_rect;
     VkResult res;
 
@@ -1916,8 +1916,8 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
      * display mode change emulation), MoltenVK's vkQueuePresentKHR returns VK_SUBOPTIMAL_KHR.
      * Create the swapchain with VkSwapchainPresentScalingCreateInfoEXT to avoid this.
      */
-    get_win_monitor_dpi( surface->hwnd, &raw_dpi );
-    if (get_surface_rect( surface->hwnd, &client_rect, raw_dpi ) &&
+    get_win_monitor_dpi( surface->hwnd, &scale );
+    if (get_surface_rect( surface->hwnd, &client_rect, scale ) &&
         !extents_equals( &create_info_host.imageExtent, &client_rect ) &&
         instance->extensions.has_VK_EXT_surface_maintenance1 &&
         physical_device->extensions.has_VK_KHR_swapchain_maintenance1)

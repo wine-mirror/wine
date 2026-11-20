@@ -912,7 +912,7 @@ struct monitor_info
     struct rectangle virt;
     unsigned int     flags;
     unsigned int     dpi;
-    struct ratio     raw_dpi;
+    struct ratio     scale;
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -1092,7 +1092,7 @@ typedef volatile struct
     unsigned int         ansi;
     int                  __pad;
     unsigned int         dpi;
-    struct ratio         raw_dpi;
+    struct ratio         scale;
     data_size_t          private_size;
     data_size_t          extra_size;
     struct window_info   info;
@@ -3560,7 +3560,7 @@ struct create_window_request
     unsigned int   ex_style;
     unsigned int   ansi;
     unsigned int   dpi;
-    struct ratio   raw_dpi;
+    struct ratio   scale;
     /* VARARG(class,unicode_str); */
 };
 struct create_window_reply
@@ -7225,6 +7225,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 983
+#define SERVER_PROTOCOL_VERSION 984
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -45,9 +45,9 @@ extern HICON create_small_icon( HICON handle );
 
 /* dce.c */
 extern struct window_surface dummy_surface;
-extern void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_rect, struct ratio monitor_dpi,
+extern void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_rect, struct ratio scale,
                                    struct window_surface **window_surface );
-extern struct window_surface *get_driver_window_surface( struct window_surface *surface, struct ratio monitor_dpi );
+extern struct window_surface *get_driver_window_surface( struct window_surface *surface, struct ratio scale );
 extern void erase_now( HWND hwnd, UINT rdw_flags );
 extern void flush_window_surfaces( BOOL idle );
 extern void move_window_bits( HWND hwnd, const struct window_rects *rects, const RECT *valid_rects );
@@ -170,7 +170,7 @@ extern LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, int *height );
 extern HBITMAP get_display_bitmap(void);
 extern INT get_display_depth( UNICODE_STRING *name );
 extern RECT get_display_rect( const WCHAR *display );
-extern struct ratio get_win_monitor_dpi( HWND hwnd, struct ratio *raw_dpi );
+extern struct ratio get_win_monitor_dpi( HWND hwnd, struct ratio *scale );
 extern RECT get_primary_monitor_rect( struct ratio dpi );
 extern DWORD get_process_layout(void);
 extern COLORREF get_sys_color( int index );
@@ -198,7 +198,7 @@ extern RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect );
 extern HMONITOR monitor_from_window( HWND hwnd, UINT flags, struct ratio dpi );
 extern MONITORINFO monitor_info_from_rect( RECT rect, struct ratio dpi );
 extern MONITORINFO monitor_info_from_window( HWND hwnd, UINT flags );
-extern struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *raw_dpi );
+extern struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *scale );
 extern BOOL update_display_cache( BOOL force );
 extern void reset_monitor_update_serial(void);
 extern void user_lock(void);

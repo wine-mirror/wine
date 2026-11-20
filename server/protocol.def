@@ -928,7 +928,7 @@ struct monitor_info
     struct rectangle virt;    /* client / virtual position of the monitor rect */
     unsigned int     flags;   /* MONITOR_FLAG_* flags for the monitor */
     unsigned int     dpi;     /* effective DPI for the monitor */
-    struct ratio     raw_dpi; /* raw DPI for the monitor */
+    struct ratio     scale;   /* virtual to physical scale ratio (raw DPI) */
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -1108,7 +1108,7 @@ typedef volatile struct
     unsigned int         ansi;             /* window wndproc is ansi */
     int                  __pad;
     unsigned int         dpi;              /* effective DPI of the window monitor */
-    struct ratio         raw_dpi;          /* raw DPI of the window monitor */
+    struct ratio         scale;            /* scale ratio of the window monitor */
     data_size_t          private_size;     /* length of private extra bytes range */
     data_size_t          extra_size;       /* size of the extra info */
     struct window_info   info;             /* window info (GWLP_*) */
@@ -2690,7 +2690,7 @@ enum message_type
     unsigned int   ex_style;    /* window extended style */
     unsigned int   ansi;        /* window created as ansi */
     unsigned int   dpi;         /* initial monitor DPI */
-    struct ratio   raw_dpi;     /* initial monitor raw DPI */
+    struct ratio   scale;       /* initial monitor scale ratio */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */

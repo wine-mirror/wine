@@ -2478,11 +2478,11 @@ static void set_winstation_monitors( BOOL increment )
         if (!is_monitor_active( monitor )) info->flags |= MONITOR_FLAG_INACTIVE;
         if (monitor->is_clone) info->flags |= MONITOR_FLAG_CLONE;
         info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y ).num;
-        info->raw_dpi = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
+        info->scale = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
         info->virt = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_EFFECTIVE_DPI ) );
         info->raw = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_RAW_DPI ) );
-        TRACE( "  flags %#x virt %s dpi %u raw %s raw_dpi %s\n", info->flags, wine_dbgstr_rect( (RECT *)&info->virt ),
-               info->dpi, wine_dbgstr_rect( (RECT *)&info->raw ), debugstr_ratio( info->raw_dpi ) );
+        TRACE( "  flags %#x virt %s dpi %u raw %s scale %s\n", info->flags, wine_dbgstr_rect( (RECT *)&info->virt ),
+               info->dpi, wine_dbgstr_rect( (RECT *)&info->raw ), debugstr_ratio( info->scale ) );
         info++;
     }
 
@@ -3395,7 +3395,7 @@ POINT map_dpi_point( POINT pt, struct ratio dpi_from, struct ratio dpi_to )
  */
 static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    struct ratio scale, dpi = get_win_monitor_dpi( hwnd, &scale );
     return map_dpi_point( pt, get_dpi_for_window( hwnd ), dpi );
 }
 
@@ -3404,7 +3404,7 @@ static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
  */
 POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    struct ratio scale, dpi = get_win_monitor_dpi( hwnd, &scale );
     return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ) );
 }
 
@@ -3413,8 +3413,8 @@ POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
  */
 POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio dpi = get_thread_dpi(), raw_dpi;
-    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    struct ratio dpi = get_thread_dpi(), scale;
+    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &scale );
     return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ));
 }
 
@@ -3423,8 +3423,8 @@ POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
  */
 RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
 {
-    struct ratio dpi = get_thread_dpi(), raw_dpi;
-    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    struct ratio dpi = get_thread_dpi(), scale;
+    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &scale );
     return map_dpi_rect( rect, dpi, get_dpi_for_window( hwnd ) );
 }
 
@@ -4821,7 +4821,7 @@ MONITORINFO monitor_info_from_rect( RECT rect, struct ratio dpi )
     return info;
 }
 
-struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *raw_dpi )
+struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *scale )
 {
     struct ratio ret = {system_dpi, 1}, x, y;
     struct monitor *monitor;
@@ -4829,7 +4829,7 @@ struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *r
     if (!lock_display_devices( FALSE )) return no_dpi;
     if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi, MDT_DEFAULT )))
     {
-        *raw_dpi = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
+        *scale = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
         ret = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
     }
     unlock_display_devices();

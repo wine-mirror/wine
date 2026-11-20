@@ -1504,7 +1504,7 @@ C_ASSERT( offsetof(struct create_window_request, style) == 44 );
 C_ASSERT( offsetof(struct create_window_request, ex_style) == 48 );
 C_ASSERT( offsetof(struct create_window_request, ansi) == 52 );
 C_ASSERT( offsetof(struct create_window_request, dpi) == 56 );
-C_ASSERT( offsetof(struct create_window_request, raw_dpi) == 60 );
+C_ASSERT( offsetof(struct create_window_request, scale) == 60 );
 C_ASSERT( sizeof(struct create_window_request) == 64 );
 C_ASSERT( offsetof(struct create_window_reply, handle) == 8 );
 C_ASSERT( offsetof(struct create_window_reply, parent) == 12 );

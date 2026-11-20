@@ -450,7 +450,7 @@ static void set_window_monitor_dpi( struct window *win )
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
         shared->dpi     = info->dpi;
-        shared->raw_dpi = info->raw_dpi;
+        shared->scale   = info->scale;
     }
     SHARED_WRITE_END;
 }
@@ -494,7 +494,7 @@ static int set_parent_window( struct window *win, struct window *parent )
         else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
         {
             shared->dpi         = parent->shared->dpi;
-            shared->raw_dpi     = parent->shared->raw_dpi;
+            shared->scale       = parent->shared->scale;
         }
         SHARED_WRITE_END;
 
@@ -678,7 +678,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
                                      mod_handle_t class_instance, bool ansi, unsigned int dpi_context,
-                                     unsigned int dpi, struct ratio raw_dpi )
+                                     unsigned int dpi, struct ratio scale )
 {
     data_size_t extra_size, private_size;
     struct window *win = NULL;
@@ -749,7 +749,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->fnid            = fnid;
         shared->private_size    = private_size;
         shared->dpi             = dpi;
-        shared->raw_dpi         = raw_dpi;
+        shared->scale           = scale;
         shared->extra_size      = extra_size;
         memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
@@ -2312,7 +2312,7 @@ DECL_HANDLER(create_window)
     if (!atom) atom = find_atom( table, cls_name );
 
     if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi,
-                               req->dpi_context, req->dpi, req->raw_dpi )))
+                               req->dpi_context, req->dpi, req->scale )))
         return;
 
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
@@ -2321,7 +2321,7 @@ DECL_HANDLER(create_window)
         if (parent && !is_desktop_window( parent ))
         {
             shared->dpi         = parent->shared->dpi;
-            shared->raw_dpi     = parent->shared->raw_dpi;
+            shared->scale       = parent->shared->scale;
         }
         shared->info.style.ws = req->style;
         shared->info.style.ex = req->ex_style;
@@ -2405,7 +2405,7 @@ DECL_HANDLER(destroy_window)
 /* retrieve the desktop window for the current thread */
 DECL_HANDLER(get_desktop_window)
 {
-    static const struct monitor_info default_info = { .dpi = USER_DEFAULT_SCREEN_DPI, .raw_dpi = { USER_DEFAULT_SCREEN_DPI, 1 } };
+    static const struct monitor_info default_info = { .dpi = USER_DEFAULT_SCREEN_DPI, .scale = { USER_DEFAULT_SCREEN_DPI, 1 } };
     static const struct rectangle desktop_rect = { 0, 0, 1, 1 };
     const struct monitor_info *info = NULL;
 
@@ -2416,7 +2416,7 @@ DECL_HANDLER(get_desktop_window)
     if (!desktop->top_window && req->force)  /* create it */
     {
         if (!(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
         {
             detach_window_thread( desktop->top_window );
             SHARED_WRITE_BEGIN( desktop->top_window->shared, window_shm_t )
@@ -2435,7 +2435,7 @@ DECL_HANDLER(get_desktop_window)
         atom_t atom = add_atom( table, name );
 
         if (!info && !(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
         {
             detach_window_thread( desktop->msg_window );
             SHARED_WRITE_BEGIN( desktop->msg_window->shared, window_shm_t )
