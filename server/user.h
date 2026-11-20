@@ -236,7 +236,7 @@ static inline int scale_dpi( int val, unsigned int dpi_from, unsigned int dpi_to
 {
     unsigned int num = dpi_to, den = dpi_from;
     if (val >= 0) return (val * num + (den / 2)) / den;
-    return (val * num - (den / 2)) / den;
+    return ((__int64)val * num - (den / 2)) / den;
 }
 
 static inline void scale_dpi_rect( struct rectangle *rect, unsigned int dpi_from, unsigned int dpi_to )
