@@ -2531,6 +2531,110 @@ static void test_scan_codes( IDirectInputDevice8W *device, HANDLE event, HWND hw
     ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
 }
 
+struct test_thread_data
+{
+    HWND hwnd;
+    HANDLE msg_sent_event;
+};
+
+static BOOL msg_received;
+static LRESULT CALLBACK test_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == (WM_USER + 1))
+    {
+        msg_received = TRUE;
+        return 0;
+    }
+
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static DWORD WINAPI dinput_device_thread( void *data )
+{
+    struct test_thread_data *thread_data = data;
+
+    SendNotifyMessageA( thread_data->hwnd, WM_USER + 1, 0, 0 );
+    SetEvent( thread_data->msg_sent_event );
+    return 0;
+}
+
+static void test_device_acquire_behavior( DWORD version )
+{
+    WNDCLASSA cls = { .lpfnWndProc = test_wndproc, .lpszClassName = "Test Window Class" };
+    IDirectInputDevice8W *device, *device2;
+    struct test_thread_data data;
+    HANDLE thread;
+    HRESULT hr;
+    MSG msg;
+
+    if (FAILED(create_dinput_device( version, &GUID_SysKeyboard, &device ))) return;
+    if (FAILED(hr = create_dinput_device( version, &GUID_SysMouse, &device2 )))
+    {
+        IDirectInputDevice8_Release( device );
+        return;
+    }
+
+    winetest_push_context( "%#lx", version );
+    cls.hInstance = GetModuleHandleA( NULL );
+    RegisterClassA( &cls );
+    data.hwnd = CreateWindowA( "Test Window Class", "Test window", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    data.msg_sent_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysKeyboard );
+    ok( hr == DI_OK, "Initialize returned %#lx.\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx.\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIKeyboard );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx.\n", hr );
+
+    hr = IDirectInputDevice8_Initialize( device2, instance, version, &GUID_SysMouseEm );
+    ok( hr == DI_OK, "Initialize returned %#lx.\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device2, NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx.\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device2, &c_dfDIMouse );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx.\n", hr );
+
+    msg_received = FALSE;
+    thread = CreateThread( NULL, 0, dinput_device_thread, &data, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu.\n", GetLastError() );
+    WaitForSingleObject( data.msg_sent_event, 1000 );
+
+    /* A call to acquire/unacquire/release should not process non-queued messages. */
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
+    todo_wine ok( !msg_received, "Received message.\n" );
+    hr = IDirectInputDevice8_Acquire( device2 );
+    ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
+    todo_wine ok( !msg_received, "Received message.\n" );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
+    todo_wine ok( !msg_received, "Received message.\n" );
+    hr = IDirectInputDevice8_Unacquire( device2 );
+    ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
+    todo_wine ok( !msg_received, "Received message.\n" );
+
+    IDirectInputDevice8_Release( device );
+    todo_wine ok( !msg_received, "Received message.\n" );
+    IDirectInputDevice8_Release( device2 );
+    todo_wine ok( !msg_received, "Received message.\n" );
+
+    while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+    ok( msg_received, "Did not receive message.\n" );
+
+
+    CloseHandle( data.msg_sent_event );
+    CloseHandle( thread );
+    DestroyWindow( data.hwnd );
+    UnregisterClassA( "Test Window Class", NULL );
+    winetest_pop_context();
+}
+
 #define check_member_str_( file, line, val, exp, member )                                         \
     ok_(file, line)( !strcmp( (val).member, (exp).member ), "got " #member " %s\n",               \
                      debugstr_a((val).member) )
@@ -3316,6 +3420,10 @@ START_TEST(device8)
     test_sys_keyboard( 0x500 );
     test_sys_keyboard( 0x700 );
     test_sys_keyboard( 0x800 );
+
+    test_device_acquire_behavior( 0x500 );
+    test_device_acquire_behavior( 0x700 );
+    test_device_acquire_behavior( 0x800 );
 
     test_sys_keyboard_action_format();
 
