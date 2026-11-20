@@ -1042,6 +1042,21 @@ static void write_cpp_method( FILE *header, const type_t *iface, const var_t *fu
     fprintf( header, "\n" );
 }
 
+static void write_cpp_using( FILE *header, const type_t *iface, const type_t *child )
+{
+    const statement_t *stmt;
+
+    if (type_iface_get_inherit( iface )) write_cpp_using( header, type_iface_get_inherit( iface ), child );
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( iface ) )
+    {
+        const var_t *func = stmt->u.var;
+        if (is_callas( func->attrs )) continue;
+        if (!get_method_override_prefix( iface, child, func )) continue;
+        fprintf( header, "    using %s::%s;\n", iface->name, get_name( func ) );
+    }
+}
+
 static void write_cpp_methods( FILE *header, const type_t *iface )
 {
     const statement_t *stmt;
@@ -1052,6 +1067,8 @@ static void write_cpp_methods( FILE *header, const type_t *iface )
         if (is_callas( func->attrs )) continue;
         write_cpp_method( header, iface, func );
     }
+
+    if (type_iface_get_inherit( iface )) write_cpp_using( header, type_iface_get_inherit( iface ), iface );
 }
 
 static void write_inline_wrappers(FILE *header, const type_t *iface, const type_t *child, const char *name)
