@@ -457,7 +457,7 @@ void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
     list_add_tail( &acquired_device_list, &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
 
-    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
+    SendMessageTimeoutW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0, SMTO_BLOCK, INFINITE, NULL );
 }
 
 void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
@@ -468,7 +468,7 @@ void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
     list_remove( &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
 
-    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
+    SendMessageTimeoutW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0, SMTO_BLOCK, INFINITE, NULL );
 }
 
 void input_thread_add_user(void)
@@ -490,7 +490,7 @@ void input_thread_remove_user(void)
 
         if (!(stop_event = CreateEventW( NULL, FALSE, FALSE, NULL )))
             ERR( "Failed to create stop event, error %lu\n", GetLastError() );
-        SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_THREAD_STOP, 0 );
+        SendMessageTimeoutW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_THREAD_STOP, 0, SMTO_BLOCK, INFINITE, NULL );
         WaitForSingleObject( stop_event, INFINITE );
         CloseHandle( stop_event );
         CloseHandle( dinput_thread );

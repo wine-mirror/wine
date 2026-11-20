@@ -2603,22 +2603,22 @@ static void test_device_acquire_behavior( DWORD version )
     /* A call to acquire/unacquire/release should not process non-queued messages. */
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
     hr = IDirectInputDevice8_Acquire( device2 );
     ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
 
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
     hr = IDirectInputDevice8_Unacquire( device2 );
     ok( hr == DI_OK, "Acquire returned %#lx.\n", hr );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
 
     IDirectInputDevice8_Release( device );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
     IDirectInputDevice8_Release( device2 );
-    todo_wine ok( !msg_received, "Received message.\n" );
+    ok( !msg_received, "Received message.\n" );
 
     while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
     {
