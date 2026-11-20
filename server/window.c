@@ -2838,7 +2838,7 @@ DECL_HANDLER(set_window_pos)
     old_client = win->client_rect;
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
-    if (old_visible != is_visible( win ) && (memcmp( &old_client, &win->client_rect, sizeof(old_client) )
+    if (old_visible && is_visible( win ) && (memcmp( &old_client, &win->client_rect, sizeof(old_client) )
         || memcmp( &old_window, &win->window_rect, sizeof(old_window) )))
         update_cursor_pos( win->desktop );
 
