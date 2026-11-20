@@ -94,6 +94,7 @@ static statement_t *make_statement_parameterized_type( struct location where, ty
 static statement_t *make_statement_delegate( struct location where, type_t *ret, var_list_t *args );
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
+static statement_list_t *insert_statement( statement_list_t *list, statement_t *stmt );
 
 static struct namespace global_namespace = {
     NULL, NULL, LIST_INIT(global_namespace.entry), LIST_INIT(global_namespace.children)
@@ -466,7 +467,7 @@ imp_statements
 
 int_statements
 	: %empty				{ $$ = NULL; }
-	| int_statements statement		{ $$ = append_statement($1, $2); }
+	| int_statements statement		{ $$ = insert_statement( $1, $2 ); }
 	;
 
 semicolon_opt
@@ -3220,6 +3221,22 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
         list_init( list );
     }
     list_add_tail( list, &stmt->entry );
+    return list;
+}
+
+/* insert a method declaration statement before any previously declared overload */
+static statement_list_t *insert_statement( statement_list_t *list, statement_t *stmt )
+{
+    statement_t *next = NULL;
+    const char *name;
+
+    if (!list || !is_function_declaration( stmt )) return append_statement( list, stmt );
+
+    name = xstrdup( get_name( stmt->u.var ) );
+    STATEMENTS_FOR_EACH_FUNC( next, list ) if (!strcmp( name, get_name( next->u.var ) )) break;
+    if (!next) return append_statement( list, stmt );
+
+    list_add_before( &next->entry, &stmt->entry );
     return list;
 }
 
