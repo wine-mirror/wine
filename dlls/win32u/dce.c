@@ -298,7 +298,7 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
         return;
     }
 
-    if (!driver_surface || !memcmp( &dpi, &scale, sizeof(scale) ))
+    if (!driver_surface || (dpi.num == scale.num && scale.den == 1))
     {
         if (*window_surface) window_surface_release( *window_surface );
         *window_surface = driver_surface;
