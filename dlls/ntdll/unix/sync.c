@@ -56,6 +56,7 @@
 #include <time.h>
 #ifdef __APPLE__
 # include <mach/mach_time.h>
+# include <mach/mach_traps.h>
 #endif
 #ifdef HAVE_KQUEUE
 # include <sys/event.h>
@@ -2397,7 +2398,9 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
  */
 NTSTATUS WINAPI NtYieldExecution(void)
 {
-#ifdef HAVE_SCHED_YIELD
+#if defined(__APPLE__)
+    return swtch() ? STATUS_SUCCESS : STATUS_NO_YIELD_PERFORMED;
+#elif defined(HAVE_SCHED_YIELD)
 #ifdef RUSAGE_THREAD
     struct rusage u1, u2;
     int ret;
