@@ -856,32 +856,6 @@ static const char *get_method_override_prefix( const type_t *iface, const type_t
     return get_method_override_prefix( iface, type_iface_get_inherit( child ), method );
 }
 
-static int is_override_method(const type_t *iface, const type_t *child, const var_t *func)
-{
-  if (iface == child)
-    return 0;
-
-  do
-  {
-    const statement_t *stmt;
-    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(child))
-    {
-      const var_t *funccmp = stmt->u.var;
-
-      if (!is_callas(func->attrs))
-      {
-         char inherit_name[256];
-         /* compare full name including property prefix */
-         strcpy(inherit_name, get_name(funccmp));
-         if (!strcmp(inherit_name, get_name(func))) return 1;
-      }
-    }
-  }
-  while ((child = type_iface_get_inherit(child)) && child != iface);
-
-  return 0;
-}
-
 static int is_aggregate_return(const var_t *func)
 {
   enum type_type type = type_get_type(type_function_get_rettype(func->declspec.type));
@@ -913,9 +887,6 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
       fprintf(header, "/*** %s methods ***/\n", iface->name);
       first_iface = 0;
     }
-
-    if (is_override_method(iface, child, func))
-      continue;
 
     if (!is_callas(func->attrs)) {
       const var_t *arg;
@@ -1100,9 +1071,6 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
       fprintf(header, "/*** %s methods ***/\n", iface->name);
       first_iface = 0;
     }
-
-    if (is_override_method(iface, child, func))
-      continue;
 
     if (!is_callas(func->attrs)) {
       const var_t *arg;
@@ -1477,9 +1445,7 @@ static void write_widl_using_method_macros( FILE *header, const type_t *iface, c
         const var_t *func = stmt->u.var;
         const char *func_name;
 
-        if (is_override_method(iface, child, func)) continue;
-        if (is_callas(func->attrs)) continue;
-
+        if (is_callas( func->attrs )) continue;
         func_name = get_method_name( iface, child, func );
         fprintf( header, "#define %s_%s %s_%s\n", name, func_name, child->c_name, func_name );
     }
