@@ -1207,7 +1207,8 @@ struct ratio get_win_monitor_dpi( HWND hwnd, struct ratio *raw_dpi )
     while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
     {
         *raw_dpi = window_shm->raw_dpi;
-        dpi = window_shm->dpi;
+        dpi.num = window_shm->dpi;
+        dpi.den = 1;
     }
     if (status)
     {
@@ -2006,7 +2007,7 @@ other_process:
     {
         req->handle = wine_server_user_handle( hwnd );
         req->relative = relative;
-        req->dpi = dpi;
+        req->dpi = dpi.num;
         if ((ret = !wine_server_call_err( req )))
         {
             rects->window = wine_server_get_rect( reply->window );
@@ -2833,7 +2834,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt, struct ratio dpi )
             req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
-            req->dpi = dpi;
+            req->dpi = dpi.num;
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -3571,7 +3572,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
     {
         req->from = wine_server_user_handle( hwnd_from );
         req->to   = wine_server_user_handle( hwnd_to );
-        req->dpi  = dpi;
+        req->dpi  = dpi.num;
         if ((ret = !wine_server_call_err( req )))
         {
             ret_offset->x = reply->x;
@@ -5762,7 +5763,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         req->ex_style        = ex_style;
         req->ansi            = ansi;
         req->atom            = wine_server_add_atom( req, name );
-        req->dpi             = dpi;
+        req->dpi             = dpi.num;
         req->raw_dpi         = raw_dpi;
         if (!wine_server_call_err( req ))
         {

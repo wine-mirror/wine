@@ -927,7 +927,7 @@ struct monitor_info
     struct rectangle raw;     /* host / physical position of the monitor rect */
     struct rectangle virt;    /* client / virtual position of the monitor rect */
     unsigned int     flags;   /* MONITOR_FLAG_* flags for the monitor */
-    struct ratio     dpi;     /* effective DPI for the monitor */
+    unsigned int     dpi;     /* effective DPI for the monitor */
     struct ratio     raw_dpi; /* raw DPI for the monitor */
 };
 #define MONITOR_FLAG_PRIMARY  0x01
@@ -1107,7 +1107,7 @@ typedef volatile struct
     unsigned int         fnid;             /* builtin class FNID, or 0 */
     unsigned int         ansi;             /* window wndproc is ansi */
     int                  __pad;
-    struct ratio         dpi;              /* effective DPI of the window monitor */
+    unsigned int         dpi;              /* effective DPI of the window monitor */
     struct ratio         raw_dpi;          /* raw DPI of the window monitor */
     data_size_t          private_size;     /* length of private extra bytes range */
     data_size_t          extra_size;       /* size of the extra info */
@@ -2689,7 +2689,7 @@ enum message_type
     unsigned int   style;       /* window style */
     unsigned int   ex_style;    /* window extended style */
     unsigned int   ansi;        /* window created as ansi */
-    struct ratio   dpi;         /* initial monitor DPI */
+    unsigned int   dpi;         /* initial monitor DPI */
     struct ratio   raw_dpi;     /* initial monitor raw DPI */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
@@ -2814,7 +2814,7 @@ enum message_type
     user_handle_t  parent;        /* parent window */
     int            x;             /* point in parent coordinates */
     int            y;
-    struct ratio   dpi;           /* dpi for the point coordinates */
+    unsigned int   dpi;           /* dpi for the point coordinates */
 @REPLY
     int            count;         /* total count of children */
     VARARG(children,user_handles); /* children handles */
@@ -2857,7 +2857,7 @@ enum message_type
 @REQ(get_window_rectangles)
     user_handle_t  handle;        /* handle to the window */
     int            relative;      /* coords relative to (see below) */
-    struct ratio   dpi;           /* DPI to map to, or zero for per-monitor DPI */
+    unsigned int   dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
     struct rectangle window;      /* window rectangle */
     struct rectangle client;      /* client rectangle */
@@ -2892,7 +2892,7 @@ enum coords_relative
 @REQ(get_windows_offset)
     user_handle_t  from;          /* handle to the first window */
     user_handle_t  to;            /* handle to the second window */
-    struct ratio   dpi;           /* DPI to map to, or zero for per-monitor DPI */
+    unsigned int   dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
     int            x;             /* x coordinate offset */
     int            y;             /* y coordinate offset */

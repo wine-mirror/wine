@@ -152,7 +152,7 @@ extern int is_region_equal( const struct region *region1, const struct region *r
 extern void get_region_extents( const struct region *region, struct rectangle *rect );
 extern void offset_region( struct region *region, int x, int y );
 extern void mirror_region( const struct rectangle *client_rect, struct region *region );
-extern void scale_region( struct region *region, struct ratio dpi_from, struct ratio dpi_to );
+extern void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to );
 extern struct region *copy_region( struct region *dst, const struct region *src );
 extern struct region *intersect_region( struct region *dst, const struct region *src1,
                                         const struct region *src2 );
@@ -232,14 +232,14 @@ static inline int point_in_rect( const struct rectangle *rect, int x, int y )
     return (x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom);
 }
 
-static inline int scale_dpi( int val, struct ratio dpi_from, struct ratio dpi_to )
+static inline int scale_dpi( int val, unsigned int dpi_from, unsigned int dpi_to )
 {
-    unsigned int num = dpi_to.num * dpi_from.den, den = dpi_from.num * dpi_to.den;
+    unsigned int num = dpi_to, den = dpi_from;
     if (val >= 0) return (val * num + (den / 2)) / den;
     return (val * num - (den / 2)) / den;
 }
 
-static inline void scale_dpi_rect( struct rectangle *rect, struct ratio dpi_from, struct ratio dpi_to )
+static inline void scale_dpi_rect( struct rectangle *rect, unsigned int dpi_from, unsigned int dpi_to )
 {
     rect->left   = scale_dpi( rect->left, dpi_from, dpi_to );
     rect->top    = scale_dpi( rect->top, dpi_from, dpi_to );

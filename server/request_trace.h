@@ -1713,7 +1713,7 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
     fprintf( stderr, ", ansi=%08x", req->ansi );
-    dump_ratio( ", dpi=", &req->dpi );
+    fprintf( stderr, ", dpi=%08x", req->dpi );
     dump_ratio( ", raw_dpi=", &req->raw_dpi );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
@@ -1852,7 +1852,7 @@ static void dump_get_window_children_from_point_request( const struct get_window
     fprintf( stderr, " parent=%08x", req->parent );
     fprintf( stderr, ", x=%d", req->x );
     fprintf( stderr, ", y=%d", req->y );
-    dump_ratio( ", dpi=", &req->dpi );
+    fprintf( stderr, ", dpi=%08x", req->dpi );
 }
 
 static void dump_get_window_children_from_point_reply( const struct get_window_children_from_point_reply *req )
@@ -1900,7 +1900,7 @@ static void dump_get_window_rectangles_request( const struct get_window_rectangl
 {
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", relative=%d", req->relative );
-    dump_ratio( ", dpi=", &req->dpi );
+    fprintf( stderr, ", dpi=%08x", req->dpi );
 }
 
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )
@@ -1931,7 +1931,7 @@ static void dump_get_windows_offset_request( const struct get_windows_offset_req
 {
     fprintf( stderr, " from=%08x", req->from );
     fprintf( stderr, ", to=%08x", req->to );
-    dump_ratio( ", dpi=", &req->dpi );
+    fprintf( stderr, ", dpi=%08x", req->dpi );
 }
 
 static void dump_get_windows_offset_reply( const struct get_windows_offset_reply *req )

@@ -1695,8 +1695,7 @@ static void dump_varargs_monitor_infos( const char *prefix, data_size_t size )
     {
         dump_rectangle( "{raw:", &monitor->raw );
         dump_rectangle( ",virt:", &monitor->virt );
-        fprintf( stderr, ",flags:%#x", monitor->flags );
-        dump_ratio( ",dpi:", &monitor->dpi );
+        fprintf( stderr, ",flags:%#x,dpi:%u", monitor->flags, monitor->dpi );
         fputc( '}', stderr );
         if (--len) fputc( ',', stderr );
     }

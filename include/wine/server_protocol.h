@@ -911,7 +911,7 @@ struct monitor_info
     struct rectangle raw;
     struct rectangle virt;
     unsigned int     flags;
-    struct ratio     dpi;
+    unsigned int     dpi;
     struct ratio     raw_dpi;
 };
 #define MONITOR_FLAG_PRIMARY  0x01
@@ -1091,7 +1091,7 @@ typedef volatile struct
     unsigned int         fnid;
     unsigned int         ansi;
     int                  __pad;
-    struct ratio         dpi;
+    unsigned int         dpi;
     struct ratio         raw_dpi;
     data_size_t          private_size;
     data_size_t          extra_size;
@@ -3559,7 +3559,7 @@ struct create_window_request
     unsigned int   style;
     unsigned int   ex_style;
     unsigned int   ansi;
-    struct ratio   dpi;
+    unsigned int   dpi;
     struct ratio   raw_dpi;
     /* VARARG(class,unicode_str); */
 };
@@ -3756,7 +3756,7 @@ struct get_window_children_from_point_request
     user_handle_t  parent;
     int            x;
     int            y;
-    struct ratio   dpi;
+    unsigned int   dpi;
     char __pad_28[4];
 };
 struct get_window_children_from_point_reply
@@ -3817,7 +3817,7 @@ struct get_window_rectangles_request
     struct request_header __header;
     user_handle_t  handle;
     int            relative;
-    struct ratio   dpi;
+    unsigned int   dpi;
 };
 struct get_window_rectangles_reply
 {
@@ -3869,7 +3869,7 @@ struct get_windows_offset_request
     struct request_header __header;
     user_handle_t  from;
     user_handle_t  to;
-    struct ratio   dpi;
+    unsigned int   dpi;
 };
 struct get_windows_offset_reply
 {
@@ -7225,6 +7225,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 982
+#define SERVER_PROTOCOL_VERSION 983
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
