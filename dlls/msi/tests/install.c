@@ -869,6 +869,119 @@ static const CHAR ip_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComm
                                            "CustomAction\tAction\n"
                                            "TestInstalledProp\t19\t\tTest failed\t\n";
 
+static const char md_directory_dat[] =
+    "Directory\tDirectory_Parent\tDefaultDir\n"
+    "s72\tS72\tl255\n"
+    "Directory\tDirectory\n"
+    "BINDIR\tINSTALLDIR\tbin\n"
+    "INSTALLDIR\tTARGETDIR\tmsitest\n"
+    "ProgramFilesFolder\tTARGETDIR\t.\n"
+    "TARGETDIR\t\tSourceDir";
+
+static const char md_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "maximus\t{8C21B274-9F91-4B48-B54D-C68D547B41BD}\tINSTALLDIR\t0\t\tmaximus\n"
+    "augustus\t{5D8C76A2-1E3B-4E59-9C2F-0A4B7D1E6F38}\tINSTALLDIR\t0\t\taugustus\n";
+
+static const char md2_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "maximus\t{8C21B274-9F91-4B48-B54D-C68D547B41BD}\tBINDIR\t0\t\tmaximus\n"
+    "augustus\t{5D8C76A2-1E3B-4E59-9C2F-0A4B7D1E6F38}\tINSTALLDIR\t0\t\taugustus\n";
+
+static const char md_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "feature\t\tFeature\tFeature\t2\t1\tINSTALLDIR\t0\n"
+    "augustus\t\tFeature\tFeature\t2\t2\tINSTALLDIR\t0";
+
+static const char md_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "feature\tmaximus\n"
+    "augustus\taugustus";
+
+static const char md_registry_dat[] =
+    "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
+    "s72\ti2\tl255\tL255\tL0\ts72\n"
+    "Registry\tRegistry\n"
+    "targetdir\t2\tSOFTWARE\\Wine\\msitest_md\tTARGETDIR\t[TARGETDIR]\tmaximus\n"
+    "installdir\t2\tSOFTWARE\\Wine\\msitest_md\tINSTALLDIR\t[INSTALLDIR]\tmaximus";
+
+static const char md_property_dat[] =
+    "Property\tValue\n"
+    "s72\tl0\n"
+    "Property\tProperty\n"
+    "Manufacturer\tWine\n"
+    "ProductCode\t{FC21E32C-5015-41D5-835F-24D6EE354F99}\n"
+    "ProductLanguage\t1033\n"
+    "ProductName\tMSITEST\n"
+    "ProductVersion\t1.1.1\n"
+    "UpgradeCode\t{5FB8CBBF-C2C6-4D06-B485-CD5C1489585D}\n"
+    "ROOTDRIVE\tC:\\\n"
+    "MSIFASTINSTALL\t1\n";
+
+static const char md_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "CostInitialize\t\t800\n"
+    "FileCost\t\t900\n"
+    "SetINSTALLDIR\tNOT INSTALLDIR AND NOT Installed\t950\n"
+    "CostFinalize\t\t1000\n"
+    "SetARPINSTALLLOCATION\t\t1010\n"
+    "InstallValidate\t\t1400\n"
+    "InstallInitialize\t\t1500\n"
+    "ProcessComponents\t\t1600\n"
+    "UnpublishFeatures\t\t1800\n"
+    "RemoveRegistryValues\t\t2600\n"
+    "RemoveFiles\t\t3500\n"
+    "InstallFiles\t\t4000\n"
+    "WriteRegistryValues\t\t5000\n"
+    "RegisterUser\t\t6000\n"
+    "RegisterProduct\t\t6100\n"
+    "PublishFeatures\t\t6300\n"
+    "PublishProduct\t\t6400\n"
+    "InstallFinalize\t\t6600";
+
+static const char md_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\n"
+    "s72\ti2\tS64\tS0\n"
+    "CustomAction\tAction\n"
+    "SetINSTALLDIR\t51\tINSTALLDIR\t[ProgramFilesFolder]msitest_md\n"
+    "SetARPINSTALLLOCATION\t51\tARPINSTALLLOCATION\t[INSTALLDIR]\n";
+
+static const char md_file_dat[] =
+    "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+    "File\tFile\n"
+    "maximus\tmaximus\tmaximus\t500\t\t\t8192\t1\n"
+    "augustus\taugustus\taugustus\t500\t\t\t8192\t2";
+
+static const char md_media_dat[] =
+    "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+    "i2\ti4\tL64\tS255\tS32\tS72\n"
+    "Media\tDiskId\n"
+    "1\t2\t\t\tDISK1\t\n";
+
+static const char md2_property_dat[] =
+    "Property\tValue\n"
+    "s72\tl0\n"
+    "Property\tProperty\n"
+    "Manufacturer\tWine\n"
+    "ProductCode\t{FC21E32C-5015-41D5-835F-24D6EE354F99}\n"
+    "ProductLanguage\t1033\n"
+    "ProductName\tMSITEST\n"
+    "ProductVersion\t1.1.2\n"
+    "UpgradeCode\t{5FB8CBBF-C2C6-4D06-B485-CD5C1489585D}\n"
+    "ROOTDRIVE\tC:\\\n"
+    "MSIFASTINSTALL\t1\n";
+
 static const CHAR aup_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
                                                "InstallExecuteSequence\tAction\n"
@@ -1872,6 +1985,34 @@ static const msi_table ip_tables[] =
     ADD_TABLE(ip_custom_action),
     ADD_TABLE(media),
     ADD_TABLE(property)
+};
+
+static const msi_table md_tables[] =
+{
+    ADD_TABLE(md_component),
+    ADD_TABLE(md_directory),
+    ADD_TABLE(md_feature),
+    ADD_TABLE(md_feature_comp),
+    ADD_TABLE(md_file),
+    ADD_TABLE(md_registry),
+    ADD_TABLE(md_install_exec_seq),
+    ADD_TABLE(md_custom_action),
+    ADD_TABLE(md_media),
+    ADD_TABLE(md_property)
+};
+
+static const msi_table md2_tables[] =
+{
+    ADD_TABLE(md2_component),
+    ADD_TABLE(md_directory),
+    ADD_TABLE(md_feature),
+    ADD_TABLE(md_feature_comp),
+    ADD_TABLE(md_file),
+    ADD_TABLE(md_registry),
+    ADD_TABLE(md_install_exec_seq),
+    ADD_TABLE(md_custom_action),
+    ADD_TABLE(md_media),
+    ADD_TABLE(md2_property)
 };
 
 static const msi_table aup_tables[] =
@@ -5085,6 +5226,253 @@ error:
     DeleteFileA(msifile);
 }
 
+static void get_md_reg_value(const char *name, char *buf, DWORD size)
+{
+    HKEY hkey;
+    LONG res;
+
+    buf[0] = 0;
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest_md", 0, KEY_READ|KEY_WOW64_32KEY, &hkey);
+    ok(!res, "Expected ERROR_SUCCESS, got %ld\n", res);
+    if (res) return;
+    res = RegQueryValueExA(hkey, name, NULL, NULL, (BYTE *)buf, &size);
+    ok(!res, "Expected ERROR_SUCCESS, got %ld\n", res);
+    RegCloseKey(hkey);
+}
+
+static void test_maintenance_dirs(void)
+{
+    static const char prodcode[] = "{FC21E32C-5015-41D5-835F-24D6EE354F99}";
+    static const char compcode[] = "{8C21B274-9F91-4B48-B54D-C68D547B41BD}";
+    static const struct
+    {
+        const msi_table *tables;
+        unsigned int count;
+        const char *file;
+        const char *src_dir;
+        const char *installdir;
+        const char *dir_prop;
+    }
+    tests[] =
+    {
+        { md_tables, ARRAY_SIZE(md_tables), "msitest_md\\maximus", "msitest", NULL, "INSTALLDIR" },
+        { md2_tables, ARRAY_SIZE(md2_tables), "msitest_md\\bin\\maximus", "msitest\\bin", "C:\\msitest\\", "BINDIR" },
+    };
+    char path[MAX_PATH], expected[MAX_PATH], src[MAX_PATH], cmd[MAX_PATH];
+    INSTALLSTATE state;
+    unsigned int i, j;
+    DWORD size;
+    UINT r;
+
+    if (!is_process_elevated())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%u", i);
+
+        CreateDirectoryA("msitest", NULL);
+        CreateDirectoryA(tests[i].src_dir, NULL);
+        sprintf(src, "%s\\maximus", tests[i].src_dir);
+        create_file_data(src, "maximus", 500);
+        create_database(msifile, tests[i].tables, tests[i].count);
+
+        r = MsiInstallProductA(msifile, NULL);
+        if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+        {
+            skip("Not enough rights to perform tests\n");
+            winetest_pop_context();
+            goto error;
+        }
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(pf_exists(tests[i].file), "File not installed\n");
+
+        sprintf(expected, "%s\\msitest_md\\", PROG_FILES_DIR);
+        size = sizeof(path);
+        r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTALLLOCATIONA, path, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
+
+        for (j = 0; j < 2; j++)
+        {
+            winetest_push_context("%u", j);
+            delete_pf(tests[i].file, TRUE);
+
+            if (j) sprintf(cmd, "REINSTALL=ALL REINSTALLMODE=amus %s=C:\\msitest_explicit\\", tests[i].dir_prop);
+            else strcpy(cmd, "REINSTALL=ALL REINSTALLMODE=amus");
+            r = MsiInstallProductA(msifile, cmd);
+            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+            get_md_reg_value("TARGETDIR", path, sizeof(path));
+            todo_wine ok(!lstrcmpiA(path, "C:\\"), "Expected C:\\, got %s\n", path);
+            if (tests[i].installdir) lstrcpyA(expected, tests[i].installdir);
+            else sprintf(expected, "%s\\msitest_md\\", PROG_FILES_DIR);
+            get_md_reg_value("INSTALLDIR", path, sizeof(path));
+            todo_wine ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
+
+            todo_wine ok(pf_exists(tests[i].file), "File not reinstalled to the component location\n");
+            todo_wine ok(!pf_exists("msitest_md\\msitest"), "Directory created below the install location\n");
+            ok(!file_exists("C:\\msitest"), "Directory created below the root drive\n");
+
+            winetest_pop_context();
+        }
+        todo_wine ok(!file_exists("C:\\msitest_explicit"), "Directory created at the explicit location\n");
+
+        sprintf(expected, "%s\\%s", PROG_FILES_DIR, tests[i].file);
+        size = sizeof(path);
+        state = MsiGetComponentPathA(prodcode, compcode, path, &size);
+        ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+        todo_wine ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
+
+        r = MsiInstallProductA(msifile, "REMOVE=ALL");
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(!pf_exists(tests[i].file), "File not removed\n");
+
+        DeleteFileA(msifile);
+        DeleteFileA(src);
+        RemoveDirectoryA(tests[i].src_dir);
+        RemoveDirectoryA("msitest");
+
+        winetest_pop_context();
+    }
+
+error:
+    DeleteFileA("C:\\msitest\\maximus");
+    RemoveDirectoryA("C:\\msitest");
+    DeleteFileA("C:\\msitest_explicit\\maximus");
+    RemoveDirectoryA("C:\\msitest_explicit");
+    delete_pf("msitest_md\\msitest\\bin\\maximus", TRUE);
+    delete_pf("msitest_md\\msitest\\bin", FALSE);
+    delete_pf("msitest_md\\msitest\\maximus", TRUE);
+    delete_pf("msitest_md\\msitest", FALSE);
+    delete_pf("msitest_md\\bin\\maximus", TRUE);
+    delete_pf("msitest_md\\bin", FALSE);
+    delete_pf("msitest_md\\maximus", TRUE);
+    delete_pf("msitest_md", FALSE);
+    RegDeleteKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest_md", KEY_WOW64_32KEY, 0);
+    DeleteFileA(msifile);
+    DeleteFileA("msitest\\bin\\maximus");
+    RemoveDirectoryA("msitest\\bin");
+    DeleteFileA("msitest\\maximus");
+    RemoveDirectoryA("msitest");
+}
+
+static void test_maintenance_dirs_modify(void)
+{
+    static const char prodcode[] = "{FC21E32C-5015-41D5-835F-24D6EE354F99}";
+    static const char compcode[] = "{8C21B274-9F91-4B48-B54D-C68D547B41BD}";
+    char path[MAX_PATH];
+    INSTALLSTATE state;
+    DWORD size;
+    UINT r;
+
+    if (!is_process_elevated())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    CreateDirectoryA("msitest", NULL);
+    CreateDirectoryA("msitest\\bin", NULL);
+    create_file_data("msitest\\maximus", "maximus", 500);
+    create_file_data("msitest\\bin\\maximus", "maximus", 500);
+    create_file_data("msitest\\augustus", "augustus", 500);
+
+    create_database(msifile, md_tables, ARRAY_SIZE(md_tables));
+    r = MsiInstallProductA(msifile, "INSTALLDIR=C:\\msitest_v1\\");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(file_exists("C:\\msitest_v1\\maximus"), "File not installed\n");
+    ok(!file_exists("C:\\msitest_v1\\augustus"), "File installed\n");
+
+    r = MsiInstallProductA(msifile, "ADDLOCAL=augustus");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    todo_wine ok(file_exists("C:\\msitest_v1\\augustus"), "File not installed next to the installed component\n");
+    todo_wine ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
+
+    DeleteFileA("C:\\msitest_v1\\maximus");
+    create_database(msifile, md2_tables, ARRAY_SIZE(md2_tables));
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = sizeof(path);
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONSTRINGA, path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!strcmp(path, "1.1.1"), "Expected 1.1.1, got %s\n", path);
+    todo_wine ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
+
+    r = MsiConfigureProductA(prodcode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!file_exists("C:\\msitest_v1\\augustus"), "File not removed\n");
+
+    create_database(msifile, md_tables, ARRAY_SIZE(md_tables));
+    r = MsiInstallProductA(msifile, "INSTALLDIR=C:\\msitest_v1\\");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(file_exists("C:\\msitest_v1\\maximus"), "File not installed\n");
+
+    create_database_wordcount(msifile, md2_tables, ARRAY_SIZE(md2_tables), 100, 0, ";1033",
+                              "{6AC63A16-6E8F-4F16-A07E-BCE6BB7E5C49}");
+    r = MsiInstallProductA(msifile, "REINSTALLMODE=v");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = sizeof(path);
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONSTRINGA, path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!strcmp(path, "1.1.2"), "Expected 1.1.2, got %s\n", path);
+    ok(file_exists("C:\\msitest_v1\\maximus"), "File not kept at the component location\n");
+
+    DeleteFileA("C:\\msitest_v1\\maximus");
+    r = MsiReinstallProductA(prodcode, REINSTALLMODE_FILEMISSING);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    size = sizeof(path);
+    state = MsiGetComponentPathA(prodcode, compcode, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    todo_wine ok(!lstrcmpiA(path, "C:\\msitest_v1\\maximus"), "Expected C:\\msitest_v1\\maximus, got %s\n", path);
+    todo_wine ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
+    ok(!file_exists("C:\\msitest_v1\\bin"), "Directory created from the directory table\n");
+    todo_wine ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
+    ok(!file_exists("C:\\msitest"), "Directory created below the root drive\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!file_exists("C:\\msitest_v1\\maximus"), "File not removed\n");
+
+error:
+    MsiConfigureProductA(prodcode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT);
+    DeleteFileA("C:\\msitest\\bin\\maximus");
+    RemoveDirectoryA("C:\\msitest\\bin");
+    RemoveDirectoryA("C:\\msitest");
+    DeleteFileA("C:\\msitest_v1\\msitest\\bin\\maximus");
+    RemoveDirectoryA("C:\\msitest_v1\\msitest\\bin");
+    DeleteFileA("C:\\msitest_v1\\msitest\\maximus");
+    DeleteFileA("C:\\msitest_v1\\msitest\\augustus");
+    RemoveDirectoryA("C:\\msitest_v1\\msitest");
+    DeleteFileA("C:\\msitest_v1\\bin\\maximus");
+    RemoveDirectoryA("C:\\msitest_v1\\bin");
+    DeleteFileA("C:\\msitest_v1\\maximus");
+    DeleteFileA("C:\\msitest_v1\\augustus");
+    RemoveDirectoryA("C:\\msitest_v1");
+    RegDeleteKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest_md", KEY_WOW64_32KEY, 0);
+    DeleteFileA(msifile);
+    DeleteFileA("msitest\\bin\\maximus");
+    RemoveDirectoryA("msitest\\bin");
+    DeleteFileA("msitest\\maximus");
+    DeleteFileA("msitest\\augustus");
+    RemoveDirectoryA("msitest");
+}
+
 static void test_allusers_prop(void)
 {
     UINT r;
@@ -6433,6 +6821,8 @@ START_TEST(install)
     test_shortcut();
     test_preselected();
     test_installed_prop();
+    test_maintenance_dirs();
+    test_maintenance_dirs_modify();
     test_file_in_use();
     test_file_in_use_cab();
     test_allusers_prop();

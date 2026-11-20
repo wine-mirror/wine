@@ -843,6 +843,72 @@ cleanup:
     RemoveDirectoryA( "msitest" );
 }
 
+static void test_patch_installed_dir( void )
+{
+    char path[MAX_PATH], cmd[MAX_PATH + 32];
+    DWORD size;
+    UINT r;
+
+    if (!is_process_elevated())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    CreateDirectoryA( "msitest", NULL );
+    create_file( "msitest\\patch.txt", 1000 );
+
+    create_database_suminfo( msifile, tables, ARRAY_SIZE(tables) );
+    create_patch( mspfile );
+
+    MsiSetInternalUI( INSTALLUILEVEL_NONE, NULL );
+
+    sprintf( cmd, "DISABLE_FEATURE=1 MSITESTDIR=\"%s\\msitest_patch\\\"", PROG_FILES_DIR );
+    r = MsiInstallProductA( msifile, cmd );
+    if (r != ERROR_SUCCESS)
+    {
+        skip("Product installation failed with error code %u\n", r);
+        goto cleanup;
+    }
+
+    size = get_pf_file_size( "msitest_patch\\patch.txt" );
+    ok( size == 1000, "expected 1000, got %lu\n", size );
+
+    r = MsiApplyPatchA( mspfile, NULL, INSTALLTYPE_DEFAULT, NULL );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    size = get_pf_file_size( "msitest_patch\\patch.txt" );
+    todo_wine ok( size == 1002, "expected 1002, got %lu\n", size );
+    size = get_pf_file_size( "msitest_patch\\file.txt" );
+    todo_wine ok( size == 1000, "expected 1000, got %lu\n", size );
+    size = get_pf_file_size( "msitest\\patch.txt" );
+    todo_wine ok( size == INVALID_FILE_SIZE, "file installed to the directory table location\n" );
+
+    r = MsiInstallProductA( msifile, "REMOVE=ALL" );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    size = get_pf_file_size( "msitest_patch\\patch.txt" );
+    todo_wine ok( size == INVALID_FILE_SIZE, "file not removed\n" );
+
+cleanup:
+    MsiConfigureProductA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}", INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT );
+    sprintf( path, "%s\\msitest\\patch.txt", PROG_FILES_DIR );
+    DeleteFileA( path );
+    sprintf( path, "%s\\msitest\\file.txt", PROG_FILES_DIR );
+    DeleteFileA( path );
+    sprintf( path, "%s\\msitest", PROG_FILES_DIR );
+    RemoveDirectoryA( path );
+    sprintf( path, "%s\\msitest_patch\\patch.txt", PROG_FILES_DIR );
+    DeleteFileA( path );
+    sprintf( path, "%s\\msitest_patch\\file.txt", PROG_FILES_DIR );
+    DeleteFileA( path );
+    sprintf( path, "%s\\msitest_patch", PROG_FILES_DIR );
+    RemoveDirectoryA( path );
+    DeleteFileA( msifile );
+    DeleteFileA( mspfile );
+    DeleteFileA( "msitest\\patch.txt" );
+    RemoveDirectoryA( "msitest" );
+}
+
 static void test_MsiOpenDatabase( void )
 {
     UINT r;
@@ -1276,6 +1342,7 @@ START_TEST(patch)
     get_program_files_dir( PROG_FILES_DIR, COMMON_FILES_DIR );
 
     test_simple_patch();
+    test_patch_installed_dir();
     test_MsiOpenDatabase();
     test_system_tables();
     test_patch_registration();
