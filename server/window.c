@@ -2345,7 +2345,11 @@ DECL_HANDLER(set_window_fnid)
     unsigned int fnid;
 
     if (!(win = get_window( req->handle ))) return;
-    if (is_desktop_window( win ) && win->thread != current) return set_error( STATUS_ACCESS_DENIED );
+    if (is_desktop_window( win ) && win->thread != current)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
 
     if (!(class = grab_class( current->process, req->atom, 0, &class_locator ))) return;
     fnid = get_class_fnid( class, &extra_size, &private_size );
@@ -2371,7 +2375,10 @@ DECL_HANDLER(set_parent)
 
     /* reparenting to a window with a different DPI awareness isn't allowed */
     if (parent && !is_desktop_window( parent ) && !is_dpi_awareness_compatible( win, parent ))
-        return set_error( STATUS_INVALID_STATE_TRANSITION );
+    {
+        set_error( STATUS_INVALID_STATE_TRANSITION );
+        return;
+    }
 
     if (is_desktop_window(win) || is_orphan_window( win ) || (parent && is_orphan_window( parent )))
     {

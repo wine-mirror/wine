@@ -214,7 +214,11 @@ DECL_HANDLER(create_class)
     WCHAR buffer[16];
     bool local;
 
-    if (name.len < sizeof(info)) return set_error( STATUS_INVALID_PARAMETER );
+    if (name.len < sizeof(info))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     memcpy( &info, name.str, sizeof(info) );
     name.str += sizeof(info) / sizeof(WCHAR);
     name.len -= sizeof(info);

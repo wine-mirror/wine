@@ -1470,8 +1470,8 @@ void detach_thread_input( struct msg_queue *queue_from, struct msg_queue *queue_
     }
     if (queue_to)
     {
-        if (!count) return set_error( STATUS_INVALID_PARAMETER );
-        if (count > 1) return;
+        if (!count) set_error( STATUS_INVALID_PARAMETER );
+        if (!count || count > 1) return;
     }
     /* TODO: detaching a thread may create two separate thread input graphs */
 
