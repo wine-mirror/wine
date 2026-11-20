@@ -3420,7 +3420,7 @@ POINT map_dpi_point( POINT pt, struct ratio dpi_from, struct ratio dpi_to )
  */
 static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio scale, dpi = get_win_monitor_dpi( hwnd, &scale );
+    struct ratio dpi = get_win_monitor_dpi( hwnd );
     return map_dpi_point( pt, get_dpi_for_window( hwnd ), dpi );
 }
 
@@ -3429,7 +3429,7 @@ static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
  */
 POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio scale, dpi = get_win_monitor_dpi( hwnd, &scale );
+    struct ratio dpi = get_win_monitor_dpi( hwnd );
     return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ) );
 }
 
@@ -3438,8 +3438,8 @@ POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
  */
 POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
 {
-    struct ratio dpi = get_thread_dpi(), scale;
-    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &scale );
+    struct ratio dpi = get_thread_dpi();
+    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd );
     return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ));
 }
 
@@ -3448,8 +3448,8 @@ POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
  */
 RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
 {
-    struct ratio dpi = get_thread_dpi(), scale;
-    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &scale );
+    struct ratio dpi = get_thread_dpi();
+    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd );
     return map_dpi_rect( rect, dpi, get_dpi_for_window( hwnd ) );
 }
 

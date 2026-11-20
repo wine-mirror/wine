@@ -463,10 +463,9 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
     if (ret > 0 && (iCode & NTGDI_RGN_MONITOR_DPI))
     {
         HWND hwnd = NtUserWindowFromDC( hDC );
-        struct ratio scale;
+        struct ratio scale = get_win_monitor_scale( hwnd );
         HRGN region;
 
-        get_win_monitor_dpi( hwnd, &scale );
         NtGdiOffsetRgn( hRgn, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
         region = map_dpi_region( hRgn, get_dpi_for_window( hwnd ), scale );
         NtGdiCombineRgn( hRgn, region, 0, RGN_COPY );
