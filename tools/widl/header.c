@@ -864,10 +864,16 @@ static int is_aggregate_return(const var_t *func)
          type == TYPE_RUNTIMECLASS;
 }
 
+static const char *get_overload_name( const var_t *func )
+{
+    if (!func->overload) return get_name( func );
+    return strmake( "%s_%d", get_name( func ), func->overload );
+}
+
 static const char *get_method_name( const type_t *iface, const type_t *child, const var_t *func )
 {
     const char *base = get_method_override_prefix( iface, child, func );
-    return base ? strmake( "%s_%s", base, get_name( func ) ) : get_name( func );
+    return base ? strmake( "%s_%s", base, get_overload_name( func ) ) : get_overload_name( func );
 }
 
 static void write_method_macro(FILE *header, const type_t *iface, const type_t *child, const char *name)

@@ -1942,6 +1942,7 @@ var_t *make_var(char *name)
   v->eval = NULL;
   init_location( &v->where, NULL, NULL );
   v->is_defined = 1;
+  v->overload = 0;
   return v;
 }
 
@@ -3236,6 +3237,7 @@ static statement_list_t *insert_statement( statement_list_t *list, statement_t *
     STATEMENTS_FOR_EACH_FUNC( next, list ) if (!strcmp( name, get_name( next->u.var ) )) break;
     if (!next) return append_statement( list, stmt );
 
+    if (&next->entry != list) stmt->u.var->overload = next->u.var->overload + 1;
     list_add_before( &next->entry, &stmt->entry );
     return list;
 }

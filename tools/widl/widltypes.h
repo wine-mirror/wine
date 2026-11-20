@@ -570,7 +570,7 @@ struct _var_t {
   unsigned int typestring_offset;
 
   /* fields specific to functions */
-  unsigned int procstring_offset, func_idx;
+  unsigned int procstring_offset, func_idx, overload;
 
   struct location where;
 
