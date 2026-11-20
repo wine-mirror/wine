@@ -86,30 +86,30 @@ interface IDCompositionClip : IUnknown
 ]
 interface IDCompositionRectangleClip : IDCompositionClip
 {
-    HRESULT SetLeftAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetLeft([in] float left);
-    HRESULT SetTopAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetLeft([in] IDCompositionAnimation *animation);
     HRESULT SetTop([in] float top);
-    HRESULT SetRightAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetTop([in] IDCompositionAnimation *animation);
     HRESULT SetRight([in] float right);
-    HRESULT SetBottomAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetRight([in] IDCompositionAnimation *animation);
     HRESULT SetBottom([in] float bottom);
-    HRESULT SetTopLeftRadiusXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetBottom([in] IDCompositionAnimation *animation);
     HRESULT SetTopLeftRadiusX([in] float radius);
-    HRESULT SetTopLeftRadiusYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetTopLeftRadiusX([in] IDCompositionAnimation *animation);
     HRESULT SetTopLeftRadiusY([in] float radius);
-    HRESULT SetTopRightRadiusXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetTopLeftRadiusY([in] IDCompositionAnimation *animation);
     HRESULT SetTopRightRadiusX([in] float radius);
-    HRESULT SetTopRightRadiusYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetTopRightRadiusX([in] IDCompositionAnimation *animation);
     HRESULT SetTopRightRadiusY([in] float radius);
-    HRESULT SetBottomLeftRadiusXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetTopRightRadiusY([in] IDCompositionAnimation *animation);
     HRESULT SetBottomLeftRadiusX([in] float radius);
-    HRESULT SetBottomLeftRadiusYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetBottomLeftRadiusX([in] IDCompositionAnimation *animation);
     HRESULT SetBottomLeftRadiusY([in] float radius);
-    HRESULT SetBottomRightRadiusXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetBottomLeftRadiusY([in] IDCompositionAnimation *animation);
     HRESULT SetBottomRightRadiusX([in] float radius);
-    HRESULT SetBottomRightRadiusYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetBottomRightRadiusX([in] IDCompositionAnimation *animation);
     HRESULT SetBottomRightRadiusY([in] float radius);
+    HRESULT SetBottomRightRadiusY([in] IDCompositionAnimation *animation);
 }
 
 [
@@ -140,8 +140,8 @@ interface IDCompositionTransform3D : IDCompositionEffect
 ]
 interface IDCompositionEffectGroup : IDCompositionEffect
 {
-    HRESULT SetOpacityAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetOpacity([in] float opacity);
+    HRESULT SetOpacity([in] IDCompositionAnimation *animation);
     HRESULT SetTransform3D([in, optional] IDCompositionTransform3D *transform);
 };
 
@@ -153,12 +153,12 @@ interface IDCompositionEffectGroup : IDCompositionEffect
 ]
 interface IDCompositionTranslateTransform3D : IDCompositionTransform3D
 {
-    HRESULT SetOffsetXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetX([in] float offset);
-    HRESULT SetOffsetYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetOffsetX([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetY([in] float offset);
-    HRESULT SetOffsetZAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetOffsetY([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetZ([in] float offset);
+    HRESULT SetOffsetZ([in] IDCompositionAnimation *animation);
 };
 
 [
@@ -169,18 +169,18 @@ interface IDCompositionTranslateTransform3D : IDCompositionTransform3D
 ]
 interface IDCompositionScaleTransform3D : IDCompositionTransform3D
 {
-    HRESULT SetScaleXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetScaleX([in] float scale);
-    HRESULT SetScaleYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetScaleX([in] IDCompositionAnimation *animation);
     HRESULT SetScaleY([in] float scale);
-    HRESULT SetScaleZAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetScaleY([in] IDCompositionAnimation *animation);
     HRESULT SetScaleZ([in] float scale);
-    HRESULT SetCenterXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetScaleZ([in] IDCompositionAnimation *animation);
     HRESULT SetCenterX([in] float center);
-    HRESULT SetCenterYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterX([in] IDCompositionAnimation *animation);
     HRESULT SetCenterY([in] float center);
-    HRESULT SetCenterZAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterY([in] IDCompositionAnimation *animation);
     HRESULT SetCenterZ([in] float center);
+    HRESULT SetCenterZ([in] IDCompositionAnimation *animation);
 }
 
 [
@@ -191,20 +191,20 @@ interface IDCompositionScaleTransform3D : IDCompositionTransform3D
 ]
 interface IDCompositionRotateTransform3D : IDCompositionTransform3D
 {
-    HRESULT SetAngleAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetAngle([in] float scale);
-    HRESULT SetAxisXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAngle([in] IDCompositionAnimation *animation);
     HRESULT SetAxisX([in] float scale);
-    HRESULT SetAxisYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAxisX([in] IDCompositionAnimation *animation);
     HRESULT SetAxisY([in] float scale);
-    HRESULT SetAxisZAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAxisY([in] IDCompositionAnimation *animation);
     HRESULT SetAxisZ([in] float center);
-    HRESULT SetCenterXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAxisZ([in] IDCompositionAnimation *animation);
     HRESULT SetCenterX([in] float center);
-    HRESULT SetCenterYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterX([in] IDCompositionAnimation *animation);
     HRESULT SetCenterY([in] float center);
-    HRESULT SetCenterZAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterY([in] IDCompositionAnimation *animation);
     HRESULT SetCenterZ([in] float center);
+    HRESULT SetCenterZ([in] IDCompositionAnimation *animation);
 }
 
 [
@@ -217,8 +217,8 @@ interface IDCompositionMatrixTransform3D : IDCompositionTransform3D
 {
     /* C++ method: HRESULT SetMatrix(const D3DMATRIX &matrix); Use pointer instead of reference */
     HRESULT SetMatrix([in] const D3DMATRIX *matrix);
-    HRESULT SetMatrixElementAnimation([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] float value);
+    HRESULT SetMatrixElement([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
 };
 
 [
@@ -239,14 +239,14 @@ interface IDCompositionTransform : IDCompositionTransform3D
 ]
 interface IDCompositionScaleTransform : IDCompositionTransform
 {
-    HRESULT SetScaleXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetScaleX([in] float scale);
-    HRESULT SetScaleYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetScaleX([in] IDCompositionAnimation *animation);
     HRESULT SetScaleY([in] float scale);
-    HRESULT SetCenterXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetScaleY([in] IDCompositionAnimation *animation);
     HRESULT SetCenterX([in] float center);
-    HRESULT SetCenterYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterX([in] IDCompositionAnimation *animation);
     HRESULT SetCenterY([in] float center);
+    HRESULT SetCenterY([in] IDCompositionAnimation *animation);
 };
 
 [
@@ -257,12 +257,12 @@ interface IDCompositionScaleTransform : IDCompositionTransform
 ]
 interface IDCompositionRotateTransform : IDCompositionTransform
 {
-    HRESULT SetAngleAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetAngle([in] float angle);
-    HRESULT SetCenterXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAngle([in] IDCompositionAnimation *animation);
     HRESULT SetCenterX([in] float center_x);
-    HRESULT SetCenterYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterX([in] IDCompositionAnimation *animation);
     HRESULT SetCenterY([in] float center_y);
+    HRESULT SetCenterY([in] IDCompositionAnimation *animation);
 };
 
 [
@@ -273,14 +273,14 @@ interface IDCompositionRotateTransform : IDCompositionTransform
 ]
 interface IDCompositionSkewTransform : IDCompositionTransform
 {
-    HRESULT SetAngleXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetAngleX([in] float angle);
-    HRESULT SetAngleYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAngleX([in] IDCompositionAnimation *animation);
     HRESULT SetAngleY([in] float angle);
-    HRESULT SetCenterXAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetAngleY([in] IDCompositionAnimation *animation);
     HRESULT SetCenterX([in] float center);
-    HRESULT SetCenterYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetCenterX([in] IDCompositionAnimation *animation);
     HRESULT SetCenterY([in] float center);
+    HRESULT SetCenterY([in] IDCompositionAnimation *animation);
 };
 
 [
@@ -293,8 +293,8 @@ interface IDCompositionMatrixTransform : IDCompositionTransform
 {
     /* C++ method: HRESULT SetMatrix(const D2D_MATRIX_3X2_F &matrix); Use pointer instead of reference */
     HRESULT SetMatrix([in] const D2D_MATRIX_3X2_F *matrix);
-    HRESULT SetMatrixElementAnimation([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] float value);
+    HRESULT SetMatrixElement([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
 };
 
 [
@@ -305,10 +305,10 @@ interface IDCompositionMatrixTransform : IDCompositionTransform
 ]
 interface IDCompositionTranslateTransform : IDCompositionTransform
 {
-    HRESULT SetOffsetXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetX([in] float offset);
-    HRESULT SetOffsetYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetOffsetX([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetY([in] float offset);
+    HRESULT SetOffsetY([in] IDCompositionAnimation *animation);
 };
 
 [
@@ -319,20 +319,20 @@ interface IDCompositionTranslateTransform : IDCompositionTransform
 ]
 interface IDCompositionVisual : IUnknown
 {
-    HRESULT SetOffsetXAnimation([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetX([in] float offset_x);
-    HRESULT SetOffsetYAnimation([in] IDCompositionAnimation *animation);
+    HRESULT SetOffsetX([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetY([in] float offset_y);
-    HRESULT SetTransformObject([in] IDCompositionTransform *transform);
+    HRESULT SetOffsetY([in] IDCompositionAnimation *animation);
     /* C++ method: HRESULT SetTransform(const D2D_MATRIX_3X2_F &matrix); Use pointer instead of reference */
     HRESULT SetTransform([in] const D2D_MATRIX_3X2_F *matrix);
+    HRESULT SetTransform([in] IDCompositionTransform *transform);
     HRESULT SetTransformParent([in] IDCompositionVisual *visual);
     HRESULT SetEffect([in] IDCompositionEffect *effect);
     HRESULT SetBitmapInterpolationMode([in] enum DCOMPOSITION_BITMAP_INTERPOLATION_MODE interpolation_mode);
     HRESULT SetBorderMode([in] enum DCOMPOSITION_BORDER_MODE border_mode);
-    HRESULT SetClipObject([in] IDCompositionClip *clip);
     /* C++ method: HRESULT SetClip(const D2D_RECT_F &rect); Use pointer instead of reference */
     HRESULT SetClip([in] const D2D_RECT_F *rect);
+    HRESULT SetClip([in] IDCompositionClip *clip);
     HRESULT SetContent([in] IUnknown *content);
     HRESULT AddVisual([in] IDCompositionVisual *visual, [in] BOOL insert_above, [in] IDCompositionVisual *reference_visual);
     HRESULT RemoveVisual([in] IDCompositionVisual *visual);
@@ -462,14 +462,14 @@ interface IDCompositionBrightnessEffect : IDCompositionFilterEffect
 {
     HRESULT SetWhitePoint(const D2D1_VECTOR_2F *white_point);
     HRESULT SetBlackPoint(const D2D1_VECTOR_2F *black_point);
-    HRESULT SetWhitePointXAnimation(IDCompositionAnimation *animation);
     HRESULT SetWhitePointX(float white_point_x);
-    HRESULT SetWhitePointYAnimation(IDCompositionAnimation *animation);
+    HRESULT SetWhitePointX(IDCompositionAnimation *animation);
     HRESULT SetWhitePointY(float white_point_y);
-    HRESULT SetBlackPointXAnimation(IDCompositionAnimation *animation);
+    HRESULT SetWhitePointY(IDCompositionAnimation *animation);
     HRESULT SetBlackPointX(float black_point_x);
-    HRESULT SetBlackPointYAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlackPointX(IDCompositionAnimation *animation);
     HRESULT SetBlackPointY(float black_point_y);
+    HRESULT SetBlackPointY(IDCompositionAnimation *animation);
 };
 
 [
@@ -481,8 +481,8 @@ interface IDCompositionBrightnessEffect : IDCompositionFilterEffect
 interface IDCompositionColorMatrixEffect : IDCompositionFilterEffect
 {
     HRESULT SetMatrix(const D2D1_MATRIX_5X4_F *matrix);
-    HRESULT SetMatrixElementAnimation(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetMatrixElement(int row, int column, float value);
+    HRESULT SetMatrixElement(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetAlphaMode(D2D1_COLORMATRIX_ALPHA_MODE mode);
     HRESULT SetClampOutput(BOOL clamp);
 };
@@ -495,17 +495,17 @@ interface IDCompositionColorMatrixEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionShadowEffect : IDCompositionFilterEffect
 {
-    HRESULT SetStandardDeviationAnimation(IDCompositionAnimation *animation);
     HRESULT SetStandardDeviation(float amount);
+    HRESULT SetStandardDeviation(IDCompositionAnimation *animation);
     HRESULT SetColor(const D2D1_VECTOR_4F *color);
-    HRESULT SetRedAnimation(IDCompositionAnimation *animation);
     HRESULT SetRed(float amount);
-    HRESULT SetGreenAnimation(IDCompositionAnimation *animation);
+    HRESULT SetRed(IDCompositionAnimation *animation);
     HRESULT SetGreen(float amount);
-    HRESULT SetBlueAnimation(IDCompositionAnimation *animation);
+    HRESULT SetGreen(IDCompositionAnimation *animation);
     HRESULT SetBlue(float amount);
-    HRESULT SetAlphaAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlue(IDCompositionAnimation *animation);
     HRESULT SetAlpha(float amount);
+    HRESULT SetAlpha(IDCompositionAnimation *animation);
 };
 
 [
@@ -516,8 +516,8 @@ interface IDCompositionShadowEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionHueRotationEffect : IDCompositionFilterEffect
 {
-    HRESULT SetAngleAnimation(IDCompositionAnimation *animation);
     HRESULT SetAngle(float degrees);
+    HRESULT SetAngle(IDCompositionAnimation *animation);
 };
 
 [
@@ -528,8 +528,8 @@ interface IDCompositionHueRotationEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionSaturationEffect : IDCompositionFilterEffect
 {
-    HRESULT SetSaturationAnimation(IDCompositionAnimation *animation);
     HRESULT SetSaturation(float ratio);
+    HRESULT SetSaturation(IDCompositionAnimation *animation);
 };
 
 [
@@ -557,25 +557,25 @@ interface IDCompositionTurbulenceEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionLinearTransferEffect : IDCompositionFilterEffect
 {
-    HRESULT SetRedYInterceptAnimation(IDCompositionAnimation *animation);
     HRESULT SetRedYIntercept(float red_y_intercept);
-    HRESULT SetRedSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetRedYIntercept(IDCompositionAnimation *animation);
     HRESULT SetRedSlope(float red_slope);
+    HRESULT SetRedSlope(IDCompositionAnimation *animation);
     HRESULT SetRedDisable(BOOL red_disable);
-    HRESULT SetGreenYInterceptAnimation(IDCompositionAnimation *animation);
     HRESULT SetGreenYIntercept(float green_y_intercept);
-    HRESULT SetGreenSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetGreenYIntercept(IDCompositionAnimation *animation);
     HRESULT SetGreenSlope(float green_slope);
+    HRESULT SetGreenSlope(IDCompositionAnimation *animation);
     HRESULT SetGreenDisable(BOOL green_disable);
-    HRESULT SetBlueYInterceptAnimation(IDCompositionAnimation *animation);
     HRESULT SetBlueYIntercept(float blue_y_intercept);
-    HRESULT SetBlueSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlueYIntercept(IDCompositionAnimation *animation);
     HRESULT SetBlueSlope(float blue_slope);
+    HRESULT SetBlueSlope(IDCompositionAnimation *animation);
     HRESULT SetBlueDisable(BOOL blue_disable);
-    HRESULT SetAlphaYInterceptAnimation(IDCompositionAnimation *animation);
     HRESULT SetAlphaYIntercept(float alpha_y_intercept);
-    HRESULT SetAlphaSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetAlphaYIntercept(IDCompositionAnimation *animation);
     HRESULT SetAlphaSlope(float alpha_slope);
+    HRESULT SetAlphaSlope(IDCompositionAnimation *animation);
     HRESULT SetAlphaDisable(BOOL alpha_disable);
     HRESULT SetClampOutput(BOOL clamp_output);
 };
@@ -597,14 +597,14 @@ interface IDCompositionTableTransferEffect : IDCompositionFilterEffect
     HRESULT SetBlueDisable(BOOL blue_disable);
     HRESULT SetAlphaDisable(BOOL alpha_disable);
     HRESULT SetClampOutput(BOOL clamp_output);
-    HRESULT SetRedTableValueAnimation(UINT index, IDCompositionAnimation *animation);
     HRESULT SetRedTableValue(UINT index, float value);
-    HRESULT SetGreenTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetRedTableValue(UINT index, IDCompositionAnimation *animation);
     HRESULT SetGreenTableValue(UINT index, float value);
-    HRESULT SetBlueTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetGreenTableValue(UINT index, IDCompositionAnimation *animation);
     HRESULT SetBlueTableValue(UINT index, float value);
-    HRESULT SetAlphaTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetBlueTableValue(UINT index, IDCompositionAnimation *animation);
     HRESULT SetAlphaTableValue(UINT index, float value);
+    HRESULT SetAlphaTableValue(UINT index, IDCompositionAnimation *animation);
 };
 
 [
@@ -639,14 +639,14 @@ interface IDCompositionArithmeticCompositeEffect : IDCompositionFilterEffect
 {
     HRESULT SetCoefficients(const D2D1_VECTOR_4F *coefficients);
     HRESULT SetClampOutput(BOOL clamp_output);
-    HRESULT SetCoefficient1Animation(IDCompositionAnimation *animation);
     HRESULT SetCoefficient1(float coeffcient);
-    HRESULT SetCoefficient2Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient1(IDCompositionAnimation *animation);
     HRESULT SetCoefficient2(float coefficient);
-    HRESULT SetCoefficient3Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient2(IDCompositionAnimation *animation);
     HRESULT SetCoefficient3(float coefficient);
-    HRESULT SetCoefficient4Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient3(IDCompositionAnimation *animation);
     HRESULT SetCoefficient4(float coefficient);
+    HRESULT SetCoefficient4(IDCompositionAnimation *animation);
 };
 
 [
@@ -660,10 +660,10 @@ interface IDCompositionAffineTransform2DEffect : IDCompositionFilterEffect
     HRESULT SetInterpolationMode(D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE mode);
     HRESULT SetBorderMode(D2D1_BORDER_MODE mode);
     HRESULT SetTransformMatrix(const D2D1_MATRIX_3X2_F *matrix);
-    HRESULT SetTransformMatrixElementAnimation(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetTransformMatrixElement(int row, int column, float value);
-    HRESULT SetSharpnessAnimation(IDCompositionAnimation *animation);
+    HRESULT SetTransformMatrixElement(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetSharpness(float sharpness);
+    HRESULT SetSharpness(IDCompositionAnimation *animation);
 };
 
 [
