@@ -212,6 +212,7 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
             I386_CONTEXT ctx = { CONTEXT_I386_ALL };
             CONTEXT_EX *context_ex, *src_ex = NULL;
             ULONG esp, flags, context_length;
+            WOW64_CPU_AREA_INFO cpu_area;
 
             C_ASSERT( offsetof(struct exc_stack_layout32, context) == 0x58 );
 
@@ -232,6 +233,13 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
                     memcpy( ctx.ExtendedRegisters, &ctx64->FltSave, sizeof(ctx.ExtendedRegisters) );
                 if ((ctx64->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
                     src_ex = (CONTEXT_EX *)(ctx64 + 1);
+            }
+            else if (!RtlWow64GetCpuAreaInfo( NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED], 0, &cpu_area ))
+            {
+                I386_CONTEXT *ctx32 = cpu_area.Context;
+
+                if ((ctx32->ContextFlags & CONTEXT_I386_XSTATE) == CONTEXT_I386_XSTATE)
+                    src_ex = (CONTEXT_EX *)(ctx32 + 1);
             }
 
             flags = ctx.ContextFlags;
