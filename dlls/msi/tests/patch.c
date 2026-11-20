@@ -878,16 +878,16 @@ static void test_patch_installed_dir( void )
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     size = get_pf_file_size( "msitest_patch\\patch.txt" );
-    todo_wine ok( size == 1002, "expected 1002, got %lu\n", size );
+    ok( size == 1002, "expected 1002, got %lu\n", size );
     size = get_pf_file_size( "msitest_patch\\file.txt" );
-    todo_wine ok( size == 1000, "expected 1000, got %lu\n", size );
+    ok( size == 1000, "expected 1000, got %lu\n", size );
     size = get_pf_file_size( "msitest\\patch.txt" );
-    todo_wine ok( size == INVALID_FILE_SIZE, "file installed to the directory table location\n" );
+    ok( size == INVALID_FILE_SIZE, "file installed to the directory table location\n" );
 
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
     size = get_pf_file_size( "msitest_patch\\patch.txt" );
-    todo_wine ok( size == INVALID_FILE_SIZE, "file not removed\n" );
+    ok( size == INVALID_FILE_SIZE, "file not removed\n" );
 
 cleanup:
     MsiConfigureProductA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}", INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT );

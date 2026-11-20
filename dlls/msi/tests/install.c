@@ -5309,25 +5309,25 @@ static void test_maintenance_dirs(void)
             ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
             get_md_reg_value("TARGETDIR", path, sizeof(path));
-            todo_wine ok(!lstrcmpiA(path, "C:\\"), "Expected C:\\, got %s\n", path);
+            ok(!lstrcmpiA(path, "C:\\"), "Expected C:\\, got %s\n", path);
             if (tests[i].installdir) lstrcpyA(expected, tests[i].installdir);
             else sprintf(expected, "%s\\msitest_md\\", PROG_FILES_DIR);
             get_md_reg_value("INSTALLDIR", path, sizeof(path));
-            todo_wine ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
+            ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
 
-            todo_wine ok(pf_exists(tests[i].file), "File not reinstalled to the component location\n");
-            todo_wine ok(!pf_exists("msitest_md\\msitest"), "Directory created below the install location\n");
+            ok(pf_exists(tests[i].file), "File not reinstalled to the component location\n");
+            ok(!pf_exists("msitest_md\\msitest"), "Directory created below the install location\n");
             ok(!file_exists("C:\\msitest"), "Directory created below the root drive\n");
 
             winetest_pop_context();
         }
-        todo_wine ok(!file_exists("C:\\msitest_explicit"), "Directory created at the explicit location\n");
+        ok(!file_exists("C:\\msitest_explicit"), "Directory created at the explicit location\n");
 
         sprintf(expected, "%s\\%s", PROG_FILES_DIR, tests[i].file);
         size = sizeof(path);
         state = MsiGetComponentPathA(prodcode, compcode, path, &size);
         ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        todo_wine ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
+        ok(!lstrcmpiA(path, expected), "Expected %s, got %s\n", expected, path);
 
         r = MsiInstallProductA(msifile, "REMOVE=ALL");
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5398,8 +5398,8 @@ static void test_maintenance_dirs_modify(void)
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=augustus");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    todo_wine ok(file_exists("C:\\msitest_v1\\augustus"), "File not installed next to the installed component\n");
-    todo_wine ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
+    ok(file_exists("C:\\msitest_v1\\augustus"), "File not installed next to the installed component\n");
+    ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
 
     DeleteFileA("C:\\msitest_v1\\maximus");
     create_database(msifile, md2_tables, ARRAY_SIZE(md2_tables));
@@ -5410,7 +5410,7 @@ static void test_maintenance_dirs_modify(void)
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONSTRINGA, path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!strcmp(path, "1.1.1"), "Expected 1.1.1, got %s\n", path);
-    todo_wine ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
+    ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
 
     r = MsiConfigureProductA(prodcode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5439,10 +5439,10 @@ static void test_maintenance_dirs_modify(void)
     size = sizeof(path);
     state = MsiGetComponentPathA(prodcode, compcode, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    todo_wine ok(!lstrcmpiA(path, "C:\\msitest_v1\\maximus"), "Expected C:\\msitest_v1\\maximus, got %s\n", path);
-    todo_wine ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
+    ok(!lstrcmpiA(path, "C:\\msitest_v1\\maximus"), "Expected C:\\msitest_v1\\maximus, got %s\n", path);
+    ok(file_exists("C:\\msitest_v1\\maximus"), "File not restored to the component location\n");
     ok(!file_exists("C:\\msitest_v1\\bin"), "Directory created from the directory table\n");
-    todo_wine ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
+    ok(!file_exists("C:\\msitest_v1\\msitest"), "Directory created below the install location\n");
     ok(!file_exists("C:\\msitest"), "Directory created below the root drive\n");
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");

@@ -2162,22 +2162,6 @@ WCHAR *msi_normalize_path( const WCHAR *in )
     return ret;
 }
 
-static WCHAR *get_install_location( MSIPACKAGE *package )
-{
-    HKEY hkey;
-    WCHAR *path;
-
-    if (!package->ProductCode) return NULL;
-    if (MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE )) return NULL;
-    if ((path = msi_reg_get_val_str( hkey, L"InstallLocation" )) && !path[0])
-    {
-        free( path );
-        path = NULL;
-    }
-    RegCloseKey( hkey );
-    return path;
-}
-
 static BOOL is_admin_install( MSIPACKAGE *package )
 {
     WCHAR *action = msi_dup_property( package->db, L"ACTION" );
@@ -2198,8 +2182,7 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
     if (!wcscmp( folder->Directory, L"TARGETDIR" )) /* special resolving for target root dir */
     {
-        if (!(path = get_install_location( package )) &&
-            (!load_prop || !(path = msi_dup_property( package->db, L"TARGETDIR" ))))
+        if (!load_prop || !(path = msi_dup_property( package->db, L"TARGETDIR" )))
         {
             path = msi_dup_property( package->db, L"ROOTDRIVE" );
         }
@@ -2243,12 +2226,47 @@ static ULONGLONG get_volume_space_required( MSIPACKAGE *package )
     return ret;
 }
 
+/* Installed components stay where they are, regardless of what the directory table says */
+static void set_installed_component_dirs( MSIPACKAGE *package )
+{
+    MSICOMPONENT *comp;
+
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        WCHAR dummy, *path, *p;
+        INSTALLSTATE state;
+        DWORD len = 0;
+
+        if (comp->Installed != INSTALLSTATE_LOCAL || !comp->ComponentId || !comp->Directory) continue;
+        if (comp->Attributes & (msidbComponentAttributesRegistryKeyPath | msidbComponentAttributesODBCDataSource))
+            continue;
+
+        state = MsiGetComponentPathExW( package->ProductCode, comp->ComponentId, NULL, package->Context, &dummy, &len );
+        if (state != INSTALLSTATE_MOREDATA || len < 3) continue;
+        ++len;
+        if (!(path = malloc( len * sizeof(*path) ))) continue;
+        state = MsiGetComponentPathExW( package->ProductCode, comp->ComponentId, NULL, package->Context, path, &len );
+        if ((state == INSTALLSTATE_LOCAL || state == INSTALLSTATE_ABSENT) && len >= 3 &&
+            path[1] == ':' && path[2] == '\\' && (p = wcsrchr( path, '\\' )) != path + 2)
+        {
+            *p = 0;
+            TRACE("setting %s to installed location %s\n", debugstr_w(comp->Directory), debugstr_w(path));
+            msi_set_property( package->db, comp->Directory, path, -1 );
+        }
+        free( path );
+    }
+}
+
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
     MSIQUERY *view;
     WCHAR *level, *primary_key, *primary_folder;
     UINT rc;
+
+    /* read components states from the registry */
+    ACTION_GetComponentInstallStates(package);
+    set_installed_component_dirs( package );
 
     TRACE("Building directory properties\n");
     msi_resolve_target_folder( package, L"TARGETDIR", TRUE );
@@ -2266,8 +2284,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     }
     get_client_counts( package );
 
-    /* read components states from the registry */
-    ACTION_GetComponentInstallStates(package);
     ACTION_GetFeatureInstallStates(package);
 
     if (!process_overrides( package, msi_get_property_int( package->db, L"INSTALLLEVEL", 1 ) ))
