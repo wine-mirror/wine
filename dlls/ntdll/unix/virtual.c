@@ -3870,6 +3870,20 @@ static void set_large_address_space(void)
     user_space_limit = working_set_limit = address_space_limit;
 }
 
+/* initialize DEP flags */
+static void set_data_execution_prevention(void)
+{
+    ULONG flags = MEM_EXECUTE_OPTION_DISABLE | MEM_EXECUTE_OPTION_PERMANENT;
+
+    if (is_machine_64bit( main_image_info.Machine )) return;  /* DEP is always enabled on 64-bit */
+
+    if (!(mitigation_options[0] & PROCESS_CREATION_MITIGATION_POLICY_DEP_ENABLE)) return;
+    if (!(mitigation_options[0] & PROCESS_CREATION_MITIGATION_POLICY_DEP_ATL_THUNK_ENABLE))
+        flags |= MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION;
+
+    NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
+}
+
 /* randomize address space layout after the main exe is loaded */
 static void randomize_address_space(void)
 {
@@ -3965,6 +3979,7 @@ void virtual_alloc_first_teb(void)
     struct thread_data *data = get_thread_data();
 
     set_large_address_space();
+    set_data_execution_prevention();
     randomize_address_space();
 
     teb_block_size = ROUND_SIZE( 0, sizeof(TEB), page_mask );
