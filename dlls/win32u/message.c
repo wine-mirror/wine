@@ -47,8 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
 
-static const struct ratio no_dpi;
-
 static LONG atomic_load_long( const volatile LONG *ptr )
 {
 #if defined(__i386__) || defined(__x86_64__)
@@ -3131,7 +3129,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
                 RECT rect = {info.msg.pt.x, info.msg.pt.y, info.msg.pt.x, info.msg.pt.y};
                 MSLLHOOKSTRUCT hook;
 
-                rect = map_rect_raw_to_virt( rect, no_dpi );
+                rect = map_rect_raw_to_virt( rect, 0 );
                 info.msg.pt.x = rect.left;
                 info.msg.pt.y = rect.top;
 

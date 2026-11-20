@@ -467,7 +467,7 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
         HRGN region;
 
         NtGdiOffsetRgn( hRgn, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
-        region = map_dpi_region( hRgn, get_dpi_for_window( hwnd ), scale );
+        region = map_dpi_region( hRgn, get_dpi_for_window( hwnd ) * scale.den, scale.num );
         NtGdiCombineRgn( hRgn, region, 0, RGN_COPY );
         NtGdiDeleteObjectApp( region );
     }

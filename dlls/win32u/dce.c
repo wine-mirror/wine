@@ -144,10 +144,10 @@ static void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect
 
 struct scaled_surface
 {
-    struct window_surface header;
+    struct window_surface  header;
     struct window_surface *target_surface;
-    struct ratio dpi;
-    struct ratio scale;
+    UINT                   dpi;
+    struct ratio           scale;
 };
 
 static struct scaled_surface *get_scaled_surface( struct window_surface *window_surface )
@@ -158,7 +158,7 @@ static struct scaled_surface *get_scaled_surface( struct window_surface *window_
 static void scaled_surface_set_clip( struct window_surface *window_surface, const RECT *rects, UINT count )
 {
     struct scaled_surface *surface = get_scaled_surface( window_surface );
-    HRGN hrgn = map_dpi_region( window_surface->clip_region, surface->dpi, surface->scale );
+    HRGN hrgn = map_dpi_region( window_surface->clip_region, surface->dpi * surface->scale.den, surface->scale.num );
     window_surface_set_clip( surface->target_surface, hrgn );
     if (hrgn) NtGdiDeleteObjectApp( hrgn );
 }
@@ -176,7 +176,7 @@ static BOOL scaled_surface_flush( struct window_surface *window_surface, const R
     src.right = (src.right + 7) & ~7;
     src.bottom = (src.bottom + 7) & ~7;
 
-    dst = map_dpi_rect( src, surface->dpi, surface->scale );
+    dst = map_dpi_rect( src, surface->dpi * surface->scale.den, surface->scale.num );
 
     hdc_dst = NtGdiCreateCompatibleDC( 0 );
     hdc_src = NtGdiCreateCompatibleDC( 0 );
@@ -200,7 +200,7 @@ static BOOL scaled_surface_flush( struct window_surface *window_surface, const R
 
     if (shape_changed)
     {
-        HRGN hrgn = map_dpi_region( window_surface->shape_region, surface->dpi, surface->scale );
+        HRGN hrgn = map_dpi_region( window_surface->shape_region, surface->dpi * surface->scale.den, surface->scale.num );
         window_surface_set_shape( surface->target_surface, hrgn );
         if (hrgn) NtGdiDeleteObjectApp( hrgn );
 
@@ -233,7 +233,7 @@ static void scaled_surface_set_target( struct scaled_surface *surface, struct wi
     surface->scale = scale;
 }
 
-static struct window_surface *scaled_surface_create( HWND hwnd, const RECT *surface_rect, struct ratio dpi, struct ratio scale,
+static struct window_surface *scaled_surface_create( HWND hwnd, const RECT *surface_rect, UINT dpi, struct ratio scale,
                                                      struct window_surface *target_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -276,10 +276,10 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
                             struct window_surface **window_surface )
 {
     struct window_surface *previous, *driver_surface;
-    struct ratio dpi = get_dpi_for_window( hwnd );
+    UINT dpi = get_dpi_for_window( hwnd );
     RECT monitor_rect;
 
-    monitor_rect = get_surface_rect( map_dpi_rect( *surface_rect, dpi, scale ) );
+    monitor_rect = get_surface_rect( map_dpi_rect( *surface_rect, dpi * scale.den, scale.num ) );
     if ((driver_surface = get_driver_window_surface( *window_surface, scale )))
     {
         /* reuse the underlying driver surface only if it also matches the target monitor rect */
@@ -298,7 +298,7 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
         return;
     }
 
-    if (!driver_surface || (dpi.num == scale.num && scale.den == 1))
+    if (!driver_surface || (dpi == scale.num && scale.den == 1))
     {
         if (*window_surface) window_surface_release( *window_surface );
         *window_surface = driver_surface;
@@ -1938,7 +1938,7 @@ BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
     {
         HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
         DWORD layout = NtGdiSetLayout( hdc, -1, 0 );  /* map_window_points mirrors already */
-        struct ratio win_dpi = get_dpi_for_window( hwnd );
+        UINT win_dpi = get_dpi_for_window( hwnd );
         map_window_points( 0, hwnd, (POINT *)rect, 2, win_dpi );
         *rect = map_dpi_rect( *rect, win_dpi, get_thread_dpi() );
         NtGdiTransformPoints( hdc, (POINT *)rect, (POINT *)rect, 2, NtGdiDPtoLP );

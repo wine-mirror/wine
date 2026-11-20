@@ -42,8 +42,6 @@ WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
 #define HIMETRIC_PER_INCH 2540
 
-static const struct ratio no_dpi;
-
 static const WCHAR keyboard_layouts_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -620,7 +618,7 @@ BOOL WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
     return ret;
 }
 
-static BOOL get_clip_cursor( RECT *rect, struct ratio dpi, MONITOR_DPI_TYPE type )
+static BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const desktop_shm_t *desktop_shm;
@@ -649,9 +647,9 @@ static void update_mouse_coords( INPUT *input )
         RECT rc;
 
         if (input->mi.dwFlags & MOUSEEVENTF_VIRTUALDESK)
-            rc = get_virtual_screen_rect( no_dpi, MDT_DEFAULT );
+            rc = get_virtual_screen_rect( 0, MDT_DEFAULT );
         else
-            rc = get_primary_monitor_rect( no_dpi );
+            rc = get_primary_monitor_rect( 0 );
 
         input->mi.dx = rc.left + ((input->mi.dx * (rc.right - rc.left)) >> 16);
         input->mi.dy = rc.top  + ((input->mi.dy * (rc.bottom - rc.top)) >> 16);
@@ -706,7 +704,7 @@ static BOOL is_clipped_motion( MOUSEINPUT mi )
 {
     RECT rect;
 
-    if (!get_clip_cursor( &rect, no_dpi, MDT_RAW_DPI ) || IsRectEmpty( &rect )) return FALSE;
+    if (!get_clip_cursor( &rect, 0, MDT_RAW_DPI ) || IsRectEmpty( &rect )) return FALSE;
     if (!(mi.dwFlags & MOUSEEVENTF_MOVE) || !(mi.dwFlags & MOUSEEVENTF_ABSOLUTE)) return FALSE;
     return mi.dx == rect.left || mi.dx == rect.right - 1 || mi.dy == rect.top || mi.dy == rect.bottom - 1;
 }
@@ -2596,7 +2594,7 @@ BOOL set_ime_composition_rect( HWND hwnd, RECT rect )
 {
     if (!NtUserIsWindow( hwnd )) return FALSE;
     NtUserMapWindowPoints( hwnd, 0, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
-    rect = map_rect_virt_to_raw( rect, no_dpi /* per-monitor DPI */ );
+    rect = map_rect_virt_to_raw( rect, 0 /* per-monitor DPI */ );
     return user_driver->pSetIMECompositionRect( NtUserGetAncestor( hwnd, GA_ROOT ), rect );
 }
 
@@ -2855,7 +2853,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    RECT rect, virtual_rect = get_virtual_screen_rect( no_dpi, MDT_RAW_DPI );
+    RECT rect, virtual_rect = get_virtual_screen_rect( 0, MDT_RAW_DPI );
     BOOL empty = !!(flags & SET_CURSOR_NOCLIP);
 
     TRACE( "hwnd %p, flags %#x, reset %u\n", hwnd, flags, reset );
@@ -2872,7 +2870,7 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
     if (!grab_pointer) return TRUE;
 
     /* we are clipping if the clip rectangle is smaller than the screen */
-    get_clip_cursor( &rect, no_dpi, MDT_RAW_DPI );
+    get_clip_cursor( &rect, 0, MDT_RAW_DPI );
     intersect_rect( &rect, &rect, &virtual_rect );
     if (EqualRect( &rect, &virtual_rect )) empty = TRUE;
     if (empty && !(flags & SET_CURSOR_FSCLIP))
@@ -2901,7 +2899,7 @@ BOOL WINAPI NtUserGetClipCursor( RECT *rect )
  */
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
-    struct ratio dpi = get_thread_dpi();
+    UINT dpi = get_thread_dpi();
     RECT new_rect;
     BOOL ret;
 
@@ -3192,7 +3190,7 @@ BOOL WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT 
         return FALSE;
     }
 
-    rect = get_virtual_screen_rect( no_dpi, MDT_DEFAULT );
+    rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
     SetRect( device_rect, 0, 0, (rect.right - rect.left) * HIMETRIC_PER_INCH / system_dpi,
              (rect.bottom - rect.top) * HIMETRIC_PER_INCH / system_dpi );
     *display_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
