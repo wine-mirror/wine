@@ -4914,11 +4914,12 @@ static WCHAR *build_connect_string( struct attribute_list *list )
     for (i = 0; i < list->count; i++)
     {
         wcscpy( ptr, list->attrs[i]->name );
+        wcsupr( ptr );
         ptr += wcslen( ptr );
         *ptr++ = '=';
         wcscpy( ptr, list->attrs[i]->value );
         ptr += wcslen( ptr );
-        if (i < list->count - 1) *ptr++ = ';';
+        *ptr++ = ';';
     }
     *ptr = 0;
     return ret;
