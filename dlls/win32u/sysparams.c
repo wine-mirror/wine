@@ -2338,30 +2338,29 @@ static void source_virt_to_raw_ratio( struct source *source, UINT *num, UINT *de
 }
 
 /* display_lock must be held */
-static struct ratio monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, struct ratio *dpi_x, struct ratio *dpi_y )
+static struct ratio monitor_get_dpi( struct monitor *monitor, struct ratio *scale_x, struct ratio *scale_y )
 {
-    struct ratio scale_x = {1, 1}, scale_y = {1, 1};
+    struct ratio dpi = {1, 1}, x = {1, 1}, y = {1, 1};
     struct source *source = monitor->source;
-    UINT dpi;
 
-    if (!source || !(dpi = source->dpi)) dpi = system_dpi;
-    if (source && type != MDT_EFFECTIVE_DPI && (source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+    if (!source || !(dpi.num = source->dpi)) dpi.num = system_dpi;
+    if (source && (source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
     {
-        scale_x.num = source->physical.dmPelsWidth;
-        scale_x.den = source->current.dmPelsWidth;
-        scale_y.num = source->physical.dmPelsHeight;
-        scale_y.den = source->current.dmPelsHeight;
+        x.num = source->physical.dmPelsWidth;
+        x.den = source->current.dmPelsWidth;
+        y.num = source->physical.dmPelsHeight;
+        y.den = source->current.dmPelsHeight;
     }
 
-    *dpi_x = make_ratio( dpi * scale_x.num, scale_x.den );
-    *dpi_y = make_ratio( dpi * scale_y.num, scale_y.den );
-    return min_ratio( *dpi_x, *dpi_y );
+    *scale_x = make_ratio( dpi.num * x.num, x.den );
+    *scale_y = make_ratio( dpi.num * y.num, y.den );
+    return dpi;
 }
 
 /* display_lock must be held */
 static RECT map_monitor_rect_raw_to_virt( struct monitor *monitor, RECT rect, struct ratio dpi_to )
 {
-    struct ratio x, y, dpi = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+    struct ratio x, y, dpi = monitor_get_dpi( monitor, &x, &y );
     struct source *source = monitor->source;
 
     if (!dpi_to.num) dpi_to = dpi;
@@ -2402,7 +2401,7 @@ static RECT map_monitor_rect_raw_to_virt( struct monitor *monitor, RECT rect, st
 /* display_lock must be held */
 static RECT map_monitor_rect_virt_to_raw( struct monitor *monitor, RECT rect, struct ratio dpi_from )
 {
-    struct ratio x, y, dpi = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+    struct ratio x, y, dpi = monitor_get_dpi( monitor, &x, &y );
     struct source *source = monitor->source;
 
     if (!dpi_from.num) dpi_from = dpi;
@@ -2445,9 +2444,8 @@ static RECT monitor_get_rect( struct monitor *monitor, struct ratio dpi, MONITOR
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     RECT rect = {0, 0, 1024, 768};
-    struct ratio dpi_from, x, y;
+    struct ratio x, y, dpi_from = monitor_get_dpi( monitor, &x, &y );
     struct source *source;
-    DEVMODEW *mode;
 
     /* services do not have any adapters, only a virtual monitor */
     if (!(source = monitor->source)) return rect;
@@ -2456,13 +2454,18 @@ static RECT monitor_get_rect( struct monitor *monitor, struct ratio dpi, MONITOR
     if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return rect;
     source_get_current_settings( source, &current_mode );
 
-    mode = type != MDT_EFFECTIVE_DPI ? &source->physical : &current_mode;
-    SetRect( &rect, mode->dmPosition.x, mode->dmPosition.y,
-             mode->dmPosition.x + mode->dmPelsWidth,
-             mode->dmPosition.y + mode->dmPelsHeight );
+    if (type == MDT_EFFECTIVE_DPI)
+    {
+        SetRect( &rect, current_mode.dmPosition.x, current_mode.dmPosition.y,
+                 current_mode.dmPosition.x + current_mode.dmPelsWidth,
+                 current_mode.dmPosition.y + current_mode.dmPelsHeight );
+        return map_dpi_rect( rect, dpi_from, dpi );
+    }
 
-    dpi_from = monitor_get_dpi( monitor, type, &x, &y );
-    return map_dpi_rect( rect, dpi_from, dpi );
+    SetRect( &rect, source->physical.dmPosition.x, source->physical.dmPosition.y,
+             source->physical.dmPosition.x + source->physical.dmPelsWidth,
+             source->physical.dmPosition.y + source->physical.dmPelsHeight );
+    return map_dpi_rect( rect, min_ratio( x, y ), dpi );
 }
 
 /* display_lock must be held */
@@ -2499,8 +2502,8 @@ static void set_winstation_monitors( BOOL increment )
         if (is_monitor_primary( monitor )) info->flags |= MONITOR_FLAG_PRIMARY;
         if (!is_monitor_active( monitor )) info->flags |= MONITOR_FLAG_INACTIVE;
         if (monitor->is_clone) info->flags |= MONITOR_FLAG_CLONE;
-        info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y ).num;
-        info->scale = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
+        info->dpi = monitor_get_dpi( monitor, &x, &y ).num;
+        info->scale = min_ratio( x, y );
         info->virt = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_EFFECTIVE_DPI ) );
         info->raw = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_RAW_DPI ) );
         TRACE( "  flags %#x virt %s dpi %u raw %s scale %s\n", info->flags, wine_dbgstr_rect( (RECT *)&info->virt ),
@@ -3235,13 +3238,13 @@ struct window_rects map_window_rects_virt_to_raw( struct window_rects rects, str
     return rects;
 }
 
-static struct ratio get_monitor_dpi( HMONITOR handle, UINT type, struct ratio *x, struct ratio *y )
+static struct ratio get_monitor_dpi( HMONITOR handle, struct ratio *x, struct ratio *y )
 {
     struct ratio dpi = {system_dpi, 1};
     struct monitor *monitor;
 
     if (!lock_display_devices( FALSE )) return no_dpi;
-    if ((monitor = get_monitor_from_handle( handle ))) dpi = monitor_get_dpi( monitor, type, x, y );
+    if ((monitor = get_monitor_from_handle( handle ))) dpi = monitor_get_dpi( monitor, x, y );
     unlock_display_devices();
 
     return dpi;
@@ -4851,8 +4854,8 @@ struct ratio monitor_dpi_from_rect( RECT rect, struct ratio dpi, struct ratio *s
     if (!lock_display_devices( FALSE )) return no_dpi;
     if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi, MDT_DEFAULT )))
     {
-        *scale = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
-        ret = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+        ret = monitor_get_dpi( monitor, &x, &y );
+        *scale = min_ratio( x, y );
     }
     unlock_display_devices();
 
@@ -4923,10 +4926,13 @@ BOOL WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *
     case DPI_AWARENESS_SYSTEM_AWARE: *x = *y = system_dpi; break;
     default:
     {
-        struct ratio dpi_x, dpi_y;
-        get_monitor_dpi( monitor, type, &dpi_x, &dpi_y );
-        *x = round_dpi( dpi_x );
-        *y = round_dpi( dpi_y );
+        struct ratio scale_x, scale_y, dpi = get_monitor_dpi( monitor, &scale_x, &scale_y );
+        if (type == MDT_EFFECTIVE_DPI) *x = *y = round_dpi( dpi );
+        else
+        {
+            *x = round_dpi( scale_x );
+            *y = round_dpi( scale_y );
+        }
         break;
     }
     }
