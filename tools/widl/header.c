@@ -1063,15 +1063,42 @@ static void write_cpp_using( FILE *header, const type_t *iface, const type_t *ch
     }
 }
 
+static void write_cpp_method_range( FILE *header, const type_t *iface, const statement_t *first, const statement_t *last, bool reverse )
+{
+    const statement_t *stmt = first;
+    for (;;)
+    {
+        write_cpp_method( header, iface, stmt->u.var );
+        if (stmt == last) break;
+        stmt = LIST_ENTRY( reverse ? stmt->entry.prev : stmt->entry.next, statement_t, entry );
+    }
+}
+
+static const statement_t *get_method_overload_range( const statement_t *stmt, const statement_t **end )
+{
+    const statement_t *first = stmt;
+    while (stmt->u.var->overload) *end = stmt = LIST_ENTRY( stmt->entry.next, statement_t, entry );
+    return stmt == first ? NULL : first;
+}
+
 static void write_cpp_methods( FILE *header, const type_t *iface )
 {
-    const statement_t *stmt;
+    const statement_t *stmt, *first, *last;
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( iface ) )
     {
         const var_t *func = stmt->u.var;
         if (is_callas( func->attrs )) continue;
-        write_cpp_method( header, iface, func );
+        if (!(first = get_method_overload_range( stmt, &last ))) write_cpp_method( header, iface, func );
+        else
+        {
+            fprintf( header, "#if defined(_MSC_VER)\n" );
+            write_cpp_method_range( header, iface, last, first, true );
+            fprintf( header, "#else\n" );
+            write_cpp_method_range( header, iface, first, last, false );
+            fprintf( header, "#endif\n" );
+            stmt = last;
+        }
     }
 
     if (type_iface_get_inherit( iface )) write_cpp_using( header, type_iface_get_inherit( iface ), iface );
@@ -1345,9 +1372,20 @@ static void write_parameterized_method( FILE *header, const var_t *func )
     indentation -= 1;
 }
 
+static void write_parameterized_method_range( FILE *header, const statement_t *first, const statement_t *last, bool reverse )
+{
+    const statement_t *stmt = first;
+    for (;;)
+    {
+        write_parameterized_method( header, stmt->u.var );
+        if (stmt == last) break;
+        stmt = LIST_ENTRY( reverse ? stmt->entry.prev : stmt->entry.next, statement_t, entry );
+    }
+}
+
 static void write_parameterized_implementation(FILE *header, type_t *type, bool define)
 {
-    const statement_t *stmt;
+    const statement_t *stmt, *first, *last;
     typeref_list_t *params = type->details.parameterized.params;
     typeref_t *ref;
     type_t *iface = type->details.parameterized.type, *base;
@@ -1382,7 +1420,16 @@ static void write_parameterized_implementation(FILE *header, type_t *type, bool 
     {
         const var_t *func = stmt->u.var;
         if (is_callas( func->attrs )) continue;
-        write_parameterized_method( header, func );
+        if (!(first = get_method_overload_range( stmt, &last ))) write_parameterized_method( header, func );
+        else
+        {
+            fprintf( header, "#if defined(_MSC_VER)\n" );
+            write_parameterized_method_range( header, last, first, true );
+            fprintf( header, "#else\n" );
+            write_parameterized_method_range( header, first, last, false );
+            fprintf( header, "#endif\n" );
+            stmt = last;
+        }
     }
     write_line(header, -1, "};");
 
