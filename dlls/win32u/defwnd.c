@@ -3007,16 +3007,6 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     return result;
 }
 
-static void update_children_window_state( HWND hwnd )
-{
-    HWND *children;
-    int i;
-
-    if (!(children = list_window_children( hwnd ))) return;
-    for (i = 0; children[i]; i++) update_window_state( children[i] );
-    free( children );
-}
-
 LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     static const WCHAR wine_display_device_guidW[] =
@@ -3052,6 +3042,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_DISPLAYCHANGE:
     {
         static RECT virtual_rect = {INT_MIN,INT_MIN,INT_MAX,INT_MAX};
+        HWND *children;
 
         RECT new_rect = get_virtual_screen_rect( no_dpi, MDT_DEFAULT ), old_rect = virtual_rect;
         UINT context, flags = 0;
@@ -3073,7 +3064,14 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                             flags | SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         NtUserSetThreadDpiAwarenessContext( context );
 
-        update_children_window_state( hwnd );
+        /* invalidate and update toplevel window positions for the new display settings */
+        children = list_window_children( hwnd );
+        for (int i = 0; children && children[i]; i++)
+        {
+            NtUserRedrawWindow( children[i], NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+            update_window_state( children[i] );
+        }
+        free( children );
 
         return 0;
     }
