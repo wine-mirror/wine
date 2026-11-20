@@ -1900,7 +1900,7 @@ static HRESULT WINAPI dwritefontface3_AreGlyphsLocal(IDWriteFontFace5 *iface, UI
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontface4_GetGlyphImageFormats_(IDWriteFontFace5 *iface, UINT16 glyph,
+static HRESULT WINAPI dwritefontface4_GetGlyphImageFormats_1(IDWriteFontFace5 *iface, UINT16 glyph,
     UINT32 ppem_first, UINT32 ppem_last, DWRITE_GLYPH_IMAGE_FORMATS *formats)
 {
     FIXME("%p, %u, %u, %u, %p: stub\n", iface, glyph, ppem_first, ppem_last, formats);
@@ -2031,7 +2031,7 @@ static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
     dwritefontface3_IsGlyphLocal,
     dwritefontface3_AreCharactersLocal,
     dwritefontface3_AreGlyphsLocal,
-    dwritefontface4_GetGlyphImageFormats_,
+    dwritefontface4_GetGlyphImageFormats_1,
     dwritefontface4_GetGlyphImageFormats,
     dwritefontface4_GetGlyphImageData,
     dwritefontface4_ReleaseGlyphImageData,
@@ -3085,7 +3085,7 @@ static HRESULT WINAPI dwritefontfamily1_GetFontFaceReference(IDWriteFontFamily2 
         return E_FAIL;
 
     font = family->data->fonts[index];
-    return IDWriteFactory5_CreateFontFaceReference_((IDWriteFactory5 *)family->collection->factory,
+    return IDWriteFactory5_CreateFontFaceReference_1((IDWriteFactory5 *)family->collection->factory,
             font->file, font->face_index, font->simulations, reference);
 }
 
@@ -7554,7 +7554,7 @@ static HRESULT WINAPI dwritefontset_GetFontFaceReference(IDWriteFontSet3 *iface,
     if (index >= set->count)
         return E_INVALIDARG;
 
-    return IDWriteFactory7_CreateFontFaceReference_(set->factory, set->entries[index]->file,
+    return IDWriteFactory7_IDWriteFactory3_CreateFontFaceReference_1(set->factory, set->entries[index]->file,
             set->entries[index]->face_index, set->entries[index]->simulations, reference);
 }
 
@@ -7574,7 +7574,7 @@ static HRESULT WINAPI dwritefontset_FindFontFace(IDWriteFontSet3 *iface, IDWrite
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset_GetPropertyValues__(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY_ID id,
+static HRESULT WINAPI dwritefontset_GetPropertyValues_2(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY_ID id,
         IDWriteStringList **values)
 {
     FIXME("%p, %d, %p.\n", iface, id, values);
@@ -7582,7 +7582,7 @@ static HRESULT WINAPI dwritefontset_GetPropertyValues__(IDWriteFontSet3 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset_GetPropertyValues_(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY_ID id,
+static HRESULT WINAPI dwritefontset_GetPropertyValues_1(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY_ID id,
         WCHAR const *preferred_locales, IDWriteStringList **values)
 {
     FIXME("%p, %d, %s, %p.\n", iface, id, debugstr_w(preferred_locales), values);
@@ -7660,7 +7660,7 @@ static BOOL fontset_entry_is_matching(struct dwrite_fontset_entry *entry, DWRITE
     return TRUE;
 }
 
-static HRESULT WINAPI dwritefontset_GetMatchingFonts_(IDWriteFontSet3 *iface, WCHAR const *family, DWRITE_FONT_WEIGHT weight,
+static HRESULT WINAPI dwritefontset_GetMatchingFonts_1(IDWriteFontSet3 *iface, WCHAR const *family, DWRITE_FONT_WEIGHT weight,
         DWRITE_FONT_STRETCH stretch,  DWRITE_FONT_STYLE style, IDWriteFontSet **fontset)
 {
     FIXME("%p, %s, %d, %d, %d, %p.\n", iface, debugstr_w(family), weight, stretch, style, fontset);
@@ -7726,7 +7726,7 @@ static HRESULT WINAPI dwritefontset1_GetFirstFontResources(IDWriteFontSet3 *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset1_GetFilteredFonts__(IDWriteFontSet3 *iface, UINT32 const *indices,
+static HRESULT WINAPI dwritefontset1_GetFilteredFonts_2(IDWriteFontSet3 *iface, UINT32 const *indices,
         UINT32 num_indices, IDWriteFontSet1 **fontset)
 {
     FIXME("%p, %p, %u, %p.\n", iface, indices, num_indices, fontset);
@@ -7734,7 +7734,7 @@ static HRESULT WINAPI dwritefontset1_GetFilteredFonts__(IDWriteFontSet3 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset1_GetFilteredFonts_(IDWriteFontSet3 *iface, DWRITE_FONT_AXIS_RANGE const *axis_ranges,
+static HRESULT WINAPI dwritefontset1_GetFilteredFonts_1(IDWriteFontSet3 *iface, DWRITE_FONT_AXIS_RANGE const *axis_ranges,
         UINT32 num_ranges, BOOL select_any_range, IDWriteFontSet1 **fontset)
 {
     FIXME("%p, %p, %u, %d, %p.\n", iface, axis_ranges, num_ranges, select_any_range, fontset);
@@ -7750,7 +7750,7 @@ static HRESULT WINAPI dwritefontset1_GetFilteredFonts(IDWriteFontSet3 *iface, DW
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset1_GetFilteredFontIndices_(IDWriteFontSet3 *iface, DWRITE_FONT_AXIS_RANGE const *ranges,
+static HRESULT WINAPI dwritefontset1_GetFilteredFontIndices_1(IDWriteFontSet3 *iface, DWRITE_FONT_AXIS_RANGE const *ranges,
         UINT32 num_ranges, BOOL select_any_range, UINT32 *indices, UINT32 num_indices, UINT32 *actual_num_indices)
 {
     FIXME("%p, %p, %u, %d, %p, %u, %p.\n", iface, ranges, num_ranges, select_any_range, indices, num_indices, actual_num_indices);
@@ -7767,7 +7767,7 @@ static HRESULT WINAPI dwritefontset1_GetFilteredFontIndices(IDWriteFontSet3 *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontset1_GetFontAxisRanges_(IDWriteFontSet3 *iface, UINT32 font_index,
+static HRESULT WINAPI dwritefontset1_GetFontAxisRanges_1(IDWriteFontSet3 *iface, UINT32 font_index,
         DWRITE_FONT_AXIS_RANGE *axis_ranges, UINT32 num_ranges, UINT32 *actual_num_ranges)
 {
     FIXME("%p, %u, %p, %u, %p.\n", iface, font_index, axis_ranges, num_ranges, actual_num_ranges);
@@ -7857,20 +7857,20 @@ static const IDWriteFontSet3Vtbl fontsetvtbl =
     dwritefontset_GetFontFaceReference,
     dwritefontset_FindFontFaceReference,
     dwritefontset_FindFontFace,
-    dwritefontset_GetPropertyValues__,
-    dwritefontset_GetPropertyValues_,
+    dwritefontset_GetPropertyValues_2,
+    dwritefontset_GetPropertyValues_1,
     dwritefontset_GetPropertyValues,
     dwritefontset_GetPropertyOccurrenceCount,
-    dwritefontset_GetMatchingFonts_,
+    dwritefontset_GetMatchingFonts_1,
     dwritefontset_GetMatchingFonts,
     dwritefontset1_GetMatchingFonts,
     dwritefontset1_GetFirstFontResources,
-    dwritefontset1_GetFilteredFonts__,
-    dwritefontset1_GetFilteredFonts_,
+    dwritefontset1_GetFilteredFonts_2,
+    dwritefontset1_GetFilteredFonts_1,
     dwritefontset1_GetFilteredFonts,
-    dwritefontset1_GetFilteredFontIndices_,
+    dwritefontset1_GetFilteredFontIndices_1,
     dwritefontset1_GetFilteredFontIndices,
-    dwritefontset1_GetFontAxisRanges_,
+    dwritefontset1_GetFontAxisRanges_1,
     dwritefontset1_GetFontAxisRanges,
     dwritefontset1_GetFontFaceReference,
     dwritefontset1_CreateFontResource,
@@ -8075,7 +8075,7 @@ static HRESULT fontset_builder_add_file(struct dwrite_fontset_builder *builder, 
     return hr;
 }
 
-static HRESULT WINAPI dwritefontsetbuilder_AddFontFaceReference_(IDWriteFontSetBuilder2 *iface,
+static HRESULT WINAPI dwritefontsetbuilder_AddFontFaceReference_1(IDWriteFontSetBuilder2 *iface,
         IDWriteFontFaceReference *ref, DWRITE_FONT_PROPERTY const *props, UINT32 prop_count)
 {
     FIXME("%p, %p, %p, %u.\n", iface, ref, props, prop_count);
@@ -8172,7 +8172,7 @@ static const IDWriteFontSetBuilder2Vtbl fontsetbuildervtbl =
     dwritefontsetbuilder_QueryInterface,
     dwritefontsetbuilder_AddRef,
     dwritefontsetbuilder_Release,
-    dwritefontsetbuilder_AddFontFaceReference_,
+    dwritefontsetbuilder_AddFontFaceReference_1,
     dwritefontsetbuilder_AddFontFaceReference,
     dwritefontsetbuilder_AddFontSet,
     dwritefontsetbuilder_CreateFontSet,

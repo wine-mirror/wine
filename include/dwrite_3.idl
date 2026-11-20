@@ -372,35 +372,35 @@ interface IDWriteFontSet : IUnknown
         [out] UINT32 *index,
         [out] BOOL *exists
     );
-    HRESULT GetPropertyValues__(
-        [in] DWRITE_FONT_PROPERTY_ID id,
-        [out] IDWriteStringList **values
-    );
-    HRESULT GetPropertyValues_(
-        [in] DWRITE_FONT_PROPERTY_ID id,
-        [in] WCHAR const *preferred_locales,
-        [out] IDWriteStringList **values
-    );
     HRESULT GetPropertyValues(
         [in] UINT32 index,
         [in] DWRITE_FONT_PROPERTY_ID id,
         [out] BOOL *exists,
         [out] IDWriteLocalizedStrings **values
     );
+    HRESULT GetPropertyValues(
+        [in] DWRITE_FONT_PROPERTY_ID id,
+        [in] WCHAR const *preferred_locales,
+        [out] IDWriteStringList **values
+    );
+    HRESULT GetPropertyValues(
+        [in] DWRITE_FONT_PROPERTY_ID id,
+        [out] IDWriteStringList **values
+    );
     HRESULT GetPropertyOccurrenceCount(
         [in] DWRITE_FONT_PROPERTY const *property,
         [out] UINT32 *count
     );
-    HRESULT GetMatchingFonts_(
+    HRESULT GetMatchingFonts(
+        [in] DWRITE_FONT_PROPERTY const *props,
+        [in] UINT32 count,
+        [out] IDWriteFontSet **fontset
+    );
+    HRESULT GetMatchingFonts(
         [in] WCHAR const *family,
         [in] DWRITE_FONT_WEIGHT weight,
         [in] DWRITE_FONT_STRETCH stretch,
         [in] DWRITE_FONT_STYLE style,
-        [out] IDWriteFontSet **fontset
-    );
-    HRESULT GetMatchingFonts(
-        [in] DWRITE_FONT_PROPERTY const *props,
-        [in] UINT32 count,
         [out] IDWriteFontSet **fontset
     );
 }
@@ -472,30 +472,22 @@ interface IDWriteFontSet1 : IDWriteFontSet
     HRESULT GetFirstFontResources(
         [out] IDWriteFontSet1 **fontset
     );
-    HRESULT GetFilteredFonts__(
-        [in] UINT32 const *indices,
-        [in] UINT32 num_indices,
-        [out] IDWriteFontSet1 **fontset
-    );
-    HRESULT GetFilteredFonts_(
-        [in] DWRITE_FONT_AXIS_RANGE const *axis_ranges,
-        [in] UINT32 num_ranges,
-        [in] BOOL select_any_range,
-        [out] IDWriteFontSet1 **fontset
-    );
     HRESULT GetFilteredFonts(
         [in] DWRITE_FONT_PROPERTY const *props,
         [in] UINT32 num_properties,
         [in] BOOL select_any_property,
         [out] IDWriteFontSet1 **fontset
     );
-    HRESULT GetFilteredFontIndices_(
-        [in] DWRITE_FONT_AXIS_RANGE const *ranges,
+    HRESULT GetFilteredFonts(
+        [in] DWRITE_FONT_AXIS_RANGE const *axis_ranges,
         [in] UINT32 num_ranges,
         [in] BOOL select_any_range,
-        [out] UINT32 *indices,
+        [out] IDWriteFontSet1 **fontset
+    );
+    HRESULT GetFilteredFonts(
+        [in] UINT32 const *indices,
         [in] UINT32 num_indices,
-        [out] UINT32 *actual_num_indices
+        [out] IDWriteFontSet1 **fontset
     );
     HRESULT GetFilteredFontIndices(
         [in] DWRITE_FONT_PROPERTY const *props,
@@ -505,13 +497,21 @@ interface IDWriteFontSet1 : IDWriteFontSet
         [in] UINT32 num_indices,
         [out] UINT32 *actual_num_indices
     );
-    HRESULT GetFontAxisRanges_(
-        [in] UINT32 font_index,
+    HRESULT GetFilteredFontIndices(
+        [in] DWRITE_FONT_AXIS_RANGE const *ranges,
+        [in] UINT32 num_ranges,
+        [in] BOOL select_any_range,
+        [out] UINT32 *indices,
+        [in] UINT32 num_indices,
+        [out] UINT32 *actual_num_indices
+    );
+    HRESULT GetFontAxisRanges(
         [out] DWRITE_FONT_AXIS_RANGE *axis_ranges,
         [in] UINT32 num_ranges,
         [out] UINT32 *actual_num_ranges
     );
     HRESULT GetFontAxisRanges(
+        [in] UINT32 font_index,
         [out] DWRITE_FONT_AXIS_RANGE *axis_ranges,
         [in] UINT32 num_ranges,
         [out] UINT32 *actual_num_ranges
@@ -997,15 +997,12 @@ interface IDWriteGdiInterop1 : IDWriteGdiInterop
         [in] IDWriteFontCollection *collection,
         [out] IDWriteFont **font
     );
-
-    /* GetFontSignature() methods are listed in reversed order to make
-       resulting vtable order compatible. */
-    HRESULT GetFontSignature_(
-        [in] IDWriteFontFace *fontface,
+    HRESULT GetFontSignature(
+        [in] IDWriteFont *font,
         [out] FONTSIGNATURE *fontsig
     );
     HRESULT GetFontSignature(
-        [in] IDWriteFont *font,
+        [in] IDWriteFontFace *fontface,
         [out] FONTSIGNATURE *fontsig
     );
     HRESULT GetMatchingFontsByLOGFONT(
@@ -1022,13 +1019,13 @@ interface IDWriteGdiInterop1 : IDWriteGdiInterop
 ]
 interface IDWriteFontSetBuilder : IUnknown
 {
-    HRESULT AddFontFaceReference_(
+    HRESULT AddFontFaceReference(
+        [in] IDWriteFontFaceReference *ref);
+    HRESULT AddFontFaceReference(
         [in] IDWriteFontFaceReference *ref,
         [in] DWRITE_FONT_PROPERTY const *props,
         [in] UINT32 prop_count
     );
-    HRESULT AddFontFaceReference(
-        [in] IDWriteFontFaceReference *ref);
     HRESULT AddFontSet(
         [in] IDWriteFontSet *fontset
     );
@@ -1100,17 +1097,15 @@ interface IDWriteFactory3 : IDWriteFactory2
         [in] DWRITE_GRID_FIT_MODE gridfit_mode,
         [out] IDWriteRenderingParams3 **params
     );
-    /* CreateFontFaceReference methods are listed in reversed order to make
-       resulting vtable order compatible. */
-    HRESULT CreateFontFaceReference_(
-        [in] IDWriteFontFile *file,
+    HRESULT CreateFontFaceReference(
+        [in] WCHAR const *path,
+        [in] FILETIME const *writetime,
         [in] UINT32 index,
         [in] DWRITE_FONT_SIMULATIONS simulations,
         [out] IDWriteFontFaceReference **reference
     );
     HRESULT CreateFontFaceReference(
-        [in] WCHAR const *path,
-        [in] FILETIME const *writetime,
+        [in] IDWriteFontFile *file,
         [in] UINT32 index,
         [in] DWRITE_FONT_SIMULATIONS simulations,
         [out] IDWriteFontFaceReference **reference
@@ -1155,13 +1150,13 @@ typedef struct DWRITE_GLYPH_IMAGE_DATA
 ]
 interface IDWriteFontFace4 : IDWriteFontFace3
 {
-    HRESULT GetGlyphImageFormats_(
+    DWRITE_GLYPH_IMAGE_FORMATS GetGlyphImageFormats();
+    HRESULT GetGlyphImageFormats(
         [in] UINT16 glyph,
         [in] UINT32 ppem_first,
         [in] UINT32 ppem_last,
         [out] DWRITE_GLYPH_IMAGE_FORMATS *formats
     );
-    DWRITE_GLYPH_IMAGE_FORMATS GetGlyphImageFormats();
     HRESULT GetGlyphImageData(
         [in] UINT16 glyph,
         [in] UINT32 ppem,
@@ -1319,16 +1314,16 @@ interface IDWriteFactory4 : IDWriteFactory3
         [in] UINT32 palette,
         [out] IDWriteColorGlyphRunEnumerator1 **layers
     );
-    HRESULT ComputeGlyphOrigins_(
-        [in] DWRITE_GLYPH_RUN const *run,
-        [in] D2D1_POINT_2F baseline_origin,
-        [out] D2D1_POINT_2F *origins
-    );
     HRESULT ComputeGlyphOrigins(
         [in] DWRITE_GLYPH_RUN const *run,
         [in] DWRITE_MEASURING_MODE measuring_mode,
         [in] D2D1_POINT_2F baseline_origin,
         [in] DWRITE_MATRIX const *transform,
+        [out] D2D1_POINT_2F *origins
+    );
+    HRESULT ComputeGlyphOrigins(
+        [in] DWRITE_GLYPH_RUN const *run,
+        [in] D2D1_POINT_2F baseline_origin,
         [out] D2D1_POINT_2F *origins
     );
 }

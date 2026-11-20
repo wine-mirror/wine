@@ -8280,7 +8280,7 @@ static void test_CreateFontFaceReference(void)
     hr = IDWriteFactory3_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IDWriteFactory3_CreateFontFaceReference_(factory, file, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+    hr = IDWriteFactory3_CreateFontFaceReference_1(factory, file, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteFontFaceReference_GetFontFile(ref, &file1);
@@ -8894,7 +8894,7 @@ static void test_ComputeGlyphOrigins(void)
         get_expected_glyph_origins(origins_tests[i].baseline_origin, &run, expected_origins);
 
         memset(origins, 0, sizeof(origins));
-        hr = IDWriteFactory4_ComputeGlyphOrigins_(factory, &run, origins_tests[i].baseline_origin, origins);
+        hr = IDWriteFactory4_ComputeGlyphOrigins_1(factory, &run, origins_tests[i].baseline_origin, origins);
         ok(hr == S_OK, "%u: failed to compute glyph origins, hr %#lx.\n", i, hr);
         for (j = 0; j < run.glyphCount; ++j)
         {
@@ -8923,7 +8923,7 @@ static void test_ComputeGlyphOrigins(void)
     baseline_origin.y = 321.0f;
 
     memset(origins, 0, sizeof(origins));
-    hr = IDWriteFactory4_ComputeGlyphOrigins_(factory, &run, baseline_origin, origins);
+    hr = IDWriteFactory4_ComputeGlyphOrigins_1(factory, &run, baseline_origin, origins);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(origins[0].x == 123.0f && origins[0].y == 321.0f, "origins[0] %f,%f\n", origins[0].x, origins[0].y);
     ok(origins[1].x == 133.0f && origins[1].y == 321.0f, "origins[1] %f,%f\n", origins[1].x, origins[1].y);
@@ -10641,12 +10641,12 @@ static void test_CreateFontCollectionFromFontSet(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
     /* Add same file, with explicit properties. */
-    hr = IDWriteFactory5_CreateFontFaceReference_(factory, file, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+    hr = IDWriteFactory5_CreateFontFaceReference_1(factory, file, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
     props[0].propertyId = DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FAMILY_NAME;
     props[0].propertyValue = L"Another Font";
     props[0].localeName = L"en-US";
-    hr = IDWriteFontSetBuilder1_AddFontFaceReference_(builder, ref, props, 1);
+    hr = IDWriteFontSetBuilder1_AddFontFaceReference_1(builder, ref, props, 1);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
     IDWriteFontFaceReference_Release(ref);
