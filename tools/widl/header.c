@@ -838,26 +838,22 @@ const var_t *is_callas(const attr_list_t *a)
   return get_attrp(a, ATTR_CALLAS);
 }
 
-static int is_inherited_method(const type_t *iface, const var_t *func)
+static const char *get_method_override_prefix( const type_t *iface, const type_t *child, const var_t *method )
 {
-  while ((iface = type_iface_get_inherit(iface)))
-  {
     const statement_t *stmt;
-    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
+    const char *name;
+
+    if (!iface || !child || iface == child || is_callas( method->attrs )) return NULL;
+    name = xstrdup( get_name( method ) );
+
+    STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts( child ) )
     {
-      const var_t *funccmp = stmt->u.var;
-
-      if (!is_callas(func->attrs))
-      {
-         char inherit_name[256];
-         /* compare full name including property prefix */
-         strcpy(inherit_name, get_name(funccmp));
-         if (!strcmp(inherit_name, get_name(func))) return 1;
-      }
+        const var_t *func = stmt->u.var;
+        if (is_callas( func->attrs )) continue;
+        if (!strcmp( name, get_name( func ) )) return iface->name;
     }
-  }
 
-  return 0;
+    return get_method_override_prefix( iface, type_iface_get_inherit( child ), method );
 }
 
 static int is_override_method(const type_t *iface, const type_t *child, const var_t *func)
@@ -894,14 +890,10 @@ static int is_aggregate_return(const var_t *func)
          type == TYPE_RUNTIMECLASS;
 }
 
-static char *get_vtbl_entry_name(const type_t *iface, const var_t *func)
+static const char *get_method_name( const type_t *iface, const type_t *child, const var_t *func )
 {
-  static char buff[255];
-  if (is_inherited_method(iface, func))
-    snprintf(buff, sizeof(buff), "%s_%s", iface->name, get_name(func));
-  else
-    snprintf(buff, sizeof(buff), "%s", get_name(func));
-  return buff;
+    const char *base = get_method_override_prefix( iface, child, func );
+    return base ? strmake( "%s_%s", base, get_name( func ) ) : get_name( func );
 }
 
 static void write_method_macro(FILE *header, const type_t *iface, const type_t *child, const char *name)
@@ -928,7 +920,7 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
     if (!is_callas(func->attrs)) {
       const var_t *arg;
 
-      fprintf(header, "#define %s_%s(This", name, get_name(func));
+      fprintf( header, "#define %s_%s(This", name, get_method_name( iface, child, func ) );
       if (type_function_get_args(func->declspec.type))
           LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
@@ -936,11 +928,12 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
 
       if (is_aggregate_return(func))
       {
-        fprintf(header, "%s_%s_define_WIDL_C_INLINE_WRAPPERS_for_aggregate_return_support\n", name, get_name(func));
-        continue;
+          fprintf( header, "%s_%s_define_WIDL_C_INLINE_WRAPPERS_for_aggregate_return_support\n",
+                   name, get_method_name( iface, child, func ) );
+          continue;
       }
 
-      fprintf(header, "(This)->lpVtbl->%s(This", get_vtbl_entry_name(iface, func));
+      fprintf( header, "(This)->lpVtbl->%s(This", get_method_name( iface, child, func ) );
       if (type_function_get_args(func->declspec.type))
           LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
@@ -1116,21 +1109,21 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
 
       fprintf(header, "static inline ");
       write_type_decl_left(header, type_function_get_ret(func->declspec.type));
-      fprintf(header, " %s_%s(", name, get_name(func));
+      fprintf( header, " %s_%s(", name, get_method_name( iface, child, func ) );
       write_args(header, type_function_get_args(func->declspec.type), name, 1, FALSE, NAME_C);
       fprintf(header, ") {\n");
       ++indentation;
       if (!is_aggregate_return(func)) {
         indent(header, 0);
-        fprintf(header, "%sThis->lpVtbl->%s(This",
-                is_void(type_function_get_rettype(func->declspec.type)) ? "" : "return ",
-                get_vtbl_entry_name(iface, func));
+        fprintf( header, "%sThis->lpVtbl->%s(This",
+                 is_void( type_function_get_rettype( func->declspec.type ) ) ? "" : "return ",
+                 get_method_name( iface, child, func ) );
       } else {
         indent(header, 0);
         write_type_decl_left(header, type_function_get_ret(func->declspec.type));
         fprintf(header, " __ret;\n");
         indent(header, 0);
-        fprintf(header, "return *This->lpVtbl->%s(This,&__ret", get_vtbl_entry_name(iface, func));
+        fprintf( header, "return *This->lpVtbl->%s(This,&__ret", get_method_name( iface, child, func ) );
       }
       if (type_function_get_args(func->declspec.type))
           LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
@@ -1142,13 +1135,12 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
   }
 }
 
-static void do_write_c_method_def(FILE *header, const type_t *iface, const char *name)
+static void do_write_c_method_def( FILE *header, const type_t *iface, const type_t *child, const char *name )
 {
   const statement_t *stmt;
   int first_iface = 1;
 
-  if (type_iface_get_inherit(iface))
-    do_write_c_method_def(header, type_iface_get_inherit(iface), name);
+  if (type_iface_get_inherit( iface )) do_write_c_method_def( header, type_iface_get_inherit( iface ), child, name );
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
@@ -1165,10 +1157,7 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
       write_type_decl_left(header, type_function_get_ret(func->declspec.type));
       if (is_aggregate_return(func))
         fprintf(header, " *");
-      if (is_inherited_method(iface, func))
-        fprintf(header, " (%s *%s_%s)(\n", callconv, iface->name, func->name);
-      else
-        fprintf(header, " (%s *%s)(\n", callconv, get_name(func));
+      fprintf( header, " (%s *%s)(\n", callconv, get_method_name( iface, child, func ) );
       ++indentation;
       indent(header, 0);
       fprintf(header, "%s *This", name);
@@ -1191,12 +1180,12 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
 
 static void write_c_method_def(FILE *header, const type_t *iface)
 {
-  do_write_c_method_def(header, iface, iface->c_name);
+    do_write_c_method_def( header, iface, iface, iface->c_name );
 }
 
 static void write_c_disp_method_def(FILE *header, const type_t *iface)
 {
-  do_write_c_method_def(header, type_iface_get_inherit(iface), iface->c_name);
+    do_write_c_method_def( header, type_iface_get_inherit( iface ), iface, iface->c_name );
 }
 
 static void write_method_proto(FILE *header, const type_t *iface)
@@ -1476,23 +1465,23 @@ static void write_com_interface_start(FILE *header, const type_t *iface)
   fprintf(header,"#define __%s_%sINTERFACE_DEFINED__\n\n", iface->c_name, dispinterface ? "DISP" : "");
 }
 
-static void write_widl_using_method_macros(FILE *header, const type_t *iface, const type_t *top_iface)
+static void write_widl_using_method_macros( FILE *header, const type_t *iface, const type_t *child )
 {
     const statement_t *stmt;
-    const char *name = top_iface->short_name ? top_iface->short_name : top_iface->name;
+    const char *name = child->short_name ? child->short_name : child->name;
 
-    if (type_iface_get_inherit(iface)) write_widl_using_method_macros(header, type_iface_get_inherit(iface), top_iface);
+    if (type_iface_get_inherit( iface )) write_widl_using_method_macros( header, type_iface_get_inherit( iface ), child );
 
     STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
     {
         const var_t *func = stmt->u.var;
         const char *func_name;
 
-        if (is_override_method(iface, top_iface, func)) continue;
+        if (is_override_method(iface, child, func)) continue;
         if (is_callas(func->attrs)) continue;
 
-        func_name = get_name(func);
-        fprintf(header, "#define %s_%s %s_%s\n", name, func_name, top_iface->c_name, func_name);
+        func_name = get_method_name( iface, child, func );
+        fprintf( header, "#define %s_%s %s_%s\n", name, func_name, child->c_name, func_name );
     }
 }
 
