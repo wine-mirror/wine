@@ -1,0 +1,5 @@
+
+# Python cache generated during local package tests
+ailinux/packages/__pycache__/
+
+ailinux/vm-reference/__pycache__/

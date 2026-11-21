@@ -2949,8 +2949,8 @@ static int main_loop( struct console *console, HANDLE signal )
 {
     HANDLE signal_event = NULL;
     HANDLE wait_handles[3];
-    unsigned int wait_cnt = 0;
-    unsigned short signal_id;
+    unsigned int wait_cnt, input_index;
+    struct wine_pty_resize_signal signal_request;
     IO_STATUS_BLOCK signal_io;
     NTSTATUS status;
     DWORD res;
@@ -2958,19 +2958,24 @@ static int main_loop( struct console *console, HANDLE signal )
     if (signal)
     {
         if (!(signal_event = CreateEventW( NULL, TRUE, FALSE, NULL ))) return 1;
-        status = NtReadFile( signal, signal_event, NULL, NULL, &signal_io, &signal_id,
-                             sizeof(signal_id), NULL, NULL );
+        status = NtReadFile( signal, signal_event, NULL, NULL, &signal_io, &signal_request,
+                             sizeof(signal_request), NULL, NULL );
         if (status && status != STATUS_PENDING) return 1;
     }
 
     if (!alloc_ioctl_buffer( 4096 )) return 1;
 
-    wait_handles[wait_cnt++] = console->server;
-    if (signal) wait_handles[wait_cnt++] = signal_event;
-    if (console->input_thread) wait_handles[wait_cnt++] = console->input_thread;
-
     for (;;)
     {
+        wait_cnt = 0;
+        input_index = ~0u;
+        wait_handles[wait_cnt++] = console->server;
+        if (signal) wait_handles[wait_cnt++] = signal_event;
+        if (console->input_thread)
+        {
+            input_index = wait_cnt;
+            wait_handles[wait_cnt++] = console->input_thread;
+        }
         if (console->win)
             res = MsgWaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE, QS_ALLINPUT );
         else
@@ -3002,14 +3007,45 @@ static int main_loop( struct console *console, HANDLE signal )
             break;
 
         case WAIT_OBJECT_0 + 1:
-            if (signal_io.Status || signal_io.Information != sizeof(signal_id))
+            if (!signal)
+            {
+                TRACE( "tty input thread terminated\n" );
+                return 0;
+            }
+            if (signal_io.Status || signal_io.Information != sizeof(signal_request))
             {
                 TRACE( "signaled quit\n" );
                 return 0;
             }
-            FIXME( "unimplemented signal %x\n", signal_id );
-            status = NtReadFile( signal, signal_event, NULL, NULL, &signal_io, &signal_id,
-                                 sizeof(signal_id), NULL, NULL );
+            if (signal_request.id == WINE_PTY_SIGNAL_RESIZE_WINDOW &&
+                signal_request.width > 0 && signal_request.height > 0)
+            {
+                struct screen_buffer *screen = console->active;
+                NTSTATUS resize_status;
+
+                EnterCriticalSection( &console_section );
+                resize_status = change_screen_buffer_size( screen, signal_request.width,
+                                                           signal_request.height );
+                if (!resize_status)
+                {
+                    screen->win.left = screen->win.top = 0;
+                    screen->win.right = signal_request.width - 1;
+                    screen->win.bottom = signal_request.height - 1;
+                    screen->max_width = signal_request.width;
+                    screen->max_height = signal_request.height;
+                    if (screen->cursor_x >= signal_request.width) screen->cursor_x = signal_request.width - 1;
+                    if (screen->cursor_y >= signal_request.height) screen->cursor_y = signal_request.height - 1;
+                    notify_screen_buffer_size( screen );
+                }
+                LeaveCriticalSection( &console_section );
+                TRACE( "pseudo console resized to %u x %u status %#lx\n",
+                       signal_request.width, signal_request.height, resize_status );
+            }
+            else if (signal_request.id == WINE_PTY_SIGNAL_RESIZE_WINDOW)
+                TRACE( "ignoring zero-size pseudo console resize\n" );
+            else FIXME( "unimplemented pseudo console signal %x\n", signal_request.id );
+            status = NtReadFile( signal, signal_event, NULL, NULL, &signal_io, &signal_request,
+                                 sizeof(signal_request), NULL, NULL );
             if (status && status != STATUS_PENDING) return 1;
             break;
 
