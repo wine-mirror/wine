@@ -2113,10 +2113,7 @@ typedef ARM64_NT_CONTEXT CONTEXT, *PCONTEXT;
 #endif /* __aarch64__ */
 
 
-#ifdef __riscv
-
-#if __riscv_xlen == 64
-
+/* RISC-V64 context layout is also used by architecture-neutral server code. */
 typedef union _RISCV64_FPREG
 {
     ULONGLONG Q;
@@ -2221,17 +2218,12 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS_RISCV64
 } KNONVOLATILE_CONTEXT_POINTERS_RISCV64,
   *PKNONVOLATILE_CONTEXT_POINTERS_RISCV64;
 
-#endif /* __riscv_xlen == 64 */
-
-#endif /* __riscv */
-
-#ifdef __riscv
+/* Keep architecture-qualified context flags available to all hosts. */
 #define CONTEXT_RISCV64                  0x800000
 #define CONTEXT_RISCV64_CONTROL          (CONTEXT_RISCV64 | 0x00000001)
 #define CONTEXT_RISCV64_INTEGER          (CONTEXT_RISCV64 | 0x00000002)
 #define CONTEXT_RISCV64_FLOATING_POINT   (CONTEXT_RISCV64 | 0x00000004)
 #define CONTEXT_RISCV64_DEBUG_REGISTERS  (CONTEXT_RISCV64 | 0x00000008)
-#define CONTEXT_UNWOUND_TO_CALL 0x20000000
 
 #define CONTEXT_RISCV64_FULL \
     (CONTEXT_RISCV64_CONTROL | \
@@ -2242,6 +2234,8 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS_RISCV64
     (CONTEXT_RISCV64_FULL | \
      CONTEXT_RISCV64_DEBUG_REGISTERS)
 
+#ifdef __riscv
+#define CONTEXT_UNWOUND_TO_CALL 0x20000000
 #define CONTEXT_CONTROL        CONTEXT_RISCV64_CONTROL
 #define CONTEXT_INTEGER        CONTEXT_RISCV64_INTEGER
 #define CONTEXT_FLOATING_POINT CONTEXT_RISCV64_FLOATING_POINT
