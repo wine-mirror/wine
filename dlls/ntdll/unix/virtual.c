@@ -909,13 +909,14 @@ static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vp
 
     vprot_word = word_from_byte * *vprot;
     mask_word = word_from_byte * mask;
-    for (; curr_idx < end_idx; curr_idx += sizeof(UINT_PTR), vprot_ptr += sizeof(UINT_PTR))
+    while (curr_idx < end_idx)
     {
 #ifdef _WIN64
         if (!(curr_idx & pages_vprot_mask) && !(vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift]))
         {
             if (*vprot & mask) return (curr_idx - start_idx) << page_shift;
             curr_idx += pages_vprot_mask + 1;
+            continue;
         }
 #endif
         if ((vprot_word ^ *(UINT_PTR *)vprot_ptr) & mask_word)
@@ -924,6 +925,8 @@ static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vp
                 if ((*vprot ^ *vprot_ptr) & mask) break;
             return (curr_idx - start_idx) << page_shift;
         }
+        curr_idx += sizeof(UINT_PTR);
+        vprot_ptr += sizeof(UINT_PTR);
     }
     return size;
 }
