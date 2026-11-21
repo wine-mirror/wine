@@ -6588,7 +6588,7 @@ static const struct ID2D1GeometryGroupVtbl d2d_geometry_group_vtbl =
 static void d2d_geometry_group_stream(struct d2d_geometry *geometry,
         const D2D_MATRIX_3X2_F *transform, ID2D1GeometrySink *sink)
 {
-    d2d_geometry_stream((ID2D1Geometry *)geometry->u.group.path, NULL, sink);
+    d2d_geometry_stream((ID2D1Geometry *)geometry->u.group.path, transform, sink);
 }
 
 static const struct d2d_geometry_ops d2d_geometry_group_ops =
