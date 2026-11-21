@@ -143,7 +143,7 @@ Only enable a debug channel if it exists in the current source. In particular, `
 
 ## 4. Current implementation status
 
-The branch contains initial implementations in several areas. **Status here means code is present, not that it passed end-to-end hardware tests.** Earlier notes described some features as entirely absent; those descriptions are now outdated.
+The branch contains initial implementations in several areas. **Status here means code is present, not that it passed end-to-end hardware tests.** Hardware smoke-test observations and unresolved failures are documented in section 7. Earlier notes described some features as entirely absent; those descriptions are now outdated.
 
 | Area | Branch status / next validation |
 | --- | --- |
@@ -292,307 +292,72 @@ Keep changes small, architecture-scoped, and consistent with existing x86-64/AAr
 
 This guide reflects the development branch and its known experiments as of **November 2026**. Update the status table only after confirming the implementation and its tests on the target hardware.
 
-## Testing
-/home/orangepi/source/wine/loader/wine dlls/ntdll/tests/ntdll_test.exe.so alpc
+## 7. Current hardware smoke-test results (November 2026)
 
-WINEPREFIX="$HOME/.wine-riscv64" \
-WINE_RISCV_RPC_DIAG=1 \
-WINE_RISCV_DIAG=1 \
-WINEDEBUG=+rpc,+file,+server,+seh \
-./wine cmd.exe /c echo RV64-RPC-TEST \
-    > /tmp/rv64-rpc-diag.log 2>&1
+On the Orange Pi RV native RISC-V64 ELF build:
 
-echo "Wine exit status: $?"
+- `./wine programs/wineboot/wineboot.exe.so --init` returned status 0 and created `system.reg` and `user.reg`. The short name `./wine wineboot --init` is not yet reliably resolved in the build tree.
+- `./wine programs/cmd/cmd.exe.so` reached a Windows command prompt. Interactive console input remains under investigation; reaching a prompt is not proof of functioning console I/O.
+- The wineserver was observed blocked normally in `epoll_pwait2()` via GDB. A single backtrace does not exclude intermittent activity.
+- A headless TigerVNC/Openbox/xterm desktop works, and `glxgears` runs. Nevertheless, `setupapi,InstallHinfSection` still hit `user_check_not_lock()` while creating an `OleMainThreadWndClass` message-only window. Do not attribute this assertion to missing GLX alone; obtain the failing process's backtrace.
+- Thread-name diagnostics and RPC worker startup remain under investigation. `WINE_RISCV_SKIP_THREAD_TRACE` currently tests **environment variable presence**, not its string value; unset it to avoid changing the thread-name TRACE path.
 
-*WINE_RISCV_SKIP_THREAD_TRACE=1*
-Can be used to test if Wine's debugging infrastructure itself causes any crashes
-*WINE_RISCV_BOOT_DIAG=1*
+These are observations, not full conformance results.
 
-```
-#!/bin/bash
+## 8. RISC-V64 syscall-frame lifecycle tracing
 
-TID="${1:-155298}"
+The experimental `signal_riscv64.c` implementation now emits frame lifecycle markers when `WINE_RISCV_DIAG=1`:
 
-if [[ ! -r "/proc/$TID/syscall" ]]; then
-    echo "Cannot inspect TID $TID"
-    exit 1
-fi
+| Marker | Meaning |
+| --- | --- |
+| `RV64-FRAME prepare ROOT` | Cross-stack entry reuses the current root frame; includes entry SP, frame, predecessor, CFA and target SP. |
+| `RV64-FRAME prepare NESTED` | A nested frame is allocated on the Unix stack and linked to its predecessor. |
+| `RV64-FRAME finish POP` | Completed nested frame is popped and its predecessor restored as active. |
+| `RV64-FRAME finish RETAIN` | Active frame remains selected at the end of the call. |
+| `RV64-FRAME sigreturn CONSUME` | SIGUSR2 handler consumes a continuation frame and reports the currently selected frame and target SP. |
 
-echo "=== RPC worker syscall ==="
-cat "/proc/$TID/syscall"
+The existing `RV64-FLOW continue REQUEST` and `RV64-FLOW sigreturn APPLY` markers provide additional PC, SP, RA, flags, and frame-link information. SIGUSR2 handler logging uses the existing bounded, `write(2)`-based diagnostic formatter; do not add Wine TRACE/WARN, malloc, or pthread calls inside the signal handler.
 
-echo
-echo "=== RPC worker file descriptors ==="
-
-for fd in /proc/"$TID"/fd/*; do
-    target=$(readlink "$fd" 2>/dev/null) || continue
-
-    [[ "$target" == pipe:* ]] || continue
-
-    printf '%-6s %s\n' "${fd##*/}" "$target"
-done
-
-echo
-echo "=== Processes holding those pipes ==="
-
-for fd in /proc/"$TID"/fd/*; do
-    target=$(readlink "$fd" 2>/dev/null) || continue
-    [[ "$target" == pipe:* ]] || continue
-
-    echo
-    echo "Searching for $target"
-
-    for proc in /proc/[0-9]*; do
-        pid="${proc##*/}"
-
-        for other in "$proc"/fd/*; do
-            other_target=$(readlink "$other" 2>/dev/null) || continue
-
-            if [[ "$other_target" == "$target" ]]; then
-                printf 'PID=%-8s FD=%-4s COMM=%s\n' \
-                    "$pid" "${other##*/}" \
-                    "$(cat "$proc/comm" 2>/dev/null)"
-            fi
-        done
-    done
-done
+```sh
+cd ~/source/wine
+WINE_RISCV_DIAG=1 WINEDEBUG=-all,+seh \
+  timeout -k 5s 60s ./wine dlls/ntdll/tests/ntdll_test.exe.so syscall \
+  > /tmp/rv64-syscall.log 2>&1
+grep -E 'RV64-FRAME|RV64-FLOW|err:|Assertion' /tmp/rv64-syscall.log
 ```
 
-## GBD
-```
-gdb -q ./dlls/ntdll/tests/ntdll_test.exe.so core     -ex 'set pagination off'     -ex 'info registers a0 a1 a2 a3 a4 a5 a6 a7 sp ra pc'     -ex 'p $_siginfo'     -ex 'info symbol $pc'     -ex 'x/12i $pc-16'     -ex 'x/16gx $sp'     -ex 'quit'
+Frame logs are diagnostic and **do not prove correct ownership**. In particular, the cross-stack root reuse and nonlocal continuation cleanup still require targeted stress tests. Avoid changing frame ownership or the USER lock solely to silence assertions.
 
+## 9. New NTDLL smoke tests
 
-### Find running wine processess
-```
-ps -eo pid,ppid,stat,wchan:30,etime,comm,args |     grep -E 'wineserver|wine|services.exe|cmd.exe|explorer.exe'
-```
+The `dlls/ntdll/tests/Makefile.in` now registers two tests:
 
-### And then match the pid up to see the state
-```
-for pid in 155283 155287 155289 155297 155303; do
-    [ -d "/proc/$pid" ] || continue
+- `signal.c` (`signal`): on RISC-V64, capture a CONTEXT and check nonzero PC/SP and stack alignment, then exercise vectored exception delivery with a continuable software exception. On other architectures it reports a Wine `win_skip`.
+- `syscall.c` (`syscall`): on RISC-V64, repeat `NtQueryInformationThread(ThreadBasicInformation)` and compare Wine thread identity; query `NtQueryInformationProcess(ProcessBasicInformation)` and compare process identity. On other architectures it reports `win_skip`.
 
-    echo
-    echo "===== PID $pid ====="
-
-    ps -p "$pid" -o pid,ppid,stat,wchan:30,comm,args
-
-    echo "File descriptors:"
-    ls -l "/proc/$pid/fd" 2>/dev/null
-
-    echo "Thread states:"
-    ps -T -p "$pid" \
-        -o pid,tid,stat,wchan:30,comm
-done
+```sh
+make dlls/ntdll/tests/ntdll_test.exe.so
+./wine dlls/ntdll/tests/ntdll_test.exe.so syscall
+./wine dlls/ntdll/tests/ntdll_test.exe.so signal
 ```
 
-### Debuging console IO with cmd.exe and conhost.exe for example
+These are **initial smoke tests**, not complete syscall argument-count, nested callback, asynchronous signal, APC, register preservation, or nonlocal `NtContinue` tests. Run them on the target and record exit codes, failing assertions and the branch commit. Do not report them as passing until run.
 
-```
-sudo strace -f -tt -T -s 128 \
-    -e trace=read,readv,write,writev,ioctl,ppoll,epoll_pwait,futex \
-    -p 164512 \
-    -p 164514 \
-    -o /tmp/rv64-console-input.log
-```
+## 10. Focused debugging commands
 
-```
-. Inspect every conhost thread
-Please run:
-ps -T -p 164512 \
-    -o pid,tid,stat,wchan:30,comm
-``
-Then:
-for task in /proc/164512/task/*; do
-    tid="${task##*/}"
+```sh
+# Capture current process/thread wait states.
+ps -eo pid,ppid,stat,wchan:25,etime,comm,args | grep -E 'wine|services|rpcss'
 
-    echo
-    echo "===== conhost TID $tid ====="
+# Inspect an idle wineserver; epoll_pwait2 is a normal wait location.
+sudo gdb -q -p <WINESERVER_PID> -batch \
+    -ex 'set pagination off' -ex 'thread apply all bt 12'
 
-    cat "$task/syscall" 2>/dev/null
-    cat "$task/wchan" 2>/dev/null
-done
+# Find the USER-lock assertion caller in the process that actually aborts.
+# GDB may need to attach to a child process rather than the wineboot launcher.
+git grep -n user_check_not_lock dlls/win32u
 ```
 
+For the USER assertion, record the full stack, `user_lock_thread`, `user_lock_rec`, current Wine thread ID, native TID, and `tp`. The USER mutex is configured recursive in `sysparams_init()`; the assertion is not evidence of a nonrecursive-mutex configuration mistake.
 
-orangepi@orangepirv:~/source/wine$ gdb -q \
-    ./dlls/ntdll/tests/ntdll_test.exe.so \
-    core \
-    -ex 'set pagination off' \
-    -ex 'info threads' \
-    -ex 'thread apply all bt 20' \
-    -ex 'info symbol $pc' \
-    -ex 'info symbol $ra' \
-    -ex 'x/20i $pc-32' \
-    -ex 'info proc mappings' \
-    -ex 'quit'
-Reading symbols from ./dlls/ntdll/tests/ntdll_test.exe.so...
-
-warning: Can't open file /tmp/.wine-1000/server-b302-3fc1e/tmpmap-f143731f (deleted) during file-backed mapping note processing
-
-warning: Can't open file /tmp/.wine-1000/server-b302-3fc1e/tmpmap-69e53bdf (deleted) during file-backed mapping note processing
-
-warning: core file may not match specified executable file.
-[New LWP 166795]
-[New LWP 166784]
-Core was generated by `dlls/ntdll/tests/ntdll_test.exe.so pipe                                       '.
-Program terminated with signal SIGSEGV, Segmentation fault.
-#0  0x0000003fbb87c7f6 in ?? ()
-[Current thread is 1 (LWP 166795)]
-  Id   Target Id         Frame 
-* 1    LWP 166795        0x0000003fbb87c7f6 in ?? ()
-  2    LWP 166784        0x0000003fbb8b1642 in ?? ()
-
-Thread 2 (LWP 166784):
-#0  0x0000003fbb8b1642 in ?? ()
-
-Thread 1 (LWP 166795):
-#0  0x0000003fbb87c7f6 in ?? ()
-No symbol matches $pc.
-No symbol matches $ra.
-   0x3fbb87c7d6:	sb	a6,0(a5)
-   0x3fbb87c7da:	addi	a5,a5,1
-   0x3fbb87c7dc:	andi	a3,a5,7
-   0x3fbb87c7e0:	bnez	a3,0x3fbb87c7d6
-   0x3fbb87c7e2:	add	a2,a2,a0
-   0x3fbb87c7e4:	sub	a2,a2,a5
-   0x3fbb87c7e6:	srli	a6,a2,0x6
-   0x3fbb87c7ea:	beqz	a6,0x3fbb87c814
-   0x3fbb87c7ee:	slli	a3,a6,0x6
-   0x3fbb87c7f2:	mv	a7,a5
-   0x3fbb87c7f4:	add	a3,a3,a5
-=> 0x3fbb87c7f6:	sd	a4,0(a5)
-   0x3fbb87c7f8:	sd	a4,8(a5)
-   0x3fbb87c7fa:	sd	a4,16(a5)
-   0x3fbb87c7fc:	sd	a4,24(a5)
-   0x3fbb87c7fe:	sd	a4,32(a5)
-   0x3fbb87c800:	sd	a4,40(a5)
-   0x3fbb87c802:	sd	a4,48(a5)
-   0x3fbb87c804:	sd	a4,56(a5)
-   0x3fbb87c806:	addi	a5,a5,64
-Mapped address spaces:
-
-          Start Addr           End Addr       Size     Offset objfile
-          0x7ffe0000         0x7ffe1000     0x1000        0x0 /tmp/.wine-1000/server-b302-3fc1e/tmpmap-f143731f (deleted)
-         0x200100000        0x200102000     0x2000     0x1000 /home/orangepi/source/wine/loader/wine-preloader
-         0x200102000        0x200103000     0x1000     0x2000 /home/orangepi/source/wine/loader/wine-preloader
-         0xe63580000        0xe63582000     0x2000        0x0 /home/orangepi/source/wine/nls/l_intl.nls
-         0xe63690000        0xe636a6000    0x16000        0x0 /home/orangepi/source/wine/dlls/apisetschema/riscv64-windows/apisetschema.dll
-         0xe636d0000        0xe637ae000    0xde000        0x0 /home/orangepi/source/wine/nls/locale.nls
-         0xe637b0000        0xe637c1000    0x11000        0x0 /home/orangepi/source/wine/nls/c_1252.nls
-         0xe637d0000        0xe637e1000    0x11000        0x0 /home/orangepi/source/wine/nls/c_437.nls
-         0xe638f0000        0xe63c2e000   0x33e000        0x0 /home/orangepi/source/wine/nls/sortdefault.nls
-         0xe63c30000        0xe63c3f000     0xf000        0x0 /home/orangepi/source/wine/nls/normnfc.nls
-         0xe63c60000        0xe63c71000    0x11000        0x0 /home/orangepi/source/wine/nls/c_20127.nls
-         0xe63c80000        0xe63dc8000   0x148000        0x0 /tmp/.wine-1000/server-b302-3fc1e/tmpmap-69e53bdf (deleted)
-         0xe63f50000        0xe63f61000    0x11000        0x0 /home/orangepi/source/wine/nls/c_10000.nls
-        0x3fb9886000       0x3fb9890000     0xa000        0x0 /home/orangepi/source/wine/dlls/imm32/imm32.dll.so
-        0x3fb9891000       0x3fb98a9000    0x18000     0xb000 /home/orangepi/source/wine/dlls/imm32/imm32.dll.so
-        0x3fb98a9000       0x3fb98aa000     0x1000    0x23000 /home/orangepi/source/wine/dlls/imm32/imm32.dll.so
-        0x3fb98aa000       0x3fb98ad000     0x3000    0x24000 /home/orangepi/source/wine/dlls/imm32/imm32.dll.so
-        0x3fb98ad000       0x3fb98b8000     0xb000        0x0 /var/cache/fontconfig/fd07936d-327f-42e5-829a-cc2673917c54-le64.cache-7
-        0x3fb98b8000       0x3fb98cb000    0x13000        0x0 /var/cache/fontconfig/d764fd5a-017c-433a-b05a-92c12178fa30-le64.cache-7
-        0x3fb98cb000       0x3fb98d9000     0xe000        0x0 /var/cache/fontconfig/09671b41-fd94-4931-988f-eab2fe1bcae0-le64.cache-7
-        0x3fb98d9000       0x3fb98df000     0x6000        0x0 /usr/lib/riscv64-linux-gnu/libuuid.so.1.3.0
-        0x3fb98df000       0x3fb98e0000     0x1000     0x5000 /usr/lib/riscv64-linux-gnu/libuuid.so.1.3.0
-        0x3fb98e0000       0x3fb98e1000     0x1000     0x6000 /usr/lib/riscv64-linux-gnu/libuuid.so.1.3.0
-        0x3fb98e1000       0x3fb9900000    0x1f000        0x0 /usr/lib/riscv64-linux-gnu/libexpat.so.1.8.10
-        0x3fb9900000       0x3fb9902000     0x2000    0x1f000 /usr/lib/riscv64-linux-gnu/libexpat.so.1.8.10
-        0x3fb9902000       0x3fb9903000     0x1000    0x21000 /usr/lib/riscv64-linux-gnu/libexpat.so.1.8.10
-        0x3fb9903000       0x3fb9936000    0x33000        0x0 /usr/lib/riscv64-linux-gnu/libfontconfig.so.1.12.0
-        0x3fb9936000       0x3fb9938000     0x2000    0x32000 /usr/lib/riscv64-linux-gnu/libfontconfig.so.1.12.0
-        0x3fb9938000       0x3fb9939000     0x1000    0x34000 /usr/lib/riscv64-linux-gnu/libfontconfig.so.1.12.0
-        0x3fb9939000       0x3fb9959000    0x20000        0x0 /usr/lib/riscv64-linux-gnu/libbrotlicommon.so.1.0.9
-        0x3fb9959000       0x3fb995a000     0x1000    0x1f000 /usr/lib/riscv64-linux-gnu/libbrotlicommon.so.1.0.9
-        0x3fb995a000       0x3fb995b000     0x1000    0x20000 /usr/lib/riscv64-linux-gnu/libbrotlicommon.so.1.0.9
-        0x3fb995b000       0x3fb9963000     0x8000        0x0 /usr/lib/riscv64-linux-gnu/libbrotlidec.so.1.0.9
-        0x3fb9963000       0x3fb9964000     0x1000     0x7000 /usr/lib/riscv64-linux-gnu/libbrotlidec.so.1.0.9
-        0x3fb9964000       0x3fb9965000     0x1000     0x8000 /usr/lib/riscv64-linux-gnu/libbrotlidec.so.1.0.9
-        0x3fb9965000       0x3fb9978000    0x13000        0x0 /usr/lib/riscv64-linux-gnu/libz.so.1.2.13
-        0x3fb9978000       0x3fb9979000     0x1000    0x13000 /usr/lib/riscv64-linux-gnu/libz.so.1.2.13
-        0x3fb9979000       0x3fb997a000     0x1000    0x14000 /usr/lib/riscv64-linux-gnu/libz.so.1.2.13
-        0x3fb997a000       0x3fb999f000    0x25000        0x0 /usr/lib/riscv64-linux-gnu/libpng16.so.16.39.0
-        0x3fb999f000       0x3fb99a0000     0x1000    0x25000 /usr/lib/riscv64-linux-gnu/libpng16.so.16.39.0
-        0x3fb99a0000       0x3fb99a1000     0x1000    0x26000 /usr/lib/riscv64-linux-gnu/libpng16.so.16.39.0
-        0x3fb99a1000       0x3fb9a28000    0x87000        0x0 /usr/lib/riscv64-linux-gnu/libfreetype.so.6.18.3
-        0x3fb9a28000       0x3fb9a2f000     0x7000    0x86000 /usr/lib/riscv64-linux-gnu/libfreetype.so.6.18.3
-        0x3fb9a2f000       0x3fb9a30000     0x1000    0x8d000 /usr/lib/riscv64-linux-gnu/libfreetype.so.6.18.3
-        0x3fb9a30000       0x3fb9a9b000    0x6b000        0x0 /usr/lib/riscv64-linux-gnu/libm.so.6
-        0x3fb9a9b000       0x3fb9a9c000     0x1000    0x6a000 /usr/lib/riscv64-linux-gnu/libm.so.6
-        0x3fb9a9c000       0x3fb9a9d000     0x1000    0x6b000 /usr/lib/riscv64-linux-gnu/libm.so.6
-        0x3fb9aa0000       0x3fb9aae000     0xe000        0x0 /var/cache/fontconfig/f17bd919-57be-4cf4-bdce-e93a0728c0de-le64.cache-7
-        0x3fb9aae000       0x3fb9c60000   0x1b2000        0x0 /home/orangepi/source/wine/dlls/win32u/win32u.so
-        0x3fb9c60000       0x3fb9c7b000    0x1b000   0x1b1000 /home/orangepi/source/wine/dlls/win32u/win32u.so
-        0x3fb9c7b000       0x3fb9c8a000     0xf000   0x1cc000 /home/orangepi/source/wine/dlls/win32u/win32u.so
-        0x3fb9cf9000       0x3fb9d10000    0x17000        0x0 /home/orangepi/source/wine/dlls/win32u/win32u.dll.so
-        0x3fb9d11000       0x3fb9d3c000    0x2b000    0x18000 /home/orangepi/source/wine/dlls/win32u/win32u.dll.so
-        0x3fb9d3c000       0x3fb9d3d000     0x1000    0x42000 /home/orangepi/source/wine/dlls/win32u/win32u.dll.so
-        0x3fb9d3d000       0x3fb9d4d000    0x10000    0x43000 /home/orangepi/source/wine/dlls/win32u/win32u.dll.so
-        0x3fb9d4d000       0x3fb9d60000    0x13000        0x0 /home/orangepi/source/wine/dlls/gdi32/gdi32.dll.so
-        0x3fb9d61000       0x3fb9dc1000    0x60000    0x14000 /home/orangepi/source/wine/dlls/gdi32/gdi32.dll.so
-        0x3fb9dc1000       0x3fb9dc4000     0x3000    0x73000 /home/orangepi/source/wine/dlls/gdi32/gdi32.dll.so
-        0x3fb9dc4000       0x3fb9dcc000     0x8000    0x76000 /home/orangepi/source/wine/dlls/gdi32/gdi32.dll.so
-        0x3fb9dcc000       0x3fb9de0000    0x14000        0x0 /home/orangepi/source/wine/dlls/user32/user32.dll.so
-        0x3fb9de1000       0x3fb9e8c000    0xab000    0x15000 /home/orangepi/source/wine/dlls/user32/user32.dll.so
-        0x3fb9e8c000       0x3fb9e8d000     0x1000    0xbf000 /home/orangepi/source/wine/dlls/user32/user32.dll.so
-        0x3fb9e8d000       0x3fb9f72000    0xe5000    0xc0000 /home/orangepi/source/wine/dlls/user32/user32.dll.so
-        0x3fb9f72000       0x3fb9f90000    0x1e000        0x0 /home/orangepi/source/wine/dlls/ucrtbase/ucrtbase.dll.so
-        0x3fb9f91000       0x3fba027000    0x96000    0x1f000 /home/orangepi/source/wine/dlls/ucrtbase/ucrtbase.dll.so
-        0x3fba027000       0x3fba028000     0x1000    0xb5000 /home/orangepi/source/wine/dlls/ucrtbase/ucrtbase.dll.so
-        0x3fba028000       0x3fba03c000    0x14000    0xb6000 /home/orangepi/source/wine/dlls/ucrtbase/ucrtbase.dll.so
-        0x3fba03e000       0x3fba050000    0x12000        0x0 /home/orangepi/source/wine/dlls/sechost/sechost.dll.so
-        0x3fba051000       0x3fba064000    0x13000    0x13000 /home/orangepi/source/wine/dlls/sechost/sechost.dll.so
-        0x3fba064000       0x3fba065000     0x1000    0x25000 /home/orangepi/source/wine/dlls/sechost/sechost.dll.so
-        0x3fba065000       0x3fba069000     0x4000    0x26000 /home/orangepi/source/wine/dlls/sechost/sechost.dll.so
-        0x3fba069000       0x3fba080000    0x17000        0x0 /home/orangepi/source/wine/dlls/msvcrt/msvcrt.dll.so
-        0x3fba081000       0x3fba0f6000    0x75000    0x18000 /home/orangepi/source/wine/dlls/msvcrt/msvcrt.dll.so
-        0x3fba0f6000       0x3fba0f7000     0x1000    0x8c000 /home/orangepi/source/wine/dlls/msvcrt/msvcrt.dll.so
-        0x3fba0f7000       0x3fba102000     0xb000    0x8d000 /home/orangepi/source/wine/dlls/msvcrt/msvcrt.dll.so
-        0x3fba104000       0x3fba110000     0xc000        0x0 /home/orangepi/source/wine/dlls/advapi32/advapi32.dll.so
-        0x3fba111000       0x3fba144000    0x33000     0xd000 /home/orangepi/source/wine/dlls/advapi32/advapi32.dll.so
-        0x3fba144000       0x3fba145000     0x1000    0x40000 /home/orangepi/source/wine/dlls/advapi32/advapi32.dll.so
-        0x3fba145000       0x3fba14e000     0x9000    0x41000 /home/orangepi/source/wine/dlls/advapi32/advapi32.dll.so
-        0x3fba14e000       0x3fba160000    0x12000        0x0 /home/orangepi/source/wine/dlls/kernelbase/kernelbase.dll.so
-        0x3fba161000       0x3fba1fd000    0x9c000    0x13000 /home/orangepi/source/wine/dlls/kernelbase/kernelbase.dll.so
-        0x3fba1fd000       0x3fba1fe000     0x1000    0xae000 /home/orangepi/source/wine/dlls/kernelbase/kernelbase.dll.so
-        0x3fba1fe000       0x3fba278000    0x7a000    0xaf000 /home/orangepi/source/wine/dlls/kernelbase/kernelbase.dll.so
-        0x3fba27a000       0x3fba290000    0x16000        0x0 /home/orangepi/source/wine/dlls/kernel32/kernel32.dll.so
-        0x3fba291000       0x3fba2c8000    0x37000    0x17000 /home/orangepi/source/wine/dlls/kernel32/kernel32.dll.so
-        0x3fba2c8000       0x3fba2c9000     0x1000    0x4d000 /home/orangepi/source/wine/dlls/kernel32/kernel32.dll.so
-        0x3fba2c9000       0x3fba2de000    0x15000    0x4e000 /home/orangepi/source/wine/dlls/kernel32/kernel32.dll.so
-        0x3fba2de000       0x3fba2f0000    0x12000        0x0 /home/orangepi/source/wine/dlls/ntdll/ntdll.dll.so
-        0x3fba2f1000       0x3fba383000    0x92000    0x13000 /home/orangepi/source/wine/dlls/ntdll/ntdll.dll.so
-        0x3fba383000       0x3fba384000     0x1000    0xa5000 /home/orangepi/source/wine/dlls/ntdll/ntdll.dll.so
-        0x3fba384000       0x3fba392000     0xe000    0xa6000 /home/orangepi/source/wine/dlls/ntdll/ntdll.dll.so
-        0x3fba495000       0x3fba4b0000    0x1b000        0x0 /home/orangepi/source/wine/dlls/ntdll/tests/ntdll_test.exe.so
-        0x3fba4b1000       0x3fba64c000   0x19b000    0x1c000 /home/orangepi/source/wine/dlls/ntdll/tests/ntdll_test.exe.so
-        0x3fba64c000       0x3fba663000    0x17000   0x1b6000 /home/orangepi/source/wine/dlls/ntdll/tests/ntdll_test.exe.so
-        0x3fba663000       0x3fba67f000    0x1c000   0x1cd000 /home/orangepi/source/wine/dlls/ntdll/tests/ntdll_test.exe.so
-        0x3fbaa50000       0x3fbaa54000     0x4000        0x0 /var/cache/fontconfig/d1b3b405-3d75-4f91-b7ce-3bd29da41787-le64.cache-7
-        0x3fbab54000       0x3fbae3d000   0x2e9000        0x0 /usr/lib/locale/locale-archive
-        0x3fbb73d000       0x3fbb74f000    0x12000        0x0 /usr/lib/riscv64-linux-gnu/libgcc_s.so.1
-        0x3fbb74f000       0x3fbb750000     0x1000    0x11000 /usr/lib/riscv64-linux-gnu/libgcc_s.so.1
-        0x3fbb750000       0x3fbb751000     0x1000    0x12000 /usr/lib/riscv64-linux-gnu/libgcc_s.so.1
-        0x3fbb751000       0x3fbb7c5000    0x74000        0x0 /home/orangepi/source/wine/dlls/ntdll/ntdll.so
-        0x3fbb7c5000       0x3fbb7c7000     0x2000    0x74000 /home/orangepi/source/wine/dlls/ntdll/ntdll.so
-        0x3fbb7c7000       0x3fbb7c9000     0x2000    0x76000 /home/orangepi/source/wine/dlls/ntdll/ntdll.so
-        0x3fbb803000       0x3fbb925000   0x122000        0x0 /usr/lib/riscv64-linux-gnu/libc.so.6
-        0x3fbb925000       0x3fbb928000     0x3000   0x122000 /usr/lib/riscv64-linux-gnu/libc.so.6
-        0x3fbb928000       0x3fbb92a000     0x2000   0x125000 /usr/lib/riscv64-linux-gnu/libc.so.6
-        0x3fbb93a000       0x3fbb93c000     0x2000        0x0 /var/cache/fontconfig/b7197d5f-5a5a-47a4-a813-5924e22523e3-le64.cache-7
-        0x3fbb93c000       0x3fbb93f000     0x3000        0x0 /var/cache/fontconfig/e7a84f39-2bb6-4402-9327-009c624e530e-le64.cache-7
-        0x3fbb93f000       0x3fbb940000     0x1000        0x0 /usr/lib/riscv64-linux-gnu/libpthread.so.0
-        0x3fbb940000       0x3fbb941000     0x1000        0x0 /usr/lib/riscv64-linux-gnu/libpthread.so.0
-        0x3fbb941000       0x3fbb942000     0x1000     0x1000 /usr/lib/riscv64-linux-gnu/libpthread.so.0
-        0x3fbb942000       0x3fbb946000     0x4000        0x0 /usr/lib/riscv64-linux-gnu/libatomic.so.1.2.0
-        0x3fbb946000       0x3fbb947000     0x1000     0x3000 /usr/lib/riscv64-linux-gnu/libatomic.so.1.2.0
-        0x3fbb947000       0x3fbb948000     0x1000     0x4000 /usr/lib/riscv64-linux-gnu/libatomic.so.1.2.0
-        0x3fbb94a000       0x3fbb966000    0x1c000        0x0 /usr/lib/riscv64-linux-gnu/ld-linux-riscv64-lp64d.so.1
-        0x3fbb966000       0x3fbb967000     0x1000    0x1c000 /usr/lib/riscv64-linux-gnu/ld-linux-riscv64-lp64d.so.1
-        0x3fbb967000       0x3fbb969000     0x2000    0x1d000 /usr/lib/riscv64-linux-gnu/ld-linux-riscv64-lp64d.so.1
-        0x3fbb969000       0x3fbb96a000     0x1000        0x0 /home/orangepi/source/wine/loader/wine
-        0x3fbb96a000       0x3fbb96b000     0x1000     0x1000 /home/orangepi/source/wine/loader/wine
-        0x3fbb96b000       0x3fbb96c000     0x1000     0x2000 /home/orangepi/source/wine/loader/wine
-orangepi@orangepirv:~/source/wine$ 
-
+For reproducible results always record `git rev-parse HEAD`, the exact command and environment, exit code, and whether the run used SSH, VNC, or Xvfb.
