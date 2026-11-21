@@ -1312,8 +1312,8 @@ static int d2d_arc_to_bezier(const D2D_POINT_2F *start_point, const D2D1_ARC_SEG
     m._32 = 0.5f * (arc->point.y + start_point->y);
     if (!zero_center)
     {
-        m._31 += (m._11 * center.x + m._12 * center.y);
-        m._32 += (m._21 * center.x + m._22 * center.y);
+        m._31 += (m._11 * center.x + m._21 * center.y);
+        m._32 += (m._12 * center.x + m._22 * center.y);
     }
 
     cPieces = d2d_arc_get_piece_count(&ptStart, &ptEnd, large_arc, sweep_up, &rCosArcAngle, &rSinArcAngle);
