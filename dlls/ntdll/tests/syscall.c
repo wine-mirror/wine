@@ -45,9 +45,9 @@ static void test_syscall_process_identity(void)
                                         &info, sizeof(info), NULL );
     ok( status == STATUS_SUCCESS, "NtQueryInformationProcess returned %#lx\n", status );
     if (status == STATUS_SUCCESS)
-        ok( HandleToULong(info.UniqueProcessId) == GetCurrentProcessId(),
-            "Wine process ID mismatch: %lu vs %lu\n",
-            HandleToULong(info.UniqueProcessId), GetCurrentProcessId() );
+        ok( info.UniqueProcessId == (ULONG_PTR)GetCurrentProcessId(),
+            "Wine process ID mismatch: %Iu vs %lu\n",
+            info.UniqueProcessId, GetCurrentProcessId() );
 }
 #endif
 
