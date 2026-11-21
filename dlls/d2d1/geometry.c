@@ -1218,7 +1218,7 @@ static float d2d_arc_get_bezier_distance(float rDot, bool sweep_up)
 /* Approximation logic is taken in its entirety from WpfGfx graphics core of
    Windows Presentation Foundation framework, distributed under MIT license. */
 static int d2d_arc_to_bezier(const D2D_POINT_2F *start_point, const D2D1_ARC_SEGMENT *arc,
-        D2D_POINT_2F *points)
+        const D2D1_MATRIX_3X2_F *transform, D2D_POINT_2F *points)
 {
     float x, y, rHalfChord2, rCos, rSin, rCosArcAngle, rSinArcAngle, dist, rotation;
     D2D_POINT_2F ptStart, ptEnd, vecToBez1, vecToBez2;
@@ -1247,7 +1247,10 @@ static int d2d_arc_to_bezier(const D2D_POINT_2F *start_point, const D2D1_ARC_SEG
     if (!d2d_arc_check_radius(rHalfChord2, fuzz2, &radius.x) ||
         !d2d_arc_check_radius(rHalfChord2, fuzz2, &radius.y))
     {
-        points[0] = arc->point;
+        if (transform)
+            d2d_point_transform(points, transform, arc->point.x, arc->point.y);
+        else
+            *points = arc->point;
         return 0;
     }
 
@@ -1343,6 +1346,14 @@ static int d2d_arc_to_bezier(const D2D_POINT_2F *start_point, const D2D1_ARC_SEG
     d2d_point_transform(&points[j++], &m, ptEnd.x - vecToBez2.x, ptEnd.y - vecToBez2.y);
     d2d_point_set(&points[j], arc->point.x, arc->point.y);
 
+    if (transform)
+    {
+        for (i = 0; i < cPieces; ++i)
+        {
+            d2d_bezier_segment_transform((D2D1_BEZIER_SEGMENT *)&points[3*i], transform);
+        }
+    }
+
     return cPieces;
 }
 
@@ -1350,9 +1361,9 @@ static bool d2d_figure_add_arc(struct d2d_figure *figure, const D2D1_ARC_SEGMENT
 {
     size_t last = figure->vertex_count - 1;
     D2D_POINT_2F points[12];
-    int count = 0;
+    int count;
 
-    count = d2d_arc_to_bezier(&figure->vertices[last], arc, points);
+    count = d2d_arc_to_bezier(&figure->vertices[last], arc, NULL, points);
 
     if (count > 0)
     {
@@ -4479,21 +4490,6 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry1 *ifac
     return S_OK;
 }
 
-static inline void d2d_arc_transform(D2D1_ARC_SEGMENT *arc, const D2D1_MATRIX_3X2_F *transform)
-{
-    D2D1_MATRIX_3X2_F m = *transform;
-    D2D_POINT_2F point;
-
-    m._31 = 0.0f;
-    m._32 = 0.0f;
-
-    d2d_point_transform(&arc->point, transform, arc->point.x, arc->point.y);
-    d2d_point_transform(&point, &m, arc->size.width, 0.0f);
-    arc->size.width = d2d_point_length(&point);
-    d2d_point_transform(&point, &m, 0.0f, arc->size.height);
-    arc->size.height = d2d_point_length(&point);
-}
-
 static void d2d_path_geometry_transformed_stream(struct d2d_geometry *geometry,
         const D2D_MATRIX_3X2_F *transform, ID2D1GeometrySink *sink)
 {
@@ -4530,12 +4526,11 @@ static void d2d_path_geometry_transformed_stream(struct d2d_geometry *geometry,
                 case D2D_SEGMENT_TYPE_BEZIERS:
                     for (unsigned int k = 0; k < s.beziers->count; ++k)
                     {
-                        D2D1_BEZIER_SEGMENT bezier_segment;
-                        d2d_point_transform(&bezier_segment.point1, transform, s.beziers->segments[k].point1.x, s.beziers->segments[k].point1.y);
-                        d2d_point_transform(&bezier_segment.point2, transform, s.beziers->segments[k].point2.x, s.beziers->segments[k].point2.y);
-                        d2d_point_transform(&bezier_segment.point3, transform, s.beziers->segments[k].point3.x, s.beziers->segments[k].point3.y);
+                        D2D1_BEZIER_SEGMENT bezier_segment = s.beziers->segments[k];
+                        d2d_bezier_segment_transform(&bezier_segment, transform);
                         ID2D1GeometrySink_AddBeziers(sink, &bezier_segment, 1);
                     }
+                    point = s.beziers->segments[s.beziers->count-1].point3;
                     size = FIELD_OFFSET(struct d2d_segment_beziers, segments[s.beziers->count]);
                     break;
                 case D2D_SEGMENT_TYPE_QUADRATIC_BEZIERS:
@@ -4546,6 +4541,7 @@ static void d2d_path_geometry_transformed_stream(struct d2d_geometry *geometry,
                         d2d_point_transform(&bezier_segment.point2, transform, s.quad_beziers->segments[k].point2.x, s.quad_beziers->segments[k].point2.y);
                         ID2D1GeometrySink_AddQuadraticBeziers(sink, &bezier_segment, 1);
                     }
+                    point = s.quad_beziers->segments[s.quad_beziers->count-1].point2;
                     size = FIELD_OFFSET(struct d2d_segment_quadratic_beziers, segments[s.quad_beziers->count]);
                     break;
                 case D2D_SEGMENT_TYPE_LINES:
@@ -4554,16 +4550,27 @@ static void d2d_path_geometry_transformed_stream(struct d2d_geometry *geometry,
                         d2d_point_transform(&point, transform, s.lines->points[k].x, s.lines->points[k].y);
                         ID2D1GeometrySink_AddLines(sink, &point, 1);
                     }
+                    point = s.lines->points[s.lines->count-1];
                     size = FIELD_OFFSET(struct d2d_segment_lines, points[s.lines->count]);
                     break;
                 case D2D_SEGMENT_TYPE_ARCS:
                     for (unsigned int k = 0; k < s.arcs->count; ++k)
                     {
-                        D2D1_ARC_SEGMENT arc = s.arcs->segments[k];
+                        const D2D1_ARC_SEGMENT *arc = &s.arcs->segments[k];
+                        D2D_POINT_2F points[12];
+                        int count;
 
-                        d2d_arc_transform(&arc, transform);
-                        ID2D1GeometrySink_AddArc(sink, &arc);
+                        count = d2d_arc_to_bezier(&point, arc, transform, points);
+                        if (count > 0)
+                        {
+                            ID2D1GeometrySink_AddBeziers(sink, (D2D1_BEZIER_SEGMENT *)points, count);
+                        }
+                        else if (count == 0)
+                        {
+                            ID2D1GeometrySink_AddLines(sink, points, 1);
+                        }
                     }
+                    point = s.arcs->segments[s.arcs->count-1].point;
                     size = FIELD_OFFSET(struct d2d_segment_arcs, segments[s.arcs->count]);
                     break;
                 default:
@@ -5013,38 +5020,23 @@ static const struct ID2D1EllipseGeometryVtbl d2d_ellipse_geometry_vtbl =
     d2d_ellipse_geometry_GetEllipse,
 };
 
-static void d2d_ellipse_geometry_stream(struct d2d_geometry *geometry, const D2D_MATRIX_3X2_F *transform,
-        ID2D1GeometrySink *sink)
+static void d2d_ellipse_geometry_stream(struct d2d_geometry *geometry,
+        const D2D_MATRIX_3X2_F *transform, ID2D1GeometrySink *sink)
 {
-    const D2D1_ELLIPSE *e = &geometry->u.ellipse.ellipse;
+    D2D1_BEZIER_SEGMENT segments[4];
     D2D1_POINT_2F start_point;
-    D2D1_ARC_SEGMENT arcs[4];
 
-    arcs[0].size.width = e->radiusX;
-    arcs[0].size.height = e->radiusY;
-    arcs[0].rotationAngle = 0.0f;
-    arcs[0].sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
-    arcs[0].arcSize = D2D1_ARC_SIZE_SMALL;
-    arcs[1] = arcs[2] = arcs[3] = arcs[0];
-
-    d2d_point_set(&start_point, e->point.x - e->radiusX, e->point.y);
-    d2d_point_set(&arcs[0].point, e->point.x, e->point.y - e->radiusY);
-    d2d_point_set(&arcs[1].point, e->point.x + e->radiusX, e->point.y);
-    d2d_point_set(&arcs[2].point, e->point.x, e->point.y + e->radiusY);
-    d2d_point_set(&arcs[3].point, start_point.x, start_point.y);
+    d2d_ellipse_to_segments(&geometry->u.ellipse.ellipse, &start_point, segments);
 
     if (transform)
     {
         d2d_point_transform(&start_point, transform, start_point.x, start_point.y);
-        for (int i = 0; i < ARRAYSIZE(arcs); ++i)
-            d2d_arc_transform(&arcs[i], transform);
+        for (int i = 0; i < ARRAYSIZE(segments); ++i)
+            d2d_bezier_segment_transform(&segments[i], transform);
     }
 
     ID2D1GeometrySink_BeginFigure(sink, start_point, D2D1_FIGURE_BEGIN_FILLED);
-
-    for (int i = 0; i < ARRAYSIZE(arcs); ++i)
-        ID2D1GeometrySink_AddArc(sink, &arcs[i]);
-
+    ID2D1GeometrySink_AddBeziers(sink, segments, 4);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
@@ -5713,29 +5705,20 @@ static inline void d2d_bezier_segment_translate(D2D1_BEZIER_SEGMENT *segment, fl
     d2d_point_translate(&segment->point3, x, y);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Simplify(ID2D1RoundedRectangleGeometry *iface,
-        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
-        ID2D1SimplifiedGeometrySink *sink)
+static void d2d_rounded_rectangle_get_segments(const D2D1_ROUNDED_RECT *r,
+        D2D1_BEZIER_SEGMENT segments[4], D2D1_POINT_2F points[4])
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
-    const D2D1_ROUNDED_RECT *r = &geometry->u.rounded_rectangle.rounded_rect;
-    struct d2d_figure figure = { 0 };
-    D2D1_BEZIER_SEGMENT segments[4];
-    D2D1_POINT_2F start_point, p;
     D2D1_ELLIPSE ellipse;
-    bool ret;
-
-    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
-            iface, option, transform, tolerance, sink);
+    D2D1_POINT_2F p;
 
     d2d_point_set(&ellipse.point, 0.0f, 0.0f);
     ellipse.radiusX = r->radiusX;
     ellipse.radiusY = r->radiusY;
 
-    d2d_ellipse_to_segments(&ellipse, &start_point, segments);
+    d2d_ellipse_to_segments(&ellipse, &points[0], segments);
 
     d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.top + r->radiusY);
-    d2d_point_translate(&start_point, p.x, p.y);
+    d2d_point_translate(&points[0], p.x, p.y);
     d2d_bezier_segment_translate(&segments[0], p.x, p.y);
     d2d_point_set(&p, r->rect.right - r->radiusX, r->rect.top + r->radiusY);
     d2d_bezier_segment_translate(&segments[1], p.x, p.y);
@@ -5744,16 +5727,34 @@ static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Simplify(ID2D1Ro
     d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.bottom - r->radiusY);
     d2d_bezier_segment_translate(&segments[3], p.x, p.y);
 
-    ret = d2d_figure_begin(&figure, start_point, D2D1_FIGURE_BEGIN_FILLED);
+    d2d_point_set(&points[1], r->rect.right - r->radiusX, r->rect.top);
+    d2d_point_set(&points[2], r->rect.right, r->rect.bottom - r->radiusY);
+    d2d_point_set(&points[3], r->rect.left + r->radiusX, r->rect.bottom);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Simplify(ID2D1RoundedRectangleGeometry *iface,
+        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+    const D2D1_ROUNDED_RECT *r = &geometry->u.rounded_rectangle.rounded_rect;
+    struct d2d_figure figure = { 0 };
+    D2D1_BEZIER_SEGMENT segments[4];
+    D2D1_POINT_2F points[4];
+    bool ret;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
+            iface, option, transform, tolerance, sink);
+
+    d2d_rounded_rectangle_get_segments(r, segments, points);
+
+    ret = d2d_figure_begin(&figure, points[0], D2D1_FIGURE_BEGIN_FILLED);
     ret = ret && d2d_figure_add_beziers(&figure, &segments[0], 1);
-    d2d_point_set(&p, r->rect.right - r->radiusX, r->rect.top);
-    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_lines(&figure, &points[1], 1);
     ret = ret && d2d_figure_add_beziers(&figure, &segments[1], 1);
-    d2d_point_set(&p, r->rect.right, r->rect.bottom - r->radiusY);
-    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_lines(&figure, &points[2], 1);
     ret = ret && d2d_figure_add_beziers(&figure, &segments[2], 1);
-    d2d_point_set(&p, r->rect.left + r->radiusX, r->rect.bottom);
-    ret = ret && d2d_figure_add_lines(&figure, &p, 1);
+    ret = ret && d2d_figure_add_lines(&figure, &points[3], 1);
     ret = ret && d2d_figure_add_beziers(&figure, &segments[3], 1);
     if (!ret)
     {
@@ -5871,46 +5872,32 @@ static void d2d_rounded_rectangle_geometry_stream(struct d2d_geometry *geometry,
         const D2D_MATRIX_3X2_F *transform, ID2D1GeometrySink *sink)
 {
     const D2D1_ROUNDED_RECT *r = &geometry->u.rounded_rectangle.rounded_rect;
-    D2D1_ARC_SEGMENT arcs[4];
+    D2D1_BEZIER_SEGMENT segments[4];
     D2D1_POINT_2F points[4];
+    unsigned int i;
 
     if (r->radiusX == 0.0f || r->radiusY == 0.0f)
         return d2d_rectangle_stream(&r->rect, transform, sink);
 
-    arcs[0].size.width = r->radiusX;
-    arcs[0].size.height = r->radiusY;
-    arcs[0].rotationAngle = 0.0f;
-    arcs[0].sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
-    arcs[0].arcSize = D2D1_ARC_SIZE_SMALL;
-    arcs[1] = arcs[2] = arcs[3] = arcs[0];
-
-    d2d_point_set(&points[0], r->rect.left, r->rect.top + r->radiusY);
-    d2d_point_set(&points[1], r->rect.right - r->radiusX, r->rect.top);
-    d2d_point_set(&points[2], r->rect.right, r->rect.bottom - r->radiusY);
-    d2d_point_set(&points[3], r->rect.left + r->radiusX, r->rect.bottom);
-
-    d2d_point_set(&arcs[0].point, r->rect.left + r->radiusX, r->rect.top);
-    d2d_point_set(&arcs[1].point, r->rect.right, r->rect.top + r->radiusY);
-    d2d_point_set(&arcs[2].point, r->rect.right - r->radiusX, r->rect.bottom);
-    d2d_point_set(&arcs[3].point, r->rect.left, r->rect.bottom - r->radiusY);
+    d2d_rounded_rectangle_get_segments(r, segments, points);
 
     if (transform)
     {
-        for (int i = 0; i < ARRAYSIZE(points); ++i)
+        for (i = 0; i < ARRAYSIZE(points); ++i)
             d2d_point_transform(&points[i], transform, points[i].x, points[i].y);
-        for (int i = 0; i < ARRAYSIZE(arcs); ++i)
-            d2d_arc_transform(&arcs[i], transform);
+        for (i = 0; i < ARRAYSIZE(segments); ++i)
+            d2d_bezier_segment_transform(&segments[i], transform);
     }
 
     ID2D1GeometrySink_BeginFigure(sink, points[0], D2D1_FIGURE_BEGIN_FILLED);
 
-    ID2D1GeometrySink_AddArc(sink, &arcs[0]);
+    ID2D1GeometrySink_AddBeziers(sink, &segments[0], 1);
     ID2D1GeometrySink_AddLine(sink, points[1]);
-    ID2D1GeometrySink_AddArc(sink, &arcs[1]);
+    ID2D1GeometrySink_AddBeziers(sink, &segments[1], 1);
     ID2D1GeometrySink_AddLine(sink, points[2]);
-    ID2D1GeometrySink_AddArc(sink, &arcs[2]);
+    ID2D1GeometrySink_AddBeziers(sink, &segments[2], 1);
     ID2D1GeometrySink_AddLine(sink, points[3]);
-    ID2D1GeometrySink_AddArc(sink, &arcs[3]);
+    ID2D1GeometrySink_AddBeziers(sink, &segments[3], 1);
 
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }

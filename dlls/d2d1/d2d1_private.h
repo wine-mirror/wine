@@ -1037,6 +1037,13 @@ static inline void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2
     dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
 }
 
+static inline void d2d_bezier_segment_transform(D2D1_BEZIER_SEGMENT *segment, const D2D1_MATRIX_3X2_F *matrix)
+{
+    d2d_point_transform(&segment->point1, matrix, segment->point1.x, segment->point1.y);
+    d2d_point_transform(&segment->point2, matrix, segment->point2.x, segment->point2.y);
+    d2d_point_transform(&segment->point3, matrix, segment->point3.x, segment->point3.y);
+}
+
 static inline void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
 {
     if (point->x < dst->left)
