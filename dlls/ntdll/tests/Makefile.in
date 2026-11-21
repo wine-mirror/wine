@@ -18,10 +18,12 @@ SOURCES = \
 	pipe.c \
 	port.c \
 	reg.c \
+	signal.c \
 	rtl.c \
 	rtlbitmap.c \
 	rtlstr.c \
 	string.c \
+	syscall.c \
 	sync.c \
 	testdll.c \
 	testdll.spec \
