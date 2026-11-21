@@ -1107,6 +1107,18 @@ static void riscv64_sigreturn_handler( int sig, siginfo_t *info, void *opaque )
     RV64_CHECKPOINT( "SIGUSR2 BEFORE TLS frame clear" );
     continuation->ready = 0;
     continuation->frame = NULL;
+    if (riscv64_transition_diag_enabled())
+    {
+        char buf[240], *p = buf;
+        p = riscv64_diag_text( p, "RV64-FRAME sigreturn CONSUME frame=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)frame );
+        p = riscv64_diag_text( p, " active=" );
+        p = riscv64_diag_hex( p, (ULONG_PTR)get_syscall_frame( data ) );
+        p = riscv64_diag_text( p, " target_sp=" );
+        p = riscv64_diag_hex( p, frame->sp );
+        *p++ = '\n';
+        write( 2, buf, p - buf );
+    }
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS frame clear" );
     uc->uc_sigmask = frame->continuation_mask;
     RV64_CHECKPOINT( "SIGUSR2 AFTER TLS mask read" );
@@ -1898,6 +1910,10 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
         }
         /* The root frame is reusable only when no nested frame owns the
          * syscall-frame pointer.  Do not modify its linkage on entry. */
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-FRAME prepare ROOT tid=%lu entry_sp=%p frame=%p prev=%p cfa=%p target_sp=%p\n",
+                  (unsigned long)syscall( 178 ), entry_sp, frame, frame->prev_frame,
+                  frame->syscall_cfa, (void *)(ULONG_PTR)frame->sp );
         return frame;
     }
 
@@ -1921,6 +1937,9 @@ static struct syscall_frame *__attribute__((used)) riscv64_prepare_syscall( void
     memset( nested, 0, sizeof(*nested) );
     nested->prev_frame = frame;
     get_teb_data( data )->syscall_frame = nested;
+    if (riscv64_transition_diag_enabled())
+        WARN( "RV64-FRAME prepare NESTED tid=%lu entry_sp=%p frame=%p prev=%p cfa=%p\n",
+              (unsigned long)syscall( 178 ), entry_sp, nested, frame, nested->syscall_cfa );
     return nested;
 }
 
@@ -1959,7 +1978,13 @@ static void __attribute__((used)) riscv64_finish_syscall( struct syscall_frame *
             return;
         }
         get_teb_data( data )->syscall_frame = frame->prev_frame;
+        if (riscv64_transition_diag_enabled())
+            WARN( "RV64-FRAME finish POP tid=%lu frame=%p restored=%p\n",
+                  (unsigned long)syscall( 178 ), frame, frame->prev_frame );
     }
+    else if (riscv64_transition_diag_enabled())
+        WARN( "RV64-FRAME finish RETAIN tid=%lu frame=%p prev=%p cfa=%p\n",
+              (unsigned long)syscall( 178 ), frame, frame->prev_frame, frame->syscall_cfa );
 }
 
 /* Unix-call entry: a0 = function table, a1 = function index,
