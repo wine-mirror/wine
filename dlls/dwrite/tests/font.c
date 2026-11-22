@@ -100,6 +100,21 @@
 
 DEFINE_EXPECT(setfillmode);
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -10656,6 +10671,9 @@ static void test_GetMatchingFontsByLOGFONT(void)
 
     hr = IDWriteFactory3_GetSystemFontSet(factory, &systemset);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(systemset, &IID_IDWriteFontSet, TRUE);
+    check_interface(systemset, &IID_IUnknown, TRUE);
 
     interop = NULL;
     hr = IDWriteFactory3_GetGdiInterop(factory, &interop0);

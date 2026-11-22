@@ -7371,7 +7371,8 @@ static HRESULT WINAPI dwritefontset_QueryInterface(IDWriteFontSet3 *iface, REFII
     if (IsEqualIID(riid, &IID_IDWriteFontSet3) ||
             IsEqualIID(riid, &IID_IDWriteFontSet2) ||
             IsEqualIID(riid, &IID_IDWriteFontSet1) ||
-            IsEqualIID(riid, &IID_IDWriteFontSet))
+            IsEqualIID(riid, &IID_IDWriteFontSet) ||
+            IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
         IDWriteFontSet3_AddRef(iface);
