@@ -310,8 +310,6 @@ struct dwrite_font_data
     IDWriteFontFile *file;
     UINT32 face_index;
 
-    WCHAR *facename;
-
     USHORT simulations;
 
     LOGFONTW lf;
@@ -762,7 +760,6 @@ static void release_font_data(struct dwrite_font_data *data)
 
     dwrite_cmap_release(&data->cmap);
     IDWriteFontFile_Release(data->file);
-    free(data->facename);
     free(data);
 }
 
