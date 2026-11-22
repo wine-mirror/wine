@@ -4541,6 +4541,15 @@ static void test_CreateFontFaceFromHdc(void)
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     fragment_context = NULL;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, size - 1, 1, &fragment_context);
+    todo_wine
+    ok(hr == S_OK, "Failed to read fragment, hr %#lx.\n", hr);
+    todo_wine
+    ok(!!fragment_context, "Unexpected context %p.\n", fragment_context);
+    ok(fragment == fragment_context, "Unexpected data pointer %p, context %p.\n", fragment, fragment_context);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, fragment_context);
+
+    fragment_context = NULL;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, size, &fragment_context);
     ok(hr == S_OK, "Failed to read fragment, hr %#lx.\n", hr);
     ok(fragment_context != NULL, "Unexpected context %p.\n", fragment_context);
@@ -5138,6 +5147,16 @@ static void test_ReadFileFragment(void)
 
     hr = IDWriteFontFileStream_GetFileSize(stream, &filesize);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    fragment = NULL;
+    context = (void *)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, filesize - 1, 1, &context);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!context, "Unexpected context %p.\n", context);
+    todo_wine
+    ok(!!fragment, "Unexpected fragment pointer %p.\n", fragment);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
     /* reading past the end of the stream */
     fragment = (void*)0xdeadbeef;
@@ -9297,6 +9316,15 @@ static void test_inmemory_file_loader(void)
     ref_key = 0;
     hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key), &stream2);
     ok(hr == S_OK, "Failed to create a stream, hr %#lx.\n", hr);
+
+    context2 = (void *)0xdeadbeef;
+    frag_start = NULL;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, file_size - 1, 1, &context2);
+    todo_wine
+    ok(hr == S_OK, "Failed to read a fragment, hr %#lx.\n", hr);
+    ok(!context2, "Unexpected context %p.\n", context2);
+    todo_wine
+    ok(frag_start == ((char *)data + file_size - 1), "Unexpected fragment pointer %p.\n", frag_start);
 
     context2 = (void *)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, 0, file_size, &context2);
