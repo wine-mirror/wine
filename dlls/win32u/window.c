@@ -5288,7 +5288,7 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 
     if (is_iconic( info->hwnd ))
     {
-        NtUserRedrawWindow( info->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+        NtUserRedrawWindow( info->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
 
         win = get_win_ptr( info->hwnd );
         if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
@@ -5319,7 +5319,7 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
         release_win_ptr( win );
 
         if (!info->dwFlags || info->dwFlags & FLASHW_CAPTION)
-            send_message( hwnd, WM_NCACTIVATE, wparam, 0 );
+            send_notify_message( hwnd, WM_NCACTIVATE, wparam, 0, 0 );
 
         user_driver->pFlashWindowEx( info );
         return wparam;

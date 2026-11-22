@@ -10264,7 +10264,7 @@ static void test_FlashWindowEx(void)
     thread = CreateThread( NULL, 0, flash_window_thread, &finfo, 0, NULL );
     ok( thread != NULL, "CreateThread failed, error %ld\n", GetLastError() );
     res = WaitForSingleObject( thread, 1000 );
-    todo_wine ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
     /* process messages that FlashWindowEx is waiting for so the thread can exit */
     if (res != WAIT_OBJECT_0)
@@ -10289,7 +10289,7 @@ static void test_FlashWindowEx(void)
     thread = CreateThread( NULL, 0, flash_window_thread, &finfo, 0, NULL );
     ok( thread != NULL, "CreateThread failed, error %ld\n", GetLastError() );
     res = WaitForSingleObject( thread, 1000 );
-    todo_wine ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
     /* process messages that FlashWindowEx is waiting for so the thread can exit */
     if (res != WAIT_OBJECT_0)
