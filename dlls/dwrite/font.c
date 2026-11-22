@@ -6907,7 +6907,7 @@ static HRESULT WINAPI inmemoryfilestream_ReadFileFragment(IDWriteFontFileStream 
 
     *fragment_context = NULL;
 
-    if ((offset >= stream->data->size - 1) || (fragment_size > stream->data->size - offset)) {
+    if ((offset >= stream->data->size) || (fragment_size > stream->data->size - offset)) {
         *fragment_start = NULL;
         return E_FAIL;
     }

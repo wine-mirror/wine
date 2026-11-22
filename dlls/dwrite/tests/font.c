@@ -9318,10 +9318,8 @@ static void test_inmemory_file_loader(void)
     context2 = (void *)0xdeadbeef;
     frag_start = NULL;
     hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, file_size - 1, 1, &context2);
-    todo_wine
     ok(hr == S_OK, "Failed to read a fragment, hr %#lx.\n", hr);
     ok(!context2, "Unexpected context %p.\n", context2);
-    todo_wine
     ok(frag_start == ((char *)data + file_size - 1), "Unexpected fragment pointer %p.\n", frag_start);
 
     context2 = (void *)0xdeadbeef;
