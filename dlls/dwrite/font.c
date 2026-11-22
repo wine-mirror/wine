@@ -7125,7 +7125,7 @@ static HRESULT WINAPI dwritefontresource_QueryInterface(IDWriteFontResource *ifa
     }
 
     WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 
