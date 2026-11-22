@@ -10154,11 +10154,20 @@ static void test_FlashWindow(void)
         "FlashWindow returned with %ld\n", GetLastError() );
 }
 
+static DWORD WINAPI flash_window_thread(void *arg)
+{
+    pFlashWindowEx( arg );
+    return 0;
+}
+
 static void test_FlashWindowEx(void)
 {
     HWND hwnd;
     FLASHWINFO finfo;
     BOOL prev, ret;
+    HANDLE thread;
+    DWORD res;
+    MSG msg;
 
     if (!pFlashWindowEx)
     {
@@ -10241,6 +10250,57 @@ static void test_FlashWindowEx(void)
     SetLastError(0xdeadbeef);
     ret = pFlashWindowEx(&finfo);
     ok(prev != ret, "previous window state should be different\n");
+
+    DestroyWindow( hwnd );
+
+    /* test interthread FlashWindowEx */
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "FlashWindow", WS_VISIBLE | WS_POPUPWINDOW,
+                            0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %ld\n", GetLastError() );
+    finfo.hwnd = hwnd;
+    finfo.dwFlags = FLASHW_ALL;
+    flush_events( TRUE );
+
+    thread = CreateThread( NULL, 0, flash_window_thread, &finfo, 0, NULL );
+    ok( thread != NULL, "CreateThread failed, error %ld\n", GetLastError() );
+    res = WaitForSingleObject( thread, 1000 );
+    todo_wine ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    /* process messages that FlashWindowEx is waiting for so the thread can exit */
+    if (res != WAIT_OBJECT_0)
+    {
+        while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_SENDMESSAGE ) != WAIT_OBJECT_0)
+        {
+            while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE ))
+                DispatchMessageA( &msg );
+        }
+    }
+    CloseHandle( thread );
+
+    DestroyWindow( hwnd );
+
+    /* test interthread FlashWindowEx on a minimized window */
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "FlashWindow", WS_VISIBLE | WS_POPUPWINDOW | WS_MINIMIZE,
+                            0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %ld\n", GetLastError() );
+    finfo.hwnd = hwnd;
+    flush_events( TRUE );
+
+    thread = CreateThread( NULL, 0, flash_window_thread, &finfo, 0, NULL );
+    ok( thread != NULL, "CreateThread failed, error %ld\n", GetLastError() );
+    res = WaitForSingleObject( thread, 1000 );
+    todo_wine ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    /* process messages that FlashWindowEx is waiting for so the thread can exit */
+    if (res != WAIT_OBJECT_0)
+    {
+        while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_SENDMESSAGE ) != WAIT_OBJECT_0)
+        {
+            while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE ))
+                DispatchMessageA( &msg );
+        }
+    }
+    CloseHandle( thread );
 
     DestroyWindow( hwnd );
 }
