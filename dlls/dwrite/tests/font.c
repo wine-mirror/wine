@@ -5151,10 +5151,8 @@ static void test_ReadFileFragment(void)
     fragment = NULL;
     context = (void *)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, filesize - 1, 1, &context);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!context, "Unexpected context %p.\n", context);
-    todo_wine
     ok(!!fragment, "Unexpected fragment pointer %p.\n", fragment);
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 

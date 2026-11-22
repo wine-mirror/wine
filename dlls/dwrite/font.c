@@ -5468,7 +5468,7 @@ static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream
 
     *fragment_context = NULL;
 
-    if ((offset >= stream->size - 1) || (fragment_size > stream->size - offset))
+    if ((offset >= stream->size) || (fragment_size > stream->size - offset))
     {
         *fragment_start = NULL;
         return E_FAIL;
