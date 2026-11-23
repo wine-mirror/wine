@@ -1508,6 +1508,12 @@ static HRESULT WINAPI dwritefactory3_CreateCustomRenderingParams(IDWriteFactory7
     TRACE("%p, %.8e, %.8e, %.8e, %.8e, %d, %d, %d, %p.\n", iface, gamma, contrast, grayscale_contrast, cleartype_level,
         pixel_geometry, rendering_mode, gridfit_mode, params);
 
+    if ((UINT32)rendering_mode > DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED)
+    {
+        *params = NULL;
+        return E_INVALIDARG;
+    }
+
     return create_renderingparams(gamma, contrast, grayscale_contrast, cleartype_level, pixel_geometry, rendering_mode,
         gridfit_mode, params);
 }
