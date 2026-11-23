@@ -439,6 +439,7 @@ struct basic_details
 struct pointer_details
 {
   struct _decl_spec_t ref;
+  bool is_reference;
 };
 
 struct bitfield_details

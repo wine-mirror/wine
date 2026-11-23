@@ -209,7 +209,7 @@ bool decl_needs_parens( const type_t *type )
     return false;
 }
 
-void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv )
+void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv, enum name_type name_type, bool is_ref)
 {
     if (needs_space_after( type )) strappend( str, " " );
     if (decl_needs_parens( type )) strappend( str, "(" );
@@ -219,7 +219,10 @@ void append_pointer_left( struct strbuf *str, const type_t *type, const char *ca
         if (explicit_callconv) callconv = explicit_callconv;
         if (*callconv) strappend( str, "%s ", callconv );
     }
-    strappend( str, "*" );
+    if (name_type == NAME_DEFAULT && is_ref)
+        strappend( str, "&" );
+    else
+        strappend( str, "*" );
 }
 
 void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
@@ -248,7 +251,7 @@ void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum na
 
     case TYPE_POINTER:
         append_type_left( str, type_pointer_get_ref( type ), name_type, NULL );
-        append_pointer_left( str, type_pointer_get_ref_type( type ), callconv );
+        append_pointer_left( str, type_pointer_get_ref_type( type ), callconv, name_type, type->details.pointer.is_reference );
         if (is_const) strappend( str, "const " );
         return;
 
@@ -256,7 +259,7 @@ void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum na
     {
         bool as_pointer = type_array_is_decl_as_ptr( type );
         append_type_left( str, type_array_get_element( type ), name_type, as_pointer ? NULL : callconv );
-        if (as_pointer) append_pointer_left( str, type_array_get_element_type( type ), callconv );
+        if (as_pointer) append_pointer_left( str, type_array_get_element_type( type ), callconv, name_type, false );
         return;
     }
 
@@ -789,6 +792,16 @@ type_t *type_new_pointer(type_t *ref)
 {
     type_t *t = make_type(TYPE_POINTER);
     t->details.pointer.ref.type = ref;
+    t->details.pointer.is_reference = false;
+    return t;
+}
+
+type_t *type_new_reference(type_t *ref)
+{
+    type_t *t = make_type(TYPE_POINTER);
+    t->details.pointer.ref.type = ref;
+    t->details.pointer.is_reference = true;
+
     return t;
 }
 

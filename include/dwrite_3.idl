@@ -1221,7 +1221,7 @@ interface IDWritePaintReader : IUnknown
         [out, defaultvalue(NULL)] DWRITE_PAINT_ATTRIBUTES *glyph_attributes
     );
     HRESULT SetTextColor(
-        [in] DWRITE_COLOR_F const *text_color
+        [in] DWRITE_COLOR_F const &text_color
     );
     HRESULT SetColorPaletteIndex(
         [in] UINT32 color_palette_index

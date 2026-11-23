@@ -36,6 +36,7 @@ type_t *find_parameterized_type(type_t *type, typeref_list_t *params);
 
 type_t *type_new_function(var_list_t *args);
 type_t *type_new_pointer(type_t *ref);
+type_t *type_new_reference(type_t *ref);
 type_t *type_new_alias(const decl_spec_t *t, const char *name);
 type_t *type_module_declare(char *name);
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
@@ -92,7 +93,7 @@ extern bool needs_space_after( const type_t *type );
 extern bool decl_needs_parens( const type_t *type );
 
 extern void append_basic_type( struct strbuf *str, const type_t *type );
-extern void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv );
+extern void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv, enum name_type name_type, bool is_ref );
 extern void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
                               const char *callconv );
 extern void append_type_right( struct strbuf *str, const type_t *type, const char *callconv, bool is_field );

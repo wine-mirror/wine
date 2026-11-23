@@ -332,6 +332,7 @@ PARSER_LTYPE pop_import(void);
 %type <var_list> m_args arg_list args dispint_meths
 %type <var_list> fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident ident
+%type <type> decl_ptr_or_ref
 %type <declarator> declarator direct_declarator init_declarator struct_declarator
 %type <declarator> m_any_declarator any_declarator any_declarator_no_direct any_direct_declarator
 %type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
@@ -1037,8 +1038,10 @@ parameterized_type_arg:
 	  base_type				{ $$ = $1; }
 	| qualified_type			{ $$ = $1; }
 	| qualified_type '*'			{ $$ = type_new_pointer($1); }
+	| qualified_type '&'			{ $$ = type_new_reference($1); }
 	| parameterized_type			{ $$ = $1; }
 	| parameterized_type '*'		{ $$ = type_new_pointer($1); }
+	| parameterized_type '&'		{ $$ = type_new_reference($1); }
 	;
 
 parameterized_type_args:
@@ -1222,9 +1225,14 @@ decl_spec_no_type:
 	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, 0, 0); }
 	;
 
+decl_ptr_or_ref:
+          '*'                                   { $$ = type_new_pointer(NULL); }
+        | '&'                                   { $$ = type_new_reference(NULL); }
+        ;
+
 declarator:
-	  '*' m_type_qual_list declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
+	  decl_ptr_or_ref m_type_qual_list declarator %prec PPTR
+						{ $$ = $3; append_chain_type($$, $1, $2); }
 	| callconv declarator			{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| direct_declarator
 	;
@@ -1238,16 +1246,16 @@ direct_declarator:
 
 /* abstract declarator */
 abstract_declarator:
-	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
+	  decl_ptr_or_ref m_type_qual_list m_abstract_declarator %prec PPTR
+						{ $$ = $3; append_chain_type($$, $1, $2); }
 	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| abstract_direct_declarator
 	;
 
 /* abstract declarator without accepting direct declarator */
 abstract_declarator_no_direct:
-	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
+	  decl_ptr_or_ref m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; append_chain_type($$, $1, $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	;
 
@@ -1274,16 +1282,16 @@ abstract_direct_declarator:
 
 /* abstract or non-abstract declarator */
 any_declarator:
-	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
+	  decl_ptr_or_ref m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; append_chain_type($$, $1, $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| any_direct_declarator
 	;
 
 /* abstract or non-abstract declarator without accepting direct declarator */
 any_declarator_no_direct:
-	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
+	  decl_ptr_or_ref m_type_qual_list m_any_declarator %prec PPTR
+						{ $$ = $3; append_chain_type($$, $1, $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	;
 

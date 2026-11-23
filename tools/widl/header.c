@@ -250,10 +250,10 @@ static void write_enums(FILE *h, var_list_t *enums, const char *enum_name)
   }
 }
 
-static void write_pointer_left(FILE *h, type_t *ref)
+static void write_pointer_left(FILE *h, type_t *ref, enum name_type name_type, bool is_ref)
 {
     struct strbuf str = {0};
-    append_pointer_left( &str, ref, is_object_interface ? "STDMETHODCALLTYPE" : "" );
+    append_pointer_left( &str, ref, is_object_interface ? "STDMETHODCALLTYPE" : "", name_type, is_ref );
     fwrite( str.buf, 1, str.pos, h );
 }
 
@@ -321,13 +321,13 @@ static void write_type_definition_left( FILE *h, const decl_spec_t *decl_spec, e
 
     case TYPE_POINTER:
         write_type_definition_left( h, type_pointer_get_ref( type ), name_type, false );
-        write_pointer_left( h, type_pointer_get_ref_type( type ) );
+        write_pointer_left( h, type_pointer_get_ref_type( type ), name_type, type->details.pointer.is_reference );
         if (is_const) fprintf( h, "const " );
         break;
 
     case TYPE_ARRAY:
         write_type_definition_left( h, type_array_get_element( type ), name_type, !type_array_is_decl_as_ptr( type ) );
-        if (type_array_is_decl_as_ptr( type )) write_pointer_left( h, type_array_get_element_type( type ) );
+        if (type_array_is_decl_as_ptr( type )) write_pointer_left( h, type_array_get_element_type( type ), name_type, false );
         break;
 
     case TYPE_FUNCTION:
