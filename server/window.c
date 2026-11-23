@@ -441,9 +441,25 @@ static int link_window( struct window *win, struct window *previous )
     return old_prev != win->entry.prev;
 }
 
+static void sync_parent_monitor_dpi( struct window *win )
+{
+    struct window *child;
+
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        shared->dpi         = win->parent->shared->dpi;
+        shared->scale       = win->parent->shared->scale;
+    }
+    SHARED_WRITE_END;
+
+    LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+        sync_parent_monitor_dpi( child );
+}
+
 static void set_window_monitor_dpi( struct window *win )
 {
     struct monitor_info *info;
+    struct window *child;
 
     if (!(info = get_monitor_from_rect( win->desktop->winstation, &win->window_rect, false ))) return;
 
@@ -453,6 +469,9 @@ static void set_window_monitor_dpi( struct window *win )
         shared->scale   = info->scale;
     }
     SHARED_WRITE_END;
+
+    LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+        sync_parent_monitor_dpi( child );
 }
 
 /* attach or detach the parent window thread input if necessary */
@@ -491,12 +510,7 @@ static int set_parent_window( struct window *win, struct window *parent )
         link_window( win, WINPTR_TOP );
 
         if (is_desktop_window( parent )) set_window_monitor_dpi( win );
-        else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
-        {
-            shared->dpi         = parent->shared->dpi;
-            shared->scale       = parent->shared->scale;
-        }
-        SHARED_WRITE_END;
+        else sync_parent_monitor_dpi( win );
 
         if (win->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD))
             update_pixel_format_flags( win );
