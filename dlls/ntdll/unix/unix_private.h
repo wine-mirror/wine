@@ -641,7 +641,7 @@ static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, UL
                                0, NULL, size, ViewShare, 0, protect );
 }
 
-static const ULONG cpsr_user_mask = 0xf620fc30;
+static const ULONG cpsr_user_mask = 0xf0200000;
 
 /* LDT definitions */
 

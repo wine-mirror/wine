@@ -7877,8 +7877,8 @@ static void test_thread_context(void)
     context.ContextFlags = CONTEXT_CONTROL;
     status = pNtGetContextThread( thread, &context );
     ok( !status, "NtGetContextThread failed %08lx\n", status );
-    ok( (orig_context.Cpsr ^ context.Cpsr) == 0xf620fc30, "unexpected cpsr modification = %lx\n",
-        orig_context.Cpsr ^ context.Cpsr );
+    ok( (orig_context.Cpsr ^ context.Cpsr) == 0xf0200000 || broken((orig_context.Cpsr ^ context.Cpsr) == 0xf620fc30),
+        "unexpected cpsr modification = %lx\n", orig_context.Cpsr ^ context.Cpsr );
 
     status = pNtSetContextThread( thread, &orig_context );
     ok( !status, "NtSetContextThread failed %08lx\n", status );

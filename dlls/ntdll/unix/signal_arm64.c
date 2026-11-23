@@ -219,11 +219,6 @@ C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 #define ESR_ELx_ISS_DFSC(esr)           ((esr) & 0x3f)
 #define ESR_ELx_ISS_DFSC_ALIGN_FAULT    0x21
 
-/* Preserve all CPSR bits not covered by user context in signal handlers.
- * Additionally, preserve the host SSBS bit, which is allowed to be set on
- * Windows, but is volatile and restored on kernel transition anyway. */
-static const ULONG cpsr_host_mask = ~cpsr_user_mask | 0x1000;
-
 /***********************************************************************
  *           context_init_empty_xstate
  *
@@ -359,7 +354,7 @@ static void restore_context( struct thread_data *data, const CONTEXT *context, u
 
     FP_sig(sigcontext)     = context->Fp;   /* Frame pointer */
     LR_sig(sigcontext)     = context->Lr;   /* Link register */
-    PSTATE_sig(sigcontext) = (PSTATE_sig(sigcontext) & cpsr_host_mask) | (context->Cpsr & ~cpsr_host_mask);
+    PSTATE_sig(sigcontext) = (PSTATE_sig(sigcontext) & ~cpsr_user_mask) | (context->Cpsr & cpsr_user_mask);
     for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->X[i];
     restore_fpu( context, sigcontext );
 }
@@ -648,7 +643,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
             wow_frame->Sp = context->Sp;
             wow_frame->Lr = context->Lr;
             wow_frame->Pc = context->Pc & ~1;
-            wow_frame->Cpsr = context->Cpsr & cpsr_user_mask;
+            wow_frame->Cpsr = context->Cpsr;
             if (context->Cpsr & 0x20) wow_frame->Pc |= 1; /* thumb */
         }
         if (flags & CONTEXT_FLOATING_POINT)
@@ -1562,7 +1557,7 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     }
     FP_sig(sigcontext)     = frame->fp;
     LR_sig(sigcontext)     = frame->lr;
-    PSTATE_sig(sigcontext) = (PSTATE_sig(sigcontext) & cpsr_host_mask) | frame->cpsr;
+    PSTATE_sig(sigcontext) = (PSTATE_sig(sigcontext) & ~cpsr_user_mask) | frame->cpsr;
     for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = frame->x[i];
 
 #ifdef linux
