@@ -4542,9 +4542,7 @@ static void test_CreateFontFaceFromHdc(void)
 
     fragment_context = NULL;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, size - 1, 1, &fragment_context);
-    todo_wine
     ok(hr == S_OK, "Failed to read fragment, hr %#lx.\n", hr);
-    todo_wine
     ok(!!fragment_context, "Unexpected context %p.\n", fragment_context);
     ok(fragment == fragment_context, "Unexpected data pointer %p, context %p.\n", fragment, fragment_context);
     IDWriteFontFileStream_ReleaseFileFragment(stream, fragment_context);

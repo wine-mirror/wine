@@ -993,7 +993,7 @@ static HRESULT WINAPI memresourcestream_ReadFileFragment(IDWriteFontFileStream *
     if (!GetFontFileInfo(stream->key, 0, &fileinfo, sizeof(fileinfo), NULL))
         return E_INVALIDARG;
 
-    if ((offset >= fileinfo.size.QuadPart - 1) || (fragment_size > fileinfo.size.QuadPart - offset))
+    if ((offset >= fileinfo.size.QuadPart) || (fragment_size > fileinfo.size.QuadPart - offset))
         return E_INVALIDARG;
 
     if (!(fragment = malloc(fragment_size)))
