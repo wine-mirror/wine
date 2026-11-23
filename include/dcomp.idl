@@ -215,8 +215,7 @@ interface IDCompositionRotateTransform3D : IDCompositionTransform3D
 ]
 interface IDCompositionMatrixTransform3D : IDCompositionTransform3D
 {
-    /* C++ method: HRESULT SetMatrix(const D3DMATRIX &matrix); Use pointer instead of reference */
-    HRESULT SetMatrix([in] const D3DMATRIX *matrix);
+    HRESULT SetMatrix([in] const D3DMATRIX &matrix);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] float value);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
 };
@@ -291,8 +290,7 @@ interface IDCompositionSkewTransform : IDCompositionTransform
 ]
 interface IDCompositionMatrixTransform : IDCompositionTransform
 {
-    /* C++ method: HRESULT SetMatrix(const D2D_MATRIX_3X2_F &matrix); Use pointer instead of reference */
-    HRESULT SetMatrix([in] const D2D_MATRIX_3X2_F *matrix);
+    HRESULT SetMatrix([in] const D2D_MATRIX_3X2_F &matrix);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] float value);
     HRESULT SetMatrixElement([in] int row, [in] int column, [in] IDCompositionAnimation *animation);
 };
@@ -323,15 +321,13 @@ interface IDCompositionVisual : IUnknown
     HRESULT SetOffsetX([in] IDCompositionAnimation *animation);
     HRESULT SetOffsetY([in] float offset_y);
     HRESULT SetOffsetY([in] IDCompositionAnimation *animation);
-    /* C++ method: HRESULT SetTransform(const D2D_MATRIX_3X2_F &matrix); Use pointer instead of reference */
-    HRESULT SetTransform([in] const D2D_MATRIX_3X2_F *matrix);
+    HRESULT SetTransform([in] const D2D_MATRIX_3X2_F &matrix);
     HRESULT SetTransform([in] IDCompositionTransform *transform);
     HRESULT SetTransformParent([in] IDCompositionVisual *visual);
     HRESULT SetEffect([in] IDCompositionEffect *effect);
     HRESULT SetBitmapInterpolationMode([in] enum DCOMPOSITION_BITMAP_INTERPOLATION_MODE interpolation_mode);
     HRESULT SetBorderMode([in] enum DCOMPOSITION_BORDER_MODE border_mode);
-    /* C++ method: HRESULT SetClip(const D2D_RECT_F &rect); Use pointer instead of reference */
-    HRESULT SetClip([in] const D2D_RECT_F *rect);
+    HRESULT SetClip([in] const D2D_RECT_F &rect);
     HRESULT SetClip([in] IDCompositionClip *clip);
     HRESULT SetContent([in] IUnknown *content);
     HRESULT AddVisual([in] IDCompositionVisual *visual, [in] BOOL insert_above, [in] IDCompositionVisual *reference_visual);
@@ -460,8 +456,8 @@ interface IDCompositionGaussianBlurEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionBrightnessEffect : IDCompositionFilterEffect
 {
-    HRESULT SetWhitePoint(const D2D1_VECTOR_2F *white_point);
-    HRESULT SetBlackPoint(const D2D1_VECTOR_2F *black_point);
+    HRESULT SetWhitePoint(const D2D1_VECTOR_2F &white_point);
+    HRESULT SetBlackPoint(const D2D1_VECTOR_2F &black_point);
     HRESULT SetWhitePointX(float white_point_x);
     HRESULT SetWhitePointX(IDCompositionAnimation *animation);
     HRESULT SetWhitePointY(float white_point_y);
@@ -480,7 +476,7 @@ interface IDCompositionBrightnessEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionColorMatrixEffect : IDCompositionFilterEffect
 {
-    HRESULT SetMatrix(const D2D1_MATRIX_5X4_F *matrix);
+    HRESULT SetMatrix(const D2D1_MATRIX_5X4_F &matrix);
     HRESULT SetMatrixElement(int row, int column, float value);
     HRESULT SetMatrixElement(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetAlphaMode(D2D1_COLORMATRIX_ALPHA_MODE mode);
@@ -497,7 +493,7 @@ interface IDCompositionShadowEffect : IDCompositionFilterEffect
 {
     HRESULT SetStandardDeviation(float amount);
     HRESULT SetStandardDeviation(IDCompositionAnimation *animation);
-    HRESULT SetColor(const D2D1_VECTOR_4F *color);
+    HRESULT SetColor(const D2D1_VECTOR_4F &color);
     HRESULT SetRed(float amount);
     HRESULT SetRed(IDCompositionAnimation *animation);
     HRESULT SetGreen(float amount);
@@ -540,9 +536,9 @@ interface IDCompositionSaturationEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionTurbulenceEffect : IDCompositionFilterEffect
 {
-    HRESULT SetOffset(const D2D1_VECTOR_2F *offset);
-    HRESULT SetBaseFrequency(const D2D1_VECTOR_2F *frequency);
-    HRESULT SetSize(const D2D1_VECTOR_2F *size);
+    HRESULT SetOffset(const D2D1_VECTOR_2F &offset);
+    HRESULT SetBaseFrequency(const D2D1_VECTOR_2F &frequency);
+    HRESULT SetSize(const D2D1_VECTOR_2F &size);
     HRESULT SetNumOctaves(UINT octaves);
     HRESULT SetSeed(UINT seed);
     HRESULT SetNoise(D2D1_TURBULENCE_NOISE noise);
@@ -637,7 +633,7 @@ interface IDCompositionBlendEffect : IDCompositionFilterEffect
 ]
 interface IDCompositionArithmeticCompositeEffect : IDCompositionFilterEffect
 {
-    HRESULT SetCoefficients(const D2D1_VECTOR_4F *coefficients);
+    HRESULT SetCoefficients(const D2D1_VECTOR_4F &coefficients);
     HRESULT SetClampOutput(BOOL clamp_output);
     HRESULT SetCoefficient1(float coeffcient);
     HRESULT SetCoefficient1(IDCompositionAnimation *animation);
@@ -659,7 +655,7 @@ interface IDCompositionAffineTransform2DEffect : IDCompositionFilterEffect
 {
     HRESULT SetInterpolationMode(D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE mode);
     HRESULT SetBorderMode(D2D1_BORDER_MODE mode);
-    HRESULT SetTransformMatrix(const D2D1_MATRIX_3X2_F *matrix);
+    HRESULT SetTransformMatrix(const D2D1_MATRIX_3X2_F &matrix);
     HRESULT SetTransformMatrixElement(int row, int column, float value);
     HRESULT SetTransformMatrixElement(int row, int column, IDCompositionAnimation *animation);
     HRESULT SetSharpness(float sharpness);
