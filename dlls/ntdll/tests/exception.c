@@ -8835,14 +8835,22 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
                                         void *dispatcher, BOOL unhandled_handler )
 {
     void *addr = rec->ExceptionAddress;
+    ULONG context_flags;
 
     trace( "exception: %08lx flags:%lx addr:%p context: Pc:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (void *)context->Pc );
 
     ok( addr == (char *)code_mem + 0x0c,
         "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0x0c );
-    ok( context->ContextFlags == (CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL) ||
-        context->ContextFlags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS),
+    context_flags = context->ContextFlags;
+    if (RtlGetEnabledExtendedFeatures( ~0ul ))
+        todo_wine
+        ok( (context_flags & CONTEXT_XSTATE) == CONTEXT_XSTATE, "missing CONTEXT_XSTATE flag\n" );
+    else
+        ok( (context_flags & CONTEXT_XSTATE) == CONTEXT_ARM64, "CONTEXT_XSTATE flag present\n" );
+    context_flags &= ~CONTEXT_XSTATE | CONTEXT_ARM64;
+    ok( context_flags == (CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL) ||
+        context_flags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS),
         "wrong context flags %lx\n", context->ContextFlags );
     ok( context->Pc == (UINT_PTR)addr,
         "%d: Pc at %Ix instead of %Ix\n", test_stage, context->Pc, (UINT_PTR)addr );
