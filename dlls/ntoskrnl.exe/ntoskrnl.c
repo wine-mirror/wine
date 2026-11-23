@@ -2363,6 +2363,19 @@ PVOID WINAPI ExAllocatePoolWithTag( POOL_TYPE type, SIZE_T size, ULONG tag )
 }
 
 /***********************************************************************
+ *           ExAllocatePoolWithTagPriority   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI ExAllocatePoolWithTagPriority( POOL_TYPE type, SIZE_T size, ULONG tag, EX_POOL_PRIORITY priority )
+{
+    POOL_FLAGS flags = pool_type_to_flags( type );
+    if (type & POOL_RAISE_IF_ALLOCATION_FAILURE)
+        flags |= POOL_FLAG_RAISE_ON_FAILURE;
+
+    /* FIXME: handle priority */
+    return ExAllocatePool2( flags, size, tag );
+}
+
+/***********************************************************************
  *           ExAllocatePoolWithQuotaTag   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI ExAllocatePoolWithQuotaTag( POOL_TYPE type, SIZE_T size, ULONG tag )

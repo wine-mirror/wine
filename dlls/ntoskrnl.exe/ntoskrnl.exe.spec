@@ -143,7 +143,7 @@
 @ stdcall ExAllocatePoolWithQuota(long long)
 @ stdcall ExAllocatePoolWithQuotaTag(long long long)
 @ stdcall ExAllocatePoolWithTag(long long long)
-@ stub ExAllocatePoolWithTagPriority
+@ stdcall ExAllocatePoolWithTagPriority(long long long long)
 @ stub ExConvertExclusiveToSharedLite
 @ stdcall ExCreateCallback(ptr ptr long long)
 @ stdcall ExDeleteNPagedLookasideList(ptr)
