@@ -4920,7 +4920,9 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
 
     hr = init_fontfamily_data(names, &family_data);
     IDWriteLocalizedStrings_Release(names);
-    if (hr != S_OK) {
+    if (hr != S_OK)
+    {
+        IDWriteFontFileStream_Release(stream);
         IDWriteFontFile_Release(file);
         return hr;
     }
