@@ -84,7 +84,7 @@ enum PathPointType{
     PathPointTypeLine           = 1,
     PathPointTypeBezier         = 3,
     PathPointTypePathTypeMask   = 7,
-    PathPointTypePathDashMode   = 16,   /* not used */
+    PathPointTypeDashMode       = 16,   /* not used */
     PathPointTypePathMarker     = 32,
     PathPointTypeCloseSubpath   = 128,  /* end of a closed figure */
     PathPointTypeBezier3        = 3
