@@ -1810,18 +1810,16 @@ static void test_inter_process_child( HWND hwnd )
 
     memset( buf, 0xcc, sizeof(buf) );
     res = NtUserMessageCall( hwnd, CB_GETLBTEXT, 100, (LPARAM)buf, NULL, NtUserSendMessage, TRUE );
-    todo_wine
     ok( res == 1, "res = %d\n", res );
     ok( buf[0] == 'T', "buf[0] = %c\n", buf[0] );
-    todo_wine
     ok( buf[1] == (char)0xcc, "buf[1] = %x\n", buf[1] );
 
     memset( bufW, 0xcc, sizeof(bufW) );
     res = NtUserMessageCall( hwnd, CB_GETLBTEXT, 100, (LPARAM)bufW, NULL, NtUserSendMessage, FALSE );
     todo_wine
     ok( res == 1, "res = %d\n", res );
-    ok( bufW[0] == 'T', "bufW[0] = %c\n", buf[0] );
-    ok( bufW[1] && buf[1] != 'e', "bufW[1] = %x\n", buf[1] );
+    ok( bufW[0] == 'T', "bufW[0] = %c\n", bufW[0] );
+    ok( bufW[1] && bufW[1] != 'e', "bufW[1] = %x\n", bufW[1] );
 
     memset( buf, 0xcc, sizeof(buf) );
     *(DWORD *)buf = ARRAYSIZE(buf);
