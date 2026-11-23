@@ -13145,10 +13145,11 @@ START_TEST(exception)
         test_stage = STAGE_BREAKPOINT_NOT_HANDLED;
         test_breakpoint(1);
         test_stage = STAGE_EXCEPTION_INVHANDLE_CONTINUE;
-        test_closehandle(0, (HANDLE)0xdeadbeef);
-#ifndef __aarch64__
-        test_closehandle(0, (HANDLE)0x7fffffff);  /* apparently valid on arm64 */
-#endif
+        if (!broken(is_arm64_native_machine))  /* apparently valid on arm64 */
+        {
+            test_closehandle(0, (HANDLE)0xdeadbeef);
+            test_closehandle(0, (HANDLE)0x7fffffff);
+        }
         test_stage = STAGE_EXCEPTION_INVHANDLE_NOT_HANDLED;
         test_closehandle(1, (HANDLE)0xdeadbeef);
         test_closehandle(1, (HANDLE)~(ULONG_PTR)6);
