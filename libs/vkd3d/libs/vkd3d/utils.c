@@ -650,6 +650,54 @@ HRESULT return_interface(void *iface, REFIID iface_iid,
     return hr;
 }
 
+struct debug_buffer
+{
+    struct vkd3d_string_buffer b;
+};
+
+static void debug_buffer_cleanup(struct debug_buffer *buffer)
+{
+    vkd3d_string_buffer_cleanup(&buffer->b);
+}
+
+static void debug_buffer_init(struct debug_buffer *buffer)
+{
+    vkd3d_string_buffer_init(&buffer->b);
+}
+
+static void debug_buffer_append(struct debug_buffer *buffer, const char *format, ...)
+{
+    va_list args;
+
+    if (buffer->b.content_size)
+        vkd3d_string_buffer_printf(&buffer->b, " | ");
+
+    va_start(args, format);
+    vkd3d_string_buffer_vprintf(&buffer->b, format, args);
+    va_end(args);
+}
+
+static void debug_buffer_append_flag(struct debug_buffer *buffer, uint32_t *flags, uint32_t flag, const char *name)
+{
+    if (!(*flags & flag))
+        return;
+    debug_buffer_append(buffer, "%s", name);
+    *flags &= ~flag;
+}
+
+static const char *debug_buffer_ret(struct debug_buffer *buffer, uint32_t flags, const char *default_string)
+{
+    const char *ret = default_string;
+
+    if (flags)
+        debug_buffer_append(buffer, "%#x", flags);
+    if (buffer->b.content_size)
+        ret = vkd3d_dbg_sprintf("%s", buffer->b.buffer);
+    debug_buffer_cleanup(buffer);
+
+    return ret;
+}
+
 const char *debug_cpu_handle(D3D12_CPU_DESCRIPTOR_HANDLE handle)
 {
     return vkd3d_dbg_sprintf("{%#"PRIxPTR"}", (uintptr_t)handle.ptr);
@@ -663,6 +711,188 @@ const char *debug_d3d12_box(const D3D12_BOX *box)
     return vkd3d_dbg_sprintf("(%u, %u, %u)-(%u, %u, %u)",
             box->left, box->top, box->front,
             box->right, box->bottom, box->back);
+}
+
+const char *debug_d3d12_comparison_func(D3D12_COMPARISON_FUNC f)
+{
+    switch (f)
+    {
+#define TO_STR(f) case D3D12_COMPARISON_FUNC_##f: return #f;
+        TO_STR(NEVER);
+        TO_STR(LESS);
+        TO_STR(EQUAL);
+        TO_STR(LESS_EQUAL);
+        TO_STR(GREATER);
+        TO_STR(NOT_EQUAL);
+        TO_STR(GREATER_EQUAL);
+        TO_STR(ALWAYS);
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", f);
+}
+
+const char *debug_d3d12_descriptor_range(const D3D12_DESCRIPTOR_RANGE *r)
+{
+    unsigned int first, last;
+    const char *type = NULL;
+
+    switch (r->RangeType)
+    {
+        case D3D12_DESCRIPTOR_RANGE_TYPE_SRV:
+            type = "srv";
+            break;
+
+        case D3D12_DESCRIPTOR_RANGE_TYPE_UAV:
+            type = "uav";
+            break;
+
+        case D3D12_DESCRIPTOR_RANGE_TYPE_CBV:
+            type = "cbv";
+            break;
+
+        case D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER:
+            type = "sampler";
+            break;
+    }
+
+    first = r->BaseShaderRegister;
+    last = first + r->NumDescriptors - 1;
+
+    if (type)
+        return vkd3d_dbg_sprintf("%s[%u:%u], space %u, offset %u",
+                type, first, last, r->RegisterSpace, r->OffsetInDescriptorsFromTableStart);
+
+    return vkd3d_dbg_sprintf("unknown<%#x>[%u:%u], space %u, offset %u",
+            r->RangeType, first, last, r->RegisterSpace,
+            r->OffsetInDescriptorsFromTableStart);
+}
+
+const char *debug_d3d12_feature(D3D12_FEATURE f)
+{
+    switch (f)
+    {
+#define TO_STR(f) case D3D12_FEATURE_##f: return #f;
+        TO_STR(D3D12_OPTIONS)
+        TO_STR(ARCHITECTURE)
+        TO_STR(FEATURE_LEVELS)
+        TO_STR(FORMAT_SUPPORT)
+        TO_STR(MULTISAMPLE_QUALITY_LEVELS)
+        TO_STR(FORMAT_INFO)
+        TO_STR(GPU_VIRTUAL_ADDRESS_SUPPORT)
+        TO_STR(SHADER_MODEL)
+        TO_STR(D3D12_OPTIONS1)
+        TO_STR(PROTECTED_RESOURCE_SESSION_SUPPORT)
+        TO_STR(ROOT_SIGNATURE)
+        TO_STR(ARCHITECTURE1)
+        TO_STR(D3D12_OPTIONS2)
+        TO_STR(SHADER_CACHE)
+        TO_STR(COMMAND_QUEUE_PRIORITY)
+        TO_STR(D3D12_OPTIONS3)
+        TO_STR(EXISTING_HEAPS)
+        TO_STR(D3D12_OPTIONS4)
+        TO_STR(SERIALIZATION)
+        TO_STR(CROSS_NODE)
+        TO_STR(D3D12_OPTIONS5)
+        TO_STR(DISPLAYABLE)
+        TO_STR(D3D12_OPTIONS6)
+        TO_STR(QUERY_META_COMMAND)
+        TO_STR(D3D12_OPTIONS7)
+        TO_STR(PROTECTED_RESOURCE_SESSION_TYPE_COUNT)
+        TO_STR(PROTECTED_RESOURCE_SESSION_TYPES)
+        TO_STR(D3D12_OPTIONS8)
+        TO_STR(D3D12_OPTIONS9)
+        TO_STR(D3D12_OPTIONS10)
+        TO_STR(D3D12_OPTIONS11)
+        TO_STR(D3D12_OPTIONS12)
+        TO_STR(D3D12_OPTIONS13)
+        TO_STR(D3D12_OPTIONS14)
+        TO_STR(D3D12_OPTIONS15)
+        TO_STR(D3D12_OPTIONS16)
+        TO_STR(D3D12_OPTIONS17)
+        TO_STR(D3D12_OPTIONS18)
+        TO_STR(D3D12_OPTIONS19)
+        TO_STR(D3D12_OPTIONS20)
+        TO_STR(PREDICATION)
+        TO_STR(PLACED_RESOURCE_SUPPORT_INFO)
+        TO_STR(HARDWARE_COPY)
+        TO_STR(D3D12_OPTIONS21)
+        TO_STR(D3D12_TIGHT_ALIGNMENT)
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", f);
+}
+
+const char *debug_d3d12_filter(D3D12_FILTER f)
+{
+    switch (f)
+    {
+#define TO_STR(f) case D3D12_FILTER_##f: return #f;
+        TO_STR(MIN_MAG_MIP_POINT);
+        TO_STR(MIN_MAG_POINT_MIP_LINEAR);
+        TO_STR(MIN_POINT_MAG_LINEAR_MIP_POINT);
+        TO_STR(MIN_POINT_MAG_MIP_LINEAR);
+        TO_STR(MIN_LINEAR_MAG_MIP_POINT);
+        TO_STR(MIN_LINEAR_MAG_POINT_MIP_LINEAR);
+        TO_STR(MIN_MAG_LINEAR_MIP_POINT);
+        TO_STR(MIN_MAG_MIP_LINEAR);
+        TO_STR(ANISOTROPIC);
+        TO_STR(COMPARISON_MIN_MAG_MIP_POINT);
+        TO_STR(COMPARISON_MIN_MAG_POINT_MIP_LINEAR);
+        TO_STR(COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT);
+        TO_STR(COMPARISON_MIN_POINT_MAG_MIP_LINEAR);
+        TO_STR(COMPARISON_MIN_LINEAR_MAG_MIP_POINT);
+        TO_STR(COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR);
+        TO_STR(COMPARISON_MIN_MAG_LINEAR_MIP_POINT);
+        TO_STR(COMPARISON_MIN_MAG_MIP_LINEAR);
+        TO_STR(COMPARISON_ANISOTROPIC);
+        TO_STR(MINIMUM_MIN_MAG_MIP_POINT);
+        TO_STR(MINIMUM_MIN_MAG_POINT_MIP_LINEAR);
+        TO_STR(MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT);
+        TO_STR(MINIMUM_MIN_POINT_MAG_MIP_LINEAR);
+        TO_STR(MINIMUM_MIN_LINEAR_MAG_MIP_POINT);
+        TO_STR(MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR);
+        TO_STR(MINIMUM_MIN_MAG_LINEAR_MIP_POINT);
+        TO_STR(MINIMUM_MIN_MAG_MIP_LINEAR);
+        TO_STR(MINIMUM_ANISOTROPIC);
+        TO_STR(MAXIMUM_MIN_MAG_MIP_POINT);
+        TO_STR(MAXIMUM_MIN_MAG_POINT_MIP_LINEAR);
+        TO_STR(MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT);
+        TO_STR(MAXIMUM_MIN_POINT_MAG_MIP_LINEAR);
+        TO_STR(MAXIMUM_MIN_LINEAR_MAG_MIP_POINT);
+        TO_STR(MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR);
+        TO_STR(MAXIMUM_MIN_MAG_LINEAR_MIP_POINT);
+        TO_STR(MAXIMUM_MIN_MAG_MIP_LINEAR);
+        TO_STR(MAXIMUM_ANISOTROPIC);
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", f);
+}
+
+const char *debug_d3d12_root_signature_flags(D3D12_ROOT_SIGNATURE_FLAGS flags)
+{
+    struct debug_buffer buffer;
+
+    debug_buffer_init(&buffer);
+#define FLAG_TO_STR(f) debug_buffer_append_flag(&buffer, (uint32_t *)&flags, D3D12_ROOT_SIGNATURE_FLAG_##f, #f)
+    FLAG_TO_STR(NONE);
+    FLAG_TO_STR(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    FLAG_TO_STR(DENY_VERTEX_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(DENY_HULL_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(DENY_DOMAIN_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(DENY_PIXEL_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(ALLOW_STREAM_OUTPUT);
+    FLAG_TO_STR(LOCAL_ROOT_SIGNATURE);
+    FLAG_TO_STR(DENY_AMPLIFICATION_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(DENY_MESH_SHADER_ROOT_ACCESS);
+    FLAG_TO_STR(CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED);
+    FLAG_TO_STR(SAMPLER_HEAP_DIRECTLY_INDEXED);
+#undef FLAG_TO_STR
+
+    return debug_buffer_ret(&buffer, flags, "NONE");
 }
 
 static const char *debug_d3d12_shader_component(D3D12_SHADER_COMPONENT_MAPPING component)
@@ -696,6 +926,71 @@ const char *debug_d3d12_shader_component_mapping(unsigned int mapping)
             debug_d3d12_shader_component(D3D12_DECODE_SHADER_4_COMPONENT_MAPPING(3, mapping)));
 }
 
+const char *debug_d3d12_shader_visibility(D3D12_SHADER_VISIBILITY v)
+{
+    switch (v)
+    {
+#define TO_STR(v) case D3D12_SHADER_VISIBILITY_##v: return #v;
+        TO_STR(ALL);
+        TO_STR(VERTEX);
+        TO_STR(HULL);
+        TO_STR(DOMAIN);
+        TO_STR(GEOMETRY);
+        TO_STR(PIXEL);
+        TO_STR(AMPLIFICATION);
+        TO_STR(MESH);
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", v);
+}
+
+const char *debug_d3d12_static_border_color(D3D12_STATIC_BORDER_COLOR c)
+{
+    switch (c)
+    {
+#define TO_STR(c) case D3D12_STATIC_BORDER_COLOR_##c: return #c;
+        TO_STR(TRANSPARENT_BLACK);
+        TO_STR(OPAQUE_BLACK);
+        TO_STR(OPAQUE_WHITE);
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", c);
+}
+
+const char *debug_d3d12_texture_address_mode(D3D12_TEXTURE_ADDRESS_MODE m)
+{
+    switch (m)
+    {
+#define TO_STR(m) case D3D12_TEXTURE_ADDRESS_MODE_##m: return #m;
+        TO_STR(WRAP);
+        TO_STR(MIRROR);
+        TO_STR(CLAMP);
+        TO_STR(BORDER);
+        TO_STR(MIRROR_ONCE);
+#undef TO_STR
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", m);
+}
+
+const char *debug_denormal_mode(enum vkd3d_shader_denormal_mode m)
+{
+    switch (m)
+    {
+#define TO_STR(u) case VKD3D_SHADER_DENORMAL_MODE_##u: return #u;
+        TO_STR(ANY);
+        TO_STR(PRESERVE);
+        TO_STR(FLUSH_TO_ZERO);
+#undef TO_STR
+        case VKD3D_SHADER_DENORMAL_MODE_FORCE_32BIT:
+            break;
+    }
+
+    return vkd3d_dbg_sprintf("UNKNOWN(%#x)", m);
+}
+
 const char *debug_gpu_handle(D3D12_GPU_DESCRIPTOR_HANDLE handle)
 {
     return vkd3d_dbg_sprintf("{%#"PRIx64"}", handle.ptr);
@@ -711,67 +1006,55 @@ const char *debug_vk_extent_3d(VkExtent3D extent)
 
 const char *debug_vk_queue_flags(VkQueueFlags flags)
 {
-    char buffer[222];
+    struct debug_buffer buffer;
 
-    buffer[0] = '\0';
-#define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
-    FLAG_TO_STR(VK_QUEUE_GRAPHICS_BIT)
-    FLAG_TO_STR(VK_QUEUE_COMPUTE_BIT)
-    FLAG_TO_STR(VK_QUEUE_TRANSFER_BIT)
-    FLAG_TO_STR(VK_QUEUE_SPARSE_BINDING_BIT)
-    FLAG_TO_STR(VK_QUEUE_PROTECTED_BIT)
+    debug_buffer_init(&buffer);
+#define FLAG_TO_STR(f) debug_buffer_append_flag(&buffer, (uint32_t *)&flags, f, #f)
+    FLAG_TO_STR(VK_QUEUE_GRAPHICS_BIT);
+    FLAG_TO_STR(VK_QUEUE_COMPUTE_BIT);
+    FLAG_TO_STR(VK_QUEUE_TRANSFER_BIT);
+    FLAG_TO_STR(VK_QUEUE_SPARSE_BINDING_BIT);
+    FLAG_TO_STR(VK_QUEUE_PROTECTED_BIT);
 #undef FLAG_TO_STR
-#define FLAG_TO_STR(f, n) if (flags & f) { strcat(buffer, " | "#n); flags &= ~f; }
-    FLAG_TO_STR(0x20, VK_QUEUE_VIDEO_DECODE_BIT_KHR)
-    FLAG_TO_STR(0x40, VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
-    FLAG_TO_STR(0x100, VK_QUEUE_OPTICAL_FLOW_BIT_NV)
+#define FLAG_TO_STR(f, n) debug_buffer_append_flag(&buffer, (uint32_t *)&flags, f, #n)
+    FLAG_TO_STR(0x20, VK_QUEUE_VIDEO_DECODE_BIT_KHR);
+    FLAG_TO_STR(0x40, VK_QUEUE_VIDEO_ENCODE_BIT_KHR);
+    FLAG_TO_STR(0x100, VK_QUEUE_OPTICAL_FLOW_BIT_NV);
 #undef FLAG_TO_STR
-    if (flags)
-        FIXME("Unrecognized flag(s) %#x.\n", flags);
 
-    if (!buffer[0])
-        return "0";
-    return vkd3d_dbg_sprintf("%s", &buffer[3]);
+    return debug_buffer_ret(&buffer, flags, "0");
 }
 
 const char *debug_vk_memory_heap_flags(VkMemoryHeapFlags flags)
 {
-    char buffer[80];
+    struct debug_buffer buffer;
 
-    buffer[0] = '\0';
-#define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
-    FLAG_TO_STR(VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-    FLAG_TO_STR(VK_MEMORY_HEAP_MULTI_INSTANCE_BIT)
+    debug_buffer_init(&buffer);
+#define FLAG_TO_STR(f) debug_buffer_append_flag(&buffer, (uint32_t *)&flags, f, #f)
+    FLAG_TO_STR(VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+    FLAG_TO_STR(VK_MEMORY_HEAP_MULTI_INSTANCE_BIT);
 #undef FLAG_TO_STR
-    if (flags)
-        FIXME("Unrecognized flag(s) %#x.\n", flags);
 
-    if (!buffer[0])
-        return "0";
-    return vkd3d_dbg_sprintf("%s", &buffer[3]);
+    return debug_buffer_ret(&buffer, flags, "0");
 }
 
 const char *debug_vk_memory_property_flags(VkMemoryPropertyFlags flags)
 {
-    char buffer[320];
+    struct debug_buffer buffer;
 
-    buffer[0] = '\0';
-#define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_PROTECTED_BIT)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
-    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
+    debug_buffer_init(&buffer);
+#define FLAG_TO_STR(f) debug_buffer_append_flag(&buffer, (uint32_t *)&flags, f, #f)
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_PROTECTED_BIT);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD);
 #undef FLAG_TO_STR
-    if (flags)
-        FIXME("Unrecognized flag(s) %#x.\n", flags);
 
-    if (!buffer[0])
-        return "0";
-    return vkd3d_dbg_sprintf("%s", &buffer[3]);
+    return debug_buffer_ret(&buffer, flags, "0");
 }
 
 HRESULT hresult_from_errno(int rc)

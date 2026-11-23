@@ -1713,6 +1713,8 @@ struct hlsl_ir_node *hlsl_fold_constant_identities(struct hlsl_ctx *ctx,
         case HLSL_OP2_MUL:
             if (hlsl_constant_is_one(const_arg))
                 return mut_arg;
+            if (hlsl_constant_is_zero(const_arg) && !ctx->compile_info.enforce_ieee_754_fp)
+                return &const_arg->node;
             break;
 
         case HLSL_OP2_LOGIC_AND:

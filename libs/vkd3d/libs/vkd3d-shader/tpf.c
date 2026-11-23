@@ -422,6 +422,7 @@ enum vkd3d_sm4_register_type
     VKD3D_SM5_RT_OUTPUT_CONTROL_POINT    = 0x1a,
     VKD3D_SM5_RT_PATCH_CONSTANT_DATA     = 0x1b,
     VKD3D_SM5_RT_DOMAIN_LOCATION         = 0x1c,
+    VKD3D_SM5_RT_THIS                    = 0x1d,
     VKD3D_SM5_RT_UAV                     = 0x1e,
     VKD3D_SM5_RT_SHARED_MEMORY           = 0x1f,
     VKD3D_SM5_RT_THREAD_ID               = 0x20,
@@ -667,7 +668,7 @@ struct vkd3d_shader_sm4_parser
 
     struct vsir_program *program;
 
-    enum vkd3d_shader_opcode phase;
+    enum vsir_opcode phase;
     bool has_control_point_phase;
     unsigned int input_register_masks[MAX_REG_OUTPUT];
     unsigned int output_register_masks[MAX_REG_OUTPUT];
@@ -685,10 +686,10 @@ struct vkd3d_shader_sm4_parser
 struct vkd3d_sm4_opcode_info
 {
     enum vkd3d_sm4_opcode opcode;
-    enum vkd3d_shader_opcode handler_idx;
+    enum vsir_opcode vsir_opcode;
     char dst_info[SM4_MAX_DST_COUNT];
     char src_info[SM4_MAX_SRC_COUNT];
-    void (*read_opcode_func)(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+    void (*read_opcode_func)(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
             const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv);
     bool is_conditional_op;
 };
@@ -794,7 +795,7 @@ static bool shader_sm4_read_register_space(struct vkd3d_shader_sm4_parser *priv,
     return true;
 }
 
-static void shader_sm4_read_conditional_op(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_conditional_op(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     tpf_read_src_operand(tpf, &tokens, &tokens[token_count], VSIR_DATA_U32, &ins->src[0]);
@@ -802,7 +803,7 @@ static void shader_sm4_read_conditional_op(struct vkd3d_shader_instruction *ins,
             VKD3D_SHADER_CONDITIONAL_OP_NZ : VKD3D_SHADER_CONDITIONAL_OP_Z;
 }
 
-static void shader_sm4_read_case_condition(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_case_condition(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     tpf_read_src_operand(tpf, &tokens, &tokens[token_count], VSIR_DATA_U32, &ins->src[0]);
@@ -811,7 +812,7 @@ static void shader_sm4_read_case_condition(struct vkd3d_shader_instruction *ins,
                 "Switch case value is not a 32-bit immediate constant register.");
 }
 
-static void shader_sm4_read_shader_data(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+static void shader_sm4_read_shader_data(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     struct vkd3d_shader_immediate_constant_buffer *icb;
@@ -861,7 +862,7 @@ static void shader_sm4_set_descriptor_register_range(struct vkd3d_shader_sm4_par
                 "Last register %u must not be less than first register %u in range.", range->last, range->first);
 }
 
-static void shader_sm4_read_dcl_resource(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_resource(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_semantic *semantic = &ins->declaration.semantic;
@@ -916,7 +917,7 @@ static void shader_sm4_read_dcl_resource(struct vkd3d_shader_instruction *ins, u
     shader_sm4_read_register_space(tpf, &tokens, end, &semantic->resource.range.space);
 }
 
-static void shader_sm4_read_dcl_constant_buffer(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_constant_buffer(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     const uint32_t *end = &tokens[token_count];
@@ -944,7 +945,7 @@ static void shader_sm4_read_dcl_constant_buffer(struct vkd3d_shader_instruction 
     ins->declaration.cb.size *= VKD3D_VEC4_SIZE * sizeof(float);
 }
 
-static void shader_sm4_read_dcl_sampler(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+static void shader_sm4_read_dcl_sampler(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     const uint32_t *end = &tokens[token_count];
@@ -957,7 +958,7 @@ static void shader_sm4_read_dcl_sampler(struct vkd3d_shader_instruction *ins, ui
     shader_sm4_read_register_space(tpf, &tokens, end, &ins->declaration.sampler.range.space);
 }
 
-static void shader_sm4_read_dcl_index_range(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_index_range(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     struct vkd3d_shader_index_range *index_range = &ins->declaration.index_range;
@@ -1066,7 +1067,7 @@ static void shader_sm4_read_dcl_index_range(struct vkd3d_shader_instruction *ins
     }
 }
 
-static void shader_sm4_read_dcl_output_topology(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_output_topology(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     enum vkd3d_sm4_output_primitive_type primitive_type;
@@ -1083,7 +1084,7 @@ static void shader_sm4_read_dcl_output_topology(struct vkd3d_shader_instruction 
     priv->program->output_topology = ins->declaration.primitive_type.type;
 }
 
-static void shader_sm4_read_dcl_input_primitive(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_input_primitive(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *sm4)
 {
     enum vkd3d_sm4_input_primitive_type primitive_type;
@@ -1112,7 +1113,7 @@ static void shader_sm4_read_dcl_input_primitive(struct vkd3d_shader_instruction 
     program->input_primitive = ins->declaration.primitive_type.type;
 }
 
-static void shader_sm4_read_declaration_count(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_declaration_count(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *sm4)
 {
     struct vsir_program *program = sm4->program;
@@ -1124,13 +1125,13 @@ static void shader_sm4_read_declaration_count(struct vkd3d_shader_instruction *i
         program->vertices_out_count = *tokens;
 }
 
-static void shader_sm4_read_declaration_dst(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_declaration_dst(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     tpf_read_dst_operand(tpf, &tokens, &tokens[token_count], VSIR_DATA_F32, &ins->declaration.dst);
 }
 
-static void shader_sm4_read_declaration_register_semantic(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_declaration_register_semantic(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     tpf_read_dst_operand(tpf, &tokens, &tokens[token_count],
@@ -1138,7 +1139,7 @@ static void shader_sm4_read_declaration_register_semantic(struct vkd3d_shader_in
     ins->declaration.register_semantic.sysval_semantic = *tokens;
 }
 
-static void shader_sm4_read_dcl_input_ps(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_input_ps(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vsir_dst_operand *dst = &ins->declaration.dst;
@@ -1157,7 +1158,7 @@ static void shader_sm4_read_dcl_input_ps(struct vkd3d_shader_instruction *ins, u
     }
 }
 
-static void shader_sm4_read_dcl_input_ps_siv(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_input_ps_siv(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vsir_dst_operand *dst = &ins->declaration.register_semantic.reg;
@@ -1177,7 +1178,7 @@ static void shader_sm4_read_dcl_input_ps_siv(struct vkd3d_shader_instruction *in
     ins->declaration.register_semantic.sysval_semantic = *tokens;
 }
 
-static void shader_sm4_read_dcl_indexable_temp(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_indexable_temp(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.indexable_temp.register_idx = *tokens++;
@@ -1188,7 +1189,7 @@ static void shader_sm4_read_dcl_indexable_temp(struct vkd3d_shader_instruction *
     ins->declaration.indexable_temp.has_function_scope = false;
 }
 
-static void shader_sm4_read_dcl_global_flags(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm4_read_dcl_global_flags(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *sm4)
 {
     ins->declaration.global_flags = (opcode_token & VKD3D_SM4_GLOBAL_FLAGS_MASK) >> VKD3D_SM4_GLOBAL_FLAGS_SHIFT;
@@ -1199,27 +1200,27 @@ static void shader_sm4_read_dcl_global_flags(struct vkd3d_shader_instruction *in
         sm4->program->f64_denormal_mode = VKD3D_SHADER_DENORMAL_MODE_PRESERVE;
 }
 
-static void shader_sm5_read_fcall(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+static void shader_sm5_read_fcall(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     ins->src[0].reg.u.fp_body_idx = *tokens++;
     tpf_read_src_operand(tpf, &tokens, &tokens[token_count], VSIR_DATA_OPAQUE, &ins->src[0]);
 }
 
-static void shader_sm5_read_dcl_function_body(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_function_body(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.index = *tokens;
 }
 
-static void shader_sm5_read_dcl_function_table(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_function_table(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.index = *tokens++;
     FIXME("Ignoring set of function bodies (count %u).\n", *tokens);
 }
 
-static void shader_sm5_read_dcl_interface(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_interface(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.fp.index = *tokens++;
@@ -1229,7 +1230,7 @@ static void shader_sm5_read_dcl_interface(struct vkd3d_shader_instruction *ins, 
     FIXME("Ignoring set of function tables (count %u).\n", ins->declaration.fp.table_count);
 }
 
-static void shader_sm5_read_control_point_count(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_control_point_count(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *sm4)
 {
     struct vsir_program *program = sm4->program;
@@ -1243,7 +1244,7 @@ static void shader_sm5_read_control_point_count(struct vkd3d_shader_instruction 
         program->output_control_point_count = ins->declaration.count;
 }
 
-static void shader_sm5_read_dcl_tessellator_domain(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_tessellator_domain(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.tessellator_domain = (opcode_token & VKD3D_SM5_TESSELLATOR_MASK)
@@ -1251,7 +1252,7 @@ static void shader_sm5_read_dcl_tessellator_domain(struct vkd3d_shader_instructi
     priv->program->tess_domain = ins->declaration.tessellator_domain;
 }
 
-static void shader_sm5_read_dcl_tessellator_partitioning(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_tessellator_partitioning(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.tessellator_partitioning = (opcode_token & VKD3D_SM5_TESSELLATOR_MASK)
@@ -1259,7 +1260,7 @@ static void shader_sm5_read_dcl_tessellator_partitioning(struct vkd3d_shader_ins
     priv->program->tess_partitioning = ins->declaration.tessellator_partitioning;
 }
 
-static void shader_sm5_read_dcl_tessellator_output_primitive(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_tessellator_output_primitive(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.tessellator_output_primitive = (opcode_token & VKD3D_SM5_TESSELLATOR_MASK)
@@ -1267,13 +1268,13 @@ static void shader_sm5_read_dcl_tessellator_output_primitive(struct vkd3d_shader
     priv->program->tess_output_primitive = ins->declaration.tessellator_output_primitive;
 }
 
-static void shader_sm5_read_dcl_hs_max_tessfactor(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_hs_max_tessfactor(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->declaration.max_tessellation_factor = *(float *)tokens;
 }
 
-static void shader_sm5_read_dcl_thread_group(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_thread_group(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *sm4)
 {
     struct vsir_program *program = sm4->program;
@@ -1284,7 +1285,7 @@ static void shader_sm5_read_dcl_thread_group(struct vkd3d_shader_instruction *in
     program->thread_group_size = ins->declaration.thread_group_size;
 }
 
-static void shader_sm5_read_dcl_uav_raw(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+static void shader_sm5_read_dcl_uav_raw(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_raw_resource *resource = &ins->declaration.raw_resource;
@@ -1296,7 +1297,7 @@ static void shader_sm5_read_dcl_uav_raw(struct vkd3d_shader_instruction *ins, ui
     shader_sm4_read_register_space(tpf, &tokens, end, &resource->resource.range.space);
 }
 
-static void shader_sm5_read_dcl_uav_structured(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_uav_structured(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_structured_resource *resource = &ins->declaration.structured_resource;
@@ -1311,7 +1312,7 @@ static void shader_sm5_read_dcl_uav_structured(struct vkd3d_shader_instruction *
     shader_sm4_read_register_space(tpf, &tokens, end, &resource->resource.range.space);
 }
 
-static void shader_sm5_read_dcl_tgsm_raw(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_tgsm_raw(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_tgsm_raw *tgsm = &ins->declaration.tgsm_raw;
@@ -1327,7 +1328,7 @@ static void shader_sm5_read_dcl_tgsm_raw(struct vkd3d_shader_instruction *ins, u
                 "Failed to add TGSM descriptor.\n");
 }
 
-static void shader_sm5_read_dcl_tgsm_structured(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_tgsm_structured(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_tgsm_structured *tgsm = &ins->declaration.tgsm_structured;
@@ -1345,7 +1346,7 @@ static void shader_sm5_read_dcl_tgsm_structured(struct vkd3d_shader_instruction 
                 "Failed to add TGSM descriptor.\n");
 }
 
-static void shader_sm5_read_dcl_resource_structured(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_resource_structured(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_structured_resource *resource = &ins->declaration.structured_resource;
@@ -1359,7 +1360,7 @@ static void shader_sm5_read_dcl_resource_structured(struct vkd3d_shader_instruct
     shader_sm4_read_register_space(tpf, &tokens, end, &resource->resource.range.space);
 }
 
-static void shader_sm5_read_dcl_resource_raw(struct vkd3d_shader_instruction *ins, uint32_t opcode,
+static void shader_sm5_read_dcl_resource_raw(struct vsir_instruction *ins, uint32_t opcode,
         uint32_t opcode_token, const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *tpf)
 {
     struct vkd3d_shader_raw_resource *resource = &ins->declaration.raw_resource;
@@ -1370,7 +1371,7 @@ static void shader_sm5_read_dcl_resource_raw(struct vkd3d_shader_instruction *in
     shader_sm4_read_register_space(tpf, &tokens, end, &resource->resource.range.space);
 }
 
-static void shader_sm5_read_sync(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
+static void shader_sm5_read_sync(struct vsir_instruction *ins, uint32_t opcode, uint32_t opcode_token,
         const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv)
 {
     ins->flags = (opcode_token & VKD3D_SM5_SYNC_FLAGS_MASK) >> VKD3D_SM5_SYNC_FLAGS_SHIFT;
@@ -1742,6 +1743,7 @@ static void init_sm4_lookup_tables(struct vkd3d_sm4_lookup_tables *lookup)
         {VKD3D_SM5_RT_OUTPUT_CONTROL_POINT,    VSIR_REGISTER_OUTCONTROLPOINT,  VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_PATCH_CONSTANT_DATA,     VSIR_REGISTER_PATCHCONST,       VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_DOMAIN_LOCATION,         VSIR_REGISTER_TESSCOORD,        VKD3D_SM4_SWIZZLE_VEC4},
+        {VKD3D_SM5_RT_THIS,                    VSIR_REGISTER_THIS,             VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_UAV,                     VSIR_REGISTER_UAV,              VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_SHARED_MEMORY,           VSIR_REGISTER_GROUPSHAREDMEM,   VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_THREAD_ID,               VSIR_REGISTER_THREADID,         VKD3D_SM4_SWIZZLE_VEC4},
@@ -1917,7 +1919,7 @@ static void init_sm4_lookup_tables(struct vkd3d_sm4_lookup_tables *lookup)
         const struct vkd3d_sm4_opcode_info *info = &opcode_table[i];
 
         lookup->opcode_info_from_sm4[info->opcode] = info;
-        lookup->opcode_info_from_vsir[info->handler_idx] = info;
+        lookup->opcode_info_from_vsir[info->vsir_opcode] = info;
     }
 
     for (i = 0; i < ARRAY_SIZE(register_type_table); ++i)
@@ -1945,7 +1947,7 @@ static const struct vkd3d_sm4_opcode_info *get_info_from_sm4_opcode(
 }
 
 static const struct vkd3d_sm4_opcode_info *get_info_from_vsir_opcode(
-        const struct vkd3d_sm4_lookup_tables *lookup, enum vkd3d_shader_opcode vsir_opcode)
+        const struct vkd3d_sm4_lookup_tables *lookup, enum vsir_opcode vsir_opcode)
 {
     if (vsir_opcode >= VSIR_OP_COUNT)
         return NULL;
@@ -2505,7 +2507,6 @@ static bool tpf_read_dst_operand(struct vkd3d_shader_sm4_parser *tpf, const uint
     if (!dst->write_mask && shader_sm4_is_scalar_register(&dst->reg))
         dst->write_mask = VKD3DSP_WRITEMASK_0;
     dst->modifiers = 0;
-    dst->shift = 0;
 
     if (register_is_input_output(&dst->reg)
             && !shader_sm4_validate_input_output_register(tpf, &dst->reg, dst->write_mask))
@@ -2514,7 +2515,7 @@ static bool tpf_read_dst_operand(struct vkd3d_shader_sm4_parser *tpf, const uint
     return true;
 }
 
-static void shader_sm4_read_instruction_modifier(uint32_t modifier, struct vkd3d_shader_instruction *ins)
+static void shader_sm4_read_instruction_modifier(uint32_t modifier, struct vsir_instruction *ins)
 {
     enum vkd3d_sm4_instruction_modifier modifier_type = modifier & VKD3D_SM4_MODIFIER_MASK;
 
@@ -2598,7 +2599,7 @@ static void shader_sm4_read_instruction_modifier(uint32_t modifier, struct vkd3d
     }
 }
 
-static void shader_sm4_read_instruction(struct vkd3d_shader_sm4_parser *sm4, struct vkd3d_shader_instruction *ins)
+static void shader_sm4_read_instruction(struct vkd3d_shader_sm4_parser *sm4, struct vsir_instruction *ins)
 {
     const struct vkd3d_sm4_opcode_info *opcode_info;
     uint32_t opcode_token, opcode, previous_token;
@@ -2648,16 +2649,14 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_sm4_parser *sm4, str
         return;
     }
 
-    vsir_instruction_init(ins, &sm4->p.location, opcode_info->handler_idx);
+    vsir_instruction_init(ins, &sm4->p.location, opcode_info->vsir_opcode);
     if (ins->opcode == VSIR_OP_HS_CONTROL_POINT_PHASE || ins->opcode == VSIR_OP_HS_FORK_PHASE
             || ins->opcode == VSIR_OP_HS_JOIN_PHASE)
         sm4->phase = ins->opcode;
     sm4->has_control_point_phase |= vsir_opcode_is_control_point_phase(ins->opcode);
     ins->flags = 0;
-    ins->coissue = false;
     ins->raw = false;
     ins->structured = false;
-    ins->predicate = NULL;
     ins->dst_count = opcode_info_get_dst_count(opcode_info);
     ins->src_count = opcode_info_get_src_count(opcode_info);
     ins->src = src = vsir_program_get_src_operands(program, ins->src_count);
@@ -2885,7 +2884,7 @@ int tpf_parse(const struct vkd3d_shader_compile_info *compile_info, uint64_t con
 {
     struct vkd3d_shader_sm4_parser sm4 = {0};
     struct dxbc_shader_desc dxbc_desc = {0};
-    struct vkd3d_shader_instruction *ins;
+    struct vsir_instruction *ins;
     int ret;
 
     dxbc_desc.is_dxil = false;
@@ -3700,7 +3699,7 @@ static void write_sm4_instruction(struct tpf_compiler *tpf, const struct sm4_ins
     sm4_update_stat_counters(tpf, instr);
 }
 
-static void tpf_dcl_constant_buffer(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_dcl_constant_buffer(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     const struct vkd3d_shader_constant_buffer *cb = &ins->declaration.cb;
     size_t size = cb->size / VKD3D_VEC4_SIZE / sizeof(float);
@@ -3811,7 +3810,7 @@ static void tpf_dcl_thread_group(struct tpf_compiler *tpf, const struct vsir_thr
     write_sm4_instruction(tpf, &instr);
 }
 
-static void tpf_dcl_sampler(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_dcl_sampler(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     const struct vkd3d_shader_sampler *sampler = &ins->declaration.sampler;
     struct sm4_instruction instr =
@@ -3861,7 +3860,7 @@ static uint32_t pack_resource_data_type(const enum vsir_data_type *resource_data
     return type;
 }
 
-static void tpf_dcl_texture(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_dcl_texture(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     const struct vkd3d_shader_version *version = &tpf->program->shader_version;
     const struct vkd3d_shader_resource *resource;
@@ -3922,7 +3921,7 @@ static void tpf_dcl_texture(struct tpf_compiler *tpf, const struct vkd3d_shader_
     write_sm4_instruction(tpf, &instr);
 }
 
-static void tpf_dcl_tgsm_raw(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_dcl_tgsm_raw(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     const struct vkd3d_shader_tgsm_raw *tgsm = &ins->declaration.tgsm_raw;
     struct sm4_instruction instr =
@@ -3939,7 +3938,7 @@ static void tpf_dcl_tgsm_raw(struct tpf_compiler *tpf, const struct vkd3d_shader
     write_sm4_instruction(tpf, &instr);
 }
 
-static void tpf_dcl_tgsm_structured(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_dcl_tgsm_structured(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     const struct vkd3d_shader_tgsm_structured *tgsm = &ins->declaration.tgsm_structured;
     struct sm4_instruction instr =
@@ -4119,7 +4118,7 @@ static void rewrite_descriptor_register(const struct tpf_compiler *tpf, struct v
     }
 }
 
-static void tpf_simple_instruction(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_simple_instruction(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     struct sm4_instruction_modifier *modifier;
     const struct vkd3d_sm4_opcode_info *info;
@@ -4193,7 +4192,7 @@ static void tpf_simple_instruction(struct tpf_compiler *tpf, const struct vkd3d_
     write_sm4_instruction(tpf, &instr);
 }
 
-static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
+static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vsir_instruction *ins)
 {
     tpf->location = ins->location;
 
@@ -4409,7 +4408,7 @@ static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vkd3d_
 static void tpf_write_program(struct tpf_compiler *tpf, struct vsir_program *program)
 {
     struct vsir_program_iterator it = vsir_program_iterator(&program->instructions);
-    struct vkd3d_shader_instruction *ins;
+    struct vsir_instruction *ins;
 
     if (tpf->program->shader_version.type == VKD3D_SHADER_TYPE_COMPUTE)
         tpf_dcl_thread_group(tpf, &tpf->program->thread_group_size);

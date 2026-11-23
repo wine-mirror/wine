@@ -3769,7 +3769,11 @@ static VkResult d3d12_create_sampler(struct d3d12_device *device, D3D12_FILTER f
     sampler_desc.addressModeV = vk_address_mode_from_d3d12(device, address_v);
     sampler_desc.addressModeW = vk_address_mode_from_d3d12(device, address_w);
     sampler_desc.mipLodBias = mip_lod_bias;
-    sampler_desc.anisotropyEnable = D3D12_DECODE_IS_ANISOTROPIC_FILTER(filter);
+    /* Vulkan's VUID-VkSamplerCreateInfo-anisotropyEnable-01071 disallows zero
+     * .maxAnisotropy in combination with VK_TRUE .anisotropyEnable. It's not
+     * a valid combination in Direct3D 12 either, but such samplers can
+     * nevertheless be successfully created. */
+    sampler_desc.anisotropyEnable = D3D12_DECODE_IS_ANISOTROPIC_FILTER(filter) && max_anisotropy;
     sampler_desc.maxAnisotropy = max_anisotropy;
     sampler_desc.compareEnable = D3D12_DECODE_IS_COMPARISON_FILTER(filter);
     sampler_desc.compareOp = sampler_desc.compareEnable ? vk_compare_op_from_d3d12(comparison_func) : 0;
@@ -3840,6 +3844,22 @@ void d3d12_desc_create_sampler(struct d3d12_desc *sampler,
     {
         WARN("NULL sampler desc.\n");
         return;
+    }
+
+    if (TRACE_ON())
+    {
+        TRACE("    filter %s.\n", debug_d3d12_filter(desc->Filter));
+        TRACE("    address {%s, %s, %s}.\n",
+                debug_d3d12_texture_address_mode(desc->AddressU),
+                debug_d3d12_texture_address_mode(desc->AddressV),
+                debug_d3d12_texture_address_mode(desc->AddressW));
+        TRACE("    lod-bias %.8e.\n", desc->MipLODBias);
+        TRACE("    max-anisotropy %u.\n", desc->MaxAnisotropy);
+        TRACE("    comparison %s.\n", debug_d3d12_comparison_func(desc->ComparisonFunc));
+        TRACE("    border-colour {%.8e, %.8e, %.8e, %.8e}.\n",
+                desc->BorderColor[0], desc->BorderColor[1], desc->BorderColor[2], desc->BorderColor[3]);
+        TRACE("    min-lod %.8e.\n", desc->MinLOD);
+        TRACE("    max-lod %.8e.\n", desc->MaxLOD);
     }
 
     if (desc->AddressU == D3D12_TEXTURE_ADDRESS_MODE_BORDER

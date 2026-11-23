@@ -1024,7 +1024,9 @@ static ULONG STDMETHODCALLTYPE d3d12_fence_Release(ID3D12Fence1 *iface)
 
 static void d3d12_fence_decref(struct d3d12_fence *fence)
 {
+    struct vkd3d_waiting_event *e;
     struct d3d12_device *device;
+    size_t i;
 
     if (vkd3d_atomic_decrement_u32(&fence->internal_refcount))
         return;
@@ -1035,6 +1037,12 @@ static void d3d12_fence_decref(struct d3d12_fence *fence)
 
     d3d12_fence_destroy_vk_objects(fence);
 
+    for (i = 0; i < fence->event_count; ++i)
+    {
+        e = &fence->events[i];
+        if (e->cleanup)
+            e->cleanup(e->event);
+    }
     vkd3d_free(fence->events);
     vkd3d_free(fence->semaphores);
     vkd3d_mutex_destroy(&fence->mutex);
@@ -1106,8 +1114,8 @@ static UINT64 STDMETHODCALLTYPE d3d12_fence_GetCompletedValue(ID3D12Fence1 *ifac
     return completed_value;
 }
 
-bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence,
-        HANDLE event, PFN_vkd3d_signal_event signal, uint64_t value)
+bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence, HANDLE event,
+        PFN_vkd3d_waiting_event_cleanup cleanup, PFN_vkd3d_signal_event signal, uint64_t value)
 {
     struct vkd3d_waiting_event *e;
 
@@ -1117,6 +1125,7 @@ bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence,
 
     e = &fence->events[fence->event_count++];
     e->event = event;
+    e->cleanup = cleanup;
     e->signal = signal;
     e->value = value;
 
@@ -1163,7 +1172,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence1 *
         signal = vkd3d_signal_null_event;
     }
 
-    if (!d3d12_fence_add_waiting_event(fence, event, signal, value))
+    if (!d3d12_fence_add_waiting_event(fence, event, NULL, signal, value))
     {
         WARN("Failed to add event.\n");
         vkd3d_mutex_unlock(&fence->mutex);

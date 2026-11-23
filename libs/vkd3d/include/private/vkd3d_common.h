@@ -43,7 +43,7 @@
 #include <intrin.h>
 #endif
 
-#define VKD3D_SHADER_API_VERSION_CURRENT VKD3D_SHADER_API_VERSION_2_1
+#define VKD3D_SHADER_API_VERSION_CURRENT VKD3D_SHADER_API_VERSION_2_2
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
@@ -218,12 +218,6 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
         } while (0)
 #else
 #define VKD3D_DBG_PRINTF_ERR(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
-#endif
-
-/* Used by vkd3d_unreachable(). */
-#ifdef VKD3D_CROSSTEST
-#undef ERR
-#define ERR(...) do { fprintf(stderr, __VA_ARGS__); abort(); } while (0)
 #endif
 
 #ifndef TRACE

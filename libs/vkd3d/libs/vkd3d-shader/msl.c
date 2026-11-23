@@ -596,7 +596,7 @@ static void msl_dst_cleanup(struct msl_dst *dst, struct vkd3d_string_buffer_cach
 }
 
 static uint32_t msl_dst_init(struct msl_dst *msl_dst, struct msl_generator *gen,
-        const struct vkd3d_shader_instruction *ins, const struct vsir_dst_operand *vsir_dst)
+        const struct vsir_instruction *ins, const struct vsir_dst_operand *vsir_dst)
 {
     uint32_t write_mask = vsir_dst->write_mask;
     enum msl_data_type dst_data_type;
@@ -645,10 +645,6 @@ static void VKD3D_PRINTF_FUNC(3, 4) msl_print_assignment(
 {
     va_list args;
 
-    if (dst->vsir->shift)
-        msl_compiler_error(gen, VKD3D_SHADER_ERROR_MSL_INTERNAL,
-                "Internal compiler error: Unhandled destination shift %#x.", dst->vsir->shift);
-
     msl_print_indent(gen->buffer, gen->indent);
     vkd3d_string_buffer_printf(gen->buffer, "%s%s = ", dst->register_name->buffer, dst->mask->buffer);
 
@@ -659,7 +655,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) msl_print_assignment(
     vkd3d_string_buffer_printf(gen->buffer, ";\n");
 }
 
-static void msl_unhandled(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_unhandled(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     const char *name = vsir_opcode_get_name(ins->opcode, "<unknown>");
 
@@ -669,7 +665,7 @@ static void msl_unhandled(struct msl_generator *gen, const struct vkd3d_shader_i
             "Internal compiler error: Unhandled instruction \"%s\" (%#x).", name, ins->opcode);
 }
 
-static void msl_binop(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, const char *op)
+static void msl_binop(struct msl_generator *gen, const struct vsir_instruction *ins, const char *op)
 {
     struct msl_src src[2];
     struct msl_dst dst;
@@ -686,7 +682,7 @@ static void msl_binop(struct msl_generator *gen, const struct vkd3d_shader_instr
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_dot(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, uint32_t src_mask)
+static void msl_dot(struct msl_generator *gen, const struct vsir_instruction *ins, uint32_t src_mask)
 {
     unsigned int component_count;
     struct msl_src src[2];
@@ -708,7 +704,7 @@ static void msl_dot(struct msl_generator *gen, const struct vkd3d_shader_instruc
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_firstbit(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_firstbit(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     const char *op = ins->opcode == VSIR_OP_FIRSTBIT_LO ? "ctz" : "clz";
     unsigned int mask_size;
@@ -730,7 +726,7 @@ static void msl_firstbit(struct msl_generator *gen, const struct vkd3d_shader_in
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_intrinsic(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, const char *op)
+static void msl_intrinsic(struct msl_generator *gen, const struct vsir_instruction *ins, const char *op)
 {
     struct vkd3d_string_buffer *args;
     struct msl_src src;
@@ -754,7 +750,7 @@ static void msl_intrinsic(struct msl_generator *gen, const struct vkd3d_shader_i
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_relop(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, const char *op)
+static void msl_relop(struct msl_generator *gen, const struct vsir_instruction *ins, const char *op)
 {
     unsigned int mask_size;
     struct msl_src src[2];
@@ -777,7 +773,7 @@ static void msl_relop(struct msl_generator *gen, const struct vkd3d_shader_instr
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_cast(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, const char *constructor)
+static void msl_cast(struct msl_generator *gen, const struct vsir_instruction *ins, const char *constructor)
 {
     unsigned int component_count;
     const char *negate;
@@ -826,7 +822,7 @@ static void msl_print_condition(struct vkd3d_string_buffer *buffer, struct msl_g
     msl_src_cleanup(&src, &gen->string_buffers);
 }
 
-static void msl_discard(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_discard(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     /* Note that discard_fragment() in Metal 2.2 and earlier behaves like
      * SPIR-V OpKill, while in Metal 2.3 and later it behaves like
@@ -838,7 +834,7 @@ static void msl_discard(struct msl_generator *gen, const struct vkd3d_shader_ins
     vkd3d_string_buffer_printf(gen->buffer, "discard_fragment();\n");
 }
 
-static void msl_if(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_if(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     msl_print_indent(gen->buffer, gen->indent);
     msl_print_condition(gen->buffer, gen, ins->flags, &ins->src[0]);
@@ -872,7 +868,7 @@ static void msl_continue(struct msl_generator *gen)
     vkd3d_string_buffer_printf(gen->buffer, "continue;\n");
 }
 
-static void msl_switch(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_switch(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     struct msl_src src;
 
@@ -885,7 +881,7 @@ static void msl_switch(struct msl_generator *gen, const struct vkd3d_shader_inst
     msl_src_cleanup(&src, &gen->string_buffers);
 }
 
-static void msl_case(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_case(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     struct msl_src src;
 
@@ -924,7 +920,7 @@ static void msl_print_texel_offset(struct vkd3d_string_buffer *buffer, struct ms
     }
 }
 
-static void msl_ld(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_ld(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     unsigned int resource_id, resource_idx, resource_space, sample_count;
     const struct msl_resource_type_info *resource_type_info;
@@ -936,7 +932,7 @@ static void msl_ld(struct msl_generator *gen, const struct vkd3d_shader_instruct
     unsigned int srv_binding = 0;
     struct msl_dst dst;
 
-    if (vkd3d_shader_instruction_has_texel_offset(ins))
+    if (vsir_instruction_has_texel_offset(ins))
         msl_compiler_error(gen, VKD3D_SHADER_ERROR_MSL_INTERNAL,
                 "Internal compiler error: Unhandled texel fetch offset.");
 
@@ -1034,7 +1030,7 @@ static void msl_ld(struct msl_generator *gen, const struct vkd3d_shader_instruct
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_sample(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_sample(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     bool bias, compare, comparison_sampler, dynamic_offset, gather, grad, lod, lod_zero, offset;
     const struct msl_resource_type_info *resource_type_info;
@@ -1059,7 +1055,7 @@ static void msl_sample(struct msl_generator *gen, const struct vkd3d_shader_inst
     grad = ins->opcode == VSIR_OP_SAMPLE_GRAD;
     lod = ins->opcode == VSIR_OP_SAMPLE_LOD;
     lod_zero = ins->opcode == VSIR_OP_SAMPLE_C_LZ;
-    offset = dynamic_offset || vkd3d_shader_instruction_has_texel_offset(ins);
+    offset = dynamic_offset || vsir_instruction_has_texel_offset(ins);
 
     resource = &ins->src[1 + dynamic_offset];
     sampler = &ins->src[2 + dynamic_offset];
@@ -1236,7 +1232,7 @@ static void msl_sample(struct msl_generator *gen, const struct vkd3d_shader_inst
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_store_uav_typed(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_store_uav_typed(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     const struct msl_resource_type_info *resource_type_info;
     enum vkd3d_shader_resource_type resource_type;
@@ -1323,7 +1319,7 @@ static void msl_store_uav_typed(struct msl_generator *gen, const struct vkd3d_sh
     vkd3d_string_buffer_release(&gen->string_buffers, image_data);
 }
 
-static void msl_unary_op(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins, const char *op)
+static void msl_unary_op(struct msl_generator *gen, const struct vsir_instruction *ins, const char *op)
 {
     struct msl_src src;
     struct msl_dst dst;
@@ -1338,7 +1334,7 @@ static void msl_unary_op(struct msl_generator *gen, const struct vkd3d_shader_in
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_mov(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_mov(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     struct msl_src src;
     struct msl_dst dst;
@@ -1353,7 +1349,7 @@ static void msl_mov(struct msl_generator *gen, const struct vkd3d_shader_instruc
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_movc(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_movc(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     unsigned int component_count;
     struct msl_src src[3];
@@ -1378,13 +1374,13 @@ static void msl_movc(struct msl_generator *gen, const struct vkd3d_shader_instru
     msl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
-static void msl_ret(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_ret(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     msl_print_indent(gen->buffer, gen->indent);
     vkd3d_string_buffer_printf(gen->buffer, "return;\n");
 }
 
-static void msl_dcl_indexable_temp(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_dcl_indexable_temp(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     const char *type = ins->declaration.indexable_temp.component_count == 4 ? "vkd3d_vec4" : "vkd3d_scalar";
 
@@ -1399,7 +1395,7 @@ static void msl_dcl_indexable_temp(struct msl_generator *gen, const struct vkd3d
             ins->declaration.indexable_temp.register_size);
 }
 
-static void msl_barrier(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_barrier(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     uint32_t flags = ins->flags;
 
@@ -1439,7 +1435,7 @@ static void msl_barrier(struct msl_generator *gen, const struct vkd3d_shader_ins
                 "Internal compiler error: Unhandled synchronisation flags %#x.", flags);
 }
 
-static void msl_handle_instruction(struct msl_generator *gen, const struct vkd3d_shader_instruction *ins)
+static void msl_handle_instruction(struct msl_generator *gen, const struct vsir_instruction *ins)
 {
     gen->location = ins->location;
 
@@ -1579,17 +1575,6 @@ static void msl_handle_instruction(struct msl_generator *gen, const struct vkd3d
         case VSIR_OP_IF:
             msl_if(gen, ins);
             break;
-        case VSIR_OP_IREM:
-        case VSIR_OP_UREM:
-            msl_binop(gen, ins, "%");
-            break;
-        case VSIR_OP_ISHL:
-            msl_binop(gen, ins, "<<");
-            break;
-        case VSIR_OP_ISHR:
-        case VSIR_OP_USHR:
-            msl_binop(gen, ins, ">>");
-            break;
         case VSIR_OP_ILT:
         case VSIR_OP_LTO:
         case VSIR_OP_ULT:
@@ -1617,6 +1602,29 @@ static void msl_handle_instruction(struct msl_generator *gen, const struct vkd3d
         case VSIR_OP_INEG:
         case VSIR_OP_NEG:
             msl_unary_op(gen, ins, "-");
+            break;
+        case VSIR_OP_IREM:
+        case VSIR_OP_UREM:
+            msl_binop(gen, ins, "%");
+            break;
+        case VSIR_OP_ISFINITE:
+            /* Negate to convert from MSL 0/1 bool to vsir 0/-1 bool. */
+            msl_intrinsic(gen, ins, "-isfinite");
+            break;
+        case VSIR_OP_ISHL:
+            msl_binop(gen, ins, "<<");
+            break;
+        case VSIR_OP_ISHR:
+        case VSIR_OP_USHR:
+            msl_binop(gen, ins, ">>");
+            break;
+        case VSIR_OP_ISINF:
+            /* Negate to convert from MSL 0/1 bool to vsir 0/-1 bool. */
+            msl_intrinsic(gen, ins, "-isinf");
+            break;
+        case VSIR_OP_ISNAN:
+            /* Negate to convert from MSL 0/1 bool to vsir 0/-1 bool. */
+            msl_intrinsic(gen, ins, "-isnan");
             break;
         case VSIR_OP_ITOF:
         case VSIR_OP_UTOF:
@@ -2277,8 +2285,8 @@ static void msl_generate_entrypoint(struct msl_generator *gen)
 static int msl_generator_generate(struct msl_generator *gen, struct vkd3d_shader_code *out)
 {
     enum vsir_global_flags flags = gen->program->global_flags;
-    struct vkd3d_shader_instruction *ins;
     struct vsir_program_iterator it;
+    struct vsir_instruction *ins;
 
     static const uint64_t ignored_flags = VKD3DSGF_REFACTORING_ALLOWED
             | VKD3DSGF_FORCE_EARLY_DEPTH_STENCIL

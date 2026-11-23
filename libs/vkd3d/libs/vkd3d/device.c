@@ -1797,6 +1797,7 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     }
 
     vulkan_info->device_limits = physical_device_info->properties2.properties.limits;
+    vulkan_info->float_controls_properties = physical_device_info->float_controls_properties;
     vulkan_info->sparse_properties = physical_device_info->properties2.properties.sparseProperties;
     vulkan_info->geometry_shaders = physical_device_info->features2.features.geometryShader;
     vulkan_info->tessellation_shaders = physical_device_info->features2.features.tessellationShader;
@@ -3439,8 +3440,8 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
 {
     struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
-    TRACE("iface %p, feature %#x, feature_data %p, feature_data_size %u.\n",
-            iface, feature, feature_data, feature_data_size);
+    TRACE("iface %p, feature %s, feature_data %p, feature_data_size %u.\n",
+            iface, debug_d3d12_feature(feature), feature_data, feature_data_size);
 
     switch (feature)
     {
@@ -3688,7 +3689,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
 
             TRACE("Request shader model %#x.\n", data->HighestShaderModel);
 
-            data->HighestShaderModel = min(data->HighestShaderModel, D3D_SHADER_MODEL_6_0);
+            data->HighestShaderModel = min(data->HighestShaderModel, D3D_SHADER_MODEL_6_2);
 
             TRACE("Shader model %#x.\n", data->HighestShaderModel);
             return S_OK;
@@ -4114,6 +4115,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             if (feature_data_size != sizeof(*data))
             {
                 WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
             }
 
             data->AdvancedTextureOpsSupported = FALSE;
@@ -4133,6 +4135,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             if (feature_data_size != sizeof(*data))
             {
                 WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
             }
 
             data->TriangleFanSupported = FALSE;
@@ -4150,6 +4153,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             if (feature_data_size != sizeof(*data))
             {
                 WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
             }
 
             data->DynamicDepthBiasSupported = FALSE;
@@ -4167,6 +4171,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             if (feature_data_size != sizeof(*data))
             {
                 WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
             }
 
             data->NonNormalizedCoordinateSamplersSupported = FALSE;
@@ -4184,6 +4189,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             if (feature_data_size != sizeof(*data))
             {
                 WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
             }
 
             data->RenderPassesValid = FALSE;
@@ -4192,8 +4198,99 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             return S_OK;
         }
 
+        case D3D12_FEATURE_D3D12_OPTIONS19:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS19 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
+            }
+
+            data->MismatchingOutputDimensionsSupported = FALSE;
+            data->SupportedSampleCountsWithNoOutputs = 0;
+            data->PointSamplingAddressesNeverRoundUp = FALSE;
+            data->RasterizerDesc2Supported = FALSE;
+            data->NarrowQuadrilateralLinesSupported = FALSE;
+            data->AnisoFilterWithPointMipSupported = FALSE;
+            data->MaxSamplerDescriptorHeapSize = 0;
+            data->MaxSamplerDescriptorHeapSizeWithStaticSamplers = 0;
+            data->MaxViewDescriptorHeapSize = 0;
+            data->ComputeOnlyCustomHeapSupported = FALSE;
+
+            TRACE("Mismatching output dimensions support %#x.\n", data->MismatchingOutputDimensionsSupported);
+            TRACE("Supported sample counts with no outputs %u.\n", data->SupportedSampleCountsWithNoOutputs);
+            TRACE("Point sampling addresses never round up %#x.\n", data->PointSamplingAddressesNeverRoundUp);
+            TRACE("Rasterizer desc2 support %#x.\n", data->RasterizerDesc2Supported);
+            TRACE("Narrow quadrilateral lines support %#x.\n", data->NarrowQuadrilateralLinesSupported);
+            TRACE("Aniso filter with point mip support %#x.\n", data->AnisoFilterWithPointMipSupported);
+            TRACE("Max sampler descriptor heap size %u.\n", data->MaxSamplerDescriptorHeapSize);
+            TRACE("Max sampler descriptor heap size with static samplers %u.\n",
+                    data->MaxSamplerDescriptorHeapSizeWithStaticSamplers);
+            TRACE("Max view descriptor heap size %u.\n", data->MaxViewDescriptorHeapSize);
+            TRACE("Compute only custom heap support %#x.\n", data->ComputeOnlyCustomHeapSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS20:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS20 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
+            }
+
+            data->ComputeOnlyWriteWatchSupported = FALSE;
+            data->RecreateAtTier = D3D12_RECREATE_AT_TIER_NOT_SUPPORTED;
+
+            TRACE("Compute only write watch support %#x.\n", data->ComputeOnlyWriteWatchSupported);
+            TRACE("Recreate at tier %#x.\n", data->RecreateAtTier);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS21:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS21 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
+            }
+
+            data->WorkGraphsTier = D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED;
+            data->ExecuteIndirectTier = D3D12_EXECUTE_INDIRECT_TIER_1_0;
+            data->SampleCmpGradientAndBiasSupported = FALSE;
+            data->ExtendedCommandInfoSupported = FALSE;
+
+            TRACE("Work graphs tier %#x.\n", data->WorkGraphsTier);
+            TRACE("Execute indirect tier %#x.\n", data->ExecuteIndirectTier);
+            TRACE("Sample comparison gradient and bias support %#x.\n", data->SampleCmpGradientAndBiasSupported);
+            TRACE("Extended command info support %#x.\n", data->ExtendedCommandInfoSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT:
+        {
+            D3D12_FEATURE_DATA_TIGHT_ALIGNMENT *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+                return E_INVALIDARG;
+            }
+
+            data->SupportTier = D3D12_TIGHT_ALIGNMENT_TIER_NOT_SUPPORTED;
+
+            TRACE("Tight alignment support tier %#x.\n", data->SupportTier);
+            return S_OK;
+        }
+
         default:
-            FIXME("Unhandled feature %#x.\n", feature);
+            FIXME("Unhandled feature %s.\n", debug_d3d12_feature(feature));
             return E_NOTIMPL;
     }
 }
@@ -4957,6 +5054,23 @@ struct waiting_event_semaphore
     uint32_t value;
 };
 
+static void waiting_event_semaphore_cleanup(HANDLE h)
+{
+    struct waiting_event_semaphore *s = h;
+
+    if (vkd3d_atomic_decrement_u32(&s->value))
+        return;
+    vkd3d_free(s);
+}
+
+static void waiting_event_semaphore_all_cleanup(HANDLE h)
+{
+    struct waiting_event_semaphore *s = h;
+
+    vkd3d_atomic_exchange_ptr(&s->event, NULL);
+    waiting_event_semaphore_cleanup(h);
+}
+
 static HRESULT waiting_event_semaphore_signal(HANDLE h)
 {
     struct waiting_event_semaphore *s = h;
@@ -4997,6 +5111,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(
         D3D12_MULTIPLE_FENCE_WAIT_FLAGS flags, HANDLE event)
 {
     struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+    PFN_vkd3d_waiting_event_cleanup cleanup;
     struct vkd3d_null_event null_event;
     struct waiting_event_semaphore *s;
     PFN_vkd3d_signal_event signal;
@@ -5037,9 +5152,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(
     s->value = fence_count;
 
     if (flags & D3D12_MULTIPLE_FENCE_WAIT_FLAG_ANY)
+    {
+        cleanup = waiting_event_semaphore_cleanup;
         signal = waiting_event_semaphore_signal_first;
+    }
     else
+    {
+        cleanup = waiting_event_semaphore_all_cleanup;
         signal = waiting_event_semaphore_signal;
+    }
 
     for (i = 0; i < fence_count; ++i)
     {
@@ -5054,7 +5175,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(
             continue;
         }
 
-        if (!d3d12_fence_add_waiting_event(fence, s, signal, values[i]))
+        if (!d3d12_fence_add_waiting_event(fence, s, cleanup, signal, values[i]))
         {
             WARN("Failed to add event.\n");
             /* If the event was already signalled, we don't need to fail here.

@@ -12,7 +12,7 @@ SOURCES = \
 	libs/vkd3d-common/debug.c \
 	libs/vkd3d-common/error.c \
 	libs/vkd3d-common/memory.c \
-	libs/vkd3d-common/utf8.c \
+	libs/vkd3d-common/string.c \
 	libs/vkd3d-shader/checksum.c \
 	libs/vkd3d-shader/d3d_asm.c \
 	libs/vkd3d-shader/d3dbc.c \

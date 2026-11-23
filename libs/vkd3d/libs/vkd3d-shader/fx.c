@@ -1416,6 +1416,7 @@ static uint32_t write_fx_4_type(const struct type_entry *type, struct fx_write_c
         case HLSL_CLASS_CONSTANT_BUFFER:
         case HLSL_CLASS_NULL:
         case HLSL_CLASS_STREAM_OUTPUT:
+        case HLSL_CLASS_MIPS:
             vkd3d_unreachable();
 
         case HLSL_CLASS_VOID:
@@ -2116,6 +2117,7 @@ static bool is_type_supported_fx_2(struct hlsl_ctx *ctx, const struct hlsl_type 
         case HLSL_CLASS_CONSTANT_BUFFER:
         case HLSL_CLASS_NULL:
         case HLSL_CLASS_STREAM_OUTPUT:
+        case HLSL_CLASS_MIPS:
             break;
     }
 
@@ -3800,6 +3802,9 @@ static void write_fx_4_buffer(struct hlsl_buffer *b, struct fx_write_context *fx
             continue;
 
         if (var->buffer != b)
+            continue;
+
+        if (!var->is_uniform)
             continue;
 
         write_fx_4_numeric_variable(var, shared, fx);

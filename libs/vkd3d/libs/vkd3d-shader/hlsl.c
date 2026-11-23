@@ -138,7 +138,7 @@ void hlsl_add_var(struct hlsl_ctx *ctx, struct hlsl_ir_var *decl)
     list_add_tail(&scope->vars, &decl->scope_entry);
 }
 
-struct hlsl_ir_var *hlsl_get_var(struct hlsl_scope *scope, const char *name)
+struct hlsl_ir_var *hlsl_get_var_in_scope(struct hlsl_scope *scope, const char *name)
 {
     struct hlsl_ir_var *var;
 
@@ -147,9 +147,24 @@ struct hlsl_ir_var *hlsl_get_var(struct hlsl_scope *scope, const char *name)
         if (var->name && !strcmp(name, var->name))
             return var;
     }
-    if (!scope->upper)
-        return NULL;
-    return hlsl_get_var(scope->upper, name);
+    return NULL;
+}
+
+struct hlsl_ir_var *hlsl_get_var(struct hlsl_scope *scope, const char *name)
+{
+    for (; scope; scope = scope->upper)
+    {
+        struct hlsl_ir_var *var;
+
+        if ((var = hlsl_get_var_in_scope(scope, name)))
+            return var;
+    }
+    return NULL;
+}
+
+void hlsl_identifier_cleanup(struct hlsl_identifier *identifier)
+{
+    vkd3d_free(identifier->qualified_name);
 }
 
 void hlsl_free_state_block_entry(struct hlsl_state_block_entry *entry)
@@ -349,6 +364,7 @@ bool hlsl_type_is_shader(const struct hlsl_type *type)
         case HLSL_CLASS_CONSTANT_BUFFER:
         case HLSL_CLASS_BLEND_STATE:
         case HLSL_CLASS_STREAM_OUTPUT:
+        case HLSL_CLASS_MIPS:
         case HLSL_CLASS_VOID:
         case HLSL_CLASS_NULL:
             return false;
@@ -608,6 +624,7 @@ static void hlsl_type_calculate_reg_size(struct hlsl_ctx *ctx, struct hlsl_type 
         case HLSL_CLASS_HULL_SHADER:
         case HLSL_CLASS_GEOMETRY_SHADER:
         case HLSL_CLASS_BLEND_STATE:
+        case HLSL_CLASS_MIPS:
         case HLSL_CLASS_NULL:
             break;
     }
@@ -690,6 +707,7 @@ static bool type_is_single_component(const struct hlsl_type *type)
         case HLSL_CLASS_GEOMETRY_SHADER:
         case HLSL_CLASS_BLEND_STATE:
         case HLSL_CLASS_STREAM_OUTPUT:
+        case HLSL_CLASS_MIPS:
         case HLSL_CLASS_NULL:
             return true;
 
@@ -860,6 +878,7 @@ unsigned int hlsl_type_get_component_offset(struct hlsl_ctx *ctx, struct hlsl_ty
             case HLSL_CLASS_VOID:
             case HLSL_CLASS_SCALAR:
             case HLSL_CLASS_CONSTANT_BUFFER:
+            case HLSL_CLASS_MIPS:
             case HLSL_CLASS_NULL:
                 vkd3d_unreachable();
         }
@@ -1092,6 +1111,26 @@ struct hlsl_type *hlsl_new_array_type(struct hlsl_ctx *ctx, struct hlsl_type *ba
     return type;
 }
 
+struct hlsl_type *hlsl_new_mips_type(struct hlsl_ctx *ctx, struct hlsl_type *resource_type,
+        enum hlsl_mips_type mips_type)
+{
+    struct hlsl_type *type;
+
+    if (!(type = hlsl_alloc(ctx, sizeof(*type))))
+        return NULL;
+
+    type->class = HLSL_CLASS_MIPS;
+    type->modifiers = HLSL_MODIFIER_CONST;
+    type->e.mips.type = resource_type;
+    type->e.mips.mips_type = mips_type;
+    type->sampler_dim = resource_type->sampler_dim;
+
+    list_add_tail(&ctx->types, &type->entry);
+    type->type_id = ctx->type_count++;
+
+    return type;
+}
+
 struct hlsl_type *hlsl_new_stream_output_type(struct hlsl_ctx *ctx,
         enum hlsl_so_object_type so_type, struct hlsl_type *data_type)
 {
@@ -1293,6 +1332,7 @@ unsigned int hlsl_type_component_count(const struct hlsl_type *type)
         case HLSL_CLASS_GEOMETRY_SHADER:
         case HLSL_CLASS_BLEND_STATE:
         case HLSL_CLASS_STREAM_OUTPUT:
+        case HLSL_CLASS_MIPS:
         case HLSL_CLASS_NULL:
             return 1;
 
@@ -1376,6 +1416,10 @@ bool hlsl_types_are_equal(const struct hlsl_type *t1, const struct hlsl_type *t2
             if (t1->e.so.so_type != t2->e.so.so_type)
                 return false;
             return hlsl_types_are_equal(t1->e.so.type, t2->e.so.type);
+
+        case HLSL_CLASS_MIPS:
+            return t1->e.mips.mips_type == t2->e.mips.mips_type
+                    && hlsl_types_are_equal(t1->e.mips.type, t2->e.mips.type);
 
         case HLSL_CLASS_DEPTH_STENCIL_STATE:
         case HLSL_CLASS_DEPTH_STENCIL_VIEW:
@@ -1491,6 +1535,10 @@ struct hlsl_type *hlsl_type_clone(struct hlsl_ctx *ctx, struct hlsl_type *old,
 
         case HLSL_CLASS_STREAM_OUTPUT:
             type->e.so.so_type = old->e.so.so_type;
+            break;
+
+        case HLSL_CLASS_MIPS:
+            type->e.mips = old->e.mips;
             break;
 
         default:
@@ -2014,6 +2062,13 @@ struct hlsl_ir_node *hlsl_new_ternary_expr(struct hlsl_ctx *ctx, enum hlsl_ir_ex
     return hlsl_new_expr(ctx, op, operands, arg1->data_type, &arg1->loc);
 }
 
+struct hlsl_ir_node *hlsl_block_add_ternary_expr(struct hlsl_ctx *ctx, struct hlsl_block *block,
+        enum hlsl_ir_expr_op op, struct hlsl_ir_node *arg1, struct hlsl_ir_node *arg2,
+        struct hlsl_ir_node *arg3)
+{
+    return append_new_instr(ctx, block, hlsl_new_ternary_expr(ctx, op, arg1, arg2, arg3));
+}
+
 struct hlsl_ir_node *hlsl_new_cast(struct hlsl_ctx *ctx, struct hlsl_ir_node *node, struct hlsl_type *type,
         const struct vkd3d_shader_location *loc)
 {
@@ -2206,6 +2261,29 @@ struct hlsl_ir_node *hlsl_block_add_load_component(struct hlsl_ctx *ctx, struct 
     hlsl_block_add_instr(block, &load->node);
 
     return &load->node;
+}
+
+struct hlsl_ir_node *hlsl_block_add_mipmap_level(struct hlsl_ctx *ctx, struct hlsl_block *block,
+        struct hlsl_ir_node *index, struct hlsl_ir_node *mip, const struct vkd3d_shader_location *loc)
+{
+    unsigned int dim_count = index->data_type->e.numeric.dimx;
+    struct hlsl_deref coords_deref;
+    struct hlsl_ir_var *coords;
+
+    VKD3D_ASSERT(dim_count < 4);
+
+    if (!(coords = hlsl_new_synthetic_var(ctx, "coords",
+            hlsl_get_vector_type(ctx, HLSL_TYPE_UINT, dim_count + 1), loc)))
+    {
+        block->value = ctx->error_instr;
+        return ctx->error_instr;
+    }
+
+    hlsl_deref_init_simple(&coords_deref, coords);
+    hlsl_block_add_store_index(ctx, block, &coords_deref, NULL, index, (1u << dim_count) - 1, loc);
+    hlsl_block_add_store_index(ctx, block, &coords_deref, NULL, mip, 1u << dim_count, loc);
+
+    return hlsl_block_add_simple_load(ctx, block, coords, loc);
 }
 
 static struct hlsl_ir_resource_load *hlsl_new_resource_load(struct hlsl_ctx *ctx,
@@ -2568,6 +2646,13 @@ bool hlsl_index_is_noncontiguous(struct hlsl_ir_index *index)
     return type->class == HLSL_CLASS_MATRIX && !hlsl_type_is_row_major(type);
 }
 
+bool hlsl_index_is_mips_slice(struct hlsl_ir_index *index)
+{
+    const struct hlsl_type *type = index->node.data_type;
+
+    return type->class == HLSL_CLASS_MIPS && type->e.mips.mips_type == HLSL_MIPS_SLICE;
+}
+
 bool hlsl_index_is_resource_access(struct hlsl_ir_index *index)
 {
     const struct hlsl_type *type = index->val.node->data_type;
@@ -2603,15 +2688,30 @@ static struct hlsl_ir_node *hlsl_new_index(struct hlsl_ctx *ctx, struct hlsl_ir_
     struct hlsl_type *type = val->data_type;
     struct hlsl_ir_index *index;
 
+    switch (type->class)
+    {
+        case HLSL_CLASS_TEXTURE:
+        case HLSL_CLASS_UAV:
+            type = type->e.resource.format;
+            break;
+
+        case HLSL_CLASS_MATRIX:
+            type = hlsl_get_vector_type(ctx, type->e.numeric.type, type->e.numeric.dimx);
+            break;
+
+        case HLSL_CLASS_MIPS:
+            VKD3D_ASSERT(type->e.mips.mips_type == HLSL_MIPS_PROPERTY);
+            if (!(type = hlsl_new_mips_type(ctx, type->e.mips.type, HLSL_MIPS_SLICE)))
+                return NULL;
+            break;
+
+        default:
+            type = hlsl_get_element_type_from_path_index(ctx, type, idx);
+            break;
+    }
+
     if (!(index = hlsl_alloc(ctx, sizeof(*index))))
         return NULL;
-
-    if (type->class == HLSL_CLASS_TEXTURE || type->class == HLSL_CLASS_UAV)
-        type = type->e.resource.format;
-    else if (type->class == HLSL_CLASS_MATRIX)
-        type = hlsl_get_vector_type(ctx, type->e.numeric.type, type->e.numeric.dimx);
-    else
-        type = hlsl_get_element_type_from_path_index(ctx, type, idx);
 
     init_node(&index->node, HLSL_IR_INDEX, type, loc);
     hlsl_src_from_node(&index->val, val);
@@ -2675,6 +2775,46 @@ void hlsl_block_add_loop(struct hlsl_ctx *ctx, struct hlsl_block *block,
         hlsl_block_add_instr(block, instr);
     else
         hlsl_block_cleanup(body);
+}
+
+bool hlsl_block_has_side_effects(const struct hlsl_block *block)
+{
+    struct hlsl_ir_node *node;
+    struct hlsl_ir_var *var;
+
+    LIST_FOR_EACH_ENTRY(node, &block->instrs, struct hlsl_ir_node, entry)
+    {
+        switch (node->type)
+        {
+            case HLSL_IR_COMPILE:
+            case HLSL_IR_CONSTANT:
+            case HLSL_IR_EXPR:
+            case HLSL_IR_SAMPLER_STATE:
+            case HLSL_IR_STRING_CONSTANT:
+            case HLSL_IR_SWIZZLE:
+            case HLSL_IR_INDEX:
+            case HLSL_IR_LOAD:
+                break;
+            case HLSL_IR_STORE:
+                var = hlsl_ir_store(node)->lhs.var;
+                if (var->is_synthetic)
+                    break;
+                return true;
+            case HLSL_IR_CALL:
+            case HLSL_IR_IF:
+            case HLSL_IR_INTERLOCKED:
+            case HLSL_IR_LOOP:
+            case HLSL_IR_JUMP:
+            case HLSL_IR_RESOURCE_LOAD:
+            case HLSL_IR_RESOURCE_STORE:
+            case HLSL_IR_SWITCH:
+            case HLSL_IR_STATEBLOCK_CONSTANT:
+            case HLSL_IR_SYNC:
+                return true;
+        }
+    }
+
+    return false;
 }
 
 struct clone_instr_map
@@ -3278,6 +3418,7 @@ static struct hlsl_scope *hlsl_new_scope(struct hlsl_ctx *ctx, struct hlsl_scope
     if (!(scope = hlsl_alloc(ctx, sizeof(*scope))))
         return NULL;
     list_init(&scope->vars);
+    list_init(&scope->namespaces);
     rb_init(&scope->types, compare_hlsl_types_rb);
     scope->upper = upper;
     list_add_tail(&ctx->scopes, &scope->entry);
@@ -3291,7 +3432,6 @@ void hlsl_push_scope(struct hlsl_ctx *ctx)
     if (!(new_scope = hlsl_new_scope(ctx, ctx->cur_scope)))
         return;
 
-    TRACE("Pushing a new scope.\n");
     ctx->cur_scope = new_scope;
 }
 
@@ -3300,8 +3440,48 @@ void hlsl_pop_scope(struct hlsl_ctx *ctx)
     struct hlsl_scope *prev_scope = ctx->cur_scope->upper;
 
     VKD3D_ASSERT(prev_scope);
-    TRACE("Popping current scope.\n");
     ctx->cur_scope = prev_scope;
+}
+
+struct hlsl_scope *hlsl_get_namespace_n(const struct hlsl_scope *scope, const char *name, size_t len)
+{
+    struct hlsl_scope *namespace;
+
+    LIST_FOR_EACH_ENTRY(namespace, &scope->namespaces, struct hlsl_scope, namespace_entry)
+    {
+        if (!strncmp(namespace->namespace, name, len) && !namespace->namespace[len])
+            return namespace;
+    }
+    return NULL;
+}
+
+struct hlsl_scope *hlsl_get_namespace(const struct hlsl_scope *scope, const char *name)
+{
+    return hlsl_get_namespace_n(scope, name, strlen(name));
+}
+
+bool hlsl_push_namespace(struct hlsl_ctx *ctx, char *name, const struct vkd3d_shader_location *loc)
+{
+    struct hlsl_scope *scope;
+
+    if ((scope = hlsl_get_namespace(ctx->cur_scope, name)))
+    {
+        vkd3d_free(name);
+        ctx->cur_scope = scope;
+        return true;
+    }
+
+    if (!(scope = hlsl_new_scope(ctx, ctx->cur_scope)))
+    {
+        vkd3d_free(name);
+        return false;
+    }
+    scope->namespace = name;
+    scope->namespace_loc = *loc;
+    list_add_tail(&ctx->cur_scope->namespaces, &scope->namespace_entry);
+
+    ctx->cur_scope = scope;
+    return true;
 }
 
 static bool func_decl_matches(const struct hlsl_ir_function_decl *decl,
@@ -3485,6 +3665,14 @@ static void hlsl_dump_type(struct vkd3d_string_buffer *buffer, const struct hlsl
                 vkd3d_string_buffer_printf(buffer, "TriangleStream<");
             hlsl_dump_type(buffer, type->e.so.type);
             vkd3d_string_buffer_printf(buffer, ">");
+            return;
+
+        case HLSL_CLASS_MIPS:
+            hlsl_dump_type(buffer, type->e.mips.type);
+            if (type->e.mips.mips_type == HLSL_MIPS_PROPERTY)
+                vkd3d_string_buffer_printf(buffer, "::mips_type");
+            else
+                vkd3d_string_buffer_printf(buffer, "::mips_slice_type");
             return;
 
         case HLSL_CLASS_DEPTH_STENCIL_STATE:
@@ -3853,9 +4041,11 @@ const char *debug_hlsl_expr_op(enum hlsl_ir_expr_op op)
         [HLSL_OP1_FIND_MSB]     = "find_msb",
         [HLSL_OP1_FLOOR]        = "floor",
         [HLSL_OP1_FRACT]        = "fract",
+        [HLSL_OP1_ISFINITE]     = "isfinite",
         [HLSL_OP1_ISINF]        = "isinf",
         [HLSL_OP1_LOG2]         = "log2",
         [HLSL_OP1_LOGIC_NOT]    = "!",
+        [HLSL_OP1_MIPS]         = "mips",
         [HLSL_OP1_NEG]          = "-",
         [HLSL_OP1_NOISE]        = "noise",
         [HLSL_OP1_RCP]          = "rcp",
@@ -4826,6 +5016,20 @@ uint32_t hlsl_combine_swizzles(uint32_t first, uint32_t second, unsigned int dim
     return ret;
 }
 
+uint32_t hlsl_concat_swizzles(uint32_t swizzle1, size_t dimx1, uint32_t swizzle2, size_t dimx2)
+{
+    uint32_t ret = HLSL_SWIZZLE(X, X, X, X);
+
+    for (unsigned int i = 0; i < dimx1 + dimx2; ++i)
+    {
+        if (i < dimx1)
+            hlsl_swizzle_set_component(&ret, i, hlsl_swizzle_get_component(swizzle1, i));
+        else
+            hlsl_swizzle_set_component(&ret, i, hlsl_swizzle_get_component(swizzle2, i - dimx1));
+    }
+    return ret;
+}
+
 const struct hlsl_profile_info *hlsl_get_target_info(const char *target)
 {
     unsigned int i;
@@ -5255,6 +5459,7 @@ static void hlsl_ctx_cleanup(struct hlsl_ctx *ctx)
         LIST_FOR_EACH_ENTRY_SAFE(var, next_var, &scope->vars, struct hlsl_ir_var, scope_entry)
             hlsl_free_var(var);
         rb_destroy(&scope->types, NULL, NULL);
+        vkd3d_free(scope->namespace);
         vkd3d_free(scope);
     }
 
@@ -5267,7 +5472,6 @@ static void hlsl_ctx_cleanup(struct hlsl_ctx *ctx)
         vkd3d_free(buffer);
     }
 
-    vkd3d_free(ctx->constant_defs.regs);
     hlsl_ctx_cleanup_locale(ctx);
 }
 
@@ -5458,6 +5662,7 @@ struct hlsl_ir_function_decl *hlsl_compile_internal_function(struct hlsl_ctx *ct
     const struct hlsl_ir_function_decl *saved_cur_function = ctx->cur_function;
     struct vkd3d_shader_code code = {.code = hlsl, .size = strlen(hlsl)};
     const char *saved_internal_func_name = ctx->internal_func_name;
+    struct vkd3d_shader_location saved_location = ctx->location;
     struct vkd3d_string_buffer *internal_name;
     struct hlsl_ir_function_decl *func;
     void *saved_scanner = ctx->scanner;
@@ -5484,6 +5689,7 @@ struct hlsl_ir_function_decl *hlsl_compile_internal_function(struct hlsl_ctx *ct
     ctx->scanner = saved_scanner;
     ctx->internal_func_name = saved_internal_func_name;
     ctx->cur_function = saved_cur_function;
+    ctx->location = saved_location;
     hlsl_pop_scope(ctx);
     if (ret)
     {

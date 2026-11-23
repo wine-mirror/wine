@@ -18,6 +18,7 @@
 
 #include "config.h"
 #include <unistd.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <direct.h>     /* For getcwd() */
 #endif
@@ -397,7 +398,7 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
 {
     struct vkd3d_shader_preprocess_info preprocess_info;
     struct vkd3d_shader_hlsl_source_info hlsl_info;
-    struct vkd3d_shader_compile_option options[7];
+    struct vkd3d_shader_compile_option options[8];
     struct vkd3d_shader_compile_info compile_info;
     struct vkd3d_shader_compile_option *option;
     struct vkd3d_shader_code byte_code;
@@ -406,6 +407,13 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
     HRESULT hr;
     int ret;
 
+    static const uint32_t ignored_flags = ~(D3DCOMPILE_DEBUG
+            | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR
+            | D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR
+            | D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
+            | D3DCOMPILE_IEEE_STRICTNESS);
+    static const uint32_t ignored_effect_flags = ~(D3DCOMPILE_EFFECT_CHILD_EFFECT);
+
     TRACE("data %p, data_size %"PRIuPTR", filename %s, macros %p, include %p, entry_point %s, "
             "profile %s, flags %#x, effect_flags %#x, secondary_flags %#x, secondary_data %p, "
             "secondary_data_size %"PRIuPTR", shader_blob %p, messages_blob %p, compiler_version %u.\n",
@@ -413,10 +421,10 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
             debugstr_a(profile), flags, effect_flags, secondary_flags, secondary_data,
             (uintptr_t)secondary_data_size, shader_blob, messages_blob, compiler_version);
 
-    if (flags & ~(D3DCOMPILE_DEBUG | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR | D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR))
-        FIXME("Ignoring flags %#x.\n", flags);
-    if (effect_flags & ~D3DCOMPILE_EFFECT_CHILD_EFFECT)
-        FIXME("Ignoring effect flags %#x.\n", effect_flags);
+    if (flags & ignored_flags)
+        FIXME("Ignoring flags %#x.\n", flags & ignored_flags);
+    if (effect_flags & ignored_effect_flags)
+        FIXME("Ignoring effect flags %#x.\n", effect_flags & ignored_effect_flags);
     if (secondary_flags)
         FIXME("Ignoring secondary flags %#x.\n", secondary_flags);
 
@@ -467,6 +475,13 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
             option->value |= VKD3D_SHADER_COMPILE_OPTION_PACK_MATRIX_COLUMN_MAJOR;
     }
 
+    if (!(flags & D3DCOMPILE_IEEE_STRICTNESS))
+    {
+        option = &options[compile_info.option_count++];
+        option->name = VKD3D_SHADER_COMPILE_OPTION_IEEE_754_FP;
+        option->value = false;
+    }
+
     option = &options[compile_info.option_count++];
     option->name = VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY;
     option->value = 0;
@@ -477,6 +492,9 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
     }
     else if (compiler_version >= 37)
         option->value = VKD3D_SHADER_COMPILE_OPTION_CONST_GLOBAL_UNIFORMS;
+
+    if (compiler_version < 37)
+        option->value |= VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_ALLOW_PACKOFFSET_OVERLAP;
 
     if (effect_flags & D3DCOMPILE_EFFECT_CHILD_EFFECT)
     {
@@ -728,6 +746,7 @@ HANDLE vkd3d_create_event(void)
 unsigned int vkd3d_wait_event(HANDLE event, unsigned int milliseconds)
 {
     struct vkd3d_event *impl = event;
+    struct timespec ts;
     int rc;
 
     TRACE("event %p, milliseconds %u.\n", event, milliseconds);
@@ -746,26 +765,45 @@ unsigned int vkd3d_wait_event(HANDLE event, unsigned int milliseconds)
         return is_signaled ? VKD3D_WAIT_OBJECT_0 : VKD3D_WAIT_TIMEOUT;
     }
 
-    if (milliseconds == VKD3D_INFINITE)
+    if (milliseconds != VKD3D_INFINITE)
     {
-        do
+#ifdef HAVE_PTHREAD_COND_CLOCKWAIT
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+#else
+        clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+        ts.tv_sec += milliseconds / 1000;
+        ts.tv_nsec += (milliseconds % 1000) * 1000000;
+        if (ts.tv_nsec >= 1000000000)
         {
-            if ((rc = pthread_cond_wait(&impl->cond, &impl->mutex)))
-            {
-                ERR("Failed to wait on condition variable, error %d.\n", rc);
-                pthread_mutex_unlock(&impl->mutex);
-                return VKD3D_WAIT_FAILED;
-            }
-        } while (!impl->is_signaled);
-
-        impl->is_signaled = false;
-        pthread_mutex_unlock(&impl->mutex);
-        return VKD3D_WAIT_OBJECT_0;
+            ts.tv_nsec -= 1000000000;
+            ++ts.tv_sec;
+        }
     }
 
+    do
+    {
+        if (milliseconds == VKD3D_INFINITE)
+            rc = pthread_cond_wait(&impl->cond, &impl->mutex);
+        else
+#ifdef HAVE_PTHREAD_COND_CLOCKWAIT
+            rc = pthread_cond_clockwait(&impl->cond, &impl->mutex, CLOCK_MONOTONIC, &ts);
+#else
+            rc = pthread_cond_timedwait(&impl->cond, &impl->mutex, &ts);
+#endif
+        if (rc)
+        {
+            pthread_mutex_unlock(&impl->mutex);
+            if (rc == ETIMEDOUT)
+                return VKD3D_WAIT_TIMEOUT;
+            ERR("Failed to wait on condition variable, error %d.\n", rc);
+            return VKD3D_WAIT_FAILED;
+        }
+    } while (!impl->is_signaled);
+
+    impl->is_signaled = false;
     pthread_mutex_unlock(&impl->mutex);
-    FIXME("Timed wait not implemented yet.\n");
-    return VKD3D_WAIT_FAILED;
+    return VKD3D_WAIT_OBJECT_0;
 }
 
 HRESULT vkd3d_signal_event(HANDLE event)

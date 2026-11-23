@@ -29,7 +29,9 @@
 #include "wined3d_gl.h"
 #include <d3d10.h>
 #include <d3d10_1shader.h>
+#include "d3d11shader.h"
 #include "d3d12.h"
+#include "d3d12shader.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
 #define VKD3D_UTILS_NO_WIN32_TYPES
