@@ -925,7 +925,7 @@ static void prepare_devices(void)
         {
             if (!(device_key = reg_open_key( subkey, key->Name, key->NameLength ))) continue;
             size = query_reg_ascii_value( device_key, "ClassGUID", value, sizeof(buffer) );
-            if (size != sizeof(guid_devclass_displayW) || wcscmp( value_str, guid_devclass_displayW ))
+            if (size != sizeof(guid_devclass_displayW) || wcsicmp( value_str, guid_devclass_displayW ))
             {
                 NtClose( device_key );
                 continue;
@@ -975,7 +975,7 @@ static void cleanup_devices(void)
             bufferW[key->NameLength / sizeof(WCHAR)] = 0;
 
             size = query_reg_ascii_value( device_key, "ClassGUID", value, sizeof(buffer) );
-            if (size != sizeof(guid_devclass_displayW) || wcscmp( value_str, guid_devclass_displayW ))
+            if (size != sizeof(guid_devclass_displayW) || wcsicmp( value_str, guid_devclass_displayW ))
             {
                 NtClose( device_key );
                 continue;
@@ -2552,7 +2552,7 @@ static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_
             path[len++] = 0;
 
             size = query_reg_ascii_value( instance_key, "ClassGUID", value, sizeof(buffer) );
-            if (size != class_size || wcscmp( (WCHAR *)value->Data, classW ))
+            if (size != class_size || wcsicmp( (WCHAR *)value->Data, classW ))
             {
                 NtClose( instance_key );
                 continue;
@@ -2583,7 +2583,7 @@ static struct gpu *find_gpu_from_path( const char *path )
     struct gpu *gpu;
 
     LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
-        if (!strcmp( gpu->path, path )) return gpu_acquire( gpu );
+        if (!strcasecmp( gpu->path, path )) return gpu_acquire( gpu );
 
     ERR( "Failed to find gpu with path %s\n", debugstr_a(path) );
     return NULL;
@@ -2603,7 +2603,7 @@ static struct monitor *find_monitor_from_path( const char *path )
     struct monitor *monitor;
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
-        if (!strcmp( monitor->path, path )) return monitor;
+        if (!strcasecmp( monitor->path, path )) return monitor;
 
     ERR( "Failed to find monitor with path %s\n", debugstr_a(path) );
     return NULL;
@@ -2929,7 +2929,7 @@ static BOOL lock_display_devices( BOOL force )
 
     /* services do not have any adapters, only a virtual monitor */
     if (NtUserGetObjectInformation( NtUserGetProcessWindowStation(), UOI_NAME, name, sizeof(name), NULL )
-        && !wcscmp( name, wine_service_station_name ))
+        && !wcsicmp( name, wine_service_station_name ))
     {
         clear_display_devices();
         list_add_tail( &monitors, &virtual_monitor.entry );
@@ -8161,7 +8161,7 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVIC
     name[len] = 0;
 
     if (!name_len || strncmp( name, "\\\\?\\", 4 )) goto done;
-    if (strcmp( name + name_len + 1, guid_display_device_arrivalA )) goto done;
+    if (strcasecmp( name + name_len + 1, guid_display_device_arrivalA )) goto done;
 
     name[name_len] = 0;
     if (!lock_display_devices( FALSE ))
@@ -8171,7 +8171,7 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVIC
     }
     LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
-        if (strcmp( name + 4, gpu->path )) continue;
+        if (strcasecmp( name + 4, gpu->path )) continue;
         found = TRUE;
         desc_luid.AdapterLuid = gpu->luid;
         break;
