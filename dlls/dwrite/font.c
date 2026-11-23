@@ -2105,7 +2105,7 @@ static BOOL WINAPI dwritefontface_reference_Equals(IDWriteFontFaceReference *ifa
 {
     FIXME("%p, %p.\n", iface, ref);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static UINT32 WINAPI dwritefontface_reference_GetFontFaceIndex(IDWriteFontFaceReference *iface)
