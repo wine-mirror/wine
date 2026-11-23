@@ -1725,7 +1725,11 @@ static LRESULT WINAPI test_ipc_message_proc( HWND hwnd, UINT msg, WPARAM wparam,
     case CB_GETLBTEXT:
         ok( wparam == 100, "wparam = %Iu\n", wparam );
         wcscpy( (void *)lparam, L"Te" );
-        return 4;
+        return 2;
+
+    case CB_GETLBTEXTLEN:
+        ok( wparam == 100, "wpram = %Iu\n", wparam );
+        return 2;
 
     case WM_GETTEXTLENGTH:
         return 99;
@@ -1810,16 +1814,13 @@ static void test_inter_process_child( HWND hwnd )
 
     memset( buf, 0xcc, sizeof(buf) );
     res = NtUserMessageCall( hwnd, CB_GETLBTEXT, 100, (LPARAM)buf, NULL, NtUserSendMessage, TRUE );
-    ok( res == 1, "res = %d\n", res );
-    ok( buf[0] == 'T', "buf[0] = %c\n", buf[0] );
-    ok( buf[1] == (char)0xcc, "buf[1] = %x\n", buf[1] );
+    ok( res == 2, "res = %d\n", res );
+    ok( !strcmp(buf, "Te"), "buf = %s\n", buf );
 
     memset( bufW, 0xcc, sizeof(bufW) );
     res = NtUserMessageCall( hwnd, CB_GETLBTEXT, 100, (LPARAM)bufW, NULL, NtUserSendMessage, FALSE );
-    todo_wine
-    ok( res == 1, "res = %d\n", res );
-    ok( bufW[0] == 'T', "bufW[0] = %c\n", bufW[0] );
-    ok( bufW[1] && bufW[1] != 'e', "bufW[1] = %x\n", bufW[1] );
+    ok( res == 2, "res = %d\n", res );
+    ok( !wcscmp(bufW, L"Te"), "bufW = %s\n", debugstr_w(bufW) );
 
     memset( buf, 0xcc, sizeof(buf) );
     *(DWORD *)buf = ARRAYSIZE(buf);
