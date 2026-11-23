@@ -1335,6 +1335,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         {
             free(layout->clustermetrics);
             free(layout->clusters);
+            layout->clustermetrics = NULL;
+            layout->clusters = NULL;
             return E_OUTOFMEMORY;
         }
     }
