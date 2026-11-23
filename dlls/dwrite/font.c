@@ -6246,6 +6246,20 @@ static ULONG WINAPI colorglyphenum_AddRef(IDWriteColorGlyphRunEnumerator1 *iface
     return refcount;
 }
 
+static void colorglyphenum_destroy(struct dwrite_colorglyphenum *glyphenum)
+{
+    free(glyphenum->advances);
+    free(glyphenum->color_advances);
+    free(glyphenum->offsets);
+    free(glyphenum->color_offsets);
+    free(glyphenum->glyphindices);
+    free(glyphenum->glyphs);
+    if (glyphenum->colr.context)
+        IDWriteFontFace5_ReleaseFontTable(glyphenum->fontface, glyphenum->colr.context);
+    IDWriteFontFace5_Release(glyphenum->fontface);
+    free(glyphenum);
+}
+
 static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator1 *iface)
 {
     struct dwrite_colorglyphenum *glyphenum = impl_from_IDWriteColorGlyphRunEnumerator1(iface);
@@ -6254,18 +6268,7 @@ static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator1 *ifac
     TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
-    {
-        free(glyphenum->advances);
-        free(glyphenum->color_advances);
-        free(glyphenum->offsets);
-        free(glyphenum->color_offsets);
-        free(glyphenum->glyphindices);
-        free(glyphenum->glyphs);
-        if (glyphenum->colr.context)
-            IDWriteFontFace5_ReleaseFontTable(glyphenum->fontface, glyphenum->colr.context);
-        IDWriteFontFace5_Release(glyphenum->fontface);
-        free(glyphenum);
-    }
+        colorglyphenum_destroy(glyphenum);
 
     return refcount;
 }
@@ -6437,11 +6440,31 @@ static const IDWriteColorGlyphRunEnumerator1Vtbl colorglyphenumvtbl =
     colorglyphenum1_GetCurrentRun,
 };
 
+struct dwrite_allocator
+{
+    bool failed;
+};
+
+static void * dwrite_calloc(struct dwrite_allocator *a, size_t count, size_t size)
+{
+    void *ret;
+
+    if (a->failed)
+        return NULL;
+
+    ret = calloc(count, size);
+    if (!ret)
+        a->failed = true;
+
+    return ret;
+}
+
 HRESULT create_colorglyphenum(D2D1_POINT_2F origin, const DWRITE_GLYPH_RUN *run,
         const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr, DWRITE_GLYPH_IMAGE_FORMATS formats, DWRITE_MEASURING_MODE measuring_mode,
         const DWRITE_MATRIX *transform, unsigned int palette, IDWriteColorGlyphRunEnumerator1 **ret)
 {
     struct dwrite_colorglyphenum *colorglyphenum;
+    struct dwrite_allocator a = { 0 };
     BOOL colorfont, has_colored_glyph;
     struct dwrite_fontface *fontface;
     unsigned int i;
@@ -6479,19 +6502,19 @@ HRESULT create_colorglyphenum(D2D1_POINT_2F origin, const DWRITE_GLYPH_RUN *run,
     colorglyphenum->origin = origin;
     colorglyphenum->fontface = &fontface->IDWriteFontFace5_iface;
     IDWriteFontFace5_AddRef(colorglyphenum->fontface);
-    colorglyphenum->glyphs = NULL;
     colorglyphenum->run = *run;
     colorglyphenum->run.glyphIndices = NULL;
     colorglyphenum->run.glyphAdvances = NULL;
     colorglyphenum->run.glyphOffsets = NULL;
     colorglyphenum->palette = palette;
-    memset(&colorglyphenum->colr, 0, sizeof(colorglyphenum->colr));
     colorglyphenum->colr.exists = TRUE;
     get_fontface_table(&fontface->IDWriteFontFace5_iface, MS_COLR_TAG, &colorglyphenum->colr);
-    colorglyphenum->current_layer = 0;
-    colorglyphenum->max_layer_num = 0;
 
-    colorglyphenum->glyphs = calloc(run->glyphCount, sizeof(*colorglyphenum->glyphs));
+    if (!(colorglyphenum->glyphs = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->glyphs))))
+    {
+        colorglyphenum_destroy(colorglyphenum);
+        return E_OUTOFMEMORY;
+    }
 
     has_colored_glyph = FALSE;
     colorglyphenum->has_regular_glyphs = FALSE;
@@ -6505,19 +6528,29 @@ HRESULT create_colorglyphenum(D2D1_POINT_2F origin, const DWRITE_GLYPH_RUN *run,
     }
 
     /* It's acceptable to have a subset of glyphs mapped to color layers, for regular runs client
-       is supposed to proceed normally, like if font had no color info at all. */
-    if (!has_colored_glyph) {
-        IDWriteColorGlyphRunEnumerator1_Release(&colorglyphenum->IDWriteColorGlyphRunEnumerator1_iface);
+       is supposed to proceed normally, as if the font had no color info at all. */
+    if (!has_colored_glyph)
+    {
+        colorglyphenum_destroy(colorglyphenum);
         return DWRITE_E_NOCOLOR;
     }
 
-    colorglyphenum->advances = calloc(run->glyphCount, sizeof(*colorglyphenum->advances));
-    colorglyphenum->color_advances = calloc(run->glyphCount, sizeof(*colorglyphenum->color_advances));
-    colorglyphenum->glyphindices = calloc(run->glyphCount, sizeof(*colorglyphenum->glyphindices));
-    if (run->glyphOffsets) {
-        colorglyphenum->offsets = calloc(run->glyphCount, sizeof(*colorglyphenum->offsets));
-        colorglyphenum->color_offsets = calloc(run->glyphCount, sizeof(*colorglyphenum->color_offsets));
-        memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
+    colorglyphenum->advances = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->advances));
+    colorglyphenum->color_advances = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->color_advances));
+    colorglyphenum->glyphindices = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->glyphindices));
+
+    if (run->glyphOffsets)
+    {
+        colorglyphenum->offsets = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->offsets));
+        colorglyphenum->color_offsets = dwrite_calloc(&a, run->glyphCount, sizeof(*colorglyphenum->color_offsets));
+        if (colorglyphenum->offsets)
+            memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
+    }
+
+    if (a.failed)
+    {
+        colorglyphenum_destroy(colorglyphenum);
+        return E_OUTOFMEMORY;
     }
 
     colorglyphenum->colorrun.glyphRun.fontFace = run->fontFace;
