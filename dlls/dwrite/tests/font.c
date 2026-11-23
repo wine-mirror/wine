@@ -5811,8 +5811,14 @@ static void test_CreateRenderingParams(void)
     IDWriteRenderingParams_Release(params);
 
     hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void**)&factory3);
-    if (hr == S_OK) {
+    if (hr == S_OK)
+    {
         IDWriteRenderingParams3 *params3;
+
+        hr = IDWriteFactory3_CreateCustomRenderingParams(factory3, 1.0f, 0.0f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+                DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED + 1, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
         hr = IDWriteFactory3_CreateCustomRenderingParams(factory3, 1.0f, 0.0f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
             DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
