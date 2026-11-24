@@ -1816,6 +1816,12 @@ static BOOL handle_interrupt( struct thread_data *data, unsigned int interrupt, 
         rec->ExceptionInformation[2] = context->Edx;
         setup_raise_exception( data, sigcontext, rec, xcontext );
         return TRUE;
+    case 0x2e:
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec->ExceptionAddress = (void *)context->Eip;
+        rec->NumberParameters = 0;
+        setup_raise_exception( data, sigcontext, rec, xcontext );
+        return TRUE;
     default:
         return FALSE;
     }

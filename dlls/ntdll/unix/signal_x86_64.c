@@ -1922,6 +1922,17 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
         rec->NumberParameters = 1;
         rec->ExceptionInformation[0] = context->Rax;
         break;
+    case 0x2e:
+        if (CS_sig(sigcontext) != cs64_sel)
+        {
+            rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+            rec->ExceptionAddress = (void *)context->Rip;
+            rec->NumberParameters = 0;
+            break;
+        }
+        RIP_sig(sigcontext) += 2;
+        handle_syscall_opcode( sigcontext, data );
+        return TRUE;
     default:
         return FALSE;
     }
