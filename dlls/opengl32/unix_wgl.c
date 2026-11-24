@@ -873,61 +873,61 @@ void pop_default_fbo( TEB *teb )
 
 void resolve_default_fbo( TEB *teb )
 {
+    GLenum mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *drawable;
     struct opengl_context *ctx;
+    GLint enabled;
+    SIZE size;
 
     if (!(ctx = get_current_context( teb, NULL, &drawable, NULL )) || !drawable) return;
+    if (!drawable->draw_fbo || !drawable->read_fbo || drawable->draw_fbo == drawable->read_fbo) return;
 
-    if (drawable->draw_fbo && drawable->read_fbo && drawable->draw_fbo != drawable->read_fbo)
+    enabled = funcs->p_glIsEnabled( GL_FRAMEBUFFER_SRGB );
+    size = drawable->virtual_size;
+
+    funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
+    funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->read_fbo );
+
+    if (drawable->srgb && !enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
+    else if (!drawable->srgb && enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+
+    if (context_draws_front( ctx ))
     {
-        GLenum mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-        GLint enabled = funcs->p_glIsEnabled( GL_FRAMEBUFFER_SRGB );
-        SIZE size = drawable->virtual_size;
-
-        funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
-        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->read_fbo );
-
-        if (drawable->srgb && !enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
-        else if (!drawable->srgb && enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
-
-        if (context_draws_front( ctx ))
-        {
-            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
-            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT0 );
-            funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-            mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        }
-
-        if ((drawable->doublebuffer && context_draws_back( ctx )) || (!drawable->doublebuffer && drawable->stereo && context_draws_front( ctx )))
-        {
-            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT1 );
-            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT1 );
-            funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-            mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        }
-
-        if (drawable->doublebuffer && drawable->stereo && context_draws_front( ctx ))
-        {
-            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT2 );
-            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT2 );
-            funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-            mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        }
-
-        if (drawable->doublebuffer && drawable->stereo && context_draws_back( ctx ))
-        {
-            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT3 );
-            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT3 );
-            funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-            mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        }
-
-        if (drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
-        else if (!drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
-
-        pop_default_fbo_buffers( teb );
+        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
+        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT0 );
+        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
+        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
+
+    if ((drawable->doublebuffer && context_draws_back( ctx )) || (!drawable->doublebuffer && drawable->stereo && context_draws_front( ctx )))
+    {
+        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT1 );
+        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT1 );
+        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
+        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+    if (drawable->doublebuffer && drawable->stereo && context_draws_front( ctx ))
+    {
+        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT2 );
+        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT2 );
+        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
+        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+    if (drawable->doublebuffer && drawable->stereo && context_draws_back( ctx ))
+    {
+        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT3 );
+        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT3 );
+        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
+        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+    if (drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
+    else if (!drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+
+    pop_default_fbo_buffers( teb );
 }
 
 static GLenum *set_default_fbo_draw_buffers( struct opengl_context *ctx, struct opengl_drawable *draw,
