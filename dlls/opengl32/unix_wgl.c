@@ -604,15 +604,6 @@ static enum buffer_mask buffer_mask_from_enum( GLenum buffer )
     }
 }
 
-static BOOL context_draws_back( struct opengl_context *ctx )
-{
-    for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
-        if (buffer_mask_from_enum( ctx->draw_buffers[i] ) & MASK_BACK)
-            return TRUE;
-
-    return FALSE;
-}
-
 static BOOL context_draws_front( struct opengl_context *ctx )
 {
     for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
@@ -877,7 +868,8 @@ void resolve_default_fbo( TEB *teb )
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *drawable;
     struct opengl_context *ctx;
-    GLint enabled;
+    GLint enabled, count = 0;
+    GLenum buffers[32] = {0};
     SIZE size;
 
     if (!(ctx = get_current_context( teb, NULL, &drawable, NULL )) || ctx->read_fbo || !drawable) return;
@@ -886,48 +878,41 @@ void resolve_default_fbo( TEB *teb )
     enabled = funcs->p_glIsEnabled( GL_FRAMEBUFFER_SRGB );
     size = drawable->virtual_size;
 
+    /* pop_default_fbo_buffers only restores the default FBO bindings, use it to handle the annoying aliased
+     * draw buffer cases, but handle the non-default FBO with simpler color buffer indexes cases here.
+     */
+    if (ctx->draw_fbo)
+    {
+        funcs->p_glGetIntegerv( GL_MAX_DRAW_BUFFERS, &count );
+        if (count > ARRAY_SIZE(buffers))
+        {
+            FIXME( "Needs %u draw buffers\n", count );
+            count = ARRAY_SIZE(buffers);
+        }
+        for (UINT i = 0; i < count; i++) funcs->p_glGetIntegerv( GL_DRAW_BUFFER0 + i, (GLint *)buffers + i );
+    }
+
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->read_fbo );
+    funcs->p_glReadBuffer( drawable_buffer_from_buffer( drawable, ctx->read_buffer ) );
+    funcs->p_glDrawBuffer( drawable_buffer_from_buffer( drawable, ctx->read_buffer ) );
 
     if (drawable->srgb && !enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
     else if (!drawable->srgb && enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
 
-    if (context_draws_front( ctx ))
-    {
-        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
-        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT0 );
-        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-
-    if ((drawable->doublebuffer && context_draws_back( ctx )) || (!drawable->doublebuffer && drawable->stereo && context_draws_front( ctx )))
-    {
-        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT1 );
-        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT1 );
-        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-
-    if (drawable->doublebuffer && drawable->stereo && context_draws_front( ctx ))
-    {
-        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT2 );
-        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT2 );
-        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-
-    if (drawable->doublebuffer && drawable->stereo && context_draws_back( ctx ))
-    {
-        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT3 );
-        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT3 );
-        funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
-        mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
+    funcs->p_glBlitFramebuffer( 0, 0, size.cx, size.cy, 0, 0, size.cx, size.cy, mask, GL_NEAREST );
 
     if (drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
     else if (!drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
 
     pop_default_fbo_buffers( teb );
+
+    /* Restore the draw FBO and draw buffers bindings if pop_default_fbo_buffers didn't */
+    if (ctx->draw_fbo)
+    {
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, ctx->draw_fbo );
+        funcs->p_glDrawBuffers( count, buffers );
+    }
 }
 
 static GLenum *set_default_fbo_draw_buffers( struct opengl_context *ctx, struct opengl_drawable *draw,
