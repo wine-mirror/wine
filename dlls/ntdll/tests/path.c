@@ -643,6 +643,12 @@ static void test_nt_names(void)
     static const struct { const WCHAR *root, *name; NTSTATUS expect, broken; } tests[] =
     {
         { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll", STATUS_SUCCESS },
+        { NULL, L"\\??\\\\C:\\windows\\system32\\kernel32.dll", STATUS_SUCCESS },
+        { NULL, L"\\??\\\\\\C:\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\\\??\\C:\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\??\\\\bogus", STATUS_OBJECT_NAME_NOT_FOUND },
+        { NULL, L"\\foo\\\\bogus", STATUS_OBJECT_PATH_NOT_FOUND },
+        { NULL, L"\\foo\\\\\\bogus", STATUS_OBJECT_PATH_NOT_FOUND },
         { NULL, L"\\??\\C:\\\\windows\\system32\\kernel32.dll", STATUS_SUCCESS, STATUS_OBJECT_NAME_INVALID },
         { NULL, L"\\??\\C:\\windows\\system32\\", STATUS_FILE_IS_A_DIRECTORY },
         { NULL, L"\\??\\C:\\\\\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
@@ -733,6 +739,7 @@ static void test_nt_names(void)
         }
         if (attr.RootDirectory) NtClose( attr.RootDirectory );
         if (handle) NtClose( handle );
+        todo_wine_if (i == 1 || i == 4)
         ok( status == tests[i].expect || broken( tests[i].broken && status == tests[i].broken ),
             "%u: got %lx / %lx for %s + %s\n", i, status, tests[i].expect,
             debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
