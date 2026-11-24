@@ -9512,9 +9512,9 @@ static void test_layered_window(void)
     ret = SetWindowPos( hwnd, 0, 120, 130, sz.cx + 20, sz.cy + 20, SWP_NOZORDER | SWP_NOACTIVATE );
     ok( ret, "SetWindowPos failed: %lu\n", GetLastError() );
     ret = GetUpdateRect( hwnd, &rect, FALSE );
-    todo_wine ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
+    ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
     ret = PeekMessageA( &msg, hwnd, WM_PAINT, WM_PAINT, PM_REMOVE );
-    todo_wine ok( ret, "Expected WM_PAINT.\n" );
+    ok( ret, "Expected WM_PAINT.\n" );
     if (ret) DispatchMessageA( &msg );
     ok( !PeekMessageA( &msg, hwnd, WM_PAINT, WM_PAINT, PM_NOREMOVE ), "Unexpected second WM_PAINT.\n" );
 
@@ -9522,7 +9522,7 @@ static void test_layered_window(void)
     ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, &bf, ULW_ALPHA );
     ok( ret, "UpdateLayeredWindow failed: %lu\n", GetLastError() );
     ret = GetUpdateRect( hwnd, &rect, FALSE );
-    todo_wine ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
+    ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
 
     DestroyWindow( hwnd );
     DeleteDC( hdc );

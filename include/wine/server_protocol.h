@@ -3807,7 +3807,6 @@ struct set_window_pos_reply
 };
 #define SET_WINPOS_PAINT_SURFACE    0x01
 #define SET_WINPOS_PIXEL_FORMAT     0x02
-#define SET_WINPOS_LAYERED_WINDOW   0x04
 
 
 struct get_window_rectangles_request
@@ -7223,6 +7222,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 986
+#define SERVER_PROTOCOL_VERSION 987
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
