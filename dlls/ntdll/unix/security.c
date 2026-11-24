@@ -45,9 +45,9 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
 {
     SECURITY_IMPERSONATION_LEVEL level = SecurityAnonymous;
     unsigned int status, i, *attrs;
-    data_size_t objattr_size, groups_size, size;
+    data_size_t objattr_size, sid_size, size;
     struct object_attributes *objattr;
-    void *groups_info;
+    void *sid_info;
     BYTE *p;
     SID *sid;
 
@@ -66,22 +66,48 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
         level = qos->ImpersonationLevel;
     }
 
-    groups_size = groups->GroupCount * sizeof( attrs[0] );
+    /* User SID + Owner SID + Primary group SID + Group attribute array + Group SID array */
+    sid = user->User.Sid;
+    sid_size = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+
+    sid = owner->Owner;
+    sid_size += offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+
+    sid = group->PrimaryGroup;
+    sid_size += offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+
+    sid_size += groups->GroupCount * sizeof( attrs[0] );
 
     for (i = 0; i < groups->GroupCount; i++)
     {
         sid = groups->Groups[i].Sid;
-        groups_size += offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+        sid_size += offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
     }
 
-    groups_info = malloc( groups_size );
-    if (!groups_info)
+    sid_info = malloc( sid_size );
+    if (!sid_info)
     {
         free( objattr );
         return STATUS_NO_MEMORY;
     }
 
-    attrs = (unsigned int *)groups_info;
+    p = sid_info;
+    sid = user->User.Sid;
+    size = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+    memcpy( p, sid, size );
+    p += size;
+
+    sid = owner->Owner;
+    size = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+    memcpy( p, sid, size );
+    p += size;
+
+    sid = group->PrimaryGroup;
+    size = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+    memcpy( p, sid, size );
+    p += size;
+
+    attrs = (unsigned int *)p;
     p = (BYTE *)&attrs[groups->GroupCount];
     for (i = 0; i < groups->GroupCount; i++)
     {
@@ -103,17 +129,8 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
 
         wine_server_add_data( req, objattr, objattr_size );
 
-        sid = user->User.Sid;
-        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
-
-        sid = owner->Owner;
-        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
-
-        sid = group->PrimaryGroup;
-        wine_server_add_data( req, sid, offsetof( SID, SubAuthority[sid->SubAuthorityCount] ) );
-
         req->group_count = groups->GroupCount;
-        wine_server_add_data( req, groups_info, groups_size );
+        wine_server_add_data( req, sid_info, sid_size );
 
         req->priv_count = privs->PrivilegeCount;
         wine_server_add_data( req, privs->Privileges, privs->PrivilegeCount * sizeof(privs->Privileges[0]) );
@@ -126,7 +143,7 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     }
     SERVER_END_REQ;
 
-    free( groups_info );
+    free( sid_info );
     free( objattr );
 
     return status;
