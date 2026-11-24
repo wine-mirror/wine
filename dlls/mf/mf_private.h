@@ -114,6 +114,7 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
 }
 
 extern const char *debugstr_media_type(IMFMediaType *media_type);
+extern const char *debugstr_mf_guid(const GUID *guid);
 
 extern HRESULT file_scheme_handler_construct(REFIID riid, void **obj);
 extern HRESULT urlmon_scheme_handler_construct(REFIID riid, void **obj);

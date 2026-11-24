@@ -77,7 +77,10 @@ struct downloaded_range
 struct bytestream_http
 {
     IMFByteStream IMFByteStream_iface;
+    IMFAttributes IMFAttributes_iface;
     LONG ref;
+
+    IMFAttributes *attributes;
 
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE cv;
@@ -99,6 +102,7 @@ struct bytestream_http
     WCHAR *content_type;
     BOOL has_length;
     ULONGLONG content_length;
+    ULONGLONG last_modified;
     ULONGLONG content_range_start;
     ULONGLONG content_range_end;
 
@@ -117,6 +121,11 @@ struct bytestream_http
 static struct bytestream_http *impl_from_IMFByteStream(IMFByteStream *iface)
 {
     return CONTAINING_RECORD(iface, struct bytestream_http, IMFByteStream_iface);
+}
+
+static struct bytestream_http *impl_from_IMFAttributes(IMFAttributes *iface)
+{
+    return CONTAINING_RECORD(iface, struct bytestream_http, IMFAttributes_iface);
 }
 
 enum async_stream_op_type
@@ -205,6 +214,10 @@ static HRESULT WINAPI bytestream_http_QueryInterface(IMFByteStream *iface, REFII
     {
         *out = &object->IMFByteStream_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFAttributes))
+    {
+        *out = &object->IMFAttributes_iface;
+    }
     else
     {
         WARN("Unsupported %s.\n", debugstr_guid(riid));
@@ -237,6 +250,7 @@ static ULONG WINAPI bytestream_http_Release(IMFByteStream *iface)
     if (!refcount)
     {
         close_connection(object, FALSE);
+        IMFAttributes_Release(object->attributes);
         LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &object->pending, struct async_stream_op, entry)
         {
             list_remove(&cur->entry);
@@ -250,6 +264,334 @@ static ULONG WINAPI bytestream_http_Release(IMFByteStream *iface)
 
     return refcount;
 }
+
+static HRESULT WINAPI bytestream_http_attributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **obj)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+    return IMFByteStream_QueryInterface(&object->IMFByteStream_iface, riid, obj);
+}
+
+static ULONG WINAPI bytestream_http_attributes_AddRef(IMFAttributes *iface)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+    return IMFByteStream_AddRef(&object->IMFByteStream_iface);
+}
+
+static ULONG WINAPI bytestream_http_attributes_Release(IMFAttributes *iface)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+    return IMFByteStream_Release(&object->IMFByteStream_iface);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetItem(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), type);
+
+    return IMFAttributes_GetItemType(object->attributes, key, type);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(key), debugstr_propvar(value), result);
+
+    return IMFAttributes_CompareItem(object->attributes, key, value, result);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
+
+    return IMFAttributes_Compare(object->attributes, theirs, match_type, ret);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT32(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT64(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetDouble(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetGUID(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), length);
+
+    return IMFAttributes_GetStringLength(object->attributes, key, length);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), value, size, length);
+
+    return IMFAttributes_GetString(object->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetAllocatedString(IMFAttributes *iface, REFGUID key, WCHAR **value, UINT32 *length)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, length);
+
+    return IMFAttributes_GetAllocatedString(object->attributes, key, value, length);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), size);
+
+    return IMFAttributes_GetBlobSize(object->attributes, key, size);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
+                UINT32 bufsize, UINT32 *blobsize)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), buf, bufsize, blobsize);
+
+    return IMFAttributes_GetBlob(object->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_GetAllocatedBlob(object->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(key), debugstr_guid(riid), out);
+
+    return IMFAttributes_GetUnknown(object->attributes, key, riid, out);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_propvar(value));
+
+    return IMFAttributes_SetItem(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_DeleteItem(IMFAttributes *iface, REFGUID key)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_guid(key));
+
+    return IMFAttributes_DeleteItem(object->attributes, key);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_DeleteAllItems(IMFAttributes *iface)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_DeleteAllItems(object->attributes);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetUINT32(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), wine_dbgstr_longlong(value));
+
+    return IMFAttributes_SetUINT64(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetDouble(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_mf_guid(value));
+
+    return IMFAttributes_SetGUID(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetString(IMFAttributes *iface, REFGUID key, const WCHAR *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_w(value));
+
+    return IMFAttributes_SetString(object->attributes, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_SetBlob(object->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), unknown);
+
+    return IMFAttributes_SetUnknown(object->attributes, key, unknown);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_LockStore(IMFAttributes *iface)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_LockStore(object->attributes);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_UnlockStore(IMFAttributes *iface)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_UnlockStore(object->attributes);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetCount(IMFAttributes *iface, UINT32 *count)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return IMFAttributes_GetCount(object->attributes, count);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_GetItemByIndex(IMFAttributes *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return IMFAttributes_GetItemByIndex(object->attributes, index, key, value);
+}
+
+static HRESULT WINAPI bytestream_http_attributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)
+{
+    struct bytestream_http *object = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return IMFAttributes_CopyAllItems(object->attributes, dest);
+}
+
+static const IMFAttributesVtbl bytestream_http_attributes_vtbl =
+{
+    bytestream_http_attributes_QueryInterface,
+    bytestream_http_attributes_AddRef,
+    bytestream_http_attributes_Release,
+    bytestream_http_attributes_GetItem,
+    bytestream_http_attributes_GetItemType,
+    bytestream_http_attributes_CompareItem,
+    bytestream_http_attributes_Compare,
+    bytestream_http_attributes_GetUINT32,
+    bytestream_http_attributes_GetUINT64,
+    bytestream_http_attributes_GetDouble,
+    bytestream_http_attributes_GetGUID,
+    bytestream_http_attributes_GetStringLength,
+    bytestream_http_attributes_GetString,
+    bytestream_http_attributes_GetAllocatedString,
+    bytestream_http_attributes_GetBlobSize,
+    bytestream_http_attributes_GetBlob,
+    bytestream_http_attributes_GetAllocatedBlob,
+    bytestream_http_attributes_GetUnknown,
+    bytestream_http_attributes_SetItem,
+    bytestream_http_attributes_DeleteItem,
+    bytestream_http_attributes_DeleteAllItems,
+    bytestream_http_attributes_SetUINT32,
+    bytestream_http_attributes_SetUINT64,
+    bytestream_http_attributes_SetDouble,
+    bytestream_http_attributes_SetGUID,
+    bytestream_http_attributes_SetString,
+    bytestream_http_attributes_SetBlob,
+    bytestream_http_attributes_SetUnknown,
+    bytestream_http_attributes_LockStore,
+    bytestream_http_attributes_UnlockStore,
+    bytestream_http_attributes_GetCount,
+    bytestream_http_attributes_GetItemByIndex,
+    bytestream_http_attributes_CopyAllItems
+};
 
 static struct bytestream_http *impl_from_read_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
@@ -990,6 +1332,35 @@ static BOOL parse_headers(struct bytestream_http *object, HINTERNET handle)
         }
     }
 
+    if (object->last_modified == -1ULL)
+    {
+        SYSTEMTIME st = {0};
+        len = sizeof(st);
+        if (HttpQueryInfoW(handle, HTTP_QUERY_LAST_MODIFIED | HTTP_QUERY_FLAG_SYSTEMTIME, &st, &len, 0))
+        {
+            ULARGE_INTEGER ul = {0};
+            FILETIME ft = {0};
+
+            if (!SystemTimeToFileTime(&st, &ft))
+            {
+                handle_wininet_error(object, ERROR_HTTP_INVALID_HEADER);
+                return FALSE;
+            }
+            ul.u.LowPart = ft.dwLowDateTime;
+            ul.u.HighPart = ft.dwHighDateTime;
+            object->last_modified = ul.QuadPart;
+        }
+        else if (GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND)
+        {
+            object->last_modified = -1ULL;
+        }
+        else
+        {
+            handle_wininet_error(object, GetLastError());
+            return FALSE;
+        }
+    }
+
     len = sizeof(buffer);
     if (HttpQueryInfoW(handle, HTTP_QUERY_CONTENT_RANGE, buffer, &len, 0))
     {
@@ -1313,6 +1684,8 @@ error:
 HRESULT create_http_bytestream(const WCHAR *url, void **out)
 {
     struct bytestream_http *object;
+    ULARGE_INTEGER ul = {0};
+    FILETIME ft = {0};
     HRESULT hr;
 
     TRACE("%s, %p.\n", debugstr_w(url), out);
@@ -1320,7 +1693,13 @@ HRESULT create_http_bytestream(const WCHAR *url, void **out)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
+    {
+        free(object);
+        return hr;
+    }
     object->IMFByteStream_iface.lpVtbl = &bytestream_http_vtbl;
+    object->IMFAttributes_iface.lpVtbl = &bytestream_http_attributes_vtbl;
     object->ref = 1;
     InitializeCriticalSection(&object->cs);
     InitializeConditionVariable(&object->cv);
@@ -1328,6 +1707,7 @@ HRESULT create_http_bytestream(const WCHAR *url, void **out)
     list_init(&object->pending);
     object->url = recreate_url(url);
     object->content_length = -1ULL;
+    object->last_modified = -1ULL;
     object->content_range_end = -1ULL;
     list_init(&object->downloaded_ranges);
 
@@ -1356,6 +1736,17 @@ HRESULT create_http_bytestream(const WCHAR *url, void **out)
     {
         hr = object->error;
         goto error;
+    }
+
+    IMFAttributes_SetString(object->attributes, &MF_BYTESTREAM_EFFECTIVE_URL, object->url);
+    IMFAttributes_SetString(object->attributes, &MF_BYTESTREAM_CONTENT_TYPE,
+                            object->content_type ? object->content_type : L"application/octet-stream");
+    if (object->last_modified != -1ULL)
+    {
+        ul.QuadPart = object->last_modified;
+        ft.dwLowDateTime = ul.u.LowPart;
+        ft.dwHighDateTime = ul.u.HighPart;
+        IMFAttributes_SetBlob(object->attributes, &MF_BYTESTREAM_LAST_MODIFIED_TIME, (void *)&ft, sizeof(ft));
     }
 
     LeaveCriticalSection(&object->cs);
