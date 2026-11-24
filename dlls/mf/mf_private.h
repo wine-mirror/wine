@@ -117,6 +117,8 @@ extern const char *debugstr_media_type(IMFMediaType *media_type);
 extern const char *debugstr_mf_guid(const GUID *guid);
 
 extern HRESULT file_scheme_handler_construct(REFIID riid, void **obj);
+extern HRESULT http_scheme_handler_construct(REFIID riid, void **obj);
+extern HRESULT secure_http_scheme_handler_construct(REFIID riid, void **obj);
 extern HRESULT urlmon_scheme_handler_construct(REFIID riid, void **obj);
 
 extern BOOL mf_is_sample_copier_transform(IMFTransform *transform);
@@ -132,3 +134,5 @@ extern IMFAttributes *topology_node_transform_async_get_attributes(IMFTopologyNo
 extern HRESULT stream_sink_get_device_manager(IMFStreamSink *stream_sink, IUnknown **device_manager);
 
 extern HRESULT enum_audio_capture_sources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *ret_count);
+
+extern HRESULT create_http_bytestream(const WCHAR *url, BOOL secure, void **out);

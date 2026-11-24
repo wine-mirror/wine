@@ -490,6 +490,68 @@ HRESULT file_scheme_handler_construct(REFIID riid, void **obj)
     return hr;
 }
 
+static HRESULT http_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
+{
+    if (flags & MF_RESOLUTION_WRITE)
+        return E_INVALIDARG;
+
+    return create_http_bytestream(url, FALSE, (void **)out);
+}
+
+HRESULT http_scheme_handler_construct(REFIID riid, void **obj)
+{
+    struct scheme_handler *handler;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
+
+    if (!(handler = calloc(1, sizeof(*handler))))
+        return E_OUTOFMEMORY;
+
+    handler->IMFSchemeHandler_iface.lpVtbl = &scheme_handler_vtbl;
+    handler->IMFAsyncCallback_iface.lpVtbl = &scheme_handler_callback_vtbl;
+    handler->refcount = 1;
+    list_init(&handler->results);
+    InitializeCriticalSection(&handler->cs);
+    handler->create_stream = http_stream_create;
+
+    hr = IMFSchemeHandler_QueryInterface(&handler->IMFSchemeHandler_iface, riid, obj);
+    IMFSchemeHandler_Release(&handler->IMFSchemeHandler_iface);
+
+    return hr;
+}
+
+static HRESULT secure_http_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
+{
+    if (flags & MF_RESOLUTION_WRITE)
+        return E_INVALIDARG;
+
+    return create_http_bytestream(url, FALSE, (void **)out);
+}
+
+HRESULT secure_http_scheme_handler_construct(REFIID riid, void **obj)
+{
+    struct scheme_handler *handler;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
+
+    if (!(handler = calloc(1, sizeof(*handler))))
+        return E_OUTOFMEMORY;
+
+    handler->IMFSchemeHandler_iface.lpVtbl = &scheme_handler_vtbl;
+    handler->IMFAsyncCallback_iface.lpVtbl = &scheme_handler_callback_vtbl;
+    handler->refcount = 1;
+    list_init(&handler->results);
+    InitializeCriticalSection(&handler->cs);
+    handler->create_stream = secure_http_stream_create;
+
+    hr = IMFSchemeHandler_QueryInterface(&handler->IMFSchemeHandler_iface, riid, obj);
+    IMFSchemeHandler_Release(&handler->IMFSchemeHandler_iface);
+
+    return hr;
+}
+
 static HRESULT urlmon_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
 {
     IMFAttributes *attributes;

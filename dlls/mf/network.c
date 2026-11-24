@@ -93,6 +93,7 @@ struct bytestream_http
     BOOL has_pending_read;
 
     WCHAR *url;
+    BOOL secure;
 
     BOOL closing_connnection;
     HINTERNET session;
@@ -1544,7 +1545,7 @@ static HRESULT open_connection(struct bytestream_http *object, ULONGLONG range_s
     InternetSetStatusCallbackW(object->session, progress_callback);
 
     flags = INTERNET_FLAG_RELOAD;
-    if (uc.nScheme == INTERNET_SCHEME_HTTPS)
+    if (object->secure)
         flags |= INTERNET_FLAG_SECURE;
 
     headers[0] = 0;
@@ -1681,7 +1682,7 @@ error:
     return NULL;
 }
 
-HRESULT create_http_bytestream(const WCHAR *url, void **out)
+HRESULT create_http_bytestream(const WCHAR *url, BOOL secure, void **out)
 {
     struct bytestream_http *object;
     ULARGE_INTEGER ul = {0};
@@ -1706,6 +1707,7 @@ HRESULT create_http_bytestream(const WCHAR *url, void **out)
     object->read_callback.lpVtbl = &bytestream_http_read_callback_vtbl;
     list_init(&object->pending);
     object->url = recreate_url(url);
+    object->secure = secure;
     object->content_length = -1ULL;
     object->last_modified = -1ULL;
     object->content_range_end = -1ULL;
