@@ -577,7 +577,7 @@ sub generate_unix_thunk($$$$)
         $target = "params->target" if $call_args =~ "params->target";
         $ret .= "    if (!$arg) $arg = get_default_fbo( $teb, $target );\n";
     }
-    $ret .= "    resolve_default_fbo( $teb, TRUE );\n" if resolve_default_fbo( $name );
+    $ret .= "    resolve_default_fbo( $teb );\n" if resolve_default_fbo( $name );
     $ret .= "    push_default_fbo( $teb );\n" if hide_default_fbo( $name );
     $ret .= "    $ret_expr";
     if ($wow64_wrap)

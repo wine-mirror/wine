@@ -95,6 +95,6 @@ extern void set_current_fbo( TEB *teb, GLenum target, GLuint framebuffer );
 extern GLuint get_default_fbo( TEB *teb, GLenum target );
 extern void push_default_fbo( TEB *teb );
 extern void pop_default_fbo( TEB *teb );
-extern void resolve_default_fbo( TEB *teb, BOOL read );
+extern void resolve_default_fbo( TEB *teb );
 
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

@@ -632,7 +632,6 @@ static void flush_context( TEB *teb, void (*flush)(void) )
     if (flush && ctx && !ctx->draw_fbo && context_draws_front( ctx ) && draw->client) flags |= GL_FLUSH_PRESENT;
     if ((flags & GL_FLUSH_PRESENT) && draw->buffer_map[0] == GL_BACK_LEFT) flags |= GL_FLUSH_FORCE_SWAP;
 
-    if (flags & GL_FLUSH_PRESENT) resolve_default_fbo( teb, FALSE );
     if (!ctx || !funcs->p_context_flush( ctx, flush, flags ))
     {
         /* default implementation: call the functions directly */
@@ -695,8 +694,6 @@ BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc )
     BOOL ret;
 
     if (!funcs->p_wglSwapBuffers) return FALSE;
-
-    resolve_default_fbo( teb, FALSE );
 
     if (!(ret = funcs->p_wglSwapBuffers( hdc )))
     {
@@ -867,13 +864,13 @@ void pop_default_fbo( TEB *teb )
     if (!ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, read->read_fbo );
 }
 
-void resolve_default_fbo( TEB *teb, BOOL read )
+void resolve_default_fbo( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *drawable;
     struct opengl_context *ctx;
 
-    if (!(ctx = get_current_context( teb, read ? NULL : &drawable, read ? &drawable : NULL, NULL )) || !drawable) return;
+    if (!(ctx = get_current_context( teb, NULL, &drawable, NULL )) || !drawable) return;
 
     if (drawable->draw_fbo && drawable->read_fbo && drawable->draw_fbo != drawable->read_fbo)
     {

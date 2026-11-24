@@ -1035,6 +1035,17 @@ static void blit_framebuffer_surface( struct opengl_drawable *drawable )
         draw_buffer = GL_COLOR_ATTACHMENT0;
     }
 
+    if (drawable->read_fbo != drawable->draw_fbo)
+    {
+        /* Resolve mutlisampled draw buffer. */
+        funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
+        funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->read_fbo );
+        funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT0 );
+        if (drawable->srgb) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
+        funcs->p_glBlitFramebuffer( 0, 0, src.cx, src.cy, 0, 0, src.cx, src.cy, GL_COLOR_BUFFER_BIT, GL_NEAREST );
+    }
+
     funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->read_fbo );
     funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo );
     funcs->p_glDrawBuffer( draw_buffer );
