@@ -9291,12 +9291,14 @@ static void test_message_window_topmost(void)
 
 static void test_layered_window(void)
 {
+    const RECT dirty = { 10, 12, 30, 34 };
     HWND hwnd, child;
     COLORREF key = 0;
     BYTE alpha = 0;
     DWORD flags = 0;
     POINT pt = { 0, 0 };
     SIZE sz = { 200, 200 };
+    RECT rect = { 0 };
     HDC hdc;
     HBITMAP hbm;
     BOOL ret;
@@ -9491,6 +9493,36 @@ static void test_layered_window(void)
         if (msg.message == WM_PAINT && msg.hwnd == child)
             break;
     }
+
+    DestroyWindow( hwnd );
+
+    hwnd = CreateWindowExA( WS_EX_LAYERED, "MainWindowClass", NULL, WS_POPUP | WS_VISIBLE,
+                            100, 100, sz.cx, sz.cy, 0, 0, 0, NULL );
+    ok( hwnd != NULL, "CreateWindowEx failed: %lu\n", GetLastError() );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, &bf, ULW_ALPHA );
+    ok( ret, "UpdateLayeredWindow failed: %lu\n", GetLastError() );
+    ValidateRect( hwnd, NULL );
+
+    ret = SetWindowPos( hwnd, 0, 110, 120, sz.cx + 10, sz.cy + 10, SWP_NOZORDER | SWP_NOACTIVATE );
+    ok( ret, "SetWindowPos failed: %lu\n", GetLastError() );
+    ok( !GetUpdateRect( hwnd, NULL, FALSE ), "Unexpected update region.\n" );
+    ok( !PeekMessageA( &msg, hwnd, WM_PAINT, WM_PAINT, PM_NOREMOVE ), "Unexpected WM_PAINT.\n" );
+
+    InvalidateRect( hwnd, &dirty, FALSE );
+    ret = SetWindowPos( hwnd, 0, 120, 130, sz.cx + 20, sz.cy + 20, SWP_NOZORDER | SWP_NOACTIVATE );
+    ok( ret, "SetWindowPos failed: %lu\n", GetLastError() );
+    ret = GetUpdateRect( hwnd, &rect, FALSE );
+    todo_wine ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
+    ret = PeekMessageA( &msg, hwnd, WM_PAINT, WM_PAINT, PM_REMOVE );
+    todo_wine ok( ret, "Expected WM_PAINT.\n" );
+    if (ret) DispatchMessageA( &msg );
+    ok( !PeekMessageA( &msg, hwnd, WM_PAINT, WM_PAINT, PM_NOREMOVE ), "Unexpected second WM_PAINT.\n" );
+
+    InvalidateRect( hwnd, &dirty, FALSE );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, &bf, ULW_ALPHA );
+    ok( ret, "UpdateLayeredWindow failed: %lu\n", GetLastError() );
+    ret = GetUpdateRect( hwnd, &rect, FALSE );
+    todo_wine ok( ret && EqualRect( &rect, &dirty ), "Got %d, rect %s.\n", ret, wine_dbgstr_rect( &rect ) );
 
     DestroyWindow( hwnd );
     DeleteDC( hdc );
