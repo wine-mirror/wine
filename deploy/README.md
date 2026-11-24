@@ -38,3 +38,16 @@ corruption, each on their own screen size and keyboard.
 ## Standing rules (break either and corruption returns)
 - Data stays on a LOCAL disk. Never a network mount.
 - All users on ONE VM. Never point a second VM at the same data.
+
+## Production hardening (VM-4 parity)
+
+On top of the baseline, the live VM-4 setup adds:
+
+- **Unique hostname** — baseline uses `reg add`; VM-4 uses an in-memory
+  `version.dll` hook (see VERSION-DLL.md). Either prevents Tally Error 122.
+- **Dynamic monitor resizing** — `version.dll` `GetSystemMetrics` hook + X11
+  work-area query, so each session fits its device (no letterboxing).
+- **DB cache hardening** — `tally.ini`: `Load Buffering = No`,
+  `EnableOptimizedCmpLoading = No`. Now written by `10-setup-user-prefix.sh`.
+- **Port isolation** — a unique Tally port per user (9050, 9052, ...), written
+  to `tally.ini` by `10-setup-user-prefix.sh`.
