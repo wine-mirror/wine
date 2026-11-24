@@ -1058,6 +1058,7 @@ static void write_cpp_using( FILE *header, const type_t *iface, const type_t *ch
     {
         const var_t *func = stmt->u.var;
         if (is_callas( func->attrs )) continue;
+        if (func->overload) continue;
         if (!get_method_override_prefix( iface, child, func )) continue;
         fprintf( header, "    using %s::%s;\n", iface->name, get_name( func ) );
     }
