@@ -4655,11 +4655,9 @@ static UINT64 WINAPI d2d_device_GetMaximumTextureMemory(ID2D1Device6 *iface)
     return 0;
 }
 
-static HRESULT WINAPI d2d_device_ClearResources(ID2D1Device6 *iface, UINT msec_since_use)
+static void WINAPI d2d_device_ClearResources(ID2D1Device6 *iface, UINT32 msec_since_use)
 {
     FIXME("iface %p, msec_since_use %u stub!\n", iface, msec_since_use);
-
-    return E_NOTIMPL;
 }
 
 static D2D1_RENDERING_PRIORITY WINAPI d2d_device_GetRenderingPriority(ID2D1Device6 *iface)

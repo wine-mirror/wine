@@ -554,8 +554,8 @@ interface ID2D1Device : ID2D1Resource
         [in] UINT64 max_texture_memory
     );
     UINT64 GetMaximumTextureMemory();
-    HRESULT ClearResources(
-        [in, defaultvalue(0)] UINT msec_since_use
+    void ClearResources(
+        [in, defaultvalue(0)] UINT32 msec_since_use
     );
 }
 
