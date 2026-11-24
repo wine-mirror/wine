@@ -880,7 +880,7 @@ void resolve_default_fbo( TEB *teb )
     GLint enabled;
     SIZE size;
 
-    if (!(ctx = get_current_context( teb, NULL, &drawable, NULL )) || !drawable) return;
+    if (!(ctx = get_current_context( teb, NULL, &drawable, NULL )) || ctx->read_fbo || !drawable) return;
     if (!drawable->draw_fbo || !drawable->read_fbo || drawable->draw_fbo == drawable->read_fbo) return;
 
     enabled = funcs->p_glIsEnabled( GL_FRAMEBUFFER_SRGB );
