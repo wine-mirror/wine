@@ -447,8 +447,8 @@ interface IDCompositionFilterEffect : IDCompositionEffect
 ]
 interface IDCompositionGaussianBlurEffect : IDCompositionFilterEffect
 {
-    HRESULT SetStandardDeviationAnimation(IDCompositionAnimation *animation);
     HRESULT SetStandardDeviation(float amount);
+    HRESULT SetStandardDeviation(IDCompositionAnimation *animation);
     HRESULT SetBorderMode(D2D1_BORDER_MODE mode);
 };
 
