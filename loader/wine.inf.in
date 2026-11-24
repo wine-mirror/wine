@@ -518,6 +518,15 @@ HKLM,%FontSubStr%,"Helv",,"MS Sans Serif"
 HKLM,%FontSubStr%,"Helvetica",,"Arial"
 HKLM,%FontSubStr%,"MS Shell Dlg 2",,"Tahoma"
 HKLM,%FontSubStr%,"Times",,"Times New Roman"
+;; --- Tally customisation: deterministic free-font substitutes (built-in) ---
+;; Ensures invoices/reports render identically on every tenant VM, independent
+;; of host fontconfig. Targets must be present on the VM (fonts-liberation, fonts-noto).
+HKLM,%FontSubStr%,"Arial",,"Liberation Sans"
+HKLM,%FontSubStr%,"Arial Unicode MS",,"Noto Sans"
+HKLM,%FontSubStr%,"Times New Roman",,"Liberation Serif"
+HKLM,%FontSubStr%,"Courier New",,"Liberation Mono"
+HKLM,%FontSubStr%,"Mangal",,"Noto Sans Devanagari"
+;; --- end Tally customisation ---
 HKLM,%FontSubStr%,"Times New Roman Baltic,186",,"Times New Roman,186"
 HKLM,%FontSubStr%,"Times New Roman CE,238",,"Times New Roman,238"
 HKLM,%FontSubStr%,"Times New Roman CYR,204",,"Times New Roman,204"

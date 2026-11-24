@@ -1,0 +1,7 @@
+# never commit binaries, licenses or prefixes
+*.exe
+*.lic
+*.log
+.tally-wine/
+drive_c/
+env/local.env

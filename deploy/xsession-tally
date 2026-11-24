@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Put this as a user's ~/.xsession (chmod +x). Runs as that user inside their
+# own RDP X session, then hands the display to the shared `tally` account.
+fluxbox &                              # minimal window manager for this session
+sleep 1
+# Allow ONLY the `tally` account onto THIS user's display (scoped, not xhost +).
+xhost +SI:localuser:tally >/dev/null 2>&1 || true
+# Launch Tally as the shared account, keeping this session's DISPLAY.
+exec sudo -u tally --preserve-env=DISPLAY /usr/local/bin/tally-launch.sh
