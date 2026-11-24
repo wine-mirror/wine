@@ -1881,6 +1881,68 @@ static void test_StrCatChainW(void)
     ok(buf[5] == 'e', "Expected buf[5] = 'e', got %x\n", buf[5]);
 }
 
+static void test_StrCmpLogicalW(void)
+{
+    static const WCHAR *strs[] =
+    {
+        L"",
+        L"$",
+        L"@",
+        L"|",
+        L"☃",
+        L"001",
+        L"1",
+        L"02",
+        L"02a",
+        L"2",
+        L"2a",
+        L"2B",
+        L"2c",
+        L"10",
+        L"11",
+        L"123",
+        L"１２３",
+        L"124",
+        L"１２４",
+        L"1234",
+        L"１２３４",
+        /* it pretends there's a separator after every group of 19 digits */
+        L"1000000000000000000",
+        L"10000000000000000000",
+        L"10000000000000000001",
+        L"10000000000000000001000000000000000000",
+        L"100000000000000000010000000000000000000",
+        L"100000000000000000010000000000000000001",
+        L"10000000000000000001000000000000000001",
+        L"100000000000000000010000000000000000010",
+        L"100000000000000000010000000000000000011",
+        L"10000000000000000001000000000000000010",
+        L"10000000000000000001000000000000000011",
+        L"1000000000000000001",
+        L"10000000000000000010",
+        L"10000000000000000011",
+        L"1000000000000000010",
+        L"1000000000000000011",
+        L"a",
+        L"🦭",
+        NULL
+    };
+
+    for (size_t a = 0; strs[a]; a++)
+    {
+        for (size_t b = 0; strs[b]; b++)
+        {
+            int result = StrCmpLogicalW(strs[a], strs[b]);
+            if (a < b) ok(result < 0, "%ls %ls: expected < 0, got %d\n", strs[a], strs[b], result);
+            if (a == b) ok(result == 0, "%ls %ls: expected 0, got %d\n", strs[a], strs[b], result);
+            if (a > b) ok(result > 0, "%ls %ls: expected > 0, got %d\n", strs[a], strs[b], result);
+        }
+    }
+    ok(StrCmpLogicalW(NULL, L"a") < 0, "got %d\n", StrCmpLogicalW(NULL, L"a"));
+    ok(StrCmpLogicalW(L"a", NULL) < 0, "got %d\n", StrCmpLogicalW(L"a", NULL));
+    ok(StrCmpLogicalW(NULL, NULL) < 0, "got %d\n", StrCmpLogicalW(NULL, NULL));
+}
+
 static void test_printf_format(void)
 {
     const struct
@@ -2129,6 +2191,7 @@ START_TEST(string)
   test_StrStrNW();
   test_StrStrNIW();
   test_StrCatChainW();
+  test_StrCmpLogicalW();
   test_printf_format();
 
   CoUninitialize();

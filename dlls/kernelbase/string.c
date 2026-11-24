@@ -1319,53 +1319,7 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringA(HINSTANCE instance, UINT resource_id, L
 int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
 {
     TRACE("%s, %s\n", wine_dbgstr_w(str), wine_dbgstr_w(comp));
-
-    if (!str || !comp)
-        return 0;
-
-    while (*str)
-    {
-        if (!*comp)
-            return 1;
-        else if (*str >= '0' && *str <= '9')
-        {
-            int str_value, comp_value;
-
-            if (*comp < '0' || *comp > '9')
-                return -1;
-
-            /* Compare the numbers */
-            StrToIntExW(str, 0, &str_value);
-            StrToIntExW(comp, 0, &comp_value);
-
-            if (str_value < comp_value)
-                return -1;
-            else if (str_value > comp_value)
-                return 1;
-
-            /* Skip */
-            while (*str >= '0' && *str <= '9') str++;
-            while (*comp >= '0' && *comp <= '9') comp++;
-        }
-        else if (*comp >= '0' && *comp <= '9')
-            return 1;
-        else
-        {
-            int diff = ChrCmpIW(*str, *comp);
-            if (diff > 0)
-                return 1;
-            else if (diff < 0)
-                return -1;
-
-            str++;
-            comp++;
-        }
-    }
-
-    if (*comp)
-      return -1;
-
-    return 0;
+    return CompareStringW(GetThreadLocale(), SORT_DIGITSASNUMBERS|NORM_IGNORECASE, str, -1, comp, -1) - CSTR_EQUAL;
 }
 
 BOOL WINAPI StrIsIntlEqualA(BOOL case_sensitive, const char *str, const char *cmp, int len)
