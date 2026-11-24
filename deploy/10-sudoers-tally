@@ -1,5 +1,0 @@
-# Install as /etc/sudoers.d/tally  (chmod 440).
-# Members of tallyusers may launch Tally ONLY as the shared `tally` account,
-# with no password. DISPLAY is preserved so Tally renders in their own session.
-Defaults>tally  env_keep += "DISPLAY"
-%tallyusers ALL=(tally) NOPASSWD: /usr/local/bin/tally-launch.sh

@@ -1,45 +1,40 @@
-# Tally-on-WINE — multi-user VM deployment (5–16 users, no corruption)
+# Tally-on-WINE — multi-user deployment (per-prefix, the working architecture)
 
-Runs many Linux users on ONE VM against ONE shared company data folder without
-data corruption, each on their own screen size and their own keyboard.
+Runs 5–16 Linux users on ONE VM against ONE shared company-data folder without
+corruption, each on their own screen size and keyboard.
 
-## The model (why it is safe and does not block input)
+## Model: one Wine prefix PER user (do NOT share a wineserver)
 
-- **ONE shared wineserver.** Every Tally process runs as the `tally` service
-  account against ONE WINEPREFIX, so all file opens land in a single lock
-  domain. Tally's multi-user locking (share modes + record locks) then behaves
-  exactly as on one Windows machine. Lock correctness does NOT depend on the
-  number of users — 6 or 16, it stays correct. Only save *performance* drops as
-  users grow; that (not integrity) is the only reason to consider TallyPrime
-  Server later.
-- **Many independent sessions.** Each user logs into the VM over RDP (xrdp) with
-  their own Linux credentials and gets their OWN X session: own resolution
-  (sized to their laptop, dynamic resize) and own keyboard/mouse. Input never
-  collides because sessions are independent — only the lock domain is shared.
+- Each Linux user has their OWN `WINEPREFIX` -> own `wineserver` -> own WINE
+  desktop. That is what keeps keyboard/mouse focus isolated (a shared wineserver
+  causes focus deadlock + transaction-rollback crashes — avoid it).
+- Data safety does NOT come from a shared lock domain. It comes from **POSIX
+  byte-range locks**: WINE maps Tally's `LockFileEx` record locks to real
+  `fcntl(F_SETLK)` locks, which the Linux kernel enforces across every prefix —
+  but only on a LOCAL filesystem.
 
-This is the Linux equivalent of a Windows multi-session server: one machine =
-one lock domain, many isolated desktops.
+## The fixes (what makes per-prefix safe)
 
-## Hard requirements (break these and corruption returns)
+1. **Unique workstation name per prefix** (`10-setup-user-prefix.sh`) — each
+   prefix reports a distinct Windows computer name, so Tally sees N separate LAN
+   workstations (its supported multi-user mode). This is the version.dll shim's job.
+2. **Shared data on LOCAL ext4/xfs** (`00-shared-data.sh`) — so fcntl byte-range
+   locks actually enforce across prefixes. NEVER NFS/SMB.
+3. **Group-writable shared dir, setgid 2775** (`00-shared-data.sh`) — every
+   user's writes stay accessible; no ownership drift.
+4. **Per-prefix sessions** (`01-install-xrdp.sh`, `xsession-tally`) — own
+   wineserver/desktop each = isolated input; xrdp sizes each session to its device.
+5. **Same custom WINE + Tally version everywhere; license from the Windows
+   Gateway Server** over the network.
 
-- Company data on a LOCAL disk (ext4/xfs) on THIS VM. Never a network/SMB mount
-  (byte-range locks silently stop enforcing on network filesystems).
-- All users on ONE VM. A second VM on the same data = a second lock domain =
-  corruption. Scale the VM UP, not OUT.
-- License is served from the Windows Gateway Server over the network (unchanged).
+## Deploy order (as root on the VM, then per user)
+1. build + install custom WINE to /opt/wine-tally
+2. ./00-shared-data.sh
+3. ./01-install-xrdp.sh
+4. install -m755 tally-launch.sh /usr/local/bin/tally-launch.sh
+5. per user: usermod -aG tallyusers <user>; then AS that user: ./10-setup-user-prefix.sh
+   and put xsession-tally as their ~/.xsession (chmod +x)
 
-## Deploy order (as root, on each tenant VM)
-
-1. build + install the custom WINE to /opt/wine-tally (see repo root / loader/wine.inf.in)
-2. ./00-service-account.sh                 # `tally` account + shared prefix + local data dir
-3. ./01-install-xrdp.sh                     # per-user RDP sessions, dynamic resolution
-4. cp 10-sudoers-tally /etc/sudoers.d/tally && chmod 440 /etc/sudoers.d/tally
-5. install -m755 tally-launch.sh /usr/local/bin/tally-launch.sh
-6. configure tally.ini once in the prefix: Data points to the local data dir
-   ($WINEPREFIX/drive_c/TallyData), license = Use License From Network (Windows VM).
-
-## Per user
-
-- Create a normal Linux user; add to group `tallyusers`.
-- Put `xsession-tally` as that user's ~/.xsession (chmod +x).
-- On RDP login, Tally opens maximized in their session at their screen size.
+## Standing rules (break either and corruption returns)
+- Data stays on a LOCAL disk. Never a network mount.
+- All users on ONE VM. Never point a second VM at the same data.
