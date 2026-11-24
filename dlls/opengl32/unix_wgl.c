@@ -682,6 +682,13 @@ void wrap_glReadPixels( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei heigh
     p_glReadPixels( x, y, width, height, format, type, pixels );
 }
 
+void wrap_glReadnPixels( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type,
+                         GLsizei buf_size, void *pixels, PFN_glReadnPixels p_glReadnPixels )
+{
+    flush_context( teb, NULL );
+    p_glReadnPixels( x, y, width, height, format, type, buf_size, pixels );
+}
+
 void wrap_glViewport( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei height, PFN_glViewport p_glViewport )
 {
     flush_context( teb, NULL );

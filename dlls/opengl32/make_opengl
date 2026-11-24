@@ -219,6 +219,7 @@ sub manual_unix_thunks($)
 
     return "glDrawPixels"                   if $name =~ /^glDrawPixels/;
     return "glReadPixels"                   if $name =~ /^glReadPixels/;
+    return "glReadnPixels"                  if $name =~ /^glReadnPixels/;
     return "glGetFramebufferParameterivEXT" if $name =~ /^glGetFramebufferParameterivEXT$/;
     return "glGetFramebufferParameteriv"    if $name =~ /^glGetFramebufferParameteriv/;
 
@@ -252,6 +253,7 @@ sub resolve_default_fbo($)
     return 1 if $name =~ /^glCopyTexSubImage/;
     return 1 if $name =~ /^glCopyTextureSubImage/;
     return 1 if $name =~ /^glReadPixels/;
+    return 1 if $name =~ /^glReadnPixels/;
     return 0;
 }
 

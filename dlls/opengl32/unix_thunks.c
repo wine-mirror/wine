@@ -19521,7 +19521,8 @@ static NTSTATUS ext_glReadnPixels( void *args )
     struct glReadnPixels_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glReadnPixels) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glReadnPixels( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data );
+    resolve_default_fbo( params->teb );
+    wrap_glReadnPixels( params->teb, params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data, funcs->p_glReadnPixels );
     return STATUS_SUCCESS;
 }
 
@@ -19530,7 +19531,8 @@ static NTSTATUS ext_glReadnPixelsARB( void *args )
     struct glReadnPixelsARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glReadnPixelsARB) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glReadnPixelsARB( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data );
+    resolve_default_fbo( params->teb );
+    wrap_glReadnPixels( params->teb, params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, params->data, funcs->p_glReadnPixelsARB );
     return STATUS_SUCCESS;
 }
 
@@ -66412,7 +66414,8 @@ static NTSTATUS wow64_ext_glReadnPixels( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glReadnPixels) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glReadnPixels( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, ULongToPtr(params->data) );
+    resolve_default_fbo( teb );
+    wrap_glReadnPixels( teb, params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, ULongToPtr(params->data), funcs->p_glReadnPixels );
     return STATUS_SUCCESS;
 }
 
@@ -66433,7 +66436,8 @@ static NTSTATUS wow64_ext_glReadnPixelsARB( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glReadnPixelsARB) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glReadnPixelsARB( params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, ULongToPtr(params->data) );
+    resolve_default_fbo( teb );
+    wrap_glReadnPixels( teb, params->x, params->y, params->width, params->height, params->format, params->type, params->bufSize, ULongToPtr(params->data), funcs->p_glReadnPixelsARB );
     return STATUS_SUCCESS;
 }
 

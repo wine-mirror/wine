@@ -33,6 +33,7 @@ extern GLsync wrap_glImportSyncEXT( TEB *teb, GLenum external_sync_type, GLintpt
 extern void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint framebuffer, GLenum buf, PFN_glNamedFramebufferDrawBuffer func );
 extern void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint framebuffer, GLsizei n, const GLenum *bufs, PFN_glNamedFramebufferDrawBuffers func );
 extern void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint framebuffer, GLenum src, PFN_glNamedFramebufferReadBuffer func );
+extern void wrap_glReadnPixels( TEB *teb, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void *data, PFN_glReadnPixels func );
 extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hDC, HGLRC hShareContext, const int *attribList, HGLRC handle );
 extern HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList, HPBUFFERARB handle );
 extern BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
