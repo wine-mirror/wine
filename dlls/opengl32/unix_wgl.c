@@ -924,8 +924,8 @@ void resolve_default_fbo( TEB *teb )
         mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
 
-    if (drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
-    else if (!drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+    if (drawable->srgb && !enabled) funcs->p_glDisable( GL_FRAMEBUFFER_SRGB );
+    else if (!drawable->srgb && enabled) funcs->p_glEnable( GL_FRAMEBUFFER_SRGB );
 
     pop_default_fbo_buffers( teb );
 }
