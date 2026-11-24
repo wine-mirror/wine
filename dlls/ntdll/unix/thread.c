@@ -542,7 +542,7 @@ static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, c
             to->ctl.arm_regs.sp   = from->Sp;
             to->ctl.arm_regs.lr   = from->Lr;
             to->ctl.arm_regs.pc   = from->Pc;
-            to->ctl.arm_regs.cpsr = from->Cpsr & cpsr_user_mask;
+            to->ctl.arm_regs.cpsr = from->Cpsr;
         }
         if (flags & CONTEXT_ARM_INTEGER)
         {
