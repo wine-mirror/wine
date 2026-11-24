@@ -23,36 +23,11 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wownt32.h"
+#include "ntuser.h"
 #include "wine/winbase16.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
-
-
-/***********************************************************************
- *           wait_input_idle
- *
- * user32.WaitForInputIdle releases the win16 lock, so here is a replacement.
- */
-static DWORD wait_input_idle( HANDLE process, DWORD timeout )
-{
-    DWORD ret;
-    HANDLE handles[2];
-
-    handles[0] = process;
-    SERVER_START_REQ( get_process_idle_event )
-    {
-        req->handle = wine_server_obj_handle(process);
-        if (!(ret = wine_server_call_err( req ))) handles[1] = wine_server_ptr_handle( reply->event );
-    }
-    SERVER_END_REQ;
-    if (ret) return WAIT_FAILED;  /* error */
-    if (!handles[1]) return 0;  /* no event to wait on */
-
-    return WaitForMultipleObjects( 2, handles, FALSE, timeout );
-}
 
 
 /**************************************************************************
@@ -73,7 +48,7 @@ WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD s
                         0, NULL, NULL, &startup, &info ))
     {
         /* Give 10 seconds to the app to come up */
-        if (wait_input_idle( info.hProcess, 10000 ) == WAIT_FAILED)
+        if (NtUserWaitForInputIdle( info.hProcess, 10000, TRUE ) == WAIT_FAILED)
             WINE_WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         ReleaseThunkLock( &count );
         WaitForSingleObject( info.hProcess, INFINITE );

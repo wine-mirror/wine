@@ -3525,6 +3525,20 @@ DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
 
     TRACE("waiting for %p\n", handles[1] );
 
+    if (wow)  /* special hack for winoldap.mod, likely not the correct meaning for this flag */
+    {
+        NTSTATUS status;
+        LARGE_INTEGER time;
+
+        status = NtWaitForMultipleObjects( 2, handles, WaitAny, FALSE, get_nt_timeout( &time, timeout ) );
+        if (NT_ERROR(status))
+        {
+            SetLastError( RtlNtStatusToDosError( status ));
+            return WAIT_FAILED;
+        }
+        return status;
+    }
+
     for (;;)
     {
         ret = NtUserMsgWaitForMultipleObjectsEx( 2, handles, timeout - elapsed, QS_SENDMESSAGE, 0 );
