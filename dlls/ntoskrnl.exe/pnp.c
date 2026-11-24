@@ -223,7 +223,6 @@ static NTSTATUS get_device_caps( DEVICE_OBJECT *device, DEVICE_CAPABILITIES *cap
 
 static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
-    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(servicesW)];
     WCHAR driver[MAX_SERVICE_NAME] = {0};
     DRIVER_OBJECT *driver_obj;
@@ -247,8 +246,7 @@ static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINF
         return;
     }
 
-    lstrcpyW( buffer, driverW );
-    lstrcatW( buffer, driver );
+    swprintf( buffer, ARRAY_SIZE(buffer), L"\\Driver\\%s", driver );
     RtlInitUnicodeString( &string, buffer );
     if (ObReferenceObjectByName( &string, OBJ_CASE_INSENSITIVE, NULL,
                                  0, NULL, KernelMode, NULL, (void **)&driver_obj ) != STATUS_SUCCESS)
@@ -546,8 +544,6 @@ static BOOL create_or_open_setupapi_device_info(HDEVINFO set, const WCHAR *devic
 
 static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OBJECT *parent_device )
 {
-    static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
-
     struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
     WCHAR container_id_str[MAX_GUID_STRING_LEN] = { 0 };
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
@@ -618,7 +614,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
     key = SetupDiOpenDevRegKey( set, &sp_device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ );
     if (key != INVALID_HANDLE_VALUE)
     {
-        if (!RegQueryValueExW( key, infpathW, NULL, NULL, NULL, NULL ))
+        if (!RegQueryValueExW( key, L"InfPath", NULL, NULL, NULL, NULL ))
             need_driver = FALSE;
         RegCloseKey( key );
     }
@@ -1298,13 +1294,7 @@ done:
  */
 NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable )
 {
-    static const WCHAR DeviceClassesW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
-        'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'D','e','v','i','c','e','C','l','a','s','s','e','s','\\',0};
-    static const WCHAR slashW[] = {'\\',0};
-    static const WCHAR hashW[] = {'#',0};
+    static const WCHAR DeviceClassesW[] = L"\\REGISTRY\\Machine\\System\\CurrentControlSet\\Control\\DeviceClasses\\";
 
     size_t namelen = name->Length / sizeof(WCHAR);
     DEV_BROADCAST_DEVICEINTERFACE_W *broadcast;
@@ -1345,12 +1335,11 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     lstrcpyW( path, DeviceClassesW );
     lstrcpynW( path + lstrlenW( path ), refstr - 38, 39 );
-    lstrcatW( path, slashW );
+    lstrcatW( path, L"\\" );
     p = path + lstrlenW( path );
     lstrcpynW( path + lstrlenW( path ), name->Buffer, (refstr - name->Buffer) + 1 );
     p[0] = p[1] = p[3] = '#';
-    lstrcatW( path, slashW );
-    lstrcatW( path, hashW );
+    lstrcatW( path, L"\\#" );
     if (refstr < name->Buffer + namelen)
         lstrcpynW( path + lstrlenW( path ), refstr, name->Buffer + namelen - refstr + 1 );
 
@@ -1839,9 +1828,7 @@ void pnp_manager_stop(void)
 void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
 {
     static const WCHAR root_container_id[] = L"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
-    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
-    static const WCHAR rootW[] = {'R','O','O','T',0};
-    WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(driverW)], id[MAX_DEVICE_ID_LEN];
+    WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(L"\\Driver\\")], id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     struct list new_list = LIST_INIT(new_list);
     struct root_pnp_device *pnp_device, *next;
@@ -1855,7 +1842,7 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
 
     driver = get_driver( driver_name );
 
-    set = SetupDiGetClassDevsW( NULL, rootW, NULL, DIGCF_ALLCLASSES );
+    set = SetupDiGetClassDevsW( NULL, L"ROOT", NULL, DIGCF_ALLCLASSES );
     if (set == INVALID_HANDLE_VALUE)
     {
         ERR("Failed to build device set, error %#lx.\n", GetLastError());

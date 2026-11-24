@@ -404,10 +404,8 @@ NTSTATUS WINAPI ObOpenObjectByPointer( void *obj, ULONG attr, ACCESS_STATE *acce
 
 static void *create_file_object( HANDLE handle );
 
-static const WCHAR file_type_name[] = {'F','i','l','e',0};
-
 static struct _OBJECT_TYPE file_type = {
-    file_type_name,
+    L"File",
     create_file_object
 };
 
@@ -1562,7 +1560,6 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
 
 static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
 {
-    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     WCHAR *str;
 
     /* Check what prefix is present */
@@ -1572,8 +1569,8 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
         RtlCreateUnicodeString( keypath, name );
         return;
     }
-    if (wcsncmp( name, driverW, lstrlenW(driverW) ) == 0)
-        name += lstrlenW(driverW);
+    if (wcsncmp( name, L"\\Driver\\", lstrlenW(L"\\Driver\\") ) == 0)
+        name += lstrlenW(L"\\Driver\\");
     else
         FIXME( "Driver name %s does not properly begin with \\Driver\\\n", debugstr_w(name) );
 
@@ -1601,11 +1598,9 @@ static void free_driver_object( void *obj )
     free_kernel_object( driver );
 }
 
-static const WCHAR driver_type_name[] = {'D','r','i','v','e','r',0};
-
 static struct _OBJECT_TYPE driver_type =
 {
-    driver_type_name,
+    L"Driver",
     NULL,
     free_driver_object
 };
@@ -1679,12 +1674,7 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
 }
 
 
-static const WCHAR device_type_name[] = {'D','e','v','i','c','e',0};
-
-static struct _OBJECT_TYPE device_type =
-{
-    device_type_name,
-};
+static struct _OBJECT_TYPE device_type = { L"Device" };
 
 POBJECT_TYPE IoDeviceObjectType = &device_type;
 
@@ -1712,7 +1702,6 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
                                 ULONG characteristics, BOOLEAN exclusive,
                                 DEVICE_OBJECT **ret_device )
 {
-    static const WCHAR auto_format[] = {'\\','D','e','v','i','c','e','\\','%','0','8','x',0};
     NTSTATUS status;
     struct wine_device *wine_device;
     DEVICE_OBJECT *device;
@@ -1739,7 +1728,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     {
         do
         {
-            swprintf( autoW, ARRAY_SIZE(autoW), auto_format, auto_idx++ );
+            swprintf( autoW, ARRAY_SIZE(autoW), L"\\Device\\%08x", auto_idx++ );
             SERVER_START_REQ( create_device )
             {
                 req->rootdir    = 0;
@@ -2618,11 +2607,9 @@ static void *create_process_object( HANDLE handle )
     return process;
 }
 
-static const WCHAR process_type_name[] = {'P','r','o','c','e','s','s',0};
-
 static struct _OBJECT_TYPE process_type =
 {
-    process_type_name,
+    L"Process",
     create_process_object
 };
 
@@ -2737,11 +2724,9 @@ static void *create_thread_object( HANDLE handle )
     return thread;
 }
 
-static const WCHAR thread_type_name[] = {'T','h','r','e','a','d',0};
-
 static struct _OBJECT_TYPE thread_type =
 {
-    thread_type_name,
+    L"Thread",
     create_thread_object
 };
 
@@ -3728,19 +3713,16 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
     STRING routineNameA;
     PVOID pFunc = NULL;
 
-    static const WCHAR ntoskrnlW[] = {'n','t','o','s','k','r','n','l','.','e','x','e',0};
-    static const WCHAR halW[] = {'h','a','l','.','d','l','l',0};
-
     if (!SystemRoutineName) return NULL;
 
     if (RtlUnicodeStringToAnsiString( &routineNameA, SystemRoutineName, TRUE ) == STATUS_SUCCESS)
     {
         /* We only support functions exported from ntoskrnl.exe or hal.dll */
-        hMod = GetModuleHandleW( ntoskrnlW );
+        hMod = GetModuleHandleW( L"ntoskrnl.exe" );
         pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         if (!pFunc)
         {
-           hMod = LoadLibraryW( halW );
+           hMod = LoadLibraryW( L"hal.dll" );
            if (hMod) pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         }
         RtlFreeAnsiString( &routineNameA );
@@ -4338,11 +4320,6 @@ static WCHAR *get_windir_path( const WCHAR *path )
 /* load the .sys module for a device driver */
 static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyname )
 {
-    static const WCHAR driversW[] = {'\\','d','r','i','v','e','r','s','\\',0};
-    static const WCHAR systemrootW[] = {'\\','S','y','s','t','e','m','R','o','o','t','\\',0};
-    static const WCHAR postfixW[] = {'.','s','y','s',0};
-    static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
-    static const WCHAR ImagePathW[] = {'I','m','a','g','e','P','a','t','h',0};
     HKEY driver_hkey;
     HMODULE module;
     LPWSTR path = NULL, str;
@@ -4356,10 +4333,10 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
     /* read the executable path from memory */
     size = 0;
-    if (!RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, NULL, &size ))
+    if (!RegQueryValueExW( driver_hkey, L"ImagePath", NULL, &type, NULL, &size ))
     {
         str = HeapAlloc( GetProcessHeap(), 0, size );
-        if (!RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, (LPBYTE)str, &size ))
+        if (!RegQueryValueExW( driver_hkey, L"ImagePath", NULL, &type, (LPBYTE)str, &size ))
         {
             size = ExpandEnvironmentStringsW(str,NULL,0);
             path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
@@ -4372,7 +4349,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
             return NULL;
         }
 
-        if (!wcsnicmp( path, systemrootW, 12 ))
+        if (!wcsnicmp( path, L"\\SystemRoot\\", 12 ))
         {
             str = get_windir_path( path + 12 );
             HeapFree( GetProcessHeap(), 0, path );
@@ -4384,7 +4361,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
             HeapFree( GetProcessHeap(), 0, path );
             path = str;
         }
-        else if (!wcsncmp( path, ntprefixW, 4 ))
+        else if (!wcsncmp( path, L"\\??\\", 4 ))
             str = path + 4;
         else
             str = path;
@@ -4393,14 +4370,10 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
     {
         /* default is to use the driver name + ".sys" */
         WCHAR buffer[MAX_PATH];
-        GetSystemDirectoryW(buffer, MAX_PATH);
-        path = HeapAlloc(GetProcessHeap(),0,
-          (lstrlenW(buffer) + lstrlenW(driversW) + lstrlenW(driver_name) + lstrlenW(postfixW) + 1)
-          *sizeof(WCHAR));
-        lstrcpyW(path, buffer);
-        lstrcatW(path, driversW);
-        lstrcatW(path, driver_name);
-        lstrcatW(path, postfixW);
+        UINT len = GetSystemDirectoryW(buffer, MAX_PATH);
+        len += lstrlenW(driver_name) + 16;
+        path = HeapAlloc(GetProcessHeap(),0, len * sizeof(WCHAR));
+        swprintf( path, len, L"%s\\drivers\\%s.sys", buffer, driver_name);
         str = path;
     }
     RegCloseKey( driver_hkey );
@@ -4481,7 +4454,7 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
 
 static BOOLEAN get_drv_name( UNICODE_STRING *drv_name, const UNICODE_STRING *service_name )
 {
-    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
+    static const WCHAR driverW[] = L"\\Driver\\";
     WCHAR *str;
 
     if (!(str = HeapAlloc( GetProcessHeap(), 0, sizeof(driverW) + service_name->Length - lstrlenW(servicesW)*sizeof(WCHAR) )))
@@ -4792,12 +4765,7 @@ void WINAPI KeLeaveGuardedRegion(void)
     FIXME("\n");
 }
 
-static const WCHAR token_type_name[] = {'T','o','k','e','n',0};
-
-static struct _OBJECT_TYPE token_type =
-{
-    token_type_name
-};
+static struct _OBJECT_TYPE token_type = { L"Token" };
 
 POBJECT_TYPE SeTokenObjectType = &token_type;
 

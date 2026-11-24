@@ -114,12 +114,7 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name );
 
 struct wine_driver *get_driver( const WCHAR *name );
 
-static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
-                                  '\\','M','a','c','h','i','n','e',
-                                  '\\','S','y','s','t','e','m',
-                                  '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-                                  '\\','S','e','r','v','i','c','e','s',
-                                  '\\',0};
+static const WCHAR servicesW[] = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\";
 
 struct wine_device
 {
