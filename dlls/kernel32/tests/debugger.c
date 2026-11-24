@@ -1689,7 +1689,7 @@ static void test_debugger(const char *argv0)
     do next_event(&ctx, POLL_EVENT_TIMEOUT);
     while(ctx.ev.dwDebugEventCode != -1);
 
-    mem = VirtualAllocEx(pi.hProcess, NULL, sizeof(buf), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    mem = VirtualAllocEx(pi.hProcess, NULL, sizeof(buf), MEM_COMMIT, PAGE_EXECUTE_READ);
     ok(mem != NULL, "VirtualAllocEx failed: %lu\n", GetLastError());
     proc_code   = buf + 1024;
     thread_proc = mem + 1024;
