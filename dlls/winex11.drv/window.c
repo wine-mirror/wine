@@ -873,14 +873,8 @@ static void set_window_icon_data( struct x11drv_win_data *data, HICON icon, cons
             }
         }
         free( bits_small );
-        NtGdiDeleteObjectApp( ii_small->hbmColor );
-        NtGdiDeleteObjectApp( ii_small->hbmMask );
     }
-
     if (!create_icon_pixmaps( hDC, ii, &icon_pixmap, &mask_pixmap )) icon_pixmap = mask_pixmap = 0;
-
-    NtGdiDeleteObjectApp( ii->hbmColor );
-    NtGdiDeleteObjectApp( ii->hbmMask );
     NtGdiDeleteObjectApp( hDC );
 
     if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );

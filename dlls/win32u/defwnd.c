@@ -427,6 +427,13 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
     {
         icon_small = get_window_icon_info( hwnd, ICON_SMALL, icon_small, &ii_small );
         user_driver->pSetWindowIcons( hwnd, icon, &ii, icon_small, &ii_small );
+        if (icon_small)
+        {
+            NtGdiDeleteObjectApp( ii_small.hbmColor );
+            NtGdiDeleteObjectApp( ii_small.hbmMask );
+        }
+        NtGdiDeleteObjectApp( ii.hbmColor );
+        NtGdiDeleteObjectApp( ii.hbmMask );
     }
 
     return ret;

@@ -2508,6 +2508,13 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         {
             icon_small = get_window_icon_info( hwnd, ICON_SMALL, icon_small, &ii_small );
             user_driver->pSetWindowIcons( hwnd, icon, &ii, icon_small, &ii_small );
+            if (icon_small)
+            {
+                NtGdiDeleteObjectApp( ii_small.hbmColor );
+                NtGdiDeleteObjectApp( ii_small.hbmMask );
+            }
+            NtGdiDeleteObjectApp( ii.hbmColor );
+            NtGdiDeleteObjectApp( ii.hbmMask );
         }
 
         owner_hint = NtUserGetWindowRelative(hwnd, GW_OWNER);
