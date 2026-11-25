@@ -70,7 +70,8 @@ static void test_dc_values(void)
 
     extra = GetTextCharacterExtra( hdc );
     ok( extra == 0, "initial extra %d\n", extra );
-    SetTextCharacterExtra( hdc, 123 );
+    extra = SetTextCharacterExtra( hdc, 123 );
+    ok( extra == 0, "Unexpected value %d\n", extra );
     extra = GetTextCharacterExtra( hdc );
     ok( extra == 123, "initial extra %d\n", extra );
     SetMapMode( hdc, MM_LOMETRIC );
@@ -79,6 +80,19 @@ static void test_dc_values(void)
     SetMapMode( hdc, MM_TEXT );
     extra = GetTextCharacterExtra( hdc );
     ok( extra == 123, "initial extra %d\n", extra );
+
+    SetLastError(0xdeadbeef);
+    extra = GetTextCharacterExtra(ULongToHandle(0xdeadbeef));
+    ok( extra == 0x80000000, "Unexpected value %d\n", extra );
+    todo_wine
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    extra = SetTextCharacterExtra(ULongToHandle(0xdeadbeef), 123);
+    todo_wine
+    ok( extra == 0x80000000, "Unexpected value %d\n", extra );
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     attr = SetBkMode(ULongToHandle(0xdeadbeef), OPAQUE);
