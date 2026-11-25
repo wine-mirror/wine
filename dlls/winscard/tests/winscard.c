@@ -165,6 +165,10 @@ static void test_SCardEstablishContext(void)
     }
     ret = SCardStatusW( connect, names, &len, &state, &protocol, NULL, NULL );
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    ret = SCardStatusW( connect, NULL, &len, &state, &protocol, NULL, NULL );
+    ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
+    ret = SCardStatusW( connect, names, NULL, &state, &protocol, NULL, NULL );
+    ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
     ret = SCardStatusW( connect, NULL, NULL, &state, &protocol, NULL, NULL );
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
     ret = SCardStatusW( connect, NULL, NULL, NULL, NULL, NULL, NULL );
