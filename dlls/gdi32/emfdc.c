@@ -1872,7 +1872,7 @@ BOOL EMFDC_PlgBlt( DC_ATTR *dc_attr, const POINT *points, HDC hdc_src, INT x_src
         x_min = min( x_min, points[i].x );
         y_min = min( y_min, points[i].y );
         x_max = max( x_max, points[i].x );
-        y_max = max( y_min, points[i].y );
+        y_max = max( y_max, points[i].y );
     }
     emr->rclBounds.left = x_min;
     emr->rclBounds.top = y_min;
