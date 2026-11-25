@@ -29,6 +29,7 @@ struct toast_manager_statics
 {
     IActivationFactory IActivationFactory_iface;
     IToastNotificationManagerStatics IToastNotificationManagerStatics_iface;
+    IToastNotificationManagerStatics2 IToastNotificationManagerStatics2_iface;
     LONG ref;
 };
 
@@ -51,6 +52,11 @@ static HRESULT WINAPI toast_manager_factory_QueryInterface( IActivationFactory *
     if (IsEqualGUID( iid, &IID_IToastNotificationManagerStatics ))
     {
         IToastNotificationManagerStatics_AddRef( (*out = &impl->IToastNotificationManagerStatics_iface) );
+        return S_OK;
+    }
+    if (IsEqualGUID( iid, &IID_IToastNotificationManagerStatics2 ))
+    {
+        IToastNotificationManagerStatics2_AddRef( (*out = &impl->IToastNotificationManagerStatics2_iface) );
         return S_OK;
     }
 
@@ -166,10 +172,33 @@ static const IToastNotificationManagerStaticsVtbl toast_manager_statics_vtbl =
     toast_manager_statics_GetTemplateContent,
 };
 
+DEFINE_IINSPECTABLE( toast_manager_statics2, IToastNotificationManagerStatics2, struct toast_manager_statics, IActivationFactory_iface );
+
+static HRESULT WINAPI toast_manager_statics2_get_History( IToastNotificationManagerStatics2 *iface, IToastNotificationHistory **out )
+{
+    FIXME( "(%p, %p): stub!\n", iface, out );
+    return E_NOTIMPL;
+}
+
+static const IToastNotificationManagerStatics2Vtbl toast_manager_statics2_vtbl =
+{
+    /* IUnknown */
+    toast_manager_statics2_QueryInterface,
+    toast_manager_statics2_AddRef,
+    toast_manager_statics2_Release,
+    /* IInspectable */
+    toast_manager_statics2_GetIids,
+    toast_manager_statics2_GetRuntimeClassName,
+    toast_manager_statics2_GetTrustLevel,
+    /* IToastNotificationManagerStatics2 */
+    toast_manager_statics2_get_History,
+};
+
 static struct toast_manager_statics toast_manager_statics =
 {
     { &toast_manager_factory_vtbl },
     { &toast_manager_statics_vtbl },
+    { &toast_manager_statics2_vtbl },
     1
 };
 
