@@ -2827,7 +2827,7 @@ static BOOL read_emfspool_record( struct spool_handle *sh )
         }
         else if (sh->devmodes_no == sh->devmodes_size)
         {
-            void *alloc = HeapReAlloc( GetProcessHeap(), 0, sh->devmodes, sh->devmodes_size * 2 );
+            void *alloc = HeapReAlloc( GetProcessHeap(), 0, sh->devmodes, sizeof(*sh->devmodes) * sh->devmodes_size * 2 );
 
             if (!alloc)
             {
