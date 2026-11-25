@@ -1818,7 +1818,7 @@ BOOL EMFDC_MaskBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT h
 err:
     HeapFree( GetProcessHeap(), 0, emr );
     if (mask_bitmap != mask) DeleteObject( mask_bitmap );
-    if (mask_dc != hdc_src) DeleteObject( mask_dc );
+    if (mask_dc != hdc_src) DeleteDC( mask_dc );
     if (blit_bitmap != bitmap) DeleteObject( blit_bitmap );
     if (blit_dc != hdc_src) DeleteDC( blit_dc );
     return ret;
@@ -1921,7 +1921,7 @@ BOOL EMFDC_PlgBlt( DC_ATTR *dc_attr, const POINT *points, HDC hdc_src, INT x_src
 err:
     HeapFree( GetProcessHeap(), 0, emr );
     if (mask_bitmap != mask) DeleteObject( mask_bitmap );
-    if (mask_dc != hdc_src) DeleteObject( mask_dc );
+    if (mask_dc != hdc_src) DeleteDC( mask_dc );
     if (blit_bitmap != bitmap) DeleteObject( blit_bitmap );
     if (blit_dc != hdc_src) DeleteDC( blit_dc );
     return ret;
