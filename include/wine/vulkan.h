@@ -120,7 +120,7 @@ struct OH_NativeBuffer;
     #endif
 #endif
 #define VK_FALSE 0
-#define VK_HEADER_VERSION 363
+#define VK_HEADER_VERSION 369
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_LOD_CLAMP_NONE 1000.0F
 #define VK_LUID_SIZE 8
@@ -182,6 +182,7 @@ struct OH_NativeBuffer;
 #define VK_WHOLE_SIZE (~0ULL)
 typedef uint32_t VkFlags;
 typedef uint64_t VkFlags64;
+typedef struct VkInternalObjectNV* VkInternalHandleNV;
 typedef void* VkRemoteAddressNV;
 #define STD_VIDEO_AV1_GLOBAL_MOTION_PARAMS 6
 #define STD_VIDEO_AV1_LOOP_FILTER_ADJUSTMENTS 2
@@ -291,6 +292,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_AMD_SHADER_TRINARY_MINMAX_SPEC_VERSION 1
 #define VK_AMD_TEXTURE_GATHER_BIAS_LOD_EXTENSION_NAME "VK_AMD_texture_gather_bias_lod"
 #define VK_AMD_TEXTURE_GATHER_BIAS_LOD_SPEC_VERSION 1
+#define VK_ARM_COOPERATIVE_MATRIX_LAYOUTS_EXTENSION_NAME "VK_ARM_cooperative_matrix_layouts"
+#define VK_ARM_COOPERATIVE_MATRIX_LAYOUTS_SPEC_VERSION 1
 #define VK_ARM_DATA_GRAPH_EXTENSION_NAME "VK_ARM_data_graph"
 #define VK_ARM_DATA_GRAPH_INSTRUCTION_SET_TOSA_EXTENSION_NAME "VK_ARM_data_graph_instruction_set_tosa"
 #define VK_ARM_DATA_GRAPH_INSTRUCTION_SET_TOSA_SPEC_VERSION 1
@@ -595,6 +598,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_EXT_VALIDATION_FEATURES_SPEC_VERSION 6
 #define VK_EXT_VALIDATION_FLAGS_EXTENSION_NAME "VK_EXT_validation_flags"
 #define VK_EXT_VALIDATION_FLAGS_SPEC_VERSION 3
+#define VK_EXT_VERTEX_ADDRESS_BINDING_UNRESTRICTED_EXTENSION_NAME "VK_EXT_vertex_address_binding_unrestricted"
+#define VK_EXT_VERTEX_ADDRESS_BINDING_UNRESTRICTED_SPEC_VERSION 1
 #define VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME "VK_EXT_vertex_attribute_divisor"
 #define VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_SPEC_VERSION 3
 #define VK_EXT_VERTEX_ATTRIBUTE_ROBUSTNESS_EXTENSION_NAME "VK_EXT_vertex_attribute_robustness"
@@ -609,6 +614,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_EXT_ZERO_INITIALIZE_DEVICE_MEMORY_SPEC_VERSION 1
 #define VK_GOOGLE_DECORATE_STRING_EXTENSION_NAME "VK_GOOGLE_decorate_string"
 #define VK_GOOGLE_DECORATE_STRING_SPEC_VERSION 1
+#define VK_GOOGLE_HDR_SMPTE_ST_209450_METADATA_EXTENSION_NAME "VK_GOOGLE_hdr_smpte_st_209450_metadata"
+#define VK_GOOGLE_HDR_SMPTE_ST_209450_METADATA_SPEC_VERSION 1
 #define VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME
 #define VK_GOOGLE_HLSL_FUNCTIONALITY1_SPEC_VERSION VK_GOOGLE_HLSL_FUNCTIONALITY_1_SPEC_VERSION
 #define VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME "VK_GOOGLE_hlsl_functionality1"
@@ -749,6 +756,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_KHR_MAINTENANCE_10_SPEC_VERSION 1
 #define VK_KHR_MAINTENANCE_11_EXTENSION_NAME "VK_KHR_maintenance11"
 #define VK_KHR_MAINTENANCE_11_SPEC_VERSION 1
+#define VK_KHR_MAINTENANCE_12_EXTENSION_NAME "VK_KHR_maintenance12"
+#define VK_KHR_MAINTENANCE_12_SPEC_VERSION 1
 #define VK_KHR_MAINTENANCE_1_EXTENSION_NAME "VK_KHR_maintenance1"
 #define VK_KHR_MAINTENANCE_1_SPEC_VERSION 2
 #define VK_KHR_MAINTENANCE_2_EXTENSION_NAME "VK_KHR_maintenance2"
@@ -3125,6 +3134,10 @@ typedef enum VkDriverId
     VK_DRIVER_ID_MESA_GFXSTREAM = 29,
     VK_DRIVER_ID_APE_SOFT = 30,
     VK_DRIVER_ID_RESERVED_31 = 31,
+    VK_DRIVER_ID_APEX = 32,
+    VK_DRIVER_ID_NIKKI = 33,
+    VK_DRIVER_ID_MOMOTEN = 34,
+    VK_DRIVER_ID_AURORA_BOREALIS = 35,
     VK_DRIVER_ID_MAX_ENUM = 0x7fffffff,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
@@ -4058,6 +4071,13 @@ typedef enum VkGraphicsPipelineLibraryFlagBitsEXT
     VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_OUTPUT_INTERFACE_BIT_EXT = 0x00000008,
     VK_GRAPHICS_PIPELINE_LIBRARY_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
 } VkGraphicsPipelineLibraryFlagBitsEXT;
+
+typedef enum VkHdrSmpteSt209450PowerPreferenceGOOGLE
+{
+    VK_HDR_SMPTE_ST_209450_POWER_PREFERENCE_COLOR_ACCURACY_GOOGLE = 0,
+    VK_HDR_SMPTE_ST_209450_POWER_PREFERENCE_LOW_POWER_GOOGLE = 1,
+    VK_HDR_SMPTE_ST_20_94_50_POWER_PREFERENCE_GOOGLE_MAX_ENUM = 0x7fffffff,
+} VkHdrSmpteSt209450PowerPreferenceGOOGLE;
 
 typedef enum VkHostImageCopyFlagBits
 {
@@ -7013,6 +7033,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_FLAGS_FEATURES_KHR = 1000668004,
     VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_2_CREATE_INFO_KHR = 1000668005,
     VK_STRUCTURE_TYPE_SHARED_PRESENT_SURFACE_CAPABILITIES_2_KHR = 1000668006,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_LAYOUTS_FEATURES_ARM = 1000670000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OCP_MICROSCALING_TYPES_FEATURES_EXT = 1000672000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE = 1000673000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_THROTTLE_HINT_FEATURES_SEC = 1000674000,
@@ -7021,6 +7042,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM = 1000676001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM = 1000676002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT = 1000678000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ADDRESS_BINDING_UNRESTRICTED_FEATURES_EXT = 1000679000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_12_FEATURES_KHR = 1000680000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_12_PROPERTIES_KHR = 1000680001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT = 1000687000,
     VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT = 1000687001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV = 1000689000,
@@ -7028,6 +7052,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_FEATURES_VALVE = 1000709000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_ALLOCATION_ALIGNMENT_PROPERTIES_VALVE = 1000709001,
     VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_ALIGNMENT_ALLOCATE_INFO_VALVE = 1000709002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_SMPTE_ST_209450_FEATURES_GOOGLE = 1000718000,
+    VK_STRUCTURE_TYPE_HDR_SMPTE_ST_209450_GOOGLE = 1000718001,
+    VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_HDR_SMPTE_ST_209450_GOOGLE = 1000718002,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7fffffff,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
@@ -7530,6 +7557,7 @@ typedef enum VkVendorId
     VK_VENDOR_ID_POCL = 0x00010006,
     VK_VENDOR_ID_MOBILEYE = 0x00010007,
     VK_VENDOR_ID_APE = 0x00010008,
+    VK_VENDOR_ID_APEX = 0x00010009,
     VK_VENDOR_ID_MAX_ENUM = 0x7fffffff,
 } VkVendorId;
 
@@ -13926,6 +13954,15 @@ typedef struct VkHdrMetadataEXT
     float maxFrameAverageLightLevel;
 } VkHdrMetadataEXT;
 
+typedef struct VkHdrSmpteSt209450GOOGLE
+{
+    VkStructureType sType;
+    const void *pNext;
+    size_t metadataSize;
+    const void *pMetadata;
+    VkHdrSmpteSt209450PowerPreferenceGOOGLE powerPreference;
+} VkHdrSmpteSt209450GOOGLE;
+
 typedef struct VkHdrVividDynamicMetadataHUAWEI
 {
     VkStructureType sType;
@@ -14598,7 +14635,7 @@ typedef struct VkMetalSurfaceCreateInfoEXT
     VkStructureType sType;
     const void *pNext;
     VkMetalSurfaceCreateFlagsEXT flags;
-    const CAMetalLayer *pLayer;
+    CAMetalLayer *pLayer;
 } VkMetalSurfaceCreateInfoEXT;
 
 typedef struct VkMicromapBuildInfoEXT
@@ -15257,6 +15294,13 @@ typedef struct VkPhysicalDeviceCooperativeMatrixInfo2EXT
     uint32_t subgroupSize;
     VkCooperativeMatrixFlagsEXT flags;
 } VkPhysicalDeviceCooperativeMatrixInfo2EXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixLayoutsFeaturesARM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 cooperativeMatrixArmLayouts;
+} VkPhysicalDeviceCooperativeMatrixLayoutsFeaturesARM;
 
 typedef struct VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT
 {
@@ -16196,6 +16240,13 @@ typedef struct VkPhysicalDeviceGroupProperties
 } VkPhysicalDeviceGroupProperties;
 typedef VkPhysicalDeviceGroupProperties VkPhysicalDeviceGroupPropertiesKHR;
 
+typedef struct VkPhysicalDeviceHdrSmpteSt209450FeaturesGOOGLE
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 hdrSmpteSt209450;
+} VkPhysicalDeviceHdrSmpteSt209450FeaturesGOOGLE;
+
 typedef struct VkPhysicalDeviceHdrVividFeaturesHUAWEI
 {
     VkStructureType sType;
@@ -16540,6 +16591,20 @@ typedef struct VkPhysicalDeviceMaintenance11FeaturesKHR
     void *pNext;
     VkBool32 maintenance11;
 } VkPhysicalDeviceMaintenance11FeaturesKHR;
+
+typedef struct VkPhysicalDeviceMaintenance12FeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 maintenance12;
+} VkPhysicalDeviceMaintenance12FeaturesKHR;
+
+typedef struct VkPhysicalDeviceMaintenance12PropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t maxInputAttachmentIndex;
+} VkPhysicalDeviceMaintenance12PropertiesKHR;
 
 typedef struct VkPhysicalDeviceMaintenance3Properties
 {
@@ -18319,6 +18384,13 @@ typedef struct VkPhysicalDeviceVariablePointersFeatures
     VkBool32 variablePointers;
 } VkPhysicalDeviceVariablePointersFeatures;
 typedef VkPhysicalDeviceVariablePointersFeatures VkPhysicalDeviceVariablePointersFeaturesKHR, VkPhysicalDeviceVariablePointerFeaturesKHR, VkPhysicalDeviceVariablePointerFeatures;
+
+typedef struct VkPhysicalDeviceVertexAddressBindingUnrestrictedFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 vertexAddressBindingUnrestricted;
+} VkPhysicalDeviceVertexAddressBindingUnrestrictedFeaturesEXT;
 
 typedef struct VkPhysicalDeviceVertexAttributeDivisorFeatures
 {
@@ -20137,6 +20209,13 @@ typedef struct VkSurfaceCapabilities2KHR
     void *pNext;
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
 } VkSurfaceCapabilities2KHR;
+
+typedef struct VkSurfaceCapabilitiesHdrSmpteSt209450GOOGLE
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 hdrSmpteSt209450Supported;
+} VkSurfaceCapabilitiesHdrSmpteSt209450GOOGLE;
 
 typedef struct VkSurfaceCapabilitiesPresentBarrierNV
 {
@@ -23519,6 +23598,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_AMD_shader_info) \
     USE_VK_EXT(VK_AMD_shader_trinary_minmax) \
     USE_VK_EXT(VK_AMD_texture_gather_bias_lod) \
+    USE_VK_EXT(VK_ARM_cooperative_matrix_layouts) \
     USE_VK_EXT(VK_ARM_data_graph) \
     USE_VK_EXT(VK_ARM_data_graph_instruction_set_tosa) \
     USE_VK_EXT(VK_ARM_data_graph_neural_accelerator_statistics) \
@@ -23657,6 +23737,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_EXT_tooling_info) \
     USE_VK_EXT(VK_EXT_transform_feedback) \
     USE_VK_EXT(VK_EXT_validation_cache) \
+    USE_VK_EXT(VK_EXT_vertex_address_binding_unrestricted) \
     USE_VK_EXT(VK_EXT_vertex_attribute_divisor) \
     USE_VK_EXT(VK_EXT_vertex_attribute_robustness) \
     USE_VK_EXT(VK_EXT_vertex_input_dynamic_state) \
@@ -23664,6 +23745,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_EXT_ycbcr_image_arrays) \
     USE_VK_EXT(VK_EXT_zero_initialize_device_memory) \
     USE_VK_EXT(VK_GOOGLE_decorate_string) \
+    USE_VK_EXT(VK_GOOGLE_hdr_smpte_st_209450_metadata) \
     USE_VK_EXT(VK_GOOGLE_hlsl_functionality1) \
     USE_VK_EXT(VK_GOOGLE_user_type) \
     USE_VK_EXT(VK_HUAWEI_cluster_culling_shader) \
@@ -23722,6 +23804,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_KHR_maintenance1) \
     USE_VK_EXT(VK_KHR_maintenance10) \
     USE_VK_EXT(VK_KHR_maintenance11) \
+    USE_VK_EXT(VK_KHR_maintenance12) \
     USE_VK_EXT(VK_KHR_maintenance2) \
     USE_VK_EXT(VK_KHR_maintenance3) \
     USE_VK_EXT(VK_KHR_maintenance4) \
