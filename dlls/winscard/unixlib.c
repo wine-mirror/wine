@@ -94,6 +94,8 @@ static NTSTATUS scard_is_valid_context( void *args )
 }
 
 #ifdef __APPLE__
+
+#pragma pack(push, 1)
 struct reader_state_macos
 {
     UINT64 reader;
@@ -103,6 +105,7 @@ struct reader_state_macos
     UINT32 atr_size;
     unsigned char atr[MAX_ATR_SIZE];
 };
+#pragma pack(pop)
 
 static struct reader_state_macos *map_states_in( const struct reader_state *state, unsigned int count )
 {
