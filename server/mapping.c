@@ -385,7 +385,7 @@ static int create_temp_file( file_pos_t size )
 }
 
 /* find a memory view from its base address */
-struct memory_view *find_mapped_view( struct process *process, client_ptr_t base )
+static struct memory_view *find_mapped_view( struct process *process, client_ptr_t base )
 {
     struct memory_view *view;
 
@@ -427,10 +427,18 @@ static int is_valid_view_addr( struct process *process, client_ptr_t addr, mem_s
     return 1;
 }
 
-/* get the main exe memory view */
-struct memory_view *get_exe_view( struct process *process )
+/* get the file name for a mapped view */
+static int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
 {
-    return LIST_ENTRY( list_head( &process->views ), struct memory_view, entry );
+    if (view->namelen)  /* .so builtin */
+    {
+        name->str = view->name;
+        name->len = view->namelen;
+        return 1;
+    }
+    if (!view->fd) return 0;
+    *name = get_nt_name( view->fd );
+    return 1;
 }
 
 static int generate_dll_event( struct thread *thread, int code, struct memory_view *view )
@@ -1210,20 +1218,6 @@ const struct pe_image_info *get_view_image_info( const struct memory_view *view,
     if (!(view->flags & SEC_IMAGE)) return NULL;
     *base = view->base;
     return &view->image;
-}
-
-/* get the file name for a mapped view */
-int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
-{
-    if (view->namelen)  /* .so builtin */
-    {
-        name->str = view->name;
-        name->len = view->namelen;
-        return 1;
-    }
-    if (!view->fd) return 0;
-    *name = get_nt_name( view->fd );
-    return 1;
 }
 
 /* generate all startup events of a given process */
