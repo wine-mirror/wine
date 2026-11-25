@@ -172,12 +172,151 @@ static const IToastNotificationManagerStaticsVtbl toast_manager_statics_vtbl =
     toast_manager_statics_GetTemplateContent,
 };
 
+struct toast_notification_history
+{
+    IToastNotificationHistory IToastNotificationHistory_iface;
+    LONG ref;
+};
+
+static inline struct toast_notification_history *impl_from_IToastNotificationHistory( IToastNotificationHistory *iface )
+{
+    return CONTAINING_RECORD( iface, struct toast_notification_history, IToastNotificationHistory_iface );
+}
+
+static HRESULT WINAPI toast_notification_history_QueryInterface( IToastNotificationHistory *iface, REFIID iid, void **out )
+{
+    struct toast_notification_history *impl = impl_from_IToastNotificationHistory( iface );
+
+    TRACE( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown )
+            || IsEqualGUID( iid, &IID_IInspectable )
+	    || IsEqualGUID( iid, &IID_IToastNotificationHistory ))
+    {
+        IToastNotifier_AddRef( (*out = &impl->IToastNotificationHistory_iface) );
+        return S_OK;
+    }
+
+    *out = NULL;
+    FIXME( "%s not implemented, returning E_NOINTERFACE\n", debugstr_guid( iid ) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI toast_notification_history_AddRef( IToastNotificationHistory *iface )
+{
+    struct toast_notification_history *impl = impl_from_IToastNotificationHistory( iface );
+    TRACE( "(%p)\n", iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI toast_notification_history_Release( IToastNotificationHistory *iface )
+{
+    struct toast_notification_history *impl = impl_from_IToastNotificationHistory( iface );
+    ULONG ref;
+
+    TRACE( "(%p)\n", iface );
+
+    ref = InterlockedDecrement( &impl->ref );
+    if (!ref) free( iface );
+    return ref;
+}
+
+static HRESULT WINAPI toast_notification_history_GetIids( IToastNotificationHistory *iface, ULONG *iids_count, IID **iids )
+{
+    FIXME( "(%p, %p, %p): stub!\n", iface, iids_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_GetRuntimeClassName( IToastNotificationHistory *iface, HSTRING *out )
+{
+    FIXME( "(%p, %p): stub!\n", iface, out );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_GetTrustLevel( IToastNotificationHistory *iface, TrustLevel *level )
+{
+    FIXME( "(%p, %p): stub!\n", iface, level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_RemoveGroup( IToastNotificationHistory *iface, HSTRING group)
+{
+    FIXME( "(%p, %s): stub!\n", iface, debugstr_hstring(group) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_RemoveGroupWithId( IToastNotificationHistory *iface, HSTRING group, HSTRING id )
+{
+    FIXME( "(%p, %s, %s): stub!\n", iface, debugstr_hstring(group), debugstr_hstring(id) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_RemoveGroupedTagWithId( IToastNotificationHistory *iface, HSTRING tag, HSTRING group, HSTRING id )
+{
+    FIXME( "(%p, %s, %s, %s): stub!\n", iface, debugstr_hstring(tag), debugstr_hstring(group), debugstr_hstring(id) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_RemoveGroupedTag( IToastNotificationHistory *iface, HSTRING tag, HSTRING group )
+{
+    FIXME( "(%p, %s, %s): stub!\n", iface, debugstr_hstring(tag), debugstr_hstring(group) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_Remove( IToastNotificationHistory *iface, HSTRING tag )
+{
+    FIXME( "(%p, %s): stub!\n", iface, debugstr_hstring(tag) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_Clear( IToastNotificationHistory *iface )
+{
+    FIXME( "(%p): stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI toast_notification_history_ClearWithId( IToastNotificationHistory *iface, HSTRING id )
+{
+    FIXME( "(%p, %s): stub!\n", iface, debugstr_hstring(id) );
+    return E_NOTIMPL;
+}
+
+static const IToastNotificationHistoryVtbl toast_notification_history_vtbl =
+{
+    toast_notification_history_QueryInterface,
+    toast_notification_history_AddRef,
+    toast_notification_history_Release,
+    toast_notification_history_GetIids,
+    toast_notification_history_GetRuntimeClassName,
+    toast_notification_history_GetTrustLevel,
+    toast_notification_history_RemoveGroup,
+    toast_notification_history_RemoveGroupWithId,
+    toast_notification_history_RemoveGroupedTagWithId,
+    toast_notification_history_RemoveGroupedTag,
+    toast_notification_history_Remove,
+    toast_notification_history_Clear,
+    toast_notification_history_ClearWithId,
+};
+
+static HRESULT create_toast_notification_history( IToastNotificationHistory **out )
+{
+    struct toast_notification_history *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IToastNotificationHistory_iface.lpVtbl = &toast_notification_history_vtbl;
+    impl->ref = 1;
+    *out = &impl->IToastNotificationHistory_iface;
+    return S_OK;
+}
+
 DEFINE_IINSPECTABLE( toast_manager_statics2, IToastNotificationManagerStatics2, struct toast_manager_statics, IActivationFactory_iface );
 
 static HRESULT WINAPI toast_manager_statics2_get_History( IToastNotificationManagerStatics2 *iface, IToastNotificationHistory **out )
 {
-    FIXME( "(%p, %p): stub!\n", iface, out );
-    return E_NOTIMPL;
+    TRACE( "(%p, %p)\n", iface, out );
+
+    return create_toast_notification_history( out );
 }
 
 static const IToastNotificationManagerStatics2Vtbl toast_manager_statics2_vtbl =
