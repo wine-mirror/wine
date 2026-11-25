@@ -89,7 +89,6 @@ static void test_dc_values(void)
 
     SetLastError(0xdeadbeef);
     extra = SetTextCharacterExtra(ULongToHandle(0xdeadbeef), 123);
-    todo_wine
     ok( extra == 0x80000000, "Unexpected value %d\n", extra );
     todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %lu\n", GetLastError());

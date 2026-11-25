@@ -1049,7 +1049,7 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
     INT ret;
 
     if (is_meta_dc( hdc )) return METADC_SetTextCharacterExtra( hdc, extra );
-    if (!(dc_attr = get_dc_attr( hdc ))) return 0x8000000;
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0x80000000;
     ret = dc_attr->char_extra;
     dc_attr->char_extra = extra;
     return ret;
