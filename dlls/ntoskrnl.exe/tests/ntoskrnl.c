@@ -1400,6 +1400,30 @@ static void test_object_info(void)
 
     CloseHandle(file);
 
+    file = CreateFileA("\\\\.\\WineTestDriver\\\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), &size);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %lu\n", size);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfile"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\\\\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), &size);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %lu\n", size);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfile"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    CloseHandle(file);
+
     file = CreateFileA("\\\\.\\WineTestDriver\\notimpl", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
