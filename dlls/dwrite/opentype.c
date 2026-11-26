@@ -1913,7 +1913,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         case 6:
             cmap->u.format6_10.first = table_read_be_word(&table, offset + 6);
             count = table_read_be_word(&table, offset + 8);
-            cmap->u.format6_10.last = cmap->u.format6_10.first + count;
+            cmap->u.format6_10.last = cmap->u.format6_10.first + count - 1;
             cmap->data = table_read_ensure(&table, offset + 10, count * 2);
             cmap->get_glyph = opentype_cmap_format6_10_get_glyph;
             cmap->get_ranges = opentype_cmap_format6_10_get_ranges;
@@ -1921,7 +1921,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         case 10:
             cmap->u.format6_10.first = table_read_be_dword(&table, offset + 12);
             count = table_read_be_dword(&table, offset + 16);
-            cmap->u.format6_10.last = cmap->u.format6_10.first + count;
+            cmap->u.format6_10.last = cmap->u.format6_10.first + count - 1;
             cmap->data = table_read_ensure(&table, offset + 20, count * 2);
             cmap->get_glyph = opentype_cmap_format6_10_get_glyph;
             cmap->get_ranges = opentype_cmap_format6_10_get_ranges;
