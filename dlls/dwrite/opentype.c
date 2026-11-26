@@ -1845,7 +1845,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         { 0, 0 },
     };
     const struct cmap_encoding_record *records, *found_record = NULL;
-    unsigned int length, offset, format, count, f, i, num_records;
+    unsigned int length, offset, format, count, i, num_records;
     struct file_stream_desc stream_desc;
     struct dwrite_fonttable table;
     const UINT16 *pair = NULL;
@@ -1911,13 +1911,18 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
             cmap->get_ranges = opentype_cmap_format4_get_ranges;
             break;
         case 6:
-        case 10:
-            /* Format 10 uses 4 byte fields. */
-            f = format == 6 ? 1 : 2;
-            cmap->u.format6_10.first = table_read_be_word(&table, offset + f * 6);
-            count = table_read_be_word(&table, offset + f * 8);
+            cmap->u.format6_10.first = table_read_be_word(&table, offset + 6);
+            count = table_read_be_word(&table, offset + 8);
             cmap->u.format6_10.last = cmap->u.format6_10.first + count;
-            cmap->data = table_read_ensure(&table, offset + f * 10, count * 2);
+            cmap->data = table_read_ensure(&table, offset + 10, count * 2);
+            cmap->get_glyph = opentype_cmap_format6_10_get_glyph;
+            cmap->get_ranges = opentype_cmap_format6_10_get_ranges;
+            break;
+        case 10:
+            cmap->u.format6_10.first = table_read_be_dword(&table, offset + 12);
+            count = table_read_be_dword(&table, offset + 16);
+            cmap->u.format6_10.last = cmap->u.format6_10.first + count;
+            cmap->data = table_read_ensure(&table, offset + 20, count * 2);
             cmap->get_glyph = opentype_cmap_format6_10_get_glyph;
             cmap->get_ranges = opentype_cmap_format6_10_get_ranges;
             break;
