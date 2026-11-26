@@ -37,6 +37,9 @@ protected:
     ARGB Argb;
 
 public:
+    Color() : Argb(0xff000000) {}
+    Color(ARGB argb) : Argb(argb) {}
+
     ARGB GetValue() const { return Argb; }
     void SetValue(ARGB argb) { Argb = argb; }
 };
