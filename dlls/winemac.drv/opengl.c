@@ -1147,7 +1147,7 @@ static void macdrv_context_select_drawable(struct macdrv_context *context, struc
     if (drawable && drawable->client)
     {
         struct macdrv_client_surface *surface = impl_from_client_surface(drawable->client);
-        RECT rect = surface->client.virtual_rect;
+        RECT rect = surface->client.raw ? surface->client.monitor_rect : surface->client.virtual_rect;
         macdrv_make_context_current(context->context, surface->cocoa_view, cgrect_from_rect(rect));
         return;
     }
