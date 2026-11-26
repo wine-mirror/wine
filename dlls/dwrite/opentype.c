@@ -1306,7 +1306,7 @@ struct var_axis_record
 
 static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
 {
-    if (size > table->size || offset > table->size - size)
+    if (!size || size > table->size || offset > table->size - size)
         return NULL;
 
     return table->data + offset;
