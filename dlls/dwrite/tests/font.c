@@ -5719,6 +5719,8 @@ static void test_GetKerningPairAdjustments(void)
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
+    UINT16 glyphs[2];
+    INT32 values[3];
     WCHAR *path;
     HRESULT hr;
     ULONG ref;
@@ -5734,19 +5736,48 @@ static void test_GetKerningPairAdjustments(void)
     IDWriteFontFile_Release(file);
 
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
-    if (hr == S_OK) {
-        INT32 adjustments[1];
+    if (hr == S_OK)
+    {
+        if (0) /* crashes on native */
+        {
+            hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 1, NULL, NULL);
+            hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 2, glyphs, NULL);
+        }
 
         hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, NULL, NULL);
-        ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_INVALIDARG), "Unexpected hr %#lx.\n", hr);
 
-        if (0) /* crashes on native */
-            hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 1, NULL, NULL);
-
-        adjustments[0] = 1;
-        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 1, NULL, adjustments);
+        values[0] = 1;
+        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 1, NULL, values);
         ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-        ok(adjustments[0] == 0, "got %d\n", adjustments[0]);
+        ok(values[0] == 0, "Unexpected value %d.\n", values[0]);
+
+        values[0] = 1;
+        values[1] = 2;
+        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 2, NULL, values);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(values[0] == 0, "Unexpected value %d.\n", values[0]);
+        ok(values[1] == 0, "Unexpected value %d.\n", values[1]);
+
+        values[0] = 1;
+        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, NULL, values);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(values[0] == 1, "Unexpected value %d.\n", values[0]);
+
+        values[0] = 1;
+        values[1] = 2;
+        glyphs[0] = glyphs[1] = 0;
+        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 2, glyphs, values);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(values[0] == 0, "Unexpected value %d.\n", values[0]);
+        ok(values[1] == 0, "Unexpected value %d.\n", values[1]);
+
+        glyphs[0] = glyphs[1] = 0;
+        hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, glyphs, NULL);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         IDWriteFontFace1_Release(fontface1);
     }
