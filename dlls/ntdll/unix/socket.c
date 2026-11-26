@@ -541,24 +541,25 @@ static int wow64_translate_control( const WSABUF *control64, struct afd_wsabuf_3
     {
         struct cmsghdr_32 *cmsg32 = (struct cmsghdr_32 *)ptr32;
         const WSACMSGHDR *cmsg64 = (const WSACMSGHDR *)ptr64;
+        ULONG cmsg_len = cmsg64->cmsg_len - sizeof(*cmsg64) + sizeof(*cmsg32);
 
-        if (ptr32 + sizeof(*cmsg32) + cmsg_align_32( cmsg64->cmsg_len ) > buf32 + max_len)
+        if (ptr32 + cmsg_align_32( cmsg_len ) > buf32 + max_len)
         {
             control32->len = 0;
             return 0;
         }
 
-        cmsg32->cmsg_len = cmsg64->cmsg_len - sizeof(*cmsg64) + sizeof(*cmsg32);
+        cmsg32->cmsg_len = cmsg_len;
         cmsg32->cmsg_level = cmsg64->cmsg_level;
         cmsg32->cmsg_type = cmsg64->cmsg_type;
-        memcpy( cmsg32 + 1, cmsg64 + 1, cmsg64->cmsg_len );
+        memcpy( cmsg32 + 1, cmsg64 + 1, cmsg_len - cmsg_align_32( sizeof(*cmsg32) ));
 
         ptr64 += WSA_CMSG_ALIGN( cmsg64->cmsg_len );
         ptr32 += cmsg_align_32( cmsg32->cmsg_len );
     }
 
     control32->len = ptr32 - buf32;
-    FIXME("-> %d\n", control32->len);
+    TRACE("-> %d\n", control32->len);
     return 1;
 }
 
