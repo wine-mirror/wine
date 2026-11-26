@@ -2674,7 +2674,6 @@ HRESULT opentype_get_font_familyname(const struct file_stream_desc *stream_desc,
     BOOL try_wws_name;
     HRESULT hr;
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
 
     *names = NULL;
