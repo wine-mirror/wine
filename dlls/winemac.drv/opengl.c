@@ -1849,8 +1849,11 @@ static BOOL macdrv_context_activate(struct opengl_context *base, struct opengl_d
 
     if (NtCurrentTeb()->glReserved2) funcs->p_glFlush();
 
+    /* set the context current before selecting the view, preventing incorrect modification of the context viewport */
+    CGLSetCurrentContext(context->base.host_context);
     macdrv_context_select_drawable(context, draw);
     CGLSetCurrentContext(context->base.host_context);
+
     return TRUE;
 }
 
