@@ -1052,6 +1052,7 @@ C_ASSERT( sizeof(struct recv_socket_request) == 64 );
 C_ASSERT( offsetof(struct recv_socket_reply, wait) == 8 );
 C_ASSERT( offsetof(struct recv_socket_reply, options) == 12 );
 C_ASSERT( offsetof(struct recv_socket_reply, nonblocking) == 16 );
+C_ASSERT( offsetof(struct recv_socket_reply, ctrlrecv_options) == 20 );
 C_ASSERT( sizeof(struct recv_socket_reply) == 24 );
 C_ASSERT( offsetof(struct send_socket_request, flags) == 12 );
 C_ASSERT( offsetof(struct send_socket_request, async) == 16 );

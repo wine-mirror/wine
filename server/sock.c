@@ -287,6 +287,7 @@ struct sock
     }
     icmp_fixup_data[MAX_ICMP_HISTORY_LENGTH]; /* Sent ICMP packets history used to fixup reply id. */
     struct bound_addr  *bound_addr[2]; /* Links to the entries in bound addresses tree. */
+    unsigned int        ctrlrecv_options; /* control message receive SERVER_SOCKET_RECV_* options */
     unsigned int        icmp_fixup_data_len;  /* Sent ICMP packets history length. */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
@@ -1800,6 +1801,7 @@ static struct sock *create_socket(void)
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
     sock->sndtimeo = 0;
+    sock->ctrlrecv_options = 0;
     sock->icmp_fixup_data_len = 0;
     sock->bound_addr[0] = sock->bound_addr[1] = NULL;
     init_async_queue( &sock->read_q );
@@ -3553,12 +3555,14 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 
 #ifdef IP_RECVTOS
+    case IOCTL_AFD_WINE_GET_IP_RECVECN:
     case IOCTL_AFD_WINE_GET_IP_RECVTOS:
     {
+        unsigned int flag = (code == IOCTL_AFD_WINE_GET_IP_RECVECN ? SERVER_SOCKET_RECV_ECN : SERVER_SOCKET_RECV_TOS);
         int value;
         socklen_t len = sizeof(value);
 
-        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        if ((sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW) || sock->family != WS_AF_INET)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
@@ -3568,38 +3572,47 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_BUFFER_TOO_SMALL );
             return;
         }
-        if (getsockopt( unix_fd, IPPROTO_IP, IP_RECVTOS, &value, &len ))
-            set_error( sock_get_ntstatus( errno ));
-        else
-            set_reply_data( &value, sizeof(value) );
+        value = !!(sock->ctrlrecv_options & flag);
+        set_reply_data( &value, sizeof(value) );
         return;
     }
 
+    case IOCTL_AFD_WINE_SET_IP_RECVECN:
     case IOCTL_AFD_WINE_SET_IP_RECVTOS:
     {
+        unsigned int flag = (code == IOCTL_AFD_WINE_SET_IP_RECVECN ? SERVER_SOCKET_RECV_ECN : SERVER_SOCKET_RECV_TOS);
+        int value;
+
         if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
-        if (get_req_data_size() < sizeof(int))
+        if (get_req_data_size() < sizeof(value))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
             return;
         }
-        if (setsockopt( unix_fd, IPPROTO_IP, IP_RECVTOS, get_req_data(), sizeof(int) ))
-            set_error( sock_get_ntstatus( errno ));
+        value = *(int *)get_req_data();
+        if (setsockopt( unix_fd, IPPROTO_IP, IP_RECVTOS, &value, sizeof(value) )) set_error( sock_get_ntstatus( errno ));
+        else
+        {
+            if (value) sock->ctrlrecv_options |= flag;
+            else       sock->ctrlrecv_options &= ~flag;
+        }
         return;
     }
 #endif
 
 #ifdef IPV6_RECVTCLASS
+    case IOCTL_AFD_WINE_GET_IPV6_RECVECN:
     case IOCTL_AFD_WINE_GET_IPV6_RECVTCLASS:
     {
+        unsigned int flag = (code == IOCTL_AFD_WINE_GET_IPV6_RECVECN ? SERVER_SOCKET_RECV_ECN : SERVER_SOCKET_RECV_TCLASS);
         int value;
         socklen_t len = sizeof(value);
 
-        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        if ((sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW) || sock->family != WS_AF_INET6)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
@@ -3609,27 +3622,34 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_BUFFER_TOO_SMALL );
             return;
         }
-        if (getsockopt( unix_fd, IPPROTO_IPV6, IPV6_RECVTCLASS, &value, &len ))
-            set_error( sock_get_ntstatus( errno ));
-        else
-            set_reply_data( &value, sizeof(value) );
+        value = !!(sock->ctrlrecv_options & flag);
+        set_reply_data( &value, sizeof(value) );
         return;
     }
 
+    case IOCTL_AFD_WINE_SET_IPV6_RECVECN:
     case IOCTL_AFD_WINE_SET_IPV6_RECVTCLASS:
     {
+        unsigned int flag = (code == IOCTL_AFD_WINE_SET_IPV6_RECVECN ? SERVER_SOCKET_RECV_ECN : SERVER_SOCKET_RECV_TCLASS);
+        int value;
+
         if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
-        if (get_req_data_size() < sizeof(int))
+        if (get_req_data_size() < sizeof(value))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
             return;
         }
-        if (setsockopt( unix_fd, IPPROTO_IPV6, IPV6_RECVTCLASS, get_req_data(), sizeof(int) ))
-            set_error( sock_get_ntstatus( errno ));
+        value = *(int *)get_req_data();
+        if (setsockopt( unix_fd, IPPROTO_IPV6, IPV6_RECVTCLASS, &value, sizeof(value) )) set_error( sock_get_ntstatus( errno ));
+        else
+        {
+            if (value) sock->ctrlrecv_options |= flag;
+            else       sock->ctrlrecv_options &= ~flag;
+        }
         return;
     }
 #endif
@@ -4069,6 +4089,7 @@ DECL_HANDLER(recv_socket)
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
         reply->nonblocking = sock->nonblocking;
+        reply->ctrlrecv_options = sock->ctrlrecv_options;
         release_object( async );
     }
     release_object( sock );

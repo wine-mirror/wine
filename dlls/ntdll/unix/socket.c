@@ -119,6 +119,7 @@ struct async_recv_ioctl
     int unix_flags;
     unsigned int count;
     BOOL icmp_over_dgram;
+    unsigned int ctrlrecv_options;
     struct iovec iov[1];
 };
 
@@ -388,7 +389,7 @@ static WSACMSGHDR *fill_control_message( int level, int type, WSACMSGHDR *curren
     return (WSACMSGHDR *)(ptr + WSA_CMSG_ALIGN(len));
 }
 
-static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
+static int convert_control_headers(struct msghdr *hdr, WSABUF *control, unsigned int ctrlrecv_options)
 {
     WSACMSGHDR *cmsg_win = (WSACMSGHDR *)control->buf, *ptr;
     ULONG ctlsize = control->len;
@@ -434,9 +435,19 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                     case IP_TOS:
                     {
                         INT tos = *(unsigned char *)CMSG_DATA(cmsg_unix);
-                        ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_TOS, ptr, &ctlsize,
-                                                    &tos, sizeof(INT) );
-                        if (!ptr) goto error;
+                        if (ctrlrecv_options & SERVER_SOCKET_RECV_TOS)
+                        {
+                            ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_TOS, ptr, &ctlsize,
+                                                        &tos, sizeof(INT) );
+                            if (!ptr) goto error;
+                        }
+                        if (ctrlrecv_options & SERVER_SOCKET_RECV_ECN)
+                        {
+                            tos &= 3;
+                            ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_ECN, ptr, &ctlsize,
+                                                        &tos, sizeof(INT) );
+                            if (!ptr) goto error;
+                        }
                         break;
                     }
 #endif /* IP_TOS */
@@ -488,9 +499,20 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 #if defined(IPV6_TCLASS)
                     case IPV6_TCLASS:
                     {
-                        ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_TCLASS, ptr, &ctlsize,
-                                                    CMSG_DATA(cmsg_unix), sizeof(INT) );
-                        if (!ptr) goto error;
+                        INT tclass = *(unsigned char *)CMSG_DATA(cmsg_unix);
+                        if (ctrlrecv_options & SERVER_SOCKET_RECV_TCLASS)
+                        {
+                            ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_TCLASS, ptr, &ctlsize,
+                                                        &tclass, sizeof(INT) );
+                            if (!ptr) goto error;
+                        }
+                        if (ctrlrecv_options & SERVER_SOCKET_RECV_ECN)
+                        {
+                            tclass &= 3;
+                            ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_ECN, ptr, &ctlsize,
+                                                        &tclass, sizeof(INT) );
+                            if (!ptr) goto error;
+                        }
                         break;
                     }
 #endif /* IPV6_TCLASS */
@@ -836,7 +858,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
 
             wsabuf.len = sizeof(control_buffer64);
             wsabuf.buf = control_buffer64;
-            if (convert_control_headers( &hdr, &wsabuf ))
+            if (convert_control_headers( &hdr, &wsabuf, async->ctrlrecv_options ))
             {
                 if (!wow64_translate_control( &wsabuf, async->control ))
                 {
@@ -854,7 +876,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
         }
         else
         {
-            if (!convert_control_headers( &hdr, async->control ))
+            if (!convert_control_headers( &hdr, async->control, async->ctrlrecv_options ))
             {
                 WARN( "Application passed insufficient room for control headers.\n" );
                 *async->ret_flags |= WS_MSG_CTRUNC;
@@ -942,6 +964,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
         nonblocking = reply->nonblocking;
+        async->ctrlrecv_options = reply->ctrlrecv_options;
     }
     SERVER_END_REQ;
 
@@ -1015,6 +1038,7 @@ static NTSTATUS sock_ioctl_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
     async->addr_len = addr_len;
     async->ret_flags = ret_flags;
     async->icmp_over_dgram = is_icmp_over_dgram( fd );
+    async->ctrlrecv_options = 0;
 
     return sock_recv( handle, event, apc, apc_user, io, fd, async, force_async );
 }
@@ -1038,6 +1062,7 @@ NTSTATUS sock_read( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     async->addr_len = NULL;
     async->ret_flags = NULL;
     async->icmp_over_dgram = is_icmp_over_dgram( fd );
+    async->ctrlrecv_options = 0;
 
     return sock_recv( handle, event, apc, apc_user, io, fd, async, 1 );
 }

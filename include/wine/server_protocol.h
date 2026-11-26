@@ -2119,9 +2119,12 @@ struct recv_socket_reply
     obj_handle_t wait;
     unsigned int options;
     int          nonblocking;
-    char __pad_20[4];
+    unsigned int ctrlrecv_options;
 };
 
+#define SERVER_SOCKET_RECV_TOS       0x00000001
+#define SERVER_SOCKET_RECV_TCLASS    0x00000002
+#define SERVER_SOCKET_RECV_ECN       0x00000004
 
 
 struct send_socket_request
@@ -7222,6 +7225,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 987
+#define SERVER_PROTOCOL_VERSION 988
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
