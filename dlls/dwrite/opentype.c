@@ -5453,8 +5453,10 @@ static BOOL opentype_layout_context_apply_lookup(struct scriptshaping_context *c
 
     for (i = 0; i < lookup_count; ++i)
     {
-        unsigned int idx = GET_BE_WORD(lookup_records[i]);
-        unsigned int orig_len, lookup_index, next;
+        unsigned int idx, orig_len, lookup_index, next;
+
+        idx = GET_BE_WORD(lookup_records[2*i]);
+        lookup_index = GET_BE_WORD(lookup_records[2*i+1]);
 
         if (idx >= count)
             continue;
@@ -5462,8 +5464,6 @@ static BOOL opentype_layout_context_apply_lookup(struct scriptshaping_context *c
         context->cur = match_positions[idx];
 
         orig_len = context->glyph_count;
-
-        lookup_index = GET_BE_WORD(lookup_records[i+1]);
 
         --context->nesting_level_left;
         context->u.buffer.apply_context_lookup(context, lookup_index);
