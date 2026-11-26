@@ -2294,22 +2294,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 #endif
 
-#ifdef IP_RECVTOS
-        case IOCTL_AFD_WINE_GET_IP_RECVTOS:
-        {
-            int sock_type = get_sock_type( handle );
-            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
-            return do_getsockopt( handle, io, IPPROTO_IP, IP_RECVTOS, out_buffer, out_size );
-        }
-
-        case IOCTL_AFD_WINE_SET_IP_RECVTOS:
-        {
-            int sock_type = get_sock_type( handle );
-            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
-            return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVTOS, in_buffer, in_size );
-        }
-#endif
-
 #ifdef IP_RECVTTL
         case IOCTL_AFD_WINE_GET_IP_RECVTTL:
         {
@@ -2490,22 +2474,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             int sock_type = get_sock_type( handle );
             if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
             return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVPKTINFO, in_buffer, in_size );
-        }
-#endif
-
-#ifdef IPV6_RECVTCLASS
-        case IOCTL_AFD_WINE_GET_IPV6_RECVTCLASS:
-        {
-            int sock_type = get_sock_type( handle );
-            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
-            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVTCLASS, out_buffer, out_size );
-        }
-
-        case IOCTL_AFD_WINE_SET_IPV6_RECVTCLASS:
-        {
-            int sock_type = get_sock_type( handle );
-            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
-            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVTCLASS, in_buffer, in_size );
         }
 #endif
 

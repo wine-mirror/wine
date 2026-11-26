@@ -3552,6 +3552,88 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return;
     }
 
+#ifdef IP_RECVTOS
+    case IOCTL_AFD_WINE_GET_IP_RECVTOS:
+    {
+        int value;
+        socklen_t len = sizeof(value);
+
+        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        if (get_reply_max_size() < len)
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        if (getsockopt( unix_fd, IPPROTO_IP, IP_RECVTOS, &value, &len ))
+            set_error( sock_get_ntstatus( errno ));
+        else
+            set_reply_data( &value, sizeof(value) );
+        return;
+    }
+
+    case IOCTL_AFD_WINE_SET_IP_RECVTOS:
+    {
+        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        if (get_req_data_size() < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        if (setsockopt( unix_fd, IPPROTO_IP, IP_RECVTOS, get_req_data(), sizeof(int) ))
+            set_error( sock_get_ntstatus( errno ));
+        return;
+    }
+#endif
+
+#ifdef IPV6_RECVTCLASS
+    case IOCTL_AFD_WINE_GET_IPV6_RECVTCLASS:
+    {
+        int value;
+        socklen_t len = sizeof(value);
+
+        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        if (get_reply_max_size() < len)
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        if (getsockopt( unix_fd, IPPROTO_IPV6, IPV6_RECVTCLASS, &value, &len ))
+            set_error( sock_get_ntstatus( errno ));
+        else
+            set_reply_data( &value, sizeof(value) );
+        return;
+    }
+
+    case IOCTL_AFD_WINE_SET_IPV6_RECVTCLASS:
+    {
+        if (sock->type != WS_SOCK_DGRAM && sock->type != WS_SOCK_RAW)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        if (get_req_data_size() < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return;
+        }
+        if (setsockopt( unix_fd, IPPROTO_IPV6, IPV6_RECVTCLASS, get_req_data(), sizeof(int) ))
+            set_error( sock_get_ntstatus( errno ));
+        return;
+    }
+#endif
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return;
