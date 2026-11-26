@@ -5745,7 +5745,6 @@ static void test_GetKerningPairAdjustments(void)
         }
 
         hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, NULL, NULL);
-        todo_wine
         ok(hr == S_OK || broken(hr == E_INVALIDARG), "Unexpected hr %#lx.\n", hr);
 
         values[0] = 1;
@@ -5762,7 +5761,6 @@ static void test_GetKerningPairAdjustments(void)
 
         values[0] = 1;
         hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, NULL, values);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(values[0] == 1, "Unexpected value %d.\n", values[0]);
 
@@ -5776,7 +5774,6 @@ static void test_GetKerningPairAdjustments(void)
 
         glyphs[0] = glyphs[1] = 0;
         hr = IDWriteFontFace1_GetKerningPairAdjustments(fontface1, 0, glyphs, NULL);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         IDWriteFontFace1_Release(fontface1);
