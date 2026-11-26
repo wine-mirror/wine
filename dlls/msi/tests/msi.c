@@ -2954,6 +2954,7 @@ static void test_MsiGetComponentPathEx(void)
     char prod[MAX_PATH], prod_squashed[MAX_PATH];
     char comp[MAX_PATH], comp_base85[MAX_PATH], comp_squashed[MAX_PATH];
     char path[MAX_PATH], path_key[MAX_PATH], *usersid;
+    WCHAR prodW[MAX_PATH], prod_squashedW[MAX_PATH], compW[MAX_PATH], pathW[MAX_PATH];
     INSTALLSTATE state;
     DWORD size, val;
     REGSAM access = KEY_ALL_ACCESS;
@@ -2963,6 +2964,9 @@ static void test_MsiGetComponentPathEx(void)
 
     create_test_guid( prod, prod_squashed );
     compose_base85_guid( comp, comp_base85, comp_squashed );
+    MultiByteToWideChar( CP_ACP, 0, prod, -1, prodW, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, prod_squashed, -1, prod_squashedW, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, comp, -1, compW, MAX_PATH );
     usersid = get_user_sid();
 
     /* NULL product */
@@ -3050,8 +3054,62 @@ static void test_MsiGetComponentPathEx(void)
     ok( !lstrcmpA( path, "c:\\msitest\\testcomponentpath"), "got %s\n", path );
     ok( size == 28, "got %lu\n", size );
 
+    /* NULL buf, file does not exist */
+    size = 0;
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, &size );
+    todo_wine ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
+    ok( size == 28, "got %lu\n", size );
+
+    if (WideCharToMultiByte( CP_ACP, 0, L"\x3042", -1, NULL, 0, NULL, NULL ) == 3)
+    {
+        res = RegSetValueExW( key_comp, prod_squashedW, 0, REG_SZ, (const BYTE *)L"c:\\msitest\\\x3042",
+                              sizeof(L"c:\\msitest\\\x3042") );
+        ok( res == ERROR_SUCCESS, "got %ld\n", res );
+
+        size = 0;
+        state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, &size );
+        todo_wine ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
+        todo_wine ok( size == 12, "got %lu\n", size );
+
+        res = reg_set_str( key_comp, prod_squashed, "c:\\msitest\\testcomponentpath" );
+        ok( res == ERROR_SUCCESS, "got %ld\n", res );
+    }
+    else
+        skip( "U+3042 is not a double-byte character in the ANSI code page\n" );
+
     CreateDirectoryA( "c:\\msitest", NULL );
     create_file( "c:\\msitest\\testcomponentpath", 21 );
+
+    /* NULL buf, file exists */
+    size = 0;
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, &size );
+    todo_wine ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
+    ok( size == 28, "got %lu\n", size );
+
+    size = MAX_PATH;
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, &size );
+    todo_wine ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
+    ok( size == 28, "got %lu\n", size );
+
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, NULL, NULL );
+    ok( state == INSTALLSTATE_LOCAL, "got %d\n", state );
+
+    size = 0;
+    state = MsiGetComponentPathW( prodW, compW, NULL, &size );
+    ok( state == INSTALLSTATE_LOCAL, "got %d\n", state );
+    ok( size == 28, "got %lu\n", size );
+
+    size = 0;
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, pathW, &size );
+    ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
+    ok( size == 28, "got %lu\n", size );
+
+    pathW[0] = 0;
+    size = MAX_PATH;
+    state = MsiGetComponentPathExW( prodW, compW, NULL, MSIINSTALLCONTEXT_MACHINE, pathW, &size );
+    ok( state == INSTALLSTATE_LOCAL, "got %d\n", state );
+    ok( !wcscmp( pathW, L"c:\\msitest\\testcomponentpath" ), "got %s\n", wine_dbgstr_w(pathW) );
+    ok( size == 28, "got %lu\n", size );
 
     /* file exists */
     path[0] = 0;
