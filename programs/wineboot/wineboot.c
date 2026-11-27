@@ -159,6 +159,28 @@ done:
     return ret;
 }
 
+/* check if we have to force a prefix update, by detecting invalid/wrong arch ntdll */
+static BOOL prefix_needs_update(void)
+{
+    HANDLE file;
+    ULONG buffer[256];
+    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)buffer;
+    IMAGE_NT_HEADERS *nt;
+    DWORD size;
+
+    file = CreateFileW( L"c:\\windows\\system32\\ntdll.dll", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (file == INVALID_HANDLE_VALUE) return TRUE;
+    ReadFile( file, buffer, sizeof(buffer), &size, NULL );
+    if (size < sizeof(*dos)) return TRUE;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return TRUE;
+    if (size < dos->e_lfanew) return TRUE;
+    if (size - dos->e_lfanew < offsetof( IMAGE_NT_HEADERS, OptionalHeader )) return TRUE;
+    nt = (IMAGE_NT_HEADERS *)((char *)buffer + dos->e_lfanew);
+    if (nt->FileHeader.Machine == machines[0].Machine) return FALSE;
+    TRACE( "forcing update for machine %x / %x\n", nt->FileHeader.Machine, machines[0].Machine );
+    return TRUE;
+}
+
 /* print the config directory in a more Unix-ish way */
 static const WCHAR *prettyprint_configdir(void)
 {
@@ -1694,7 +1716,7 @@ static void update_wineprefix( BOOL force )
     fstat( fd, &st );
     close( fd );
 
-    if (update_timestamp( config_dir, st.st_mtime ) || force)
+    if (update_timestamp( config_dir, st.st_mtime ) || force || prefix_needs_update())
     {
         HANDLE process;
         DWORD count = 0;
