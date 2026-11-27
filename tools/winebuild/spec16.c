@@ -413,9 +413,9 @@ static void output_call16_function( ORDDEF *odp )
         case ARG_INT128:
             if (odp->type != TYPE_PASCAL) pos -= 4;
             output( "\tmovzwl %d(%%ecx),%%edx\n", pos + 2 ); /* sel */
-            output( "\tshr $3,%%edx\n" );
+            output( "\tandl $0xfff8,%%edx\n" );
             output( "\tmovzwl %d(%%ecx),%%eax\n", pos ); /* offset */
-            output( "\taddl (%%esi,%%edx,4),%%eax\n" );
+            output( "\taddl (%%esi,%%edx),%%eax\n" );
             output( "\tpushl %%eax\n" );
             if (odp->type == TYPE_PASCAL) pos += 4;
             break;

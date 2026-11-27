@@ -151,11 +151,13 @@ typedef struct _THHOOK
 
 struct ldt_bits
 {
+    unsigned int base;
     unsigned int limit : 24;
     unsigned int type : 5;
     unsigned int granularity : 1;
     unsigned int default_big : 1;
 };
+C_ASSERT( sizeof(struct ldt_bits) == 8 );
 
 extern LONG __wine_call_from_16(void);
 extern void __wine_call_from_16_regs(void);

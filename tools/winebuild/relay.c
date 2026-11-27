@@ -148,7 +148,6 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     /* Translate STACK16FRAME base to flat offset in %edx */
     output( "\tmovw %%ss, %%dx\n" );
     output( "\tandl $0xfff8, %%edx\n" );
-    output( "\tshrl $1, %%edx\n" );
     output( "\tmovl %%fs:(0x30), %%ecx\n" ); /* peb */
     output( "\tmovl %u(%%ecx), %%ecx\n", LDT_OFFSET );   /* ldt_copy */
     output( "\tmovl (%%ecx,%%edx), %%edx\n" );

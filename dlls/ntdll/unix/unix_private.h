@@ -649,11 +649,13 @@ static const ULONG cpsr_user_mask = 0xf0200000;
 
 struct ldt_bits
 {
+    unsigned int base;
     unsigned int limit : 24;
     unsigned int type : 5;
     unsigned int granularity : 1;
     unsigned int default_big : 1;
 };
+C_ASSERT( sizeof(struct ldt_bits) == 8 );
 
 #define LDT_SIZE 8192
 
@@ -674,20 +676,21 @@ static inline unsigned int ldt_get_base( LDT_ENTRY ent )
             (unsigned int)ent.HighWord.Bits.BaseHi << 24);
 }
 
-static inline struct ldt_bits ldt_set_limit( struct ldt_bits bits, unsigned int limit )
+static inline struct ldt_bits ldt_set_addr( struct ldt_bits bits, unsigned int base, unsigned int limit )
 {
     if ((bits.granularity = (limit >= 0x100000))) limit >>= 12;
     bits.limit = limit;
+    bits.base = base;
     return bits;
 }
 
-static inline LDT_ENTRY ldt_make_entry( unsigned int base, struct ldt_bits bits )
+static inline LDT_ENTRY ldt_make_entry( struct ldt_bits bits )
 {
     LDT_ENTRY entry;
 
-    entry.BaseLow                   = (WORD)base;
-    entry.HighWord.Bits.BaseMid     = (BYTE)(base >> 16);
-    entry.HighWord.Bits.BaseHi      = (BYTE)(base >> 24);
+    entry.BaseLow                   = (WORD)bits.base;
+    entry.HighWord.Bits.BaseMid     = bits.base >> 16;
+    entry.HighWord.Bits.BaseHi      = bits.base >> 24;
     entry.LimitLow                  = (WORD)bits.limit;
     entry.HighWord.Bits.LimitHi     = bits.limit >> 16;
     entry.HighWord.Bits.Dpl         = 3;
@@ -720,17 +723,17 @@ static inline void ldt_free_entry( WORD sel )
 
 static inline LDT_ENTRY ldt_make_cs32_entry(void)
 {
-    return ldt_make_entry( 0, ldt_set_limit( code_segment, ~0u ));
+    return ldt_make_entry( ldt_set_addr( code_segment, 0, ~0u ));
 }
 
 static inline LDT_ENTRY ldt_make_ds32_entry(void)
 {
-    return ldt_make_entry( 0, ldt_set_limit( data_segment, ~0u ));
+    return ldt_make_entry( ldt_set_addr( data_segment, 0, ~0u ));
 }
 
 static inline LDT_ENTRY ldt_make_fs32_entry( void *teb )
 {
-    return ldt_make_entry( PtrToUlong(teb), ldt_set_limit( data_segment, page_size - 1 ));
+    return ldt_make_entry( ldt_set_addr( data_segment, PtrToUlong(teb), page_size - 1 ));
 }
 
 static inline int is_gdt_sel( WORD sel )

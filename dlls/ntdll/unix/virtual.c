@@ -4173,14 +4173,7 @@ void virtual_free_thread_data( struct thread_data *data )
 
 #if defined(__i386__) || defined(__x86_64__)
 
-struct ldt_copy
-{
-    unsigned int    base[LDT_SIZE];
-    struct ldt_bits bits[LDT_SIZE];
-};
-C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
-
-static struct ldt_copy *ldt_copy;
+static struct ldt_bits *ldt_copy;
 
 UINT ldt_bitmap[LDT_SIZE / 32] = { ~0u };
 
@@ -4195,7 +4188,7 @@ WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
     {
         struct file_view *view;
 
-        if (map_view( &view, NULL, sizeof(*ldt_copy), MEM_TOP_DOWN,
+        if (map_view( &view, NULL, sizeof(ldt_copy[0]) * LDT_SIZE, MEM_TOP_DOWN,
                       VPROT_COMMITTED | VPROT_READ | VPROT_WRITE,
                       is_win64 ? limit_2g : 0, limit_4g, 0 )) return 0;
         ldt_copy = view->base;
@@ -4204,11 +4197,11 @@ WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
     }
 
     ldt_set_entry( sel, entry );
-    ldt_copy->base[index]             = ldt_get_base( entry );
-    ldt_copy->bits[index].limit       = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
-    ldt_copy->bits[index].type        = entry.HighWord.Bits.Type;
-    ldt_copy->bits[index].granularity = entry.HighWord.Bits.Granularity;
-    ldt_copy->bits[index].default_big = entry.HighWord.Bits.Default_Big;
+    ldt_copy[index].base        = ldt_get_base( entry );
+    ldt_copy[index].limit       = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
+    ldt_copy[index].type        = entry.HighWord.Bits.Type;
+    ldt_copy[index].granularity = entry.HighWord.Bits.Granularity;
+    ldt_copy[index].default_big = entry.HighWord.Bits.Default_Big;
     ldt_bitmap[index / 32] |= 1u << (index & 31);
     return sel;
 }
@@ -4219,17 +4212,12 @@ WORD ldt_update_entry( WORD sel, LDT_ENTRY entry )
 NTSTATUS ldt_get_entry( WORD sel, CLIENT_ID client_id, LDT_ENTRY *entry )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    unsigned int base = 0;
     struct ldt_bits bits = { 0 };
     unsigned int idx = sel >> 3;
 
     if (HandleToULong(client_id.UniqueProcess) == pid)
     {
-        if (ldt_copy)
-        {
-            base = ldt_copy->base[idx];
-            bits = ldt_copy->bits[idx];
-        }
+        if (ldt_copy) bits = ldt_copy[idx];
     }
     else
     {
@@ -4250,14 +4238,13 @@ NTSTATUS ldt_get_entry( WORD sel, CLIENT_ID client_id, LDT_ENTRY *entry )
 
         if (!NtReadVirtualMemory( process, &peb32->SpareUlongs[0], &ptr, sizeof(ptr), NULL ) && ptr)
         {
-            struct ldt_copy *ldt = ULongToPtr( ptr );
-            NtReadVirtualMemory( process, &ldt->base[idx], &base, sizeof(base), NULL );
-            NtReadVirtualMemory( process, &ldt->bits[idx], &bits, sizeof(bits), NULL );
+            struct ldt_bits *ldt = ULongToPtr( ptr );
+            NtReadVirtualMemory( process, &ldt[idx], &bits, sizeof(bits), NULL );
         }
         NtClose( process );
     }
 
-    if (base || bits.limit || bits.type) *entry = ldt_make_entry( base, bits );
+    if (bits.base || bits.limit || bits.type) *entry = ldt_make_entry( bits );
     else status = STATUS_UNSUCCESSFUL;
 
     return status;
