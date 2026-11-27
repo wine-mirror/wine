@@ -1,5 +1,5 @@
 TESTDLL   = mpr.dll
-IMPORTS   = mpr
+IMPORTS   = mpr advapi32
 
 SOURCES = \
 	mpr.c

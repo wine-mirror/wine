@@ -315,10 +315,36 @@ end:
     HeapFree(GetProcessHeap(), 0, netRes);
 }
 
+static void test_provider_order(void)
+{
+    static const char *keys[] =
+    {
+        "System\\CurrentControlSet\\Control\\NetworkProvider\\Order",
+        "System\\CurrentControlSet\\Control\\NetworkProvider\\HwOrder",
+    };
+    DWORD type, size;
+    unsigned int i;
+    HKEY key;
+    LONG ret;
+
+    for (i = 0; i < ARRAY_SIZE(keys); i++)
+    {
+        ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keys[i], 0, KEY_READ, &key);
+        todo_wine ok(!ret, "%s: RegOpenKeyExA returned %ld\n", keys[i], ret);
+        if (ret) continue;
+        size = 0;
+        ret = RegQueryValueExA(key, "ProviderOrder", NULL, &type, NULL, &size);
+        ok(!ret, "%s: RegQueryValueExA returned %ld\n", keys[i], ret);
+        ok(type == REG_SZ, "%s: got type %lu\n", keys[i], type);
+        RegCloseKey(key);
+    }
+}
+
 START_TEST(mpr)
 {
     test_WNetGetUniversalName();
     test_WNetGetRemoteName();
     test_WNetCachePassword();
     test_WNetUseConnection();
+    test_provider_order();
 }
