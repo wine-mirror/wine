@@ -2,7 +2,7 @@ MODULE    = wow64cpu.dll
 IMPORTS   = wow64 ntdll
 ENABLE_ARCHS = x86_64
 
-EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7a400000
+EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x10000000
 
 SOURCES = \
 	cpu.c

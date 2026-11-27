@@ -4,8 +4,6 @@ IMPORTLIB = kernelbase
 IMPORTS   = uuid ntdll
 
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles
-i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b000000
-x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x174000000
 
 SOURCES = \
 	console.c \
