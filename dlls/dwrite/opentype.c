@@ -1844,8 +1844,8 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         { 0, 1 },
         { 0, 0 },
     };
+    unsigned int length, offset, array_offset, format, count, i, num_records;
     const struct cmap_encoding_record *records, *found_record = NULL;
-    unsigned int length, offset, format, count, i, num_records;
     struct file_stream_desc stream_desc;
     struct dwrite_fonttable table;
     const UINT16 *pair = NULL;
@@ -1901,12 +1901,28 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         case 4:
             length = table_read_be_word(&table, offset + 2);
             cmap->u.format4.seg_count = count = table_read_be_word(&table, offset + 6) / 2;
-            cmap->u.format4.ends = table_read_ensure(&table, offset + 14, count * 2);
+
+            /* The glyph id array section is optional, so make sure that fixed part of
+               the data is accessible, leaving glyph data as a remainder. */
+
+            array_offset = 16 + 8 * count;
+            if (!table_read_ensure(&table, offset, array_offset))
+                break;
+            if (!table_read_ensure(&table, offset, length))
+                break;
+
+            cmap->u.format4.ends = (const UINT16 *)(table.data + offset + 14);
             cmap->u.format4.starts = cmap->u.format4.ends + count + 1;
             cmap->u.format4.id_delta = cmap->u.format4.starts + count;
             cmap->u.format4.id_range_offset = cmap->u.format4.id_delta + count;
-            cmap->u.format4.glyph_id_array = cmap->data = cmap->u.format4.id_range_offset + count;
-            cmap->u.format4.glyph_id_array_len = (length - 16 - 8 * count) / 2;
+
+            if (length > array_offset)
+            {
+                cmap->u.format4.glyph_id_array_len = (length - array_offset) / 2;
+                cmap->u.format4.glyph_id_array = table_read_ensure(&table, offset + array_offset, length - array_offset);
+            }
+            cmap->data = cmap;
+
             cmap->get_glyph = opentype_cmap_format4_get_glyph;
             cmap->get_ranges = opentype_cmap_format4_get_ranges;
             break;
