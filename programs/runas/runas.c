@@ -27,26 +27,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(runas);
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    WCHAR *user, *domain;
+    WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR *user, *domain, *p;
     STARTUPINFOW si = { sizeof(si) };
     PROCESS_INFORMATION pi;
     BOOL ret;
 
     if (argc < 3 || wcsncmp(argv[1], L"/user:", 5) != 0)
     {
-        printf("Syntax: runas.exe /user:user@domain.com program.exe\n");
+        printf("Syntax: runas.exe /user:user@domain program.exe\n");
         return -1;
     }
 
-    user = argv[1] + 6;
-    domain = wcschr(user, '@');
-    if (!*user || !domain || !*domain)
+    if ((p = wcschr(argv[1] + 6, '@')))
+    {
+        *p++ = 0;
+        user = argv[1] + 6;
+        domain = p;
+    }
+    else if ((p = wcschr(argv[1] + 6, '\\')))
+    {
+        *p++ = 0;
+        domain = argv[1] + 6;
+        user = p;
+    }
+    else
+    {
+        DWORD len = ARRAY_SIZE( computer_name );
+        GetComputerNameW( computer_name, &len );
+        user = argv[1] + 6;
+        domain = computer_name;
+    }
+    if (!*user || !*domain)
     {
         ERR("Invalid user/domain specified\n");
         return -1;
     }
 
-    *domain++ = 0;
     TRACE("Running as %s@%s\n", debugstr_w(user), debugstr_w(domain));
 
     ret = CreateProcessWithLogonW(user, domain, NULL, 0, NULL, argv[2], 0, NULL, NULL, &si, &pi);
