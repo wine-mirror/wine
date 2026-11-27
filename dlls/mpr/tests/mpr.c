@@ -330,7 +330,7 @@ static void test_provider_order(void)
     for (i = 0; i < ARRAY_SIZE(keys); i++)
     {
         ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keys[i], 0, KEY_READ, &key);
-        todo_wine ok(!ret, "%s: RegOpenKeyExA returned %ld\n", keys[i], ret);
+        ok(!ret, "%s: RegOpenKeyExA returned %ld\n", keys[i], ret);
         if (ret) continue;
         size = 0;
         ret = RegQueryValueExA(key, "ProviderOrder", NULL, &type, NULL, &size);
