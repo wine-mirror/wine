@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# A user's ~/.xsession (chmod +x). Runs as the user in their own RDP session:
+# own screen size (xrdp dynamic resize), own keyboard, own Wine prefix.
+fluxbox &
+sleep 1
+exec /usr/local/bin/tally-launch.sh
